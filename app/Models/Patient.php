@@ -66,6 +66,16 @@ class Patient extends Model
         return $this->belongsTo(User::class, 'registered_by');
     }
 
+    public function visits()
+    {
+        return $this->hasMany(Visit::class);
+    }
+
+    public function activeVisit()
+    {
+        return $this->hasOne(Visit::class)->whereNotIn('status', ['completed', 'cancelled'])->latestOfMany();
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Accessors

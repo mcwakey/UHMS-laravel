@@ -69,17 +69,22 @@
 
                         @can('visits.view')
                         <li class="{{ request()->routeIs('admin.visits.*') ? 'active' : '' }}">
-                            <a href="javascript:void(0);">
+                            <a href="{{ route('admin.visits.index') }}">
                                 <i class="ti ti-calendar-check"></i><span>Visits / OPD</span>
                             </a>
                         </li>
                         @endcan
 
                         @can('queue.view')
-                        <li class="{{ request()->routeIs('admin.queue.*') ? 'active' : '' }}">
-                            <a href="javascript:void(0);">
+                        <li class="submenu">
+                            <a href="javascript:void(0);" class="{{ request()->routeIs('admin.queue.*') ? 'active subdrop' : '' }}">
                                 <i class="ti ti-list-numbers"></i><span>Queue</span>
+                                <span class="menu-arrow"></span>
                             </a>
+                            <ul>
+                                <li><a href="{{ route('admin.queue.manage') }}" class="{{ request()->routeIs('admin.queue.manage') ? 'active' : '' }}">Manage Queue</a></li>
+                                <li><a href="{{ route('admin.queue.board') }}" class="{{ request()->routeIs('admin.queue.board') ? 'active' : '' }}">Queue Board</a></li>
+                            </ul>
                         </li>
                         @endcan
 

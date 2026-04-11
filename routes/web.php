@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\DesignationController;
 use App\Http\Controllers\Admin\PatientController;
+use App\Http\Controllers\Admin\VisitController;
+use App\Http\Controllers\Admin\QueueController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -103,6 +105,26 @@ Route::middleware('auth')->group(function () {
             Route::get('patients/{patient}/edit', [PatientController::class, 'edit'])->name('patients.edit')->middleware('can:patients.edit');
             Route::put('patients/{patient}', [PatientController::class, 'update'])->name('patients.update')->middleware('can:patients.edit');
             Route::patch('patients/{patient}/toggle-status', [PatientController::class, 'toggleStatus'])->name('patients.toggle-status')->middleware('can:patients.edit');
+        });
+
+        // Visits
+        Route::middleware('can:visits.view')->group(function () {
+            Route::get('visits', [VisitController::class, 'index'])->name('visits.index');
+            Route::get('visits/create', [VisitController::class, 'create'])->name('visits.create')->middleware('can:visits.create');
+            Route::post('visits', [VisitController::class, 'store'])->name('visits.store')->middleware('can:visits.create');
+            Route::get('visits/patient-search', [VisitController::class, 'patientSearch'])->name('visits.patient-search');
+            Route::get('visits/{visit}', [VisitController::class, 'show'])->name('visits.show');
+            Route::patch('visits/{visit}/transition', [VisitController::class, 'transition'])->name('visits.transition')->middleware('can:visits.transition');
+        });
+
+        // Queue
+        Route::middleware('can:queue.view')->group(function () {
+            Route::get('queue/manage', [QueueController::class, 'manage'])->name('queue.manage');
+            Route::get('queue/board', [QueueController::class, 'board'])->name('queue.board');
+            Route::post('queue/call-next', [QueueController::class, 'callNext'])->name('queue.call-next')->middleware('can:queue.manage');
+            Route::patch('queue/{queueEntry}/complete', [QueueController::class, 'complete'])->name('queue.complete')->middleware('can:queue.manage');
+            Route::patch('queue/{queueEntry}/skip', [QueueController::class, 'skip'])->name('queue.skip')->middleware('can:queue.manage');
+            Route::patch('queue/{queueEntry}/requeue', [QueueController::class, 'requeue'])->name('queue.requeue')->middleware('can:queue.manage');
         });
 
         // Departments

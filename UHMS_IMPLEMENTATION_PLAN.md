@@ -37,7 +37,7 @@
 | **Phase 0** — Foundation & Setup | ✅ DONE | 2026-04-11 |
 | **Phase 1** — Authentication & User Management | ✅ DONE | 2026-04-11 |
 | **Phase 2** — Patient Module | ✅ DONE | 2026-04-11 |
-| **Phase 3** — Visit & Queue Module | ⬜ Not Started | — |
+| **Phase 3** — Visit & Queue Module | ✅ DONE | 2026-04-11 |
 | **Phase 4** — EHR Module | ⬜ Not Started | — |
 | **Phase 5** — Medical Pattern Engine | ⬜ Not Started | — |
 | **Phase 6** — Laboratory Module | ⬜ Not Started | — |
@@ -46,25 +46,25 @@
 | **Phase 9** — Dashboards & Reports | ⬜ Not Started | — |
 | **Phase 10** — Settings, Audit & Polish | ⬜ Not Started | — |
 
-### Files Created (Phase 0, 1 & 2)
+### Files Created (Phase 0, 1, 2 & 3)
 
 **Enums (11):** `Gender`, `UserStatus`, `VisitStatus`, `VisitType`, `Priority`, `BloodGroup`, `PaymentMethod`, `MaritalStatus`, `BillingType`, `InvoiceStatus`, `LabRequestStatus`, `PrescriptionStatus`
 
-**Models (4):** `User` (modified), `Department`, `Designation`, `Patient`
+**Models (7):** `User` (modified), `Department`, `Designation`, `Patient`, `Visit`, `VisitStatusLog`, `QueueEntry`
 
-**Controllers (9):** `Admin/DashboardController`, `Admin/UserController`, `Admin/RoleController`, `Admin/DepartmentController`, `Admin/DesignationController`, `Admin/PatientController`, `Auth/LoginController`, `Auth/ForgotPasswordController`, `Auth/ResetPasswordController`
+**Controllers (11):** `Admin/DashboardController`, `Admin/UserController`, `Admin/RoleController`, `Admin/DepartmentController`, `Admin/DesignationController`, `Admin/PatientController`, `Admin/VisitController`, `Admin/QueueController`, `Auth/LoginController`, `Auth/ForgotPasswordController`, `Auth/ResetPasswordController`
 
-**Services (2):** `UserService`, `PatientService`
+**Services (4):** `UserService`, `PatientService`, `VisitService`, `QueueService`
 
 **Middleware (1):** `EnsureUserHasRole`
 
-**Form Requests (4):** `StoreUserRequest`, `UpdateUserRequest`, `StorePatientRequest`, `UpdatePatientRequest`
+**Form Requests (5):** `StoreUserRequest`, `UpdateUserRequest`, `StorePatientRequest`, `UpdatePatientRequest`, `StoreVisitRequest`
 
-**Migrations (4 custom):** `create_departments_table`, `create_designations_table`, `modify_users_table_for_uhms`, `create_patients_table`
+**Migrations (7 custom):** `create_departments_table`, `create_designations_table`, `modify_users_table_for_uhms`, `create_patients_table`, `create_visits_table`, `create_visit_status_logs_table`, `create_queue_entries_table`
 
 **Seeders (3):** `RoleSeeder` (8 roles, 42 permissions), `DepartmentSeeder` (16 depts), `AdminUserSeeder`
 
-**Blade Views (18):**
+**Blade Views (23):**
 - Layouts: `app.blade.php`, `auth.blade.php`, `partials/header.blade.php`, `partials/sidebar.blade.php`
 - Auth: `login`, `forgot-password`, `reset-password`
 - Dashboard: `admin`
@@ -73,6 +73,8 @@
 - Departments: `index`
 - Designations: `index`
 - Patients: `index`, `create`, `edit`, `show`
+- Visits: `index`, `create`, `show`
+- Queue: `manage`, `board`
 
 ---
 
@@ -567,14 +569,30 @@ REGISTERED → WAITING → TRIAGE → CONSULTING → LAB (optional)
 ```
 
 ### 6.7 Deliverables
-- [ ] Visit creation by receptionist
-- [ ] Visit status tracking with full audit trail
-- [ ] Queue board for waiting area display
-- [ ] Queue management (call next, skip, re-queue)
-- [ ] Visit timeline component
-- [ ] Status transition validation (can't skip steps)
-- [ ] Visit list with filtering by status/date/doctor
-- [ ] Auto queue number generation per department per day
+- [x] Visit creation by receptionist (with patient search, department/doctor assignment)
+- [x] Visit status tracking with full audit trail (VisitStatusLog with timestamps)
+- [x] Queue board for waiting area display (auto-refresh, priority color-coded)
+- [x] Queue management (call next, skip, re-queue, complete)
+- [x] Visit timeline component (visual status flow on visit detail page)
+- [x] Status transition validation (9-state machine with allowed transitions)
+- [x] Visit list with filtering by status/date/doctor/type/department
+- [x] Auto queue number generation per department per day
+- [x] Dashboard updated with today's visit stats and recent visits table
+- [x] Sidebar updated with active Visits and Queue links (submenu)
+
+> **Phase 3 COMPLETED** — 2026-04-11
+>
+> **Implementation Notes:**
+> - Visit model uses GeneratesNumbers trait for VST-YYYYMMDD-XXXX format
+> - 9-state status machine: registered → waiting → triage → consulting → lab → pharmacy → billing → completed (+ cancelled)
+> - Status transitions validated via VisitStatus::allowedTransitions() — prevents skipping steps
+> - Visit creation auto-transitions to WAITING and creates queue entry
+> - QueueEntry tracks per-department daily queue numbers with priority ordering (emergency > urgent > normal)
+> - Queue board auto-refreshes every 30 seconds, color-coded by priority
+> - Queue management: call next, serve, complete, skip, re-queue operations
+> - Patient search AJAX endpoint for visit creation (search by name, ID, phone, Ghana Card)
+> - VisitService injected into DashboardController for today's stats
+> - 12 new routes (6 visit + 6 queue)
 
 ---
 

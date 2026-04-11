@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Patient;
 use App\Models\User;
+use App\Models\Visit;
+use App\Services\VisitService;
 use Spatie\Permission\Models\Role;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(VisitService $visitService)
     {
         $totalUsers = User::count();
         $activeUsers = User::where('status', 'active')->count();
@@ -20,9 +22,17 @@ class DashboardController extends Controller
         $recentUsers = User::with(['roles', 'department'])->latest()->take(5)->get();
         $recentPatients = Patient::latest()->take(5)->get();
 
+        $visitStats = $visitService->todayStats();
+        $recentVisits = Visit::with(['patient', 'department', 'assignedDoctor'])
+            ->today()
+            ->latest()
+            ->take(5)
+            ->get();
+
         return view('dashboard.admin', compact(
             'totalUsers', 'activeUsers', 'totalDepartments', 'totalRoles',
-            'totalPatients', 'recentUsers', 'recentPatients'
+            'totalPatients', 'recentUsers', 'recentPatients',
+            'visitStats', 'recentVisits'
         ));
     }
 }

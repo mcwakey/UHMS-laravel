@@ -77,6 +77,61 @@
     </div>
 </div>
 
+<!-- Today's Visits Stats -->
+<div class="row mb-3">
+    <div class="col-12">
+        <h6 class="fw-bold text-muted mb-3">Today's Visits</h6>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="card border-start border-primary border-3">
+            <div class="card-body py-3 px-3">
+                <p class="text-muted mb-1 small">Total</p>
+                <h4 class="fw-bold mb-0">{{ $visitStats['total'] ?? 0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="card border-start border-warning border-3">
+            <div class="card-body py-3 px-3">
+                <p class="text-muted mb-1 small">Waiting</p>
+                <h4 class="fw-bold mb-0">{{ $visitStats['waiting'] ?? 0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="card border-start border-info border-3">
+            <div class="card-body py-3 px-3">
+                <p class="text-muted mb-1 small">Consulting</p>
+                <h4 class="fw-bold mb-0">{{ $visitStats['consulting'] ?? 0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="card border-start border-success border-3">
+            <div class="card-body py-3 px-3">
+                <p class="text-muted mb-1 small">Completed</p>
+                <h4 class="fw-bold mb-0">{{ $visitStats['completed'] ?? 0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="card border-start border-danger border-3">
+            <div class="card-body py-3 px-3">
+                <p class="text-muted mb-1 small">Emergency</p>
+                <h4 class="fw-bold mb-0">{{ $visitStats['emergency'] ?? 0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="card border-start border-secondary border-3">
+            <div class="card-body py-3 px-3">
+                <p class="text-muted mb-1 small">Cancelled</p>
+                <h4 class="fw-bold mb-0">{{ $visitStats['cancelled'] ?? 0 }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Recent Tables -->
 <div class="row">
     <div class="col-lg-6">
@@ -162,6 +217,54 @@
                             @empty
                             <tr>
                                 <td colspan="4" class="text-center text-muted py-4">No patients registered yet</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Today's Visits Table -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="card-title mb-0">Today's Visits</h5>
+                @can('visits.view')
+                <a href="{{ route('admin.visits.index', ['today' => 1]) }}" class="btn btn-sm btn-outline-primary">View All</a>
+                @endcan
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Visit #</th>
+                                <th>Patient</th>
+                                <th>Type</th>
+                                <th>Priority</th>
+                                <th>Department</th>
+                                <th>Doctor</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($recentVisits ?? [] as $visit)
+                            <tr>
+                                <td><a href="{{ route('admin.visits.show', $visit) }}" class="text-primary fw-medium">{{ $visit->visit_number }}</a></td>
+                                <td>{{ $visit->patient->full_name }}</td>
+                                <td><span class="badge bg-light text-dark">{{ $visit->visit_type->label() }}</span></td>
+                                <td><span class="badge bg-{{ $visit->priority->color() }}">{{ $visit->priority->label() }}</span></td>
+                                <td>{{ $visit->department?->name ?? '—' }}</td>
+                                <td>{{ $visit->assignedDoctor?->full_name ?? '—' }}</td>
+                                <td><span class="badge bg-{{ $visit->status->color() }}">{{ $visit->status->label() }}</span></td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">No visits today</td>
                             </tr>
                             @endforelse
                         </tbody>
