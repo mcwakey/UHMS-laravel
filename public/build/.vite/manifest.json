@@ -1,0 +1,21 @@
+{
+  "resources/css/style.css": {
+    "file": "css/style.min.css",
+    "src": "resources/css/style.css",
+    "isEntry": true,
+    "name": "style",
+    "names": [
+      "style.css"
+    ]
+  },
+  "resources/img/auth/auth-bg.jpg": {
+    "file": "icons/auth-bg.jpg",
+    "src": "resources/img/auth/auth-bg.jpg"
+  },
+  "resources/js/script.js": {
+    "file": "js/script.js",
+    "name": "script",
+    "src": "resources/js/script.js",
+    "isEntry": true
+  }
+}
