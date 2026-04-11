@@ -36,7 +36,7 @@
 |-------|--------|-----------|
 | **Phase 0** — Foundation & Setup | ✅ DONE | 2026-04-11 |
 | **Phase 1** — Authentication & User Management | ✅ DONE | 2026-04-11 |
-| **Phase 2** — Patient Module | ⬜ Not Started | — |
+| **Phase 2** — Patient Module | ✅ DONE | 2026-04-11 |
 | **Phase 3** — Visit & Queue Module | ⬜ Not Started | — |
 | **Phase 4** — EHR Module | ⬜ Not Started | — |
 | **Phase 5** — Medical Pattern Engine | ⬜ Not Started | — |
@@ -46,25 +46,25 @@
 | **Phase 9** — Dashboards & Reports | ⬜ Not Started | — |
 | **Phase 10** — Settings, Audit & Polish | ⬜ Not Started | — |
 
-### Files Created (Phase 0 & 1)
+### Files Created (Phase 0, 1 & 2)
 
 **Enums (11):** `Gender`, `UserStatus`, `VisitStatus`, `VisitType`, `Priority`, `BloodGroup`, `PaymentMethod`, `MaritalStatus`, `BillingType`, `InvoiceStatus`, `LabRequestStatus`, `PrescriptionStatus`
 
-**Models (3):** `User` (modified), `Department`, `Designation`
+**Models (4):** `User` (modified), `Department`, `Designation`, `Patient`
 
-**Controllers (8):** `Admin/DashboardController`, `Admin/UserController`, `Admin/RoleController`, `Admin/DepartmentController`, `Admin/DesignationController`, `Auth/LoginController`, `Auth/ForgotPasswordController`, `Auth/ResetPasswordController`
+**Controllers (9):** `Admin/DashboardController`, `Admin/UserController`, `Admin/RoleController`, `Admin/DepartmentController`, `Admin/DesignationController`, `Admin/PatientController`, `Auth/LoginController`, `Auth/ForgotPasswordController`, `Auth/ResetPasswordController`
 
-**Services (1):** `UserService` (list, create, update, toggleStatus)
+**Services (2):** `UserService`, `PatientService`
 
 **Middleware (1):** `EnsureUserHasRole`
 
-**Form Requests (2):** `StoreUserRequest`, `UpdateUserRequest`
+**Form Requests (4):** `StoreUserRequest`, `UpdateUserRequest`, `StorePatientRequest`, `UpdatePatientRequest`
 
-**Migrations (3 custom):** `create_departments_table`, `create_designations_table`, `modify_users_table_for_uhms`
+**Migrations (4 custom):** `create_departments_table`, `create_designations_table`, `modify_users_table_for_uhms`, `create_patients_table`
 
 **Seeders (3):** `RoleSeeder` (8 roles, 42 permissions), `DepartmentSeeder` (16 depts), `AdminUserSeeder`
 
-**Blade Views (14):**
+**Blade Views (18):**
 - Layouts: `app.blade.php`, `auth.blade.php`, `partials/header.blade.php`, `partials/sidebar.blade.php`
 - Auth: `login`, `forgot-password`, `reset-password`
 - Dashboard: `admin`
@@ -72,6 +72,7 @@
 - Roles: `index`, `permissions`
 - Departments: `index`
 - Designations: `index`
+- Patients: `index`, `create`, `edit`, `show`
 
 ---
 
@@ -422,12 +423,26 @@ enum VisitStatus: string {
 5. **Visit History Tab**: On patient details page, show all visits
 
 ### 5.6 Deliverables
-- [ ] Patient registration form (Ghana-specific)
-- [ ] Patient list with search/filter
-- [ ] Patient profile page with tabs
-- [ ] Patient edit functionality
-- [ ] Auto-generated patient numbers
-- [ ] Ghana regions dropdown seeded
+- [x] Patient registration form (Ghana-specific: Ghana Card, NHIS, Region, Digital Address)
+- [x] Patient list with search/filter (name, phone, ID, Ghana Card, NHIS, gender, blood group, status)
+- [x] Patient profile page with tabs (About, ID & Emergency, Medical Notes, Visit History placeholder, Registration Info)
+- [x] Patient edit functionality
+- [x] Auto-generated patient numbers (PT-YYYYMMDD-XXXX format)
+- [x] Ghana regions dropdown (16 regions inline)
+- [x] Dashboard updated with Total Patients card and Recent Patients table
+- [x] Sidebar updated with active Patients link
+
+> **Phase 2 COMPLETED** — 2026-04-11
+>
+> **Implementation Notes:**
+> - Patient model uses GeneratesNumbers trait for PT-YYYYMMDD-XXXX format
+> - NHIS active status computed via `is_nhis_active` accessor (checks expiry date)
+> - PatientService handles list (with search/filters), create (with auto-number + avatar upload), update, toggleStatus
+> - Form Requests: StorePatientRequest, UpdatePatientRequest with enum validation
+> - Profile view matches template's patient-details.blade.php UI pattern (header card, about card, ID card, tabs)
+> - All 16 Ghana regions available in dropdowns
+> - Emergency contact with relationship dropdown
+> - Medical notes: allergies and chronic conditions text areas
 - [ ] NHIS validation
 
 ---

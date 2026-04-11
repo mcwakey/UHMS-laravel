@@ -61,7 +61,7 @@
                     <ul>
                         @can('patients.view')
                         <li class="{{ request()->routeIs('admin.patients.*') ? 'active' : '' }}">
-                            <a href="javascript:void(0);">
+                            <a href="{{ route('admin.patients.index') }}">
                                 <i class="ti ti-user-heart"></i><span>Patients</span>
                             </a>
                         </li>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Department;
+use App\Models\Patient;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
 
@@ -15,10 +16,13 @@ class DashboardController extends Controller
         $activeUsers = User::where('status', 'active')->count();
         $totalDepartments = Department::where('status', 'active')->count();
         $totalRoles = Role::count();
+        $totalPatients = Patient::count();
         $recentUsers = User::with(['roles', 'department'])->latest()->take(5)->get();
+        $recentPatients = Patient::latest()->take(5)->get();
 
         return view('dashboard.admin', compact(
-            'totalUsers', 'activeUsers', 'totalDepartments', 'totalRoles', 'recentUsers'
+            'totalUsers', 'activeUsers', 'totalDepartments', 'totalRoles',
+            'totalPatients', 'recentUsers', 'recentPatients'
         ));
     }
 }

@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\DesignationController;
+use App\Http\Controllers\Admin\PatientController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -91,6 +92,17 @@ Route::middleware('auth')->group(function () {
             Route::delete('roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
             Route::get('roles/{role}/permissions', [RoleController::class, 'permissions'])->name('roles.permissions');
             Route::put('roles/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('roles.permissions.update');
+        });
+
+        // Patients
+        Route::middleware('can:patients.view')->group(function () {
+            Route::get('patients', [PatientController::class, 'index'])->name('patients.index');
+            Route::get('patients/create', [PatientController::class, 'create'])->name('patients.create')->middleware('can:patients.create');
+            Route::post('patients', [PatientController::class, 'store'])->name('patients.store')->middleware('can:patients.create');
+            Route::get('patients/{patient}', [PatientController::class, 'show'])->name('patients.show');
+            Route::get('patients/{patient}/edit', [PatientController::class, 'edit'])->name('patients.edit')->middleware('can:patients.edit');
+            Route::put('patients/{patient}', [PatientController::class, 'update'])->name('patients.update')->middleware('can:patients.edit');
+            Route::patch('patients/{patient}/toggle-status', [PatientController::class, 'toggleStatus'])->name('patients.toggle-status')->middleware('can:patients.edit');
         });
 
         // Departments
