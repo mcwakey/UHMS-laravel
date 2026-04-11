@@ -1,0 +1,67 @@
+@extends('layouts.auth')
+@section('title', 'Forgot Password')
+
+@section('content')
+<div class="container-fuild position-relative z-1">
+    <div class="w-100 overflow-hidden position-relative flex-wrap d-block vh-100">
+        <div class="row justify-content-center align-items-center vh-100 overflow-auto flex-wrap">
+            <div class="col-lg-4 mx-auto">
+                <div class="d-flex flex-column justify-content-lg-center p-4 p-lg-0 pb-0 flex-fill">
+                    <div class="mx-auto mb-4 text-center">
+                        <img src="{{ URL::asset('build/img/logo.svg') }}" class="img-fluid" alt="UHMS">
+                    </div>
+                    <div class="card border-1 p-lg-3 shadow-md rounded-3 mb-4">
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                <h5 class="mb-1 fs-20 fw-bold">Forgot Password</h5>
+                                <p class="mb-0">No worries, we'll send you reset instructions</p>
+                            </div>
+
+                            @if(session('status'))
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                {{ session('status') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                            @endif
+
+                            @if($errors->any())
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                @foreach($errors->all() as $error)
+                                    <div>{{ $error }}</div>
+                                @endforeach
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                            @endif
+
+                            <form method="POST" action="{{ route('password.email') }}">
+                                @csrf
+                                <div class="mb-3">
+                                    <label class="form-label">Email Address</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text border-end-0 bg-white">
+                                            <i class="ti ti-mail fs-14 text-dark"></i>
+                                        </span>
+                                        <input type="email" name="email" value="{{ old('email') }}" class="form-control border-start-0 ps-0" placeholder="Enter Email Address" required autofocus>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <button type="submit" class="btn bg-primary text-white w-100">Send Reset Link</button>
+                                </div>
+                                <div class="text-center">
+                                    <h6 class="fw-normal fs-14 text-dark mb-0">Return to
+                                        <a href="{{ route('login') }}" class="hover-a">Login</a>
+                                    </h6>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-dark text-center">Copyright &copy; <script>document.write(new Date().getFullYear())</script> - UHMS</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<img src="{{ URL::asset('build/img/auth/auth-bg-top.png') }}" alt="" class="img-fluid element-01">
+<img src="{{ URL::asset('build/img/auth/auth-bg-bot.png') }}" alt="" class="img-fluid element-02">
+@endsection

@@ -1,0 +1,173 @@
+@extends('layouts.app')
+@section('title', 'Departments')
+
+@section('content')
+<!-- Page Header -->
+<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
+    <div class="flex-grow-1">
+        <h4 class="fw-bold mb-0">Departments
+            <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">Total: {{ $departments->total() }}</span>
+        </h4>
+    </div>
+    <div>
+        @can('departments.create')
+        <button class="btn btn-primary btn-md fs-13" data-bs-toggle="modal" data-bs-target="#addDeptModal">
+            <i class="ti ti-plus me-1"></i>Add Department
+        </button>
+        @endcan
+    </div>
+</div>
+
+<!-- Departments Table -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Designations</th>
+                        <th>Users</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($departments as $dept)
+                    <tr>
+                        <td><span class="fw-medium badge bg-light text-dark">{{ $dept->code }}</span></td>
+                        <td class="fw-medium">{{ $dept->name }}</td>
+                        <td>{{ Str::limit($dept->description, 50) ?? '-' }}</td>
+                        <td><span class="badge bg-soft-info">{{ $dept->designations_count }}</span></td>
+                        <td><span class="badge bg-soft-primary">{{ $dept->users_count }}</span></td>
+                        <td>
+                            <span class="badge bg-{{ $dept->status === 'active' ? 'success' : 'danger' }}">
+                                {{ ucfirst($dept->status) }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
+                                    <i class="ti ti-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    @can('departments.edit')
+                                    <li>
+                                        <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editDeptModal-{{ $dept->id }}">
+                                            <i class="ti ti-edit me-1"></i>Edit
+                                        </button>
+                                    </li>
+                                    @endcan
+                                    @can('departments.delete')
+                                    <li>
+                                        <form method="POST" action="{{ route('admin.departments.destroy', $dept) }}" onsubmit="return confirm('Delete this department?')">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="ti ti-trash me-1"></i>Delete
+                                            </button>
+                                        </form>
+                                    </li>
+                                    @endcan
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- Edit Modal -->
+                    <div class="modal fade" id="editDeptModal-{{ $dept->id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <form method="POST" action="{{ route('admin.departments.update', $dept) }}">
+                                    @csrf @method('PUT')
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Edit Department</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Name <span class="text-danger">*</span></label>
+                                            <input type="text" name="name" class="form-control" value="{{ $dept->name }}" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Code <span class="text-danger">*</span></label>
+                                            <input type="text" name="code" class="form-control" value="{{ $dept->code }}" required maxlength="10">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Description</label>
+                                            <textarea name="description" class="form-control" rows="3">{{ $dept->description }}</textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Status <span class="text-danger">*</span></label>
+                                            <select name="status" class="form-select" required>
+                                                <option value="active" {{ $dept->status === 'active' ? 'selected' : '' }}>Active</option>
+                                                <option value="inactive" {{ $dept->status === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Update</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    @empty
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">No departments found</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if($departments->hasPages())
+<div class="d-flex justify-content-end mt-3">
+    {{ $departments->links() }}
+</div>
+@endif
+
+<!-- Add Department Modal -->
+<div class="modal fade" id="addDeptModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.departments.store') }}">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Department</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Outpatient Department" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Code <span class="text-danger">*</span></label>
+                        <input type="text" name="code" class="form-control" placeholder="e.g. OPD" required maxlength="10">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Brief description..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status <span class="text-danger">*</span></label>
+                        <select name="status" class="form-select" required>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Department</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endsection
