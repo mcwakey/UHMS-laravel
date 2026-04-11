@@ -90,7 +90,7 @@
 
                         @can('consultations.view')
                         <li class="{{ request()->routeIs('admin.consultations.*') ? 'active' : '' }}">
-                            <a href="javascript:void(0);">
+                            <a href="{{ route('admin.consultations.index') }}">
                                 <i class="ti ti-stethoscope"></i><span>Consultations</span>
                             </a>
                         </li>
@@ -98,7 +98,7 @@
 
                         @can('vitals.view')
                         <li class="{{ request()->routeIs('admin.vitals.*') ? 'active' : '' }}">
-                            <a href="javascript:void(0);">
+                            <a href="{{ route('admin.vitals.create') }}">
                                 <i class="ti ti-heartbeat"></i><span>Vitals / Triage</span>
                             </a>
                         </li>
@@ -116,7 +116,7 @@
                     <ul>
                         @can('prescriptions.view')
                         <li class="{{ request()->routeIs('admin.prescriptions.*') ? 'active' : '' }}">
-                            <a href="javascript:void(0);">
+                            <a href="{{ route('admin.prescriptions.index') }}">
                                 <i class="ti ti-prescription"></i><span>Prescriptions</span>
                             </a>
                         </li>

@@ -11,6 +11,9 @@ use App\Http\Controllers\Admin\DesignationController;
 use App\Http\Controllers\Admin\PatientController;
 use App\Http\Controllers\Admin\VisitController;
 use App\Http\Controllers\Admin\QueueController;
+use App\Http\Controllers\Admin\VitalController;
+use App\Http\Controllers\Doctor\ConsultationController;
+use App\Http\Controllers\Doctor\PrescriptionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -141,6 +144,45 @@ Route::middleware('auth')->group(function () {
             Route::post('designations', [DesignationController::class, 'store'])->name('designations.store')->middleware('can:departments.manage');
             Route::put('designations/{designation}', [DesignationController::class, 'update'])->name('designations.update')->middleware('can:departments.manage');
             Route::delete('designations/{designation}', [DesignationController::class, 'destroy'])->name('designations.destroy')->middleware('can:departments.manage');
+        });
+
+        // Consultations (Doctor EHR)
+        Route::middleware('can:consultations.view')->group(function () {
+            Route::get('consultations', [ConsultationController::class, 'index'])->name('consultations.index');
+            Route::get('consultations/{visit}', [ConsultationController::class, 'show'])->name('consultations.show');
+            Route::get('consultations/{visit}/history', [ConsultationController::class, 'history'])->name('consultations.history');
+            Route::patch('consultations/{visit}/transition', [ConsultationController::class, 'transitionVisit'])->name('consultations.transition')->middleware('can:visits.transition');
+
+            // Consultation sub-resources (complaints, diagnoses, investigations, treatments, prescriptions)
+            Route::middleware('can:consultations.create')->group(function () {
+                Route::post('consultations/{visit}/complaints', [ConsultationController::class, 'storeComplaint'])->name('consultations.complaints.store');
+                Route::delete('consultations/complaints/{complaint}', [ConsultationController::class, 'destroyComplaint'])->name('consultations.complaints.destroy');
+
+                Route::post('consultations/{visit}/diagnoses', [ConsultationController::class, 'storeDiagnosis'])->name('consultations.diagnoses.store');
+                Route::delete('consultations/diagnoses/{diagnosis}', [ConsultationController::class, 'destroyDiagnosis'])->name('consultations.diagnoses.destroy');
+
+                Route::post('consultations/{visit}/investigations', [ConsultationController::class, 'storeInvestigation'])->name('consultations.investigations.store');
+                Route::delete('consultations/investigations/{investigation}', [ConsultationController::class, 'destroyInvestigation'])->name('consultations.investigations.destroy');
+
+                Route::post('consultations/{visit}/treatments', [ConsultationController::class, 'storeTreatment'])->name('consultations.treatments.store');
+                Route::delete('consultations/treatments/{treatment}', [ConsultationController::class, 'destroyTreatment'])->name('consultations.treatments.destroy');
+            });
+
+            Route::post('consultations/{visit}/prescriptions', [ConsultationController::class, 'storePrescription'])->name('consultations.prescriptions.store')->middleware('can:prescriptions.create');
+        });
+
+        // Vitals (Nurse Triage)
+        Route::middleware('can:vitals.view')->group(function () {
+            Route::get('vitals', [VitalController::class, 'create'])->name('vitals.create');
+            Route::post('vitals', [VitalController::class, 'store'])->name('vitals.store')->middleware('can:vitals.create');
+            Route::get('vitals/{visit}', [VitalController::class, 'show'])->name('vitals.show');
+        });
+
+        // Prescriptions
+        Route::middleware('can:prescriptions.view')->group(function () {
+            Route::get('prescriptions', [PrescriptionController::class, 'index'])->name('prescriptions.index');
+            Route::get('prescriptions/{prescription}', [PrescriptionController::class, 'show'])->name('prescriptions.show');
+            Route::patch('prescriptions/{prescription}/cancel', [PrescriptionController::class, 'cancel'])->name('prescriptions.cancel')->middleware('can:prescriptions.create');
         });
     });
 

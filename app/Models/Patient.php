@@ -76,6 +76,21 @@ class Patient extends Model
         return $this->hasOne(Visit::class)->whereNotIn('status', ['completed', 'cancelled'])->latestOfMany();
     }
 
+    public function medicalRecords()
+    {
+        return $this->hasMany(MedicalRecord::class);
+    }
+
+    public function vitals()
+    {
+        return $this->hasMany(Vital::class);
+    }
+
+    public function prescriptions()
+    {
+        return $this->hasMany(Prescription::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Accessors

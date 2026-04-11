@@ -38,7 +38,7 @@
 | **Phase 1** — Authentication & User Management | ✅ DONE | 2026-04-11 |
 | **Phase 2** — Patient Module | ✅ DONE | 2026-04-11 |
 | **Phase 3** — Visit & Queue Module | ✅ DONE | 2026-04-11 |
-| **Phase 4** — EHR Module | ⬜ Not Started | — |
+| **Phase 4** — EHR Module | ✅ DONE | 2026-04-11 |
 | **Phase 5** — Medical Pattern Engine | ⬜ Not Started | — |
 | **Phase 6** — Laboratory Module | ⬜ Not Started | — |
 | **Phase 7** — Pharmacy Module | ⬜ Not Started | — |
@@ -46,25 +46,25 @@
 | **Phase 9** — Dashboards & Reports | ⬜ Not Started | — |
 | **Phase 10** — Settings, Audit & Polish | ⬜ Not Started | — |
 
-### Files Created (Phase 0, 1, 2 & 3)
+### Files Created (Phase 0, 1, 2, 3 & 4)
 
-**Enums (11):** `Gender`, `UserStatus`, `VisitStatus`, `VisitType`, `Priority`, `BloodGroup`, `PaymentMethod`, `MaritalStatus`, `BillingType`, `InvoiceStatus`, `LabRequestStatus`, `PrescriptionStatus`
+**Enums (12):** `Gender`, `UserStatus`, `VisitStatus`, `VisitType`, `Priority`, `BloodGroup`, `PaymentMethod`, `MaritalStatus`, `BillingType`, `InvoiceStatus`, `LabRequestStatus`, `PrescriptionStatus`
 
-**Models (7):** `User` (modified), `Department`, `Designation`, `Patient`, `Visit`, `VisitStatusLog`, `QueueEntry`
+**Models (15):** `User` (modified), `Department`, `Designation`, `Patient`, `Visit`, `VisitStatusLog`, `QueueEntry`, `MedicalRecord`, `Complaint`, `Diagnosis`, `Investigation`, `Treatment`, `Prescription`, `PrescriptionItem`, `Vital`
 
-**Controllers (11):** `Admin/DashboardController`, `Admin/UserController`, `Admin/RoleController`, `Admin/DepartmentController`, `Admin/DesignationController`, `Admin/PatientController`, `Admin/VisitController`, `Admin/QueueController`, `Auth/LoginController`, `Auth/ForgotPasswordController`, `Auth/ResetPasswordController`
+**Controllers (14):** `Admin/DashboardController`, `Admin/UserController`, `Admin/RoleController`, `Admin/DepartmentController`, `Admin/DesignationController`, `Admin/PatientController`, `Admin/VisitController`, `Admin/QueueController`, `Admin/VitalController`, `Doctor/ConsultationController`, `Doctor/PrescriptionController`, `Auth/LoginController`, `Auth/ForgotPasswordController`, `Auth/ResetPasswordController`
 
-**Services (4):** `UserService`, `PatientService`, `VisitService`, `QueueService`
+**Services (6):** `UserService`, `PatientService`, `VisitService`, `QueueService`, `ConsultationService`, `PrescriptionService`
 
 **Middleware (1):** `EnsureUserHasRole`
 
-**Form Requests (5):** `StoreUserRequest`, `UpdateUserRequest`, `StorePatientRequest`, `UpdatePatientRequest`, `StoreVisitRequest`
+**Form Requests (8):** `StoreUserRequest`, `UpdateUserRequest`, `StorePatientRequest`, `UpdatePatientRequest`, `StoreVisitRequest`, `StoreConsultationRequest`, `StoreVitalRequest`, `StorePrescriptionRequest`
 
-**Migrations (7 custom):** `create_departments_table`, `create_designations_table`, `modify_users_table_for_uhms`, `create_patients_table`, `create_visits_table`, `create_visit_status_logs_table`, `create_queue_entries_table`
+**Migrations (15 custom):** `create_departments_table`, `create_designations_table`, `modify_users_table_for_uhms`, `create_patients_table`, `create_visits_table`, `create_visit_status_logs_table`, `create_queue_entries_table`, `create_medical_records_table`, `create_complaints_table`, `create_diagnoses_table`, `create_investigations_table`, `create_treatments_table`, `create_prescriptions_table`, `create_prescription_items_table`, `create_vitals_table`
 
 **Seeders (3):** `RoleSeeder` (8 roles, 42 permissions), `DepartmentSeeder` (16 depts), `AdminUserSeeder`
 
-**Blade Views (23):**
+**Blade Views (29):**
 - Layouts: `app.blade.php`, `auth.blade.php`, `partials/header.blade.php`, `partials/sidebar.blade.php`
 - Auth: `login`, `forgot-password`, `reset-password`
 - Dashboard: `admin`
@@ -75,6 +75,9 @@
 - Patients: `index`, `create`, `edit`, `show`
 - Visits: `index`, `create`, `show`
 - Queue: `manage`, `board`
+- Consultations: `index`, `show`, `history`
+- Vitals: `record`
+- Prescriptions: `index`, `show`
 
 ---
 
@@ -749,15 +752,17 @@ This is the **most critical custom view**. Layout:
 ```
 
 ### 7.5 Deliverables
-- [ ] Consultation interface for doctors
-- [ ] Vitals recording (nurse triage)
-- [ ] Complaint recording with severity
-- [ ] Diagnosis entry with ICD-10 codes
-- [ ] Investigation/lab test requests
-- [ ] Treatment recording
-- [ ] Prescription creation with drug items
-- [ ] Medical history view (cross-visit)
-- [ ] Visit transitions from consultation
+- [x] Consultation interface for doctors
+- [x] Vitals recording (nurse triage)
+- [x] Complaint recording with severity
+- [x] Diagnosis entry with ICD-10 codes
+- [x] Investigation/lab test requests
+- [x] Treatment recording
+- [x] Prescription creation with drug items
+- [x] Medical history view (cross-visit)
+- [x] Visit transitions from consultation
+
+> **Phase 4 COMPLETED** — 2026-04-11
 
 ---
 

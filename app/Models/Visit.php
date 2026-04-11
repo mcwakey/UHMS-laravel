@@ -83,6 +83,26 @@ class Visit extends Model
         return $this->hasOne(QueueEntry::class)->latestOfMany();
     }
 
+    public function medicalRecord()
+    {
+        return $this->hasOne(MedicalRecord::class);
+    }
+
+    public function vitals()
+    {
+        return $this->hasMany(Vital::class);
+    }
+
+    public function latestVitals()
+    {
+        return $this->hasOne(Vital::class)->latestOfMany();
+    }
+
+    public function prescriptions()
+    {
+        return $this->hasMany(Prescription::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes
