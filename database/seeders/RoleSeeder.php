@@ -89,6 +89,13 @@ class RoleSeeder extends Seeder
             'claims.approve',
             'claims.export',
 
+            // Store & Procurement
+            'store.purchase.view',
+            'store.purchase.create',
+            'store.purchase.approve',
+            'store.transfer.view',
+            'store.transfer.create',
+
             // Ward & Inpatient
             'ward.view',
             'ward.manage',
@@ -166,6 +173,7 @@ class RoleSeeder extends Seeder
             'prescriptions.view',
             'pharmacy.dispensing.view', 'pharmacy.dispensing.create',
             'pharmacy.drugs.manage', 'pharmacy.stock.manage',
+            'store.transfer.view',
             'queue.view',
         ]);
 
@@ -187,6 +195,14 @@ class RoleSeeder extends Seeder
             'invoices.view',
             'claims.view', 'claims.create', 'claims.approve', 'claims.export',
             'reports.view',
+        ]);
+
+        $storeKeeper = Role::firstOrCreate(['name' => 'Store Keeper']);
+        $storeKeeper->givePermissionTo([
+            'patients.view',
+            'store.purchase.view', 'store.purchase.create', 'store.purchase.approve',
+            'store.transfer.view', 'store.transfer.create',
+            'pharmacy.drugs.manage', 'pharmacy.stock.manage',
         ]);
     }
 }

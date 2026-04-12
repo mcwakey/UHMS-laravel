@@ -1326,7 +1326,7 @@ Running total: ~57 tables
 | **Phase 11** | Inpatient & Ward | ✅ Complete | 2026-04-12 |
 | **Phase 12** | Appointments & Scheduling | ✅ Complete | 2026-04-12 |
 | **Phase 13** | Claims & Insurance | ✅ Complete | 2026-04-12 |
-| **Phase 14** | Store & Procurement | ⬜ Not Started | — |
+| **Phase 14** | Store & Procurement | ✅ Complete | 2026-04-12 |
 | **Phase 15** | Accounts & Finance | ⬜ Not Started | — |
 | **Phase 16** | HR & Payroll | ⬜ Not Started | — |
 | **Phase 17** | Notification System | ⬜ Not Started | — |

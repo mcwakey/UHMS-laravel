@@ -307,6 +307,36 @@
                 @endcan
 
                 {{-- ========================================== --}}
+                {{-- STORE & PROCUREMENT --}}
+                {{-- ========================================== --}}
+                @if(Auth::user()->canAny(['store.purchase.view', 'store.transfer.view']))
+                <li class="menu-title"><span>Store & Procurement</span></li>
+                <li>
+                    <ul>
+                        @can('store.purchase.view')
+                        <li class="{{ request()->routeIs('admin.store.suppliers.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.store.suppliers.index') }}">
+                                <i class="ti ti-truck"></i><span>Suppliers</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.store.purchase-orders.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.store.purchase-orders.index') }}">
+                                <i class="ti ti-file-text"></i><span>Purchase Orders</span>
+                            </a>
+                        </li>
+                        @endcan
+                        @can('store.transfer.view')
+                        <li class="{{ request()->routeIs('admin.store.transfers.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.store.transfers.index') }}">
+                                <i class="ti ti-transfer"></i><span>Stock Transfers</span>
+                            </a>
+                        </li>
+                        @endcan
+                    </ul>
+                </li>
+                @endif
+
+                {{-- ========================================== --}}
                 {{-- ADMINISTRATION (Phase 1 — Active) --}}
                 {{-- ========================================== --}}
                 @if(Auth::user()->canAny(['users.view', 'departments.view', 'settings.view']))

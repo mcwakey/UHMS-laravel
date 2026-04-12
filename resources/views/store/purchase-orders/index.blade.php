@@ -1,0 +1,227 @@
+@extends('layouts.app')
+@section('title', 'Purchase Orders')
+
+@section('content')
+<!-- Page Header -->
+<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
+    <div class="flex-grow-1">
+        <h4 class="fw-bold mb-0">Purchase Orders
+            <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">Total: {{ $purchaseOrders->total() }}</span>
+        </h4>
+    </div>
+    <div>
+        @can('store.purchase.create')
+        <a href="{{ route('admin.store.purchase-orders.create') }}" class="btn btn-primary btn-md fs-13">
+            <i class="ti ti-plus me-1"></i>New Purchase Order
+        </a>
+        @endcan
+    </div>
+</div>
+
+@if(session('success'))
+<div class="alert alert-success alert-dismissible fade show">{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+@endif
+@if(session('error'))
+<div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+@endif
+
+<!-- Stats Cards -->
+<div class="row mb-3">
+    <div class="col-md-3 col-sm-6">
+        <div class="card">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center">
+                    <div class="avatar avatar-md bg-warning bg-opacity-10 rounded me-3">
+                        <i class="ti ti-file-text fs-4 text-warning"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0">{{ $stats['draft'] ?? 0 }}</h4>
+                        <small class="text-muted">Draft</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center">
+                    <div class="avatar avatar-md bg-info bg-opacity-10 rounded me-3">
+                        <i class="ti ti-clock fs-4 text-info"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0">{{ ($stats['submitted'] ?? 0) + ($stats['approved'] ?? 0) }}</h4>
+                        <small class="text-muted">Pending</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center">
+                    <div class="avatar avatar-md bg-success bg-opacity-10 rounded me-3">
+                        <i class="ti ti-check fs-4 text-success"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0">{{ $stats['received'] ?? 0 }}</h4>
+                        <small class="text-muted">Received</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="card">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center">
+                    <div class="avatar avatar-md bg-primary bg-opacity-10 rounded me-3">
+                        <i class="ti ti-currency-dollar fs-4 text-primary"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-0">GH₵ {{ number_format($stats['total_value'] ?? 0, 2) }}</h4>
+                        <small class="text-muted">Total Value</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <form method="GET" action="{{ route('admin.store.purchase-orders.index') }}" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <input type="text" name="search" class="form-control" placeholder="Search PO #, supplier..." value="{{ request('search') }}">
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select">
+                    <option value="">All Status</option>
+                    @foreach($statuses as $status)
+                        <option value="{{ $status->value }}" {{ request('status') == $status->value ? 'selected' : '' }}>{{ $status->label() }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="supplier_id" class="form-select">
+                    <option value="">All Suppliers</option>
+                    @foreach($suppliers as $supplier)
+                        <option value="{{ $supplier->id }}" {{ request('supplier_id') == $supplier->id ? 'selected' : '' }}>{{ $supplier->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button>
+            </div>
+            @if(request()->hasAny(['search', 'status', 'supplier_id', 'date_from']))
+            <div class="col-md-1">
+                <a href="{{ route('admin.store.purchase-orders.index') }}" class="btn btn-outline-secondary w-100"><i class="ti ti-x"></i></a>
+            </div>
+            @endif
+        </form>
+    </div>
+</div>
+
+<!-- Purchase Orders Table -->
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>PO #</th>
+                        <th>Supplier</th>
+                        <th>Order Date</th>
+                        <th>Expected</th>
+                        <th class="text-center">Items</th>
+                        <th class="text-end">Total</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($purchaseOrders as $po)
+                    <tr>
+                        <td>
+                            <a href="{{ route('admin.store.purchase-orders.show', $po) }}" class="fw-medium text-primary">
+                                {{ $po->po_number }}
+                            </a>
+                        </td>
+                        <td>{{ $po->supplier->name }}</td>
+                        <td>{{ $po->order_date->format('d M Y') }}</td>
+                        <td>{{ $po->expected_date?->format('d M Y') ?? '-' }}</td>
+                        <td class="text-center"><span class="badge bg-soft-info">{{ $po->items_count }}</span></td>
+                        <td class="text-end fw-medium">GH₵ {{ number_format($po->total_amount, 2) }}</td>
+                        <td><span class="badge bg-{{ $po->status->color() }}">{{ $po->status->label() }}</span></td>
+                        <td class="text-end">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
+                                    <i class="ti ti-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a href="{{ route('admin.store.purchase-orders.show', $po) }}" class="dropdown-item">
+                                            <i class="ti ti-eye me-1"></i>View
+                                        </a>
+                                    </li>
+                                    @if($po->is_editable)
+                                    <li>
+                                        <form method="POST" action="{{ route('admin.store.purchase-orders.submit', $po) }}">
+                                            @csrf
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="ti ti-send me-1"></i>Submit
+                                            </button>
+                                        </form>
+                                    </li>
+                                    @endif
+                                    @if($po->status === \App\Enums\PurchaseOrderStatus::SUBMITTED)
+                                    @can('store.purchase.approve')
+                                    <li>
+                                        <form method="POST" action="{{ route('admin.store.purchase-orders.approve', $po) }}">
+                                            @csrf
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="ti ti-check me-1"></i>Approve
+                                            </button>
+                                        </form>
+                                    </li>
+                                    @endcan
+                                    @endif
+                                    @if($po->is_editable || $po->status === \App\Enums\PurchaseOrderStatus::SUBMITTED)
+                                    <li>
+                                        <form method="POST" action="{{ route('admin.store.purchase-orders.cancel', $po) }}" onsubmit="return confirm('Cancel this PO?')">
+                                            @csrf
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="ti ti-x me-1"></i>Cancel
+                                            </button>
+                                        </form>
+                                    </li>
+                                    @endif
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="ti ti-file-off fs-2 d-block mb-2"></i>
+                            No purchase orders found
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@if($purchaseOrders->hasPages())
+<div class="d-flex justify-content-end mt-3">
+    {{ $purchaseOrders->withQueryString()->links() }}
+</div>
+@endif
+@endsection

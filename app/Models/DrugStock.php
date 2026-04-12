@@ -12,12 +12,14 @@ class DrugStock extends Model
 
     protected $fillable = [
         'drug_id',
+        'location',
         'batch_number',
         'quantity',
         'unit_cost',
         'selling_price',
         'expiry_date',
         'supplier',
+        'supplier_id',
         'received_date',
         'received_by',
         'reorder_level',
@@ -40,6 +42,11 @@ class DrugStock extends Model
         return $this->belongsTo(User::class, 'received_by');
     }
 
+    public function supplierRecord(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class, 'supplier_id');
+    }
+
     public function dispensingRecords(): HasMany
     {
         return $this->hasMany(DispensingRecord::class);
@@ -49,6 +56,11 @@ class DrugStock extends Model
     {
         return $query->where('quantity', '>', 0)
                      ->where('expiry_date', '>', now());
+    }
+
+    public function scopeAtLocation($query, string $location)
+    {
+        return $query->where('location', $location);
     }
 
     public function scopeExpiringSoon($query, int $days = 90)

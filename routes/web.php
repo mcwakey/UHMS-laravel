@@ -33,6 +33,9 @@ use App\Http\Controllers\Admin\AdmissionController;
 use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\InsuranceProviderController;
 use App\Http\Controllers\Admin\ClaimController;
+use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\Admin\PurchaseOrderController;
+use App\Http\Controllers\Admin\StockTransferController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -202,6 +205,43 @@ Route::middleware('auth')->group(function () {
             Route::post('claims/{claim}/appeal', [ClaimController::class, 'appeal'])->name('claims.appeal')->middleware('can:claims.create');
             Route::post('claims/{claim}/add-item', [ClaimController::class, 'addItem'])->name('claims.add-item')->middleware('can:claims.create');
             Route::delete('claims/remove-item/{item}', [ClaimController::class, 'removeItem'])->name('claims.remove-item')->middleware('can:claims.create');
+        });
+
+        // Store & Procurement
+        Route::prefix('store')->name('store.')->group(function () {
+            // Suppliers
+            Route::middleware('can:store.purchase.view')->group(function () {
+                Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
+                Route::post('suppliers', [SupplierController::class, 'store'])->name('suppliers.store')->middleware('can:store.purchase.create');
+                Route::put('suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update')->middleware('can:store.purchase.create');
+                Route::patch('suppliers/{supplier}/toggle', [SupplierController::class, 'toggle'])->name('suppliers.toggle')->middleware('can:store.purchase.create');
+            });
+
+            // Purchase Orders
+            Route::middleware('can:store.purchase.view')->group(function () {
+                Route::get('purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchase-orders.index');
+                Route::get('purchase-orders/create', [PurchaseOrderController::class, 'create'])->name('purchase-orders.create')->middleware('can:store.purchase.create');
+                Route::post('purchase-orders', [PurchaseOrderController::class, 'store'])->name('purchase-orders.store')->middleware('can:store.purchase.create');
+                Route::get('purchase-orders/{purchaseOrder}', [PurchaseOrderController::class, 'show'])->name('purchase-orders.show');
+                Route::post('purchase-orders/{purchaseOrder}/submit', [PurchaseOrderController::class, 'submit'])->name('purchase-orders.submit')->middleware('can:store.purchase.create');
+                Route::post('purchase-orders/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve'])->name('purchase-orders.approve')->middleware('can:store.purchase.approve');
+                Route::post('purchase-orders/{purchaseOrder}/receive', [PurchaseOrderController::class, 'receive'])->name('purchase-orders.receive')->middleware('can:store.purchase.create');
+                Route::post('purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel'])->name('purchase-orders.cancel')->middleware('can:store.purchase.create');
+                Route::post('purchase-orders/{purchaseOrder}/add-item', [PurchaseOrderController::class, 'addItem'])->name('purchase-orders.add-item')->middleware('can:store.purchase.create');
+                Route::delete('purchase-orders/remove-item/{item}', [PurchaseOrderController::class, 'removeItem'])->name('purchase-orders.remove-item')->middleware('can:store.purchase.create');
+            });
+
+            // Stock Transfers
+            Route::middleware('can:store.transfer.view')->group(function () {
+                Route::get('transfers', [StockTransferController::class, 'index'])->name('transfers.index');
+                Route::get('transfers/create', [StockTransferController::class, 'create'])->name('transfers.create')->middleware('can:store.transfer.create');
+                Route::post('transfers', [StockTransferController::class, 'store'])->name('transfers.store')->middleware('can:store.transfer.create');
+                Route::get('transfers/{transfer}', [StockTransferController::class, 'show'])->name('transfers.show');
+                Route::post('transfers/{transfer}/approve', [StockTransferController::class, 'approve'])->name('transfers.approve')->middleware('can:store.purchase.approve');
+                Route::post('transfers/{transfer}/complete', [StockTransferController::class, 'complete'])->name('transfers.complete')->middleware('can:store.transfer.create');
+                Route::post('transfers/{transfer}/cancel', [StockTransferController::class, 'cancel'])->name('transfers.cancel')->middleware('can:store.transfer.create');
+                Route::get('transfers/drug-stock', [StockTransferController::class, 'drugStock'])->name('transfers.drug-stock');
+            });
         });
 
         // Queue
