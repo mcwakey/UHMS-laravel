@@ -41,30 +41,30 @@
 | **Phase 4** — EHR Module | ✅ DONE | 2026-04-11 |
 | **Phase 5** — Medical Pattern Engine | ✅ DONE | 2026-04-12 |
 | **Phase 6** — Laboratory Module | ✅ DONE | 2026-04-12 |
-| **Phase 7** — Pharmacy Module | ⬜ Not Started | — |
+| **Phase 7** — Pharmacy Module | ✅ DONE | 2026-04-12 |
 | **Phase 8** — Billing Module | ⬜ Not Started | — |
 | **Phase 9** — Dashboards & Reports | ⬜ Not Started | — |
 | **Phase 10** — Settings, Audit & Polish | ⬜ Not Started | — |
 
-### Files Created (Phase 0, 1, 2, 3, 4, 5 & 6)
+### Files Created (Phase 0, 1, 2, 3, 4, 5, 6 & 7)
 
 **Enums (12):** `Gender`, `UserStatus`, `VisitStatus`, `VisitType`, `Priority`, `BloodGroup`, `PaymentMethod`, `MaritalStatus`, `BillingType`, `InvoiceStatus`, `LabRequestStatus`, `PrescriptionStatus`
 
-**Models (22):** `User` (modified), `Department`, `Designation`, `Patient`, `Visit`, `VisitStatusLog`, `QueueEntry`, `MedicalRecord`, `Complaint`, `Diagnosis`, `Investigation`, `Treatment`, `Prescription`, `PrescriptionItem`, `Vital`, `MedicalPattern`, `MedicalPatternItem`, `LabTestCategory`, `LabTest`, `LabRequest`, `LabRequestItem`, `LabResult`
+**Models (26):** `User` (modified), `Department`, `Designation`, `Patient`, `Visit`, `VisitStatusLog`, `QueueEntry`, `MedicalRecord`, `Complaint`, `Diagnosis`, `Investigation`, `Treatment`, `Prescription`, `PrescriptionItem`, `Vital`, `MedicalPattern`, `MedicalPatternItem`, `LabTestCategory`, `LabTest`, `LabRequest`, `LabRequestItem`, `LabResult`, `DrugCategory`, `Drug`, `DrugStock`, `DispensingRecord`
 
-**Controllers (18):** `Admin/DashboardController`, `Admin/UserController`, `Admin/RoleController`, `Admin/DepartmentController`, `Admin/DesignationController`, `Admin/PatientController`, `Admin/VisitController`, `Admin/QueueController`, `Admin/VitalController`, `Admin/LabTestController`, `Doctor/ConsultationController`, `Doctor/PrescriptionController`, `Doctor/MedicalPatternController`, `Lab/LabRequestController`, `Lab/LabResultController`, `Auth/LoginController`, `Auth/ForgotPasswordController`, `Auth/ResetPasswordController`
+**Controllers (21):** `Admin/DashboardController`, `Admin/UserController`, `Admin/RoleController`, `Admin/DepartmentController`, `Admin/DesignationController`, `Admin/PatientController`, `Admin/VisitController`, `Admin/QueueController`, `Admin/VitalController`, `Admin/LabTestController`, `Admin/DrugController`, `Admin/DrugStockController`, `Doctor/ConsultationController`, `Doctor/PrescriptionController`, `Doctor/MedicalPatternController`, `Lab/LabRequestController`, `Lab/LabResultController`, `Pharmacy/DispensingController`, `Auth/LoginController`, `Auth/ForgotPasswordController`, `Auth/ResetPasswordController`
 
-**Services (8):** `UserService`, `PatientService`, `VisitService`, `QueueService`, `ConsultationService`, `PrescriptionService`, `MedicalPatternService`, `LabService`
+**Services (9):** `UserService`, `PatientService`, `VisitService`, `QueueService`, `ConsultationService`, `PrescriptionService`, `MedicalPatternService`, `LabService`, `PharmacyService`
 
 **Middleware (1):** `EnsureUserHasRole`
 
 **Form Requests (8):** `StoreUserRequest`, `UpdateUserRequest`, `StorePatientRequest`, `UpdatePatientRequest`, `StoreVisitRequest`, `StoreConsultationRequest`, `StoreVitalRequest`, `StorePrescriptionRequest`
 
-**Migrations (22 custom):** `create_departments_table`, `create_designations_table`, `modify_users_table_for_uhms`, `create_patients_table`, `create_visits_table`, `create_visit_status_logs_table`, `create_queue_entries_table`, `create_medical_records_table`, `create_complaints_table`, `create_diagnoses_table`, `create_investigations_table`, `create_treatments_table`, `create_prescriptions_table`, `create_prescription_items_table`, `create_vitals_table`, `create_medical_patterns_table`, `create_medical_pattern_items_table`, `create_lab_test_categories_table`, `create_lab_tests_table`, `create_lab_requests_table`, `create_lab_request_items_table`, `create_lab_results_table`
+**Migrations (26 custom):** `create_departments_table`, `create_designations_table`, `modify_users_table_for_uhms`, `create_patients_table`, `create_visits_table`, `create_visit_status_logs_table`, `create_queue_entries_table`, `create_medical_records_table`, `create_complaints_table`, `create_diagnoses_table`, `create_investigations_table`, `create_treatments_table`, `create_prescriptions_table`, `create_prescription_items_table`, `create_vitals_table`, `create_medical_patterns_table`, `create_medical_pattern_items_table`, `create_lab_test_categories_table`, `create_lab_tests_table`, `create_lab_requests_table`, `create_lab_request_items_table`, `create_lab_results_table`, `create_drug_categories_table`, `create_drugs_table`, `create_drug_stock_table`, `create_dispensing_records_table`
 
 **Seeders (3):** `RoleSeeder` (8 roles, 42 permissions), `DepartmentSeeder` (16 depts), `AdminUserSeeder`
 
-**Blade Views (35):**
+**Blade Views (41):**
 - Layouts: `app.blade.php`, `auth.blade.php`, `partials/header.blade.php`, `partials/sidebar.blade.php`
 - Auth: `login`, `forgot-password`, `reset-password`
 - Dashboard: `admin`
@@ -80,6 +80,7 @@
 - Prescriptions: `index`, `show`
 - Patterns: `index`, `create`
 - Lab: `requests`, `process`, `results`, `tests`
+- Pharmacy: `dispensing`, `dispense`, `history`, `drugs`, `stock`, `stock-alerts`
 
 ---
 

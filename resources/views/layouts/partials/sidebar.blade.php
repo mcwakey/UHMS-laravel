@@ -118,7 +118,7 @@
                 {{-- ========================================== --}}
                 {{-- PHARMACY & LAB (Future phases) --}}
                 {{-- ========================================== --}}
-                @if(Auth::user()->canAny(['prescriptions.view', 'pharmacy.view', 'lab.requests.view', 'lab.results.view', 'lab.tests.manage']))
+                @if(Auth::user()->canAny(['prescriptions.view', 'pharmacy.dispensing.view', 'pharmacy.drugs.manage', 'pharmacy.stock.manage', 'lab.requests.view', 'lab.results.view', 'lab.tests.manage']))
                 <li class="menu-title"><span>Pharmacy & Lab</span></li>
                 <li>
                     <ul>
@@ -130,10 +130,26 @@
                         </li>
                         @endcan
 
-                        @can('pharmacy.view')
-                        <li class="{{ request()->routeIs('admin.pharmacy.*') ? 'active' : '' }}">
-                            <a href="javascript:void(0);">
-                                <i class="ti ti-pill"></i><span>Pharmacy</span>
+                        @can('pharmacy.dispensing.view')
+                        <li class="{{ request()->routeIs('admin.pharmacy.dispensing.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.pharmacy.dispensing.index') }}">
+                                <i class="ti ti-pill"></i><span>Dispensing</span>
+                            </a>
+                        </li>
+                        @endcan
+
+                        @can('pharmacy.drugs.manage')
+                        <li class="{{ request()->routeIs('admin.pharmacy.drugs.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.pharmacy.drugs.index') }}">
+                                <i class="ti ti-medicine-syrup"></i><span>Drug Catalog</span>
+                            </a>
+                        </li>
+                        @endcan
+
+                        @can('pharmacy.stock.manage')
+                        <li class="{{ request()->routeIs('admin.pharmacy.stock.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.pharmacy.stock.index') }}">
+                                <i class="ti ti-packages"></i><span>Drug Stock</span>
                             </a>
                         </li>
                         @endcan

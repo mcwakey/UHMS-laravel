@@ -18,6 +18,9 @@ use App\Http\Controllers\Doctor\PrescriptionController;
 use App\Http\Controllers\Lab\LabRequestController;
 use App\Http\Controllers\Lab\LabResultController;
 use App\Http\Controllers\Admin\LabTestController;
+use App\Http\Controllers\Admin\DrugController;
+use App\Http\Controllers\Admin\DrugStockController;
+use App\Http\Controllers\Pharmacy\DispensingController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -233,6 +236,39 @@ Route::middleware('auth')->group(function () {
                 Route::post('categories', [LabTestController::class, 'storeCategory'])->name('categories.store');
                 Route::put('categories/{category}', [LabTestController::class, 'updateCategory'])->name('categories.update');
                 Route::delete('categories/{category}', [LabTestController::class, 'destroyCategory'])->name('categories.destroy');
+            });
+        });
+
+        // Pharmacy
+        Route::prefix('pharmacy')->name('pharmacy.')->group(function () {
+            // Dispensing
+            Route::middleware('can:pharmacy.dispensing.view')->group(function () {
+                Route::get('dispensing', [DispensingController::class, 'index'])->name('dispensing.index');
+                Route::get('dispensing/{prescription}', [DispensingController::class, 'show'])->name('dispensing.show');
+                Route::post('dispensing/{item}/dispense', [DispensingController::class, 'dispenseItem'])->name('dispensing.dispense-item')->middleware('can:pharmacy.dispensing.create');
+                Route::post('dispensing/{prescription}/batch', [DispensingController::class, 'batchDispense'])->name('dispensing.batch')->middleware('can:pharmacy.dispensing.create');
+                Route::get('history', [DispensingController::class, 'history'])->name('history');
+            });
+
+            // Drug Catalog
+            Route::middleware('can:pharmacy.drugs.manage')->group(function () {
+                Route::get('drugs', [DrugController::class, 'index'])->name('drugs.index');
+                Route::post('drugs', [DrugController::class, 'store'])->name('drugs.store');
+                Route::put('drugs/{drug}', [DrugController::class, 'update'])->name('drugs.update');
+                Route::patch('drugs/{drug}/toggle', [DrugController::class, 'toggle'])->name('drugs.toggle');
+                Route::get('drugs/search', [DrugController::class, 'search'])->name('drugs.search');
+
+                Route::post('drug-categories', [DrugController::class, 'storeCategory'])->name('drug-categories.store');
+                Route::put('drug-categories/{category}', [DrugController::class, 'updateCategory'])->name('drug-categories.update');
+                Route::delete('drug-categories/{category}', [DrugController::class, 'destroyCategory'])->name('drug-categories.destroy');
+            });
+
+            // Stock Management
+            Route::middleware('can:pharmacy.stock.manage')->group(function () {
+                Route::get('stock', [DrugStockController::class, 'index'])->name('stock.index');
+                Route::post('stock', [DrugStockController::class, 'store'])->name('stock.store');
+                Route::put('stock/{stock}', [DrugStockController::class, 'update'])->name('stock.update');
+                Route::get('stock/alerts', [DrugStockController::class, 'alerts'])->name('stock.alerts');
             });
         });
     });

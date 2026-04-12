@@ -39,4 +39,24 @@ class PrescriptionItem extends Model
     {
         return $this->belongsTo(Prescription::class);
     }
+
+    public function drug()
+    {
+        return $this->belongsTo(Drug::class);
+    }
+
+    public function dispensingRecords()
+    {
+        return $this->hasMany(DispensingRecord::class);
+    }
+
+    public function getTotalDispensedAttribute(): int
+    {
+        return $this->dispensingRecords()->sum('quantity_dispensed');
+    }
+
+    public function getRemainingQuantityAttribute(): int
+    {
+        return max(0, ($this->quantity ?? 0) - $this->total_dispensed);
+    }
 }

@@ -59,6 +59,11 @@ class Prescription extends Model
         return $this->hasMany(PrescriptionItem::class);
     }
 
+    public function dispensingRecords()
+    {
+        return $this->hasMany(DispensingRecord::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Helpers
