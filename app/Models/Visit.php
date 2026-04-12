@@ -129,6 +129,11 @@ class Visit extends Model
         return $this->hasOne(Invoice::class)->latestOfMany();
     }
 
+    public function admission()
+    {
+        return $this->hasOne(Admission::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes
@@ -149,6 +154,7 @@ class Visit extends Model
     {
         return $query->whereNotIn('status', [
             VisitStatus::COMPLETED->value,
+            VisitStatus::DISCHARGED->value,
             VisitStatus::CANCELLED->value,
         ]);
     }

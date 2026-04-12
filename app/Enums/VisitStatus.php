@@ -11,6 +11,9 @@ enum VisitStatus: string
     case LAB = 'lab';
     case PHARMACY = 'pharmacy';
     case BILLING = 'billing';
+    case ADMITTED = 'admitted';
+    case DISCHARGING = 'discharging';
+    case DISCHARGED = 'discharged';
     case COMPLETED = 'completed';
     case CANCELLED = 'cancelled';
 
@@ -24,6 +27,9 @@ enum VisitStatus: string
             self::LAB => 'Laboratory',
             self::PHARMACY => 'Pharmacy',
             self::BILLING => 'Billing',
+            self::ADMITTED => 'Admitted',
+            self::DISCHARGING => 'Discharging',
+            self::DISCHARGED => 'Discharged',
             self::COMPLETED => 'Completed',
             self::CANCELLED => 'Cancelled',
         };
@@ -39,6 +45,9 @@ enum VisitStatus: string
             self::LAB => 'purple',
             self::PHARMACY => 'orange',
             self::BILLING => 'dark',
+            self::ADMITTED => 'info',
+            self::DISCHARGING => 'warning',
+            self::DISCHARGED => 'success',
             self::COMPLETED => 'success',
             self::CANCELLED => 'danger',
         };
@@ -53,10 +62,13 @@ enum VisitStatus: string
             self::REGISTERED => [self::WAITING, self::CANCELLED],
             self::WAITING => [self::TRIAGE, self::CONSULTING, self::CANCELLED],
             self::TRIAGE => [self::WAITING, self::CONSULTING, self::CANCELLED],
-            self::CONSULTING => [self::LAB, self::PHARMACY, self::BILLING, self::COMPLETED, self::CANCELLED],
+            self::CONSULTING => [self::LAB, self::PHARMACY, self::BILLING, self::ADMITTED, self::COMPLETED, self::CANCELLED],
             self::LAB => [self::CONSULTING, self::PHARMACY, self::CANCELLED],
             self::PHARMACY => [self::BILLING, self::COMPLETED, self::CANCELLED],
-            self::BILLING => [self::COMPLETED, self::CANCELLED],
+            self::BILLING => [self::COMPLETED, self::DISCHARGED, self::CANCELLED],
+            self::ADMITTED => [self::CONSULTING, self::LAB, self::PHARMACY, self::DISCHARGING],
+            self::DISCHARGING => [self::BILLING, self::ADMITTED],
+            self::DISCHARGED => [],
             self::COMPLETED => [],
             self::CANCELLED => [],
         };

@@ -77,6 +77,14 @@ class RoleSeeder extends Seeder
             'departments.view',
             'departments.manage',
 
+            // Ward & Inpatient
+            'ward.view',
+            'ward.manage',
+            'ward.admit',
+            'ward.discharge',
+            'beds.view',
+            'beds.manage',
+
             // Reports
             'reports.view',
 
@@ -106,6 +114,7 @@ class RoleSeeder extends Seeder
             'lab.requests.view', 'lab.requests.create',
             'lab.results.view',
             'queue.view',
+            'ward.view', 'ward.admit', 'ward.discharge',
         ]);
 
         $nurse = Role::firstOrCreate(['name' => 'Nurse']);
@@ -115,6 +124,7 @@ class RoleSeeder extends Seeder
             'vitals.view', 'vitals.create',
             'queue.view', 'queue.manage',
             'prescriptions.view',
+            'ward.view', 'beds.view',
         ]);
 
         $receptionist = Role::firstOrCreate(['name' => 'Receptionist']);

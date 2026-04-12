@@ -1323,7 +1323,7 @@ Running total: ~57 tables
 
 | Phase | Module | Status | Completed |
 |-------|--------|--------|-----------|
-| **Phase 11** | Inpatient & Ward | ⬜ Not Started | — |
+| **Phase 11** | Inpatient & Ward | ✅ Complete | 2026-04-12 |
 | **Phase 12** | Appointments & Scheduling | ⬜ Not Started | — |
 | **Phase 13** | Claims & Insurance | ⬜ Not Started | — |
 | **Phase 14** | Store & Procurement | ⬜ Not Started | — |

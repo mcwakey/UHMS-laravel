@@ -116,6 +116,41 @@
                 @endcan
 
                 {{-- ========================================== --}}
+                {{-- WARD / INPATIENT --}}
+                {{-- ========================================== --}}
+                @can('ward.view')
+                <li class="menu-title"><span>Ward / Inpatient</span></li>
+                <li>
+                    <ul>
+                        <li class="{{ request()->routeIs('admin.admissions.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.admissions.index') }}">
+                                <i class="ti ti-bed"></i><span>Admissions</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.wards.bed-map') ? 'active' : '' }}">
+                            <a href="{{ route('admin.wards.bed-map') }}">
+                                <i class="ti ti-map"></i><span>Bed Map</span>
+                            </a>
+                        </li>
+                        @can('ward.manage')
+                        <li class="{{ request()->routeIs('admin.wards.index') ? 'active' : '' }}">
+                            <a href="{{ route('admin.wards.index') }}">
+                                <i class="ti ti-building-hospital"></i><span>Wards</span>
+                            </a>
+                        </li>
+                        @endcan
+                        @can('beds.manage')
+                        <li class="{{ request()->routeIs('admin.wards.beds') ? 'active' : '' }}">
+                            <a href="{{ route('admin.wards.beds') }}">
+                                <i class="ti ti-bed-flat"></i><span>Bed Management</span>
+                            </a>
+                        </li>
+                        @endcan
+                    </ul>
+                </li>
+                @endcan
+
+                {{-- ========================================== --}}
                 {{-- PHARMACY & LAB (Future phases) --}}
                 {{-- ========================================== --}}
                 @if(Auth::user()->canAny(['prescriptions.view', 'pharmacy.dispensing.view', 'pharmacy.drugs.manage', 'pharmacy.stock.manage', 'lab.requests.view', 'lab.results.view', 'lab.tests.manage']))

@@ -28,6 +28,8 @@ use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\WardController;
+use App\Http\Controllers\Admin\AdmissionController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -133,6 +135,29 @@ Route::middleware('auth')->group(function () {
             Route::get('visits/patient-search', [VisitController::class, 'patientSearch'])->name('visits.patient-search');
             Route::get('visits/{visit}', [VisitController::class, 'show'])->name('visits.show');
             Route::patch('visits/{visit}/transition', [VisitController::class, 'transition'])->name('visits.transition')->middleware('can:visits.transition');
+        });
+
+        // Wards & Beds
+        Route::middleware('can:ward.view')->group(function () {
+            Route::get('wards', [WardController::class, 'index'])->name('wards.index');
+            Route::post('wards', [WardController::class, 'store'])->name('wards.store')->middleware('can:ward.manage');
+            Route::put('wards/{ward}', [WardController::class, 'update'])->name('wards.update')->middleware('can:ward.manage');
+            Route::patch('wards/{ward}/toggle', [WardController::class, 'toggle'])->name('wards.toggle')->middleware('can:ward.manage');
+            Route::get('beds', [WardController::class, 'beds'])->name('wards.beds');
+            Route::post('beds', [WardController::class, 'storeBed'])->name('wards.beds.store')->middleware('can:beds.manage');
+            Route::put('beds/{bed}', [WardController::class, 'updateBed'])->name('wards.beds.update')->middleware('can:beds.manage');
+            Route::get('bed-map', [WardController::class, 'bedMap'])->name('wards.bed-map');
+        });
+
+        // Admissions
+        Route::middleware('can:ward.view')->group(function () {
+            Route::get('admissions', [AdmissionController::class, 'index'])->name('admissions.index');
+            Route::get('admissions/create', [AdmissionController::class, 'create'])->name('admissions.create')->middleware('can:ward.admit');
+            Route::post('admissions', [AdmissionController::class, 'store'])->name('admissions.store')->middleware('can:ward.admit');
+            Route::get('admissions/{admission}', [AdmissionController::class, 'show'])->name('admissions.show');
+            Route::get('admissions/{admission}/discharge', [AdmissionController::class, 'discharge'])->name('admissions.discharge')->middleware('can:ward.discharge');
+            Route::post('admissions/{admission}/discharge', [AdmissionController::class, 'processDischarge'])->name('admissions.process-discharge')->middleware('can:ward.discharge');
+            Route::post('admissions/{admission}/rounds', [AdmissionController::class, 'storeRound'])->name('admissions.rounds.store');
         });
 
         // Queue
