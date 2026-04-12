@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\PrescriptionStatus;
+use App\Events\StockLow;
 use App\Models\DispensingRecord;
 use App\Models\Drug;
 use App\Models\DrugCategory;
@@ -240,6 +241,13 @@ class PharmacyService
 
             // Update prescription status
             $this->updatePrescriptionStatus($prescription);
+
+            // Check stock levels and fire alert if low
+            $totalStock = $drug->activeStocks()->sum('quantity');
+            $reorderLevel = $drug->activeStocks()->max('reorder_level') ?? 10;
+            if ($totalStock <= $reorderLevel) {
+                StockLow::dispatch($drug->display_name, (int) $totalStock, (int) $reorderLevel);
+            }
 
             return $lastRecord;
         });

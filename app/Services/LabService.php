@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\VisitStatus;
+use App\Events\LabRequestCreated;
+use App\Events\LabResultsCompleted;
 use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 use App\Models\LabResult;
@@ -123,7 +125,11 @@ class LabService
                 ]);
             }
 
-            return $request->load(['items.labTest', 'patient']);
+            $request->load(['items.labTest', 'patient']);
+
+            LabRequestCreated::dispatch($request);
+
+            return $request;
         });
     }
 
@@ -263,6 +269,7 @@ class LabService
 
         if ($total > 0 && $completed === $total) {
             $request->update(['status' => 'completed']);
+            LabResultsCompleted::dispatch($request);
         } elseif ($completed > 0) {
             $request->update(['status' => 'processing']);
         }

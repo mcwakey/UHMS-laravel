@@ -43,6 +43,7 @@ use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\LeaveController;
 use App\Http\Controllers\Admin\PayrollController;
+use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -521,6 +522,14 @@ Route::middleware('auth')->group(function () {
             Route::get('payment-methods', [SettingsController::class, 'paymentMethods'])->name('payment-methods');
             Route::put('payment-methods', [SettingsController::class, 'updatePaymentMethods'])->name('payment-methods.update');
             Route::get('activity-log', [ActivityLogController::class, 'index'])->name('activity-log');
+        });
+
+        // Notifications
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+            Route::get('/', [NotificationController::class, 'index'])->name('index');
+            Route::get('/recent', [NotificationController::class, 'recent'])->name('recent');
+            Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('mark-read');
+            Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
         });
 
         // Profile (All authenticated users)

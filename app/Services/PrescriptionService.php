@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\PrescriptionStatus;
+use App\Events\PrescriptionCreated;
 use App\Models\MedicalRecord;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
@@ -68,7 +69,11 @@ class PrescriptionService
             }
         }
 
-        return $prescription->load('items');
+        $prescription->load('items');
+
+        PrescriptionCreated::dispatch($prescription);
+
+        return $prescription;
     }
 
     /**

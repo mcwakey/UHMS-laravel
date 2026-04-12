@@ -55,9 +55,9 @@
             <!-- Notification Dropdown -->
             <div class="header-item">
                 <div class="dropdown me-3">
-                    <button class="topbar-link btn btn-icon topbar-link dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown" data-bs-offset="0,24" type="button" aria-haspopup="false" aria-expanded="false">
+                    <button class="topbar-link btn btn-icon topbar-link dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown" data-bs-offset="0,24" type="button" aria-haspopup="false" aria-expanded="false" id="notificationDropdownBtn">
                         <i class="ti ti-bell-check fs-16 animate-ring"></i>
-                        <span class="notification-badge"></span>
+                        <span class="notification-badge" id="notificationBadge" style="display:none;"></span>
                     </button>
                     <div class="dropdown-menu p-0 dropdown-menu-end dropdown-menu-lg" style="min-height: 300px;">
                         <div class="p-2 border-bottom">
@@ -65,13 +65,23 @@
                                 <div class="col">
                                     <h6 class="m-0 fs-16 fw-semibold">Notifications</h6>
                                 </div>
+                                <div class="col-auto">
+                                    <a href="javascript:void(0);" class="text-muted fs-13" id="markAllReadBtn" style="display:none;">
+                                        Mark all read
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                        <div class="notification-body position-relative z-2 rounded-0" data-simplebar>
-                            <div class="text-center text-muted py-4">
+                        <div class="notification-body position-relative z-2 rounded-0" data-simplebar id="notificationList">
+                            <div class="text-center text-muted py-4" id="noNotifications">
                                 <i class="ti ti-bell-off fs-24 d-block mb-2"></i>
                                 No new notifications
                             </div>
+                        </div>
+                        <div class="p-2 border-top text-center">
+                            <a href="{{ route('admin.notifications.index') }}" class="text-primary fs-13">
+                                View All Notifications
+                            </a>
                         </div>
                     </div>
                 </div>

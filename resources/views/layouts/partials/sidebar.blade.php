@@ -500,6 +500,18 @@
                 </li>
                 @endcan
 
+                {{-- Notifications --}}
+                @can('notifications.view')
+                <li class="{{ request()->routeIs('admin.notifications.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.notifications.index') }}">
+                        <i class="ti ti-bell"></i><span>Notifications</span>
+                        @if(auth()->user()->unreadNotifications()->count() > 0)
+                            <span class="badge bg-danger rounded-pill ms-auto">{{ auth()->user()->unreadNotifications()->count() }}</span>
+                        @endif
+                    </a>
+                </li>
+                @endcan
+
                 {{-- Settings --}}
                 @canany(['settings.manage'])
                 <li class="nav-subtitle">

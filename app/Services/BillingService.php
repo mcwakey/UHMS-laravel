@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\BillingType;
 use App\Enums\InvoiceStatus;
 use App\Enums\VisitStatus;
+use App\Events\PaymentRecorded;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
@@ -132,6 +133,10 @@ class BillingService
 
             return $payment->load('invoice', 'patient');
         });
+
+        PaymentRecorded::dispatch($payment);
+
+        return $payment;
     }
 
     /**

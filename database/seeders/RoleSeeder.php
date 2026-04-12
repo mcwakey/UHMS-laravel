@@ -123,6 +123,9 @@ class RoleSeeder extends Seeder
             'hr.attendance.view',
             'hr.attendance.manage',
 
+            // Notifications
+            'notifications.view',
+
             // Reports
             'reports.view',
 
@@ -154,6 +157,7 @@ class RoleSeeder extends Seeder
             'queue.view',
             'ward.view', 'ward.admit', 'ward.discharge',
             'appointments.view', 'appointments.create', 'appointments.edit',
+            'notifications.view',
         ]);
 
         $nurse = Role::firstOrCreate(['name' => 'Nurse']);
@@ -164,6 +168,7 @@ class RoleSeeder extends Seeder
             'queue.view', 'queue.manage',
             'prescriptions.view',
             'ward.view', 'beds.view',
+            'notifications.view',
         ]);
 
         $receptionist = Role::firstOrCreate(['name' => 'Receptionist']);
@@ -173,6 +178,7 @@ class RoleSeeder extends Seeder
             'queue.view', 'queue.manage',
             'invoices.view',
             'appointments.view', 'appointments.create', 'appointments.edit',
+            'notifications.view',
         ]);
 
         $labTech = Role::firstOrCreate(['name' => 'Lab Technician']);
@@ -183,6 +189,7 @@ class RoleSeeder extends Seeder
             'lab.results.view', 'lab.results.create',
             'lab.tests.manage',
             'queue.view',
+            'notifications.view',
         ]);
 
         $pharmacist = Role::firstOrCreate(['name' => 'Pharmacist']);
@@ -194,6 +201,7 @@ class RoleSeeder extends Seeder
             'pharmacy.drugs.manage', 'pharmacy.stock.manage',
             'store.transfer.view',
             'queue.view',
+            'notifications.view',
         ]);
 
         $accountant = Role::firstOrCreate(['name' => 'Accountant']);
@@ -208,6 +216,7 @@ class RoleSeeder extends Seeder
             'accounts.manage',
             'accounts.entries.view', 'accounts.entries.create', 'accounts.entries.approve',
             'accounts.cashier',
+            'notifications.view',
         ]);
 
         $claimsOfficer = Role::firstOrCreate(['name' => 'Claims Officer']);
@@ -217,6 +226,7 @@ class RoleSeeder extends Seeder
             'invoices.view',
             'claims.view', 'claims.create', 'claims.approve', 'claims.export',
             'reports.view',
+            'notifications.view',
         ]);
 
         $storeKeeper = Role::firstOrCreate(['name' => 'Store Keeper']);
@@ -225,6 +235,7 @@ class RoleSeeder extends Seeder
             'store.purchase.view', 'store.purchase.create', 'store.purchase.approve',
             'store.transfer.view', 'store.transfer.create',
             'pharmacy.drugs.manage', 'pharmacy.stock.manage',
+            'notifications.view',
         ]);
 
         $hrManager = Role::firstOrCreate(['name' => 'HR Manager']);
@@ -234,6 +245,7 @@ class RoleSeeder extends Seeder
             'hr.payroll.view', 'hr.payroll.process',
             'hr.attendance.view', 'hr.attendance.manage',
             'reports.view',
+            'notifications.view',
         ]);
     }
 }

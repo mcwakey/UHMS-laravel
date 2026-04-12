@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\AdmissionStatus;
 use App\Enums\BedStatus;
 use App\Enums\VisitStatus;
+use App\Events\PatientAdmitted;
+use App\Events\PatientDischarged;
 use App\Models\Admission;
 use App\Models\WardRound;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -51,6 +53,10 @@ class AdmissionService
 
             return $admission->load(['patient', 'bed.ward', 'admittedBy']);
         });
+
+        PatientAdmitted::dispatch($admission);
+
+        return $admission;
     }
 
     public function discharge(Admission $admission, array $data): Admission
@@ -75,6 +81,10 @@ class AdmissionService
 
             return $admission->fresh(['patient', 'bed.ward', 'dischargedBy']);
         });
+
+        PatientDischarged::dispatch($admission);
+
+        return $admission;
     }
 
     public function addWardRound(Admission $admission, array $data): WardRound
