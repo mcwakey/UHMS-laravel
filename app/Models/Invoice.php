@@ -1,0 +1,130 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\BillingType;
+use App\Enums\InvoiceStatus;
+use App\Traits\GeneratesNumbers;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Invoice extends Model
+{
+    use HasFactory, SoftDeletes, GeneratesNumbers;
+
+    protected $fillable = [
+        'invoice_number',
+        'visit_id',
+        'patient_id',
+        'billing_type',
+        'subtotal',
+        'tax_amount',
+        'discount_amount',
+        'nhis_amount',
+        'total_amount',
+        'amount_paid',
+        'balance',
+        'status',
+        'due_date',
+        'notes',
+        'created_by',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'billing_type' => BillingType::class,
+            'status' => InvoiceStatus::class,
+            'subtotal' => 'decimal:2',
+            'tax_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'nhis_amount' => 'decimal:2',
+            'total_amount' => 'decimal:2',
+            'amount_paid' => 'decimal:2',
+            'balance' => 'decimal:2',
+            'due_date' => 'date',
+        ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    public function visit()
+    {
+        return $this->belongsTo(Visit::class);
+    }
+
+    public function patient()
+    {
+        return $this->belongsTo(Patient::class);
+    }
+
+    public function items()
+    {
+        return $this->hasMany(InvoiceItem::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scopes
+    |--------------------------------------------------------------------------
+    */
+
+    public function scopeByStatus($query, InvoiceStatus $status)
+    {
+        return $query->where('status', $status);
+    }
+
+    public function scopeUnpaid($query)
+    {
+        return $query->whereIn('status', [
+            InvoiceStatus::PENDING->value,
+            InvoiceStatus::PARTIALLY_PAID->value,
+        ]);
+    }
+
+    public function scopeToday($query)
+    {
+        return $query->whereDate('created_at', today());
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Accessors
+    |--------------------------------------------------------------------------
+    */
+
+    public function getFormattedTotalAttribute(): string
+    {
+        return '₵' . number_format($this->total_amount, 2);
+    }
+
+    public function getFormattedBalanceAttribute(): string
+    {
+        return '₵' . number_format($this->balance, 2);
+    }
+
+    public function getFormattedAmountPaidAttribute(): string
+    {
+        return '₵' . number_format($this->amount_paid, 2);
+    }
+
+    public function getIsPaidAttribute(): bool
+    {
+        return $this->status === InvoiceStatus::PAID;
+    }
+}

@@ -108,6 +108,16 @@ class Visit extends Model
         return $this->hasMany(LabRequest::class);
     }
 
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    public function latestInvoice()
+    {
+        return $this->hasOne(Invoice::class)->latestOfMany();
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes

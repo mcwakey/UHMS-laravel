@@ -20,6 +20,9 @@ use App\Http\Controllers\Lab\LabResultController;
 use App\Http\Controllers\Admin\LabTestController;
 use App\Http\Controllers\Admin\DrugController;
 use App\Http\Controllers\Admin\DrugStockController;
+use App\Http\Controllers\Admin\ServiceCatalogController;
+use App\Http\Controllers\Billing\InvoiceController;
+use App\Http\Controllers\Billing\PaymentController;
 use App\Http\Controllers\Pharmacy\DispensingController;
 use Illuminate\Support\Facades\Route;
 
@@ -270,6 +273,34 @@ Route::middleware('auth')->group(function () {
                 Route::put('stock/{stock}', [DrugStockController::class, 'update'])->name('stock.update');
                 Route::get('stock/alerts', [DrugStockController::class, 'alerts'])->name('stock.alerts');
             });
+        });
+
+        // Billing
+        Route::prefix('billing')->name('billing.')->group(function () {
+            // Invoices
+            Route::middleware('can:invoices.view')->group(function () {
+                Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
+                Route::get('invoices/create', [InvoiceController::class, 'create'])->name('invoices.create')->middleware('can:invoices.create');
+                Route::post('invoices', [InvoiceController::class, 'store'])->name('invoices.store')->middleware('can:invoices.create');
+                Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
+                Route::patch('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel')->middleware('can:invoices.edit');
+                Route::get('invoices/{invoice}/print', [InvoiceController::class, 'print'])->name('invoices.print');
+            });
+
+            // Payments
+            Route::middleware('can:payments.view')->group(function () {
+                Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
+                Route::post('payments/{invoice}', [PaymentController::class, 'store'])->name('payments.store')->middleware('can:payments.create');
+                Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
+            });
+        });
+
+        // Service Catalog
+        Route::middleware('can:services.manage')->group(function () {
+            Route::get('services', [ServiceCatalogController::class, 'index'])->name('services.index');
+            Route::post('services', [ServiceCatalogController::class, 'store'])->name('services.store');
+            Route::put('services/{service}', [ServiceCatalogController::class, 'update'])->name('services.update');
+            Route::patch('services/{service}/toggle', [ServiceCatalogController::class, 'toggle'])->name('services.toggle');
         });
     });
 

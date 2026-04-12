@@ -1034,7 +1034,7 @@ This is the **most critical custom view**. Layout:
 
 ---
 
-## 11. PHASE 8 — BILLING MODULE
+## 11. PHASE 8 — BILLING MODULE ✅ DONE
 
 ### 11.1 Objectives
 - Auto-generate invoices from visit services
@@ -1140,14 +1140,14 @@ This is the **most critical custom view**. Layout:
 5. **Invoice Print**: A4 format with hospital letterhead
 
 ### 11.6 Deliverables
-- [ ] Service catalog with NHIS pricing
-- [ ] Auto-invoice generation from visit
-- [ ] NHIS vs cash billing toggle
-- [ ] Payment recording (cash, MoMo, card, NHIS)
-- [ ] Invoice printing (PDF)
-- [ ] Payment receipts
-- [ ] Outstanding balance tracking
-- [ ] Visit auto-completion after payment
+- [x] Service catalog with NHIS pricing
+- [x] Auto-invoice generation from visit
+- [x] NHIS vs cash billing toggle
+- [x] Payment recording (cash, MoMo, card, NHIS)
+- [x] Invoice printing (PDF)
+- [x] Payment receipts
+- [x] Outstanding balance tracking
+- [x] Visit auto-completion after payment
 
 ---
 

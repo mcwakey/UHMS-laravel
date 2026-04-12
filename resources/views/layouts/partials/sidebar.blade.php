@@ -182,20 +182,38 @@
                 @endif
 
                 {{-- ========================================== --}}
-                {{-- BILLING (Future phases) --}}
+                {{-- BILLING --}}
                 {{-- ========================================== --}}
-                @can('billing.view')
+                @if(Auth::user()->canAny(['invoices.view', 'payments.view', 'services.manage']))
                 <li class="menu-title"><span>Finance</span></li>
                 <li>
                     <ul>
-                        <li class="{{ request()->routeIs('admin.billing.*') ? 'active' : '' }}">
-                            <a href="javascript:void(0);">
-                                <i class="ti ti-file-invoice"></i><span>Billing</span>
+                        @can('invoices.view')
+                        <li class="{{ request()->routeIs('admin.billing.invoices.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.billing.invoices.index') }}">
+                                <i class="ti ti-file-invoice"></i><span>Invoices</span>
                             </a>
                         </li>
+                        @endcan
+
+                        @can('payments.view')
+                        <li class="{{ request()->routeIs('admin.billing.payments.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.billing.payments.index') }}">
+                                <i class="ti ti-cash"></i><span>Payments</span>
+                            </a>
+                        </li>
+                        @endcan
+
+                        @can('services.manage')
+                        <li class="{{ request()->routeIs('admin.services.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.services.index') }}">
+                                <i class="ti ti-list-details"></i><span>Service Catalog</span>
+                            </a>
+                        </li>
+                        @endcan
                     </ul>
                 </li>
-                @endcan
+                @endif
 
                 {{-- ========================================== --}}
                 {{-- ADMINISTRATION (Phase 1 — Active) --}}

@@ -1,0 +1,306 @@
+@extends('layouts.app')
+@section('title', 'Create Invoice')
+
+@section('content')
+<!-- Page Header -->
+<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
+    <div class="flex-grow-1">
+        <h6 class="fw-bold mb-0 d-flex align-items-center">
+            <a href="{{ route('admin.billing.invoices.index') }}"><i class="ti ti-chevron-left me-1 fs-14"></i>Invoices</a>
+        </h6>
+    </div>
+</div>
+
+@if(session('error'))
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{ session('error') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+@endif
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="fw-bold m-0"><i class="ti ti-file-invoice me-2"></i>New Invoice</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ route('admin.billing.invoices.store') }}" id="invoiceForm">
+            @csrf
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-medium">Patient <span class="text-danger">*</span></label>
+                    @if($visit)
+                        <input type="hidden" name="visit_id" value="{{ $visit->id }}">
+                        <input type="hidden" name="patient_id" value="{{ $visit->patient_id }}">
+                        <input type="text" class="form-control" value="{{ $visit->patient->full_name }} ({{ $visit->patient->patient_number }})" readonly>
+                        <small class="text-muted">Visit: {{ $visit->visit_number }} — {{ $visit->department->name ?? 'N/A' }}</small>
+                    @else
+                        <select name="visit_id" id="visitSelect" class="form-select @error('visit_id') is-invalid @enderror" required>
+                            <option value="">Select a visit...</option>
+                        </select>
+                        <input type="hidden" name="patient_id" id="patientIdInput">
+                        @error('visit_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    @endif
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-medium">Billing Type <span class="text-danger">*</span></label>
+                    <select name="billing_type" class="form-select @error('billing_type') is-invalid @enderror" required>
+                        @foreach($billingTypes as $type)
+                        <option value="{{ $type->value }}" {{ old('billing_type', $visit?->patient->is_nhis_active ? 'nhis' : 'cash') === $type->value ? 'selected' : '' }}>
+                            {{ $type->label() }}
+                        </option>
+                        @endforeach
+                    </select>
+                    @error('billing_type')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-medium">Due Date</label>
+                    <input type="date" name="due_date" class="form-control" value="{{ old('due_date', now()->addDays(30)->format('Y-m-d')) }}">
+                </div>
+            </div>
+
+            @if($visit && $visit->patient->is_nhis_active)
+            <div class="alert alert-info d-flex align-items-center mb-3">
+                <i class="ti ti-shield-check me-2 fs-4"></i>
+                <div>
+                    <strong>NHIS Active</strong> — Card No: {{ $visit->patient->nhis_number }}
+                    | Expiry: {{ $visit->patient->nhis_expiry_date->format('d M Y') }}
+                </div>
+            </div>
+            @endif
+
+            <!-- Invoice Items -->
+            <h6 class="fw-bold mb-3"><i class="ti ti-list-details me-1"></i>Invoice Items</h6>
+            <div class="table-responsive mb-3">
+                <table class="table table-bordered" id="itemsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:30%">Description <span class="text-danger">*</span></th>
+                            <th style="width:15%">Service</th>
+                            <th style="width:8%">Qty</th>
+                            <th style="width:12%">Unit Price (&#8373;)</th>
+                            <th style="width:12%">Total (&#8373;)</th>
+                            <th style="width:8%">NHIS?</th>
+                            <th style="width:12%">NHIS Amt (&#8373;)</th>
+                            <th style="width:3%"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemsBody">
+                        @if(count($suggestedItems) > 0)
+                            @foreach($suggestedItems as $i => $item)
+                            <tr class="item-row">
+                                <td>
+                                    <input type="text" name="items[{{ $i }}][description]" class="form-control form-control-sm" value="{{ $item['description'] }}" required>
+                                </td>
+                                <td>
+                                    <select name="items[{{ $i }}][service_catalog_id]" class="form-select form-select-sm service-select">
+                                        <option value="">—</option>
+                                        @foreach($services as $svc)
+                                        <option value="{{ $svc->id }}" data-price="{{ $svc->price }}" data-nhis-price="{{ $svc->nhis_price }}" data-nhis="{{ $svc->is_nhis_covered ? 1 : 0 }}"
+                                            {{ ($item['service_catalog_id'] ?? '') == $svc->id ? 'selected' : '' }}>
+                                            {{ $svc->name }}
+                                        </option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" name="items[{{ $i }}][quantity]" class="form-control form-control-sm qty-input" value="{{ $item['quantity'] ?? 1 }}" min="1" required>
+                                </td>
+                                <td>
+                                    <input type="number" name="items[{{ $i }}][unit_price]" class="form-control form-control-sm price-input" value="{{ $item['unit_price'] }}" step="0.01" min="0" required>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm line-total" readonly value="{{ number_format(($item['unit_price'] ?? 0) * ($item['quantity'] ?? 1), 2) }}">
+                                </td>
+                                <td class="text-center">
+                                    <input type="checkbox" name="items[{{ $i }}][is_nhis_covered]" class="form-check-input nhis-check" value="1" {{ !empty($item['is_nhis_covered']) ? 'checked' : '' }}>
+                                </td>
+                                <td>
+                                    <input type="number" name="items[{{ $i }}][nhis_approved_amount]" class="form-control form-control-sm nhis-amount" value="{{ $item['nhis_approved_amount'] ?? 0 }}" step="0.01" min="0">
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
+                                </td>
+                            </tr>
+                            @endforeach
+                        @else
+                            <tr class="item-row">
+                                <td>
+                                    <input type="text" name="items[0][description]" class="form-control form-control-sm" required>
+                                </td>
+                                <td>
+                                    <select name="items[0][service_catalog_id]" class="form-select form-select-sm service-select">
+                                        <option value="">—</option>
+                                        @foreach($services as $svc)
+                                        <option value="{{ $svc->id }}" data-price="{{ $svc->price }}" data-nhis-price="{{ $svc->nhis_price }}" data-nhis="{{ $svc->is_nhis_covered ? 1 : 0 }}">
+                                            {{ $svc->name }}
+                                        </option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" name="items[0][quantity]" class="form-control form-control-sm qty-input" value="1" min="1" required>
+                                </td>
+                                <td>
+                                    <input type="number" name="items[0][unit_price]" class="form-control form-control-sm price-input" value="0" step="0.01" min="0" required>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control form-control-sm line-total" readonly value="0.00">
+                                </td>
+                                <td class="text-center">
+                                    <input type="checkbox" name="items[0][is_nhis_covered]" class="form-check-input nhis-check" value="1">
+                                </td>
+                                <td>
+                                    <input type="number" name="items[0][nhis_approved_amount]" class="form-control form-control-sm nhis-amount" value="0" step="0.01" min="0">
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
+                                </td>
+                            </tr>
+                        @endif
+                    </tbody>
+                </table>
+            </div>
+
+            <button type="button" class="btn btn-sm btn-outline-primary mb-3" id="addItemBtn">
+                <i class="ti ti-plus me-1"></i>Add Item
+            </button>
+
+            <!-- Totals -->
+            <div class="row justify-content-end">
+                <div class="col-md-5">
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td class="fw-medium">Subtotal:</td>
+                            <td class="text-end" id="subtotalDisplay">&#8373;0.00</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-medium">Tax (&#8373;):</td>
+                            <td class="text-end">
+                                <input type="number" name="tax_amount" class="form-control form-control-sm text-end" id="taxInput" value="0" step="0.01" min="0" style="max-width:150px;margin-left:auto;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-medium">Discount (&#8373;):</td>
+                            <td class="text-end">
+                                <input type="number" name="discount_amount" class="form-control form-control-sm text-end" id="discountInput" value="0" step="0.01" min="0" style="max-width:150px;margin-left:auto;">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-medium text-primary">NHIS Covered:</td>
+                            <td class="text-end text-primary fw-bold" id="nhisDisplay">&#8373;0.00</td>
+                        </tr>
+                        <tr class="border-top">
+                            <td class="fw-bold fs-5">Total:</td>
+                            <td class="text-end fw-bold fs-5" id="totalDisplay">&#8373;0.00</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold text-danger">Patient Pays:</td>
+                            <td class="text-end fw-bold text-danger" id="patientPaysDisplay">&#8373;0.00</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-3">
+                <label class="form-label fw-medium">Notes</label>
+                <textarea name="notes" class="form-control" rows="2" placeholder="Optional notes...">{{ old('notes') }}</textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="ti ti-file-invoice me-1"></i>Create Invoice
+                </button>
+                <a href="{{ route('admin.billing.invoices.index') }}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script>
+$(function() {
+    let rowIndex = {{ count($suggestedItems) > 0 ? count($suggestedItems) : 1 }};
+
+    function recalculate() {
+        let subtotal = 0, nhisTotal = 0;
+        $('#itemsBody .item-row').each(function() {
+            let qty = parseFloat($(this).find('.qty-input').val()) || 0;
+            let price = parseFloat($(this).find('.price-input').val()) || 0;
+            let lineTotal = qty * price;
+            $(this).find('.line-total').val(lineTotal.toFixed(2));
+            subtotal += lineTotal;
+
+            if ($(this).find('.nhis-check').is(':checked')) {
+                nhisTotal += parseFloat($(this).find('.nhis-amount').val()) || 0;
+            }
+        });
+
+        let tax = parseFloat($('#taxInput').val()) || 0;
+        let discount = parseFloat($('#discountInput').val()) || 0;
+        let total = subtotal + tax - discount;
+        let patientPays = total - nhisTotal;
+
+        $('#subtotalDisplay').text('₵' + subtotal.toFixed(2));
+        $('#nhisDisplay').text('₵' + nhisTotal.toFixed(2));
+        $('#totalDisplay').text('₵' + total.toFixed(2));
+        $('#patientPaysDisplay').text('₵' + Math.max(0, patientPays).toFixed(2));
+    }
+
+    // Recalculate on input changes
+    $(document).on('input change', '.qty-input, .price-input, .nhis-amount, .nhis-check, #taxInput, #discountInput', recalculate);
+
+    // Service select auto-fills price
+    $(document).on('change', '.service-select', function() {
+        let opt = $(this).find(':selected');
+        let row = $(this).closest('.item-row');
+        if (opt.val()) {
+            row.find('.price-input').val(opt.data('price') || 0);
+            if (opt.data('nhis') == 1) {
+                row.find('.nhis-check').prop('checked', true);
+                row.find('.nhis-amount').val(opt.data('nhis-price') || opt.data('price') || 0);
+            }
+        }
+        recalculate();
+    });
+
+    // Add item row
+    $('#addItemBtn').on('click', function() {
+        let serviceOptions = '';
+        @foreach($services as $svc)
+        serviceOptions += '<option value="{{ $svc->id }}" data-price="{{ $svc->price }}" data-nhis-price="{{ $svc->nhis_price }}" data-nhis="{{ $svc->is_nhis_covered ? 1 : 0 }}">{{ addslashes($svc->name) }}</option>';
+        @endforeach
+
+        let row = `<tr class="item-row">
+            <td><input type="text" name="items[${rowIndex}][description]" class="form-control form-control-sm" required></td>
+            <td><select name="items[${rowIndex}][service_catalog_id]" class="form-select form-select-sm service-select"><option value="">—</option>${serviceOptions}</select></td>
+            <td><input type="number" name="items[${rowIndex}][quantity]" class="form-control form-control-sm qty-input" value="1" min="1" required></td>
+            <td><input type="number" name="items[${rowIndex}][unit_price]" class="form-control form-control-sm price-input" value="0" step="0.01" min="0" required></td>
+            <td><input type="text" class="form-control form-control-sm line-total" readonly value="0.00"></td>
+            <td class="text-center"><input type="checkbox" name="items[${rowIndex}][is_nhis_covered]" class="form-check-input nhis-check" value="1"></td>
+            <td><input type="number" name="items[${rowIndex}][nhis_approved_amount]" class="form-control form-control-sm nhis-amount" value="0" step="0.01" min="0"></td>
+            <td><button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
+        </tr>`;
+        $('#itemsBody').append(row);
+        rowIndex++;
+    });
+
+    // Remove row
+    $(document).on('click', '.remove-row', function() {
+        if ($('#itemsBody .item-row').length > 1) {
+            $(this).closest('.item-row').remove();
+            recalculate();
+        }
+    });
+
+    // Initial calculation
+    recalculate();
+});
+</script>
+@endsection
