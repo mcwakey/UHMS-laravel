@@ -116,6 +116,34 @@
                 @endcan
 
                 {{-- ========================================== --}}
+                {{-- APPOINTMENTS --}}
+                {{-- ========================================== --}}
+                @can('appointments.view')
+                <li class="menu-title"><span>Appointments</span></li>
+                <li>
+                    <ul>
+                        <li class="{{ request()->routeIs('admin.appointments.index') || request()->routeIs('admin.appointments.show') || request()->routeIs('admin.appointments.create') || request()->routeIs('admin.appointments.edit') ? 'active' : '' }}">
+                            <a href="{{ route('admin.appointments.index') }}">
+                                <i class="ti ti-calendar-event"></i><span>All Appointments</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.appointments.calendar') ? 'active' : '' }}">
+                            <a href="{{ route('admin.appointments.calendar') }}">
+                                <i class="ti ti-calendar"></i><span>Calendar</span>
+                            </a>
+                        </li>
+                        @can('appointments.create')
+                        <li class="{{ request()->routeIs('admin.appointments.create') ? 'active' : '' }}">
+                            <a href="{{ route('admin.appointments.create') }}">
+                                <i class="ti ti-calendar-plus"></i><span>Schedule New</span>
+                            </a>
+                        </li>
+                        @endcan
+                    </ul>
+                </li>
+                @endcan
+
+                {{-- ========================================== --}}
                 {{-- WARD / INPATIENT --}}
                 {{-- ========================================== --}}
                 @can('ward.view')
