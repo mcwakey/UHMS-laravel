@@ -1329,8 +1329,8 @@ Running total: ~57 tables
 | **Phase 12** | Appointments & Scheduling | ✅ Complete | 2026-04-12 |
 | **Phase 13** | Claims & Insurance | ✅ Complete | 2026-04-12 |
 | **Phase 14** | Store & Procurement | ✅ Complete | 2026-04-12 |
-| **Phase 15** | Accounts & Finance | ⬜ Not Started | — |
-| **Phase 16** | HR & Payroll | ⬜ Not Started | — |
+| **Phase 15** | Accounts & Finance | ✅ Complete | 2026-04-12 |
+| **Phase 16** | HR & Payroll | ✅ Complete | 2026-04-12 |
 | **Phase 17** | Notification System | ⬜ Not Started | — |
 | **Phase 18** | ICD-10 & Procedures | ⬜ Not Started | — |
 | **Phase 19** | Analyzer Integration | ⬜ Not Started | — |

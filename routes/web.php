@@ -39,6 +39,10 @@ use App\Http\Controllers\Admin\StockTransferController;
 use App\Http\Controllers\Admin\AccountCategoryController;
 use App\Http\Controllers\Admin\FinancialEntryController;
 use App\Http\Controllers\Admin\CashierShiftController;
+use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\AttendanceController;
+use App\Http\Controllers\Admin\LeaveController;
+use App\Http\Controllers\Admin\PayrollController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -286,6 +290,44 @@ Route::middleware('auth')->group(function () {
                 Route::post('handover/open', [CashierShiftController::class, 'open'])->name('handover.open');
                 Route::post('handover/{shift}/close', [CashierShiftController::class, 'close'])->name('handover.close');
                 Route::post('handover/{shift}/verify', [CashierShiftController::class, 'verify'])->name('handover.verify')->middleware('can:accounts.entries.approve');
+            });
+        });
+
+        // HR & Payroll
+        Route::prefix('hr')->name('hr.')->group(function () {
+            // Employees
+            Route::middleware('can:hr.employees.view')->group(function () {
+                Route::get('employees', [EmployeeController::class, 'index'])->name('employees.index');
+                Route::get('employees/create', [EmployeeController::class, 'create'])->name('employees.create')->middleware('can:hr.employees.create');
+                Route::post('employees', [EmployeeController::class, 'store'])->name('employees.store')->middleware('can:hr.employees.create');
+                Route::get('employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
+                Route::get('employees/{employee}/edit', [EmployeeController::class, 'edit'])->name('employees.edit')->middleware('can:hr.employees.edit');
+                Route::put('employees/{employee}', [EmployeeController::class, 'update'])->name('employees.update')->middleware('can:hr.employees.edit');
+            });
+
+            // Attendance
+            Route::middleware('can:hr.attendance.view')->group(function () {
+                Route::get('attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+                Route::post('attendance', [AttendanceController::class, 'store'])->name('attendance.store')->middleware('can:hr.attendance.manage');
+                Route::get('attendance/summary', [AttendanceController::class, 'summary'])->name('attendance.summary');
+            });
+
+            // Leave
+            Route::middleware('can:hr.leave.view')->group(function () {
+                Route::get('leave', [LeaveController::class, 'index'])->name('leave.index');
+                Route::get('leave/create', [LeaveController::class, 'create'])->name('leave.create')->middleware('can:hr.leave.create');
+                Route::post('leave', [LeaveController::class, 'store'])->name('leave.store')->middleware('can:hr.leave.create');
+                Route::post('leave/{leave}/approve', [LeaveController::class, 'approve'])->name('leave.approve')->middleware('can:hr.leave.approve');
+                Route::post('leave/{leave}/reject', [LeaveController::class, 'reject'])->name('leave.reject')->middleware('can:hr.leave.approve');
+            });
+
+            // Payroll
+            Route::middleware('can:hr.payroll.view')->group(function () {
+                Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index');
+                Route::post('payroll/process', [PayrollController::class, 'process'])->name('payroll.process')->middleware('can:hr.payroll.process');
+                Route::post('payroll/approve', [PayrollController::class, 'approve'])->name('payroll.approve')->middleware('can:hr.payroll.process');
+                Route::post('payroll/mark-paid', [PayrollController::class, 'markPaid'])->name('payroll.mark-paid')->middleware('can:hr.payroll.process');
+                Route::get('payroll/{record}/payslip', [PayrollController::class, 'payslip'])->name('payroll.payslip');
             });
         });
 

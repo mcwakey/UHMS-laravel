@@ -384,6 +384,45 @@
                 @endif
 
                 {{-- ========================================== --}}
+                {{-- HR & PAYROLL --}}
+                {{-- ========================================== --}}
+                @if(Auth::user()->canAny(['hr.employees.view', 'hr.leave.view', 'hr.payroll.view', 'hr.attendance.view']))
+                <li class="menu-title"><span>HR & Payroll</span></li>
+                <li>
+                    <ul>
+                        @can('hr.employees.view')
+                        <li class="{{ request()->routeIs('admin.hr.employees.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.employees.index') }}">
+                                <i class="ti ti-id-badge-2"></i><span>Employees</span>
+                            </a>
+                        </li>
+                        @endcan
+                        @can('hr.attendance.view')
+                        <li class="{{ request()->routeIs('admin.hr.attendance.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.attendance.index') }}">
+                                <i class="ti ti-clock-record"></i><span>Attendance</span>
+                            </a>
+                        </li>
+                        @endcan
+                        @can('hr.leave.view')
+                        <li class="{{ request()->routeIs('admin.hr.leave.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.leave.index') }}">
+                                <i class="ti ti-calendar-off"></i><span>Leave Requests</span>
+                            </a>
+                        </li>
+                        @endcan
+                        @can('hr.payroll.view')
+                        <li class="{{ request()->routeIs('admin.hr.payroll.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.hr.payroll.index') }}">
+                                <i class="ti ti-report-money"></i><span>Payroll</span>
+                            </a>
+                        </li>
+                        @endcan
+                    </ul>
+                </li>
+                @endif
+
+                {{-- ========================================== --}}
                 {{-- ADMINISTRATION (Phase 1 — Active) --}}
                 {{-- ========================================== --}}
                 @if(Auth::user()->canAny(['users.view', 'departments.view', 'settings.view']))

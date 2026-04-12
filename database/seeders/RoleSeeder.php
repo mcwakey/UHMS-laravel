@@ -111,6 +111,18 @@ class RoleSeeder extends Seeder
             'beds.view',
             'beds.manage',
 
+            // HR & Payroll
+            'hr.employees.view',
+            'hr.employees.create',
+            'hr.employees.edit',
+            'hr.leave.view',
+            'hr.leave.create',
+            'hr.leave.approve',
+            'hr.payroll.view',
+            'hr.payroll.process',
+            'hr.attendance.view',
+            'hr.attendance.manage',
+
             // Reports
             'reports.view',
 
@@ -213,6 +225,15 @@ class RoleSeeder extends Seeder
             'store.purchase.view', 'store.purchase.create', 'store.purchase.approve',
             'store.transfer.view', 'store.transfer.create',
             'pharmacy.drugs.manage', 'pharmacy.stock.manage',
+        ]);
+
+        $hrManager = Role::firstOrCreate(['name' => 'HR Manager']);
+        $hrManager->givePermissionTo([
+            'hr.employees.view', 'hr.employees.create', 'hr.employees.edit',
+            'hr.leave.view', 'hr.leave.create', 'hr.leave.approve',
+            'hr.payroll.view', 'hr.payroll.process',
+            'hr.attendance.view', 'hr.attendance.manage',
+            'reports.view',
         ]);
     }
 }
