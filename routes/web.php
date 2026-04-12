@@ -15,6 +15,9 @@ use App\Http\Controllers\Admin\VitalController;
 use App\Http\Controllers\Doctor\ConsultationController;
 use App\Http\Controllers\Doctor\MedicalPatternController;
 use App\Http\Controllers\Doctor\PrescriptionController;
+use App\Http\Controllers\Lab\LabRequestController;
+use App\Http\Controllers\Lab\LabResultController;
+use App\Http\Controllers\Admin\LabTestController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -170,6 +173,7 @@ Route::middleware('auth')->group(function () {
             });
 
             Route::post('consultations/{visit}/prescriptions', [ConsultationController::class, 'storePrescription'])->name('consultations.prescriptions.store')->middleware('can:prescriptions.create');
+            Route::post('consultations/{visit}/lab-request', [ConsultationController::class, 'storeLabRequest'])->name('consultations.lab-request.store')->middleware('can:lab.requests.create');
         });
 
         // Vitals (Nurse Triage)
@@ -198,6 +202,38 @@ Route::middleware('auth')->group(function () {
             Route::delete('patterns/{pattern}', [MedicalPatternController::class, 'destroy'])->name('patterns.destroy')->middleware('can:consultations.create');
             Route::post('patterns/{pattern}/apply', [MedicalPatternController::class, 'apply'])->name('patterns.apply')->middleware('can:consultations.create');
             Route::post('patterns/from-record/{visit}', [MedicalPatternController::class, 'storeFromRecord'])->name('patterns.from-record')->middleware('can:consultations.create');
+        });
+
+        // Laboratory
+        Route::prefix('lab')->name('lab.')->group(function () {
+            // Lab Requests
+            Route::middleware('can:lab.requests.view')->group(function () {
+                Route::get('requests', [LabRequestController::class, 'index'])->name('requests.index');
+                Route::get('requests/{labRequest}', [LabRequestController::class, 'show'])->name('requests.show');
+                Route::patch('requests/{labRequest}/accept', [LabRequestController::class, 'accept'])->name('requests.accept')->middleware('can:lab.results.create');
+                Route::patch('requests/{labRequest}/cancel', [LabRequestController::class, 'cancel'])->name('requests.cancel')->middleware('can:lab.results.create');
+            });
+
+            // Lab Results
+            Route::middleware('can:lab.results.view')->group(function () {
+                Route::get('results', [LabResultController::class, 'index'])->name('results.index');
+                Route::post('results/{item}', [LabResultController::class, 'store'])->name('results.store')->middleware('can:lab.results.create');
+                Route::post('results/batch/{labRequest}', [LabResultController::class, 'batchStore'])->name('results.batch')->middleware('can:lab.results.create');
+                Route::patch('results/{result}/verify', [LabResultController::class, 'verify'])->name('results.verify')->middleware('can:lab.results.create');
+            });
+
+            // Lab Test Catalog Management
+            Route::middleware('can:lab.tests.manage')->group(function () {
+                Route::get('tests', [LabTestController::class, 'index'])->name('tests.index');
+                Route::post('tests', [LabTestController::class, 'storeTest'])->name('tests.store');
+                Route::put('tests/{test}', [LabTestController::class, 'updateTest'])->name('tests.update');
+                Route::patch('tests/{test}/toggle', [LabTestController::class, 'toggleTest'])->name('tests.toggle');
+                Route::get('tests/category/{category}', [LabTestController::class, 'testsByCategory'])->name('tests.by-category');
+
+                Route::post('categories', [LabTestController::class, 'storeCategory'])->name('categories.store');
+                Route::put('categories/{category}', [LabTestController::class, 'updateCategory'])->name('categories.update');
+                Route::delete('categories/{category}', [LabTestController::class, 'destroyCategory'])->name('categories.destroy');
+            });
         });
     });
 

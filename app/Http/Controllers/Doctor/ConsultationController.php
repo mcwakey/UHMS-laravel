@@ -12,6 +12,7 @@ use App\Models\Investigation;
 use App\Models\Treatment;
 use App\Models\Visit;
 use App\Services\ConsultationService;
+use App\Services\LabService;
 use App\Services\MedicalPatternService;
 use App\Services\PrescriptionService;
 use App\Services\VisitService;
@@ -24,6 +25,7 @@ class ConsultationController extends Controller
         protected PrescriptionService $prescriptionService,
         protected VisitService $visitService,
         protected MedicalPatternService $patternService,
+        protected LabService $labService,
     ) {}
 
     /**
@@ -68,12 +70,18 @@ class ConsultationController extends Controller
             ->limit(10)
             ->get();
 
+        // Lab data
+        $labRequests = $this->labService->getVisitLabRequests($visit);
+        $labCategories = $this->labService->getActiveCategories();
+
         return view('consultations.show', [
             'visit' => $data['visit'],
             'record' => $data['record'],
             'vitals' => $data['vitals'],
             'history' => $data['history'],
             'patterns' => $patterns,
+            'labRequests' => $labRequests,
+            'labCategories' => $labCategories,
         ]);
     }
 
@@ -245,6 +253,30 @@ class ConsultationController extends Controller
         }
 
         return back()->with('success', "Prescription {$prescription->prescription_number} created.");
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lab Request from Consultation
+    |--------------------------------------------------------------------------
+    */
+
+    public function storeLabRequest(Request $request, Visit $visit)
+    {
+        $request->validate([
+            'test_ids' => ['required', 'array', 'min:1'],
+            'test_ids.*' => ['exists:lab_tests,id'],
+            'urgency' => ['nullable', 'in:routine,urgent,emergency'],
+            'clinical_info' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $labRequest = $this->labService->createRequest($visit, $request->test_ids, $request->only('urgency', 'clinical_info'));
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'labRequest' => $labRequest]);
+        }
+
+        return back()->with('success', "Lab request {$labRequest->request_number} created.");
     }
 
     /*

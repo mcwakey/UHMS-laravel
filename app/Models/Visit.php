@@ -103,6 +103,11 @@ class Visit extends Model
         return $this->hasMany(Prescription::class);
     }
 
+    public function labRequests()
+    {
+        return $this->hasMany(LabRequest::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes

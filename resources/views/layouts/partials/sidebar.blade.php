@@ -118,7 +118,7 @@
                 {{-- ========================================== --}}
                 {{-- PHARMACY & LAB (Future phases) --}}
                 {{-- ========================================== --}}
-                @if(Auth::user()->canAny(['prescriptions.view', 'pharmacy.view', 'lab.view']))
+                @if(Auth::user()->canAny(['prescriptions.view', 'pharmacy.view', 'lab.requests.view', 'lab.results.view', 'lab.tests.manage']))
                 <li class="menu-title"><span>Pharmacy & Lab</span></li>
                 <li>
                     <ul>
@@ -138,10 +138,26 @@
                         </li>
                         @endcan
 
-                        @can('lab.view')
-                        <li class="{{ request()->routeIs('admin.lab.*') ? 'active' : '' }}">
-                            <a href="javascript:void(0);">
-                                <i class="ti ti-test-pipe"></i><span>Laboratory</span>
+                        @if(Auth::user()->canAny(['lab.requests.view', 'lab.results.view', 'lab.tests.manage']))
+                        <li class="{{ request()->routeIs('admin.lab.requests.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.lab.requests.index') }}">
+                                <i class="ti ti-test-pipe"></i><span>Lab Requests</span>
+                            </a>
+                        </li>
+                        @endif
+
+                        @can('lab.results.view')
+                        <li class="{{ request()->routeIs('admin.lab.results.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.lab.results.index') }}">
+                                <i class="ti ti-report-medical"></i><span>Lab Results</span>
+                            </a>
+                        </li>
+                        @endcan
+
+                        @can('lab.tests.manage')
+                        <li class="{{ request()->routeIs('admin.lab.tests.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.lab.tests.index') }}">
+                                <i class="ti ti-flask"></i><span>Lab Test Catalog</span>
                             </a>
                         </li>
                         @endcan

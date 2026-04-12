@@ -93,6 +93,12 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" href="#lab-section" data-bs-toggle="pill">
+                                <i class="ti ti-flask me-2"></i>Lab Requests
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $labRequests->count() ?? 0 }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="#treatments-section" data-bs-toggle="pill">
                                 <i class="ti ti-vaccine me-2"></i>Treatments
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $record?->treatments?->count() ?? 0 }}</span>
@@ -532,6 +538,139 @@
                             <div class="text-center text-muted py-4">
                                 <i class="ti ti-test-pipe fs-1 d-block mb-2"></i>
                                 No investigations requested yet.
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- ============================================================ --}}
+            {{-- LAB REQUESTS TAB --}}
+            {{-- ============================================================ --}}
+            <div class="tab-pane fade" id="lab-section">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold mb-0"><i class="ti ti-flask me-1"></i>Lab Requests</h6>
+                        @can('lab.requests.create')
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#sendToLabForm">
+                            <i class="ti ti-send me-1"></i>Send to Lab
+                        </button>
+                        @endcan
+                    </div>
+                    <div class="card-body">
+                        {{-- Send to Lab Form --}}
+                        @can('lab.requests.create')
+                        <div class="collapse mb-3" id="sendToLabForm">
+                            <div class="card card-body bg-light">
+                                <form method="POST" action="{{ route('admin.consultations.lab-request.store', $visit) }}">
+                                    @csrf
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label small">Test Category</label>
+                                            <select id="labCategorySelect" class="form-select" onchange="loadTestsByCategory(this.value)">
+                                                <option value="">-- Select Category --</option>
+                                                @foreach($labCategories as $cat)
+                                                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label small">Urgency</label>
+                                            <select name="urgency" class="form-select">
+                                                <option value="routine">Routine</option>
+                                                <option value="urgent">Urgent</option>
+                                                <option value="emergency">Emergency</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small">Select Tests <span class="text-danger">*</span></label>
+                                            <div id="labTestsContainer" class="border rounded p-2" style="min-height: 60px;">
+                                                <span class="text-muted small">Select a category first to load tests</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small">Clinical Information</label>
+                                            <textarea name="clinical_info" class="form-control" rows="2" placeholder="Relevant clinical notes for the lab..."></textarea>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-send me-1"></i>Submit Lab Request</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        @endcan
+
+                        {{-- Existing Lab Requests --}}
+                        @if($labRequests->count() > 0)
+                            @foreach($labRequests as $labReq)
+                            <div class="ehr-item mb-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <p class="mb-1">
+                                            <a href="{{ route('admin.lab.requests.show', $labReq) }}" class="fw-medium text-primary">{{ $labReq->request_number }}</a>
+                                            <span class="badge bg-{{ $labReq->status_color }} ms-1">{{ $labReq->status_label }}</span>
+                                            <span class="badge bg-{{ $labReq->urgency_color }} ms-1">{{ ucfirst($labReq->urgency) }}</span>
+                                        </p>
+                                        <div class="d-flex flex-wrap gap-1 mb-1">
+                                            @foreach($labReq->items as $item)
+                                                <span class="badge bg-light text-dark border">
+                                                    {{ $item->labTest->name }}
+                                                    @if($item->result)
+                                                        <i class="ti ti-check text-success ms-1"></i>
+                                                        @if($item->result->is_abnormal)
+                                                            <i class="ti ti-alert-triangle text-danger ms-1"></i>
+                                                        @endif
+                                                    @endif
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                        <small class="text-muted">
+                                            {{ $labReq->created_at->format('d M Y H:i') }}
+                                            &middot; Progress: {{ $labReq->completion_percentage }}%
+                                            @if($labReq->requestedBy)
+                                                &middot; By: {{ $labReq->requestedBy->name }}
+                                            @endif
+                                        </small>
+                                        {{-- Show results if completed --}}
+                                        @if($labReq->status === 'completed')
+                                        <div class="mt-2">
+                                            <table class="table table-sm table-bordered mb-0">
+                                                <thead class="table-light">
+                                                    <tr><th>Test</th><th>Result</th><th>Normal Range</th><th>Status</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($labReq->items as $item)
+                                                    @if($item->result)
+                                                    <tr class="{{ $item->result->is_abnormal ? 'table-danger' : '' }}">
+                                                        <td>{{ $item->labTest->name }}</td>
+                                                        <td class="{{ $item->result->is_abnormal ? 'text-danger fw-bold' : '' }}">{{ $item->result->result_value }}</td>
+                                                        <td><small>{{ $item->labTest->normal_range ?? '-' }} {{ $item->labTest->unit ?? '' }}</small></td>
+                                                        <td>
+                                                            @if($item->result->is_verified)
+                                                                <span class="badge bg-success">Verified</span>
+                                                            @else
+                                                                <span class="badge bg-warning">Unverified</span>
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                    @endif
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        @endif
+                                    </div>
+                                    <a href="{{ route('admin.lab.requests.show', $labReq) }}" class="btn btn-sm btn-outline-primary ms-2">
+                                        <i class="ti ti-eye"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            @endforeach
+                        @else
+                            <div class="text-center text-muted py-4">
+                                <i class="ti ti-flask fs-1 d-block mb-2"></i>
+                                No lab requests for this visit.
                             </div>
                         @endif
                     </div>
@@ -1043,5 +1182,40 @@
     }
 
     bindApplyButtons();
+
+    // Lab test category → test loading
+    function loadTestsByCategory(categoryId) {
+        var container = document.getElementById('labTestsContainer');
+        if (!categoryId) {
+            container.innerHTML = '<span class="text-muted small">Select a category first to load tests</span>';
+            return;
+        }
+        container.innerHTML = '<div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary"></div> Loading tests...</div>';
+
+        fetch('{{ url("admin/lab/tests/category") }}/' + categoryId, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(tests) {
+            if (tests.length === 0) {
+                container.innerHTML = '<span class="text-muted small">No active tests in this category</span>';
+                return;
+            }
+            var html = '<div class="row g-1">';
+            tests.forEach(function(test) {
+                html += '<div class="col-md-6"><div class="form-check">';
+                html += '<input type="checkbox" name="test_ids[]" value="' + test.id + '" class="form-check-input" id="labTest' + test.id + '">';
+                html += '<label class="form-check-label" for="labTest' + test.id + '">';
+                html += escapeHtml(test.name) + ' <small class="text-muted">(' + escapeHtml(test.code) + ')';
+                if (test.price) html += ' - GH₵' + parseFloat(test.price).toFixed(2);
+                html += '</small></label></div></div>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        })
+        .catch(function() {
+            container.innerHTML = '<span class="text-danger small">Failed to load tests. Try again.</span>';
+        });
+    }
 </script>
 @endpush
