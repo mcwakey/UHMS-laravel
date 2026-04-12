@@ -31,6 +31,8 @@ use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\WardController;
 use App\Http\Controllers\Admin\AdmissionController;
 use App\Http\Controllers\Admin\AppointmentController;
+use App\Http\Controllers\Admin\InsuranceProviderController;
+use App\Http\Controllers\Admin\ClaimController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -174,6 +176,32 @@ Route::middleware('auth')->group(function () {
             Route::patch('appointments/{appointment}/transition', [AppointmentController::class, 'transition'])->name('appointments.transition')->middleware('can:appointments.edit');
             Route::post('appointments/{appointment}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel')->middleware('can:appointments.edit');
             Route::post('appointments/{appointment}/no-show', [AppointmentController::class, 'noShow'])->name('appointments.no-show')->middleware('can:appointments.edit');
+        });
+
+        // Insurance Providers
+        Route::middleware('can:claims.view')->group(function () {
+            Route::get('insurance-providers', [InsuranceProviderController::class, 'index'])->name('insurance-providers.index');
+            Route::post('insurance-providers', [InsuranceProviderController::class, 'store'])->name('insurance-providers.store')->middleware('can:claims.create');
+            Route::put('insurance-providers/{provider}', [InsuranceProviderController::class, 'update'])->name('insurance-providers.update')->middleware('can:claims.create');
+            Route::patch('insurance-providers/{provider}/toggle', [InsuranceProviderController::class, 'toggle'])->name('insurance-providers.toggle')->middleware('can:claims.create');
+        });
+
+        // Claims
+        Route::middleware('can:claims.view')->group(function () {
+            Route::get('claims', [ClaimController::class, 'index'])->name('claims.index');
+            Route::get('claims/create', [ClaimController::class, 'create'])->name('claims.create')->middleware('can:claims.create');
+            Route::post('claims', [ClaimController::class, 'store'])->name('claims.store')->middleware('can:claims.create');
+            Route::post('claims/from-invoice', [ClaimController::class, 'storeFromInvoice'])->name('claims.store-from-invoice')->middleware('can:claims.create');
+            Route::get('claims/export', [ClaimController::class, 'export'])->name('claims.export')->middleware('can:claims.export');
+            Route::get('claims/{claim}', [ClaimController::class, 'show'])->name('claims.show');
+            Route::post('claims/{claim}/submit', [ClaimController::class, 'submit'])->name('claims.submit')->middleware('can:claims.create');
+            Route::get('claims/{claim}/review', [ClaimController::class, 'review'])->name('claims.review')->middleware('can:claims.approve');
+            Route::post('claims/{claim}/review-item/{item}', [ClaimController::class, 'reviewItem'])->name('claims.review-item')->middleware('can:claims.approve');
+            Route::post('claims/{claim}/complete-review', [ClaimController::class, 'completeReview'])->name('claims.complete-review')->middleware('can:claims.approve');
+            Route::post('claims/{claim}/mark-paid', [ClaimController::class, 'markPaid'])->name('claims.mark-paid')->middleware('can:claims.approve');
+            Route::post('claims/{claim}/appeal', [ClaimController::class, 'appeal'])->name('claims.appeal')->middleware('can:claims.create');
+            Route::post('claims/{claim}/add-item', [ClaimController::class, 'addItem'])->name('claims.add-item')->middleware('can:claims.create');
+            Route::delete('claims/remove-item/{item}', [ClaimController::class, 'removeItem'])->name('claims.remove-item')->middleware('can:claims.create');
         });
 
         // Queue

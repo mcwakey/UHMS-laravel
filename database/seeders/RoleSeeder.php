@@ -83,6 +83,12 @@ class RoleSeeder extends Seeder
             'appointments.edit',
             'appointments.delete',
 
+            // Claims & Insurance
+            'claims.view',
+            'claims.create',
+            'claims.approve',
+            'claims.export',
+
             // Ward & Inpatient
             'ward.view',
             'ward.manage',
@@ -170,6 +176,16 @@ class RoleSeeder extends Seeder
             'invoices.view', 'invoices.create', 'invoices.edit',
             'payments.view', 'payments.create',
             'services.manage',
+            'reports.view',
+            'claims.view',
+        ]);
+
+        $claimsOfficer = Role::firstOrCreate(['name' => 'Claims Officer']);
+        $claimsOfficer->givePermissionTo([
+            'patients.view',
+            'visits.view',
+            'invoices.view',
+            'claims.view', 'claims.create', 'claims.approve', 'claims.export',
             'reports.view',
         ]);
     }

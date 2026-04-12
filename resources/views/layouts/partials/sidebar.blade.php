@@ -279,6 +279,34 @@
                 @endif
 
                 {{-- ========================================== --}}
+                {{-- CLAIMS & INSURANCE --}}
+                {{-- ========================================== --}}
+                @can('claims.view')
+                <li class="menu-title"><span>Claims & Insurance</span></li>
+                <li>
+                    <ul>
+                        <li class="{{ request()->routeIs('admin.claims.index') || request()->routeIs('admin.claims.show') || request()->routeIs('admin.claims.review') ? 'active' : '' }}">
+                            <a href="{{ route('admin.claims.index') }}">
+                                <i class="ti ti-file-check"></i><span>Claims</span>
+                            </a>
+                        </li>
+                        @can('claims.create')
+                        <li class="{{ request()->routeIs('admin.claims.create') ? 'active' : '' }}">
+                            <a href="{{ route('admin.claims.create') }}">
+                                <i class="ti ti-file-plus"></i><span>New Claim</span>
+                            </a>
+                        </li>
+                        @endcan
+                        <li class="{{ request()->routeIs('admin.insurance-providers.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.insurance-providers.index') }}">
+                                <i class="ti ti-shield-check"></i><span>Insurance Providers</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                @endcan
+
+                {{-- ========================================== --}}
                 {{-- ADMINISTRATION (Phase 1 — Active) --}}
                 {{-- ========================================== --}}
                 @if(Auth::user()->canAny(['users.view', 'departments.view', 'settings.view']))
