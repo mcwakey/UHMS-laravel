@@ -46,6 +46,7 @@ use App\Http\Controllers\Admin\PayrollController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\IcdCodeController;
 use App\Http\Controllers\Admin\ProcedureController;
+use App\Http\Controllers\Admin\AnalyzerController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -549,6 +550,21 @@ Route::middleware('auth')->group(function () {
             Route::patch('procedures/{patientProcedure}/start', [ProcedureController::class, 'startProcedure'])->name('procedures.start')->middleware('can:procedures.create');
             Route::patch('procedures/{patientProcedure}/complete', [ProcedureController::class, 'completeProcedure'])->name('procedures.complete')->middleware('can:procedures.create');
             Route::patch('procedures/{patientProcedure}/cancel', [ProcedureController::class, 'cancelProcedure'])->name('procedures.cancel')->middleware('can:procedures.create');
+        });
+
+        // Analyzer Integration (Lab Instruments)
+        Route::middleware('can:analyzer.manage')->prefix('analyzers')->name('analyzers.')->group(function () {
+            Route::get('/', [AnalyzerController::class, 'index'])->name('index');
+            Route::post('/', [AnalyzerController::class, 'store'])->name('store');
+            Route::get('/diagnostics', [AnalyzerController::class, 'diagnostics'])->name('diagnostics');
+            Route::get('/{analyzer}', [AnalyzerController::class, 'show'])->name('show');
+            Route::put('/{analyzer}', [AnalyzerController::class, 'update'])->name('update');
+            Route::patch('/{analyzer}/toggle', [AnalyzerController::class, 'toggle'])->name('toggle');
+            Route::delete('/{analyzer}', [AnalyzerController::class, 'destroy'])->name('destroy');
+            Route::post('/{analyzer}/mappings', [AnalyzerController::class, 'storeMapping'])->name('mappings.store');
+            Route::put('/mappings/{mapping}', [AnalyzerController::class, 'updateMapping'])->name('mappings.update');
+            Route::delete('/mappings/{mapping}', [AnalyzerController::class, 'destroyMapping'])->name('mappings.destroy');
+            Route::post('/messages/{message}/reprocess', [AnalyzerController::class, 'reprocess'])->name('reprocess');
         });
 
         // Notifications

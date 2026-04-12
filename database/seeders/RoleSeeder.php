@@ -132,6 +132,9 @@ class RoleSeeder extends Seeder
             'procedures.create',
             'procedures.edit',
 
+            // Analyzer Integration
+            'analyzer.manage',
+
             // Reports
             'reports.view',
 
@@ -196,6 +199,7 @@ class RoleSeeder extends Seeder
             'lab.requests.view',
             'lab.results.view', 'lab.results.create',
             'lab.tests.manage',
+            'analyzer.manage',
             'queue.view',
             'notifications.view',
         ]);

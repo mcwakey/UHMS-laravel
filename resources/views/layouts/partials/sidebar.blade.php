@@ -181,7 +181,7 @@
                 {{-- ========================================== --}}
                 {{-- PHARMACY & LAB (Future phases) --}}
                 {{-- ========================================== --}}
-                @if(Auth::user()->canAny(['prescriptions.view', 'pharmacy.dispensing.view', 'pharmacy.drugs.manage', 'pharmacy.stock.manage', 'lab.requests.view', 'lab.results.view', 'lab.tests.manage']))
+                @if(Auth::user()->canAny(['prescriptions.view', 'pharmacy.dispensing.view', 'pharmacy.drugs.manage', 'pharmacy.stock.manage', 'lab.requests.view', 'lab.results.view', 'lab.tests.manage', 'analyzer.manage']))
                 <li class="menu-title"><span>Pharmacy & Lab</span></li>
                 <li>
                     <ul>
@@ -237,6 +237,19 @@
                         <li class="{{ request()->routeIs('admin.lab.tests.*') ? 'active' : '' }}">
                             <a href="{{ route('admin.lab.tests.index') }}">
                                 <i class="ti ti-flask"></i><span>Lab Test Catalog</span>
+                            </a>
+                        </li>
+                        @endcan
+
+                        @can('analyzer.manage')
+                        <li class="{{ request()->routeIs('admin.analyzers.index', 'admin.analyzers.show') ? 'active' : '' }}">
+                            <a href="{{ route('admin.analyzers.index') }}">
+                                <i class="ti ti-device-analytics"></i><span>Lab Analyzers</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.analyzers.diagnostics') ? 'active' : '' }}">
+                            <a href="{{ route('admin.analyzers.diagnostics') }}">
+                                <i class="ti ti-activity"></i><span>Analyzer Messages</span>
                             </a>
                         </li>
                         @endcan
