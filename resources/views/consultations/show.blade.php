@@ -381,22 +381,29 @@
                                 <form method="POST" action="{{ route('admin.consultations.diagnoses.store', $visit) }}">
                                     @csrf
                                     <div class="row g-2">
-                                        <div class="col-md-8">
+                                        <div class="col-md-12">
+                                            <label class="form-label small">ICD-10 Code <small class="text-muted">(Search by code or description)</small></label>
+                                            <input type="hidden" name="icd_code_id" id="icd_code_id">
+                                            <select id="icd_code_select" class="form-select" style="width:100%">
+                                                <option value="">Type to search ICD-10 codes...</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-12">
                                             <label class="form-label small">Description <span class="text-danger">*</span></label>
-                                            <textarea name="description" class="form-control" rows="2" required placeholder="Diagnosis description..."></textarea>
+                                            <textarea name="description" id="diagnosis_description" class="form-control" rows="2" required placeholder="Diagnosis description..."></textarea>
                                         </div>
                                         <div class="col-md-4">
-                                            <label class="form-label small">ICD-10 Code</label>
-                                            <input type="text" name="icd_code" class="form-control" placeholder="e.g., J06.9">
+                                            <label class="form-label small">ICD-10 Code (Manual)</label>
+                                            <input type="text" name="icd_code" id="icd_code_manual" class="form-control" placeholder="e.g., J06.9">
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-md-4">
                                             <label class="form-label small">Type</label>
                                             <select name="type" class="form-select">
                                                 <option value="provisional">Provisional</option>
                                                 <option value="final">Final</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-md-4">
                                             <label class="form-label small">Notes</label>
                                             <input type="text" name="notes" class="form-control" placeholder="Additional notes...">
                                         </div>
@@ -420,7 +427,8 @@
                                             <span class="badge bg-{{ $diagnosis->type === 'final' ? 'success' : 'warning' }}">{{ ucfirst($diagnosis->type) }}</span>
                                         </p>
                                         <small class="text-muted">
-                                            @if($diagnosis->icd_code) ICD-10: <code>{{ $diagnosis->icd_code }}</code> &middot; @endif
+                                            @if($diagnosis->icdCodeEntry) ICD-10: <code>{{ $diagnosis->icdCodeEntry->code }}</code> — {{ $diagnosis->icdCodeEntry->description }} &middot;
+                                            @elseif($diagnosis->icd_code) ICD-10: <code>{{ $diagnosis->icd_code }}</code> &middot; @endif
                                             @if($diagnosis->notes) {{ $diagnosis->notes }} @endif
                                         </small>
                                     </div>
@@ -1217,5 +1225,49 @@
             container.innerHTML = '<span class="text-danger small">Failed to load tests. Try again.</span>';
         });
     }
+
+    // ICD-10 Code Autocomplete (Select2 AJAX)
+    $(document).ready(function() {
+        if ($('#icd_code_select').length && $.fn.select2) {
+            $('#icd_code_select').select2({
+                placeholder: 'Type to search ICD-10 codes...',
+                allowClear: true,
+                minimumInputLength: 2,
+                ajax: {
+                    url: '{{ route("admin.icd-search") }}',
+                    dataType: 'json',
+                    delay: 300,
+                    data: function(params) {
+                        return { q: params.term };
+                    },
+                    processResults: function(data) {
+                        return { results: data.results };
+                    },
+                    cache: true
+                },
+                templateResult: function(item) {
+                    if (item.loading) return item.text;
+                    return $('<span>').html('<strong>' + escapeHtml(item.code) + '</strong> — ' + escapeHtml(item.description));
+                },
+                templateSelection: function(item) {
+                    return item.text || item.code;
+                }
+            }).on('select2:select', function(e) {
+                var data = e.params.data;
+                // Set the hidden icd_code_id
+                $('#icd_code_id').val(data.id);
+                // Auto-fill the manual code field
+                $('#icd_code_manual').val(data.code);
+                // Auto-fill description if empty
+                var descField = $('#diagnosis_description');
+                if (!descField.val().trim()) {
+                    descField.val(data.description);
+                }
+            }).on('select2:clear', function() {
+                $('#icd_code_id').val('');
+                $('#icd_code_manual').val('');
+            });
+        }
+    });
 </script>
 @endpush

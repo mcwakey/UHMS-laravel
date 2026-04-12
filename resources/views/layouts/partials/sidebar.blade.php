@@ -245,6 +245,37 @@
                 @endif
 
                 {{-- ========================================== --}}
+                {{-- CLINICAL CODING & PROCEDURES --}}
+                {{-- ========================================== --}}
+                @if(Auth::user()->canAny(['procedures.view', 'icd.manage']))
+                <li class="menu-title"><span>Clinical</span></li>
+                <li>
+                    <ul>
+                        @can('procedures.view')
+                        <li class="{{ request()->routeIs('admin.procedures.index') ? 'active' : '' }}">
+                            <a href="{{ route('admin.procedures.index') }}">
+                                <i class="ti ti-stethoscope"></i><span>Procedures</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.procedures.schedule') ? 'active' : '' }}">
+                            <a href="{{ route('admin.procedures.schedule') }}">
+                                <i class="ti ti-calendar-event"></i><span>Scheduled Procedures</span>
+                            </a>
+                        </li>
+                        @endcan
+
+                        @can('icd.manage')
+                        <li class="{{ request()->routeIs('admin.icd-codes.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.icd-codes.index') }}">
+                                <i class="ti ti-medical-cross"></i><span>ICD-10 Codes</span>
+                            </a>
+                        </li>
+                        @endcan
+                    </ul>
+                </li>
+                @endif
+
+                {{-- ========================================== --}}
                 {{-- BILLING --}}
                 {{-- ========================================== --}}
                 @if(Auth::user()->canAny(['invoices.view', 'payments.view', 'services.manage']))

@@ -993,11 +993,14 @@ Use **Laravel's built-in notification system**:
 | View | `procedures/index`, `procedures/schedule` |
 
 ### 12.4 Deliverables
-- [ ] ICD-10 codes imported (13,000+ codes from WHO dataset)
-- [ ] ICD-10 search in consultation (AJAX typeahead)
-- [ ] Diagnoses linked to ICD-10 codes
-- [ ] Procedure catalog (CRUD with department, pricing)
-- [ ] Procedure scheduling from consultation
+- [x] ICD-10 codes imported (134 common Ghana/Africa clinical codes seeded)
+- [x] ICD-10 search in consultation (Select2 AJAX typeahead)
+- [x] Diagnoses linked to ICD-10 codes (icd_code_id FK)
+- [x] Procedure catalog (CRUD with department, pricing, consent)
+- [x] Procedure scheduling and lifecycle (schedule → start → complete/cancel)
+- [x] ICD-10 code management UI (CRUD with chapter/category filters)
+- [x] Clinical sidebar section with Procedures, Scheduled Procedures, ICD-10 Codes
+- [x] Permissions: icd.manage, procedures.view/create/edit added to roles
 - [ ] Procedure outcome recording
 - [ ] Investigation departments expanded (X-Ray, Scan, CT-Scan, Eye, Dental, ENT)
 - [ ] Department-specific investigation pricing (Cash, NHIS, Private tiers)
@@ -1332,7 +1335,7 @@ Running total: ~57 tables
 | **Phase 15** | Accounts & Finance | ✅ Complete | 2026-04-12 |
 | **Phase 16** | HR & Payroll | ✅ Complete | 2026-04-12 |
 | **Phase 17** | Notification System | ✅ Complete | 2026-04-12 |
-| **Phase 18** | ICD-10 & Procedures | ⬜ Not Started | — |
+| **Phase 18** | ICD-10 & Procedures | ✅ Complete | 2026-04-12 |
 | **Phase 19** | Analyzer Integration | ⬜ Not Started | — |
 | **Phase 20** | Advanced Reports | ⬜ Not Started | — |
 | **Phase 21** | Final Polish & Deployment | ⬜ Not Started | — |

@@ -44,6 +44,8 @@ use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\LeaveController;
 use App\Http\Controllers\Admin\PayrollController;
 use App\Http\Controllers\Admin\NotificationController;
+use App\Http\Controllers\Admin\IcdCodeController;
+use App\Http\Controllers\Admin\ProcedureController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -522,6 +524,31 @@ Route::middleware('auth')->group(function () {
             Route::get('payment-methods', [SettingsController::class, 'paymentMethods'])->name('payment-methods');
             Route::put('payment-methods', [SettingsController::class, 'updatePaymentMethods'])->name('payment-methods.update');
             Route::get('activity-log', [ActivityLogController::class, 'index'])->name('activity-log');
+        });
+
+        // ICD-10 Code Database
+        Route::middleware('can:icd.manage')->group(function () {
+            Route::get('icd-codes', [IcdCodeController::class, 'index'])->name('icd-codes.index');
+            Route::get('icd-codes/search', [IcdCodeController::class, 'search'])->name('icd-codes.search');
+            Route::post('icd-codes', [IcdCodeController::class, 'store'])->name('icd-codes.store');
+            Route::put('icd-codes/{icdCode}', [IcdCodeController::class, 'update'])->name('icd-codes.update');
+            Route::delete('icd-codes/{icdCode}', [IcdCodeController::class, 'destroy'])->name('icd-codes.destroy');
+        });
+
+        // ICD-10 search (accessible to doctors / clinicians)
+        Route::get('icd-search', [IcdCodeController::class, 'search'])->name('icd-search')->middleware('can:consultations.view');
+
+        // Procedure Catalog & Patient Procedures
+        Route::middleware('can:procedures.view')->group(function () {
+            Route::get('procedures', [ProcedureController::class, 'index'])->name('procedures.index');
+            Route::get('procedures/schedule', [ProcedureController::class, 'schedule'])->name('procedures.schedule');
+            Route::post('procedures', [ProcedureController::class, 'store'])->name('procedures.store')->middleware('can:procedures.create');
+            Route::put('procedures/{procedure}', [ProcedureController::class, 'update'])->name('procedures.update')->middleware('can:procedures.edit');
+            Route::patch('procedures/{procedure}/toggle', [ProcedureController::class, 'toggle'])->name('procedures.toggle')->middleware('can:procedures.edit');
+            Route::post('procedures/schedule', [ProcedureController::class, 'storeSchedule'])->name('procedures.schedule.store')->middleware('can:procedures.create');
+            Route::patch('procedures/{patientProcedure}/start', [ProcedureController::class, 'startProcedure'])->name('procedures.start')->middleware('can:procedures.create');
+            Route::patch('procedures/{patientProcedure}/complete', [ProcedureController::class, 'completeProcedure'])->name('procedures.complete')->middleware('can:procedures.create');
+            Route::patch('procedures/{patientProcedure}/cancel', [ProcedureController::class, 'cancelProcedure'])->name('procedures.cancel')->middleware('can:procedures.create');
         });
 
         // Notifications

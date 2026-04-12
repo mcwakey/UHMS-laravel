@@ -126,6 +126,12 @@ class RoleSeeder extends Seeder
             // Notifications
             'notifications.view',
 
+            // Clinical Coding & Procedures
+            'icd.manage',
+            'procedures.view',
+            'procedures.create',
+            'procedures.edit',
+
             // Reports
             'reports.view',
 
@@ -158,6 +164,7 @@ class RoleSeeder extends Seeder
             'ward.view', 'ward.admit', 'ward.discharge',
             'appointments.view', 'appointments.create', 'appointments.edit',
             'notifications.view',
+            'procedures.view', 'procedures.create',
         ]);
 
         $nurse = Role::firstOrCreate(['name' => 'Nurse']);
@@ -169,6 +176,7 @@ class RoleSeeder extends Seeder
             'prescriptions.view',
             'ward.view', 'beds.view',
             'notifications.view',
+            'procedures.view',
         ]);
 
         $receptionist = Role::firstOrCreate(['name' => 'Receptionist']);

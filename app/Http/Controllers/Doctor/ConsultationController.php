@@ -142,12 +142,13 @@ class ConsultationController extends Controller
         $request->validate([
             'description' => ['required', 'string', 'max:2000'],
             'icd_code' => ['nullable', 'string', 'max:20'],
+            'icd_code_id' => ['nullable', 'exists:icd_codes,id'],
             'type' => ['nullable', 'in:provisional,final'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $record = $this->consultationService->getOrCreateRecord($visit);
-        $diagnosis = $this->consultationService->addDiagnosis($record, $request->only('description', 'icd_code', 'type', 'notes'));
+        $diagnosis = $this->consultationService->addDiagnosis($record, $request->only('description', 'icd_code', 'icd_code_id', 'type', 'notes'));
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'diagnosis' => $diagnosis]);
