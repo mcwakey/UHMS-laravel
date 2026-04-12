@@ -8,10 +8,21 @@ use App\Traits\GeneratesNumbers;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Invoice extends Model
 {
-    use HasFactory, SoftDeletes, GeneratesNumbers;
+    use HasFactory, SoftDeletes, GeneratesNumbers, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['status', 'total_amount', 'amount_paid', 'balance', 'billing_type'])
+            ->logOnlyDirty()
+            ->useLogName('billing')
+            ->dontSubmitEmptyLogs();
+    }
 
     protected $fillable = [
         'invoice_number',

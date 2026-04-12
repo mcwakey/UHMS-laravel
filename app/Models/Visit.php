@@ -9,10 +9,21 @@ use App\Traits\GeneratesNumbers;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Visit extends Model
 {
-    use HasFactory, SoftDeletes, GeneratesNumbers;
+    use HasFactory, SoftDeletes, GeneratesNumbers, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['status', 'visit_type', 'priority', 'assigned_doctor_id', 'department_id'])
+            ->logOnlyDirty()
+            ->useLogName('visits')
+            ->dontSubmitEmptyLogs();
+    }
 
     protected $fillable = [
         'visit_number',

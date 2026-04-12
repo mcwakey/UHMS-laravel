@@ -6,10 +6,21 @@ use App\Enums\PrescriptionStatus;
 use App\Traits\GeneratesNumbers;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Prescription extends Model
 {
-    use HasFactory, GeneratesNumbers;
+    use HasFactory, GeneratesNumbers, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['status', 'notes'])
+            ->logOnlyDirty()
+            ->useLogName('pharmacy')
+            ->dontSubmitEmptyLogs();
+    }
 
     protected $fillable = [
         'medical_record_id',

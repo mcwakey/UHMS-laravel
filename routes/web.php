@@ -25,6 +25,9 @@ use App\Http\Controllers\Billing\InvoiceController;
 use App\Http\Controllers\Billing\PaymentController;
 use App\Http\Controllers\Pharmacy\DispensingController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -312,6 +315,22 @@ Route::middleware('auth')->group(function () {
             Route::get('visits', [ReportController::class, 'visits'])->name('visits');
             Route::get('nhis', [ReportController::class, 'nhis'])->name('nhis');
         });
+
+        // Settings (Admin)
+        Route::middleware('can:settings.manage')->prefix('settings')->name('settings.')->group(function () {
+            Route::get('organization', [SettingsController::class, 'organization'])->name('organization');
+            Route::put('organization', [SettingsController::class, 'updateOrganization'])->name('organization.update');
+            Route::get('invoice', [SettingsController::class, 'invoice'])->name('invoice');
+            Route::put('invoice', [SettingsController::class, 'updateInvoice'])->name('invoice.update');
+            Route::get('payment-methods', [SettingsController::class, 'paymentMethods'])->name('payment-methods');
+            Route::put('payment-methods', [SettingsController::class, 'updatePaymentMethods'])->name('payment-methods.update');
+            Route::get('activity-log', [ActivityLogController::class, 'index'])->name('activity-log');
+        });
+
+        // Profile (All authenticated users)
+        Route::get('profile', [ProfileController::class, 'edit'])->name('profile');
+        Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::put('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
     });
 
     /*

@@ -104,6 +104,17 @@
                         </div>
                     </div>
 
+                    <a href="{{ route('admin.profile') }}" class="dropdown-item">
+                        <i class="ti ti-user me-1 fs-17 align-middle"></i>
+                        <span class="align-middle">My Profile</span>
+                    </a>
+                    @can('settings.manage')
+                    <a href="{{ route('admin.settings.organization') }}" class="dropdown-item">
+                        <i class="ti ti-settings me-1 fs-17 align-middle"></i>
+                        <span class="align-middle">Settings</span>
+                    </a>
+                    @endcan
+
                     <div class="pt-2 mt-2 border-top">
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf

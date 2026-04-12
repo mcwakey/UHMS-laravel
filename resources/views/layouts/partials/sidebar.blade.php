@@ -293,6 +293,42 @@
                 </li>
                 @endcan
 
+                {{-- Settings --}}
+                @canany(['settings.manage'])
+                <li class="nav-subtitle">
+                    <span>Settings</span>
+                </li>
+                <li class="{{ request()->routeIs('admin.settings.*') ? 'active subdrop' : '' }}">
+                    <a href="javascript:void(0);" class="{{ request()->routeIs('admin.settings.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#settingsMenu" aria-expanded="{{ request()->routeIs('admin.settings.*') ? 'true' : 'false' }}">
+                        <i class="ti ti-settings"></i><span>Settings</span><span class="menu-arrow"></span>
+                    </a>
+                    <ul class="collapse {{ request()->routeIs('admin.settings.*') ? 'show' : '' }}" id="settingsMenu">
+                        @can('settings.manage')
+                        <li class="{{ request()->routeIs('admin.settings.organization') ? 'active' : '' }}">
+                            <a href="{{ route('admin.settings.organization') }}">
+                                <i class="ti ti-building"></i><span>Organization</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.settings.invoice') ? 'active' : '' }}">
+                            <a href="{{ route('admin.settings.invoice') }}">
+                                <i class="ti ti-file-invoice"></i><span>Invoice Settings</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.settings.payment-methods') ? 'active' : '' }}">
+                            <a href="{{ route('admin.settings.payment-methods') }}">
+                                <i class="ti ti-credit-card"></i><span>Payment Methods</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.settings.activity-log') ? 'active' : '' }}">
+                            <a href="{{ route('admin.settings.activity-log') }}">
+                                <i class="ti ti-history"></i><span>Activity Log</span>
+                            </a>
+                        </li>
+                        @endcan
+                    </ul>
+                </li>
+                @endcanany
+
             </ul>
         </div>
     </div>

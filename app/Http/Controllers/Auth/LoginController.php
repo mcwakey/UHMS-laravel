@@ -29,6 +29,11 @@ class LoginController extends Controller
 
             $user = Auth::user();
 
+            activity('auth')
+                ->causedBy($user)
+                ->withProperties(['ip' => $request->ip(), 'user_agent' => $request->userAgent()])
+                ->log('logged in');
+
             // Redirect based on role
             if ($user->hasRole('Super Admin') || $user->hasRole('Admin')) {
                 return redirect()->intended(route('admin.dashboard'));
@@ -52,6 +57,13 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
+        $user = Auth::user();
+
+        activity('auth')
+            ->causedBy($user)
+            ->withProperties(['ip' => $request->ip()])
+            ->log('logged out');
+
         Auth::logout();
 
         $request->session()->invalidate();

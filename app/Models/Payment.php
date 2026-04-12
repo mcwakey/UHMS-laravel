@@ -6,10 +6,21 @@ use App\Enums\PaymentMethod;
 use App\Traits\GeneratesNumbers;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Payment extends Model
 {
-    use HasFactory, GeneratesNumbers;
+    use HasFactory, GeneratesNumbers, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['amount', 'payment_method', 'reference_number'])
+            ->logOnlyDirty()
+            ->useLogName('billing')
+            ->dontSubmitEmptyLogs();
+    }
 
     protected $fillable = [
         'payment_number',

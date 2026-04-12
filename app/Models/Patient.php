@@ -9,10 +9,21 @@ use App\Traits\GeneratesNumbers;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Patient extends Model
 {
-    use HasFactory, SoftDeletes, GeneratesNumbers;
+    use HasFactory, SoftDeletes, GeneratesNumbers, LogsActivity;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['first_name', 'last_name', 'phone', 'email', 'nhis_number', 'status'])
+            ->logOnlyDirty()
+            ->useLogName('patients')
+            ->dontSubmitEmptyLogs();
+    }
 
     protected $fillable = [
         'patient_number',
