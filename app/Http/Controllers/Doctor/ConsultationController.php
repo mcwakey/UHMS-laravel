@@ -12,6 +12,7 @@ use App\Models\Investigation;
 use App\Models\Treatment;
 use App\Models\Visit;
 use App\Services\ConsultationService;
+use App\Services\MedicalPatternService;
 use App\Services\PrescriptionService;
 use App\Services\VisitService;
 use Illuminate\Http\Request;
@@ -22,6 +23,7 @@ class ConsultationController extends Controller
         protected ConsultationService $consultationService,
         protected PrescriptionService $prescriptionService,
         protected VisitService $visitService,
+        protected MedicalPatternService $patternService,
     ) {}
 
     /**
@@ -58,11 +60,20 @@ class ConsultationController extends Controller
         $record = $this->consultationService->getOrCreateRecord($visit);
         $data = $this->consultationService->getConsultationData($visit);
 
+        // Get recent/popular patterns for the doctor
+        $patterns = \App\Models\MedicalPattern::active()
+            ->forDoctor(auth()->id())
+            ->with('items')
+            ->orderByDesc('usage_count')
+            ->limit(10)
+            ->get();
+
         return view('consultations.show', [
             'visit' => $data['visit'],
             'record' => $data['record'],
             'vitals' => $data['vitals'],
             'history' => $data['history'],
+            'patterns' => $patterns,
         ]);
     }
 

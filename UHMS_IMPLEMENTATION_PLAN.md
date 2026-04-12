@@ -39,7 +39,7 @@
 | **Phase 2** — Patient Module | ✅ DONE | 2026-04-11 |
 | **Phase 3** — Visit & Queue Module | ✅ DONE | 2026-04-11 |
 | **Phase 4** — EHR Module | ✅ DONE | 2026-04-11 |
-| **Phase 5** — Medical Pattern Engine | ⬜ Not Started | — |
+| **Phase 5** — Medical Pattern Engine | ✅ DONE | 2026-04-12 |
 | **Phase 6** — Laboratory Module | ⬜ Not Started | — |
 | **Phase 7** — Pharmacy Module | ⬜ Not Started | — |
 | **Phase 8** — Billing Module | ⬜ Not Started | — |
@@ -50,21 +50,21 @@
 
 **Enums (12):** `Gender`, `UserStatus`, `VisitStatus`, `VisitType`, `Priority`, `BloodGroup`, `PaymentMethod`, `MaritalStatus`, `BillingType`, `InvoiceStatus`, `LabRequestStatus`, `PrescriptionStatus`
 
-**Models (15):** `User` (modified), `Department`, `Designation`, `Patient`, `Visit`, `VisitStatusLog`, `QueueEntry`, `MedicalRecord`, `Complaint`, `Diagnosis`, `Investigation`, `Treatment`, `Prescription`, `PrescriptionItem`, `Vital`
+**Models (17):** `User` (modified), `Department`, `Designation`, `Patient`, `Visit`, `VisitStatusLog`, `QueueEntry`, `MedicalRecord`, `Complaint`, `Diagnosis`, `Investigation`, `Treatment`, `Prescription`, `PrescriptionItem`, `Vital`, `MedicalPattern`, `MedicalPatternItem`
 
-**Controllers (14):** `Admin/DashboardController`, `Admin/UserController`, `Admin/RoleController`, `Admin/DepartmentController`, `Admin/DesignationController`, `Admin/PatientController`, `Admin/VisitController`, `Admin/QueueController`, `Admin/VitalController`, `Doctor/ConsultationController`, `Doctor/PrescriptionController`, `Auth/LoginController`, `Auth/ForgotPasswordController`, `Auth/ResetPasswordController`
+**Controllers (15):** `Admin/DashboardController`, `Admin/UserController`, `Admin/RoleController`, `Admin/DepartmentController`, `Admin/DesignationController`, `Admin/PatientController`, `Admin/VisitController`, `Admin/QueueController`, `Admin/VitalController`, `Doctor/ConsultationController`, `Doctor/PrescriptionController`, `Doctor/MedicalPatternController`, `Auth/LoginController`, `Auth/ForgotPasswordController`, `Auth/ResetPasswordController`
 
-**Services (6):** `UserService`, `PatientService`, `VisitService`, `QueueService`, `ConsultationService`, `PrescriptionService`
+**Services (7):** `UserService`, `PatientService`, `VisitService`, `QueueService`, `ConsultationService`, `PrescriptionService`, `MedicalPatternService`
 
 **Middleware (1):** `EnsureUserHasRole`
 
 **Form Requests (8):** `StoreUserRequest`, `UpdateUserRequest`, `StorePatientRequest`, `UpdatePatientRequest`, `StoreVisitRequest`, `StoreConsultationRequest`, `StoreVitalRequest`, `StorePrescriptionRequest`
 
-**Migrations (15 custom):** `create_departments_table`, `create_designations_table`, `modify_users_table_for_uhms`, `create_patients_table`, `create_visits_table`, `create_visit_status_logs_table`, `create_queue_entries_table`, `create_medical_records_table`, `create_complaints_table`, `create_diagnoses_table`, `create_investigations_table`, `create_treatments_table`, `create_prescriptions_table`, `create_prescription_items_table`, `create_vitals_table`
+**Migrations (17 custom):** `create_departments_table`, `create_designations_table`, `modify_users_table_for_uhms`, `create_patients_table`, `create_visits_table`, `create_visit_status_logs_table`, `create_queue_entries_table`, `create_medical_records_table`, `create_complaints_table`, `create_diagnoses_table`, `create_investigations_table`, `create_treatments_table`, `create_prescriptions_table`, `create_prescription_items_table`, `create_vitals_table`, `create_medical_patterns_table`, `create_medical_pattern_items_table`
 
 **Seeders (3):** `RoleSeeder` (8 roles, 42 permissions), `DepartmentSeeder` (16 depts), `AdminUserSeeder`
 
-**Blade Views (29):**
+**Blade Views (31):**
 - Layouts: `app.blade.php`, `auth.blade.php`, `partials/header.blade.php`, `partials/sidebar.blade.php`
 - Auth: `login`, `forgot-password`, `reset-password`
 - Dashboard: `admin`
@@ -75,9 +75,10 @@
 - Patients: `index`, `create`, `edit`, `show`
 - Visits: `index`, `create`, `show`
 - Queue: `manage`, `board`
-- Consultations: `index`, `show`, `history`
+- Consultations: `index`, `show` (with pattern integration), `history`
 - Vitals: `record`
 - Prescriptions: `index`, `show`
+- Patterns: `index`, `create`
 
 ---
 
@@ -817,11 +818,22 @@ This is the **most critical custom view**. Layout:
 ```
 
 ### 8.5 Deliverables
-- [ ] Pattern creation from consultation data
-- [ ] Pattern suggestion based on complaints
-- [ ] One-click pattern application
-- [ ] Pattern management (edit, deactivate)
-- [ ] Usage tracking and ranking
+- [x] Pattern creation from consultation data ("Save as Pattern" button on consultation view)
+- [x] Pattern suggestion based on complaints (AJAX search with fuzzy LIKE matching)
+- [x] One-click pattern application (applies complaints, diagnoses, treatments to record)
+- [x] Pattern management (list, create, view detail modal, toggle active/inactive, delete)
+- [x] Usage tracking and ranking (auto-increment on apply, sorted by usage_count)
+
+> **Phase 5 COMPLETED** — 2026-04-12
+>
+> **Implementation Notes:**
+> - 2 migrations: `medical_patterns` (name, doctor_id, usage_count, is_active) + `medical_pattern_items` (type, data as longText/JSON, sort_order)
+> - Pattern items store structured JSON: complaint (description, duration, severity), diagnosis (icd_code, description, type, notes), treatment (type, description), prescription_item (drug_name, dosage, frequency, duration, quantity, route, instructions)
+> - MedicalPatternService: create, createFromRecord, update, suggest (fuzzy LIKE on complaint data + pattern name), applyPattern (creates items on medical record), toggleActive, delete
+> - MedicalPatternController: 10 routes (index, create, store, show, update, destroy, toggle, suggest, apply, from-record). All AJAX-compatible.
+> - Consultation view enhanced: Patterns tab with search + frequent patterns, "Save as Pattern" modal in quick actions, one-click apply with page reload
+> - Sidebar updated with Medical Patterns link under Clinic section
+> - Scopes: personal (doctor_id set) or system-wide (doctor_id null). ForDoctor scope returns both.
 
 ---
 

@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\VisitController;
 use App\Http\Controllers\Admin\QueueController;
 use App\Http\Controllers\Admin\VitalController;
 use App\Http\Controllers\Doctor\ConsultationController;
+use App\Http\Controllers\Doctor\MedicalPatternController;
 use App\Http\Controllers\Doctor\PrescriptionController;
 use Illuminate\Support\Facades\Route;
 
@@ -183,6 +184,20 @@ Route::middleware('auth')->group(function () {
             Route::get('prescriptions', [PrescriptionController::class, 'index'])->name('prescriptions.index');
             Route::get('prescriptions/{prescription}', [PrescriptionController::class, 'show'])->name('prescriptions.show');
             Route::patch('prescriptions/{prescription}/cancel', [PrescriptionController::class, 'cancel'])->name('prescriptions.cancel')->middleware('can:prescriptions.create');
+        });
+
+        // Medical Patterns
+        Route::middleware('can:consultations.view')->group(function () {
+            Route::get('patterns', [MedicalPatternController::class, 'index'])->name('patterns.index');
+            Route::get('patterns/create', [MedicalPatternController::class, 'create'])->name('patterns.create')->middleware('can:consultations.create');
+            Route::post('patterns', [MedicalPatternController::class, 'store'])->name('patterns.store')->middleware('can:consultations.create');
+            Route::get('patterns/suggest', [MedicalPatternController::class, 'suggest'])->name('patterns.suggest');
+            Route::get('patterns/{pattern}', [MedicalPatternController::class, 'show'])->name('patterns.show');
+            Route::put('patterns/{pattern}', [MedicalPatternController::class, 'update'])->name('patterns.update')->middleware('can:consultations.create');
+            Route::patch('patterns/{pattern}/toggle', [MedicalPatternController::class, 'toggleActive'])->name('patterns.toggle')->middleware('can:consultations.create');
+            Route::delete('patterns/{pattern}', [MedicalPatternController::class, 'destroy'])->name('patterns.destroy')->middleware('can:consultations.create');
+            Route::post('patterns/{pattern}/apply', [MedicalPatternController::class, 'apply'])->name('patterns.apply')->middleware('can:consultations.create');
+            Route::post('patterns/from-record/{visit}', [MedicalPatternController::class, 'storeFromRecord'])->name('patterns.from-record')->middleware('can:consultations.create');
         });
     });
 

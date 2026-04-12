@@ -103,6 +103,14 @@
                             </a>
                         </li>
                         @endcan
+
+                        @can('consultations.view')
+                        <li class="{{ request()->routeIs('admin.patterns.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.patterns.index') }}">
+                                <i class="ti ti-template"></i><span>Medical Patterns</span>
+                            </a>
+                        </li>
+                        @endcan
                     </ul>
                 </li>
                 @endcan

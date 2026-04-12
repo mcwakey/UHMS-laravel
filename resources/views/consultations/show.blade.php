@@ -110,6 +110,12 @@
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $history['total'] ?? 0 }}</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#patterns-section" data-bs-toggle="pill">
+                                <i class="ti ti-template me-2"></i>Patterns
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $patterns->count() }}</span>
+                            </a>
+                        </li>
                     </ul>
                 </nav>
             </div>
@@ -128,6 +134,11 @@
                     <a href="{{ route('admin.consultations.history', $visit) }}" class="btn btn-outline-info btn-sm">
                         <i class="ti ti-history me-1"></i>Full History
                     </a>
+                    @can('consultations.create')
+                    <button type="button" class="btn btn-outline-purple btn-sm" data-bs-toggle="modal" data-bs-target="#savePatternModal">
+                        <i class="ti ti-template me-1"></i>Save as Pattern
+                    </button>
+                    @endcan
                     @if($visit->status->allowedTransitions())
                     <hr class="my-1">
                     <small class="text-muted fw-bold px-1">Transition Visit</small>
@@ -799,9 +810,111 @@
                 </div>
             </div>
 
+            {{-- ============================================================ --}}
+            {{-- PATTERNS TAB --}}
+            {{-- ============================================================ --}}
+            <div class="tab-pane fade" id="patterns-section">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold mb-0"><i class="ti ti-template me-1"></i>Medical Patterns</h6>
+                        <a href="{{ route('admin.patterns.create') }}" class="btn btn-sm btn-outline-primary">
+                            <i class="ti ti-plus me-1"></i>Create Pattern
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <!-- Pattern Search -->
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="ti ti-search"></i></span>
+                                <input type="text" id="patternSearchInput" class="form-control" placeholder="Type a complaint to find matching patterns..." minlength="3">
+                                <button type="button" class="btn btn-primary" id="patternSearchBtn">
+                                    <i class="ti ti-search me-1"></i>Search
+                                </button>
+                            </div>
+                            <small class="text-muted">Enter at least 3 characters to search for patterns by complaint or name.</small>
+                        </div>
+
+                        <!-- Search Results -->
+                        <div id="patternSearchResults" class="mb-3" style="display:none;"></div>
+
+                        <!-- Frequent Patterns -->
+                        <h6 class="fw-bold small text-muted mb-2"><i class="ti ti-flame me-1"></i>Frequently Used</h6>
+                        @if($patterns->count() > 0)
+                            @foreach($patterns as $pattern)
+                            <div class="border rounded p-3 mb-2 pattern-card">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="fw-bold mb-1">{{ $pattern->name }}</h6>
+                                        <div class="mb-1">
+                                            @foreach($pattern->items->groupBy('type') as $type => $items)
+                                                <span class="badge bg-{{ $items->first()->getTypeColor() }}-subtle text-{{ $items->first()->getTypeColor() }} me-1">
+                                                    {{ $items->count() }} {{ $items->first()->getTypeLabel() }}{{ $items->count() > 1 ? 's' : '' }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                        <small class="text-muted">
+                                            @if($pattern->is_system) <span class="badge bg-primary-subtle text-primary">System</span> @else Personal @endif
+                                            &middot; Used {{ $pattern->usage_count }} times
+                                        </small>
+                                    </div>
+                                    @can('consultations.create')
+                                    <button type="button" class="btn btn-sm btn-success apply-pattern-btn"
+                                            data-pattern-id="{{ $pattern->id }}" data-pattern-name="{{ $pattern->name }}">
+                                        <i class="ti ti-check me-1"></i>Apply
+                                    </button>
+                                    @endcan
+                                </div>
+                            </div>
+                            @endforeach
+                        @else
+                            <div class="text-center text-muted py-4">
+                                <i class="ti ti-template fs-1 d-block mb-2"></i>
+                                No patterns available yet.
+                                <br><a href="{{ route('admin.patterns.create') }}">Create your first pattern</a>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
+
+<!-- Save as Pattern Modal -->
+@can('consultations.create')
+<div class="modal fade" id="savePatternModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.patterns.from-record', $visit) }}">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="ti ti-template me-2"></i>Save as Pattern</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">Save the current consultation data (complaints, diagnoses, treatments, prescriptions) as a reusable pattern.</p>
+                    <div class="mb-3">
+                        <label class="form-label">Pattern Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" required placeholder="e.g., Common Cold, Malaria Uncomplicated">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Scope</label>
+                        <select name="scope" class="form-select">
+                            <option value="personal">Personal (Only me)</option>
+                            <option value="system">System-Wide (All doctors)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>Save Pattern</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endcan
 @endsection
 
 @push('scripts')
@@ -830,5 +943,105 @@
         container.appendChild(template);
         itemIndex++;
     });
+
+    // Pattern search
+    var searchBtn = document.getElementById('patternSearchBtn');
+    var searchInput = document.getElementById('patternSearchInput');
+    var searchResults = document.getElementById('patternSearchResults');
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(text || ''));
+        return div.innerHTML;
+    }
+
+    if (searchBtn) {
+        searchBtn.addEventListener('click', function() {
+            var query = searchInput.value.trim();
+            if (query.length < 3) {
+                searchResults.innerHTML = '<div class="alert alert-warning py-2">Please enter at least 3 characters.</div>';
+                searchResults.style.display = 'block';
+                return;
+            }
+
+            searchResults.innerHTML = '<div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary"></div> Searching...</div>';
+            searchResults.style.display = 'block';
+
+            fetch('{{ route("admin.patterns.suggest") }}?query=' + encodeURIComponent(query), {
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.patterns && data.patterns.length > 0) {
+                    var html = '<h6 class="fw-bold small text-muted mb-2"><i class="ti ti-sparkles me-1"></i>Suggestions</h6>';
+                    data.patterns.forEach(function(p) {
+                        html += '<div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-center">';
+                        html += '<div><strong>' + escapeHtml(p.name) + '</strong> <small class="text-muted">(' + p.items.length + ' items, used ' + p.usage_count + 'x)</small></div>';
+                        html += '<button type="button" class="btn btn-sm btn-success apply-pattern-btn" data-pattern-id="' + p.id + '" data-pattern-name="' + escapeHtml(p.name) + '"><i class="ti ti-check me-1"></i>Apply</button>';
+                        html += '</div>';
+                    });
+                    searchResults.innerHTML = html;
+                    bindApplyButtons();
+                } else {
+                    searchResults.innerHTML = '<div class="alert alert-info py-2 mb-0">No matching patterns found.</div>';
+                }
+            })
+            .catch(function() {
+                searchResults.innerHTML = '<div class="alert alert-danger py-2 mb-0">Search failed. Please try again.</div>';
+            });
+        });
+
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); searchBtn.click(); }
+        });
+    }
+
+    // Apply pattern
+    function bindApplyButtons() {
+        document.querySelectorAll('.apply-pattern-btn').forEach(function(btn) {
+            btn.removeEventListener('click', applyPattern);
+            btn.addEventListener('click', applyPattern);
+        });
+    }
+
+    function applyPattern() {
+        var patternId = this.dataset.patternId;
+        var patternName = this.dataset.patternName;
+        var btn = this;
+
+        if (!confirm('Apply pattern "' + patternName + '"? This will add all items from the pattern to this consultation.')) return;
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        fetch('{{ url("admin/patterns") }}/' + patternId + '/apply', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ visit_id: {{ $visit->id }} })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                // Reload to show applied items
+                window.location.reload();
+            } else {
+                alert('Failed to apply pattern.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="ti ti-check me-1"></i>Apply';
+            }
+        })
+        .catch(function() {
+            alert('Failed to apply pattern. Please try again.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="ti ti-check me-1"></i>Apply';
+        });
+    }
+
+    bindApplyButtons();
 </script>
 @endpush
