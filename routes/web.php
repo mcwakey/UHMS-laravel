@@ -36,6 +36,9 @@ use App\Http\Controllers\Admin\ClaimController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\StockTransferController;
+use App\Http\Controllers\Admin\AccountCategoryController;
+use App\Http\Controllers\Admin\FinancialEntryController;
+use App\Http\Controllers\Admin\CashierShiftController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -241,6 +244,48 @@ Route::middleware('auth')->group(function () {
                 Route::post('transfers/{transfer}/complete', [StockTransferController::class, 'complete'])->name('transfers.complete')->middleware('can:store.transfer.create');
                 Route::post('transfers/{transfer}/cancel', [StockTransferController::class, 'cancel'])->name('transfers.cancel')->middleware('can:store.transfer.create');
                 Route::get('transfers/drug-stock', [StockTransferController::class, 'drugStock'])->name('transfers.drug-stock');
+            });
+        });
+
+        // Accounts & Finance
+        Route::prefix('accounts')->name('accounts.')->group(function () {
+            // Categories
+            Route::middleware('can:accounts.manage')->group(function () {
+                Route::get('categories', [AccountCategoryController::class, 'index'])->name('categories.index');
+                Route::post('categories', [AccountCategoryController::class, 'store'])->name('categories.store');
+                Route::put('categories/{category}', [AccountCategoryController::class, 'update'])->name('categories.update');
+                Route::patch('categories/{category}/toggle', [AccountCategoryController::class, 'toggle'])->name('categories.toggle');
+            });
+
+            // Expenses
+            Route::middleware('can:accounts.entries.view')->group(function () {
+                Route::get('expenses', [FinancialEntryController::class, 'index'])->name('expenses.index');
+                Route::get('expenses/create', [FinancialEntryController::class, 'create'])->name('expenses.create')->middleware('can:accounts.entries.create');
+            });
+
+            // Income
+            Route::middleware('can:accounts.entries.view')->group(function () {
+                Route::get('income', [FinancialEntryController::class, 'index'])->name('income.index');
+                Route::get('income/create', [FinancialEntryController::class, 'create'])->name('income.create')->middleware('can:accounts.entries.create');
+            });
+
+            // Shared entry actions
+            Route::post('entries', [FinancialEntryController::class, 'store'])->name('entries.store')->middleware('can:accounts.entries.create');
+            Route::post('entries/{entry}/approve', [FinancialEntryController::class, 'approve'])->name('entries.approve')->middleware('can:accounts.entries.approve');
+            Route::delete('entries/{entry}', [FinancialEntryController::class, 'destroy'])->name('entries.destroy')->middleware('can:accounts.entries.create');
+
+            // Reports
+            Route::middleware('can:accounts.entries.view')->group(function () {
+                Route::get('daily-collection', [FinancialEntryController::class, 'dailyCollection'])->name('daily-collection');
+                Route::get('reconciliation', [FinancialEntryController::class, 'reconciliation'])->name('reconciliation');
+            });
+
+            // Cashier Handover
+            Route::middleware('can:accounts.cashier')->group(function () {
+                Route::get('handover', [CashierShiftController::class, 'index'])->name('handover.index');
+                Route::post('handover/open', [CashierShiftController::class, 'open'])->name('handover.open');
+                Route::post('handover/{shift}/close', [CashierShiftController::class, 'close'])->name('handover.close');
+                Route::post('handover/{shift}/verify', [CashierShiftController::class, 'verify'])->name('handover.verify')->middleware('can:accounts.entries.approve');
             });
         });
 

@@ -337,6 +337,53 @@
                 @endif
 
                 {{-- ========================================== --}}
+                {{-- ACCOUNTS & FINANCE --}}
+                {{-- ========================================== --}}
+                @if(Auth::user()->canAny(['accounts.entries.view', 'accounts.manage', 'accounts.cashier']))
+                <li class="menu-title"><span>Accounts & Finance</span></li>
+                <li>
+                    <ul>
+                        @can('accounts.manage')
+                        <li class="{{ request()->routeIs('admin.accounts.categories.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.accounts.categories.index') }}">
+                                <i class="ti ti-category"></i><span>Account Categories</span>
+                            </a>
+                        </li>
+                        @endcan
+                        @can('accounts.entries.view')
+                        <li class="{{ request()->routeIs('admin.accounts.expenses.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.accounts.expenses.index') }}">
+                                <i class="ti ti-trending-down"></i><span>Expenses</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.accounts.income.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.accounts.income.index') }}">
+                                <i class="ti ti-trending-up"></i><span>Income</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.accounts.daily-collection') ? 'active' : '' }}">
+                            <a href="{{ route('admin.accounts.daily-collection') }}">
+                                <i class="ti ti-report-money"></i><span>Daily Collection</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.accounts.reconciliation') ? 'active' : '' }}">
+                            <a href="{{ route('admin.accounts.reconciliation') }}">
+                                <i class="ti ti-chart-bar"></i><span>Reconciliation</span>
+                            </a>
+                        </li>
+                        @endcan
+                        @can('accounts.cashier')
+                        <li class="{{ request()->routeIs('admin.accounts.handover.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.accounts.handover.index') }}">
+                                <i class="ti ti-cash-register"></i><span>Cashier Handover</span>
+                            </a>
+                        </li>
+                        @endcan
+                    </ul>
+                </li>
+                @endif
+
+                {{-- ========================================== --}}
                 {{-- ADMINISTRATION (Phase 1 — Active) --}}
                 {{-- ========================================== --}}
                 @if(Auth::user()->canAny(['users.view', 'departments.view', 'settings.view']))

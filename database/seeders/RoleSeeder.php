@@ -96,6 +96,13 @@ class RoleSeeder extends Seeder
             'store.transfer.view',
             'store.transfer.create',
 
+            // Accounts & Finance
+            'accounts.manage',
+            'accounts.entries.view',
+            'accounts.entries.create',
+            'accounts.entries.approve',
+            'accounts.cashier',
+
             // Ward & Inpatient
             'ward.view',
             'ward.manage',
@@ -186,6 +193,9 @@ class RoleSeeder extends Seeder
             'services.manage',
             'reports.view',
             'claims.view',
+            'accounts.manage',
+            'accounts.entries.view', 'accounts.entries.create', 'accounts.entries.approve',
+            'accounts.cashier',
         ]);
 
         $claimsOfficer = Role::firstOrCreate(['name' => 'Claims Officer']);
