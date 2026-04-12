@@ -1,7 +1,7 @@
 <div class="list-group list-group-flush">
     <div class="list-group-item bg-light fw-bold text-muted small text-uppercase">Account</div>
-    <a href="{{ route('admin.settings.profile') }}"
-       class="list-group-item list-group-item-action {{ request()->routeIs('admin.settings.profile') ? 'active' : '' }}">
+    <a href="{{ route('admin.profile') }}"
+       class="list-group-item list-group-item-action {{ request()->routeIs('admin.profile') ? 'active' : '' }}">
         <i class="ti ti-user me-2"></i>Profile Settings
     </a>
 

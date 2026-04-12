@@ -36,7 +36,7 @@
                 <h5 class="card-title mb-0">Profile Information</h5>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ route('admin.settings.profile.update') }}" enctype="multipart/form-data">
+                <form method="POST" action="{{ route('admin.profile.update') }}" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
@@ -130,7 +130,7 @@
                 <h5 class="card-title mb-0">Change Password</h5>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ route('admin.settings.profile.password') }}">
+                <form method="POST" action="{{ route('admin.profile.password') }}">
                     @csrf
                     @method('PUT')
 
