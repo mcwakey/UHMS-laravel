@@ -263,15 +263,30 @@
                 @endif
 
                 {{-- ========================================== --}}
-                {{-- REPORTS (Future phases) --}}
+                {{-- REPORTS --}}
                 {{-- ========================================== --}}
                 @can('reports.view')
                 <li class="menu-title"><span>Reports</span></li>
                 <li>
                     <ul>
-                        <li class="{{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">
-                            <a href="javascript:void(0);">
-                                <i class="ti ti-report"></i><span>Reports</span>
+                        <li class="{{ request()->routeIs('admin.reports.income') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.income') }}">
+                                <i class="ti ti-report-money"></i><span>Income Report</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.reports.patients') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.patients') }}">
+                                <i class="ti ti-users"></i><span>Patient Report</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.reports.visits') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.visits') }}">
+                                <i class="ti ti-calendar-stats"></i><span>Visit Report</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.reports.nhis') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.nhis') }}">
+                                <i class="ti ti-heart-handshake"></i><span>NHIS Report</span>
                             </a>
                         </li>
                     </ul>

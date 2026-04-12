@@ -24,6 +24,8 @@ use App\Http\Controllers\Admin\ServiceCatalogController;
 use App\Http\Controllers\Billing\InvoiceController;
 use App\Http\Controllers\Billing\PaymentController;
 use App\Http\Controllers\Pharmacy\DispensingController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -302,16 +304,22 @@ Route::middleware('auth')->group(function () {
             Route::put('services/{service}', [ServiceCatalogController::class, 'update'])->name('services.update');
             Route::patch('services/{service}/toggle', [ServiceCatalogController::class, 'toggle'])->name('services.toggle');
         });
+
+        // Reports
+        Route::middleware('can:reports.view')->prefix('reports')->name('reports.')->group(function () {
+            Route::get('income', [ReportController::class, 'income'])->name('income');
+            Route::get('patients', [ReportController::class, 'patients'])->name('patients');
+            Route::get('visits', [ReportController::class, 'visits'])->name('visits');
+            Route::get('nhis', [ReportController::class, 'nhis'])->name('nhis');
+        });
     });
 
     /*
     |----------------------------------------------------------------------
-    | Doctor Routes (placeholder for Phase 2+)
+    | Doctor Routes
     |----------------------------------------------------------------------
     */
     Route::prefix('doctor')->name('doctor.')->group(function () {
-        Route::get('dashboard', function () {
-            return view('dashboard.admin'); // Temporary: use admin dashboard
-        })->name('dashboard');
+        Route::get('dashboard', [DoctorDashboardController::class, 'index'])->name('dashboard');
     });
 });

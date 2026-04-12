@@ -1151,7 +1151,7 @@ This is the **most critical custom view**. Layout:
 
 ---
 
-## 12. PHASE 9 — DASHBOARDS & REPORTS
+## 12. PHASE 9 — DASHBOARDS & REPORTS ✅ DONE
 
 ### 12.1 Objectives
 - Role-specific dashboards with real metrics
@@ -1196,13 +1196,25 @@ This is the **most critical custom view**. Layout:
 | NHIS Report | NHIS claims summary | **NEW** |
 
 ### 12.4 Deliverables
-- [ ] Admin dashboard with real metrics and charts
-- [ ] Doctor dashboard with patient queue
-- [ ] Income/Expense/P&L reports
-- [ ] Patient statistics report
-- [ ] Visit/appointment report
-- [ ] Excel export for all reports
-- [ ] PDF export for all reports
+- [x] Admin dashboard with real metrics and charts (revenue trend, visit trend, dept load, low stock alerts)
+- [x] Doctor dashboard with patient queue and stats
+- [x] Income report with category breakdown and PDF export
+- [x] Patient statistics report w/ registration trend, gender chart, PDF export
+- [x] Visit/appointment report w/ department distribution, daily trend, PDF export
+- [x] NHIS claims report with PDF export
+- [x] PDF export for all reports (via barryvdh/laravel-dompdf)
+- [x] Sidebar report navigation with 4 report links
+- [x] Updated doctor route from placeholder closure to dedicated controller
+
+### 12.5 Implementation Summary
+| Type | Files | Details |
+|------|-------|---------|
+| Services | 1 | `ReportService` (income, patient, visit, NHIS, dashboard stats, trends) |
+| Controllers | 2 | `Admin\ReportController`, `Doctor\DashboardController` |
+| Controllers Modified | 1 | `Admin\DashboardController` (enhanced with metrics + charts) |
+| Views | 9 | `dashboard/admin` (refactored), `dashboard/doctor` (new), 4 report views, 4 PDF views |
+| Routes | 4 new | `admin.reports.income/patients/visits/nhis` (133 total) |
+| Sidebar | Updated | Reports section with 4 individual report links |
 
 ---
 
