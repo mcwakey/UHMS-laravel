@@ -149,7 +149,7 @@ class BillingService
     }
 
     /**
-     * Auto-generate invoice items from visit services (consultation, lab, prescriptions).
+     * Auto-generate invoice items from visit services (visit_services table + consultation, lab, prescriptions).
      */
     public function generateItemsFromVisit(Visit $visit): array
     {
@@ -161,23 +161,48 @@ class BillingService
         $hasInsurance = $visitInsurance && $visitInsurance->is_active && !$visitInsurance->is_expired && $provider && !$provider->is_default;
         $coveragePercentage = $hasInsurance ? ($provider->coverage_percentage / 100) : 0;
 
-        // Consultation fee
-        $consultationService = ServiceCatalog::where('category', 'consultation')
-            ->where('is_active', true)
-            ->first();
-
-        if ($consultationService) {
-            $insuranceCoveredAmount = $hasInsurance && $consultationService->is_nhis_covered
-                ? round($consultationService->price * $coveragePercentage, 2)
+        // 1. Visit Services (from visit_services table — the primary billing source)
+        $visit->loadMissing('visitServices.serviceCatalog');
+        foreach ($visit->visitServices as $vs) {
+            $catalog = $vs->serviceCatalog;
+            $totalPrice = $vs->total_price;
+            $insuranceCoveredAmount = $hasInsurance && $catalog && $catalog->is_nhis_covered
+                ? round($totalPrice * $coveragePercentage, 2)
                 : 0;
+
             $items[] = [
-                'service_catalog_id' => $consultationService->id,
-                'description' => $consultationService->name,
-                'quantity' => 1,
-                'unit_price' => $consultationService->price,
-                'is_nhis_covered' => $hasInsurance && $consultationService->is_nhis_covered,
+                'service_catalog_id' => $vs->service_catalog_id,
+                'description' => $catalog ? $catalog->name : 'Service',
+                'quantity' => $vs->quantity,
+                'unit_price' => $vs->unit_price,
+                'is_nhis_covered' => $hasInsurance && $catalog && $catalog->is_nhis_covered,
                 'nhis_approved_amount' => $insuranceCoveredAmount,
             ];
+        }
+
+        // 2. Consultation fee (only if no visit_services cover consultation)
+        $hasConsultationService = $visit->visitServices
+            ->filter(fn ($vs) => $vs->serviceCatalog && $vs->serviceCatalog->category === 'consultation')
+            ->isNotEmpty();
+
+        if (!$hasConsultationService) {
+            $consultationService = ServiceCatalog::where('category', 'consultation')
+                ->where('is_active', true)
+                ->first();
+
+            if ($consultationService) {
+                $insuranceCoveredAmount = $hasInsurance && $consultationService->is_nhis_covered
+                    ? round($consultationService->price * $coveragePercentage, 2)
+                    : 0;
+                $items[] = [
+                    'service_catalog_id' => $consultationService->id,
+                    'description' => $consultationService->name,
+                    'quantity' => 1,
+                    'unit_price' => $consultationService->price,
+                    'is_nhis_covered' => $hasInsurance && $consultationService->is_nhis_covered,
+                    'nhis_approved_amount' => $insuranceCoveredAmount,
+                ];
+            }
         }
 
         // Lab tests

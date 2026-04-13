@@ -30,6 +30,11 @@ class StoreVisitRequest extends FormRequest
             'visit_insurance_id' => ['nullable', 'exists:patient_insurances,id'],
             'consultation_mode' => ['nullable', 'string', 'in:in_person,telehealth,virtual'],
             'meeting_link' => ['nullable', 'url', 'max:500'],
+
+            // Visit services
+            'services' => ['nullable', 'array'],
+            'services.*.service_catalog_id' => ['required_with:services', 'exists:service_catalog,id'],
+            'services.*.quantity' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
     }
 

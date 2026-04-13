@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title', 'Create Visit')
 
 @section('content')
@@ -14,11 +14,18 @@
     </div>
 </div>
 
+@if(session('error'))
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="ti ti-alert-circle me-1"></i>{{ session('error') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+@endif
+
 <form method="POST" action="{{ route('admin.visits.store') }}" id="visitForm">
     @csrf
 
     <div class="row">
-        <!-- Left Column — Patient Selection & Visit Details -->
+        <!-- Left Column â€” Patient, Visit Details, Services -->
         <div class="col-lg-8">
             <!-- Patient Search -->
             <div class="card">
@@ -26,11 +33,11 @@
                     <h5 class="fw-bold mb-0"><i class="ti ti-search me-1"></i>Select Patient</h5>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
+                    <div class="mb-3 position-relative">
                         <label class="form-label">Search Patient <span class="text-danger">*</span></label>
                         <input type="text" id="patientSearch" class="form-control form-control-lg @error('patient_id') is-invalid @enderror"
                                placeholder="Type patient name, ID, phone, or Ghana Card number..."
-                               value="{{ $selectedPatient ? $selectedPatient->patient_number . ' — ' . $selectedPatient->full_name : '' }}"
+                               value="{{ $selectedPatient ? $selectedPatient->patient_number . ' â€” ' . $selectedPatient->full_name : '' }}"
                                autocomplete="off">
                         <input type="hidden" name="patient_id" id="patientId" value="{{ $selectedPatient?->id ?? old('patient_id') }}">
                         @error('patient_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -39,7 +46,7 @@
 
                     <!-- Selected Patient Info Card -->
                     <div id="patientInfo" class="{{ $selectedPatient ? '' : 'd-none' }}">
-                        <div class="alert alert-light border d-flex align-items-center gap-3">
+                        <div class="alert alert-light border d-flex align-items-center gap-3 mb-0">
                             <div class="avatar avatar-lg bg-primary rounded-circle text-white d-flex align-items-center justify-content-center">
                                 <span id="patientInitial">{{ $selectedPatient ? strtoupper(substr($selectedPatient->first_name, 0, 1)) : '' }}</span>
                             </div>
@@ -115,16 +122,6 @@
                         </div>
                     </div>
 
-                    {{-- Insurance Selection --}}
-                    <div class="mb-3" id="insuranceSelection" style="display: none;">
-                        <label class="form-label">Visit Insurance</label>
-                        <select name="visit_insurance_id" class="form-select @error('visit_insurance_id') is-invalid @enderror" id="visitInsuranceSelect">
-                            <option value="">Cash & Carry (Default)</option>
-                        </select>
-                        @error('visit_insurance_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        <small class="text-muted">Select which insurance to use for this visit.</small>
-                    </div>
-
                     <div class="mb-3">
                         <label class="form-label">Chief Complaint</label>
                         <textarea name="chief_complaint" class="form-control @error('chief_complaint') is-invalid @enderror" rows="3" placeholder="Primary reason for visit...">{{ old('chief_complaint') }}</textarea>
@@ -138,36 +135,129 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Right Column — Assignment -->
-        <div class="col-lg-4">
+            <!-- Department, Services & Doctor Selection -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-building-hospital me-1"></i>Assignment</h5>
+                    <h5 class="fw-bold mb-0"><i class="ti ti-building-hospital me-1"></i>Department, Services & Doctor</h5>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label">Department</label>
-                        <select name="department_id" class="form-select @error('department_id') is-invalid @enderror">
-                            <option value="">Select Department</option>
-                            @foreach($departments as $dept)
-                                <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        <small class="text-muted">Patient will be added to this department's queue</small>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Department</label>
+                            <select name="department_id" id="departmentSelect" class="form-select @error('department_id') is-invalid @enderror">
+                                <option value="">Select Department</option>
+                                @foreach($departments as $dept)
+                                    <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Assign Doctor</label>
+                            <select name="assigned_doctor_id" id="doctorSelect" class="form-select @error('assigned_doctor_id') is-invalid @enderror">
+                                <option value="">Select Doctor (optional)</option>
+                                @foreach($doctors as $doctor)
+                                    <option value="{{ $doctor->id }}" {{ old('assigned_doctor_id') == $doctor->id ? 'selected' : '' }}>Dr. {{ $doctor->full_name }}</option>
+                                @endforeach
+                            </select>
+                            @error('assigned_doctor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
                     </div>
+
+                    <!-- Service Selection -->
                     <div class="mb-3">
-                        <label class="form-label">Assign Doctor</label>
-                        <select name="assigned_doctor_id" class="form-select @error('assigned_doctor_id') is-invalid @enderror">
-                            <option value="">Select Doctor (optional)</option>
-                            @foreach($doctors as $doctor)
-                                <option value="{{ $doctor->id }}" {{ old('assigned_doctor_id') == $doctor->id ? 'selected' : '' }}>Dr. {{ $doctor->full_name }}</option>
-                            @endforeach
-                        </select>
-                        @error('assigned_doctor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <label class="form-label">Available Services</label>
+                        <div id="servicesList" class="border rounded p-3 bg-light">
+                            <div class="text-muted text-center py-3" id="servicesPlaceholder">
+                                <i class="ti ti-list-search me-1"></i>Select a department or doctor to load available services
+                            </div>
+                            <div id="servicesContent" class="d-none">
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text"><i class="ti ti-search"></i></span>
+                                    <input type="text" id="serviceFilter" class="form-control" placeholder="Filter services...">
+                                </div>
+                                <div id="servicesItems" style="max-height: 280px; overflow-y: auto;"></div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Selected Services (Billing Lines) -->
+                    <div id="selectedServicesCard" class="d-none">
+                        <label class="form-label fw-bold"><i class="ti ti-receipt me-1"></i>Selected Services (Billing Lines)</label>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered mb-0" id="billingTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Service</th>
+                                        <th class="text-center" style="width: 80px;">Qty</th>
+                                        <th class="text-end" style="width: 120px;">Unit Price</th>
+                                        <th class="text-end" style="width: 120px;">Insurance</th>
+                                        <th class="text-end" style="width: 120px;">Total</th>
+                                        <th style="width: 40px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="billingBody"></tbody>
+                                <tfoot>
+                                    <tr class="table-light fw-bold">
+                                        <td colspan="3" class="text-end">Subtotal:</td>
+                                        <td class="text-end text-success" id="totalInsurance">&#8373;0.00</td>
+                                        <td class="text-end" id="totalAmount">&#8373;0.00</td>
+                                        <td></td>
+                                    </tr>
+                                    <tr class="table-warning fw-bold">
+                                        <td colspan="4" class="text-end">Patient Pays:</td>
+                                        <td class="text-end" id="patientPays">&#8373;0.00</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column â€” Info & Submit -->
+        <div class="col-lg-4">
+            <!-- Insurance Selection -->
+            <div class="card d-none" id="insuranceCard">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Insurance</h5>
+                    <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">Default expired â€” using Cash &amp; Carry</span>
+                </div>
+                <div class="card-body">
+                    <!-- Insurance List (radio selection) -->
+                    <div id="insuranceList" class="mb-3">
+                        <div class="text-muted text-center py-3">
+                            <i class="ti ti-loader me-1"></i>Loading patient insurances...
+                        </div>
+                    </div>
+
+                    <!-- Selected Insurance Info Panel -->
+                    <div id="selectedInsuranceInfo" class="d-none">
+                        <div class="alert alert-light border mb-0">
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Insurance Type</small>
+                                    <span class="fw-medium" id="insInfoType">â€”</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Coverage</small>
+                                    <span class="fw-medium" id="insInfoCoverage">â€”</span>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <small class="text-muted d-block">Total Billed (YTD)</small>
+                                    <span class="fw-medium" id="insInfoBilled">â€”</span>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <small class="text-muted d-block">Remaining Balance</small>
+                                    <span class="fw-bold" id="insInfoRemaining">â€”</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="visit_insurance_id" id="visitInsuranceId" value="">
                 </div>
             </div>
 
@@ -179,7 +269,7 @@
                         <li class="mb-2"><i class="ti ti-check text-success me-1"></i>Visit is registered</li>
                         <li class="mb-2"><i class="ti ti-check text-success me-1"></i>Patient moves to <strong>Waiting</strong></li>
                         <li class="mb-2"><i class="ti ti-check text-success me-1"></i>Queue number assigned</li>
-                        <li><i class="ti ti-check text-success me-1"></i>Appears on Queue Board</li>
+                        <li><i class="ti ti-check text-success me-1"></i>Billing lines created for selected services</li>
                     </ul>
                 </div>
             </div>
@@ -214,13 +304,23 @@ document.addEventListener('DOMContentLoaded', function() {
     const patientInfo = document.getElementById('patientInfo');
     const visitDateInput = document.getElementById('visitDate');
     const schedulingFields = document.getElementById('schedulingFields');
-    const insuranceSelection = document.getElementById('insuranceSelection');
     const walkInInfo = document.getElementById('walkInInfo');
     const scheduledInfo = document.getElementById('scheduledInfo');
     const submitBtnText = document.getElementById('submitBtnText');
-    let debounceTimer;
+    const departmentSelect = document.getElementById('departmentSelect');
+    const doctorSelect = document.getElementById('doctorSelect');
+    const insuranceCard = document.getElementById('insuranceCard');
 
+    let debounceTimer;
+    let patientInsurances = [];
+    let selectedInsurance = null;
+    let availableServices = [];
+    let selectedServices = []; // [{service_catalog_id, name, price, quantity, is_nhis}]
+    let allDoctors = @json($doctors->map(fn($d) => ['id' => $d->id, 'name' => 'Dr. ' . $d->full_name]));
+
+    // ==========================================
     // Scheduling toggle based on date
+    // ==========================================
     function checkScheduling() {
         const today = new Date().toISOString().split('T')[0];
         const selectedDate = visitDateInput.value;
@@ -231,22 +331,20 @@ document.addEventListener('DOMContentLoaded', function() {
         scheduledInfo.classList.toggle('d-none', !isFuture);
         submitBtnText.textContent = isFuture ? 'Schedule Visit' : 'Create Visit';
     }
-
     visitDateInput.addEventListener('change', checkScheduling);
     checkScheduling();
 
+    // ==========================================
+    // Patient search
+    // ==========================================
     searchInput.addEventListener('input', function() {
         clearTimeout(debounceTimer);
         const query = this.value.trim();
-
-        if (query.length < 2) {
-            resultsDiv.classList.add('d-none');
-            return;
-        }
+        if (query.length < 2) { resultsDiv.classList.add('d-none'); return; }
 
         debounceTimer = setTimeout(function() {
             fetch('{{ route("admin.visits.patient-search") }}?q=' + encodeURIComponent(query))
-                .then(response => response.json())
+                .then(r => r.json())
                 .then(data => {
                     resultsDiv.innerHTML = '';
                     if (data.length === 0) {
@@ -256,8 +354,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             const item = document.createElement('a');
                             item.href = '#';
                             item.className = 'list-group-item list-group-item-action';
-                            item.innerHTML = '<div class="fw-medium">' + patient.full_name + '</div>' +
-                                '<small class="text-muted">' + patient.patient_number + ' &bull; ' + (patient.phone || 'No phone') + '</small>';
+                            item.innerHTML = '<div class="fw-medium">' + escapeHtml(patient.full_name) + '</div>' +
+                                '<small class="text-muted">' + escapeHtml(patient.patient_number) + ' &bull; ' + escapeHtml(patient.phone || 'No phone') + '</small>';
                             item.addEventListener('click', function(e) {
                                 e.preventDefault();
                                 selectPatient(patient);
@@ -276,7 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.selectPatient = function(patient) {
         patientIdInput.value = patient.id;
-        searchInput.value = patient.patient_number + ' — ' + patient.full_name;
+        searchInput.value = patient.patient_number + ' \u2014 ' + patient.full_name;
         document.getElementById('patientInitial').textContent = patient.full_name.charAt(0).toUpperCase();
         document.getElementById('patientName').textContent = patient.full_name;
         document.getElementById('patientNumber').textContent = patient.patient_number;
@@ -284,7 +382,6 @@ document.addEventListener('DOMContentLoaded', function() {
         patientInfo.classList.remove('d-none');
         resultsDiv.classList.add('d-none');
 
-        // Load patient insurances
         loadPatientInsurances(patient.id);
     };
 
@@ -292,36 +389,383 @@ document.addEventListener('DOMContentLoaded', function() {
         patientIdInput.value = '';
         searchInput.value = '';
         patientInfo.classList.add('d-none');
-        insuranceSelection.style.display = 'none';
-        document.getElementById('visitInsuranceSelect').innerHTML = '<option value="">Cash & Carry (Default)</option>';
+        insuranceCard.classList.add('d-none');
+        document.getElementById('visitInsuranceId').value = '';
+        patientInsurances = [];
+        selectedInsurance = null;
+        recalculateBilling();
     };
 
+    // ==========================================
+    // Insurance Loading & Selection
+    // ==========================================
     function loadPatientInsurances(patientId) {
-        // We show the insurance selection box; options populated from patient data
-        insuranceSelection.style.display = '';
-        const select = document.getElementById('visitInsuranceSelect');
-        select.innerHTML = '<option value="">Cash & Carry (Default)</option><option disabled>Loading...</option>';
+        insuranceCard.classList.remove('d-none');
+        document.getElementById('insuranceList').innerHTML = '<div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>Loading...</div>';
 
-        fetch('{{ url("admin/patients") }}/' + patientId + '?format=insurances', {
+        fetch('{{ route("admin.visits.patient-insurances") }}?patient_id=' + patientId, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(r => r.json())
         .then(data => {
-            select.innerHTML = '<option value="">Cash & Carry (Default)</option>';
-            if (data.insurances && data.insurances.length > 0) {
-                data.insurances.forEach(function(ins) {
-                    const opt = document.createElement('option');
-                    opt.value = ins.id;
-                    opt.textContent = ins.provider_name + (ins.membership_number ? ' (' + ins.membership_number + ')' : '') + (ins.is_expired ? ' [EXPIRED]' : '');
-                    if (ins.is_expired) opt.disabled = true;
-                    if (ins.is_primary) opt.selected = true;
-                    select.appendChild(opt);
+            patientInsurances = data.insurances || [];
+            const defaultId = data.default_insurance_id;
+            const isFallback = data.is_fallback;
+
+            document.getElementById('insuranceFallbackBadge').style.display = isFallback ? '' : 'none';
+
+            let html = '';
+            if (patientInsurances.length === 0) {
+                html = '<div class="text-muted text-center py-2">No insurances found. Defaulting to Cash & Carry.</div>';
+            } else {
+                html = '<div class="list-group">';
+                patientInsurances.forEach(function(ins) {
+                    const isDefault = ins.id == defaultId;
+                    const isDisabled = !ins.is_valid && !ins.is_default;
+                    const badgeClass = ins.is_valid ? 'bg-success' : (ins.is_expired ? 'bg-danger' : 'bg-secondary');
+                    const statusText = ins.is_valid ? 'Valid' : (ins.is_expired ? 'Expired' : 'Inactive');
+
+                    html += '<label class="list-group-item list-group-item-action d-flex align-items-center gap-3 ' + (isDisabled ? 'opacity-50' : '') + '">';
+                    html += '<input type="radio" name="_insurance_radio" class="form-check-input insurance-radio" value="' + ins.id + '" data-ins-id="' + ins.id + '"';
+                    if (isDefault) html += ' checked';
+                    if (isDisabled) html += ' disabled';
+                    html += '>';
+                    html += '<div class="flex-grow-1">';
+                    html += '<div class="fw-medium">' + escapeHtml(ins.provider_name) + ' <span class="badge bg-' + ins.type_color + ' ms-1">' + escapeHtml(ins.type_label) + '</span></div>';
+                    html += '<small class="text-muted">';
+                    if (ins.membership_number) html += 'Member: ' + escapeHtml(ins.membership_number) + ' &bull; ';
+                    if (ins.expiry_date) html += 'Expires: ' + ins.expiry_date;
+                    else html += 'No expiry';
+                    html += '</small>';
+                    html += '</div>';
+                    html += '<div class="text-end">';
+                    html += '<span class="badge ' + badgeClass + '">' + statusText + '</span>';
+                    if (ins.coverage_percentage != null) {
+                        html += '<div class="small text-muted mt-1">' + ins.coverage_percentage + '% coverage</div>';
+                    }
+                    html += '</div>';
+                    html += '</label>';
                 });
+                html += '</div>';
+            }
+
+            document.getElementById('insuranceList').innerHTML = html;
+
+            // Attach radio change handlers
+            document.querySelectorAll('.insurance-radio').forEach(function(radio) {
+                radio.addEventListener('change', function() {
+                    selectInsurance(parseInt(this.dataset.insId));
+                });
+            });
+
+            // Auto-select the default
+            if (defaultId) {
+                selectInsurance(defaultId);
             }
         })
-        .catch(() => {
-            select.innerHTML = '<option value="">Cash & Carry (Default)</option>';
+        .catch(function() {
+            document.getElementById('insuranceList').innerHTML = '<div class="text-danger text-center py-2">Failed to load insurances.</div>';
         });
+    }
+
+    function selectInsurance(insId) {
+        selectedInsurance = patientInsurances.find(i => i.id === insId) || null;
+        document.getElementById('visitInsuranceId').value = insId || '';
+
+        const infoPanel = document.getElementById('selectedInsuranceInfo');
+        if (selectedInsurance) {
+            infoPanel.classList.remove('d-none');
+            document.getElementById('insInfoType').innerHTML = '<span class="badge bg-' + selectedInsurance.type_color + '">' + escapeHtml(selectedInsurance.type_label) + '</span>';
+            document.getElementById('insInfoCoverage').textContent = (selectedInsurance.coverage_percentage || 0) + '%';
+
+            const remaining = selectedInsurance.remaining_annual_limit;
+            document.getElementById('insInfoBilled').textContent = remaining != null
+                ? '\u20B5' + formatNumber((selectedInsurance.annual_limit || 0) - remaining)
+                : '\u2014';
+            document.getElementById('insInfoRemaining').textContent = remaining != null
+                ? '\u20B5' + formatNumber(remaining)
+                : 'Unlimited';
+        } else {
+            infoPanel.classList.add('d-none');
+        }
+
+        recalculateBilling();
+    }
+
+    // ==========================================
+    // Department â†’ Services loading
+    // ==========================================
+    departmentSelect.addEventListener('change', function() {
+        const deptId = this.value;
+        if (!deptId) {
+            showServicesPlaceholder();
+            return;
+        }
+        loadServicesForDepartment(deptId);
+    });
+
+    function loadServicesForDepartment(deptId) {
+        showServicesLoading();
+
+        fetch('{{ route("admin.visits.department-services") }}?department_id=' + deptId, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            availableServices = data;
+            renderServicesList();
+            updateDoctorsForSelectedServices();
+        })
+        .catch(() => {
+            document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-alert-circle me-1 text-danger"></i>Failed to load services';
+            document.getElementById('servicesPlaceholder').classList.remove('d-none');
+        });
+    }
+
+    // ==========================================
+    // Doctor â†’ Services loading
+    // ==========================================
+    doctorSelect.addEventListener('change', function() {
+        const doctorId = this.value;
+        if (!doctorId) return;
+
+        if (!departmentSelect.value) {
+            loadServicesForDoctor(doctorId);
+        }
+    });
+
+    function loadServicesForDoctor(doctorId) {
+        showServicesLoading();
+
+        fetch('{{ route("admin.visits.services-for-doctor") }}?doctor_id=' + doctorId, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            availableServices = data;
+            renderServicesList();
+        });
+    }
+
+    // ==========================================
+    // Services rendering and selection
+    // ==========================================
+    function renderServicesList() {
+        if (availableServices.length === 0) {
+            document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-info-circle me-1 text-muted"></i>No services found for this selection';
+            document.getElementById('servicesPlaceholder').classList.remove('d-none');
+            document.getElementById('servicesContent').classList.add('d-none');
+            return;
+        }
+
+        document.getElementById('servicesPlaceholder').classList.add('d-none');
+        document.getElementById('servicesContent').classList.remove('d-none');
+
+        const container = document.getElementById('servicesItems');
+        let html = '';
+        availableServices.forEach(function(svc) {
+            html += '<div class="service-item d-flex align-items-center justify-content-between py-2 px-2 border-bottom bg-white rounded mb-1" data-name="' + escapeHtml(svc.name.toLowerCase()) + '">';
+            html += '<div>';
+            html += '<span class="fw-medium">' + escapeHtml(svc.name) + '</span>';
+            html += ' <span class="badge bg-light text-dark ms-1">' + escapeHtml(svc.code) + '</span>';
+            if (svc.is_nhis_covered) html += ' <span class="badge bg-primary-subtle text-primary ms-1">NHIS</span>';
+            html += '<div class="small text-muted">' + escapeHtml(svc.category) + '</div>';
+            html += '</div>';
+            html += '<div class="d-flex align-items-center gap-2">';
+            html += '<span class="fw-bold text-success">' + svc.formatted_price + '</span>';
+            html += '<button type="button" class="btn btn-sm btn-outline-primary add-service-btn" data-id="' + svc.id + '" data-name="' + escapeHtml(svc.name) + '" data-price="' + svc.price + '" data-nhis="' + (svc.is_nhis_covered ? '1' : '0') + '" title="Add to billing">';
+            html += '<i class="ti ti-plus"></i></button>';
+            html += '</div>';
+            html += '</div>';
+        });
+        container.innerHTML = html;
+
+        container.querySelectorAll('.add-service-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                addServiceToBilling(
+                    parseInt(this.dataset.id),
+                    this.dataset.name,
+                    parseFloat(this.dataset.price),
+                    this.dataset.nhis === '1'
+                );
+            });
+        });
+    }
+
+    document.getElementById('serviceFilter').addEventListener('input', function() {
+        const filter = this.value.toLowerCase();
+        document.querySelectorAll('.service-item').forEach(function(item) {
+            item.style.display = item.dataset.name.includes(filter) ? '' : 'none';
+        });
+    });
+
+    function showServicesPlaceholder() {
+        document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-list-search me-1"></i>Select a department or doctor to load available services';
+        document.getElementById('servicesPlaceholder').classList.remove('d-none');
+        document.getElementById('servicesContent').classList.add('d-none');
+    }
+
+    function showServicesLoading() {
+        document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-loader me-1"></i>Loading services...';
+        document.getElementById('servicesPlaceholder').classList.remove('d-none');
+        document.getElementById('servicesContent').classList.add('d-none');
+    }
+
+    // ==========================================
+    // Billing line management
+    // ==========================================
+    function addServiceToBilling(serviceId, serviceName, price, isNhis) {
+        const existing = selectedServices.find(s => s.service_catalog_id === serviceId);
+        if (existing) {
+            existing.quantity++;
+        } else {
+            selectedServices.push({
+                service_catalog_id: serviceId,
+                name: serviceName,
+                price: price,
+                quantity: 1,
+                is_nhis: isNhis,
+            });
+        }
+
+        renderBillingTable();
+        updateDoctorsForSelectedServices();
+    }
+
+    function removeServiceFromBilling(index) {
+        selectedServices.splice(index, 1);
+        renderBillingTable();
+        updateDoctorsForSelectedServices();
+    }
+
+    function updateServiceQuantity(index, newQty) {
+        if (newQty < 1) { removeServiceFromBilling(index); return; }
+        selectedServices[index].quantity = newQty;
+        renderBillingTable();
+    }
+
+    function renderBillingTable() {
+        const card = document.getElementById('selectedServicesCard');
+        const tbody = document.getElementById('billingBody');
+
+        if (selectedServices.length === 0) {
+            card.classList.add('d-none');
+            tbody.innerHTML = '';
+            recalculateBilling();
+            return;
+        }
+
+        card.classList.remove('d-none');
+        let html = '';
+
+        selectedServices.forEach(function(svc, idx) {
+            const lineTotal = svc.price * svc.quantity;
+            const insuranceAmt = calculateInsuranceForLine(svc);
+
+            html += '<tr>';
+            html += '<td>' + escapeHtml(svc.name);
+            if (svc.is_nhis) html += ' <span class="badge bg-primary-subtle text-primary">NHIS</span>';
+            html += '<input type="hidden" name="services[' + idx + '][service_catalog_id]" value="' + svc.service_catalog_id + '">';
+            html += '</td>';
+            html += '<td class="text-center"><input type="number" name="services[' + idx + '][quantity]" class="form-control form-control-sm text-center qty-input" value="' + svc.quantity + '" min="1" max="100" data-index="' + idx + '" style="width: 60px; margin: 0 auto;"></td>';
+            html += '<td class="text-end">\u20B5' + formatNumber(svc.price) + '</td>';
+            html += '<td class="text-end text-success">\u20B5' + formatNumber(insuranceAmt) + '</td>';
+            html += '<td class="text-end fw-medium">\u20B5' + formatNumber(lineTotal) + '</td>';
+            html += '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="' + idx + '"><i class="ti ti-trash"></i></button></td>';
+            html += '</tr>';
+        });
+
+        tbody.innerHTML = html;
+
+        tbody.querySelectorAll('.qty-input').forEach(function(input) {
+            input.addEventListener('change', function() {
+                updateServiceQuantity(parseInt(this.dataset.index), parseInt(this.value) || 1);
+            });
+        });
+        tbody.querySelectorAll('.remove-service-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                removeServiceFromBilling(parseInt(this.dataset.index));
+            });
+        });
+
+        recalculateBilling();
+    }
+
+    function calculateInsuranceForLine(svc) {
+        if (!selectedInsurance || selectedInsurance.is_default) return 0;
+        if (!selectedInsurance.is_valid) return 0;
+        if (selectedInsurance.type === 'nhis' && !svc.is_nhis) return 0;
+
+        const coverageRate = (selectedInsurance.coverage_percentage || 0) / 100;
+        return Math.round(svc.price * svc.quantity * coverageRate * 100) / 100;
+    }
+
+    function recalculateBilling() {
+        let totalAmount = 0;
+        let totalInsurance = 0;
+
+        selectedServices.forEach(function(svc) {
+            totalAmount += svc.price * svc.quantity;
+            totalInsurance += calculateInsuranceForLine(svc);
+        });
+
+        document.getElementById('totalAmount').textContent = '\u20B5' + formatNumber(totalAmount);
+        document.getElementById('totalInsurance').textContent = '\u20B5' + formatNumber(totalInsurance);
+        document.getElementById('patientPays').textContent = '\u20B5' + formatNumber(Math.max(0, totalAmount - totalInsurance));
+    }
+
+    // ==========================================
+    // Dynamic doctor filtering based on selected services
+    // ==========================================
+    function updateDoctorsForSelectedServices() {
+        const serviceIds = selectedServices.map(s => s.service_catalog_id);
+        if (serviceIds.length === 0) {
+            repopulateDoctorSelect(allDoctors);
+            return;
+        }
+
+        const params = serviceIds.map(id => 'service_ids[]=' + id).join('&');
+        fetch('{{ route("admin.visits.doctors-for-services") }}?' + params, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => { repopulateDoctorSelect(data); });
+    }
+
+    function repopulateDoctorSelect(doctors) {
+        const currentVal = doctorSelect.value;
+        doctorSelect.innerHTML = '<option value="">Select Doctor (optional)</option>';
+        doctors.forEach(function(doc) {
+            const opt = document.createElement('option');
+            opt.value = doc.id;
+            opt.textContent = doc.name;
+            if (doc.specialties && doc.specialties.length > 0) {
+                opt.textContent += ' (' + doc.specialties.join(', ') + ')';
+            }
+            if (doc.id == currentVal) opt.selected = true;
+            doctorSelect.appendChild(opt);
+        });
+    }
+
+    // ==========================================
+    // Auto-load if patient is pre-selected
+    // ==========================================
+    @if($selectedPatient)
+        loadPatientInsurances({{ $selectedPatient->id }});
+    @endif
+
+    // ==========================================
+    // Utility functions
+    // ==========================================
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.appendChild(document.createTextNode(text));
+        return div.innerHTML;
+    }
+
+    function formatNumber(num) {
+        return parseFloat(num).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     }
 });
 </script>

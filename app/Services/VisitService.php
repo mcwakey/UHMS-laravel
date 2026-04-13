@@ -6,6 +6,8 @@ use App\Enums\VisitStatus;
 use App\Models\Patient;
 use App\Models\QueueEntry;
 use App\Models\Visit;
+use App\Models\VisitServiceItem;
+use App\Models\ServiceCatalog;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -13,6 +15,7 @@ class VisitService
 {
     public function __construct(
         protected QueueService $queueService,
+        protected InsuranceService $insuranceService,
     ) {}
 
     public function list(array $filters = []): LengthAwarePaginator
@@ -106,6 +109,100 @@ class VisitService
         }
 
         return $visit->fresh(['patient', 'department', 'assignedDoctor']);
+    }
+
+    /**
+     * Attach services to a visit and create billing line items.
+     *
+     * @param array $services Array of ['service_catalog_id' => int, 'quantity' => int, 'notes' => ?string]
+     */
+    public function attachServices(Visit $visit, array $services): Visit
+    {
+        $patient = $visit->patient;
+        $insuranceResult = $this->insuranceService->resolveForVisit($patient, $visit->visit_insurance_id);
+        $insurance = $insuranceResult['insurance'];
+
+        foreach ($services as $serviceData) {
+            $catalog = ServiceCatalog::findOrFail($serviceData['service_catalog_id']);
+            $quantity = max(1, (int) ($serviceData['quantity'] ?? 1));
+            $unitPrice = $catalog->price;
+            $totalPrice = $unitPrice * $quantity;
+
+            // Calculate insurance price if applicable
+            $insurancePrice = null;
+            if ($insurance && !$insuranceResult['is_fallback']) {
+                $insurancePrice = $this->insuranceService->calculateCoverage(
+                    $insurance, $totalPrice, $catalog->is_nhis_covered
+                );
+            }
+
+            VisitServiceItem::create([
+                'visit_id' => $visit->id,
+                'service_catalog_id' => $catalog->id,
+                'department_id' => $catalog->department_id ?? $visit->department_id,
+                'quantity' => $quantity,
+                'unit_price' => $unitPrice,
+                'insurance_price' => $insurancePrice,
+                'total_price' => $totalPrice,
+            ]);
+        }
+
+        return $visit->fresh(['visitServices.serviceCatalog', 'visitServices.department']);
+    }
+
+    /**
+     * Get services available for a department (via specialty relationships).
+     */
+    public function getServicesForDepartment(int $departmentId): \Illuminate\Database\Eloquent\Collection
+    {
+        return ServiceCatalog::where('is_active', true)
+            ->where('department_id', $departmentId)
+            ->orderBy('name')
+            ->get();
+    }
+
+    /**
+     * Get doctors available for specific services (via specialties).
+     */
+    public function getDoctorsForServices(array $serviceIds): \Illuminate\Database\Eloquent\Collection
+    {
+        $specialtyIds = \DB::table('service_specialty')
+            ->whereIn('service_catalog_id', $serviceIds)
+            ->pluck('specialty_id')
+            ->unique();
+
+        if ($specialtyIds->isEmpty()) {
+            // Fallback: return all active doctors
+            return \App\Models\User::role('Doctor')
+                ->where('status', \App\Enums\UserStatus::ACTIVE)
+                ->orderBy('first_name')
+                ->get();
+        }
+
+        return \App\Models\User::role('Doctor')
+            ->where('status', \App\Enums\UserStatus::ACTIVE)
+            ->whereHas('specialties', fn ($q) => $q->whereIn('specialties.id', $specialtyIds))
+            ->orderBy('first_name')
+            ->get();
+    }
+
+    /**
+     * Get services available for a doctor (via specialties).
+     */
+    public function getServicesForDoctor(int $doctorId): \Illuminate\Database\Eloquent\Collection
+    {
+        $specialtyIds = \DB::table('doctor_specialty')
+            ->where('user_id', $doctorId)
+            ->pluck('specialty_id');
+
+        if ($specialtyIds->isEmpty()) {
+            return ServiceCatalog::where('is_active', true)->orderBy('name')->get();
+        }
+
+        return ServiceCatalog::where('is_active', true)
+            ->whereHas('specialties', fn ($q) => $q->whereIn('specialties.id', $specialtyIds))
+            ->orderBy('name')
+            ->get();
     }
 
     /**

@@ -171,6 +171,10 @@ Route::middleware('auth')->group(function () {
             Route::get('visits/create', [VisitController::class, 'create'])->name('visits.create')->middleware('can:visits.create');
             Route::post('visits', [VisitController::class, 'store'])->name('visits.store')->middleware('can:visits.create');
             Route::get('visits/patient-search', [VisitController::class, 'patientSearch'])->name('visits.patient-search');
+            Route::get('visits/patient-insurances', [VisitController::class, 'patientInsurances'])->name('visits.patient-insurances');
+            Route::get('visits/department-services', [VisitController::class, 'departmentServices'])->name('visits.department-services');
+            Route::get('visits/doctors-for-services', [VisitController::class, 'doctorsForServices'])->name('visits.doctors-for-services');
+            Route::get('visits/services-for-doctor', [VisitController::class, 'servicesForDoctor'])->name('visits.services-for-doctor');
             Route::get('visits/{visit}', [VisitController::class, 'show'])->name('visits.show');
             Route::patch('visits/{visit}/transition', [VisitController::class, 'transition'])->name('visits.transition')->middleware('can:visits.transition');
         });
@@ -535,6 +539,14 @@ Route::middleware('auth')->group(function () {
             Route::post('services', [ServiceCatalogController::class, 'store'])->name('services.store');
             Route::put('services/{service}', [ServiceCatalogController::class, 'update'])->name('services.update');
             Route::patch('services/{service}/toggle', [ServiceCatalogController::class, 'toggle'])->name('services.toggle');
+        });
+
+        // Specialties
+        Route::middleware('can:services.manage')->group(function () {
+            Route::get('specialties', [\App\Http\Controllers\Admin\SpecialtyController::class, 'index'])->name('specialties.index');
+            Route::post('specialties', [\App\Http\Controllers\Admin\SpecialtyController::class, 'store'])->name('specialties.store');
+            Route::put('specialties/{specialty}', [\App\Http\Controllers\Admin\SpecialtyController::class, 'update'])->name('specialties.update');
+            Route::patch('specialties/{specialty}/toggle', [\App\Http\Controllers\Admin\SpecialtyController::class, 'toggle'])->name('specialties.toggle');
         });
 
         // Reports

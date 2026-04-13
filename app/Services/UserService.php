@@ -54,6 +54,10 @@ class UserService
             $user->assignRole($data['role']);
         }
 
+        if (isset($data['specialties'])) {
+            $user->specialties()->sync($data['specialties']);
+        }
+
         return $user;
     }
 
@@ -76,6 +80,10 @@ class UserService
 
         if (isset($data['role'])) {
             $user->syncRoles([$data['role']]);
+        }
+
+        if (array_key_exists('specialties', $data)) {
+            $user->specialties()->sync($data['specialties'] ?? []);
         }
 
         return $user;

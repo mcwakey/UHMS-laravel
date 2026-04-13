@@ -317,6 +317,11 @@
                                 <i class="ti ti-list-details"></i><span>Service Catalog</span>
                             </a>
                         </li>
+                        <li class="{{ request()->routeIs('admin.specialties.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.specialties.index') }}">
+                                <i class="ti ti-stethoscope"></i><span>Specialties</span>
+                            </a>
+                        </li>
                         @endcan
                     </ul>
                 </li>

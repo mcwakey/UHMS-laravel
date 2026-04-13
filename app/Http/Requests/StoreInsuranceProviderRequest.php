@@ -17,12 +17,16 @@ class StoreInsuranceProviderRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'short_name' => ['required', 'string', 'max:50'],
+            'short_name' => ['nullable', 'string', 'max:50'],
             'type' => ['required', Rule::enum(InsuranceType::class)],
             'contact_phone' => ['nullable', 'string', 'max:50'],
             'contact_email' => ['nullable', 'email', 'max:255'],
             'address' => ['nullable', 'string', 'max:2000'],
             'contract_number' => ['nullable', 'string', 'max:100'],
+            'coverage_percentage' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'annual_limit' => ['nullable', 'numeric', 'min:0'],
+            'per_visit_limit' => ['nullable', 'numeric', 'min:0'],
+            'is_default' => ['nullable', 'boolean'],
             'is_active' => ['boolean'],
         ];
     }

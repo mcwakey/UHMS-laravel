@@ -13,12 +13,14 @@ class ServiceCatalog extends Model
 
     protected $fillable = [
         'name',
+        'description',
         'code',
         'category',
         'price',
         'nhis_price',
         'is_nhis_covered',
         'is_active',
+        'department_id',
     ];
 
     protected function casts(): array
@@ -40,6 +42,22 @@ class ServiceCatalog extends Model
     public function invoiceItems()
     {
         return $this->hasMany(InvoiceItem::class);
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function specialties()
+    {
+        return $this->belongsToMany(Specialty::class, 'service_specialty', 'service_catalog_id', 'specialty_id')
+            ->withTimestamps();
+    }
+
+    public function visitServices()
+    {
+        return $this->hasMany(VisitServiceItem::class);
     }
 
     /*

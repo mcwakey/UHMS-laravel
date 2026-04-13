@@ -135,6 +135,26 @@
                                                 @endforeach
                                             </select>
                                         </div>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-medium">Department</label>
+                                            <select name="department_id" class="form-select">
+                                                <option value="">— None —</option>
+                                                @foreach($departments as $dept)
+                                                <option value="{{ $dept->id }}" {{ $service->department_id == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label fw-medium">Specialties</label>
+                                            <div class="border rounded p-2" style="max-height:150px;overflow-y:auto">
+                                                @foreach($specialties as $spec)
+                                                <div class="form-check">
+                                                    <input type="checkbox" name="specialties[]" value="{{ $spec->id }}" class="form-check-input" id="editSpec{{ $service->id }}_{{ $spec->id }}" {{ $service->specialties->contains($spec->id) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="editSpec{{ $service->id }}_{{ $spec->id }}">{{ $spec->name }}</label>
+                                                </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
                                         <div class="row">
                                             <div class="col-md-6 mb-3">
                                                 <label class="form-label fw-medium">Price (&#8373;) <span class="text-danger">*</span></label>
@@ -207,6 +227,26 @@
                             <option value="{{ $cat }}">{{ ucfirst($cat) }}</option>
                             @endforeach
                         </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Department</label>
+                        <select name="department_id" class="form-select">
+                            <option value="">— None —</option>
+                            @foreach($departments as $dept)
+                            <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Specialties</label>
+                        <div class="border rounded p-2" style="max-height:150px;overflow-y:auto">
+                            @foreach($specialties as $spec)
+                            <div class="form-check">
+                                <input type="checkbox" name="specialties[]" value="{{ $spec->id }}" class="form-check-input" id="addSpec{{ $spec->id }}">
+                                <label class="form-check-label" for="addSpec{{ $spec->id }}">{{ $spec->name }}</label>
+                            </div>
+                            @endforeach
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">

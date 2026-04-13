@@ -98,6 +98,20 @@
                     @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
+                <div class="col-md-6 mb-3" id="specialties-group" style="display:none;">
+                    <label class="form-label">Specialties</label>
+                    <div class="border rounded p-2" style="max-height:150px;overflow-y:auto">
+                        @php $userSpecIds = old('specialties', $user->specialties->pluck('id')->toArray()); @endphp
+                        @foreach($specialties as $spec)
+                        <div class="form-check">
+                            <input type="checkbox" name="specialties[]" value="{{ $spec->id }}" class="form-check-input" id="spec{{ $spec->id }}" {{ in_array($spec->id, $userSpecIds) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="spec{{ $spec->id }}">{{ $spec->name }}</label>
+                        </div>
+                        @endforeach
+                    </div>
+                    @error('specialties')<div class="text-danger small">{{ $message }}</div>@enderror
+                </div>
+
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Status</label>
                     <select name="status" class="form-select @error('status') is-invalid @enderror">
@@ -130,3 +144,18 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const roleSelect = document.querySelector('select[name="role"]');
+        const specGroup = document.getElementById('specialties-group');
+        function toggleSpecialties() {
+            const val = roleSelect.value.toLowerCase();
+            specGroup.style.display = (val === 'doctor' || val === 'specialist') ? '' : 'none';
+        }
+        roleSelect.addEventListener('change', toggleSpecialties);
+        toggleSpecialties();
+    });
+</script>
+@endpush

@@ -6,6 +6,7 @@ use App\Enums\Gender;
 use App\Enums\UserStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -80,6 +81,12 @@ class User extends Authenticatable
     public function employee(): HasOne
     {
         return $this->hasOne(Employee::class);
+    }
+
+    public function specialties(): BelongsToMany
+    {
+        return $this->belongsToMany(Specialty::class, 'doctor_specialty', 'user_id', 'specialty_id')
+            ->withTimestamps();
     }
 
     /* ── Scopes ───────────────────────────────────────── */

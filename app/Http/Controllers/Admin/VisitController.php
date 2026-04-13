@@ -9,8 +9,11 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreVisitRequest;
 use App\Models\Department;
 use App\Models\Patient;
+use App\Models\ServiceCatalog;
+use App\Models\Specialty;
 use App\Models\User;
 use App\Models\Visit;
+use App\Services\InsuranceService;
 use App\Services\VisitService;
 use Illuminate\Http\Request;
 
@@ -18,6 +21,7 @@ class VisitController extends Controller
 {
     public function __construct(
         protected VisitService $visitService,
+        protected InsuranceService $insuranceService,
     ) {}
 
     public function index(Request $request)
@@ -45,7 +49,16 @@ class VisitController extends Controller
 
     public function store(StoreVisitRequest $request)
     {
-        $visit = $this->visitService->create($request->validated());
+        try {
+            $visit = $this->visitService->create($request->validated());
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
+        }
+
+        // Attach selected services if any
+        if ($request->has('services') && is_array($request->services)) {
+            $this->visitService->attachServices($visit, $request->services);
+        }
 
         return redirect()
             ->route('admin.visits.show', $visit)
@@ -61,9 +74,20 @@ class VisitController extends Controller
             'createdBy',
             'statusLogs.changedBy',
             'queueEntries.department',
+            'visitInsurance.insuranceProvider',
+            'visitServices.serviceCatalog',
+            'visitServices.department',
         ]);
 
-        return view('visits.show', compact('visit'));
+        // Insurance info for display
+        $insuranceInfo = null;
+        if ($visit->visitInsurance) {
+            $insuranceInfo = $this->insuranceService->getUsageSummary($visit->visitInsurance);
+            $insuranceInfo['provider'] = $visit->visitInsurance->insuranceProvider;
+            $insuranceInfo['insurance'] = $visit->visitInsurance;
+        }
+
+        return view('visits.show', compact('visit', 'insuranceInfo'));
     }
 
     public function transition(Request $request, Visit $visit)
@@ -105,5 +129,73 @@ class VisitController extends Controller
             ]);
 
         return response()->json($patients);
+    }
+
+    /**
+     * AJAX: Get patient insurances with full validation/coverage data.
+     */
+    public function patientInsurances(Request $request)
+    {
+        $patient = Patient::findOrFail($request->patient_id);
+        $insurances = $this->insuranceService->getPatientInsurances($patient);
+        $resolved = $this->insuranceService->resolveForVisit($patient);
+
+        return response()->json([
+            'insurances' => $insurances,
+            'default_insurance_id' => $resolved['insurance']?->id,
+            'is_fallback' => $resolved['is_fallback'],
+        ]);
+    }
+
+    /**
+     * AJAX: Get services for a department.
+     */
+    public function departmentServices(Request $request)
+    {
+        $services = $this->visitService->getServicesForDepartment($request->department_id);
+
+        return response()->json($services->map(fn ($s) => [
+            'id' => $s->id,
+            'name' => $s->name,
+            'code' => $s->code,
+            'category' => $s->category,
+            'price' => $s->price,
+            'formatted_price' => $s->formatted_price,
+            'is_nhis_covered' => $s->is_nhis_covered,
+        ]));
+    }
+
+    /**
+     * AJAX: Get doctors for selected services (via specialties).
+     */
+    public function doctorsForServices(Request $request)
+    {
+        $serviceIds = $request->input('service_ids', []);
+        $doctors = $this->visitService->getDoctorsForServices($serviceIds);
+
+        return response()->json($doctors->map(fn ($d) => [
+            'id' => $d->id,
+            'name' => 'Dr. ' . $d->full_name,
+            'specialties' => $d->specialties->pluck('name')->toArray(),
+        ]));
+    }
+
+    /**
+     * AJAX: Get services for a doctor (via specialties).
+     */
+    public function servicesForDoctor(Request $request)
+    {
+        $services = $this->visitService->getServicesForDoctor($request->doctor_id);
+
+        return response()->json($services->map(fn ($s) => [
+            'id' => $s->id,
+            'name' => $s->name,
+            'code' => $s->code,
+            'category' => $s->category,
+            'price' => $s->price,
+            'formatted_price' => $s->formatted_price,
+            'is_nhis_covered' => $s->is_nhis_covered,
+            'department_id' => $s->department_id,
+        ]));
     }
 }

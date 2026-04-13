@@ -31,6 +31,8 @@ class StoreUserRequest extends FormRequest
             'department_id' => ['nullable', 'exists:departments,id'],
             'designation_id' => ['nullable', 'exists:designations,id'],
             'role' => ['required', 'string', 'exists:roles,name'],
+            'specialties' => ['nullable', 'array'],
+            'specialties.*' => ['exists:specialties,id'],
             'avatar' => ['nullable', 'image', 'max:2048'],
         ];
     }

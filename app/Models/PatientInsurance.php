@@ -15,6 +15,7 @@ class PatientInsurance extends Model
         'insurance_provider_id',
         'membership_number',
         'policy_number',
+        'start_date',
         'expiry_date',
         'is_primary',
         'is_active',
@@ -23,6 +24,7 @@ class PatientInsurance extends Model
     protected function casts(): array
     {
         return [
+            'start_date' => 'date',
             'expiry_date' => 'date',
             'is_primary' => 'boolean',
             'is_active' => 'boolean',

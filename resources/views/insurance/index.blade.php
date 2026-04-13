@@ -159,6 +159,24 @@
                                             <label class="form-label">Contract Number</label>
                                             <input type="text" name="contract_number" class="form-control" value="{{ $provider->contract_number }}">
                                         </div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Coverage %</label>
+                                                <input type="number" name="coverage_percentage" class="form-control" value="{{ $provider->coverage_percentage }}" step="0.01" min="0" max="100">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Annual Limit (&#8373;)</label>
+                                                <input type="number" name="annual_limit" class="form-control" value="{{ $provider->annual_limit }}" step="0.01" min="0">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label">Per Visit Limit (&#8373;)</label>
+                                                <input type="number" name="per_visit_limit" class="form-control" value="{{ $provider->per_visit_limit }}" step="0.01" min="0">
+                                            </div>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input type="checkbox" name="is_default" class="form-check-input" value="1" id="editDefault{{ $provider->id }}" {{ $provider->is_default ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="editDefault{{ $provider->id }}">Default Provider</label>
+                                        </div>
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -231,6 +249,24 @@
                     <div class="mb-3">
                         <label class="form-label">Contract Number</label>
                         <input type="text" name="contract_number" class="form-control" placeholder="Contract/Agreement #">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Coverage %</label>
+                            <input type="number" name="coverage_percentage" class="form-control" step="0.01" min="0" max="100" placeholder="e.g. 80">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Annual Limit (&#8373;)</label>
+                            <input type="number" name="annual_limit" class="form-control" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Per Visit Limit (&#8373;)</label>
+                            <input type="number" name="per_visit_limit" class="form-control" step="0.01" min="0" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" name="is_default" class="form-check-input" value="1" id="addDefault">
+                        <label class="form-check-label" for="addDefault">Default Provider</label>
                     </div>
                 </div>
                 <div class="modal-footer">

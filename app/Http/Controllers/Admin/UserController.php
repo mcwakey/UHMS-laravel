@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\User\StoreUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
 use App\Models\Department;
+use App\Models\Specialty;
 use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Http\Request;
@@ -30,8 +31,9 @@ class UserController extends Controller
     {
         $roles = Role::all();
         $departments = Department::active()->get();
+        $specialties = Specialty::active()->orderBy('name')->get();
 
-        return view('users.create', compact('roles', 'departments'));
+        return view('users.create', compact('roles', 'departments', 'specialties'));
     }
 
     public function store(StoreUserRequest $request)
@@ -44,11 +46,12 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        $user->load(['department', 'designation', 'roles']);
+        $user->load(['department', 'designation', 'roles', 'specialties']);
         $roles = Role::all();
         $departments = Department::active()->get();
+        $specialties = Specialty::active()->orderBy('name')->get();
 
-        return view('users.edit', compact('user', 'roles', 'departments'));
+        return view('users.edit', compact('user', 'roles', 'departments', 'specialties'));
     }
 
     public function update(UpdateUserRequest $request, User $user)

@@ -139,6 +139,117 @@
             </div>
         </div>
 
+        <!-- Insurance Information -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Insurance</h6>
+            </div>
+            <div class="card-body">
+            @if($insuranceInfo)
+                <div class="row">
+                    <div class="col-md-3">
+                        <label class="text-muted small mb-1">Provider</label>
+                        <div class="fw-medium">{{ $insuranceInfo['provider']?->name ?? 'Cash & Carry' }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="text-muted small mb-1">Insurance Type</label>
+                        <div>
+                            <span class="badge bg-{{ $insuranceInfo['provider']->type->color() }}">
+                                {{ $insuranceInfo['provider']->type->label() }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="text-muted small mb-1">Coverage</label>
+                        <div class="fw-medium">{{ $insuranceInfo['coverage_percentage'] ?? 0 }}%</div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="text-muted small mb-1">Remaining Balance</label>
+                        <div class="fw-bold {{ ($insuranceInfo['remaining'] ?? 0) > 0 ? 'text-success' : 'text-danger' }}">
+                            @if($insuranceInfo['annual_limit'])
+                                &#8373;{{ number_format($insuranceInfo['remaining'] ?? 0, 2) }}
+                            @else
+                                Unlimited
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                @if($insuranceInfo['annual_limit'])
+                <div class="mt-3">
+                    @php
+                        $usagePercent = $insuranceInfo['annual_limit'] > 0 ? min(100, round(($insuranceInfo['total_billed'] / $insuranceInfo['annual_limit']) * 100)) : 0;
+                    @endphp
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>Annual Usage: &#8373;{{ number_format($insuranceInfo['total_billed'] ?? 0, 2) }} of &#8373;{{ number_format($insuranceInfo['annual_limit'], 2) }}</span>
+                        <span>{{ $usagePercent }}%</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar {{ $usagePercent > 80 ? 'bg-danger' : ($usagePercent > 50 ? 'bg-warning' : 'bg-success') }}" style="width: {{ $usagePercent }}%"></div>
+                    </div>
+                </div>
+                @endif
+            @else
+                <div class="text-center py-3">
+                    <span class="badge bg-danger fs-14 px-3 py-2 mb-2">Cash &amp; Carry (Self-Sponsored)</span>
+                    <p class="text-muted mb-0 small">No insurance selected for this visit. Patient pays full amount.</p>
+                </div>
+            @endif
+            </div>
+        </div>
+
+        <!-- Visit Services -->
+        @if($visit->visitServices->isNotEmpty())
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="fw-bold mb-0"><i class="ti ti-receipt me-1"></i>Visit Services</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Service</th>
+                                <th class="text-center">Qty</th>
+                                <th class="text-end">Unit Price</th>
+                                <th class="text-end">Insurance</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php $totalAmt = 0; $totalIns = 0; @endphp
+                            @foreach($visit->visitServices as $vs)
+                            <tr>
+                                <td>
+                                    {{ $vs->serviceCatalog?->name ?? '—' }}
+                                    @if($vs->department)
+                                        <span class="badge bg-light text-dark ms-1">{{ $vs->department->name }}</span>
+                                    @endif
+                                </td>
+                                <td class="text-center">{{ $vs->quantity }}</td>
+                                <td class="text-end">&#8373;{{ number_format($vs->unit_price, 2) }}</td>
+                                <td class="text-end text-success">&#8373;{{ number_format($vs->insurance_price ?? 0, 2) }}</td>
+                                <td class="text-end fw-medium">&#8373;{{ number_format($vs->total_price, 2) }}</td>
+                            </tr>
+                            @php $totalAmt += $vs->total_price; $totalIns += ($vs->insurance_price ?? 0); @endphp
+                            @endforeach
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-light fw-bold">
+                                <td colspan="3" class="text-end">Subtotal:</td>
+                                <td class="text-end text-success">&#8373;{{ number_format($totalIns, 2) }}</td>
+                                <td class="text-end">&#8373;{{ number_format($totalAmt, 2) }}</td>
+                            </tr>
+                            <tr class="table-warning fw-bold">
+                                <td colspan="4" class="text-end">Patient Pays:</td>
+                                <td class="text-end">&#8373;{{ number_format($totalAmt - $totalIns, 2) }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <!-- Status Timeline -->
         <div class="card">
             <div class="card-header">

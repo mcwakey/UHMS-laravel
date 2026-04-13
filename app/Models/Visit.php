@@ -167,6 +167,11 @@ class Visit extends Model
         return $this->hasOne(self::class, 'rescheduled_from_id');
     }
 
+    public function visitServices()
+    {
+        return $this->hasMany(VisitServiceItem::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes

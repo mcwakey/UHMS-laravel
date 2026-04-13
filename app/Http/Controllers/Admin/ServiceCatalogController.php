@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreServiceCatalogRequest;
+use App\Models\Department;
 use App\Models\ServiceCatalog;
+use App\Models\Specialty;
 use Illuminate\Http\Request;
 
 class ServiceCatalogController extends Controller
@@ -28,11 +30,13 @@ class ServiceCatalogController extends Controller
             });
         }
 
-        $services = $query->paginate(20)->withQueryString();
+        $services = $query->with('department', 'specialties')->paginate(20)->withQueryString();
 
-        $categories = ['consultation', 'lab', 'pharmacy', 'procedure', 'other'];
+        $categories = ['consultation', 'lab', 'pharmacy', 'procedure', 'imaging', 'surgery', 'admin', 'other'];
+        $departments = Department::active()->orderBy('name')->get();
+        $specialties = Specialty::active()->orderBy('name')->get();
 
-        return view('admin.services.index', compact('services', 'categories'));
+        return view('admin.services.index', compact('services', 'categories', 'departments', 'specialties'));
     }
 
     /**
@@ -40,15 +44,20 @@ class ServiceCatalogController extends Controller
      */
     public function store(StoreServiceCatalogRequest $request)
     {
-        ServiceCatalog::create([
+        $service = ServiceCatalog::create([
             'name' => $request->name,
             'code' => strtoupper($request->code),
             'category' => $request->category,
             'price' => $request->price,
             'nhis_price' => $request->nhis_price,
             'is_nhis_covered' => $request->boolean('is_nhis_covered'),
+            'department_id' => $request->department_id,
             'is_active' => true,
         ]);
+
+        if ($request->has('specialties')) {
+            $service->specialties()->sync($request->specialties ?? []);
+        }
 
         return back()->with('success', 'Service added successfully.');
     }
@@ -65,7 +74,10 @@ class ServiceCatalogController extends Controller
             'price' => $request->price,
             'nhis_price' => $request->nhis_price,
             'is_nhis_covered' => $request->boolean('is_nhis_covered'),
+            'department_id' => $request->department_id,
         ]);
+
+        $service->specialties()->sync($request->specialties ?? []);
 
         return back()->with('success', 'Service updated successfully.');
     }
