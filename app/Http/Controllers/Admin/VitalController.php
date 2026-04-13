@@ -35,7 +35,7 @@ class VitalController extends Controller
      */
     public function store(StoreVitalRequest $request)
     {
-        $visit = Visit::findOrFail($request->visit_id);
+        $visit = Visit::with('patient')->findOrFail($request->visit_id);
 
         $data = $request->validated();
         $data['patient_id'] = $visit->patient_id;

@@ -22,7 +22,7 @@ class DashboardController extends Controller
         $totalRoles = Role::count();
         $totalPatients = Patient::count();
         $recentUsers = User::with(['roles', 'department'])->latest()->take(5)->get();
-        $recentPatients = Patient::latest()->take(5)->get();
+        $recentPatients = Patient::with('registeredBy')->latest()->take(5)->get();
 
         $visitStats = $visitService->todayStats();
         $recentVisits = Visit::with(['patient', 'department', 'assignedDoctor'])

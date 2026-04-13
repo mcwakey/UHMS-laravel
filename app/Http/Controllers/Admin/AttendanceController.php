@@ -31,10 +31,7 @@ class AttendanceController extends Controller
         $month = $request->get('month', now()->format('Y-m'));
         $employees = Employee::active()->with('department')->orderBy('first_name')->get();
 
-        $summaries = [];
-        foreach ($employees as $employee) {
-            $summaries[$employee->id] = $this->hrService->getAttendanceSummary($employee->id, $month);
-        }
+        $summaries = $this->hrService->getBulkAttendanceSummary($employees->pluck('id')->toArray(), $month);
 
         return view('hr.attendance.summary', compact('employees', 'summaries', 'month'));
     }

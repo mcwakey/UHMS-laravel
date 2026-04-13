@@ -91,6 +91,36 @@ class HRService
         ];
     }
 
+    /**
+     * Bulk attendance summary — single query instead of N queries.
+     */
+    public function getBulkAttendanceSummary(array $employeeIds, string $month): array
+    {
+        $start = Carbon::parse($month . '-01')->startOfMonth();
+        $end = $start->copy()->endOfMonth();
+        $workingDays = $start->diffInWeekdays($end) + 1;
+
+        $records = EmployeeAttendance::whereIn('employee_id', $employeeIds)
+            ->whereBetween('date', [$start, $end])
+            ->get()
+            ->groupBy('employee_id');
+
+        $summaries = [];
+        foreach ($employeeIds as $id) {
+            $group = $records->get($id, collect());
+            $summaries[$id] = [
+                'present' => $group->where('status', 'present')->count(),
+                'absent' => $group->where('status', 'absent')->count(),
+                'late' => $group->where('status', 'late')->count(),
+                'half_day' => $group->where('status', 'half_day')->count(),
+                'total_hours' => $group->sum('hours_worked'),
+                'working_days' => $workingDays,
+            ];
+        }
+
+        return $summaries;
+    }
+
     // Leave
     public function listLeaveRequests(array $filters = []): LengthAwarePaginator
     {

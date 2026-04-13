@@ -47,6 +47,7 @@ class Setting extends Model
         );
 
         Cache::forget("settings.{$group}.{$key}");
+        Cache::forget("settings.group.{$group}");
 
         return $setting;
     }
@@ -56,9 +57,11 @@ class Setting extends Model
      */
     public static function getGroup(string $group): array
     {
-        return static::where('group', $group)
-            ->pluck('value', 'key')
-            ->toArray();
+        return Cache::remember("settings.group.{$group}", 3600, function () use ($group) {
+            return static::where('group', $group)
+                ->pluck('value', 'key')
+                ->toArray();
+        });
     }
 
     /**
