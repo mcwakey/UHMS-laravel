@@ -48,7 +48,7 @@
                     <label class="form-label fw-medium">Billing Type <span class="text-danger">*</span></label>
                     <select name="billing_type" class="form-select @error('billing_type') is-invalid @enderror" required>
                         @foreach($billingTypes as $type)
-                        <option value="{{ $type->value }}" {{ old('billing_type', $visit?->patient->is_nhis_active ? 'nhis' : 'cash') === $type->value ? 'selected' : '' }}>
+                        <option value="{{ $type->value }}" {{ old('billing_type', 'cash') === $type->value ? 'selected' : '' }}>
                             {{ $type->label() }}
                         </option>
                         @endforeach
@@ -62,16 +62,6 @@
                     <input type="date" name="due_date" class="form-control" value="{{ old('due_date', now()->addDays(30)->format('Y-m-d')) }}">
                 </div>
             </div>
-
-            @if($visit && $visit->patient->is_nhis_active)
-            <div class="alert alert-info d-flex align-items-center mb-3">
-                <i class="ti ti-shield-check me-2 fs-4"></i>
-                <div>
-                    <strong>NHIS Active</strong> — Card No: {{ $visit->patient->nhis_number }}
-                    | Expiry: {{ $visit->patient->nhis_expiry_date->format('d M Y') }}
-                </div>
-            </div>
-            @endif
 
             <!-- Invoice Items -->
             <h6 class="fw-bold mb-3"><i class="ti ti-list-details me-1"></i>Invoice Items</h6>

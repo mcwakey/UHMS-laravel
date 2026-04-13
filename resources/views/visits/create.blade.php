@@ -50,11 +50,6 @@
                                     &bull; <span id="patientPhone">{{ $selectedPatient?->phone }}</span>
                                 </small>
                             </div>
-                            <div>
-                                <span id="nhisStatus" class="badge bg-{{ $selectedPatient && $selectedPatient->is_nhis_active ? 'success' : 'secondary' }}">
-                                    {{ $selectedPatient && $selectedPatient->is_nhis_active ? 'NHIS Active' : 'No NHIS' }}
-                                </span>
-                            </div>
                             <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearPatient()">
                                 <i class="ti ti-x"></i>
                             </button>
@@ -196,8 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             item.href = '#';
                             item.className = 'list-group-item list-group-item-action';
                             item.innerHTML = '<div class="fw-medium">' + patient.full_name + '</div>' +
-                                '<small class="text-muted">' + patient.patient_number + ' &bull; ' + (patient.phone || 'No phone') + '</small>' +
-                                (patient.nhis_active ? ' <span class="badge bg-success ms-1">NHIS</span>' : '');
+                                '<small class="text-muted">' + patient.patient_number + ' &bull; ' + (patient.phone || 'No phone') + '</small>';
                             item.addEventListener('click', function(e) {
                                 e.preventDefault();
                                 selectPatient(patient);
@@ -221,8 +215,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('patientName').textContent = patient.full_name;
         document.getElementById('patientNumber').textContent = patient.patient_number;
         document.getElementById('patientPhone').textContent = patient.phone || 'No phone';
-        document.getElementById('nhisStatus').textContent = patient.nhis_active ? 'NHIS Active' : 'No NHIS';
-        document.getElementById('nhisStatus').className = 'badge bg-' + (patient.nhis_active ? 'success' : 'secondary');
         patientInfo.classList.remove('d-none');
         resultsDiv.classList.add('d-none');
     };

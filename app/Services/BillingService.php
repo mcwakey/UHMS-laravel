@@ -161,7 +161,7 @@ class BillingService
             ->first();
 
         if ($consultationService) {
-            $isNhis = $visit->patient->is_nhis_active;
+            $isNhis = false; // TODO: Check patient insurance via pivot table
             $items[] = [
                 'service_catalog_id' => $consultationService->id,
                 'description' => $consultationService->name,
@@ -184,7 +184,7 @@ class BillingService
                     ->first();
 
                 if ($labService) {
-                    $isNhis = $visit->patient->is_nhis_active;
+                    $isNhis = false; // TODO: Check patient insurance via pivot table
                     $items[] = [
                         'service_catalog_id' => $labService->id,
                         'description' => $item->labTest->name,
@@ -209,7 +209,7 @@ class BillingService
                     ->first();
 
                 if ($drugService) {
-                    $isNhis = $visit->patient->is_nhis_active;
+                    $isNhis = false; // TODO: Check patient insurance via pivot table
                     $items[] = [
                         'service_catalog_id' => $drugService->id,
                         'description' => $item->drug->name . ' (' . $item->quantity . ')',

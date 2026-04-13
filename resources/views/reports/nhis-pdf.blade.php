@@ -27,7 +27,6 @@
             <tr>
                 <th>Invoice #</th>
                 <th>Patient</th>
-                <th>NHIS #</th>
                 <th>Department</th>
                 <th class="text-right">Total</th>
                 <th class="text-right">NHIS Amount</th>
@@ -41,7 +40,6 @@
             <tr>
                 <td>{{ $invoice->invoice_number }}</td>
                 <td>{{ $invoice->patient->full_name ?? '—' }}</td>
-                <td>{{ $invoice->patient->nhis_number ?? '—' }}</td>
                 <td>{{ $invoice->visit?->department?->name ?? '—' }}</td>
                 <td class="text-right">₵{{ number_format($invoice->total_amount, 2) }}</td>
                 <td class="text-right text-success">₵{{ number_format($invoice->nhis_amount, 2) }}</td>

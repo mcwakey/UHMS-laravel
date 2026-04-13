@@ -51,12 +51,6 @@
                         <td class="text-muted">Phone</td>
                         <td>{{ $admission->patient->phone }}</td>
                     </tr>
-                    @if($admission->patient->nhis_number)
-                    <tr>
-                        <td class="text-muted">NHIS</td>
-                        <td>{{ $admission->patient->nhis_number }}</td>
-                    </tr>
-                    @endif
                     @if($admission->patient->allergies)
                     <tr>
                         <td class="text-muted">Allergies</td>

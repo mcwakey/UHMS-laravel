@@ -271,7 +271,7 @@ class ClaimController extends Controller
             $file = fopen('php://output', 'w');
 
             fputcsv($file, [
-                'Claim #', 'Provider', 'Patient Name', 'Patient NHIS #',
+                'Claim #', 'Provider', 'Patient Name',
                 'Visit Date', 'Claim Date', 'Total Amount', 'Approved Amount',
                 'Status', 'Items Count',
             ]);
@@ -281,7 +281,6 @@ class ClaimController extends Controller
                     $claim->claim_number,
                     $claim->insuranceProvider->name,
                     $claim->patient->first_name . ' ' . $claim->patient->last_name,
-                    $claim->patient->nhis_number ?? '',
                     $claim->visit->visit_date?->format('Y-m-d') ?? '',
                     $claim->claim_date->format('Y-m-d'),
                     $claim->total_amount,

@@ -97,7 +97,6 @@
                     <tr>
                         <th>Invoice #</th>
                         <th>Patient</th>
-                        <th>NHIS #</th>
                         <th>Department</th>
                         <th>Total Amount</th>
                         <th>NHIS Amount</th>
@@ -115,7 +114,6 @@
                             </a>
                         </td>
                         <td>{{ $invoice->patient->full_name ?? '—' }}</td>
-                        <td>{{ $invoice->patient->nhis_number ?? '—' }}</td>
                         <td>{{ $invoice->visit?->department?->name ?? '—' }}</td>
                         <td>₵{{ number_format($invoice->total_amount, 2) }}</td>
                         <td class="fw-bold text-success">₵{{ number_format($invoice->nhis_amount, 2) }}</td>
@@ -125,7 +123,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center text-muted py-4">No NHIS claims found</td>
+                        <td colspan="8" class="text-center text-muted py-4">No NHIS claims found</td>
                     </tr>
                     @endforelse
                 </tbody>

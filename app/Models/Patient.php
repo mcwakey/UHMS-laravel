@@ -19,7 +19,7 @@ class Patient extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['first_name', 'last_name', 'phone', 'email', 'nhis_number', 'status'])
+            ->logOnly(['first_name', 'last_name', 'phone', 'email', 'status'])
             ->logOnlyDirty()
             ->useLogName('patients')
             ->dontSubmitEmptyLogs();
@@ -38,8 +38,6 @@ class Patient extends Model
         'phone_secondary',
         'email',
         'ghana_card_number',
-        'nhis_number',
-        'nhis_expiry_date',
         'occupation',
         'address',
         'city',
@@ -59,7 +57,6 @@ class Patient extends Model
     {
         return [
             'date_of_birth' => 'date',
-            'nhis_expiry_date' => 'date',
             'gender' => Gender::class,
             'blood_group' => BloodGroup::class,
             'marital_status' => MaritalStatus::class,
@@ -129,11 +126,6 @@ class Patient extends Model
         return $this->date_of_birth->age;
     }
 
-    public function getIsNhisActiveAttribute(): bool
-    {
-        return $this->nhis_number && $this->nhis_expiry_date && $this->nhis_expiry_date->isFuture();
-    }
-
     /*
     |--------------------------------------------------------------------------
     | Scopes
@@ -156,8 +148,7 @@ class Patient extends Model
               ->orWhere('patient_number', 'like', "%{$term}%")
               ->orWhere('phone', 'like', "%{$term}%")
               ->orWhere('email', 'like', "%{$term}%")
-              ->orWhere('ghana_card_number', 'like', "%{$term}%")
-              ->orWhere('nhis_number', 'like', "%{$term}%");
+              ->orWhere('ghana_card_number', 'like', "%{$term}%");
         });
     }
 

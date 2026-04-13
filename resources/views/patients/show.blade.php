@@ -32,17 +32,6 @@
                         <span class="text-light">|</span>
                         <p class="mb-0 d-inline-flex align-items-center"><i class="ti ti-mail me-1 text-dark"></i>{{ $patient->email }}</p>
                         @endif
-                        @if($patient->nhis_number)
-                        <span class="text-light">|</span>
-                        <p class="mb-0 d-inline-flex align-items-center">
-                            <i class="ti ti-shield-check me-1 text-dark"></i>NHIS:
-                            @if($patient->is_nhis_active)
-                                <span class="badge badge-soft-success ms-1">Active</span>
-                            @else
-                                <span class="badge badge-soft-danger ms-1">Expired</span>
-                            @endif
-                        </p>
-                        @endif
                     </div>
                 </div>
             </div>
@@ -149,24 +138,6 @@
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">Ghana Card</h6>
                                 <p class="mb-0">{{ $patient->ghana_card_number ?? '—' }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-4">
-                        <div class="d-flex align-items-center mb-3">
-                            <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-shield-check fs-16"></i></span>
-                            <div>
-                                <h6 class="fs-13 fw-bold mb-1">NHIS Number</h6>
-                                <p class="mb-0">{{ $patient->nhis_number ?? '—' }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-4">
-                        <div class="d-flex align-items-center mb-3">
-                            <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-calendar fs-16"></i></span>
-                            <div>
-                                <h6 class="fs-13 fw-bold mb-1">NHIS Expiry</h6>
-                                <p class="mb-0">{{ $patient->nhis_expiry_date?->format('d M Y') ?? '—' }}</p>
                             </div>
                         </div>
                     </div>

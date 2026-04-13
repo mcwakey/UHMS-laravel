@@ -19,7 +19,7 @@
     <div class="card-body py-2">
         <form method="GET" action="{{ route('admin.patients.index') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
-                <input type="text" name="search" class="form-control" placeholder="Search name, phone, ID, Ghana Card, NHIS..." value="{{ request('search') }}">
+                <input type="text" name="search" class="form-control" placeholder="Search name, phone, ID, Ghana Card..." value="{{ request('search') }}">
             </div>
             <div class="col-md-2">
                 <select name="gender" class="form-select">
@@ -65,7 +65,6 @@
                         <th>Phone</th>
                         <th>Gender</th>
                         <th>Age</th>
-                        <th>NHIS</th>
                         <th>Region</th>
                         <th>Status</th>
                         <th class="text-end">Actions</th>
@@ -97,17 +96,6 @@
                         <td>{{ $patient->phone }}</td>
                         <td>{{ $patient->gender?->label() }}</td>
                         <td>{{ $patient->age }} yrs</td>
-                        <td>
-                            @if($patient->nhis_number)
-                                @if($patient->is_nhis_active)
-                                    <span class="badge badge-soft-success"><i class="ti ti-check me-1"></i>Active</span>
-                                @else
-                                    <span class="badge badge-soft-danger"><i class="ti ti-x me-1"></i>Expired</span>
-                                @endif
-                            @else
-                                <span class="text-muted">—</span>
-                            @endif
-                        </td>
                         <td>{{ $patient->region ?? '—' }}</td>
                         <td>
                             @if($patient->status === 'active')

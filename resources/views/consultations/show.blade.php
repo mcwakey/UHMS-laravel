@@ -32,9 +32,6 @@
                             {{ $visit->patient->age }}y &middot;
                             {{ $visit->patient->gender->value }} &middot;
                             Blood: {{ $visit->patient->blood_group?->value ?? 'N/A' }}
-                            @if($visit->patient->is_nhis_active)
-                                &middot; <span class="badge bg-success-subtle text-success">NHIS Active</span>
-                            @endif
                         </small>
                     </div>
                 </div>

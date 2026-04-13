@@ -45,14 +45,6 @@
             </div>
         </div>
     </div>
-    <div class="col-xl-3 col-md-6">
-        <div class="card border-start border-warning border-3">
-            <div class="card-body py-3">
-                <p class="text-muted mb-1 small">NHIS Active</p>
-                <h4 class="fw-bold mb-0">{{ $stats['nhis_active'] ?? 0 }}</h4>
-            </div>
-        </div>
-    </div>
 </div>
 
 <!-- Charts + Filter -->
@@ -125,7 +117,6 @@
                         <th>Gender</th>
                         <th>DOB</th>
                         <th>Phone</th>
-                        <th>NHIS</th>
                         <th>Visits</th>
                         <th>Registered</th>
                     </tr>
@@ -138,13 +129,6 @@
                         <td>{{ ucfirst($patient->gender?->value ?? '—') }}</td>
                         <td>{{ $patient->date_of_birth?->format('d M Y') ?? '—' }}</td>
                         <td>{{ $patient->phone }}</td>
-                        <td>
-                            @if($patient->nhis_number)
-                                <span class="badge bg-success">Active</span>
-                            @else
-                                <span class="badge bg-light text-dark">N/A</span>
-                            @endif
-                        </td>
                         <td><span class="badge bg-primary rounded-pill">{{ $patient->visits_count }}</span></td>
                         <td>{{ $patient->created_at->format('d M Y') }}</td>
                     </tr>

@@ -157,9 +157,6 @@
             <div class="card-body">
                 <h6 class="mb-1">{{ $claim->patient->first_name }} {{ $claim->patient->last_name }}</h6>
                 <div><small class="text-muted">{{ $claim->patient->patient_number }}</small></div>
-                @if($claim->patient->nhis_number)
-                <div><small class="text-muted">NHIS: {{ $claim->patient->nhis_number }}</small></div>
-                @endif
                 @if($claim->assignedDoctor)
                 <div class="mt-2"><small class="text-muted">Doctor: {{ $claim->assignedDoctor->name }}</small></div>
                 @endif

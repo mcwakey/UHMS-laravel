@@ -131,18 +131,6 @@
                     <input type="text" name="ghana_card_number" class="form-control @error('ghana_card_number') is-invalid @enderror" value="{{ old('ghana_card_number') }}" placeholder="GHA-XXXXXXXXX-X">
                     @error('ghana_card_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">NHIS Number</label>
-                    <input type="text" name="nhis_number" class="form-control @error('nhis_number') is-invalid @enderror" value="{{ old('nhis_number') }}">
-                    @error('nhis_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">NHIS Expiry Date</label>
-                    <input type="date" name="nhis_expiry_date" class="form-control @error('nhis_expiry_date') is-invalid @enderror" value="{{ old('nhis_expiry_date') }}">
-                    @error('nhis_expiry_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
             </div>
         </div>
     </div>

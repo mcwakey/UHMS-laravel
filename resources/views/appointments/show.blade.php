@@ -237,12 +237,6 @@
                             <td>{{ $appointment->patient->date_of_birth->age }} years</td>
                         </tr>
                         @endif
-                        @if($appointment->patient->nhis_number)
-                        <tr>
-                            <td class="text-muted">NHIS #</td>
-                            <td>{{ $appointment->patient->nhis_number }}</td>
-                        </tr>
-                        @endif
                     </table>
                     <div class="mt-3">
                         <a href="{{ route('admin.patients.show', $appointment->patient) }}" class="btn btn-outline-primary btn-sm w-100">

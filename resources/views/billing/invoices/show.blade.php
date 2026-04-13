@@ -59,9 +59,6 @@
                         <p class="fw-medium mb-1">{{ $invoice->patient->full_name }}</p>
                         <p class="text-muted mb-1">{{ $invoice->patient->patient_number }}</p>
                         <p class="text-muted mb-1">{{ $invoice->patient->phone }}</p>
-                        @if($invoice->patient->nhis_number)
-                        <p class="mb-0"><span class="badge bg-soft-primary">NHIS: {{ $invoice->patient->nhis_number }}</span></p>
-                        @endif
                     </div>
                     <div class="col-md-4 text-md-end">
                         <h6 class="fw-bold mb-2">Visit</h6>

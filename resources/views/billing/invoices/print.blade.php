@@ -84,9 +84,6 @@
                 <p style="font-weight:bold;">{{ $invoice->patient->full_name }}</p>
                 <p>{{ $invoice->patient->patient_number }}</p>
                 <p>{{ $invoice->patient->phone }}</p>
-                @if($invoice->patient->nhis_number)
-                <p><span class="label">NHIS:</span> {{ $invoice->patient->nhis_number }}</p>
-                @endif
             </div>
             <div class="info-col" style="text-align:right;">
                 <h5>Visit</h5>

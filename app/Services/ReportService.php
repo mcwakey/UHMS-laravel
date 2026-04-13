@@ -123,8 +123,6 @@ class ReportService
                 ->whereYear('created_at', now()->year)->count(),
             'male_patients' => Patient::where('gender', 'male')->count(),
             'female_patients' => Patient::where('gender', 'female')->count(),
-            'nhis_active' => Patient::whereNotNull('nhis_number')
-                ->where('nhis_expiry_date', '>', now())->count(),
         ];
 
         // Monthly registration trend (last 6 months)
@@ -252,8 +250,6 @@ class ReportService
             'pending_claims' => (clone $baseQuery)->whereIn('status', [
                 InvoiceStatus::PENDING->value, InvoiceStatus::DRAFT->value,
             ])->count(),
-            'nhis_patients' => Patient::whereNotNull('nhis_number')
-                ->where('nhis_expiry_date', '>', now())->count(),
         ];
 
         return compact('invoices', 'stats');

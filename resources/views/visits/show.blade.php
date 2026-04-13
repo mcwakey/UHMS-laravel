@@ -195,9 +195,6 @@
                 <p class="text-muted mb-2">{{ $visit->patient->patient_number }}</p>
 
                 <div class="d-flex justify-content-center gap-2 mb-3">
-                    @if($visit->patient->is_nhis_active)
-                        <span class="badge bg-success">NHIS Active</span>
-                    @endif
                     @if($visit->patient->blood_group)
                         <span class="badge bg-danger">{{ $visit->patient->blood_group->label() }}</span>
                     @endif

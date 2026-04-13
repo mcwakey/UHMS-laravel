@@ -93,7 +93,7 @@ class VisitController extends Controller
 
         $patients = Patient::search($term)
             ->active()
-            ->select('id', 'patient_number', 'first_name', 'last_name', 'other_names', 'phone', 'nhis_number', 'nhis_expiry_date')
+            ->select('id', 'patient_number', 'first_name', 'last_name', 'other_names', 'phone')
             ->limit(10)
             ->get()
             ->map(fn ($p) => [
@@ -102,7 +102,6 @@ class VisitController extends Controller
                 'patient_number' => $p->patient_number,
                 'full_name' => $p->full_name,
                 'phone' => $p->phone,
-                'nhis_active' => $p->is_nhis_active,
             ]);
 
         return response()->json($patients);

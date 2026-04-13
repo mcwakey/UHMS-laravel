@@ -28,7 +28,6 @@
                 <th>Gender</th>
                 <th>DOB</th>
                 <th>Phone</th>
-                <th>NHIS</th>
                 <th>Visits</th>
                 <th>Registered</th>
             </tr>
@@ -41,7 +40,6 @@
                 <td>{{ ucfirst($patient->gender?->value ?? '—') }}</td>
                 <td>{{ $patient->date_of_birth?->format('d M Y') ?? '—' }}</td>
                 <td>{{ $patient->phone }}</td>
-                <td>{{ $patient->nhis_number ?? 'N/A' }}</td>
                 <td>{{ $patient->visits_count }}</td>
                 <td>{{ $patient->created_at->format('d M Y') }}</td>
             </tr>

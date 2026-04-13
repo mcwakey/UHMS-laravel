@@ -167,12 +167,6 @@
                             <td>{{ $patient->date_of_birth->age }} years</td>
                         </tr>
                         @endif
-                        @if($patient->nhis_number)
-                        <tr>
-                            <td class="text-muted">NHIS #</td>
-                            <td>{{ $patient->nhis_number }}</td>
-                        </tr>
-                        @endif
                     </table>
                 </div>
             </div>

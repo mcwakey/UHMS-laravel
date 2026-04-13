@@ -30,8 +30,6 @@ class UpdatePatientRequest extends FormRequest
             'phone_secondary' => ['nullable', 'string', 'max:20'],
             'email' => ['nullable', 'email', 'max:191'],
             'ghana_card_number' => ['nullable', 'string', 'max:30', Rule::unique('patients')->ignore($this->route('patient'))],
-            'nhis_number' => ['nullable', 'string', 'max:30'],
-            'nhis_expiry_date' => ['nullable', 'date'],
             'occupation' => ['nullable', 'string', 'max:100'],
             'address' => ['nullable', 'string', 'max:500'],
             'city' => ['nullable', 'string', 'max:100'],

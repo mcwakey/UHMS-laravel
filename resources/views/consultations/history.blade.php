@@ -22,7 +22,6 @@
             <div class="col-md-3"><small class="text-muted">Age:</small> <span class="fw-medium">{{ $visit->patient->age }}y</span></div>
             <div class="col-md-3"><small class="text-muted">Gender:</small> <span class="fw-medium">{{ $visit->patient->gender->value }}</span></div>
             <div class="col-md-3"><small class="text-muted">Blood Group:</small> <span class="fw-medium">{{ $visit->patient->blood_group?->value ?? 'N/A' }}</span></div>
-            <div class="col-md-3"><small class="text-muted">NHIS:</small> <span class="fw-medium">{{ $visit->patient->is_nhis_active ? 'Active' : 'Inactive' }}</span></div>
         </div>
     </div>
 </div>
