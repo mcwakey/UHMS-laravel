@@ -514,6 +514,35 @@ Route::middleware('auth')->group(function () {
             Route::get('patients', [ReportController::class, 'patients'])->name('patients');
             Route::get('visits', [ReportController::class, 'visits'])->name('visits');
             Route::get('nhis', [ReportController::class, 'nhis'])->name('nhis');
+
+            // Financial Reports
+            Route::get('pharmacy-sales', [ReportController::class, 'pharmacySales'])->name('pharmacy-sales');
+            Route::get('pharmacy-sales-summary', [ReportController::class, 'pharmacySalesSummary'])->name('pharmacy-sales-summary');
+            Route::get('investigation-revenue', [ReportController::class, 'investigationRevenue'])->name('investigation-revenue');
+            Route::get('daily-collection', [ReportController::class, 'dailyCollection'])->name('daily-collection');
+            Route::get('claims', [ReportController::class, 'claims'])->name('claims');
+
+            // Clinical Reports
+            Route::get('consultation-stats', [ReportController::class, 'consultationStats'])->name('consultation-stats');
+            Route::get('admissions', [ReportController::class, 'admissions'])->name('admissions');
+            Route::get('discharges', [ReportController::class, 'discharges'])->name('discharges');
+
+            // Patient Statement
+            Route::get('statement-search', [ReportController::class, 'statementSearch'])->name('statement-search');
+            Route::get('patient-statement/{patient}', [ReportController::class, 'patientStatement'])->name('patient-statement');
+
+            // HR Reports
+            Route::get('leave', [ReportController::class, 'leave'])->name('leave');
+            Route::get('payroll', [ReportController::class, 'payroll'])->name('payroll');
+
+            // Inventory Reports
+            Route::get('stock-valuation', [ReportController::class, 'stockValuation'])->name('stock-valuation');
+            Route::get('expired-stock', [ReportController::class, 'expiredStock'])->name('expired-stock');
+
+            // Printable Documents
+            Route::get('print-consultation/{record}', [ReportController::class, 'printConsultation'])->name('print-consultation');
+            Route::get('print-lab-report/{labRequest}', [ReportController::class, 'printLabReport'])->name('print-lab-report');
+            Route::get('print-prescription/{prescription}', [ReportController::class, 'printPrescription'])->name('print-prescription');
         });
 
         // Settings (Admin)

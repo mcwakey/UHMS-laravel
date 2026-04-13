@@ -2,15 +2,27 @@
 
 namespace App\Services;
 
+use App\Enums\AdmissionStatus;
+use App\Enums\ClaimStatus;
 use App\Enums\InvoiceStatus;
 use App\Enums\VisitStatus;
+use App\Models\Admission;
+use App\Models\Claim;
 use App\Models\Department;
+use App\Models\DispensingRecord;
+use App\Models\Drug;
 use App\Models\DrugStock;
+use App\Models\Employee;
+use App\Models\InsuranceProvider;
 use App\Models\Invoice;
 use App\Models\LabRequest;
+use App\Models\LeaveRequest;
+use App\Models\MedicalRecord;
 use App\Models\Patient;
 use App\Models\Payment;
+use App\Models\PayrollRecord;
 use App\Models\Visit;
+use App\Models\Ward;
 use Illuminate\Support\Facades\DB;
 
 class ReportService
@@ -311,5 +323,445 @@ class ReportService
             ->orderByDesc('count')
             ->pluck('count', 'name')
             ->toArray();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Phase 20 — Advanced Reports
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Pharmacy sales (detailed) report.
+     */
+    public function pharmacySalesReport(array $filters = []): array
+    {
+        $query = DispensingRecord::with(['prescriptionItem.drug', 'drugStock', 'patient', 'dispensedBy']);
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('dispensed_at', '>=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('dispensed_at', '<=', $filters['date_to']);
+        }
+
+        $records = $query->latest('dispensed_at')->paginate(25)->withQueryString();
+
+        // Stats
+        $baseQuery = DispensingRecord::query();
+        if (!empty($filters['date_from'])) {
+            $baseQuery->whereDate('dispensed_at', '>=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $baseQuery->whereDate('dispensed_at', '<=', $filters['date_to']);
+        }
+
+        $totalRevenue = (clone $baseQuery)
+            ->join('drug_stock', 'dispensing_records.drug_stock_id', '=', 'drug_stock.id')
+            ->selectRaw('SUM(dispensing_records.quantity_dispensed * drug_stock.selling_price) as total')
+            ->value('total') ?? 0;
+
+        $stats = [
+            'total_dispensed' => (clone $baseQuery)->count(),
+            'total_revenue' => $totalRevenue,
+            'items_dispensed' => (clone $baseQuery)->sum('quantity_dispensed'),
+            'unique_patients' => (clone $baseQuery)->distinct('patient_id')->count('patient_id'),
+        ];
+
+        return compact('records', 'stats');
+    }
+
+    /**
+     * Pharmacy sales summary (aggregated by drug).
+     */
+    public function pharmacySalesSummaryReport(array $filters = []): array
+    {
+        $query = DispensingRecord::join('drug_stock', 'dispensing_records.drug_stock_id', '=', 'drug_stock.id')
+            ->join('drugs', 'drug_stock.drug_id', '=', 'drugs.id')
+            ->select(
+                'drugs.id',
+                'drugs.name as drug_name',
+                'drugs.generic_name',
+                DB::raw('SUM(dispensing_records.quantity_dispensed) as total_quantity'),
+                DB::raw('SUM(dispensing_records.quantity_dispensed * drug_stock.selling_price) as total_revenue'),
+                DB::raw('COUNT(DISTINCT dispensing_records.patient_id) as patient_count')
+            );
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('dispensing_records.dispensed_at', '>=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('dispensing_records.dispensed_at', '<=', $filters['date_to']);
+        }
+
+        $summary = $query->groupBy('drugs.id', 'drugs.name', 'drugs.generic_name')
+            ->orderByDesc('total_revenue')
+            ->paginate(25)
+            ->withQueryString();
+
+        return compact('summary');
+    }
+
+    /**
+     * Investigation (lab) revenue report.
+     */
+    public function investigationRevenueReport(array $filters = []): array
+    {
+        $query = LabRequest::with(['patient', 'department', 'items.labTest'])
+            ->where('status', 'completed');
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+        if (!empty($filters['department_id'])) {
+            $query->where('department_id', $filters['department_id']);
+        }
+
+        $requests = $query->latest()->paginate(25)->withQueryString();
+
+        // Revenue by department
+        $departmentRevenue = LabRequest::join('lab_request_items', 'lab_requests.id', '=', 'lab_request_items.lab_request_id')
+            ->join('lab_tests', 'lab_request_items.lab_test_id', '=', 'lab_tests.id')
+            ->join('departments', 'lab_requests.department_id', '=', 'departments.id')
+            ->where('lab_requests.status', 'completed');
+
+        if (!empty($filters['date_from'])) {
+            $departmentRevenue->whereDate('lab_requests.created_at', '>=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $departmentRevenue->whereDate('lab_requests.created_at', '<=', $filters['date_to']);
+        }
+
+        $departmentRevenue = $departmentRevenue
+            ->select('departments.name', DB::raw('SUM(lab_tests.price) as total_revenue'), DB::raw('COUNT(*) as test_count'))
+            ->groupBy('departments.name')
+            ->orderByDesc('total_revenue')
+            ->get();
+
+        $totalRevenue = $departmentRevenue->sum('total_revenue');
+
+        $stats = [
+            'total_revenue' => $totalRevenue,
+            'total_requests' => LabRequest::where('status', 'completed')->count(),
+            'departments' => $departmentRevenue->count(),
+        ];
+
+        return compact('requests', 'departmentRevenue', 'stats');
+    }
+
+    /**
+     * Consultation statistics report.
+     */
+    public function consultationStatsReport(array $filters = []): array
+    {
+        $query = MedicalRecord::with(['patient', 'doctor', 'visit.department', 'diagnoses']);
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+        if (!empty($filters['doctor_id'])) {
+            $query->where('doctor_id', $filters['doctor_id']);
+        }
+
+        $records = $query->latest()->paginate(25)->withQueryString();
+
+        // By doctor
+        $byDoctor = MedicalRecord::join('users', 'medical_records.doctor_id', '=', 'users.id')
+            ->select(
+                'users.id',
+                DB::raw("CONCAT(users.first_name, ' ', users.last_name) as doctor_name"),
+                DB::raw('COUNT(*) as consultation_count')
+            );
+
+        if (!empty($filters['date_from'])) {
+            $byDoctor->whereDate('medical_records.created_at', '>=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $byDoctor->whereDate('medical_records.created_at', '<=', $filters['date_to']);
+        }
+
+        $byDoctor = $byDoctor->groupBy('users.id', 'users.first_name', 'users.last_name')
+            ->orderByDesc('consultation_count')
+            ->get();
+
+        $stats = [
+            'total_consultations' => $byDoctor->sum('consultation_count'),
+            'active_doctors' => $byDoctor->count(),
+            'avg_per_doctor' => $byDoctor->count() > 0 ? round($byDoctor->sum('consultation_count') / $byDoctor->count()) : 0,
+        ];
+
+        return compact('records', 'byDoctor', 'stats');
+    }
+
+    /**
+     * Daily collection report.
+     */
+    public function dailyCollectionReport(array $filters = []): array
+    {
+        $date = $filters['date'] ?? today()->format('Y-m-d');
+
+        $payments = Payment::with(['invoice.patient', 'receivedBy'])
+            ->whereDate('paid_at', $date)
+            ->latest('paid_at')
+            ->get();
+
+        // Breakdown by payment method
+        $byMethod = Payment::whereDate('paid_at', $date)
+            ->select('payment_method', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
+            ->groupBy('payment_method')
+            ->get();
+
+        $stats = [
+            'total_collected' => $payments->sum('amount'),
+            'transaction_count' => $payments->count(),
+            'cash' => $byMethod->where('payment_method', 'cash')->first()?->total ?? 0,
+            'momo' => $byMethod->where('payment_method', 'mobile_money')->first()?->total ?? 0,
+        ];
+
+        return compact('payments', 'byMethod', 'stats', 'date');
+    }
+
+    /**
+     * Admissions report.
+     */
+    public function admissionsReport(array $filters = []): array
+    {
+        $query = Admission::with(['patient', 'bed.ward', 'admittedBy']);
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('admission_date', '>=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('admission_date', '<=', $filters['date_to']);
+        }
+        if (!empty($filters['ward_id'])) {
+            $query->whereHas('bed', fn ($q) => $q->where('ward_id', $filters['ward_id']));
+        }
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        $admissions = $query->latest('admission_date')->paginate(25)->withQueryString();
+
+        // Stats
+        $baseQ = Admission::query();
+        if (!empty($filters['date_from'])) {
+            $baseQ->whereDate('admission_date', '>=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $baseQ->whereDate('admission_date', '<=', $filters['date_to']);
+        }
+
+        $stats = [
+            'total' => (clone $baseQ)->count(),
+            'active' => (clone $baseQ)->where('status', AdmissionStatus::ADMITTED)->count(),
+            'discharged' => (clone $baseQ)->where('status', AdmissionStatus::DISCHARGED)->count(),
+        ];
+
+        $wards = Ward::orderBy('name')->get();
+
+        return compact('admissions', 'stats', 'wards');
+    }
+
+    /**
+     * Discharges report.
+     */
+    public function dischargesReport(array $filters = []): array
+    {
+        $query = Admission::with(['patient', 'bed.ward', 'dischargedBy'])
+            ->where('status', AdmissionStatus::DISCHARGED)
+            ->whereNotNull('actual_discharge_date');
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('actual_discharge_date', '>=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('actual_discharge_date', '<=', $filters['date_to']);
+        }
+
+        $discharges = $query->latest('actual_discharge_date')->paginate(25)->withQueryString();
+
+        // Average length of stay
+        $avgLos = Admission::where('status', AdmissionStatus::DISCHARGED)
+            ->whereNotNull('actual_discharge_date')
+            ->selectRaw('AVG(DATEDIFF(actual_discharge_date, admission_date)) as avg_days')
+            ->value('avg_days');
+
+        $stats = [
+            'total_discharged' => $discharges->total(),
+            'avg_length_of_stay' => round($avgLos ?? 0, 1),
+        ];
+
+        return compact('discharges', 'stats');
+    }
+
+    /**
+     * Leave report.
+     */
+    public function leaveReport(array $filters = []): array
+    {
+        $query = LeaveRequest::with(['employee.user', 'employee.department', 'approvedByUser']);
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('start_date', '>=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('start_date', '<=', $filters['date_to']);
+        }
+        if (!empty($filters['leave_type'])) {
+            $query->where('leave_type', $filters['leave_type']);
+        }
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        $leaves = $query->latest('start_date')->paginate(25)->withQueryString();
+
+        $stats = [
+            'total_requests' => $leaves->total(),
+            'total_days' => LeaveRequest::sum('days'),
+            'approved' => LeaveRequest::where('status', 'approved')->count(),
+            'pending' => LeaveRequest::where('status', 'pending')->count(),
+        ];
+
+        return compact('leaves', 'stats');
+    }
+
+    /**
+     * Payroll summary report.
+     */
+    public function payrollReport(array $filters = []): array
+    {
+        $query = PayrollRecord::with(['employee.user', 'employee.department']);
+
+        if (!empty($filters['pay_period'])) {
+            $query->where('pay_period', $filters['pay_period']);
+        }
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        $records = $query->latest('pay_period')->paginate(25)->withQueryString();
+
+        // Summary by department
+        $byDept = PayrollRecord::join('employees', 'payroll_records.employee_id', '=', 'employees.id')
+            ->join('departments', 'employees.department_id', '=', 'departments.id');
+
+        if (!empty($filters['pay_period'])) {
+            $byDept->where('payroll_records.pay_period', $filters['pay_period']);
+        }
+
+        $byDept = $byDept->select(
+                'departments.name',
+                DB::raw('COUNT(*) as employee_count'),
+                DB::raw('SUM(payroll_records.gross_pay) as total_gross'),
+                DB::raw('SUM(payroll_records.net_pay) as total_net')
+            )
+            ->groupBy('departments.name')
+            ->orderBy('departments.name')
+            ->get();
+
+        $stats = [
+            'total_gross' => $records->sum('gross_pay'),
+            'total_net' => $records->sum('net_pay'),
+            'total_tax' => $records->sum('tax'),
+            'employee_count' => $records->total(),
+        ];
+
+        return compact('records', 'byDept', 'stats');
+    }
+
+    /**
+     * Claims report.
+     */
+    public function claimsReport(array $filters = []): array
+    {
+        $query = Claim::with(['insuranceProvider', 'patient', 'invoice']);
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('claim_date', '>=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('claim_date', '<=', $filters['date_to']);
+        }
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+        if (!empty($filters['provider_id'])) {
+            $query->where('insurance_provider_id', $filters['provider_id']);
+        }
+
+        $claims = $query->latest('claim_date')->paginate(25)->withQueryString();
+
+        $stats = [
+            'total_claims' => $claims->total(),
+            'total_amount' => Claim::sum('total_amount'),
+            'approved_amount' => Claim::whereNotNull('approved_amount')->sum('approved_amount'),
+            'pending' => Claim::where('status', ClaimStatus::PENDING)->count(),
+        ];
+
+        $providers = InsuranceProvider::orderBy('name')->get();
+
+        return compact('claims', 'stats', 'providers');
+    }
+
+    /**
+     * Stock valuation report.
+     */
+    public function stockValuationReport(array $filters = []): array
+    {
+        $query = DrugStock::with(['drug'])
+            ->where('quantity', '>', 0);
+
+        if (!empty($filters['location'])) {
+            $query->where('location', $filters['location']);
+        }
+
+        $stocks = $query->orderBy('drug_id')->paginate(25)->withQueryString();
+
+        $totalValue = DrugStock::where('quantity', '>', 0)
+            ->selectRaw('SUM(quantity * unit_cost) as cost_value, SUM(quantity * selling_price) as sell_value')
+            ->first();
+
+        $stats = [
+            'cost_value' => $totalValue->cost_value ?? 0,
+            'sell_value' => $totalValue->sell_value ?? 0,
+            'total_items' => DrugStock::where('quantity', '>', 0)->count(),
+            'unique_drugs' => DrugStock::where('quantity', '>', 0)->distinct('drug_id')->count('drug_id'),
+        ];
+
+        return compact('stocks', 'stats');
+    }
+
+    /**
+     * Expired stock report.
+     */
+    public function expiredStockReport(array $filters = []): array
+    {
+        $query = DrugStock::with(['drug']);
+
+        $type = $filters['type'] ?? 'expired';
+        if ($type === 'expiring') {
+            $query->expiringSoon(90)->where('quantity', '>', 0);
+        } else {
+            $query->expired()->where('quantity', '>', 0);
+        }
+
+        $stocks = $query->orderBy('expiry_date')->paginate(25)->withQueryString();
+
+        $stats = [
+            'expired_count' => DrugStock::expired()->where('quantity', '>', 0)->count(),
+            'expiring_soon' => DrugStock::expiringSoon(90)->where('quantity', '>', 0)->count(),
+            'expired_value' => DrugStock::expired()->where('quantity', '>', 0)
+                ->selectRaw('SUM(quantity * unit_cost) as total')->value('total') ?? 0,
+        ];
+
+        return compact('stocks', 'stats', 'type');
     }
 }

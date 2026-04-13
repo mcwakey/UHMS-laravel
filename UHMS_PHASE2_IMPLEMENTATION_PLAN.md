@@ -1142,13 +1142,13 @@ This is the most complex technical module. It requires:
 | View | `patients/statement` (financial statement per patient) |
 
 ### 14.4 Deliverables
-- [ ] 13+ new report views
-- [ ] Patient statement PDF
-- [ ] Excel export on all report pages
-- [ ] PDF export on financial reports
-- [ ] Printable consultation note
-- [ ] Printable lab report
-- [ ] Printable prescription
+- [x] 13+ new report views (14 views: pharmacy-sales, pharmacy-sales-summary, investigation-revenue, consultation-stats, daily-collection, patient-statement, statement-search, admissions, discharges, leave, payroll, claims, stock-valuation, expired-stock)
+- [x] Patient statement PDF (patient-statement-pdf.blade.php)
+- [x] Excel export on all report pages (11 Export classes)
+- [x] PDF export on financial reports (pharmacy-sales-pdf, daily-collection-pdf, payroll-pdf)
+- [x] Printable consultation note (print-consultation.blade.php)
+- [x] Printable lab report (print-lab-report.blade.php)
+- [x] Printable prescription (print-prescription.blade.php)
 
 ---
 
@@ -1337,7 +1337,7 @@ Running total: ~57 tables
 | **Phase 17** | Notification System | ✅ Complete | 2026-04-12 |
 | **Phase 18** | ICD-10 & Procedures | ✅ Complete | 2026-04-12 |
 | **Phase 19** | Analyzer Integration | ✅ Complete | Phase 19 |
-| **Phase 20** | Advanced Reports | ⬜ Not Started | — |
+| **Phase 20** | Advanced Reports | ✅ Complete | Phase 20 |
 | **Phase 21** | Final Polish & Deployment | ⬜ Not Started | — |
 
 ---

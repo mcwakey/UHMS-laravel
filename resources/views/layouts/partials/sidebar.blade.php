@@ -520,11 +520,34 @@
                 <li class="menu-title"><span>Reports</span></li>
                 <li>
                     <ul>
+                        {{-- Financial Reports --}}
                         <li class="{{ request()->routeIs('admin.reports.income') ? 'active' : '' }}">
                             <a href="{{ route('admin.reports.income') }}">
                                 <i class="ti ti-report-money"></i><span>Income Report</span>
                             </a>
                         </li>
+                        <li class="{{ request()->routeIs('admin.reports.daily-collection') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.daily-collection') }}">
+                                <i class="ti ti-cash"></i><span>Daily Collection</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.reports.nhis') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.nhis') }}">
+                                <i class="ti ti-heart-handshake"></i><span>NHIS Report</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.reports.claims') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.claims') }}">
+                                <i class="ti ti-file-invoice"></i><span>Claims Report</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.reports.statement-search') || request()->routeIs('admin.reports.patient-statement') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.statement-search') }}">
+                                <i class="ti ti-receipt"></i><span>Patient Statement</span>
+                            </a>
+                        </li>
+
+                        {{-- Clinical Reports --}}
                         <li class="{{ request()->routeIs('admin.reports.patients') ? 'active' : '' }}">
                             <a href="{{ route('admin.reports.patients') }}">
                                 <i class="ti ti-users"></i><span>Patient Report</span>
@@ -535,9 +558,58 @@
                                 <i class="ti ti-calendar-stats"></i><span>Visit Report</span>
                             </a>
                         </li>
-                        <li class="{{ request()->routeIs('admin.reports.nhis') ? 'active' : '' }}">
-                            <a href="{{ route('admin.reports.nhis') }}">
-                                <i class="ti ti-heart-handshake"></i><span>NHIS Report</span>
+                        <li class="{{ request()->routeIs('admin.reports.consultation-stats') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.consultation-stats') }}">
+                                <i class="ti ti-stethoscope"></i><span>Consultation Stats</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.reports.admissions') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.admissions') }}">
+                                <i class="ti ti-bed"></i><span>Admissions Report</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.reports.discharges') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.discharges') }}">
+                                <i class="ti ti-door-exit"></i><span>Discharges Report</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.reports.investigation-revenue') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.investigation-revenue') }}">
+                                <i class="ti ti-microscope"></i><span>Investigation Revenue</span>
+                            </a>
+                        </li>
+
+                        {{-- Pharmacy Reports --}}
+                        <li class="{{ request()->routeIs('admin.reports.pharmacy-sales') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.pharmacy-sales') }}">
+                                <i class="ti ti-pill"></i><span>Pharmacy Sales</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.reports.pharmacy-sales-summary') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.pharmacy-sales-summary') }}">
+                                <i class="ti ti-chart-bar"></i><span>Sales Summary</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.reports.stock-valuation') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.stock-valuation') }}">
+                                <i class="ti ti-packages"></i><span>Stock Valuation</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.reports.expired-stock') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.expired-stock') }}">
+                                <i class="ti ti-alert-triangle"></i><span>Expired Stock</span>
+                            </a>
+                        </li>
+
+                        {{-- HR Reports --}}
+                        <li class="{{ request()->routeIs('admin.reports.leave') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.leave') }}">
+                                <i class="ti ti-calendar-off"></i><span>Leave Report</span>
+                            </a>
+                        </li>
+                        <li class="{{ request()->routeIs('admin.reports.payroll') ? 'active' : '' }}">
+                            <a href="{{ route('admin.reports.payroll') }}">
+                                <i class="ti ti-wallet"></i><span>Payroll Report</span>
                             </a>
                         </li>
                     </ul>
