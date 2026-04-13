@@ -119,6 +119,12 @@
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $patterns->count() }}</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#tasks-section" data-bs-toggle="pill">
+                                <i class="ti ti-checklist me-2"></i>Tasks
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $record?->tasks?->count() ?? 0 }}</span>
+                            </a>
+                        </li>
                     </ul>
                 </nav>
             </div>
@@ -1021,9 +1027,128 @@
                 </div>
             </div>
 
+            {{-- ============================================================ --}}
+            {{-- TASKS TAB --}}
+            {{-- ============================================================ --}}
+            <div class="tab-pane fade" id="tasks-section">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold mb-0"><i class="ti ti-checklist me-1"></i>Consultation Tasks</h6>
+                        @can('consultations.create')
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+                            <i class="ti ti-plus me-1"></i>Add Task
+                        </button>
+                        @endcan
+                    </div>
+                    <div class="card-body">
+                        @if($record && $record->tasks && $record->tasks->count() > 0)
+                            @foreach($record->tasks->sortBy('completed_at')->sortBy(fn($t) => $t->status === 'completed' ? 1 : 0) as $task)
+                            <div class="d-flex align-items-start gap-2 mb-3 p-2 border rounded {{ $task->completed_at ? 'bg-light' : '' }}">
+                                @can('consultations.create')
+                                <form method="POST" action="{{ route('admin.consultations.tasks.toggle', $task) }}">
+                                    @csrf @method('PATCH')
+                                    <button type="submit" class="btn btn-sm {{ $task->completed_at ? 'btn-success' : 'btn-outline-secondary' }} rounded-circle p-1" style="width:28px;height:28px;" title="{{ $task->completed_at ? 'Mark incomplete' : 'Mark complete' }}">
+                                        <i class="ti ti-check fs-14"></i>
+                                    </button>
+                                </form>
+                                @endcan
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <span class="fw-medium {{ $task->completed_at ? 'text-decoration-line-through text-muted' : '' }}">{{ $task->title }}</span>
+                                            @if($task->priority !== 'medium')
+                                                <span class="badge badge-soft-{{ $task->priority === 'high' ? 'danger' : 'info' }} ms-1">{{ ucfirst($task->priority) }}</span>
+                                            @endif
+                                        </div>
+                                        @can('consultations.create')
+                                        <form method="POST" action="{{ route('admin.consultations.tasks.destroy', $task) }}" class="d-inline" onsubmit="return confirm('Delete this task?')">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="btn btn-sm btn-outline-danger p-1" style="width:24px;height:24px;"><i class="ti ti-x fs-12"></i></button>
+                                        </form>
+                                        @endcan
+                                    </div>
+                                    @if($task->description)
+                                        <small class="text-muted">{{ $task->description }}</small>
+                                    @endif
+                                    <div class="mt-1">
+                                        <small class="text-muted">
+                                            @if($task->assignedUser) Assigned to: {{ $task->assignedUser->full_name }} @endif
+                                            @if($task->due_date) &middot; Due: {{ $task->due_date->format('d M Y') }} @endif
+                                            @if($task->completed_at) &middot; Completed: {{ $task->completed_at->format('d M Y H:i') }} @endif
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
+                        @else
+                            <div class="text-center text-muted py-4">
+                                <i class="ti ti-checklist fs-1 d-block mb-2"></i>
+                                No tasks for this consultation yet.
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
+
+{{-- Add Task Modal --}}
+@can('consultations.create')
+<div class="modal fade" id="addTaskModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.consultations.tasks.store', $visit) }}">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="ti ti-checklist me-2"></i>Add Task</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Task Title <span class="text-danger">*</span></label>
+                        <input type="text" name="title" class="form-control" required placeholder="e.g., Follow up on lab results">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="2" placeholder="Additional details..."></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Priority</label>
+                            <select name="priority" class="form-select">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Due Date</label>
+                            <input type="date" name="due_date" class="form-control">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Assign To</label>
+                        <select name="assigned_to" class="form-select">
+                            <option value="">Unassigned</option>
+                            @if(isset($doctors))
+                                @foreach($doctors as $doc)
+                                    <option value="{{ $doc->id }}">Dr. {{ $doc->full_name }}</option>
+                                @endforeach
+                            @endif
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endcan
 
 <!-- Save as Pattern Modal -->
 @can('consultations.create')

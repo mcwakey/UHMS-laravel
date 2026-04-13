@@ -34,6 +34,7 @@ class Patient extends Model
         'gender',
         'blood_group',
         'marital_status',
+        'religion',
         'phone',
         'phone_secondary',
         'email',
@@ -109,6 +110,41 @@ class Patient extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function insurances()
+    {
+        return $this->hasMany(PatientInsurance::class);
+    }
+
+    public function activeInsurances()
+    {
+        return $this->hasMany(PatientInsurance::class)
+            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->whereNull('expiry_date')
+                  ->orWhere('expiry_date', '>', now());
+            });
+    }
+
+    public function primaryInsurance()
+    {
+        return $this->hasOne(PatientInsurance::class)->where('is_primary', true);
+    }
+
+    public function emergencyContacts()
+    {
+        return $this->hasMany(EmergencyContact::class);
+    }
+
+    public function primaryEmergencyContact()
+    {
+        return $this->hasOne(EmergencyContact::class)->where('is_primary', true);
+    }
+
+    public function appointments()
+    {
+        return $this->hasMany(Visit::class)->whereIn('status', ['scheduled', 'confirmed']);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Accessors
@@ -124,6 +160,13 @@ class Patient extends Model
     public function getAgeAttribute(): string
     {
         return $this->date_of_birth->age;
+    }
+
+    public function getCashAndCarryInsuranceAttribute(): ?PatientInsurance
+    {
+        return $this->insurances()
+            ->whereHas('insuranceProvider', fn ($q) => $q->where('is_default', true))
+            ->first();
     }
 
     /*

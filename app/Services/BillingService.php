@@ -155,22 +155,28 @@ class BillingService
     {
         $items = [];
 
+        // Determine insurance coverage for this visit
+        $visitInsurance = $visit->visitInsurance;
+        $provider = $visitInsurance?->insuranceProvider;
+        $hasInsurance = $visitInsurance && $visitInsurance->is_active && !$visitInsurance->is_expired && $provider && !$provider->is_default;
+        $coveragePercentage = $hasInsurance ? ($provider->coverage_percentage / 100) : 0;
+
         // Consultation fee
         $consultationService = ServiceCatalog::where('category', 'consultation')
             ->where('is_active', true)
             ->first();
 
         if ($consultationService) {
-            $isNhis = false; // TODO: Check patient insurance via pivot table
+            $insuranceCoveredAmount = $hasInsurance && $consultationService->is_nhis_covered
+                ? round($consultationService->price * $coveragePercentage, 2)
+                : 0;
             $items[] = [
                 'service_catalog_id' => $consultationService->id,
                 'description' => $consultationService->name,
                 'quantity' => 1,
                 'unit_price' => $consultationService->price,
-                'is_nhis_covered' => $isNhis && $consultationService->is_nhis_covered,
-                'nhis_approved_amount' => $isNhis && $consultationService->is_nhis_covered
-                    ? ($consultationService->nhis_price ?? $consultationService->price)
-                    : 0,
+                'is_nhis_covered' => $hasInsurance && $consultationService->is_nhis_covered,
+                'nhis_approved_amount' => $insuranceCoveredAmount,
             ];
         }
 
@@ -184,16 +190,16 @@ class BillingService
                     ->first();
 
                 if ($labService) {
-                    $isNhis = false; // TODO: Check patient insurance via pivot table
+                    $labCoveredAmount = $hasInsurance && $labService->is_nhis_covered
+                        ? round($labService->price * $coveragePercentage, 2)
+                        : 0;
                     $items[] = [
                         'service_catalog_id' => $labService->id,
                         'description' => $item->labTest->name,
                         'quantity' => 1,
                         'unit_price' => $labService->price,
-                        'is_nhis_covered' => $isNhis && $labService->is_nhis_covered,
-                        'nhis_approved_amount' => $isNhis && $labService->is_nhis_covered
-                            ? ($labService->nhis_price ?? $labService->price)
-                            : 0,
+                        'is_nhis_covered' => $hasInsurance && $labService->is_nhis_covered,
+                        'nhis_approved_amount' => $labCoveredAmount,
                     ];
                 }
             }
@@ -209,16 +215,16 @@ class BillingService
                     ->first();
 
                 if ($drugService) {
-                    $isNhis = false; // TODO: Check patient insurance via pivot table
+                    $drugCoveredAmount = $hasInsurance && $drugService->is_nhis_covered
+                        ? round($drugService->price * $coveragePercentage * $item->quantity, 2)
+                        : 0;
                     $items[] = [
                         'service_catalog_id' => $drugService->id,
                         'description' => $item->drug->name . ' (' . $item->quantity . ')',
                         'quantity' => $item->quantity,
                         'unit_price' => $drugService->price,
-                        'is_nhis_covered' => $isNhis && $drugService->is_nhis_covered,
-                        'nhis_approved_amount' => $isNhis && $drugService->is_nhis_covered
-                            ? ($drugService->nhis_price ?? $drugService->price) * $item->quantity
-                            : 0,
+                        'is_nhis_covered' => $hasInsurance && $drugService->is_nhis_covered,
+                        'nhis_approved_amount' => $drugCoveredAmount,
                     ];
                 }
             }

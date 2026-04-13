@@ -32,6 +32,9 @@ use App\Http\Controllers\Admin\WardController;
 use App\Http\Controllers\Admin\AdmissionController;
 use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\InsuranceProviderController;
+use App\Http\Controllers\Admin\PatientInsuranceController;
+use App\Http\Controllers\Admin\EmergencyContactController;
+use App\Http\Controllers\Admin\ConsultationTaskController;
 use App\Http\Controllers\Admin\ClaimController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
@@ -142,7 +145,25 @@ Route::middleware('auth')->group(function () {
             Route::get('patients/{patient}/edit', [PatientController::class, 'edit'])->name('patients.edit')->middleware('can:patients.edit');
             Route::put('patients/{patient}', [PatientController::class, 'update'])->name('patients.update')->middleware('can:patients.edit');
             Route::patch('patients/{patient}/toggle-status', [PatientController::class, 'toggleStatus'])->name('patients.toggle-status')->middleware('can:patients.edit');
+
+            // Patient Insurance Management
+            Route::middleware('can:patients.edit')->group(function () {
+                Route::post('patients/{patient}/insurances', [PatientInsuranceController::class, 'store'])->name('patients.insurances.store');
+                Route::put('patients/{patient}/insurances/{insurance}', [PatientInsuranceController::class, 'update'])->name('patients.insurances.update');
+                Route::delete('patients/{patient}/insurances/{insurance}', [PatientInsuranceController::class, 'destroy'])->name('patients.insurances.destroy');
+                Route::patch('patients/{patient}/insurances/{insurance}/set-primary', [PatientInsuranceController::class, 'setPrimary'])->name('patients.insurances.set-primary');
+            });
+
+            // Emergency Contacts
+            Route::middleware('can:patients.edit')->group(function () {
+                Route::post('patients/{patient}/emergency-contacts', [EmergencyContactController::class, 'store'])->name('patients.emergency-contacts.store');
+                Route::put('patients/{patient}/emergency-contacts/{contact}', [EmergencyContactController::class, 'update'])->name('patients.emergency-contacts.update');
+                Route::delete('patients/{patient}/emergency-contacts/{contact}', [EmergencyContactController::class, 'destroy'])->name('patients.emergency-contacts.destroy');
+            });
         });
+
+        // Insurance Providers AJAX
+        Route::get('insurance-providers/by-type', [PatientInsuranceController::class, 'providersByType'])->name('insurance-providers.by-type');
 
         // Visits
         Route::middleware('can:visits.view')->group(function () {
@@ -385,6 +406,14 @@ Route::middleware('auth')->group(function () {
 
             Route::post('consultations/{visit}/prescriptions', [ConsultationController::class, 'storePrescription'])->name('consultations.prescriptions.store')->middleware('can:prescriptions.create');
             Route::post('consultations/{visit}/lab-request', [ConsultationController::class, 'storeLabRequest'])->name('consultations.lab-request.store')->middleware('can:lab.requests.create');
+
+            // Consultation Tasks
+            Route::middleware('can:consultations.create')->group(function () {
+                Route::post('consultations/{visit}/tasks', [ConsultationTaskController::class, 'store'])->name('consultations.tasks.store');
+                Route::put('consultations/tasks/{task}', [ConsultationTaskController::class, 'update'])->name('consultations.tasks.update');
+                Route::patch('consultations/tasks/{task}/toggle', [ConsultationTaskController::class, 'toggleComplete'])->name('consultations.tasks.toggle');
+                Route::delete('consultations/tasks/{task}', [ConsultationTaskController::class, 'destroy'])->name('consultations.tasks.destroy');
+            });
         });
 
         // Vitals (Nurse Triage)

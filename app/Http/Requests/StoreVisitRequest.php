@@ -25,6 +25,11 @@ class StoreVisitRequest extends FormRequest
             'chief_complaint' => ['nullable', 'string', 'max:2000'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'visit_date' => ['nullable', 'date'],
+            'start_time' => ['nullable', 'date_format:H:i'],
+            'end_time' => ['nullable', 'date_format:H:i', 'after:start_time'],
+            'visit_insurance_id' => ['nullable', 'exists:patient_insurances,id'],
+            'consultation_mode' => ['nullable', 'string', 'in:in_person,telehealth,virtual'],
+            'meeting_link' => ['nullable', 'url', 'max:500'],
         ];
     }
 

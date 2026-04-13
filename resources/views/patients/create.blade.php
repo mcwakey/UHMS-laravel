@@ -82,6 +82,17 @@
                 </div>
 
                 <div class="col-md-4 mb-3">
+                    <label class="form-label">Religion</label>
+                    <select name="religion" class="form-select @error('religion') is-invalid @enderror">
+                        <option value="">Select</option>
+                        @foreach(['Christianity', 'Islam', 'Traditional', 'Hindu', 'Buddhist', 'Other', 'None'] as $rel)
+                            <option value="{{ $rel }}" {{ old('religion') == $rel ? 'selected' : '' }}>{{ $rel }}</option>
+                        @endforeach
+                    </select>
+                    @error('religion')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="col-md-4 mb-3">
                     <label class="form-label">Blood Group</label>
                     <select name="blood_group" class="form-select @error('blood_group') is-invalid @enderror">
                         <option value="">Select</option>

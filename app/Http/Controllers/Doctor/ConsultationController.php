@@ -62,6 +62,11 @@ class ConsultationController extends Controller
         $record = $this->consultationService->getOrCreateRecord($visit);
         $data = $this->consultationService->getConsultationData($visit);
 
+        // Load tasks on the record
+        if ($data['record']) {
+            $data['record']->load(['tasks.assignedUser', 'tasks.creator']);
+        }
+
         // Get recent/popular patterns for the doctor
         $patterns = \App\Models\MedicalPattern::active()
             ->forDoctor(auth()->id())
@@ -74,6 +79,9 @@ class ConsultationController extends Controller
         $labRequests = $this->labService->getVisitLabRequests($visit);
         $labCategories = $this->labService->getActiveCategories();
 
+        // Doctors for task assignment
+        $doctors = \App\Models\User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get();
+
         return view('consultations.show', [
             'visit' => $data['visit'],
             'record' => $data['record'],
@@ -82,6 +90,7 @@ class ConsultationController extends Controller
             'patterns' => $patterns,
             'labRequests' => $labRequests,
             'labCategories' => $labCategories,
+            'doctors' => $doctors,
         ]);
     }
 

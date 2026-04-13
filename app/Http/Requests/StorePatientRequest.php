@@ -25,6 +25,7 @@ class StorePatientRequest extends FormRequest
             'gender' => ['required', new Enum(Gender::class)],
             'blood_group' => ['nullable', new Enum(BloodGroup::class)],
             'marital_status' => ['nullable', new Enum(MaritalStatus::class)],
+            'religion' => ['nullable', 'string', 'max:100'],
             'phone' => ['required', 'string', 'max:20'],
             'phone_secondary' => ['nullable', 'string', 'max:20'],
             'email' => ['nullable', 'email', 'max:191'],

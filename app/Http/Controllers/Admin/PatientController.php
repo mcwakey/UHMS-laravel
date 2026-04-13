@@ -5,8 +5,10 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePatientRequest;
 use App\Http\Requests\UpdatePatientRequest;
+use App\Models\InsuranceProvider;
 use App\Models\Patient;
 use App\Services\PatientService;
+use App\Services\VisitService;
 use Illuminate\Http\Request;
 
 class PatientController extends Controller
@@ -36,11 +38,42 @@ class PatientController extends Controller
             ->with('success', "Patient {$patient->patient_number} registered successfully.");
     }
 
-    public function show(Patient $patient)
+    public function show(Patient $patient, Request $request)
     {
-        $patient->load('registeredBy');
+        // AJAX: Return patient insurances as JSON
+        if ($request->ajax() && $request->get('format') === 'insurances') {
+            $patient->load('insurances.insuranceProvider');
+            return response()->json([
+                'insurances' => $patient->insurances
+                    ->where('is_active', true)
+                    ->map(fn($ins) => [
+                        'id' => $ins->id,
+                        'provider_name' => $ins->insuranceProvider->name,
+                        'membership_number' => $ins->membership_number,
+                        'is_primary' => $ins->is_primary,
+                        'is_expired' => $ins->is_expired,
+                    ])->values(),
+            ]);
+        }
 
-        return view('patients.show', compact('patient'));
+        $patient->load([
+            'registeredBy',
+            'insurances.insuranceProvider',
+            'emergencyContacts',
+        ]);
+
+        // Load visits separately to avoid window-function queries on older MariaDB
+        $visits = \App\Models\Visit::where('patient_id', $patient->id)
+            ->with(['department', 'assignedDoctor', 'invoices'])
+            ->latest('visit_date')
+            ->take(20)
+            ->get();
+        $patient->setRelation('visits', $visits);
+
+        $insuranceProviders = InsuranceProvider::where('is_active', true)->orderBy('name')->get();
+        $upcomingVisits = app(VisitService::class)->upcomingForPatient($patient->id);
+
+        return view('patients.show', compact('patient', 'insuranceProviders', 'upcomingVisits'));
     }
 
     public function edit(Patient $patient)

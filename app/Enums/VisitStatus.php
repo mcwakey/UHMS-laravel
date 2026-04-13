@@ -4,6 +4,8 @@ namespace App\Enums;
 
 enum VisitStatus: string
 {
+    case SCHEDULED = 'scheduled';
+    case CONFIRMED = 'confirmed';
     case REGISTERED = 'registered';
     case WAITING = 'waiting';
     case TRIAGE = 'triage';
@@ -16,10 +18,14 @@ enum VisitStatus: string
     case DISCHARGED = 'discharged';
     case COMPLETED = 'completed';
     case CANCELLED = 'cancelled';
+    case RESCHEDULED = 'rescheduled';
+    case NO_SHOW = 'no_show';
 
     public function label(): string
     {
         return match ($this) {
+            self::SCHEDULED => 'Scheduled',
+            self::CONFIRMED => 'Confirmed',
             self::REGISTERED => 'Registered',
             self::WAITING => 'Waiting',
             self::TRIAGE => 'Triage',
@@ -32,12 +38,16 @@ enum VisitStatus: string
             self::DISCHARGED => 'Discharged',
             self::COMPLETED => 'Completed',
             self::CANCELLED => 'Cancelled',
+            self::RESCHEDULED => 'Rescheduled',
+            self::NO_SHOW => 'No Show',
         };
     }
 
     public function color(): string
     {
         return match ($this) {
+            self::SCHEDULED => 'secondary',
+            self::CONFIRMED => 'info',
             self::REGISTERED => 'secondary',
             self::WAITING => 'warning',
             self::TRIAGE => 'info',
@@ -50,6 +60,8 @@ enum VisitStatus: string
             self::DISCHARGED => 'success',
             self::COMPLETED => 'success',
             self::CANCELLED => 'danger',
+            self::RESCHEDULED => 'warning',
+            self::NO_SHOW => 'dark',
         };
     }
 
@@ -59,6 +71,8 @@ enum VisitStatus: string
     public function allowedTransitions(): array
     {
         return match ($this) {
+            self::SCHEDULED => [self::CONFIRMED, self::REGISTERED, self::CANCELLED, self::RESCHEDULED, self::NO_SHOW],
+            self::CONFIRMED => [self::REGISTERED, self::CANCELLED, self::RESCHEDULED, self::NO_SHOW],
             self::REGISTERED => [self::WAITING, self::CANCELLED],
             self::WAITING => [self::TRIAGE, self::CONSULTING, self::CANCELLED],
             self::TRIAGE => [self::WAITING, self::CONSULTING, self::CANCELLED],
@@ -71,6 +85,8 @@ enum VisitStatus: string
             self::DISCHARGED => [],
             self::COMPLETED => [],
             self::CANCELLED => [],
+            self::RESCHEDULED => [],
+            self::NO_SHOW => [],
         };
     }
 

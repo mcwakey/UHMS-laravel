@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ConsultationMode;
 use App\Enums\Priority;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
@@ -30,6 +31,8 @@ class Visit extends Model
         'patient_id',
         'visit_type',
         'visit_date',
+        'start_time',
+        'end_time',
         'status',
         'priority',
         'department_id',
@@ -39,6 +42,14 @@ class Visit extends Model
         'checked_in_at',
         'checked_out_at',
         'created_by',
+        'visit_insurance_id',
+        'cancelled_by',
+        'cancellation_reason',
+        'rescheduled_from_id',
+        'rescheduled_at',
+        'rescheduled_reason',
+        'consultation_mode',
+        'meeting_link',
     ];
 
     protected function casts(): array
@@ -48,8 +59,10 @@ class Visit extends Model
             'visit_type' => VisitType::class,
             'status' => VisitStatus::class,
             'priority' => Priority::class,
+            'consultation_mode' => ConsultationMode::class,
             'checked_in_at' => 'datetime',
             'checked_out_at' => 'datetime',
+            'rescheduled_at' => 'datetime',
         ];
     }
 
@@ -134,6 +147,26 @@ class Visit extends Model
         return $this->hasOne(Admission::class);
     }
 
+    public function visitInsurance()
+    {
+        return $this->belongsTo(PatientInsurance::class, 'visit_insurance_id');
+    }
+
+    public function cancelledByUser()
+    {
+        return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    public function rescheduledFrom()
+    {
+        return $this->belongsTo(self::class, 'rescheduled_from_id');
+    }
+
+    public function rescheduledTo()
+    {
+        return $this->hasOne(self::class, 'rescheduled_from_id');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes
@@ -156,7 +189,22 @@ class Visit extends Model
             VisitStatus::COMPLETED->value,
             VisitStatus::DISCHARGED->value,
             VisitStatus::CANCELLED->value,
+            VisitStatus::RESCHEDULED->value,
+            VisitStatus::NO_SHOW->value,
         ]);
+    }
+
+    public function scopeScheduled($query)
+    {
+        return $query->whereIn('status', [
+            VisitStatus::SCHEDULED->value,
+            VisitStatus::CONFIRMED->value,
+        ]);
+    }
+
+    public function scopeUpcoming($query)
+    {
+        return $query->scheduled()->where('visit_date', '>=', today());
     }
 
     public function scopeSearch($query, ?string $term)
@@ -231,5 +279,54 @@ class Visit extends Model
             return $diff->h . 'h ' . $diff->i . 'm';
         }
         return $diff->i . 'm';
+    }
+
+    /**
+     * Check if the visit is a scheduled appointment (future-dated).
+     */
+    public function getIsScheduledAttribute(): bool
+    {
+        return in_array($this->status, [VisitStatus::SCHEDULED, VisitStatus::CONFIRMED]);
+    }
+
+    /**
+     * Check for scheduling conflicts with a doctor.
+     */
+    public function hasConflict(): bool
+    {
+        if (!$this->assigned_doctor_id || !$this->start_time) return false;
+
+        return self::where('assigned_doctor_id', $this->assigned_doctor_id)
+            ->where('visit_date', $this->visit_date)
+            ->where('id', '!=', $this->id ?? 0)
+            ->whereNotIn('status', [
+                VisitStatus::CANCELLED->value,
+                VisitStatus::NO_SHOW->value,
+                VisitStatus::RESCHEDULED->value,
+            ])
+            ->whereNotNull('start_time')
+            ->where(function ($q) {
+                $q->where(function ($inner) {
+                    $inner->where('start_time', '<', $this->end_time ?? date('H:i', strtotime($this->start_time . ' +30 minutes')))
+                          ->where('end_time', '>', $this->start_time);
+                });
+            })
+            ->exists();
+    }
+
+    /**
+     * Check if patient already has a visit on this date.
+     */
+    public static function patientHasVisitOnDate(int $patientId, string $date, ?int $excludeId = null): bool
+    {
+        return self::where('patient_id', $patientId)
+            ->whereDate('visit_date', $date)
+            ->whereNotIn('status', [
+                VisitStatus::CANCELLED->value,
+                VisitStatus::RESCHEDULED->value,
+                VisitStatus::NO_SHOW->value,
+            ])
+            ->when($excludeId, fn ($q) => $q->where('id', '!=', $excludeId))
+            ->exists();
     }
 }

@@ -60,4 +60,14 @@ class MedicalRecord extends Model
     {
         return $this->hasMany(Prescription::class);
     }
+
+    public function tasks()
+    {
+        return $this->hasMany(ConsultationTask::class);
+    }
+
+    public function pendingTasks()
+    {
+        return $this->hasMany(ConsultationTask::class)->whereIn('status', ['pending', 'in_progress']);
+    }
 }

@@ -22,11 +22,20 @@ class InsuranceProvider extends Model
         'address',
         'contract_number',
         'is_active',
+        'annual_limit',
+        'per_visit_limit',
+        'tier',
+        'coverage_percentage',
+        'is_default',
     ];
 
     protected $casts = [
         'type' => InsuranceType::class,
         'is_active' => 'boolean',
+        'is_default' => 'boolean',
+        'annual_limit' => 'decimal:2',
+        'per_visit_limit' => 'decimal:2',
+        'coverage_percentage' => 'decimal:2',
     ];
 
     public function getActivitylogOptions(): LogOptions
@@ -43,10 +52,20 @@ class InsuranceProvider extends Model
         return $this->hasMany(Claim::class);
     }
 
+    public function patientInsurances(): HasMany
+    {
+        return $this->hasMany(PatientInsurance::class);
+    }
+
     // ── Scopes ───────────────────────────────────────
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function scopeDefault($query)
+    {
+        return $query->where('is_default', true);
     }
 
     public function scopeByType($query, InsuranceType $type)

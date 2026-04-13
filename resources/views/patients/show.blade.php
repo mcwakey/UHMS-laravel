@@ -47,9 +47,14 @@
                         <span class="badge badge-soft-dark fs-13 px-3 py-2">Deceased</span>
                     @endif
                 </div>
-                @can('patients.edit')
-                <a href="{{ route('admin.patients.edit', $patient) }}" class="btn btn-primary btn-md"><i class="ti ti-edit me-1"></i>Edit Patient</a>
-                @endcan
+                <div class="d-flex gap-2 justify-content-lg-end flex-wrap">
+                    @can('visits.create')
+                    <a href="{{ route('admin.visits.create') }}?patient_id={{ $patient->id }}" class="btn btn-success btn-md"><i class="ti ti-plus me-1"></i>New Visit</a>
+                    @endcan
+                    @can('patients.edit')
+                    <a href="{{ route('admin.patients.edit', $patient) }}" class="btn btn-primary btn-md"><i class="ti ti-edit me-1"></i>Edit Patient</a>
+                    @endcan
+                </div>
             </div>
         </div>
     </div>
@@ -103,6 +108,15 @@
                     </div>
                     <div class="col-sm-6">
                         <div class="d-flex align-items-center mb-3">
+                            <span class="avatar rounded-circle bg-light text-dark flex-shrink-0 me-2"><i class="ti ti-pray fs-16"></i></span>
+                            <div>
+                                <h6 class="fs-13 fw-bold mb-1">Religion</h6>
+                                <p class="mb-0">{{ $patient->religion ?? '—' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-circle bg-light text-dark flex-shrink-0 me-2"><i class="ti ti-briefcase fs-16"></i></span>
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">Occupation</h6>
@@ -150,12 +164,13 @@
                             </div>
                         </div>
                     </div>
+                    @php $primaryContact = $patient->emergencyContacts->where('is_primary', true)->first() ?? $patient->emergencyContacts->first(); @endphp
                     <div class="col-sm-4">
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-urgent fs-16"></i></span>
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">Emergency Contact</h6>
-                                <p class="mb-0">{{ $patient->emergency_contact_name ?? '—' }}</p>
+                                <p class="mb-0">{{ $primaryContact?->name ?? $patient->emergency_contact_name ?? '—' }}</p>
                             </div>
                         </div>
                     </div>
@@ -164,10 +179,21 @@
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-phone-call fs-16"></i></span>
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">Emergency Phone</h6>
-                                <p class="mb-0">{{ $patient->emergency_contact_phone ?? '—' }}</p>
+                                <p class="mb-0">{{ $primaryContact?->phone ?? $patient->emergency_contact_phone ?? '—' }}</p>
                             </div>
                         </div>
                     </div>
+                    @if($patient->insurances->isNotEmpty())
+                    <div class="col-sm-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-shield-check fs-16"></i></span>
+                            <div>
+                                <h6 class="fs-13 fw-bold mb-1">Primary Insurance</h6>
+                                <p class="mb-0">{{ $patient->insurances->where('is_primary', true)->first()?->insuranceProvider?->name ?? 'Cash & Carry' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -207,21 +233,348 @@
 <!-- Tabs -->
 <ul class="nav nav-tabs nav-bordered mb-3">
     <li class="nav-item">
-        <a href="#visits" data-bs-toggle="tab" class="nav-link active bg-transparent"><span>Visit History</span></a>
+        <a href="#visits" data-bs-toggle="tab" class="nav-link active bg-transparent"><i class="ti ti-calendar-event me-1"></i>Visit History</a>
     </li>
     <li class="nav-item">
-        <a href="#registration-info" data-bs-toggle="tab" class="nav-link bg-transparent"><span>Registration Info</span></a>
+        <a href="#insurance" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-shield-check me-1"></i>Insurance <span class="badge bg-primary ms-1">{{ $patient->insurances->count() }}</span></a>
+    </li>
+    <li class="nav-item">
+        <a href="#emergency-contacts" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-urgent me-1"></i>Emergency Contacts</a>
+    </li>
+    <li class="nav-item">
+        <a href="#billing" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-receipt me-1"></i>Billing</a>
+    </li>
+    <li class="nav-item">
+        <a href="#registration-info" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-info-circle me-1"></i>Registration Info</a>
     </li>
 </ul>
 
 <div class="tab-content">
     <!-- Visit History Tab -->
     <div class="tab-pane show active" id="visits">
+        {{-- Upcoming Scheduled Visits --}}
+        @if($upcomingVisits->isNotEmpty())
+        <div class="card border-primary mb-3">
+            <div class="card-header bg-primary bg-opacity-10">
+                <h6 class="fw-bold mb-0 text-primary"><i class="ti ti-calendar-plus me-1"></i>Upcoming Scheduled Visits</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Department</th>
+                                <th>Doctor</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($upcomingVisits as $uv)
+                            <tr>
+                                <td>{{ $uv->visit_date->format('d M Y') }}</td>
+                                <td>{{ $uv->start_time ? \Carbon\Carbon::parse($uv->start_time)->format('h:i A') : '—' }}</td>
+                                <td>{{ $uv->department?->name ?? '—' }}</td>
+                                <td>{{ $uv->assignedDoctor?->full_name ?? '—' }}</td>
+                                <td><span class="badge" style="background-color: {{ $uv->status->color() }}">{{ $uv->status->label() }}</span></td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        {{-- Past Visit History --}}
         <div class="card">
-            <div class="card-body text-center py-5 text-muted">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0">Visit History</h6>
+                @can('visits.create')
+                <a href="{{ route('admin.visits.create') }}?patient_id={{ $patient->id }}" class="btn btn-sm btn-primary"><i class="ti ti-plus me-1"></i>New Visit</a>
+                @endcan
+            </div>
+            @if($patient->visits->isNotEmpty())
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Visit #</th>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Department</th>
+                                <th>Doctor</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($patient->visits as $visit)
+                            <tr>
+                                <td><a href="{{ route('admin.visits.show', $visit) }}" class="fw-medium">{{ $visit->visit_number }}</a></td>
+                                <td>{{ $visit->visit_date->format('d M Y') }}</td>
+                                <td>{{ $visit->visit_type?->label() ?? '—' }}</td>
+                                <td>{{ $visit->department?->name ?? '—' }}</td>
+                                <td>{{ $visit->assignedDoctor?->full_name ?? '—' }}</td>
+                                <td><span class="badge" style="background-color: {{ $visit->status->color() }}">{{ $visit->status->label() }}</span></td>
+                                <td><a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @else
+            <div class="card-body text-center py-4 text-muted">
                 <i class="ti ti-calendar-off fs-1 d-block mb-2"></i>
-                <p>No visits recorded yet.</p>
-                <small class="text-muted">Visits will appear here once created in Phase 3.</small>
+                <p class="mb-0">No visits recorded yet.</p>
+            </div>
+            @endif
+        </div>
+    </div>
+
+    <!-- Insurance Tab -->
+    <div class="tab-pane" id="insurance">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Patient Insurance Plans</h6>
+                @can('patients.edit')
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addInsuranceModal"><i class="ti ti-plus me-1"></i>Add Insurance</button>
+                @endcan
+            </div>
+            <div class="card-body p-0">
+                @if($patient->insurances->isNotEmpty())
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Provider</th>
+                                <th>Type</th>
+                                <th>Membership #</th>
+                                <th>Expiry</th>
+                                <th>Coverage</th>
+                                <th>Status</th>
+                                <th>Primary</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($patient->insurances as $ins)
+                            <tr>
+                                <td class="fw-medium">{{ $ins->insuranceProvider->name }}</td>
+                                <td>{{ ucfirst($ins->insuranceProvider->type instanceof \BackedEnum ? $ins->insuranceProvider->type->value : $ins->insuranceProvider->type) }}</td>
+                                <td>{{ $ins->membership_number ?? '—' }}</td>
+                                <td>
+                                    @if($ins->expiry_date)
+                                        <span class="{{ $ins->is_expired ? 'text-danger' : '' }}">{{ $ins->expiry_date->format('d M Y') }}</span>
+                                    @else
+                                        <span class="text-muted">No expiry</span>
+                                    @endif
+                                </td>
+                                <td>{{ $ins->insuranceProvider->coverage_percentage ?? 100 }}%</td>
+                                <td>
+                                    @if($ins->is_active && !$ins->is_expired)
+                                        <span class="badge badge-soft-success">Active</span>
+                                    @elseif($ins->is_expired)
+                                        <span class="badge badge-soft-danger">Expired</span>
+                                    @else
+                                        <span class="badge badge-soft-warning">Inactive</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($ins->is_primary)
+                                        <span class="badge bg-primary">Primary</span>
+                                    @else
+                                        @can('patients.edit')
+                                        <form method="POST" action="{{ route('admin.patients.insurances.set-primary', [$patient, $ins]) }}" class="d-inline">
+                                            @csrf @method('PATCH')
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Set Primary</button>
+                                        </form>
+                                        @endcan
+                                    @endif
+                                </td>
+                                <td>
+                                    @can('patients.edit')
+                                    @if(!$ins->insuranceProvider->is_default)
+                                    <button type="button" class="btn btn-sm btn-outline-secondary edit-insurance-btn"
+                                        data-id="{{ $ins->id }}"
+                                        data-provider="{{ $ins->insurance_provider_id }}"
+                                        data-membership="{{ $ins->membership_number }}"
+                                        data-policy="{{ $ins->policy_number }}"
+                                        data-expiry="{{ $ins->expiry_date?->format('Y-m-d') }}"
+                                        data-active="{{ $ins->is_active }}"
+                                        data-bs-toggle="modal" data-bs-target="#editInsuranceModal">
+                                        <i class="ti ti-edit"></i>
+                                    </button>
+                                    <form method="POST" action="{{ route('admin.patients.insurances.destroy', [$patient, $ins]) }}" class="d-inline" onsubmit="return confirm('Remove this insurance?')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="ti ti-trash"></i></button>
+                                    </form>
+                                    @endif
+                                    @endcan
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                <div class="text-center py-4 text-muted">
+                    <i class="ti ti-shield-off fs-1 d-block mb-2"></i>
+                    <p class="mb-1">No insurance plans added yet.</p>
+                    <small>Cash & Carry will be used by default for all visits.</small>
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Contacts Tab -->
+    <div class="tab-pane" id="emergency-contacts">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0"><i class="ti ti-urgent me-1"></i>Emergency Contacts</h6>
+                @can('patients.edit')
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addEmergencyContactModal"><i class="ti ti-plus me-1"></i>Add Contact</button>
+                @endcan
+            </div>
+            <div class="card-body p-0">
+                @if($patient->emergencyContacts->isNotEmpty())
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Secondary Phone</th>
+                                <th>Relationship</th>
+                                <th>Primary</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($patient->emergencyContacts as $ec)
+                            <tr>
+                                <td class="fw-medium">{{ $ec->name }}</td>
+                                <td>{{ $ec->phone }}</td>
+                                <td>{{ $ec->phone_secondary ?? '—' }}</td>
+                                <td>{{ $ec->relationship ?? '—' }}</td>
+                                <td>
+                                    @if($ec->is_primary)
+                                        <span class="badge bg-primary">Primary</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @can('patients.edit')
+                                    <button type="button" class="btn btn-sm btn-outline-secondary edit-ec-btn"
+                                        data-id="{{ $ec->id }}"
+                                        data-name="{{ $ec->name }}"
+                                        data-phone="{{ $ec->phone }}"
+                                        data-phone-secondary="{{ $ec->phone_secondary }}"
+                                        data-relationship="{{ $ec->relationship }}"
+                                        data-primary="{{ $ec->is_primary }}"
+                                        data-bs-toggle="modal" data-bs-target="#editEmergencyContactModal">
+                                        <i class="ti ti-edit"></i>
+                                    </button>
+                                    <form method="POST" action="{{ route('admin.patients.emergency-contacts.destroy', [$patient, $ec]) }}" class="d-inline" onsubmit="return confirm('Remove this contact?')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="ti ti-trash"></i></button>
+                                    </form>
+                                    @endcan
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                <div class="text-center py-4 text-muted">
+                    <i class="ti ti-address-book-off fs-1 d-block mb-2"></i>
+                    <p class="mb-0">No emergency contacts added yet.</p>
+                </div>
+                @endif
+            </div>
+        </div>
+
+        {{-- Legacy flat emergency contact info --}}
+        @if($patient->emergency_contact_name && $patient->emergencyContacts->isEmpty())
+        <div class="alert alert-info">
+            <i class="ti ti-info-circle me-1"></i>
+            <strong>Legacy Contact:</strong> {{ $patient->emergency_contact_name }} — {{ $patient->emergency_contact_phone ?? 'No phone' }} ({{ $patient->emergency_contact_relationship ?? 'Unknown relationship' }})
+            <br><small class="text-muted">This contact was saved before the emergency contacts system was enabled. Add it as a proper contact above.</small>
+        </div>
+        @endif
+    </div>
+
+    <!-- Billing Tab -->
+    <div class="tab-pane" id="billing">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="fw-bold mb-0"><i class="ti ti-receipt me-1"></i>Billing Summary</h6>
+            </div>
+            <div class="card-body">
+                @php
+                    $allInvoices = $patient->visits->flatMap->invoices;
+                    $totalBilled = $allInvoices->sum('total_amount');
+                    $totalPaid = $allInvoices->sum('paid_amount');
+                    $totalOutstanding = $totalBilled - $totalPaid;
+                @endphp
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 text-center">
+                            <h6 class="text-muted mb-1">Total Billed</h6>
+                            <h4 class="fw-bold mb-0">&#8373;{{ number_format($totalBilled, 2) }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 text-center">
+                            <h6 class="text-muted mb-1">Total Paid</h6>
+                            <h4 class="fw-bold text-success mb-0">&#8373;{{ number_format($totalPaid, 2) }}</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border rounded p-3 text-center">
+                            <h6 class="text-muted mb-1">Outstanding</h6>
+                            <h4 class="fw-bold {{ $totalOutstanding > 0 ? 'text-danger' : 'text-success' }} mb-0">&#8373;{{ number_format($totalOutstanding, 2) }}</h4>
+                        </div>
+                    </div>
+                </div>
+
+                @if($allInvoices->isNotEmpty())
+                <h6 class="fw-bold mb-2">Recent Invoices</h6>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Visit</th>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Paid</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($allInvoices->sortByDesc('created_at')->take(10) as $inv)
+                            <tr>
+                                <td><a href="{{ route('admin.invoices.show', $inv) }}" class="fw-medium">{{ $inv->invoice_number }}</a></td>
+                                <td>{{ $inv->visit?->visit_number ?? '—' }}</td>
+                                <td>{{ $inv->created_at->format('d M Y') }}</td>
+                                <td>&#8373;{{ number_format($inv->total_amount, 2) }}</td>
+                                <td>&#8373;{{ number_format($inv->paid_amount, 2) }}</td>
+                                <td><span class="badge badge-soft-{{ ($inv->status instanceof \BackedEnum ? $inv->status->value : $inv->status) === 'paid' ? 'success' : (($inv->status instanceof \BackedEnum ? $inv->status->value : $inv->status) === 'partial' ? 'warning' : 'danger') }}">{{ ucfirst($inv->status instanceof \BackedEnum ? $inv->status->value : $inv->status) }}</span></td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @else
+                <div class="text-center py-3 text-muted">
+                    <p class="mb-0">No billing records yet.</p>
+                </div>
+                @endif
             </div>
         </div>
     </div>
@@ -252,12 +605,218 @@
                         <p>{{ $patient->phone_secondary ?? '—' }}</p>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <h6 class="fw-bold fs-13">Emergency Relationship</h6>
-                        <p>{{ $patient->emergency_contact_relationship ?? '—' }}</p>
+                        <h6 class="fw-bold fs-13">Digital Address</h6>
+                        <p>{{ $patient->digital_address ?? '—' }}</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+{{-- Add Insurance Modal --}}
+@can('patients.edit')
+<div class="modal fade" id="addInsuranceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.patients.insurances.store', $patient) }}">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Insurance Plan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Insurance Provider <span class="text-danger">*</span></label>
+                        <select name="insurance_provider_id" class="form-select" required>
+                            <option value="">Select Provider</option>
+                            @foreach($insuranceProviders->where('is_default', false) as $ip)
+                                <option value="{{ $ip->id }}">{{ $ip->name }} ({{ ucfirst($ip->type instanceof \BackedEnum ? $ip->type->value : $ip->type) }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Membership Number</label>
+                        <input type="text" name="membership_number" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Policy Number</label>
+                        <input type="text" name="policy_number" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Expiry Date</label>
+                        <input type="date" name="expiry_date" class="form-control">
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" name="is_primary" value="1" class="form-check-input" id="addInsPrimary">
+                        <label class="form-check-label" for="addInsPrimary">Set as primary insurance</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Insurance</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Edit Insurance Modal --}}
+<div class="modal fade" id="editInsuranceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" id="editInsuranceForm">
+                @csrf @method('PUT')
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Insurance Plan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Membership Number</label>
+                        <input type="text" name="membership_number" class="form-control" id="editInsMembership">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Policy Number</label>
+                        <input type="text" name="policy_number" class="form-control" id="editInsPolicy">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Expiry Date</label>
+                        <input type="date" name="expiry_date" class="form-control" id="editInsExpiry">
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" name="is_active" value="1" class="form-check-input" id="editInsActive">
+                        <label class="form-check-label" for="editInsActive">Active</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Insurance</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Add Emergency Contact Modal --}}
+<div class="modal fade" id="addEmergencyContactModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.patients.emergency-contacts.store', $patient) }}">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Emergency Contact</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Contact Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone <span class="text-danger">*</span></label>
+                        <input type="tel" name="phone" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Secondary Phone</label>
+                        <input type="tel" name="phone_secondary" class="form-control">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Relationship</label>
+                        <select name="relationship" class="form-select">
+                            <option value="">Select</option>
+                            @foreach(['Spouse', 'Parent', 'Child', 'Sibling', 'Relative', 'Friend', 'Other'] as $rel)
+                                <option value="{{ $rel }}">{{ $rel }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" name="is_primary" value="1" class="form-check-input" id="addEcPrimary">
+                        <label class="form-check-label" for="addEcPrimary">Set as primary contact</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Contact</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Edit Emergency Contact Modal --}}
+<div class="modal fade" id="editEmergencyContactModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" id="editEcForm">
+                @csrf @method('PUT')
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Emergency Contact</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Contact Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" id="editEcName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone <span class="text-danger">*</span></label>
+                        <input type="tel" name="phone" class="form-control" id="editEcPhone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Secondary Phone</label>
+                        <input type="tel" name="phone_secondary" class="form-control" id="editEcPhoneSecondary">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Relationship</label>
+                        <select name="relationship" class="form-select" id="editEcRelationship">
+                            <option value="">Select</option>
+                            @foreach(['Spouse', 'Parent', 'Child', 'Sibling', 'Relative', 'Friend', 'Other'] as $rel)
+                                <option value="{{ $rel }}">{{ $rel }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" name="is_primary" value="1" class="form-check-input" id="editEcPrimary">
+                        <label class="form-check-label" for="editEcPrimary">Set as primary contact</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Contact</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endcan
+@endsection
+
+@section('scripts')
+<script>
+    // Edit Insurance Modal population
+    document.querySelectorAll('.edit-insurance-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            document.getElementById('editInsuranceForm').action = '{{ url("admin/patients/" . $patient->id . "/insurances") }}/' + id;
+            document.getElementById('editInsMembership').value = this.dataset.membership || '';
+            document.getElementById('editInsPolicy').value = this.dataset.policy || '';
+            document.getElementById('editInsExpiry').value = this.dataset.expiry || '';
+            document.getElementById('editInsActive').checked = this.dataset.active === '1';
+        });
+    });
+
+    // Edit Emergency Contact Modal population
+    document.querySelectorAll('.edit-ec-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const id = this.dataset.id;
+            document.getElementById('editEcForm').action = '{{ url("admin/patients/" . $patient->id . "/emergency-contacts") }}/' + id;
+            document.getElementById('editEcName').value = this.dataset.name || '';
+            document.getElementById('editEcPhone').value = this.dataset.phone || '';
+            document.getElementById('editEcPhoneSecondary').value = this.dataset.phoneSecondary || '';
+            document.getElementById('editEcRelationship').value = this.dataset.relationship || '';
+            document.getElementById('editEcPrimary').checked = this.dataset.primary === '1';
+        });
+    });
+</script>
 @endsection

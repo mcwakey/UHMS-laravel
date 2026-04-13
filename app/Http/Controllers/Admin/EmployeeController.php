@@ -43,7 +43,9 @@ class EmployeeController extends Controller
 
     public function show(Employee $employee)
     {
-        $employee->load(['department', 'user', 'leaveRequests' => fn ($q) => $q->latest()->take(5)]);
+        $employee->load(['department', 'user']);
+        $leaveRequests = $employee->leaveRequests()->latest()->take(5)->get();
+        $employee->setRelation('leaveRequests', $leaveRequests);
         $leaveBalance = $this->hrService->getLeaveBalance($employee->id);
 
         return view('hr.employees.show', compact('employee', 'leaveBalance'));
