@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -41,7 +42,7 @@ class LoginController extends Controller
             $user = Auth::user();
 
             // Block inactive users
-            if ($user->status !== 'active') {
+            if ($user->status !== UserStatus::ACTIVE) {
                 Auth::logout();
                 $request->session()->invalidate();
                 return back()->withErrors([
