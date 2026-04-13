@@ -82,6 +82,11 @@ class User extends Authenticatable
         return $this->hasOne(Employee::class);
     }
 
+    public function specialties()
+    {
+        return $this->belongsToMany(Specialty::class, 'doctor_specialty');
+    }
+
     /* ── Scopes ───────────────────────────────────────── */
 
     public function scopeActive($query)

@@ -28,7 +28,7 @@ class EmployeeController extends Controller
     public function create()
     {
         $departments = Department::active()->orderBy('name')->get();
-        $users = User::whereDoesntHave('employee')->orderBy('name')->get();
+        $users = User::whereDoesntHave('employee')->orderBy('first_name')->orderBy('last_name')->get();
         $genders = Gender::cases();
         $statuses = EmployeeStatus::cases();
 

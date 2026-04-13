@@ -1,0 +1,59 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+/**
+ * Represents a service line item attached to a visit.
+ * Captures pricing at time of service selection (insurance-adjusted).
+ */
+class VisitServiceLine extends Model
+{
+    use HasFactory;
+
+    protected $table = 'visit_services';
+
+    protected $fillable = [
+        'visit_id',
+        'service_catalog_id',
+        'department_id',
+        'quantity',
+        'unit_price',
+        'total_price',
+        'insurance_covered',
+        'patient_payable',
+        'notes',
+    ];
+
+    protected $casts = [
+        'quantity'          => 'integer',
+        'unit_price'        => 'decimal:2',
+        'total_price'       => 'decimal:2',
+        'insurance_covered' => 'decimal:2',
+        'patient_payable'   => 'decimal:2',
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    public function visit(): BelongsTo
+    {
+        return $this->belongsTo(Visit::class);
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(ServiceCatalog::class, 'service_catalog_id');
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+}

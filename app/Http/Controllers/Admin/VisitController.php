@@ -45,7 +45,14 @@ class VisitController extends Controller
 
     public function store(StoreVisitRequest $request)
     {
-        $visit = $this->visitService->create($request->validated());
+        $data = $request->validated();
+
+        // Use createWithServices when services are included; fall back to plain create
+        if (!empty($data['services'])) {
+            $visit = $this->visitService->createWithServices($data);
+        } else {
+            $visit = $this->visitService->create($data);
+        }
 
         return redirect()
             ->route('admin.visits.show', $visit)

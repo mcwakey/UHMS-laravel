@@ -5,7 +5,10 @@ namespace App\Services;
 use App\Enums\VisitStatus;
 use App\Models\Patient;
 use App\Models\QueueEntry;
+use App\Models\ServiceCatalog;
 use App\Models\Visit;
+use App\Models\VisitServiceLine;
+use App\Services\InsuranceService;
 use Carbon\Carbon;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -13,6 +16,7 @@ class VisitService
 {
     public function __construct(
         protected QueueService $queueService,
+        protected InsuranceService $insuranceService,
     ) {}
 
     public function list(array $filters = []): LengthAwarePaginator
@@ -256,6 +260,50 @@ class VisitService
     {
         $visit->update($data);
         return $visit->fresh();
+    }
+
+    /**
+     * Create a visit WITH service lines and insurance resolution.
+     *
+     * $data keys: (same as create()) + services: [{id, quantity}], insurance_id (optional)
+     * Billing lines are written to visit_services with insurance-adjusted pricing.
+     */
+    public function createWithServices(array $data): Visit
+    {
+        $services  = $data['services'] ?? [];
+        $insuranceId = $data['visit_insurance_id'] ?? null;
+        unset($data['services']);
+
+        $patient = Patient::findOrFail($data['patient_id']);
+
+        // 1. Resolve insurance (auto-selects best valid or Cash & Carry)
+        $insurance = $this->insuranceService->resolveForPatient($patient, $insuranceId ? (int) $insuranceId : null);
+        $data['visit_insurance_id'] = $insurance->id;
+
+        // 2. Create the visit
+        $visit = $this->create($data);
+
+        // 3. Persist service lines with pricing
+        foreach ($services as $svcInput) {
+            $service  = ServiceCatalog::find($svcInput['id']);
+            if (!$service) continue;
+
+            $quantity = max(1, (int) ($svcInput['quantity'] ?? 1));
+            $pricing  = $this->insuranceService->calculateServicePricing($service, $insurance, $quantity);
+
+            VisitServiceLine::create([
+                'visit_id'           => $visit->id,
+                'service_catalog_id' => $service->id,
+                'department_id'      => $service->department_id ?? $visit->department_id,
+                'quantity'           => $quantity,
+                'unit_price'         => $pricing['unit_price'],
+                'total_price'        => $pricing['total_price'],
+                'insurance_covered'  => $pricing['insurance_covered'],
+                'patient_payable'    => $pricing['patient_payable'],
+            ]);
+        }
+
+        return $visit->fresh(['patient', 'department', 'assignedDoctor', 'serviceLines.service', 'visitInsurance.insuranceProvider']);
     }
 
     public function todayStats(): array

@@ -165,6 +165,17 @@ Route::middleware('auth')->group(function () {
         // Insurance Providers AJAX
         Route::get('insurance-providers/by-type', [PatientInsuranceController::class, 'providersByType'])->name('insurance-providers.by-type');
 
+        // Visit AJAX endpoints (specialty-based selection + insurance + billing calculation)
+        Route::prefix('visits/ajax')->name('visits.ajax.')->group(function () {
+            Route::get('departments/{department}/services', [\App\Http\Controllers\Admin\VisitAjaxController::class, 'servicesByDepartment'])->name('department-services');
+            Route::get('doctors-by-services', [\App\Http\Controllers\Admin\VisitAjaxController::class, 'doctorsByServices'])->name('doctors-by-services');
+            Route::get('doctors/{doctor}/services', [\App\Http\Controllers\Admin\VisitAjaxController::class, 'servicesByDoctor'])->name('doctor-services');
+            Route::post('calculate-services', [\App\Http\Controllers\Admin\VisitAjaxController::class, 'calculateServices'])->name('calculate-services');
+        });
+
+        // Patient insurance status AJAX (used on visit creation form)
+        Route::get('patients/{patient}/insurance-status', [\App\Http\Controllers\Admin\VisitAjaxController::class, 'patientInsuranceStatus'])->name('patients.insurance-status');
+
         // Visits
         Route::middleware('can:visits.view')->group(function () {
             Route::get('visits', [VisitController::class, 'index'])->name('visits.index');

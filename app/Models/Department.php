@@ -27,6 +27,21 @@ class Department extends Model
         return $this->hasMany(User::class);
     }
 
+    public function services(): HasMany
+    {
+        return $this->hasMany(ServiceCatalog::class);
+    }
+
+    public function activeServices(): HasMany
+    {
+        return $this->hasMany(ServiceCatalog::class)->where('is_active', true);
+    }
+
+    public function specialties()
+    {
+        return $this->belongsToMany(Specialty::class, 'department_specialty');
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';
