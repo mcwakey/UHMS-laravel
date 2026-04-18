@@ -175,6 +175,7 @@ Route::middleware('auth')->group(function () {
             Route::get('visits/department-services', [VisitController::class, 'departmentServices'])->name('visits.department-services');
             Route::get('visits/doctors-for-services', [VisitController::class, 'doctorsForServices'])->name('visits.doctors-for-services');
             Route::get('visits/services-for-doctor', [VisitController::class, 'servicesForDoctor'])->name('visits.services-for-doctor');
+            Route::get('visits/service-price', [VisitController::class, 'servicePrice'])->name('visits.service-price');
             Route::get('visits/{visit}', [VisitController::class, 'show'])->name('visits.show');
             Route::patch('visits/{visit}/transition', [VisitController::class, 'transition'])->name('visits.transition')->middleware('can:visits.transition');
         });
@@ -539,6 +540,8 @@ Route::middleware('auth')->group(function () {
             Route::post('services', [ServiceCatalogController::class, 'store'])->name('services.store');
             Route::put('services/{service}', [ServiceCatalogController::class, 'update'])->name('services.update');
             Route::patch('services/{service}/toggle', [ServiceCatalogController::class, 'toggle'])->name('services.toggle');
+            Route::post('services/{service}/prices', [ServiceCatalogController::class, 'storePrices'])->name('services.prices.store');
+            Route::delete('services/{service}/prices/{price}', [ServiceCatalogController::class, 'deletePrice'])->name('services.prices.delete');
         });
 
         // Specialties

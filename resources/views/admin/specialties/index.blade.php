@@ -44,6 +44,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>Name</th>
+                        <th>Department</th>
                         <th>Description</th>
                         <th class="text-center">Doctors</th>
                         <th class="text-center">Services</th>
@@ -55,6 +56,13 @@
                     @forelse($specialties as $specialty)
                     <tr>
                         <td class="fw-medium">{{ $specialty->name }}</td>
+                        <td>
+                            @if($specialty->department)
+                            <span class="badge bg-soft-primary">{{ $specialty->department->name }}</span>
+                            @else
+                            <span class="text-muted small">—</span>
+                            @endif
+                        </td>
                         <td class="text-muted">{{ Str::limit($specialty->description, 60) ?? '—' }}</td>
                         <td class="text-center"><span class="badge bg-soft-info">{{ $specialty->doctors_count }}</span></td>
                         <td class="text-center"><span class="badge bg-soft-primary">{{ $specialty->services_count }}</span></td>
@@ -102,6 +110,16 @@
                                             <input type="text" name="name" class="form-control" value="{{ $specialty->name }}" required>
                                         </div>
                                         <div class="mb-3">
+                                            <label class="form-label">Department</label>
+                                            <select name="department_id" class="form-select">
+                                                <option value="">— None —</option>
+                                                @foreach($departments as $dept)
+                                                <option value="{{ $dept->id }}" {{ $specialty->department_id == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <small class="text-muted">Links this specialty to a department. Services with this specialty will appear in that department.</small>
+                                        </div>
+                                        <div class="mb-3">
                                             <label class="form-label">Description</label>
                                             <textarea name="description" class="form-control" rows="3">{{ $specialty->description }}</textarea>
                                         </div>
@@ -144,6 +162,16 @@
                     <div class="mb-3">
                         <label class="form-label">Name <span class="text-danger">*</span></label>
                         <input type="text" name="name" class="form-control" placeholder="e.g. General Surgery, Cardiology..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Department</label>
+                        <select name="department_id" class="form-select">
+                            <option value="">— None —</option>
+                            @foreach($departments as $dept)
+                            <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                            @endforeach
+                        </select>
+                        <small class="text-muted">Links this specialty to a department. Services with this specialty will appear in that department.</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Description</label>

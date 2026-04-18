@@ -126,7 +126,7 @@
                         <!-- Weight -->
                         <div class="col-md-3">
                             <label class="form-label">Weight <small class="text-muted">(kg)</small></label>
-                            <input type="number" name="weight" class="form-control @error('weight') is-invalid @enderror"
+                            <input type="number" name="weight" id="vitalWeight" class="form-control @error('weight') is-invalid @enderror"
                                    placeholder="70" min="0.5" max="500" step="0.1" value="{{ old('weight') }}">
                             @error('weight') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
@@ -134,9 +134,15 @@
                         <!-- Height -->
                         <div class="col-md-3">
                             <label class="form-label">Height <small class="text-muted">(cm)</small></label>
-                            <input type="number" name="height" class="form-control @error('height') is-invalid @enderror"
+                            <input type="number" name="height" id="vitalHeight" class="form-control @error('height') is-invalid @enderror"
                                    placeholder="170" min="20" max="300" step="0.1" value="{{ old('height') }}">
                             @error('height') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+
+                        <!-- BMI (auto-calculated) -->
+                        <div class="col-md-3">
+                            <label class="form-label">BMI <small class="text-muted">(kg/m&sup2;)</small></label>
+                            <input type="text" id="vitalBmi" class="form-control bg-light" readonly placeholder="Auto-calculated">
                         </div>
 
                         <!-- Blood Sugar -->
@@ -174,4 +180,37 @@
         @endif
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const weightInput = document.getElementById('vitalWeight');
+    const heightInput = document.getElementById('vitalHeight');
+    const bmiDisplay = document.getElementById('vitalBmi');
+
+    function calculateBMI() {
+        if (!weightInput || !heightInput || !bmiDisplay) return;
+        const weight = parseFloat(weightInput.value);
+        const height = parseFloat(heightInput.value);
+        if (weight > 0 && height > 0) {
+            const heightM = height / 100;
+            const bmi = (weight / (heightM * heightM)).toFixed(1);
+            let category = '';
+            if (bmi < 18.5) category = ' (Underweight)';
+            else if (bmi < 25) category = ' (Normal)';
+            else if (bmi < 30) category = ' (Overweight)';
+            else category = ' (Obese)';
+            bmiDisplay.value = bmi + category;
+        } else {
+            bmiDisplay.value = '';
+        }
+    }
+
+    if (weightInput) weightInput.addEventListener('input', calculateBMI);
+    if (heightInput) heightInput.addEventListener('input', calculateBMI);
+    calculateBMI();
+});
+</script>
+@endpush
+
 @endsection

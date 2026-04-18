@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Doctor;
 
+use App\Enums\DepartmentType;
 use App\Enums\VisitStatus;
+use App\Enums\VisitType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreConsultationRequest;
 use App\Http\Requests\StorePrescriptionRequest;
@@ -33,6 +35,15 @@ class ConsultationController extends Controller
      */
     public function index(Request $request)
     {
+        $filters = $request->all();
+
+        // Default: outpatient visits for today
+        if (!$request->hasAny(['search', 'visit_type', 'date_from'])) {
+            $filters['visit_type'] = $filters['visit_type'] ?? VisitType::OUTPATIENT->value;
+            $filters['date_from'] = $filters['date_from'] ?? today()->toDateString();
+            $filters['date_to'] = $filters['date_to'] ?? today()->toDateString();
+        }
+
         $query = Visit::with(['patient', 'department', 'assignedDoctor', 'medicalRecord'])
             ->whereIn('status', [
                 VisitStatus::CONSULTING->value,
@@ -40,17 +51,35 @@ class ConsultationController extends Controller
                 VisitStatus::LAB->value,
             ]);
 
-        if ($request->filled('search')) {
-            $query->search($request->search);
+        if (!empty($filters['search'])) {
+            $query->search($filters['search']);
+        }
+
+        if (!empty($filters['visit_type'])) {
+            $query->where('visit_type', $filters['visit_type']);
+        }
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('visit_date', '>=', $filters['date_from']);
+        }
+
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('visit_date', '<=', $filters['date_to']);
         }
 
         if ($request->boolean('my_patients')) {
             $query->where('assigned_doctor_id', auth()->id());
         }
 
+        // Only show visits in departments with consultation type
+        $query->where(function ($q) {
+            $q->whereHas('department', fn ($dq) => $dq->where('type', DepartmentType::CONSULTATION->value))
+              ->orWhereNull('department_id');
+        });
+
         $visits = $query->latest()->paginate(15);
 
-        return view('consultations.index', compact('visits'));
+        return view('consultations.index', compact('visits', 'filters'));
     }
 
     /**

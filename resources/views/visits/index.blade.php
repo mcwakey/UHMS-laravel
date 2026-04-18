@@ -80,14 +80,14 @@
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
                     <label class="form-label">Search</label>
-                    <input type="text" name="search" class="form-control" placeholder="Visit #, patient name, phone..." value="{{ request('search') }}">
+                    <input type="text" name="search" class="form-control" placeholder="Visit #, patient name, phone..." value="{{ $filters['search'] ?? '' }}">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Status</label>
                     <select name="status" class="form-select">
                         <option value="">All Statuses</option>
                         @foreach(\App\Enums\VisitStatus::cases() as $status)
-                            <option value="{{ $status->value }}" {{ request('status') == $status->value ? 'selected' : '' }}>{{ $status->label() }}</option>
+                            <option value="{{ $status->value }}" {{ ($filters['status'] ?? '') == $status->value ? 'selected' : '' }}>{{ $status->label() }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -96,7 +96,7 @@
                     <select name="visit_type" class="form-select">
                         <option value="">All Types</option>
                         @foreach(\App\Enums\VisitType::cases() as $type)
-                            <option value="{{ $type->value }}" {{ request('visit_type') == $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
+                            <option value="{{ $type->value }}" {{ ($filters['visit_type'] ?? '') == $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -105,13 +105,13 @@
                     <select name="department_id" class="form-select">
                         <option value="">All Departments</option>
                         @foreach($departments as $dept)
-                            <option value="{{ $dept->id }}" {{ request('department_id') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
+                            <option value="{{ $dept->id }}" {{ ($filters['department_id'] ?? '') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Date From</label>
-                    <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
+                    <input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}">
                 </div>
                 <div class="col-md-1">
                     <div class="d-flex gap-1">
@@ -133,6 +133,7 @@
                     <tr>
                         <th>Visit #</th>
                         <th>Patient</th>
+                        <th>Age</th>
                         <th>Type</th>
                         <th>Priority</th>
                         <th>Department</th>
@@ -157,6 +158,7 @@
                                 <br><small class="text-muted">{{ $visit->patient->patient_number }}</small>
                             </div>
                         </td>
+                        <td>{{ $visit->patient_age ?? $visit->patient->age }}y</td>
                         <td>
                             <span class="badge bg-{{ $visit->visit_type === \App\Enums\VisitType::EMERGENCY ? 'danger' : ($visit->visit_type === \App\Enums\VisitType::INPATIENT ? 'info' : 'light text-dark') }}">
                                 {{ $visit->visit_type->label() }}
@@ -200,7 +202,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="10" class="text-center text-muted py-4">
+                        <td colspan="11" class="text-center text-muted py-4">
                             <i class="ti ti-calendar-off fs-1 d-block mb-2"></i>
                             No visits found
                         </td>

@@ -23,7 +23,7 @@
                     @endif
                 </span>
                 <div>
-                    <p class="text-primary mb-1 fw-medium">{{ $patient->patient_number }}</p>
+                    <p class="text-primary mb-1 fw-medium">{{ $patient->patient_number }} / {{ $patient->phone_secondary }}</p>
                     <h5 class="mb-1"><span class="fw-bold">{{ $patient->full_name }}</span></h5>
                     <p class="mb-3">{{ $patient->address ? $patient->address . ', ' : '' }}{{ $patient->city ?? '' }}{{ $patient->region ? ', ' . $patient->region : '' }}</p>
                     <div class="d-flex align-items-center flex-wrap gap-3">
@@ -39,6 +39,10 @@
         <div class="col-xl-3 col-lg-4">
             <div class="p-3 text-lg-end">
                 <div class="mb-3">
+                    @php $lastVisitDate = $patient->visits->first()?->visit_date; @endphp
+                    @if($lastVisitDate)
+                        <span class="text-muted small me-2"><i class="ti ti-calendar-event me-1"></i>Last visit: {{ $lastVisitDate->format('d M Y') }}</span>
+                    @endif
                     @if($patient->status === 'active')
                         <span class="badge badge-soft-success fs-13 px-3 py-2">Active</span>
                     @elseif($patient->status === 'inactive')

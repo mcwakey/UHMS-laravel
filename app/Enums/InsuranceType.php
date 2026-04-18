@@ -14,8 +14,8 @@ enum InsuranceType: string
         return match ($this) {
             self::SELF => 'SELF SPONSORED',
             self::NHIA => 'NHIA',
-            self::PRIVATE => 'Private',
-            self::CORPORATE => 'Corporate',
+            self::PRIVATE => 'PRIVATE',
+            self::CORPORATE => 'CORPORATE',
         };
     }
 

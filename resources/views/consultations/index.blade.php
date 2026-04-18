@@ -14,22 +14,32 @@
 <div class="card mb-3">
     <div class="card-body">
         <form method="GET" class="row g-2 align-items-end">
-            <div class="col-md-4">
-                <label class="form-label small">Search</label>
-                <input type="text" name="search" class="form-control" placeholder="Patient name, visit number..." value="{{ request('search') }}">
-            </div>
             <div class="col-md-3">
-                <label class="form-label small">&nbsp;</label>
-                <div class="form-check mt-2">
+                <label class="form-label small">Search</label>
+                <input type="text" name="search" class="form-control" placeholder="Patient name, visit number..." value="{{ $filters['search'] ?? '' }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Visit Type</label>
+                <select name="visit_type" class="form-select">
+                    <option value="">All Types</option>
+                    @foreach(\App\Enums\VisitType::cases() as $type)
+                        <option value="{{ $type->value }}" {{ ($filters['visit_type'] ?? '') == $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Date From</label>
+                <input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}">
+            </div>
+            <div class="col-md-2">
+                <div class="form-check mt-4">
                     <input class="form-check-input" type="checkbox" name="my_patients" value="1" id="myPatients" {{ request('my_patients') ? 'checked' : '' }}>
                     <label class="form-check-label" for="myPatients">My Patients Only</label>
                 </div>
             </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100"><i class="ti ti-search me-1"></i>Filter</button>
-            </div>
-            <div class="col-md-2">
-                <a href="{{ route('admin.consultations.index') }}" class="btn btn-outline-secondary w-100">Clear</a>
+            <div class="col-md-auto">
+                <button type="submit" class="btn btn-primary"><i class="ti ti-search me-1"></i>Filter</button>
+                <a href="{{ route('admin.consultations.index') }}" class="btn btn-outline-secondary ms-1">Clear</a>
             </div>
         </form>
     </div>
@@ -46,7 +56,6 @@
                         <th>Patient</th>
                         <th>Status</th>
                         <th>Priority</th>
-                        <th>Department</th>
                         <th>Doctor</th>
                         <th>Chief Complaint</th>
                         <th>Action</th>
@@ -64,7 +73,6 @@
                         </td>
                         <td><span class="badge bg-{{ $visit->status->color() }}">{{ $visit->status->label() }}</span></td>
                         <td><span class="badge bg-{{ $visit->priority->color() }}">{{ $visit->priority->label() }}</span></td>
-                        <td>{{ $visit->department?->name ?? '—' }}</td>
                         <td>{{ $visit->assignedDoctor ? 'Dr. ' . $visit->assignedDoctor->full_name : '—' }}</td>
                         <td><small>{{ Str::limit($visit->chief_complaint, 40) ?? '—' }}</small></td>
                         <td>
@@ -75,7 +83,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center py-4 text-muted">
+                        <td colspan="7" class="text-center py-4 text-muted">
                             <i class="ti ti-stethoscope fs-1 d-block mb-2"></i>
                             No active consultations at the moment.
                         </td>

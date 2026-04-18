@@ -74,6 +74,12 @@ class VisitService
         $data['visit_date'] = $data['visit_date'] ?? today();
         $data['created_by'] = auth()->id();
 
+        // Calculate and store patient age at time of visit
+        $patient = Patient::find($data['patient_id']);
+        if ($patient && $patient->date_of_birth) {
+            $data['patient_age'] = $patient->date_of_birth->age;
+        }
+
         // Determine if this is a scheduled visit (future date) or walk-in
         $visitDate = Carbon::parse($data['visit_date']);
         $isScheduled = $visitDate->isAfter(today());
@@ -122,28 +128,42 @@ class VisitService
         $insuranceResult = $this->insuranceService->resolveForVisit($patient, $visit->visit_insurance_id);
         $insurance = $insuranceResult['insurance'];
 
+        // Resolve insurance type + provider for pricing lookup
+        $insuranceType = null;
+        $insuranceProviderId = null;
+        if ($insurance && ! $insuranceResult['is_fallback']) {
+            $provider = $insurance->insuranceProvider;
+            $insuranceType = $provider?->type; // InsuranceType enum
+            $insuranceProviderId = $insurance->insurance_provider_id;
+        }
+
         foreach ($services as $serviceData) {
-            $catalog = ServiceCatalog::findOrFail($serviceData['service_catalog_id']);
+            $catalog = ServiceCatalog::with('prices')->findOrFail($serviceData['service_catalog_id']);
             $quantity = max(1, (int) ($serviceData['quantity'] ?? 1));
-            $unitPrice = $catalog->price;
+
+            // Use insurance-type/provider-specific price if available
+            $unitPrice = $catalog->getPriceForInsurance($insuranceType, $insuranceProviderId);
             $totalPrice = $unitPrice * $quantity;
 
-            // Calculate insurance price if applicable
-            $insurancePrice = null;
-            if ($insurance && !$insuranceResult['is_fallback']) {
-                $insurancePrice = $this->insuranceService->calculateCoverage(
+            // Calculate insurance coverage amount
+            $insuranceCovered = 0;
+            if ($insurance && ! $insuranceResult['is_fallback']) {
+                $insuranceCovered = $this->insuranceService->calculateCoverage(
                     $insurance, $totalPrice, $catalog->is_nhis_covered
                 );
             }
 
+            $patientPayable = $totalPrice - $insuranceCovered;
+
             VisitServiceItem::create([
-                'visit_id' => $visit->id,
-                'service_catalog_id' => $catalog->id,
-                'department_id' => $catalog->department_id ?? $visit->department_id,
-                'quantity' => $quantity,
-                'unit_price' => $unitPrice,
-                'insurance_price' => $insurancePrice,
-                'total_price' => $totalPrice,
+                'visit_id'             => $visit->id,
+                'service_catalog_id'   => $catalog->id,
+                'department_id'        => $catalog->department_id ?? $visit->department_id,
+                'quantity'             => $quantity,
+                'unit_price'           => $unitPrice,
+                'insurance_covered'    => $insuranceCovered,
+                'patient_payable'      => $patientPayable,
+                'total_price'          => $totalPrice,
             ]);
         }
 
@@ -151,12 +171,18 @@ class VisitService
     }
 
     /**
-     * Get services available for a department (via specialty relationships).
+     * Get services available for a department.
+     * Includes services whose primary department_id matches, OR whose
+     * specialties are linked to the department.
      */
     public function getServicesForDepartment(int $departmentId): \Illuminate\Database\Eloquent\Collection
     {
         return ServiceCatalog::where('is_active', true)
-            ->where('department_id', $departmentId)
+            ->where(function ($q) use ($departmentId) {
+                $q->where('department_id', $departmentId)
+                  ->orWhereHas('specialties', fn ($sq) => $sq->where('department_id', $departmentId));
+            })
+            ->with('prices.insuranceProvider')
             ->orderBy('name')
             ->get();
     }
@@ -201,6 +227,7 @@ class VisitService
 
         return ServiceCatalog::where('is_active', true)
             ->whereHas('specialties', fn ($q) => $q->whereIn('specialties.id', $specialtyIds))
+            ->with('prices.insuranceProvider')
             ->orderBy('name')
             ->get();
     }

@@ -109,7 +109,12 @@
 
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Occupation</label>
-                    <input type="text" name="occupation" class="form-control @error('occupation') is-invalid @enderror" value="{{ old('occupation', $patient->occupation) }}">
+                    <select name="occupation" class="form-select @error('occupation') is-invalid @enderror">
+                        <option value="">Select Occupation</option>
+                        @foreach(['Accountant','Architect','Artist','Baker','Banker','Barber','Business Owner','Carpenter','Cashier','Chef','Civil Servant','Clergy','Cleaner','Construction Worker','Consultant','Dentist','Doctor','Driver','Electrician','Engineer','Farmer','Fisherman','Graphic Designer','Hairdresser','Journalist','Lawyer','Lecturer','Mechanic','Miner','Musician','Nurse','Pharmacist','Photographer','Pilot','Plumber','Police Officer','Politician','Programmer','Retired','Salesperson','Secretary','Security Guard','Social Worker','Student','Surveyor','Tailor','Teacher','Technician','Trader','Unemployed','Veterinarian','Welder','Other'] as $occ)
+                            <option value="{{ $occ }}" {{ old('occupation', $patient->occupation) == $occ ? 'selected' : '' }}>{{ $occ }}</option>
+                        @endforeach
+                    </select>
                     @error('occupation')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>

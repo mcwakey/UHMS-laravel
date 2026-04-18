@@ -25,7 +25,7 @@
     @csrf
 
     <div class="row">
-        <!-- Left Column â€” Patient, Visit Details, Services -->
+        <!-- Left Column - Patient, Insurance, Visit Details -->
         <div class="col-lg-8">
             <!-- Patient Search -->
             <div class="card">
@@ -55,6 +55,9 @@
                                 <small class="text-muted">
                                     <span id="patientNumber">{{ $selectedPatient?->patient_number }}</span>
                                     &bull; <span id="patientPhone">{{ $selectedPatient?->phone }}</span>
+                                    <span id="patientLastVisit" class="{{ $selectedPatient && $selectedPatient->visits()->exists() ? '' : 'd-none' }}">
+                                        &bull; Last visit: <strong>{{ $selectedPatient ? ($selectedPatient->visits()->latest('visit_date')->value('visit_date') ? \Carbon\Carbon::parse($selectedPatient->visits()->latest('visit_date')->value('visit_date'))->format('d M Y') : '') : '' }}</strong>
+                                    </span>
                                 </small>
                             </div>
                             <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearPatient()">
@@ -62,6 +65,47 @@
                             </button>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Insurance Selection -->
+            <div class="card d-none" id="insuranceCard">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Insurance</h5>
+                    <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">Default expired â€” using Cash &amp; Carry</span>
+                </div>
+                <div class="card-body">
+                    <!-- Insurance List (radio selection) -->
+                    <div id="insuranceList" class="mb-3">
+                        <div class="text-muted text-center py-3">
+                            <i class="ti ti-loader me-1"></i>Loading patient insurances...
+                        </div>
+                    </div>
+
+                    <!-- Selected Insurance Info Panel -->
+                    <div id="selectedInsuranceInfo" class="d-none">
+                        <div class="alert alert-light border mb-0">
+                            <div class="row">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Insurance Type</small>
+                                    <span class="fw-medium" id="insInfoType">â€”</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Coverage</small>
+                                    <span class="fw-medium" id="insInfoCoverage">â€”</span>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <small class="text-muted d-block">Total Billed (YTD)</small>
+                                    <span class="fw-medium" id="insInfoBilled">â€”</span>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <small class="text-muted d-block">Remaining Balance</small>
+                                    <span class="fw-bold" id="insInfoRemaining">â€”</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="visit_insurance_id" id="visitInsuranceId" value="">
                 </div>
             </div>
 
@@ -135,7 +179,10 @@
                     </div>
                 </div>
             </div>
+        </div>
 
+        <!-- Right Column - Department, Services & Submit -->
+        <div class="col-lg-4">
             <!-- Department, Services & Doctor Selection -->
             <div class="card">
                 <div class="card-header">
@@ -184,80 +231,27 @@
 
                     <!-- Selected Services (Billing Lines) -->
                     <div id="selectedServicesCard" class="d-none">
-                        <label class="form-label fw-bold"><i class="ti ti-receipt me-1"></i>Selected Services (Billing Lines)</label>
+                        <label class="form-label fw-bold"><i class="ti ti-receipt me-1"></i>Selected Services</label>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered mb-0" id="billingTable">
                                 <thead class="table-light">
                                     <tr>
                                         <th>Service</th>
-                                        <th class="text-center" style="width: 80px;">Qty</th>
-                                        <th class="text-end" style="width: 120px;">Unit Price</th>
-                                        <th class="text-end" style="width: 120px;">Insurance</th>
-                                        <th class="text-end" style="width: 120px;">Total</th>
+                                        <th class="text-end" style="width: 120px;">Price</th>
                                         <th style="width: 40px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="billingBody"></tbody>
                                 <tfoot>
                                     <tr class="table-light fw-bold">
-                                        <td colspan="3" class="text-end">Subtotal:</td>
-                                        <td class="text-end text-success" id="totalInsurance">&#8373;0.00</td>
+                                        <td class="text-end">Total:</td>
                                         <td class="text-end" id="totalAmount">&#8373;0.00</td>
-                                        <td></td>
-                                    </tr>
-                                    <tr class="table-warning fw-bold">
-                                        <td colspan="4" class="text-end">Patient Pays:</td>
-                                        <td class="text-end" id="patientPays">&#8373;0.00</td>
                                         <td></td>
                                     </tr>
                                 </tfoot>
                             </table>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Column â€” Info & Submit -->
-        <div class="col-lg-4">
-            <!-- Insurance Selection -->
-            <div class="card d-none" id="insuranceCard">
-                <div class="card-header d-flex align-items-center justify-content-between">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Insurance</h5>
-                    <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">Default expired â€” using Cash &amp; Carry</span>
-                </div>
-                <div class="card-body">
-                    <!-- Insurance List (radio selection) -->
-                    <div id="insuranceList" class="mb-3">
-                        <div class="text-muted text-center py-3">
-                            <i class="ti ti-loader me-1"></i>Loading patient insurances...
-                        </div>
-                    </div>
-
-                    <!-- Selected Insurance Info Panel -->
-                    <div id="selectedInsuranceInfo" class="d-none">
-                        <div class="alert alert-light border mb-0">
-                            <div class="row">
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Insurance Type</small>
-                                    <span class="fw-medium" id="insInfoType">â€”</span>
-                                </div>
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Coverage</small>
-                                    <span class="fw-medium" id="insInfoCoverage">â€”</span>
-                                </div>
-                                <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Total Billed (YTD)</small>
-                                    <span class="fw-medium" id="insInfoBilled">â€”</span>
-                                </div>
-                                <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Remaining Balance</small>
-                                    <span class="fw-bold" id="insInfoRemaining">â€”</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <input type="hidden" name="visit_insurance_id" id="visitInsuranceId" value="">
                 </div>
             </div>
 
@@ -354,8 +348,12 @@ document.addEventListener('DOMContentLoaded', function() {
                             const item = document.createElement('a');
                             item.href = '#';
                             item.className = 'list-group-item list-group-item-action';
+                            let info = escapeHtml(patient.patient_number) + ' &bull; ' + escapeHtml(patient.phone || 'No phone');
+                            if (patient.last_visit_date) {
+                                info += ' &bull; Last visit: <strong>' + escapeHtml(patient.last_visit_date) + '</strong>';
+                            }
                             item.innerHTML = '<div class="fw-medium">' + escapeHtml(patient.full_name) + '</div>' +
-                                '<small class="text-muted">' + escapeHtml(patient.patient_number) + ' &bull; ' + escapeHtml(patient.phone || 'No phone') + '</small>';
+                                '<small class="text-muted">' + info + '</small>';
                             item.addEventListener('click', function(e) {
                                 e.preventDefault();
                                 selectPatient(patient);
@@ -379,6 +377,15 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('patientName').textContent = patient.full_name;
         document.getElementById('patientNumber').textContent = patient.patient_number;
         document.getElementById('patientPhone').textContent = patient.phone || 'No phone';
+
+        const lastVisitEl = document.getElementById('patientLastVisit');
+        if (patient.last_visit_date) {
+            lastVisitEl.innerHTML = '&bull; Last visit: <strong>' + escapeHtml(patient.last_visit_date) + '</strong>';
+            lastVisitEl.classList.remove('d-none');
+        } else {
+            lastVisitEl.classList.add('d-none');
+        }
+
         patientInfo.classList.remove('d-none');
         resultsDiv.classList.add('d-none');
 
@@ -489,7 +496,45 @@ document.addEventListener('DOMContentLoaded', function() {
             infoPanel.classList.add('d-none');
         }
 
+        // Re-price all already-selected services for the new insurance
+        selectedServices.forEach(function(svc) {
+            svc.price = resolveServicePrice(svc.originalService);
+        });
+
         recalculateBilling();
+        renderBillingTable();
+
+        // Update displayed prices in the available services list
+        availableServices.forEach(function(svc) {
+            const el = document.querySelector('.svc-price-display[data-svc-id="' + svc.id + '"]');
+            if (el) {
+                el.textContent = '\u20B5' + formatNumber(resolveServicePrice(svc));
+            }
+        });
+    }
+
+    /**
+     * Resolve the applicable unit price for a service object
+     * given the currently selectedInsurance.
+     * Priority: provider-specific override -> type default -> base price
+     */
+    function resolveServicePrice(svc) {
+        if (!svc) return 0;
+        const insType = selectedInsurance ? selectedInsurance.type : null;            // e.g. 'nhia'
+        const insProviderId = selectedInsurance ? selectedInsurance.provider_id : null; // numeric
+
+        // Provider-specific override
+        if (insType && insProviderId && svc.provider_prices
+            && svc.provider_prices[insProviderId]
+            && svc.provider_prices[insProviderId][insType] !== undefined) {
+            return svc.provider_prices[insProviderId][insType];
+        }
+        // Type default
+        if (insType && svc.type_prices && svc.type_prices[insType] !== undefined) {
+            return svc.type_prices[insType];
+        }
+        // Base price fallback
+        return svc.price;
     }
 
     // ==========================================
@@ -564,6 +609,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById('servicesItems');
         let html = '';
         availableServices.forEach(function(svc) {
+            const displayPrice = resolveServicePrice(svc);
+            const fmtPrice = '\u20B5' + formatNumber(displayPrice);
+
             html += '<div class="service-item d-flex align-items-center justify-content-between py-2 px-2 border-bottom bg-white rounded mb-1" data-name="' + escapeHtml(svc.name.toLowerCase()) + '">';
             html += '<div>';
             html += '<span class="fw-medium">' + escapeHtml(svc.name) + '</span>';
@@ -572,8 +620,12 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<div class="small text-muted">' + escapeHtml(svc.category) + '</div>';
             html += '</div>';
             html += '<div class="d-flex align-items-center gap-2">';
-            html += '<span class="fw-bold text-success">' + svc.formatted_price + '</span>';
-            html += '<button type="button" class="btn btn-sm btn-outline-primary add-service-btn" data-id="' + svc.id + '" data-name="' + escapeHtml(svc.name) + '" data-price="' + svc.price + '" data-nhis="' + (svc.is_nhis_covered ? '1' : '0') + '" title="Add to billing">';
+            html += '<span class="fw-bold text-success svc-price-display" data-svc-id="' + svc.id + '">' + fmtPrice + '</span>';
+            html += '<button type="button" class="btn btn-sm btn-outline-primary add-service-btn"'
+                + ' data-id="' + svc.id + '"'
+                + ' data-name="' + escapeHtml(svc.name) + '"'
+                + ' data-nhis="' + (svc.is_nhis_covered ? '1' : '0') + '"'
+                + ' title="Add to billing">';
             html += '<i class="ti ti-plus"></i></button>';
             html += '</div>';
             html += '</div>';
@@ -582,12 +634,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         container.querySelectorAll('.add-service-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                addServiceToBilling(
-                    parseInt(this.dataset.id),
-                    this.dataset.name,
-                    parseFloat(this.dataset.price),
-                    this.dataset.nhis === '1'
-                );
+                const svcId = parseInt(this.dataset.id);
+                const svcObj = availableServices.find(s => s.id === svcId);
+                addServiceToBilling(svcId, this.dataset.name, svcObj);
             });
         });
     }
@@ -614,17 +663,20 @@ document.addEventListener('DOMContentLoaded', function() {
     // ==========================================
     // Billing line management
     // ==========================================
-    function addServiceToBilling(serviceId, serviceName, price, isNhis) {
+    function addServiceToBilling(serviceId, serviceName, svcObj) {
+        const resolvedPrice = resolveServicePrice(svcObj);
         const existing = selectedServices.find(s => s.service_catalog_id === serviceId);
         if (existing) {
             existing.quantity++;
+            existing.price = resolvedPrice; // refresh price in case insurance changed
         } else {
             selectedServices.push({
                 service_catalog_id: serviceId,
                 name: serviceName,
-                price: price,
+                price: resolvedPrice,
                 quantity: 1,
-                is_nhis: isNhis,
+                is_nhis: svcObj ? svcObj.is_nhis_covered : false,
+                originalService: svcObj,
             });
         }
 
@@ -660,16 +712,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         selectedServices.forEach(function(svc, idx) {
             const lineTotal = svc.price * svc.quantity;
-            const insuranceAmt = calculateInsuranceForLine(svc);
 
             html += '<tr>';
             html += '<td>' + escapeHtml(svc.name);
             if (svc.is_nhis) html += ' <span class="badge bg-primary-subtle text-primary">NHIS</span>';
             html += '<input type="hidden" name="services[' + idx + '][service_catalog_id]" value="' + svc.service_catalog_id + '">';
+            html += '<input type="hidden" name="services[' + idx + '][quantity]" value="' + svc.quantity + '">';
             html += '</td>';
-            html += '<td class="text-center"><input type="number" name="services[' + idx + '][quantity]" class="form-control form-control-sm text-center qty-input" value="' + svc.quantity + '" min="1" max="100" data-index="' + idx + '" style="width: 60px; margin: 0 auto;"></td>';
-            html += '<td class="text-end">\u20B5' + formatNumber(svc.price) + '</td>';
-            html += '<td class="text-end text-success">\u20B5' + formatNumber(insuranceAmt) + '</td>';
             html += '<td class="text-end fw-medium">\u20B5' + formatNumber(lineTotal) + '</td>';
             html += '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="' + idx + '"><i class="ti ti-trash"></i></button></td>';
             html += '</tr>';
@@ -677,11 +726,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         tbody.innerHTML = html;
 
-        tbody.querySelectorAll('.qty-input').forEach(function(input) {
-            input.addEventListener('change', function() {
-                updateServiceQuantity(parseInt(this.dataset.index), parseInt(this.value) || 1);
-            });
-        });
         tbody.querySelectorAll('.remove-service-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 removeServiceFromBilling(parseInt(this.dataset.index));
@@ -702,16 +746,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function recalculateBilling() {
         let totalAmount = 0;
-        let totalInsurance = 0;
 
         selectedServices.forEach(function(svc) {
             totalAmount += svc.price * svc.quantity;
-            totalInsurance += calculateInsuranceForLine(svc);
         });
 
         document.getElementById('totalAmount').textContent = '\u20B5' + formatNumber(totalAmount);
-        document.getElementById('totalInsurance').textContent = '\u20B5' + formatNumber(totalInsurance);
-        document.getElementById('patientPays').textContent = '\u20B5' + formatNumber(Math.max(0, totalAmount - totalInsurance));
     }
 
     // ==========================================

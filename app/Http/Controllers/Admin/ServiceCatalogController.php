@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreServiceCatalogRequest;
 use App\Models\Department;
+use App\Models\InsuranceProvider;
 use App\Models\ServiceCatalog;
+use App\Models\ServicePrice;
 use App\Models\Specialty;
+use App\Enums\InsuranceType;
 use Illuminate\Http\Request;
 
 class ServiceCatalogController extends Controller
@@ -30,13 +33,15 @@ class ServiceCatalogController extends Controller
             });
         }
 
-        $services = $query->with('department', 'specialties')->paginate(20)->withQueryString();
+        $services = $query->with('department', 'specialties', 'prices.insuranceProvider')->paginate(20)->withQueryString();
 
         $categories = ['consultation', 'lab', 'pharmacy', 'procedure', 'imaging', 'surgery', 'admin', 'other'];
         $departments = Department::active()->orderBy('name')->get();
         $specialties = Specialty::active()->orderBy('name')->get();
+        $insuranceProviders = InsuranceProvider::where('is_active', true)->orderBy('name')->get();
+        $insuranceTypes = InsuranceType::cases();
 
-        return view('admin.services.index', compact('services', 'categories', 'departments', 'specialties'));
+        return view('admin.services.index', compact('services', 'categories', 'departments', 'specialties', 'insuranceProviders', 'insuranceTypes'));
     }
 
     /**
@@ -90,5 +95,67 @@ class ServiceCatalogController extends Controller
         $service->update(['is_active' => !$service->is_active]);
 
         return back()->with('success', "Service {$service->name} " . ($service->is_active ? 'activated' : 'deactivated') . '.');
+    }
+
+    /**
+     * Save (upsert) insurance prices for a service.
+     * Handles both default type prices and provider-specific prices.
+     */
+    public function storePrices(Request $request, ServiceCatalog $service)
+    {
+        $request->validate([
+            'type_prices'                    => ['nullable', 'array'],
+            'type_prices.*'                  => ['nullable', 'numeric', 'min:0'],
+            'provider_prices'                => ['nullable', 'array'],
+            'provider_prices.*.insurance_type'      => ['required', 'string', 'in:self,nhia,private,corporate'],
+            'provider_prices.*.insurance_provider_id' => ['required', 'exists:insurance_providers,id'],
+            'provider_prices.*.price'        => ['required', 'numeric', 'min:0'],
+        ]);
+
+        // Upsert default type prices
+        foreach (($request->type_prices ?? []) as $type => $price) {
+            if (!InsuranceType::tryFrom($type)) continue;
+            if ($price === null || $price === '') {
+                // Remove if cleared
+                ServicePrice::where('service_catalog_id', $service->id)
+                    ->where('insurance_type', $type)
+                    ->whereNull('insurance_provider_id')
+                    ->delete();
+                continue;
+            }
+            ServicePrice::updateOrCreate(
+                [
+                    'service_catalog_id'   => $service->id,
+                    'insurance_type'       => $type,
+                    'insurance_provider_id' => null,
+                ],
+                ['price' => $price]
+            );
+        }
+
+        // Upsert provider-specific prices
+        foreach (($request->provider_prices ?? []) as $row) {
+            ServicePrice::updateOrCreate(
+                [
+                    'service_catalog_id'   => $service->id,
+                    'insurance_type'       => $row['insurance_type'],
+                    'insurance_provider_id' => $row['insurance_provider_id'],
+                ],
+                ['price' => $row['price']]
+            );
+        }
+
+        return back()->with('success', "Prices for \"{$service->name}\" updated.");
+    }
+
+    /**
+     * Delete a single service price entry.
+     */
+    public function deletePrice(ServiceCatalog $service, ServicePrice $price)
+    {
+        abort_unless($price->service_catalog_id === $service->id, 403);
+        $price->delete();
+
+        return back()->with('success', 'Price entry removed.');
     }
 }

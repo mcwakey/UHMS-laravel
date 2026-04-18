@@ -243,7 +243,17 @@
                                     <div class="border rounded p-2 text-center">
                                         <small class="text-muted d-block">BMI</small>
                                         <span class="fw-bold fs-6">{{ $latest->bmi ?? '—' }}</span>
-                                        <small class="text-muted d-block">kg/m²</small>
+                                        <small class="d-block {{ $latest->bmi ? ($latest->bmi < 18.5 ? 'text-warning' : ($latest->bmi < 25 ? 'text-success' : ($latest->bmi < 30 ? 'text-warning' : 'text-danger'))) : 'text-muted' }}">
+                                            @if($latest->bmi)
+                                                @if($latest->bmi < 18.5) Underweight
+                                                @elseif($latest->bmi < 25) Normal
+                                                @elseif($latest->bmi < 30) Overweight
+                                                @else Obese
+                                                @endif
+                                            @else
+                                                kg/m²
+                                            @endif
+                                        </small>
                                     </div>
                                 </div>
                             </div>
@@ -266,7 +276,7 @@
                             @foreach($vitals->skip(1) as $v)
                             <div class="d-flex justify-content-between align-items-center border-bottom py-2">
                                 <div>
-                                    <small>BP: {{ $v->blood_pressure ?? '—' }} | HR: {{ $v->heart_rate ?? '—' }} | T: {{ $v->temperature ?? '—' }}°C | SpO2: {{ $v->spo2 ?? '—' }}%</small>
+                                    <small>BP: {{ $v->blood_pressure ?? '—' }} | HR: {{ $v->heart_rate ?? '—' }} | T: {{ $v->temperature ?? '—' }}°C | SpO2: {{ $v->spo2 ?? '—' }}%{{ $v->bmi ? ' | BMI: ' . $v->bmi : '' }}</small>
                                 </div>
                                 <small class="text-muted">{{ $v->recorded_at->format('d M, h:i A') }}</small>
                             </div>

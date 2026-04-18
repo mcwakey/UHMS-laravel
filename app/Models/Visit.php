@@ -29,6 +29,7 @@ class Visit extends Model
     protected $fillable = [
         'visit_number',
         'patient_id',
+        'patient_age',
         'visit_type',
         'visit_date',
         'start_time',

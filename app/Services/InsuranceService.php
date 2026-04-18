@@ -133,7 +133,7 @@ class InsuranceService
         }
 
         // For NHIS-type, only cover if service is NHIS-covered
-        if ($provider->type === \App\Enums\InsuranceType::NHIS && !$isNhisCovered) {
+        if ($provider->type === \App\Enums\InsuranceType::NHIA && !$isNhisCovered) {
             return 0;
         }
 

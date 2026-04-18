@@ -18,7 +18,8 @@ class VisitServiceItem extends Model
         'department_id',
         'quantity',
         'unit_price',
-        'insurance_price',
+        'insurance_covered',
+        'patient_payable',
         'total_price',
         'notes',
     ];
@@ -27,7 +28,8 @@ class VisitServiceItem extends Model
     {
         return [
             'unit_price' => 'decimal:2',
-            'insurance_price' => 'decimal:2',
+            'insurance_covered' => 'decimal:2',
+            'patient_payable' => 'decimal:2',
             'total_price' => 'decimal:2',
         ];
     }

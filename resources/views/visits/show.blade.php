@@ -71,6 +71,16 @@
                 <h6 class="fw-bold mb-0"><i class="ti ti-switch-horizontal me-1"></i>Transition Visit</h6>
             </div>
             <div class="card-body">
+                @if($visit->visitServices->isNotEmpty())
+                <div class="mb-3">
+                    <small class="text-muted fw-bold">Service Departments:</small>
+                    <div class="d-flex flex-wrap gap-1 mt-1">
+                        @foreach($visit->visitServices->pluck('department')->filter()->unique('id') as $dept)
+                            <span class="badge bg-light text-dark"><i class="ti ti-building-hospital me-1"></i>{{ $dept->name }}</span>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
                 <div class="d-flex flex-wrap gap-2">
                     @foreach($visit->status->allowedTransitions() as $nextStatus)
                         <form method="POST" action="{{ route('admin.visits.transition', $visit) }}" class="d-inline">
@@ -227,10 +237,10 @@
                                 </td>
                                 <td class="text-center">{{ $vs->quantity }}</td>
                                 <td class="text-end">&#8373;{{ number_format($vs->unit_price, 2) }}</td>
-                                <td class="text-end text-success">&#8373;{{ number_format($vs->insurance_price ?? 0, 2) }}</td>
+                                <td class="text-end text-success">&#8373;{{ number_format($vs->insurance_covered ?? 0, 2) }}</td>
                                 <td class="text-end fw-medium">&#8373;{{ number_format($vs->total_price, 2) }}</td>
                             </tr>
-                            @php $totalAmt += $vs->total_price; $totalIns += ($vs->insurance_price ?? 0); @endphp
+                            @php $totalAmt += $vs->total_price; $totalIns += ($vs->insurance_covered ?? 0); @endphp
                             @endforeach
                         </tbody>
                         <tfoot>
@@ -314,7 +324,7 @@
                 <div class="text-start">
                     <div class="d-flex justify-content-between py-2 border-bottom">
                         <span class="text-muted">Age</span>
-                        <span class="fw-medium">{{ $visit->patient->age }} years</span>
+                        <span class="fw-medium">{{ $visit->patient_age ?? $visit->patient->age }} years</span>
                     </div>
                     <div class="d-flex justify-content-between py-2 border-bottom">
                         <span class="text-muted">Gender</span>
@@ -372,6 +382,32 @@
                             @endforeach
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        <!-- Services Being Done -->
+        @if($visit->visitServices->isNotEmpty())
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="fw-bold mb-0"><i class="ti ti-list-check me-1"></i>Services</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    @foreach($visit->visitServices as $vs)
+                    <div class="list-group-item py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-medium">{{ $vs->serviceCatalog?->name ?? '—' }}</span>
+                                @if($vs->department)
+                                    <span class="badge bg-light text-dark ms-1 small">{{ $vs->department->name }}</span>
+                                @endif
+                            </div>
+                            <span class="text-muted small">x{{ $vs->quantity }}</span>
+                        </div>
+                    </div>
+                    @endforeach
                 </div>
             </div>
         </div>

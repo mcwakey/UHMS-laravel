@@ -65,6 +65,7 @@
                         <th>Phone</th>
                         <th>Gender</th>
                         <th>Age</th>
+                        <th>Last Visit</th>
                         <th>Region</th>
                         <th>Status</th>
                         <th class="text-end">Actions</th>
@@ -96,6 +97,7 @@
                         <td>{{ $patient->phone }}</td>
                         <td>{{ $patient->gender?->label() }}</td>
                         <td>{{ $patient->age }} yrs</td>
+                        <td>{{ $patient->last_visit_date ? \Carbon\Carbon::parse($patient->last_visit_date)->format('d M Y') : '—' }}</td>
                         <td>{{ $patient->region ?? '—' }}</td>
                         <td>
                             @if($patient->status === 'active')
@@ -131,7 +133,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center py-4 text-muted">
+                        <td colspan="10" class="text-center py-4 text-muted">
                             <i class="ti ti-user-off fs-1 d-block mb-2"></i>
                             No patients found.
                             @can('patients.create')

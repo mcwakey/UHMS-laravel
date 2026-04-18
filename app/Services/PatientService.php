@@ -10,7 +10,13 @@ class PatientService
 {
     public function list(array $filters = []): LengthAwarePaginator
     {
-        $query = Patient::with('registeredBy');
+        $query = Patient::with('registeredBy')
+            ->select('patients.*')
+            ->addSelect(['last_visit_date' => \App\Models\Visit::select('visit_date')
+                ->whereColumn('patient_id', 'patients.id')
+                ->latest('visit_date')
+                ->limit(1)
+            ]);
 
         if (!empty($filters['search'])) {
             $query->search($filters['search']);

@@ -13,6 +13,7 @@ class Specialty extends Model
     protected $fillable = [
         'name',
         'description',
+        'department_id',
         'is_active',
     ];
 
@@ -29,6 +30,11 @@ class Specialty extends Model
     |--------------------------------------------------------------------------
     */
 
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
     public function doctors(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'doctor_specialty', 'specialty_id', 'user_id')
@@ -37,8 +43,7 @@ class Specialty extends Model
 
     public function services(): BelongsToMany
     {
-        return $this->belongsToMany(ServiceCatalog::class, 'service_specialty', 'specialty_id', 'service_catalog_id')
-            ->withTimestamps();
+        return $this->belongsToMany(ServiceCatalog::class, 'service_specialty', 'specialty_id', 'service_catalog_id');
     }
 
     /*
