@@ -20,7 +20,7 @@ class Visit extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['status', 'visit_type', 'priority', 'assigned_doctor_id', 'department_id'])
+            ->logOnly(['status', 'visit_type', 'priority', 'assigned_doctor_id'])
             ->logOnlyDirty()
             ->useLogName('visits')
             ->dontSubmitEmptyLogs();
@@ -36,7 +36,6 @@ class Visit extends Model
         'end_time',
         'status',
         'priority',
-        'department_id',
         'assigned_doctor_id',
         'chief_complaint',
         'notes',
@@ -76,11 +75,6 @@ class Visit extends Model
     public function patient()
     {
         return $this->belongsTo(Patient::class);
-    }
-
-    public function department()
-    {
-        return $this->belongsTo(Department::class);
     }
 
     public function assignedDoctor()

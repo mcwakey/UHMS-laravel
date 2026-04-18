@@ -25,6 +25,10 @@ class ServiceCatalogController extends Controller
             $query->where('category', $request->category);
         }
 
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -54,9 +58,8 @@ class ServiceCatalogController extends Controller
             'code' => strtoupper($request->code),
             'category' => $request->category,
             'price' => $request->price,
-            'nhis_price' => $request->nhis_price,
-            'is_nhis_covered' => $request->boolean('is_nhis_covered'),
             'department_id' => $request->department_id,
+            'department_type' => $request->department_type,
             'is_active' => true,
         ]);
 
@@ -77,9 +80,8 @@ class ServiceCatalogController extends Controller
             'code' => strtoupper($request->code),
             'category' => $request->category,
             'price' => $request->price,
-            'nhis_price' => $request->nhis_price,
-            'is_nhis_covered' => $request->boolean('is_nhis_covered'),
             'department_id' => $request->department_id,
+            'department_type' => $request->department_type,
         ]);
 
         $service->specialties()->sync($request->specialties ?? []);

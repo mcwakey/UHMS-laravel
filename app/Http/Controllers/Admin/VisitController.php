@@ -33,10 +33,9 @@ class VisitController extends Controller
 
         $visits = $this->visitService->list($filters);
         $stats = $this->visitService->todayStats();
-        $departments = Department::active()->orderBy('name')->get();
         $doctors = User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get();
 
-        return view('visits.index', compact('visits', 'stats', 'departments', 'doctors', 'filters'));
+        return view('visits.index', compact('visits', 'stats', 'doctors', 'filters'));
     }
 
     public function create(Request $request)
@@ -74,7 +73,6 @@ class VisitController extends Controller
     {
         $visit->load([
             'patient',
-            'department',
             'assignedDoctor',
             'createdBy',
             'statusLogs.changedBy',
@@ -248,7 +246,6 @@ class VisitController extends Controller
             'category'         => $s->category,
             'price'            => (float) $s->price,
             'formatted_price'  => $s->formatted_price,
-            'is_nhis_covered'  => $s->is_nhis_covered,
             'type_prices'      => $typePrices,
             'provider_prices'  => $providerPrices,
         ];

@@ -144,7 +144,7 @@ class ReportService
      */
     public function visitReport(array $filters = []): array
     {
-        $query = Visit::with(['patient', 'department', 'assignedDoctor']);
+        $query = Visit::with(['patient', 'assignedDoctor']);
 
         if (!empty($filters['date_from'])) {
             $query->whereDate('visit_date', '>=', $filters['date_from']);
@@ -154,9 +154,6 @@ class ReportService
         }
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
-        }
-        if (!empty($filters['department_id'])) {
-            $query->where('department_id', $filters['department_id']);
         }
 
         $visits = $query->latest('visit_date')->paginate(20)->withQueryString();
@@ -179,19 +176,7 @@ class ReportService
             ])->count(),
         ];
 
-        // Department load
-        $departmentLoad = Visit::join('departments', 'visits.department_id', '=', 'departments.id')
-            ->select('departments.name', DB::raw('COUNT(*) as count'));
-        if (!empty($filters['date_from'])) {
-            $departmentLoad->whereDate('visit_date', '>=', $filters['date_from']);
-        }
-        if (!empty($filters['date_to'])) {
-            $departmentLoad->whereDate('visit_date', '<=', $filters['date_to']);
-        }
-        $departmentLoad = $departmentLoad->groupBy('departments.name')
-            ->orderByDesc('count')
-            ->pluck('count', 'name')
-            ->toArray();
+        $departmentLoad = [];
 
         // Daily trend (last 30 days)
         $dailyTrend = Visit::select(
@@ -212,7 +197,7 @@ class ReportService
      */
     public function nhisReport(array $filters = []): array
     {
-        $query = Invoice::with(['patient', 'visit.department', 'items'])
+        $query = Invoice::with(['patient', 'items'])
             ->where(function ($q) {
                 $q->where('billing_type', 'nhis')
                     ->orWhere('billing_type', 'mixed');
@@ -312,13 +297,7 @@ class ReportService
      */
     public function departmentLoad(): array
     {
-        return Visit::join('departments', 'visits.department_id', '=', 'departments.id')
-            ->select('departments.name', DB::raw('COUNT(*) as count'))
-            ->today()
-            ->groupBy('departments.name')
-            ->orderByDesc('count')
-            ->pluck('count', 'name')
-            ->toArray();
+        return [];
     }
 
     /*
@@ -453,7 +432,7 @@ class ReportService
      */
     public function consultationStatsReport(array $filters = []): array
     {
-        $query = MedicalRecord::with(['patient', 'doctor', 'visit.department', 'diagnoses']);
+        $query = MedicalRecord::with(['patient', 'doctor', 'visit', 'diagnoses']);
 
         if (!empty($filters['date_from'])) {
             $query->whereDate('created_at', '>=', $filters['date_from']);

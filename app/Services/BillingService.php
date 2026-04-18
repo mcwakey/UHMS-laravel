@@ -166,7 +166,7 @@ class BillingService
         foreach ($visit->visitServices as $vs) {
             $catalog = $vs->serviceCatalog;
             $totalPrice = $vs->total_price;
-            $insuranceCoveredAmount = $hasInsurance && $catalog && $catalog->is_nhis_covered
+            $insuranceCoveredAmount = $hasInsurance
                 ? round($totalPrice * $coveragePercentage, 2)
                 : 0;
 
@@ -175,7 +175,7 @@ class BillingService
                 'description' => $catalog ? $catalog->name : 'Service',
                 'quantity' => $vs->quantity,
                 'unit_price' => $vs->unit_price,
-                'is_nhis_covered' => $hasInsurance && $catalog && $catalog->is_nhis_covered,
+                'is_nhis_covered' => $hasInsurance,
                 'nhis_approved_amount' => $insuranceCoveredAmount,
             ];
         }
@@ -191,7 +191,7 @@ class BillingService
                 ->first();
 
             if ($consultationService) {
-                $insuranceCoveredAmount = $hasInsurance && $consultationService->is_nhis_covered
+                $insuranceCoveredAmount = $hasInsurance
                     ? round($consultationService->price * $coveragePercentage, 2)
                     : 0;
                 $items[] = [
@@ -199,7 +199,7 @@ class BillingService
                     'description' => $consultationService->name,
                     'quantity' => 1,
                     'unit_price' => $consultationService->price,
-                    'is_nhis_covered' => $hasInsurance && $consultationService->is_nhis_covered,
+                    'is_nhis_covered' => $hasInsurance,
                     'nhis_approved_amount' => $insuranceCoveredAmount,
                 ];
             }
@@ -215,7 +215,7 @@ class BillingService
                     ->first();
 
                 if ($labService) {
-                    $labCoveredAmount = $hasInsurance && $labService->is_nhis_covered
+                    $labCoveredAmount = $hasInsurance
                         ? round($labService->price * $coveragePercentage, 2)
                         : 0;
                     $items[] = [
@@ -223,7 +223,7 @@ class BillingService
                         'description' => $item->labTest->name,
                         'quantity' => 1,
                         'unit_price' => $labService->price,
-                        'is_nhis_covered' => $hasInsurance && $labService->is_nhis_covered,
+                        'is_nhis_covered' => $hasInsurance,
                         'nhis_approved_amount' => $labCoveredAmount,
                     ];
                 }
@@ -240,7 +240,7 @@ class BillingService
                     ->first();
 
                 if ($drugService) {
-                    $drugCoveredAmount = $hasInsurance && $drugService->is_nhis_covered
+                    $drugCoveredAmount = $hasInsurance
                         ? round($drugService->price * $coveragePercentage * $item->quantity, 2)
                         : 0;
                     $items[] = [
@@ -248,7 +248,7 @@ class BillingService
                         'description' => $item->drug->name . ' (' . $item->quantity . ')',
                         'quantity' => $item->quantity,
                         'unit_price' => $drugService->price,
-                        'is_nhis_covered' => $hasInsurance && $drugService->is_nhis_covered,
+                        'is_nhis_covered' => $hasInsurance,
                         'nhis_approved_amount' => $drugCoveredAmount,
                     ];
                 }

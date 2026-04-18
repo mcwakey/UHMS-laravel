@@ -118,7 +118,7 @@ class InsuranceService
     /**
      * Calculate insurance coverage amount for a service price.
      */
-    public function calculateCoverage(PatientInsurance $insurance, float $price, bool $isNhisCovered = false): float
+    public function calculateCoverage(PatientInsurance $insurance, float $price): float
     {
         $provider = $insurance->insuranceProvider;
 
@@ -129,11 +129,6 @@ class InsuranceService
 
         // Invalid insurance → no coverage
         if (!$insurance->is_valid) {
-            return 0;
-        }
-
-        // For NHIS-type, only cover if service is NHIS-covered
-        if ($provider->type === \App\Enums\InsuranceType::NHIA && !$isNhisCovered) {
             return 0;
         }
 

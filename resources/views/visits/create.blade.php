@@ -191,14 +191,13 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Department</label>
-                            <select name="department_id" id="departmentSelect" class="form-select @error('department_id') is-invalid @enderror">
+                            <label class="form-label">Department <small class="text-muted">(filters services)</small></label>
+                            <select id="departmentSelect" class="form-select @error('department_id') is-invalid @enderror">
                                 <option value="">Select Department</option>
                                 @foreach($departments as $dept)
                                     <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
                                 @endforeach
                             </select>
-                            @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Assign Doctor</label>
@@ -309,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let patientInsurances = [];
     let selectedInsurance = null;
     let availableServices = [];
-    let selectedServices = []; // [{service_catalog_id, name, price, quantity, is_nhis}]
+    let selectedServices = []; // [{service_catalog_id, name, price, quantity}]
     let allDoctors = @json($doctors->map(fn($d) => ['id' => $d->id, 'name' => 'Dr. ' . $d->full_name]));
 
     // ==========================================
@@ -616,7 +615,6 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<div>';
             html += '<span class="fw-medium">' + escapeHtml(svc.name) + '</span>';
             html += ' <span class="badge bg-light text-dark ms-1">' + escapeHtml(svc.code) + '</span>';
-            if (svc.is_nhis_covered) html += ' <span class="badge bg-primary-subtle text-primary ms-1">NHIS</span>';
             html += '<div class="small text-muted">' + escapeHtml(svc.category) + '</div>';
             html += '</div>';
             html += '<div class="d-flex align-items-center gap-2">';
@@ -624,7 +622,6 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<button type="button" class="btn btn-sm btn-outline-primary add-service-btn"'
                 + ' data-id="' + svc.id + '"'
                 + ' data-name="' + escapeHtml(svc.name) + '"'
-                + ' data-nhis="' + (svc.is_nhis_covered ? '1' : '0') + '"'
                 + ' title="Add to billing">';
             html += '<i class="ti ti-plus"></i></button>';
             html += '</div>';
@@ -675,7 +672,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 name: serviceName,
                 price: resolvedPrice,
                 quantity: 1,
-                is_nhis: svcObj ? svcObj.is_nhis_covered : false,
                 originalService: svcObj,
             });
         }
@@ -715,7 +711,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             html += '<tr>';
             html += '<td>' + escapeHtml(svc.name);
-            if (svc.is_nhis) html += ' <span class="badge bg-primary-subtle text-primary">NHIS</span>';
             html += '<input type="hidden" name="services[' + idx + '][service_catalog_id]" value="' + svc.service_catalog_id + '">';
             html += '<input type="hidden" name="services[' + idx + '][quantity]" value="' + svc.quantity + '">';
             html += '</td>';

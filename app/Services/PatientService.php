@@ -10,7 +10,7 @@ class PatientService
 {
     public function list(array $filters = []): LengthAwarePaginator
     {
-        $query = Patient::with('registeredBy')
+        $query = Patient::with(['registeredBy', 'primaryInsurance.insuranceProvider'])
             ->select('patients.*')
             ->addSelect(['last_visit_date' => \App\Models\Visit::select('visit_date')
                 ->whereColumn('patient_id', 'patients.id')
@@ -34,8 +34,8 @@ class PatientService
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['region'])) {
-            $query->where('region', $filters['region']);
+        if (!empty($filters['city'])) {
+            $query->where('city', 'like', '%' . $filters['city'] . '%');
         }
 
         return $query->latest()->paginate($filters['per_page'] ?? 15);

@@ -25,10 +25,10 @@
 <div class="card mb-3">
     <div class="card-body py-2">
         <form method="GET" action="{{ route('admin.services.index') }}" class="row g-2 align-items-end">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <input type="text" name="search" class="form-control form-control-sm" placeholder="Search service name or code..." value="{{ request('search') }}">
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <select name="category" class="form-select form-select-sm">
                     <option value="">All Categories</option>
                     @foreach($categories as $cat)
@@ -36,7 +36,15 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3 d-flex gap-1">
+            <div class="col-md-2">
+                <select name="department_id" class="form-select form-select-sm">
+                    <option value="">All Departments</option>
+                    @foreach($departments as $dept)
+                    <option value="{{ $dept->id }}" {{ request('department_id') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-auto d-flex gap-1">
                 <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-filter me-1"></i>Filter</button>
                 <a href="{{ route('admin.services.index') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-x"></i></a>
             </div>
@@ -140,6 +148,7 @@
                         </td>
                     </tr>
 
+                    @push('service_modals')
                     <!-- Edit Modal -->
                     <div class="modal fade" id="editServiceModal-{{ $service->id }}" tabindex="-1">
                         <div class="modal-dialog modal-lg">
@@ -171,6 +180,17 @@
                                                 </select>
                                             </div>
                                             <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-medium">Department Type</label>
+                                                <select name="department_type" class="form-select">
+                                                    <option value="">— Select type —</option>
+                                                    @foreach(\App\Enums\DepartmentType::cases() as $dt)
+                                                    <option value="{{ $dt->value }}" {{ $service->department_type === $dt ? 'selected' : '' }}>{{ $dt->label() }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
                                                 <label class="form-label fw-medium">Department (primary)</label>
                                                 <select name="department_id" class="form-select">
                                                     <option value="">— None —</option>
@@ -178,6 +198,11 @@
                                                     <option value="{{ $dept->id }}" {{ $service->department_id == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
                                                     @endforeach
                                                 </select>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label fw-medium">Base Price (&#8373;) <span class="text-danger">*</span></label>
+                                                <input type="number" name="price" class="form-control" value="{{ $service->price }}" step="0.01" min="0" required>
+                                                <small class="text-muted">Fallback when no insurance price configured</small>
                                             </div>
                                         </div>
                                         <div class="mb-3">
@@ -195,21 +220,6 @@
                                                 </div>
                                                 @endforeach
                                             </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label fw-medium">Base Price (&#8373;) <span class="text-danger">*</span></label>
-                                                <input type="number" name="price" class="form-control" value="{{ $service->price }}" step="0.01" min="0" required>
-                                                <small class="text-muted">Fallback when no insurance price configured</small>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label fw-medium">NHIS Price (&#8373;) <small class="text-muted">legacy</small></label>
-                                                <input type="number" name="nhis_price" class="form-control" value="{{ $service->nhis_price }}" step="0.01" min="0">
-                                            </div>
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="checkbox" name="is_nhis_covered" class="form-check-input" value="1" id="editNhis{{ $service->id }}" {{ $service->is_nhis_covered ? 'checked' : '' }}>
-                                            <label class="form-check-label" for="editNhis{{ $service->id }}">NHIS Covered</label>
                                         </div>
                                     </div>
                                     <div class="modal-footer">
@@ -309,6 +319,8 @@
                         </div>
                     </div>
 
+                    @endpush
+
                     @empty
                     <tr>
                         <td colspan="8" class="text-center py-4">
@@ -329,6 +341,8 @@
     </div>
     @endif
 </div>
+
+@stack('service_modals')
 
 <!-- Add Service Modal -->
 <div class="modal fade" id="addServiceModal" tabindex="-1">
@@ -362,6 +376,17 @@
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
+                            <label class="form-label fw-medium">Department Type</label>
+                            <select name="department_type" class="form-select">
+                                <option value="">— Select type —</option>
+                                @foreach(\App\Enums\DepartmentType::cases() as $dt)
+                                <option value="{{ $dt->value }}">{{ $dt->label() }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label fw-medium">Department (primary)</label>
                             <select name="department_id" class="form-select">
                                 <option value="">— None —</option>
@@ -370,40 +395,11 @@
                                 @endforeach
                             </select>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-medium">Specialties <small class="text-muted">(adds service to those departments)</small></label>
-                        <div class="border rounded p-2" style="max-height:150px;overflow-y:auto">
-                            @foreach($specialties as $spec)
-                            <div class="form-check">
-                                <input type="checkbox" name="specialties[]" value="{{ $spec->id }}" class="form-check-input" id="addSpec{{ $spec->id }}">
-                                <label class="form-check-label" for="addSpec{{ $spec->id }}">
-                                    {{ $spec->name }}
-                                    @if($spec->department)
-                                    <small class="text-muted">({{ $spec->department->name }})</small>
-                                    @endif
-                                </label>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-                    <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-medium">Base Price (&#8373;) <span class="text-danger">*</span></label>
                             <input type="number" name="price" class="form-control" step="0.01" min="0" required>
                             <small class="text-muted">Fallback when no insurance price configured</small>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-medium">NHIS Price (&#8373;) <small class="text-muted">legacy</small></label>
-                            <input type="number" name="nhis_price" class="form-control" step="0.01" min="0">
-                        </div>
-                    </div>
-                    <div class="form-check">
-                        <input type="checkbox" name="is_nhis_covered" class="form-check-input" value="1" id="addNhisCovered">
-                        <label class="form-check-label" for="addNhisCovered">NHIS Covered</label>
-                    </div>
-                    <div class="alert alert-info mt-3 mb-0 small">
-                        <i class="ti ti-info-circle me-1"></i>After creating, use <strong>Manage Prices</strong> to set insurance-specific rates.
                     </div>
                 </div>
                 <div class="modal-footer">

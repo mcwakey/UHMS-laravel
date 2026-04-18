@@ -122,10 +122,6 @@
                         <div class="fw-medium">{{ $visit->visit_date->format('d M Y') }}</div>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label class="text-muted small mb-1">Department</label>
-                        <div class="fw-medium">{{ $visit->department?->name ?? '—' }}</div>
-                    </div>
-                    <div class="col-md-4 mb-3">
                         <label class="text-muted small mb-1">Assigned Doctor</label>
                         <div class="fw-medium">{{ $visit->assignedDoctor ? 'Dr. ' . $visit->assignedDoctor->full_name : '—' }}</div>
                     </div>

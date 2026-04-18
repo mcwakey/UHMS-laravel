@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DepartmentType;
 use App\Enums\InsuranceType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,19 +19,17 @@ class ServiceCatalog extends Model
         'code',
         'category',
         'price',
-        'nhis_price',
-        'is_nhis_covered',
         'is_active',
         'department_id',
+        'department_type',
     ];
 
     protected function casts(): array
     {
         return [
             'price' => 'decimal:2',
-            'nhis_price' => 'decimal:2',
-            'is_nhis_covered' => 'boolean',
             'is_active' => 'boolean',
+            'department_type' => DepartmentType::class,
         ];
     }
 
@@ -81,10 +80,7 @@ class ServiceCatalog extends Model
         return $query->where('category', $category);
     }
 
-    public function scopeNhisCovered($query)
-    {
-        return $query->where('is_nhis_covered', true);
-    }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -97,10 +93,7 @@ class ServiceCatalog extends Model
         return '₵' . number_format($this->price, 2);
     }
 
-    public function getFormattedNhisPriceAttribute(): string
-    {
-        return $this->nhis_price ? '₵' . number_format($this->nhis_price, 2) : '—';
-    }
+
     /**
      * Get the applicable price for a given insurance type and optional provider.
      * Priority: provider-specific > type default > base price.

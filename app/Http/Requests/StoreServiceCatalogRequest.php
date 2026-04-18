@@ -20,10 +20,9 @@ class StoreServiceCatalogRequest extends FormRequest
             'code' => ['required', 'string', 'max:50', 'unique:service_catalog,code,' . $serviceId],
             'category' => ['required', 'string', 'in:consultation,lab,pharmacy,procedure,imaging,surgery,admin,other'],
             'price' => ['required', 'numeric', 'min:0'],
-            'nhis_price' => ['nullable', 'numeric', 'min:0'],
-            'is_nhis_covered' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
             'department_id' => ['nullable', 'exists:departments,id'],
+            'department_type' => ['nullable', 'string', 'in:consultation,investigation,procedure,treatment,pharmacy,radiology,support,administrative'],
             'specialties' => ['nullable', 'array'],
             'specialties.*' => ['exists:specialties,id'],
         ];

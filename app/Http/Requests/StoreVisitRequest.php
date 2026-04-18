@@ -20,7 +20,6 @@ class StoreVisitRequest extends FormRequest
             'patient_id' => ['required', 'exists:patients,id'],
             'visit_type' => ['required', Rule::enum(VisitType::class)],
             'priority' => ['required', Rule::enum(Priority::class)],
-            'department_id' => ['nullable', 'exists:departments,id'],
             'assigned_doctor_id' => ['nullable', 'exists:users,id'],
             'chief_complaint' => ['nullable', 'string', 'max:2000'],
             'notes' => ['nullable', 'string', 'max:2000'],

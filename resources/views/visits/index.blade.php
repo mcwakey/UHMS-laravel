@@ -101,15 +101,6 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">Department</label>
-                    <select name="department_id" class="form-select">
-                        <option value="">All Departments</option>
-                        @foreach($departments as $dept)
-                            <option value="{{ $dept->id }}" {{ ($filters['department_id'] ?? '') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2">
                     <label class="form-label">Date From</label>
                     <input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}">
                 </div>
@@ -136,7 +127,6 @@
                         <th>Age</th>
                         <th>Type</th>
                         <th>Priority</th>
-                        <th>Department</th>
                         <th>Doctor</th>
                         <th>Status</th>
                         <th>Date</th>
@@ -167,7 +157,6 @@
                         <td>
                             <span class="badge bg-{{ $visit->priority->color() }}">{{ $visit->priority->label() }}</span>
                         </td>
-                        <td>{{ $visit->department?->name ?? '—' }}</td>
                         <td>{{ $visit->assignedDoctor?->full_name ?? '—' }}</td>
                         <td>
                             <span class="badge bg-{{ $visit->status->color() }}">{{ $visit->status->label() }}</span>

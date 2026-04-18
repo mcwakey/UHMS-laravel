@@ -20,7 +20,7 @@ class VisitService
 
     public function list(array $filters = []): LengthAwarePaginator
     {
-        $query = Visit::with(['patient', 'department', 'assignedDoctor', 'createdBy']);
+        $query = Visit::with(['patient', 'assignedDoctor', 'createdBy']);
 
         if (!empty($filters['search'])) {
             $query->search($filters['search']);
@@ -36,10 +36,6 @@ class VisitService
 
         if (!empty($filters['priority'])) {
             $query->where('priority', $filters['priority']);
-        }
-
-        if (!empty($filters['department_id'])) {
-            $query->where('department_id', $filters['department_id']);
         }
 
         if (!empty($filters['assigned_doctor_id'])) {
@@ -108,13 +104,10 @@ class VisitService
         // Walk-in visits auto-transition to waiting
         if (!$isScheduled) {
             $visit->transitionTo(VisitStatus::WAITING);
-
-            if ($visit->department_id) {
-                $this->queueService->addToQueue($visit);
-            }
+            $this->queueService->addToQueue($visit);
         }
 
-        return $visit->fresh(['patient', 'department', 'assignedDoctor']);
+        return $visit->fresh(['patient', 'assignedDoctor']);
     }
 
     /**
@@ -149,7 +142,7 @@ class VisitService
             $insuranceCovered = 0;
             if ($insurance && ! $insuranceResult['is_fallback']) {
                 $insuranceCovered = $this->insuranceService->calculateCoverage(
-                    $insurance, $totalPrice, $catalog->is_nhis_covered
+                    $insurance, $totalPrice
                 );
             }
 
@@ -158,7 +151,7 @@ class VisitService
             VisitServiceItem::create([
                 'visit_id'             => $visit->id,
                 'service_catalog_id'   => $catalog->id,
-                'department_id'        => $catalog->department_id ?? $visit->department_id,
+                'department_id'        => $catalog->department_id,
                 'quantity'             => $quantity,
                 'unit_price'           => $unitPrice,
                 'insurance_covered'    => $insuranceCovered,
@@ -298,9 +291,7 @@ class VisitService
         $visit->transitionTo(VisitStatus::REGISTERED);
         $visit->transitionTo(VisitStatus::WAITING);
 
-        if ($visit->department_id) {
-            $this->queueService->addToQueue($visit);
-        }
+        $this->queueService->addToQueue($visit);
 
         return $visit->fresh();
     }
@@ -318,7 +309,7 @@ class VisitService
         $visit->transitionTo(VisitStatus::RESCHEDULED, $data['reason'] ?? 'Rescheduled');
 
         // Create new visit with rescheduled_from reference
-        $newData = $visit->only(['patient_id', 'visit_type', 'priority', 'department_id', 'assigned_doctor_id', 'chief_complaint', 'notes', 'visit_insurance_id', 'consultation_mode', 'meeting_link']);
+        $newData = $visit->only(['patient_id', 'visit_type', 'priority', 'assigned_doctor_id', 'chief_complaint', 'notes', 'visit_insurance_id', 'consultation_mode', 'meeting_link']);
         $newData['visit_date'] = $data['visit_date'];
         $newData['start_time'] = $data['start_time'] ?? $visit->start_time;
         $newData['end_time'] = $data['end_time'] ?? $visit->end_time;
@@ -366,7 +357,7 @@ class VisitService
         $visit->transitionTo($newStatus, $notes);
 
         // Complete queue entry when moving past waiting
-        if ($visit->department_id && in_array($newStatus, [
+        if (in_array($newStatus, [
             VisitStatus::TRIAGE,
             VisitStatus::CONSULTING,
         ])) {
@@ -406,7 +397,7 @@ class VisitService
             ->where('visit_date', '>=', today())
             ->orderBy('visit_date')
             ->orderBy('start_time')
-            ->with(['department', 'assignedDoctor'])
+            ->with(['assignedDoctor'])
             ->get();
     }
 
@@ -424,10 +415,6 @@ class VisitService
             $query->where('assigned_doctor_id', $filters['doctor_id']);
         }
 
-        if (!empty($filters['department_id'])) {
-            $query->where('department_id', $filters['department_id']);
-        }
-
         if (!empty($filters['start'])) {
             $query->whereDate('visit_date', '>=', $filters['start']);
         }
@@ -436,7 +423,7 @@ class VisitService
             $query->whereDate('visit_date', '<=', $filters['end']);
         }
 
-        return $query->with(['patient', 'assignedDoctor', 'department'])
+        return $query->with(['patient', 'assignedDoctor'])
             ->get()
             ->map(fn(Visit $v) => [
                 'id' => $v->id,
@@ -448,7 +435,6 @@ class VisitService
                     'visit_id' => $v->id,
                     'patient_name' => $v->patient->full_name,
                     'doctor' => $v->assignedDoctor?->name,
-                    'department' => $v->department?->name,
                     'status' => $v->status->label(),
                     'visit_type' => $v->visit_type?->label(),
                 ],
