@@ -362,7 +362,6 @@
                         <thead class="table-light">
                             <tr>
                                 <th>#</th>
-                                <th>Dept</th>
                                 <th>Status</th>
                                 <th>Time</th>
                             </tr>
@@ -371,7 +370,6 @@
                             @foreach($visit->queueEntries as $qe)
                             <tr>
                                 <td class="fw-bold">{{ $qe->queue_number }}</td>
-                                <td>{{ $qe->department?->name ?? '—' }}</td>
                                 <td><span class="badge bg-{{ $qe->status_badge }}">{{ $qe->status_label }}</span></td>
                                 <td class="small text-muted">{{ $qe->created_at->format('h:i A') }}</td>
                             </tr>
@@ -379,6 +377,31 @@
                         </tbody>
                     </table>
                 </div>
+                @if($visit->visitServices->isNotEmpty())
+                <div class="border-top px-3 py-2">
+                    <p class="text-muted small fw-bold mb-1">Services</p>
+                    <div class="d-flex flex-column gap-1">
+                        @foreach($visit->visitServices as $vs)
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="small fw-medium">{{ $vs->serviceCatalog?->name ?? '—' }}</span>
+                                @if($vs->department)
+                                    <span class="badge bg-light text-dark ms-1 small">{{ $vs->department->name }}</span>
+                                @endif
+                            </div>
+                            <div class="text-end small text-muted">
+                                x{{ $vs->quantity }} &bull; &#8373;{{ number_format($vs->total_price, 2) }}
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    @php $visitTotal = $visit->visitServices->sum('total_price'); $visitIns = $visit->visitServices->sum('insurance_covered'); @endphp
+                    <div class="d-flex justify-content-between border-top mt-2 pt-1 small fw-bold">
+                        <span>Patient Pays</span>
+                        <span>&#8373;{{ number_format($visitTotal - $visitIns, 2) }}</span>
+                    </div>
+                </div>
+                @endif
             </div>
         </div>
         @endif

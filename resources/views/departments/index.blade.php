@@ -27,6 +27,7 @@
                     <tr>
                         <th>Code</th>
                         <th>Name</th>
+                        <th>Type</th>
                         <th>Description</th>
                         <th>Designations</th>
                         <th>Users</th>
@@ -39,6 +40,13 @@
                     <tr>
                         <td><span class="fw-medium badge bg-light text-dark">{{ $dept->code }}</span></td>
                         <td class="fw-medium">{{ $dept->name }}</td>
+                        <td>
+                            @if($dept->type)
+                                <span class="badge bg-{{ $dept->type->color() }}">{{ $dept->type->label() }}</span>
+                            @else
+                                <span class="text-muted small">—</span>
+                            @endif
+                        </td>
                         <td>{{ Str::limit($dept->description, 50) ?? '-' }}</td>
                         <td><span class="badge bg-soft-info">{{ $dept->designations_count }}</span></td>
                         <td><span class="badge bg-soft-primary">{{ $dept->users_count }}</span></td>
@@ -90,9 +98,22 @@
                                             <label class="form-label">Name <span class="text-danger">*</span></label>
                                             <input type="text" name="name" class="form-control" value="{{ $dept->name }}" required>
                                         </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Code <span class="text-danger">*</span></label>
-                                            <input type="text" name="code" class="form-control" value="{{ $dept->code }}" required maxlength="10">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Code <span class="text-danger">*</span></label>
+                                                <input type="text" name="code" class="form-control" value="{{ $dept->code }}" required maxlength="10">
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label class="form-label">Type</label>
+                                                <select name="type" class="form-select">
+                                                    <option value="">— Select Type —</option>
+                                                    @foreach($departmentTypes as $type)
+                                                        <option value="{{ $type->value }}" {{ $dept->type?->value === $type->value ? 'selected' : '' }}>
+                                                            {{ $type->label() }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
                                         </div>
                                         <div class="mb-3">
                                             <label class="form-label">Description</label>
@@ -116,7 +137,7 @@
                     </div>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">No departments found</td>
+                        <td colspan="8" class="text-center text-muted py-4">No departments found</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -146,9 +167,20 @@
                         <label class="form-label">Name <span class="text-danger">*</span></label>
                         <input type="text" name="name" class="form-control" placeholder="e.g. Outpatient Department" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Code <span class="text-danger">*</span></label>
-                        <input type="text" name="code" class="form-control" placeholder="e.g. OPD" required maxlength="10">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Code <span class="text-danger">*</span></label>
+                            <input type="text" name="code" class="form-control" placeholder="e.g. OPD" required maxlength="10">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Type</label>
+                            <select name="type" class="form-select">
+                                <option value="">— Select Type —</option>
+                                @foreach($departmentTypes as $type)
+                                    <option value="{{ $type->value }}">{{ $type->label() }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Description</label>

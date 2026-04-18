@@ -11,14 +11,17 @@ use App\Models\ServiceCatalog;
 use App\Models\User;
 use App\Models\Visit;
 use App\Services\InsuranceService;
+use App\Services\QueueService;
 use App\Services\VisitService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class VisitController extends Controller
 {
     public function __construct(
         protected VisitService $visitService,
         protected InsuranceService $insuranceService,
+        protected QueueService $queueService,
     ) {}
 
     public function index(Request $request)
@@ -54,14 +57,24 @@ class VisitController extends Controller
     public function store(StoreVisitRequest $request)
     {
         try {
-            $visit = $this->visitService->create($request->validated());
+            $visit = DB::transaction(function () use ($request) {
+                $v = $this->visitService->create($request->validated());
+
+                // Attach selected services inside the same transaction
+                $services = $request->validated()['services'] ?? [];
+                if (!empty($services)) {
+                    $this->visitService->attachServices($v, $services);
+                }
+
+                // Queue entries are created per-department after services are known
+                $this->queueService->addToQueue($v);
+
+                return $v;
+            });
         } catch (\InvalidArgumentException $e) {
             return redirect()->back()->withInput()->with('error', $e->getMessage());
-        }
-
-        // Attach selected services if any
-        if ($request->has('services') && is_array($request->services)) {
-            $this->visitService->attachServices($visit, $request->services);
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', 'Failed to create visit: ' . $e->getMessage());
         }
 
         return redirect()

@@ -102,9 +102,9 @@ class VisitService
         ]);
 
         // Walk-in visits auto-transition to waiting
+        // Queue entry creation happens after services are attached (see VisitController::store)
         if (!$isScheduled) {
             $visit->transitionTo(VisitStatus::WAITING);
-            $this->queueService->addToQueue($visit);
         }
 
         return $visit->fresh(['patient', 'assignedDoctor']);

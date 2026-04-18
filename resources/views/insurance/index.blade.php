@@ -253,7 +253,7 @@
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label class="form-label">Coverage %</label>
-                            <input type="number" name="coverage_percentage" class="form-control" step="0.01" min="0" max="100" placeholder="e.g. 80">
+                            <input type="number" name="coverage_percentage" class="form-control" step="0.01" min="0" max="100" value="100" placeholder="e.g. 80">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Annual Limit (&#8373;)</label>

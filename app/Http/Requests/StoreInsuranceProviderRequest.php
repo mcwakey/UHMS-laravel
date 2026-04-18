@@ -13,6 +13,14 @@ class StoreInsuranceProviderRequest extends FormRequest
         return $this->user()->can('claims.create');
     }
 
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'coverage_percentage' => $this->filled('coverage_percentage') ? $this->coverage_percentage : 100,
+            'short_name' => $this->filled('short_name') ? $this->short_name : '',
+        ]);
+    }
+
     public function rules(): array
     {
         return [

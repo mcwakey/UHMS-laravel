@@ -8,17 +8,23 @@ use Illuminate\Database\Eloquent\Collection;
 
 class QueueService
 {
-    public function addToQueue(Visit $visit): QueueEntry
+    public function addToQueue(Visit $visit): void
     {
-        $queueNumber = QueueEntry::nextQueueNumber($visit->department_id);
+        $departmentIds = $visit->visitServices()
+            ->whereNotNull('department_id')
+            ->pluck('department_id')
+            ->unique();
 
-        return QueueEntry::create([
-            'visit_id' => $visit->id,
-            'department_id' => $visit->department_id,
-            'queue_number' => $queueNumber,
-            'priority' => $visit->priority->value,
-            'status' => 'waiting',
-        ]);
+        foreach ($departmentIds as $departmentId) {
+            $queueNumber = QueueEntry::nextQueueNumber($departmentId);
+            QueueEntry::create([
+                'visit_id'      => $visit->id,
+                'department_id' => $departmentId,
+                'queue_number'  => $queueNumber,
+                'priority'      => $visit->priority->value,
+                'status'        => 'waiting',
+            ]);
+        }
     }
 
     public function getDepartmentQueue(int $departmentId): Collection

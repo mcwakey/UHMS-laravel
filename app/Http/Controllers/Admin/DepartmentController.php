@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Enums\DepartmentType;
 use App\Models\Department;
 use Illuminate\Http\Request;
 
@@ -18,7 +19,9 @@ class DepartmentController extends Controller
             ->latest()
             ->paginate(15);
 
-        return view('departments.index', compact('departments'));
+        $departmentTypes = DepartmentType::cases();
+
+        return view('departments.index', compact('departments', 'departmentTypes'));
     }
 
     public function store(Request $request)
@@ -26,6 +29,7 @@ class DepartmentController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:10|unique:departments,code',
+            'type' => ['nullable', \Illuminate\Validation\Rule::enum(DepartmentType::class)],
             'description' => 'nullable|string|max:500',
             'status' => 'required|in:active,inactive',
         ]);
@@ -41,6 +45,7 @@ class DepartmentController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => "required|string|max:10|unique:departments,code,{$department->id}",
+            'type' => ['nullable', \Illuminate\Validation\Rule::enum(DepartmentType::class)],
             'description' => 'nullable|string|max:500',
             'status' => 'required|in:active,inactive',
         ]);
