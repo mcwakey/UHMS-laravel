@@ -38,7 +38,7 @@ class ConsultationService
         $record = $visit->medicalRecord;
 
         return [
-            'visit' => $visit->load(['patient', 'department', 'assignedDoctor', 'latestVitals']),
+            'visit' => $visit->load(['patient', 'assignedDoctor', 'latestVitals']),
             'record' => $record?->load(['complaints', 'diagnoses', 'investigations', 'treatments', 'prescriptions.items']),
             'vitals' => $visit->vitals()->with('recordedBy')->latest()->get(),
             'history' => $this->getPatientHistory($visit->patient_id, $visit->id),

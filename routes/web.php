@@ -177,7 +177,10 @@ Route::middleware('auth')->group(function () {
             Route::get('visits/services-for-doctor', [VisitController::class, 'servicesForDoctor'])->name('visits.services-for-doctor');
             Route::get('visits/service-price', [VisitController::class, 'servicePrice'])->name('visits.service-price');
             Route::get('visits/{visit}', [VisitController::class, 'show'])->name('visits.show');
+            Route::get('visits/{visit}/edit', [VisitController::class, 'edit'])->name('visits.edit')->middleware('can:visits.edit');
+            Route::put('visits/{visit}', [VisitController::class, 'update'])->name('visits.update')->middleware('can:visits.edit');
             Route::patch('visits/{visit}/transition', [VisitController::class, 'transition'])->name('visits.transition')->middleware('can:visits.transition');
+            Route::patch('visits/{visit}/send-to-department', [VisitController::class, 'sendToDepartment'])->name('visits.send-to-department')->middleware('can:visits.transition');
         });
 
         // Wards & Beds

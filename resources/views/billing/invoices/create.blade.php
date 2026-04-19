@@ -33,7 +33,7 @@
                         <input type="hidden" name="visit_id" value="{{ $visit->id }}">
                         <input type="hidden" name="patient_id" value="{{ $visit->patient_id }}">
                         <input type="text" class="form-control" value="{{ $visit->patient->full_name }} ({{ $visit->patient->patient_number }})" readonly>
-                        <small class="text-muted">Visit: {{ $visit->visit_number }} — {{ $visit->department->name ?? 'N/A' }}</small>
+                        <small class="text-muted">Visit: {{ $visit->visit_number }} — {{ $visit->visit_date->format('d M Y') }}</small>
                     @else
                         <select name="visit_id" id="visitSelect" class="form-select @error('visit_id') is-invalid @enderror" required>
                             <option value="">Select a visit...</option>

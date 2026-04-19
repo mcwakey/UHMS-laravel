@@ -1,15 +1,15 @@
 @extends('layouts.app')
-@section('title', 'Edit Appointment — ' . $appointment->appointment_number)
+@section('title', 'Edit Visit — ' . $visit->visit_number)
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Edit Appointment <span class="text-muted fw-normal fs-5">{{ $appointment->appointment_number }}</span></h4>
+        <h4 class="fw-bold mb-0">Edit Visit <span class="text-muted fw-normal fs-5">{{ $visit->visit_number }}</span></h4>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ route('admin.appointments.show', $appointment) }}" class="btn btn-outline-secondary btn-md">
-            <i class="ti ti-arrow-left me-1"></i>Back to Appointment
+        <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-md">
+            <i class="ti ti-arrow-left me-1"></i>Back to Visit
         </a>
     </div>
 </div>
@@ -28,7 +28,7 @@
 </div>
 @endif
 
-<form method="POST" action="{{ route('admin.appointments.update', $appointment) }}" id="appointmentForm">
+<form method="POST" action="{{ route('admin.visits.update', $visit) }}" id="visitForm">
     @csrf
     @method('PUT')
 
@@ -44,21 +44,20 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3">
                         <div class="avatar avatar-lg bg-primary rounded-circle text-white d-flex align-items-center justify-content-center" style="width:48px;height:48px;font-size:1.3rem;">
-                            {{ strtoupper(substr($appointment->patient->first_name, 0, 1)) }}
+                            {{ strtoupper(substr($visit->patient->first_name, 0, 1)) }}
                         </div>
                         <div>
-                            <h6 class="mb-0">{{ $appointment->patient->full_name }}</h6>
+                            <h6 class="mb-0">{{ $visit->patient->full_name }}</h6>
                             <small class="text-muted">
-                                {{ $appointment->patient->patient_number }}
-                                &bull; {{ $appointment->patient->phone ?? 'No phone' }}
-                                @if($appointment->patient->date_of_birth)
-                                    &bull; Age {{ $appointment->patient->date_of_birth->age }}
+                                {{ $visit->patient->patient_number }}
+                                &bull; {{ $visit->patient->phone ?? 'No phone' }}
+                                @if($visit->patient->date_of_birth)
+                                    &bull; Age {{ $visit->patient->date_of_birth->age }}
                                 @endif
                             </small>
                         </div>
-                        <span class="ms-auto badge bg-{{ $appointment->status->color() }} fs-7">{{ $appointment->status->label() }}</span>
+                        <span class="ms-auto badge bg-{{ $visit->status->color() }} fs-7">{{ $visit->status->label() }}</span>
                     </div>
-                    <input type="hidden" name="patient_id" value="{{ $appointment->patient_id }}">
                 </div>
             </div>
 
@@ -94,14 +93,14 @@
                             </div>
                         </div>
                     </div>
-                    <input type="hidden" name="visit_insurance_id" id="visitInsuranceId" value="{{ old('visit_insurance_id', $appointment->visit_insurance_id) }}">
+                    <input type="hidden" name="visit_insurance_id" id="visitInsuranceId" value="{{ old('visit_insurance_id', $visit->visit_insurance_id) }}">
                 </div>
             </div>
 
-            <!-- Appointment Details -->
+            <!-- Visit Details -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>Appointment Details</h5>
+                    <h5 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>Visit Details</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -109,7 +108,7 @@
                             <label class="form-label">Visit Type <span class="text-danger">*</span></label>
                             <select name="visit_type" class="form-select @error('visit_type') is-invalid @enderror" required>
                                 @foreach(\App\Enums\VisitType::cases() as $type)
-                                    <option value="{{ $type->value }}" {{ old('visit_type', $appointment->visit_type->value ?? '') == $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
+                                    <option value="{{ $type->value }}" {{ old('visit_type', $visit->visit_type->value) == $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
                                 @endforeach
                             </select>
                             @error('visit_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -118,37 +117,39 @@
                             <label class="form-label">Priority <span class="text-danger">*</span></label>
                             <select name="priority" class="form-select @error('priority') is-invalid @enderror" required>
                                 @foreach(\App\Enums\Priority::cases() as $priority)
-                                    <option value="{{ $priority->value }}" {{ old('priority', $appointment->priority ?? 'normal') == $priority->value ? 'selected' : '' }}>{{ $priority->label() }}</option>
+                                    <option value="{{ $priority->value }}" {{ old('priority', $visit->priority->value) == $priority->value ? 'selected' : '' }}>{{ $priority->label() }}</option>
                                 @endforeach
                             </select>
                             @error('priority')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Appointment Date <span class="text-danger">*</span></label>
-                            <input type="date" name="appointment_date" class="form-control @error('appointment_date') is-invalid @enderror"
-                                   value="{{ old('appointment_date', $appointment->appointment_date->format('Y-m-d')) }}" required>
-                            @error('appointment_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <label class="form-label">Visit Date</label>
+                            <input type="date" name="visit_date" id="visitDate" class="form-control @error('visit_date') is-invalid @enderror"
+                                   value="{{ old('visit_date', $visit->visit_date?->format('Y-m-d') ?? date('Y-m-d')) }}">
+                            @error('visit_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <small class="text-muted" id="schedulingHint">Today = walk-in. Future date = scheduled.</small>
                         </div>
                     </div>
 
-                    <div class="row">
+                    <!-- Scheduling fields -->
+                    <div class="row" id="schedulingFields" style="{{ ($visit->start_time || $visit->visit_date?->isFuture()) ? '' : 'display:none;' }}">
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Start Time <span class="text-danger">*</span></label>
+                            <label class="form-label">Start Time</label>
                             <input type="time" name="start_time" class="form-control @error('start_time') is-invalid @enderror"
-                                   value="{{ old('start_time', \Carbon\Carbon::parse($appointment->start_time)->format('H:i')) }}" required>
+                                   value="{{ old('start_time', $visit->start_time ? \Carbon\Carbon::parse($visit->start_time)->format('H:i') : '') }}">
                             @error('start_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label">End Time</label>
                             <input type="time" name="end_time" class="form-control @error('end_time') is-invalid @enderror"
-                                   value="{{ old('end_time', $appointment->end_time ? \Carbon\Carbon::parse($appointment->end_time)->format('H:i') : '') }}">
+                                   value="{{ old('end_time', $visit->end_time ? \Carbon\Carbon::parse($visit->end_time)->format('H:i') : '') }}">
                             @error('end_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Consultation Mode</label>
                             <select name="consultation_mode" class="form-select @error('consultation_mode') is-invalid @enderror">
                                 @foreach(\App\Enums\ConsultationMode::cases() as $mode)
-                                    <option value="{{ $mode->value }}" {{ old('consultation_mode', $appointment->consultation_mode ?? 'in_person') == $mode->value ? 'selected' : '' }}>{{ $mode->label() }}</option>
+                                    <option value="{{ $mode->value }}" {{ old('consultation_mode', $visit->consultation_mode?->value ?? 'in_person') == $mode->value ? 'selected' : '' }}>{{ $mode->label() }}</option>
                                 @endforeach
                             </select>
                             @error('consultation_mode')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -157,13 +158,13 @@
 
                     <div class="mb-3">
                         <label class="form-label">Chief Complaint</label>
-                        <textarea name="chief_complaint" class="form-control @error('chief_complaint') is-invalid @enderror" rows="3">{{ old('chief_complaint', $appointment->chief_complaint ?? $appointment->reason) }}</textarea>
+                        <textarea name="chief_complaint" class="form-control @error('chief_complaint') is-invalid @enderror" rows="3">{{ old('chief_complaint', $visit->chief_complaint) }}</textarea>
                         @error('chief_complaint')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Notes</label>
-                        <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" rows="2">{{ old('notes', $appointment->notes) }}</textarea>
+                        <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" rows="2">{{ old('notes', $visit->notes) }}</textarea>
                         @error('notes')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
@@ -172,7 +173,6 @@
 
         <!-- Right Column -->
         <div class="col-lg-4">
-
             <!-- Department, Services & Doctor -->
             <div class="card">
                 <div class="card-header">
@@ -181,24 +181,24 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Department <span class="text-danger">*</span></label>
-                            <select id="departmentSelect" name="department_id" class="form-select @error('department_id') is-invalid @enderror" required>
+                            <label class="form-label">Department <small class="text-muted">(filters services)</small></label>
+                            <select id="departmentSelect" name="department_id" class="form-select @error('department_id') is-invalid @enderror">
                                 <option value="">Select Department</option>
                                 @foreach($departments as $dept)
-                                    <option value="{{ $dept->id }}" {{ old('department_id', $appointment->department_id) == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
+                                    <option value="{{ $dept->id }}" {{ old('department_id', $visit->department_id) == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
                                 @endforeach
                             </select>
                             @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Assign Doctor</label>
-                            <select name="doctor_id" id="doctorSelect" class="form-select @error('doctor_id') is-invalid @enderror">
+                            <select name="assigned_doctor_id" id="doctorSelect" class="form-select @error('assigned_doctor_id') is-invalid @enderror">
                                 <option value="">Select Doctor (optional)</option>
                                 @foreach($doctors as $doctor)
-                                    <option value="{{ $doctor->id }}" {{ old('doctor_id', $appointment->doctor_id) == $doctor->id ? 'selected' : '' }}>Dr. {{ $doctor->full_name }}</option>
+                                    <option value="{{ $doctor->id }}" {{ old('assigned_doctor_id', $visit->assigned_doctor_id) == $doctor->id ? 'selected' : '' }}>Dr. {{ $doctor->full_name }}</option>
                                 @endforeach
                             </select>
-                            @error('doctor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            @error('assigned_doctor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                     </div>
 
@@ -213,12 +213,12 @@
                                     <span class="input-group-text"><i class="ti ti-search"></i></span>
                                     <input type="text" id="serviceFilter" class="form-control" placeholder="Filter services...">
                                 </div>
-                                <div id="servicesItems" style="max-height: 280px; overflow-y: auto;"></div>
+                                <div id="servicesItems" style="max-height:280px;overflow-y:auto;"></div>
                             </div>
                         </div>
                     </div>
 
-                    <div id="selectedServicesCard" class="{{ $appointment->services->isNotEmpty() ? '' : 'd-none' }}">
+                    <div id="selectedServicesCard" class="{{ $visit->visitServices->isNotEmpty() ? '' : 'd-none' }}">
                         <label class="form-label fw-bold"><i class="ti ti-receipt me-1"></i>Selected Services</label>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered mb-0" id="billingTable">
@@ -247,9 +247,9 @@
 
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="ti ti-device-floppy me-1"></i>Update Appointment
+                    <i class="ti ti-device-floppy me-1"></i>Update Visit
                 </button>
-                <a href="{{ route('admin.appointments.show', $appointment) }}" class="btn btn-outline-secondary">Cancel</a>
+                <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary">Cancel</a>
             </div>
         </div>
     </div>
@@ -257,17 +257,17 @@
 @endsection
 
 @php
-    $existingServicesJson = $appointment->services->map(fn($s) => [
-        'service_catalog_id' => $s->id,
-        'name'     => $s->name,
-        'price'    => (float) ($s->price ?? 0),
-        'quantity' => (int) $s->pivot->quantity,
+    $existingServicesJson = $visit->visitServices->map(fn($vs) => [
+        'service_catalog_id' => $vs->service_catalog_id,
+        'name'     => $vs->serviceCatalog->name ?? '',
+        'price'    => (float) ($vs->unit_price ?? $vs->serviceCatalog?->price ?? 0),
+        'quantity' => (int) ($vs->quantity ?? 1),
         'originalService' => [
-            'id'       => $s->id,
-            'name'     => $s->name,
-            'price'    => (float) ($s->price ?? 0),
-            'code'     => $s->code ?? '',
-            'category' => $s->category ?? '',
+            'id'       => $vs->service_catalog_id,
+            'name'     => $vs->serviceCatalog->name ?? '',
+            'price'    => (float) ($vs->unit_price ?? $vs->serviceCatalog?->price ?? 0),
+            'code'     => $vs->serviceCatalog->code ?? '',
+            'category' => $vs->serviceCatalog->category ?? '',
             'provider_prices' => [],
             'type_prices'     => [],
         ],
@@ -275,22 +275,34 @@
 @endphp
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
+    const visitDateInput   = document.getElementById('visitDate');
+    const schedulingFields = document.getElementById('schedulingFields');
     const departmentSelect = document.getElementById('departmentSelect');
-    const doctorSelect    = document.getElementById('doctorSelect');
+    const doctorSelect     = document.getElementById('doctorSelect');
 
     let patientInsurances = [];
     let selectedInsurance = null;
     let availableServices = [];
     let selectedServices  = [];
-    const patientId       = {{ $appointment->patient_id }};
-    const currentInsId    = {{ $appointment->visit_insurance_id ?? 'null' }};
+    const patientId       = {{ $visit->patient_id }};
+    const currentInsId    = {{ $visit->visit_insurance_id ?? 'null' }};
 
-    // Existing services from the appointment
+    // Existing visit services
     let existingServices = {!! json_encode($existingServicesJson) !!};
     selectedServices = existingServices.map(s => Object.assign({}, s));
 
-    /* ---------- Insurance ---------- */
+    /* ----- Scheduling toggle ----- */
+    function checkSchedulingFields() {
+        const val = visitDateInput.value;
+        if (!val) { schedulingFields.style.display = 'none'; return; }
+        const today = new Date(); today.setHours(0,0,0,0);
+        const sel   = new Date(val + 'T00:00:00');
+        schedulingFields.style.display = sel > today ? '' : 'none';
+    }
+    visitDateInput.addEventListener('change', checkSchedulingFields);
+
+    /* ----- Insurance ----- */
     function loadPatientInsurances() {
         fetch('{{ route("admin.visits.patient-insurances") }}?patient_id=' + patientId, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
@@ -304,7 +316,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let html = '';
             if (patientInsurances.length === 0) {
-                html = '<div class="text-muted text-center py-2">No insurances found. Defaulting to Cash &amp; Carry.</div>';
+                html = '<div class="text-muted text-center py-2">No insurances. Defaulting to Cash &amp; Carry.</div>';
             } else {
                 html = '<div class="list-group">';
                 patientInsurances.forEach(ins => {
@@ -330,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             document.getElementById('insuranceList').innerHTML = html;
             document.querySelectorAll('.insurance-radio').forEach(radio => {
-                radio.addEventListener('change', function() { selectInsurance(parseInt(this.dataset.insId)); });
+                radio.addEventListener('change', function () { selectInsurance(parseInt(this.dataset.insId)); });
             });
             if (defaultId) selectInsurance(defaultId);
         })
@@ -374,8 +386,8 @@ document.addEventListener('DOMContentLoaded', function() {
         return svc.price;
     }
 
-    /* ---------- Department / Services ---------- */
-    departmentSelect.addEventListener('change', function() {
+    /* ----- Department / Services ----- */
+    departmentSelect.addEventListener('change', function () {
         if (!this.value) { showServicesPlaceholder(); return; }
         showServicesLoading();
         fetch('{{ route("admin.visits.department-services") }}?department_id=' + this.value, {
@@ -392,7 +404,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    doctorSelect.addEventListener('change', function() {
+    doctorSelect.addEventListener('change', function () {
         if (!this.value || departmentSelect.value) return;
         showServicesLoading();
         fetch('{{ route("admin.visits.services-for-doctor") }}?doctor_id=' + this.value, {
@@ -416,21 +428,23 @@ document.addEventListener('DOMContentLoaded', function() {
             html += `<div class="service-item d-flex align-items-center justify-content-between py-2 px-2 border-bottom bg-white rounded mb-1" data-name="${escapeHtml(svc.name.toLowerCase())}">`;
             html += `<div><span class="fw-medium">${escapeHtml(svc.name)}</span> <span class="badge bg-light text-dark ms-1">${escapeHtml(svc.code)}</span><div class="small text-muted">${escapeHtml(svc.category)}</div></div>`;
             html += `<div class="d-flex align-items-center gap-2">
-                        <span class="fw-bold text-success svc-price-display" data-svc-id="${svc.id}">₵${formatNumber(resolveServicePrice(svc))}</span>
-                        <button type="button" class="btn btn-sm btn-outline-primary add-service-btn" data-id="${svc.id}" data-name="${escapeHtml(svc.name)}">
+                        <span class="fw-bold text-success">₵${formatNumber(resolveServicePrice(svc))}</span>
+                        <button type="button" class="btn btn-sm btn-outline-primary add-service-btn"
+                                data-id="${svc.id}" data-name="${escapeHtml(svc.name)}">
                             <i class="ti ti-plus"></i>
-                        </button></div></div>`;
+                        </button>
+                     </div></div>`;
         });
         document.getElementById('servicesItems').innerHTML = html;
         document.querySelectorAll('.add-service-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 addServiceToBilling(parseInt(this.dataset.id), this.dataset.name,
                     availableServices.find(s => s.id === parseInt(this.dataset.id)));
             });
         });
     }
 
-    document.getElementById('serviceFilter').addEventListener('input', function() {
+    document.getElementById('serviceFilter').addEventListener('input', function () {
         const f = this.value.toLowerCase();
         document.querySelectorAll('.service-item').forEach(item => {
             item.style.display = item.dataset.name.includes(f) ? '' : 'none';
@@ -449,7 +463,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('servicesContent').classList.add('d-none');
     }
 
-    /* ---------- Billing Table ---------- */
+    /* ----- Billing Table ----- */
     function addServiceToBilling(serviceId, serviceName, svcObj) {
         const price    = resolveServicePrice(svcObj);
         const existing = selectedServices.find(s => s.service_catalog_id === serviceId);
@@ -457,7 +471,6 @@ document.addEventListener('DOMContentLoaded', function() {
         else selectedServices.push({ service_catalog_id: serviceId, name: serviceName, price, quantity: 1, originalService: svcObj });
         renderBillingTable();
     }
-
     function removeServiceFromBilling(index) { selectedServices.splice(index, 1); renderBillingTable(); }
     function updateServiceQuantity(index, qty) {
         if (qty < 1) { removeServiceFromBilling(index); return; }
@@ -495,11 +508,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         tbody.innerHTML = html;
         tbody.querySelectorAll('.remove-service-btn').forEach(b =>
-            b.addEventListener('click', function() { removeServiceFromBilling(parseInt(this.dataset.index)); }));
+            b.addEventListener('click', function () { removeServiceFromBilling(parseInt(this.dataset.index)); }));
         tbody.querySelectorAll('.qty-dec').forEach(b =>
-            b.addEventListener('click', function() { updateServiceQuantity(parseInt(this.dataset.index), selectedServices[parseInt(this.dataset.index)].quantity - 1); }));
+            b.addEventListener('click', function () { updateServiceQuantity(parseInt(this.dataset.index), selectedServices[parseInt(this.dataset.index)].quantity - 1); }));
         tbody.querySelectorAll('.qty-inc').forEach(b =>
-            b.addEventListener('click', function() { updateServiceQuantity(parseInt(this.dataset.index), selectedServices[parseInt(this.dataset.index)].quantity + 1); }));
+            b.addEventListener('click', function () { updateServiceQuantity(parseInt(this.dataset.index), selectedServices[parseInt(this.dataset.index)].quantity + 1); }));
         recalculateBilling();
     }
 

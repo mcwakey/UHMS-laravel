@@ -28,7 +28,7 @@ class EmployeeController extends Controller
     public function create()
     {
         $departments = Department::active()->orderBy('name')->get();
-        $users = User::whereDoesntHave('employee')->orderBy('name')->get();
+        $users = User::whereDoesntHave('employee')->orderBy('first_name')->get();
         $genders = Gender::cases();
         $statuses = EmployeeStatus::cases();
 
@@ -56,7 +56,7 @@ class EmployeeController extends Controller
         $departments = Department::active()->orderBy('name')->get();
         $users = User::where(function ($q) use ($employee) {
             $q->whereDoesntHave('employee')->orWhere('id', $employee->user_id);
-        })->orderBy('name')->get();
+        })->orderBy('first_name')->get();
         $genders = Gender::cases();
         $statuses = EmployeeStatus::cases();
 

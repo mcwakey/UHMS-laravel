@@ -88,7 +88,7 @@
             <div class="info-col" style="text-align:right;">
                 <h5>Visit</h5>
                 <p>{{ $invoice->visit->visit_number }}</p>
-                <p>{{ $invoice->visit->department->name ?? '—' }}</p>
+                <p>{{ $invoice->visit->status->label() }}</p>
                 <p>{{ $invoice->visit->visit_date->format('d M Y') }}</p>
             </div>
         </div>

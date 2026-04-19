@@ -40,7 +40,7 @@
                 <td>{{ $visit->patient->full_name }}</td>
                 <td>{{ $visit->visit_type->label() }}</td>
                 <td>{{ $visit->priority->label() }}</td>
-                <td>{{ $visit->department?->name ?? '—' }}</td>
+                <td>—</td>
                 <td>{{ $visit->assignedDoctor?->full_name ?? '—' }}</td>
                 <td>{{ $visit->status->label() }}</td>
                 <td>{{ $visit->visit_date->format('d M Y') }}</td>

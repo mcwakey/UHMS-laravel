@@ -46,7 +46,7 @@ class ClaimController extends Controller
             : null;
 
         $providers = InsuranceProvider::active()->orderBy('name')->get();
-        $doctors = User::role('Doctor')->orderBy('name')->get();
+        $doctors = User::role('Doctor')->orderBy('first_name')->get();
         $patients = Patient::where('status', 'active')->orderBy('first_name')->get();
         $serviceTypes = ServiceType::cases();
 

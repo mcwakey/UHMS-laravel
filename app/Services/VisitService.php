@@ -290,8 +290,7 @@ class VisitService
         $visit->update(['visit_date' => today(), 'checked_in_at' => now()]);
         $visit->transitionTo(VisitStatus::REGISTERED);
         $visit->transitionTo(VisitStatus::WAITING);
-
-        $this->queueService->addToQueue($visit);
+        // Queue entry will be created when staff pushes patient to Triage
 
         return $visit->fresh();
     }
@@ -356,13 +355,59 @@ class VisitService
 
         $visit->transitionTo($newStatus, $notes);
 
-        // Complete queue entry when moving past waiting
+        // When entering triage create a general triage queue entry
+        if ($newStatus === VisitStatus::TRIAGE) {
+            $this->queueService->addTriageEntry($visit->fresh());
+        }
+
+        // Complete any open queue entry when visit is cancelled / no-show / completed
         if (in_array($newStatus, [
-            VisitStatus::TRIAGE,
-            VisitStatus::CONSULTING,
+            VisitStatus::CANCELLED,
+            VisitStatus::NO_SHOW,
+            VisitStatus::COMPLETED,
+            VisitStatus::DISCHARGED,
         ])) {
             $this->queueService->completeCurrentEntry($visit);
         }
+
+        return $visit->fresh();
+    }
+
+    /**
+     * Send patient from triage (or current service) to a specific department.
+     * Completes the current active queue entry and creates a new one for the target dept.
+     */
+    public function sendToDepartment(Visit $visit, int $departmentId, ?string $notes = null): Visit
+    {
+        $serviceStatuses = [
+            VisitStatus::TRIAGE,
+            VisitStatus::CONSULTING,
+            VisitStatus::LAB,
+            VisitStatus::PHARMACY,
+            VisitStatus::BILLING,
+        ];
+
+        if (!in_array($visit->status, $serviceStatuses)) {
+            throw new \InvalidArgumentException(
+                "Cannot send to department from status: {$visit->status->label()}"
+            );
+        }
+
+        $department = \App\Models\Department::findOrFail($departmentId);
+
+        // Map department type to visit status
+        $newStatus = $department->type
+            ? $department->type->toVisitStatus()
+            : VisitStatus::CONSULTING;
+
+        // Complete the current active queue entry
+        $this->queueService->completeCurrentEntry($visit);
+
+        // Transition visit status
+        $visit->transitionTo($newStatus, $notes ?? "Sent to {$department->name}");
+
+        // Create new queue entry for the target department
+        $this->queueService->addForDepartment($visit->fresh(), $departmentId);
 
         return $visit->fresh();
     }

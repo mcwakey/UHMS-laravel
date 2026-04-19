@@ -100,7 +100,7 @@
                                 </td>
                                 <td><span class="badge bg-light text-dark">{{ $visit->visit_type->label() }}</span></td>
                                 <td><span class="badge bg-{{ $visit->priority->color() }}">{{ $visit->priority->label() }}</span></td>
-                                <td>{{ $visit->department?->name ?? '—' }}</td>
+                                <td>—</td>
                                 <td><span class="badge bg-{{ $visit->status->color() }}">{{ $visit->status->label() }}</span></td>
                                 <td>
                                     @if($visit->status->value === 'waiting' || $visit->status->value === 'consulting')
@@ -186,7 +186,7 @@
                                         {{ $visit->patient->full_name }}
                                     </a>
                                 </td>
-                                <td>{{ $visit->department?->name ?? '—' }}</td>
+                                <td>—</td>
                                 <td>{{ $visit->visit_date->diffForHumans() }}</td>
                             </tr>
                             @empty

@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use App\Models\ServiceCatalog;
+use App\Models\PatientInsurance;
 
 class Appointment extends Model
 {
@@ -25,8 +27,12 @@ class Appointment extends Model
         'start_time',
         'end_time',
         'visit_type',
+        'priority',
+        'chief_complaint',
         'reason',
         'notes',
+        'consultation_mode',
+        'visit_insurance_id',
         'status',
         'visit_id',
         'created_by',
@@ -78,6 +84,18 @@ class Appointment extends Model
     public function cancelledByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    public function services(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(ServiceCatalog::class, 'appointment_services')
+            ->withPivot('quantity')
+            ->withTimestamps();
+    }
+
+    public function visitInsurance(): BelongsTo
+    {
+        return $this->belongsTo(PatientInsurance::class, 'visit_insurance_id');
     }
 
     // ── Scopes ───────────────────────────────────────

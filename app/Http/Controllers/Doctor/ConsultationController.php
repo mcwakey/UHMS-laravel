@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Doctor;
 
-use App\Enums\DepartmentType;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Http\Controllers\Controller;
@@ -44,7 +43,7 @@ class ConsultationController extends Controller
             $filters['date_to'] = $filters['date_to'] ?? today()->toDateString();
         }
 
-        $query = Visit::with(['patient', 'department', 'assignedDoctor', 'medicalRecord'])
+        $query = Visit::with(['patient', 'assignedDoctor', 'medicalRecord'])
             ->whereIn('status', [
                 VisitStatus::CONSULTING->value,
                 VisitStatus::TRIAGE->value,
@@ -71,11 +70,7 @@ class ConsultationController extends Controller
             $query->where('assigned_doctor_id', auth()->id());
         }
 
-        // Only show visits in departments with consultation type
-        $query->where(function ($q) {
-            $q->whereHas('department', fn ($dq) => $dq->where('type', DepartmentType::CONSULTATION->value))
-              ->orWhereNull('department_id');
-        });
+        // No department column on visits — filter by status instead (done above)
 
         $visits = $query->latest()->paginate(15);
 

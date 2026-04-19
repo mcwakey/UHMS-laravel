@@ -7,11 +7,15 @@ use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Models\Appointment;
 use App\Models\Visit;
+use App\Services\VisitService;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class AppointmentService
 {
+    public function __construct(
+        private VisitService $visitService,
+    ) {}
     /**
      * List appointments with filters.
      */
@@ -42,7 +46,16 @@ class AppointmentService
             $data['end_time'] = date('H:i', strtotime($data['start_time'] . ' +30 minutes'));
         }
 
-        return Appointment::create($data);
+        $services = $data['services'] ?? [];
+        unset($data['services']);
+
+        $appointment = Appointment::create($data);
+
+        if (! empty($services)) {
+            $this->syncServices($appointment, $services);
+        }
+
+        return $appointment;
     }
 
     /**
@@ -50,8 +63,28 @@ class AppointmentService
      */
     public function update(Appointment $appointment, array $data): Appointment
     {
+        $services = $data['services'] ?? null;
+        unset($data['services']);
+
         $appointment->update($data);
+
+        if ($services !== null) {
+            $this->syncServices($appointment, $services);
+        }
+
         return $appointment->fresh();
+    }
+
+    /**
+     * Sync appointment services (pivot).
+     */
+    private function syncServices(Appointment $appointment, array $services): void
+    {
+        $syncData = [];
+        foreach ($services as $svc) {
+            $syncData[$svc['service_catalog_id']] = ['quantity' => $svc['quantity'] ?? 1];
+        }
+        $appointment->services()->sync($syncData);
     }
 
     /**
@@ -90,24 +123,36 @@ class AppointmentService
     public function checkIn(Appointment $appointment): Appointment
     {
         return DB::transaction(function () use ($appointment) {
+            $appointment->load('services');
+
             // Create a visit from this appointment
             $visit = Visit::create([
-                'visit_number' => Visit::generateVisitNumber(),
-                'patient_id' => $appointment->patient_id,
-                'visit_type' => $appointment->visit_type,
-                'visit_date' => now(),
-                'status' => VisitStatus::REGISTERED,
-                'priority' => 'normal',
-                'department_id' => $appointment->department_id,
+                'visit_number'       => Visit::generateVisitNumber(),
+                'patient_id'         => $appointment->patient_id,
+                'visit_type'         => $appointment->visit_type,
+                'visit_date'         => now(),
+                'status'             => VisitStatus::REGISTERED,
+                'priority'           => $appointment->priority ?? 'normal',
                 'assigned_doctor_id' => $appointment->doctor_id,
-                'chief_complaint' => $appointment->reason,
-                'checked_in_at' => now(),
-                'created_by' => auth()->id(),
+                'chief_complaint'    => $appointment->chief_complaint ?? $appointment->reason,
+                'notes'              => $appointment->notes,
+                'consultation_mode'  => $appointment->consultation_mode ?? 'in_person',
+                'visit_insurance_id' => $appointment->visit_insurance_id,
+                'checked_in_at'      => now(),
+                'created_by'         => auth()->id(),
             ]);
+
+            // Attach pre-selected appointment services to the new visit
+            if ($appointment->services->isNotEmpty()) {
+                $this->visitService->attachServices($visit, $appointment->services->map(fn ($svc) => [
+                    'service_catalog_id' => $svc->id,
+                    'quantity'           => $svc->pivot->quantity,
+                ])->all());
+            }
 
             // Link appointment to visit and mark as checked in
             $appointment->update([
-                'status' => AppointmentStatus::CHECKED_IN,
+                'status'   => AppointmentStatus::CHECKED_IN,
                 'visit_id' => $visit->id,
             ]);
 

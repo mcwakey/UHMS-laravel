@@ -10,21 +10,40 @@ class QueueService
 {
     public function addToQueue(Visit $visit): void
     {
-        $departmentIds = $visit->visitServices()
-            ->whereNotNull('department_id')
-            ->pluck('department_id')
-            ->unique();
+        // No-op: queue entries are now created explicitly per stage
+        // (triage via addTriageEntry, departments via addForDepartment)
+    }
 
-        foreach ($departmentIds as $departmentId) {
-            $queueNumber = QueueEntry::nextQueueNumber($departmentId);
-            QueueEntry::create([
-                'visit_id'      => $visit->id,
-                'department_id' => $departmentId,
-                'queue_number'  => $queueNumber,
-                'priority'      => $visit->priority->value,
-                'status'        => 'waiting',
-            ]);
-        }
+    /**
+     * Create a triage queue entry (no specific department).
+     */
+    public function addTriageEntry(Visit $visit): QueueEntry
+    {
+        $queueNumber = QueueEntry::nextQueueNumber(null);
+
+        return QueueEntry::create([
+            'visit_id'      => $visit->id,
+            'department_id' => null,
+            'queue_number'  => $queueNumber,
+            'priority'      => $visit->priority->value,
+            'status'        => 'waiting',
+        ]);
+    }
+
+    /**
+     * Create a queue entry for a specific department.
+     */
+    public function addForDepartment(Visit $visit, int $departmentId): QueueEntry
+    {
+        $queueNumber = QueueEntry::nextQueueNumber($departmentId);
+
+        return QueueEntry::create([
+            'visit_id'      => $visit->id,
+            'department_id' => $departmentId,
+            'queue_number'  => $queueNumber,
+            'priority'      => $visit->priority->value,
+            'status'        => 'waiting',
+        ]);
     }
 
     public function getDepartmentQueue(int $departmentId): Collection

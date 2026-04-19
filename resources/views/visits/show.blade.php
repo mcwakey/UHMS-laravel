@@ -65,21 +65,98 @@
         </div>
 
         <!-- Status Transition Actions -->
-        @if($visit->status->allowedTransitions())
+        @php
+            $isWaiting  = $visit->status === \App\Enums\VisitStatus::WAITING;
+            $isTriage   = $visit->status === \App\Enums\VisitStatus::TRIAGE;
+            $serviceDepts = $visit->visitServices->pluck('department')->filter()->unique('id');
+
+            // Statuses that can use the department send button (triage or at a service dept)
+            $canSendToDept = in_array($visit->status, [
+                \App\Enums\VisitStatus::TRIAGE,
+                \App\Enums\VisitStatus::CONSULTING,
+                \App\Enums\VisitStatus::LAB,
+                \App\Enums\VisitStatus::PHARMACY,
+                \App\Enums\VisitStatus::BILLING,
+            ]);
+        @endphp
+
+        @if($isWaiting || $isTriage || $visit->status->allowedTransitions())
         <div class="card mb-3">
             <div class="card-header">
                 <h6 class="fw-bold mb-0"><i class="ti ti-switch-horizontal me-1"></i>Transition Visit</h6>
             </div>
             <div class="card-body">
-                @if($visit->visitServices->isNotEmpty())
-                <div class="mb-3">
-                    <small class="text-muted fw-bold">Service Departments:</small>
-                    <div class="d-flex flex-wrap gap-1 mt-1">
-                        @foreach($visit->visitServices->pluck('department')->filter()->unique('id') as $dept)
-                            <span class="badge bg-light text-dark"><i class="ti ti-building-hospital me-1"></i>{{ $dept->name }}</span>
+
+                {{-- WAITING: Triage / Cancelled / Reschedule only --}}
+                @if($isWaiting)
+                <p class="text-muted small mb-2">Select the next step for this patient:</p>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach([\App\Enums\VisitStatus::TRIAGE, \App\Enums\VisitStatus::CANCELLED, \App\Enums\VisitStatus::RESCHEDULED] as $nextStatus)
+                        <form method="POST" action="{{ route('admin.visits.transition', $visit) }}" class="d-inline">
+                            @csrf
+                            @method('PATCH')
+                            <input type="hidden" name="status" value="{{ $nextStatus->value }}">
+                            <button type="submit" class="btn btn-{{ $nextStatus->color() }} btn-sm"
+                                    onclick="return confirm('Move visit to {{ $nextStatus->label() }}?')">
+                                <i class="ti ti-arrow-right me-1"></i>{{ $nextStatus->label() }}
+                            </button>
+                        </form>
+                    @endforeach
+                </div>
+
+                {{-- TRIAGE: send to service departments + Cancelled --}}
+                @elseif($isTriage)
+                @if($serviceDepts->isNotEmpty())
+                    <p class="text-muted small mb-2">Send patient to a service department:</p>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        @foreach($serviceDepts as $dept)
+                            <form method="POST" action="{{ route('admin.visits.send-to-department', $visit) }}" class="d-inline">
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="department_id" value="{{ $dept->id }}">
+                                <button type="submit"
+                                        class="btn btn-{{ $dept->type?->color() ?? 'primary' }} btn-sm"
+                                        onclick="return confirm('Send patient to {{ $dept->name }}?')">
+                                    <i class="ti ti-building-hospital me-1"></i>{{ $dept->name }}
+                                </button>
+                            </form>
                         @endforeach
                     </div>
+                @else
+                    <div class="alert alert-info alert-sm py-2 mb-3">
+                        <i class="ti ti-info-circle me-1"></i>No service departments found for this visit's services.
+                    </div>
+                @endif
+                <div class="d-flex flex-wrap gap-2">
+                    <form method="POST" action="{{ route('admin.visits.transition', $visit) }}" class="d-inline">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="status" value="{{ \App\Enums\VisitStatus::CANCELLED->value }}">
+                        <button type="submit" class="btn btn-danger btn-sm"
+                                onclick="return confirm('Cancel this visit?')">
+                            <i class="ti ti-x me-1"></i>Cancel Visit
+                        </button>
+                    </form>
                 </div>
+
+                {{-- All other statuses: standard transition buttons --}}
+                @elseif($visit->status->allowedTransitions())
+                @if($canSendToDept && $serviceDepts->isNotEmpty())
+                    <p class="text-muted small mb-2">Send to another department:</p>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        @foreach($serviceDepts as $dept)
+                            <form method="POST" action="{{ route('admin.visits.send-to-department', $visit) }}" class="d-inline">
+                                @csrf
+                                @method('PATCH')
+                                <input type="hidden" name="department_id" value="{{ $dept->id }}">
+                                <button type="submit"
+                                        class="btn btn-outline-{{ $dept->type?->color() ?? 'primary' }} btn-sm"
+                                        onclick="return confirm('Send patient to {{ $dept->name }}?')">
+                                    <i class="ti ti-building-hospital me-1"></i>{{ $dept->name }}
+                                </button>
+                            </form>
+                        @endforeach
+                    </div>
                 @endif
                 <div class="d-flex flex-wrap gap-2">
                     @foreach($visit->status->allowedTransitions() as $nextStatus)
@@ -94,6 +171,8 @@
                         </form>
                     @endforeach
                 </div>
+                @endif
+
             </div>
         </div>
         @endif
@@ -362,6 +441,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th>#</th>
+                                <th>Department</th>
                                 <th>Status</th>
                                 <th>Time</th>
                             </tr>
@@ -370,6 +450,13 @@
                             @foreach($visit->queueEntries as $qe)
                             <tr>
                                 <td class="fw-bold">{{ $qe->queue_number }}</td>
+                                <td>
+                                    @if($qe->department)
+                                        <span class="badge bg-light text-dark">{{ $qe->department->name }}</span>
+                                    @else
+                                        <span class="badge bg-info text-white">Triage</span>
+                                    @endif
+                                </td>
                                 <td><span class="badge bg-{{ $qe->status_badge }}">{{ $qe->status_label }}</span></td>
                                 <td class="small text-muted">{{ $qe->created_at->format('h:i A') }}</td>
                             </tr>
@@ -406,8 +493,8 @@
         </div>
         @endif
 
-        <!-- Services Being Done -->
-        @if($visit->visitServices->isNotEmpty())
+        <!-- Services Being Done (hidden during triage — full detail shown in left column) -->
+        @if($visit->visitServices->isNotEmpty() && !$isTriage)
         <div class="card mb-3">
             <div class="card-header">
                 <h6 class="fw-bold mb-0"><i class="ti ti-list-check me-1"></i>Services</h6>

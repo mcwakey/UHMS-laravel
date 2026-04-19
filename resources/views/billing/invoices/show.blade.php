@@ -63,7 +63,7 @@
                     <div class="col-md-4 text-md-end">
                         <h6 class="fw-bold mb-2">Visit</h6>
                         <p class="text-muted mb-1">{{ $invoice->visit->visit_number }}</p>
-                        <p class="text-muted mb-1">{{ $invoice->visit->department->name ?? '—' }}</p>
+                        <p class="text-muted mb-1">{{ $invoice->visit->status->label() }}</p>
                         <p class="text-muted mb-0">{{ $invoice->visit->visit_date->format('d M Y') }}</p>
                     </div>
                 </div>

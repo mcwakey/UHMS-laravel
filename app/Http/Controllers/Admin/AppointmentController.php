@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\AppointmentStatus;
-use App\Enums\VisitType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAppointmentRequest;
 use App\Http\Requests\UpdateAppointmentRequest;
@@ -27,8 +26,8 @@ class AppointmentController extends Controller
     {
         $stats = $this->appointmentService->getStats();
         $appointments = $this->appointmentService->list($request->all());
-        $doctors = User::role('Doctor')->orderBy('name')->get();
-        $departments = Department::where('is_active', true)->orderBy('name')->get();
+        $doctors = User::role('Doctor')->orderBy('first_name')->get();
+        $departments = Department::active()->orderBy('name')->get();
         $statuses = AppointmentStatus::cases();
 
         return view('appointments.index', compact(
@@ -41,17 +40,15 @@ class AppointmentController extends Controller
      */
     public function create(Request $request)
     {
-        $patient = $request->has('patient_id')
-            ? Patient::findOrFail($request->patient_id)
+        $selectedPatient = $request->has('patient_id')
+            ? Patient::find($request->patient_id)
             : null;
 
-        $patients = Patient::where('status', 'active')->orderBy('first_name')->get();
-        $doctors = User::role('Doctor')->orderBy('name')->get();
-        $departments = Department::where('is_active', true)->orderBy('name')->get();
-        $visitTypes = VisitType::cases();
+        $departments = Department::active()->orderBy('name')->get();
+        $doctors = User::role('Doctor')->orderBy('first_name')->get();
 
         return view('appointments.create', compact(
-            'patient', 'patients', 'doctors', 'departments', 'visitTypes'
+            'selectedPatient', 'departments', 'doctors'
         ));
     }
 
@@ -98,13 +95,12 @@ class AppointmentController extends Controller
      */
     public function edit(Appointment $appointment)
     {
-        $patients = Patient::where('status', 'active')->orderBy('first_name')->get();
-        $doctors = User::role('Doctor')->orderBy('name')->get();
-        $departments = Department::where('is_active', true)->orderBy('name')->get();
-        $visitTypes = VisitType::cases();
+        $appointment->load(['patient', 'services', 'visitInsurance.insuranceProvider']);
+        $doctors = User::role('Doctor')->orderBy('first_name')->get();
+        $departments = Department::active()->orderBy('name')->get();
 
         return view('appointments.edit', compact(
-            'appointment', 'patients', 'doctors', 'departments', 'visitTypes'
+            'appointment', 'doctors', 'departments'
         ));
     }
 
@@ -211,8 +207,8 @@ class AppointmentController extends Controller
             return response()->json($calendarData);
         }
 
-        $doctors = User::role('Doctor')->orderBy('name')->get();
-        $departments = Department::where('is_active', true)->orderBy('name')->get();
+        $doctors = User::role('Doctor')->orderBy('first_name')->get();
+        $departments = Department::active()->orderBy('name')->get();
 
         return view('appointments.calendar', compact('calendarData', 'from', 'to', 'doctors', 'departments'));
     }

@@ -77,7 +77,7 @@ class QueueEntry extends Model
     |--------------------------------------------------------------------------
     */
 
-    public static function nextQueueNumber(int $departmentId): int
+    public static function nextQueueNumber(?int $departmentId): int
     {
         $last = static::where('department_id', $departmentId)
             ->whereDate('created_at', today())

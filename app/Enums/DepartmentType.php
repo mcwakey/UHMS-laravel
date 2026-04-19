@@ -40,4 +40,19 @@ enum DepartmentType: string
             self::ADMINISTRATIVE => 'light',
         };
     }
+
+    /**
+     * Map department type to the corresponding VisitStatus when a patient is sent here.
+     */
+    public function toVisitStatus(): \App\Enums\VisitStatus
+    {
+        return match ($this) {
+            self::CONSULTATION  => \App\Enums\VisitStatus::CONSULTING,
+            self::INVESTIGATION => \App\Enums\VisitStatus::LAB,
+            self::RADIOLOGY     => \App\Enums\VisitStatus::LAB,
+            self::PHARMACY      => \App\Enums\VisitStatus::PHARMACY,
+            self::ADMINISTRATIVE => \App\Enums\VisitStatus::BILLING,
+            default             => \App\Enums\VisitStatus::CONSULTING,
+        };
+    }
 }

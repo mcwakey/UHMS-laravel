@@ -151,7 +151,7 @@
                         <td>{{ $visit->patient->full_name }}</td>
                         <td><span class="badge bg-light text-dark">{{ $visit->visit_type->label() }}</span></td>
                         <td><span class="badge bg-{{ $visit->priority->color() }}">{{ $visit->priority->label() }}</span></td>
-                        <td>{{ $visit->department?->name ?? '—' }}</td>
+                        <td>—</td>
                         <td>{{ $visit->assignedDoctor?->full_name ?? '—' }}</td>
                         <td><span class="badge bg-{{ $visit->status->color() }}">{{ $visit->status->label() }}</span></td>
                         <td>{{ $visit->visit_date->format('d M Y') }}</td>

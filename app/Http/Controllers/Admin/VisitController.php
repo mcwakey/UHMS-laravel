@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\VisitStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreVisitRequest;
+use App\Http\Requests\UpdateVisitRequest;
 use App\Models\Department;
 use App\Models\Patient;
 use App\Models\ServiceCatalog;
@@ -65,9 +66,7 @@ class VisitController extends Controller
                 if (!empty($services)) {
                     $this->visitService->attachServices($v, $services);
                 }
-
-                // Queue entries are created per-department after services are known
-                $this->queueService->addToQueue($v);
+                // No queue entry at waiting — it is created when pushed to Triage
 
                 return $v;
             });
@@ -81,6 +80,45 @@ class VisitController extends Controller
             ->route('admin.visits.show', $visit)
             ->with('success', "Visit {$visit->visit_number} created and patient added to queue.");
     }
+
+    public function edit(Visit $visit)
+    {
+        $visit->load([
+            'patient',
+            'visitInsurance.insuranceProvider',
+            'visitServices.serviceCatalog',
+            'assignedDoctor',
+        ]);
+
+        $departments = Department::active()->orderBy('name')->get();
+        $doctors     = User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get();
+
+        return view('visits.edit', compact('visit', 'departments', 'doctors'));
+    }
+
+    public function update(UpdateVisitRequest $request, Visit $visit)
+    {
+        try {
+            DB::transaction(function () use ($request, $visit) {
+                $data     = $request->validated();
+                $services = $data['services'] ?? null;
+                unset($data['services']);
+
+                $this->visitService->update($visit, $data);
+
+                if ($services !== null) {
+                    $this->visitService->attachServices($visit, $services);
+                }
+            });
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', 'Failed to update visit: ' . $e->getMessage());
+        }
+
+        return redirect()
+            ->route('admin.visits.show', $visit)
+            ->with('success', "Visit {$visit->visit_number} updated.");
+    }
+
 
     public function show(Visit $visit)
     {
@@ -122,6 +160,22 @@ class VisitController extends Controller
         $this->visitService->transition($visit, $newStatus, $request->notes);
 
         return back()->with('success', "Visit status updated to {$newStatus->label()}.");
+    }
+
+    public function sendToDepartment(Request $request, Visit $visit)
+    {
+        $request->validate([
+            'department_id' => ['required', 'integer', 'exists:departments,id'],
+            'notes'         => ['nullable', 'string', 'max:500'],
+        ]);
+
+        try {
+            $this->visitService->sendToDepartment($visit, (int) $request->department_id, $request->notes);
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', 'Patient sent to department and queue entry created.');
     }
 
     public function patientSearch(Request $request)

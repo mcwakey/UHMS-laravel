@@ -320,7 +320,7 @@
                                 <td><a href="{{ route('admin.visits.show', $visit) }}" class="fw-medium">{{ $visit->visit_number }}</a></td>
                                 <td>{{ $visit->visit_date->format('d M Y') }}</td>
                                 <td>{{ $visit->visit_type?->label() ?? '—' }}</td>
-                                <td>{{ $visit->department?->name ?? '—' }}</td>
+                                <td>—</td>
                                 <td>{{ $visit->assignedDoctor?->full_name ?? '—' }}</td>
                                 <td><span class="badge" style="background-color: {{ $visit->status->color() }}">{{ $visit->status->label() }}</span></td>
                                 <td><a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>

@@ -236,14 +236,16 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Service</th>
-                                        <th class="text-end" style="width: 120px;">Price</th>
-                                        <th style="width: 40px;"></th>
+                                        <th class="text-center" style="width: 70px;">Qty</th>
+                                        <th class="text-end" style="width: 100px;">Unit Price</th>
+                                        <th class="text-end" style="width: 100px;">Total</th>
+                                        <th style="width: 36px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="billingBody"></tbody>
                                 <tfoot>
                                     <tr class="table-light fw-bold">
-                                        <td class="text-end">Total:</td>
+                                        <td colspan="3" class="text-end">Grand Total:</td>
                                         <td class="text-end" id="totalAmount">&#8373;0.00</td>
                                         <td></td>
                                     </tr>
@@ -261,8 +263,8 @@
                     <ul class="list-unstyled mb-0 small">
                         <li class="mb-2"><i class="ti ti-check text-success me-1"></i>Visit is registered</li>
                         <li class="mb-2"><i class="ti ti-check text-success me-1"></i>Patient moves to <strong>Waiting</strong></li>
-                        <li class="mb-2"><i class="ti ti-check text-success me-1"></i>Queue number assigned</li>
-                        <li><i class="ti ti-check text-success me-1"></i>Billing lines created for selected services</li>
+                        <li class="mb-2"><i class="ti ti-check text-warning me-1"></i>Staff pushes to <strong>Triage</strong> → queue # assigned</li>
+                        <li><i class="ti ti-check text-primary me-1"></i>Billing lines created for selected services</li>
                     </ul>
                 </div>
             </div>
@@ -714,6 +716,14 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<input type="hidden" name="services[' + idx + '][service_catalog_id]" value="' + svc.service_catalog_id + '">';
             html += '<input type="hidden" name="services[' + idx + '][quantity]" value="' + svc.quantity + '">';
             html += '</td>';
+            html += '<td class="text-center">'
+                + '<div class="input-group input-group-sm" style="width:70px;">'
+                + '<button type="button" class="btn btn-outline-secondary btn-xs qty-dec" data-index="' + idx + '">-</button>'
+                + '<span class="form-control form-control-sm text-center px-1">' + svc.quantity + '</span>'
+                + '<button type="button" class="btn btn-outline-secondary btn-xs qty-inc" data-index="' + idx + '">+</button>'
+                + '</div>'
+                + '</td>';
+            html += '<td class="text-end text-muted">\u20B5' + formatNumber(svc.price) + '</td>';
             html += '<td class="text-end fw-medium">\u20B5' + formatNumber(lineTotal) + '</td>';
             html += '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="' + idx + '"><i class="ti ti-trash"></i></button></td>';
             html += '</tr>';
@@ -724,6 +734,18 @@ document.addEventListener('DOMContentLoaded', function() {
         tbody.querySelectorAll('.remove-service-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 removeServiceFromBilling(parseInt(this.dataset.index));
+            });
+        });
+
+        tbody.querySelectorAll('.qty-dec').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                updateServiceQuantity(parseInt(this.dataset.index), selectedServices[parseInt(this.dataset.index)].quantity - 1);
+            });
+        });
+
+        tbody.querySelectorAll('.qty-inc').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                updateServiceQuantity(parseInt(this.dataset.index), selectedServices[parseInt(this.dataset.index)].quantity + 1);
             });
         });
 
