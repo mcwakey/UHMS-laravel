@@ -194,39 +194,6 @@
         </div>
     </div>
 
-    <!-- Emergency Contact -->
-    <div class="card">
-        <div class="card-header">
-            <h5 class="fw-bold mb-0"><i class="ti ti-urgent me-1"></i>Emergency Contact</h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Contact Name</label>
-                    <input type="text" name="emergency_contact_name" class="form-control @error('emergency_contact_name') is-invalid @enderror" value="{{ old('emergency_contact_name', $patient->emergency_contact_name) }}">
-                    @error('emergency_contact_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Contact Phone</label>
-                    <input type="tel" name="emergency_contact_phone" class="form-control @error('emergency_contact_phone') is-invalid @enderror" value="{{ old('emergency_contact_phone', $patient->emergency_contact_phone) }}">
-                    @error('emergency_contact_phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Relationship</label>
-                    <select name="emergency_contact_relationship" class="form-select @error('emergency_contact_relationship') is-invalid @enderror">
-                        <option value="">Select</option>
-                        @foreach(['Spouse', 'Parent', 'Child', 'Sibling', 'Relative', 'Friend', 'Other'] as $rel)
-                            <option value="{{ $rel }}" {{ old('emergency_contact_relationship', $patient->emergency_contact_relationship) == $rel ? 'selected' : '' }}>{{ $rel }}</option>
-                        @endforeach
-                    </select>
-                    @error('emergency_contact_relationship')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Medical Notes -->
     <div class="card">
         <div class="card-header">

@@ -69,7 +69,6 @@
                         <th>Gender</th>
                         <th>Date of Birth</th>
                         <th>City</th>
-                        <th>Emergency Contact</th>
                         <th>Insurance</th>
                         <th>Status</th>
                         <th>Last Visit</th>
@@ -104,16 +103,6 @@
                         {{-- <td>{{ $patient->age }} yrs</td> --}}
                         <td>{{ $patient->date_of_birth ? \Carbon\Carbon::parse($patient->date_of_birth)->format('d M Y') : '—' }}</td>
                         <td>{{ $patient->city ?? '—' }}</td>
-                        <td>
-                            @if($patient->emergency_contact_name)
-                                <div class="fw-medium small">{{ $patient->emergency_contact_name }}</div>
-                                @if($patient->emergency_contact_phone)
-                                <div class="text-muted small">{{ $patient->emergency_contact_phone }}</div>
-                                @endif
-                            @else
-                                <span class="text-muted small">—</span>
-                            @endif
-                        </td>
                         <td>
                             @if($patient->primaryInsurance?->insuranceProvider)
                                 <span class="badge bg-{{ $patient->primaryInsurance->insuranceProvider->type?->color() ?? 'secondary' }}">

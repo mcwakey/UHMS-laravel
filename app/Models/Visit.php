@@ -50,6 +50,7 @@ class Visit extends Model
         'rescheduled_reason',
         'consultation_mode',
         'meeting_link',
+        'department_id',
     ];
 
     protected function casts(): array

@@ -12,6 +12,11 @@
         <a href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary btn-md">
             <i class="ti ti-arrow-left me-1"></i>Back to Visits
         </a>
+        @can('visits.edit')
+        <a href="{{ route('admin.visits.edit', $visit) }}" class="btn btn-outline-warning btn-md">
+            <i class="ti ti-pencil me-1"></i>Edit Visit
+        </a>
+        @endcan
         @can('visits.create')
         <a href="{{ route('admin.visits.create', ['patient_id' => $visit->patient_id]) }}" class="btn btn-outline-primary btn-md">
             <i class="ti ti-plus me-1"></i>New Visit for Patient

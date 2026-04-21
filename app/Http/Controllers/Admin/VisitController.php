@@ -107,7 +107,11 @@ class VisitController extends Controller
                 $this->visitService->update($visit, $data);
 
                 if ($services !== null) {
-                    $this->visitService->attachServices($visit, $services);
+                    // Delete existing service items before re-attaching to avoid duplicates
+                    $visit->visitServices()->delete();
+                    if (!empty($services)) {
+                        $this->visitService->attachServices($visit, $services);
+                    }
                 }
             });
         } catch (\Exception $e) {

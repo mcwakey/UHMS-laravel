@@ -174,7 +174,7 @@
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-urgent fs-16"></i></span>
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">Emergency Contact</h6>
-                                <p class="mb-0">{{ $primaryContact?->name ?? $patient->emergency_contact_name ?? '—' }}</p>
+                                <p class="mb-0">{{ $primaryContact?->name ?? '—' }}</p>
                             </div>
                         </div>
                     </div>
@@ -183,7 +183,7 @@
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-phone-call fs-16"></i></span>
                             <div>
                                 <h6 class="fs-13 fw-bold mb-1">Emergency Phone</h6>
-                                <p class="mb-0">{{ $primaryContact?->phone ?? $patient->emergency_contact_phone ?? '—' }}</p>
+                                <p class="mb-0">{{ $primaryContact?->phone ?? '—' }}</p>
                             </div>
                         </div>
                     </div>
@@ -502,14 +502,6 @@
             </div>
         </div>
 
-        {{-- Legacy flat emergency contact info --}}
-        @if($patient->emergency_contact_name && $patient->emergencyContacts->isEmpty())
-        <div class="alert alert-info">
-            <i class="ti ti-info-circle me-1"></i>
-            <strong>Legacy Contact:</strong> {{ $patient->emergency_contact_name }} — {{ $patient->emergency_contact_phone ?? 'No phone' }} ({{ $patient->emergency_contact_relationship ?? 'Unknown relationship' }})
-            <br><small class="text-muted">This contact was saved before the emergency contacts system was enabled. Add it as a proper contact above.</small>
-        </div>
-        @endif
     </div>
 
     <!-- Billing Tab -->
