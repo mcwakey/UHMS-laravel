@@ -32,6 +32,7 @@ use App\Http\Controllers\Admin\WardController;
 use App\Http\Controllers\Admin\AdmissionController;
 use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\InsuranceProviderController;
+use App\Http\Controllers\Admin\InsuranceTierController;
 use App\Http\Controllers\Admin\PatientInsuranceController;
 use App\Http\Controllers\Admin\EmergencyContactController;
 use App\Http\Controllers\Admin\ConsultationTaskController;
@@ -221,12 +222,21 @@ Route::middleware('auth')->group(function () {
             Route::post('appointments/{appointment}/no-show', [AppointmentController::class, 'noShow'])->name('appointments.no-show')->middleware('can:appointments.edit');
         });
 
-        // Insurance Providers
+        // Insurance Providers & Tiers
         Route::middleware('can:claims.view')->group(function () {
             Route::get('insurance-providers', [InsuranceProviderController::class, 'index'])->name('insurance-providers.index');
             Route::post('insurance-providers', [InsuranceProviderController::class, 'store'])->name('insurance-providers.store')->middleware('can:claims.create');
             Route::put('insurance-providers/{provider}', [InsuranceProviderController::class, 'update'])->name('insurance-providers.update')->middleware('can:claims.create');
             Route::patch('insurance-providers/{provider}/toggle', [InsuranceProviderController::class, 'toggle'])->name('insurance-providers.toggle')->middleware('can:claims.create');
+
+            // Tier management (nested under provider)
+            Route::get('insurance-providers/{provider}/tiers', [InsuranceTierController::class, 'index'])->name('insurance-providers.tiers.index');
+            Route::post('insurance-providers/{provider}/tiers', [InsuranceTierController::class, 'store'])->name('insurance-providers.tiers.store')->middleware('can:claims.create');
+            Route::get('insurance-providers/{provider}/tiers/for-patient', [InsuranceTierController::class, 'tiersForProvider'])->name('insurance-providers.tiers.for-patient');
+
+            // Tier update/delete (standalone, not nested under provider)
+            Route::put('insurance-tiers/{tier}', [InsuranceTierController::class, 'update'])->name('insurance-tiers.update')->middleware('can:claims.create');
+            Route::delete('insurance-tiers/{tier}', [InsuranceTierController::class, 'destroy'])->name('insurance-tiers.destroy')->middleware('can:claims.create');
         });
 
         // Claims

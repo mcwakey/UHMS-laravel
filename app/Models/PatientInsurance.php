@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\MemberType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +15,9 @@ class PatientInsurance extends Model
     protected $fillable = [
         'patient_id',
         'insurance_provider_id',
+        'insurance_tier_id',
+        'member_type',
+        'card_holder_insurance_id',
         'membership_number',
         'policy_number',
         'start_date',
@@ -25,10 +29,11 @@ class PatientInsurance extends Model
     protected function casts(): array
     {
         return [
-            'start_date' => 'date',
+            'start_date'  => 'date',
             'expiry_date' => 'date',
-            'is_primary' => 'boolean',
-            'is_active' => 'boolean',
+            'is_primary'  => 'boolean',
+            'is_active'   => 'boolean',
+            'member_type' => MemberType::class,
         ];
     }
 
@@ -42,6 +47,23 @@ class PatientInsurance extends Model
     public function insuranceProvider(): BelongsTo
     {
         return $this->belongsTo(InsuranceProvider::class);
+    }
+
+    public function insuranceTier(): BelongsTo
+    {
+        return $this->belongsTo(InsuranceTier::class);
+    }
+
+    /** Card holder record (for beneficiaries). */
+    public function cardHolder(): BelongsTo
+    {
+        return $this->belongsTo(PatientInsurance::class, 'card_holder_insurance_id');
+    }
+
+    /** All beneficiaries enrolled under this card holder record. */
+    public function beneficiaries(): HasMany
+    {
+        return $this->hasMany(PatientInsurance::class, 'card_holder_insurance_id');
     }
 
     public function usages(): HasMany
@@ -65,6 +87,16 @@ class PatientInsurance extends Model
             });
     }
 
+    public function scopeHolders($query)
+    {
+        return $query->where('member_type', 'holder');
+    }
+
+    public function scopeBeneficiaries($query)
+    {
+        return $query->where('member_type', 'beneficiary');
+    }
+
     // ── Accessors ────────────────────────────────────
 
     public function getIsExpiredAttribute(): bool
@@ -74,56 +106,30 @@ class PatientInsurance extends Model
 
     public function getIsValidAttribute(): bool
     {
-        return $this->is_active && !$this->is_expired;
+        return $this->is_active && ! $this->is_expired;
     }
 
-    /**
-     * Total insurance-covered amount already used this year.
-     */
-    public function usedThisYear(): float
+    public function getIsHolderAttribute(): bool
     {
-        return (float) $this->usages()
-            ->where('created_at', '>=', now()->startOfYear())
-            ->sum('amount_covered');
+        return ($this->member_type?->value ?? 'holder') === 'holder';
     }
 
-    /**
-     * Total insurance-covered amount already used this month.
-     */
-    public function usedThisMonth(): float
+    public function getIsBeneficiaryAttribute(): bool
     {
-        return (float) $this->usages()
-            ->where('created_at', '>=', now()->startOfMonth())
-            ->sum('amount_covered');
+        return ($this->member_type?->value ?? 'holder') === 'beneficiary';
     }
 
     /**
-     * Total insurance-covered amount already used for a specific visit.
-     */
-    public function usedForVisit(int $visitId): float
-    {
-        return (float) $this->usages()
-            ->where('visit_id', $visitId)
-            ->sum('amount_covered');
-    }
-
-    /**
-     * Number of distinct visits covered this month.
-     */
-    public function visitsThisMonth(): int
-    {
-        return $this->usages()
-            ->where('created_at', '>=', now()->startOfMonth())
-            ->distinct('visit_id')
-            ->count('visit_id');
-    }
-
-    /**
-     * Check if this insurance has remaining annual limit (uses insurance_usages).
+     * Remaining annual limit based on tier constraints for this member type.
      */
     public function getRemainingAnnualLimitAttribute(): ?float
     {
-        $limit = $this->insuranceProvider->annual_limit;
+        $tier = $this->insuranceTier;
+        if (! $tier) {
+            return null;
+        }
+
+        $limit = $tier->effectiveConstraints($this->member_type?->value ?? 'holder')['annual_limit'];
         if ($limit === null) {
             return null;
         }
@@ -132,11 +138,16 @@ class PatientInsurance extends Model
     }
 
     /**
-     * Remaining monthly limit.
+     * Remaining monthly limit based on tier constraints for this member type.
      */
     public function getRemainingMonthlyLimitAttribute(): ?float
     {
-        $limit = $this->insuranceProvider->max_per_month;
+        $tier = $this->insuranceTier;
+        if (! $tier) {
+            return null;
+        }
+
+        $limit = $tier->effectiveConstraints($this->member_type?->value ?? 'holder')['max_per_month'];
         if ($limit === null) {
             return null;
         }
@@ -144,14 +155,73 @@ class PatientInsurance extends Model
         return max(0, (float) $limit - $this->usedThisMonth());
     }
 
+    // ── Usage helpers ─────────────────────────────────
+
+    public function usedThisYear(): float
+    {
+        return (float) $this->usages()
+            ->where('created_at', '>=', now()->startOfYear())
+            ->sum('amount_covered');
+    }
+
+    public function usedThisMonth(): float
+    {
+        return (float) $this->usages()
+            ->where('created_at', '>=', now()->startOfMonth())
+            ->sum('amount_covered');
+    }
+
+    public function usedForVisit(int $visitId): float
+    {
+        return (float) $this->usages()
+            ->where('visit_id', $visitId)
+            ->sum('amount_covered');
+    }
+
+    public function visitsThisMonth(): int
+    {
+        return $this->usages()
+            ->where('created_at', '>=', now()->startOfMonth())
+            ->distinct('visit_id')
+            ->count('visit_id');
+    }
+
+    // ── Beneficiary helpers ───────────────────────────
+
     /**
-     * Check if per-visit limit allows the given amount.
+     * Count of active beneficiaries under this card holder record.
+     */
+    public function activeBeneficiaryCount(): int
+    {
+        return $this->beneficiaries()->where('is_active', true)->count();
+    }
+
+    /**
+     * Whether another beneficiary can be added under this card holder, given the tier limit.
+     */
+    public function canAddBeneficiary(): bool
+    {
+        $tier = $this->insuranceTier;
+        if (! $tier || $tier->max_beneficiaries === null) {
+            return true;
+        }
+
+        return $this->activeBeneficiaryCount() < $tier->max_beneficiaries;
+    }
+
+    /**
+     * Check if per-visit limit allows the given amount (uses tier constraints).
      */
     public function canCoverAmount(float $amount): bool
     {
-        $provider = $this->insuranceProvider;
+        $tier = $this->insuranceTier;
+        if (! $tier) {
+            return false;
+        }
 
-        if ($provider->per_visit_limit !== null && $amount > $provider->per_visit_limit) {
+        $constraints = $tier->effectiveConstraints($this->member_type?->value ?? 'holder');
+
+        if ($constraints['per_visit_limit'] !== null && $amount > $constraints['per_visit_limit']) {
             return false;
         }
 

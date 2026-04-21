@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\InsuranceProvider;
+use App\Models\InsuranceTier;
 use App\Models\Patient;
 use App\Models\PatientInsurance;
 use Illuminate\Http\Request;
@@ -13,14 +14,17 @@ class PatientInsuranceController extends Controller
     public function store(Request $request, Patient $patient)
     {
         $data = $request->validate([
-            'insurance_provider_id' => ['required', 'exists:insurance_providers,id'],
-            'membership_number' => ['nullable', 'string', 'max:50'],
-            'policy_number' => ['nullable', 'string', 'max:50'],
-            'expiry_date' => ['nullable', 'date'],
-            'is_primary' => ['nullable', 'boolean'],
+            'insurance_provider_id'    => ['required', 'exists:insurance_providers,id'],
+            'insurance_tier_id'        => ['nullable', 'exists:insurance_tiers,id'],
+            'member_type'              => ['nullable', 'in:holder,beneficiary'],
+            'card_holder_insurance_id' => ['nullable', 'exists:patient_insurances,id'],
+            'membership_number'        => ['nullable', 'string', 'max:50'],
+            'policy_number'            => ['nullable', 'string', 'max:50'],
+            'expiry_date'              => ['nullable', 'date'],
+            'is_primary'               => ['nullable', 'boolean'],
         ]);
 
-        // Check for duplicate
+        // Prevent duplicate provider assignment
         $exists = $patient->insurances()
             ->where('insurance_provider_id', $data['insurance_provider_id'])
             ->exists();
@@ -29,11 +33,38 @@ class PatientInsuranceController extends Controller
             return back()->with('error', 'Patient already has this insurance provider.');
         }
 
-        if (!empty($data['is_primary'])) {
+        $memberType = $data['member_type'] ?? 'holder';
+
+        // Beneficiary-specific validation
+        if ($memberType === 'beneficiary') {
+            if (empty($data['card_holder_insurance_id'])) {
+                return back()->with('error', 'Card holder must be specified for beneficiaries.');
+            }
+
+            // Check max_beneficiaries on the tier
+            if (! empty($data['insurance_tier_id'])) {
+                $tier = InsuranceTier::find($data['insurance_tier_id']);
+
+                if ($tier && $tier->max_beneficiaries !== null) {
+                    $currentCount = PatientInsurance::where('card_holder_insurance_id', $data['card_holder_insurance_id'])
+                        ->where('member_type', 'beneficiary')
+                        ->where('is_active', true)
+                        ->count();
+
+                    if ($currentCount >= $tier->max_beneficiaries) {
+                        return back()->with('error', "Maximum beneficiaries ({$tier->max_beneficiaries}) already reached for this card holder on the selected tier.");
+                    }
+                }
+            }
+        }
+
+        if (! empty($data['is_primary'])) {
             $patient->insurances()->update(['is_primary' => false]);
         }
 
-        $data['is_active'] = true;
+        $data['is_active']   = true;
+        $data['member_type'] = $memberType;
+
         $patient->insurances()->create($data);
 
         return back()->with('success', 'Insurance added to patient.');
@@ -42,15 +73,18 @@ class PatientInsuranceController extends Controller
     public function update(Request $request, Patient $patient, PatientInsurance $insurance)
     {
         $data = $request->validate([
-            'insurance_provider_id' => ['required', 'exists:insurance_providers,id'],
-            'membership_number' => ['nullable', 'string', 'max:50'],
-            'policy_number' => ['nullable', 'string', 'max:50'],
-            'expiry_date' => ['nullable', 'date'],
-            'is_primary' => ['nullable', 'boolean'],
-            'is_active' => ['nullable', 'boolean'],
+            'insurance_provider_id'    => ['required', 'exists:insurance_providers,id'],
+            'insurance_tier_id'        => ['nullable', 'exists:insurance_tiers,id'],
+            'member_type'              => ['nullable', 'in:holder,beneficiary'],
+            'card_holder_insurance_id' => ['nullable', 'exists:patient_insurances,id'],
+            'membership_number'        => ['nullable', 'string', 'max:50'],
+            'policy_number'            => ['nullable', 'string', 'max:50'],
+            'expiry_date'              => ['nullable', 'date'],
+            'is_primary'               => ['nullable', 'boolean'],
+            'is_active'                => ['nullable', 'boolean'],
         ]);
 
-        if (!empty($data['is_primary'])) {
+        if (! empty($data['is_primary'])) {
             $patient->insurances()->where('id', '!=', $insurance->id)->update(['is_primary' => false]);
         }
 
@@ -61,7 +95,6 @@ class PatientInsuranceController extends Controller
 
     public function destroy(Patient $patient, PatientInsurance $insurance)
     {
-        // Prevent removing Cash & Carry default
         if ($insurance->insuranceProvider->is_default) {
             return back()->with('error', 'Cannot remove the default Cash & Carry insurance.');
         }
@@ -80,16 +113,19 @@ class PatientInsuranceController extends Controller
     }
 
     /**
-     * AJAX: Get providers by insurance type.
+     * AJAX: Get providers (with their tiers) filtered by insurance type.
      */
     public function providersByType(Request $request)
     {
         $type = $request->get('type');
+
         $providers = InsuranceProvider::active()
+            ->with(['tiers' => fn ($q) => $q->active()->orderBy('sort_order')->orderBy('name')])
             ->when($type, fn ($q) => $q->where('type', $type))
             ->orderBy('name')
-            ->get(['id', 'name', 'short_name', 'type', 'tier', 'annual_limit', 'per_visit_limit']);
+            ->get(['id', 'name', 'short_name', 'type']);
 
         return response()->json($providers);
     }
 }
+

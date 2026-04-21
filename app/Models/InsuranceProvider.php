@@ -22,24 +22,13 @@ class InsuranceProvider extends Model
         'address',
         'contract_number',
         'is_active',
-        'annual_limit',
-        'per_visit_limit',
-        'max_per_month',
-        'max_visits_per_month',
-        'tier',
-        'coverage_percentage',
         'is_default',
     ];
 
     protected $casts = [
-        'type' => InsuranceType::class,
-        'is_active' => 'boolean',
+        'type'       => InsuranceType::class,
+        'is_active'  => 'boolean',
         'is_default' => 'boolean',
-        'annual_limit' => 'decimal:2',
-        'per_visit_limit' => 'decimal:2',
-        'max_per_month' => 'decimal:2',
-        'max_visits_per_month' => 'integer',
-        'coverage_percentage' => 'decimal:2',
     ];
 
     public function getActivitylogOptions(): LogOptions
@@ -51,6 +40,11 @@ class InsuranceProvider extends Model
     }
 
     // ── Relationships ────────────────────────────────
+    public function tiers(): HasMany
+    {
+        return $this->hasMany(InsuranceTier::class)->orderBy('sort_order')->orderBy('name');
+    }
+
     public function claims(): HasMany
     {
         return $this->hasMany(Claim::class);

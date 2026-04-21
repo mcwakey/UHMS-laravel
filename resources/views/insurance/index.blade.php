@@ -98,6 +98,11 @@
                                         </button>
                                     </li>
                                     <li>
+                                        <a class="dropdown-item" href="{{ route('admin.insurance-providers.tiers.index', $provider) }}">
+                                            <i class="ti ti-layers me-1"></i>Manage Tiers
+                                        </a>
+                                    </li>
+                                    <li>
                                         <form method="POST" action="{{ route('admin.insurance-providers.toggle', $provider) }}">
                                             @csrf @method('PATCH')
                                             <button type="submit" class="dropdown-item">
@@ -159,32 +164,10 @@
                                             <label class="form-label">Contract Number</label>
                                             <input type="text" name="contract_number" class="form-control" value="{{ $provider->contract_number }}">
                                         </div>
-                                        <div class="row mb-3">
-                                            <div class="col-md-3">
-                                                <label class="form-label">Coverage %</label>
-                                                <input type="number" name="coverage_percentage" class="form-control" value="{{ $provider->coverage_percentage }}" step="0.01" min="0" max="100">
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label class="form-label">Annual Limit (&#8373;)</label>
-                                                <input type="number" name="annual_limit" class="form-control" value="{{ $provider->annual_limit }}" step="0.01" min="0" placeholder="No limit">
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label class="form-label">Per Visit Limit (&#8373;)</label>
-                                                <input type="number" name="per_visit_limit" class="form-control" value="{{ $provider->per_visit_limit }}" step="0.01" min="0" placeholder="No limit">
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label class="form-label">Monthly Limit (&#8373;)</label>
-                                                <input type="number" name="max_per_month" class="form-control" value="{{ $provider->max_per_month }}" step="0.01" min="0" placeholder="No limit">
-                                            </div>
-                                        </div>
-                                        <div class="row mb-3">
-                                            <div class="col-md-4">
-                                                <label class="form-label">Max Visits/Month</label>
-                                                <input type="number" name="max_visits_per_month" class="form-control" value="{{ $provider->max_visits_per_month }}" min="1" step="1" placeholder="No limit">
-                                            </div>
-                                            <div class="col-md-8 d-flex align-items-end pb-1">
-                                                <small class="text-muted">Leave blank = no limit. Whichever constraint is hit first triggers cash fallback.</small>
-                                            </div>
+                                        <div class="alert alert-info py-2 mb-3 small">
+                                            <i class="ti ti-info-circle me-1"></i>
+                                            Coverage rules (limits, coverage %, member types) are managed per <strong>Tier</strong>.
+                                            <a href="{{ route('admin.insurance-providers.tiers.index', $provider) }}" class="alert-link">Manage Tiers &rarr;</a>
                                         </div>
                                         <div class="form-check mb-3">
                                             <input type="checkbox" name="is_default" class="form-check-input" value="1" id="editDefault{{ $provider->id }}" {{ $provider->is_default ? 'checked' : '' }}>
@@ -263,32 +246,10 @@
                         <label class="form-label">Contract Number</label>
                         <input type="text" name="contract_number" class="form-control" placeholder="Contract/Agreement #">
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label class="form-label">Coverage %</label>
-                            <input type="number" name="coverage_percentage" class="form-control" step="0.01" min="0" max="100" value="100" placeholder="e.g. 80">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Annual Limit (&#8373;)</label>
-                            <input type="number" name="annual_limit" class="form-control" step="0.01" min="0" placeholder="No limit">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Per Visit Limit (&#8373;)</label>
-                            <input type="number" name="per_visit_limit" class="form-control" step="0.01" min="0" placeholder="No limit">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Monthly Limit (&#8373;)</label>
-                            <input type="number" name="max_per_month" class="form-control" step="0.01" min="0" placeholder="No limit">
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Max Visits/Month</label>
-                            <input type="number" name="max_visits_per_month" class="form-control" min="1" step="1" placeholder="No limit">
-                        </div>
-                        <div class="col-md-8 d-flex align-items-end pb-1">
-                            <small class="text-muted">Leave blank = no limit. Whichever constraint is hit first triggers cash fallback.</small>
-                        </div>
+                    <div class="alert alert-info py-2 mb-3 small">
+                        <i class="ti ti-info-circle me-1"></i>
+                        Coverage rules are managed per <strong>Tier</strong> after the provider is created.
+                        A <em>Standard</em> tier is auto-created. You can rename/add tiers from the provider dropdown.
                     </div>
                     <div class="form-check mb-3">
                         <input type="checkbox" name="is_default" class="form-check-input" value="1" id="addDefault">

@@ -6,6 +6,7 @@ use App\Enums\InsuranceType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreInsuranceProviderRequest;
 use App\Models\InsuranceProvider;
+use App\Models\InsuranceTier;
 use Illuminate\Http\Request;
 
 class InsuranceProviderController extends Controller
@@ -26,11 +27,21 @@ class InsuranceProviderController extends Controller
 
     public function store(StoreInsuranceProviderRequest $request)
     {
-        InsuranceProvider::create($request->validated());
+        $provider = InsuranceProvider::create($request->validated());
+
+        // Auto-create a Standard tier so the provider is immediately usable
+        InsuranceTier::create([
+            'insurance_provider_id' => $provider->id,
+            'name'                  => 'Standard',
+            'code'                  => 'STD',
+            'is_default'            => true,
+            'is_active'             => true,
+            'coverage_percentage'   => 100,
+        ]);
 
         return redirect()
             ->route('admin.insurance-providers.index')
-            ->with('success', 'Insurance provider created successfully.');
+            ->with('success', 'Insurance provider created. A Standard tier has been added — configure its limits from the provider dropdown.');
     }
 
     public function update(StoreInsuranceProviderRequest $request, InsuranceProvider $provider)

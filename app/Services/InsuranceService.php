@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\InsuranceProvider;
+use App\Models\InsuranceTier;
 use App\Models\InsuranceUsage;
 use App\Models\Patient;
 use App\Models\PatientInsurance;
@@ -17,19 +18,19 @@ class InsuranceService
     /**
      * Evaluate how much insurance can cover for one billing line item.
      *
-     * Four hard constraints — whichever is hit first wins:
-     *   1. max_per_visit       — cumulative insurance spend on this visit
-     *   2. max_per_month       — cumulative insurance spend this calendar month
-     *   3. annual_limit        — cumulative insurance spend this calendar year
-     *   4. max_visits_per_month — number of distinct covered visits this month
+     * Six hard constraints — whichever is hit first wins:
+     *   1. max_per_visit            — cumulative insurance spend on this visit
+     *   2. max_per_month            — cumulative insurance spend this calendar month
+     *   3. annual_limit             — cumulative insurance spend this calendar year
+     *   4. max_visits_per_month     — number of distinct covered visits this month
+     *   5. min_visit_interval_days  — minimum days required since the last covered visit
+     *   6. member_type overrides    — holder vs beneficiary specific limits
      *
-     * coverage_percentage is applied BEFORE limit caps, so the limit caps refer
-     * to actual insurance-paid amounts (not service prices).
+     * All constraints are resolved from the assigned InsuranceTier and member_type;
+     * not from the InsuranceProvider directly.
      *
-     * @param float $sessionOffset  Extra uncommitted spend from earlier items in the
-     *                              same billing session (not yet in insurance_usages).
-     *                              Pass this when evaluating multiple items in one pass
-     *                              without recording between them.
+     * @param  float $sessionOffset  Extra uncommitted spend from earlier items in the
+     *                               same billing pass (not yet in insurance_usages).
      * @return array{
      *   can_use: bool,
      *   covered_amount: float,
@@ -46,7 +47,7 @@ class InsuranceService
     ): array {
         $provider = $insurance->insuranceProvider;
 
-        // ── Guard: Cash & Carry is always full patient payment ────────────────
+        // ── Guard: Cash & Carry → always full patient payment ─────────────────
         if ($provider->is_default) {
             return $this->cashResult($incomingAmount, null);
         }
@@ -56,33 +57,69 @@ class InsuranceService
             return $this->cashResult($incomingAmount, 'Insurance is expired or inactive');
         }
 
+        // ── Resolve tier & effective constraints for this member type ─────────
+        $tier = $insurance->insuranceTier;
+        if (! $tier) {
+            return $this->cashResult($incomingAmount, 'No insurance tier assigned');
+        }
+
+        $memberType  = $insurance->member_type?->value ?? 'holder';
+        $constraints = $tier->effectiveConstraints($memberType);
+
+        // ── Constraint 5: minimum visit interval ──────────────────────────────
+        // Only checked on the first item of this visit (before any usages exist for it).
+        if ($constraints['min_visit_interval_days'] !== null && $sessionOffset === 0.0) {
+            $hasUsagesForThisVisit = InsuranceUsage::where('patient_insurance_id', $insurance->id)
+                ->where('visit_id', $visit->id)
+                ->exists();
+
+            if (! $hasUsagesForThisVisit) {
+                $lastUsage = InsuranceUsage::where('patient_insurance_id', $insurance->id)
+                    ->where('visit_id', '!=', $visit->id)
+                    ->latest('created_at')
+                    ->first();
+
+                if ($lastUsage) {
+                    $daysSinceLast = (int) $lastUsage->created_at->diffInDays(now(), true);
+                    $minDays       = $constraints['min_visit_interval_days'];
+
+                    if ($daysSinceLast < $minDays) {
+                        return $this->cashResult(
+                            $incomingAmount,
+                            "Visit interval too short ({$daysSinceLast}d < {$minDays}d minimum between covered visits)"
+                        );
+                    }
+                }
+            }
+        }
+
         // ── Collect current usage from insurance_usages ───────────────────────
         $monthStart = now()->startOfMonth();
         $yearStart  = now()->startOfYear();
 
-        $usedThisVisit  = (float) InsuranceUsage::where('patient_insurance_id', $insurance->id)
+        $usedThisVisit = (float) InsuranceUsage::where('patient_insurance_id', $insurance->id)
             ->where('visit_id', $visit->id)
             ->sum('amount_covered') + $sessionOffset;
 
-        $usedThisMonth  = (float) InsuranceUsage::where('patient_insurance_id', $insurance->id)
+        $usedThisMonth = (float) InsuranceUsage::where('patient_insurance_id', $insurance->id)
             ->where('created_at', '>=', $monthStart)
             ->sum('amount_covered') + $sessionOffset;
 
-        $usedThisYear   = (float) InsuranceUsage::where('patient_insurance_id', $insurance->id)
+        $usedThisYear  = (float) InsuranceUsage::where('patient_insurance_id', $insurance->id)
             ->where('created_at', '>=', $yearStart)
             ->sum('amount_covered') + $sessionOffset;
 
-        // Distinct visits covered this month (visits that already have usage)
-        $visitIdsThisMonth  = InsuranceUsage::where('patient_insurance_id', $insurance->id)
+        // Distinct visits covered this month
+        $visitIdsThisMonth   = InsuranceUsage::where('patient_insurance_id', $insurance->id)
             ->where('created_at', '>=', $monthStart)
             ->distinct()
             ->pluck('visit_id');
 
-        $visitsThisMonth    = $visitIdsThisMonth->count();
+        $visitsThisMonth     = $visitIdsThisMonth->count();
         $visitAlreadyCounted = $visitIdsThisMonth->contains($visit->id);
 
         // ── Constraint 4: max visits per month ────────────────────────────────
-        $maxVisitsPerMonth = $provider->max_visits_per_month;
+        $maxVisitsPerMonth = $constraints['max_visits_per_month'];
         if ($maxVisitsPerMonth !== null && ! $visitAlreadyCounted) {
             if ($visitsThisMonth >= $maxVisitsPerMonth) {
                 return $this->cashResult(
@@ -95,44 +132,42 @@ class InsuranceService
         // ── Compute remaining budget under each limit (null = no limit) ───────
         $INF = PHP_FLOAT_MAX;
 
-        $remainingPerVisit = $provider->per_visit_limit !== null
-            ? max(0.0, (float) $provider->per_visit_limit - $usedThisVisit)
+        $remainingPerVisit = $constraints['per_visit_limit'] !== null
+            ? max(0.0, (float) $constraints['per_visit_limit'] - $usedThisVisit)
             : $INF;
 
-        $remainingMonthly  = $provider->max_per_month !== null
-            ? max(0.0, (float) $provider->max_per_month - $usedThisMonth)
+        $remainingMonthly  = $constraints['max_per_month'] !== null
+            ? max(0.0, (float) $constraints['max_per_month'] - $usedThisMonth)
             : $INF;
 
-        $remainingAnnual   = $provider->annual_limit !== null
-            ? max(0.0, (float) $provider->annual_limit - $usedThisYear)
+        $remainingAnnual   = $constraints['annual_limit'] !== null
+            ? max(0.0, (float) $constraints['annual_limit'] - $usedThisYear)
             : $INF;
 
-        // Tightest remaining capacity across all active limits
         $capacityByLimits = min($remainingPerVisit, $remainingMonthly, $remainingAnnual);
 
         if ($capacityByLimits <= 0.0) {
             $exhaustedLimit = $this->identifyExhaustedLimit(
                 $remainingPerVisit, $remainingMonthly, $remainingAnnual,
-                $provider->per_visit_limit, $provider->max_per_month, $provider->annual_limit
+                $constraints['per_visit_limit'], $constraints['max_per_month'], $constraints['annual_limit']
             );
             return $this->cashResult($incomingAmount, "Insurance limit exhausted ({$exhaustedLimit})");
         }
 
         // ── Apply coverage percentage ──────────────────────────────────────────
-        $coverageRate      = ((float) ($provider->coverage_percentage ?? 100)) / 100;
+        $coverageRate      = ((float) ($constraints['coverage_percentage'] ?? 100)) / 100;
         $requestedCoverage = round($incomingAmount * $coverageRate, 2);
 
-        // Final coverable = what coverage% wants, capped by remaining limits
         $finalCovered = min($requestedCoverage, $capacityByLimits);
         $finalCovered = round(max(0.0, $finalCovered), 2);
         $patientPays  = round($incomingAmount - $finalCovered, 2);
 
-        // ── Build remaining limits (after this line item) ─────────────────────
+        // ── Build remaining limits after this line item ───────────────────────
         $remaining = [
-            'per_visit'          => $remainingPerVisit  === $INF ? null : round($remainingPerVisit  - $finalCovered, 2),
-            'monthly'            => $remainingMonthly   === $INF ? null : round($remainingMonthly   - $finalCovered, 2),
-            'annual'             => $remainingAnnual    === $INF ? null : round($remainingAnnual    - $finalCovered, 2),
-            'visits_this_month'  => $visitAlreadyCounted ? $visitsThisMonth : $visitsThisMonth + 1,
+            'per_visit'            => $remainingPerVisit  === $INF ? null : round($remainingPerVisit  - $finalCovered, 2),
+            'monthly'              => $remainingMonthly   === $INF ? null : round($remainingMonthly   - $finalCovered, 2),
+            'annual'               => $remainingAnnual    === $INF ? null : round($remainingAnnual    - $finalCovered, 2),
+            'visits_this_month'    => $visitAlreadyCounted ? $visitsThisMonth : $visitsThisMonth + 1,
             'max_visits_per_month' => $maxVisitsPerMonth,
         ];
 
@@ -147,7 +182,6 @@ class InsuranceService
 
     /**
      * Record a coverage decision into insurance_usages.
-     * Call this immediately after evaluateCoverage() confirms coverage.
      */
     public function recordUsage(
         PatientInsurance $insurance,
@@ -187,22 +221,16 @@ class InsuranceService
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    //  VISIT RESOLUTION (unchanged API)
+    //  VISIT RESOLUTION
     // ──────────────────────────────────────────────────────────────────────────
 
     /**
-     * Resolve the insurance to use for a visit.
-     *
-     * 1. If a specific insurance_id is selected, validate and use it
-     * 2. Otherwise load patient's primary insurance
-     * 3. If NOT valid → fall back to Cash & Carry
-     *
      * @return array{insurance: ?PatientInsurance, provider: InsuranceProvider, is_fallback: bool}
      */
     public function resolveForVisit(Patient $patient, ?int $selectedInsuranceId = null): array
     {
         if ($selectedInsuranceId) {
-            $selected = PatientInsurance::with('insuranceProvider')
+            $selected = PatientInsurance::with(['insuranceProvider', 'insuranceTier'])
                 ->where('id', $selectedInsuranceId)
                 ->where('patient_id', $patient->id)
                 ->first();
@@ -218,7 +246,7 @@ class InsuranceService
 
         $primary = $patient->primaryInsurance;
         if ($primary) {
-            $primary->load('insuranceProvider');
+            $primary->load(['insuranceProvider', 'insuranceTier']);
             if ($primary->is_valid) {
                 return [
                     'insurance'   => $primary,
@@ -231,9 +259,6 @@ class InsuranceService
         return $this->getCashAndCarryResult($patient);
     }
 
-    /**
-     * Get the Cash & Carry fallback result.
-     */
     public function getCashAndCarryResult(Patient $patient): array
     {
         $cashProvider = InsuranceProvider::where('is_default', true)->first();
@@ -242,7 +267,7 @@ class InsuranceService
         if ($cashProvider) {
             $cashInsurance = PatientInsurance::firstOrCreate(
                 ['patient_id' => $patient->id, 'insurance_provider_id' => $cashProvider->id],
-                ['is_primary' => false, 'is_active' => true]
+                ['is_primary' => false, 'is_active' => true, 'member_type' => 'holder']
             );
         }
 
@@ -257,63 +282,72 @@ class InsuranceService
     //  DISPLAY HELPERS
     // ──────────────────────────────────────────────────────────────────────────
 
-    /**
-     * Get all insurances for a patient with validation info.
-     */
     public function getPatientInsurances(Patient $patient): array
     {
         $insurances = $patient->insurances()
-            ->with('insuranceProvider')
+            ->with(['insuranceProvider', 'insuranceTier'])
             ->orderByDesc('is_primary')
             ->get();
 
         return $insurances->map(function (PatientInsurance $ins) {
-            $provider = $ins->insuranceProvider;
+            $provider    = $ins->insuranceProvider;
+            $tier        = $ins->insuranceTier;
+            $memberType  = $ins->member_type?->value ?? 'holder';
+            $constraints = $tier ? $tier->effectiveConstraints($memberType) : null;
+
             return [
-                'id'                    => $ins->id,
-                'provider_id'           => $provider->id,
-                'provider_name'         => $provider->name,
-                'type'                  => $provider->type instanceof \BackedEnum ? $provider->type->value : $provider->type,
-                'type_label'            => $provider->type instanceof \BackedEnum ? $provider->type->label() : ucfirst($provider->type),
-                'type_color'            => $provider->type instanceof \BackedEnum ? $provider->type->color() : 'secondary',
-                'membership_number'     => $ins->membership_number,
-                'policy_number'         => $ins->policy_number,
-                'start_date'            => $ins->start_date?->format('Y-m-d'),
-                'expiry_date'           => $ins->expiry_date?->format('Y-m-d'),
-                'is_primary'            => $ins->is_primary,
-                'is_active'             => $ins->is_active,
-                'is_expired'            => $ins->is_expired,
-                'is_valid'              => $ins->is_valid,
-                'is_default'            => $provider->is_default,
-                'coverage_percentage'   => $provider->coverage_percentage,
-                'annual_limit'          => $provider->annual_limit,
-                'per_visit_limit'       => $provider->per_visit_limit,
-                'max_per_month'         => $provider->max_per_month,
-                'max_visits_per_month'  => $provider->max_visits_per_month,
-                'remaining_annual_limit'  => $ins->remaining_annual_limit,
-                'remaining_monthly_limit' => $ins->remaining_monthly_limit,
+                'id'                       => $ins->id,
+                'provider_id'              => $provider->id,
+                'provider_name'            => $provider->name,
+                'type'                     => $provider->type instanceof \BackedEnum ? $provider->type->value : $provider->type,
+                'type_label'               => $provider->type instanceof \BackedEnum ? $provider->type->label() : ucfirst($provider->type),
+                'type_color'               => $provider->type instanceof \BackedEnum ? $provider->type->color() : 'secondary',
+                'tier_id'                  => $tier?->id,
+                'tier_name'                => $tier?->name,
+                'member_type'              => $memberType,
+                'member_type_label'        => $ins->member_type?->label() ?? 'Card Holder',
+                'card_holder_insurance_id' => $ins->card_holder_insurance_id,
+                'membership_number'        => $ins->membership_number,
+                'policy_number'            => $ins->policy_number,
+                'start_date'               => $ins->start_date?->format('Y-m-d'),
+                'expiry_date'              => $ins->expiry_date?->format('Y-m-d'),
+                'is_primary'               => $ins->is_primary,
+                'is_active'                => $ins->is_active,
+                'is_expired'               => $ins->is_expired,
+                'is_valid'                 => $ins->is_valid,
+                'is_default'               => $provider->is_default,
+                'coverage_percentage'      => $constraints['coverage_percentage'] ?? null,
+                'annual_limit'             => $constraints['annual_limit'] ?? null,
+                'per_visit_limit'          => $constraints['per_visit_limit'] ?? null,
+                'max_per_month'            => $constraints['max_per_month'] ?? null,
+                'max_visits_per_month'     => $constraints['max_visits_per_month'] ?? null,
+                'min_visit_interval_days'  => $constraints['min_visit_interval_days'] ?? null,
+                'remaining_annual_limit'   => $ins->remaining_annual_limit,
+                'remaining_monthly_limit'  => $ins->remaining_monthly_limit,
             ];
         })->values()->toArray();
     }
 
-    /**
-     * Get the insurance usage summary for display.
-     */
     public function getUsageSummary(PatientInsurance $insurance): array
     {
-        $provider = $insurance->insuranceProvider;
+        $tier        = $insurance->insuranceTier;
+        $memberType  = $insurance->member_type?->value ?? 'holder';
+        $constraints = $tier ? $tier->effectiveConstraints($memberType) : [];
 
         return [
-            'annual_limit'          => $provider->annual_limit,
-            'per_visit_limit'       => $provider->per_visit_limit,
-            'max_per_month'         => $provider->max_per_month,
-            'max_visits_per_month'  => $provider->max_visits_per_month,
-            'coverage_percentage'   => $provider->coverage_percentage,
-            'used_this_year'        => $insurance->usedThisYear(),
-            'used_this_month'       => $insurance->usedThisMonth(),
-            'remaining_annual'      => $insurance->remaining_annual_limit,
-            'remaining_monthly'     => $insurance->remaining_monthly_limit,
-            'visits_this_month'     => $insurance->visitsThisMonth(),
+            'tier_name'               => $tier?->name,
+            'member_type'             => $memberType,
+            'coverage_percentage'     => $constraints['coverage_percentage'] ?? null,
+            'annual_limit'            => $constraints['annual_limit'] ?? null,
+            'per_visit_limit'         => $constraints['per_visit_limit'] ?? null,
+            'max_per_month'           => $constraints['max_per_month'] ?? null,
+            'max_visits_per_month'    => $constraints['max_visits_per_month'] ?? null,
+            'min_visit_interval_days' => $constraints['min_visit_interval_days'] ?? null,
+            'used_this_year'          => $insurance->usedThisYear(),
+            'used_this_month'         => $insurance->usedThisMonth(),
+            'remaining_annual'        => $insurance->remaining_annual_limit,
+            'remaining_monthly'       => $insurance->remaining_monthly_limit,
+            'visits_this_month'       => $insurance->visitsThisMonth(),
         ];
     }
 
