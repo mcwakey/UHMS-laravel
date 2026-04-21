@@ -88,19 +88,35 @@
                             <div class="row">
                                 <div class="col-6">
                                     <small class="text-muted d-block">Insurance Type</small>
-                                    <span class="fw-medium" id="insInfoType">â€”</span>
+                                    <span class="fw-medium" id="insInfoType">&mdash;</span>
                                 </div>
                                 <div class="col-6">
+                                    <small class="text-muted d-block">Tier</small>
+                                    <span class="fw-medium" id="insInfoTier">&mdash;</span>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <small class="text-muted d-block">Member Type</small>
+                                    <span class="fw-medium" id="insInfoMemberType">&mdash;</span>
+                                </div>
+                                <div class="col-6 mt-2">
                                     <small class="text-muted d-block">Coverage</small>
-                                    <span class="fw-medium" id="insInfoCoverage">â€”</span>
+                                    <span class="fw-medium" id="insInfoCoverage">&mdash;</span>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <small class="text-muted d-block">Per-Visit Cap</small>
+                                    <span class="fw-medium" id="insInfoPerVisit">&mdash;</span>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <small class="text-muted d-block">Monthly Cap</small>
+                                    <span class="fw-medium" id="insInfoMonthly">&mdash;</span>
                                 </div>
                                 <div class="col-6 mt-2">
                                     <small class="text-muted d-block">Total Billed (YTD)</small>
-                                    <span class="fw-medium" id="insInfoBilled">â€”</span>
+                                    <span class="fw-medium" id="insInfoBilled">&mdash;</span>
                                 </div>
                                 <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Remaining Balance</small>
-                                    <span class="fw-bold" id="insInfoRemaining">â€”</span>
+                                    <small class="text-muted d-block">Annual Remaining</small>
+                                    <span class="fw-bold" id="insInfoRemaining">&mdash;</span>
                                 </div>
                             </div>
                         </div>
@@ -439,7 +455,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (isDisabled) html += ' disabled';
                     html += '>';
                     html += '<div class="flex-grow-1">';
-                    html += '<div class="fw-medium">' + escapeHtml(ins.provider_name) + ' <span class="badge bg-' + ins.type_color + ' ms-1">' + escapeHtml(ins.type_label) + '</span></div>';
+                    html += '<div class="fw-medium">' + escapeHtml(ins.provider_name) + ' <span class="badge bg-' + ins.type_color + ' ms-1">' + escapeHtml(ins.type_label) + '</span>';
+                    if (ins.tier_name) html += ' <span class="badge bg-primary bg-opacity-75 ms-1">' + escapeHtml(ins.tier_name) + '</span>';
+                    const memberBadge = ins.member_type === 'beneficiary' ? 'bg-warning text-dark' : 'bg-info';
+                    const memberLabel = ins.member_type === 'beneficiary' ? 'Beneficiary' : 'Card Holder';
+                    html += ' <span class="badge ' + memberBadge + ' ms-1">' + memberLabel + '</span>';
+                    html += '</div>';
                     html += '<small class="text-muted">';
                     if (ins.membership_number) html += 'Member: ' + escapeHtml(ins.membership_number) + ' &bull; ';
                     if (ins.expiry_date) html += 'Expires: ' + ins.expiry_date;
@@ -484,8 +505,28 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedInsurance) {
             infoPanel.classList.remove('d-none');
             document.getElementById('insInfoType').innerHTML = '<span class="badge bg-' + selectedInsurance.type_color + '">' + escapeHtml(selectedInsurance.type_label) + '</span>';
+            // Tier
+            if (selectedInsurance.tier_name) {
+                document.getElementById('insInfoTier').innerHTML = '<span class="badge bg-primary bg-opacity-75">' + escapeHtml(selectedInsurance.tier_name) + '</span>';
+            } else {
+                document.getElementById('insInfoTier').textContent = '\u2014';
+            }
+            // Member type
+            const mt = selectedInsurance.member_type || 'holder';
+            const mtBadge = mt === 'beneficiary' ? 'bg-warning text-dark' : 'bg-info';
+            const mtLabel = mt === 'beneficiary' ? 'Beneficiary' : 'Card Holder';
+            document.getElementById('insInfoMemberType').innerHTML = '<span class="badge ' + mtBadge + '">' + mtLabel + '</span>';
+            // Coverage
             document.getElementById('insInfoCoverage').textContent = (selectedInsurance.coverage_percentage || 0) + '%';
-
+            // Per-visit cap
+            document.getElementById('insInfoPerVisit').textContent = selectedInsurance.per_visit_limit
+                ? '\u20B5' + formatNumber(selectedInsurance.per_visit_limit)
+                : 'Unlimited';
+            // Monthly cap
+            document.getElementById('insInfoMonthly').textContent = selectedInsurance.max_per_month
+                ? '\u20B5' + formatNumber(selectedInsurance.max_per_month)
+                : 'Unlimited';
+            // YTD billed / annual remaining
             const remaining = selectedInsurance.remaining_annual_limit;
             document.getElementById('insInfoBilled').textContent = remaining != null
                 ? '\u20B5' + formatNumber((selectedInsurance.annual_limit || 0) - remaining)

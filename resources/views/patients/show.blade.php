@@ -375,6 +375,8 @@
                             <tr>
                                 <th>Provider</th>
                                 <th>Type</th>
+                                <th>Tier</th>
+                                <th>Member</th>
                                 <th>Membership #</th>
                                 <th>Expiry</th>
                                 <th>Coverage</th>
@@ -385,9 +387,33 @@
                         </thead>
                         <tbody>
                             @foreach($patient->insurances as $ins)
+                            @php
+                                $insTier = $ins->insuranceTier;
+                                $insMemberType = $ins->member_type?->value ?? 'holder';
+                                $insConstraints = $insTier ? $insTier->effectiveConstraints($insMemberType) : null;
+                                $insCoverage = $insConstraints['coverage_percentage'] ?? null;
+                            @endphp
                             <tr>
                                 <td class="fw-medium">{{ $ins->insuranceProvider->name }}</td>
-                                <td>{{ ucfirst($ins->insuranceProvider->type instanceof \BackedEnum ? $ins->insuranceProvider->type->value : $ins->insuranceProvider->type) }}</td>
+                                <td>
+                                    <span class="badge bg-{{ $ins->insuranceProvider->type instanceof \BackedEnum ? $ins->insuranceProvider->type->color() : 'secondary' }}">
+                                        {{ $ins->insuranceProvider->type instanceof \BackedEnum ? $ins->insuranceProvider->type->label() : ucfirst($ins->insuranceProvider->type) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @if($insTier)
+                                        <span class="badge bg-primary bg-opacity-75">{{ $insTier->name }}</span>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($insMemberType === 'beneficiary')
+                                        <span class="badge bg-warning text-dark">Beneficiary</span>
+                                    @else
+                                        <span class="badge bg-info">Card Holder</span>
+                                    @endif
+                                </td>
                                 <td>{{ $ins->membership_number ?? '—' }}</td>
                                 <td>
                                     @if($ins->expiry_date)
@@ -396,7 +422,7 @@
                                         <span class="text-muted">No expiry</span>
                                     @endif
                                 </td>
-                                <td>{{ $ins->insuranceProvider->coverage_percentage ?? 100 }}%</td>
+                                <td>{{ $insCoverage !== null ? $insCoverage . '%' : '—' }}</td>
                                 <td>
                                     @if($ins->is_active && !$ins->is_expired)
                                         <span class="badge badge-soft-success">Active</span>
@@ -424,6 +450,10 @@
                                     <button type="button" class="btn btn-sm btn-outline-secondary edit-insurance-btn"
                                         data-id="{{ $ins->id }}"
                                         data-provider="{{ $ins->insurance_provider_id }}"
+                                        data-tier="{{ $ins->insurance_tier_id }}"
+                                        data-tier-name="{{ $insTier?->name }}"
+                                        data-member-type="{{ $insMemberType }}"
+                                        data-card-holder="{{ $ins->card_holder_insurance_id }}"
                                         data-membership="{{ $ins->membership_number }}"
                                         data-policy="{{ $ins->policy_number }}"
                                         data-expiry="{{ $ins->expiry_date?->format('Y-m-d') }}"
@@ -685,7 +715,7 @@
 {{-- Add Insurance Modal --}}
 @can('patients.edit')
 <div class="modal fade" id="addInsuranceModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form method="POST" action="{{ route('admin.patients.insurances.store', $patient) }}">
                 @csrf
@@ -694,30 +724,67 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Insurance Provider <span class="text-danger">*</span></label>
-                        <select name="insurance_provider_id" class="form-select" required>
-                            <option value="">Select Provider</option>
-                            @foreach($insuranceProviders->where('is_default', false) as $ip)
-                                <option value="{{ $ip->id }}">{{ $ip->name }} ({{ ucfirst($ip->type instanceof \BackedEnum ? $ip->type->value : $ip->type) }})</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Membership Number</label>
-                        <input type="text" name="membership_number" class="form-control">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Policy Number</label>
-                        <input type="text" name="policy_number" class="form-control">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Expiry Date</label>
-                        <input type="date" name="expiry_date" class="form-control">
-                    </div>
-                    <div class="form-check">
-                        <input type="checkbox" name="is_primary" value="1" class="form-check-input" id="addInsPrimary">
-                        <label class="form-check-label" for="addInsPrimary">Set as primary insurance</label>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Insurance Provider <span class="text-danger">*</span></label>
+                            <select name="insurance_provider_id" id="addInsProvider" class="form-select" required>
+                                <option value="">Select Provider</option>
+                                @foreach($insuranceProviders->where('is_default', false) as $ip)
+                                    <option value="{{ $ip->id }}">{{ $ip->name }} ({{ ucfirst($ip->type instanceof \BackedEnum ? $ip->type->value : $ip->type) }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Insurance Tier <span class="text-danger">*</span></label>
+                            <select name="insurance_tier_id" id="addInsTier" class="form-select" required disabled>
+                                <option value="">Select provider first</option>
+                            </select>
+                            <div id="addInsTierInfo" class="small text-muted mt-1"></div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Member Type <span class="text-danger">*</span></label>
+                            <div class="d-flex gap-3 mt-1">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="member_type" id="addMemberHolder" value="holder" checked>
+                                    <label class="form-check-label" for="addMemberHolder">
+                                        <span class="badge bg-info">Card Holder</span>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="member_type" id="addMemberBeneficiary" value="beneficiary">
+                                    <label class="form-check-label" for="addMemberBeneficiary">
+                                        <span class="badge bg-warning text-dark">Beneficiary</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3" id="addCardHolderRow" style="display:none;">
+                            <label class="form-label">Card Holder Insurance <span class="text-danger">*</span></label>
+                            <select name="card_holder_insurance_id" id="addCardHolder" class="form-select">
+                                <option value="">Select card holder</option>
+                                @foreach($patient->insurances->where('member_type', null)->merge($patient->insurances->where('member_type', \App\Enums\MemberType::Holder)) as $holderIns)
+                                    <option value="{{ $holderIns->id }}">{{ $holderIns->insuranceProvider->name }} — {{ $holderIns->membership_number ?? 'no membership #' }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Membership Number</label>
+                            <input type="text" name="membership_number" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Policy Number</label>
+                            <input type="text" name="policy_number" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Expiry Date</label>
+                            <input type="date" name="expiry_date" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3 d-flex align-items-end">
+                            <div class="form-check">
+                                <input type="checkbox" name="is_primary" value="1" class="form-check-input" id="addInsPrimary">
+                                <label class="form-check-label" for="addInsPrimary">Set as primary insurance</label>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -731,7 +798,7 @@
 
 {{-- Edit Insurance Modal --}}
 <div class="modal fade" id="editInsuranceModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form method="POST" id="editInsuranceForm">
                 @csrf @method('PUT')
@@ -740,21 +807,47 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Membership Number</label>
-                        <input type="text" name="membership_number" class="form-control" id="editInsMembership">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Policy Number</label>
-                        <input type="text" name="policy_number" class="form-control" id="editInsPolicy">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Expiry Date</label>
-                        <input type="date" name="expiry_date" class="form-control" id="editInsExpiry">
-                    </div>
-                    <div class="form-check">
-                        <input type="checkbox" name="is_active" value="1" class="form-check-input" id="editInsActive">
-                        <label class="form-check-label" for="editInsActive">Active</label>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tier</label>
+                            <div id="editInsTierDisplay" class="form-control-plaintext fw-medium text-muted">—</div>
+                            <input type="hidden" name="insurance_tier_id" id="editInsTierId">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Member Type</label>
+                            <div class="d-flex gap-3 mt-1">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="member_type" id="editMemberHolder" value="holder">
+                                    <label class="form-check-label" for="editMemberHolder">
+                                        <span class="badge bg-info">Card Holder</span>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="member_type" id="editMemberBeneficiary" value="beneficiary">
+                                    <label class="form-check-label" for="editMemberBeneficiary">
+                                        <span class="badge bg-warning text-dark">Beneficiary</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Membership Number</label>
+                            <input type="text" name="membership_number" class="form-control" id="editInsMembership">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Policy Number</label>
+                            <input type="text" name="policy_number" class="form-control" id="editInsPolicy">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Expiry Date</label>
+                            <input type="date" name="expiry_date" class="form-control" id="editInsExpiry">
+                        </div>
+                        <div class="col-md-6 mb-3 d-flex align-items-end">
+                            <div class="form-check">
+                                <input type="checkbox" name="is_active" value="1" class="form-check-input" id="editInsActive">
+                                <label class="form-check-label" for="editInsActive">Active</label>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -862,7 +955,7 @@
 
 @section('scripts')
 <script>
-    // Edit Insurance Modal population
+    // ── Edit Insurance Modal ──────────────────────────────────────────────────
     document.querySelectorAll('.edit-insurance-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.dataset.id;
@@ -871,10 +964,82 @@
             document.getElementById('editInsPolicy').value = this.dataset.policy || '';
             document.getElementById('editInsExpiry').value = this.dataset.expiry || '';
             document.getElementById('editInsActive').checked = this.dataset.active === '1';
+            // Tier display
+            document.getElementById('editInsTierId').value = this.dataset.tier || '';
+            document.getElementById('editInsTierDisplay').textContent = this.dataset.tierName || '—';
+            // Member type
+            const mt = this.dataset.memberType || 'holder';
+            document.getElementById('editMemberHolder').checked = mt === 'holder';
+            document.getElementById('editMemberBeneficiary').checked = mt === 'beneficiary';
         });
     });
 
-    // Edit Emergency Contact Modal population
+    // ── Add Insurance: Provider → Tier cascade ───────────────────────────────
+    document.getElementById('addInsProvider').addEventListener('change', function() {
+        const providerId = this.value;
+        const tierSelect = document.getElementById('addInsTier');
+        const tierInfo   = document.getElementById('addInsTierInfo');
+
+        if (!providerId) {
+            tierSelect.innerHTML = '<option value="">Select provider first</option>';
+            tierSelect.disabled = true;
+            tierInfo.textContent = '';
+            return;
+        }
+
+        tierSelect.innerHTML = '<option value="">Loading…</option>';
+        tierSelect.disabled = true;
+
+        fetch('{{ route("admin.insurance-providers.tiers.for-patient", ":pid") }}'.replace(':pid', providerId), {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(tiers => {
+            if (!tiers.length) {
+                tierSelect.innerHTML = '<option value="">No tiers available</option>';
+                return;
+            }
+            tierSelect.innerHTML = '<option value="">Select Tier</option>';
+            tiers.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.name + (t.coverage_percentage ? ' (' + t.coverage_percentage + '% coverage)' : '');
+                if (t.is_default) opt.selected = true;
+                tierSelect.appendChild(opt);
+            });
+            tierSelect.disabled = false;
+            updateTierInfo();
+        })
+        .catch(() => {
+            tierSelect.innerHTML = '<option value="">Failed to load tiers</option>';
+        });
+    });
+
+    document.getElementById('addInsTier').addEventListener('change', updateTierInfo);
+
+    function updateTierInfo() {
+        const sel = document.getElementById('addInsTier');
+        const opt = sel.options[sel.selectedIndex];
+        document.getElementById('addInsTierInfo').textContent = opt && opt.value ? opt.textContent : '';
+    }
+
+    // ── Add Insurance: Member Type → show/hide card holder row ───────────────
+    document.querySelectorAll('input[name="member_type"]').forEach(r => {
+        r.addEventListener('change', function() {
+            const row = document.getElementById('addCardHolderRow');
+            const sel = document.getElementById('addCardHolder');
+            if (this.value === 'beneficiary') {
+                row.style.display = '';
+                sel.required = true;
+            } else {
+                row.style.display = 'none';
+                sel.required = false;
+                sel.value = '';
+            }
+        });
+    });
+
+    // ── Edit Emergency Contact Modal ──────────────────────────────────────────
     document.querySelectorAll('.edit-ec-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.dataset.id;

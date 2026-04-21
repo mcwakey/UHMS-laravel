@@ -95,7 +95,7 @@ class ClaimController extends Controller
     public function show(Claim $claim)
     {
         $claim->load([
-            'insuranceProvider', 'patient', 'visit', 'invoice',
+            'insuranceProvider.tiers', 'patient', 'visit.visitInsurance.insuranceTier', 'invoice',
             'items', 'assignedDoctor', 'createdByUser',
         ]);
 

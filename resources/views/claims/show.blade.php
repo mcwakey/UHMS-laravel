@@ -146,6 +146,38 @@
                 @if($claim->insuranceProvider->contact_email)
                     <div><small class="text-muted"><i class="ti ti-mail me-1"></i>{{ $claim->insuranceProvider->contact_email }}</small></div>
                 @endif
+                @php
+                    $claimTier = $claim->visit?->visitInsurance?->insuranceTier;
+                    $claimMemberType = $claim->visit?->visitInsurance?->member_type;
+                @endphp
+                @if($claimTier)
+                <div class="mt-2 pt-2 border-top">
+                    <small class="text-muted d-block mb-1">Tier Used for Visit</small>
+                    <span class="badge bg-primary bg-opacity-75">{{ $claimTier->name }}</span>
+                    @if($claimMemberType)
+                        <span class="badge {{ $claimMemberType->value === 'beneficiary' ? 'bg-warning text-dark' : 'bg-info' }} ms-1">
+                            {{ $claimMemberType->label() }}
+                        </span>
+                    @endif
+                    @php
+                        $memberVal = $claimMemberType?->value ?? 'holder';
+                        $tierConstraints = $claimTier->effectiveConstraints($memberVal);
+                    @endphp
+                    @if($tierConstraints['coverage_percentage'])
+                        <div class="small text-muted mt-1">Coverage: {{ $tierConstraints['coverage_percentage'] }}%</div>
+                    @endif
+                    @if($tierConstraints['annual_limit'])
+                        <div class="small text-muted">Annual Limit: GH₵ {{ number_format($tierConstraints['annual_limit'], 2) }}</div>
+                    @endif
+                </div>
+                @elseif($claim->insuranceProvider->tiers->isNotEmpty())
+                <div class="mt-2 pt-2 border-top">
+                    <small class="text-muted d-block mb-1">Available Tiers</small>
+                    @foreach($claim->insuranceProvider->tiers as $provTier)
+                        <span class="badge bg-light text-dark border me-1 mb-1">{{ $provTier->name }}</span>
+                    @endforeach
+                </div>
+                @endif
             </div>
         </div>
 

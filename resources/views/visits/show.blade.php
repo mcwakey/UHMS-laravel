@@ -237,40 +237,64 @@
             <div class="card-body">
             @if($insuranceInfo)
                 <div class="row">
-                    <div class="col-md-3">
+                    <div class="col-md-4 mb-2">
                         <label class="text-muted small mb-1">Provider</label>
                         <div class="fw-medium">{{ $insuranceInfo['provider']?->name ?? 'Cash & Carry' }}</div>
+                        @if($insuranceInfo['provider'])
+                        <div><span class="badge bg-{{ $insuranceInfo['provider']->type->color() }} mt-1">{{ $insuranceInfo['provider']->type->label() }}</span></div>
+                        @endif
                     </div>
-                    <div class="col-md-3">
-                        <label class="text-muted small mb-1">Insurance Type</label>
-                        <div>
-                            <span class="badge bg-{{ $insuranceInfo['provider']->type->color() }}">
-                                {{ $insuranceInfo['provider']->type->label() }}
-                            </span>
-                        </div>
+                    <div class="col-md-4 mb-2">
+                        <label class="text-muted small mb-1">Tier &amp; Member Type</label>
+                        <div class="fw-medium">{{ $insuranceInfo['tier_name'] ?? '—' }}</div>
+                        @php
+                            $memberTypeVal = $insuranceInfo['member_type'] ?? 'holder';
+                            $memberTypeBadge = $memberTypeVal === 'beneficiary' ? 'warning' : 'info';
+                            $memberTypeLabel = $memberTypeVal === 'beneficiary' ? 'Beneficiary' : 'Card Holder';
+                        @endphp
+                        <span class="badge bg-{{ $memberTypeBadge }} mt-1">{{ $memberTypeLabel }}</span>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4 mb-2">
                         <label class="text-muted small mb-1">Coverage</label>
                         <div class="fw-medium">{{ $insuranceInfo['coverage_percentage'] ?? 0 }}%</div>
+                        @if($insuranceInfo['per_visit_limit'])
+                            <small class="text-muted">Per visit cap: &#8373;{{ number_format($insuranceInfo['per_visit_limit'], 2) }}</small>
+                        @endif
                     </div>
-                    <div class="col-md-3">
-                        <label class="text-muted small mb-1">Remaining Balance</label>
-                        <div class="fw-bold {{ ($insuranceInfo['remaining'] ?? 0) > 0 ? 'text-success' : 'text-danger' }}">
+                    <div class="col-md-4 mb-2">
+                        <label class="text-muted small mb-1">Annual Remaining</label>
+                        <div class="fw-bold {{ ($insuranceInfo['remaining_annual'] ?? 0) > 0 ? 'text-success' : 'text-danger' }}">
                             @if($insuranceInfo['annual_limit'])
-                                &#8373;{{ number_format($insuranceInfo['remaining'] ?? 0, 2) }}
+                                &#8373;{{ number_format($insuranceInfo['remaining_annual'] ?? 0, 2) }}
                             @else
                                 Unlimited
                             @endif
                         </div>
                     </div>
+                    <div class="col-md-4 mb-2">
+                        <label class="text-muted small mb-1">Monthly Remaining</label>
+                        <div class="fw-medium">
+                            @if($insuranceInfo['max_per_month'])
+                                <span class="{{ ($insuranceInfo['remaining_monthly'] ?? 0) > 0 ? 'text-success' : 'text-danger' }}">
+                                    &#8373;{{ number_format($insuranceInfo['remaining_monthly'] ?? 0, 2) }}
+                                </span>
+                            @else
+                                <span class="text-muted">Unlimited</span>
+                            @endif
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                        <label class="text-muted small mb-1">Membership #</label>
+                        <div class="fw-medium">{{ $insuranceInfo['insurance']?->membership_number ?? '—' }}</div>
+                    </div>
                 </div>
                 @if($insuranceInfo['annual_limit'])
-                <div class="mt-3">
+                <div class="mt-2">
                     @php
-                        $usagePercent = $insuranceInfo['annual_limit'] > 0 ? min(100, round(($insuranceInfo['total_billed'] / $insuranceInfo['annual_limit']) * 100)) : 0;
+                        $usagePercent = $insuranceInfo['annual_limit'] > 0 ? min(100, round(($insuranceInfo['used_this_year'] / $insuranceInfo['annual_limit']) * 100)) : 0;
                     @endphp
                     <div class="d-flex justify-content-between small text-muted mb-1">
-                        <span>Annual Usage: &#8373;{{ number_format($insuranceInfo['total_billed'] ?? 0, 2) }} of &#8373;{{ number_format($insuranceInfo['annual_limit'], 2) }}</span>
+                        <span>Annual Usage: &#8373;{{ number_format($insuranceInfo['used_this_year'] ?? 0, 2) }} of &#8373;{{ number_format($insuranceInfo['annual_limit'], 2) }}</span>
                         <span>{{ $usagePercent }}%</span>
                     </div>
                     <div class="progress" style="height: 6px;">

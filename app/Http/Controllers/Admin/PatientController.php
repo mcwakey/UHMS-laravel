@@ -93,6 +93,7 @@ class PatientController extends Controller
         $patient->load([
             'registeredBy',
             'insurances.insuranceProvider',
+            'insurances.insuranceTier',
             'emergencyContacts',
         ]);
 
