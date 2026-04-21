@@ -15,67 +15,94 @@ use Illuminate\Support\Facades\DB;
 
 class BillingService
 {
+    public function __construct(
+        protected InsuranceService $insuranceService,
+    ) {}
+
     /**
      * Create an invoice for a visit.
+     * After inserting items, links insurance usage records to the invoice and
+     * records any lab/pharmacy usages that weren't captured at service-attach time.
      */
     public function createInvoice(array $data, array $items): Invoice
     {
         return DB::transaction(function () use ($data, $items) {
             $invoiceNumber = Invoice::generateNumber('INV', 'invoices', 'invoice_number');
 
-            // Calculate totals
-            $subtotal = 0;
-            $nhisAmount = 0;
+            // Calculate totals from items
+            $subtotal    = 0;
+            $nhisAmount  = 0;
 
             foreach ($items as $item) {
-                $lineTotal = ($item['unit_price'] ?? 0) * ($item['quantity'] ?? 1);
-                $subtotal += $lineTotal;
-                if (!empty($item['is_nhis_covered']) && !empty($item['nhis_approved_amount'])) {
+                $lineTotal   = ($item['unit_price'] ?? 0) * ($item['quantity'] ?? 1);
+                $subtotal   += $lineTotal;
+                if (! empty($item['is_nhis_covered']) && ! empty($item['nhis_approved_amount'])) {
                     $nhisAmount += $item['nhis_approved_amount'];
                 }
             }
 
-            $taxAmount = $data['tax_amount'] ?? 0;
+            $taxAmount      = $data['tax_amount'] ?? 0;
             $discountAmount = $data['discount_amount'] ?? 0;
-            $totalAmount = $subtotal + $taxAmount - $discountAmount;
-            $balance = $totalAmount - $nhisAmount;
+            $totalAmount    = $subtotal + $taxAmount - $discountAmount;
+            $balance        = $totalAmount - $nhisAmount;
 
             $invoice = Invoice::create([
-                'invoice_number' => $invoiceNumber,
-                'visit_id' => $data['visit_id'],
-                'patient_id' => $data['patient_id'],
-                'billing_type' => $data['billing_type'],
-                'subtotal' => $subtotal,
-                'tax_amount' => $taxAmount,
+                'invoice_number'  => $invoiceNumber,
+                'visit_id'        => $data['visit_id'],
+                'patient_id'      => $data['patient_id'],
+                'billing_type'    => $data['billing_type'],
+                'subtotal'        => $subtotal,
+                'tax_amount'      => $taxAmount,
                 'discount_amount' => $discountAmount,
-                'nhis_amount' => $nhisAmount,
-                'total_amount' => $totalAmount,
-                'amount_paid' => $nhisAmount, // NHIS portion counts as paid
-                'balance' => $balance,
-                'status' => $nhisAmount >= $totalAmount ? InvoiceStatus::PAID->value : InvoiceStatus::PENDING->value,
-                'due_date' => $data['due_date'] ?? now()->addDays(30),
-                'notes' => $data['notes'] ?? null,
-                'created_by' => auth()->id(),
+                'nhis_amount'     => $nhisAmount,
+                'total_amount'    => $totalAmount,
+                'amount_paid'     => $nhisAmount,
+                'balance'         => max(0, $balance),
+                'status'          => $nhisAmount >= $totalAmount ? InvoiceStatus::PAID->value : InvoiceStatus::PENDING->value,
+                'due_date'        => $data['due_date'] ?? now()->addDays(30),
+                'notes'           => $data['notes'] ?? null,
+                'created_by'      => auth()->id(),
             ]);
 
-            // Create invoice items
             foreach ($items as $item) {
                 $lineTotal = ($item['unit_price'] ?? 0) * ($item['quantity'] ?? 1);
 
                 InvoiceItem::create([
-                    'invoice_id' => $invoice->id,
-                    'service_catalog_id' => $item['service_catalog_id'] ?? null,
-                    'description' => $item['description'],
-                    'quantity' => $item['quantity'] ?? 1,
-                    'unit_price' => $item['unit_price'],
-                    'total_price' => $lineTotal,
-                    'is_nhis_covered' => $item['is_nhis_covered'] ?? false,
+                    'invoice_id'          => $invoice->id,
+                    'service_catalog_id'  => $item['service_catalog_id'] ?? null,
+                    'description'         => $item['description'],
+                    'quantity'            => $item['quantity'] ?? 1,
+                    'unit_price'          => $item['unit_price'],
+                    'total_price'         => $lineTotal,
+                    'is_nhis_covered'     => $item['is_nhis_covered'] ?? false,
                     'nhis_approved_amount' => $item['nhis_approved_amount'] ?? 0,
                 ]);
+
+                // Record usage for items that were evaluated at invoice time
+                // (lab / pharmacy — visit_services were already recorded in attachServices)
+                if (! empty($item['_record_usage']) && ! empty($item['_insurance'])) {
+                    $this->insuranceService->recordUsage(
+                        $item['_insurance'],
+                        Visit::find($data['visit_id']),
+                        $item['nhis_approved_amount'] ?? 0,
+                        $lineTotal - ($item['nhis_approved_amount'] ?? 0),
+                        $item['_coverage_reason'] ?? null,
+                        $invoice->id
+                    );
+                }
+            }
+
+            // Link any existing visit_service usage records to this invoice
+            $visit = Visit::find($data['visit_id']);
+            if ($visit?->visitInsurance) {
+                $this->insuranceService->linkInvoiceToUsages(
+                    $visit->id,
+                    $invoice->id,
+                    $visit->visitInsurance->id
+                );
             }
 
             // Transition visit to billing if appropriate
-            $visit = Visit::find($data['visit_id']);
             if ($visit && in_array(VisitStatus::BILLING, $visit->status->allowedTransitions())) {
                 $visit->update(['status' => VisitStatus::BILLING->value]);
             }
@@ -89,43 +116,41 @@ class BillingService
      */
     public function recordPayment(Invoice $invoice, array $data): Payment
     {
-        return DB::transaction(function () use ($invoice, $data) {
+        $payment = DB::transaction(function () use ($invoice, $data) {
             $paymentNumber = Payment::generateNumber('PAY', 'payments', 'payment_number');
 
             $payment = Payment::create([
-                'payment_number' => $paymentNumber,
-                'invoice_id' => $invoice->id,
-                'patient_id' => $invoice->patient_id,
-                'amount' => $data['amount'],
-                'payment_method' => $data['payment_method'],
+                'payment_number'   => $paymentNumber,
+                'invoice_id'       => $invoice->id,
+                'patient_id'       => $invoice->patient_id,
+                'amount'           => $data['amount'],
+                'payment_method'   => $data['payment_method'],
                 'reference_number' => $data['reference_number'] ?? null,
-                'received_by' => auth()->id(),
-                'notes' => $data['notes'] ?? null,
-                'paid_at' => $data['paid_at'] ?? now(),
+                'received_by'      => auth()->id(),
+                'notes'            => $data['notes'] ?? null,
+                'paid_at'          => $data['paid_at'] ?? now(),
             ]);
 
-            // Update invoice totals
             $totalPaid = $invoice->amount_paid + $data['amount'];
-            $balance = $invoice->total_amount - $totalPaid;
+            $balance   = $invoice->total_amount - $totalPaid;
 
             $status = InvoiceStatus::PARTIALLY_PAID;
             if ($balance <= 0) {
-                $status = InvoiceStatus::PAID;
+                $status  = InvoiceStatus::PAID;
                 $balance = 0;
             }
 
             $invoice->update([
                 'amount_paid' => $totalPaid,
-                'balance' => $balance,
-                'status' => $status->value,
+                'balance'     => $balance,
+                'status'      => $status->value,
             ]);
 
-            // If fully paid, transition visit to completed
             if ($status === InvoiceStatus::PAID) {
                 $visit = $invoice->visit;
                 if ($visit && $visit->status === VisitStatus::BILLING) {
                     $visit->update([
-                        'status' => VisitStatus::COMPLETED->value,
+                        'status'         => VisitStatus::COMPLETED->value,
                         'checked_out_at' => now(),
                     ]);
                 }
@@ -149,63 +174,82 @@ class BillingService
     }
 
     /**
-     * Auto-generate invoice items from visit services (visit_services table + consultation, lab, prescriptions).
+     * Auto-generate invoice items from visit services + lab + prescriptions.
+     *
+     * For visit_services: reads already-evaluated amounts (recorded at attachServices time).
+     * For lab/pharmacy items: evaluates coverage in real time using the insurance engine,
+     * accounting for visit_service amounts already committed + previous lab/pharmacy items
+     * in this same billing pass (via sessionOffset).
+     *
+     * Items destined for invoice-time usage recording carry a '_record_usage' flag.
      */
     public function generateItemsFromVisit(Visit $visit): array
     {
         $items = [];
 
-        // Determine insurance coverage for this visit
+        // Resolve insurance for this visit
         $visitInsurance = $visit->visitInsurance;
-        $provider = $visitInsurance?->insuranceProvider;
-        $hasInsurance = $visitInsurance && $visitInsurance->is_active && !$visitInsurance->is_expired && $provider && !$provider->is_default;
-        $coveragePercentage = $hasInsurance ? ($provider->coverage_percentage / 100) : 0;
+        $provider       = $visitInsurance?->insuranceProvider;
+        $hasInsurance   = $visitInsurance
+            && $visitInsurance->is_active
+            && ! $visitInsurance->is_expired
+            && $provider
+            && ! $provider->is_default;
 
-        // 1. Visit Services (from visit_services table — the primary billing source)
+        // Running offset: track lab/pharmacy insurance amounts committed in this pass
+        // (not yet in insurance_usages — prevents over-coverage on simultaneous items)
+        $sessionOffset = 0.0;
+
+        // 1. Visit Services ─────────────────────────────────────────────────
+        // Coverage was already evaluated + recorded at attachServices() time.
+        // Just read the stored amounts directly — do NOT re-evaluate.
         $visit->loadMissing('visitServices.serviceCatalog');
         foreach ($visit->visitServices as $vs) {
-            $catalog = $vs->serviceCatalog;
-            $totalPrice = $vs->total_price;
-            $insuranceCoveredAmount = $hasInsurance
-                ? round($totalPrice * $coveragePercentage, 2)
-                : 0;
+            $catalog       = $vs->serviceCatalog;
+            $insuredAmount = (float) $vs->insurance_covered;
 
             $items[] = [
-                'service_catalog_id' => $vs->service_catalog_id,
-                'description' => $catalog ? $catalog->name : 'Service',
-                'quantity' => $vs->quantity,
-                'unit_price' => $vs->unit_price,
-                'is_nhis_covered' => $hasInsurance,
-                'nhis_approved_amount' => $insuranceCoveredAmount,
+                'service_catalog_id'  => $vs->service_catalog_id,
+                'description'         => $catalog ? $catalog->name : 'Service',
+                'quantity'            => $vs->quantity,
+                'unit_price'          => $vs->unit_price,
+                'is_nhis_covered'     => $insuredAmount > 0,
+                'nhis_approved_amount' => $insuredAmount,
+                '_record_usage'       => false, // already recorded in attachServices()
             ];
         }
 
-        // 2. Consultation fee (only if no visit_services cover consultation)
+        // 2. Auto-consultation fee ──────────────────────────────────────────
         $hasConsultationService = $visit->visitServices
             ->filter(fn ($vs) => $vs->serviceCatalog && $vs->serviceCatalog->category === 'consultation')
             ->isNotEmpty();
 
-        if (!$hasConsultationService) {
+        if (! $hasConsultationService) {
             $consultationService = ServiceCatalog::where('category', 'consultation')
                 ->where('is_active', true)
                 ->first();
 
             if ($consultationService) {
-                $insuranceCoveredAmount = $hasInsurance
-                    ? round($consultationService->price * $coveragePercentage, 2)
-                    : 0;
+                [$coveredAmt, $sessionOffset] = $this->evalAndOffset(
+                    $hasInsurance, $visitInsurance, $visit,
+                    $consultationService->price, $sessionOffset
+                );
+
                 $items[] = [
-                    'service_catalog_id' => $consultationService->id,
-                    'description' => $consultationService->name,
-                    'quantity' => 1,
-                    'unit_price' => $consultationService->price,
-                    'is_nhis_covered' => $hasInsurance,
-                    'nhis_approved_amount' => $insuranceCoveredAmount,
+                    'service_catalog_id'  => $consultationService->id,
+                    'description'         => $consultationService->name,
+                    'quantity'            => 1,
+                    'unit_price'          => $consultationService->price,
+                    'is_nhis_covered'     => $coveredAmt > 0,
+                    'nhis_approved_amount' => $coveredAmt,
+                    '_record_usage'       => $coveredAmt > 0,
+                    '_insurance'          => $visitInsurance,
+                    '_coverage_reason'    => null,
                 ];
             }
         }
 
-        // Lab tests
+        // 3. Lab tests ──────────────────────────────────────────────────────
         $visit->loadMissing('labRequests.items.labTest');
         foreach ($visit->labRequests as $labRequest) {
             foreach ($labRequest->items as $item) {
@@ -215,41 +259,53 @@ class BillingService
                     ->first();
 
                 if ($labService) {
-                    $labCoveredAmount = $hasInsurance
-                        ? round($labService->price * $coveragePercentage, 2)
-                        : 0;
+                    [$coveredAmt, $sessionOffset] = $this->evalAndOffset(
+                        $hasInsurance, $visitInsurance, $visit,
+                        $labService->price, $sessionOffset
+                    );
+
                     $items[] = [
-                        'service_catalog_id' => $labService->id,
-                        'description' => $item->labTest->name,
-                        'quantity' => 1,
-                        'unit_price' => $labService->price,
-                        'is_nhis_covered' => $hasInsurance,
-                        'nhis_approved_amount' => $labCoveredAmount,
+                        'service_catalog_id'  => $labService->id,
+                        'description'         => $item->labTest->name,
+                        'quantity'            => 1,
+                        'unit_price'          => $labService->price,
+                        'is_nhis_covered'     => $coveredAmt > 0,
+                        'nhis_approved_amount' => $coveredAmt,
+                        '_record_usage'       => $coveredAmt > 0,
+                        '_insurance'          => $visitInsurance,
+                        '_coverage_reason'    => null,
                     ];
                 }
             }
         }
 
-        // Prescriptions (pharmacy items)
+        // 4. Prescriptions ──────────────────────────────────────────────────
         $visit->loadMissing('prescriptions.items.drug');
         foreach ($visit->prescriptions as $prescription) {
-            foreach ($prescription->items as $item) {
+            foreach ($prescription->items as $prescItem) {
                 $drugService = ServiceCatalog::where('category', 'pharmacy')
-                    ->where('code', 'DRUG-' . ($item->drug->code ?? $item->drug_id))
+                    ->where('code', 'DRUG-' . ($prescItem->drug->code ?? $prescItem->drug_id))
                     ->where('is_active', true)
                     ->first();
 
                 if ($drugService) {
-                    $drugCoveredAmount = $hasInsurance
-                        ? round($drugService->price * $coveragePercentage * $item->quantity, 2)
-                        : 0;
+                    $linePrice = $drugService->price * $prescItem->quantity;
+
+                    [$coveredAmt, $sessionOffset] = $this->evalAndOffset(
+                        $hasInsurance, $visitInsurance, $visit,
+                        $linePrice, $sessionOffset
+                    );
+
                     $items[] = [
-                        'service_catalog_id' => $drugService->id,
-                        'description' => $item->drug->name . ' (' . $item->quantity . ')',
-                        'quantity' => $item->quantity,
-                        'unit_price' => $drugService->price,
-                        'is_nhis_covered' => $hasInsurance,
-                        'nhis_approved_amount' => $drugCoveredAmount,
+                        'service_catalog_id'  => $drugService->id,
+                        'description'         => $prescItem->drug->name . ' (' . $prescItem->quantity . ')',
+                        'quantity'            => $prescItem->quantity,
+                        'unit_price'          => $drugService->price,
+                        'is_nhis_covered'     => $coveredAmt > 0,
+                        'nhis_approved_amount' => $coveredAmt,
+                        '_record_usage'       => $coveredAmt > 0,
+                        '_insurance'          => $visitInsurance,
+                        '_coverage_reason'    => null,
                     ];
                 }
             }
@@ -264,11 +320,34 @@ class BillingService
     public function getStats(): array
     {
         return [
-            'total_invoices' => Invoice::count(),
-            'pending_invoices' => Invoice::unpaid()->count(),
-            'total_revenue' => Payment::whereMonth('paid_at', now()->month)->sum('amount'),
-            'today_revenue' => Payment::whereDate('paid_at', today())->sum('amount'),
+            'total_invoices'     => Invoice::count(),
+            'pending_invoices'   => Invoice::unpaid()->count(),
+            'total_revenue'      => Payment::whereMonth('paid_at', now()->month)->sum('amount'),
+            'today_revenue'      => Payment::whereDate('paid_at', today())->sum('amount'),
             'outstanding_balance' => Invoice::unpaid()->sum('balance'),
         ];
+    }
+
+    // ── Private helpers ──────────────────────────────────────────────────────
+
+    /**
+     * Evaluate coverage for one item and return [coveredAmount, newSessionOffset].
+     */
+    private function evalAndOffset(
+        bool $hasInsurance,
+        $visitInsurance,
+        Visit $visit,
+        float $price,
+        float $sessionOffset
+    ): array {
+        if (! $hasInsurance || ! $visitInsurance) {
+            return [0.0, $sessionOffset];
+        }
+
+        $eval       = $this->insuranceService->evaluateCoverage($visitInsurance, $visit, $price, $sessionOffset);
+        $covered    = $eval['covered_amount'];
+        $newOffset  = $sessionOffset + $covered;
+
+        return [$covered, $newOffset];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PatientInsurance extends Model
 {
@@ -43,6 +44,11 @@ class PatientInsurance extends Model
         return $this->belongsTo(InsuranceProvider::class);
     }
 
+    public function usages(): HasMany
+    {
+        return $this->hasMany(InsuranceUsage::class);
+    }
+
     // ── Scopes ───────────────────────────────────────
 
     public function scopeActive($query)
@@ -72,22 +78,70 @@ class PatientInsurance extends Model
     }
 
     /**
-     * Check if this insurance has remaining annual limit.
+     * Total insurance-covered amount already used this year.
+     */
+    public function usedThisYear(): float
+    {
+        return (float) $this->usages()
+            ->where('created_at', '>=', now()->startOfYear())
+            ->sum('amount_covered');
+    }
+
+    /**
+     * Total insurance-covered amount already used this month.
+     */
+    public function usedThisMonth(): float
+    {
+        return (float) $this->usages()
+            ->where('created_at', '>=', now()->startOfMonth())
+            ->sum('amount_covered');
+    }
+
+    /**
+     * Total insurance-covered amount already used for a specific visit.
+     */
+    public function usedForVisit(int $visitId): float
+    {
+        return (float) $this->usages()
+            ->where('visit_id', $visitId)
+            ->sum('amount_covered');
+    }
+
+    /**
+     * Number of distinct visits covered this month.
+     */
+    public function visitsThisMonth(): int
+    {
+        return $this->usages()
+            ->where('created_at', '>=', now()->startOfMonth())
+            ->distinct('visit_id')
+            ->count('visit_id');
+    }
+
+    /**
+     * Check if this insurance has remaining annual limit (uses insurance_usages).
      */
     public function getRemainingAnnualLimitAttribute(): ?float
     {
         $limit = $this->insuranceProvider->annual_limit;
         if ($limit === null) {
-            return null; // No limit (e.g., Cash & Carry)
+            return null;
         }
 
-        $yearStart = now()->startOfYear();
-        $usedAmount = \App\Models\Invoice::where('patient_id', $this->patient_id)
-            ->whereHas('visit', fn ($q) => $q->where('visit_insurance_id', $this->id))
-            ->where('created_at', '>=', $yearStart)
-            ->sum('total_amount');
+        return max(0, (float) $limit - $this->usedThisYear());
+    }
 
-        return max(0, $limit - $usedAmount);
+    /**
+     * Remaining monthly limit.
+     */
+    public function getRemainingMonthlyLimitAttribute(): ?float
+    {
+        $limit = $this->insuranceProvider->max_per_month;
+        if ($limit === null) {
+            return null;
+        }
+
+        return max(0, (float) $limit - $this->usedThisMonth());
     }
 
     /**

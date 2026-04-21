@@ -112,51 +112,67 @@ class VisitService
 
     /**
      * Attach services to a visit and create billing line items.
+     * Each service is evaluated against all four insurance constraints in real
+     * time; if a limit is reached the remainder is recorded as cash & carry.
      *
      * @param array $services Array of ['service_catalog_id' => int, 'quantity' => int, 'notes' => ?string]
      */
     public function attachServices(Visit $visit, array $services): Visit
     {
-        $patient = $visit->patient;
+        $patient         = $visit->patient;
         $insuranceResult = $this->insuranceService->resolveForVisit($patient, $visit->visit_insurance_id);
-        $insurance = $insuranceResult['insurance'];
+        $insurance       = $insuranceResult['insurance'];
+        $isFallback      = $insuranceResult['is_fallback'];
 
         // Resolve insurance type + provider for pricing lookup
-        $insuranceType = null;
+        $insuranceType      = null;
         $insuranceProviderId = null;
-        if ($insurance && ! $insuranceResult['is_fallback']) {
-            $provider = $insurance->insuranceProvider;
-            $insuranceType = $provider?->type; // InsuranceType enum
+        if ($insurance && ! $isFallback) {
+            $provider           = $insurance->insuranceProvider;
+            $insuranceType      = $provider?->type;
             $insuranceProviderId = $insurance->insurance_provider_id;
         }
 
         foreach ($services as $serviceData) {
-            $catalog = ServiceCatalog::with('prices')->findOrFail($serviceData['service_catalog_id']);
+            $catalog  = ServiceCatalog::with('prices')->findOrFail($serviceData['service_catalog_id']);
             $quantity = max(1, (int) ($serviceData['quantity'] ?? 1));
 
             // Use insurance-type/provider-specific price if available
-            $unitPrice = $catalog->getPriceForInsurance($insuranceType, $insuranceProviderId);
+            $unitPrice  = $catalog->getPriceForInsurance($insuranceType, $insuranceProviderId);
             $totalPrice = $unitPrice * $quantity;
 
-            // Calculate insurance coverage amount
-            $insuranceCovered = 0;
-            if ($insurance && ! $insuranceResult['is_fallback']) {
-                $insuranceCovered = $this->insuranceService->calculateCoverage(
-                    $insurance, $totalPrice
-                );
+            // ── Real-time constraint evaluation ──────────────────────────────
+            $insuranceCovered = 0.0;
+            $patientPayable   = $totalPrice;
+
+            if ($insurance && ! $isFallback) {
+                $evaluation = $this->insuranceService->evaluateCoverage($insurance, $visit, $totalPrice);
+
+                $insuranceCovered = $evaluation['covered_amount'];
+                $patientPayable   = $evaluation['patient_amount'];
+
+                // Record usage immediately so the next service in this loop sees
+                // updated running totals.
+                if ($evaluation['covered_amount'] > 0) {
+                    $this->insuranceService->recordUsage(
+                        $insurance,
+                        $visit,
+                        $evaluation['covered_amount'],
+                        $evaluation['patient_amount'],
+                        $evaluation['reason'],
+                    );
+                }
             }
 
-            $patientPayable = $totalPrice - $insuranceCovered;
-
             VisitServiceItem::create([
-                'visit_id'             => $visit->id,
-                'service_catalog_id'   => $catalog->id,
-                'department_id'        => $catalog->department_id,
-                'quantity'             => $quantity,
-                'unit_price'           => $unitPrice,
-                'insurance_covered'    => $insuranceCovered,
-                'patient_payable'      => $patientPayable,
-                'total_price'          => $totalPrice,
+                'visit_id'           => $visit->id,
+                'service_catalog_id' => $catalog->id,
+                'department_id'      => $catalog->department_id,
+                'quantity'           => $quantity,
+                'unit_price'         => $unitPrice,
+                'insurance_covered'  => $insuranceCovered,
+                'patient_payable'    => $patientPayable,
+                'total_price'        => $totalPrice,
             ]);
         }
 
@@ -338,10 +354,14 @@ class VisitService
     public function cancel(Visit $visit, ?string $reason = null): Visit
     {
         $visit->update([
-            'cancelled_by' => auth()->id(),
+            'cancelled_by'        => auth()->id(),
             'cancellation_reason' => $reason,
         ]);
         $visit->transitionTo(VisitStatus::CANCELLED, $reason);
+
+        // Void all insurance usage records so limits are correctly restored
+        $this->insuranceService->voidVisitUsages($visit->id);
+
         return $visit->fresh();
     }
 

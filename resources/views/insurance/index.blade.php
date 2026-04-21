@@ -160,17 +160,30 @@
                                             <input type="text" name="contract_number" class="form-control" value="{{ $provider->contract_number }}">
                                         </div>
                                         <div class="row mb-3">
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <label class="form-label">Coverage %</label>
                                                 <input type="number" name="coverage_percentage" class="form-control" value="{{ $provider->coverage_percentage }}" step="0.01" min="0" max="100">
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <label class="form-label">Annual Limit (&#8373;)</label>
-                                                <input type="number" name="annual_limit" class="form-control" value="{{ $provider->annual_limit }}" step="0.01" min="0">
+                                                <input type="number" name="annual_limit" class="form-control" value="{{ $provider->annual_limit }}" step="0.01" min="0" placeholder="No limit">
                                             </div>
-                                            <div class="col-md-4">
+                                            <div class="col-md-3">
                                                 <label class="form-label">Per Visit Limit (&#8373;)</label>
-                                                <input type="number" name="per_visit_limit" class="form-control" value="{{ $provider->per_visit_limit }}" step="0.01" min="0">
+                                                <input type="number" name="per_visit_limit" class="form-control" value="{{ $provider->per_visit_limit }}" step="0.01" min="0" placeholder="No limit">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label">Monthly Limit (&#8373;)</label>
+                                                <input type="number" name="max_per_month" class="form-control" value="{{ $provider->max_per_month }}" step="0.01" min="0" placeholder="No limit">
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label class="form-label">Max Visits/Month</label>
+                                                <input type="number" name="max_visits_per_month" class="form-control" value="{{ $provider->max_visits_per_month }}" min="1" step="1" placeholder="No limit">
+                                            </div>
+                                            <div class="col-md-8 d-flex align-items-end pb-1">
+                                                <small class="text-muted">Leave blank = no limit. Whichever constraint is hit first triggers cash fallback.</small>
                                             </div>
                                         </div>
                                         <div class="form-check mb-3">
@@ -251,17 +264,30 @@
                         <input type="text" name="contract_number" class="form-control" placeholder="Contract/Agreement #">
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label">Coverage %</label>
                             <input type="number" name="coverage_percentage" class="form-control" step="0.01" min="0" max="100" value="100" placeholder="e.g. 80">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label">Annual Limit (&#8373;)</label>
-                            <input type="number" name="annual_limit" class="form-control" step="0.01" min="0" placeholder="0.00">
+                            <input type="number" name="annual_limit" class="form-control" step="0.01" min="0" placeholder="No limit">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label">Per Visit Limit (&#8373;)</label>
-                            <input type="number" name="per_visit_limit" class="form-control" step="0.01" min="0" placeholder="0.00">
+                            <input type="number" name="per_visit_limit" class="form-control" step="0.01" min="0" placeholder="No limit">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Monthly Limit (&#8373;)</label>
+                            <input type="number" name="max_per_month" class="form-control" step="0.01" min="0" placeholder="No limit">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Max Visits/Month</label>
+                            <input type="number" name="max_visits_per_month" class="form-control" min="1" step="1" placeholder="No limit">
+                        </div>
+                        <div class="col-md-8 d-flex align-items-end pb-1">
+                            <small class="text-muted">Leave blank = no limit. Whichever constraint is hit first triggers cash fallback.</small>
                         </div>
                     </div>
                     <div class="form-check mb-3">

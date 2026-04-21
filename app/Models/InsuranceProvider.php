@@ -24,6 +24,8 @@ class InsuranceProvider extends Model
         'is_active',
         'annual_limit',
         'per_visit_limit',
+        'max_per_month',
+        'max_visits_per_month',
         'tier',
         'coverage_percentage',
         'is_default',
@@ -35,6 +37,8 @@ class InsuranceProvider extends Model
         'is_default' => 'boolean',
         'annual_limit' => 'decimal:2',
         'per_visit_limit' => 'decimal:2',
+        'max_per_month' => 'decimal:2',
+        'max_visits_per_month' => 'integer',
         'coverage_percentage' => 'decimal:2',
     ];
 
