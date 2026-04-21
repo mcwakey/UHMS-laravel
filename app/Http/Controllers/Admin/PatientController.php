@@ -26,12 +26,46 @@ class PatientController extends Controller
 
     public function create()
     {
-        return view('patients.create');
+        $insuranceProviders = InsuranceProvider::where('is_active', true)
+            ->where('is_default', false)
+            ->orderBy('name')
+            ->get();
+
+        return view('patients.create', compact('insuranceProviders'));
     }
 
     public function store(StorePatientRequest $request)
     {
         $patient = $this->patientService->create($request->validated());
+
+        // Create emergency contacts submitted inline during registration
+        foreach ($request->input('emergency_contacts', []) as $index => $ec) {
+            if (empty($ec['name'])) {
+                continue;
+            }
+            $patient->emergencyContacts()->create([
+                'name'            => $ec['name'],
+                'phone'           => $ec['phone'],
+                'phone_secondary' => $ec['phone_secondary'] ?? null,
+                'relationship'    => $ec['relationship'] ?? null,
+                'is_primary'      => $index === 0,
+            ]);
+        }
+
+        // Create insurances submitted inline during registration
+        foreach ($request->input('insurances', []) as $index => $ins) {
+            if (empty($ins['provider_id'])) {
+                continue;
+            }
+            $patient->insurances()->create([
+                'insurance_provider_id' => $ins['provider_id'],
+                'membership_number'     => $ins['membership_number'] ?: null,
+                'policy_number'         => $ins['policy_number'] ?: null,
+                'expiry_date'           => $ins['expiry_date'] ?: null,
+                'is_primary'            => $index === 0,
+                'is_active'             => true,
+            ]);
+        }
 
         return redirect()
             ->route('admin.patients.show', $patient)
@@ -62,6 +96,13 @@ class PatientController extends Controller
             'emergencyContacts',
         ]);
 
+        $activityLogs = \Spatie\Activitylog\Models\Activity::where('subject_type', Patient::class)
+            ->where('subject_id', $patient->id)
+            ->with('causer')
+            ->latest()
+            ->take(100)
+            ->get();
+
         // Load visits separately to avoid window-function queries on older MariaDB
         $visits = \App\Models\Visit::where('patient_id', $patient->id)
             ->with(['department', 'assignedDoctor', 'invoices'])
@@ -73,7 +114,7 @@ class PatientController extends Controller
         $insuranceProviders = InsuranceProvider::where('is_active', true)->orderBy('name')->get();
         $upcomingVisits = app(VisitService::class)->upcomingForPatient($patient->id);
 
-        return view('patients.show', compact('patient', 'insuranceProviders', 'upcomingVisits'));
+        return view('patients.show', compact('patient', 'insuranceProviders', 'upcomingVisits', 'activityLogs'));
     }
 
     public function edit(Patient $patient)

@@ -169,9 +169,15 @@
                 </div>
 
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">City / Town</label>
+                    <label class="form-label">City</label>
                     <input type="text" name="city" class="form-control @error('city') is-invalid @enderror" value="{{ old('city', $patient->city) }}">
                     @error('city')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Town</label>
+                    <input type="text" name="town" class="form-control @error('town') is-invalid @enderror" value="{{ old('town', $patient->town) }}">
+                    @error('town')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="col-md-4 mb-3">

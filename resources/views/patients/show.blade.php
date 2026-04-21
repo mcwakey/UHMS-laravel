@@ -25,7 +25,7 @@
                 <div>
                     <p class="text-primary mb-1 fw-medium">{{ $patient->patient_number }} / {{ $patient->phone_secondary }}</p>
                     <h5 class="mb-1"><span class="fw-bold">{{ $patient->full_name }}</span></h5>
-                    <p class="mb-3">{{ $patient->address ? $patient->address . ', ' : '' }}{{ $patient->city ?? '' }}{{ $patient->region ? ', ' . $patient->region : '' }}</p>
+                    <p class="mb-3">{{ $patient->address ? $patient->address . ', ' : '' }}{{ collect([$patient->city, $patient->town])->filter()->implode(', ') }}{{ $patient->region ? ', ' . $patient->region : '' }}</p>
                     <div class="d-flex align-items-center flex-wrap gap-3">
                         <p class="mb-0 d-inline-flex align-items-center"><i class="ti ti-phone me-1 text-dark"></i>{{ $patient->phone }}</p>
                         @if($patient->email)
@@ -167,8 +167,24 @@
                                 <p class="mb-0">{{ $patient->digital_address ?? '—' }}</p>
                             </div>
                         </div>
+                    </div>                    <div class="col-sm-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-building-community fs-16"></i></span>
+                            <div>
+                                <h6 class="fs-13 fw-bold mb-1">City / Town</h6>
+                                <p class="mb-0">{{ collect([$patient->city, $patient->town])->filter()->implode(' / ') ?: '\u2014' }}</p>
+                            </div>
+                        </div>
                     </div>
-                    @php $primaryContact = $patient->emergencyContacts->where('is_primary', true)->first() ?? $patient->emergencyContacts->first(); @endphp
+                    <div class="col-sm-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-home fs-16"></i></span>
+                            <div>
+                                <h6 class="fs-13 fw-bold mb-1">Address</h6>
+                                <p class="mb-0">{{ $patient->address ?? '\u2014' }}</p>
+                            </div>
+                        </div>
+                    </div>                    @php $primaryContact = $patient->emergencyContacts->where('is_primary', true)->first() ?? $patient->emergencyContacts->first(); @endphp
                     <div class="col-sm-4">
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-urgent fs-16"></i></span>
@@ -250,6 +266,9 @@
     </li>
     <li class="nav-item">
         <a href="#registration-info" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-info-circle me-1"></i>Registration Info</a>
+    </li>
+    <li class="nav-item">
+        <a href="#activity-log" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-history me-1"></i>Activity Log <span class="badge bg-secondary ms-1">{{ $activityLogs->count() }}</span></a>
     </li>
 </ul>
 
@@ -606,6 +625,59 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Activity Log Tab -->
+    <div class="tab-pane" id="activity-log">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="fw-bold mb-0"><i class="ti ti-history me-1"></i>Patient Activity Log</h6>
+            </div>
+            @if($activityLogs->isNotEmpty())
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date &amp; Time</th>
+                                <th>Event</th>
+                                <th>Description</th>
+                                <th>Changed By</th>
+                                <th>Fields Changed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($activityLogs as $log)
+                            <tr>
+                                <td class="text-nowrap small">{{ $log->created_at->format('d M Y, h:i A') }}</td>
+                                <td>
+                                    <span class="badge badge-soft-{{ $log->event === 'created' ? 'success' : ($log->event === 'deleted' ? 'danger' : 'info') }}">
+                                        {{ ucfirst($log->event ?? 'updated') }}
+                                    </span>
+                                </td>
+                                <td class="small">{{ $log->description }}</td>
+                                <td class="small">{{ $log->causer?->full_name ?? $log->causer?->name ?? 'System' }}</td>
+                                <td class="small">
+                                    @if($log->properties->has('attributes') && $log->properties->has('old'))
+                                        @php $changed = array_keys($log->properties['attributes'] ?? []); @endphp
+                                        @if(count($changed))
+                                            <span class="text-muted">{{ implode(', ', $changed) }}</span>
+                                        @endif
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            @else
+            <div class="card-body text-center py-4 text-muted">
+                <i class="ti ti-history-off fs-1 d-block mb-2"></i>
+                <p class="mb-0">No activity recorded yet.</p>
+            </div>
+            @endif
         </div>
     </div>
 </div>

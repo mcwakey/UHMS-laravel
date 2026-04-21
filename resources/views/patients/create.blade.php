@@ -165,9 +165,15 @@
                 </div>
 
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">City / Town</label>
+                    <label class="form-label">City</label>
                     <input type="text" name="city" class="form-control @error('city') is-invalid @enderror" value="{{ old('city') }}">
                     @error('city')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Town</label>
+                    <input type="text" name="town" class="form-control @error('town') is-invalid @enderror" value="{{ old('town') }}">
+                    @error('town')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
                 <div class="col-md-4 mb-3">
@@ -187,6 +193,100 @@
                     @error('digital_address')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Emergency Contacts -->
+    <div class="card">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="fw-bold mb-0"><i class="ti ti-urgent me-1"></i>Emergency Contacts</h5>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="add-ec-btn">
+                <i class="ti ti-plus me-1"></i>Add Another
+            </button>
+        </div>
+        <div class="card-body">
+            <div id="ec-wrapper">
+                <div class="ec-row border rounded p-3 mb-2" data-index="0">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-medium small text-muted ec-label">Contact #1 <span class="badge bg-primary ms-1">Primary</span></span>
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-ec d-none"><i class="ti ti-trash"></i></button>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="form-label form-label-sm">Name <span class="text-danger">*</span></label>
+                            <input type="text" name="emergency_contacts[0][name]" class="form-control form-control-sm @error('emergency_contacts.0.name') is-invalid @enderror" value="{{ old('emergency_contacts.0.name') }}" placeholder="Full name">
+                            @error('emergency_contacts.0.name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label form-label-sm">Phone <span class="text-danger">*</span></label>
+                            <input type="tel" name="emergency_contacts[0][phone]" class="form-control form-control-sm @error('emergency_contacts.0.phone') is-invalid @enderror" value="{{ old('emergency_contacts.0.phone') }}" placeholder="e.g. 0241234567">
+                            @error('emergency_contacts.0.phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label form-label-sm">Secondary Phone</label>
+                            <input type="tel" name="emergency_contacts[0][phone_secondary]" class="form-control form-control-sm" value="{{ old('emergency_contacts.0.phone_secondary') }}" placeholder="Optional">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label form-label-sm">Relationship</label>
+                            <select name="emergency_contacts[0][relationship]" class="form-select form-select-sm">
+                                <option value="">Select</option>
+                                @foreach(['Spouse', 'Parent', 'Child', 'Sibling', 'Relative', 'Friend', 'Other'] as $rel)
+                                    <option value="{{ $rel }}" {{ old('emergency_contacts.0.relationship') == $rel ? 'selected' : '' }}>{{ $rel }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <small class="text-muted"><i class="ti ti-info-circle me-1"></i>The first contact will be set as primary. Additional contacts can always be managed from the patient's profile.</small>
+        </div>
+    </div>
+
+    <!-- Insurance -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Insurance</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info small py-2 mb-3">
+                <i class="ti ti-info-circle me-1"></i>
+                <strong>Cash &amp; Carry</strong> is applied by default for all visits. Add insurance plans here if the patient is insured.
+            </div>
+            <div id="ins-wrapper">
+                <div class="ins-row border rounded p-3 mb-2" data-index="0">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-medium small text-muted ins-label">Insurance #1 <span class="badge bg-primary ms-1">Primary</span></span>
+                        <button type="button" class="btn btn-sm btn-outline-danger remove-ins d-none"><i class="ti ti-trash"></i></button>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label form-label-sm">Provider</label>
+                            <select name="insurances[0][provider_id]" class="form-select form-select-sm ins-provider" data-idx="0">
+                                <option value="">— None —</option>
+                                @foreach($insuranceProviders as $provider)
+                                    <option value="{{ $provider->id }}" {{ old('insurances.0.provider_id') == $provider->id ? 'selected' : '' }}>{{ $provider->name }} ({{ $provider->type->label() }})</option>
+                                @endforeach
+                            </select>
+                            @error('insurances.0.provider_id')<div class="text-danger small">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-6 ins-row-extra" style="display:none">
+                            <label class="form-label form-label-sm">Membership / Card Number</label>
+                            <input type="text" name="insurances[0][membership_number]" class="form-control form-control-sm" value="{{ old('insurances.0.membership_number') }}" placeholder="e.g. NHIS-123456789">
+                        </div>
+                        <div class="col-md-4 ins-row-extra" style="display:none">
+                            <label class="form-label form-label-sm">Policy Number</label>
+                            <input type="text" name="insurances[0][policy_number]" class="form-control form-control-sm" value="{{ old('insurances.0.policy_number') }}">
+                        </div>
+                        <div class="col-md-4 ins-row-extra" style="display:none">
+                            <label class="form-label form-label-sm">Expiry Date</label>
+                            <input type="date" name="insurances[0][expiry_date]" class="form-control form-control-sm" value="{{ old('insurances.0.expiry_date') }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-primary mt-1" id="add-ins-btn">
+                <i class="ti ti-plus me-1"></i>Add Another Insurance
+            </button>
         </div>
     </div>
 
@@ -218,4 +318,158 @@
         <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>Register Patient</button>
     </div>
 </form>
+
+@push('scripts')
+<script>
+(function () {
+    // ── Emergency contacts ─────────────────────────────────────────────
+    @php $ecRelationships = ['Spouse', 'Parent', 'Child', 'Sibling', 'Relative', 'Friend', 'Other']; @endphp
+    const relationships = {!! json_encode($ecRelationships) !!};
+    let ecCount = 1;
+
+    function buildEcOptions(selected) {
+        return relationships.map(r =>
+            `<option value="${r}"${r === selected ? ' selected' : ''}>${r}</option>`
+        ).join('');
+    }
+
+    document.getElementById('add-ec-btn').addEventListener('click', function () {
+        const idx = ecCount++;
+        const row = document.createElement('div');
+        row.className = 'ec-row border rounded p-3 mb-2';
+        row.dataset.index = idx;
+        row.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-medium small text-muted ec-label">Contact #${idx + 1}</span>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-ec"><i class="ti ti-trash"></i></button>
+            </div>
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <label class="form-label form-label-sm">Name <span class="text-danger">*</span></label>
+                    <input type="text" name="emergency_contacts[${idx}][name]" class="form-control form-control-sm" placeholder="Full name">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label form-label-sm">Phone <span class="text-danger">*</span></label>
+                    <input type="tel" name="emergency_contacts[${idx}][phone]" class="form-control form-control-sm" placeholder="e.g. 0241234567">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label form-label-sm">Secondary Phone</label>
+                    <input type="tel" name="emergency_contacts[${idx}][phone_secondary]" class="form-control form-control-sm" placeholder="Optional">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label form-label-sm">Relationship</label>
+                    <select name="emergency_contacts[${idx}][relationship]" class="form-select form-select-sm">
+                        <option value="">Select</option>
+                        ${buildEcOptions('')}
+                    </select>
+                </div>
+            </div>`;
+        document.getElementById('ec-wrapper').appendChild(row);
+    });
+
+    document.getElementById('ec-wrapper').addEventListener('click', function (e) {
+        const btn = e.target.closest('.remove-ec');
+        if (btn) {
+            btn.closest('.ec-row').remove();
+            renumberEcRows();
+        }
+    });
+
+    function renumberEcRows() {
+        document.querySelectorAll('#ec-wrapper .ec-row').forEach((row, i) => {
+            const label = row.querySelector('.ec-label');
+            label.innerHTML = i === 0
+                ? `Contact #1 <span class="badge bg-primary ms-1">Primary</span>`
+                : `Contact #${i + 1}`;
+            const btn = row.querySelector('.remove-ec');
+            if (btn) btn.classList.toggle('d-none', i === 0);
+        });
+    }
+
+    // ── Insurance rows ─────────────────────────────────────────────────
+    @php $insuranceProviderOptions = $insuranceProviders->map(fn($p) => ['id' => $p->id, 'label' => $p->name . ' (' . $p->type->label() . ')'])->values(); @endphp
+    const insProviders = {!! json_encode($insuranceProviderOptions) !!};
+    let insCount = 1;
+
+    function buildInsOptions(selected) {
+        return insProviders.map(p =>
+            `<option value="${p.id}"${p.id == selected ? ' selected' : ''}>${p.label}</option>`
+        ).join('');
+    }
+
+    // toggle extra fields per row when provider changes
+    document.getElementById('ins-wrapper').addEventListener('change', function (e) {
+        if (e.target.classList.contains('ins-provider')) {
+            const row = e.target.closest('.ins-row');
+            const show = e.target.value !== '';
+            row.querySelectorAll('.ins-row-extra').forEach(el => el.style.display = show ? '' : 'none');
+        }
+    });
+
+    // Restore extra field visibility on page load (after validation failure)
+    document.querySelectorAll('.ins-provider').forEach(sel => {
+        const row = sel.closest('.ins-row');
+        const show = sel.value !== '';
+        row.querySelectorAll('.ins-row-extra').forEach(el => el.style.display = show ? '' : 'none');
+    });
+
+    document.getElementById('add-ins-btn').addEventListener('click', function () {
+        const idx = insCount++;
+        const row = document.createElement('div');
+        row.className = 'ins-row border rounded p-3 mb-2';
+        row.dataset.index = idx;
+        row.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-medium small text-muted ins-label">Insurance #${idx + 1}</span>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-ins"><i class="ti ti-trash"></i></button>
+            </div>
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <label class="form-label form-label-sm">Provider</label>
+                    <select name="insurances[${idx}][provider_id]" class="form-select form-select-sm ins-provider" data-idx="${idx}">
+                        <option value="">— None —</option>
+                        ${buildInsOptions('')}
+                    </select>
+                </div>
+                <div class="col-md-6 ins-row-extra" style="display:none">
+                    <label class="form-label form-label-sm">Membership / Card Number</label>
+                    <input type="text" name="insurances[${idx}][membership_number]" class="form-control form-control-sm" placeholder="e.g. NHIS-123456789">
+                </div>
+                <div class="col-md-4 ins-row-extra" style="display:none">
+                    <label class="form-label form-label-sm">Policy Number</label>
+                    <input type="text" name="insurances[${idx}][policy_number]" class="form-control form-control-sm">
+                </div>
+                <div class="col-md-4 ins-row-extra" style="display:none">
+                    <label class="form-label form-label-sm">Expiry Date</label>
+                    <input type="date" name="insurances[${idx}][expiry_date]" class="form-control form-control-sm">
+                </div>
+            </div>`;
+        document.getElementById('ins-wrapper').appendChild(row);
+        row.querySelector('.remove-ins').addEventListener('click', function () {
+            row.remove();
+            renumberInsRows();
+        });
+    });
+
+    document.getElementById('ins-wrapper').addEventListener('click', function (e) {
+        const btn = e.target.closest('.remove-ins');
+        if (btn) {
+            btn.closest('.ins-row').remove();
+            renumberInsRows();
+        }
+    });
+
+    function renumberInsRows() {
+        document.querySelectorAll('#ins-wrapper .ins-row').forEach((row, i) => {
+            const label = row.querySelector('.ins-label');
+            label.innerHTML = i === 0
+                ? `Insurance #1 <span class="badge bg-primary ms-1">Primary</span>`
+                : `Insurance #${i + 1}`;
+            const btn = row.querySelector('.remove-ins');
+            if (btn) btn.classList.toggle('d-none', i === 0);
+        });
+    }
+})();
+</script>
+@endpush
 @endsection

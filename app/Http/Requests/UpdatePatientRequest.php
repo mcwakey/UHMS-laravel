@@ -34,6 +34,7 @@ class UpdatePatientRequest extends FormRequest
             'occupation' => ['nullable', 'string', 'max:100'],
             'address' => ['nullable', 'string', 'max:500'],
             'city' => ['nullable', 'string', 'max:100'],
+            'town' => ['nullable', 'string', 'max:100'],
             'region' => ['nullable', 'string', 'max:100'],
             'digital_address' => ['nullable', 'string', 'max:30'],
             'avatar' => ['nullable', 'image', 'max:2048'],

@@ -42,6 +42,7 @@ class Patient extends Model
         'occupation',
         'address',
         'city',
+        'town',
         'region',
         'digital_address',
         'avatar',
