@@ -13,6 +13,11 @@ class DatabaseSeeder extends Seeder
             DepartmentSeeder::class,
             AdminUserSeeder::class,
             CashAndCarrySeeder::class,
+            ServiceCatalogSeeder::class,
+            DesignationSeeder::class,
+            SpecialtySeeder::class,
+            DemoUserSeeder::class,
+            PatientSeeder::class,
         ]);
     }
 }
