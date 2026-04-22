@@ -109,29 +109,18 @@
                     @endforeach
                 </div>
 
-                {{-- TRIAGE: send to service departments + Cancelled --}}
+                {{-- TRIAGE: primary action is triage assessment form --}}
                 @elseif($isTriage)
-                @if($serviceDepts->isNotEmpty())
-                    <p class="text-muted small mb-2">Send patient to a service department:</p>
-                    <div class="d-flex flex-wrap gap-2 mb-3">
-                        @foreach($serviceDepts as $dept)
-                            <form method="POST" action="{{ route('admin.visits.send-to-department', $visit) }}" class="d-inline">
-                                @csrf
-                                @method('PATCH')
-                                <input type="hidden" name="department_id" value="{{ $dept->id }}">
-                                <button type="submit"
-                                        class="btn btn-{{ $dept->type?->color() ?? 'primary' }} btn-sm"
-                                        onclick="return confirm('Send patient to {{ $dept->name }}?')">
-                                    <i class="ti ti-building-hospital me-1"></i>{{ $dept->name }}
-                                </button>
-                            </form>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="alert alert-info alert-sm py-2 mb-3">
-                        <i class="ti ti-info-circle me-1"></i>No service departments found for this visit's services.
-                    </div>
-                @endif
+                <div class="mb-3">
+                    <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-info">
+                        <i class="ti ti-stethoscope me-1"></i>Start Triage Assessment
+                    </a>
+                    @if($visit->triage)
+                        <a href="{{ route('admin.triage.show', $visit) }}" class="btn btn-outline-info btn-sm ms-2">
+                            <i class="ti ti-eye me-1"></i>View Triage Record
+                        </a>
+                    @endif
+                </div>
                 <div class="d-flex flex-wrap gap-2">
                     <form method="POST" action="{{ route('admin.visits.transition', $visit) }}" class="d-inline">
                         @csrf
@@ -178,6 +167,208 @@
                 </div>
                 @endif
 
+            </div>
+        </div>
+        @endif
+
+        {{-- Triage Summary Card (shown once triage exists) --}}
+        @if($visit->triage)
+        @php $triage = $visit->triage; @endphp
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-info"></i>Triage Assessment</h6>
+                @if($triage->triage_score)
+                    <span class="badge bg-{{ $triage->triage_score->color() }}">{{ $triage->triage_score->label() }}</span>
+                @endif
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    @if($triage->blood_pressure)
+                        <div class="col-6 col-md-3 text-center">
+                            <div class="text-muted" style="font-size:0.72rem">BP</div>
+                            <div class="fw-semibold small">{{ $triage->blood_pressure }} mmHg</div>
+                        </div>
+                    @endif
+                    @if($triage->heart_rate)
+                        <div class="col-6 col-md-3 text-center">
+                            <div class="text-muted" style="font-size:0.72rem">Heart Rate</div>
+                            <div class="fw-semibold small">{{ $triage->heart_rate }} bpm</div>
+                        </div>
+                    @endif
+                    @if($triage->temperature)
+                        <div class="col-6 col-md-3 text-center">
+                            <div class="text-muted" style="font-size:0.72rem">Temp</div>
+                            <div class="fw-semibold small">{{ $triage->temperature }} °C</div>
+                        </div>
+                    @endif
+                    @if($triage->spo2)
+                        <div class="col-6 col-md-3 text-center">
+                            <div class="text-muted" style="font-size:0.72rem">SpO₂</div>
+                            <div class="fw-semibold small">{{ $triage->spo2 }}%</div>
+                        </div>
+                    @endif
+                    @if($triage->respiratory_rate)
+                        <div class="col-6 col-md-3 text-center">
+                            <div class="text-muted" style="font-size:0.72rem">Resp. Rate</div>
+                            <div class="fw-semibold small">{{ $triage->respiratory_rate }}/min</div>
+                        </div>
+                    @endif
+                    @if($triage->bmi)
+                        <div class="col-6 col-md-3 text-center">
+                            <div class="text-muted" style="font-size:0.72rem">BMI</div>
+                            <div class="fw-semibold small">{{ $triage->bmi }} kg/m²</div>
+                        </div>
+                    @endif
+                </div>
+                @if($triage->department)
+                    <div class="mt-2 small text-muted">
+                        <i class="ti ti-building-hospital me-1"></i>Assigned to: <strong>{{ $triage->department->name }}</strong>
+                    </div>
+                @endif
+                <div class="mt-2 d-flex gap-2">
+                    <a href="{{ route('admin.triage.show', $visit) }}" class="btn btn-outline-info btn-sm">
+                        <i class="ti ti-eye me-1"></i>Full Triage Report
+                    </a>
+                    @if($visit->status === \App\Enums\VisitStatus::TRIAGE)
+                        <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-info btn-sm">
+                            <i class="ti ti-pencil me-1"></i>Re-assess
+                        </a>
+                    @endif
+                </div>
+            </div>
+        </div>
+        @endif
+
+        {{-- Department History Card (shown after triage assigns dept) --}}
+        @if($visit->departmentHistory->isNotEmpty())
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="fw-bold mb-0"><i class="ti ti-list-details me-1"></i>Department Journey</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Department</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($visit->departmentHistory as $hist)
+                                <tr>
+                                    <td class="small fw-semibold">{{ $hist->department?->name ?? '—' }}</td>
+                                    <td><span class="badge bg-{{ $hist->typeColor() }}">{{ $hist->typeLabel() }}</span></td>
+                                    <td><span class="badge bg-{{ $hist->statusColor() }}">{{ $hist->statusLabel() }}</span></td>
+                                    <td class="text-muted small">{{ $hist->created_at->format('h:i A') }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        {{-- Triage Summary Card (shown once triage exists) --}}
+        @if($visit->triage)
+        @php $triage = $visit->triage; @endphp
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-info"></i>Triage Assessment</h6>
+                @if($triage->triage_score)
+                    <span class="badge bg-{{ $triage->triage_score->color() }}">{{ $triage->triage_score->label() }}</span>
+                @endif
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    @if($triage->blood_pressure)
+                        <div class="col-6 col-md-3 text-center">
+                            <div class="text-muted" style="font-size:0.72rem">BP</div>
+                            <div class="fw-semibold small">{{ $triage->blood_pressure }} mmHg</div>
+                        </div>
+                    @endif
+                    @if($triage->heart_rate)
+                        <div class="col-6 col-md-3 text-center">
+                            <div class="text-muted" style="font-size:0.72rem">Heart Rate</div>
+                            <div class="fw-semibold small">{{ $triage->heart_rate }} bpm</div>
+                        </div>
+                    @endif
+                    @if($triage->temperature)
+                        <div class="col-6 col-md-3 text-center">
+                            <div class="text-muted" style="font-size:0.72rem">Temp</div>
+                            <div class="fw-semibold small">{{ $triage->temperature }} °C</div>
+                        </div>
+                    @endif
+                    @if($triage->spo2)
+                        <div class="col-6 col-md-3 text-center">
+                            <div class="text-muted" style="font-size:0.72rem">SpO₂</div>
+                            <div class="fw-semibold small">{{ $triage->spo2 }}%</div>
+                        </div>
+                    @endif
+                    @if($triage->respiratory_rate)
+                        <div class="col-6 col-md-3 text-center">
+                            <div class="text-muted" style="font-size:0.72rem">Resp. Rate</div>
+                            <div class="fw-semibold small">{{ $triage->respiratory_rate }}/min</div>
+                        </div>
+                    @endif
+                    @if($triage->bmi)
+                        <div class="col-6 col-md-3 text-center">
+                            <div class="text-muted" style="font-size:0.72rem">BMI</div>
+                            <div class="fw-semibold small">{{ $triage->bmi }} kg/m²</div>
+                        </div>
+                    @endif
+                </div>
+                @if($triage->department)
+                    <div class="mt-2 small text-muted">
+                        <i class="ti ti-building-hospital me-1"></i>Assigned to: <strong>{{ $triage->department->name }}</strong>
+                    </div>
+                @endif
+                <div class="mt-2 d-flex gap-2">
+                    <a href="{{ route('admin.triage.show', $visit) }}" class="btn btn-outline-info btn-sm">
+                        <i class="ti ti-eye me-1"></i>Full Triage Report
+                    </a>
+                    @if($visit->status === \App\Enums\VisitStatus::TRIAGE)
+                        <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-info btn-sm">
+                            <i class="ti ti-pencil me-1"></i>Re-assess
+                        </a>
+                    @endif
+                </div>
+            </div>
+        </div>
+        @endif
+
+        {{-- Department History Card (shown after triage assigns dept) --}}
+        @if($visit->departmentHistory->isNotEmpty())
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="fw-bold mb-0"><i class="ti ti-list-details me-1"></i>Department Journey</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Department</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($visit->departmentHistory as $hist)
+                                <tr>
+                                    <td class="small fw-semibold">{{ $hist->department?->name ?? '—' }}</td>
+                                    <td><span class="badge bg-{{ $hist->typeColor() }}">{{ $hist->typeLabel() }}</span></td>
+                                    <td><span class="badge bg-{{ $hist->statusColor() }}">{{ $hist->statusLabel() }}</span></td>
+                                    <td class="text-muted small">{{ $hist->created_at->format('h:i A') }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
         @endif

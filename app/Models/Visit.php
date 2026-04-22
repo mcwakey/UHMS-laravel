@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ConsultationMode;
 use App\Enums\Priority;
+use App\Enums\TriageScore;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Traits\GeneratesNumbers;
@@ -42,6 +43,8 @@ class Visit extends Model
         'checked_in_at',
         'checked_out_at',
         'created_by',
+        'current_department_id',
+        'triage_score',
         'visit_insurance_id',
         'cancelled_by',
         'cancellation_reason',
@@ -50,7 +53,6 @@ class Visit extends Model
         'rescheduled_reason',
         'consultation_mode',
         'meeting_link',
-        'department_id',
     ];
 
     protected function casts(): array
@@ -60,6 +62,7 @@ class Visit extends Model
             'visit_type' => VisitType::class,
             'status' => VisitStatus::class,
             'priority' => Priority::class,
+            'triage_score' => TriageScore::class,
             'consultation_mode' => ConsultationMode::class,
             'checked_in_at' => 'datetime',
             'checked_out_at' => 'datetime',
@@ -166,6 +169,21 @@ class Visit extends Model
     public function visitServices()
     {
         return $this->hasMany(VisitServiceItem::class);
+    }
+
+    public function triage()
+    {
+        return $this->hasOne(Triage::class);
+    }
+
+    public function departmentHistory()
+    {
+        return $this->hasMany(VisitDepartmentHistory::class)->orderBy('created_at');
+    }
+
+    public function currentDepartment()
+    {
+        return $this->belongsTo(Department::class, 'current_department_id');
     }
 
     /*

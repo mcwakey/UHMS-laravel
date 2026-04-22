@@ -163,6 +163,24 @@
                         </form>
                     @endforeach
                     @endif
+
+                    {{-- Referral to another consultation dept (CONSULTING status only) --}}
+                    @if($visit->status === \App\Enums\VisitStatus::CONSULTING)
+                    <hr class="my-1">
+                    <small class="text-muted fw-bold px-1">Referral / Investigation</small>
+
+                    {{-- Refer button --}}
+                    <button type="button" class="btn btn-outline-indigo btn-sm w-100 mb-1"
+                            data-bs-toggle="modal" data-bs-target="#referralModal">
+                        <i class="ti ti-transfer me-1"></i>Refer to Department
+                    </button>
+
+                    {{-- Send to Investigation button --}}
+                    <button type="button" class="btn btn-outline-purple btn-sm w-100"
+                            data-bs-toggle="modal" data-bs-target="#investigationModal">
+                        <i class="ti ti-test-pipe me-1"></i>Send to Investigation
+                    </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -1194,6 +1212,117 @@
     </div>
 </div>
 @endcan
+
+{{-- ================================================================ --}}
+{{-- REFERRAL MODAL --}}
+{{-- ================================================================ --}}
+@if($visit->status === \App\Enums\VisitStatus::CONSULTING)
+<div class="modal fade" id="referralModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.consultations.refer', $visit) }}">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="ti ti-transfer me-2"></i>Refer to Department</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    @php
+                        $historyDeptIds = $visit->departmentHistory->pluck('department_id')->toArray();
+                        $currentDeptId  = $visit->current_department_id;
+                        $referralDepts  = \App\Models\Department::active()
+                            ->where('id', '!=', $currentDeptId)
+                            ->whereNotIn('id', $historyDeptIds)
+                            ->orderBy('name')->get();
+                    @endphp
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Referral Department <span class="text-danger">*</span></label>
+                        <select name="department_id" class="form-select" required>
+                            <option value="">— Select department —</option>
+                            @foreach($referralDepts as $dept)
+                                <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                            @endforeach
+                        </select>
+                        @if($referralDepts->isEmpty())
+                            <div class="text-muted small mt-1">All available departments have already been visited in this encounter.</div>
+                        @endif
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason / Notes</label>
+                        <textarea name="notes" class="form-control" rows="3" placeholder="Referral reason..."></textarea>
+                    </div>
+
+                    {{-- Department history so far --}}
+                    @if($visit->departmentHistory->isNotEmpty())
+                        <div class="alert alert-info py-2 small">
+                            <strong>Department History:</strong><br>
+                            @foreach($visit->departmentHistory as $hist)
+                                <span class="badge bg-{{ $hist->typeColor() }}">{{ $hist->typeLabel() }}</span>
+                                {{ $hist->department?->name }}
+                                <span class="badge bg-{{ $hist->statusColor() }}">{{ $hist->statusLabel() }}</span><br>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" {{ $referralDepts->isEmpty() ? 'disabled' : '' }}>
+                        <i class="ti ti-transfer me-1"></i>Refer Patient
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ================================================================ --}}
+{{-- INVESTIGATION MODAL --}}
+{{-- ================================================================ --}}
+<div class="modal fade" id="investigationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.consultations.investigation', $visit) }}">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="ti ti-test-pipe me-2"></i>Send to Investigation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    @php
+                        $investigationDepts = \App\Models\Department::active()
+                            ->whereHas('type', fn ($q) => $q->whereIn('value', ['laboratory', 'radiology', 'imaging']))
+                            ->orderBy('name')->get();
+                        // Fallback: all departments
+                        if ($investigationDepts->isEmpty()) {
+                            $investigationDepts = \App\Models\Department::active()->orderBy('name')->get();
+                        }
+                    @endphp
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Investigation Department <span class="text-danger">*</span></label>
+                        <select name="department_id" class="form-select" required>
+                            <option value="">— Select department —</option>
+                            @foreach($investigationDepts as $dept)
+                                <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes / Instructions</label>
+                        <textarea name="notes" class="form-control" rows="3" placeholder="Investigation notes..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-purple">
+                        <i class="ti ti-test-pipe me-1"></i>Send to Investigation
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
+
 @endsection
 
 @push('scripts')

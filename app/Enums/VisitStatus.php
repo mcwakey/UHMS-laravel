@@ -9,7 +9,11 @@ enum VisitStatus: string
     case REGISTERED = 'registered';
     case WAITING = 'waiting';
     case TRIAGE = 'triage';
+    // Post-triage workflow states
+    case WAITING_CONSULTATION = 'waiting_consultation';
     case CONSULTING = 'consulting';
+    case REFERRED_CONSULTATION = 'referred_consultation';
+    case WAITING_INVESTIGATION = 'waiting_investigation';
     case LAB = 'lab';
     case PHARMACY = 'pharmacy';
     case BILLING = 'billing';
@@ -20,6 +24,8 @@ enum VisitStatus: string
     case CANCELLED = 'cancelled';
     case RESCHEDULED = 'rescheduled';
     case NO_SHOW = 'no_show';
+    case EMERGENCY = 'emergency';
+    case INPATIENT = 'inpatient';
 
     public function label(): string
     {
@@ -29,7 +35,10 @@ enum VisitStatus: string
             self::REGISTERED => 'Registered',
             self::WAITING => 'Waiting',
             self::TRIAGE => 'Triage',
+            self::WAITING_CONSULTATION => 'Waiting Consultation',
             self::CONSULTING => 'Consulting',
+            self::REFERRED_CONSULTATION => 'Referred — Awaiting Consult',
+            self::WAITING_INVESTIGATION => 'Waiting Investigation',
             self::LAB => 'Laboratory',
             self::PHARMACY => 'Pharmacy',
             self::BILLING => 'Billing',
@@ -40,6 +49,8 @@ enum VisitStatus: string
             self::CANCELLED => 'Cancelled',
             self::RESCHEDULED => 'Rescheduled',
             self::NO_SHOW => 'No Show',
+            self::EMERGENCY => 'Emergency',
+            self::INPATIENT => 'Inpatient',
         };
     }
 
@@ -51,7 +62,10 @@ enum VisitStatus: string
             self::REGISTERED => 'secondary',
             self::WAITING => 'warning',
             self::TRIAGE => 'info',
+            self::WAITING_CONSULTATION => 'primary',
             self::CONSULTING => 'primary',
+            self::REFERRED_CONSULTATION => 'indigo',
+            self::WAITING_INVESTIGATION => 'purple',
             self::LAB => 'purple',
             self::PHARMACY => 'orange',
             self::BILLING => 'dark',
@@ -62,6 +76,8 @@ enum VisitStatus: string
             self::CANCELLED => 'danger',
             self::RESCHEDULED => 'warning',
             self::NO_SHOW => 'dark',
+            self::EMERGENCY => 'danger',
+            self::INPATIENT => 'teal',
         };
     }
 
@@ -71,22 +87,28 @@ enum VisitStatus: string
     public function allowedTransitions(): array
     {
         return match ($this) {
-            self::SCHEDULED => [self::CONFIRMED, self::REGISTERED, self::CANCELLED, self::RESCHEDULED, self::NO_SHOW],
-            self::CONFIRMED => [self::REGISTERED, self::CANCELLED, self::RESCHEDULED, self::NO_SHOW],
-            self::REGISTERED => [self::WAITING, self::CANCELLED],
-            self::WAITING => [self::TRIAGE, self::CANCELLED, self::RESCHEDULED],
-            self::TRIAGE => [self::CANCELLED],
-            self::CONSULTING => [self::LAB, self::PHARMACY, self::BILLING, self::ADMITTED, self::COMPLETED, self::CANCELLED],
-            self::LAB => [self::CONSULTING, self::PHARMACY, self::CANCELLED],
-            self::PHARMACY => [self::BILLING, self::COMPLETED, self::CANCELLED],
-            self::BILLING => [self::COMPLETED, self::DISCHARGED, self::CANCELLED],
-            self::ADMITTED => [self::CONSULTING, self::LAB, self::PHARMACY, self::DISCHARGING],
+            self::SCHEDULED   => [self::CONFIRMED, self::REGISTERED, self::CANCELLED, self::RESCHEDULED, self::NO_SHOW],
+            self::CONFIRMED   => [self::REGISTERED, self::CANCELLED, self::RESCHEDULED, self::NO_SHOW],
+            self::REGISTERED  => [self::WAITING, self::CANCELLED],
+            self::WAITING     => [self::TRIAGE, self::CANCELLED, self::RESCHEDULED],
+            // Triage transitions are handled by TriageController (processTriage) — manual transitions disabled
+            self::TRIAGE      => [self::WAITING_CONSULTATION, self::EMERGENCY, self::INPATIENT, self::CANCELLED],
+            self::WAITING_CONSULTATION => [self::CONSULTING, self::CANCELLED],
+            self::CONSULTING  => [self::REFERRED_CONSULTATION, self::WAITING_INVESTIGATION, self::LAB, self::PHARMACY, self::BILLING, self::ADMITTED, self::COMPLETED, self::CANCELLED],
+            self::REFERRED_CONSULTATION => [self::CONSULTING, self::CANCELLED],
+            self::WAITING_INVESTIGATION => [self::LAB, self::CANCELLED],
+            self::LAB         => [self::CONSULTING, self::WAITING_CONSULTATION, self::PHARMACY, self::CANCELLED],
+            self::PHARMACY    => [self::BILLING, self::COMPLETED, self::CANCELLED],
+            self::BILLING     => [self::COMPLETED, self::DISCHARGED, self::CANCELLED],
+            self::ADMITTED    => [self::CONSULTING, self::LAB, self::PHARMACY, self::DISCHARGING],
             self::DISCHARGING => [self::BILLING, self::ADMITTED],
-            self::DISCHARGED => [],
-            self::COMPLETED => [],
-            self::CANCELLED => [],
+            self::EMERGENCY   => [self::ADMITTED, self::CONSULTING, self::COMPLETED, self::CANCELLED],
+            self::INPATIENT   => [self::ADMITTED, self::CANCELLED],
+            self::DISCHARGED  => [],
+            self::COMPLETED   => [],
+            self::CANCELLED   => [],
             self::RESCHEDULED => [],
-            self::NO_SHOW => [],
+            self::NO_SHOW     => [],
         };
     }
 

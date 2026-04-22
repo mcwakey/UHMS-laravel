@@ -298,7 +298,7 @@
                             <tr>
                                 <td>{{ $uv->visit_date->format('d M Y') }}</td>
                                 <td>{{ $uv->start_time ? \Carbon\Carbon::parse($uv->start_time)->format('h:i A') : '—' }}</td>
-                                <td>{{ $uv->department?->name ?? '—' }}</td>
+                                <td>{{ $uv->currentDepartment?->name ?? '—' }}</td>
                                 <td>{{ $uv->assignedDoctor?->full_name ?? '—' }}</td>
                                 <td><span class="badge" style="background-color: {{ $uv->status->color() }}">{{ $uv->status->label() }}</span></td>
                             </tr>
@@ -762,7 +762,7 @@
                             <label class="form-label">Card Holder Insurance <span class="text-danger">*</span></label>
                             <select name="card_holder_insurance_id" id="addCardHolder" class="form-select">
                                 <option value="">Select card holder</option>
-                                @foreach($patient->insurances->where('member_type', null)->merge($patient->insurances->where('member_type', \App\Enums\MemberType::Holder)) as $holderIns)
+                                @foreach($patient->insurances->where('member_type', null)->merge($patient->insurances->where('member_type', \App\Enums\MemberType::HOLDER)) as $holderIns)
                                     <option value="{{ $holderIns->id }}">{{ $holderIns->insuranceProvider->name }} — {{ $holderIns->membership_number ?? 'no membership #' }}</option>
                                 @endforeach
                             </select>

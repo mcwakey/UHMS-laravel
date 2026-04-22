@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\TriageScore;
 use App\Enums\VisitStatus;
 use App\Models\Patient;
 use App\Models\QueueEntry;
+use App\Models\Triage;
+use App\Models\VisitDepartmentHistory;
 use App\Models\Visit;
 use App\Models\VisitServiceItem;
 use App\Models\ServiceCatalog;
@@ -436,6 +439,239 @@ class VisitService
     {
         $visit->update($data);
         return $visit->fresh();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Triage Workflow Methods
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Process triage: record vitals, compute score, select dept, transition visit.
+     *
+     * @param array $data {
+     *   blood_pressure_systolic, blood_pressure_diastolic, heart_rate,
+     *   temperature, respiratory_rate, spo2, weight?, height?,
+     *   department_id (consultation dept), notes?
+     * }
+     */
+    public function processTriage(Visit $visit, array $data): Visit
+    {
+        if ($visit->status !== VisitStatus::TRIAGE) {
+            throw new \InvalidArgumentException('Visit must be in TRIAGE status to process triage.');
+        }
+
+        // Compute triage score
+        $score = TriageScore::compute($data);
+
+        // Store (or update) triage record
+        Triage::updateOrCreate(
+            ['visit_id' => $visit->id],
+            array_merge($data, [
+                'patient_id' => $visit->patient_id,
+                'triage_score' => $score->value,
+                'triaged_by' => auth()->id(),
+                'triaged_at' => now(),
+            ])
+        );
+
+        // Save score on the visit itself
+        $visit->update(['triage_score' => $score->value]);
+
+        // Determine next visit status based on triage score
+        $nextStatus = match ($score) {
+            TriageScore::EMERGENCY => VisitStatus::EMERGENCY,
+            TriageScore::URGENT    => VisitStatus::WAITING_CONSULTATION, // still routed through consult queue
+            default                => VisitStatus::WAITING_CONSULTATION,
+        };
+
+        // Assign consultation department if provided
+        if (!empty($data['department_id'])) {
+            $this->assignDepartment($visit, (int) $data['department_id'], $nextStatus);
+        } else {
+            $visit->transitionTo($nextStatus, "Triage complete — score: {$score->label()}");
+        }
+
+        return $visit->fresh(['triage', 'currentDepartment']);
+    }
+
+    /**
+     * Assign a department to a visit and create a billing line + queue entry.
+     */
+    public function assignDepartment(Visit $visit, int $departmentId, VisitStatus $newStatus): Visit
+    {
+        $department = \App\Models\Department::findOrFail($departmentId);
+
+        // Update current department on visit
+        $visit->update(['current_department_id' => $departmentId]);
+
+        // Record dept history
+        VisitDepartmentHistory::create([
+            'visit_id'    => $visit->id,
+            'department_id' => $departmentId,
+            'type'        => VisitDepartmentHistory::TYPE_CONSULTATION,
+            'status'      => VisitDepartmentHistory::STATUS_WAITING,
+            'assigned_by' => auth()->id(),
+        ]);
+
+        // Create a billing line for consultation if a consultation service exists for the dept
+        $this->createConsultationBilling($visit, $departmentId);
+
+        // Complete old queue entry, create new one for the dept
+        $this->queueService->completeCurrentEntry($visit);
+
+        // Transition status
+        $visit->transitionTo($newStatus, "Assigned to {$department->name}");
+
+        // Create queue entry for the new department
+        $this->queueService->addForDepartment($visit->fresh(), $departmentId);
+
+        return $visit->fresh();
+    }
+
+    /**
+     * Refer a visit to another consultation department.
+     *
+     * @throws \InvalidArgumentException if referral to same department or invalid status.
+     */
+    public function referPatient(Visit $visit, int $departmentId, ?string $notes = null): Visit
+    {
+        if ($visit->status !== VisitStatus::CONSULTING) {
+            throw new \InvalidArgumentException('Can only refer from CONSULTING status.');
+        }
+
+        if ($visit->current_department_id === $departmentId) {
+            throw new \InvalidArgumentException('Cannot refer to the same department.');
+        }
+
+        // Check if previously referred to this department (prevent loops — optional strictness)
+        $alreadyVisited = $visit->departmentHistory()
+            ->where('department_id', $departmentId)
+            ->whereIn('type', [VisitDepartmentHistory::TYPE_CONSULTATION, VisitDepartmentHistory::TYPE_REFERRAL])
+            ->exists();
+
+        if ($alreadyVisited) {
+            throw new \InvalidArgumentException('Patient was already referred to this department in this visit.');
+        }
+
+        $department = \App\Models\Department::findOrFail($departmentId);
+
+        // Mark current dept history entry as completed
+        $this->completeDepartmentHistory($visit);
+
+        // Update current department
+        $visit->update(['current_department_id' => $departmentId]);
+
+        // Record referral history
+        VisitDepartmentHistory::create([
+            'visit_id'     => $visit->id,
+            'department_id' => $departmentId,
+            'type'         => VisitDepartmentHistory::TYPE_REFERRAL,
+            'status'       => VisitDepartmentHistory::STATUS_WAITING,
+            'assigned_by'  => auth()->id(),
+            'notes'        => $notes,
+        ]);
+
+        // Billing line for the referral consultation
+        $this->createConsultationBilling($visit, $departmentId);
+
+        // Queue transition
+        $this->queueService->completeCurrentEntry($visit);
+        $visit->transitionTo(VisitStatus::REFERRED_CONSULTATION, $notes ?? "Referred to {$department->name}");
+        $this->queueService->addForDepartment($visit->fresh(), $departmentId);
+
+        return $visit->fresh();
+    }
+
+    /**
+     * Send patient to investigation (lab / scan / x-ray etc.).
+     */
+    public function sendToInvestigation(Visit $visit, int $departmentId, ?string $notes = null): Visit
+    {
+        if ($visit->status !== VisitStatus::CONSULTING) {
+            throw new \InvalidArgumentException('Can only send to investigation from CONSULTING status.');
+        }
+
+        $department = \App\Models\Department::findOrFail($departmentId);
+
+        // Mark current dept history entry as in-progress (consultation still ongoing)
+        // Investigation is additional, not replacing the consultation dept
+
+        // Record investigation history
+        VisitDepartmentHistory::create([
+            'visit_id'     => $visit->id,
+            'department_id' => $departmentId,
+            'type'         => VisitDepartmentHistory::TYPE_INVESTIGATION,
+            'status'       => VisitDepartmentHistory::STATUS_WAITING,
+            'assigned_by'  => auth()->id(),
+            'notes'        => $notes,
+        ]);
+
+        // Billing line for investigation
+        $this->createInvestigationBilling($visit, $departmentId);
+
+        // Queue transition
+        $this->queueService->completeCurrentEntry($visit);
+        $visit->transitionTo(VisitStatus::WAITING_INVESTIGATION, $notes ?? "Sent to {$department->name} for investigation");
+        $this->queueService->addForDepartment($visit->fresh(), $departmentId);
+
+        return $visit->fresh();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Private helpers
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private function completeDepartmentHistory(Visit $visit): void
+    {
+        $active = $visit->departmentHistory()
+            ->where('department_id', $visit->current_department_id)
+            ->whereIn('status', [VisitDepartmentHistory::STATUS_WAITING, VisitDepartmentHistory::STATUS_IN_PROGRESS])
+            ->latest()
+            ->first();
+
+        if ($active) {
+            $active->update([
+                'status'       => VisitDepartmentHistory::STATUS_COMPLETED,
+                'completed_at' => now(),
+            ]);
+        }
+    }
+
+    /**
+     * Create a consultation billing line for the given department if a default
+     * consultation service is configured for it.
+     */
+    private function createConsultationBilling(Visit $visit, int $departmentId): void
+    {
+        $service = ServiceCatalog::where('department_id', $departmentId)
+            ->where('service_type', \App\Enums\ServiceType::CONSULTATION->value)
+            ->where('is_active', true)
+            ->first();
+
+        if ($service) {
+            $this->attachServices($visit, [[
+                'service_catalog_id' => $service->id,
+                'quantity' => 1,
+            ]]);
+        }
+    }
+
+    /**
+     * Create an investigation billing line for the given department.
+     */
+    private function createInvestigationBilling(Visit $visit, int $departmentId): void
+    {
+        $service = ServiceCatalog::where('department_id', $departmentId)
+            ->where('service_type', \App\Enums\ServiceType::INVESTIGATION->value)
+            ->where('is_active', true)
+            ->first();
+
+        if ($service) {
+            $this->attachServices($visit, [[
+                'service_catalog_id' => $service->id,
+                'quantity' => 1,
+            ]]);
+        }
     }
 
     public function todayStats(): array

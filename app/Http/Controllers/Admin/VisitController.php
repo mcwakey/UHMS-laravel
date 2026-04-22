@@ -133,8 +133,13 @@ class VisitController extends Controller
             'statusLogs.changedBy',
             'queueEntries.department',
             'visitInsurance.insuranceProvider',
+            'visitInsurance.insuranceTier',
             'visitServices.serviceCatalog',
             'visitServices.department',
+            'triage.triagedBy',
+            'triage.department',
+            'departmentHistory.department',
+            'currentDepartment',
         ]);
 
         // Insurance info for display

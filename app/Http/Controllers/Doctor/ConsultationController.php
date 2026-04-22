@@ -338,4 +338,56 @@ class ConsultationController extends Controller
             ->route('admin.consultations.index')
             ->with('success', "Visit moved to {$newStatus->label()}.");
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Referral to Another Consultation Department
+    |--------------------------------------------------------------------------
+    */
+
+    public function refer(Request $request, Visit $visit)
+    {
+        $request->validate([
+            'department_id' => ['required', 'exists:departments,id'],
+            'notes'         => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        try {
+            $this->visitService->referPatient($visit, (int) $request->department_id, $request->notes);
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $dept = \App\Models\Department::find($request->department_id);
+
+        return redirect()
+            ->route('admin.consultations.index')
+            ->with('success', "Patient referred to {$dept?->name}.");
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Send to Investigation
+    |--------------------------------------------------------------------------
+    */
+
+    public function sendToInvestigation(Request $request, Visit $visit)
+    {
+        $request->validate([
+            'department_id' => ['required', 'exists:departments,id'],
+            'notes'         => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        try {
+            $this->visitService->sendToInvestigation($visit, (int) $request->department_id, $request->notes);
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        $dept = \App\Models\Department::find($request->department_id);
+
+        return redirect()
+            ->route('admin.consultations.index')
+            ->with('success', "Patient sent to {$dept?->name} for investigation.");
+    }
 }

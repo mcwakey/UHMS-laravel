@@ -407,6 +407,12 @@ Route::middleware('auth')->group(function () {
             Route::get('consultations/{visit}/history', [ConsultationController::class, 'history'])->name('consultations.history');
             Route::patch('consultations/{visit}/transition', [ConsultationController::class, 'transitionVisit'])->name('consultations.transition')->middleware('can:visits.transition');
 
+            // Referral to another department
+            Route::post('consultations/{visit}/refer', [ConsultationController::class, 'refer'])->name('consultations.refer')->middleware('can:consultations.create');
+
+            // Send to investigation department
+            Route::post('consultations/{visit}/investigation', [ConsultationController::class, 'sendToInvestigation'])->name('consultations.investigation')->middleware('can:consultations.create');
+
             // Consultation sub-resources (complaints, diagnoses, investigations, treatments, prescriptions)
             Route::middleware('can:consultations.create')->group(function () {
                 Route::post('consultations/{visit}/complaints', [ConsultationController::class, 'storeComplaint'])->name('consultations.complaints.store');
@@ -432,6 +438,14 @@ Route::middleware('auth')->group(function () {
                 Route::patch('consultations/tasks/{task}/toggle', [ConsultationTaskController::class, 'toggleComplete'])->name('consultations.tasks.toggle');
                 Route::delete('consultations/tasks/{task}', [ConsultationTaskController::class, 'destroy'])->name('consultations.tasks.destroy');
             });
+        });
+
+        // Triage Workflow
+        Route::middleware('can:vitals.view')->group(function () {
+            Route::get('triage', [\App\Http\Controllers\Admin\TriageController::class, 'index'])->name('triage.index');
+            Route::get('triage/{visit}', [\App\Http\Controllers\Admin\TriageController::class, 'show'])->name('triage.show');
+            Route::get('triage/{visit}/assess', [\App\Http\Controllers\Admin\TriageController::class, 'create'])->name('triage.create')->middleware('can:vitals.create');
+            Route::post('triage/{visit}', [\App\Http\Controllers\Admin\TriageController::class, 'store'])->name('triage.store')->middleware('can:vitals.create');
         });
 
         // Vitals (Nurse Triage)
