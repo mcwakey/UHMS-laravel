@@ -31,6 +31,7 @@ class Patient extends Model
         'last_name',
         'other_names',
         'date_of_birth',
+        'height',
         'gender',
         'blood_group',
         'marital_status',

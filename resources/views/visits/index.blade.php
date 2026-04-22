@@ -156,6 +156,9 @@
                         </td>
                         <td>
                             <span class="badge bg-{{ $visit->priority->color() }}">{{ $visit->priority->label() }}</span>
+                            @if($visit->triage_score)
+                                <span class="badge bg-{{ $visit->triage_score->color() }} ms-1">{{ $visit->triage_score->label() }}</span>
+                            @endif
                         </td>
                         <td>{{ $visit->assignedDoctor?->full_name ?? '—' }}</td>
                         <td>

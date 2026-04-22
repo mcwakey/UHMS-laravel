@@ -453,6 +453,8 @@ Route::middleware('auth')->group(function () {
             Route::get('vitals', [VitalController::class, 'create'])->name('vitals.create');
             Route::post('vitals', [VitalController::class, 'store'])->name('vitals.store')->middleware('can:vitals.create');
             Route::get('vitals/{visit}', [VitalController::class, 'show'])->name('vitals.show');
+            Route::patch('vitals/{visit}/update-priority', [VitalController::class, 'updatePriority'])->name('vitals.update-priority')->middleware('can:vitals.create');
+            Route::patch('vitals/{visit}/assign-consultation', [VitalController::class, 'assignConsultation'])->name('vitals.assign-consultation')->middleware('can:vitals.create');
         });
 
         // Prescriptions

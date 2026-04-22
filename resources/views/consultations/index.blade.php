@@ -72,7 +72,12 @@
                             <small class="text-muted">{{ $visit->patient->patient_number }} &middot; {{ $visit->patient->age }}y {{ $visit->patient->gender->value }}</small>
                         </td>
                         <td><span class="badge bg-{{ $visit->status->color() }}">{{ $visit->status->label() }}</span></td>
-                        <td><span class="badge bg-{{ $visit->priority->color() }}">{{ $visit->priority->label() }}</span></td>
+                        <td>
+                            <span class="badge bg-{{ $visit->priority->color() }}">{{ $visit->priority->label() }}</span>
+                            @if($visit->triage_score)
+                                <span class="badge bg-{{ $visit->triage_score->color() }} ms-1">{{ $visit->triage_score->label() }}</span>
+                            @endif
+                        </td>
                         <td>{{ $visit->assignedDoctor ? 'Dr. ' . $visit->assignedDoctor->full_name : '—' }}</td>
                         <td><small>{{ Str::limit($visit->chief_complaint, 40) ?? '—' }}</small></td>
                         <td>

@@ -36,7 +36,7 @@ class PrescriptionNotification extends Notification
             'patient_id' => $patient->id,
             'patient_name' => $patient->full_name,
             'visit_id' => $this->prescription->visit_id,
-            'url' => route('pharmacy.dispensing.show', $this->prescription),
+            'url' => route('admin.pharmacy.dispensing.show', $this->prescription),
             'icon' => 'ti-pill',
             'color' => 'success',
         ];

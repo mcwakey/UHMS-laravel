@@ -1290,7 +1290,7 @@
                 <div class="modal-body">
                     @php
                         $investigationDepts = \App\Models\Department::active()
-                            ->whereHas('type', fn ($q) => $q->whereIn('value', ['laboratory', 'radiology', 'imaging']))
+                            ->whereIn('type', ['investigation', 'radiology'])
                             ->orderBy('name')->get();
                         // Fallback: all departments
                         if ($investigationDepts->isEmpty()) {

@@ -33,7 +33,14 @@
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <h6 class="fw-bold mb-0">Visit Status Flow</h6>
-                    <span class="badge bg-{{ $visit->status->color() }} fs-14 px-3 py-2">{{ $visit->status->label() }}</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-{{ $visit->status->color() }} fs-14 px-3 py-2">{{ $visit->status->label() }}</span>
+                        @if($visit->triage_score)
+                            <span class="badge bg-{{ $visit->triage_score->color() }} px-2 py-2">
+                                <i class="ti ti-activity me-1"></i>{{ $visit->triage_score->label() }}
+                            </span>
+                        @endif
+                    </div>
                 </div>
                 <!-- Status Timeline -->
                 <div class="d-flex align-items-center gap-1 flex-wrap">
@@ -215,109 +222,12 @@
                     @endif
                     @if($triage->bmi)
                         <div class="col-6 col-md-3 text-center">
+                            @php
+                                $bmiCat = $triage->bmi < 18.5 ? ['Underweight', 'warning'] : ($triage->bmi < 25 ? ['Normal', 'success'] : ($triage->bmi < 30 ? ['Overweight', 'warning'] : ['Obese', 'danger']));
+                            @endphp
                             <div class="text-muted" style="font-size:0.72rem">BMI</div>
                             <div class="fw-semibold small">{{ $triage->bmi }} kg/m²</div>
-                        </div>
-                    @endif
-                </div>
-                @if($triage->department)
-                    <div class="mt-2 small text-muted">
-                        <i class="ti ti-building-hospital me-1"></i>Assigned to: <strong>{{ $triage->department->name }}</strong>
-                    </div>
-                @endif
-                <div class="mt-2 d-flex gap-2">
-                    <a href="{{ route('admin.triage.show', $visit) }}" class="btn btn-outline-info btn-sm">
-                        <i class="ti ti-eye me-1"></i>Full Triage Report
-                    </a>
-                    @if($visit->status === \App\Enums\VisitStatus::TRIAGE)
-                        <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-info btn-sm">
-                            <i class="ti ti-pencil me-1"></i>Re-assess
-                        </a>
-                    @endif
-                </div>
-            </div>
-        </div>
-        @endif
-
-        {{-- Department History Card (shown after triage assigns dept) --}}
-        @if($visit->departmentHistory->isNotEmpty())
-        <div class="card mb-3">
-            <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-list-details me-1"></i>Department Journey</h6>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-sm mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Department</th>
-                                <th>Type</th>
-                                <th>Status</th>
-                                <th>Time</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($visit->departmentHistory as $hist)
-                                <tr>
-                                    <td class="small fw-semibold">{{ $hist->department?->name ?? '—' }}</td>
-                                    <td><span class="badge bg-{{ $hist->typeColor() }}">{{ $hist->typeLabel() }}</span></td>
-                                    <td><span class="badge bg-{{ $hist->statusColor() }}">{{ $hist->statusLabel() }}</span></td>
-                                    <td class="text-muted small">{{ $hist->created_at->format('h:i A') }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        @endif
-
-        {{-- Triage Summary Card (shown once triage exists) --}}
-        @if($visit->triage)
-        @php $triage = $visit->triage; @endphp
-        <div class="card mb-3">
-            <div class="card-header d-flex align-items-center justify-content-between">
-                <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-info"></i>Triage Assessment</h6>
-                @if($triage->triage_score)
-                    <span class="badge bg-{{ $triage->triage_score->color() }}">{{ $triage->triage_score->label() }}</span>
-                @endif
-            </div>
-            <div class="card-body">
-                <div class="row g-2">
-                    @if($triage->blood_pressure)
-                        <div class="col-6 col-md-3 text-center">
-                            <div class="text-muted" style="font-size:0.72rem">BP</div>
-                            <div class="fw-semibold small">{{ $triage->blood_pressure }} mmHg</div>
-                        </div>
-                    @endif
-                    @if($triage->heart_rate)
-                        <div class="col-6 col-md-3 text-center">
-                            <div class="text-muted" style="font-size:0.72rem">Heart Rate</div>
-                            <div class="fw-semibold small">{{ $triage->heart_rate }} bpm</div>
-                        </div>
-                    @endif
-                    @if($triage->temperature)
-                        <div class="col-6 col-md-3 text-center">
-                            <div class="text-muted" style="font-size:0.72rem">Temp</div>
-                            <div class="fw-semibold small">{{ $triage->temperature }} °C</div>
-                        </div>
-                    @endif
-                    @if($triage->spo2)
-                        <div class="col-6 col-md-3 text-center">
-                            <div class="text-muted" style="font-size:0.72rem">SpO₂</div>
-                            <div class="fw-semibold small">{{ $triage->spo2 }}%</div>
-                        </div>
-                    @endif
-                    @if($triage->respiratory_rate)
-                        <div class="col-6 col-md-3 text-center">
-                            <div class="text-muted" style="font-size:0.72rem">Resp. Rate</div>
-                            <div class="fw-semibold small">{{ $triage->respiratory_rate }}/min</div>
-                        </div>
-                    @endif
-                    @if($triage->bmi)
-                        <div class="col-6 col-md-3 text-center">
-                            <div class="text-muted" style="font-size:0.72rem">BMI</div>
-                            <div class="fw-semibold small">{{ $triage->bmi }} kg/m²</div>
+                            <span class="badge bg-{{ $bmiCat[1] }}" style="font-size:0.65rem">{{ $bmiCat[0] }}</span>
                         </div>
                     @endif
                 </div>
@@ -417,88 +327,6 @@
                     <div class="bg-light rounded p-3">{{ $visit->notes }}</div>
                 </div>
                 @endif
-            </div>
-        </div>
-
-        <!-- Insurance Information -->
-        <div class="card mb-3">
-            <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Insurance</h6>
-            </div>
-            <div class="card-body">
-            @if($insuranceInfo)
-                <div class="row">
-                    <div class="col-md-4 mb-2">
-                        <label class="text-muted small mb-1">Provider</label>
-                        <div class="fw-medium">{{ $insuranceInfo['provider']?->name ?? 'Cash & Carry' }}</div>
-                        @if($insuranceInfo['provider'])
-                        <div><span class="badge bg-{{ $insuranceInfo['provider']->type->color() }} mt-1">{{ $insuranceInfo['provider']->type->label() }}</span></div>
-                        @endif
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <label class="text-muted small mb-1">Tier &amp; Member Type</label>
-                        <div class="fw-medium">{{ $insuranceInfo['tier_name'] ?? '—' }}</div>
-                        @php
-                            $memberTypeVal = $insuranceInfo['member_type'] ?? 'holder';
-                            $memberTypeBadge = $memberTypeVal === 'beneficiary' ? 'warning' : 'info';
-                            $memberTypeLabel = $memberTypeVal === 'beneficiary' ? 'Beneficiary' : 'Card Holder';
-                        @endphp
-                        <span class="badge bg-{{ $memberTypeBadge }} mt-1">{{ $memberTypeLabel }}</span>
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <label class="text-muted small mb-1">Coverage</label>
-                        <div class="fw-medium">{{ $insuranceInfo['coverage_percentage'] ?? 0 }}%</div>
-                        @if($insuranceInfo['per_visit_limit'])
-                            <small class="text-muted">Per visit cap: &#8373;{{ number_format($insuranceInfo['per_visit_limit'], 2) }}</small>
-                        @endif
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <label class="text-muted small mb-1">Annual Remaining</label>
-                        <div class="fw-bold {{ ($insuranceInfo['remaining_annual'] ?? 0) > 0 ? 'text-success' : 'text-danger' }}">
-                            @if($insuranceInfo['annual_limit'])
-                                &#8373;{{ number_format($insuranceInfo['remaining_annual'] ?? 0, 2) }}
-                            @else
-                                Unlimited
-                            @endif
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <label class="text-muted small mb-1">Monthly Remaining</label>
-                        <div class="fw-medium">
-                            @if($insuranceInfo['max_per_month'])
-                                <span class="{{ ($insuranceInfo['remaining_monthly'] ?? 0) > 0 ? 'text-success' : 'text-danger' }}">
-                                    &#8373;{{ number_format($insuranceInfo['remaining_monthly'] ?? 0, 2) }}
-                                </span>
-                            @else
-                                <span class="text-muted">Unlimited</span>
-                            @endif
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-2">
-                        <label class="text-muted small mb-1">Membership #</label>
-                        <div class="fw-medium">{{ $insuranceInfo['insurance']?->membership_number ?? '—' }}</div>
-                    </div>
-                </div>
-                @if($insuranceInfo['annual_limit'])
-                <div class="mt-2">
-                    @php
-                        $usagePercent = $insuranceInfo['annual_limit'] > 0 ? min(100, round(($insuranceInfo['used_this_year'] / $insuranceInfo['annual_limit']) * 100)) : 0;
-                    @endphp
-                    <div class="d-flex justify-content-between small text-muted mb-1">
-                        <span>Annual Usage: &#8373;{{ number_format($insuranceInfo['used_this_year'] ?? 0, 2) }} of &#8373;{{ number_format($insuranceInfo['annual_limit'], 2) }}</span>
-                        <span>{{ $usagePercent }}%</span>
-                    </div>
-                    <div class="progress" style="height: 6px;">
-                        <div class="progress-bar {{ $usagePercent > 80 ? 'bg-danger' : ($usagePercent > 50 ? 'bg-warning' : 'bg-success') }}" style="width: {{ $usagePercent }}%"></div>
-                    </div>
-                </div>
-                @endif
-            @else
-                <div class="text-center py-3">
-                    <span class="badge bg-danger fs-14 px-3 py-2 mb-2">Cash &amp; Carry (Self-Sponsored)</span>
-                    <p class="text-muted mb-0 small">No insurance selected for this visit. Patient pays full amount.</p>
-                </div>
-            @endif
             </div>
         </div>
 
@@ -649,6 +477,67 @@
             </div>
         </div>
 
+        <!-- Insurance -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Insurance</h6>
+            </div>
+            <div class="card-body">
+            @if($insuranceInfo)
+                <div class="row">
+                    <div class="col-6 mb-2">
+                        <label class="text-muted small mb-1">Provider</label>
+                        <div class="fw-medium small">{{ $insuranceInfo['provider']?->name ?? 'Cash & Carry' }}</div>
+                        @if($insuranceInfo['provider'])
+                        <span class="badge bg-{{ $insuranceInfo['provider']->type->color() }} mt-1">{{ $insuranceInfo['provider']->type->label() }}</span>
+                        @endif
+                    </div>
+                    <div class="col-6 mb-2">
+                        <label class="text-muted small mb-1">Coverage</label>
+                        <div class="fw-medium small">{{ $insuranceInfo['coverage_percentage'] ?? 0 }}%</div>
+                        @php
+                            $memberTypeVal = $insuranceInfo['member_type'] ?? 'holder';
+                            $memberTypeBadge = $memberTypeVal === 'beneficiary' ? 'warning' : 'info';
+                            $memberTypeLabel = $memberTypeVal === 'beneficiary' ? 'Beneficiary' : 'Card Holder';
+                        @endphp
+                        <span class="badge bg-{{ $memberTypeBadge }}">{{ $memberTypeLabel }}</span>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <label class="text-muted small mb-1">Annual Remaining</label>
+                        <div class="fw-bold small {{ ($insuranceInfo['remaining_annual'] ?? 0) > 0 ? 'text-success' : 'text-danger' }}">
+                            @if($insuranceInfo['annual_limit'])
+                                &#8373;{{ number_format($insuranceInfo['remaining_annual'] ?? 0, 2) }}
+                            @else
+                                Unlimited
+                            @endif
+                        </div>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <label class="text-muted small mb-1">Membership #</label>
+                        <div class="fw-medium small">{{ $insuranceInfo['insurance']?->membership_number ?? '—' }}</div>
+                    </div>
+                </div>
+                @if($insuranceInfo['annual_limit'])
+                @php
+                    $usagePercent = $insuranceInfo['annual_limit'] > 0 ? min(100, round(($insuranceInfo['used_this_year'] / $insuranceInfo['annual_limit']) * 100)) : 0;
+                @endphp
+                <div class="d-flex justify-content-between small text-muted mb-1">
+                    <span>Annual: &#8373;{{ number_format($insuranceInfo['used_this_year'] ?? 0, 2) }} / &#8373;{{ number_format($insuranceInfo['annual_limit'], 2) }}</span>
+                    <span>{{ $usagePercent }}%</span>
+                </div>
+                <div class="progress" style="height: 5px;">
+                    <div class="progress-bar {{ $usagePercent > 80 ? 'bg-danger' : ($usagePercent > 50 ? 'bg-warning' : 'bg-success') }}" style="width: {{ $usagePercent }}%"></div>
+                </div>
+                @endif
+            @else
+                <div class="text-center py-2">
+                    <span class="badge bg-danger px-3 py-2 mb-1">Cash &amp; Carry</span>
+                    <p class="text-muted mb-0 small">No insurance — patient pays full amount.</p>
+                </div>
+            @endif
+            </div>
+        </div>
+
         <!-- Queue Info -->
         @if($visit->queueEntries->isNotEmpty())
         <div class="card mb-3">
@@ -709,32 +598,6 @@
                     </div>
                 </div>
                 @endif
-            </div>
-        </div>
-        @endif
-
-        <!-- Services Being Done (hidden during triage — full detail shown in left column) -->
-        @if($visit->visitServices->isNotEmpty() && !$isTriage)
-        <div class="card mb-3">
-            <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-list-check me-1"></i>Services</h6>
-            </div>
-            <div class="card-body p-0">
-                <div class="list-group list-group-flush">
-                    @foreach($visit->visitServices as $vs)
-                    <div class="list-group-item py-2">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <span class="fw-medium">{{ $vs->serviceCatalog?->name ?? '—' }}</span>
-                                @if($vs->department)
-                                    <span class="badge bg-light text-dark ms-1 small">{{ $vs->department->name }}</span>
-                                @endif
-                            </div>
-                            <span class="text-muted small">x{{ $vs->quantity }}</span>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
             </div>
         </div>
         @endif

@@ -86,7 +86,7 @@ class VisitService
         if ($isScheduled) {
             $data['status'] = VisitStatus::SCHEDULED->value;
         } else {
-            $data['status'] = VisitStatus::REGISTERED->value;
+            $data['status'] = VisitStatus::TRIAGE->value;
         }
 
         // One visit per day per patient check
@@ -104,10 +104,10 @@ class VisitService
             'notes' => $isScheduled ? 'Visit scheduled' : 'Visit created',
         ]);
 
-        // Walk-in visits auto-transition to waiting
+        // Walk-in visits start in TRIAGE; create triage queue entry
         // Queue entry creation happens after services are attached (see VisitController::store)
         if (!$isScheduled) {
-            $visit->transitionTo(VisitStatus::WAITING);
+            $this->queueService->addTriageEntry($visit->fresh());
         }
 
         return $visit->fresh(['patient', 'assignedDoctor']);
