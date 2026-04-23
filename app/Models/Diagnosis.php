@@ -16,8 +16,16 @@ class Diagnosis extends Model
         'icd_code_id',
         'description',
         'type',
+        'is_primary',
         'notes',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_primary' => 'boolean',
+        ];
+    }
 
     /*
     |--------------------------------------------------------------------------

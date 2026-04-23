@@ -1,45 +1,82 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title', 'Consultation - ' . $visit->visit_number)
 
 @push('styles')
 <style>
-    .consultation-sidebar .nav-link { padding: 0.5rem 1rem; border-radius: 0.5rem; color: #495057; }
+    .consultation-sidebar .nav-link { padding: 0.4rem 0.75rem; border-radius: 0.4rem; color: #495057; font-size: 0.82rem; }
     .consultation-sidebar .nav-link.active { background-color: #e8f0fe; color: #1a73e8; font-weight: 600; }
-    .consultation-sidebar .nav-link i { width: 20px; }
-    .consultation-sidebar .badge { font-size: 0.65rem; }
-    .ehr-item { border-left: 3px solid #dee2e6; padding-left: 1rem; margin-bottom: 1rem; }
+    .consultation-sidebar .nav-link i { width: 18px; }
+    .consultation-sidebar .badge { font-size: 0.6rem; }
+    .ehr-item { border-left: 3px solid #dee2e6; padding-left: 1rem; margin-bottom: 0.75rem; }
     .ehr-item:hover { border-left-color: #0d6efd; }
     .severity-mild { border-left-color: #ffc107; }
     .severity-moderate { border-left-color: #fd7e14; }
     .severity-severe { border-left-color: #dc3545; }
+    .ehr-item.is-primary { border-left-color: #ffc107 !important; }
+    .vitals-static { background: linear-gradient(135deg, #f8f9ff, #eef2ff); border-left: 4px solid #6366f1 !important; }
+    .triage-badge { font-size: 0.8rem; font-weight: 700; padding: 0.35rem 0.7rem; }
+    .prev-visit-card { transition: border-color 0.15s; cursor: default; }
+    .prev-visit-card:hover { border-color: #0d6efd !important; }
+    .btn-xs { padding: 0.15rem 0.35rem; font-size: 0.72rem; line-height: 1.4; }
+    .vitals-val { font-size: 1.05rem; font-weight: 700; }
+    .vitals-label { font-size: 0.68rem; color: #6c757d; }
+    .diagnosis-primary-badge { font-size: 0.6rem; vertical-align: middle; }
 </style>
 @endpush
 
 @section('content')
-<!-- Patient Header Bar -->
+
+{{-- ============================================================ --}}
+{{-- PATIENT HEADER BAR --}}
+{{-- ============================================================ --}}
 <div class="card mb-3 border-primary">
     <div class="card-body py-2">
         <div class="row align-items-center">
-            <div class="col-md-6">
+            <div class="col-md-7">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="avatar avatar-md bg-primary-subtle rounded-circle d-flex align-items-center justify-content-center">
-                        <span class="text-primary fw-bold">{{ strtoupper(substr($visit->patient->first_name, 0, 1) . substr($visit->patient->last_name, 0, 1)) }}</span>
+                    <div class="avatar avatar-md bg-primary-subtle rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;flex-shrink:0">
+                        <span class="text-primary fw-bold fs-5">{{ strtoupper(substr($visit->patient->first_name, 0, 1) . substr($visit->patient->last_name, 0, 1)) }}</span>
                     </div>
                     <div>
                         <h5 class="mb-0 fw-bold">{{ $visit->patient->full_name }}</h5>
-                        <small class="text-muted">
+                        <div class="text-muted small">
                             {{ $visit->patient->patient_number }} &middot;
                             {{ $visit->patient->age }}y &middot;
                             {{ $visit->patient->gender->value }} &middot;
                             Blood: {{ $visit->patient->blood_group?->value ?? 'N/A' }}
-                        </small>
+                            @if($visit->patient->phone) &middot; <i class="ti ti-phone me-1"></i>{{ $visit->patient->phone }} @endif
+                        </div>
+                        <div class="text-muted small mt-1 d-flex flex-wrap gap-2">
+                            @if($visit->patient->occupation)
+                                <span><i class="ti ti-briefcase me-1"></i>{{ $visit->patient->occupation }}</span>
+                            @endif
+                            @if($visit->patient->religion)
+                                <span><i class="ti ti-book me-1"></i>{{ $visit->patient->religion }}</span>
+                            @endif
+                            @if($visit->patient->marital_status)
+                                <span><i class="ti ti-heart me-1"></i>{{ is_object($visit->patient->marital_status) ? $visit->patient->marital_status->value : $visit->patient->marital_status }}</span>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6 text-md-end">
-                <span class="badge bg-{{ $visit->status->color() }} px-3 py-2 fs-14">{{ $visit->status->label() }}</span>
+            <div class="col-md-5 text-md-end mt-2 mt-md-0">
+                <span class="badge bg-{{ $visit->status->color() }} px-3 py-2">{{ $visit->status->label() }}</span>
+                @php
+                    $vtBg = match($visit->visit_type) {
+                        \App\Enums\VisitType::INPATIENT  => 'info',
+                        \App\Enums\VisitType::EMERGENCY  => 'danger',
+                        default                           => 'primary',
+                    };
+                @endphp
+                <span class="badge bg-{{ $vtBg }}-subtle text-{{ $vtBg }} border border-{{ $vtBg }} px-2 py-1 ms-1" title="Visit Type">
+                    <i class="ti ti-{{ $visit->visit_type === \App\Enums\VisitType::INPATIENT ? 'bed' : ($visit->visit_type === \App\Enums\VisitType::EMERGENCY ? 'ambulance' : 'walk') }} me-1"></i>{{ $visit->visit_type->label() }}
+                </span>
                 <span class="badge bg-{{ $visit->priority->color() }} px-2 py-2 ms-1">{{ $visit->priority->label() }}</span>
                 <span class="text-muted ms-2 small">{{ $visit->visit_number }}</span>
+                @if($visit->assignedDoctor)
+                    <div class="text-muted small mt-1"><i class="ti ti-user-md me-1"></i>Dr. {{ $visit->assignedDoctor->full_name }}</div>
+                @endif
             </div>
         </div>
     </div>
@@ -50,79 +87,157 @@
     <i class="ti ti-alert-triangle me-1"></i><strong>Allergies:</strong> {{ $visit->patient->allergies }}
 </div>
 @endif
-
 @if($visit->patient->chronic_conditions)
 <div class="alert alert-warning py-2 mb-3">
     <i class="ti ti-heart-rate-monitor me-1"></i><strong>Chronic Conditions:</strong> {{ $visit->patient->chronic_conditions }}
 </div>
 @endif
 
-<div class="row">
-    <!-- LEFT SIDEBAR -->
-    <div class="col-lg-3">
-        <!-- Navigation -->
+{{-- ============================================================ --}}
+{{-- VITALS — STATIC SECTION (always visible) --}}
+{{-- ============================================================ --}}
+<div class="card mb-3 vitals-static">
+    <div class="card-body py-2">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <h6 class="fw-bold mb-0 small"><i class="ti ti-heartbeat me-1 text-danger"></i>Latest Vitals</h6>
+            @php
+                $triageScore = $visit->triage_score;
+                if (!$triageScore && $vitals->count() > 0) {
+                    $lv = $vitals->first();
+                    $triageScore = \App\Enums\TriageScore::compute([
+                        'temperature'      => $lv->temperature,
+                        'heart_rate'       => $lv->heart_rate,
+                        'respiratory_rate' => $lv->respiratory_rate,
+                        'spo2'             => $lv->spo2,
+                    ]);
+                }
+            @endphp
+            @if($triageScore)
+                <span class="badge bg-{{ $triageScore->color() }} triage-badge">
+                    <i class="ti {{ $triageScore->icon() }} me-1"></i>{{ $triageScore->label() }}
+                </span>
+            @else
+                <span class="badge bg-secondary triage-badge"><i class="ti ti-help me-1"></i>Triage N/A</span>
+            @endif
+        </div>
+
+        @if($vitals->count() > 0)
+            @php $lv = $vitals->first(); @endphp
+            <div class="row g-2">
+                <div class="col-6 col-sm-4 col-md-2 text-center">
+                    <div class="vitals-label">Blood Pressure</div>
+                    <div class="vitals-val">{{ $lv->blood_pressure ?? '—' }}</div>
+                    <div class="vitals-label">mmHg</div>
+                </div>
+                <div class="col-6 col-sm-4 col-md-2 text-center">
+                    <div class="vitals-label">Heart Rate</div>
+                    <div class="vitals-val">{{ $lv->heart_rate ?? '—' }}</div>
+                    <div class="vitals-label">bpm</div>
+                </div>
+                <div class="col-6 col-sm-4 col-md-2 text-center">
+                    <div class="vitals-label">Temperature</div>
+                    <div class="vitals-val">{{ $lv->temperature ?? '—' }}</div>
+                    <div class="vitals-label">°C</div>
+                </div>
+                <div class="col-6 col-sm-4 col-md-2 text-center">
+                    <div class="vitals-label">SpO₂</div>
+                    <div class="vitals-val">{{ $lv->spo2 ?? '—' }}</div>
+                    <div class="vitals-label">%</div>
+                </div>
+                <div class="col-6 col-sm-4 col-md-2 text-center">
+                    <div class="vitals-label">Resp. Rate</div>
+                    <div class="vitals-val">{{ $lv->respiratory_rate ?? '—' }}</div>
+                    <div class="vitals-label">/min</div>
+                </div>
+                <div class="col-6 col-sm-4 col-md-2 text-center">
+                    <div class="vitals-label">BMI</div>
+                    <div class="vitals-val {{ $lv->bmi ? ($lv->bmi < 18.5 ? 'text-warning' : ($lv->bmi < 25 ? 'text-success' : ($lv->bmi < 30 ? 'text-warning' : 'text-danger'))) : '' }}">
+                        {{ $lv->bmi ?? '—' }}
+                    </div>
+                    <div class="vitals-label">
+                        @if($lv->bmi)
+                            @if($lv->bmi < 18.5) Underweight
+                            @elseif($lv->bmi < 25) Normal
+                            @elseif($lv->bmi < 30) Overweight
+                            @else Obese @endif
+                        @else kg/m² @endif
+                    </div>
+                </div>
+            </div>
+            <div class="text-muted mt-1" style="font-size:0.7rem">
+                <i class="ti ti-clock me-1"></i>{{ $lv->recorded_at->diffForHumans() }} by {{ $lv->recordedBy?->full_name ?? 'Unknown' }}
+                @if($vitals->count() > 1)
+                    &middot; <span class="text-primary">{{ $vitals->count() - 1 }} earlier reading(s)</span>
+                @endif
+            </div>
+        @else
+            <div class="text-muted small py-1">
+                <i class="ti ti-heartbeat me-1"></i>No vitals recorded for this visit yet.
+                @can('vitals.create')
+                    <a href="{{ route('admin.vitals.create', ['visit_id' => $visit->id]) }}" class="ms-2">Record now</a>
+                @endcan
+            </div>
+        @endif
+    </div>
+</div>
+
+{{-- ============================================================ --}}
+{{-- MAIN 3-COLUMN LAYOUT --}}
+{{-- ============================================================ --}}
+<div class="row g-3">
+
+    {{-- =================== LEFT SIDEBAR =================== --}}
+    <div class="col-lg-2">
         <div class="card mb-3">
             <div class="card-body p-2">
                 <nav class="consultation-sidebar">
-                    <ul class="nav flex-column gap-1">
+                    <ul class="nav flex-column gap-1" id="consultationTabs" role="tablist">
                         <li class="nav-item">
-                            <a class="nav-link active" href="#vitals-section" data-bs-toggle="pill">
-                                <i class="ti ti-heartbeat me-2"></i>Vitals
-                                <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $vitals->count() }}</span>
+                            <a class="nav-link active" id="tab-complaints" href="#complaints-section" data-bs-toggle="pill" role="tab">
+                                <i class="ti ti-message-report me-1"></i>Complaints
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-complaints">{{ $record?->complaints?->count() ?? 0 }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#complaints-section" data-bs-toggle="pill">
-                                <i class="ti ti-message-report me-2"></i>Complaints
-                                <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $record?->complaints?->count() ?? 0 }}</span>
+                            <a class="nav-link" id="tab-diagnoses" href="#diagnoses-section" data-bs-toggle="pill" role="tab">
+                                <i class="ti ti-report-medical me-1"></i>Diagnoses
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-diagnoses">{{ $record?->diagnoses?->count() ?? 0 }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#diagnoses-section" data-bs-toggle="pill">
-                                <i class="ti ti-report-medical me-2"></i>Diagnoses
-                                <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $record?->diagnoses?->count() ?? 0 }}</span>
+                            <a class="nav-link" id="tab-investigations" href="#investigations-section" data-bs-toggle="pill" role="tab">
+                                <i class="ti ti-test-pipe me-1"></i>Investigations
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-investigations">{{ $record?->investigations?->count() ?? 0 }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#investigations-section" data-bs-toggle="pill">
-                                <i class="ti ti-test-pipe me-2"></i>Investigations
-                                <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $record?->investigations?->count() ?? 0 }}</span>
+                            <a class="nav-link" id="tab-treatments" href="#treatments-section" data-bs-toggle="pill" role="tab">
+                                <i class="ti ti-vaccine me-1"></i>Treatments
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-treatments">{{ $record?->treatments?->count() ?? 0 }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#lab-section" data-bs-toggle="pill">
-                                <i class="ti ti-flask me-2"></i>Lab Requests
-                                <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $labRequests->count() ?? 0 }}</span>
+                            <a class="nav-link" id="tab-prescriptions" href="#prescriptions-section" data-bs-toggle="pill" role="tab">
+                                <i class="ti ti-prescription me-1"></i>Prescriptions
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-prescriptions">{{ $record?->prescriptions?->count() ?? 0 }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#treatments-section" data-bs-toggle="pill">
-                                <i class="ti ti-vaccine me-2"></i>Treatments
-                                <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $record?->treatments?->count() ?? 0 }}</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#prescriptions-section" data-bs-toggle="pill">
-                                <i class="ti ti-prescription me-2"></i>Prescriptions
-                                <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $record?->prescriptions?->count() ?? 0 }}</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#history-section" data-bs-toggle="pill">
-                                <i class="ti ti-history me-2"></i>History
+                            <a class="nav-link" id="tab-history" href="#history-section" data-bs-toggle="pill" role="tab">
+                                <i class="ti ti-history me-1"></i>History
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $history['total'] ?? 0 }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#patterns-section" data-bs-toggle="pill">
-                                <i class="ti ti-template me-2"></i>Patterns
+                            <a class="nav-link" id="tab-patterns" href="#patterns-section" data-bs-toggle="pill" role="tab">
+                                <i class="ti ti-template me-1"></i>Patterns
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $patterns->count() }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#tasks-section" data-bs-toggle="pill">
-                                <i class="ti ti-checklist me-2"></i>Tasks
-                                <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $record?->tasks?->count() ?? 0 }}</span>
+                            <a class="nav-link" id="tab-tasks" href="#tasks-section" data-bs-toggle="pill" role="tab">
+                                <i class="ti ti-checklist me-1"></i>Tasks
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-tasks">{{ $record?->tasks?->count() ?? 0 }}</span>
                             </a>
                         </li>
                     </ul>
@@ -130,7 +245,6 @@
             </div>
         </div>
 
-        <!-- Quick Actions -->
         <div class="card">
             <div class="card-header py-2">
                 <h6 class="fw-bold mb-0 small">Quick Actions</h6>
@@ -145,16 +259,15 @@
                     </a>
                     @can('consultations.create')
                     <button type="button" class="btn btn-outline-purple btn-sm" data-bs-toggle="modal" data-bs-target="#savePatternModal">
-                        <i class="ti ti-template me-1"></i>Save as Pattern
+                        <i class="ti ti-template me-1"></i>Save Pattern
                     </button>
                     @endcan
                     @if($visit->status->allowedTransitions())
                     <hr class="my-1">
                     <small class="text-muted fw-bold px-1">Transition Visit</small>
                     @foreach($visit->status->allowedTransitions() as $nextStatus)
-                        <form method="POST" action="{{ route('admin.consultations.transition', $visit) }}" class="d-inline">
-                            @csrf
-                            @method('PATCH')
+                        <form method="POST" action="{{ route('admin.consultations.transition', $visit) }}">
+                            @csrf @method('PATCH')
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
                             <button type="submit" class="btn btn-{{ $nextStatus->color() }} btn-sm w-100"
                                     onclick="return confirm('Move to {{ $nextStatus->label() }}?')">
@@ -163,22 +276,14 @@
                         </form>
                     @endforeach
                     @endif
-
-                    {{-- Referral to another consultation dept (CONSULTING status only) --}}
                     @if($visit->status === \App\Enums\VisitStatus::CONSULTING)
                     <hr class="my-1">
-                    <small class="text-muted fw-bold px-1">Referral / Investigation</small>
-
-                    {{-- Refer button --}}
-                    <button type="button" class="btn btn-outline-indigo btn-sm w-100 mb-1"
-                            data-bs-toggle="modal" data-bs-target="#referralModal">
-                        <i class="ti ti-transfer me-1"></i>Refer to Department
+                    <small class="text-muted fw-bold px-1">Referral</small>
+                    <button type="button" class="btn btn-outline-indigo btn-sm w-100 mb-1" data-bs-toggle="modal" data-bs-target="#referralModal">
+                        <i class="ti ti-transfer me-1"></i>Refer to Dept.
                     </button>
-
-                    {{-- Send to Investigation button --}}
-                    <button type="button" class="btn btn-outline-purple btn-sm w-100"
-                            data-bs-toggle="modal" data-bs-target="#investigationModal">
-                        <i class="ti ti-test-pipe me-1"></i>Send to Investigation
+                    <button type="button" class="btn btn-outline-purple btn-sm w-100" data-bs-toggle="modal" data-bs-target="#investigationModal">
+                        <i class="ti ti-test-pipe me-1"></i>Send to Invest.
                     </button>
                     @endif
                 </div>
@@ -186,160 +291,38 @@
         </div>
     </div>
 
-    <!-- MAIN CONTENT -->
-    <div class="col-lg-9">
-        <div class="tab-content">
+    {{-- =================== MAIN CONTENT =================== --}}
+    <div class="col-lg-7">
+        <div class="tab-content" id="consultationTabContent">
 
-            {{-- ============================================================ --}}
-            {{-- VITALS TAB --}}
-            {{-- ============================================================ --}}
-            <div class="tab-pane fade show active" id="vitals-section">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h6 class="fw-bold mb-0"><i class="ti ti-heartbeat me-1"></i>Vitals</h6>
-                        @can('vitals.create')
-                        <a href="{{ route('admin.vitals.create', ['visit_id' => $visit->id]) }}" class="btn btn-sm btn-primary">
-                            <i class="ti ti-plus me-1"></i>Record Vitals
-                        </a>
-                        @endcan
-                    </div>
-                    <div class="card-body">
-                        @if($vitals->count() > 0)
-                            @php $latest = $vitals->first(); @endphp
-                            <!-- Latest Vitals Summary -->
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-3 col-6">
-                                    <div class="border rounded p-2 text-center">
-                                        <small class="text-muted d-block">Blood Pressure</small>
-                                        <span class="fw-bold fs-6">{{ $latest->blood_pressure ?? '—' }}</span>
-                                        <small class="text-muted d-block">mmHg</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 col-6">
-                                    <div class="border rounded p-2 text-center">
-                                        <small class="text-muted d-block">Heart Rate</small>
-                                        <span class="fw-bold fs-6">{{ $latest->heart_rate ?? '—' }}</span>
-                                        <small class="text-muted d-block">bpm</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 col-6">
-                                    <div class="border rounded p-2 text-center">
-                                        <small class="text-muted d-block">Temperature</small>
-                                        <span class="fw-bold fs-6">{{ $latest->temperature ?? '—' }}</span>
-                                        <small class="text-muted d-block">°C</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 col-6">
-                                    <div class="border rounded p-2 text-center">
-                                        <small class="text-muted d-block">SpO2</small>
-                                        <span class="fw-bold fs-6">{{ $latest->spo2 ?? '—' }}</span>
-                                        <small class="text-muted d-block">%</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 col-6">
-                                    <div class="border rounded p-2 text-center">
-                                        <small class="text-muted d-block">Resp. Rate</small>
-                                        <span class="fw-bold fs-6">{{ $latest->respiratory_rate ?? '—' }}</span>
-                                        <small class="text-muted d-block">/min</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 col-6">
-                                    <div class="border rounded p-2 text-center">
-                                        <small class="text-muted d-block">Weight</small>
-                                        <span class="fw-bold fs-6">{{ $latest->weight ?? '—' }}</span>
-                                        <small class="text-muted d-block">kg</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 col-6">
-                                    <div class="border rounded p-2 text-center">
-                                        <small class="text-muted d-block">Height</small>
-                                        <span class="fw-bold fs-6">{{ $latest->height ?? '—' }}</span>
-                                        <small class="text-muted d-block">cm</small>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 col-6">
-                                    <div class="border rounded p-2 text-center">
-                                        <small class="text-muted d-block">BMI</small>
-                                        <span class="fw-bold fs-6">{{ $latest->bmi ?? '—' }}</span>
-                                        <small class="d-block {{ $latest->bmi ? ($latest->bmi < 18.5 ? 'text-warning' : ($latest->bmi < 25 ? 'text-success' : ($latest->bmi < 30 ? 'text-warning' : 'text-danger'))) : 'text-muted' }}">
-                                            @if($latest->bmi)
-                                                @if($latest->bmi < 18.5) Underweight
-                                                @elseif($latest->bmi < 25) Normal
-                                                @elseif($latest->bmi < 30) Overweight
-                                                @else Obese
-                                                @endif
-                                            @else
-                                                kg/m²
-                                            @endif
-                                        </small>
-                                    </div>
-                                </div>
-                            </div>
-                            @if($latest->blood_sugar)
-                            <div class="mb-3">
-                                <small class="text-muted">Blood Sugar:</small> <span class="fw-medium">{{ $latest->blood_sugar }} mmol/L</span>
-                            </div>
-                            @endif
-                            @if($latest->notes)
-                            <div class="bg-light rounded p-2 mb-3">
-                                <small class="text-muted d-block">Notes:</small>
-                                {{ $latest->notes }}
-                            </div>
-                            @endif
-                            <small class="text-muted">Recorded by {{ $latest->recordedBy?->full_name }} at {{ $latest->recorded_at->format('d M Y, h:i A') }}</small>
-
-                            @if($vitals->count() > 1)
-                            <hr>
-                            <h6 class="small fw-bold text-muted">Previous Readings</h6>
-                            @foreach($vitals->skip(1) as $v)
-                            <div class="d-flex justify-content-between align-items-center border-bottom py-2">
-                                <div>
-                                    <small>BP: {{ $v->blood_pressure ?? '—' }} | HR: {{ $v->heart_rate ?? '—' }} | T: {{ $v->temperature ?? '—' }}°C | SpO2: {{ $v->spo2 ?? '—' }}%{{ $v->bmi ? ' | BMI: ' . $v->bmi : '' }}</small>
-                                </div>
-                                <small class="text-muted">{{ $v->recorded_at->format('d M, h:i A') }}</small>
-                            </div>
-                            @endforeach
-                            @endif
-                        @else
-                            <div class="text-center text-muted py-4">
-                                <i class="ti ti-heartbeat fs-1 d-block mb-2"></i>
-                                No vitals recorded for this visit yet.
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-            {{-- ============================================================ --}}
-            {{-- COMPLAINTS TAB --}}
-            {{-- ============================================================ --}}
-            <div class="tab-pane fade" id="complaints-section">
+            {{-- ========================= COMPLAINTS ========================= --}}
+            <div class="tab-pane fade show active" id="complaints-section" role="tabpanel">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="fw-bold mb-0"><i class="ti ti-message-report me-1"></i>Complaints</h6>
                         @can('consultations.create')
                         <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addComplaintForm">
-                            <i class="ti ti-plus me-1"></i>Add Complaint
+                            <i class="ti ti-plus me-1"></i>Add
                         </button>
                         @endcan
                     </div>
                     <div class="card-body">
-                        <!-- Add Complaint Form -->
                         @can('consultations.create')
                         <div class="collapse mb-3" id="addComplaintForm">
                             <div class="card card-body bg-light">
-                                <form method="POST" action="{{ route('admin.consultations.complaints.store', $visit) }}">
+                                <form data-ajax-form="complaints" action="{{ route('admin.consultations.complaints.store', $visit) }}" method="POST">
                                     @csrf
                                     <div class="row g-2">
-                                        <div class="col-md-12">
+                                        <div class="col-12">
                                             <label class="form-label small">Description <span class="text-danger">*</span></label>
-                                            <textarea name="description" class="form-control" rows="2" required placeholder="Describe the complaint..."></textarea>
+                                            <input type="text" name="description" id="complaintDescInput" class="form-control" required placeholder="Type to search common complaints..." autocomplete="off" list="complaintSuggestions">
+                                            <datalist id="complaintSuggestions"></datalist>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-6">
                                             <label class="form-label small">Duration</label>
-                                            <input type="text" name="duration" class="form-control" placeholder="e.g., 3 days, 1 week">
+                                            <input type="text" name="duration" class="form-control" placeholder="e.g., 3 days">
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-6">
                                             <label class="form-label small">Severity</label>
                                             <select name="severity" class="form-select">
                                                 <option value="">-- Select --</option>
@@ -349,180 +332,191 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="mt-2">
+                                    <div class="mt-2 d-flex gap-2">
                                         <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-check me-1"></i>Save</button>
+                                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#addComplaintForm">Cancel</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                         @endcan
 
-                        <!-- Complaints List -->
-                        @if($record && $record->complaints->count() > 0)
-                            @foreach($record->complaints as $complaint)
-                            <div class="ehr-item severity-{{ $complaint->severity ?? 'mild' }}">
+                        <div id="complaints-list">
+                            @forelse($record?->complaints ?? [] as $complaint)
+                            <div class="ehr-item severity-{{ $complaint->severity ?? 'mild' }}" id="complaint-{{ $complaint->id }}">
                                 <div class="d-flex justify-content-between">
                                     <div>
                                         <p class="mb-1">{{ $complaint->description }}</p>
                                         <small class="text-muted">
                                             @if($complaint->duration) Duration: {{ $complaint->duration }} &middot; @endif
-                                            @if($complaint->severity) Severity: <span class="badge bg-{{ $complaint->severity === 'severe' ? 'danger' : ($complaint->severity === 'moderate' ? 'warning' : 'info') }}">{{ ucfirst($complaint->severity) }}</span> @endif
+                                            @if($complaint->severity)
+                                                Severity: <span class="badge bg-{{ $complaint->severity === 'severe' ? 'danger' : ($complaint->severity === 'moderate' ? 'warning' : 'info') }}">{{ ucfirst($complaint->severity) }}</span>
+                                            @endif
                                         </small>
                                     </div>
                                     @can('consultations.create')
-                                    <form method="POST" action="{{ route('admin.consultations.complaints.destroy', $complaint) }}" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this complaint?')">
-                                            <i class="ti ti-trash"></i>
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                            data-url="{{ route('admin.consultations.complaints.destroy', $complaint) }}"
+                                            data-target="#complaint-{{ $complaint->id }}"
+                                            data-badge="badge-complaints"
+                                            data-confirm="Remove this complaint?">
+                                        <i class="ti ti-trash"></i>
+                                    </button>
                                     @endcan
                                 </div>
                             </div>
-                            @endforeach
-                        @else
-                            <div class="text-center text-muted py-4">
-                                <i class="ti ti-message-report fs-1 d-block mb-2"></i>
-                                No complaints recorded yet.
+                            @empty
+                            <div class="text-center text-muted py-4" id="complaints-empty">
+                                <i class="ti ti-message-report fs-1 d-block mb-2"></i>No complaints recorded yet.
                             </div>
-                        @endif
+                            @endforelse
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {{-- ============================================================ --}}
-            {{-- DIAGNOSES TAB --}}
-            {{-- ============================================================ --}}
-            <div class="tab-pane fade" id="diagnoses-section">
+            {{-- ========================= DIAGNOSES ========================= --}}
+            <div class="tab-pane fade" id="diagnoses-section" role="tabpanel">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="fw-bold mb-0"><i class="ti ti-report-medical me-1"></i>Diagnoses</h6>
                         @can('consultations.create')
                         <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addDiagnosisForm">
-                            <i class="ti ti-plus me-1"></i>Add Diagnosis
+                            <i class="ti ti-plus me-1"></i>Add
                         </button>
                         @endcan
                     </div>
                     <div class="card-body">
-                        <!-- Add Diagnosis Form -->
                         @can('consultations.create')
                         <div class="collapse mb-3" id="addDiagnosisForm">
                             <div class="card card-body bg-light">
-                                <form method="POST" action="{{ route('admin.consultations.diagnoses.store', $visit) }}">
+                                <form data-ajax-form="diagnoses" action="{{ route('admin.consultations.diagnoses.store', $visit) }}" method="POST">
                                     @csrf
                                     <div class="row g-2">
-                                        <div class="col-md-12">
-                                            <label class="form-label small">ICD-10 Code <small class="text-muted">(Search by code or description)</small></label>
+                                        <div class="col-12">
+                                            <label class="form-label small">ICD-10 <small class="text-muted">(optional search)</small></label>
                                             <input type="hidden" name="icd_code_id" id="icd_code_id">
                                             <select id="icd_code_select" class="form-select" style="width:100%">
                                                 <option value="">Type to search ICD-10 codes...</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-12">
+                                        <div class="col-12">
                                             <label class="form-label small">Description <span class="text-danger">*</span></label>
-                                            <textarea name="description" id="diagnosis_description" class="form-control" rows="2" required placeholder="Diagnosis description..."></textarea>
+                                            <input type="text" name="description" id="diagnosis_description" class="form-control" required placeholder="Type diagnosis or search ICD-10 above..." autocomplete="off" list="diagnosisSuggestions">
+                                            <datalist id="diagnosisSuggestions"></datalist>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-6">
                                             <label class="form-label small">ICD-10 Code (Manual)</label>
                                             <input type="text" name="icd_code" id="icd_code_manual" class="form-control" placeholder="e.g., J06.9">
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-6">
                                             <label class="form-label small">Type</label>
                                             <select name="type" class="form-select">
                                                 <option value="provisional">Provisional</option>
                                                 <option value="final">Final</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-4">
+                                        <div class="col-12">
                                             <label class="form-label small">Notes</label>
                                             <input type="text" name="notes" class="form-control" placeholder="Additional notes...">
                                         </div>
                                     </div>
-                                    <div class="mt-2">
+                                    <div class="mt-2 d-flex gap-2">
                                         <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-check me-1"></i>Save</button>
+                                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#addDiagnosisForm">Cancel</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                         @endcan
 
-                        <!-- Diagnoses List -->
-                        @if($record && $record->diagnoses->count() > 0)
-                            @foreach($record->diagnoses as $diagnosis)
-                            <div class="ehr-item">
-                                <div class="d-flex justify-content-between">
-                                    <div>
+                        <div id="diagnoses-list">
+                            @forelse($record?->diagnoses ?? [] as $diagnosis)
+                            <div class="ehr-item {{ $diagnosis->is_primary ? 'is-primary' : '' }}" id="diagnosis-{{ $diagnosis->id }}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
                                         <p class="mb-1">
                                             {{ $diagnosis->description }}
-                                            <span class="badge bg-{{ $diagnosis->type === 'final' ? 'success' : 'warning' }}">{{ ucfirst($diagnosis->type) }}</span>
+                                            <span class="badge bg-{{ $diagnosis->type === 'final' ? 'success' : 'warning' }} ms-1 diagnosis-type-badge" id="type-badge-{{ $diagnosis->id }}">{{ ucfirst($diagnosis->type) }}</span>
+                                            <span class="badge bg-warning text-dark ms-1 diagnosis-primary-badge primary-indicator {{ $diagnosis->is_primary ? '' : 'd-none' }}" id="primary-badge-{{ $diagnosis->id }}">
+                                                <i class="ti ti-star-filled me-1"></i>Primary
+                                            </span>
                                         </p>
                                         <small class="text-muted">
-                                            @if($diagnosis->icdCodeEntry) ICD-10: <code>{{ $diagnosis->icdCodeEntry->code }}</code> — {{ $diagnosis->icdCodeEntry->description }} &middot;
+                                            @if($diagnosis->icdCodeEntry) ICD-10: <code>{{ $diagnosis->icdCodeEntry->code }}</code> &middot;
                                             @elseif($diagnosis->icd_code) ICD-10: <code>{{ $diagnosis->icd_code }}</code> &middot; @endif
                                             @if($diagnosis->notes) {{ $diagnosis->notes }} @endif
                                         </small>
                                     </div>
                                     @can('consultations.create')
-                                    <form method="POST" action="{{ route('admin.consultations.diagnoses.destroy', $diagnosis) }}" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this diagnosis?')">
+                                    <div class="d-flex gap-1 ms-2 flex-shrink-0">
+                                        <button type="button" class="btn btn-xs btn-outline-secondary toggle-type-btn"
+                                                title="Toggle Provisional / Final"
+                                                data-id="{{ $diagnosis->id }}"
+                                                data-current="{{ $diagnosis->type }}"
+                                                data-url="{{ route('admin.consultations.diagnoses.update', $diagnosis) }}">
+                                            <i class="ti ti-pencil"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-xs btn-outline-warning set-primary-btn {{ $diagnosis->is_primary ? 'd-none' : '' }}"
+                                                title="Set as Primary diagnosis"
+                                                id="set-primary-{{ $diagnosis->id }}"
+                                                data-id="{{ $diagnosis->id }}"
+                                                data-url="{{ route('admin.consultations.diagnoses.primary', $diagnosis) }}">
+                                            <i class="ti ti-star"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                                data-url="{{ route('admin.consultations.diagnoses.destroy', $diagnosis) }}"
+                                                data-target="#diagnosis-{{ $diagnosis->id }}"
+                                                data-badge="badge-diagnoses"
+                                                data-confirm="Remove this diagnosis?">
                                             <i class="ti ti-trash"></i>
                                         </button>
-                                    </form>
+                                    </div>
                                     @endcan
                                 </div>
                             </div>
-                            @endforeach
-                        @else
-                            <div class="text-center text-muted py-4">
-                                <i class="ti ti-report-medical fs-1 d-block mb-2"></i>
-                                No diagnoses recorded yet.
+                            @empty
+                            <div class="text-center text-muted py-4" id="diagnoses-empty">
+                                <i class="ti ti-report-medical fs-1 d-block mb-2"></i>No diagnoses recorded yet.
                             </div>
-                        @endif
+                            @endforelse
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {{-- ============================================================ --}}
-            {{-- INVESTIGATIONS TAB --}}
-            {{-- ============================================================ --}}
-            <div class="tab-pane fade" id="investigations-section">
+            {{-- ========================= INVESTIGATIONS ========================= --}}
+            <div class="tab-pane fade" id="investigations-section" role="tabpanel">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="fw-bold mb-0"><i class="ti ti-test-pipe me-1"></i>Investigations</h6>
                         @can('consultations.create')
                         <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addInvestigationForm">
-                            <i class="ti ti-plus me-1"></i>Add Investigation
+                            <i class="ti ti-plus me-1"></i>Add
                         </button>
                         @endcan
                     </div>
                     <div class="card-body">
-                        <!-- Add Investigation Form -->
                         @can('consultations.create')
                         <div class="collapse mb-3" id="addInvestigationForm">
                             <div class="card card-body bg-light">
-                                <form method="POST" action="{{ route('admin.consultations.investigations.store', $visit) }}">
+                                <form data-ajax-form="investigations" action="{{ route('admin.consultations.investigations.store', $visit) }}" method="POST">
                                     @csrf
                                     <div class="row g-2">
-                                        <div class="col-md-4">
-                                            <label class="form-label small">Type <span class="text-danger">*</span></label>
-                                            <select name="investigation_type" class="form-select" required>
-                                                <option value="">-- Select --</option>
-                                                <option value="Blood Test">Blood Test</option>
-                                                <option value="Urine Test">Urine Test</option>
-                                                <option value="X-Ray">X-Ray</option>
-                                                <option value="Ultrasound">Ultrasound</option>
-                                                <option value="CT Scan">CT Scan</option>
-                                                <option value="MRI">MRI</option>
-                                                <option value="ECG">ECG</option>
-                                                <option value="Other">Other</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-8">
-                                            <label class="form-label small">Description <span class="text-danger">*</span></label>
-                                            <textarea name="description" class="form-control" rows="2" required placeholder="Investigation details..."></textarea>
+                                        <div class="col-md-6">
+                                            <label class="form-label small">Department <span class="text-danger">*</span></label>
+                                            @if($investigationDepts->isNotEmpty())
+                                                <select id="investigationDeptSelect" class="form-select" required onchange="loadInvestigationServices(this.value)">
+                                                    <option value="">-- Select Department --</option>
+                                                    @foreach($investigationDepts as $dept)
+                                                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            @else
+                                                <select id="investigationDeptSelect" class="form-select d-none"></select>
+                                                <input type="text" name="investigation_type" class="form-control" required placeholder="e.g., Blood Test, X-Ray...">
+                                                <small class="text-muted">No investigation departments configured.</small>
+                                            @endif
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label small">Urgency</label>
@@ -532,28 +526,36 @@
                                                 <option value="emergency">Emergency</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-6">
+                                        @if($investigationDepts->isNotEmpty())
+                                        <div class="col-12">
+                                            <label class="form-label small">Select Services <span class="text-danger">*</span></label>
+                                            <div id="investigationServicesContainer" class="border rounded p-2" style="min-height:50px;">
+                                                <span class="text-muted small">Select a department first to load services</span>
+                                            </div>
+                                        </div>
+                                        @endif
+                                        <div class="col-12">
                                             <label class="form-label small">Notes</label>
                                             <input type="text" name="notes" class="form-control" placeholder="Clinical notes...">
                                         </div>
                                     </div>
-                                    <div class="mt-2">
+                                    <div class="mt-2 d-flex gap-2">
                                         <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-check me-1"></i>Save</button>
+                                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#addInvestigationForm">Cancel</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                         @endcan
 
-                        <!-- Investigations List -->
-                        @if($record && $record->investigations->count() > 0)
-                            @foreach($record->investigations as $investigation)
-                            <div class="ehr-item">
+                        <div id="investigations-list">
+                            @forelse($record?->investigations ?? [] as $investigation)
+                            <div class="ehr-item" id="investigation-{{ $investigation->id }}">
                                 <div class="d-flex justify-content-between">
                                     <div>
                                         <p class="mb-1">
                                             <span class="badge bg-dark">{{ $investigation->investigation_type }}</span>
-                                            {{ $investigation->description }}
+                                            @if($investigation->description && $investigation->description !== $investigation->investigation_type) {{ $investigation->description }} @endif
                                         </p>
                                         <small class="text-muted">
                                             Urgency: <span class="badge bg-{{ $investigation->urgency === 'emergency' ? 'danger' : ($investigation->urgency === 'urgent' ? 'warning' : 'secondary') }}">{{ ucfirst($investigation->urgency) }}</span>
@@ -562,179 +564,42 @@
                                         </small>
                                     </div>
                                     @can('consultations.create')
-                                    <form method="POST" action="{{ route('admin.consultations.investigations.destroy', $investigation) }}" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this investigation?')">
-                                            <i class="ti ti-trash"></i>
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                            data-url="{{ route('admin.consultations.investigations.destroy', $investigation) }}"
+                                            data-target="#investigation-{{ $investigation->id }}"
+                                            data-badge="badge-investigations"
+                                            data-confirm="Remove this investigation?">
+                                        <i class="ti ti-trash"></i>
+                                    </button>
                                     @endcan
                                 </div>
                             </div>
-                            @endforeach
-                        @else
-                            <div class="text-center text-muted py-4">
-                                <i class="ti ti-test-pipe fs-1 d-block mb-2"></i>
-                                No investigations requested yet.
+                            @empty
+                            <div class="text-center text-muted py-4" id="investigations-empty">
+                                <i class="ti ti-test-pipe fs-1 d-block mb-2"></i>No investigations requested yet.
                             </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-
-            {{-- ============================================================ --}}
-            {{-- LAB REQUESTS TAB --}}
-            {{-- ============================================================ --}}
-            <div class="tab-pane fade" id="lab-section">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h6 class="fw-bold mb-0"><i class="ti ti-flask me-1"></i>Lab Requests</h6>
-                        @can('lab.requests.create')
-                        <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#sendToLabForm">
-                            <i class="ti ti-send me-1"></i>Send to Lab
-                        </button>
-                        @endcan
-                    </div>
-                    <div class="card-body">
-                        {{-- Send to Lab Form --}}
-                        @can('lab.requests.create')
-                        <div class="collapse mb-3" id="sendToLabForm">
-                            <div class="card card-body bg-light">
-                                <form method="POST" action="{{ route('admin.consultations.lab-request.store', $visit) }}">
-                                    @csrf
-                                    <div class="row g-2">
-                                        <div class="col-md-6">
-                                            <label class="form-label small">Test Category</label>
-                                            <select id="labCategorySelect" class="form-select" onchange="loadTestsByCategory(this.value)">
-                                                <option value="">-- Select Category --</option>
-                                                @foreach($labCategories as $cat)
-                                                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label class="form-label small">Urgency</label>
-                                            <select name="urgency" class="form-select">
-                                                <option value="routine">Routine</option>
-                                                <option value="urgent">Urgent</option>
-                                                <option value="emergency">Emergency</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-12">
-                                            <label class="form-label small">Select Tests <span class="text-danger">*</span></label>
-                                            <div id="labTestsContainer" class="border rounded p-2" style="min-height: 60px;">
-                                                <span class="text-muted small">Select a category first to load tests</span>
-                                            </div>
-                                        </div>
-                                        <div class="col-12">
-                                            <label class="form-label small">Clinical Information</label>
-                                            <textarea name="clinical_info" class="form-control" rows="2" placeholder="Relevant clinical notes for the lab..."></textarea>
-                                        </div>
-                                    </div>
-                                    <div class="mt-2">
-                                        <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-send me-1"></i>Submit Lab Request</button>
-                                    </div>
-                                </form>
-                            </div>
+                            @endforelse
                         </div>
-                        @endcan
-
-                        {{-- Existing Lab Requests --}}
-                        @if($labRequests->count() > 0)
-                            @foreach($labRequests as $labReq)
-                            <div class="ehr-item mb-3">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <p class="mb-1">
-                                            <a href="{{ route('admin.lab.requests.show', $labReq) }}" class="fw-medium text-primary">{{ $labReq->request_number }}</a>
-                                            <span class="badge bg-{{ $labReq->status_color }} ms-1">{{ $labReq->status_label }}</span>
-                                            <span class="badge bg-{{ $labReq->urgency_color }} ms-1">{{ ucfirst($labReq->urgency) }}</span>
-                                        </p>
-                                        <div class="d-flex flex-wrap gap-1 mb-1">
-                                            @foreach($labReq->items as $item)
-                                                <span class="badge bg-light text-dark border">
-                                                    {{ $item->labTest->name }}
-                                                    @if($item->result)
-                                                        <i class="ti ti-check text-success ms-1"></i>
-                                                        @if($item->result->is_abnormal)
-                                                            <i class="ti ti-alert-triangle text-danger ms-1"></i>
-                                                        @endif
-                                                    @endif
-                                                </span>
-                                            @endforeach
-                                        </div>
-                                        <small class="text-muted">
-                                            {{ $labReq->created_at->format('d M Y H:i') }}
-                                            &middot; Progress: {{ $labReq->completion_percentage }}%
-                                            @if($labReq->requestedBy)
-                                                &middot; By: {{ $labReq->requestedBy->name }}
-                                            @endif
-                                        </small>
-                                        {{-- Show results if completed --}}
-                                        @if($labReq->status === 'completed')
-                                        <div class="mt-2">
-                                            <table class="table table-sm table-bordered mb-0">
-                                                <thead class="table-light">
-                                                    <tr><th>Test</th><th>Result</th><th>Normal Range</th><th>Status</th></tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach($labReq->items as $item)
-                                                    @if($item->result)
-                                                    <tr class="{{ $item->result->is_abnormal ? 'table-danger' : '' }}">
-                                                        <td>{{ $item->labTest->name }}</td>
-                                                        <td class="{{ $item->result->is_abnormal ? 'text-danger fw-bold' : '' }}">{{ $item->result->result_value }}</td>
-                                                        <td><small>{{ $item->labTest->normal_range ?? '-' }} {{ $item->labTest->unit ?? '' }}</small></td>
-                                                        <td>
-                                                            @if($item->result->is_verified)
-                                                                <span class="badge bg-success">Verified</span>
-                                                            @else
-                                                                <span class="badge bg-warning">Unverified</span>
-                                                            @endif
-                                                        </td>
-                                                    </tr>
-                                                    @endif
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        @endif
-                                    </div>
-                                    <a href="{{ route('admin.lab.requests.show', $labReq) }}" class="btn btn-sm btn-outline-primary ms-2">
-                                        <i class="ti ti-eye"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            @endforeach
-                        @else
-                            <div class="text-center text-muted py-4">
-                                <i class="ti ti-flask fs-1 d-block mb-2"></i>
-                                No lab requests for this visit.
-                            </div>
-                        @endif
                     </div>
                 </div>
             </div>
 
-            {{-- ============================================================ --}}
-            {{-- TREATMENTS TAB --}}
-            {{-- ============================================================ --}}
-            <div class="tab-pane fade" id="treatments-section">
+            {{-- ========================= TREATMENTS ========================= --}}
+            <div class="tab-pane fade" id="treatments-section" role="tabpanel">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="fw-bold mb-0"><i class="ti ti-vaccine me-1"></i>Treatments</h6>
                         @can('consultations.create')
                         <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addTreatmentForm">
-                            <i class="ti ti-plus me-1"></i>Add Treatment
+                            <i class="ti ti-plus me-1"></i>Add
                         </button>
                         @endcan
                     </div>
                     <div class="card-body">
-                        <!-- Add Treatment Form -->
                         @can('consultations.create')
                         <div class="collapse mb-3" id="addTreatmentForm">
                             <div class="card card-body bg-light">
-                                <form method="POST" action="{{ route('admin.consultations.treatments.store', $visit) }}">
+                                <form data-ajax-form="treatments" action="{{ route('admin.consultations.treatments.store', $visit) }}" method="POST">
                                     @csrf
                                     <div class="row g-2">
                                         <div class="col-md-4">
@@ -752,18 +617,18 @@
                                             <textarea name="description" class="form-control" rows="2" required placeholder="Treatment details..."></textarea>
                                         </div>
                                     </div>
-                                    <div class="mt-2">
+                                    <div class="mt-2 d-flex gap-2">
                                         <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-check me-1"></i>Save</button>
+                                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#addTreatmentForm">Cancel</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
                         @endcan
 
-                        <!-- Treatments List -->
-                        @if($record && $record->treatments->count() > 0)
-                            @foreach($record->treatments as $treatment)
-                            <div class="ehr-item">
+                        <div id="treatments-list">
+                            @forelse($record?->treatments ?? [] as $treatment)
+                            <div class="ehr-item" id="treatment-{{ $treatment->id }}">
                                 <div class="d-flex justify-content-between">
                                     <div>
                                         <p class="mb-1">
@@ -772,42 +637,38 @@
                                         </p>
                                     </div>
                                     @can('consultations.create')
-                                    <form method="POST" action="{{ route('admin.consultations.treatments.destroy', $treatment) }}" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this treatment?')">
-                                            <i class="ti ti-trash"></i>
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                            data-url="{{ route('admin.consultations.treatments.destroy', $treatment) }}"
+                                            data-target="#treatment-{{ $treatment->id }}"
+                                            data-badge="badge-treatments"
+                                            data-confirm="Remove this treatment?">
+                                        <i class="ti ti-trash"></i>
+                                    </button>
                                     @endcan
                                 </div>
                             </div>
-                            @endforeach
-                        @else
-                            <div class="text-center text-muted py-4">
-                                <i class="ti ti-vaccine fs-1 d-block mb-2"></i>
-                                No treatments recorded yet.
+                            @empty
+                            <div class="text-center text-muted py-4" id="treatments-empty">
+                                <i class="ti ti-vaccine fs-1 d-block mb-2"></i>No treatments recorded yet.
                             </div>
-                        @endif
+                            @endforelse
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {{-- ============================================================ --}}
-            {{-- PRESCRIPTIONS TAB --}}
-            {{-- ============================================================ --}}
-            <div class="tab-pane fade" id="prescriptions-section">
+            {{-- ========================= PRESCRIPTIONS ========================= --}}
+            <div class="tab-pane fade" id="prescriptions-section" role="tabpanel">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="fw-bold mb-0"><i class="ti ti-prescription me-1"></i>Prescriptions</h6>
                         @can('prescriptions.create')
                         <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addPrescriptionForm">
-                            <i class="ti ti-plus me-1"></i>New Prescription
+                            <i class="ti ti-plus me-1"></i>New Rx
                         </button>
                         @endcan
                     </div>
                     <div class="card-body">
-                        <!-- Add Prescription Form -->
                         @can('prescriptions.create')
                         <div class="collapse mb-3" id="addPrescriptionForm">
                             <div class="card card-body bg-light">
@@ -822,22 +683,22 @@
                                                 </div>
                                                 <div class="col-md-2">
                                                     <label class="form-label small">Dosage <span class="text-danger">*</span></label>
-                                                    <input type="text" name="items[0][dosage]" class="form-control form-control-sm" required placeholder="e.g., 500mg">
+                                                    <input type="text" name="items[0][dosage]" class="form-control form-control-sm" required placeholder="500mg">
                                                 </div>
                                                 <div class="col-md-2">
-                                                    <label class="form-label small">Frequency <span class="text-danger">*</span></label>
+                                                    <label class="form-label small">Freq <span class="text-danger">*</span></label>
                                                     <select name="items[0][frequency]" class="form-select form-select-sm" required>
-                                                        <option value="OD">OD (Once daily)</option>
-                                                        <option value="BD">BD (Twice daily)</option>
-                                                        <option value="TDS" selected>TDS (Three times)</option>
-                                                        <option value="QDS">QDS (Four times)</option>
-                                                        <option value="STAT">STAT (Immediately)</option>
-                                                        <option value="PRN">PRN (As needed)</option>
+                                                        <option value="OD">OD</option>
+                                                        <option value="BD">BD</option>
+                                                        <option value="TDS" selected>TDS</option>
+                                                        <option value="QDS">QDS</option>
+                                                        <option value="STAT">STAT</option>
+                                                        <option value="PRN">PRN</option>
                                                     </select>
                                                 </div>
                                                 <div class="col-md-2">
                                                     <label class="form-label small">Duration <span class="text-danger">*</span></label>
-                                                    <input type="text" name="items[0][duration]" class="form-control form-control-sm" required placeholder="e.g., 5 days">
+                                                    <input type="text" name="items[0][duration]" class="form-control form-control-sm" required placeholder="5 days">
                                                 </div>
                                                 <div class="col-md-2">
                                                     <label class="form-label small">Qty <span class="text-danger">*</span></label>
@@ -851,8 +712,6 @@
                                                         <option value="IM">IM</option>
                                                         <option value="SC">SC</option>
                                                         <option value="topical">Topical</option>
-                                                        <option value="rectal">Rectal</option>
-                                                        <option value="sublingual">Sublingual</option>
                                                         <option value="inhaled">Inhaled</option>
                                                     </select>
                                                 </div>
@@ -863,15 +722,14 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="d-flex justify-content-between mt-2">
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
                                         <button type="button" class="btn btn-outline-secondary btn-sm" id="addItemBtn">
                                             <i class="ti ti-plus me-1"></i>Add Drug
                                         </button>
-                                        <div>
-                                            <label class="form-label small d-block">Rx Notes</label>
-                                            <input type="text" name="notes" class="form-control form-control-sm d-inline-block" style="width: 250px" placeholder="Prescription notes...">
-                                            <button type="submit" class="btn btn-primary btn-sm ms-2">
-                                                <i class="ti ti-check me-1"></i>Create Prescription
+                                        <div class="d-flex gap-2">
+                                            <input type="text" name="notes" class="form-control form-control-sm" style="width:170px" placeholder="Rx Notes...">
+                                            <button type="submit" class="btn btn-primary btn-sm" onclick="saveTabBeforeSubmit('prescriptions-section')">
+                                                <i class="ti ti-check me-1"></i>Create Rx
                                             </button>
                                         </div>
                                     </div>
@@ -880,29 +738,32 @@
                         </div>
                         @endcan
 
-                        <!-- Prescriptions List -->
-                        @if($record && $record->prescriptions->count() > 0)
-                            @foreach($record->prescriptions as $prescription)
-                            <div class="border rounded p-3 mb-3">
+                        <div id="prescriptions-list">
+                            @forelse($record?->prescriptions ?? [] as $prescription)
+                            <div class="border rounded p-3 mb-3" id="prescription-{{ $prescription->id }}">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <div>
                                         <span class="fw-bold">{{ $prescription->prescription_number }}</span>
                                         <span class="badge bg-{{ $prescription->status->color() }} ms-2">{{ $prescription->status->label() }}</span>
                                     </div>
-                                    <small class="text-muted">{{ $prescription->created_at->format('d M Y, h:i A') }}</small>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <small class="text-muted">{{ $prescription->created_at->format('d M Y, h:i A') }}</small>
+                                        @can('prescriptions.create')
+                                        @if(in_array($prescription->status->value, ['pending', 'active']))
+                                        <form method="POST" action="{{ route('admin.consultations.prescriptions.destroy', $prescription) }}"
+                                              onsubmit="return confirm('Cancel &amp; delete this prescription?') &amp;&amp; saveTabBeforeSubmit('prescriptions-section')">
+                                            @csrf @method('DELETE')
+                                            <button type="submit" class="btn btn-xs btn-outline-danger" title="Delete prescription">
+                                                <i class="ti ti-trash"></i>
+                                            </button>
+                                        </form>
+                                        @endif
+                                        @endcan
+                                    </div>
                                 </div>
                                 <div class="table-responsive">
                                     <table class="table table-sm table-borderless mb-0">
-                                        <thead>
-                                            <tr class="text-muted small">
-                                                <th>Drug</th>
-                                                <th>Dosage</th>
-                                                <th>Frequency</th>
-                                                <th>Duration</th>
-                                                <th>Qty</th>
-                                                <th>Route</th>
-                                            </tr>
-                                        </thead>
+                                        <thead><tr class="text-muted small"><th>Drug</th><th>Dosage</th><th>Freq</th><th>Duration</th><th>Qty</th><th>Route</th></tr></thead>
                                         <tbody>
                                             @foreach($prescription->items as $item)
                                             <tr>
@@ -917,25 +778,20 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                @if($prescription->notes)
-                                <small class="text-muted mt-1 d-block">Notes: {{ $prescription->notes }}</small>
-                                @endif
+                                @if($prescription->notes) <small class="text-muted">Notes: {{ $prescription->notes }}</small> @endif
                             </div>
-                            @endforeach
-                        @else
-                            <div class="text-center text-muted py-4">
-                                <i class="ti ti-prescription fs-1 d-block mb-2"></i>
-                                No prescriptions created yet.
+                            @empty
+                            <div class="text-center text-muted py-4" id="prescriptions-empty">
+                                <i class="ti ti-prescription fs-1 d-block mb-2"></i>No prescriptions created yet.
                             </div>
-                        @endif
+                            @endforelse
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {{-- ============================================================ --}}
-            {{-- HISTORY TAB --}}
-            {{-- ============================================================ --}}
-            <div class="tab-pane fade" id="history-section">
+            {{-- ========================= HISTORY ========================= --}}
+            <div class="tab-pane fade" id="history-section" role="tabpanel">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="fw-bold mb-0"><i class="ti ti-history me-1"></i>Medical History</h6>
@@ -947,11 +803,9 @@
                         @if(count($history['records']) > 0)
                             @foreach($history['records'] as $pastRecord)
                             <div class="border rounded p-3 mb-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <div>
-                                        <span class="fw-bold">{{ $pastRecord->visit->visit_number ?? 'Unknown' }}</span>
-                                        <small class="text-muted ms-2">{{ $pastRecord->created_at->format('d M Y') }}</small>
-                                    </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="fw-bold">{{ $pastRecord->visit?->visit_number ?? 'Unknown' }}</span>
+                                    <small class="text-muted">{{ $pastRecord->created_at->format('d M Y') }}</small>
                                 </div>
                                 @if($pastRecord->complaints->count())
                                 <div class="mb-2">
@@ -962,7 +816,7 @@
                                 </div>
                                 @endif
                                 @if($pastRecord->diagnoses->count())
-                                <div class="mb-2">
+                                <div>
                                     <small class="text-muted fw-bold">Diagnoses:</small>
                                     @foreach($pastRecord->diagnoses as $d)
                                         <span class="badge bg-info-subtle text-info">{{ Str::limit($d->description, 50) }}</span>
@@ -973,25 +827,20 @@
                             @endforeach
                             @if($history['total'] > 10)
                             <div class="text-center">
-                                <a href="{{ route('admin.consultations.history', $visit) }}" class="btn btn-outline-primary btn-sm">
-                                    View All {{ $history['total'] }} Records
-                                </a>
+                                <a href="{{ route('admin.consultations.history', $visit) }}" class="btn btn-outline-primary btn-sm">View All {{ $history['total'] }} Records</a>
                             </div>
                             @endif
                         @else
                             <div class="text-center text-muted py-4">
-                                <i class="ti ti-history fs-1 d-block mb-2"></i>
-                                No previous medical history found.
+                                <i class="ti ti-history fs-1 d-block mb-2"></i>No previous medical history found.
                             </div>
                         @endif
                     </div>
                 </div>
             </div>
 
-            {{-- ============================================================ --}}
-            {{-- PATTERNS TAB --}}
-            {{-- ============================================================ --}}
-            <div class="tab-pane fade" id="patterns-section">
+            {{-- ========================= PATTERNS ========================= --}}
+            <div class="tab-pane fade" id="patterns-section" role="tabpanel">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="fw-bold mb-0"><i class="ti ti-template me-1"></i>Medical Patterns</h6>
@@ -1000,26 +849,18 @@
                         </a>
                     </div>
                     <div class="card-body">
-                        <!-- Pattern Search -->
                         <div class="mb-3">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="ti ti-search"></i></span>
-                                <input type="text" id="patternSearchInput" class="form-control" placeholder="Type a complaint to find matching patterns..." minlength="3">
-                                <button type="button" class="btn btn-primary" id="patternSearchBtn">
-                                    <i class="ti ti-search me-1"></i>Search
-                                </button>
+                                <input type="text" id="patternSearchInput" class="form-control" placeholder="Search patterns by complaint..." minlength="3">
+                                <button type="button" class="btn btn-primary" id="patternSearchBtn">Search</button>
                             </div>
-                            <small class="text-muted">Enter at least 3 characters to search for patterns by complaint or name.</small>
                         </div>
-
-                        <!-- Search Results -->
                         <div id="patternSearchResults" class="mb-3" style="display:none;"></div>
-
-                        <!-- Frequent Patterns -->
                         <h6 class="fw-bold small text-muted mb-2"><i class="ti ti-flame me-1"></i>Frequently Used</h6>
                         @if($patterns->count() > 0)
                             @foreach($patterns as $pattern)
-                            <div class="border rounded p-3 mb-2 pattern-card">
+                            <div class="border rounded p-3 mb-2">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <h6 class="fw-bold mb-1">{{ $pattern->name }}</h6>
@@ -1030,10 +871,7 @@
                                                 </span>
                                             @endforeach
                                         </div>
-                                        <small class="text-muted">
-                                            @if($pattern->is_system) <span class="badge bg-primary-subtle text-primary">System</span> @else Personal @endif
-                                            &middot; Used {{ $pattern->usage_count }} times
-                                        </small>
+                                        <small class="text-muted">Used {{ $pattern->usage_count }} times</small>
                                     </div>
                                     @can('consultations.create')
                                     <button type="button" class="btn btn-sm btn-success apply-pattern-btn"
@@ -1046,8 +884,7 @@
                             @endforeach
                         @else
                             <div class="text-center text-muted py-4">
-                                <i class="ti ti-template fs-1 d-block mb-2"></i>
-                                No patterns available yet.
+                                <i class="ti ti-template fs-1 d-block mb-2"></i>No patterns available yet.
                                 <br><a href="{{ route('admin.patterns.create') }}">Create your first pattern</a>
                             </div>
                         @endif
@@ -1055,13 +892,11 @@
                 </div>
             </div>
 
-            {{-- ============================================================ --}}
-            {{-- TASKS TAB --}}
-            {{-- ============================================================ --}}
-            <div class="tab-pane fade" id="tasks-section">
+            {{-- ========================= TASKS ========================= --}}
+            <div class="tab-pane fade" id="tasks-section" role="tabpanel">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h6 class="fw-bold mb-0"><i class="ti ti-checklist me-1"></i>Consultation Tasks</h6>
+                        <h6 class="fw-bold mb-0"><i class="ti ti-checklist me-1"></i>Tasks</h6>
                         @can('consultations.create')
                         <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
                             <i class="ti ti-plus me-1"></i>Add Task
@@ -1070,10 +905,10 @@
                     </div>
                     <div class="card-body">
                         @if($record && $record->tasks && $record->tasks->count() > 0)
-                            @foreach($record->tasks->sortBy('completed_at')->sortBy(fn($t) => $t->status === 'completed' ? 1 : 0) as $task)
+                            @foreach($record->tasks->sortBy(fn($t) => $t->completed_at ? 1 : 0) as $task)
                             <div class="d-flex align-items-start gap-2 mb-3 p-2 border rounded {{ $task->completed_at ? 'bg-light' : '' }}">
                                 @can('consultations.create')
-                                <form method="POST" action="{{ route('admin.consultations.tasks.toggle', $task) }}">
+                                <form method="POST" action="{{ route('admin.consultations.tasks.toggle', $task) }}" onsubmit="saveTabBeforeSubmit('tasks-section')">
                                     @csrf @method('PATCH')
                                     <button type="submit" class="btn btn-sm {{ $task->completed_at ? 'btn-success' : 'btn-outline-secondary' }} rounded-circle p-1" style="width:28px;height:28px;" title="{{ $task->completed_at ? 'Mark incomplete' : 'Mark complete' }}">
                                         <i class="ti ti-check fs-14"></i>
@@ -1081,28 +916,21 @@
                                 </form>
                                 @endcan
                                 <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                            <span class="fw-medium {{ $task->completed_at ? 'text-decoration-line-through text-muted' : '' }}">{{ $task->title }}</span>
-                                            @if($task->priority !== 'medium')
-                                                <span class="badge badge-soft-{{ $task->priority === 'high' ? 'danger' : 'info' }} ms-1">{{ ucfirst($task->priority) }}</span>
-                                            @endif
-                                        </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="fw-medium {{ $task->completed_at ? 'text-decoration-line-through text-muted' : '' }}">{{ $task->title }}</span>
                                         @can('consultations.create')
-                                        <form method="POST" action="{{ route('admin.consultations.tasks.destroy', $task) }}" class="d-inline" onsubmit="return confirm('Delete this task?')">
+                                        <form method="POST" action="{{ route('admin.consultations.tasks.destroy', $task) }}" class="d-inline" onsubmit="return confirm('Delete this task?') && saveTabBeforeSubmit('tasks-section')">
                                             @csrf @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger p-1" style="width:24px;height:24px;"><i class="ti ti-x fs-12"></i></button>
+                                            <button type="submit" class="btn btn-xs btn-outline-danger"><i class="ti ti-x"></i></button>
                                         </form>
                                         @endcan
                                     </div>
-                                    @if($task->description)
-                                        <small class="text-muted">{{ $task->description }}</small>
-                                    @endif
+                                    @if($task->description) <small class="text-muted">{{ $task->description }}</small> @endif
                                     <div class="mt-1">
                                         <small class="text-muted">
-                                            @if($task->assignedUser) Assigned to: {{ $task->assignedUser->full_name }} @endif
+                                            @if($task->assignedUser) Assigned: {{ $task->assignedUser->full_name }} @endif
                                             @if($task->due_date) &middot; Due: {{ $task->due_date->format('d M Y') }} @endif
-                                            @if($task->completed_at) &middot; Completed: {{ $task->completed_at->format('d M Y H:i') }} @endif
+                                            @if($task->completed_at) &middot; Done: {{ $task->completed_at->format('d M Y H:i') }} @endif
                                         </small>
                                     </div>
                                 </div>
@@ -1110,8 +938,7 @@
                             @endforeach
                         @else
                             <div class="text-center text-muted py-4">
-                                <i class="ti ti-checklist fs-1 d-block mb-2"></i>
-                                No tasks for this consultation yet.
+                                <i class="ti ti-checklist fs-1 d-block mb-2"></i>No tasks for this consultation yet.
                             </div>
                         @endif
                     </div>
@@ -1120,14 +947,82 @@
 
         </div>
     </div>
+
+    {{-- =================== RIGHT PANEL — PREVIOUS VISITS =================== --}}
+    <div class="col-lg-3">
+        <div class="card">
+            <div class="card-header py-2">
+                <h6 class="fw-bold mb-0 small"><i class="ti ti-clock-history me-1"></i>Previous Visits
+                    @if($history['total'] > 0) <span class="badge bg-secondary-subtle text-secondary ms-1">{{ $history['total'] }}</span> @endif
+                </h6>
+            </div>
+            <div class="card-body p-2" style="max-height:600px;overflow-y:auto;">
+                @if(count($history['records']) > 0)
+                    @foreach($history['records'] as $index => $pastRecord)
+                    <div class="prev-visit-card border rounded p-2 mb-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fw-bold small">{{ $pastRecord->visit?->visit_number ?? 'N/A' }}</div>
+                                <small class="text-muted d-block">{{ $pastRecord->created_at->format('d M Y') }}</small>
+                                @if($pastRecord->visit?->assignedDoctor)
+                                    <small class="text-muted d-block">Dr. {{ Str::limit($pastRecord->visit->assignedDoctor->full_name, 18) }}</small>
+                                @endif
+                                <small class="text-muted d-block">
+                                    {{ $pastRecord->complaints->count() }} complaint(s) &middot; {{ $pastRecord->diagnoses->count() }} dx
+                                </small>
+                            </div>
+                            <button type="button" class="btn btn-xs btn-outline-primary flex-shrink-0"
+                                    onclick="previewVisit({{ $index }})">
+                                <i class="ti ti-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    @endforeach
+                    @if($history['total'] > 10)
+                    <div class="text-center mt-1">
+                        <a href="{{ route('admin.consultations.history', $visit) }}" class="btn btn-sm btn-outline-secondary w-100">
+                            + {{ $history['total'] - 10 }} more visits
+                        </a>
+                    </div>
+                    @endif
+                @else
+                    <div class="text-center text-muted py-3">
+                        <i class="ti ti-clock fs-3 d-block mb-1"></i>
+                        <small>No previous visits</small>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </div>
+
+</div>{{-- end main row --}}
+
+{{-- ============================================================ --}}
+{{-- VISIT PREVIEW MODAL --}}
+{{-- ============================================================ --}}
+<div class="modal fade" id="visitPreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ti ti-clock-history me-2"></i>Visit Summary</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="visitPreviewContent"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
 </div>
 
-{{-- Add Task Modal --}}
+{{-- ============================================================ --}}
+{{-- ADD TASK MODAL --}}
+{{-- ============================================================ --}}
 @can('consultations.create')
 <div class="modal fade" id="addTaskModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ route('admin.consultations.tasks.store', $visit) }}">
+            <form method="POST" action="{{ route('admin.consultations.tasks.store', $visit) }}" onsubmit="saveTabBeforeSubmit('tasks-section')">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="ti ti-checklist me-2"></i>Add Task</h5>
@@ -1140,10 +1035,10 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Description</label>
-                        <textarea name="description" class="form-control" rows="2" placeholder="Additional details..."></textarea>
+                        <textarea name="description" class="form-control" rows="2"></textarea>
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-6 mb-3">
                             <label class="form-label">Priority</label>
                             <select name="priority" class="form-select">
                                 <option value="low">Low</option>
@@ -1151,7 +1046,7 @@
                                 <option value="high">High</option>
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-6 mb-3">
                             <label class="form-label">Due Date</label>
                             <input type="date" name="due_date" class="form-control">
                         </div>
@@ -1178,7 +1073,9 @@
 </div>
 @endcan
 
-<!-- Save as Pattern Modal -->
+{{-- ============================================================ --}}
+{{-- SAVE AS PATTERN MODAL --}}
+{{-- ============================================================ --}}
 @can('consultations.create')
 <div class="modal fade" id="savePatternModal" tabindex="-1">
     <div class="modal-dialog">
@@ -1190,10 +1087,9 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted small">Save the current consultation data (complaints, diagnoses, treatments, prescriptions) as a reusable pattern.</p>
                     <div class="mb-3">
                         <label class="form-label">Pattern Name <span class="text-danger">*</span></label>
-                        <input type="text" name="name" class="form-control" required placeholder="e.g., Common Cold, Malaria Uncomplicated">
+                        <input type="text" name="name" class="form-control" required placeholder="e.g., Common Cold">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Scope</label>
@@ -1213,9 +1109,9 @@
 </div>
 @endcan
 
-{{-- ================================================================ --}}
+{{-- ============================================================ --}}
 {{-- REFERRAL MODAL --}}
-{{-- ================================================================ --}}
+{{-- ============================================================ --}}
 @if($visit->status === \App\Enums\VisitStatus::CONSULTING)
 <div class="modal fade" id="referralModal" tabindex="-1">
     <div class="modal-dialog">
@@ -1243,16 +1139,11 @@
                                 <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                             @endforeach
                         </select>
-                        @if($referralDepts->isEmpty())
-                            <div class="text-muted small mt-1">All available departments have already been visited in this encounter.</div>
-                        @endif
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Reason / Notes</label>
                         <textarea name="notes" class="form-control" rows="3" placeholder="Referral reason..."></textarea>
                     </div>
-
-                    {{-- Department history so far --}}
                     @if($visit->departmentHistory->isNotEmpty())
                         <div class="alert alert-info py-2 small">
                             <strong>Department History:</strong><br>
@@ -1275,9 +1166,6 @@
     </div>
 </div>
 
-{{-- ================================================================ --}}
-{{-- INVESTIGATION MODAL --}}
-{{-- ================================================================ --}}
 <div class="modal fade" id="investigationModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -1289,25 +1177,24 @@
                 </div>
                 <div class="modal-body">
                     @php
-                        $investigationDepts = \App\Models\Department::active()
+                        $sendInvestDepts = \App\Models\Department::active()
                             ->whereIn('type', ['investigation', 'radiology'])
                             ->orderBy('name')->get();
-                        // Fallback: all departments
-                        if ($investigationDepts->isEmpty()) {
-                            $investigationDepts = \App\Models\Department::active()->orderBy('name')->get();
+                        if ($sendInvestDepts->isEmpty()) {
+                            $sendInvestDepts = \App\Models\Department::active()->orderBy('name')->get();
                         }
                     @endphp
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Investigation Department <span class="text-danger">*</span></label>
                         <select name="department_id" class="form-select" required>
                             <option value="">— Select department —</option>
-                            @foreach($investigationDepts as $dept)
+                            @foreach($sendInvestDepts as $dept)
                                 <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Notes / Instructions</label>
+                        <label class="form-label">Notes</label>
                         <textarea name="notes" class="form-control" rows="3" placeholder="Investigation notes..."></textarea>
                     </div>
                 </div>
@@ -1323,212 +1210,569 @@
 </div>
 @endif
 
+{{-- ============================================================ --}}
+{{-- VISIT HISTORY JSON + JS CONFIG --}}
+{{-- ============================================================ --}}
+@php
+$visitHistoryJson = $history['records']->map(function($r) {
+    return [
+        'visit_number'   => $r->visit?->visit_number ?? 'N/A',
+        'date'           => $r->created_at->format('d M Y'),
+        'doctor'         => $r->visit?->assignedDoctor?->full_name ?? null,
+        'complaints'     => $r->complaints->map(function($c) { return $c->description; })->values()->all(),
+        'diagnoses'      => $r->diagnoses->map(function($d) {
+            return [
+                'description' => $d->description,
+                'type'        => $d->type,
+                'is_primary'  => $d->is_primary ?? false,
+                'icd_code'    => $d->icd_code,
+            ];
+        })->values()->all(),
+        'investigations' => $r->investigations->map(function($i) {
+            return [
+                'type'        => $i->investigation_type,
+                'description' => $i->description,
+                'urgency'     => $i->urgency,
+            ];
+        })->values()->all(),
+        'treatments'     => $r->treatments->map(function($t) {
+            return [
+                'type'        => $t->type,
+                'description' => $t->description,
+            ];
+        })->values()->all(),
+    ];
+})->values();
+@endphp
+<script>
+var visitHistoryData = @json($visitHistoryJson);
+
+var csrfToken      = '{{ csrf_token() }}';
+var tabStorageKey  = 'consult_tab_{{ $visit->id }}';
+var destroyUrls    = {
+    complaint:     '{{ url("admin/consultations/complaints") }}',
+    diagnosis:     '{{ url("admin/consultations/diagnoses") }}',
+    investigation: '{{ url("admin/consultations/investigations") }}',
+    treatment:     '{{ url("admin/consultations/treatments") }}',
+};
+var diagnosisBaseUrl  = '{{ url("admin/consultations/diagnoses") }}';
+var deptServicesBase  = '{{ url("admin/departments") }}';
+var prescriptionDestroyBase = '{{ url("admin/consultations/prescriptions") }}';}
+</script>
+
 @endsection
 
 @push('scripts')
 <script>
-    // Dynamic prescription item adding
-    let itemIndex = 1;
-    document.getElementById('addItemBtn')?.addEventListener('click', function() {
-        const container = document.getElementById('prescriptionItems');
-        const template = container.querySelector('.prescription-item').cloneNode(true);
-
-        // Update all input names
-        template.querySelectorAll('[name]').forEach(function(input) {
-            input.name = input.name.replace(/items\[\d+\]/, 'items[' + itemIndex + ']');
-            if (input.tagName === 'INPUT') input.value = input.type === 'number' ? '1' : '';
-        });
-
-        // Add remove button
-        const removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.className = 'btn btn-sm btn-outline-danger position-absolute top-0 end-0 m-1';
-        removeBtn.innerHTML = '<i class="ti ti-x"></i>';
-        removeBtn.onclick = function() { template.remove(); };
-        template.style.position = 'relative';
-        template.appendChild(removeBtn);
-
-        container.appendChild(template);
-        itemIndex++;
-    });
-
-    // Pattern search
-    var searchBtn = document.getElementById('patternSearchBtn');
-    var searchInput = document.getElementById('patternSearchInput');
-    var searchResults = document.getElementById('patternSearchResults');
-
-    function escapeHtml(text) {
-        var div = document.createElement('div');
-        div.appendChild(document.createTextNode(text || ''));
-        return div.innerHTML;
+/* ================================================================
+   TAB PERSISTENCE
+   ================================================================ */
+(function () {
+    var saved = localStorage.getItem(tabStorageKey);
+    if (saved) {
+        var el = document.querySelector('#consultationTabs .nav-link[href="' + saved + '"]');
+        if (el) new bootstrap.Tab(el).show();
     }
+    document.querySelectorAll('#consultationTabs .nav-link').forEach(function (link) {
+        link.addEventListener('shown.bs.tab', function (e) {
+            localStorage.setItem(tabStorageKey, e.target.getAttribute('href'));
+        });
+    });
+}());
 
-    if (searchBtn) {
-        searchBtn.addEventListener('click', function() {
-            var query = searchInput.value.trim();
-            if (query.length < 3) {
-                searchResults.innerHTML = '<div class="alert alert-warning py-2">Please enter at least 3 characters.</div>';
-                searchResults.style.display = 'block';
-                return;
-            }
+function saveTabBeforeSubmit(tabId) {
+    localStorage.setItem(tabStorageKey, '#' + tabId);
+    return true;
+}
 
-            searchResults.innerHTML = '<div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary"></div> Searching...</div>';
-            searchResults.style.display = 'block';
+/* ================================================================
+   UTILITIES
+   ================================================================ */
+function escapeHtml(s) {
+    if (s == null) return '';
+    var d = document.createElement('div');
+    d.appendChild(document.createTextNode(String(s)));
+    return d.innerHTML;
+}
+function capFirst(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
 
-            fetch('{{ route("admin.patterns.suggest") }}?query=' + encodeURIComponent(query), {
+function showToast(msg, type) {
+    var t = document.createElement('div');
+    t.className = 'alert alert-' + (type || 'success') + ' position-fixed bottom-0 end-0 m-3 shadow';
+    t.style.cssText = 'z-index:9999;max-width:280px;font-size:.84rem;';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(function () { t.remove(); }, 3000);
+}
+
+/* ================================================================
+   AJAX DELETE
+   ================================================================ */
+function bindDeleteButtons() {
+    document.querySelectorAll('.ajax-delete:not([data-bound])').forEach(function (btn) {
+        btn.setAttribute('data-bound', '1');
+        btn.addEventListener('click', function () {
+            if (!confirm(this.dataset.confirm || 'Remove this item?')) return;
+            var url    = this.dataset.url;
+            var target = this.dataset.target;
+            var badge  = this.dataset.badge;
+            var self   = this;
+            self.disabled = true;
+
+            var fd = new FormData();
+            fd.append('_method', 'DELETE');
+            fd.append('_token', csrfToken);
+
+            fetch(url, {
+                method: 'POST',
+                body: fd,
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
             })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (data.patterns && data.patterns.length > 0) {
-                    var html = '<h6 class="fw-bold small text-muted mb-2"><i class="ti ti-sparkles me-1"></i>Suggestions</h6>';
-                    data.patterns.forEach(function(p) {
-                        html += '<div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-center">';
-                        html += '<div><strong>' + escapeHtml(p.name) + '</strong> <small class="text-muted">(' + p.items.length + ' items, used ' + p.usage_count + 'x)</small></div>';
-                        html += '<button type="button" class="btn btn-sm btn-success apply-pattern-btn" data-pattern-id="' + p.id + '" data-pattern-name="' + escapeHtml(p.name) + '"><i class="ti ti-check me-1"></i>Apply</button>';
-                        html += '</div>';
-                    });
-                    searchResults.innerHTML = html;
-                    bindApplyButtons();
-                } else {
-                    searchResults.innerHTML = '<div class="alert alert-info py-2 mb-0">No matching patterns found.</div>';
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    var el = document.querySelector(target);
+                    if (el) el.remove();
+                    if (badge) {
+                        var b = document.getElementById(badge);
+                        if (b) b.textContent = Math.max(0, parseInt(b.textContent || 0) - 1);
+                    }
                 }
             })
-            .catch(function() {
-                searchResults.innerHTML = '<div class="alert alert-danger py-2 mb-0">Search failed. Please try again.</div>';
-            });
+            .catch(function () { alert('Delete failed. Please try again.'); self.disabled = false; });
         });
+    });
+}
+bindDeleteButtons();
 
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') { e.preventDefault(); searchBtn.click(); }
-        });
-    }
+/* ================================================================
+   AJAX FORM SUBMISSIONS (complaints, diagnoses, investigations, treatments)
+   ================================================================ */
+document.querySelectorAll('[data-ajax-form]').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var section  = form.dataset.ajaxForm;
+        var btn      = form.querySelector('[type="submit"]');
+        var origHtml = btn ? btn.innerHTML : '';
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>'; }
 
-    // Apply pattern
-    function bindApplyButtons() {
-        document.querySelectorAll('.apply-pattern-btn').forEach(function(btn) {
-            btn.removeEventListener('click', applyPattern);
-            btn.addEventListener('click', applyPattern);
-        });
-    }
-
-    function applyPattern() {
-        var patternId = this.dataset.patternId;
-        var patternName = this.dataset.patternName;
-        var btn = this;
-
-        if (!confirm('Apply pattern "' + patternName + '"? This will add all items from the pattern to this consultation.')) return;
-
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-
-        fetch('{{ url("admin/patterns") }}/' + patternId + '/apply', {
+        fetch(form.action, {
             method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ visit_id: {{ $visit->id }} })
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.success) {
-                // Reload to show applied items
-                window.location.reload();
-            } else {
-                alert('Failed to apply pattern.');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="ti ti-check me-1"></i>Apply';
-            }
-        })
-        .catch(function() {
-            alert('Failed to apply pattern. Please try again.');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="ti ti-check me-1"></i>Apply';
-        });
-    }
-
-    bindApplyButtons();
-
-    // Lab test category → test loading
-    function loadTestsByCategory(categoryId) {
-        var container = document.getElementById('labTestsContainer');
-        if (!categoryId) {
-            container.innerHTML = '<span class="text-muted small">Select a category first to load tests</span>';
-            return;
-        }
-        container.innerHTML = '<div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary"></div> Loading tests...</div>';
-
-        fetch('{{ url("admin/lab/tests/category") }}/' + categoryId, {
+            body: new FormData(form),
             headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
         })
-        .then(function(r) { return r.json(); })
-        .then(function(tests) {
-            if (tests.length === 0) {
-                container.innerHTML = '<span class="text-muted small">No active tests in this category</span>';
-                return;
-            }
-            var html = '<div class="row g-1">';
-            tests.forEach(function(test) {
-                html += '<div class="col-md-6"><div class="form-check">';
-                html += '<input type="checkbox" name="test_ids[]" value="' + test.id + '" class="form-check-input" id="labTest' + test.id + '">';
-                html += '<label class="form-check-label" for="labTest' + test.id + '">';
-                html += escapeHtml(test.name) + ' <small class="text-muted">(' + escapeHtml(test.code) + ')';
-                if (test.price) html += ' - GH₵' + parseFloat(test.price).toFixed(2);
-                html += '</small></label></div></div>';
-            });
-            html += '</div>';
-            container.innerHTML = html;
+        .then(function (r) {
+            if (!r.ok) return r.json().then(function (e) { throw e; });
+            return r.json();
         })
-        .catch(function() {
-            container.innerHTML = '<span class="text-danger small">Failed to load tests. Try again.</span>';
+        .then(function (data) {
+            if (data.success) {
+                onFormSuccess(section, data, form);
+                showToast('Saved successfully.');
+            }
+        })
+        .catch(function (err) {
+            var msg = 'An error occurred.';
+            if (err && err.errors) msg = Object.values(err.errors).flat().join('\n');
+            else if (err && err.message) msg = err.message;
+            alert(msg);
+        })
+        .finally(function () { if (btn) { btn.disabled = false; btn.innerHTML = origHtml; } });
+    });
+});
+
+function onFormSuccess(section, data, form) {
+    var listEl  = document.getElementById(section + '-list');
+    var emptyEl = document.getElementById(section + '-empty');
+    var badge   = document.getElementById('badge-' + section);
+    var html    = '';
+    var count   = 0;
+
+    if (section === 'complaints' && data.complaint) {
+        var c   = data.complaint;
+        var sev = c.severity || 'mild';
+        var sevBadge = c.severity
+            ? '<span class="badge bg-' + (sev === 'severe' ? 'danger' : sev === 'moderate' ? 'warning' : 'info') + '">' + capFirst(sev) + '</span>'
+            : '';
+        html  = '<div class="ehr-item severity-' + escapeHtml(sev) + '" id="complaint-' + c.id + '">';
+        html += '<div class="d-flex justify-content-between">';
+        html += '<div><p class="mb-1">' + escapeHtml(c.description) + '</p>';
+        html += '<small class="text-muted">' + (c.duration ? 'Duration: ' + escapeHtml(c.duration) + ' &middot; ' : '') + (c.severity ? 'Severity: ' + sevBadge : '') + '</small></div>';
+        html += '<button type="button" class="btn btn-xs btn-outline-danger ajax-delete" data-url="' + destroyUrls.complaint + '/' + c.id + '" data-target="#complaint-' + c.id + '" data-badge="badge-complaints" data-confirm="Remove this complaint?"><i class="ti ti-trash"></i></button>';
+        html += '</div></div>';
+        count = 1;
+
+    } else if (section === 'diagnoses' && data.diagnosis) {
+        var d       = data.diagnosis;
+        var typeBg  = d.type === 'final' ? 'success' : 'warning';
+        var pClass  = d.is_primary ? '' : ' d-none';
+        html  = '<div class="ehr-item' + (d.is_primary ? ' is-primary' : '') + '" id="diagnosis-' + d.id + '">';
+        html += '<div class="d-flex justify-content-between align-items-start">';
+        html += '<div class="flex-grow-1"><p class="mb-1">' + escapeHtml(d.description);
+        html += ' <span class="badge bg-' + typeBg + ' ms-1 diagnosis-type-badge" id="type-badge-' + d.id + '">' + capFirst(d.type) + '</span>';
+        html += ' <span class="badge bg-warning text-dark ms-1 diagnosis-primary-badge primary-indicator' + pClass + '" id="primary-badge-' + d.id + '"><i class="ti ti-star-filled me-1"></i>Primary</span>';
+        html += '</p></div>';
+        html += '<div class="d-flex gap-1 ms-2 flex-shrink-0">';
+        html += '<button type="button" class="btn btn-xs btn-outline-secondary toggle-type-btn" title="Toggle type" data-id="' + d.id + '" data-current="' + escapeHtml(d.type) + '" data-url="' + diagnosisBaseUrl + '/' + d.id + '"><i class="ti ti-pencil"></i></button>';
+        if (!d.is_primary) {
+            html += '<button type="button" class="btn btn-xs btn-outline-warning set-primary-btn" title="Set as Primary" id="set-primary-' + d.id + '" data-id="' + d.id + '" data-url="' + diagnosisBaseUrl + '/' + d.id + '/primary"><i class="ti ti-star"></i></button>';
+        }
+        html += '<button type="button" class="btn btn-xs btn-outline-danger ajax-delete" data-url="' + destroyUrls.diagnosis + '/' + d.id + '" data-target="#diagnosis-' + d.id + '" data-badge="badge-diagnoses" data-confirm="Remove this diagnosis?"><i class="ti ti-trash"></i></button>';
+        html += '</div></div></div>';
+        count = 1;
+
+    } else if (section === 'investigations') {
+        var invs = data.investigations || (data.investigation ? [data.investigation] : []);
+        invs.forEach(function (inv) {
+            var uc = inv.urgency === 'emergency' ? 'danger' : inv.urgency === 'urgent' ? 'warning' : 'secondary';
+            html += '<div class="ehr-item" id="investigation-' + inv.id + '">';
+            html += '<div class="d-flex justify-content-between">';
+            html += '<div><p class="mb-1"><span class="badge bg-dark">' + escapeHtml(inv.investigation_type) + '</span>';
+            if (inv.description && inv.description !== inv.investigation_type) html += ' ' + escapeHtml(inv.description);
+            html += '</p><small class="text-muted">Urgency: <span class="badge bg-' + uc + '">' + capFirst(inv.urgency || 'routine') + '</span></small></div>';
+            html += '<button type="button" class="btn btn-xs btn-outline-danger ajax-delete" data-url="' + destroyUrls.investigation + '/' + inv.id + '" data-target="#investigation-' + inv.id + '" data-badge="badge-investigations" data-confirm="Remove this investigation?"><i class="ti ti-trash"></i></button>';
+            html += '</div></div>';
+        });
+        count = invs.length;
+
+    } else if (section === 'treatments' && data.treatment) {
+        var t  = data.treatment;
+        var tc = t.type === 'medication' ? 'primary' : t.type === 'procedure' ? 'info' : t.type === 'referral' ? 'warning' : 'secondary';
+        html  = '<div class="ehr-item" id="treatment-' + t.id + '">';
+        html += '<div class="d-flex justify-content-between">';
+        html += '<div><p class="mb-1"><span class="badge bg-' + tc + '">' + capFirst(t.type) + '</span> ' + escapeHtml(t.description) + '</p></div>';
+        html += '<button type="button" class="btn btn-xs btn-outline-danger ajax-delete" data-url="' + destroyUrls.treatment + '/' + t.id + '" data-target="#treatment-' + t.id + '" data-badge="badge-treatments" data-confirm="Remove this treatment?"><i class="ti ti-trash"></i></button>';
+        html += '</div></div>';
+        count = 1;
+    }
+
+    if (html && listEl) {
+        listEl.insertAdjacentHTML('beforeend', html);
+        if (emptyEl) emptyEl.style.display = 'none';
+        if (badge) badge.textContent = parseInt(badge.textContent || 0) + count;
+        bindDeleteButtons();
+        bindDiagnosisButtons();
+    }
+
+    // Reset form
+    form.reset();
+    var col = form.closest('.collapse');
+    if (col) { var bs = bootstrap.Collapse.getInstance(col); if (bs) bs.hide(); }
+
+    // Reset investigation dept/services
+    var ds = document.getElementById('investigationDeptSelect');
+    if (ds) {
+        ds.value = '';
+        var sc = document.getElementById('investigationServicesContainer');
+        if (sc) sc.innerHTML = '<span class="text-muted small">Select a department first to load services</span>';
+    }
+}
+
+/* ================================================================
+   DIAGNOSIS — TYPE TOGGLE & SET PRIMARY
+   ================================================================ */
+function bindDiagnosisButtons() {
+    document.querySelectorAll('.toggle-type-btn:not([data-bound])').forEach(function (btn) {
+        btn.setAttribute('data-bound', '1');
+        btn.addEventListener('click', function () {
+            var id      = this.dataset.id;
+            var current = this.dataset.current;
+            var newType = current === 'provisional' ? 'final' : 'provisional';
+            var self    = this;
+            if (!confirm('Change type to ' + capFirst(newType) + '?')) return;
+            self.disabled = true;
+
+            var fd = new FormData();
+            fd.append('_method', 'PATCH'); fd.append('_token', csrfToken); fd.append('type', newType);
+
+            fetch(this.dataset.url, {
+                method: 'POST', body: fd,
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    var badge = document.getElementById('type-badge-' + id);
+                    if (badge) {
+                        badge.textContent = capFirst(newType);
+                        badge.className = 'badge bg-' + (newType === 'final' ? 'success' : 'warning') + ' ms-1 diagnosis-type-badge';
+                    }
+                    self.dataset.current = newType;
+                    showToast('Type set to ' + capFirst(newType) + '.');
+                }
+            })
+            .catch(function () { alert('Failed to update type.'); })
+            .finally(function () { self.disabled = false; });
+        });
+    });
+
+    document.querySelectorAll('.set-primary-btn:not([data-bound])').forEach(function (btn) {
+        btn.setAttribute('data-bound', '1');
+        btn.addEventListener('click', function () {
+            var id   = this.dataset.id;
+            var self = this;
+            self.disabled = true;
+
+            var fd = new FormData();
+            fd.append('_method', 'PATCH'); fd.append('_token', csrfToken);
+
+            fetch(this.dataset.url, {
+                method: 'POST', body: fd,
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    // Clear all primary markers
+                    document.querySelectorAll('.primary-indicator').forEach(function (b) { b.classList.add('d-none'); });
+                    document.querySelectorAll('.set-primary-btn').forEach(function (b) { b.classList.remove('d-none'); });
+                    document.querySelectorAll('#diagnoses-list .ehr-item').forEach(function (el) { el.classList.remove('is-primary'); });
+                    // Apply to this diagnosis
+                    var pb = document.getElementById('primary-badge-' + id);
+                    if (pb) pb.classList.remove('d-none');
+                    var sp = document.getElementById('set-primary-' + id);
+                    if (sp) sp.classList.add('d-none');
+                    var de = document.getElementById('diagnosis-' + id);
+                    if (de) de.classList.add('is-primary');
+                    showToast('Primary diagnosis updated.');
+                }
+            })
+            .catch(function () { alert('Failed to set primary diagnosis.'); })
+            .finally(function () { self.disabled = false; });
+        });
+    });
+}
+bindDiagnosisButtons();
+
+/* ================================================================
+   INVESTIGATION DEPARTMENT → SERVICES
+   ================================================================ */
+function loadInvestigationServices(deptId) {
+    var container = document.getElementById('investigationServicesContainer');
+    if (!container) return;
+    if (!deptId) { container.innerHTML = '<span class="text-muted small">Select a department first to load services</span>'; return; }
+    container.innerHTML = '<div class="py-2 text-center"><span class="spinner-border spinner-border-sm text-primary"></span> Loading...</div>';
+
+    fetch(deptServicesBase + '/' + deptId + '/investigation-services', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (services) {
+        if (!services.length) { container.innerHTML = '<span class="text-muted small">No active services found.</span>'; return; }
+        var html = '<div class="row g-1">';
+        services.forEach(function (s) {
+            html += '<div class="col-md-6"><div class="form-check">';
+            html += '<input type="checkbox" name="service_ids[]" value="' + s.id + '" class="form-check-input" id="svc' + s.id + '">';
+            html += '<label class="form-check-label small" for="svc' + s.id + '">' + escapeHtml(s.name);
+            if (s.price) html += ' <span class="text-muted small">GH₵' + parseFloat(s.price).toFixed(2) + '</span>';
+            html += '</label></div></div>';
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    })
+    .catch(function () { container.innerHTML = '<span class="text-danger small">Failed to load services.</span>'; });
+}
+
+/* ================================================================
+   PRESCRIPTIONS — DYNAMIC DRUG ROWS
+   ================================================================ */
+var rxIdx = 1;
+document.getElementById('addItemBtn')?.addEventListener('click', function () {
+    var cont = document.getElementById('prescriptionItems');
+    var tpl  = cont.querySelector('.prescription-item').cloneNode(true);
+    tpl.querySelectorAll('[name]').forEach(function (inp) {
+        inp.name = inp.name.replace(/items\[\d+\]/, 'items[' + rxIdx + ']');
+        if (inp.tagName === 'INPUT') inp.value = inp.type === 'number' ? '1' : '';
+    });
+    tpl.style.position = 'relative';
+    var rm = document.createElement('button');
+    rm.type = 'button'; rm.className = 'btn btn-xs btn-outline-danger position-absolute top-0 end-0 m-1';
+    rm.innerHTML = '<i class="ti ti-x"></i>'; rm.onclick = function () { tpl.remove(); };
+    tpl.appendChild(rm);
+    cont.appendChild(tpl);
+    rxIdx++;
+});
+
+/* ================================================================
+   PREVIOUS VISIT PREVIEW MODAL
+   ================================================================ */
+function previewVisit(index) {
+    var vd = visitHistoryData[index];
+    if (!vd) return;
+    var html = '<p class="mb-3"><span class="fw-bold fs-6">' + escapeHtml(vd.visit_number) + '</span>'
+        + ' <span class="text-muted">' + escapeHtml(vd.date) + '</span>'
+        + (vd.doctor ? ' &middot; Dr. ' + escapeHtml(vd.doctor) : '') + '</p>';
+
+    if (vd.complaints && vd.complaints.length) {
+        html += '<h6 class="fw-bold small text-muted border-bottom pb-1 mb-2">Complaints</h6>';
+        vd.complaints.forEach(function (c) { html += '<div class="ehr-item py-1">' + escapeHtml(c) + '</div>'; });
+    }
+    if (vd.diagnoses && vd.diagnoses.length) {
+        html += '<h6 class="fw-bold small text-muted border-bottom pb-1 mb-2 mt-3">Diagnoses</h6>';
+        vd.diagnoses.forEach(function (d) {
+            html += '<div class="ehr-item py-1">' + escapeHtml(d.description);
+            html += ' <span class="badge bg-' + (d.type === 'final' ? 'success' : 'warning') + '">' + capFirst(d.type) + '</span>';
+            if (d.is_primary) html += ' <span class="badge bg-warning text-dark"><i class="ti ti-star-filled me-1"></i>Primary</span>';
+            if (d.icd_code) html += ' <code class="ms-1">' + escapeHtml(d.icd_code) + '</code>';
+            html += '</div>';
+        });
+    }
+    if (vd.investigations && vd.investigations.length) {
+        html += '<h6 class="fw-bold small text-muted border-bottom pb-1 mb-2 mt-3">Investigations</h6>';
+        vd.investigations.forEach(function (i) {
+            var ug = i.urgency === 'emergency' ? 'danger' : i.urgency === 'urgent' ? 'warning' : 'secondary';
+            html += '<div class="ehr-item py-1"><span class="badge bg-dark">' + escapeHtml(i.type) + '</span>';
+            if (i.description && i.description !== i.type) html += ' ' + escapeHtml(i.description);
+            html += ' <span class="badge bg-' + ug + '">' + capFirst(i.urgency || 'routine') + '</span></div>';
+        });
+    }
+    if (vd.treatments && vd.treatments.length) {
+        html += '<h6 class="fw-bold small text-muted border-bottom pb-1 mb-2 mt-3">Treatments</h6>';
+        vd.treatments.forEach(function (t) {
+            var tc = t.type === 'medication' ? 'primary' : t.type === 'procedure' ? 'info' : t.type === 'referral' ? 'warning' : 'secondary';
+            html += '<div class="ehr-item py-1"><span class="badge bg-' + tc + '">' + capFirst(t.type) + '</span> ' + escapeHtml(t.description) + '</div>';
+        });
+    }
+    if (!vd.complaints.length && !vd.diagnoses.length && !vd.investigations.length && !vd.treatments.length) {
+        html = '<div class="text-center text-muted py-3">No clinical data recorded for this visit.</div>';
+    }
+
+    document.getElementById('visitPreviewContent').innerHTML = html;
+    new bootstrap.Modal(document.getElementById('visitPreviewModal')).show();
+}
+
+/* ================================================================
+   PATTERN SEARCH & APPLY
+   ================================================================ */
+function bindApplyButtons() {
+    document.querySelectorAll('.apply-pattern-btn:not([data-bound])').forEach(function (btn) {
+        btn.setAttribute('data-bound', '1');
+        btn.addEventListener('click', function () {
+            var pid  = this.dataset.patternId;
+            var pnm  = this.dataset.patternName;
+            var self = this;
+            if (!confirm('Apply pattern "' + pnm + '"?')) return;
+            self.disabled = true; self.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+            fetch('{{ url("admin/patterns") }}/' + pid + '/apply', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json',
+                    'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ visit_id: {{ $visit->id }} })
+            })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (d.success) { saveTabBeforeSubmit('patterns-section'); window.location.reload(); }
+                else { alert('Failed to apply pattern.'); self.disabled = false; self.innerHTML = '<i class="ti ti-check me-1"></i>Apply'; }
+            })
+            .catch(function () { alert('Failed.'); self.disabled = false; self.innerHTML = '<i class="ti ti-check me-1"></i>Apply'; });
+        });
+    });
+}
+bindApplyButtons();
+
+var psBtn = document.getElementById('patternSearchBtn');
+var psInp = document.getElementById('patternSearchInput');
+var psRes = document.getElementById('patternSearchResults');
+if (psBtn) {
+    psBtn.addEventListener('click', function () {
+        var q = psInp.value.trim();
+        if (q.length < 3) { psRes.innerHTML = '<div class="alert alert-warning py-2">Enter at least 3 characters.</div>'; psRes.style.display = 'block'; return; }
+        psRes.innerHTML = '<div class="text-center py-2"><span class="spinner-border spinner-border-sm text-primary"></span></div>';
+        psRes.style.display = 'block';
+        fetch('{{ route("admin.patterns.suggest") }}?query=' + encodeURIComponent(q), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (d.patterns && d.patterns.length) {
+                var h = '';
+                d.patterns.forEach(function (p) {
+                    h += '<div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-center">';
+                    h += '<div><strong>' + escapeHtml(p.name) + '</strong> <small class="text-muted">(' + p.items.length + ' items)</small></div>';
+                    h += '<button type="button" class="btn btn-sm btn-success apply-pattern-btn" data-pattern-id="' + p.id + '" data-pattern-name="' + escapeHtml(p.name) + '"><i class="ti ti-check me-1"></i>Apply</button>';
+                    h += '</div>';
+                });
+                psRes.innerHTML = h;
+                bindApplyButtons();
+            } else { psRes.innerHTML = '<div class="alert alert-info py-2 mb-0">No patterns found.</div>'; }
+        })
+        .catch(function () { psRes.innerHTML = '<div class="alert alert-danger py-2 mb-0">Search failed.</div>'; });
+    });
+    psInp.addEventListener('keypress', function (e) { if (e.key === 'Enter') { e.preventDefault(); psBtn.click(); } });
+}
+
+/* ================================================================
+   COMPLAINT & DIAGNOSIS SUGGESTIONS (DB AUTOCOMPLETE)
+   ================================================================ */
+(function () {
+    var suggestUrls = {
+        complaint: '{{ route("admin.consultations.suggest.complaints") }}',
+        diagnosis:  '{{ route("admin.consultations.suggest.diagnoses") }}',
+    };
+    var timers = {};
+
+    function bindSuggest(inputId, datalistId, type) {
+        var inp = document.getElementById(inputId);
+        var dl  = document.getElementById(datalistId);
+        if (!inp || !dl) return;
+        inp.addEventListener('input', function () {
+            var q = this.value.trim();
+            clearTimeout(timers[type]);
+            if (q.length < 2) { dl.innerHTML = ''; return; }
+            timers[type] = setTimeout(function () {
+                fetch(suggestUrls[type] + '?q=' + encodeURIComponent(q), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+                })
+                .then(function (r) { return r.json(); })
+                .then(function (items) {
+                    dl.innerHTML = items.map(function (s) {
+                        return '<option value="' + escapeHtml(s) + '">';
+                    }).join('');
+                });
+            }, 280);
         });
     }
 
-    // ICD-10 Code Autocomplete (Select2 AJAX)
-    $(document).ready(function() {
-        if ($('#icd_code_select').length && $.fn.select2) {
-            $('#icd_code_select').select2({
-                placeholder: 'Type to search ICD-10 codes...',
-                allowClear: true,
-                minimumInputLength: 2,
-                ajax: {
-                    url: '{{ route("admin.icd-search") }}',
-                    dataType: 'json',
-                    delay: 300,
-                    data: function(params) {
-                        return { q: params.term };
-                    },
-                    processResults: function(data) {
-                        return { results: data.results };
-                    },
-                    cache: true
-                },
-                templateResult: function(item) {
-                    if (item.loading) return item.text;
-                    return $('<span>').html('<strong>' + escapeHtml(item.code) + '</strong> — ' + escapeHtml(item.description));
-                },
-                templateSelection: function(item) {
-                    return item.text || item.code;
-                }
-            }).on('select2:select', function(e) {
-                var data = e.params.data;
-                // Set the hidden icd_code_id
-                $('#icd_code_id').val(data.id);
-                // Auto-fill the manual code field
-                $('#icd_code_manual').val(data.code);
-                // Auto-fill description if empty
-                var descField = $('#diagnosis_description');
-                if (!descField.val().trim()) {
-                    descField.val(data.description);
-                }
-            }).on('select2:clear', function() {
-                $('#icd_code_id').val('');
-                $('#icd_code_manual').val('');
-            });
-        }
-    });
+    bindSuggest('complaintDescInput', 'complaintSuggestions', 'complaint');
+    bindSuggest('diagnosis_description', 'diagnosisSuggestions', 'diagnosis');
+}());
+
+/* ================================================================
+   ICD-10 AUTOCOMPLETE
+   ================================================================ */
+$(document).ready(function () {
+    if ($('#icd_code_select').length && $.fn.select2) {
+        $('#icd_code_select').select2({
+            placeholder: 'Type to search ICD-10 codes...',
+            allowClear: true,
+            minimumInputLength: 2,
+            ajax: {
+                url: '{{ route("admin.icd-search") }}',
+                dataType: 'json',
+                delay: 300,
+                data: function (p) { return { q: p.term }; },
+                processResults: function (d) { return { results: d.results }; },
+                cache: true
+            },
+            templateResult: function (i) {
+                if (i.loading) return i.text;
+                return $('<span>').html('<strong>' + escapeHtml(i.code) + '</strong> — ' + escapeHtml(i.description));
+            },
+            templateSelection: function (i) { return i.text || i.code; }
+        }).on('select2:select', function (e) {
+            var d = e.params.data;
+            $('#icd_code_id').val(d.id);
+            $('#icd_code_manual').val(d.code);
+            var desc = $('#diagnosis_description');
+            if (!desc.val().trim()) desc.val(d.description);
+        }).on('select2:clear', function () {
+            $('#icd_code_id').val('');
+            $('#icd_code_manual').val('');
+        });
+    }
+});
 </script>
 @endpush

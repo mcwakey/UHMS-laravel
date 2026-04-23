@@ -419,6 +419,8 @@ Route::middleware('auth')->group(function () {
                 Route::delete('consultations/complaints/{complaint}', [ConsultationController::class, 'destroyComplaint'])->name('consultations.complaints.destroy');
 
                 Route::post('consultations/{visit}/diagnoses', [ConsultationController::class, 'storeDiagnosis'])->name('consultations.diagnoses.store');
+                Route::patch('consultations/diagnoses/{diagnosis}', [ConsultationController::class, 'updateDiagnosis'])->name('consultations.diagnoses.update');
+                Route::patch('consultations/diagnoses/{diagnosis}/primary', [ConsultationController::class, 'setPrimaryDiagnosis'])->name('consultations.diagnoses.primary');
                 Route::delete('consultations/diagnoses/{diagnosis}', [ConsultationController::class, 'destroyDiagnosis'])->name('consultations.diagnoses.destroy');
 
                 Route::post('consultations/{visit}/investigations', [ConsultationController::class, 'storeInvestigation'])->name('consultations.investigations.store');
@@ -428,8 +430,15 @@ Route::middleware('auth')->group(function () {
                 Route::delete('consultations/treatments/{treatment}', [ConsultationController::class, 'destroyTreatment'])->name('consultations.treatments.destroy');
             });
 
+            Route::get('departments/{department}/investigation-services', [ConsultationController::class, 'getDepartmentServices'])->name('departments.investigation-services');
+
             Route::post('consultations/{visit}/prescriptions', [ConsultationController::class, 'storePrescription'])->name('consultations.prescriptions.store')->middleware('can:prescriptions.create');
+            Route::delete('consultations/prescriptions/{prescription}', [ConsultationController::class, 'destroyPrescription'])->name('consultations.prescriptions.destroy')->middleware('can:prescriptions.create');
             Route::post('consultations/{visit}/lab-request', [ConsultationController::class, 'storeLabRequest'])->name('consultations.lab-request.store')->middleware('can:lab.requests.create');
+
+            // Suggestion endpoints
+            Route::get('consultations/suggest/complaints', [ConsultationController::class, 'suggestComplaints'])->name('consultations.suggest.complaints');
+            Route::get('consultations/suggest/diagnoses', [ConsultationController::class, 'suggestDiagnoses'])->name('consultations.suggest.diagnoses');
 
             // Consultation Tasks
             Route::middleware('can:consultations.create')->group(function () {

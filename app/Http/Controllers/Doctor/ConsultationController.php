@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Doctor;
 
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
+use App\Enums\DepartmentType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreConsultationRequest;
 use App\Http\Requests\StorePrescriptionRequest;
 use App\Models\Complaint;
+use App\Models\Department;
 use App\Models\Diagnosis;
 use App\Models\Investigation;
+use App\Models\ServiceCatalog;
 use App\Models\Treatment;
 use App\Models\Visit;
 use App\Services\ConsultationService;
@@ -103,6 +106,15 @@ class ConsultationController extends Controller
         $labRequests = $this->labService->getVisitLabRequests($visit);
         $labCategories = $this->labService->getActiveCategories();
 
+        // Investigation departments (for the unified investigations tab)
+        $investigationDepts = Department::active()
+            ->whereIn('type', [
+                DepartmentType::INVESTIGATION->value,
+                DepartmentType::RADIOLOGY->value,
+            ])
+            ->orderBy('name')
+            ->get();
+
         // Doctors for task assignment
         $doctors = \App\Models\User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get();
 
@@ -114,6 +126,7 @@ class ConsultationController extends Controller
             'patterns' => $patterns,
             'labRequests' => $labRequests,
             'labCategories' => $labCategories,
+            'investigationDepts' => $investigationDepts,
             'doctors' => $doctors,
         ]);
     }
@@ -201,6 +214,51 @@ class ConsultationController extends Controller
         return back()->with('success', 'Diagnosis removed.');
     }
 
+    /**
+     * Toggle a diagnosis type between provisional and final.
+     */
+    public function updateDiagnosis(Request $request, Diagnosis $diagnosis)
+    {
+        $request->validate([
+            'type' => ['required', 'in:provisional,final'],
+        ]);
+
+        $this->consultationService->updateDiagnosis($diagnosis, $request->only('type'));
+
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'type' => $diagnosis->fresh()->type]);
+        }
+
+        return back()->with('success', 'Diagnosis updated.');
+    }
+
+    /**
+     * Set a diagnosis as the primary one for this record.
+     */
+    public function setPrimaryDiagnosis(Diagnosis $diagnosis)
+    {
+        $this->consultationService->setPrimaryDiagnosis($diagnosis);
+
+        if (request()->ajax()) {
+            return response()->json(['success' => true]);
+        }
+
+        return back()->with('success', 'Primary diagnosis set.');
+    }
+
+    /**
+     * Return active services for a department (for investigation dept dropdown).
+     */
+    public function getDepartmentServices(Department $department)
+    {
+        $services = $department->services()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name', 'code', 'price']);
+
+        return response()->json($services);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Investigation CRUD (AJAX)
@@ -210,20 +268,42 @@ class ConsultationController extends Controller
     public function storeInvestigation(Request $request, Visit $visit)
     {
         $request->validate([
-            'investigation_type' => ['required', 'string', 'max:191'],
-            'description' => ['required', 'string', 'max:2000'],
-            'urgency' => ['nullable', 'in:routine,urgent,emergency'],
-            'notes' => ['nullable', 'string', 'max:2000'],
+            'department_id'    => ['nullable', 'exists:departments,id'],
+            'service_ids'      => ['nullable', 'array'],
+            'service_ids.*'    => ['exists:service_catalog,id'],
+            'investigation_type' => ['nullable', 'string', 'max:191'],
+            'description'      => ['nullable', 'string', 'max:2000'],
+            'urgency'          => ['nullable', 'in:routine,urgent,emergency'],
+            'notes'            => ['nullable', 'string', 'max:2000'],
         ]);
 
         $record = $this->consultationService->getOrCreateRecord($visit);
-        $investigation = $this->consultationService->addInvestigation($record, $request->only('investigation_type', 'description', 'urgency', 'notes'));
+        $created = [];
 
-        if ($request->ajax()) {
-            return response()->json(['success' => true, 'investigation' => $investigation]);
+        if (!empty($request->service_ids)) {
+            $services = ServiceCatalog::whereIn('id', $request->service_ids)->get();
+            foreach ($services as $service) {
+                $created[] = $this->consultationService->addInvestigation($record, [
+                    'investigation_type' => $service->name,
+                    'description'        => $service->description ?? $service->name,
+                    'urgency'            => $request->urgency ?? 'routine',
+                    'notes'              => $request->notes,
+                ]);
+            }
+        } elseif (!empty($request->investigation_type)) {
+            $created[] = $this->consultationService->addInvestigation($record, [
+                'investigation_type' => $request->investigation_type,
+                'description'        => $request->description ?? $request->investigation_type,
+                'urgency'            => $request->urgency ?? 'routine',
+                'notes'              => $request->notes,
+            ]);
         }
 
-        return back()->with('success', 'Investigation added.');
+        if ($request->ajax()) {
+            return response()->json(['success' => true, 'investigations' => $created, 'count' => count($created)]);
+        }
+
+        return back()->with('success', count($created) . ' investigation(s) added.');
     }
 
     public function destroyInvestigation(Investigation $investigation)
@@ -287,6 +367,63 @@ class ConsultationController extends Controller
         }
 
         return back()->with('success', "Prescription {$prescription->prescription_number} created.");
+    }
+
+    public function destroyPrescription(\App\Models\Prescription $prescription)
+    {
+        // Only allow deletion of pending/active prescriptions
+        $allowedStatuses = ['pending', 'active'];
+        if (!in_array($prescription->status->value, $allowedStatuses)) {
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete a dispensed or cancelled prescription.'], 422);
+            }
+            return back()->with('error', 'Cannot delete a dispensed or cancelled prescription.');
+        }
+
+        $prescription->items()->delete();
+        $prescription->delete();
+
+        if (request()->ajax()) {
+            return response()->json(['success' => true]);
+        }
+
+        return back()->with('success', 'Prescription deleted.');
+    }
+
+    /**
+     * Return complaint description suggestions from existing complaints.
+     */
+    public function suggestComplaints(Request $request)
+    {
+        $q = trim($request->input('q', ''));
+        if (strlen($q) < 2) return response()->json([]);
+
+        $suggestions = \App\Models\Complaint::where('description', 'like', '%' . $q . '%')
+            ->distinct()
+            ->orderByRaw('COUNT(*) DESC')
+            ->groupBy('description')
+            ->limit(10)
+            ->pluck('description');
+
+        return response()->json($suggestions);
+    }
+
+    /**
+     * Return diagnosis description suggestions from existing diagnoses.
+     */
+    public function suggestDiagnoses(Request $request)
+    {
+        $q = trim($request->input('q', ''));
+        if (strlen($q) < 2) return response()->json([]);
+
+        $suggestions = \App\Models\Diagnosis::where('description', 'like', '%' . $q . '%')
+            ->distinct()
+            ->orderByRaw('COUNT(*) DESC')
+            ->groupBy('description')
+            ->limit(10)
+            ->pluck('description');
+
+        return response()->json($suggestions);
     }
 
     /*

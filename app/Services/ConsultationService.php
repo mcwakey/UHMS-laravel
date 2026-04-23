@@ -50,7 +50,14 @@ class ConsultationService
      */
     public function getPatientHistory(int $patientId, ?int $excludeVisitId = null): array
     {
-        $query = MedicalRecord::with(['visit', 'complaints', 'diagnoses', 'prescriptions.items'])
+        $query = MedicalRecord::with([
+            'visit.assignedDoctor',
+            'complaints',
+            'diagnoses',
+            'investigations',
+            'treatments',
+            'prescriptions.items',
+        ])
             ->where('patient_id', $patientId)
             ->latest();
 
@@ -58,9 +65,14 @@ class ConsultationService
             $query->where('visit_id', '!=', $excludeVisitId);
         }
 
+        $records = $query->take(10)->get();
+        $total = MedicalRecord::where('patient_id', $patientId)
+            ->when($excludeVisitId, fn ($q) => $q->where('visit_id', '!=', $excludeVisitId))
+            ->count();
+
         return [
-            'records' => $query->take(10)->get(),
-            'total' => $query->count(),
+            'records' => $records,
+            'total' => $total,
         ];
     }
 
@@ -91,10 +103,27 @@ class ConsultationService
 
     /**
      * Add a diagnosis to the medical record.
+     * The first diagnosis added is automatically set as primary.
      */
     public function addDiagnosis(MedicalRecord $record, array $data): Diagnosis
     {
+        if (!isset($data['is_primary']) && !$record->diagnoses()->where('is_primary', true)->exists()) {
+            $data['is_primary'] = true;
+        }
+
         return $record->diagnoses()->create($data);
+    }
+
+    /**
+     * Set a diagnosis as the primary one for its medical record.
+     */
+    public function setPrimaryDiagnosis(Diagnosis $diagnosis): Diagnosis
+    {
+        // Unset all primaries for this record first
+        $diagnosis->medicalRecord->diagnoses()->update(['is_primary' => false]);
+        $diagnosis->update(['is_primary' => true]);
+
+        return $diagnosis->fresh();
     }
 
     /**
