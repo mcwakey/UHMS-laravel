@@ -17,6 +17,7 @@ enum VisitStatus: string
     case LAB = 'lab';
     case PHARMACY = 'pharmacy';
     case BILLING = 'billing';
+    case ADMITTING = 'admitting';
     case ADMITTED = 'admitted';
     case DISCHARGING = 'discharging';
     case DISCHARGED = 'discharged';
@@ -42,6 +43,7 @@ enum VisitStatus: string
             self::LAB => 'Laboratory',
             self::PHARMACY => 'Pharmacy',
             self::BILLING => 'Billing',
+            self::ADMITTING => 'Admitting',
             self::ADMITTED => 'Admitted',
             self::DISCHARGING => 'Discharging',
             self::DISCHARGED => 'Discharged',
@@ -69,6 +71,7 @@ enum VisitStatus: string
             self::LAB => 'purple',
             self::PHARMACY => 'orange',
             self::BILLING => 'dark',
+            self::ADMITTING => 'teal',
             self::ADMITTED => 'info',
             self::DISCHARGING => 'warning',
             self::DISCHARGED => 'success',
@@ -94,7 +97,8 @@ enum VisitStatus: string
             // Triage transitions are handled by TriageController (processTriage) — manual transitions disabled
             self::TRIAGE      => [self::WAITING_CONSULTATION, self::EMERGENCY, self::INPATIENT, self::CANCELLED],
             self::WAITING_CONSULTATION => [self::CONSULTING, self::CANCELLED],
-            self::CONSULTING  => [self::REFERRED_CONSULTATION, self::WAITING_INVESTIGATION, self::LAB, self::PHARMACY, self::BILLING, self::ADMITTED, self::COMPLETED, self::CANCELLED],
+            self::CONSULTING  => [self::REFERRED_CONSULTATION, self::WAITING_INVESTIGATION, self::LAB, self::PHARMACY, self::BILLING, self::ADMITTING, self::ADMITTED, self::COMPLETED, self::CANCELLED],
+            self::ADMITTING   => [self::ADMITTED, self::CONSULTING, self::CANCELLED],
             self::REFERRED_CONSULTATION => [self::CONSULTING, self::CANCELLED],
             self::WAITING_INVESTIGATION => [self::LAB, self::CANCELLED],
             self::LAB         => [self::CONSULTING, self::WAITING_CONSULTATION, self::PHARMACY, self::CANCELLED],
@@ -103,7 +107,7 @@ enum VisitStatus: string
             self::ADMITTED    => [self::CONSULTING, self::LAB, self::PHARMACY, self::DISCHARGING],
             self::DISCHARGING => [self::BILLING, self::ADMITTED],
             self::EMERGENCY   => [self::ADMITTED, self::CONSULTING, self::COMPLETED, self::CANCELLED],
-            self::INPATIENT   => [self::ADMITTED, self::CANCELLED],
+            self::INPATIENT   => [self::ADMITTING, self::ADMITTED, self::CANCELLED],
             self::DISCHARGED  => [],
             self::COMPLETED   => [],
             self::CANCELLED   => [],

@@ -4,16 +4,24 @@ namespace App\Services;
 
 use App\Enums\AdmissionStatus;
 use App\Enums\BedStatus;
+use App\Enums\BillingType;
+use App\Enums\InvoiceStatus;
 use App\Enums\VisitStatus;
+use App\Enums\VisitType;
 use App\Events\PatientAdmitted;
 use App\Events\PatientDischarged;
 use App\Models\Admission;
+use App\Models\Invoice;
 use App\Models\WardRound;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 class AdmissionService
 {
+    public function __construct(
+        protected InsuranceService $insuranceService,
+    ) {}
+
     public function list(array $filters = []): LengthAwarePaginator
     {
         $query = Admission::with(['patient', 'bed.ward', 'admittedBy', 'visit']);
@@ -35,21 +43,33 @@ class AdmissionService
 
     public function admit(array $data): Admission
     {
-        return DB::transaction(function () use ($data) {
-            $data['admission_number'] = Admission::generateAdmissionNumber();
-            $data['admitted_by'] = auth()->id();
-            $data['admission_date'] = $data['admission_date'] ?? now();
+        $admission = DB::transaction(function () use ($data) {
+            $admissionFields = array_intersect_key($data, array_flip([
+                'admission_number', 'visit_id', 'patient_id', 'bed_id', 'admitted_by',
+                'admitting_diagnosis', 'admission_date', 'expected_discharge_date',
+                'admission_type', 'admission_fee_service_id', 'consumable_fee_service_id',
+            ]));
+            $admissionFields['admission_number'] = Admission::generateAdmissionNumber();
+            $admissionFields['admitted_by'] = auth()->id();
+            $admissionFields['admission_date'] = $data['admission_date'] ?? now();
 
-            $admission = Admission::create($data);
+            $admission = Admission::create($admissionFields);
 
             // Mark bed as occupied
-            $admission->bed->markOccupied();
+            $bed = $admission->bed;
+            $bed->markOccupied();
 
-            // Transition visit to admitted
+            // Transition visit status to ADMITTED and update type to INPATIENT
             $visit = $admission->visit;
             if ($visit->canTransitionTo(VisitStatus::ADMITTED)) {
-                $visit->transitionTo(VisitStatus::ADMITTED, 'Patient admitted to ' . $admission->bed->ward->name . ' - Bed ' . $admission->bed->bed_number);
+                $visit->transitionTo(VisitStatus::ADMITTED,
+                    'Patient admitted (' . ($data['admission_type'] ?? 'admission') . ') to '
+                    . $bed->ward->name . ' — Bed ' . $bed->bed_number);
             }
+            $visit->update(['visit_type' => VisitType::INPATIENT->value]);
+
+            // Auto-create admission invoice with 3 lines
+            $this->createAdmissionInvoice($admission, $bed, $data);
 
             return $admission->load(['patient', 'bed.ward', 'admittedBy']);
         });
@@ -57,6 +77,154 @@ class AdmissionService
         PatientAdmitted::dispatch($admission);
 
         return $admission;
+    }
+
+    /**
+     * Create the admission invoice with 3 standard lines with insurance applied:
+     *  1. Admission/Detention fee (one-time, mapped service or manual)
+     *  2. Bed fee (per day × days stay)
+     *  3. Consumable fee (per day × days stay)
+     */
+    protected function createAdmissionInvoice(Admission $admission, $bed, array $data): Invoice
+    {
+        $admissionType = $data['admission_type'] ?? 'admission';
+        $admissionDate = \Carbon\Carbon::parse($data['admission_date'] ?? now());
+        $expectedDischarge = isset($data['expected_discharge_date'])
+            ? \Carbon\Carbon::parse($data['expected_discharge_date'])
+            : null;
+        $days = $expectedDischarge ? max(1, $admissionDate->diffInDays($expectedDischarge)) : 1;
+
+        // Fee amounts from form (user-editable in summary) or defaults
+        $admissionFeeAmount  = (float)($data['admission_fee_amount'] ?? 0);
+        $bedFeePerDay        = (float)($data['bed_fee_amount'] !== null ? $data['bed_fee_amount'] / max(1, $days) : ($bed->daily_rate ?? 0));
+        $consumableFeePerDay = (float)($data['consumable_fee_amount'] !== null ? $data['consumable_fee_amount'] / max(1, $days) : 0);
+
+        // Fallback: get amounts from service catalog if zero
+        if ($admissionFeeAmount == 0 && !empty($data['admission_fee_service_id'])) {
+            $svc = \App\Models\ServiceCatalog::find($data['admission_fee_service_id']);
+            if ($svc) $admissionFeeAmount = (float)$svc->price;
+        }
+        if ($consumableFeePerDay == 0 && !empty($data['consumable_fee_service_id'])) {
+            $svc = \App\Models\ServiceCatalog::find($data['consumable_fee_service_id']);
+            if ($svc) $consumableFeePerDay = (float)$svc->price;
+        }
+
+        // Resolve insurance for this visit
+        $visit          = $admission->visit;
+        $visitInsurance = $visit->visitInsurance;
+        $hasInsurance   = $visitInsurance
+            && $visitInsurance->is_active
+            && ! $visitInsurance->is_expired
+            && $visitInsurance->insuranceProvider
+            && ! $visitInsurance->insuranceProvider->is_default;
+
+        $label         = ucfirst($admissionType);
+        $totalNhis     = 0;
+        $sessionOffset = 0.0;
+
+        $buildItem = function (
+            ?int $serviceCatalogId, string $description, int $quantity, float $unitPrice
+        ) use ($hasInsurance, $visitInsurance, $visit, &$sessionOffset, &$totalNhis): array {
+            $lineTotal   = round($unitPrice * $quantity, 2);
+            $nhisCovered = 0.0;
+            $isNhis      = false;
+
+            if ($hasInsurance && $lineTotal > 0) {
+                $coverage = $this->insuranceService->evaluateCoverage(
+                    $visitInsurance, $visit, $lineTotal, $sessionOffset
+                );
+                if ($coverage['can_use']) {
+                    $nhisCovered   = $coverage['covered_amount'];
+                    $isNhis        = $nhisCovered > 0;
+                    $sessionOffset += $nhisCovered;
+                    $totalNhis    += $nhisCovered;
+                }
+            }
+
+            return [
+                'service_catalog_id'   => $serviceCatalogId,
+                'description'          => $description,
+                'quantity'             => $quantity,
+                'unit_price'           => $unitPrice,
+                'total_price'          => $lineTotal,
+                'is_nhis_covered'      => $isNhis,
+                'nhis_approved_amount' => $nhisCovered,
+            ];
+        };
+
+        $items = [
+            $buildItem(
+                $data['admission_fee_service_id'] ?? null,
+                $label . ' Fee',
+                1,
+                $admissionFeeAmount
+            ),
+            $buildItem(
+                null,
+                'Bed Fee — ' . $bed->ward->name . ' / ' . $bed->bed_number . ' (' . $bed->bed_type->label() . ')',
+                $days,
+                $bedFeePerDay
+            ),
+            $buildItem(
+                $data['consumable_fee_service_id'] ?? null,
+                'Consumable Fee',
+                $days,
+                $consumableFeePerDay
+            ),
+        ];
+
+        $subtotal    = array_sum(array_column($items, 'total_price'));
+        $totalAmount = $subtotal;
+        $balance     = max(0, $totalAmount - $totalNhis);
+
+        // Determine billing type
+        $billingType = BillingType::CASH;
+        if ($hasInsurance) {
+            $providerType = $visitInsurance->insuranceProvider->insurance_type ?? null;
+            $billingType  = match ($providerType) {
+                'nhis'  => BillingType::NHIS,
+                default => BillingType::CASH,
+            };
+        }
+
+        $invoice = Invoice::create([
+            'invoice_number'  => Invoice::generateNumber('INV', 'invoices', 'invoice_number'),
+            'visit_id'        => $admission->visit_id,
+            'patient_id'      => $admission->patient_id,
+            'billing_type'    => $billingType,
+            'subtotal'        => $subtotal,
+            'tax_amount'      => 0,
+            'discount_amount' => 0,
+            'nhis_amount'     => $totalNhis,
+            'total_amount'    => $totalAmount,
+            'amount_paid'     => $totalNhis,
+            'balance'         => $balance,
+            'status'          => $balance <= 0 ? InvoiceStatus::PAID : InvoiceStatus::PENDING,
+            'created_by'      => auth()->id(),
+            'notes'           => $label . ' invoice for ' . $admission->patient->full_name,
+        ]);
+
+        foreach ($items as $item) {
+            $invoice->items()->create($item);
+        }
+
+        // Record insurance usage per covered line
+        if ($hasInsurance) {
+            foreach ($items as $item) {
+                if ($item['nhis_approved_amount'] > 0) {
+                    $this->insuranceService->recordUsage(
+                        $visitInsurance,
+                        $visit,
+                        $item['nhis_approved_amount'],
+                        $item['total_price'] - $item['nhis_approved_amount'],
+                        'Admission billing: ' . $item['description'],
+                        $invoice->id
+                    );
+                }
+            }
+        }
+
+        return $invoice;
     }
 
     public function discharge(Admission $admission, array $data): Admission

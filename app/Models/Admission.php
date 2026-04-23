@@ -37,6 +37,9 @@ class Admission extends Model
         'discharge_summary',
         'discharge_instructions',
         'status',
+        'admission_type',
+        'admission_fee_service_id',
+        'consumable_fee_service_id',
     ];
 
     protected function casts(): array

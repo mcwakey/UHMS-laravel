@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\VisitStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DischargeRequest;
 use App\Http\Requests\StoreAdmissionRequest;
 use App\Models\Admission;
+use App\Models\ServiceCatalog;
+use App\Models\Visit;
 use App\Models\Ward;
 use App\Services\AdmissionService;
 use App\Services\WardService;
@@ -30,16 +33,39 @@ class AdmissionController extends Controller
     public function create(Request $request)
     {
         $visitId = $request->query('visit_id');
-        $visit = null;
+        $preselectedVisit = null;
 
         if ($visitId) {
-            $visit = \App\Models\Visit::with('patient')->findOrFail($visitId);
+            $preselectedVisit = Visit::with([
+                'patient.insurances.insuranceProvider',
+                'patient.insurances.insuranceTier',
+                'visitInsurance.insuranceProvider',
+                'visitInsurance.insuranceTier',
+            ])
+                ->where('id', $visitId)
+                ->where('status', VisitStatus::ADMITTING)
+                ->first();
         }
+
+        // Visits awaiting admission (with insurance data for JS data attributes)
+        $admittingVisits = Visit::with([
+            'patient',
+            'visitInsurance.insuranceProvider',
+            'visitInsurance.insuranceTier',
+        ])
+            ->where('status', VisitStatus::ADMITTING)
+            ->orderByDesc('created_at')
+            ->get();
 
         $availableBeds = $this->wardService->getAvailableBeds();
         $wards = Ward::active()->orderBy('name')->get();
 
-        return view('admissions.create', compact('visit', 'availableBeds', 'wards'));
+        // Services for admission/consumable fee mapping
+        $services = ServiceCatalog::where('is_active', true)->orderBy('name')->get();
+
+        return view('admissions.create', compact(
+            'preselectedVisit', 'admittingVisits', 'availableBeds', 'wards', 'services'
+        ));
     }
 
     public function store(StoreAdmissionRequest $request)

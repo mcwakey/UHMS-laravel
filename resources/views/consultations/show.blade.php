@@ -266,6 +266,17 @@
                     <hr class="my-1">
                     <small class="text-muted fw-bold px-1">Transition Visit</small>
                     @foreach($visit->status->allowedTransitions() as $nextStatus)
+                        @if($nextStatus === \App\Enums\VisitStatus::ADMITTING)
+                        {{-- Special admit button → go straight to admission form --}}
+                        <form method="POST" action="{{ route('admin.consultations.transition', $visit) }}">
+                            @csrf @method('PATCH')
+                            <input type="hidden" name="status" value="{{ $nextStatus->value }}">
+                            <button type="submit" class="btn btn-success btn-sm w-100"
+                                    onclick="return confirm('Mark patient for admission and go to the admission form?')">
+                                <i class="ti ti-bed me-1"></i>Admit Patient
+                            </button>
+                        </form>
+                        @else
                         <form method="POST" action="{{ route('admin.consultations.transition', $visit) }}">
                             @csrf @method('PATCH')
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
@@ -274,6 +285,7 @@
                                 <i class="ti ti-arrow-right me-1"></i>{{ $nextStatus->label() }}
                             </button>
                         </form>
+                        @endif
                     @endforeach
                     @endif
                     @if($visit->status === \App\Enums\VisitStatus::CONSULTING)
