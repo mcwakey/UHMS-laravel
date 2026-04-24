@@ -14,7 +14,7 @@
     </div>
 </div>
 
-<form method="POST" action="{{ route('admin.roles.update-permissions', $role) }}">
+<form method="POST" action="{{ route('admin.roles.permissions.update', $role) }}">
     @csrf
     @method('PUT')
 

@@ -635,14 +635,12 @@
 
                 {{-- Settings --}}
                 @canany(['settings.manage'])
-                <li class="nav-subtitle">
-                    <span>Settings</span>
-                </li>
-                <li class="{{ request()->routeIs('admin.settings.*') ? 'active subdrop' : '' }}">
-                    <a href="javascript:void(0);" class="{{ request()->routeIs('admin.settings.*') ? '' : 'collapsed' }}" data-bs-toggle="collapse" data-bs-target="#settingsMenu" aria-expanded="{{ request()->routeIs('admin.settings.*') ? 'true' : 'false' }}">
+                <li class="menu-title"><span>Settings</span></li>
+                <li class="submenu">
+                    <a href="javascript:void(0);" class="{{ request()->routeIs('admin.settings.*') ? 'active subdrop' : '' }}">
                         <i class="ti ti-settings"></i><span>Settings</span><span class="menu-arrow"></span>
                     </a>
-                    <ul class="collapse {{ request()->routeIs('admin.settings.*') ? 'show' : '' }}" id="settingsMenu">
+                    <ul>
                         @can('settings.manage')
                         <li class="{{ request()->routeIs('admin.settings.organization') ? 'active' : '' }}">
                             <a href="{{ route('admin.settings.organization') }}">

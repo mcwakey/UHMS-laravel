@@ -106,7 +106,7 @@
     <script src="{{ URL::asset('build/plugins/select2/js/select2.min.js') }}"></script>
 
     <!-- SweetAlert2 -->
-    <script src="{{ URL::asset('build/plugins/sweetalert2/sweetalerts2.min.js') }}"></script>
+    <script src="{{ URL::asset('build/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
 
     <!-- Template Script -->
     <script src="{{ URL::asset('build/js/script.js') }}"></script>
