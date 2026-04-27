@@ -205,6 +205,8 @@ Route::middleware('auth')->group(function () {
             Route::get('admissions/{admission}/discharge', [AdmissionController::class, 'discharge'])->name('admissions.discharge')->middleware('can:ward.discharge');
             Route::post('admissions/{admission}/discharge', [AdmissionController::class, 'processDischarge'])->name('admissions.process-discharge')->middleware('can:ward.discharge');
             Route::post('admissions/{admission}/rounds', [AdmissionController::class, 'storeRound'])->name('admissions.rounds.store');
+            Route::post('admissions/{admission}/vitals', [AdmissionController::class, 'storeVital'])->name('admissions.vitals.store');
+            Route::post('admissions/{admission}/services', [AdmissionController::class, 'storeService'])->name('admissions.services.store');
         });
 
         // Appointments

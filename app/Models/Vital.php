@@ -11,6 +11,7 @@ class Vital extends Model
 
     protected $fillable = [
         'visit_id',
+        'admission_id',
         'patient_id',
         'recorded_by',
         'blood_pressure_systolic',
@@ -48,6 +49,11 @@ class Vital extends Model
     public function visit()
     {
         return $this->belongsTo(Visit::class);
+    }
+
+    public function admission()
+    {
+        return $this->belongsTo(Admission::class);
     }
 
     public function patient()

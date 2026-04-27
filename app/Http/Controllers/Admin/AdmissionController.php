@@ -7,10 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\DischargeRequest;
 use App\Http\Requests\StoreAdmissionRequest;
 use App\Models\Admission;
+use App\Models\InvoiceItem;
 use App\Models\ServiceCatalog;
 use App\Models\Visit;
+use App\Models\Vital;
 use App\Models\Ward;
 use App\Services\AdmissionService;
+use App\Services\VisitService;
 use App\Services\WardService;
 use Illuminate\Http\Request;
 
@@ -18,7 +21,8 @@ class AdmissionController extends Controller
 {
     public function __construct(
         private AdmissionService $admissionService,
-        private WardService $wardService
+        private WardService $wardService,
+        private VisitService $visitService
     ) {}
 
     public function index(Request $request)
@@ -84,11 +88,21 @@ class AdmissionController extends Controller
             'bed.ward',
             'admittedBy',
             'dischargedBy',
-            'visit',
+            'visit.visitServices.serviceCatalog',
+            'visit.vitals.recordedBy',
+            'visit.latestInvoice.items',
+            'visit.medicalRecord.complaints',
+            'visit.medicalRecord.diagnoses.icdCodeEntry',
+            'visit.medicalRecord.treatments',
+            'visit.medicalRecord.prescriptions.items.drug',
+            'visit.medicalRecord.tasks.assignedUser',
+            'visit.medicalRecord.doctor',
             'wardRounds.recordedBy',
         ]);
 
-        return view('admissions.show', compact('admission'));
+        $services = ServiceCatalog::where('is_active', true)->orderBy('name')->get();
+
+        return view('admissions.show', compact('admission', 'services'));
     }
 
     public function discharge(Admission $admission)
@@ -120,5 +134,90 @@ class AdmissionController extends Controller
         return redirect()
             ->route('admin.admissions.show', $admission)
             ->with('success', 'Ward round recorded successfully.');
+    }
+
+    public function storeVital(Request $request, Admission $admission)
+    {
+        $request->validate([
+            'blood_pressure_systolic'  => ['nullable', 'integer', 'min:0', 'max:300'],
+            'blood_pressure_diastolic' => ['nullable', 'integer', 'min:0', 'max:200'],
+            'heart_rate'               => ['nullable', 'integer', 'min:0', 'max:300'],
+            'temperature'              => ['nullable', 'numeric', 'min:30', 'max:45'],
+            'respiratory_rate'         => ['nullable', 'integer', 'min:0', 'max:60'],
+            'spo2'                     => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'weight'                   => ['nullable', 'numeric', 'min:0', 'max:500'],
+            'blood_sugar'              => ['nullable', 'numeric', 'min:0'],
+            'notes'                    => ['nullable', 'string', 'max:1000'],
+            'recorded_at'              => ['nullable', 'date'],
+        ]);
+
+        Vital::create(array_merge($request->only([
+            'blood_pressure_systolic', 'blood_pressure_diastolic', 'heart_rate',
+            'temperature', 'respiratory_rate', 'spo2', 'weight', 'blood_sugar', 'notes',
+        ]), [
+            'admission_id' => $admission->id,
+            'visit_id'     => $admission->visit_id,
+            'patient_id'   => $admission->patient_id,
+            'recorded_by'  => auth()->id(),
+            'recorded_at'  => $request->recorded_at ?? now(),
+        ]));
+
+        return redirect()
+            ->route('admin.admissions.show', $admission)
+            ->withFragment('tab-vitals')
+            ->with('success', 'Vitals recorded.');
+    }
+
+    public function storeService(Request $request, Admission $admission)
+    {
+        $request->validate([
+            'service_catalog_id' => ['required', 'exists:service_catalog,id'],
+            'quantity'           => ['nullable', 'integer', 'min:1', 'max:99'],
+            'notes'              => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $qty = $request->quantity ?? 1;
+
+        $updatedVisit = $this->visitService->attachServices($admission->visit, [[
+            'service_catalog_id' => $request->service_catalog_id,
+            'quantity'           => $qty,
+            'notes'              => $request->notes,
+        ]]);
+
+        // Also append the charge to the admission invoice so it appears on the invoice
+        $invoice = $admission->visit->latestInvoice;
+        if ($invoice) {
+            $svcItem = $updatedVisit->visitServices->sortByDesc('id')->first();
+            if ($svcItem) {
+                InvoiceItem::create([
+                    'invoice_id'           => $invoice->id,
+                    'service_catalog_id'   => $svcItem->service_catalog_id,
+                    'description'          => $svcItem->serviceCatalog->name ?? 'Service',
+                    'quantity'             => $svcItem->quantity,
+                    'unit_price'           => $svcItem->unit_price,
+                    'total_price'          => $svcItem->total_price,
+                    'is_nhis_covered'      => $svcItem->insurance_covered > 0,
+                    'nhis_approved_amount' => $svcItem->insurance_covered,
+                ]);
+
+                // Recalculate invoice totals
+                $invoice->refresh()->load('items');
+                $newSubtotal   = $invoice->items->sum('total_price');
+                $newNhis       = $invoice->items->sum('nhis_approved_amount');
+                $newTotal      = $newSubtotal + $invoice->tax_amount - $invoice->discount_amount;
+                $newBalance    = max(0, $newTotal - $invoice->amount_paid);
+                $invoice->update([
+                    'subtotal'     => $newSubtotal,
+                    'nhis_amount'  => $newNhis,
+                    'total_amount' => $newTotal,
+                    'balance'      => $newBalance,
+                ]);
+            }
+        }
+
+        return redirect()
+            ->route('admin.admissions.show', $admission)
+            ->withFragment('tab-billing')
+            ->with('success', 'Service charge added.');
     }
 }

@@ -93,6 +93,11 @@ class Admission extends Model
         return $this->hasMany(WardRound::class)->orderByDesc('round_date');
     }
 
+    public function vitals()
+    {
+        return $this->hasMany(Vital::class)->orderByDesc('recorded_at');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes
