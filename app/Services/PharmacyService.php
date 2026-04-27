@@ -2,12 +2,16 @@
 
 namespace App\Services;
 
+use App\Enums\BillingType;
+use App\Enums\InvoiceStatus;
 use App\Enums\PrescriptionStatus;
 use App\Events\StockLow;
 use App\Models\DispensingRecord;
 use App\Models\Drug;
 use App\Models\DrugCategory;
 use App\Models\DrugStock;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -261,6 +265,56 @@ class PharmacyService
 
             // Update prescription status
             $this->updatePrescriptionStatus($prescription);
+
+            // ── BILLING ──────────────────────────────────────────────────
+            // Add an invoice line for the dispensed drugs
+            if ($prescription->visit_id && $drug->price > 0) {
+                $unitPrice = (float) $drug->price;
+                $lineTotal = $unitPrice * $quantity;
+
+                // Find the visit's latest open invoice, or create one
+                $invoice = Invoice::where('visit_id', $prescription->visit_id)
+                    ->whereNotIn('status', [InvoiceStatus::PAID->value, InvoiceStatus::CANCELLED->value])
+                    ->latest()
+                    ->first();
+
+                if (!$invoice) {
+                    $invoice = Invoice::create([
+                        'invoice_number'  => Invoice::generateNumber('INV', 'invoices', 'invoice_number'),
+                        'visit_id'        => $prescription->visit_id,
+                        'patient_id'      => $prescription->patient_id,
+                        'billing_type'    => BillingType::CASH->value,
+                        'subtotal'        => 0,
+                        'tax_amount'      => 0,
+                        'discount_amount' => 0,
+                        'nhis_amount'     => 0,
+                        'total_amount'    => 0,
+                        'amount_paid'     => 0,
+                        'balance'         => 0,
+                        'status'          => InvoiceStatus::PENDING->value,
+                        'due_date'        => now()->addDays(30),
+                        'created_by'      => auth()->id(),
+                    ]);
+                }
+
+                InvoiceItem::create([
+                    'invoice_id'  => $invoice->id,
+                    'description' => $drug->display_name . ' × ' . $quantity . ' ' . ($drug->unit ?? 'unit(s)'),
+                    'quantity'    => $quantity,
+                    'unit_price'  => $unitPrice,
+                    'total_price' => $lineTotal,
+                ]);
+
+                // Recalculate invoice totals
+                $newSubtotal = (float) $invoice->items()->sum('total_price');
+                $newTotal    = $newSubtotal + (float) $invoice->tax_amount - (float) $invoice->discount_amount;
+                $invoice->update([
+                    'subtotal'     => $newSubtotal,
+                    'total_amount' => $newTotal,
+                    'balance'      => max(0, $newTotal - (float) $invoice->amount_paid),
+                ]);
+            }
+            // ─────────────────────────────────────────────────────────────
 
             // Check stock levels and fire alert if low
             $totalStock = $drug->activeStocks()->sum('quantity');
