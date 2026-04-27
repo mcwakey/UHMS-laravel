@@ -11,6 +11,7 @@ use App\Http\Requests\StorePrescriptionRequest;
 use App\Models\Complaint;
 use App\Models\Department;
 use App\Models\Diagnosis;
+use App\Models\Drug;
 use App\Models\Investigation;
 use App\Models\ServiceCatalog;
 use App\Models\Treatment;
@@ -118,6 +119,9 @@ class ConsultationController extends Controller
         // Doctors for task assignment
         $doctors = \App\Models\User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get();
 
+        // Drugs for prescription dropdown
+        $drugs = Drug::where('is_active', true)->orderBy('name')->get(['id', 'name', 'generic_name', 'strength', 'dosage_form']);
+
         return view('consultations.show', [
             'visit' => $data['visit'],
             'record' => $data['record'],
@@ -128,6 +132,7 @@ class ConsultationController extends Controller
             'labCategories' => $labCategories,
             'investigationDepts' => $investigationDepts,
             'doctors' => $doctors,
+            'drugs' => $drugs,
         ]);
     }
 

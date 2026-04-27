@@ -691,7 +691,12 @@
                                             <div class="row g-2">
                                                 <div class="col-md-4">
                                                     <label class="form-label small">Drug Name <span class="text-danger">*</span></label>
-                                                    <input type="text" name="items[0][drug_name]" class="form-control form-control-sm" required placeholder="Drug name">
+                                                    <select name="items[0][drug_name]" class="form-select form-select-sm drug-select" required>
+                                                        <option value="">-- Search drug --</option>
+                                                        @foreach($drugs as $drug)
+                                                            <option value="{{ $drug->name }}">{{ $drug->name }}{{ $drug->generic_name ? ' ('.$drug->generic_name.')' : '' }}{{ $drug->strength ? ' - '.$drug->strength : '' }}{{ $drug->dosage_form ? ' ['.$drug->dosage_form.']' : '' }}</option>
+                                                        @endforeach
+                                                    </select>
                                                 </div>
                                                 <div class="col-md-2">
                                                     <label class="form-label small">Dosage <span class="text-danger">*</span></label>
@@ -1269,7 +1274,7 @@ var destroyUrls    = {
 };
 var diagnosisBaseUrl  = '{{ url("admin/consultations/diagnoses") }}';
 var deptServicesBase  = '{{ url("admin/departments") }}';
-var prescriptionDestroyBase = '{{ url("admin/consultations/prescriptions") }}';}
+var prescriptionDestroyBase = '{{ url("admin/consultations/prescriptions") }}';
 </script>
 
 @endsection
@@ -1588,6 +1593,14 @@ function loadInvestigationServices(deptId) {
 /* ================================================================
    PRESCRIPTIONS — DYNAMIC DRUG ROWS
    ================================================================ */
+/* Initialize Select2 on the first drug select */
+$('.drug-select').select2({
+    theme: 'default',
+    width: '100%',
+    placeholder: '-- Search drug --',
+    allowClear: true,
+});
+
 var rxIdx = 1;
 document.getElementById('addItemBtn')?.addEventListener('click', function () {
     var cont = document.getElementById('prescriptionItems');
@@ -1595,6 +1608,11 @@ document.getElementById('addItemBtn')?.addEventListener('click', function () {
     tpl.querySelectorAll('[name]').forEach(function (inp) {
         inp.name = inp.name.replace(/items\[\d+\]/, 'items[' + rxIdx + ']');
         if (inp.tagName === 'INPUT') inp.value = inp.type === 'number' ? '1' : '';
+        if (inp.tagName === 'SELECT' && inp.classList.contains('drug-select')) {
+            inp.value = '';
+            // Destroy any existing select2 on the cloned element before re-init
+            if ($(inp).data('select2')) { $(inp).select2('destroy'); }
+        }
     });
     tpl.style.position = 'relative';
     var rm = document.createElement('button');
@@ -1602,6 +1620,13 @@ document.getElementById('addItemBtn')?.addEventListener('click', function () {
     rm.innerHTML = '<i class="ti ti-x"></i>'; rm.onclick = function () { tpl.remove(); };
     tpl.appendChild(rm);
     cont.appendChild(tpl);
+    /* Init Select2 on the new drug dropdown */
+    $(tpl).find('.drug-select').select2({
+        theme: 'default',
+        width: '100%',
+        placeholder: '-- Search drug --',
+        allowClear: true,
+    });
     rxIdx++;
 });
 

@@ -176,7 +176,7 @@ class PharmacyService
 
     public function getDispensingDetails(Prescription $prescription): Prescription
     {
-        return $prescription->load([
+        $prescription->load([
             'patient',
             'doctor',
             'visit',
@@ -184,6 +184,19 @@ class PharmacyService
             'items.dispensingRecords.drugStock',
             'items.dispensingRecords.dispensedBy',
         ]);
+
+        // Auto-resolve drug_id for items that have drug_name but no drug_id (backward compat)
+        foreach ($prescription->items as $item) {
+            if (!$item->drug_id && $item->drug_name) {
+                $drug = Drug::where('name', $item->drug_name)->first();
+                if ($drug) {
+                    $item->updateQuietly(['drug_id' => $drug->id]);
+                    $item->setRelation('drug', $drug->load('activeStocks'));
+                }
+            }
+        }
+
+        return $prescription;
     }
 
     public function dispenseItem(PrescriptionItem $item, int $quantity, ?string $notes = null): DispensingRecord
@@ -193,8 +206,15 @@ class PharmacyService
             $prescription = $item->prescription;
             $lastRecord = null;
 
-            // Find drug - try linked drug_id first, then search by name
+            // Find drug - try linked drug_id first, then fall back to drug_name lookup
             $drug = $item->drug_id ? Drug::find($item->drug_id) : null;
+
+            if (!$drug && $item->drug_name) {
+                $drug = Drug::where('name', $item->drug_name)->first();
+                if ($drug) {
+                    $item->updateQuietly(['drug_id' => $drug->id]);
+                }
+            }
 
             if (!$drug) {
                 throw new \RuntimeException("No drug linked to this prescription item. Please link a drug first.");

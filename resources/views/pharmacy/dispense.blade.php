@@ -228,7 +228,7 @@
 <div class="modal fade" id="dispenseModal-{{ $item->id }}" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ route('admin.pharmacy.dispensing.item', $item) }}">
+            <form method="POST" action="{{ route('admin.pharmacy.dispensing.dispense-item', $item) }}">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title">Dispense: {{ $item->drug_name }}</h5>
