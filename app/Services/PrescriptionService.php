@@ -7,6 +7,7 @@ use App\Events\PrescriptionCreated;
 use App\Models\MedicalRecord;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class PrescriptionService
@@ -57,7 +58,7 @@ class PrescriptionService
         $prescription = $record->prescriptions()->create([
             'visit_id' => $record->visit_id,
             'patient_id' => $record->patient_id,
-            'doctor_id' => auth()->id(),
+            'doctor_id' => Auth::id(),
             'prescription_number' => Prescription::generatePrescriptionNumber(),
             'status' => PrescriptionStatus::PENDING->value,
             'notes' => $data['notes'] ?? null,

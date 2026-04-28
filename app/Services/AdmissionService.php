@@ -14,6 +14,7 @@ use App\Models\Admission;
 use App\Models\Invoice;
 use App\Models\WardRound;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AdmissionService
@@ -50,7 +51,7 @@ class AdmissionService
                 'admission_type', 'admission_fee_service_id', 'consumable_fee_service_id',
             ]));
             $admissionFields['admission_number'] = Admission::generateAdmissionNumber();
-            $admissionFields['admitted_by'] = auth()->id();
+            $admissionFields['admitted_by'] = Auth::id();
             $admissionFields['admission_date'] = $data['admission_date'] ?? now();
 
             $admission = Admission::create($admissionFields);
@@ -200,7 +201,7 @@ class AdmissionService
             'amount_paid'     => $totalNhis,
             'balance'         => $balance,
             'status'          => $balance <= 0 ? InvoiceStatus::PAID : InvoiceStatus::PENDING,
-            'created_by'      => auth()->id(),
+            'created_by'      => Auth::id(),
             'notes'           => $label . ' invoice for ' . $admission->patient->full_name,
         ]);
 
@@ -232,7 +233,7 @@ class AdmissionService
         return DB::transaction(function () use ($admission, $data) {
             $admission->update([
                 'actual_discharge_date' => now(),
-                'discharged_by' => auth()->id(),
+                'discharged_by' => Auth::id(),
                 'discharge_summary' => $data['discharge_summary'] ?? null,
                 'discharge_instructions' => $data['discharge_instructions'] ?? null,
                 'status' => AdmissionStatus::DISCHARGED,
@@ -258,7 +259,7 @@ class AdmissionService
     public function addWardRound(Admission $admission, array $data): WardRound
     {
         return $admission->wardRounds()->create([
-            'recorded_by' => auth()->id(),
+            'recorded_by' => Auth::id(),
             'round_date' => $data['round_date'] ?? now(),
             'notes' => $data['notes'],
             'instructions' => $data['instructions'] ?? null,

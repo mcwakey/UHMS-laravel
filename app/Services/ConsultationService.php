@@ -8,6 +8,7 @@ use App\Models\Investigation;
 use App\Models\MedicalRecord;
 use App\Models\Patient;
 use App\Models\Treatment;
+use Illuminate\Support\Facades\Auth;
 use App\Models\Visit;
 
 class ConsultationService
@@ -25,7 +26,7 @@ class ConsultationService
             ['visit_id' => $visit->id],
             [
                 'patient_id' => $visit->patient_id,
-                'doctor_id' => auth()->id(),
+                'doctor_id' => Auth::id(),
             ]
         );
     }

@@ -7,6 +7,7 @@ use App\Enums\PayrollStatus;
 use App\Models\Employee;
 use App\Models\PayrollRecord;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Collection;
 
 class PayrollService
@@ -77,7 +78,7 @@ class PayrollService
                 'other_deductions' => $otherDeductions,
                 'net_pay' => max(0, $netPay),
                 'status' => PayrollStatus::DRAFT->value,
-                'processed_by' => auth()->id(),
+                'processed_by' => Auth::id(),
             ]);
 
             $records->push($record);

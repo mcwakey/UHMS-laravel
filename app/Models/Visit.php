@@ -8,6 +8,7 @@ use App\Enums\TriageScore;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Traits\GeneratesNumbers;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -268,7 +269,7 @@ class Visit extends Model
         $this->statusLogs()->create([
             'from_status' => $from->value,
             'to_status' => $target->value,
-            'changed_by' => auth()->id(),
+            'changed_by' => Auth::id(),
             'notes' => $notes,
         ]);
 

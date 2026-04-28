@@ -8,6 +8,7 @@ use App\Models\Claim;
 use App\Models\ClaimItem;
 use App\Models\Invoice;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ClaimService
@@ -47,7 +48,7 @@ class ClaimService
                 'total_amount' => 0,
                 'status' => ClaimStatus::DRAFT,
                 'assigned_doctor_id' => $doctorId,
-                'created_by' => auth()->id(),
+                'created_by' => Auth::id(),
             ]);
 
             // Auto-populate items from invoice
@@ -76,7 +77,7 @@ class ClaimService
     {
         return DB::transaction(function () use ($data) {
             $data['claim_number'] = Claim::generateClaimNumber();
-            $data['created_by'] = auth()->id();
+            $data['created_by'] = Auth::id();
             $data['status'] = ClaimStatus::DRAFT;
 
             $items = $data['items'] ?? [];

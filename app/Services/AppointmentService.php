@@ -9,6 +9,7 @@ use App\Models\Appointment;
 use App\Models\Visit;
 use App\Services\VisitService;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AppointmentService
@@ -40,7 +41,7 @@ class AppointmentService
     public function create(array $data): Appointment
     {
         $data['appointment_number'] = Appointment::generateAppointmentNumber();
-        $data['created_by'] = auth()->id();
+        $data['created_by'] = Auth::id();
 
         if (empty($data['end_time']) && ! empty($data['start_time'])) {
             $data['end_time'] = date('H:i', strtotime($data['start_time'] . ' +30 minutes'));
@@ -110,7 +111,7 @@ class AppointmentService
     {
         $appointment->update([
             'status' => AppointmentStatus::CANCELLED,
-            'cancelled_by' => auth()->id(),
+            'cancelled_by' => Auth::id(),
             'cancellation_reason' => $reason,
         ]);
 
@@ -139,7 +140,7 @@ class AppointmentService
                 'consultation_mode'  => $appointment->consultation_mode ?? 'in_person',
                 'visit_insurance_id' => $appointment->visit_insurance_id,
                 'checked_in_at'      => now(),
-                'created_by'         => auth()->id(),
+                'created_by'         => Auth::id(),
             ]);
 
             // Attach pre-selected appointment services to the new visit

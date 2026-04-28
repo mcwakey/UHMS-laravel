@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\IcdCode;
 use App\Models\PatientProcedure;
 use App\Models\Procedure;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
@@ -135,7 +136,7 @@ class ClinicalService
             'visit_id' => $data['visit_id'],
             'patient_id' => $data['patient_id'],
             'procedure_id' => $data['procedure_id'],
-            'performed_by' => $data['performed_by'] ?? auth()->id(),
+            'performed_by' => $data['performed_by'] ?? Auth::id(),
             'scheduled_date' => $data['scheduled_date'],
             'notes' => $data['notes'] ?? null,
             'consent_signed' => $data['consent_signed'] ?? false,
@@ -154,7 +155,7 @@ class ClinicalService
         $patientProcedure->update([
             'status' => 'completed',
             'performed_date' => now(),
-            'performed_by' => auth()->id(),
+            'performed_by' => Auth::id(),
             'outcome' => $data['outcome'] ?? null,
             'notes' => $data['notes'] ?? $patientProcedure->notes,
         ]);

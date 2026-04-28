@@ -8,6 +8,7 @@ use App\Models\MedicalRecord;
 use App\Models\Visit;
 use App\Services\ConsultationService;
 use App\Services\MedicalPatternService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class MedicalPatternController extends Controller
@@ -54,7 +55,7 @@ class MedicalPatternController extends Controller
 
         $pattern = $this->patternService->create([
             'name' => $request->name,
-            'doctor_id' => $request->scope === 'personal' ? auth()->id() : null,
+            'doctor_id' => $request->scope === 'personal' ? Auth::id() : null,
             'items' => $request->items,
         ]);
 
@@ -80,7 +81,7 @@ class MedicalPatternController extends Controller
         $pattern = $this->patternService->createFromRecord(
             $record,
             $request->name,
-            $request->scope === 'personal' ? auth()->id() : null,
+            $request->scope === 'personal' ? Auth::id() : null,
         );
 
         if ($request->ajax()) {
@@ -165,7 +166,7 @@ class MedicalPatternController extends Controller
 
         $suggestions = $this->patternService->suggest(
             $request->query('query'),
-            auth()->id(),
+            Auth::id(),
             5
         );
 

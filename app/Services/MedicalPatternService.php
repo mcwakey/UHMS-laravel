@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\MedicalPattern;
 use App\Models\MedicalPatternItem;
 use App\Models\MedicalRecord;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
@@ -25,7 +26,7 @@ class MedicalPatternService
             if ($filters['scope'] === 'system') {
                 $query->systemWide();
             } elseif ($filters['scope'] === 'mine') {
-                $query->where('doctor_id', auth()->id());
+                $query->where('doctor_id', Auth::id());
             }
         }
 

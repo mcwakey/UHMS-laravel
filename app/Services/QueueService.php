@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\QueueEntry;
 use App\Models\Visit;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
 
 class QueueService
 {
@@ -80,7 +81,7 @@ class QueueService
             $entry->update([
                 'status' => 'serving',
                 'called_at' => now(),
-                'served_by' => auth()->id(),
+                'served_by' => Auth::id(),
             ]);
         }
 
@@ -92,7 +93,7 @@ class QueueService
         $entry->update([
             'status' => 'serving',
             'served_at' => now(),
-            'served_by' => auth()->id(),
+            'served_by' => Auth::id(),
         ]);
 
         return $entry->fresh();

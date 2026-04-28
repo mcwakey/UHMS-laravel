@@ -16,6 +16,7 @@ use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PharmacyService
@@ -128,7 +129,7 @@ class PharmacyService
 
     public function addStock(array $data): DrugStock
     {
-        $data['received_by'] = auth()->id();
+        $data['received_by'] = Auth::id();
         $data['received_date'] = $data['received_date'] ?? now()->toDateString();
 
         return DrugStock::create($data);
@@ -248,7 +249,7 @@ class PharmacyService
                     'patient_id' => $prescription->patient_id,
                     'visit_id' => $prescription->visit_id,
                     'quantity_dispensed' => $deduct,
-                    'dispensed_by' => auth()->id(),
+                    'dispensed_by' => Auth::id(),
                     'dispensed_at' => now(),
                     'notes' => $notes,
                 ]);
@@ -293,7 +294,7 @@ class PharmacyService
                         'balance'         => 0,
                         'status'          => InvoiceStatus::PENDING->value,
                         'due_date'        => now()->addDays(30),
-                        'created_by'      => auth()->id(),
+                        'created_by'      => Auth::id(),
                     ]);
 
                     // Seed consultation + visit service charges into the new invoice

@@ -7,6 +7,7 @@ use App\Models\DrugStock;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ProcurementService
@@ -40,7 +41,7 @@ class ProcurementService
                 'expected_date' => $data['expected_date'] ?? null,
                 'notes' => $data['notes'] ?? null,
                 'status' => PurchaseOrderStatus::DRAFT,
-                'created_by' => auth()->id(),
+                'created_by' => Auth::id(),
                 'total_amount' => 0,
             ]);
 
@@ -117,7 +118,7 @@ class ProcurementService
 
         $po->update([
             'status' => PurchaseOrderStatus::APPROVED,
-            'approved_by' => auth()->id(),
+            'approved_by' => Auth::id(),
         ]);
     }
 
@@ -166,7 +167,7 @@ class ProcurementService
                     'supplier' => $po->supplier->name,
                     'supplier_id' => $po->supplier_id,
                     'received_date' => now(),
-                    'received_by' => auth()->id(),
+                    'received_by' => Auth::id(),
                 ]);
             }
 

@@ -15,6 +15,7 @@ use App\Models\Ward;
 use App\Services\AdmissionService;
 use App\Services\VisitService;
 use App\Services\WardService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class AdmissionController extends Controller
@@ -158,7 +159,7 @@ class AdmissionController extends Controller
             'admission_id' => $admission->id,
             'visit_id'     => $admission->visit_id,
             'patient_id'   => $admission->patient_id,
-            'recorded_by'  => auth()->id(),
+            'recorded_by'  => Auth::id(),
             'recorded_at'  => $request->recorded_at ?? now(),
         ]));
 

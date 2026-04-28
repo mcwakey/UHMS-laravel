@@ -46,7 +46,7 @@ class FinancialEntry extends Model
 
     public static function generateEntryNumber(): string
     {
-        return (new static)->generateNumber('FIN', 'entry_number');
+        return (new static)->generateNumber('FIN', 'financial_entries', 'entry_number');
     }
 
     // ── Relationships ──

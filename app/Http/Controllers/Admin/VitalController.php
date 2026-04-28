@@ -12,6 +12,7 @@ use App\Models\Triage;
 use App\Models\Visit;
 use App\Models\Vital;
 use App\Services\VisitService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class VitalController extends Controller
@@ -78,7 +79,7 @@ class VitalController extends Controller
 
         $data = $request->validated();
         $data['patient_id'] = $visit->patient_id;
-        $data['recorded_by'] = auth()->id();
+        $data['recorded_by'] = Auth::id();
         $data['recorded_at'] = now();
 
         // Auto-calculate BMI if weight and height provided
@@ -109,7 +110,7 @@ class VitalController extends Controller
                 array_merge($data, [
                     'patient_id'   => $visit->patient_id,
                     'triage_score' => $score->value,
-                    'triaged_by'   => auth()->id(),
+                    'triaged_by'   => Auth::id(),
                     'triaged_at'   => now(),
                 ])
             );

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Patient;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class PatientService
@@ -44,7 +45,7 @@ class PatientService
     public function create(array $data): Patient
     {
         $data['patient_number'] = Patient::generatePatientNumber();
-        $data['registered_by'] = auth()->id();
+        $data['registered_by'] = Auth::id();
 
         if (isset($data['avatar']) && $data['avatar']) {
             $data['avatar'] = $data['avatar']->store('patients', 'public');

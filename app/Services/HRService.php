@@ -8,6 +8,7 @@ use App\Models\Employee;
 use App\Models\EmployeeAttendance;
 use App\Models\LeaveRequest;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class HRService
@@ -151,7 +152,7 @@ class HRService
 
         $leave->update([
             'status' => LeaveStatus::APPROVED->value,
-            'approved_by' => auth()->id(),
+            'approved_by' => Auth::id(),
             'approved_at' => now(),
         ]);
     }
@@ -164,7 +165,7 @@ class HRService
 
         $leave->update([
             'status' => LeaveStatus::REJECTED->value,
-            'approved_by' => auth()->id(),
+            'approved_by' => Auth::id(),
             'approved_at' => now(),
             'rejection_reason' => $reason,
         ]);

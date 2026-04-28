@@ -13,6 +13,7 @@ use App\Models\LabTestCategory;
 use App\Models\Visit;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class LabService
@@ -111,7 +112,7 @@ class LabService
                 'request_number' => LabRequest::generateRequestNumber(),
                 'visit_id' => $visit->id,
                 'patient_id' => $visit->patient_id,
-                'requested_by' => auth()->id(),
+                'requested_by' => Auth::id(),
                 'department_id' => $visit->department_id,
                 'clinical_info' => $data['clinical_info'] ?? null,
                 'urgency' => $data['urgency'] ?? 'routine',
@@ -188,7 +189,7 @@ class LabService
                     'result_value' => $data['result_value'],
                     'is_abnormal' => $data['is_abnormal'] ?? false,
                     'remarks' => $data['remarks'] ?? null,
-                    'performed_by' => auth()->id(),
+                    'performed_by' => Auth::id(),
                     'performed_at' => now(),
                 ]
             );
@@ -209,7 +210,7 @@ class LabService
         }
 
         $result->update([
-            'verified_by' => auth()->id(),
+            'verified_by' => Auth::id(),
             'verified_at' => now(),
         ]);
 

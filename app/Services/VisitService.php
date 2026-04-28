@@ -5,13 +5,13 @@ namespace App\Services;
 use App\Enums\TriageScore;
 use App\Enums\VisitStatus;
 use App\Models\Patient;
-use App\Models\QueueEntry;
 use App\Models\Triage;
 use App\Models\VisitDepartmentHistory;
 use App\Models\Visit;
 use App\Models\VisitServiceItem;
 use App\Models\ServiceCatalog;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class VisitService
@@ -71,7 +71,7 @@ class VisitService
     {
         $data['visit_number'] = Visit::generateVisitNumber();
         $data['visit_date'] = $data['visit_date'] ?? today();
-        $data['created_by'] = auth()->id();
+        $data['created_by'] = Auth::id();
 
         // Calculate and store patient age at time of visit
         $patient = Patient::find($data['patient_id']);
@@ -100,7 +100,7 @@ class VisitService
         $visit->statusLogs()->create([
             'from_status' => null,
             'to_status' => $visit->status->value,
-            'changed_by' => auth()->id(),
+            'changed_by' => Auth::id(),
             'notes' => $isScheduled ? 'Visit scheduled' : 'Visit created',
         ]);
 
@@ -357,7 +357,7 @@ class VisitService
     public function cancel(Visit $visit, ?string $reason = null): Visit
     {
         $visit->update([
-            'cancelled_by'        => auth()->id(),
+            'cancelled_by'        => Auth::id(),
             'cancellation_reason' => $reason,
         ]);
         $visit->transitionTo(VisitStatus::CANCELLED, $reason);
@@ -469,7 +469,7 @@ class VisitService
             array_merge($data, [
                 'patient_id' => $visit->patient_id,
                 'triage_score' => $score->value,
-                'triaged_by' => auth()->id(),
+                'triaged_by' => Auth::id(),
                 'triaged_at' => now(),
             ])
         );
@@ -510,7 +510,7 @@ class VisitService
             'department_id' => $departmentId,
             'type'        => VisitDepartmentHistory::TYPE_CONSULTATION,
             'status'      => VisitDepartmentHistory::STATUS_WAITING,
-            'assigned_by' => auth()->id(),
+            'assigned_by' => Auth::id(),
         ]);
 
         // Create a billing line for consultation if a consultation service exists for the dept
@@ -567,7 +567,7 @@ class VisitService
             'department_id' => $departmentId,
             'type'         => VisitDepartmentHistory::TYPE_REFERRAL,
             'status'       => VisitDepartmentHistory::STATUS_WAITING,
-            'assigned_by'  => auth()->id(),
+            'assigned_by'  => Auth::id(),
             'notes'        => $notes,
         ]);
 
@@ -602,7 +602,7 @@ class VisitService
             'department_id' => $departmentId,
             'type'         => VisitDepartmentHistory::TYPE_INVESTIGATION,
             'status'       => VisitDepartmentHistory::STATUS_WAITING,
-            'assigned_by'  => auth()->id(),
+            'assigned_by'  => Auth::id(),
             'notes'        => $notes,
         ]);
 

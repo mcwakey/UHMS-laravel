@@ -8,6 +8,7 @@ use App\Models\CashierShift;
 use App\Models\FinancialEntry;
 use App\Models\Payment;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AccountingService
@@ -38,13 +39,13 @@ class AccountingService
             'receipt_number' => $data['receipt_number'] ?? null,
             'description' => $data['description'],
             'entry_date' => $data['entry_date'],
-            'recorded_by' => auth()->id(),
+            'recorded_by' => Auth::id(),
         ]);
     }
 
     public function approveEntry(FinancialEntry $entry): void
     {
-        $entry->update(['approved_by' => auth()->id()]);
+        $entry->update(['approved_by' => Auth::id()]);
     }
 
     public function deleteEntry(FinancialEntry $entry): void
@@ -61,7 +62,7 @@ class AccountingService
     public function getOpenShift(?int $userId = null): ?CashierShift
     {
         return CashierShift::open()
-            ->byUser($userId ?? auth()->id())
+            ->byUser($userId ?? Auth::id())
             ->first();
     }
 
@@ -74,7 +75,7 @@ class AccountingService
         }
 
         return CashierShift::create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'shift_date' => now()->toDateString(),
             'started_at' => now(),
             'opening_balance' => $data['opening_balance'] ?? 0,
@@ -116,7 +117,7 @@ class AccountingService
 
         $shift->update([
             'status' => ShiftStatus::VERIFIED,
-            'verified_by' => auth()->id(),
+            'verified_by' => Auth::id(),
         ]);
     }
 

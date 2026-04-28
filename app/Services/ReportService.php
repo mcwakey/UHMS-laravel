@@ -678,7 +678,7 @@ class ReportService
             'total_claims' => $claims->total(),
             'total_amount' => Claim::sum('total_amount'),
             'approved_amount' => Claim::whereNotNull('approved_amount')->sum('approved_amount'),
-            'pending' => Claim::where('status', ClaimStatus::PENDING)->count(),
+            'pending' => Claim::where('status', ClaimStatus::SUBMITTED)->count(),
         ];
 
         $providers = InsuranceProvider::orderBy('name')->get();

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ConsultationTask;
 use App\Models\MedicalRecord;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class ConsultationTaskController extends Controller
@@ -20,7 +21,7 @@ class ConsultationTaskController extends Controller
             'due_date' => ['nullable', 'date'],
         ]);
 
-        $data['created_by'] = auth()->id();
+        $data['created_by'] = Auth::id();
         $data['status'] = 'pending';
 
         $task = $medicalRecord->tasks()->create($data);

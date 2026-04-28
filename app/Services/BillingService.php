@@ -11,6 +11,7 @@ use App\Models\InvoiceItem;
 use App\Models\Payment;
 use App\Models\ServiceCatalog;
 use App\Models\Visit;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class BillingService
@@ -61,7 +62,7 @@ class BillingService
                 'status'          => $nhisAmount >= $totalAmount ? InvoiceStatus::PAID->value : InvoiceStatus::PENDING->value,
                 'due_date'        => $data['due_date'] ?? now()->addDays(30),
                 'notes'           => $data['notes'] ?? null,
-                'created_by'      => auth()->id(),
+                'created_by'      => Auth::id(),
             ]);
 
             foreach ($items as $item) {
@@ -126,7 +127,7 @@ class BillingService
                 'amount'           => $data['amount'],
                 'payment_method'   => $data['payment_method'],
                 'reference_number' => $data['reference_number'] ?? null,
-                'received_by'      => auth()->id(),
+                'received_by'      => Auth::id(),
                 'notes'            => $data['notes'] ?? null,
                 'paid_at'          => $data['paid_at'] ?? now(),
             ]);

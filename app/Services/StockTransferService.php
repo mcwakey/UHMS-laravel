@@ -7,6 +7,7 @@ use App\Models\DrugStock;
 use App\Models\StockTransfer;
 use App\Models\StockTransferItem;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class StockTransferService
@@ -34,7 +35,7 @@ class StockTransferService
                 'transfer_number' => StockTransfer::generateTransferNumber(),
                 'from_location' => $data['from_location'] ?? 'store',
                 'to_location' => $data['to_location'] ?? 'pharmacy',
-                'transferred_by' => auth()->id(),
+                'transferred_by' => Auth::id(),
                 'transfer_date' => $data['transfer_date'] ?? now(),
                 'notes' => $data['notes'] ?? null,
                 'status' => StockTransferStatus::PENDING,
@@ -65,7 +66,7 @@ class StockTransferService
 
         $transfer->update([
             'status' => StockTransferStatus::APPROVED,
-            'approved_by' => auth()->id(),
+            'approved_by' => Auth::id(),
         ]);
     }
 
@@ -107,7 +108,7 @@ class StockTransferService
                     'supplier' => $sourceStock->supplier ?? 'Transfer',
                     'supplier_id' => $sourceStock->supplier_id,
                     'received_date' => now(),
-                    'received_by' => auth()->id(),
+                    'received_by' => Auth::id(),
                 ]);
             }
 

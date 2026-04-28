@@ -6,7 +6,6 @@ use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Enums\DepartmentType;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreConsultationRequest;
 use App\Http\Requests\StorePrescriptionRequest;
 use App\Models\Complaint;
 use App\Models\Department;
@@ -21,6 +20,7 @@ use App\Services\LabService;
 use App\Services\MedicalPatternService;
 use App\Services\PrescriptionService;
 use App\Services\VisitService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class ConsultationController extends Controller
@@ -71,7 +71,7 @@ class ConsultationController extends Controller
         }
 
         if ($request->boolean('my_patients')) {
-            $query->where('assigned_doctor_id', auth()->id());
+            $query->where('assigned_doctor_id', Auth::id());
         }
 
         // No department column on visits — filter by status instead (done above)
@@ -97,7 +97,7 @@ class ConsultationController extends Controller
 
         // Get recent/popular patterns for the doctor
         $patterns = \App\Models\MedicalPattern::active()
-            ->forDoctor(auth()->id())
+            ->forDoctor(Auth::id())
             ->with('items')
             ->orderByDesc('usage_count')
             ->limit(10)
