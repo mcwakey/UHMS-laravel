@@ -28,8 +28,8 @@
                         <th>Code</th>
                         <th>Name</th>
                         <th>Type</th>
-                        <th>Description</th>
-                        <th>Designations</th>
+                        <th>Result Type</th>
+                        <th class="text-center">Stock Managed</th>
                         <th>Users</th>
                         <th>Status</th>
                         <th class="text-end">Actions</th>
@@ -47,8 +47,22 @@
                                 <span class="text-muted small">—</span>
                             @endif
                         </td>
-                        <td>{{ Str::limit($dept->description, 50) ?? '-' }}</td>
-                        <td><span class="badge bg-soft-info">{{ $dept->designations_count }}</span></td>
+                        <td>
+                            @if($dept->result_type && $dept->result_type->value !== 'none')
+                                <span class="badge bg-{{ $dept->result_type->color() }}">
+                                    <i class="ti {{ $dept->result_type->icon() }} me-1"></i>{{ $dept->result_type->label() }}
+                                </span>
+                            @else
+                                <span class="text-muted small">None</span>
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            @if($dept->is_stock_managed)
+                                <span class="badge bg-success"><i class="ti ti-check"></i> Yes</span>
+                            @else
+                                <span class="text-muted small">—</span>
+                            @endif
+                        </td>
                         <td><span class="badge bg-soft-primary">{{ $dept->users_count }}</span></td>
                         <td>
                             <span class="badge bg-{{ $dept->status === 'active' ? 'success' : 'danger' }}">
@@ -116,6 +130,26 @@
                                             </div>
                                         </div>
                                         <div class="mb-3">
+                                            <label class="form-label fw-medium">Result Type <span class="text-danger">*</span></label>
+                                            <select name="result_type" class="form-select" required>
+                                                @foreach($resultTypes as $rt)
+                                                <option value="{{ $rt->value }}" {{ $dept->result_type?->value === $rt->value ? 'selected' : '' }}>
+                                                    {{ $rt->label() }}
+                                                </option>
+                                                @endforeach
+                                            </select>
+                                            <div class="form-text">Determines what type of report/result this department sends back.</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" name="is_stock_managed" value="1" id="stockEdit{{ $dept->id }}" {{ $dept->is_stock_managed ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="stockEdit{{ $dept->id }}">
+                                                    <strong>Store manages stock for this department</strong>
+                                                    <div class="text-muted small">Items from this department appear in Procurement & Stock Transfers.</div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
                                             <label class="form-label">Description</label>
                                             <textarea name="description" class="form-control" rows="3">{{ $dept->description }}</textarea>
                                         </div>
@@ -180,6 +214,24 @@
                                     <option value="{{ $type->value }}">{{ $type->label() }}</option>
                                 @endforeach
                             </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Result Type <span class="text-danger">*</span></label>
+                        <select name="result_type" class="form-select" required>
+                            @foreach($resultTypes as $rt)
+                            <option value="{{ $rt->value }}" {{ $rt->value === 'none' ? 'selected' : '' }}>{{ $rt->label() }}</option>
+                            @endforeach
+                        </select>
+                        <div class="form-text">Determines what type of report/result this department sends back.</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="is_stock_managed" value="1" id="stockAdd">
+                            <label class="form-check-label" for="stockAdd">
+                                <strong>Store manages stock for this department</strong>
+                                <div class="text-muted small">Items from this department appear in Procurement & Stock Transfers.</div>
+                            </label>
                         </div>
                     </div>
                     <div class="mb-3">

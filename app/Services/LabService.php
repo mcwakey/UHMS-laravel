@@ -2,18 +2,22 @@
 
 namespace App\Services;
 
+use App\Enums\ResultType;
 use App\Events\LabRequestCreated;
 use App\Events\LabResultsCompleted;
+use App\Models\Department;
 use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 use App\Models\LabResult;
 use App\Models\LabTest;
 use App\Models\LabTestCategory;
 use App\Models\Visit;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class LabService
 {
@@ -78,7 +82,7 @@ class LabService
 
     public function getRequests(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = LabRequest::with(['patient', 'requestedBy', 'items.labTest', 'department'])
+        $query = LabRequest::with(['patient', 'requestedBy', 'items.labTest', 'department', 'targetDepartment'])
             ->latest();
 
         if (!empty($filters['status'])) {
@@ -87,6 +91,10 @@ class LabService
 
         if (!empty($filters['urgency'])) {
             $query->where('urgency', $filters['urgency']);
+        }
+
+        if (!empty($filters['target_department_id'])) {
+            $query->where('target_department_id', $filters['target_department_id']);
         }
 
         if (!empty($filters['search'])) {
@@ -140,6 +148,7 @@ class LabService
             'visit',
             'requestedBy',
             'department',
+            'targetDepartment',
             'items.labTest.category',
             'items.result.performedBy',
             'items.result.verifiedBy',
@@ -181,16 +190,33 @@ class LabService
     public function enterResult(LabRequestItem $item, array $data): LabResult
     {
         return DB::transaction(function () use ($item, $data) {
+            $resultType = ResultType::tryFrom($data['result_type'] ?? 'parameters')
+                ?? ResultType::PARAMETERS;
+
+            $payload = [
+                'lab_request_id'      => $item->lab_request_id,
+                'result_type'         => $resultType->value,
+                'is_abnormal'         => $data['is_abnormal'] ?? false,
+                'remarks'             => $data['remarks'] ?? null,
+                'performed_by'        => Auth::id(),
+                'performed_at'        => now(),
+            ];
+
+            if ($resultType === ResultType::RICHTEXT) {
+                $payload['result_text'] = $data['result_text'] ?? null;
+            } elseif ($resultType->isFileBased()) {
+                if (isset($data['result_file']) && $data['result_file'] instanceof UploadedFile) {
+                    $path = $data['result_file']->store('investigation-results', 'public');
+                    $payload['result_file']      = $path;
+                    $payload['result_file_name'] = $data['result_file']->getClientOriginalName();
+                }
+            } else {
+                $payload['result_value'] = $data['result_value'] ?? null;
+            }
+
             $result = LabResult::updateOrCreate(
                 ['lab_request_item_id' => $item->id],
-                [
-                    'lab_request_id' => $item->lab_request_id,
-                    'result_value' => $data['result_value'],
-                    'is_abnormal' => $data['is_abnormal'] ?? false,
-                    'remarks' => $data['remarks'] ?? null,
-                    'performed_by' => Auth::id(),
-                    'performed_at' => now(),
-                ]
+                $payload
             );
 
             $item->update(['status' => 'completed']);
@@ -278,11 +304,16 @@ class LabService
     public function getLabStats(): array
     {
         return [
-            'pending' => LabRequest::pending()->count(),
-            'processing' => LabRequest::processing()->count(),
+            'pending'         => LabRequest::pending()->count(),
+            'processing'      => LabRequest::processing()->count(),
             'completed_today' => LabRequest::completed()->whereDate('updated_at', today())->count(),
-            'total_tests' => LabTest::active()->count(),
+            'total_tests'     => LabTest::active()->count(),
         ];
+    }
+
+    public function getInvestigationDepartments(): Collection
+    {
+        return Department::acceptsRequests()->orderBy('name')->get();
     }
 
     public function getVisitLabRequests(Visit $visit): Collection

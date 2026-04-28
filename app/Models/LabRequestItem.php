@@ -12,6 +12,7 @@ class LabRequestItem extends Model
         'lab_request_id',
         'lab_test_id',
         'status',
+        'name',
     ];
 
     public function labRequest(): BelongsTo

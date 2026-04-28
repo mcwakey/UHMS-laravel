@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Enums\DepartmentType;
+use App\Enums\ResultType;
 use App\Models\Department;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class DepartmentController extends Controller
 {
@@ -20,19 +22,24 @@ class DepartmentController extends Controller
             ->paginate(15);
 
         $departmentTypes = DepartmentType::cases();
+        $resultTypes     = ResultType::cases();
 
-        return view('departments.index', compact('departments', 'departmentTypes'));
+        return view('departments.index', compact('departments', 'departmentTypes', 'resultTypes'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'code' => 'required|string|max:10|unique:departments,code',
-            'type' => ['nullable', \Illuminate\Validation\Rule::enum(DepartmentType::class)],
-            'description' => 'nullable|string|max:500',
-            'status' => 'required|in:active,inactive',
+            'name'             => 'required|string|max:255',
+            'code'             => 'required|string|max:10|unique:departments,code',
+            'type'             => ['nullable', Rule::enum(DepartmentType::class)],
+            'result_type'      => ['required', Rule::enum(ResultType::class)],
+            'is_stock_managed' => 'nullable|boolean',
+            'description'      => 'nullable|string|max:500',
+            'status'           => 'required|in:active,inactive',
         ]);
+
+        $validated['is_stock_managed'] = $request->boolean('is_stock_managed');
 
         Department::create($validated);
 
@@ -43,12 +50,16 @@ class DepartmentController extends Controller
     public function update(Request $request, Department $department)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'code' => "required|string|max:10|unique:departments,code,{$department->id}",
-            'type' => ['nullable', \Illuminate\Validation\Rule::enum(DepartmentType::class)],
-            'description' => 'nullable|string|max:500',
-            'status' => 'required|in:active,inactive',
+            'name'             => 'required|string|max:255',
+            'code'             => "required|string|max:10|unique:departments,code,{$department->id}",
+            'type'             => ['nullable', Rule::enum(DepartmentType::class)],
+            'result_type'      => ['required', Rule::enum(ResultType::class)],
+            'is_stock_managed' => 'nullable|boolean',
+            'description'      => 'nullable|string|max:500',
+            'status'           => 'required|in:active,inactive',
         ]);
+
+        $validated['is_stock_managed'] = $request->boolean('is_stock_managed');
 
         $department->update($validated);
 

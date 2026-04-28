@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Doctor;
 
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
-use App\Enums\DepartmentType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePrescriptionRequest;
 use App\Models\Complaint;
@@ -107,14 +106,8 @@ class ConsultationController extends Controller
         $labRequests = $this->labService->getVisitLabRequests($visit);
         $labCategories = $this->labService->getActiveCategories();
 
-        // Investigation departments (for the unified investigations tab)
-        $investigationDepts = Department::active()
-            ->whereIn('type', [
-                DepartmentType::INVESTIGATION->value,
-                DepartmentType::RADIOLOGY->value,
-            ])
-            ->orderBy('name')
-            ->get();
+        // All departments that accept investigation requests (have a result_type set)
+        $investigationDepts = $this->labService->getInvestigationDepartments();
 
         // Doctors for task assignment
         $doctors = \App\Models\User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get();
@@ -262,6 +255,30 @@ class ConsultationController extends Controller
             ->get(['id', 'name', 'code', 'price']);
 
         return response()->json($services);
+    }
+
+    /**
+     * Return investigation metadata for a department (result_type + catalog tests if applicable).
+     */
+    public function getDepartmentInvestigationInfo(Department $department)
+    {
+        $resultType = $department->result_type ?? \App\Enums\ResultType::NONE;
+
+        $data = [
+            'result_type'  => $resultType->value,
+            'uses_catalog' => $resultType->usesTestCatalog(),
+            'label'        => $resultType->label(),
+            'lab_tests'    => [],
+        ];
+
+        if ($resultType->usesTestCatalog()) {
+            $data['lab_tests'] = \App\Models\LabTest::where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'code', 'unit', 'normal_range', 'price'])
+                ->toArray();
+        }
+
+        return response()->json($data);
     }
 
     /*
@@ -442,19 +459,24 @@ class ConsultationController extends Controller
     public function storeLabRequest(Request $request, Visit $visit)
     {
         $request->validate([
-            'test_ids' => ['required', 'array', 'min:1'],
-            'test_ids.*' => ['exists:lab_tests,id'],
-            'urgency' => ['nullable', 'in:routine,urgent,emergency'],
-            'clinical_info' => ['nullable', 'string', 'max:2000'],
+            'target_department_id' => ['required', 'exists:departments,id'],
+            'items'                => ['required', 'array', 'min:1'],
+            // items can be test IDs (int) or free-text names (string)
+            'urgency'              => ['nullable', 'in:routine,urgent,emergency'],
+            'clinical_info'        => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $labRequest = $this->labService->createRequest($visit, $request->test_ids, $request->only('urgency', 'clinical_info'));
+        $labRequest = $this->labService->createRequest(
+            $visit,
+            $request->input('items', []),
+            $request->only('target_department_id', 'urgency', 'clinical_info')
+        );
 
         if ($request->ajax()) {
             return response()->json(['success' => true, 'labRequest' => $labRequest]);
         }
 
-        return back()->with('success', "Lab request {$labRequest->request_number} created.");
+        return back()->with('success', "Investigation request {$labRequest->request_number} sent to {$labRequest->targetDepartment?->name}.");
     }
 
     /*

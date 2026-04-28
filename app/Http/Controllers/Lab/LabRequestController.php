@@ -14,21 +14,21 @@ class LabRequestController extends Controller
     ) {}
 
     /**
-     * Lab request queue / list.
+     * Lab/Investigation request queue.
      */
     public function index(Request $request)
     {
-        $requests = $this->labService->getRequests([
-            'status' => $request->status,
-            'urgency' => $request->urgency,
-            'search' => $request->search,
-            'date_from' => $request->date_from,
-            'date_to' => $request->date_to,
-        ]);
+        $filters = $request->only(['status', 'urgency', 'search', 'date_from', 'date_to', 'department_id']);
 
+        if (!empty($filters['department_id'])) {
+            $filters['target_department_id'] = $filters['department_id'];
+        }
+
+        $requests = $this->labService->getRequests($filters);
         $stats = $this->labService->getLabStats();
+        $departments = $this->labService->getInvestigationDepartments();
 
-        return view('lab.requests', compact('requests', 'stats'));
+        return view('lab.requests', compact('requests', 'stats', 'departments'));
     }
 
     /**

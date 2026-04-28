@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\DepartmentType;
+use App\Enums\ResultType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,12 +18,16 @@ class Department extends Model
         'description',
         'type',
         'status',
+        'result_type',
+        'is_stock_managed',
     ];
 
     protected function casts(): array
     {
         return [
-            'type' => DepartmentType::class,
+            'type'             => DepartmentType::class,
+            'result_type'      => ResultType::class,
+            'is_stock_managed' => 'boolean',
         ];
     }
 
@@ -51,8 +56,24 @@ class Department extends Model
         return $this->status === 'active';
     }
 
+    public function labRequests(): HasMany
+    {
+        return $this->hasMany(LabRequest::class, 'target_department_id');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
+    }
+
+    public function scopeStockManaged($query)
+    {
+        return $query->where('is_stock_managed', true);
+    }
+
+    public function scopeAcceptsRequests($query)
+    {
+        return $query->where('status', 'active')
+            ->where('result_type', '!=', ResultType::NONE->value);
     }
 }

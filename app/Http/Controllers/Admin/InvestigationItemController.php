@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\InvestigationItemCategory;
 use App\Enums\StockLocation;
 use App\Http\Controllers\Controller;
+use App\Models\Department;
 use App\Models\InvestigationItem;
 use App\Models\InvestigationItemStock;
 use App\Models\Supplier;
@@ -96,9 +97,10 @@ class InvestigationItemController extends Controller
             ->orderBy('expiry_date')
             ->paginate(20)->withQueryString();
 
-        $items     = InvestigationItem::active()->orderBy('name')->get();
-        $suppliers = Supplier::active()->orderBy('name')->get();
-        $locations = StockLocation::cases();
+        $items             = InvestigationItem::active()->orderBy('name')->get();
+        $suppliers         = Supplier::active()->orderBy('name')->get();
+        $locations         = StockLocation::cases();
+        $stockManagedDepts = Department::stockManaged()->orderBy('name')->get();
 
         $stats = [
             'total_batches'    => InvestigationItemStock::where('quantity', '>', 0)->count(),
@@ -107,7 +109,7 @@ class InvestigationItemController extends Controller
             'expiring_soon'    => InvestigationItemStock::expiringSoon()->count(),
         ];
 
-        return view('investigations.items.stock', compact('query', 'items', 'suppliers', 'locations', 'stats'));
+        return view('investigations.items.stock', compact('query', 'items', 'suppliers', 'locations', 'stats', 'stockManagedDepts'));
     }
 
     public function storeStock(Request $request)

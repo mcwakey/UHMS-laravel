@@ -19,6 +19,7 @@ class LabRequest extends Model
         'patient_id',
         'requested_by',
         'department_id',
+        'target_department_id',
         'clinical_info',
         'urgency',
         'status',
@@ -48,6 +49,16 @@ class LabRequest extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function targetDepartment(): BelongsTo
+    {
+        return $this->belongsTo(Department::class, 'target_department_id');
+    }
+
+    public function getResultTypeAttribute(): ?\App\Enums\ResultType
+    {
+        return $this->targetDepartment?->result_type;
     }
 
     public function items(): HasMany

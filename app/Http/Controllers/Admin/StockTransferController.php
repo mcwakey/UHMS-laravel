@@ -6,6 +6,7 @@ use App\Enums\StockLocation;
 use App\Enums\StockTransferStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreStockTransferRequest;
+use App\Models\Department;
 use App\Models\Drug;
 use App\Models\DrugStock;
 use App\Models\InvestigationItem;
@@ -56,9 +57,10 @@ class StockTransferController extends Controller
             ->get()
             ->groupBy('investigation_item_id');
 
-        $locations = StockLocation::cases();
+        $locations         = StockLocation::cases();
+        $stockManagedDepts = Department::stockManaged()->orderBy('name')->get();
 
-        return view('store.transfers.create', compact('drugs', 'storeStock', 'locations', 'investigationItems', 'investigationStock'));
+        return view('store.transfers.create', compact('drugs', 'storeStock', 'locations', 'investigationItems', 'investigationStock', 'stockManagedDepts'));
     }
 
     public function store(StoreStockTransferRequest $request)

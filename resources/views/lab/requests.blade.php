@@ -1,11 +1,11 @@
 @extends('layouts.app')
-@section('title', 'Lab Requests')
+@section('title', 'Investigation Requests')
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"><i class="ti ti-test-pipe me-2"></i>Laboratory Requests</h4>
+        <h4 class="fw-bold mb-0"><i class="ti ti-microscope me-2"></i>Investigation Requests</h4>
     </div>
 </div>
 
@@ -62,6 +62,13 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <select name="department_id" class="form-select">
+                    <option value="">All Departments</option>
+                    @foreach($departments as $dept)
+                    <option value="{{ $dept->id }}" {{ request('department_id') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
+                    @endforeach
+                </select>
+            </div>
                 <select name="urgency" class="form-select">
                     <option value="">All Urgency</option>
                     <option value="routine" {{ request('urgency') === 'routine' ? 'selected' : '' }}>Routine</option>
@@ -92,11 +99,11 @@
                     <tr>
                         <th>Request #</th>
                         <th>Patient</th>
-                        <th>Tests</th>
+                        <th>Department</th>
+                        <th>Type</th>
                         <th>Urgency</th>
                         <th>Status</th>
                         <th>Progress</th>
-                        <th>Requested By</th>
                         <th>Date</th>
                         <th class="text-end">Actions</th>
                     </tr>
@@ -114,21 +121,24 @@
                             <small class="text-muted">{{ $req->patient->patient_number }}</small>
                         </td>
                         <td>
-                            <span class="badge bg-soft-primary">{{ $req->items->count() }} test(s)</span>
+                            @if($req->targetDepartment)
+                            <span class="fw-medium">{{ $req->targetDepartment->name }}</span>
+                            @else <span class="text-muted">&mdash;</span> @endif
                         </td>
                         <td>
-                            <span class="badge bg-{{ $req->urgency_color }}">{{ ucfirst($req->urgency) }}</span>
+                            @php $rt = $req->result_type; @endphp
+                            @if($rt && $rt->value !== 'none')
+                            <span class="badge bg-{{ $rt->color() }}"><i class="ti {{ $rt->icon() }} me-1"></i>{{ $rt->label() }}</span>
+                            @else <span class="text-muted">&mdash;</span> @endif
                         </td>
-                        <td>
-                            <span class="badge bg-{{ $req->status_color }}">{{ $req->status_label }}</span>
-                        </td>
+                        <td><span class="badge bg-{{ $req->urgency_color }}">{{ ucfirst($req->urgency) }}</span></td>
+                        <td><span class="badge bg-{{ $req->status_color }}">{{ $req->status_label }}</span></td>
                         <td>
                             <div class="progress" style="height: 6px; width: 80px;">
                                 <div class="progress-bar bg-success" style="width: {{ $req->completion_percentage }}%"></div>
                             </div>
                             <small class="text-muted">{{ $req->completion_percentage }}%</small>
                         </td>
-                        <td>{{ $req->requestedBy->name ?? '-' }}</td>
                         <td>
                             <small>{{ $req->created_at->format('d M Y') }}</small><br>
                             <small class="text-muted">{{ $req->created_at->format('H:i') }}</small>
@@ -142,8 +152,8 @@
                     @empty
                     <tr>
                         <td colspan="9" class="text-center text-muted py-4">
-                            <i class="ti ti-test-pipe fs-1 d-block mb-2"></i>
-                            No lab requests found.
+                            <i class="ti ti-microscope fs-1 d-block mb-2"></i>
+                            No investigation requests found.
                         </td>
                     </tr>
                     @endforelse

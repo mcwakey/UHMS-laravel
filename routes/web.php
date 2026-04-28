@@ -437,6 +437,7 @@ Route::middleware('auth')->group(function () {
             });
 
             Route::get('departments/{department}/investigation-services', [ConsultationController::class, 'getDepartmentServices'])->name('departments.investigation-services');
+            Route::get('departments/{department}/investigation-info', [ConsultationController::class, 'getDepartmentInvestigationInfo'])->name('departments.investigation-info');
 
             Route::post('consultations/{visit}/prescriptions', [ConsultationController::class, 'storePrescription'])->name('consultations.prescriptions.store')->middleware('can:prescriptions.create');
             Route::delete('consultations/prescriptions/{prescription}', [ConsultationController::class, 'destroyPrescription'])->name('consultations.prescriptions.destroy')->middleware('can:prescriptions.create');

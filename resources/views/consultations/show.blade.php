@@ -1186,44 +1186,113 @@
 </div>
 
 <div class="modal fade" id="investigationModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form method="POST" action="{{ route('admin.consultations.investigation', $visit) }}">
-                @csrf
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="ti ti-test-pipe me-2"></i>Send to Investigation</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    @php
-                        $sendInvestDepts = \App\Models\Department::active()
-                            ->whereIn('type', ['investigation', 'radiology'])
-                            ->orderBy('name')->get();
-                        if ($sendInvestDepts->isEmpty()) {
-                            $sendInvestDepts = \App\Models\Department::active()->orderBy('name')->get();
-                        }
-                    @endphp
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Investigation Department <span class="text-danger">*</span></label>
-                        <select name="department_id" class="form-select" required>
-                            <option value="">— Select department —</option>
-                            @foreach($sendInvestDepts as $dept)
-                                <option value="{{ $dept->id }}">{{ $dept->name }}</option>
-                            @endforeach
-                        </select>
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ti ti-microscope me-2"></i>Send Investigation Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {{-- Tab navigation --}}
+                <ul class="nav nav-tabs mb-3" id="investModalTabs">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#investTabLabReq">
+                            <i class="ti ti-flask me-1"></i>Lab / Imaging Request
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#investTabRoute">
+                            <i class="ti ti-arrow-right me-1"></i>Route to Department
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    {{-- Tab 1: Lab Request --}}
+                    <div class="tab-pane fade show active" id="investTabLabReq">
+                        @can('lab.requests.create')
+                        <form id="labRequestForm" method="POST" action="{{ route('admin.consultations.lab-request.store', $visit) }}">
+                            @csrf
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Target Department <span class="text-danger">*</span></label>
+                                    @if($investigationDepts->isNotEmpty())
+                                    <select name="target_department_id" id="labReqDeptSelect" class="form-select" required
+                                        onchange="loadLabReqItems(this.value)">
+                                        <option value="">— Select department —</option>
+                                        @foreach($investigationDepts as $dept)
+                                        <option value="{{ $dept->id }}"
+                                            data-result-type="{{ $dept->result_type?->value }}"
+                                            data-uses-catalog="{{ $dept->result_type?->usesTestCatalog() ? 'true' : 'false' }}">
+                                            {{ $dept->name }}
+                                            <small>({{ $dept->result_type?->label() }})</small>
+                                        </option>
+                                        @endforeach
+                                    </select>
+                                    @else
+                                    <div class="alert alert-warning py-2 mb-0">
+                                        <small>No investigation departments configured. Please add departments with a result type set.</small>
+                                    </div>
+                                    @endif
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Urgency</label>
+                                    <select name="urgency" class="form-select">
+                                        <option value="routine">Routine</option>
+                                        <option value="urgent">Urgent</option>
+                                        <option value="emergency">Emergency</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-semibold">Clinical Notes</label>
+                                    <input type="text" name="clinical_info" class="form-control" placeholder="Clinical indication / notes...">
+                                </div>
+                            </div>
+
+                            {{-- Items container — shown after dept selected --}}
+                            <div id="labReqItemsContainer" class="mt-3 d-none">
+                                <label class="form-label fw-semibold" id="labReqItemsLabel">Items <span class="text-danger">*</span></label>
+                                <div id="labReqItemsBody">
+                                    <span class="text-muted small"><span class="spinner-border spinner-border-sm me-1"></span>Loading...</span>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary" id="labReqSubmitBtn">
+                                    <i class="ti ti-send me-1"></i>Send Request
+                                </button>
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                            </div>
+                        </form>
+                        @else
+                        <div class="alert alert-warning">You don't have permission to create lab requests.</div>
+                        @endcan
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Notes</label>
-                        <textarea name="notes" class="form-control" rows="3" placeholder="Investigation notes..."></textarea>
+
+                    {{-- Tab 2: Route to Department --}}
+                    <div class="tab-pane fade" id="investTabRoute">
+                        <form method="POST" action="{{ route('admin.consultations.investigation', $visit) }}">
+                            @csrf
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Investigation Department <span class="text-danger">*</span></label>
+                                <select name="department_id" class="form-select" required>
+                                    <option value="">— Select department —</option>
+                                    @foreach($investigationDepts->isNotEmpty() ? $investigationDepts : \App\Models\Department::active()->orderBy('name')->get() as $dept)
+                                        <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Notes</label>
+                                <textarea name="notes" class="form-control" rows="3" placeholder="Investigation notes..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-purple">
+                                <i class="ti ti-arrow-right me-1"></i>Route Patient to Department
+                            </button>
+                        </form>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-purple">
-                        <i class="ti ti-test-pipe me-1"></i>Send to Investigation
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
@@ -1590,6 +1659,62 @@ function loadInvestigationServices(deptId) {
         container.innerHTML = html;
     })
     .catch(function () { container.innerHTML = '<span class="text-danger small">Failed to load services.</span>'; });
+}
+
+/* ================================================================
+   LAB REQUEST — DYNAMIC ITEM LOADER
+   ================================================================ */
+function loadLabReqItems(deptId) {
+    var container = document.getElementById('labReqItemsContainer');
+    var body      = document.getElementById('labReqItemsBody');
+    var label     = document.getElementById('labReqItemsLabel');
+    if (!container || !body) return;
+
+    if (!deptId) { container.classList.add('d-none'); return; }
+    container.classList.remove('d-none');
+    body.innerHTML = '<span class="text-muted small"><span class="spinner-border spinner-border-sm me-1"></span>Loading items...</span>';
+
+    fetch(deptServicesBase + '/' + deptId + '/investigation-info', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+        if (label) label.textContent = 'Items (' + data.label + ') *';
+
+        if (data.uses_catalog) {
+            // Show lab test checkboxes
+            if (!data.lab_tests.length) { body.innerHTML = '<span class="text-warning small">No active lab tests configured.</span>'; return; }
+            var html = '<div class="row g-1" style="max-height:250px;overflow-y:auto;">';
+            data.lab_tests.forEach(function (t) {
+                html += '<div class="col-md-6"><div class="form-check">';
+                html += '<input type="checkbox" name="items[]" value="' + t.id + '" class="form-check-input" id="lt' + t.id + '">';
+                html += '<label class="form-check-label small" for="lt' + t.id + '">' + escapeHtml(t.name);
+                if (t.code) html += ' <span class="text-muted">(' + escapeHtml(t.code) + ')</span>';
+                html += '</label></div></div>';
+            });
+            html += '</div>';
+            body.innerHTML = html;
+        } else {
+            // Show free-text item rows
+            body.innerHTML = '<div id="labReqFreeItems">' + freeTextItemRow(0) + '</div>' +
+                '<button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="addFreeTextItem()"><i class="ti ti-plus me-1"></i>Add Item</button>';
+        }
+    })
+    .catch(function () { body.innerHTML = '<span class="text-danger small">Failed to load items.</span>'; });
+}
+
+var _freeItemIdx = 0;
+function freeTextItemRow(idx) {
+    return '<div class="input-group mb-1" id="freeItem' + idx + '">' +
+        '<span class="input-group-text"><i class="ti ti-point"></i></span>' +
+        '<input type="text" name="items[]" class="form-control" placeholder="e.g. Chest X-Ray, Abdominal Scan..." required>' +
+        (idx > 0 ? '<button type="button" class="btn btn-outline-danger" onclick="document.getElementById(\'freeItem' + idx + '\').remove()"><i class="ti ti-x"></i></button>' : '') +
+        '</div>';
+}
+function addFreeTextItem() {
+    _freeItemIdx++;
+    var ct = document.getElementById('labReqFreeItems');
+    if (ct) ct.insertAdjacentHTML('beforeend', freeTextItemRow(_freeItemIdx));
 }
 
 /* ================================================================
