@@ -120,7 +120,7 @@ class ConsultationController extends Controller
         $doctors = \App\Models\User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get();
 
         // Drugs for prescription dropdown
-        $drugs = Drug::where('is_active', true)->orderBy('name')->get(['id', 'name', 'generic_name', 'strength', 'dosage_form']);
+        $drugs = Drug::where('is_active', true)->orderBy('name')->get(['id', 'name', 'generic_name', 'strength', 'dosage_form', 'unit']);
 
         return view('consultations.show', [
             'visit' => $data['visit'],
@@ -371,7 +371,9 @@ class ConsultationController extends Controller
             return response()->json(['success' => true, 'prescription' => $prescription->load('items')]);
         }
 
-        return back()->with('success', "Prescription {$prescription->prescription_number} created.");
+        return redirect()
+            ->route('admin.pharmacy.dispensing.show', $prescription)
+            ->with('success', "Prescription {$prescription->prescription_number} created. Ready to dispense.");
     }
 
     public function destroyPrescription(\App\Models\Prescription $prescription)

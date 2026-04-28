@@ -142,4 +142,39 @@ class DrugController extends Controller
             $this->pharmacyService->searchDrugs($request->query('q'))
         );
     }
+
+    /**
+     * Drug history — all stock movements and dispensing events.
+     */
+    public function history(Drug $drug)
+    {
+        $drug->load([
+            'category',
+            'stocks.receivedBy',
+            'stocks.dispensingRecords',
+        ]);
+
+        // All dispensing records for this drug, most recent first
+        $dispensingRecords = \App\Models\DispensingRecord::whereHas('drugStock', fn($q) => $q->where('drug_id', $drug->id))
+            ->with(['patient', 'prescription', 'dispensedBy', 'drugStock'])
+            ->latest('dispensed_at')
+            ->get();
+
+        // Summary stats
+        $totalReceived = $drug->stocks->sum(function ($s) {
+            return $s->quantity + $s->dispensingRecords->sum('quantity_dispensed');
+        });
+        $totalDispensed = $dispensingRecords->sum('quantity_dispensed');
+        $revenue = $dispensingRecords->sum(fn($r) => $r->quantity_dispensed * ($r->drugStock->selling_price ?? 0));
+
+        $stats = [
+            'total_batches'   => $drug->stocks->count(),
+            'total_received'  => $totalReceived,
+            'total_dispensed' => $totalDispensed,
+            'current_stock'   => $drug->total_stock,
+            'revenue'         => $revenue,
+        ];
+
+        return view('pharmacy.drug-history', compact('drug', 'dispensingRecords', 'stats'));
+    }
 }

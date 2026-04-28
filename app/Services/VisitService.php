@@ -644,15 +644,29 @@ class VisitService
     private function createConsultationBilling(Visit $visit, int $departmentId): void
     {
         $service = ServiceCatalog::where('department_id', $departmentId)
-            ->where('service_type', \App\Enums\ServiceType::CONSULTATION->value)
+            ->where('category', \App\Enums\ServiceType::CONSULTATION->value)
             ->where('is_active', true)
             ->first();
 
+        // Fallback: any active consultation service in the catalog
+        if (!$service) {
+            $service = ServiceCatalog::where('category', \App\Enums\ServiceType::CONSULTATION->value)
+                ->where('is_active', true)
+                ->first();
+        }
+
         if ($service) {
-            $this->attachServices($visit, [[
-                'service_catalog_id' => $service->id,
-                'quantity' => 1,
-            ]]);
+            // Avoid duplicate consultation billing for this visit
+            $alreadyBilled = $visit->visitServices()
+                ->where('service_catalog_id', $service->id)
+                ->exists();
+
+            if (!$alreadyBilled) {
+                $this->attachServices($visit, [[
+                    'service_catalog_id' => $service->id,
+                    'quantity' => 1,
+                ]]);
+            }
         }
     }
 

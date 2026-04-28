@@ -295,6 +295,47 @@ class PharmacyService
                         'due_date'        => now()->addDays(30),
                         'created_by'      => auth()->id(),
                     ]);
+
+                    // Seed consultation + visit service charges into the new invoice
+                    $visit = \App\Models\Visit::with('visitServices.serviceCatalog')->find($prescription->visit_id);
+                    if ($visit) {
+                        foreach ($visit->visitServices as $vs) {
+                            $cat = $vs->serviceCatalog;
+                            if (!$cat) continue;
+                            $svcTotal = (float) $vs->unit_price * (int) $vs->quantity;
+                            InvoiceItem::create([
+                                'invoice_id'          => $invoice->id,
+                                'service_catalog_id'  => $vs->service_catalog_id,
+                                'description'         => $cat->name,
+                                'quantity'            => $vs->quantity,
+                                'unit_price'          => $vs->unit_price,
+                                'total_price'         => $svcTotal,
+                                'is_nhis_covered'     => (float) $vs->insurance_covered > 0,
+                                'nhis_approved_amount'=> (float) $vs->insurance_covered,
+                            ]);
+                        }
+
+                        // If no consultation service was in visitServices, auto-add one
+                        $hasConsultation = $visit->visitServices
+                            ->filter(fn($vs) => $vs->serviceCatalog && $vs->serviceCatalog->category === 'consultation')
+                            ->isNotEmpty();
+
+                        if (!$hasConsultation) {
+                            $consultationSvc = \App\Models\ServiceCatalog::where('category', 'consultation')
+                                ->where('is_active', true)
+                                ->first();
+                            if ($consultationSvc) {
+                                InvoiceItem::create([
+                                    'invoice_id'  => $invoice->id,
+                                    'service_catalog_id' => $consultationSvc->id,
+                                    'description' => $consultationSvc->name,
+                                    'quantity'    => 1,
+                                    'unit_price'  => (float) $consultationSvc->price,
+                                    'total_price' => (float) $consultationSvc->price,
+                                ]);
+                            }
+                        }
+                    }
                 }
 
                 InvoiceItem::create([

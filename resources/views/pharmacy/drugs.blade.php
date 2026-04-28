@@ -181,6 +181,9 @@
                                 </td>
                                 <td class="text-end">
                                     <div class="btn-group btn-group-sm">
+                                        <a href="{{ route('admin.pharmacy.drugs.history', $drug) }}" class="btn btn-outline-info" title="Drug History">
+                                            <i class="ti ti-history"></i>
+                                        </a>
                                         <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editDrugModal-{{ $drug->id }}" title="Edit">
                                             <i class="ti ti-edit"></i>
                                         </button>

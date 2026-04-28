@@ -694,7 +694,9 @@
                                                     <select name="items[0][drug_name]" class="form-select form-select-sm drug-select" required>
                                                         <option value="">-- Search drug --</option>
                                                         @foreach($drugs as $drug)
-                                                            <option value="{{ $drug->name }}">{{ $drug->name }}{{ $drug->generic_name ? ' ('.$drug->generic_name.')' : '' }}{{ $drug->strength ? ' - '.$drug->strength : '' }}{{ $drug->dosage_form ? ' ['.$drug->dosage_form.']' : '' }}</option>
+                                                            <option value="{{ $drug->name }}"
+                                                                data-strength="{{ $drug->strength ?? '' }}"
+                                                                data-unit="{{ $drug->unit ?? '' }}">{{ $drug->name }}{{ $drug->generic_name ? ' ('.$drug->generic_name.')' : '' }}{{ $drug->strength ? ' - '.$drug->strength : '' }}{{ $drug->dosage_form ? ' ['.$drug->dosage_form.']' : '' }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>
@@ -1601,6 +1603,88 @@ $('.drug-select').select2({
     allowClear: true,
 });
 
+/* ----------------------------------------------------------------
+   AUTO-CALCULATE QUANTITY
+   Formula: (dosage_mg / strength_mg) × doses_per_day × duration_days
+   If strength can't be parsed, falls back to: doses_per_day × days
+   ---------------------------------------------------------------- */
+var freqMap = { OD:1, BD:2, TDS:3, QDS:4, STAT:1, PRN:1 };
+
+function parseMg(str) {
+    if (!str) return null;
+    var m = String(str).match(/([\d.]+)\s*(mg|mcg|g|ml|iu|units?)?/i);
+    if (!m) return null;
+    var val = parseFloat(m[1]);
+    var unit = (m[2] || 'mg').toLowerCase();
+    if (unit === 'g') val *= 1000;
+    if (unit === 'mcg') val /= 1000;
+    return isNaN(val) ? null : val;
+}
+
+function parseDays(str) {
+    if (!str) return null;
+    str = String(str).toLowerCase().trim();
+    // "5 days", "1 week", "2 weeks", "3 months", plain number
+    var m = str.match(/^(\d+(?:\.\d+)?)\s*(day|days|week|weeks|month|months|wk|wks)?/);
+    if (!m) return null;
+    var n = parseFloat(m[1]);
+    var u = m[2] || 'day';
+    if (u.startsWith('week') || u === 'wk' || u === 'wks') n *= 7;
+    if (u.startsWith('month')) n *= 30;
+    return isNaN(n) ? null : Math.round(n);
+}
+
+function calcQty(row) {
+    var drugSel   = row.querySelector('.drug-select');
+    var dosageInp = row.querySelector('[name$="[dosage]"]');
+    var freqSel   = row.querySelector('[name$="[frequency]"]');
+    var durInp    = row.querySelector('[name$="[duration]"]');
+    var qtyInp    = row.querySelector('[name$="[quantity]"]');
+    if (!drugSel || !dosageInp || !freqSel || !durInp || !qtyInp) return;
+
+    var selOpt    = drugSel.options[drugSel.selectedIndex];
+    var strength  = selOpt ? selOpt.getAttribute('data-strength') : null;
+    var dosage    = dosageInp.value.trim();
+    var freq      = freqSel.value;
+    var dur       = durInp.value.trim();
+
+    var daysVal   = parseDays(dur);
+    var freqVal   = freqMap[freq] || 1;
+
+    if (!daysVal) return; // can't compute without duration
+
+    var tabletsPerDose = 1;
+    var dMg = parseMg(dosage);
+    var sMg = parseMg(strength);
+    if (dMg && sMg && sMg > 0) {
+        tabletsPerDose = Math.ceil(dMg / sMg);
+    }
+
+    var total = tabletsPerDose * freqVal * daysVal;
+    if (freq === 'STAT') total = tabletsPerDose; // one-off
+    if (total > 0) {
+        qtyInp.value = total;
+        qtyInp.style.background = '#fffbe6'; // subtle highlight
+        setTimeout(function(){ qtyInp.style.background = ''; }, 1200);
+    }
+}
+
+function bindRxCalc(row) {
+    ['change','input'].forEach(function(evt) {
+        row.querySelector('[name$="[dosage]"]')?.addEventListener(evt, function(){ calcQty(row); });
+        row.querySelector('[name$="[duration]"]')?.addEventListener(evt, function(){ calcQty(row); });
+    });
+    row.querySelector('[name$="[frequency]"]')?.addEventListener('change', function(){ calcQty(row); });
+    // Select2 fires a jQuery event
+    $(row).find('.drug-select').on('select2:select select2:clear', function(){ calcQty(row); });
+}
+
+/* Bind on the first (pre-rendered) row */
+(function(){
+    var firstRow = document.querySelector('#prescriptionItems .prescription-item');
+    if (firstRow) bindRxCalc(firstRow);
+})();
+
 var rxIdx = 1;
 document.getElementById('addItemBtn')?.addEventListener('click', function () {
     var cont = document.getElementById('prescriptionItems');
@@ -1627,6 +1711,8 @@ document.getElementById('addItemBtn')?.addEventListener('click', function () {
         placeholder: '-- Search drug --',
         allowClear: true,
     });
+    /* Bind auto-calc on the new row */
+    bindRxCalc(tpl);
     rxIdx++;
 });
 

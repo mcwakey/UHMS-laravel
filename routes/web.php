@@ -535,10 +535,11 @@ Route::middleware('auth')->group(function () {
             // Drug Catalog
             Route::middleware('can:pharmacy.drugs.manage')->group(function () {
                 Route::get('drugs', [DrugController::class, 'index'])->name('drugs.index');
+                Route::get('drugs/search', [DrugController::class, 'search'])->name('drugs.search');
+                Route::get('drugs/{drug}/history', [DrugController::class, 'history'])->name('drugs.history');
                 Route::post('drugs', [DrugController::class, 'store'])->name('drugs.store');
                 Route::put('drugs/{drug}', [DrugController::class, 'update'])->name('drugs.update');
                 Route::patch('drugs/{drug}/toggle', [DrugController::class, 'toggle'])->name('drugs.toggle');
-                Route::get('drugs/search', [DrugController::class, 'search'])->name('drugs.search');
 
                 Route::post('drug-categories', [DrugController::class, 'storeCategory'])->name('drug-categories.store');
                 Route::put('drug-categories/{category}', [DrugController::class, 'updateCategory'])->name('drug-categories.update');

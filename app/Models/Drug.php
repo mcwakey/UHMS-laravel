@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Drug extends Model
@@ -49,7 +50,7 @@ class Drug extends Model
             ->orderBy('expiry_date'); // FEFO: First Expiry, First Out
     }
 
-    public function dispensingRecords(): HasMany
+    public function dispensingRecords(): HasManyThrough
     {
         return $this->hasManyThrough(DispensingRecord::class, DrugStock::class);
     }
