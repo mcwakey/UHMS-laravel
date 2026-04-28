@@ -6,6 +6,7 @@ use App\Enums\PurchaseOrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePurchaseOrderRequest;
 use App\Models\Drug;
+use App\Models\InvestigationItem;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Supplier;
@@ -32,8 +33,9 @@ class PurchaseOrderController extends Controller
     {
         $suppliers = Supplier::active()->orderBy('name')->get();
         $drugs = Drug::active()->orderBy('name')->get();
+        $investigationItems = InvestigationItem::active()->orderBy('name')->get();
 
-        return view('store.purchase-orders.create', compact('suppliers', 'drugs'));
+        return view('store.purchase-orders.create', compact('suppliers', 'drugs', 'investigationItems'));
     }
 
     public function store(StorePurchaseOrderRequest $request)
@@ -105,13 +107,15 @@ class PurchaseOrderController extends Controller
     public function addItem(Request $request, PurchaseOrder $purchaseOrder)
     {
         $request->validate([
-            'drug_id' => ['required', 'exists:drugs,id'],
-            'quantity_ordered' => ['required', 'integer', 'min:1'],
-            'unit_cost' => ['required', 'numeric', 'min:0'],
+            'item_type'             => ['required', 'in:drug,investigation'],
+            'drug_id'               => ['nullable', 'exists:drugs,id', 'required_if:item_type,drug'],
+            'investigation_item_id' => ['nullable', 'exists:investigation_items,id', 'required_if:item_type,investigation'],
+            'quantity_ordered'      => ['required', 'integer', 'min:1'],
+            'unit_cost'             => ['required', 'numeric', 'min:0'],
         ]);
 
         $this->procurementService->addItem($purchaseOrder, $request->only([
-            'drug_id', 'quantity_ordered', 'unit_cost',
+            'item_type', 'drug_id', 'investigation_item_id', 'quantity_ordered', 'unit_cost',
         ]));
 
         return back()->with('success', 'Item added to purchase order.');

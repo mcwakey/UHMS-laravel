@@ -13,6 +13,8 @@ class StockTransferItem extends Model
     protected $fillable = [
         'stock_transfer_id',
         'drug_id',
+        'investigation_item_id',
+        'item_type',
         'quantity',
         'batch_number',
     ];
@@ -25,5 +27,18 @@ class StockTransferItem extends Model
     public function drug(): BelongsTo
     {
         return $this->belongsTo(Drug::class);
+    }
+
+    public function investigationItem(): BelongsTo
+    {
+        return $this->belongsTo(InvestigationItem::class);
+    }
+
+    public function getItemNameAttribute(): string
+    {
+        if ($this->item_type === 'investigation') {
+            return $this->investigationItem?->name ?? '—';
+        }
+        return $this->drug?->brand_name ?? $this->drug?->generic_name ?? '—';
     }
 }

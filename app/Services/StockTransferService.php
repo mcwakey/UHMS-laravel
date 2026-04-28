@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\StockTransferStatus;
 use App\Models\DrugStock;
+use App\Models\InvestigationItemStock;
 use App\Models\StockTransfer;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -42,10 +43,13 @@ class StockTransferService
 
             if (! empty($data['items'])) {
                 foreach ($data['items'] as $item) {
+                    $itemType = isset($item['investigation_item_id']) ? 'investigation' : 'drug';
                     $transfer->items()->create([
-                        'drug_id' => $item['drug_id'],
-                        'quantity' => $item['quantity'],
-                        'batch_number' => $item['batch_number'] ?? null,
+                        'drug_id'               => $item['drug_id'] ?? null,
+                        'investigation_item_id' => $item['investigation_item_id'] ?? null,
+                        'item_type'             => $itemType,
+                        'quantity'              => $item['quantity'],
+                        'batch_number'          => $item['batch_number'] ?? null,
                     ]);
                 }
             }
@@ -79,36 +83,66 @@ class StockTransferService
         }
 
         DB::transaction(function () use ($transfer) {
-            $transfer->load('items.drug');
+            $transfer->load('items.drug', 'items.investigationItem');
 
             foreach ($transfer->items as $item) {
-                // Deduct from source location
-                $this->deductStock(
-                    $item->drug_id,
-                    $transfer->from_location->value,
-                    $item->quantity,
-                    $item->batch_number,
-                );
+                if ($item->item_type === 'investigation') {
+                    // Deduct investigation item stock
+                    $this->deductInvestigationStock(
+                        $item->investigation_item_id,
+                        $transfer->from_location->value,
+                        $item->quantity,
+                        $item->batch_number,
+                    );
 
-                // Add to destination location
-                $sourceStock = DrugStock::where('drug_id', $item->drug_id)
-                    ->atLocation($transfer->from_location->value)
-                    ->when($item->batch_number, fn ($q, $b) => $q->where('batch_number', $b))
-                    ->first();
+                    // Add to destination
+                    $sourceStock = InvestigationItemStock::where('investigation_item_id', $item->investigation_item_id)
+                        ->atLocation($transfer->from_location->value)
+                        ->when($item->batch_number, fn ($q, $b) => $q->where('batch_number', $b))
+                        ->first();
 
-                DrugStock::create([
-                    'drug_id' => $item->drug_id,
-                    'location' => $transfer->to_location->value,
-                    'batch_number' => $item->batch_number ?? ($sourceStock->batch_number ?? 'TRF'),
-                    'quantity' => $item->quantity,
-                    'unit_cost' => $sourceStock->unit_cost ?? 0,
-                    'selling_price' => $sourceStock->selling_price ?? ($item->drug->price ?? 0),
-                    'expiry_date' => $sourceStock->expiry_date ?? now()->addYear(),
-                    'supplier' => $sourceStock->supplier ?? 'Transfer',
-                    'supplier_id' => $sourceStock->supplier_id,
-                    'received_date' => now(),
-                    'received_by' => Auth::id(),
-                ]);
+                    InvestigationItemStock::create([
+                        'investigation_item_id' => $item->investigation_item_id,
+                        'location'              => $transfer->to_location->value,
+                        'batch_number'          => $item->batch_number ?? ($sourceStock->batch_number ?? 'TRF'),
+                        'quantity'              => $item->quantity,
+                        'unit_cost'             => $sourceStock->unit_cost ?? 0,
+                        'expiry_date'           => $sourceStock->expiry_date ?? null,
+                        'supplier'              => $sourceStock->supplier ?? 'Transfer',
+                        'supplier_id'           => $sourceStock->supplier_id,
+                        'received_date'         => now(),
+                        'received_by'           => Auth::id(),
+                        'reorder_level'         => $sourceStock->reorder_level ?? $item->investigationItem->reorder_level ?? 10,
+                    ]);
+                } else {
+                    // Deduct drug stock
+                    $this->deductStock(
+                        $item->drug_id,
+                        $transfer->from_location->value,
+                        $item->quantity,
+                        $item->batch_number,
+                    );
+
+                    // Add to destination location
+                    $sourceStock = DrugStock::where('drug_id', $item->drug_id)
+                        ->atLocation($transfer->from_location->value)
+                        ->when($item->batch_number, fn ($q, $b) => $q->where('batch_number', $b))
+                        ->first();
+
+                    DrugStock::create([
+                        'drug_id'       => $item->drug_id,
+                        'location'      => $transfer->to_location->value,
+                        'batch_number'  => $item->batch_number ?? ($sourceStock->batch_number ?? 'TRF'),
+                        'quantity'      => $item->quantity,
+                        'unit_cost'     => $sourceStock->unit_cost ?? 0,
+                        'selling_price' => $sourceStock->selling_price ?? ($item->drug->price ?? 0),
+                        'expiry_date'   => $sourceStock->expiry_date ?? now()->addYear(),
+                        'supplier'      => $sourceStock->supplier ?? 'Transfer',
+                        'supplier_id'   => $sourceStock->supplier_id,
+                        'received_date' => now(),
+                        'received_by'   => Auth::id(),
+                    ]);
+                }
             }
 
             $transfer->update(['status' => StockTransferStatus::COMPLETED]);
@@ -128,7 +162,35 @@ class StockTransferService
     }
 
     /**
-     * Deduct stock from a location (FEFO — First Expiry First Out).
+     * Deduct investigation item stock from a location (FEFO).
+     */
+    private function deductInvestigationStock(int $itemId, string $location, int $quantity, ?string $batchNumber = null): void
+    {
+        $stocks = InvestigationItemStock::where('investigation_item_id', $itemId)
+            ->atLocation($location)
+            ->where('quantity', '>', 0)
+            ->when($batchNumber, fn ($q, $b) => $q->where('batch_number', $b))
+            ->orderBy('expiry_date')
+            ->get();
+
+        $remaining = $quantity;
+
+        foreach ($stocks as $stock) {
+            if ($remaining <= 0) break;
+            $deduct = min($remaining, $stock->quantity);
+            $stock->update(['quantity' => $stock->quantity - $deduct]);
+            $remaining -= $deduct;
+        }
+
+        if ($remaining > 0) {
+            throw new \InvalidArgumentException(
+                "Insufficient investigation item stock ID {$itemId} at {$location}. Short by {$remaining} units."
+            );
+        }
+    }
+
+    /**
+     * Deduct drug stock from a location (FEFO — First Expiry First Out).
      */
     private function deductStock(int $drugId, string $location, int $quantity, ?string $batchNumber = null): void
     {
@@ -162,6 +224,17 @@ class StockTransferService
     public function getAvailableStock(int $drugId, string $location = 'store'): int
     {
         return (int) DrugStock::where('drug_id', $drugId)
+            ->atLocation($location)
+            ->available()
+            ->sum('quantity');
+    }
+
+    /**
+     * Get available investigation item stock at a location.
+     */
+    public function getAvailableInvestigationStock(int $itemId, string $location = 'laboratory'): int
+    {
+        return (int) InvestigationItemStock::where('investigation_item_id', $itemId)
             ->atLocation($location)
             ->available()
             ->sum('quantity');

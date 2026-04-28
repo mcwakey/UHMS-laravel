@@ -13,6 +13,8 @@ class PurchaseOrderItem extends Model
     protected $fillable = [
         'purchase_order_id',
         'drug_id',
+        'investigation_item_id',
+        'item_type',
         'quantity_ordered',
         'quantity_received',
         'unit_cost',
@@ -35,6 +37,22 @@ class PurchaseOrderItem extends Model
     public function drug(): BelongsTo
     {
         return $this->belongsTo(Drug::class);
+    }
+
+    public function investigationItem(): BelongsTo
+    {
+        return $this->belongsTo(InvestigationItem::class);
+    }
+
+    /**
+     * Returns the resolved item name regardless of type.
+     */
+    public function getItemNameAttribute(): string
+    {
+        if ($this->item_type === 'investigation') {
+            return $this->investigationItem?->name ?? '—';
+        }
+        return $this->drug?->brand_name ?? $this->drug?->generic_name ?? '—';
     }
 
     public function getRemainingQuantityAttribute(): int

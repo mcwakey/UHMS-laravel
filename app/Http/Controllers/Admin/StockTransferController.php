@@ -8,6 +8,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreStockTransferRequest;
 use App\Models\Drug;
 use App\Models\DrugStock;
+use App\Models\InvestigationItem;
+use App\Models\InvestigationItemStock;
 use App\Models\StockTransfer;
 use App\Services\StockTransferService;
 use Illuminate\Http\Request;
@@ -34,6 +36,12 @@ class StockTransferController extends Controller
             ->orderBy('name')
             ->get();
 
+        // Investigation items available in store or laboratory
+        $investigationItems = InvestigationItem::active()
+            ->whereHas('stocks', fn ($q) => $q->where('quantity', '>', 0))
+            ->orderBy('name')
+            ->get();
+
         // Get store stock for each drug
         $storeStock = DrugStock::where('location', 'store')
             ->where('quantity', '>', 0)
@@ -41,9 +49,16 @@ class StockTransferController extends Controller
             ->groupBy('drug_id')
             ->pluck('total_qty', 'drug_id');
 
+        // Investigation item stock totals per location
+        $investigationStock = InvestigationItemStock::where('quantity', '>', 0)
+            ->selectRaw('investigation_item_id, location, SUM(quantity) as total_qty')
+            ->groupBy('investigation_item_id', 'location')
+            ->get()
+            ->groupBy('investigation_item_id');
+
         $locations = StockLocation::cases();
 
-        return view('store.transfers.create', compact('drugs', 'storeStock', 'locations'));
+        return view('store.transfers.create', compact('drugs', 'storeStock', 'locations', 'investigationItems', 'investigationStock'));
     }
 
     public function store(StoreStockTransferRequest $request)
@@ -108,6 +123,24 @@ class StockTransferController extends Controller
 
         $stock = $this->stockTransferService->getAvailableStock(
             $request->drug_id,
+            $request->location,
+        );
+
+        return response()->json(['available' => $stock]);
+    }
+
+    /**
+     * AJAX: get available stock for an investigation item at a location.
+     */
+    public function investigationItemStock(Request $request)
+    {
+        $request->validate([
+            'item_id'  => ['required', 'exists:investigation_items,id'],
+            'location' => ['required', 'string'],
+        ]);
+
+        $stock = $this->stockTransferService->getAvailableInvestigationStock(
+            $request->item_id,
             $request->location,
         );
 

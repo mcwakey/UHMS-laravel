@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\PurchaseOrderStatus;
 use App\Models\DrugStock;
+use App\Models\InvestigationItemStock;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -48,11 +49,14 @@ class ProcurementService
             if (! empty($data['items'])) {
                 foreach ($data['items'] as $item) {
                     $totalCost = $item['quantity_ordered'] * $item['unit_cost'];
+                    $itemType  = isset($item['investigation_item_id']) ? 'investigation' : 'drug';
                     $po->items()->create([
-                        'drug_id' => $item['drug_id'],
-                        'quantity_ordered' => $item['quantity_ordered'],
-                        'unit_cost' => $item['unit_cost'],
-                        'total_cost' => $totalCost,
+                        'drug_id'               => $item['drug_id'] ?? null,
+                        'investigation_item_id' => $item['investigation_item_id'] ?? null,
+                        'item_type'             => $itemType,
+                        'quantity_ordered'      => $item['quantity_ordered'],
+                        'unit_cost'             => $item['unit_cost'],
+                        'total_cost'            => $totalCost,
                     ]);
                 }
                 $po->recalculateTotal();
@@ -69,11 +73,15 @@ class ProcurementService
     {
         $totalCost = $data['quantity_ordered'] * $data['unit_cost'];
 
+        $itemType = isset($data['investigation_item_id']) ? 'investigation' : 'drug';
+
         $item = $po->items()->create([
-            'drug_id' => $data['drug_id'],
-            'quantity_ordered' => $data['quantity_ordered'],
-            'unit_cost' => $data['unit_cost'],
-            'total_cost' => $totalCost,
+            'drug_id'               => $data['drug_id'] ?? null,
+            'investigation_item_id' => $data['investigation_item_id'] ?? null,
+            'item_type'             => $itemType,
+            'quantity_ordered'      => $data['quantity_ordered'],
+            'unit_cost'             => $data['unit_cost'],
+            'total_cost'            => $totalCost,
         ]);
 
         $po->recalculateTotal();
@@ -151,24 +159,41 @@ class ProcurementService
                 // Update PO item received quantity
                 $poItem->update([
                     'quantity_received' => $poItem->quantity_received + $qtyToReceive,
-                    'batch_number' => $itemData['batch_number'] ?? $poItem->batch_number,
-                    'expiry_date' => $itemData['expiry_date'] ?? $poItem->expiry_date,
+                    'batch_number'      => $itemData['batch_number'] ?? $poItem->batch_number,
+                    'expiry_date'       => $itemData['expiry_date'] ?? $poItem->expiry_date,
                 ]);
 
-                // Create drug stock entry (received to store)
-                DrugStock::create([
-                    'drug_id' => $poItem->drug_id,
-                    'location' => 'store',
-                    'batch_number' => $itemData['batch_number'] ?? 'N/A',
-                    'quantity' => $qtyToReceive,
-                    'unit_cost' => $poItem->unit_cost,
-                    'selling_price' => $poItem->drug->price ?? $poItem->unit_cost,
-                    'expiry_date' => $itemData['expiry_date'] ?? now()->addYear(),
-                    'supplier' => $po->supplier->name,
-                    'supplier_id' => $po->supplier_id,
-                    'received_date' => now(),
-                    'received_by' => Auth::id(),
-                ]);
+                if ($poItem->item_type === 'investigation') {
+                    // Create investigation item stock entry
+                    InvestigationItemStock::create([
+                        'investigation_item_id' => $poItem->investigation_item_id,
+                        'location'              => 'laboratory',
+                        'batch_number'          => $itemData['batch_number'] ?? 'N/A',
+                        'quantity'              => $qtyToReceive,
+                        'unit_cost'             => $poItem->unit_cost,
+                        'expiry_date'           => $itemData['expiry_date'] ?? null,
+                        'supplier'              => $po->supplier->name,
+                        'supplier_id'           => $po->supplier_id,
+                        'received_date'         => now(),
+                        'received_by'           => Auth::id(),
+                        'reorder_level'         => $poItem->investigationItem->reorder_level ?? 10,
+                    ]);
+                } else {
+                    // Create drug stock entry (received to store)
+                    DrugStock::create([
+                        'drug_id'       => $poItem->drug_id,
+                        'location'      => 'store',
+                        'batch_number'  => $itemData['batch_number'] ?? 'N/A',
+                        'quantity'      => $qtyToReceive,
+                        'unit_cost'     => $poItem->unit_cost,
+                        'selling_price' => $poItem->drug->price ?? $poItem->unit_cost,
+                        'expiry_date'   => $itemData['expiry_date'] ?? now()->addYear(),
+                        'supplier'      => $po->supplier->name,
+                        'supplier_id'   => $po->supplier_id,
+                        'received_date' => now(),
+                        'received_by'   => Auth::id(),
+                    ]);
+                }
             }
 
             // Determine new PO status

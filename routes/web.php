@@ -52,6 +52,7 @@ use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\IcdCodeController;
 use App\Http\Controllers\Admin\ProcedureController;
 use App\Http\Controllers\Admin\AnalyzerController;
+use App\Http\Controllers\Admin\InvestigationItemController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use Illuminate\Support\Facades\Route;
 
@@ -295,6 +296,7 @@ Route::middleware('auth')->group(function () {
                 Route::post('transfers/{transfer}/complete', [StockTransferController::class, 'complete'])->name('transfers.complete')->middleware('can:store.transfer.create');
                 Route::post('transfers/{transfer}/cancel', [StockTransferController::class, 'cancel'])->name('transfers.cancel')->middleware('can:store.transfer.create');
                 Route::get('transfers/drug-stock', [StockTransferController::class, 'drugStock'])->name('transfers.drug-stock');
+                Route::get('transfers/investigation-stock', [StockTransferController::class, 'investigationItemStock'])->name('transfers.investigation-stock');
             });
         });
 
@@ -668,9 +670,28 @@ Route::middleware('auth')->group(function () {
             Route::patch('procedures/{patientProcedure}/cancel', [ProcedureController::class, 'cancelProcedure'])->name('procedures.cancel')->middleware('can:procedures.create');
         });
 
+        // Investigation Items (Catalog + Stock for Lab/Radiology/Investigation departments)
+        Route::prefix('investigations')->name('investigations.')->group(function () {
+            // Item Catalog
+            Route::middleware('can:lab.tests.manage')->group(function () {
+                Route::get('items', [InvestigationItemController::class, 'index'])->name('items.index');
+                Route::post('items', [InvestigationItemController::class, 'store'])->name('items.store');
+                Route::put('items/{investigationItem}', [InvestigationItemController::class, 'update'])->name('items.update');
+                Route::patch('items/{investigationItem}/toggle', [InvestigationItemController::class, 'toggle'])->name('items.toggle');
+                Route::get('items/search', [InvestigationItemController::class, 'search'])->name('items.search');
+            });
+
+            // Stock Management
+            Route::middleware('can:pharmacy.stock.manage')->group(function () {
+                Route::get('stock', [InvestigationItemController::class, 'stock'])->name('stock.index');
+                Route::post('stock', [InvestigationItemController::class, 'storeStock'])->name('stock.store');
+                Route::put('stock/{stock}', [InvestigationItemController::class, 'updateStock'])->name('stock.update');
+                Route::get('stock/available', [InvestigationItemController::class, 'getStock'])->name('stock.available');
+            });
+        });
+
         // Analyzer Integration (Lab Instruments)
-        Route::middleware('can:analyzer.manage')->prefix('analyzers')->name('analyzers.')->group(function () {
-            Route::get('/', [AnalyzerController::class, 'index'])->name('index');
+        Route::middleware('can:analyzer.manage')->prefix('analyzers')->name('analyzers.')->group(function () {            Route::get('/', [AnalyzerController::class, 'index'])->name('index');
             Route::post('/', [AnalyzerController::class, 'store'])->name('store');
             Route::get('/diagnostics', [AnalyzerController::class, 'diagnostics'])->name('diagnostics');
             Route::get('/{analyzer}', [AnalyzerController::class, 'show'])->name('show');

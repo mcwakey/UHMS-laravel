@@ -188,7 +188,7 @@
 
                 {{-- LABORATORY --}}
                 @if(Auth::user()->canAny(['lab.requests.view', 'lab.results.view', 'lab.tests.manage', 'analyzer.manage']))
-                <li class="menu-title"><span>Laboratory</span></li>
+                <li class="menu-title"><span>Investigations</span></li>
                 <li><ul>
                     @can('lab.requests.view')
                     <li class="{{ request()->routeIs('admin.lab.requests.*') ? 'active' : '' }}">
@@ -203,6 +203,12 @@
                     @can('lab.tests.manage')
                     <li class="{{ request()->routeIs('admin.lab.tests.*') ? 'active' : '' }}">
                         <a href="{{ route('admin.lab.tests.index') }}"><i class="ti ti-flask"></i><span>Test Catalog</span></a>
+                    </li>
+                    <li class="{{ request()->routeIs('admin.investigations.items.*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.investigations.items.index') }}"><i class="ti ti-microscope"></i><span>Investigation Items</span></a>
+                    </li>
+                    <li class="{{ request()->routeIs('admin.investigations.stock.*') ? 'active' : '' }}">
+                        <a href="{{ route('admin.investigations.stock.index') }}"><i class="ti ti-packages"></i><span>Investigation Stock</span></a>
                     </li>
                     @endcan
                     @can('analyzer.manage')
