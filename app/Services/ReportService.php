@@ -6,12 +6,17 @@ use App\Enums\AdmissionStatus;
 use App\Enums\ClaimStatus;
 use App\Enums\InvoiceStatus;
 use App\Enums\VisitStatus;
+use App\Enums\BedStatus;
+use App\Enums\PrescriptionStatus;
 use App\Models\Admission;
+use App\Models\Appointment;
+use App\Models\Bed;
 use App\Models\Claim;
 use App\Models\DispensingRecord;
 use App\Models\DrugStock;
 use App\Models\InsuranceProvider;
 use App\Models\Invoice;
+use App\Models\Prescription;
 use App\Models\LabRequest;
 use App\Models\LeaveRequest;
 use App\Models\MedicalRecord;
@@ -243,17 +248,28 @@ class ReportService
     public function adminDashboardStats(): array
     {
         return [
-            'total_patients' => Patient::count(),
-            'today_visits' => Visit::today()->count(),
-            'month_revenue' => Payment::whereMonth('paid_at', now()->month)
-                ->whereYear('paid_at', now()->year)->sum('amount'),
-            'pending_lab' => LabRequest::where('status', 'pending')->count(),
-            'active_doctors' => \App\Models\User::role('Doctor')
-                ->where('status', 'active')->count(),
-            'outstanding_balance' => Invoice::unpaid()->sum('balance'),
-            'low_stock_alerts' => DrugStock::whereColumn('quantity', '<=', 'reorder_level')
-                ->where('quantity', '>', 0)->count(),
-            'today_revenue' => Payment::whereDate('paid_at', today())->sum('amount'),
+            'total_patients'        => Patient::count(),
+            'today_visits'          => Visit::today()->count(),
+            'month_revenue'         => Payment::whereMonth('paid_at', now()->month)
+                                        ->whereYear('paid_at', now()->year)->sum('amount'),
+            'today_revenue'         => Payment::whereDate('paid_at', today())->sum('amount'),
+            'outstanding_balance'   => Invoice::unpaid()->sum('balance'),
+            'active_doctors'        => \App\Models\User::role('Doctor')
+                                        ->where('status', 'active')->count(),
+            'pending_lab'           => LabRequest::where('status', 'pending')->count(),
+            'low_stock_alerts'      => DrugStock::whereColumn('quantity', '<=', 'reorder_level')
+                                        ->where('quantity', '>', 0)->count(),
+            'today_appointments'    => Appointment::today()->count(),
+            'today_admissions'      => Admission::whereDate('created_at', today())->count(),
+            'active_admissions'     => Admission::where('status', AdmissionStatus::ADMITTED)->count(),
+            'occupied_beds'         => Bed::where('status', BedStatus::OCCUPIED)->count(),
+            'pending_prescriptions' => Prescription::where('status', PrescriptionStatus::PENDING)->count(),
+            'pending_claims'        => Claim::whereIn('status', [
+                                        ClaimStatus::SUBMITTED->value,
+                                        ClaimStatus::UNDER_REVIEW->value,
+                                       ])->count(),
+            'expired_stock_count'   => DrugStock::whereDate('expiry_date', '<', today())
+                                        ->where('quantity', '>', 0)->count(),
         ];
     }
 
