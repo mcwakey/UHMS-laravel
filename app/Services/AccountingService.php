@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\EntryType;
 use App\Enums\ShiftStatus;
 use App\Models\CashierShift;
 use App\Models\FinancialEntry;

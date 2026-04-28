@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
 use App\Models\MedicalPattern;
-use App\Models\MedicalRecord;
 use App\Models\Visit;
 use App\Services\ConsultationService;
 use App\Services\MedicalPatternService;

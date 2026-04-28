@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\VisitStatus;
 use App\Events\LabRequestCreated;
 use App\Events\LabResultsCompleted;
 use App\Models\LabRequest;

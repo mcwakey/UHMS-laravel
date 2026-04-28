@@ -12,6 +12,7 @@ use App\Models\VisitServiceItem;
 use App\Models\ServiceCatalog;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class VisitService
@@ -204,7 +205,7 @@ class VisitService
      */
     public function getDoctorsForServices(array $serviceIds): \Illuminate\Database\Eloquent\Collection
     {
-        $specialtyIds = \DB::table('service_specialty')
+        $specialtyIds = DB::table('service_specialty')
             ->whereIn('service_catalog_id', $serviceIds)
             ->pluck('specialty_id')
             ->unique();
@@ -229,7 +230,7 @@ class VisitService
      */
     public function getServicesForDoctor(int $doctorId): \Illuminate\Database\Eloquent\Collection
     {
-        $specialtyIds = \DB::table('doctor_specialty')
+        $specialtyIds = DB::table('doctor_specialty')
             ->where('user_id', $doctorId)
             ->pluck('specialty_id');
 

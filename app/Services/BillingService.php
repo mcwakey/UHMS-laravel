@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\BillingType;
 use App\Enums\InvoiceStatus;
 use App\Enums\VisitStatus;
 use App\Events\PaymentRecorded;

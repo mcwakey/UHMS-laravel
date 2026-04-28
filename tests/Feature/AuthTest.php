@@ -29,6 +29,7 @@ class AuthTest extends TestCase
 
     public function test_authenticated_user_is_redirected_from_login(): void
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $role = Role::create(['name' => 'Admin']);
         $user->assignRole($role);
@@ -109,6 +110,7 @@ class AuthTest extends TestCase
 
     public function test_user_can_logout(): void
     {
+        /** @var User $user */
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post('/logout');
@@ -127,6 +129,7 @@ class AuthTest extends TestCase
 
     public function test_user_without_permission_gets_forbidden(): void
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $role = Role::create(['name' => 'Receptionist']);
         Permission::create(['name' => 'users.view']);
@@ -138,6 +141,7 @@ class AuthTest extends TestCase
 
     public function test_user_with_permission_can_access_route(): void
     {
+        /** @var User $user */
         $user = User::factory()->create();
         $role = Role::create(['name' => 'Admin']);
         $perm = Permission::create(['name' => 'patients.view']);

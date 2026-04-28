@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\AppointmentStatus;
 use App\Enums\VisitStatus;
-use App\Enums\VisitType;
 use App\Models\Appointment;
 use App\Models\Visit;
 use App\Services\VisitService;

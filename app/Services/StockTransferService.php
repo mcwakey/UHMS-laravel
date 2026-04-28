@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\StockTransferStatus;
 use App\Models\DrugStock;
 use App\Models\StockTransfer;
-use App\Models\StockTransferItem;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

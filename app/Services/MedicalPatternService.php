@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\MedicalPattern;
-use App\Models\MedicalPatternItem;
 use App\Models\MedicalRecord;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Pagination\LengthAwarePaginator;

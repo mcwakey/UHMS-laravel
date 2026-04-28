@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\AdmissionStatus;
-use App\Enums\BedStatus;
 use App\Enums\BillingType;
 use App\Enums\InvoiceStatus;
 use App\Enums\VisitStatus;

@@ -132,6 +132,7 @@ class ReportTest extends TestCase
 
     public function test_report_requires_permission(): void
     {
+        /** @var \App\Models\User $user */
         $user = User::factory()->create();
         $role = Role::create(['name' => 'NoAccess']);
         $user->assignRole($role);

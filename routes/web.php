@@ -1,5 +1,6 @@
 ﻿<?php
 
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
@@ -93,7 +94,8 @@ Route::middleware('auth')->group(function () {
 
     // Generic dashboard redirect (resolves based on role)
     Route::get('dashboard', function () {
-        $user = auth()->user();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
 
         if ($user->hasRole('Super Admin') || $user->hasRole('Admin')) {
             return redirect()->route('admin.dashboard');

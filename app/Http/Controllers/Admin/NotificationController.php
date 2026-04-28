@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
     public function index()
     {
-        $notifications = Auth::user()
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $notifications = $user
             ->notifications()
             ->paginate(20);
 
@@ -20,6 +21,7 @@ class NotificationController extends Controller
 
     public function recent(): JsonResponse
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         $notifications = $user->unreadNotifications()
@@ -46,7 +48,9 @@ class NotificationController extends Controller
 
     public function markAsRead(string $id): JsonResponse
     {
-        $notification = Auth::user()
+        /** @var \App\Models\User $authUser */
+        $authUser = Auth::user();
+        $notification = $authUser
             ->notifications()
             ->findOrFail($id);
 
@@ -57,7 +61,9 @@ class NotificationController extends Controller
 
     public function markAllAsRead(): JsonResponse
     {
-        Auth::user()->unreadNotifications->markAsRead();
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
+        $currentUser->unreadNotifications->markAsRead();
 
         return response()->json(['success' => true]);
     }

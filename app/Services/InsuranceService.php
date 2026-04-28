@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\InsuranceProvider;
-use App\Models\InsuranceTier;
 use App\Models\InsuranceUsage;
 use App\Models\Patient;
 use App\Models\PatientInsurance;
@@ -299,9 +298,9 @@ class InsuranceService
                 'id'                       => $ins->id,
                 'provider_id'              => $provider->id,
                 'provider_name'            => $provider->name,
-                'type'                     => $provider->type instanceof \BackedEnum ? $provider->type->value : $provider->type,
-                'type_label'               => $provider->type instanceof \BackedEnum ? $provider->type->label() : ucfirst($provider->type),
-                'type_color'               => $provider->type instanceof \BackedEnum ? $provider->type->color() : 'secondary',
+                'type'                     => $provider->type?->value ?? $provider->type,
+                'type_label'               => $provider->type?->label() ?? ucfirst((string) $provider->type),
+                'type_color'               => $provider->type?->color() ?? 'secondary',
                 'tier_id'                  => $tier?->id,
                 'tier_name'                => $tier?->name,
                 'member_type'              => $memberType,

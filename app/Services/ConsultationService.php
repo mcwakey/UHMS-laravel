@@ -6,7 +6,6 @@ use App\Models\Complaint;
 use App\Models\Diagnosis;
 use App\Models\Investigation;
 use App\Models\MedicalRecord;
-use App\Models\Patient;
 use App\Models\Treatment;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Visit;
