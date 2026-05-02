@@ -121,6 +121,9 @@
     {{-- Appointments Table --}}
     <div class="card">
         <div class="card-body p-0">
+            <div class="p-3 pb-0">
+                <div id="appointmentIndexActionFeedback" class="alert d-none mb-0" role="alert"></div>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
@@ -137,9 +140,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                    <div id="appointmentIndexActionFeedback" class="alert d-none" role="alert"></div>
                         @forelse($appointments as $appointment)
-                        <tr>
+                        <tr data-appointment-row="{{ $appointment->id }}">
                             <td>
                                 <a href="{{ route('admin.appointments.show', $appointment) }}" class="fw-medium">
                                     {{ $appointment->appointment_number }}
@@ -163,7 +165,7 @@
                                 <span class="badge bg-outline-primary">{{ $appointment->visit_type->label() }}</span>
                             </td>
                             <td>
-                                <span class="badge bg-{{ $appointment->status->color() }}">
+                                <span class="badge bg-{{ $appointment->status->color() }} js-appointment-status-badge">
                                     {{ $appointment->status->label() }}
                                 </span>
                             </td>
@@ -279,11 +281,21 @@
     @endif
 </div>
 @endsection
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const feedback = document.getElementById('appointmentIndexActionFeedback');
     const forms = document.querySelectorAll('.js-appointment-action-form');
+    const statusColors = {
+        scheduled: 'secondary',
+        confirmed: 'info',
+        checked_in: 'primary',
+        in_progress: 'warning',
+        completed: 'success',
+        no_show: 'dark',
+        cancelled: 'danger',
+    };
 
     if (!feedback || !forms.length) {
         return;
@@ -294,6 +306,25 @@ document.addEventListener('DOMContentLoaded', function () {
         feedback.innerHTML = html;
         feedback.classList.remove('d-none');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateRowState(form, payload) {
+        const row = form.closest('[data-appointment-row]');
+        const statusBadge = row ? row.querySelector('.js-appointment-status-badge') : null;
+        const statusValue = payload.appointment_status;
+        const statusLabel = payload.appointment_status_label;
+        const statusColor = payload.status_color || statusColors[statusValue] || 'secondary';
+
+        if (statusBadge && statusLabel) {
+            statusBadge.className = 'badge bg-' + statusColor + ' js-appointment-status-badge';
+            statusBadge.textContent = statusLabel;
+        }
+
+        const actionItem = form.closest('li');
+
+        if (actionItem) {
+            actionItem.remove();
+        }
     }
 
     forms.forEach(function (form) {
@@ -331,19 +362,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     ? (payload.visit_redirect_url || payload.redirect_url)
                     : payload.redirect_url;
 
+                updateRowState(form, payload);
+
                 showFeedback(
                     'success',
                     '<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">'
                         + '<div><strong>' + (payload.message || 'Appointment updated successfully.') + '</strong></div>'
-                        + (followUp ? '<div><a href="' + followUp + '" class="btn btn-sm btn-success">Continue</a></div>' : '')
+                        + (followUp ? '<div><a href="' + followUp + '" class="btn btn-sm btn-success">Open</a></div>' : '')
                         + '</div>'
                 );
-
-                if (followUp) {
-                    window.setTimeout(function () {
-                        window.location.assign(followUp);
-                    }, 900);
-                }
             } catch (error) {
                 showFeedback('danger', 'Network error while processing the appointment action.');
             } finally {

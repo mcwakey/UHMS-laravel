@@ -111,7 +111,7 @@
                         <td>{{ $payment->patient->full_name ?? '—' }}</td>
                         <td>
                             @if($payment->invoice)
-                                <a href="{{ route('admin.invoices.show', $payment->invoice) }}" class="text-primary">
+                                <a href="{{ route('admin.billing.invoices.show', $payment->invoice) }}" class="text-primary">
                                     {{ $payment->invoice->invoice_number }}
                                 </a>
                             @else

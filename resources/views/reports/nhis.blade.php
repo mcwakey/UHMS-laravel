@@ -109,7 +109,7 @@
                     @forelse($invoices as $invoice)
                     <tr>
                         <td>
-                            <a href="{{ route('admin.invoices.show', $invoice) }}" class="text-primary fw-medium">
+                            <a href="{{ route('admin.billing.invoices.show', $invoice) }}" class="text-primary fw-medium">
                                 {{ $invoice->invoice_number }}
                             </a>
                         </td>

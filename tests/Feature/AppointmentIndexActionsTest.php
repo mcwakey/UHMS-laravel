@@ -63,7 +63,7 @@ class AppointmentIndexActionsTest extends TestCase
             ->assertSee("action=\"".route('admin.appointments.transition', $scheduledAppointment)."\" class=\"js-appointment-action-form\" data-follow-up=\"appointment\"", false)
             ->assertSee("action=\"".route('admin.appointments.check-in', $confirmedAppointment)."\" class=\"js-appointment-action-form\" data-follow-up=\"visit\"", false)
             ->assertSee("const feedback = document.getElementById('appointmentIndexActionFeedback');", false)
-            ->assertSee('window.location.assign(followUp);', false)
+            ->assertDontSee('window.location.assign(followUp);', false)
             ->assertDontSee(route('admin.appointments.check-in', $scheduledAppointment), false)
             ->assertDontSee(route('admin.appointments.transition', $confirmedAppointment), false)
             ->assertDontSee(route('admin.appointments.transition', $checkedInAppointment), false)

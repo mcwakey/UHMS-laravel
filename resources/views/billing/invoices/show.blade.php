@@ -43,7 +43,7 @@
                         <img src="{{ URL::asset('build/img/logo.svg') }}" alt="UHMS" style="height:40px;">
                     </div>
                     <div class="text-end">
-                        <span class="badge bg-{{ $invoice->status->color() }} fs-13 px-3 py-2">{{ $invoice->status->label() }}</span>
+                        <span id="invoiceStatusBadge" class="badge bg-{{ $invoice->status->color() }} fs-13 px-3 py-2">{{ $invoice->status->label() }}</span>
                     </div>
                 </div>
 
@@ -65,7 +65,7 @@
                     <div class="col-md-4 text-md-end">
                         <h6 class="fw-bold mb-2">Visit</h6>
                         <p class="text-muted mb-1">{{ $invoice->visit->visit_number }}</p>
-                        <p class="text-muted mb-1">{{ $invoice->visit->status->label() }}</p>
+                        <p id="invoiceVisitStatusLabel" class="text-muted mb-1">{{ $invoice->visit->status->label() }}</p>
                         <p class="text-muted mb-0">{{ $invoice->visit->visit_date->format('d M Y') }}</p>
                     </div>
                 </div>
@@ -158,11 +158,11 @@
                         </div>
                         <div class="d-flex justify-content-between mb-2">
                             <span class="text-success fw-medium">Paid</span>
-                            <span class="text-success fw-medium">&#8373;{{ number_format($invoice->amount_paid, 2) }}</span>
+                            <span id="invoicePaidValue" class="text-success fw-medium" data-amount="{{ $invoice->amount_paid }}">&#8373;{{ number_format($invoice->amount_paid, 2) }}</span>
                         </div>
                         <div class="d-flex justify-content-between">
                             <span class="fw-bold text-danger">Balance</span>
-                            <span class="fw-bold text-danger fs-5">&#8373;{{ number_format($invoice->balance, 2) }}</span>
+                            <span id="invoiceBalanceValue" class="fw-bold text-danger fs-5" data-amount="{{ $invoice->balance }}">&#8373;{{ number_format($invoice->balance, 2) }}</span>
                         </div>
                     </div>
                 </div>
@@ -205,20 +205,20 @@
     <!-- Right Sidebar: Record Payment -->
     <div class="col-lg-4">
         @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::PAID, \App\Enums\InvoiceStatus::CANCELLED, \App\Enums\InvoiceStatus::REFUNDED]))
-        <div class="card border-primary">
+        <div class="card border-primary" id="recordPaymentCard">
             <div class="card-header bg-primary text-white">
                 <h6 class="fw-bold mb-0"><i class="ti ti-cash me-1"></i>Record Payment</h6>
             </div>
             <div class="card-body">
-                <div class="alert alert-warning py-2 mb-3">
-                    <small><strong>Outstanding:</strong> &#8373;{{ number_format($invoice->balance, 2) }}</small>
+                <div class="alert alert-warning py-2 mb-3" id="invoiceOutstandingAlert">
+                    <small><strong>Outstanding:</strong> <span id="invoiceOutstandingValue">&#8373;{{ number_format($invoice->balance, 2) }}</span></small>
                 </div>
 
                 <form method="POST" action="{{ route('admin.billing.payments.store', $invoice) }}" id="paymentForm">
                     @csrf
                     <div class="mb-3">
                         <label class="form-label fw-medium">Amount (&#8373;) <span class="text-danger">*</span></label>
-                        <input type="number" name="amount" class="form-control @error('amount') is-invalid @enderror"
+                        <input type="number" name="amount" id="paymentAmountInput" class="form-control @error('amount') is-invalid @enderror"
                             value="{{ old('amount', $invoice->balance) }}" step="0.01" min="0.01" max="{{ $invoice->balance }}" required>
                         @error('amount')
                         <div class="invalid-feedback">{{ $message }}</div>
@@ -308,11 +308,75 @@ $(function() {
     const recordPaymentBtn = $('#recordPaymentBtn');
     const paymentMethodSelect = $('#paymentMethodSelect');
     const referenceGroup = $('#referenceGroup');
+    const invoiceStatusBadge = $('#invoiceStatusBadge');
+    const invoiceVisitStatusLabel = $('#invoiceVisitStatusLabel');
+    const invoicePaidValue = $('#invoicePaidValue');
+    const invoiceBalanceValue = $('#invoiceBalanceValue');
+    const invoiceOutstandingAlert = $('#invoiceOutstandingAlert');
+    const invoiceOutstandingValue = $('#invoiceOutstandingValue');
+    const paymentAmountInput = $('#paymentAmountInput');
+    const invoiceStatusColors = {
+        draft: 'secondary',
+        pending: 'warning',
+        partially_paid: 'info',
+        paid: 'success',
+        cancelled: 'danger',
+        refunded: 'dark'
+    };
     const originalButtonHtml = recordPaymentBtn.html();
+
+    function formatMoney(amount) {
+        return '&#8373;' + Number(amount || 0).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+    }
 
     function showFeedback(type, html) {
         feedback.removeClass('d-none alert-success alert-danger').addClass('alert-' + type).html(html);
         $('html, body').animate({ scrollTop: 0 }, 200);
+    }
+
+    function updateInvoiceState(payload) {
+        const paymentAmount = parseFloat(payload.amount || paymentAmountInput.val() || 0);
+        const currentPaid = parseFloat(invoicePaidValue.data('amount') || 0);
+        const currentBalance = parseFloat(invoiceBalanceValue.data('amount') || paymentAmountInput.attr('max') || 0);
+        const nextPaid = Math.max(0, currentPaid + paymentAmount);
+        const nextBalance = Math.max(0, currentBalance - paymentAmount);
+        const statusColor = invoiceStatusColors[payload.invoice_status] || 'warning';
+
+        if (payload.invoice_status_label && invoiceStatusBadge.length) {
+            invoiceStatusBadge.removeClass('bg-secondary bg-warning bg-info bg-success bg-danger bg-dark')
+                .addClass('bg-' + statusColor)
+                .text(payload.invoice_status_label);
+        }
+
+        if (payload.visit_status_label && invoiceVisitStatusLabel.length) {
+            invoiceVisitStatusLabel.text(payload.visit_status_label);
+        }
+
+        if (invoicePaidValue.length) {
+            invoicePaidValue.data('amount', nextPaid);
+            invoicePaidValue.html(formatMoney(nextPaid));
+        }
+
+        if (invoiceBalanceValue.length) {
+            invoiceBalanceValue.data('amount', nextBalance);
+            invoiceBalanceValue.html(formatMoney(nextBalance));
+        }
+
+        if (invoiceOutstandingValue.length) {
+            invoiceOutstandingValue.html(formatMoney(nextBalance));
+        }
+
+        if (payload.invoice_status === 'paid') {
+            invoiceOutstandingAlert.removeClass('alert-warning').addClass('alert-success');
+            paymentForm.find(':input').prop('disabled', true);
+            recordPaymentBtn.prop('disabled', true).html('<i class="ti ti-circle-check me-1"></i>Paid');
+            return;
+        }
+
+        paymentAmountInput.attr('max', nextBalance.toFixed(2)).val(nextBalance.toFixed(2));
     }
 
     function clearValidationErrors() {
@@ -381,23 +445,21 @@ $(function() {
                 return;
             }
 
+            updateInvoiceState(payload);
+
             showFeedback(
                 'success',
                 '<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">'
                     + '<div><strong>' + (payload.message || 'Payment recorded successfully.') + '</strong><div class="small text-muted">Invoice: ' + (payload.invoice_status_label || '') + (payload.visit_status_label ? ' | Visit: ' + payload.visit_status_label : '') + '</div></div>'
-                    + '<div class="d-flex gap-2"><a href="' + (payload.receipt_url || '#') + '" class="btn btn-sm btn-success">Receipt</a><a href="' + (payload.redirect_url || '#') + '" class="btn btn-sm btn-outline-success">Refresh Invoice</a></div>'
+                    + '<div class="d-flex gap-2"><a href="' + (payload.receipt_url || '#') + '" class="btn btn-sm btn-success">Receipt</a>' + (payload.redirect_url ? '<a href="' + payload.redirect_url + '" class="btn btn-sm btn-outline-success">Open Invoice</a>' : '') + '</div>'
                     + '</div>'
             );
-
-            window.setTimeout(function () {
-                if (payload.redirect_url) {
-                    window.location.assign(payload.redirect_url);
-                }
-            }, 1000);
         } catch (error) {
             showFeedback('danger', 'Network error while recording payment.');
         } finally {
-            recordPaymentBtn.prop('disabled', false).html(originalButtonHtml);
+            if (!recordPaymentBtn.is(':disabled')) {
+                recordPaymentBtn.prop('disabled', false).html(originalButtonHtml);
+            }
         }
     });
 });

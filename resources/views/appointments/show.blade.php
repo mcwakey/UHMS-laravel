@@ -11,7 +11,7 @@
             <div class="col">
                 <h3 class="page-title">
                     Appointment {{ $appointment->appointment_number }}
-                    <span class="badge bg-{{ $appointment->status->color() }} ms-2">{{ $appointment->status->label() }}</span>
+                    <span class="badge bg-{{ $appointment->status->color() }} ms-2 js-appointment-status-badge">{{ $appointment->status->label() }}</span>
                 </h3>
             </div>
             <div class="col-auto">
@@ -90,7 +90,7 @@
                                 </tr>
                                 <tr>
                                     <td class="text-muted">Status</td>
-                                    <td><span class="badge bg-{{ $appointment->status->color() }}">{{ $appointment->status->label() }}</span></td>
+                                    <td><span class="badge bg-{{ $appointment->status->color() }} js-appointment-status-badge">{{ $appointment->status->label() }}</span></td>
                                 </tr>
                             </table>
                         </div>
@@ -296,12 +296,45 @@
 document.addEventListener('DOMContentLoaded', function () {
     const feedback = document.getElementById('appointmentActionFeedback');
     const forms = document.querySelectorAll('.js-appointment-action-form');
+    const statusColors = {
+        scheduled: 'secondary',
+        confirmed: 'info',
+        checked_in: 'primary',
+        in_progress: 'warning',
+        completed: 'success',
+        no_show: 'dark',
+        cancelled: 'danger',
+    };
 
     function showFeedback(type, html) {
         feedback.className = 'alert alert-' + type;
         feedback.innerHTML = html;
         feedback.classList.remove('d-none');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateStatusBadges(payload) {
+        const statusValue = payload.appointment_status;
+        const statusLabel = payload.appointment_status_label;
+        const statusColor = payload.status_color || statusColors[statusValue] || 'secondary';
+
+        if (!statusLabel) {
+            return;
+        }
+
+        document.querySelectorAll('.js-appointment-status-badge').forEach(function (badge) {
+            badge.classList.remove('bg-secondary', 'bg-info', 'bg-primary', 'bg-warning', 'bg-success', 'bg-dark', 'bg-danger');
+            badge.classList.add('bg-' + statusColor);
+            badge.textContent = statusLabel;
+        });
+    }
+
+    function removeMatchingForms(form) {
+        document.querySelectorAll('.js-appointment-action-form').forEach(function (candidate) {
+            if (candidate.action === form.action) {
+                candidate.remove();
+            }
+        });
     }
 
     forms.forEach(function (form) {
@@ -339,19 +372,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     ? (payload.visit_redirect_url || payload.redirect_url)
                     : payload.redirect_url;
 
+                updateStatusBadges(payload);
+                removeMatchingForms(form);
+
                 showFeedback(
                     'success',
                     '<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">'
                         + '<div><strong>' + (payload.message || 'Appointment updated successfully.') + '</strong></div>'
-                        + '<div><a href="' + followUp + '" class="btn btn-sm btn-success">Continue</a></div>'
+                        + (followUp ? '<div><a href="' + followUp + '" class="btn btn-sm btn-success">Open</a></div>' : '')
                         + '</div>'
                 );
-
-                if (followUp) {
-                    window.setTimeout(function () {
-                        window.location.assign(followUp);
-                    }, 900);
-                }
             } catch (error) {
                 showFeedback('danger', 'Network error while processing the appointment action.');
             } finally {

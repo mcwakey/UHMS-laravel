@@ -604,7 +604,7 @@
                         <tbody>
                             @foreach($allInvoices->sortByDesc('created_at')->take(10) as $inv)
                             <tr>
-                                <td><a href="{{ route('admin.invoices.show', $inv) }}" class="fw-medium">{{ $inv->invoice_number }}</a></td>
+                                <td><a href="{{ route('admin.billing.invoices.show', $inv) }}" class="fw-medium">{{ $inv->invoice_number }}</a></td>
                                 <td>{{ $inv->visit?->visit_number ?? '—' }}</td>
                                 <td>{{ $inv->created_at->format('d M Y') }}</td>
                                 <td>&#8373;{{ number_format($inv->total_amount, 2) }}</td>
