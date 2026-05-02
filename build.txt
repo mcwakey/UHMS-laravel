@@ -1,0 +1,8 @@
+
+> build
+> vite build
+
+[33mYou are using Node.js 18.16.0. Vite requires Node.js version 20.19+ or 22.12+. Please upgrade your Node.js version.[39m
+[36mvite v7.3.2 [32mbuilding client environment for production...[36m[39m
+transforming...
+Terminate batch job (Y/N)? Terminate batch job (Y/N)? Terminate batch job (Y/N)? Terminate batch job (Y/N)? Terminate batch job (Y/N)? Terminate batch job (Y/N)? Terminate batch job (Y/N)? 

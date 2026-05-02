@@ -17,6 +17,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
+        // Inertia.js — appended to the web group so any future Inertia
+        // controller response automatically receives shared props.
+        // Harmless on classic Blade responses (no-ops unless an
+        // Inertia\Response is returned).
+        $middleware->web(append: [
+            \App\Http\Middleware\HandleInertiaRequests::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

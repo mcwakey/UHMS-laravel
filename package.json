@@ -10,10 +10,16 @@
         "sass:no-map": "sass resources/scss/main.scss:resources/css/style.css --style=compressed --no-source-map"
     },
     "devDependencies": {
+        "@vitejs/plugin-vue": "^6.0.6",
         "axios": "^1.14.0",
         "concurrently": "^9.2.1",
         "laravel-vite-plugin": "^2.0.1",
         "vite": "^7.2.4",
+        "vite-plugin-pwa": "^1.2.0",
         "vite-plugin-static-copy": "^3.1.4"
+    },
+    "dependencies": {
+        "@inertiajs/vue3": "^3.0.3",
+        "vue": "^3.5.33"
     }
 }

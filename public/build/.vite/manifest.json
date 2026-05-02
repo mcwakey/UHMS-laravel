@@ -12,6 +12,12 @@
     "file": "icons/auth-bg.jpg",
     "src": "resources/img/auth/auth-bg.jpg"
   },
+  "resources/js/inertia.js": {
+    "file": "js/inertia.js",
+    "name": "inertia",
+    "src": "resources/js/inertia.js",
+    "isEntry": true
+  },
   "resources/js/script.js": {
     "file": "js/script.js",
     "name": "script",
