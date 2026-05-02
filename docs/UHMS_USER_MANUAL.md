@@ -17,6 +17,10 @@ This manual describes the features currently available in the system and how sta
 3. Select Login.
 4. The system redirects you to the correct dashboard for your role.
 
+![UHMS login screen](assets/user-manual/01-login.png)
+
+The login screen is the entry point for all staff. Users must authenticate before accessing patient, clinical, financial, or administrative pages.
+
 ### 2.2 Dashboards
 
 UHMS routes users to a dashboard based on role:
@@ -69,6 +73,10 @@ Important: UHMS is an operational clinical system. Patient, billing, and authent
 | HR Manager | Employees, attendance, leave, payroll, HR reports |
 
 Permission assignments may be changed by administrators in Roles & Permissions.
+
+![Admin dashboard](assets/user-manual/02-dashboard.png)
+
+The dashboard gives administrators a quick view of operational totals, shortcuts, and the role-aware sidebar menu.
 
 ## 4. Main Navigation Areas
 
@@ -221,6 +229,10 @@ Most list pages follow the same pattern:
 
 ## 6. Patient Registration and Management
 
+![Patients list](assets/user-manual/03-patients.png)
+
+The Patients page is the main register for searching, reviewing, and opening patient records.
+
 ### 6.1 Add a patient
 
 1. Go to Patient Services > Patients.
@@ -259,6 +271,10 @@ Most list pages follow the same pattern:
 4. Open an appointment to view details.
 
 ### 7.2 Use the calendar view
+
+![Appointment calendar](assets/user-manual/04-appointments-calendar.png)
+
+The appointment calendar groups bookings by day and supports week navigation, doctor filters, and department filters.
 
 1. Go to Patient Services > Appointments > Calendar View.
 2. Choose a week start date.
@@ -301,6 +317,10 @@ Most list pages follow the same pattern:
 6. The system creates a visit number and moves the patient into the next workflow state.
 
 ### 8.2 View visits
+
+![Visits and OPD list](assets/user-manual/05-visits-opd.png)
+
+The Visits / OPD page shows visit status, patient details, linked appointment information, and workflow actions.
 
 1. Go to Visits / OPD.
 2. By default, the list focuses on today's visits unless search or date filters are used.
@@ -346,6 +366,10 @@ After triage, the patient may be assigned to consultation, moved to another depa
 ## 11. Consultations
 
 ### 11.1 Open consultation list
+
+![Consultations list](assets/user-manual/06-consultations.png)
+
+The consultation list helps clinicians find consultable visits and filter by visit type, date, assignment, or patient search.
 
 1. Go to Clinical > Consultations.
 2. By default, the list focuses on today's outpatient consultable visits.
@@ -428,6 +452,10 @@ Common actions:
 ## 12. Investigations
 
 ### 12.1 View investigation requests
+
+![Investigation requests](assets/user-manual/07-investigation-requests.png)
+
+Investigation staff use this queue to filter, accept, process, and track requests from consultations.
 
 1. Go to Investigations > Investigation Requests.
 2. Filter by status, urgency, department, date range, or search text.
@@ -529,6 +557,10 @@ Typical actions:
 ## 14. Billing and Payments
 
 ### 14.1 View invoices
+
+![Invoices list](assets/user-manual/08-billing-invoices.png)
+
+The Invoices page centralizes billing status, outstanding balances, payments, and invoice actions.
 
 1. Go to Billing > Invoices.
 2. Filter by status, billing type, or search text.
@@ -820,6 +852,10 @@ Use Payment Methods to configure available payment options.
 Use Activity Log to review significant system actions.
 
 ### 23.5 Modules management
+
+![Modules management](assets/user-manual/09-modules.png)
+
+Administrators use Modules Management to control which optional feature groups are available in the sidebar and protected routes.
 
 Modules control which optional feature groups are shown and available in navigation.
 
