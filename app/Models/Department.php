@@ -73,7 +73,18 @@ class Department extends Model
 
     public function scopeAcceptsRequests($query)
     {
+        // Include departments that have an explicit result_type set,
+        // OR departments whose DepartmentType implies investigation work
+        // (so existing departments don't disappear before result_type is configured).
+        $investigationTypes = [
+            DepartmentType::INVESTIGATION->value,
+            DepartmentType::RADIOLOGY->value,
+        ];
+
         return $query->where('status', 'active')
-            ->where('result_type', '!=', ResultType::NONE->value);
+            ->where(function ($q) use ($investigationTypes) {
+                $q->where('result_type', '!=', ResultType::NONE->value)
+                  ->orWhereIn('type', $investigationTypes);
+            });
     }
 }

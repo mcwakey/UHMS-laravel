@@ -69,6 +69,7 @@
                     @endforeach
                 </select>
             </div>
+            <div class="col-md-2">
                 <select name="urgency" class="form-select">
                     <option value="">All Urgency</option>
                     <option value="routine" {{ request('urgency') === 'routine' ? 'selected' : '' }}>Routine</option>

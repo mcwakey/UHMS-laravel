@@ -112,25 +112,35 @@ class LabService
         return $query->paginate($perPage)->withQueryString();
     }
 
-    public function createRequest(Visit $visit, array $testIds, array $data = []): LabRequest
+    public function createRequest(Visit $visit, array $items, array $data = []): LabRequest
     {
-        return DB::transaction(function () use ($visit, $testIds, $data) {
+        return DB::transaction(function () use ($visit, $items, $data) {
             $request = LabRequest::create([
-                'request_number' => LabRequest::generateRequestNumber(),
-                'visit_id' => $visit->id,
-                'patient_id' => $visit->patient_id,
-                'requested_by' => Auth::id(),
-                'department_id' => $visit->department_id,
-                'clinical_info' => $data['clinical_info'] ?? null,
-                'urgency' => $data['urgency'] ?? 'routine',
-                'status' => 'pending',
+                'request_number'       => LabRequest::generateRequestNumber(),
+                'visit_id'             => $visit->id,
+                'patient_id'           => $visit->patient_id,
+                'requested_by'         => Auth::id(),
+                'department_id'        => $visit->department_id,
+                'target_department_id' => $data['target_department_id'] ?? null,
+                'clinical_info'        => $data['clinical_info'] ?? null,
+                'urgency'              => $data['urgency'] ?? 'routine',
+                'status'               => 'pending',
             ]);
 
-            foreach ($testIds as $testId) {
-                $request->items()->create([
-                    'lab_test_id' => $testId,
-                    'status' => 'pending',
-                ]);
+            foreach ($items as $item) {
+                if (is_numeric($item)) {
+                    // Item is a test-catalog ID
+                    $request->items()->create([
+                        'lab_test_id' => (int) $item,
+                        'status'      => 'pending',
+                    ]);
+                } else {
+                    // Item is a free-text description (non-catalog dept)
+                    $request->items()->create([
+                        'name'   => $item,
+                        'status' => 'pending',
+                    ]);
+                }
             }
 
             $request->load(['items.labTest', 'patient']);

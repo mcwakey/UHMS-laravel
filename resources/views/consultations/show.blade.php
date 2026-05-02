@@ -1257,6 +1257,8 @@
                                 </div>
                             </div>
 
+                            <div id="labReqErrors" class="alert alert-danger py-2 d-none mt-3"></div>
+
                             <div class="mt-3 d-flex gap-2">
                                 <button type="submit" class="btn btn-primary" id="labReqSubmitBtn">
                                     <i class="ti ti-send me-1"></i>Send Request
@@ -1662,8 +1664,57 @@ function loadInvestigationServices(deptId) {
 }
 
 /* ================================================================
-   LAB REQUEST — DYNAMIC ITEM LOADER
+   LAB REQUEST — AJAX FORM SUBMISSION
    ================================================================ */
+(function () {
+    var form = document.getElementById('labRequestForm');
+    if (!form) return;
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        var errBox = document.getElementById('labReqErrors');
+        var btn    = document.getElementById('labReqSubmitBtn');
+        var orig   = btn ? btn.innerHTML : '';
+
+        if (errBox) errBox.classList.add('d-none');
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending...'; }
+
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        })
+        .then(function (r) {
+            if (!r.ok) return r.json().then(function (body) { throw body; });
+            return r.json();
+        })
+        .then(function (data) {
+            if (data.success) {
+                // Close modal and show success
+                var modal = bootstrap.Modal.getInstance(document.getElementById('investigationModal'));
+                if (modal) modal.hide();
+                showToast('Investigation request sent successfully.');
+                // Reset form for next use
+                form.reset();
+                document.getElementById('labReqItemsContainer').classList.add('d-none');
+            }
+        })
+        .catch(function (err) {
+            var msg = 'Failed to send request.';
+            if (err && err.errors) {
+                msg = Object.values(err.errors).flat().join('<br>');
+            } else if (err && err.message) {
+                msg = err.message;
+            }
+            if (errBox) { errBox.innerHTML = msg; errBox.classList.remove('d-none'); }
+            else alert(msg);
+        })
+        .finally(function () { if (btn) { btn.disabled = false; btn.innerHTML = orig; } });
+    });
+})();
+
+
 function loadLabReqItems(deptId) {
     var container = document.getElementById('labReqItemsContainer');
     var body      = document.getElementById('labReqItemsBody');

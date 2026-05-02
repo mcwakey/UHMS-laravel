@@ -186,18 +186,18 @@
                 </ul></li>
                 @endif
 
-                {{-- LABORATORY --}}
+                {{-- INVESTIGATIONS --}}
                 @if(Auth::user()->canAny(['lab.requests.view', 'lab.results.view', 'lab.tests.manage', 'analyzer.manage']))
                 <li class="menu-title"><span>Investigations</span></li>
                 <li><ul>
                     @can('lab.requests.view')
                     <li class="{{ request()->routeIs('admin.lab.requests.*') ? 'active' : '' }}">
-                        <a href="{{ route('admin.lab.requests.index') }}"><i class="ti ti-test-pipe"></i><span>Lab Requests</span></a>
+                        <a href="{{ route('admin.lab.requests.index') }}"><i class="ti ti-test-pipe"></i><span>Investigation Requests</span></a>
                     </li>
                     @endcan
                     @can('lab.results.view')
                     <li class="{{ request()->routeIs('admin.lab.results.*') ? 'active' : '' }}">
-                        <a href="{{ route('admin.lab.results.index') }}"><i class="ti ti-report-medical"></i><span>Lab Results</span></a>
+                        <a href="{{ route('admin.lab.results.index') }}"><i class="ti ti-report-medical"></i><span>Investigation Results</span></a>
                     </li>
                     @endcan
                     @can('lab.tests.manage')
@@ -213,7 +213,7 @@
                     @endcan
                     @can('analyzer.manage')
                     <li class="{{ request()->routeIs('admin.analyzers.index', 'admin.analyzers.show') ? 'active' : '' }}">
-                        <a href="{{ route('admin.analyzers.index') }}"><i class="ti ti-device-analytics"></i><span>Lab Analyzers</span></a>
+                        <a href="{{ route('admin.analyzers.index') }}"><i class="ti ti-device-analytics"></i><span>Analyzers</span></a>
                     </li>
                     <li class="{{ request()->routeIs('admin.analyzers.diagnostics') ? 'active' : '' }}">
                         <a href="{{ route('admin.analyzers.diagnostics') }}"><i class="ti ti-activity"></i><span>Analyzer Messages</span></a>
