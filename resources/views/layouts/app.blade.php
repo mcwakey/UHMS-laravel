@@ -54,6 +54,8 @@
     @stack('styles')
 </head>
 <body>
+    <!--UHMS_LEGACY_LAYOUT-->
+    <!--UHMS_LEGACY_BODY_START-->
     <div class="main-wrapper">
 
         @include('layouts.partials.header')
@@ -92,6 +94,7 @@
         </div>
 
     </div>
+    <!--UHMS_LEGACY_BODY_END-->
 
     <!-- jQuery -->
     <script src="{{ URL::asset('build/js/jquery-3.7.1.min.js') }}"></script>
@@ -122,6 +125,7 @@
     <!-- Template Script -->
     <script src="{{ URL::asset('build/js/script.js') }}"></script>
 
+    <!--UHMS_LEGACY_SCRIPTS_START-->
     <!-- Notification Polling -->
     @auth
     <script>
@@ -131,6 +135,14 @@
         const list = document.getElementById('notificationList');
         const noNotif = document.getElementById('noNotifications');
         const markAllBtn = document.getElementById('markAllReadBtn');
+
+        if (!badge || !list || !noNotif || !markAllBtn) {
+            return;
+        }
+
+        if (window.uhmsNotificationInterval) {
+            clearInterval(window.uhmsNotificationInterval);
+        }
 
         function fetchNotifications() {
             $.ajax({
@@ -175,7 +187,7 @@
         }
 
         // Mark single as read on click
-        $(document).on('click', '.notification-item', function() {
+        $(document).off('click.uhmsNotifications', '.notification-item').on('click.uhmsNotifications', '.notification-item', function() {
             var id = $(this).data('id');
             $.ajax({
                 url: '{{ url("admin/notifications") }}/' + id + '/read',
@@ -185,7 +197,7 @@
         });
 
         // Mark all as read
-        $(markAllBtn).on('click', function(e) {
+        $(markAllBtn).off('click.uhmsNotifications').on('click.uhmsNotifications', function(e) {
             e.preventDefault();
             $.ajax({
                 url: '{{ route("admin.notifications.mark-all-read") }}',
@@ -199,12 +211,14 @@
 
         // Initial fetch + polling
         fetchNotifications();
-        setInterval(fetchNotifications, POLL_INTERVAL);
+        window.uhmsNotificationInterval = setInterval(fetchNotifications, POLL_INTERVAL);
     })();
     </script>
     @endauth
 
     @stack('scripts')
+    @yield('scripts')
+    <!--UHMS_LEGACY_SCRIPTS_END-->
 
     {{-- Reveal page once everything has loaded — kills the sidebar FOUC --}}
     <script>

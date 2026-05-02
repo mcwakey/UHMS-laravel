@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Inertia\Response is returned).
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
+            \App\Http\Middleware\ConvertBladeViewsToInertia::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

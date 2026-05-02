@@ -57,17 +57,22 @@ class AppointmentIndexActionsTest extends TestCase
         $checkedInAppointment = $this->createAppointment(AppointmentStatus::CHECKED_IN);
 
         $response = $this->actingAs($this->user)->get(route('admin.appointments.index'));
+        $page = $this->inertiaPage($response->getContent());
+        $html = $page['props']['html'];
+        $scripts = $page['props']['scripts'];
 
         $response->assertOk()
-            ->assertSee('appointmentIndexActionFeedback', false)
-            ->assertSee("action=\"".route('admin.appointments.transition', $scheduledAppointment)."\" class=\"js-appointment-action-form\" data-follow-up=\"appointment\"", false)
-            ->assertSee("action=\"".route('admin.appointments.check-in', $confirmedAppointment)."\" class=\"js-appointment-action-form\" data-follow-up=\"visit\"", false)
-            ->assertSee("const feedback = document.getElementById('appointmentIndexActionFeedback');", false)
-            ->assertDontSee('window.location.assign(followUp);', false)
-            ->assertDontSee(route('admin.appointments.check-in', $scheduledAppointment), false)
-            ->assertDontSee(route('admin.appointments.transition', $confirmedAppointment), false)
-            ->assertDontSee(route('admin.appointments.transition', $checkedInAppointment), false)
-            ->assertDontSee(route('admin.appointments.check-in', $checkedInAppointment), false);
+            ->assertSee('Legacy\\/BladePage', false);
+
+        $this->assertStringContainsString('appointmentIndexActionFeedback', $html);
+        $this->assertStringContainsString("action=\"".route('admin.appointments.transition', $scheduledAppointment)."\" class=\"js-appointment-action-form\" data-follow-up=\"appointment\"", $html);
+        $this->assertStringContainsString("action=\"".route('admin.appointments.check-in', $confirmedAppointment)."\" class=\"js-appointment-action-form\" data-follow-up=\"visit\"", $html);
+        $this->assertStringContainsString("const feedback = document.getElementById('appointmentIndexActionFeedback');", $scripts);
+        $this->assertStringNotContainsString('window.location.assign(followUp);', $scripts);
+        $this->assertStringNotContainsString(route('admin.appointments.check-in', $scheduledAppointment), $html);
+        $this->assertStringNotContainsString(route('admin.appointments.transition', $confirmedAppointment), $html);
+        $this->assertStringNotContainsString(route('admin.appointments.transition', $checkedInAppointment), $html);
+        $this->assertStringNotContainsString(route('admin.appointments.check-in', $checkedInAppointment), $html);
     }
 
     public function test_index_actions_return_json_payload_needed_by_async_handler(): void
@@ -117,5 +122,12 @@ class AppointmentIndexActionsTest extends TestCase
             'status' => $status,
             'created_by' => $this->user->id,
         ]);
+    }
+
+    private function inertiaPage(string $content): array
+    {
+        preg_match('/<script data-page="app" type="application\/json">(.*?)<\/script>/s', $content, $matches);
+
+        return json_decode($matches[1] ?? '{}', true, flags: JSON_THROW_ON_ERROR);
     }
 }

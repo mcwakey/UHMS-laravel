@@ -2,11 +2,12 @@ import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
 import { VitePWA } from 'vite-plugin-pwa';
-import { viteStaticCopy } from 'vite-plugin-static-copy';
+
+const supportsPwaBuild = Number.parseInt(process.versions.node.split('.')[0], 10) >= 20;
 
 export default defineConfig({
     build: {
-        manifest: true,
+        manifest: 'manifest.json',
         rtl: true,
         outDir: 'public/build/',
         cssCodeSplit: true,
@@ -19,7 +20,8 @@ export default defineConfig({
                         return 'icons/' + css.name;
                     }
                 },
-                entryFileNames: 'js/' + `[name]` + `.js`,
+                entryFileNames: 'js/' + `[name]` + `.bundle.js`,
+                chunkFileNames: 'js/' + `[name]` + `.[hash].js`,
             },
         },
     },
@@ -42,7 +44,7 @@ export default defineConfig({
             },
         }),
 
-        VitePWA({
+        supportsPwaBuild && VitePWA({
             registerType: 'autoUpdate',
             injectRegister: 'auto',
             includeAssets: [
@@ -108,32 +110,5 @@ export default defineConfig({
                 enabled: false,
             },
         }),
-
-        viteStaticCopy({
-            targets: [
-                {
-                    src: 'resources/css',
-                    dest: ''
-                },
-                {
-                    src: 'resources/scss',
-                    dest: ''
-                },
-                {
-                    src: 'resources/img',
-                    dest: ''
-                },
-                {
-                    src: 'resources/js',
-                    dest: ''
-                },
-               
-                {
-                    src: 'resources/plugins',
-                    dest: ''
-                },
-               
-            ]
-        }),
-    ],
+    ].filter(Boolean),
 });

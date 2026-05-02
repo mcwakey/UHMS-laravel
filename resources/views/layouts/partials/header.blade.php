@@ -126,7 +126,7 @@
                     @endcan
 
                     <div class="pt-2 mt-2 border-top">
-                        <form method="POST" action="{{ route('logout') }}">
+                        <form method="POST" action="{{ route('logout') }}" data-spa-ignore="true">
                             @csrf
                             <button type="submit" class="dropdown-item text-danger">
                                 <i class="ti ti-logout me-1 fs-17 align-middle"></i>

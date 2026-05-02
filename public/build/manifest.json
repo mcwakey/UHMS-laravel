@@ -1,0 +1,38 @@
+{
+  "resources/css/style.css": {
+    "file": "css/style.min.css",
+    "src": "resources/css/style.css",
+    "isEntry": true
+  },
+  "resources/img/auth/auth-bg.jpg": {
+    "file": "icons/auth-bg.jpg",
+    "src": "resources/img/auth/auth-bg.jpg"
+  },
+  "resources/js/Pages/Legacy/BladePage.vue": {
+    "file": "js/BladePage.BIPYEveg.js",
+    "name": "BladePage",
+    "src": "resources/js/Pages/Legacy/BladePage.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/inertia.js"
+    ],
+    "css": [
+      "css/BladePage.min.css"
+    ]
+  },
+  "resources/js/inertia.js": {
+    "file": "js/inertia.bundle.js",
+    "name": "inertia",
+    "src": "resources/js/inertia.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/Pages/Legacy/BladePage.vue"
+    ]
+  },
+  "resources/js/script.js": {
+    "file": "js/script.bundle.js",
+    "name": "script",
+    "src": "resources/js/script.js",
+    "isEntry": true
+  }
+}
