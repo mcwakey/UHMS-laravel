@@ -62,6 +62,35 @@ class LegacyInertiaBridgeTest extends TestCase
             ->assertSee('Legacy\/BladePage', false);
     }
 
+    public function test_inertia_request_to_calendar_page_returns_legacy_component(): void
+    {
+        $version = $this->inertiaVersion();
+
+        $response = $this->actingAs($this->user)
+            ->withHeaders([
+                'X-Inertia' => 'true',
+                'X-Inertia-Version' => $version,
+                'X-Requested-With' => 'XMLHttpRequest',
+            ])
+            ->get(route('admin.appointments.calendar'));
+
+        $response->assertOk()
+            ->assertJsonPath('component', 'Legacy/BladePage')
+            ->assertJsonPath('props.title', 'Appointment Calendar - '.config('app.name'))
+            ->assertJsonPath('url', '/admin/appointments/calendar');
+
+        $this->assertStringContainsString('Appointment Calendar', $response->json('props.html'));
+    }
+
+    public function test_non_inertia_ajax_calendar_request_still_returns_json(): void
+    {
+        $response = $this->actingAs($this->user)
+            ->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
+            ->get(route('admin.appointments.calendar'));
+
+        $response->assertOk()->assertJson([]);
+    }
+
     private function inertiaVersion(): string
     {
         $response = $this->actingAs($this->user)->get(route('admin.appointments.index'));

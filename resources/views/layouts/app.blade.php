@@ -9,6 +9,15 @@
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ URL::asset('build/img/favicon.png') }}">
 
+    {{-- PWA --}}
+    <meta name="theme-color" content="#0d6efd">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="UHMS">
+    <link rel="apple-touch-icon" href="{{ URL::asset('build/img/favicon.png') }}">
+    <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+
     <!-- Theme Config -->
     <script src="{{ URL::asset('build/js/theme-script.js') }}"></script>
 
@@ -230,5 +239,6 @@
             document.documentElement.classList.remove('uhms-loading');
         }, 1500);
     </script>
+    <script src="{{ asset('register-sw.js') }}" defer></script>
 </body>
 </html>

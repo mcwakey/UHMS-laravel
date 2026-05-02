@@ -1,0 +1,26 @@
+{
+  "name": "UHMS - Ultimate Hospital Management System",
+  "short_name": "UHMS",
+  "description": "Hospital management system for clinics and hospitals.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#ffffff",
+  "theme_color": "#0d6efd",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "/build/img/logo-small.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/build/img/favicon.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

@@ -247,7 +247,7 @@ class AppointmentController extends Controller
 
         $calendarData = $this->appointmentService->getCalendarData($from, $to, $request->all());
 
-        if ($request->ajax()) {
+        if ($request->ajax() && ! $request->headers->has('X-Inertia')) {
             return response()->json($calendarData);
         }
 

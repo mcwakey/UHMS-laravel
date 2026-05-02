@@ -123,7 +123,7 @@
                                 @endphp
                                 <td class="align-top p-2 {{ $isToday ? 'bg-primary bg-opacity-10' : '' }}" style="min-height: 200px; vertical-align: top;">
                                     @forelse($dayAppointments as $apt)
-                                    <div class="card mb-2 border-start border-3 border-{{ $apt->status->color() }}" style="cursor: pointer;" onclick="window.location='{{ route('admin.appointments.show', $apt) }}'">
+                                    <a href="{{ route('admin.appointments.show', $apt) }}" class="card mb-2 border-start border-3 border-{{ $apt->status->color() }} text-decoration-none text-reset d-block">
                                         <div class="card-body p-2">
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <small class="fw-medium text-truncate" style="max-width: 120px;">
@@ -144,7 +144,7 @@
                                             </small>
                                             @endif
                                         </div>
-                                    </div>
+                                    </a>
                                     @empty
                                     <div class="text-center text-muted py-4">
                                         <small>No appointments</small>
