@@ -441,7 +441,7 @@
                 @endcan
 
                 {{-- SETTINGS --}}
-                @canany(['settings.manage'])
+                @canany(['settings.manage', 'modules.manage'])
                 <li class="menu-title"><span>Settings</span></li>
                 <li class="submenu">
                     <a href="javascript:void(0);" class="{{ request()->routeIs('admin.settings.*') ? 'active subdrop' : '' }}">
@@ -460,6 +460,11 @@
                         </li>
                         <li class="{{ request()->routeIs('admin.settings.activity-log') ? 'active' : '' }}">
                             <a href="{{ route('admin.settings.activity-log') }}"><i class="ti ti-history"></i><span>Activity Log</span></a>
+                        </li>
+                        @endcan
+                        @can('modules.manage')
+                        <li class="{{ request()->routeIs('admin.modules.*') ? 'active' : '' }}">
+                            <a href="{{ route('admin.modules.index') }}"><i class="ti ti-puzzle"></i><span>Modules</span></a>
                         </li>
                         @endcan
                     </ul>

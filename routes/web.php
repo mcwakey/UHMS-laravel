@@ -655,6 +655,13 @@ Route::middleware('auth')->group(function () {
             Route::get('activity-log', [ActivityLogController::class, 'index'])->name('activity-log');
         });
 
+        // Modules Management (Admin)
+        Route::middleware('can:modules.manage')->prefix('modules')->name('modules.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\ModuleController::class, 'index'])->name('index');
+            Route::post('{module}/toggle', [\App\Http\Controllers\Admin\ModuleController::class, 'toggle'])->name('toggle');
+            Route::post('flush', [\App\Http\Controllers\Admin\ModuleController::class, 'flushCache'])->name('flush');
+        });
+
         // ICD-10 Code Database
         Route::middleware('can:icd.manage')->group(function () {
             Route::get('icd-codes', [IcdCodeController::class, 'index'])->name('icd-codes.index');

@@ -140,6 +140,9 @@ class RoleSeeder extends Seeder
 
             // Settings
             'settings.manage',
+
+            // Modules Management (admin-only)
+            'modules.manage',
         ];
 
         // Create permissions
