@@ -16,13 +16,17 @@ use App\Listeners\NotifyLabTechnicians;
 use App\Listeners\NotifyPharmacists;
 use App\Listeners\NotifyStockManagers;
 use App\Listeners\NotifyWardStaffAdmission;
+use App\Models\User;
 use App\Services\ModuleService;
+use App\Services\SidebarMenuBuilder;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
 use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
@@ -33,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(ModuleService::class);
+        $this->app->singleton(SidebarMenuBuilder::class);
     }
 
     /**
@@ -67,6 +72,24 @@ class AppServiceProvider extends ServiceProvider
         // @module('pharmacy') ... @endmodule  → renders only when module enabled
         Blade::if('module', function (string $slug) {
             return app(ModuleService::class)->enabled($slug);
+        });
+
+        View::composer('layouts.partials.sidebar', function ($view) {
+            /** @var User|null $user */
+            $user = Auth::user();
+            $moduleService = app(ModuleService::class);
+
+            $unreadNotifications = $user instanceof User
+                && $moduleService->enabled('notifications')
+                && $user->can('notifications.view')
+                    ? $user->unreadNotifications()->count()
+                    : 0;
+
+            $view->with('sidebarSections', app(SidebarMenuBuilder::class)->build(
+                $user,
+                request()->route()?->getName() ?? '',
+                $unreadNotifications,
+            ));
         });
     }
 }

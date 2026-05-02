@@ -67,14 +67,46 @@ class PaymentController extends Controller
     public function store(StorePaymentRequest $request, Invoice $invoice)
     {
         if (in_array($invoice->status, [InvoiceStatus::PAID, InvoiceStatus::CANCELLED, InvoiceStatus::REFUNDED])) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Cannot record payment on this invoice.',
+                ], 409);
+            }
+
             return back()->with('error', 'Cannot record payment on this invoice.');
         }
 
         if ($request->amount > $invoice->balance) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Payment amount exceeds outstanding balance of ₵' . number_format($invoice->balance, 2),
+                ], 422);
+            }
+
             return back()->with('error', 'Payment amount exceeds outstanding balance of ₵' . number_format($invoice->balance, 2));
         }
 
         $payment = $this->billingService->recordPayment($invoice, $request->validated());
+        $payment->loadMissing(['invoice.visit']);
+        $invoice->refresh();
+        $visit = $invoice->visit?->fresh();
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => "Payment {$payment->payment_number} of ₵" . number_format($payment->amount, 2) . ' recorded successfully.',
+                'payment_id' => $payment->id,
+                'payment_number' => $payment->payment_number,
+                'amount' => (float) $payment->amount,
+                'invoice_id' => $invoice->id,
+                'invoice_status' => $invoice->status->value,
+                'invoice_status_label' => $invoice->status->label(),
+                'visit_id' => $visit?->id,
+                'visit_status' => $visit?->status?->value,
+                'visit_status_label' => $visit?->status?->label(),
+                'redirect_url' => route('admin.billing.invoices.show', $invoice),
+                'receipt_url' => route('admin.billing.payments.receipt', $payment),
+            ], 201);
+        }
 
         return redirect()
             ->route('admin.billing.invoices.show', $invoice)

@@ -137,6 +137,7 @@
                         </tr>
                     </thead>
                     <tbody>
+                    <div id="appointmentIndexActionFeedback" class="alert d-none" role="alert"></div>
                         @forelse($appointments as $appointment)
                         <tr>
                             <td>
@@ -188,7 +189,7 @@
                                         @endcan
                                         @if($appointment->status === \App\Enums\AppointmentStatus::SCHEDULED)
                                         <li>
-                                            <form method="POST" action="{{ route('admin.appointments.transition', $appointment) }}">
+                                                <form method="POST" action="{{ route('admin.appointments.transition', $appointment) }}" class="js-appointment-action-form" data-follow-up="appointment">
                                                 @csrf @method('PATCH')
                                                 <input type="hidden" name="status" value="confirmed">
                                                 <button type="submit" class="dropdown-item">
@@ -200,7 +201,7 @@
                                         @if($appointment->status === \App\Enums\AppointmentStatus::CONFIRMED)
                                         @can('appointments.create')
                                         <li>
-                                            <form method="POST" action="{{ route('admin.appointments.check-in', $appointment) }}">
+                                                <form method="POST" action="{{ route('admin.appointments.check-in', $appointment) }}" class="js-appointment-action-form" data-follow-up="visit">
                                                 @csrf
                                                 <button type="submit" class="dropdown-item">
                                                     <i class="ti ti-login me-2"></i>Check In
@@ -278,3 +279,81 @@
     @endif
 </div>
 @endsection
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const feedback = document.getElementById('appointmentIndexActionFeedback');
+    const forms = document.querySelectorAll('.js-appointment-action-form');
+
+    if (!feedback || !forms.length) {
+        return;
+    }
+
+    function showFeedback(type, html) {
+        feedback.className = 'alert alert-' + type;
+        feedback.innerHTML = html;
+        feedback.classList.remove('d-none');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    forms.forEach(function (form) {
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalHtml = submitButton ? submitButton.innerHTML : '';
+
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="ti ti-loader me-1"></i>Working...';
+            }
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: new FormData(form),
+                });
+
+                const payload = (response.headers.get('content-type') || '').includes('application/json')
+                    ? await response.json()
+                    : {};
+
+                if (!response.ok) {
+                    showFeedback('danger', payload.message || 'Unable to complete appointment action.');
+                    return;
+                }
+
+                const followUp = form.dataset.followUp === 'visit'
+                    ? (payload.visit_redirect_url || payload.redirect_url)
+                    : payload.redirect_url;
+
+                showFeedback(
+                    'success',
+                    '<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">'
+                        + '<div><strong>' + (payload.message || 'Appointment updated successfully.') + '</strong></div>'
+                        + (followUp ? '<div><a href="' + followUp + '" class="btn btn-sm btn-success">Continue</a></div>' : '')
+                        + '</div>'
+                );
+
+                if (followUp) {
+                    window.setTimeout(function () {
+                        window.location.assign(followUp);
+                    }, 900);
+                }
+            } catch (error) {
+                showFeedback('danger', 'Network error while processing the appointment action.');
+            } finally {
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalHtml;
+                }
+            }
+        });
+    });
+});
+</script>
+@endpush

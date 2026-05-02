@@ -21,6 +21,8 @@
 </div>
 @endif
 
+<div id="visitFormFeedback" class="alert d-none" role="alert"></div>
+
 <form method="POST" action="{{ route('admin.visits.store') }}" id="visitForm">
     @csrf
 
@@ -318,9 +320,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const walkInInfo = document.getElementById('walkInInfo');
     const scheduledInfo = document.getElementById('scheduledInfo');
     const submitBtnText = document.getElementById('submitBtnText');
+    const submitBtn = document.getElementById('submitBtn');
+    const visitForm = document.getElementById('visitForm');
+    const formFeedback = document.getElementById('visitFormFeedback');
     const departmentSelect = document.getElementById('departmentSelect');
     const doctorSelect = document.getElementById('doctorSelect');
     const insuranceCard = document.getElementById('insuranceCard');
+    const selectedServicesCard = document.getElementById('selectedServicesCard');
+    const serviceFilterInput = document.getElementById('serviceFilter');
+    const defaultVisitDate = new Date().toISOString().split('T')[0];
 
     let debounceTimer;
     let patientInsurances = [];
@@ -344,6 +352,186 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     visitDateInput.addEventListener('change', checkScheduling);
     checkScheduling();
+
+    function showFormFeedback(type, html) {
+        formFeedback.className = 'alert alert-' + type;
+        formFeedback.innerHTML = html;
+        formFeedback.classList.remove('d-none');
+        window.scrollTo({ top: formFeedback.offsetTop - 100, behavior: 'smooth' });
+    }
+
+    function clearFormFeedback() {
+        formFeedback.className = 'alert d-none';
+        formFeedback.innerHTML = '';
+    }
+
+    function clearValidationErrors() {
+        visitForm.querySelectorAll('.is-invalid').forEach(function(element) {
+            element.classList.remove('is-invalid');
+        });
+
+        visitForm.querySelectorAll('.dynamic-invalid-feedback').forEach(function(element) {
+            element.remove();
+        });
+
+        selectedServicesCard.classList.remove('border', 'border-danger');
+    }
+
+    function inputNameFromDot(field) {
+        return field.split('.').reduce(function(name, part, index) {
+            return index === 0 ? part : name + '[' + part + ']';
+        }, '');
+    }
+
+    function resolveFieldElement(field) {
+        if (field === 'patient_id') {
+            return searchInput;
+        }
+
+        return visitForm.querySelector('[name="' + inputNameFromDot(field) + '"]');
+    }
+
+    function appendFieldError(field, message) {
+        if (field.startsWith('services.')) {
+            selectedServicesCard.classList.add('border', 'border-danger');
+            return false;
+        }
+
+        const fieldElement = resolveFieldElement(field);
+
+        if (!fieldElement || fieldElement.type === 'hidden') {
+            return false;
+        }
+
+        fieldElement.classList.add('is-invalid');
+
+        const anchor = fieldElement.closest('.input-group') || fieldElement;
+        const feedback = document.createElement('div');
+        feedback.className = 'invalid-feedback d-block dynamic-invalid-feedback';
+        feedback.textContent = message;
+        anchor.insertAdjacentElement('afterend', feedback);
+
+        return true;
+    }
+
+    function applyValidationErrors(errors) {
+        const generalErrors = [];
+
+        Object.entries(errors).forEach(function(entry) {
+            const field = entry[0];
+            const messages = entry[1];
+            const message = Array.isArray(messages) ? messages[0] : messages;
+
+            if (!appendFieldError(field, message)) {
+                generalErrors.push(message);
+            }
+        });
+
+        if (generalErrors.length > 0) {
+            showFormFeedback('danger', generalErrors.map(function(message) {
+                return '<div>' + escapeHtml(message) + '</div>';
+            }).join(''));
+            return;
+        }
+
+        showFormFeedback('danger', 'Please correct the highlighted fields and try again.');
+    }
+
+    function setSubmitting(isSubmitting) {
+        submitBtn.disabled = isSubmitting;
+        submitBtnText.textContent = isSubmitting ? 'Saving...' : '';
+
+        if (!isSubmitting) {
+            checkScheduling();
+        }
+    }
+
+    function resetVisitFormState() {
+        visitForm.reset();
+        clearPatient();
+
+        selectedServices = [];
+        availableServices = [];
+        patientInsurances = [];
+        selectedInsurance = null;
+
+        resultsDiv.innerHTML = '';
+        resultsDiv.classList.add('d-none');
+        document.getElementById('insuranceList').innerHTML = '<div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>Loading patient insurances...</div>';
+        document.getElementById('selectedInsuranceInfo').classList.add('d-none');
+        document.getElementById('insuranceFallbackBadge').style.display = 'none';
+        document.getElementById('visitInsuranceId').value = '';
+
+        departmentSelect.value = '';
+        repopulateDoctorSelect(allDoctors);
+        showServicesPlaceholder();
+        renderBillingTable();
+
+        if (serviceFilterInput) {
+            serviceFilterInput.value = '';
+        }
+
+        visitDateInput.value = defaultVisitDate;
+        checkScheduling();
+    }
+
+    visitForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        clearFormFeedback();
+        clearValidationErrors();
+        setSubmitting(true);
+
+        try {
+            const response = await fetch(visitForm.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: new FormData(visitForm),
+            });
+
+            const isJson = (response.headers.get('content-type') || '').includes('application/json');
+            const payload = isJson ? await response.json() : {};
+
+            if (response.ok) {
+                resetVisitFormState();
+                showFormFeedback(
+                    'success',
+                    '<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">'
+                        + '<div><div class="fw-bold">' + escapeHtml(payload.message || 'Visit created successfully.') + '</div>'
+                        + '<div class="small text-muted">Current status: ' + escapeHtml(payload.status_label || '') + '</div></div>'
+                        + '<div class="d-flex gap-2">'
+                        + '<a href="' + escapeHtml(payload.redirect_url || '#') + '" class="btn btn-sm btn-success">Open Visit</a>'
+                        + '<button type="button" class="btn btn-sm btn-outline-success" id="createAnotherVisitBtn">Create Another</button>'
+                        + '</div></div>'
+                );
+
+                const createAnotherBtn = document.getElementById('createAnotherVisitBtn');
+                if (createAnotherBtn) {
+                    createAnotherBtn.addEventListener('click', function() {
+                        clearFormFeedback();
+                        searchInput.focus();
+                    });
+                }
+
+                return;
+            }
+
+            if (response.status === 422 && payload.errors) {
+                applyValidationErrors(payload.errors);
+                return;
+            }
+
+            const message = payload.message || 'Failed to create visit. Please try again.';
+            showFormFeedback('danger', escapeHtml(message));
+        } catch (error) {
+            showFormFeedback('danger', 'Network error while creating visit. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
+    });
 
     // ==========================================
     // Patient search

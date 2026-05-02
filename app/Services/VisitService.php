@@ -13,6 +13,7 @@ use App\Models\ServiceCatalog;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\VisitWorkflowService;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class VisitService
@@ -20,6 +21,7 @@ class VisitService
     public function __construct(
         protected QueueService $queueService,
         protected InsuranceService $insuranceService,
+        protected VisitWorkflowService $workflowService,
     ) {}
 
     public function list(array $filters = []): LengthAwarePaginator
@@ -97,21 +99,9 @@ class VisitService
 
         $visit = Visit::create($data);
 
-        // Log the initial status
-        $visit->statusLogs()->create([
-            'from_status' => null,
-            'to_status' => $visit->status->value,
-            'changed_by' => Auth::id(),
-            'notes' => $isScheduled ? 'Visit scheduled' : 'Visit created',
-        ]);
-
-        // Walk-in visits start in TRIAGE; create triage queue entry
-        // Queue entry creation happens after services are attached (see VisitController::store)
-        if (!$isScheduled) {
-            $this->queueService->addTriageEntry($visit->fresh());
-        }
-
-        return $visit->fresh(['patient', 'assignedDoctor']);
+        return $this->workflowService
+            ->initialize($visit, $isScheduled)
+            ->load(['patient', 'assignedDoctor']);
     }
 
     /**
@@ -281,12 +271,7 @@ class VisitService
      */
     public function confirm(Visit $visit, ?string $notes = null): Visit
     {
-        if ($visit->status !== VisitStatus::SCHEDULED) {
-            throw new \InvalidArgumentException('Only scheduled visits can be confirmed.');
-        }
-
-        $visit->transitionTo(VisitStatus::CONFIRMED, $notes);
-        return $visit->fresh();
+        return $this->workflowService->confirm($visit, $notes);
     }
 
     /**
@@ -307,12 +292,7 @@ class VisitService
             throw new \InvalidArgumentException('Patient already has an active visit today.');
         }
 
-        $visit->update(['visit_date' => today(), 'checked_in_at' => now()]);
-        $visit->transitionTo(VisitStatus::REGISTERED);
-        $visit->transitionTo(VisitStatus::WAITING);
-        // Queue entry will be created when staff pushes patient to Triage
-
-        return $visit->fresh();
+        return $this->workflowService->checkIn($visit);
     }
 
     /**
@@ -325,7 +305,7 @@ class VisitService
         }
 
         // Mark old visit as rescheduled
-        $visit->transitionTo(VisitStatus::RESCHEDULED, $data['reason'] ?? 'Rescheduled');
+        $this->workflowService->markRescheduled($visit, $data['reason'] ?? 'Rescheduled');
 
         // Create new visit with rescheduled_from reference
         $newData = $visit->only(['patient_id', 'visit_type', 'priority', 'assigned_doctor_id', 'chief_complaint', 'notes', 'visit_insurance_id', 'consultation_mode', 'meeting_link']);
@@ -344,12 +324,7 @@ class VisitService
      */
     public function markNoShow(Visit $visit, ?string $notes = null): Visit
     {
-        if (!in_array($visit->status, [VisitStatus::SCHEDULED, VisitStatus::CONFIRMED])) {
-            throw new \InvalidArgumentException('Only scheduled or confirmed visits can be marked as no-show.');
-        }
-
-        $visit->transitionTo(VisitStatus::NO_SHOW, $notes ?? 'Patient did not show up');
-        return $visit->fresh();
+        return $this->workflowService->markNoShow($visit, $notes);
     }
 
     /**
@@ -357,44 +332,12 @@ class VisitService
      */
     public function cancel(Visit $visit, ?string $reason = null): Visit
     {
-        $visit->update([
-            'cancelled_by'        => Auth::id(),
-            'cancellation_reason' => $reason,
-        ]);
-        $visit->transitionTo(VisitStatus::CANCELLED, $reason);
-
-        // Void all insurance usage records so limits are correctly restored
-        $this->insuranceService->voidVisitUsages($visit->id);
-
-        return $visit->fresh();
+        return $this->workflowService->cancel($visit, $reason);
     }
 
     public function transition(Visit $visit, VisitStatus $newStatus, ?string $notes = null): Visit
     {
-        if (!$visit->canTransitionTo($newStatus)) {
-            throw new \InvalidArgumentException(
-                "Cannot transition from {$visit->status->label()} to {$newStatus->label()}"
-            );
-        }
-
-        $visit->transitionTo($newStatus, $notes);
-
-        // When entering triage create a general triage queue entry
-        if ($newStatus === VisitStatus::TRIAGE) {
-            $this->queueService->addTriageEntry($visit->fresh());
-        }
-
-        // Complete any open queue entry when visit is cancelled / no-show / completed
-        if (in_array($newStatus, [
-            VisitStatus::CANCELLED,
-            VisitStatus::NO_SHOW,
-            VisitStatus::COMPLETED,
-            VisitStatus::DISCHARGED,
-        ])) {
-            $this->queueService->completeCurrentEntry($visit);
-        }
-
-        return $visit->fresh();
+        return $this->workflowService->transition($visit, $newStatus, $notes);
     }
 
     /**
@@ -428,7 +371,7 @@ class VisitService
         $this->queueService->completeCurrentEntry($visit);
 
         // Transition visit status
-        $visit->transitionTo($newStatus, $notes ?? "Sent to {$department->name}");
+        $this->workflowService->transition($visit, $newStatus, $notes ?? "Sent to {$department->name}");
 
         // Create new queue entry for the target department
         $this->queueService->addForDepartment($visit->fresh(), $departmentId);
@@ -489,7 +432,7 @@ class VisitService
         if (!empty($data['department_id'])) {
             $this->assignDepartment($visit, (int) $data['department_id'], $nextStatus);
         } else {
-            $visit->transitionTo($nextStatus, "Triage complete — score: {$score->label()}");
+            $this->workflowService->transition($visit, $nextStatus, "Triage complete — score: {$score->label()}");
         }
 
         return $visit->fresh(['triage', 'currentDepartment']);
@@ -521,7 +464,7 @@ class VisitService
         $this->queueService->completeCurrentEntry($visit);
 
         // Transition status
-        $visit->transitionTo($newStatus, "Assigned to {$department->name}");
+        $this->workflowService->transition($visit, $newStatus, "Assigned to {$department->name}");
 
         // Create queue entry for the new department
         $this->queueService->addForDepartment($visit->fresh(), $departmentId);
@@ -577,7 +520,7 @@ class VisitService
 
         // Queue transition
         $this->queueService->completeCurrentEntry($visit);
-        $visit->transitionTo(VisitStatus::REFERRED_CONSULTATION, $notes ?? "Referred to {$department->name}");
+        $this->workflowService->transition($visit, VisitStatus::REFERRED_CONSULTATION, $notes ?? "Referred to {$department->name}");
         $this->queueService->addForDepartment($visit->fresh(), $departmentId);
 
         return $visit->fresh();
@@ -612,7 +555,7 @@ class VisitService
 
         // Queue transition
         $this->queueService->completeCurrentEntry($visit);
-        $visit->transitionTo(VisitStatus::WAITING_INVESTIGATION, $notes ?? "Sent to {$department->name} for investigation");
+        $this->workflowService->transition($visit, VisitStatus::WAITING_INVESTIGATION, $notes ?? "Sent to {$department->name} for investigation");
         $this->queueService->addForDepartment($visit->fresh(), $departmentId);
 
         return $visit->fresh();

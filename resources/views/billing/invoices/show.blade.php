@@ -30,6 +30,8 @@
 </div>
 @endif
 
+<div id="paymentFormFeedback" class="alert d-none" role="alert"></div>
+
 <div class="row">
     <!-- Invoice Details -->
     <div class="col-lg-8">
@@ -212,7 +214,7 @@
                     <small><strong>Outstanding:</strong> &#8373;{{ number_format($invoice->balance, 2) }}</small>
                 </div>
 
-                <form method="POST" action="{{ route('admin.billing.payments.store', $invoice) }}">
+                <form method="POST" action="{{ route('admin.billing.payments.store', $invoice) }}" id="paymentForm">
                     @csrf
                     <div class="mb-3">
                         <label class="form-label fw-medium">Amount (&#8373;) <span class="text-danger">*</span></label>
@@ -246,7 +248,7 @@
                     </div>
 
                     @can('payments.create')
-                    <button type="submit" class="btn btn-primary w-100" onclick="return confirm('Record this payment?')">
+                    <button type="submit" class="btn btn-primary w-100" id="recordPaymentBtn">
                         <i class="ti ti-check me-1"></i>Record Payment
                     </button>
                     @endcan
@@ -301,12 +303,103 @@
 @section('scripts')
 <script>
 $(function() {
-    // Show reference field for electronic payment methods
-    $('#paymentMethodSelect').on('change', function() {
+    const feedback = $('#paymentFormFeedback');
+    const paymentForm = $('#paymentForm');
+    const recordPaymentBtn = $('#recordPaymentBtn');
+    const paymentMethodSelect = $('#paymentMethodSelect');
+    const referenceGroup = $('#referenceGroup');
+    const originalButtonHtml = recordPaymentBtn.html();
+
+    function showFeedback(type, html) {
+        feedback.removeClass('d-none alert-success alert-danger').addClass('alert-' + type).html(html);
+        $('html, body').animate({ scrollTop: 0 }, 200);
+    }
+
+    function clearValidationErrors() {
+        paymentForm.find('.is-invalid').removeClass('is-invalid');
+        paymentForm.find('.dynamic-invalid-feedback').remove();
+    }
+
+    function applyValidationErrors(errors) {
+        Object.entries(errors).forEach(function(entry) {
+            const field = entry[0];
+            const message = Array.isArray(entry[1]) ? entry[1][0] : entry[1];
+            const input = paymentForm.find('[name="' + field + '"]');
+
+            if (input.length === 0) {
+                return;
+            }
+
+            input.addClass('is-invalid');
+            $('<div class="invalid-feedback d-block dynamic-invalid-feedback"></div>')
+                .text(message)
+                .insertAfter(input);
+        });
+
+        if (feedback.hasClass('d-none')) {
+            showFeedback('danger', 'Please correct the highlighted payment fields and try again.');
+        }
+    }
+
+    paymentMethodSelect.on('change', function() {
         let method = $(this).val();
         let needsRef = ['mtn_momo', 'vodafone_cash', 'airteltigo_money', 'bank_transfer', 'card', 'cheque'].includes(method);
-        $('#referenceGroup').toggle(needsRef);
+        referenceGroup.toggle(needsRef);
     }).trigger('change');
+
+    paymentForm.on('submit', async function(event) {
+        event.preventDefault();
+
+        if (!window.confirm('Record this payment?')) {
+            return;
+        }
+
+        clearValidationErrors();
+        recordPaymentBtn.prop('disabled', true).html('<i class="ti ti-loader me-1"></i>Recording...');
+
+        try {
+            const response = await fetch(paymentForm.attr('action'), {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new FormData(paymentForm[0])
+            });
+
+            const payload = (response.headers.get('content-type') || '').includes('application/json')
+                ? await response.json()
+                : {};
+
+            if (response.status === 422 && payload.errors) {
+                applyValidationErrors(payload.errors);
+                return;
+            }
+
+            if (!response.ok) {
+                showFeedback('danger', payload.message || 'Unable to record payment right now.');
+                return;
+            }
+
+            showFeedback(
+                'success',
+                '<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">'
+                    + '<div><strong>' + (payload.message || 'Payment recorded successfully.') + '</strong><div class="small text-muted">Invoice: ' + (payload.invoice_status_label || '') + (payload.visit_status_label ? ' | Visit: ' + payload.visit_status_label : '') + '</div></div>'
+                    + '<div class="d-flex gap-2"><a href="' + (payload.receipt_url || '#') + '" class="btn btn-sm btn-success">Receipt</a><a href="' + (payload.redirect_url || '#') + '" class="btn btn-sm btn-outline-success">Refresh Invoice</a></div>'
+                    + '</div>'
+            );
+
+            window.setTimeout(function () {
+                if (payload.redirect_url) {
+                    window.location.assign(payload.redirect_url);
+                }
+            }, 1000);
+        } catch (error) {
+            showFeedback('danger', 'Network error while recording payment.');
+        } finally {
+            recordPaymentBtn.prop('disabled', false).html(originalButtonHtml);
+        }
+    });
 });
 </script>
 @endsection

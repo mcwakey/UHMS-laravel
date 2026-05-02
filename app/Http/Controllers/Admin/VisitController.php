@@ -71,14 +71,41 @@ class VisitController extends Controller
                 return $v;
             });
         } catch (\InvalidArgumentException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Failed to create visit. Please try again.',
+                ], 500);
+            }
+
             return redirect()->back()->withInput()->with('error', 'Failed to create visit: ' . $e->getMessage());
+        }
+
+        $message = $visit->status === VisitStatus::SCHEDULED
+            ? "Visit {$visit->visit_number} scheduled successfully."
+            : "Visit {$visit->visit_number} created and patient added to triage queue.";
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+                'visit_id' => $visit->id,
+                'visit_number' => $visit->visit_number,
+                'status' => $visit->status->value,
+                'status_label' => $visit->status->label(),
+                'redirect_url' => route('admin.visits.show', $visit),
+            ], 201);
         }
 
         return redirect()
             ->route('admin.visits.show', $visit)
-            ->with('success', "Visit {$visit->visit_number} created and patient added to queue.");
+            ->with('success', $message);
     }
 
     public function edit(Visit $visit)

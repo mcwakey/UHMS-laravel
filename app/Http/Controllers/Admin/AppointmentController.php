@@ -12,6 +12,7 @@ use App\Models\Patient;
 use App\Models\User;
 use App\Services\AppointmentService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class AppointmentController extends Controller
 {
@@ -139,11 +140,36 @@ class AppointmentController extends Controller
     public function checkIn(Appointment $appointment)
     {
         try {
-            $this->appointmentService->checkIn($appointment);
+            $appointment = $this->appointmentService->checkIn($appointment);
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'message' => 'Patient checked in and visit created successfully.',
+                    'appointment_id' => $appointment->id,
+                    'appointment_number' => $appointment->appointment_number,
+                    'appointment_status' => $appointment->status->value,
+                    'appointment_status_label' => $appointment->status->label(),
+                    'visit_id' => $appointment->visit?->id,
+                    'visit_number' => $appointment->visit?->visit_number,
+                    'visit_status' => $appointment->visit?->status?->value,
+                    'visit_status_label' => $appointment->visit?->status?->label(),
+                    'redirect_url' => route('admin.appointments.show', $appointment),
+                    'visit_redirect_url' => $appointment->visit
+                        ? route('admin.visits.show', $appointment->visit)
+                        : null,
+                ]);
+            }
+
             return redirect()
                 ->route('admin.appointments.show', $appointment)
                 ->with('success', 'Patient checked in and visit created successfully.');
         } catch (\InvalidArgumentException $e) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
             return back()->with('error', $e->getMessage());
         }
     }
@@ -154,15 +180,33 @@ class AppointmentController extends Controller
     public function transition(Request $request, Appointment $appointment)
     {
         $request->validate([
-            'status' => ['required', 'string'],
+            'status' => ['required', Rule::enum(AppointmentStatus::class)],
         ]);
 
         try {
             $newStatus = AppointmentStatus::from($request->status);
-            $this->appointmentService->transition($appointment, $newStatus);
+            $appointment = $this->appointmentService->transition($appointment, $newStatus)->fresh();
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => "Appointment status changed to {$newStatus->label()}.",
+                    'appointment_id' => $appointment->id,
+                    'appointment_number' => $appointment->appointment_number,
+                    'appointment_status' => $appointment->status->value,
+                    'appointment_status_label' => $appointment->status->label(),
+                    'status_color' => $appointment->status->color(),
+                    'redirect_url' => route('admin.appointments.show', $appointment),
+                ]);
+            }
 
             return back()->with('success', "Appointment status changed to {$newStatus->label()}.");
         } catch (\InvalidArgumentException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
             return back()->with('error', $e->getMessage());
         }
     }

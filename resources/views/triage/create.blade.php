@@ -20,6 +20,8 @@
     </div>
 @endif
 
+<div id="triageFormFeedback" class="alert d-none" role="alert"></div>
+
 <div class="row">
     <!-- Left: Triage Form -->
     <div class="col-lg-8">
@@ -168,8 +170,8 @@
             </div>
 
             <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-info px-4">
-                    <i class="ti ti-stethoscope me-1"></i>Complete Triage
+                <button type="submit" class="btn btn-primary px-4" id="triageSubmitBtn">
+                    <i class="ti ti-stethoscope me-1"></i><span id="triageSubmitLabel">Complete Triage</span>
                 </button>
                 <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary">Cancel</a>
             </div>
@@ -269,6 +271,11 @@
 (function () {
     'use strict';
 
+    const triageForm = document.getElementById('triageForm');
+    const triageSubmitBtn = document.getElementById('triageSubmitBtn');
+    const triageSubmitLabel = document.getElementById('triageSubmitLabel');
+    const triageFormFeedback = document.getElementById('triageFormFeedback');
+
     // Live BMI calculation
     const wt = document.getElementById('inp_weight');
     const ht = document.getElementById('inp_height');
@@ -305,6 +312,114 @@
         color: 'bg-success', label: 'ROUTINE',
         reason: 'Vitals within acceptable range'
     };
+
+    function showFormFeedback(type, html) {
+        triageFormFeedback.className = 'alert alert-' + type;
+        triageFormFeedback.innerHTML = html;
+        triageFormFeedback.classList.remove('d-none');
+        window.scrollTo({ top: triageFormFeedback.offsetTop - 100, behavior: 'smooth' });
+    }
+
+    function clearFormFeedback() {
+        triageFormFeedback.className = 'alert d-none';
+        triageFormFeedback.innerHTML = '';
+    }
+
+    function clearValidationErrors() {
+        triageForm.querySelectorAll('.is-invalid').forEach(function(element) {
+            element.classList.remove('is-invalid');
+        });
+
+        triageForm.querySelectorAll('.dynamic-invalid-feedback').forEach(function(element) {
+            element.remove();
+        });
+    }
+
+    function resolveFieldElement(field) {
+        const mappedIds = {
+            blood_pressure_systolic: 'inp_sbp',
+            blood_pressure_diastolic: 'inp_dbp',
+            heart_rate: 'inp_hr',
+            temperature: 'inp_temp',
+            respiratory_rate: 'inp_rr',
+            spo2: 'inp_spo2',
+            weight: 'inp_weight',
+            height: 'inp_height',
+        };
+
+        if (mappedIds[field]) {
+            return document.getElementById(mappedIds[field]);
+        }
+
+        return triageForm.querySelector('[name="' + field + '"]');
+    }
+
+    function appendFieldError(field, message) {
+        const fieldElement = resolveFieldElement(field);
+
+        if (!fieldElement) {
+            return false;
+        }
+
+        fieldElement.classList.add('is-invalid');
+
+        const anchor = fieldElement.closest('.input-group') || fieldElement;
+        const feedback = document.createElement('div');
+        feedback.className = 'invalid-feedback d-block dynamic-invalid-feedback';
+        feedback.textContent = message;
+        anchor.insertAdjacentElement('afterend', feedback);
+
+        return true;
+    }
+
+    function applyValidationErrors(errors) {
+        const generalErrors = [];
+
+        Object.entries(errors).forEach(function(entry) {
+            const field = entry[0];
+            const messages = entry[1];
+            const message = Array.isArray(messages) ? messages[0] : messages;
+
+            if (!appendFieldError(field, message)) {
+                generalErrors.push(message);
+            }
+        });
+
+        if (generalErrors.length > 0) {
+            showFormFeedback('danger', generalErrors.map(function(message) {
+                return '<div>' + message + '</div>';
+            }).join(''));
+            return;
+        }
+
+        showFormFeedback('danger', 'Please correct the highlighted fields and try again.');
+    }
+
+    function setSubmitting(isSubmitting) {
+        triageSubmitBtn.disabled = isSubmitting;
+        triageSubmitLabel.textContent = isSubmitting ? 'Saving...' : 'Complete Triage';
+    }
+
+    function lockFormAfterSuccess() {
+        triageForm.querySelectorAll('input, select, textarea, button[type="submit"]').forEach(function(element) {
+            element.disabled = true;
+        });
+
+        triageSubmitLabel.textContent = 'Completed';
+    }
+
+    function escapeHtml(text) {
+        if (text === null || text === undefined) {
+            return '';
+        }
+
+        return String(text)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
 
     function computeScore() {
         const sbp  = parseInt(document.getElementById('inp_sbp')?.value);
@@ -345,6 +460,66 @@
     inputs.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.addEventListener('input', computeScore);
+    });
+
+    triageForm.addEventListener('submit', async function(event) {
+        event.preventDefault();
+
+        clearFormFeedback();
+        clearValidationErrors();
+        setSubmitting(true);
+
+        try {
+            const response = await fetch(triageForm.action, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: new FormData(triageForm),
+            });
+
+            const isJson = (response.headers.get('content-type') || '').includes('application/json');
+            const payload = isJson ? await response.json() : {};
+
+            if (response.ok) {
+                lockFormAfterSuccess();
+                showFormFeedback(
+                    'success',
+                    '<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">'
+                        + '<div>'
+                        + '<div class="fw-bold">' + escapeHtml(payload.message || 'Triage completed successfully.') + '</div>'
+                        + '<div class="small text-muted">'
+                        + 'Triage score: ' + escapeHtml(payload.triage_score_label || 'Captured')
+                        + (payload.department ? ' | Department: ' + escapeHtml(payload.department) : '')
+                        + '</div>'
+                        + '</div>'
+                        + '<div class="d-flex gap-2">'
+                        + '<a href="' + escapeHtml(payload.redirect_url || '#') + '" class="btn btn-sm btn-success">View Visit</a>'
+                        + '<a href="' + escapeHtml(payload.queue_url || '#') + '" class="btn btn-sm btn-outline-success">Open Triage Queue</a>'
+                        + '</div>'
+                        + '</div>'
+                );
+                return;
+            }
+
+            if (response.status === 422 && payload.errors) {
+                applyValidationErrors(payload.errors);
+                return;
+            }
+
+            const message = payload.message || 'Failed to complete triage. Please try again.';
+            const link = payload.redirect_url
+                ? ' <a href="' + escapeHtml(payload.redirect_url) + '" class="alert-link">Open visit</a>'
+                : '';
+            showFormFeedback('danger', escapeHtml(message) + link);
+        } catch (error) {
+            showFormFeedback('danger', 'Network error while completing triage. Please try again.');
+        } finally {
+            if (!triageSubmitBtn.disabled) {
+                setSubmitting(false);
+            }
+        }
     });
 
     calcBmi();

@@ -29,69 +29,7 @@
 {{-- ============================================================ --}}
 {{-- PATIENT HEADER BAR --}}
 {{-- ============================================================ --}}
-<div class="card mb-3 border-primary">
-    <div class="card-body py-2">
-        <div class="row align-items-center">
-            <div class="col-md-7">
-                <div class="d-flex align-items-center gap-3">
-                    <div class="avatar avatar-md bg-primary-subtle rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;flex-shrink:0">
-                        <span class="text-primary fw-bold fs-5">{{ strtoupper(substr($visit->patient->first_name, 0, 1) . substr($visit->patient->last_name, 0, 1)) }}</span>
-                    </div>
-                    <div>
-                        <h5 class="mb-0 fw-bold">{{ $visit->patient->full_name }}</h5>
-                        <div class="text-muted small">
-                            {{ $visit->patient->patient_number }} &middot;
-                            {{ $visit->patient->age }}y &middot;
-                            {{ $visit->patient->gender->value }} &middot;
-                            Blood: {{ $visit->patient->blood_group?->value ?? 'N/A' }}
-                            @if($visit->patient->phone) &middot; <i class="ti ti-phone me-1"></i>{{ $visit->patient->phone }} @endif
-                        </div>
-                        <div class="text-muted small mt-1 d-flex flex-wrap gap-2">
-                            @if($visit->patient->occupation)
-                                <span><i class="ti ti-briefcase me-1"></i>{{ $visit->patient->occupation }}</span>
-                            @endif
-                            @if($visit->patient->religion)
-                                <span><i class="ti ti-book me-1"></i>{{ $visit->patient->religion }}</span>
-                            @endif
-                            @if($visit->patient->marital_status)
-                                <span><i class="ti ti-heart me-1"></i>{{ is_object($visit->patient->marital_status) ? $visit->patient->marital_status->value : $visit->patient->marital_status }}</span>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-5 text-md-end mt-2 mt-md-0">
-                <span class="badge bg-{{ $visit->status->color() }} px-3 py-2">{{ $visit->status->label() }}</span>
-                @php
-                    $vtBg = match($visit->visit_type) {
-                        \App\Enums\VisitType::INPATIENT  => 'info',
-                        \App\Enums\VisitType::EMERGENCY  => 'danger',
-                        default                           => 'primary',
-                    };
-                @endphp
-                <span class="badge bg-{{ $vtBg }}-subtle text-{{ $vtBg }} border border-{{ $vtBg }} px-2 py-1 ms-1" title="Visit Type">
-                    <i class="ti ti-{{ $visit->visit_type === \App\Enums\VisitType::INPATIENT ? 'bed' : ($visit->visit_type === \App\Enums\VisitType::EMERGENCY ? 'ambulance' : 'walk') }} me-1"></i>{{ $visit->visit_type->label() }}
-                </span>
-                <span class="badge bg-{{ $visit->priority->color() }} px-2 py-2 ms-1">{{ $visit->priority->label() }}</span>
-                <span class="text-muted ms-2 small">{{ $visit->visit_number }}</span>
-                @if($visit->assignedDoctor)
-                    <div class="text-muted small mt-1"><i class="ti ti-user-md me-1"></i>Dr. {{ $visit->assignedDoctor->full_name }}</div>
-                @endif
-            </div>
-        </div>
-    </div>
-</div>
-
-@if($visit->patient->allergies)
-<div class="alert alert-danger py-2 mb-3">
-    <i class="ti ti-alert-triangle me-1"></i><strong>Allergies:</strong> {{ $visit->patient->allergies }}
-</div>
-@endif
-@if($visit->patient->chronic_conditions)
-<div class="alert alert-warning py-2 mb-3">
-    <i class="ti ti-heart-rate-monitor me-1"></i><strong>Chronic Conditions:</strong> {{ $visit->patient->chronic_conditions }}
-</div>
-@endif
+@include('partials.patient-visit-header', ['visit' => $visit, 'showAlerts' => true])
 
 {{-- ============================================================ --}}
 {{-- VITALS — STATIC SECTION (always visible) --}}
@@ -1273,7 +1211,7 @@
 
                     {{-- Tab 2: Route to Department --}}
                     <div class="tab-pane fade" id="investTabRoute">
-                        <form method="POST" action="{{ route('admin.consultations.investigation', $visit) }}">
+                        <form id="routeInvestigationForm" method="POST" action="{{ route('admin.consultations.investigation', $visit) }}">
                             @csrf
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Investigation Department <span class="text-danger">*</span></label>
@@ -1288,7 +1226,8 @@
                                 <label class="form-label">Notes</label>
                                 <textarea name="notes" class="form-control" rows="3" placeholder="Investigation notes..."></textarea>
                             </div>
-                            <button type="submit" class="btn btn-purple">
+                            <div id="investRouteErrors" class="alert alert-danger py-2 d-none"></div>
+                            <button type="submit" class="btn btn-primary" id="investRouteSubmitBtn">
                                 <i class="ti ti-arrow-right me-1"></i>Route Patient to Department
                             </button>
                         </form>
@@ -1767,6 +1706,74 @@ function addFreeTextItem() {
     var ct = document.getElementById('labReqFreeItems');
     if (ct) ct.insertAdjacentHTML('beforeend', freeTextItemRow(_freeItemIdx));
 }
+
+/* ================================================================
+   INVESTIGATION ROUTE — AJAX FORM SUBMISSION
+   ================================================================ */
+(function () {
+    var form = document.getElementById('routeInvestigationForm');
+    if (!form) return;
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        var errBox = document.getElementById('investRouteErrors');
+        var btn = document.getElementById('investRouteSubmitBtn');
+        var original = btn ? btn.innerHTML : '';
+
+        if (errBox) {
+            errBox.classList.add('d-none');
+            errBox.innerHTML = '';
+        }
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Routing...';
+        }
+
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        })
+        .then(function (r) {
+            if (!r.ok) return r.json().then(function (body) { throw body; });
+            return r.json();
+        })
+        .then(function (data) {
+            if (!data.success) return;
+
+            localStorage.setItem(tabStorageKey, '#investigations-section');
+
+            var modal = bootstrap.Modal.getInstance(document.getElementById('investigationModal'));
+            if (modal) modal.hide();
+
+            form.reset();
+            showToast(data.message || 'Patient routed successfully.');
+        })
+        .catch(function (err) {
+            var msg = 'Failed to route patient.';
+            if (err && err.errors) {
+                msg = Object.values(err.errors).flat().join('<br>');
+            } else if (err && err.message) {
+                msg = err.message;
+            }
+
+            if (errBox) {
+                errBox.innerHTML = msg;
+                errBox.classList.remove('d-none');
+            } else {
+                alert(msg);
+            }
+        })
+        .finally(function () {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = original;
+            }
+        });
+    });
+})();
 
 /* ================================================================
    PRESCRIPTIONS — DYNAMIC DRUG ROWS

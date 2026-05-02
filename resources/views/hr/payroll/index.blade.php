@@ -105,7 +105,7 @@
         <form method="POST" action="{{ route('admin.hr.payroll.approve') }}" class="d-inline">
             @csrf
             <input type="hidden" name="pay_period" value="{{ $payPeriod }}">
-            <button type="submit" class="btn btn-info btn-sm"><i class="ti ti-check me-1"></i>Approve All</button>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-check me-1"></i>Approve All</button>
         </form>
         <form method="POST" action="{{ route('admin.hr.payroll.mark-paid') }}" class="d-inline">
             @csrf

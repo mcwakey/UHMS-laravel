@@ -11,7 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (! Schema::hasColumn('patients', 'nhis_number') && ! Schema::hasColumn('patients', 'nhis_expiry_date')) {
+            return;
+        }
+
         Schema::table('patients', function (Blueprint $table) {
+            try {
+                $table->dropIndex('patients_nhis_number_index');
+            } catch (\Throwable) {
+                // SQLite test migrations can reach this point without the index metadata being present.
+            }
+
             $table->dropColumn(['nhis_number', 'nhis_expiry_date']);
         });
     }
@@ -24,6 +34,7 @@ return new class extends Migration
         Schema::table('patients', function (Blueprint $table) {
             $table->string('nhis_number', 30)->nullable()->after('ghana_card_number');
             $table->date('nhis_expiry_date')->nullable()->after('nhis_number');
+            $table->index('nhis_number');
         });
     }
 };

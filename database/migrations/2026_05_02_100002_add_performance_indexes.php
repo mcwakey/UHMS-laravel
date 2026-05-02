@@ -61,6 +61,10 @@ return new class extends Migration
 
     public function up(): void
     {
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         foreach ($this->indexes as [$table, $name, $cols]) {
             if (!Schema::hasTable($table)) {
                 continue;
@@ -88,6 +92,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         foreach ($this->indexes as [$table, $name, $_cols]) {
             if (!Schema::hasTable($table)) {
                 continue;

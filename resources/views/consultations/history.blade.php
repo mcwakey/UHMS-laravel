@@ -15,28 +15,7 @@
     </div>
 </div>
 
-<!-- Patient Summary -->
-<div class="card mb-3">
-    <div class="card-body py-2">
-        <div class="row">
-            <div class="col-md-3"><small class="text-muted">Age:</small> <span class="fw-medium">{{ $visit->patient->age }}y</span></div>
-            <div class="col-md-3"><small class="text-muted">Gender:</small> <span class="fw-medium">{{ $visit->patient->gender->value }}</span></div>
-            <div class="col-md-3"><small class="text-muted">Blood Group:</small> <span class="fw-medium">{{ $visit->patient->blood_group?->value ?? 'N/A' }}</span></div>
-        </div>
-    </div>
-</div>
-
-@if($visit->patient->allergies)
-<div class="alert alert-danger py-2 mb-3">
-    <i class="ti ti-alert-triangle me-1"></i><strong>Allergies:</strong> {{ $visit->patient->allergies }}
-</div>
-@endif
-
-@if($visit->patient->chronic_conditions)
-<div class="alert alert-warning py-2 mb-3">
-    <i class="ti ti-heart-rate-monitor me-1"></i><strong>Chronic Conditions:</strong> {{ $visit->patient->chronic_conditions }}
-</div>
-@endif
+@include('partials.patient-visit-header', ['visit' => $visit, 'showAlerts' => true])
 
 <!-- Medical Records -->
 @if(count($history['records']) > 0)

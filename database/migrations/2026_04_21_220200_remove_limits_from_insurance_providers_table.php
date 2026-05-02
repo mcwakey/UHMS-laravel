@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -19,16 +18,7 @@ return new class extends Migration
             ]);
         });
 
-        // Drop the old bare "tier" string column if it exists.
-        // Use raw information_schema query to avoid MariaDB generation_expression bug.
-        $hasTierCol = DB::selectOne(
-            "SELECT 1 FROM information_schema.columns
-             WHERE table_schema = DATABASE()
-               AND table_name   = 'insurance_providers'
-               AND column_name  = 'tier'"
-        );
-
-        if ($hasTierCol) {
+        if (Schema::hasColumn('insurance_providers', 'tier')) {
             Schema::table('insurance_providers', function (Blueprint $table) {
                 $table->dropColumn('tier');
             });

@@ -9,6 +9,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         $col = collect(DB::select('DESCRIBE lab_request_items'))->firstWhere('Field', 'lab_test_id');
         if ($col && $col->Null === 'YES') {
             return; // already nullable
@@ -21,6 +25,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (Schema::getConnection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         Schema::table('lab_request_items', function (Blueprint $table) {
             $table->foreignId('lab_test_id')->nullable(false)->change();
         });

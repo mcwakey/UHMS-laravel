@@ -547,10 +547,28 @@ class ConsultationController extends Controller
         try {
             $this->visitService->sendToInvestigation($visit, (int) $request->department_id, $request->notes);
         } catch (\InvalidArgumentException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
             return back()->with('error', $e->getMessage());
         }
 
         $dept = \App\Models\Department::find($request->department_id);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Patient sent to {$dept?->name} for investigation.",
+                'department' => [
+                    'id' => $dept?->id,
+                    'name' => $dept?->name,
+                ],
+            ]);
+        }
 
         return redirect()
             ->route('admin.consultations.index')

@@ -12,11 +12,13 @@ use App\Models\ServiceCatalog;
 use App\Models\Visit;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\VisitWorkflowService;
 
 class BillingService
 {
     public function __construct(
         protected InsuranceService $insuranceService,
+        protected VisitWorkflowService $visitWorkflowService,
     ) {}
 
     /**
@@ -102,9 +104,9 @@ class BillingService
                 );
             }
 
-            // Transition visit to billing if appropriate
+            // Transition visit to billing via the workflow engine
             if ($visit && in_array(VisitStatus::BILLING, $visit->status->allowedTransitions())) {
-                $visit->update(['status' => VisitStatus::BILLING->value]);
+                $this->visitWorkflowService->moveToBilling($visit);
             }
 
             return $invoice->load('items', 'patient', 'visit');
@@ -149,10 +151,7 @@ class BillingService
             if ($status === InvoiceStatus::PAID) {
                 $visit = $invoice->visit;
                 if ($visit && $visit->status === VisitStatus::BILLING) {
-                    $visit->update([
-                        'status'         => VisitStatus::COMPLETED->value,
-                        'checked_out_at' => now(),
-                    ]);
+                    $this->visitWorkflowService->completeAfterPayment($visit);
                 }
             }
 

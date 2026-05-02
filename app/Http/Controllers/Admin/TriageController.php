@@ -48,6 +48,13 @@ class TriageController extends Controller
     public function store(Request $request, Visit $visit)
     {
         if ($visit->status !== VisitStatus::TRIAGE) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'This visit is not in TRIAGE status.',
+                    'redirect_url' => route('admin.visits.show', $visit),
+                ], 409);
+            }
+
             return redirect()
                 ->route('admin.visits.show', $visit)
                 ->with('error', 'This visit is not in TRIAGE status.');
@@ -77,12 +84,35 @@ class TriageController extends Controller
         try {
             $visit = $this->visitService->processTriage($visit, $validated);
         } catch (\InvalidArgumentException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
             return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        $message = 'Triage completed. Visit moved to ' . $visit->status->label() . '.';
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+                'visit_id' => $visit->id,
+                'visit_number' => $visit->visit_number,
+                'status' => $visit->status->value,
+                'status_label' => $visit->status->label(),
+                'triage_score' => $visit->triage_score?->value,
+                'triage_score_label' => $visit->triage_score?->label(),
+                'department' => $visit->currentDepartment?->name,
+                'redirect_url' => route('admin.visits.show', $visit),
+                'queue_url' => route('admin.triage.index'),
+            ]);
         }
 
         return redirect()
             ->route('admin.visits.show', $visit)
-            ->with('success', 'Triage completed. Visit moved to ' . $visit->status->label() . '.');
+            ->with('success', $message);
     }
 
     /**
