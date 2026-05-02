@@ -98,7 +98,7 @@ Route::middleware('auth')->group(function () {
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        if ($user->hasRole('Super Admin') || $user->hasRole('Admin')) {
+        if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
             return redirect()->route('admin.dashboard');
         }
 
@@ -106,9 +106,18 @@ Route::middleware('auth')->group(function () {
             return redirect()->route('doctor.dashboard');
         }
 
-        // Default fallback for other roles
+        // Role-specific staff dashboards (single shared view, content varies by role)
+        if ($user->hasAnyRole(['Nurse', 'Receptionist', 'Pharmacist', 'Lab Technician', 'Accountant', 'Cashier', 'HR Manager', 'Store Manager'])) {
+            return redirect()->route('staff.dashboard');
+        }
+
+        // Default fallback
         return redirect()->route('admin.dashboard');
     })->name('dashboard');
+
+    // Shared staff dashboard — role-aware content
+    Route::get('staff/dashboard', [\App\Http\Controllers\StaffDashboardController::class, 'index'])
+        ->name('staff.dashboard');
 
     /*
     |----------------------------------------------------------------------

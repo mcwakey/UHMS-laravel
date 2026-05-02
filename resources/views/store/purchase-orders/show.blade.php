@@ -15,7 +15,7 @@
             @can('store.purchase.create')
             <form method="POST" action="{{ route('admin.store.purchase-orders.submit', $purchaseOrder) }}" class="d-inline">
                 @csrf
-                <button type="submit" class="btn btn-info btn-md fs-13" onclick="return confirm('Submit this PO for approval?')">
+                <button type="submit" class="btn btn-primary btn-md fs-13" onclick="return confirm('Submit this PO for approval?')">
                     <i class="ti ti-send me-1"></i>Submit
                 </button>
             </form>

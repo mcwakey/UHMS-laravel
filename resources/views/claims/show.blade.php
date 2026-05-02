@@ -15,7 +15,7 @@
             @can('claims.create')
             <form method="POST" action="{{ route('admin.claims.submit', $claim) }}" class="d-inline">
                 @csrf
-                <button type="submit" class="btn btn-info btn-md fs-13" onclick="return confirm('Submit this claim for review?')">
+                <button type="submit" class="btn btn-primary btn-md fs-13" onclick="return confirm('Submit this claim for review?')">
                     <i class="ti ti-send me-1"></i>Submit for Review
                 </button>
             </form>

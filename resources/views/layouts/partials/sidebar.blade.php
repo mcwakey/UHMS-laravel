@@ -160,6 +160,7 @@
                 @endcan
 
                 {{-- PHARMACY --}}
+                @module('pharmacy')
                 @if(Auth::user()->canAny(['prescriptions.view', 'pharmacy.dispensing.view', 'pharmacy.drugs.manage', 'pharmacy.stock.manage']))
                 <li class="menu-title"><span>Pharmacy</span></li>
                 <li><ul>
@@ -185,8 +186,10 @@
                     @endcan
                 </ul></li>
                 @endif
+                @endmodule
 
                 {{-- INVESTIGATIONS --}}
+                @module('investigations')
                 @if(Auth::user()->canAny(['lab.requests.view', 'lab.results.view', 'lab.tests.manage', 'analyzer.manage']))
                 <li class="menu-title"><span>Investigations</span></li>
                 <li><ul>
@@ -221,6 +224,7 @@
                     @endcan
                 </ul></li>
                 @endif
+                @endmodule
 
                 {{-- BILLING --}}
                 @if(Auth::user()->canAny(['invoices.view', 'payments.view', 'services.manage']))
@@ -344,6 +348,7 @@
                 @endif
 
                 {{-- REPORTS --}}
+                @module('reports')
                 @can('reports.view')
                 <li class="menu-title"><span>Reports</span></li>
                 <li><ul>
@@ -387,6 +392,7 @@
                     </li>
                 </ul></li>
                 @endcan
+                @endmodule
 
                 {{-- ADMINISTRATION --}}
                 @if(Auth::user()->canAny(['users.view', 'departments.view', 'settings.view']))

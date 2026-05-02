@@ -40,6 +40,17 @@
     <!-- Template Style -->
     <link rel="stylesheet" href="{{ URL::asset('build/css/style.css') }}">
 
+    {{-- Anti-FOUC: hide page until critical CSS is parsed.
+         Prevents the sidebar/menu "flash of unstyled content" on load. --}}
+    <style>
+        html.uhms-loading body { visibility: hidden; }
+        #sidebar { transition: none !important; }
+        /* keep sidebar dimensions reserved while JS initializes */
+        .sidebar-menu ul { list-style: none; padding-left: 0; margin: 0; }
+        .sidebar-menu .menu-title { opacity: 0.7; }
+    </style>
+    <script>document.documentElement.classList.add('uhms-loading');</script>
+
     @stack('styles')
 </head>
 <body>
@@ -194,5 +205,16 @@
     @endauth
 
     @stack('scripts')
+
+    {{-- Reveal page once everything has loaded — kills the sidebar FOUC --}}
+    <script>
+        window.addEventListener('load', function () {
+            document.documentElement.classList.remove('uhms-loading');
+        });
+        // Safety net: never leave the page hidden longer than 1.5s
+        setTimeout(function () {
+            document.documentElement.classList.remove('uhms-loading');
+        }, 1500);
+    </script>
 </body>
 </html>
