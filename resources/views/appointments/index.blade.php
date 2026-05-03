@@ -3,7 +3,6 @@
 @section('title', 'Appointments')
 
 @section('content')
-<div class="content">
     <div class="page-header">
         <div class="row align-items-center">
             <div class="col-sm-6">
@@ -81,9 +80,11 @@
         <div class="card-body">
             <form method="GET" action="{{ route('admin.appointments.index') }}" class="row g-3">
                 <div class="col-md-3">
+                    <label class="form-label small">Search</label>
                     <input type="text" name="search" class="form-control" placeholder="Search patient or apt#..." value="{{ request('search') }}">
                 </div>
                 <div class="col-md-2">
+                    <label class="form-label small">Status</label>
                     <select name="status" class="form-select">
                         <option value="">All Statuses</option>
                         @foreach($statuses as $status)
@@ -94,6 +95,7 @@
                     </select>
                 </div>
                 <div class="col-md-2">
+                    <label class="form-label small">Doctor</label>
                     <select name="doctor_id" class="form-select">
                         <option value="">All Doctors</option>
                         @foreach($doctors as $doctor)
@@ -104,6 +106,7 @@
                     </select>
                 </div>
                 <div class="col-md-2">
+                    <label class="form-label small">Date</label>
                     <input type="date" name="date" class="form-control" value="{{ request('date') }}" placeholder="Date">
                 </div>
                 <div class="col-md-3">
@@ -171,7 +174,7 @@
                             </td>
                             <td class="text-end">
                                 <div class="dropdown">
-                                    <button class="btn btn-sm btn-light" data-bs-toggle="dropdown">
+                                    <button type="button" class="btn btn-sm btn-light" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -279,7 +282,6 @@
         {{ $appointments->withQueryString()->links() }}
     </div>
     @endif
-</div>
 @endsection
 
 @push('scripts')

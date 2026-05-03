@@ -3,7 +3,7 @@
 
 @section('content')
 <!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
+<div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">{{ ucfirst($type) }} Entries
             <span class="badge badge-soft-{{ $type === 'income' ? 'success' : 'danger' }} border border-{{ $type === 'income' ? 'success' : 'danger' }} fs-13 fw-medium ms-2">
@@ -28,7 +28,7 @@
 @endif
 
 <!-- Stats Cards -->
-<div class="row mb-3">
+<div class="row g-3 mb-3">
     <div class="col-md-6">
         <div class="card">
             <div class="card-body py-3">
@@ -66,9 +66,11 @@
     <div class="card-body py-2">
         <form method="GET" action="{{ route($type === 'income' ? 'admin.accounts.income.index' : 'admin.accounts.expenses.index') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
+                <label class="form-label small">Search</label>
                 <input type="text" name="search" class="form-control" placeholder="Search entry #, description..." value="{{ request('search') }}">
             </div>
             <div class="col-md-2">
+                <label class="form-label small">Category</label>
                 <select name="category_id" class="form-select">
                     <option value="">All Categories</option>
                     @foreach($categories as $cat)
@@ -77,6 +79,7 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <label class="form-label small">Method</label>
                 <select name="payment_method" class="form-select">
                     <option value="">All Methods</option>
                     @foreach($paymentMethods as $pm)
@@ -85,6 +88,7 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <label class="form-label small">From</label>
                 <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
             </div>
             <div class="col-md-1">
@@ -136,7 +140,7 @@
                         </td>
                         <td class="text-end">
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
+                                <button type="button" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">

@@ -3,7 +3,6 @@
 @section('title', 'Appointment Calendar')
 
 @section('content')
-<div class="content">
     <div class="page-header">
         <div class="row align-items-center">
             <div class="col-sm-6">
@@ -90,7 +89,23 @@
     </div>
 
     {{-- Calendar Grid --}}
-    <div class="card">
+    @php
+        $calendarWeeks = [
+            ['label' => 'Selected Week', 'start' => \Carbon\Carbon::parse($from)],
+            ['label' => 'Next Week', 'start' => \Carbon\Carbon::parse($from)->addWeek()],
+        ];
+    @endphp
+
+    @foreach($calendarWeeks as $weekIndex => $calendarWeek)
+    @php
+        $weekStart = $calendarWeek['start']->copy();
+        $weekEnd = $weekStart->copy()->addDays(6);
+    @endphp
+    <div class="card uhms-calendar-week {{ $weekIndex > 0 ? 'mt-3' : '' }}">
+        <div class="card-header d-flex align-items-center justify-content-between">
+            <h5 class="card-title mb-0">{{ $calendarWeek['label'] }}</h5>
+            <span class="text-muted fw-medium">{{ $weekStart->format('d M') }} — {{ $weekEnd->format('d M Y') }}</span>
+        </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-bordered mb-0">
@@ -98,7 +113,7 @@
                         <tr>
                             @for($i = 0; $i < 7; $i++)
                                 @php
-                                    $day = \Carbon\Carbon::parse($from)->addDays($i);
+                                    $day = $weekStart->copy()->addDays($i);
                                     $isToday = $day->isToday();
                                 @endphp
                                 <th class="text-center {{ $isToday ? 'bg-primary bg-opacity-10' : '' }}" style="width: 14.28%; min-width: 150px;">
@@ -116,14 +131,14 @@
                         <tr>
                             @for($i = 0; $i < 7; $i++)
                                 @php
-                                    $day = \Carbon\Carbon::parse($from)->addDays($i);
+                                    $day = $weekStart->copy()->addDays($i);
                                     $dayKey = $day->format('Y-m-d');
                                     $dayAppointments = $calendarData[$dayKey] ?? collect();
                                     $isToday = $day->isToday();
                                 @endphp
-                                <td class="align-top p-2 {{ $isToday ? 'bg-primary bg-opacity-10' : '' }}" style="min-height: 200px; vertical-align: top;">
+                                <td class="calendar-day-cell align-top p-2 {{ $isToday ? 'bg-primary bg-opacity-10' : '' }}">
                                     @forelse($dayAppointments as $apt)
-                                    <a href="{{ route('admin.appointments.show', $apt) }}" class="card mb-2 border-start border-3 border-{{ $apt->status->color() }} text-decoration-none text-reset d-block">
+                                    <a href="{{ route('admin.appointments.show', $apt) }}" class="appointment-card card mb-2 border-start border-3 border-{{ $apt->status->color() }} text-decoration-none text-reset d-block">
                                         <div class="card-body p-2">
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <small class="fw-medium text-truncate" style="max-width: 120px;">
@@ -166,6 +181,7 @@
             </div>
         </div>
     </div>
+    @endforeach
 
     {{-- Legend --}}
     <div class="card mt-3">
@@ -178,5 +194,4 @@
             </div>
         </div>
     </div>
-</div>
 @endsection

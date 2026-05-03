@@ -3,7 +3,7 @@
 
 @section('content')
 <!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
+<div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0"><i class="ti ti-file-invoice me-2"></i>Invoices</h4>
     </div>
@@ -33,7 +33,7 @@
 <!-- Stats Cards -->
 <div class="row g-3 mb-4">
     <div class="col-md-3 col-sm-6">
-        <div class="card border-0 shadow-sm">
+        <div class="card uhms-stat-card border-0 shadow-sm">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="avatar avatar-lg bg-soft-primary rounded me-3">
@@ -48,7 +48,7 @@
         </div>
     </div>
     <div class="col-md-3 col-sm-6">
-        <div class="card border-0 shadow-sm">
+        <div class="card uhms-stat-card border-0 shadow-sm">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="avatar avatar-lg bg-soft-warning rounded me-3">
@@ -63,7 +63,7 @@
         </div>
     </div>
     <div class="col-md-3 col-sm-6">
-        <div class="card border-0 shadow-sm">
+        <div class="card uhms-stat-card border-0 shadow-sm">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="avatar avatar-lg bg-soft-success rounded me-3">
@@ -78,7 +78,7 @@
         </div>
     </div>
     <div class="col-md-3 col-sm-6">
-        <div class="card border-0 shadow-sm">
+        <div class="card uhms-stat-card border-0 shadow-sm">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="avatar avatar-lg bg-soft-danger rounded me-3">
@@ -99,9 +99,11 @@
     <div class="card-body py-2">
         <form method="GET" action="{{ route('admin.billing.invoices.index') }}" class="row g-2 align-items-end">
             <div class="col-md-4">
+                <label class="form-label small">Search</label>
                 <input type="text" name="search" class="form-control form-control-sm" placeholder="Search invoice #, patient..." value="{{ request('search') }}">
             </div>
             <div class="col-md-3">
+                <label class="form-label small">Status</label>
                 <select name="status" class="form-select form-select-sm">
                     <option value="">All Statuses</option>
                     @foreach(\App\Enums\InvoiceStatus::cases() as $status)
@@ -112,6 +114,7 @@
                 </select>
             </div>
             <div class="col-md-3">
+                <label class="form-label small">Billing Type</label>
                 <select name="billing_type" class="form-select form-select-sm">
                     <option value="">All Billing Types</option>
                     @foreach(\App\Enums\BillingType::cases() as $type)
@@ -171,7 +174,7 @@
                         <td>{{ $invoice->created_at->format('d M Y') }}</td>
                         <td class="text-center">
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
+                                <button type="button" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">

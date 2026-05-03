@@ -51,7 +51,7 @@
         <tbody>
             @foreach($byMethod as $method)
             <tr>
-                <td>{{ $method->payment_method }}</td>
+                <td>{{ $method->payment_method_label }}</td>
                 <td class="text-right">{{ number_format($method->count) }}</td>
                 <td class="text-right text-success">₵{{ number_format($method->total, 2) }}</td>
             </tr>
@@ -75,8 +75,8 @@
         <tbody>
             @foreach($payments as $payment)
             <tr>
-                <td>{{ $payment->receipt_number ?? '—' }}</td>
-                <td>{{ $payment->created_at->format('H:i') }}</td>
+                <td>{{ $payment->payment_number ?? '-' }}</td>
+                <td>{{ ($payment->paid_at ?? $payment->created_at)->format('H:i') }}</td>
                 <td>{{ $payment->invoice?->patient?->full_name ?? '—' }}</td>
                 <td>{{ $payment->payment_method?->label() ?? $payment->payment_method }}</td>
                 <td>{{ $payment->receivedBy?->name ?? '—' }}</td>

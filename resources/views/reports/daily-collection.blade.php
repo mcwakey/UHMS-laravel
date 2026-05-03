@@ -2,7 +2,7 @@
 @section('title', 'Daily Collection Report')
 
 @section('content')
-<div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
+<div class="uhms-page-header d-flex align-items-sm-center justify-content-between flex-wrap gap-2">
     <div>
         <h4 class="fw-bold mb-0">Daily Collection Report</h4>
         <nav aria-label="breadcrumb">
@@ -51,14 +51,14 @@
 <div class="card mb-4">
     <div class="card-header"><h6 class="mb-0">Collection by Payment Method</h6></div>
     <div class="table-responsive">
-        <table class="table table-sm mb-0">
+        <table class="table table-sm table-hover mb-0">
             <thead class="table-light">
                 <tr><th>Method</th><th class="text-end">Transactions</th><th class="text-end">Amount</th></tr>
             </thead>
             <tbody>
                 @foreach($byMethod as $method)
                 <tr>
-                    <td><span class="badge bg-light text-dark">{{ $method->payment_method }}</span></td>
+                    <td><span class="badge bg-light text-dark">{{ $method->payment_method_label }}</span></td>
                     <td class="text-end">{{ number_format($method->count) }}</td>
                     <td class="text-end fw-semibold">₵{{ number_format($method->total, 2) }}</td>
                 </tr>
@@ -86,8 +86,8 @@
                 </select>
             </div>
             <div class="col-md-4">
-                <button class="btn btn-primary">Filter</button>
-                <a href="{{ route('admin.reports.daily-collection') }}" class="btn btn-outline-secondary">Clear</a>
+                <button type="submit" class="btn btn-primary"><i class="ti ti-filter me-1"></i>Filter</button>
+                <a href="{{ route('admin.reports.daily-collection') }}" class="btn btn-outline-secondary"><i class="ti ti-x me-1"></i>Clear</a>
             </div>
         </form>
     </div>
@@ -110,8 +110,8 @@
             <tbody>
                 @forelse($payments as $payment)
                 <tr>
-                    <td><code>{{ $payment->receipt_number ?? '—' }}</code></td>
-                    <td>{{ $payment->created_at->format('H:i') }}</td>
+                    <td><code>{{ $payment->payment_number ?? '-' }}</code></td>
+                    <td>{{ ($payment->paid_at ?? $payment->created_at)->format('H:i') }}</td>
                     <td>{{ $payment->invoice?->patient?->full_name ?? '—' }}</td>
                     <td><code>{{ $payment->invoice?->invoice_number ?? '—' }}</code></td>
                     <td><span class="badge bg-light text-dark">{{ $payment->payment_method?->label() ?? $payment->payment_method }}</span></td>

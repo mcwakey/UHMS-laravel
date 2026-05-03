@@ -2,11 +2,95 @@
 
 Current system state as of May 2, 2026.
 
-## 1. Purpose
+This manual is workflow-first. Each section walks you through what to do, in what order, and which screen to use. It is illustrated with screenshots from the running system and includes flow diagrams for the most important processes.
 
-UHMS is a hospital management system for handling patient registration, OPD visits, appointments, triage, consultation, investigations, prescriptions, billing, pharmacy dispensing, insurance claims, wards, inventory, HR, reports, and administration.
+## Table of Contents
 
-This manual describes the features currently available in the system and how staff should use them in day-to-day operations. Access to each area depends on the user's role, permissions, and whether the related module is enabled.
+- [1. Purpose and Audience](#1-purpose-and-audience)
+- [2. Getting Started](#2-getting-started)
+- [3. Roles and Typical Responsibilities](#3-roles-and-typical-responsibilities)
+- [4. Main Navigation Areas](#4-main-navigation-areas)
+- [5. Standard Page Controls](#5-standard-page-controls)
+- [A. End-to-End Patient Journey](#a-end-to-end-patient-journey)
+- [B. Role Day Journeys](#b-role-day-journeys)
+- [6. Patient Registration and Management](#6-patient-registration-and-management)
+- [7. Appointments](#7-appointments)
+- [8. Visits / OPD Workflow](#8-visits--opd-workflow)
+- [9. Queue Management](#9-queue-management)
+- [10. Triage and Vitals](#10-triage-and-vitals)
+- [11. Consultations](#11-consultations)
+- [12. Investigations](#12-investigations)
+- [13. Pharmacy](#13-pharmacy)
+- [14. Billing and Payments](#14-billing-and-payments)
+- [15. Claims and Insurance](#15-claims-and-insurance)
+- [16. Ward and Inpatient](#16-ward-and-inpatient)
+- [17. Procedures](#17-procedures)
+- [18. Store and Procurement](#18-store-and-procurement)
+- [19. Accounts and Finance](#19-accounts-and-finance)
+- [20. HR and Payroll](#20-hr-and-payroll)
+- [21. Reports](#21-reports)
+- [22. Administration](#22-administration)
+- [23. Settings and Modules](#23-settings-and-modules)
+- [24. Notifications](#24-notifications)
+- [25. Profile and Password](#25-profile-and-password)
+- [26. Recommended Operational Workflows](#26-recommended-operational-workflows)
+- [27. Troubleshooting](#27-troubleshooting)
+- [28. Current Implementation Notes](#28-current-implementation-notes)
+- [29. Quick Reference by Department](#29-quick-reference-by-department)
+
+## 1. Purpose and Audience
+
+UHMS is a hospital management system for patient registration, OPD visits, appointments, triage, consultation, investigations, prescriptions, billing, pharmacy dispensing, insurance claims, wards, inventory, HR, reports, and administration.
+
+This manual is intended for the staff who actually use the system every day:
+
+- Reception, registration, and front-desk staff
+- Nurses and triage personnel
+- Doctors and clinicians
+- Investigation/laboratory staff and analyzer operators
+- Pharmacy staff and dispensers
+- Cashiers, accountants, and claims officers
+- Store and procurement staff
+- HR officers and payroll processors
+- Administrators, supervisors, and module owners
+
+What appears on your screen depends on three things:
+
+1. Your **role** (for example, Doctor, Nurse, Cashier).
+2. Your **permissions**, which an administrator can adjust per role.
+3. Which **modules** are enabled in Settings > Modules.
+
+If a step in this manual mentions a menu item you cannot see, that almost always means your role is missing the relevant permission or the module is disabled.
+
+### 1.1 The big picture
+
+A UHMS encounter typically moves through this lifecycle:
+
+```mermaid
+flowchart LR
+  A[Patient registers] --> B[Appointment or walk-in]
+  B --> C[Visit created]
+  C --> D[Triage / Vitals]
+  D -->|Routine| E[Consultation]
+  D -->|Urgent / Emergency| F[Emergency / Inpatient]
+  E --> G{Doctor decision}
+  G -->|Prescribe| H[Pharmacy dispensing]
+  G -->|Investigation| I[Investigation request]
+  G -->|Refer| J[Another department]
+  G -->|Admit| K[Ward admission]
+  G -->|Complete| L[Visit complete]
+  I --> M[Results entered and verified]
+  M --> E
+  H --> N[Billing & payment]
+  L --> N
+  K --> N
+  N --> O{Insurance?}
+  O -->|Yes| P[Claim submitted]
+  O -->|No| Q[Receipt printed]
+  P --> R[Claim review and reimbursement]
+```
+
+The lifecycle above is the backbone of nearly every operational workflow in this manual. When in doubt, locate where a patient currently is on this diagram and the next step is usually obvious.
 
 ## 2. Getting Started
 
@@ -77,6 +161,24 @@ Permission assignments may be changed by administrators in Roles & Permissions.
 ![Admin dashboard](assets/user-manual/02-dashboard.png)
 
 The dashboard gives administrators a quick view of operational totals, shortcuts, and the role-aware sidebar menu.
+
+### 3.1 Permission and module visibility model
+
+```mermaid
+flowchart TB
+  U[Logged-in user] --> R[Role]
+  R --> P[Permissions]
+  M[Modules enabled] --> V[Sidebar visibility]
+  P --> V
+  V --> S[What the user actually sees]
+  P --> X[What the user can submit]
+```
+
+Three quick rules to remember:
+
+1. Role grants permissions, not menus directly.
+2. The sidebar hides anything the user has no permission for or that belongs to a disabled module.
+3. The server still enforces permissions on every action, so a user who manipulates the URL still cannot perform an action they lack permission for.
 
 ## 4. Main Navigation Areas
 
@@ -227,11 +329,175 @@ Most list pages follow the same pattern:
 4. Success and error alerts appear near the top of the page after actions.
 5. Some actions update the page inline without forcing a full reload.
 
+### 5.1 Common UI elements
+
+| Element | Purpose | Tip |
+| --- | --- | --- |
+| Search box | Free-text search over the list | Hit Enter to apply; clear it to reset |
+| Filter row | Narrow by status, date, department, role, etc. | Combine filters to drill down quickly |
+| Status badge | Current workflow state of the record | Color reflects severity / progression |
+| Row action menu | Per-row operations (View, Edit, Cancel, etc.) | Available actions vary by status and permission |
+| Bulk actions | Apply one operation to multiple records | Tick checkboxes first |
+| Toast / alert | Confirmation or error messages | Most actions show a toast in the top-right |
+| Print / PDF link | Open a printable document | Opens in a new tab and bypasses the SPA |
+
+### 5.2 Uniform screen design
+
+UHMS screens now follow a shared design system so staff do not have to relearn controls from module to module.
+
+1. Page titles appear in a consistent header with the main action on the right.
+2. Search and filter controls use visible labels, compact spacing, and short actions such as Filter and Clear.
+3. Tables use compact headers, row hover states, workflow badges, and right-aligned money columns.
+4. Action buttons use familiar Tabler icons and short text; row-specific actions stay inside the row action menu.
+5. The shared styling is loaded once through the application layouts, including older template pages, so the visual cleanup stays lightweight and fast.
+
+### 5.3 What to do if a button is missing
+
+1. Confirm you have permission for that action.
+2. Confirm the related module is enabled (Settings > Modules).
+3. Confirm the record's current status allows that action (e.g., you cannot "approve" a draft that has not been submitted yet).
+4. Refresh the page to clear stale state.
+
+## A. End-to-End Patient Journey
+
+This section combines every other module into one continuous example, from arrival to final settlement. Use it as a reference when training new staff.
+
+```mermaid
+sequenceDiagram
+  participant P as Patient
+  participant R as Reception
+  participant N as Nurse
+  participant D as Doctor
+  participant L as Investigations
+  participant Ph as Pharmacy
+  participant B as Billing
+  participant C as Claims
+  P->>R: Arrives / books appointment
+  R->>R: Register patient (if new)
+  R->>R: Create appointment / visit
+  R->>N: Send to triage queue
+  N->>N: Record vitals and priority
+  N->>D: Assign to consultation queue
+  D->>D: Take history, examine, diagnose
+  alt Investigation needed
+    D->>L: Submit investigation request
+    L->>L: Accept, run, enter results
+    L->>D: Verified results visible in consultation
+  end
+  alt Prescription needed
+    D->>Ph: Issue prescription
+    Ph->>Ph: Dispense items
+  end
+  D->>B: Mark services done / complete visit
+  B->>P: Generate invoice
+  P->>B: Pay (cash / card / insurance)
+  alt Insurance
+    B->>C: Create claim from invoice
+    C->>C: Submit, review, mark paid
+  end
+  B->>P: Print receipt or claim summary
+```
+
+The rest of this manual zooms into each step of the diagram above.
+
+## B. Role Day Journeys
+
+Quick day-in-the-life walkthroughs by role. Each one points back to the detailed sections later in the manual.
+
+### B.1 Receptionist
+
+1. Open Dashboard, review today's appointments.
+2. Patient arrives:
+   - Existing patient: search Patients > open profile.
+   - New patient: Patients > Create.
+3. If they had a booking: Appointments > All Appointments > Check In, which creates the visit automatically.
+4. If walk-in: Visits / OPD > Create Visit.
+5. Confirm payable services are correctly attached to the visit.
+6. Send patient to triage queue.
+7. Throughout the day, manage the queue board, confirm and reschedule appointments, and answer billing queries.
+
+### B.2 Triage nurse
+
+1. Open Triage from the sidebar.
+2. Open the next visit awaiting triage.
+3. Record vitals and triage score.
+4. Set priority (Routine, Urgent, Emergency).
+5. Assign to a consultation department or move to emergency.
+6. Repeat for the queue.
+
+### B.3 Doctor
+
+1. Open Consultations to see today's assigned patients.
+2. Open a visit to enter the consultation workspace.
+3. Record complaints, examine, add diagnoses.
+4. As needed: request investigations, prescribe, schedule procedures, refer, or admit.
+5. Use Medical Patterns to speed up repetitive consultations.
+6. Complete the visit when care is done; the system queues billing automatically.
+
+### B.4 Investigation/Lab technician
+
+1. Open Investigation Requests.
+2. Accept new pending requests.
+3. Run the test on the analyzer or manually.
+4. Enter results per request item; mark abnormal where applicable.
+5. Verify results.
+6. Use Analyzer Messages to reprocess any instrument message that failed.
+
+### B.5 Pharmacist / dispenser
+
+1. Open Pharmacy > Dispensing.
+2. Open the next prescription.
+3. Confirm stock and dispense item by item, or use batch dispense.
+4. Update stock through Pharmacy > Drug Stock as supplies arrive.
+5. Watch stock alerts daily.
+
+### B.6 Cashier / accountant
+
+1. Open shift via Accounts > Cashier Handover.
+2. Open Billing > Receive Payments to collect outstanding invoices from the cashier queue.
+3. Use Billing > Invoices when you need to review or create a specific invoice.
+4. Record payments and print receipts.
+5. End of shift: close handover, supervisor verifies.
+6. Review Daily Collection and Reconciliation.
+
+### B.7 Claims officer
+
+1. Open Claims > New Claim or create from a settled invoice.
+2. Add and validate items.
+3. Submit the claim.
+4. Review tabs: pending, submitted, paid, appealed.
+5. Export reports for the insurer when needed.
+
+### B.8 Store keeper
+
+1. Suppliers: add or update partners.
+2. Purchase Orders: create, submit, approve, receive.
+3. Stock Transfers between pharmacy/investigation locations.
+
+### B.9 HR officer
+
+1. Employees: maintain profiles.
+2. Attendance: enter daily attendance.
+3. Leave: review and approve requests.
+4. Payroll: process, approve, mark paid.
+
+### B.10 Administrator
+
+1. Users and Roles: provision new staff.
+2. Departments and Designations: keep the org structure current.
+3. Modules: enable / disable optional features.
+4. Activity Log: review what happened.
+5. Settings: organization, invoice, payment methods.
+
 ## 6. Patient Registration and Management
 
 ![Patients list](assets/user-manual/03-patients.png)
 
 The Patients page is the main register for searching, reviewing, and opening patient records.
+
+![Add patient form](assets/user-manual/10-patients-create.png)
+
+The Add Patient form captures demographics, contact, and identifying information needed downstream by visits, billing, claims, and reports.
 
 ### 6.1 Add a patient
 
@@ -263,6 +529,30 @@ The Patients page is the main register for searching, reviewing, and opening pat
 
 ## 7. Appointments
 
+The Appointments module covers booking, calendar, check-in, and lifecycle of every scheduled visit.
+
+### Appointment lifecycle
+
+```mermaid
+stateDiagram-v2
+  [*] --> Scheduled
+  Scheduled --> Confirmed: Confirm
+  Confirmed --> CheckedIn: Check in (creates visit)
+  Scheduled --> Cancelled: Cancel
+  Confirmed --> Cancelled: Cancel
+  Scheduled --> NoShow: No-show
+  Confirmed --> NoShow: No-show
+  CheckedIn --> [*]
+```
+
+![Appointments list](assets/user-manual/11-appointments-list.png)
+
+The All Appointments list shows status badges, doctor, department, and quick actions like Confirm, Check In, No Show, Cancel.
+
+![Schedule appointment form](assets/user-manual/12-appointments-create.png)
+
+The Schedule New form lets you pick patient, doctor, department, slot, visit type, reason, and any pre-attached services.
+
 ### 7.1 View appointments
 
 1. Go to Patient Services > Appointments > All Appointments.
@@ -272,16 +562,17 @@ The Patients page is the main register for searching, reviewing, and opening pat
 
 ### 7.2 Use the calendar view
 
-![Appointment calendar](assets/user-manual/04-appointments-calendar.png)
+![Two-week appointment calendar](assets/user-manual/70-appointments-two-week-calendar.png)
 
-The appointment calendar groups bookings by day and supports week navigation, doctor filters, and department filters.
+The appointment calendar groups bookings by day and supports week navigation, doctor filters, and department filters. It shows the selected week first and the next week directly below it, so schedulers can see two weeks at a time without changing screens.
 
 1. Go to Patient Services > Appointments > Calendar View.
 2. Choose a week start date.
 3. Optionally filter by doctor or department.
-4. Use Previous Week, Today, or Next Week to move through the calendar.
-5. Select an appointment card to open the appointment.
-6. Use the plus button on future dates to schedule a new appointment for that date.
+4. Review both the selected week and the next week before booking or moving an appointment.
+5. Use Previous Week, Today, or Next Week to move through the calendar.
+6. Select an appointment card to open the appointment.
+7. Use the plus button on future dates to schedule a new appointment for that date.
 
 ### 7.3 Schedule an appointment
 
@@ -306,6 +597,32 @@ The appointment calendar groups bookings by day and supports week navigation, do
 4. Open the created visit when prompted.
 
 ## 8. Visits / OPD Workflow
+
+A visit is the central operational record connecting patient, services, departments, billing, and clinical data.
+
+### Visit lifecycle
+
+```mermaid
+stateDiagram-v2
+  [*] --> Triage
+  Triage --> WaitingConsultation: Triage done
+  Triage --> Emergency: Critical
+  Triage --> Inpatient: Severe
+  WaitingConsultation --> InConsultation: Doctor opens
+  InConsultation --> WaitingInvestigation: Investigation requested
+  WaitingInvestigation --> InInvestigation: Accepted
+  InInvestigation --> InConsultation: Results back
+  InConsultation --> ReferredConsultation: Refer
+  ReferredConsultation --> InConsultation: Receiving doctor
+  InConsultation --> Completed: Visit complete
+  Emergency --> Inpatient
+  Inpatient --> Completed: Discharge
+  Completed --> [*]
+```
+
+![Create visit form](assets/user-manual/13-visits-create.png)
+
+The Create Visit form supports walk-in registration with patient search, department/doctor pick, service selection, insurance, and priority.
 
 ### 8.1 Create a walk-in visit
 
@@ -333,6 +650,16 @@ Users with transition permission can move visits through workflow states. Common
 
 ## 9. Queue Management
 
+The queue ties triage, departments, and consultations together so staff always see who is next.
+
+![Queue manage](assets/user-manual/14-queue-manage.png)
+
+Manage Queue is for staff who control flow: call next, complete, skip, or requeue patients.
+
+![Queue board](assets/user-manual/15-queue-board.png)
+
+Queue Board is a public-display friendly view for waiting rooms and department screens.
+
 ### 9.1 Manage queue
 
 1. Go to Patient Services > Queue > Manage Queue.
@@ -345,6 +672,26 @@ Users with transition permission can move visits through workflow states. Common
 2. Use this display for waiting room or department queue visibility.
 
 ## 10. Triage and Vitals
+
+Triage is the first clinical touchpoint after registration. It computes urgency and routes the patient.
+
+```mermaid
+flowchart LR
+  T[Triage queue] --> V[Record vitals]
+  V --> S{Triage score}
+  S -->|Routine| C[Send to consultation]
+  S -->|Urgent| C
+  S -->|Emergency| E[Emergency department]
+  S -->|Severe| I[Inpatient admission]
+```
+
+![Triage list](assets/user-manual/16-triage-index.png)
+
+The triage queue shows visits awaiting assessment, with patient, time waiting, and priority cues.
+
+![Vitals entry](assets/user-manual/17-vitals.png)
+
+The vitals form captures temperature, blood pressure, pulse, respiration, oxygen saturation and other measurements.
 
 ### 10.1 Open triage queue
 
@@ -364,6 +711,35 @@ Users with transition permission can move visits through workflow states. Common
 After triage, the patient may be assigned to consultation, moved to another department, or treated according to urgency. The exact available actions depend on visit status and staff permissions.
 
 ## 11. Consultations
+
+The consultation workspace is where doctors record their work for a visit. It is the system's clinical heart.
+
+```mermaid
+flowchart TD
+  Open[Open consultation] --> Hist[Review history & vitals]
+  Hist --> Comp[Add complaints]
+  Comp --> Diag[Add diagnoses with ICD-10]
+  Diag --> Branch{Plan}
+  Branch -->|Tests| Inv[Request investigations]
+  Branch -->|Drugs| Rx[Prescribe medication]
+  Branch -->|Procedures| Proc[Schedule procedure]
+  Branch -->|Refer| Ref[Refer to other dept]
+  Branch -->|Admit| Adm[Inpatient admission]
+  Branch -->|Done| Com[Complete visit]
+  Inv --> Com
+  Rx --> Com
+  Proc --> Com
+  Ref --> Com
+  Adm --> Com
+```
+
+![Medical patterns](assets/user-manual/18-medical-patterns.png)
+
+Medical Patterns store reusable bundles (complaints + diagnoses + treatments + prescriptions + investigations) that doctors can apply with one click.
+
+![ICD-10 codes](assets/user-manual/19-icd-codes.png)
+
+ICD-10 search is integrated into diagnoses for accurate clinical coding.
 
 ### 11.1 Open consultation list
 
@@ -451,6 +827,38 @@ Common actions:
 
 ## 12. Investigations
 
+The Investigations module covers the full lifecycle of test requests from the moment a doctor orders them until results are verified.
+
+```mermaid
+stateDiagram-v2
+  [*] --> Pending
+  Pending --> Processing: Accept
+  Pending --> Cancelled: Cancel
+  Processing --> Completed: All items entered
+  Completed --> Verified: Verify
+  Verified --> [*]
+```
+
+![Investigation results](assets/user-manual/30-investigation-results.png)
+
+Investigation Results lists all entered results, supports filtering, and lets authorized staff verify entries.
+
+![Test catalog](assets/user-manual/31-test-catalog.png)
+
+Test Catalog manages categories and individual tests, each with parameter definitions and reference ranges.
+
+![Investigation items](assets/user-manual/32-investigation-items.png)
+
+Investigation Items is the catalog of consumables and reagents.
+
+![Investigation stock](assets/user-manual/33-investigation-stock.png)
+
+Investigation Stock tracks reagent and consumable inventory per investigation department.
+
+![Analyzers](assets/user-manual/34-analyzers.png)
+
+Analyzer integration manages connected lab instruments, mappings, and message diagnostics.
+
 ### 12.1 View investigation requests
 
 ![Investigation requests](assets/user-manual/07-investigation-requests.png)
@@ -518,6 +926,36 @@ Typical actions:
 
 ## 13. Pharmacy
 
+The Pharmacy module handles prescriptions, dispensing, drug catalog, and stock.
+
+```mermaid
+flowchart LR
+  Doc[Doctor prescribes] --> Q[Pharmacy queue]
+  Q --> Disp[Pharmacist opens prescription]
+  Disp --> Stock{Stock OK?}
+  Stock -->|Yes| D[Dispense item]
+  Stock -->|No| Sub[Substitute or notify]
+  D --> Hist[Update dispensing history]
+  D --> Inv[Decrement drug stock]
+  Inv --> Alerts[Stock alerts if low]
+```
+
+![Prescriptions list](assets/user-manual/26-prescriptions.png)
+
+The Prescriptions list shows every prescription created in consultations and their dispensing status.
+
+![Dispensing](assets/user-manual/27-dispensing.png)
+
+The Dispensing screen is the pharmacist's main workspace for fulfilling prescriptions.
+
+![Drug catalog](assets/user-manual/28-drug-catalog.png)
+
+Drug Catalog manages drugs, dosage forms, strengths, and categories.
+
+![Drug stock](assets/user-manual/29-drug-stock.png)
+
+Drug Stock tracks batches, quantities, and expiry; the alerts section highlights low and expired stock.
+
 ### 13.1 View prescriptions
 
 1. Go to Pharmacy > Prescriptions.
@@ -556,6 +994,45 @@ Typical actions:
 
 ## 14. Billing and Payments
 
+Billing turns clinical activity into invoices and payments. It links into visits, services, claims, and accounts.
+
+```mermaid
+flowchart LR
+  V[Visit / services] --> Inv[Create invoice]
+  Inv --> Pay{Payment method}
+  Pay -->|Cash/Card| Rec[Record payment]
+  Pay -->|Insurance| Cl[Create claim]
+  Rec --> Rcpt[Print receipt]
+  Cl --> Sub[Submit claim]
+  Sub --> Reim[Reimbursement]
+  Reim --> Closed[Invoice closed]
+  Rcpt --> Closed
+```
+
+![Invoices list](assets/user-manual/08-billing-invoices.png)
+
+The Invoices page centralizes billing status, outstanding balances, payments, and invoice actions.
+
+![Create invoice](assets/user-manual/35-invoice-create.png)
+
+The Create Invoice form pulls billable items from a selected visit and lets the cashier add or adjust lines.
+
+![Payments](assets/user-manual/36-payments.png)
+
+The Payments list records all transactions; receipts are printable per payment.
+
+![Receive payments](assets/user-manual/69-receive-payments.png)
+
+The Receive Payments page is the cashier-focused queue for unpaid and partially paid invoices.
+
+![Service catalog](assets/user-manual/37-services.png)
+
+The Service Catalog defines billable services and price tiers (cash vs. insurance).
+
+![Specialties](assets/user-manual/38-specialties.png)
+
+Specialties group services and departments by clinical discipline.
+
 ### 14.1 View invoices
 
 ![Invoices list](assets/user-manual/08-billing-invoices.png)
@@ -575,7 +1052,18 @@ The Invoices page centralizes billing status, outstanding balances, payments, an
 5. Select billing type, tax, discount, due date, and notes.
 6. Save the invoice.
 
-### 14.3 Record payment
+### 14.3 Receive payments as cashier
+
+1. Go to Billing > Receive Payments.
+2. Review the summary cards: invoices waiting, outstanding balance, collections today, and cash shift state.
+3. Search or filter the unpaid invoice queue by patient, invoice, visit, status, or billing type.
+4. Enter the amount to collect. The form defaults to the remaining balance.
+5. Choose the payment method and enter a transaction reference when available.
+6. Select Receive. UHMS updates the invoice balance, records the payment, and keeps the payment visible in Payment History and Daily Collection.
+
+Cash is disabled when the cashier has no open shift. Open the shift from Accounts > Cashier Handover before accepting cash. Mobile money, card, bank transfer, cheque, and similar non-cash payments can still be recorded according to your facility policy. NHIS is not treated as a manual cashier collection method; it belongs in the claims workflow.
+
+### 14.4 Record payment from an invoice
 
 1. Open the invoice.
 2. Use the payment form.
@@ -583,17 +1071,58 @@ The Invoices page centralizes billing status, outstanding balances, payments, an
 4. Save payment.
 5. UHMS updates invoice payment status and provides receipt access.
 
-### 14.4 Print invoice or receipt
+### 14.5 Print invoice or receipt
 
 1. Open the invoice or payment.
 2. Use Print Invoice or Receipt actions where available.
 3. Print/PDF links intentionally bypass SPA interception and open normally.
 
-### 14.5 Service catalog and specialties
+### 14.6 Service catalog and specialties
 
 Use Service Catalog to maintain billable services and prices. Use Specialties to maintain clinical specialty groupings used in services, appointments, and departments.
 
+### 14.7 Billing and accounting coherence
+
+Patient money collected against invoices is stored as payments. Manual income and expenses are stored separately as financial entries. This keeps reports, handover, and reconciliation from counting the same revenue twice.
+
+Use this rule of thumb:
+
+| Situation | Use |
+| --- | --- |
+| Patient pays an invoice | Billing > Receive Payments or the invoice payment form |
+| Cashier wants to see what they collected today | Billing > Payment History or Accounts > Daily Collection |
+| Accountant records non-patient income | Accounts > Income |
+| Accountant records operational expenses | Accounts > Expenses |
+| Supervisor checks payment totals against shift cash | Accounts > Cashier Handover and Reconciliation |
+
 ## 15. Claims and Insurance
+
+Claims modules handles insurer-funded patient care, from provider setup through to reimbursement.
+
+```mermaid
+stateDiagram-v2
+  [*] --> Draft
+  Draft --> Submitted: Submit
+  Submitted --> InReview: Reviewer opens
+  InReview --> Approved: Complete review
+  InReview --> Rejected
+  Approved --> Paid: Mark paid
+  Rejected --> Appealed: Appeal
+  Appealed --> InReview
+  Paid --> [*]
+```
+
+![Claims list](assets/user-manual/39-claims.png)
+
+The Claims list lets officers filter by status, insurer, and patient and act per row.
+
+![New claim](assets/user-manual/40-claim-create.png)
+
+The New Claim form binds patient, insurer, and invoice into a submittable claim.
+
+![Insurance providers](assets/user-manual/41-insurance-providers.png)
+
+Insurance Providers maintains insurers and their tier structure.
 
 ### 15.1 Insurance providers and tiers
 
@@ -631,6 +1160,29 @@ Users with export permission can export claim data from the claims list.
 
 ## 16. Ward and Inpatient
 
+The Ward module manages admissions, beds, rounds, and discharge.
+
+```mermaid
+flowchart LR
+  A[Admit patient] --> B[Assign bed]
+  B --> R[Daily rounds & vitals]
+  R --> S[Inpatient services]
+  S --> D{Discharge?}
+  D -->|Yes| Out[Process discharge]
+  D -->|No| R
+  Out --> Bill[Final billing]
+```
+
+![Admissions list](assets/user-manual/22-admissions.png)
+
+![Bed map](assets/user-manual/23-bed-map.png)
+
+The Bed Map visualizes bed occupancy across wards.
+
+![Wards](assets/user-manual/24-wards.png)
+
+![Beds](assets/user-manual/25-beds.png)
+
 ### 16.1 Admissions
 
 1. Go to Ward / Inpatient > Admissions.
@@ -662,6 +1214,20 @@ From an admission record, permitted users can:
 
 ## 17. Procedures
 
+```mermaid
+stateDiagram-v2
+  [*] --> Scheduled
+  Scheduled --> InProgress: Start
+  InProgress --> Completed: Complete
+  Scheduled --> Cancelled
+  InProgress --> Cancelled
+  Completed --> [*]
+```
+
+![Procedure catalog](assets/user-manual/20-procedures-catalog.png)
+
+![Scheduled procedures](assets/user-manual/21-procedures-schedule.png)
+
 ### 17.1 Procedure catalog
 
 1. Go to Clinical > Procedures > Procedure Catalog.
@@ -679,6 +1245,27 @@ From an admission record, permitted users can:
 Use actions on scheduled procedures to move them through their workflow.
 
 ## 18. Store and Procurement
+
+Procurement keeps both pharmacy and investigation stock supplied.
+
+```mermaid
+stateDiagram-v2
+  [*] --> Draft
+  Draft --> Submitted: Submit
+  Submitted --> Approved: Approve
+  Approved --> Received: Receive goods
+  Submitted --> Cancelled
+  Draft --> Cancelled
+  Received --> [*]
+```
+
+![Suppliers](assets/user-manual/42-suppliers.png)
+
+![Purchase orders](assets/user-manual/43-purchase-orders.png)
+
+![Create purchase order](assets/user-manual/44-po-create.png)
+
+![Stock transfers](assets/user-manual/45-stock-transfers.png)
 
 ### 18.1 Suppliers
 
@@ -706,6 +1293,28 @@ Use actions on scheduled procedures to move them through their workflow.
 
 ## 19. Accounts and Finance
 
+```mermaid
+flowchart TB
+  Cat[Account categories] --> E[Expense entry]
+  Cat --> I[Income entry]
+  E --> Ap[Approve]
+  I --> Ap
+  Ap --> DC[Daily collection]
+  Pay[Payments] --> DC
+  DC --> H[Cashier handover]
+  H --> Verify[Supervisor verify]
+```
+
+![Account categories](assets/user-manual/46-account-categories.png)
+
+![Expenses](assets/user-manual/47-expenses.png)
+
+![Income](assets/user-manual/48-income.png)
+
+![Daily collection](assets/user-manual/49-daily-collection.png)
+
+![Cashier handover](assets/user-manual/51-handover.png)
+
 ### 19.1 Account categories
 
 Use Account Categories to classify income and expenses.
@@ -718,9 +1327,11 @@ Use Account Categories to classify income and expenses.
 4. Save entry.
 5. Approve entries if you have approval permission.
 
+Do not use manual income entries for patient invoice payments. Patient collections should be recorded through Billing so invoice balances, receipts, daily collections, and cashier shift totals stay aligned.
+
 ### 19.3 Daily collection
 
-Use Daily Collection to review payments and collected revenue for a day or period.
+Use Daily Collection to review payments and collected revenue for a day or period. Patient payment totals come from Billing payments, while manual financial entries remain labeled separately.
 
 ### 19.4 Reconciliation
 
@@ -730,10 +1341,31 @@ Use Reconciliation to compare expected collections with actual payments or hando
 
 1. Open Cashier Handover.
 2. Open a cashier shift.
-3. Close the shift at the end of the period.
-4. A supervisor or authorized user verifies the shift.
+3. Collect cash payments only while the shift is open.
+4. Close the shift at the end of the period and enter the actual cash counted.
+5. A supervisor or authorized user verifies the shift.
 
 ## 20. HR and Payroll
+
+```mermaid
+flowchart LR
+  Emp[Employees] --> Att[Attendance]
+  Emp --> Lv[Leave requests]
+  Lv --> Apr[Approve / Reject]
+  Att --> Pay[Process payroll]
+  Apr --> Pay
+  Pay --> AppPay[Approve payroll]
+  AppPay --> Mark[Mark paid]
+  Mark --> Slip[Payslips]
+```
+
+![Employees](assets/user-manual/52-employees.png)
+
+![Attendance](assets/user-manual/53-attendance.png)
+
+![Leave](assets/user-manual/54-leave.png)
+
+![Payroll](assets/user-manual/55-payroll.png)
 
 ### 20.1 Employees
 
@@ -762,6 +1394,12 @@ Use Reconciliation to compare expected collections with actual payments or hando
 5. Open payslips where available.
 
 ## 21. Reports
+
+Reports aggregate operational and financial data into views you can review on screen or print.
+
+![Income report](assets/user-manual/56-reports-income.png)
+
+![Visit report](assets/user-manual/57-reports-visits.png)
 
 ### 21.1 Financial reports
 
@@ -801,6 +1439,14 @@ The system also supports printable clinical and operational documents such as co
 
 ## 22. Administration
 
+![Users](assets/user-manual/59-users.png)
+
+![Roles & permissions](assets/user-manual/60-roles.png)
+
+![Departments](assets/user-manual/61-departments.png)
+
+![Designations](assets/user-manual/62-designations.png)
+
 ### 22.1 Users
 
 1. Go to Administration > Users.
@@ -834,6 +1480,14 @@ Key department behavior:
 Use Designations to manage staff job titles and classifications.
 
 ## 23. Settings and Modules
+
+![Organization settings](assets/user-manual/63-settings-organization.png)
+
+![Invoice settings](assets/user-manual/64-settings-invoice.png)
+
+![Payment methods](assets/user-manual/65-settings-payment-methods.png)
+
+![Activity log](assets/user-manual/66-activity-log.png)
 
 ### 23.1 Organization settings
 
@@ -897,6 +1551,10 @@ To manage modules:
 
 ## 24. Notifications
 
+![Notifications page](assets/user-manual/67-notifications.png)
+
+Notifications alert users about clinical events, billing actions, claim status changes, stock alerts, and system messages.
+
 ### 24.1 Header notification dropdown
 
 The header shows recent notifications and an unread badge.
@@ -912,6 +1570,8 @@ Common actions:
 Go to Notifications to view a full list of notifications.
 
 ## 25. Profile and Password
+
+![Profile](assets/user-manual/68-profile.png)
 
 All authenticated users can access their profile.
 

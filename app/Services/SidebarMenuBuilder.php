@@ -306,8 +306,16 @@ class SidebarMenuBuilder
                         'label' => 'Payments',
                         'icon' => 'ti ti-cash',
                         'route' => 'admin.billing.payments.index',
-                        'active_patterns' => ['admin.billing.payments.*'],
+                        'active_patterns' => ['admin.billing.payments.index', 'admin.billing.payments.receipt'],
                         'permission' => 'payments.view',
+                        'module' => 'billing',
+                    ],
+                    [
+                        'label' => 'Receive Payments',
+                        'icon' => 'ti ti-cash',
+                        'route' => 'admin.billing.payments.receive',
+                        'active_patterns' => ['admin.billing.payments.receive'],
+                        'permission' => 'payments.create',
                         'module' => 'billing',
                     ],
                     [
@@ -426,7 +434,7 @@ class SidebarMenuBuilder
                     ],
                     [
                         'label' => 'Cashier Handover',
-                        'icon' => 'ti ti-cash-register',
+                        'icon' => 'ti ti-cash',
                         'route' => 'admin.accounts.handover.index',
                         'active_patterns' => ['admin.accounts.handover.*'],
                         'permission' => 'accounts.cashier',

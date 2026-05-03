@@ -49,6 +49,9 @@
     <!-- Template Style -->
     <link rel="stylesheet" href="{{ URL::asset('build/css/style.css') }}">
 
+    <!-- UHMS Design Rules -->
+    <link rel="stylesheet" href="{{ URL::asset('build/css/uhms-design-system.css') }}">
+
     {{-- Anti-FOUC: hide page until critical CSS is parsed.
          Prevents the sidebar/menu "flash of unstyled content" on load. --}}
     <style>

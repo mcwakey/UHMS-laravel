@@ -8,14 +8,72 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePaymentRequest;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Services\AccountingService;
 use App\Services\BillingService;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
 {
     public function __construct(
-        protected BillingService $billingService
+        protected BillingService $billingService,
+        protected AccountingService $accountingService,
     ) {}
+
+    /**
+     * Cashier intake screen for collecting outstanding invoice payments.
+     */
+    public function receive(Request $request)
+    {
+        $query = Invoice::with(['patient', 'visit.department'])
+            ->unpaid()
+            ->where('balance', '>', 0);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('billing_type')) {
+            $query->where('billing_type', $request->billing_type);
+        }
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('invoice_number', 'like', "%{$search}%")
+                    ->orWhereHas('patient', function ($q2) use ($search) {
+                        $q2->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%")
+                            ->orWhere('patient_number', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('visit', function ($q2) use ($search) {
+                        $q2->where('visit_number', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $stats = [
+            'waiting_invoices' => (clone $query)->count(),
+            'outstanding_balance' => (clone $query)->sum('balance'),
+            'cashier_today' => Payment::where('received_by', $request->user()->id)
+                ->whereDate('paid_at', today())
+                ->sum('amount'),
+        ];
+
+        $invoices = (clone $query)
+            ->orderByRaw('due_date IS NULL, due_date ASC')
+            ->latest('created_at')
+            ->paginate(12)
+            ->withQueryString();
+
+        $paymentMethods = collect(PaymentMethod::cases())
+            ->reject(fn (PaymentMethod $method) => $method === PaymentMethod::NHIS)
+            ->values();
+        $openShift = $this->accountingService->getOpenShift();
+        $invoiceStatuses = [InvoiceStatus::PENDING, InvoiceStatus::PARTIALLY_PAID];
+
+        return view('billing.payments.receive', compact('invoices', 'paymentMethods', 'openShift', 'stats', 'invoiceStatuses'));
+    }
 
     /**
      * Payment list.
@@ -66,6 +124,8 @@ class PaymentController extends Controller
      */
     public function store(StorePaymentRequest $request, Invoice $invoice)
     {
+        $validated = $request->validated();
+
         if (in_array($invoice->status, [InvoiceStatus::PAID, InvoiceStatus::CANCELLED, InvoiceStatus::REFUNDED])) {
             if ($request->expectsJson()) {
                 return response()->json([
@@ -76,7 +136,7 @@ class PaymentController extends Controller
             return back()->with('error', 'Cannot record payment on this invoice.');
         }
 
-        if ($request->amount > $invoice->balance) {
+        if ((float) $validated['amount'] > (float) $invoice->balance) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Payment amount exceeds outstanding balance of ₵' . number_format($invoice->balance, 2),
@@ -86,7 +146,17 @@ class PaymentController extends Controller
             return back()->with('error', 'Payment amount exceeds outstanding balance of ₵' . number_format($invoice->balance, 2));
         }
 
-        $payment = $this->billingService->recordPayment($invoice, $request->validated());
+        if ($validated['payment_method'] === PaymentMethod::CASH->value && ! $this->accountingService->getOpenShift()) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Open a cashier shift before accepting cash payments.',
+                ], 409);
+            }
+
+            return back()->with('error', 'Open a cashier shift before accepting cash payments.');
+        }
+
+        $payment = $this->billingService->recordPayment($invoice, $validated);
         $payment->loadMissing(['invoice.visit']);
         $invoice->refresh();
         $visit = $invoice->visit?->fresh();
@@ -106,6 +176,12 @@ class PaymentController extends Controller
                 'redirect_url' => route('admin.billing.invoices.show', $invoice),
                 'receipt_url' => route('admin.billing.payments.receipt', $payment),
             ], 201);
+        }
+
+        if ($request->input('return_to') === 'receive') {
+            return redirect()
+                ->route('admin.billing.payments.receive')
+                ->with('success', "Payment {$payment->payment_number} of ₵" . number_format($payment->amount, 2) . " recorded successfully.");
         }
 
         return redirect()

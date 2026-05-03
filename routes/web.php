@@ -583,6 +583,7 @@ Route::middleware('auth')->group(function () {
 
             // Payments
             Route::middleware('can:payments.view')->group(function () {
+                Route::get('payments/receive', [PaymentController::class, 'receive'])->name('payments.receive')->middleware('can:payments.create');
                 Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
                 Route::post('payments/{invoice}', [PaymentController::class, 'store'])->name('payments.store')->middleware('can:payments.create');
                 Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');

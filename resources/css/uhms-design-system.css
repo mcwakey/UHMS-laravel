@@ -1,0 +1,248 @@
+/* UHMS shared design rules. Loaded after the vendor template so local screens stay visually consistent. */
+:root {
+    --uhms-radius-xs: 4px;
+    --uhms-radius-sm: 6px;
+    --uhms-radius-md: 8px;
+    --uhms-content-gap: 1rem;
+    --uhms-muted-bg: #f8f9fb;
+    --uhms-table-header-bg: #f6f8fb;
+    --uhms-focus-ring: 0 0 0 .16rem rgba(13, 110, 253, .12);
+}
+
+body {
+    background-color: var(--light-900, #f4f6f9);
+}
+
+.page-header,
+.uhms-page-header {
+    margin-bottom: var(--uhms-content-gap);
+    padding-bottom: .875rem;
+    border-bottom: 1px solid var(--border-color, #e9edf3);
+}
+
+.page-header .breadcrumb,
+.uhms-page-header .breadcrumb {
+    margin-bottom: 0;
+}
+
+.card {
+    border-color: var(--border-color, #e9edf3);
+    border-radius: var(--uhms-radius-md);
+    box-shadow: var(--box-shadow-sm, 0 .125rem .25rem rgba(15, 23, 42, .05));
+}
+
+.card .card {
+    box-shadow: none;
+}
+
+.card-body {
+    padding: 1rem;
+}
+
+.card-header {
+    background-color: var(--white, #fff);
+    border-bottom-color: var(--border-color, #e9edf3);
+    padding: .875rem 1rem;
+}
+
+.card-header .card-title,
+.card-footer .pagination {
+    margin-bottom: 0;
+}
+
+.card-footer {
+    background-color: var(--white, #fff);
+    border-top-color: var(--border-color, #e9edf3);
+}
+
+.card-title,
+.page-title,
+.uhms-page-header h1,
+.uhms-page-header h2,
+.uhms-page-header h3,
+.uhms-page-header h4,
+.uhms-page-header h5 {
+    color: var(--heading-color, #17212b);
+    letter-spacing: 0;
+}
+
+.card-title {
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .25rem;
+    border-radius: var(--uhms-radius-sm);
+    white-space: nowrap;
+}
+
+.btn-sm {
+    gap: .2rem;
+}
+
+.btn i {
+    line-height: 1;
+}
+
+.btn:focus-visible,
+.form-control:focus,
+.form-select:focus {
+    box-shadow: var(--uhms-focus-ring);
+}
+
+.form-control,
+.form-select,
+.input-group-text {
+    border-radius: var(--uhms-radius-sm);
+}
+
+.form-label {
+    color: var(--gray-700, #344054);
+    font-weight: 600;
+}
+
+.form-text,
+.invalid-feedback,
+.valid-feedback {
+    font-size: .8125rem;
+}
+
+input[type="number"],
+.text-end {
+    font-variant-numeric: tabular-nums;
+}
+
+.select2-container .select2-selection--single,
+.select2-container .select2-selection--multiple,
+.choices__inner {
+    border-radius: var(--uhms-radius-sm) !important;
+}
+
+.badge {
+    border-radius: var(--uhms-radius-sm);
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.table-responsive {
+    border-radius: var(--uhms-radius-md);
+}
+
+.card .table {
+    margin-bottom: 0;
+}
+
+.table > :not(caption) > * > * {
+    vertical-align: middle;
+}
+
+.table thead th {
+    background-color: var(--uhms-table-header-bg);
+    color: var(--gray-700, #344054);
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-transform: uppercase;
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--uhms-muted-bg);
+}
+
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_filter input {
+    border-radius: var(--uhms-radius-sm);
+}
+
+.alert {
+    border-radius: var(--uhms-radius-md);
+}
+
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--uhms-radius-sm);
+}
+
+.dropdown-menu,
+.modal-content,
+.offcanvas,
+.toast,
+.swal2-popup {
+    border-radius: var(--uhms-radius-md);
+}
+
+.dropdown-menu {
+    border-color: var(--border-color, #e9edf3);
+    box-shadow: var(--box-shadow, 0 .5rem 1rem rgba(15, 23, 42, .12));
+}
+
+.modal-header,
+.modal-footer {
+    border-color: var(--border-color, #e9edf3);
+}
+
+.nav-tabs .nav-link {
+    border-radius: var(--uhms-radius-sm) var(--uhms-radius-sm) 0 0;
+}
+
+.pagination .page-link {
+    border-radius: var(--uhms-radius-xs);
+}
+
+.pagination .page-item + .page-item {
+    margin-left: .25rem;
+}
+
+.uhms-stat-card .card-body {
+    min-height: 96px;
+}
+
+.uhms-payment-queue .payment-inline-form {
+    min-width: 560px;
+}
+
+.uhms-calendar-week .calendar-day-cell {
+    min-height: 220px;
+    vertical-align: top;
+}
+
+.uhms-calendar-week .table {
+    min-width: 980px;
+    table-layout: fixed;
+}
+
+.uhms-calendar-week .appointment-card {
+    border-radius: var(--uhms-radius-md);
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+.uhms-calendar-week .appointment-card:hover {
+    box-shadow: var(--box-shadow);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 767.98px) {
+    .uhms-page-header {
+        align-items: stretch !important;
+    }
+
+    .uhms-page-header .btn,
+    .page-header .btn {
+        width: 100%;
+    }
+
+    .btn {
+        white-space: normal;
+    }
+
+    .uhms-payment-queue .payment-inline-form {
+        min-width: 0;
+        width: 100%;
+    }
+}

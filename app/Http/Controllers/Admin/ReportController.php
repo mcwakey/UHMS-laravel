@@ -23,10 +23,8 @@ use App\Exports\PharmacySalesSummaryExport;
 use App\Exports\StockValuationExport;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
-use App\Models\InsuranceProvider;
 use App\Models\Patient;
 use App\Models\User;
-use App\Models\Ward;
 use App\Services\ReportService;
 use App\Services\StatementService;
 use Illuminate\Http\Request;
@@ -185,13 +183,20 @@ class ReportController extends Controller
      */
     public function dailyCollection(Request $request)
     {
-        $filters = $request->only(['date']);
+        $filters = $request->only(['date', 'payment_method']);
+
+        if ($request->export === 'pdf') {
+            $filters['export'] = 'pdf';
+        }
+
         $data = $this->reportService->dailyCollectionReport($filters);
 
         if ($request->export === 'pdf') {
-            $pdf = Pdf::loadView('reports.daily-collection-pdf', $data);
+            $pdf = Pdf::loadView('reports.daily-collection-pdf', array_merge($data, compact('filters')));
             return $pdf->download('daily-collection-' . ($filters['date'] ?? today()->format('Y-m-d')) . '.pdf');
         }
+
+        unset($filters['export']);
 
         return view('reports.daily-collection', array_merge($data, compact('filters')));
     }

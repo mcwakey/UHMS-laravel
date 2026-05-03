@@ -3,7 +3,7 @@
 
 @section('content')
 <!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
+<div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">Patients <span class="badge badge-soft-primary fw-medium border py-1 px-2 border-primary fs-13 ms-1">Total: {{ $patients->total() }}</span></h4>
     </div>
@@ -19,9 +19,11 @@
     <div class="card-body py-2">
         <form method="GET" action="{{ route('admin.patients.index') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
+                <label class="form-label small">Search</label>
                 <input type="text" name="search" class="form-control" placeholder="Search name, phone, ID, Ghana Card..." value="{{ request('search') }}">
             </div>
             <div class="col-md-2">
+                <label class="form-label small">Gender</label>
                 <select name="gender" class="form-select">
                     <option value="">All Genders</option>
                     @foreach(\App\Enums\Gender::cases() as $gender)
@@ -30,6 +32,7 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <label class="form-label small">Blood Group</label>
                 <select name="blood_group" class="form-select">
                     <option value="">All Blood Groups</option>
                     @foreach(\App\Enums\BloodGroup::cases() as $bg)
@@ -38,9 +41,11 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <label class="form-label small">City</label>
                 <input type="text" name="city" class="form-control" placeholder="Filter by city..." value="{{ request('city') }}">
             </div>
             <div class="col-md-2">
+                <label class="form-label small">Status</label>
                 <select name="status" class="form-select">
                     <option value="">All Status</option>
                     <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>

@@ -3,7 +3,7 @@
 
 @section('content')
 <!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
+<div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">Create New Visit</h4>
     </div>
@@ -39,7 +39,7 @@
                         <label class="form-label">Search Patient <span class="text-danger">*</span></label>
                         <input type="text" id="patientSearch" class="form-control form-control-lg @error('patient_id') is-invalid @enderror"
                                placeholder="Type patient name, ID, phone, or Ghana Card number..."
-                               value="{{ $selectedPatient ? $selectedPatient->patient_number . ' â€” ' . $selectedPatient->full_name : '' }}"
+                               value="{{ $selectedPatient ? $selectedPatient->patient_number . ' - ' . $selectedPatient->full_name : '' }}"
                                autocomplete="off">
                         <input type="hidden" name="patient_id" id="patientId" value="{{ $selectedPatient?->id ?? old('patient_id') }}">
                         @error('patient_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -74,7 +74,7 @@
             <div class="card d-none" id="insuranceCard">
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Insurance</h5>
-                    <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">Default expired â€” using Cash &amp; Carry</span>
+                    <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">Default expired - using Cash &amp; Carry</span>
                 </div>
                 <div class="card-body">
                     <!-- Insurance List (radio selection) -->
@@ -250,7 +250,7 @@
                     <div id="selectedServicesCard" class="d-none">
                         <label class="form-label fw-bold"><i class="ti ti-receipt me-1"></i>Selected Services</label>
                         <div class="table-responsive">
-                            <table class="table table-sm table-bordered mb-0" id="billingTable">
+                            <table class="table table-sm table-hover table-bordered mb-0" id="billingTable">
                                 <thead class="table-light">
                                     <tr>
                                         <th>Service</th>

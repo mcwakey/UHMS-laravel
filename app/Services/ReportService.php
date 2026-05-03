@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\AdmissionStatus;
 use App\Enums\ClaimStatus;
 use App\Enums\InvoiceStatus;
+use App\Enums\PaymentMethod;
 use App\Enums\VisitStatus;
 use App\Enums\BedStatus;
 use App\Enums\PrescriptionStatus;
@@ -493,23 +494,53 @@ class ReportService
     public function dailyCollectionReport(array $filters = []): array
     {
         $date = $filters['date'] ?? today()->format('Y-m-d');
+        $paymentMethod = $filters['payment_method'] ?? null;
 
-        $payments = Payment::with(['invoice.patient', 'receivedBy'])
-            ->whereDate('paid_at', $date)
-            ->latest('paid_at')
-            ->get();
+        $baseQuery = Payment::query()->whereDate('paid_at', $date);
 
-        // Breakdown by payment method
-        $byMethod = Payment::whereDate('paid_at', $date)
+        if (!empty($paymentMethod)) {
+            $baseQuery->where('payment_method', $paymentMethod);
+        }
+
+        $paymentsQuery = (clone $baseQuery)
+            ->with(['invoice.patient', 'receivedBy'])
+            ->latest('paid_at');
+
+        $payments = !empty($filters['export'])
+            ? $paymentsQuery->get()
+            : $paymentsQuery->paginate(25)->withQueryString();
+
+        $byMethod = (clone $baseQuery)
             ->select('payment_method', DB::raw('SUM(amount) as total'), DB::raw('COUNT(*) as count'))
             ->groupBy('payment_method')
-            ->get();
+            ->orderByDesc('total')
+            ->get()
+            ->map(function ($method) {
+                $methodValue = $method->getRawOriginal('payment_method')
+                    ?? ($method->payment_method instanceof PaymentMethod ? $method->payment_method->value : $method->payment_method);
+
+                $method->payment_method = $methodValue;
+                $method->payment_method_label = PaymentMethod::tryFrom((string) $methodValue)?->label()
+                    ?? ucwords(str_replace('_', ' ', (string) $methodValue));
+                $method->total = (float) $method->total;
+                $method->count = (int) $method->count;
+
+                return $method;
+            });
 
         $stats = [
-            'total_collected' => $payments->sum('amount'),
-            'transaction_count' => $payments->count(),
-            'cash' => $byMethod->where('payment_method', 'cash')->first()?->total ?? 0,
-            'momo' => $byMethod->where('payment_method', 'mobile_money')->first()?->total ?? 0,
+            'total_collected' => $byMethod->sum('total'),
+            'total_transactions' => $byMethod->sum('count'),
+            'transaction_count' => $byMethod->sum('count'),
+            'methods' => $byMethod->count(),
+            'cash' => $byMethod->where('payment_method', PaymentMethod::CASH->value)->first()?->total ?? 0,
+            'momo' => $byMethod
+                ->whereIn('payment_method', [
+                    PaymentMethod::MTN_MOMO->value,
+                    PaymentMethod::VODAFONE_CASH->value,
+                    PaymentMethod::AIRTELTIGO_MONEY->value,
+                ])
+                ->sum('total'),
         ];
 
         return compact('payments', 'byMethod', 'stats', 'date');

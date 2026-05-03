@@ -22,6 +22,9 @@
     <!-- Template Style -->
     <link rel="stylesheet" href="{{ URL::asset('build/css/style.css') }}">
 
+    <!-- UHMS Design Rules -->
+    <link rel="stylesheet" href="{{ URL::asset('build/css/uhms-design-system.css') }}">
+
     @stack('styles')
 </head>
 <body>

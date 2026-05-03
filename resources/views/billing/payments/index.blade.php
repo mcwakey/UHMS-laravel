@@ -3,7 +3,7 @@
 
 @section('content')
 <!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
+<div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0"><i class="ti ti-cash me-2"></i>Payments</h4>
     </div>
@@ -19,7 +19,7 @@
 <!-- Stats -->
 <div class="row g-3 mb-4">
     <div class="col-md-4 col-sm-6">
-        <div class="card border-0 shadow-sm">
+        <div class="card uhms-stat-card border-0 shadow-sm">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="avatar avatar-lg bg-soft-success rounded me-3">
@@ -34,7 +34,7 @@
         </div>
     </div>
     <div class="col-md-4 col-sm-6">
-        <div class="card border-0 shadow-sm">
+        <div class="card uhms-stat-card border-0 shadow-sm">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="avatar avatar-lg bg-soft-primary rounded me-3">
@@ -49,7 +49,7 @@
         </div>
     </div>
     <div class="col-md-4 col-sm-6">
-        <div class="card border-0 shadow-sm">
+        <div class="card uhms-stat-card border-0 shadow-sm">
             <div class="card-body">
                 <div class="d-flex align-items-center">
                     <div class="avatar avatar-lg bg-soft-info rounded me-3">
@@ -70,9 +70,11 @@
     <div class="card-body py-2">
         <form method="GET" action="{{ route('admin.billing.payments.index') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
+                <label class="form-label small">Search</label>
                 <input type="text" name="search" class="form-control form-control-sm" placeholder="Search payment #, patient..." value="{{ request('search') }}">
             </div>
             <div class="col-md-2">
+                <label class="form-label small">Method</label>
                 <select name="payment_method" class="form-select form-select-sm">
                     <option value="">All Methods</option>
                     @foreach($paymentMethods as $method)
@@ -83,9 +85,11 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <label class="form-label small">From</label>
                 <input type="date" name="date_from" class="form-control form-control-sm" value="{{ request('date_from') }}" placeholder="From">
             </div>
             <div class="col-md-2">
+                <label class="form-label small">To</label>
                 <input type="date" name="date_to" class="form-control form-control-sm" value="{{ request('date_to') }}" placeholder="To">
             </div>
             <div class="col-md-3 d-flex gap-1">

@@ -3,10 +3,7 @@
 @section('title', $role . ' Dashboard')
 
 @section('content')
-<div class="page-wrapper">
-    <div class="content">
-
-        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div class="uhms-page-header d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div>
                 <h4 class="mb-1">Welcome, {{ $user->name }}</h4>
                 <p class="text-muted mb-0">{{ $role }} Dashboard &middot; {{ now()->format('l, d M Y') }}</p>
@@ -17,7 +14,7 @@
         <div class="row g-3 mb-4">
             @foreach($stats as $label => $value)
             <div class="col-sm-6 col-md-4 col-xl-3">
-                <div class="card h-100 border-0 shadow-sm">
+                <div class="card uhms-stat-card h-100 border-0 shadow-sm">
                     <div class="card-body">
                         <div class="text-muted text-uppercase small mb-1">{{ ucwords(preg_replace('/(?<!^)[A-Z]/', ' $0', $label)) }}</div>
                         <h3 class="mb-0">{{ number_format($value) }}</h3>
@@ -40,7 +37,7 @@
                             <div class="p-4 text-center text-muted">No records.</div>
                         @else
                             <div class="table-responsive">
-                                <table class="table mb-0 align-middle">
+                                <table class="table table-hover mb-0 align-middle">
                                     <tbody>
                                         @foreach($items as $item)
                                         <tr>
@@ -85,7 +82,4 @@
             </div>
         </div>
         @endif
-
-    </div>
-</div>
 @endsection

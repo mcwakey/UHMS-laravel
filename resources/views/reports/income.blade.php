@@ -2,7 +2,7 @@
 @section('title', 'Income Report')
 
 @section('content')
-<div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
+<div class="uhms-page-header d-flex align-items-sm-center justify-content-between flex-wrap gap-2">
     <div>
         <h4 class="fw-bold mb-0">Income Report</h4>
         <nav aria-label="breadcrumb">
@@ -99,7 +99,7 @@
                         <th>Patient</th>
                         <th>Invoice #</th>
                         <th>Method</th>
-                        <th>Amount</th>
+                        <th class="text-end">Amount</th>
                         <th>Received By</th>
                         <th>Date</th>
                     </tr>
@@ -119,7 +119,7 @@
                             @endif
                         </td>
                         <td><span class="badge bg-light text-dark">{{ $payment->payment_method->label() }}</span></td>
-                        <td class="fw-bold text-success">₵{{ number_format($payment->amount, 2) }}</td>
+                        <td class="text-end fw-bold text-success">₵{{ number_format($payment->amount, 2) }}</td>
                         <td>{{ $payment->receivedBy->full_name ?? '—' }}</td>
                         <td>{{ $payment->paid_at?->format('d M Y H:i') }}</td>
                     </tr>

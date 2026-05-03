@@ -70,19 +70,19 @@ class FinancialEntry extends Model
 
     public function scopeByType($query, string $type)
     {
-        return $query->where('type', $type);
+        return $query->where($this->qualifyColumn('type'), $type);
     }
 
     public function scopeByCategory($query, int $categoryId)
     {
-        return $query->where('category_id', $categoryId);
+        return $query->where($this->qualifyColumn('category_id'), $categoryId);
     }
 
     public function scopeDateRange($query, ?string $from, ?string $to)
     {
         return $query
-            ->when($from, fn ($q) => $q->where('entry_date', '>=', $from))
-            ->when($to, fn ($q) => $q->where('entry_date', '<=', $to));
+            ->when($from, fn ($q) => $q->where($this->qualifyColumn('entry_date'), '>=', $from))
+            ->when($to, fn ($q) => $q->where($this->qualifyColumn('entry_date'), '<=', $to));
     }
 
     public function scopeSearch($query, string $term)

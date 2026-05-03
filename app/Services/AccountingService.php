@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ShiftStatus;
+use App\Enums\PaymentMethod;
 use App\Models\CashierShift;
 use App\Models\FinancialEntry;
 use App\Models\Payment;
@@ -90,7 +91,7 @@ class AccountingService
 
         // Calculate expected closing from payments received during shift
         $cashPayments = Payment::where('received_by', $shift->user_id)
-            ->where('payment_method', 'cash')
+            ->where('payment_method', PaymentMethod::CASH->value)
             ->whereBetween('paid_at', [$shift->started_at, now()])
             ->sum('amount');
 
@@ -149,6 +150,7 @@ class AccountingService
         return [
             'period_income' => $totals['income'] ?? 0,
             'period_expense' => $totals['expense'] ?? 0,
+            'period_revenue' => $patientPayments,
             'period_patient_revenue' => $patientPayments,
             'period_net' => ($totals['income'] ?? 0) + $patientPayments - ($totals['expense'] ?? 0),
             'today_income' => $todayIncome,
@@ -195,26 +197,28 @@ class AccountingService
     public function getReconciliation(string $from, string $to): array
     {
         // Income by category
-        $incomeByCategory = FinancialEntry::where('type', 'income')
-            ->whereBetween('entry_date', [$from, $to])
+        $incomeByCategory = FinancialEntry::query()
+            ->byType('income')
+            ->dateRange($from, $to)
             ->join('account_categories', 'financial_entries.category_id', '=', 'account_categories.id')
-            ->selectRaw('account_categories.name as category, SUM(financial_entries.amount) as total')
+            ->selectRaw('account_categories.name as category_name, COUNT(*) as count, SUM(financial_entries.amount) as total')
             ->groupBy('account_categories.name')
             ->orderByDesc('total')
             ->get();
 
         // Expense by category
-        $expenseByCategory = FinancialEntry::where('type', 'expense')
-            ->whereBetween('entry_date', [$from, $to])
+        $expenseByCategory = FinancialEntry::query()
+            ->byType('expense')
+            ->dateRange($from, $to)
             ->join('account_categories', 'financial_entries.category_id', '=', 'account_categories.id')
-            ->selectRaw('account_categories.name as category, SUM(financial_entries.amount) as total')
+            ->selectRaw('account_categories.name as category_name, COUNT(*) as count, SUM(financial_entries.amount) as total')
             ->groupBy('account_categories.name')
             ->orderByDesc('total')
             ->get();
 
         // Patient revenue by method
         $revenueByMethod = Payment::whereBetween('paid_at', [$from, $to . ' 23:59:59'])
-            ->selectRaw("payment_method, SUM(amount) as total")
+            ->selectRaw("payment_method, COUNT(*) as count, SUM(amount) as total")
             ->groupBy('payment_method')
             ->get();
 
@@ -223,7 +227,7 @@ class AccountingService
             SELECT d.date,
                    COALESCE(inc.total, 0) as income,
                    COALESCE(exp.total, 0) as expense,
-                   COALESCE(pay.total, 0) as payments
+                     COALESCE(pay.total, 0) as revenue
             FROM (
                 SELECT DATE(entry_date) as date FROM financial_entries WHERE entry_date BETWEEN ? AND ?
                 UNION
@@ -240,6 +244,11 @@ class AccountingService
             'expense_by_category' => $expenseByCategory,
             'revenue_by_method' => $revenueByMethod,
             'daily_trend' => $dailyTrend,
+            'totals' => [
+                'income' => $incomeByCategory->sum('total'),
+                'expense' => $expenseByCategory->sum('total'),
+                'revenue' => $revenueByMethod->sum('total'),
+            ],
             'total_income' => $incomeByCategory->sum('total'),
             'total_expense' => $expenseByCategory->sum('total'),
             'total_revenue' => $revenueByMethod->sum('total'),

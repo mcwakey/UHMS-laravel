@@ -3,7 +3,7 @@
 
 @section('content')
 <!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
+<div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0"><i class="ti ti-microscope me-2"></i>Investigation Requests</h4>
     </div>
@@ -50,9 +50,11 @@
     <div class="card-body py-2">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-md-3">
+                <label class="form-label small">Search</label>
                 <input type="text" name="search" class="form-control" placeholder="Search patient, request #..." value="{{ request('search') }}">
             </div>
             <div class="col-md-2">
+                <label class="form-label small">Status</label>
                 <select name="status" class="form-select">
                     <option value="">All Status</option>
                     <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending</option>
@@ -62,6 +64,7 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <label class="form-label small">Department</label>
                 <select name="department_id" class="form-select">
                     <option value="">All Departments</option>
                     @foreach($departments as $dept)
@@ -70,6 +73,7 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <label class="form-label small">Urgency</label>
                 <select name="urgency" class="form-select">
                     <option value="">All Urgency</option>
                     <option value="routine" {{ request('urgency') === 'routine' ? 'selected' : '' }}>Routine</option>
@@ -78,14 +82,16 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <label class="form-label small">From</label>
                 <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}" placeholder="From">
             </div>
             <div class="col-md-2">
+                <label class="form-label small">To</label>
                 <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}" placeholder="To">
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-primary btn-md"><i class="ti ti-search me-1"></i>Filter</button>
-                <a href="{{ route('admin.lab.requests.index') }}" class="btn btn-outline-secondary btn-md">Clear</a>
+                <a href="{{ route('admin.lab.requests.index') }}" class="btn btn-outline-secondary btn-md"><i class="ti ti-x me-1"></i>Clear</a>
             </div>
         </form>
     </div>

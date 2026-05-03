@@ -243,7 +243,7 @@ class AppointmentController extends Controller
     public function calendar(Request $request)
     {
         $from = $request->get('from', now()->startOfWeek()->toDateString());
-        $to = $request->get('to', now()->endOfWeek()->toDateString());
+        $to = \Carbon\Carbon::parse($from)->addDays(13)->toDateString();
 
         $calendarData = $this->appointmentService->getCalendarData($from, $to, $request->all());
 

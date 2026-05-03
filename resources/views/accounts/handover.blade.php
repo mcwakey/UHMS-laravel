@@ -3,7 +3,7 @@
 
 @section('content')
 <!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
+<div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">Cashier Handover</h4>
     </div>
@@ -17,7 +17,7 @@
 @endif
 
 <!-- Current Shift -->
-<div class="row mb-3">
+<div class="row g-3 mb-3">
     <div class="col-lg-6">
         <div class="card border-{{ $openShift ? 'success' : 'secondary' }}">
             <div class="card-header bg-{{ $openShift ? 'success' : 'secondary' }} bg-opacity-10">
@@ -82,7 +82,8 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="card-title mb-0">Shift History</h5>
         <form method="GET" action="{{ route('admin.accounts.handover.index') }}" class="d-flex gap-2">
-            <select name="status" class="form-select form-select-sm" style="width:120px;" onchange="this.form.submit()">
+            <label class="visually-hidden" for="shiftStatusFilter">Status</label>
+            <select id="shiftStatusFilter" name="status" class="form-select form-select-sm" style="width:120px;" onchange="this.form.submit()">
                 <option value="">All Status</option>
                 <option value="open" {{ request('status') == 'open' ? 'selected' : '' }}>Open</option>
                 <option value="closed" {{ request('status') == 'closed' ? 'selected' : '' }}>Closed</option>
