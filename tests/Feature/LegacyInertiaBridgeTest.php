@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Department;
+use App\Models\Patient;
 use App\Models\User;
+use App\Models\Visit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -26,7 +28,14 @@ class LegacyInertiaBridgeTest extends TestCase
 
         Role::findOrCreate('Doctor', 'web');
         $role = Role::findOrCreate('Inertia Bridge Tester', 'web');
-        $role->givePermissionTo(Permission::findOrCreate('appointments.view', 'web'));
+
+        foreach ([
+            'appointments.view',
+            'consultations.view',
+            'consultations.create',
+        ] as $permission) {
+            $role->givePermissionTo(Permission::findOrCreate($permission, 'web'));
+        }
 
         $this->user->assignRole($role);
     }
@@ -91,6 +100,47 @@ class LegacyInertiaBridgeTest extends TestCase
         $response->assertOk()->assertJson([]);
     }
 
+    public function test_inertia_complaint_submission_redirects_instead_of_returning_plain_json(): void
+    {
+        $version = $this->inertiaVersion();
+        $visit = $this->createVisit();
+
+        $response = $this->actingAs($this->user)
+            ->from(route('admin.consultations.show', $visit))
+            ->withHeaders([
+                'X-Inertia' => 'true',
+                'X-Inertia-Version' => $version,
+                'X-Requested-With' => 'XMLHttpRequest',
+            ])
+            ->post(route('admin.consultations.complaints.store', $visit), [
+                'description' => 'headache',
+            ]);
+
+        $response->assertRedirect(route('admin.consultations.show', $visit));
+        $response->assertSessionHas('success', 'Complaint added.');
+
+        $this->assertDatabaseHas('complaints', [
+            'description' => 'headache',
+        ]);
+    }
+
+    public function test_non_inertia_ajax_complaint_submission_still_returns_json(): void
+    {
+        $visit = $this->createVisit();
+
+        $response = $this->actingAs($this->user)
+            ->withHeaders([
+                'X-Requested-With' => 'XMLHttpRequest',
+            ])
+            ->post(route('admin.consultations.complaints.store', $visit), [
+                'description' => 'headache',
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('complaint.description', 'headache');
+    }
+
     private function inertiaVersion(): string
     {
         $response = $this->actingAs($this->user)->get(route('admin.appointments.index'));
@@ -98,5 +148,16 @@ class LegacyInertiaBridgeTest extends TestCase
         preg_match('/"version":"([^"]+)"/', $response->getContent(), $matches);
 
         return $matches[1] ?? '';
+    }
+
+    private function createVisit(): Visit
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+
+        return Visit::factory()->create([
+            'patient_id' => $patient->id,
+            'assigned_doctor_id' => $this->user->id,
+            'created_by' => $this->user->id,
+        ]);
     }
 }

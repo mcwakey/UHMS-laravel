@@ -31,6 +31,11 @@ class ConsultationController extends Controller
         protected MedicalPatternService $patternService,
         protected LabService $labService,
     ) {}
+    
+    private function shouldReturnJson(Request $request): bool
+    {
+        return $request->ajax() && ! $request->headers->has('X-Inertia');
+    }
 
     /**
      * List consultable visits (today's consulting visits).
@@ -157,7 +162,7 @@ class ConsultationController extends Controller
         $record = $this->consultationService->getOrCreateRecord($visit);
         $complaint = $this->consultationService->addComplaint($record, $request->only('description', 'duration', 'severity'));
 
-        if ($request->ajax()) {
+        if ($this->shouldReturnJson($request)) {
             return response()->json(['success' => true, 'complaint' => $complaint]);
         }
 
@@ -168,7 +173,7 @@ class ConsultationController extends Controller
     {
         $this->consultationService->deleteComplaint($complaint);
 
-        if (request()->ajax()) {
+        if ($this->shouldReturnJson(request())) {
             return response()->json(['success' => true]);
         }
 
@@ -194,7 +199,7 @@ class ConsultationController extends Controller
         $record = $this->consultationService->getOrCreateRecord($visit);
         $diagnosis = $this->consultationService->addDiagnosis($record, $request->only('description', 'icd_code', 'icd_code_id', 'type', 'notes'));
 
-        if ($request->ajax()) {
+        if ($this->shouldReturnJson($request)) {
             return response()->json(['success' => true, 'diagnosis' => $diagnosis]);
         }
 
@@ -205,7 +210,7 @@ class ConsultationController extends Controller
     {
         $this->consultationService->deleteDiagnosis($diagnosis);
 
-        if (request()->ajax()) {
+        if ($this->shouldReturnJson(request())) {
             return response()->json(['success' => true]);
         }
 
@@ -223,7 +228,7 @@ class ConsultationController extends Controller
 
         $this->consultationService->updateDiagnosis($diagnosis, $request->only('type'));
 
-        if ($request->ajax()) {
+        if ($this->shouldReturnJson($request)) {
             return response()->json(['success' => true, 'type' => $diagnosis->fresh()->type]);
         }
 
@@ -237,7 +242,7 @@ class ConsultationController extends Controller
     {
         $this->consultationService->setPrimaryDiagnosis($diagnosis);
 
-        if (request()->ajax()) {
+        if ($this->shouldReturnJson(request())) {
             return response()->json(['success' => true]);
         }
 
@@ -321,7 +326,7 @@ class ConsultationController extends Controller
             ]);
         }
 
-        if ($request->ajax()) {
+        if ($this->shouldReturnJson($request)) {
             return response()->json(['success' => true, 'investigations' => $created, 'count' => count($created)]);
         }
 
@@ -332,7 +337,7 @@ class ConsultationController extends Controller
     {
         $this->consultationService->deleteInvestigation($investigation);
 
-        if (request()->ajax()) {
+        if ($this->shouldReturnJson(request())) {
             return response()->json(['success' => true]);
         }
 
@@ -355,7 +360,7 @@ class ConsultationController extends Controller
         $record = $this->consultationService->getOrCreateRecord($visit);
         $treatment = $this->consultationService->addTreatment($record, $request->only('type', 'description'));
 
-        if ($request->ajax()) {
+        if ($this->shouldReturnJson($request)) {
             return response()->json(['success' => true, 'treatment' => $treatment]);
         }
 
@@ -366,7 +371,7 @@ class ConsultationController extends Controller
     {
         $this->consultationService->deleteTreatment($treatment);
 
-        if (request()->ajax()) {
+        if ($this->shouldReturnJson(request())) {
             return response()->json(['success' => true]);
         }
 
@@ -384,7 +389,7 @@ class ConsultationController extends Controller
         $record = $this->consultationService->getOrCreateRecord($visit);
         $prescription = $this->prescriptionService->create($record, $request->validated());
 
-        if ($request->ajax()) {
+        if ($this->shouldReturnJson($request)) {
             return response()->json(['success' => true, 'prescription' => $prescription->load('items')]);
         }
 
@@ -398,7 +403,7 @@ class ConsultationController extends Controller
         // Only allow deletion of pending/active prescriptions
         $allowedStatuses = ['pending', 'active'];
         if (!in_array($prescription->status->value, $allowedStatuses)) {
-            if (request()->ajax()) {
+            if ($this->shouldReturnJson(request())) {
                 return response()->json(['success' => false, 'message' => 'Cannot delete a dispensed or cancelled prescription.'], 422);
             }
             return back()->with('error', 'Cannot delete a dispensed or cancelled prescription.');
@@ -407,7 +412,7 @@ class ConsultationController extends Controller
         $prescription->items()->delete();
         $prescription->delete();
 
-        if (request()->ajax()) {
+        if ($this->shouldReturnJson(request())) {
             return response()->json(['success' => true]);
         }
 
@@ -472,7 +477,7 @@ class ConsultationController extends Controller
             $request->only('target_department_id', 'urgency', 'clinical_info')
         );
 
-        if ($request->ajax()) {
+        if ($this->shouldReturnJson($request)) {
             return response()->json(['success' => true, 'labRequest' => $labRequest]);
         }
 
