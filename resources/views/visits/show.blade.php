@@ -22,6 +22,11 @@
             <i class="ti ti-plus me-1"></i>New Visit for Patient
         </a>
         @endcan
+        @can('invoices.create')
+        <a href="{{ route('admin.billing.invoices.create', ['visit_id' => $visit->id]) }}" class="btn btn-success btn-md">
+            <i class="ti ti-file-invoice me-1"></i>Bill Visit
+        </a>
+        @endcan
     </div>
 </div>
 

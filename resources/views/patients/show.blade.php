@@ -563,8 +563,17 @@
                 @php
                     $allInvoices = $patient->visits->flatMap->invoices;
                     $totalBilled = $allInvoices->sum('total_amount');
-                    $totalPaid = $allInvoices->sum('paid_amount');
+                    $totalPaid = $allInvoices->sum('amount_paid');
                     $totalOutstanding = $totalBilled - $totalPaid;
+                    $invoicedServiceKeys = $allInvoices
+                        ->flatMap(fn ($invoice) => $invoice->items->map(fn ($item) => $invoice->visit_id . ':' . $item->service_catalog_id))
+                        ->filter(fn ($key) => ! str_ends_with($key, ':'))
+                        ->flip();
+                    $unbilledVisitServices = $patient->visits->flatMap(function ($visit) use ($invoicedServiceKeys) {
+                        return $visit->visitServices
+                            ->filter(fn ($service) => ! $invoicedServiceKeys->has($visit->id . ':' . $service->service_catalog_id))
+                            ->map(fn ($service) => ['visit' => $visit, 'service' => $service]);
+                    });
                 @endphp
                 <div class="row mb-4">
                     <div class="col-md-4">
@@ -587,6 +596,43 @@
                     </div>
                 </div>
 
+                @if($unbilledVisitServices->isNotEmpty())
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h6 class="fw-bold mb-0">Uninvoiced Visit Services</h6>
+                    <span class="badge bg-warning text-dark">{{ $unbilledVisitServices->count() }} pending</span>
+                </div>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Visit</th>
+                                <th>Service</th>
+                                <th>Department</th>
+                                <th class="text-end">Amount</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($unbilledVisitServices as $row)
+                            <tr>
+                                <td>{{ $row['visit']->visit_number }}</td>
+                                <td>{{ $row['service']->serviceCatalog?->name ?? 'Service' }}</td>
+                                <td>{{ $row['service']->department?->name ?? '—' }}</td>
+                                <td class="text-end">&#8373;{{ number_format($row['service']->total_price, 2) }}</td>
+                                <td class="text-end">
+                                    @can('invoices.create')
+                                    <a href="{{ route('admin.billing.invoices.create', ['visit_id' => $row['visit']->id]) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="ti ti-file-invoice me-1"></i>Create Invoice
+                                    </a>
+                                    @endcan
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                @endif
+
                 @if($allInvoices->isNotEmpty())
                 <h6 class="fw-bold mb-2">Recent Invoices</h6>
                 <div class="table-responsive">
@@ -608,7 +654,7 @@
                                 <td>{{ $inv->visit?->visit_number ?? '—' }}</td>
                                 <td>{{ $inv->created_at->format('d M Y') }}</td>
                                 <td>&#8373;{{ number_format($inv->total_amount, 2) }}</td>
-                                <td>&#8373;{{ number_format($inv->paid_amount, 2) }}</td>
+                                <td>&#8373;{{ number_format($inv->amount_paid, 2) }}</td>
                                 <td><span class="badge badge-soft-{{ ($inv->status instanceof \BackedEnum ? $inv->status->value : $inv->status) === 'paid' ? 'success' : (($inv->status instanceof \BackedEnum ? $inv->status->value : $inv->status) === 'partial' ? 'warning' : 'danger') }}">{{ ucfirst($inv->status instanceof \BackedEnum ? $inv->status->value : $inv->status) }}</span></td>
                             </tr>
                             @endforeach

@@ -56,7 +56,18 @@ class AppServiceProvider extends ServiceProvider
 
         // Super Admin bypasses all permission checks
         Gate::before(function ($user, $ability) {
-            return $user->hasRole('Super Admin') ? true : null;
+            if ($user->hasRole('Super Admin')) {
+                return true;
+            }
+
+            if (str_starts_with((string) $ability, 'departments.')
+                && $ability !== 'departments.manage'
+                && method_exists($user, 'hasPermissionTo')
+                && $user->getAllPermissions()->contains('name', 'departments.manage')) {
+                return true;
+            }
+
+            return null;
         });
 
         // Register event listeners for notifications

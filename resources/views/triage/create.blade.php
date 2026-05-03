@@ -149,16 +149,17 @@
                     <div class="mb-3">
                         <label class="form-label">Assign to Consultation Department <span class="text-muted small">(optional but recommended)</span></label>
                         <select name="department_id" class="form-select @error('department_id') is-invalid @enderror">
-                            <option value="">— Select department —</option>
+                            @php $selectedDepartmentId = old('department_id', $visit->triage?->department_id); @endphp
+                            <option value="">{{ $consultationDepts->isEmpty() ? 'No billed consultation departments available' : '— Select department —' }}</option>
                             @foreach($consultationDepts as $dept)
-                                <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>
+                                <option value="{{ $dept->id }}" {{ (string) $selectedDepartmentId === (string) $dept->id ? 'selected' : '' }}>
                                     {{ $dept->name }}
                                     @if($dept->type)  ({{ $dept->type->label() }})@endif
                                 </option>
                             @endforeach
                         </select>
                         @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        <div class="form-text">If selected, a consultation billing line will be created and the patient will be added to that department's queue.</div>
+                        <div class="form-text">Only consultation departments from services already attached to this visit are listed.</div>
                     </div>
 
                     <div class="mb-3">

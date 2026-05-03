@@ -4,16 +4,21 @@ namespace Tests\Feature;
 
 use App\Enums\AppointmentStatus;
 use App\Enums\BillingType;
+use App\Enums\DepartmentType;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentMethod;
+use App\Enums\ShiftStatus;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Models\Appointment;
+use App\Models\CashierShift;
 use App\Models\Department;
 use App\Models\Invoice;
 use App\Models\Patient;
+use App\Models\ServiceCatalog;
 use App\Models\User;
 use App\Models\Visit;
+use App\Services\VisitService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -32,7 +37,7 @@ class WorkflowJsonResponsesTest extends TestCase
 
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $this->department = Department::factory()->create();
+        $this->department = Department::factory()->create(['type' => DepartmentType::CONSULTATION]);
         $this->user = User::factory()->create(['department_id' => $this->department->id]);
 
         Role::findOrCreate('Accountant', 'web');
@@ -50,6 +55,7 @@ class WorkflowJsonResponsesTest extends TestCase
             'payments.view',
             'payments.create',
             'invoices.view',
+            'invoices.create',
         ] as $permission) {
             $role->givePermissionTo(Permission::findOrCreate($permission, 'web'));
         }
@@ -91,6 +97,11 @@ class WorkflowJsonResponsesTest extends TestCase
             'current_department_id' => null,
             'status' => VisitStatus::TRIAGE,
         ]);
+        $service = $this->createService($this->department, 'General Consultation');
+        app(VisitService::class)->attachServices($visit, [[
+            'service_catalog_id' => $service->id,
+            'quantity' => 1,
+        ]]);
 
         $response = $this->actingAs($this->user)->postJson(route('admin.triage.store', $visit), [
             'blood_pressure_systolic' => 120,
@@ -107,10 +118,75 @@ class WorkflowJsonResponsesTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('visit_id', $visit->id)
-            ->assertJsonPath('status', VisitStatus::WAITING_CONSULTATION->value)
+            ->assertJsonPath('status', VisitStatus::CONSULTING->value)
             ->assertJsonPath('redirect_url', route('admin.visits.show', $visit));
 
-        $this->assertSame(VisitStatus::WAITING_CONSULTATION, $visit->status);
+        $this->assertSame(VisitStatus::CONSULTING, $visit->status);
+        $this->assertDatabaseHas('vitals', [
+            'visit_id' => $visit->id,
+            'patient_id' => $patient->id,
+            'blood_pressure_systolic' => 120,
+            'blood_pressure_diastolic' => 80,
+            'heart_rate' => 78,
+            'spo2' => 98,
+        ]);
+    }
+
+    public function test_triage_assessment_only_lists_billed_consultation_departments(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+        $billedDepartment = $this->department;
+        $unbilledDepartment = Department::factory()->create([
+            'name' => 'Unbilled Consultation',
+            'type' => DepartmentType::CONSULTATION,
+        ]);
+        $investigationDepartment = Department::factory()->create([
+            'name' => 'Radiology',
+            'type' => DepartmentType::RADIOLOGY,
+        ]);
+
+        $visit = Visit::factory()->create([
+            'patient_id' => $patient->id,
+            'created_by' => $this->user->id,
+            'status' => VisitStatus::TRIAGE,
+        ]);
+
+        $service = $this->createService($billedDepartment, 'General Consultation');
+        app(VisitService::class)->attachServices($visit, [[
+            'service_catalog_id' => $service->id,
+            'quantity' => 1,
+        ]]);
+        $this->createService($unbilledDepartment, 'Unbilled Consultation Service');
+        $this->createService($investigationDepartment, 'X-Ray', 'lab');
+
+        $response = $this->actingAs($this->user)->get(route('admin.triage.create', $visit));
+
+        $response->assertOk()
+            ->assertSee($billedDepartment->name)
+            ->assertDontSee($unbilledDepartment->name)
+            ->assertDontSee($investigationDepartment->name);
+    }
+
+    public function test_invoice_create_prefills_selected_visit_services(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+        $visit = Visit::factory()->create([
+            'patient_id' => $patient->id,
+            'created_by' => $this->user->id,
+            'status' => VisitStatus::TRIAGE,
+        ]);
+        $service = $this->createService($this->department, 'General Consultation');
+
+        app(VisitService::class)->attachServices($visit, [[
+            'service_catalog_id' => $service->id,
+            'quantity' => 2,
+        ]]);
+
+        $response = $this->actingAs($this->user)->get(route('admin.billing.invoices.create', ['visit_id' => $visit->id]));
+
+        $response->assertOk()
+            ->assertSee('General Consultation')
+            ->assertSee('value=\\"2\\"', false);
     }
 
     public function test_appointment_check_in_returns_json_and_creates_visit(): void
@@ -204,6 +280,14 @@ class WorkflowJsonResponsesTest extends TestCase
             'created_by' => $this->user->id,
         ]);
 
+        CashierShift::create([
+            'user_id' => $this->user->id,
+            'shift_date' => now()->toDateString(),
+            'started_at' => now(),
+            'opening_balance' => 0,
+            'status' => ShiftStatus::OPEN,
+        ]);
+
         $response = $this->actingAs($this->user)->postJson(route('admin.billing.payments.store', $invoice), [
             'amount' => 100.00,
             'payment_method' => PaymentMethod::CASH->value,
@@ -221,5 +305,18 @@ class WorkflowJsonResponsesTest extends TestCase
 
         $this->assertSame(InvoiceStatus::PAID, $invoice->status);
         $this->assertSame(VisitStatus::COMPLETED, $visit->status);
+    }
+
+    private function createService(Department $department, string $name, string $category = 'consultation'): ServiceCatalog
+    {
+        return ServiceCatalog::create([
+            'name' => $name,
+            'code' => strtoupper(substr(md5($name), 0, 8)),
+            'category' => $category,
+            'price' => 100.00,
+            'is_active' => true,
+            'department_id' => $department->id,
+            'department_type' => $department->type?->value,
+        ]);
     }
 }

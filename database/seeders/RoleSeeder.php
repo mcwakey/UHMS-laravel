@@ -76,6 +76,9 @@ class RoleSeeder extends Seeder
             // Departments
             'departments.view',
             'departments.manage',
+            'departments.create',
+            'departments.edit',
+            'departments.delete',
 
             // Appointments
             'appointments.view',

@@ -51,12 +51,17 @@ class ConsultationController extends Controller
             $filters['date_to'] = $filters['date_to'] ?? today()->toDateString();
         }
 
-        $query = Visit::with(['patient', 'assignedDoctor', 'medicalRecord'])
+        $query = Visit::with(['patient', 'assignedDoctor', 'medicalRecord', 'currentDepartment'])
             ->whereIn('status', [
                 VisitStatus::CONSULTING->value,
                 VisitStatus::TRIAGE->value,
                 VisitStatus::LAB->value,
             ]);
+
+        $user = Auth::user();
+        if ($user && ! $user->hasAnyRole(['Super Admin', 'Admin']) && $user->department_id) {
+            $query->where('current_department_id', $user->department_id);
+        }
 
         if (!empty($filters['search'])) {
             $query->search($filters['search']);
@@ -77,8 +82,6 @@ class ConsultationController extends Controller
         if ($request->boolean('my_patients')) {
             $query->where('assigned_doctor_id', Auth::id());
         }
-
-        // No department column on visits — filter by status instead (done above)
 
         $visits = $query->latest()->paginate(15);
 

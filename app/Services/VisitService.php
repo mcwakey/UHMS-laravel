@@ -6,6 +6,7 @@ use App\Enums\TriageScore;
 use App\Enums\VisitStatus;
 use App\Models\Patient;
 use App\Models\Triage;
+use App\Models\Vital;
 use App\Models\VisitDepartmentHistory;
 use App\Models\Visit;
 use App\Models\VisitServiceItem;
@@ -408,7 +409,7 @@ class VisitService
         $score = TriageScore::compute($data);
 
         // Store (or update) triage record
-        Triage::updateOrCreate(
+        $triage = Triage::updateOrCreate(
             ['visit_id' => $visit->id],
             array_merge($data, [
                 'patient_id' => $visit->patient_id,
@@ -418,14 +419,15 @@ class VisitService
             ])
         );
 
+        $this->syncTriageVitalRecord($triage, $data);
+
         // Save score on the visit itself
         $visit->update(['triage_score' => $score->value]);
 
         // Determine next visit status based on triage score
         $nextStatus = match ($score) {
             TriageScore::EMERGENCY => VisitStatus::EMERGENCY,
-            TriageScore::URGENT    => VisitStatus::WAITING_CONSULTATION, // still routed through consult queue
-            default                => VisitStatus::WAITING_CONSULTATION,
+            default                => VisitStatus::CONSULTING,
         };
 
         // Assign consultation department if provided
@@ -579,6 +581,34 @@ class VisitService
                 'completed_at' => now(),
             ]);
         }
+    }
+
+    private function syncTriageVitalRecord(Triage $triage, array $data): void
+    {
+        $vitalFields = [
+            'blood_pressure_systolic',
+            'blood_pressure_diastolic',
+            'heart_rate',
+            'temperature',
+            'respiratory_rate',
+            'spo2',
+            'weight',
+            'height',
+            'bmi',
+            'notes',
+        ];
+
+        $vitals = array_intersect_key($data, array_flip($vitalFields));
+
+        Vital::updateOrCreate(
+            ['triage_id' => $triage->id],
+            array_merge($vitals, [
+                'visit_id' => $triage->visit_id,
+                'patient_id' => $triage->patient_id,
+                'recorded_by' => $triage->triaged_by,
+                'recorded_at' => $triage->triaged_at ?? now(),
+            ])
+        );
     }
 
     /**

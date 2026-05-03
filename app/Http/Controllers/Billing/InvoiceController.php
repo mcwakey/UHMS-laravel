@@ -62,16 +62,22 @@ class InvoiceController extends Controller
         $suggestedItems = [];
 
         if ($request->filled('visit_id')) {
-            $visit = Visit::with(['patient', 'labRequests.items.labTest', 'prescriptions.items.drug'])
+            $visit = Visit::with(['patient', 'visitServices.serviceCatalog', 'labRequests.items.labTest', 'prescriptions.items.drug'])
                 ->findOrFail($request->visit_id);
             $suggestedItems = $this->billingService->generateItemsFromVisit($visit);
         }
+
+        $billableVisits = Visit::with(['patient', 'visitServices.serviceCatalog'])
+            ->whereHas('visitServices')
+            ->latest('visit_date')
+            ->limit(100)
+            ->get();
 
         $services = ServiceCatalog::active()->orderBy('category')->orderBy('name')->get();
         $patients = Patient::orderBy('first_name')->get();
         $billingTypes = BillingType::cases();
 
-        return view('billing.invoices.create', compact('visit', 'suggestedItems', 'services', 'patients', 'billingTypes'));
+        return view('billing.invoices.create', compact('visit', 'suggestedItems', 'billableVisits', 'services', 'patients', 'billingTypes'));
     }
 
     /**

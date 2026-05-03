@@ -402,9 +402,9 @@ Route::middleware('auth')->group(function () {
         // Departments
         Route::middleware('can:departments.view')->group(function () {
             Route::get('departments', [DepartmentController::class, 'index'])->name('departments.index');
-            Route::post('departments', [DepartmentController::class, 'store'])->name('departments.store')->middleware('can:departments.manage');
-            Route::put('departments/{department}', [DepartmentController::class, 'update'])->name('departments.update')->middleware('can:departments.manage');
-            Route::delete('departments/{department}', [DepartmentController::class, 'destroy'])->name('departments.destroy')->middleware('can:departments.manage');
+            Route::post('departments', [DepartmentController::class, 'store'])->name('departments.store')->middleware('can:departments.create');
+            Route::put('departments/{department}', [DepartmentController::class, 'update'])->name('departments.update')->middleware('can:departments.edit');
+            Route::delete('departments/{department}', [DepartmentController::class, 'destroy'])->name('departments.destroy')->middleware('can:departments.delete');
         });
 
         // Designations

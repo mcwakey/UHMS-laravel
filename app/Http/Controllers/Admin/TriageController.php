@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\DepartmentType;
 use App\Enums\VisitStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Visit;
 use App\Services\VisitService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Validation\Rule;
 
 class TriageController extends Controller
 {
@@ -26,18 +29,9 @@ class TriageController extends Controller
                 ->with('error', 'This visit is not in TRIAGE status.');
         }
 
-        $visit->load(['patient', 'triage', 'currentDepartment']);
+        $visit->load(['patient', 'triage', 'currentDepartment', 'visitServices.department']);
 
-        // Consultation departments for the department selector
-        $consultationDepts = Department::where('type', \App\Enums\DepartmentType::CONSULTATION)
-            ->active()
-            ->orderBy('name')
-            ->get();
-
-        // Fallback: get all active departments if none tagged as consultation
-        if ($consultationDepts->isEmpty()) {
-            $consultationDepts = Department::active()->orderBy('name')->get();
-        }
+        $consultationDepts = $this->billableConsultationDepartmentsForVisit($visit);
 
         return view('triage.create', compact('visit', 'consultationDepts'));
     }
@@ -60,6 +54,8 @@ class TriageController extends Controller
                 ->with('error', 'This visit is not in TRIAGE status.');
         }
 
+        $consultationDeptIds = $this->billableConsultationDepartmentsForVisit($visit)->pluck('id')->all();
+
         $validated = $request->validate([
             'blood_pressure_systolic'  => ['nullable', 'integer', 'min:40', 'max:300'],
             'blood_pressure_diastolic' => ['nullable', 'integer', 'min:20', 'max:200'],
@@ -69,8 +65,10 @@ class TriageController extends Controller
             'spo2'                     => ['nullable', 'integer', 'min:50', 'max:100'],
             'weight'                   => ['nullable', 'numeric', 'min:0.5', 'max:500'],
             'height'                   => ['nullable', 'numeric', 'min:20', 'max:250'],
-            'department_id'            => ['nullable', 'exists:departments,id'],
+            'department_id'            => ['nullable', Rule::in($consultationDeptIds)],
             'notes'                    => ['nullable', 'string', 'max:1000'],
+        ], [
+            'department_id.in' => 'Select one of the consultation departments billed on this visit.',
         ]);
 
         // Auto-calculate BMI if weight and height provided
@@ -144,5 +142,19 @@ class TriageController extends Controller
             ->get();
 
         return view('triage.index', compact('visits', 'waitingConsultation'));
+    }
+
+    private function billableConsultationDepartmentsForVisit(Visit $visit): Collection
+    {
+        $visit->loadMissing('visitServices.department');
+
+        return $visit->visitServices
+            ->pluck('department')
+            ->filter(fn (?Department $department) => $department
+                && $department->isActive()
+                && $department->type === DepartmentType::CONSULTATION)
+            ->unique('id')
+            ->sortBy('name')
+            ->values();
     }
 }

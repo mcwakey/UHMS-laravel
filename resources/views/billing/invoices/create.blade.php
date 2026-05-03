@@ -37,6 +37,11 @@
                     @else
                         <select name="visit_id" id="visitSelect" class="form-select @error('visit_id') is-invalid @enderror" required>
                             <option value="">Select a visit...</option>
+                            @foreach($billableVisits as $billableVisit)
+                            <option value="{{ $billableVisit->id }}" data-patient-id="{{ $billableVisit->patient_id }}">
+                                {{ $billableVisit->visit_number }} — {{ $billableVisit->patient?->full_name }} — {{ $billableVisit->visit_date?->format('d M Y') }} ({{ $billableVisit->visitServices->count() }} service{{ $billableVisit->visitServices->count() === 1 ? '' : 's' }})
+                            </option>
+                            @endforeach
                         </select>
                         <input type="hidden" name="patient_id" id="patientIdInput">
                         @error('visit_id')
@@ -245,6 +250,12 @@ $(function() {
 
     // Recalculate on input changes
     $(document).on('input change', '.qty-input, .price-input, .nhis-amount, .nhis-check, #taxInput, #discountInput', recalculate);
+
+    $('#visitSelect').on('change', function() {
+        if (this.value) {
+            window.location.href = '{{ route("admin.billing.invoices.create") }}?visit_id=' + encodeURIComponent(this.value);
+        }
+    });
 
     // Service select auto-fills price
     $(document).on('change', '.service-select', function() {

@@ -67,6 +67,11 @@ class Triage extends Model
         return $this->belongsTo(User::class, 'triaged_by');
     }
 
+    public function vital()
+    {
+        return $this->hasOne(Vital::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Accessors

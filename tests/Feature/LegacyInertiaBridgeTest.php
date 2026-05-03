@@ -141,6 +141,92 @@ class LegacyInertiaBridgeTest extends TestCase
             ->assertJsonPath('complaint.description', 'headache');
     }
 
+    public function test_inertia_diagnosis_submission_redirects_instead_of_returning_plain_json(): void
+    {
+        $version = $this->inertiaVersion();
+        $visit = $this->createVisit();
+
+        $response = $this->actingAs($this->user)
+            ->from(route('admin.consultations.show', $visit))
+            ->withHeaders([
+                'X-Inertia' => 'true',
+                'X-Inertia-Version' => $version,
+                'X-Requested-With' => 'XMLHttpRequest',
+            ])
+            ->post(route('admin.consultations.diagnoses.store', $visit), [
+                'description' => 'Migraine',
+                'type' => 'provisional',
+            ]);
+
+        $response->assertRedirect(route('admin.consultations.show', $visit));
+        $response->assertSessionHas('success', 'Diagnosis added.');
+
+        $this->assertDatabaseHas('diagnoses', [
+            'description' => 'Migraine',
+        ]);
+    }
+
+    public function test_non_inertia_ajax_diagnosis_submission_still_returns_json(): void
+    {
+        $visit = $this->createVisit();
+
+        $response = $this->actingAs($this->user)
+            ->withHeaders([
+                'X-Requested-With' => 'XMLHttpRequest',
+            ])
+            ->post(route('admin.consultations.diagnoses.store', $visit), [
+                'description' => 'Migraine',
+                'type' => 'provisional',
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('diagnosis.description', 'Migraine');
+    }
+
+    public function test_inertia_treatment_submission_redirects_instead_of_returning_plain_json(): void
+    {
+        $version = $this->inertiaVersion();
+        $visit = $this->createVisit();
+
+        $response = $this->actingAs($this->user)
+            ->from(route('admin.consultations.show', $visit))
+            ->withHeaders([
+                'X-Inertia' => 'true',
+                'X-Inertia-Version' => $version,
+                'X-Requested-With' => 'XMLHttpRequest',
+            ])
+            ->post(route('admin.consultations.treatments.store', $visit), [
+                'type' => 'medication',
+                'description' => 'Paracetamol and rest',
+            ]);
+
+        $response->assertRedirect(route('admin.consultations.show', $visit));
+        $response->assertSessionHas('success', 'Treatment added.');
+
+        $this->assertDatabaseHas('treatments', [
+            'description' => 'Paracetamol and rest',
+        ]);
+    }
+
+    public function test_non_inertia_ajax_treatment_submission_still_returns_json(): void
+    {
+        $visit = $this->createVisit();
+
+        $response = $this->actingAs($this->user)
+            ->withHeaders([
+                'X-Requested-With' => 'XMLHttpRequest',
+            ])
+            ->post(route('admin.consultations.treatments.store', $visit), [
+                'type' => 'medication',
+                'description' => 'Paracetamol and rest',
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('treatment.description', 'Paracetamol and rest');
+    }
+
     private function inertiaVersion(): string
     {
         $response = $this->actingAs($this->user)->get(route('admin.appointments.index'));
