@@ -2,25 +2,39 @@
 
 namespace Database\Seeders;
 
+use App\Enums\InsuranceType;
 use App\Models\InsuranceProvider;
+use App\Models\InsuranceTier;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class CashAndCarrySeeder extends Seeder
 {
     public function run(): void
     {
-        InsuranceProvider::firstOrCreate(
-            ['name' => 'Cash & Carry'],
-            [
-                'short_name' => 'C&C',
-                'type' => 'private',
-                'is_active' => true,
-                'is_default' => true,
-                'annual_limit' => null,
-                'per_visit_limit' => null,
-                'coverage_percentage' => 100.00,
-                'tier' => 'default',
-            ]
-        );
+        DB::transaction(function () {
+            $provider = InsuranceProvider::updateOrCreate(
+                ['name' => 'Cash & Carry'],
+                [
+                    'short_name' => 'C&C',
+                    'type' => InsuranceType::PRIVATE->value,
+                    'is_active' => true,
+                    'is_default' => true,
+                ]
+            );
+
+            InsuranceTier::updateOrCreate(
+                [
+                    'insurance_provider_id' => $provider->id,
+                    'code' => 'STD',
+                ],
+                [
+                    'name' => 'Standard',
+                    'is_default' => true,
+                    'is_active' => true,
+                    'coverage_percentage' => 100.00,
+                ]
+            );
+        });
     }
 }
