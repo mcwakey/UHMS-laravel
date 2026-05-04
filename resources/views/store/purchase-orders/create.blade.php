@@ -119,6 +119,35 @@ $(document).ready(function() {
 
     const drugOptions = `<option value="">Select Drug...</option>@foreach($drugs as $drug)<option value="{{ $drug->id }}">{{ $drug->name }} ({{ $drug->generic_name }})</option>@endforeach`;
 
+    function initDrugSelect($select) {
+        if ($.fn.select2 && !$select.data('select2')) {
+            $select.select2({ width: '100%', placeholder: 'Select Drug...', allowClear: true });
+        }
+    }
+
+    function renumberRows() {
+        $('.item-row').each(function(index) {
+            $(this).find('[name]').each(function() {
+                this.name = this.name.replace(/items\[\d+\]/, 'items[' + index + ']');
+            });
+        });
+        itemIndex = $('.item-row').length;
+    }
+
+    function syncDrugOptions() {
+        const selected = $('.drug-select').map(function() { return $(this).val(); }).get().filter(Boolean);
+
+        $('.drug-select').each(function() {
+            const current = $(this).val();
+            $(this).find('option').each(function() {
+                const value = $(this).attr('value');
+                $(this).prop('disabled', value && value !== current && selected.includes(value));
+            });
+        });
+    }
+
+    $('.drug-select').each(function() { initDrugSelect($(this)); });
+
     $('#addItemBtn').on('click', function() {
         const row = `<tr class="item-row">
             <td><select name="items[${itemIndex}][drug_id]" class="form-select form-select-sm drug-select" required>${drugOptions}</select></td>
@@ -128,17 +157,43 @@ $(document).ready(function() {
             <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
         </tr>`;
         $('#itemsBody').append(row);
+        initDrugSelect($('#itemsBody .drug-select').last());
         itemIndex++;
+        syncDrugOptions();
     });
 
     $(document).on('click', '.remove-row', function() {
         if ($('.item-row').length > 1) {
+            const $select = $(this).closest('tr').find('.drug-select');
+            if ($.fn.select2 && $select.data('select2')) $select.select2('destroy');
             $(this).closest('tr').remove();
+            renumberRows();
+            syncDrugOptions();
             calculateTotal();
         }
     });
 
+    $(document).on('change', '.drug-select', function() {
+        syncDrugOptions();
+    });
+
     $(document).on('input', '.qty-input, .price-input', function() {
+        calculateTotal();
+    });
+
+    $('#poForm').on('submit', function() {
+        $('.item-row').each(function() {
+            const hasDrug = $(this).find('.drug-select').val();
+            const isOnlyRow = $('.item-row').length === 1;
+            if (!hasDrug && !isOnlyRow) {
+                const $select = $(this).find('.drug-select');
+                if ($.fn.select2 && $select.data('select2')) $select.select2('destroy');
+                $(this).remove();
+            }
+        });
+
+        renumberRows();
+        syncDrugOptions();
         calculateTotal();
     });
 
@@ -153,6 +208,8 @@ $(document).ready(function() {
         });
         $('#grandTotal').text('GH₵ ' + grandTotal.toFixed(2));
     }
+
+    syncDrugOptions();
 });
 </script>
 @endpush

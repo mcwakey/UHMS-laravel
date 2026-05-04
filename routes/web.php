@@ -450,6 +450,7 @@ Route::middleware('auth')->group(function () {
 
             Route::post('consultations/{visit}/prescriptions', [ConsultationController::class, 'storePrescription'])->name('consultations.prescriptions.store')->middleware('can:prescriptions.create');
             Route::delete('consultations/prescriptions/{prescription}', [ConsultationController::class, 'destroyPrescription'])->name('consultations.prescriptions.destroy')->middleware('can:prescriptions.create');
+            Route::post('consultations/{visit}/procedures', [ConsultationController::class, 'storeProcedureRequest'])->name('consultations.procedures.store')->middleware('can:consultations.create');
             Route::post('consultations/{visit}/lab-request', [ConsultationController::class, 'storeLabRequest'])->name('consultations.lab-request.store')->middleware('can:lab.requests.create');
 
             // Suggestion endpoints

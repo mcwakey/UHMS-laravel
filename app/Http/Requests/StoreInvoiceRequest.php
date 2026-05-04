@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\BillingType;
+use App\Models\ServiceCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -32,5 +33,38 @@ class StoreInvoiceRequest extends FormRequest
             'items.*.is_nhis_covered' => ['nullable', 'boolean'],
             'items.*.nhis_approved_amount' => ['nullable', 'numeric', 'min:0'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $items = collect($this->input('items', []))
+            ->filter(function ($item) {
+                return filled($item['description'] ?? null)
+                    || filled($item['service_catalog_id'] ?? null);
+            })
+            ->values();
+
+        $services = ServiceCatalog::whereIn('id', $items->pluck('service_catalog_id')->filter()->unique())
+            ->get()
+            ->keyBy('id');
+
+        $items = $items->map(function ($item) use ($services) {
+            $service = !empty($item['service_catalog_id']) ? $services->get((int) $item['service_catalog_id']) : null;
+
+            if ($service && blank($item['description'] ?? null)) {
+                $item['description'] = $service->name;
+            }
+
+            if ($service && blank($item['unit_price'] ?? null)) {
+                $item['unit_price'] = $service->price ?? 0;
+            }
+
+            $item['quantity'] = $item['quantity'] ?? 1;
+            $item['nhis_approved_amount'] = $item['nhis_approved_amount'] ?? 0;
+
+            return $item;
+        })->all();
+
+        $this->merge(['items' => $items]);
     }
 }

@@ -4,13 +4,18 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ConsultationTask;
-use App\Models\MedicalRecord;
+use App\Models\Visit;
+use App\Services\ConsultationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class ConsultationTaskController extends Controller
 {
-    public function store(Request $request, MedicalRecord $medicalRecord)
+    public function __construct(
+        protected ConsultationService $consultationService,
+    ) {}
+
+    public function store(Request $request, Visit $visit)
     {
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
@@ -23,6 +28,7 @@ class ConsultationTaskController extends Controller
         $data['created_by'] = Auth::id();
         $data['status'] = 'pending';
 
+        $medicalRecord = $this->consultationService->getOrCreateRecord($visit);
         $task = $medicalRecord->tasks()->create($data);
 
         if ($request->ajax()) {

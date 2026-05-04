@@ -11,9 +11,12 @@ use App\Models\Department;
 use App\Models\Diagnosis;
 use App\Models\Drug;
 use App\Models\Investigation;
+use App\Models\PatientProcedure;
+use App\Models\Procedure;
 use App\Models\ServiceCatalog;
 use App\Models\Treatment;
 use App\Models\Visit;
+use App\Services\ClinicalService;
 use App\Services\ConsultationService;
 use App\Services\LabService;
 use App\Services\MedicalPatternService;
@@ -30,6 +33,7 @@ class ConsultationController extends Controller
         protected VisitService $visitService,
         protected MedicalPatternService $patternService,
         protected LabService $labService,
+        protected ClinicalService $clinicalService,
     ) {}
     
     private function shouldReturnJson(Request $request): bool
@@ -58,6 +62,7 @@ class ConsultationController extends Controller
                 VisitStatus::LAB->value,
             ]);
 
+        /** @var \App\Models\User|null $user */
         $user = Auth::user();
         if ($user && ! $user->hasAnyRole(['Super Admin', 'Admin']) && $user->department_id) {
             $query->where('current_department_id', $user->department_id);
@@ -123,6 +128,12 @@ class ConsultationController extends Controller
         // Drugs for prescription dropdown
         $drugs = Drug::where('is_active', true)->orderBy('name')->get(['id', 'name', 'generic_name', 'strength', 'dosage_form', 'unit']);
 
+        $procedures = Procedure::with('department')->active()->orderBy('name')->get();
+        $patientProcedures = PatientProcedure::with(['procedure.department', 'performedByUser'])
+            ->where('visit_id', $visit->id)
+            ->latest('scheduled_date')
+            ->get();
+
         return view('consultations.show', [
             'visit' => $data['visit'],
             'record' => $data['record'],
@@ -134,6 +145,8 @@ class ConsultationController extends Controller
             'investigationDepts' => $investigationDepts,
             'doctors' => $doctors,
             'drugs' => $drugs,
+            'procedures' => $procedures,
+            'patientProcedures' => $patientProcedures,
         ]);
     }
 
@@ -280,7 +293,8 @@ class ConsultationController extends Controller
         ];
 
         if ($resultType->usesTestCatalog()) {
-            $data['lab_tests'] = \App\Models\LabTest::where('is_active', true)
+            $data['lab_tests'] = \App\Models\LabTest::with('criteria')
+                ->where('is_active', true)
                 ->orderBy('name')
                 ->get(['id', 'name', 'code', 'unit', 'normal_range', 'price'])
                 ->toArray();
@@ -397,8 +411,9 @@ class ConsultationController extends Controller
         }
 
         return redirect()
-            ->route('admin.pharmacy.dispensing.show', $prescription)
-            ->with('success', "Prescription {$prescription->prescription_number} created. Ready to dispense.");
+            ->route('admin.consultations.show', $visit)
+            ->withFragment('prescriptions-section')
+            ->with('success', "Prescription {$prescription->prescription_number} created and sent to pharmacy.");
     }
 
     public function destroyPrescription(\App\Models\Prescription $prescription)
@@ -420,6 +435,47 @@ class ConsultationController extends Controller
         }
 
         return back()->with('success', 'Prescription deleted.');
+    }
+
+    public function storeProcedureRequest(Request $request, Visit $visit)
+    {
+        $data = $request->validate([
+            'procedure_id' => ['required', 'exists:procedures,id'],
+            'scheduled_date' => ['required', 'date', 'after_or_equal:today'],
+            'performed_by' => ['nullable', 'exists:users,id'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+            'consent_signed' => ['nullable', 'boolean'],
+        ]);
+
+        $data['visit_id'] = $visit->id;
+        $data['patient_id'] = $visit->patient_id;
+        $data['consent_signed'] = $request->boolean('consent_signed');
+
+        $procedure = Procedure::findOrFail($data['procedure_id']);
+        if ($procedure->requires_consent && ! $data['consent_signed']) {
+            if ($this->shouldReturnJson($request)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This procedure requires signed consent before scheduling.',
+                ], 422);
+            }
+
+            return back()->with('error', 'This procedure requires signed consent before scheduling.');
+        }
+
+        $patientProcedure = $this->clinicalService->scheduleProcedure($data);
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json([
+                'success' => true,
+                'procedure' => $patientProcedure->load(['procedure.department', 'performedByUser']),
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.consultations.show', $visit)
+            ->withFragment('procedures-section')
+            ->with('success', 'Procedure requested.');
     }
 
     /**

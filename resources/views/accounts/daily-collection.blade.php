@@ -10,6 +10,11 @@
     <div>
         <form method="GET" action="{{ route('admin.accounts.daily-collection') }}" class="d-flex gap-2">
             <input type="date" name="date" class="form-control" value="{{ $date }}" onchange="this.form.submit()">
+            @can('invoices.create')
+            <a href="{{ route('admin.billing.invoices.create') }}" class="btn btn-primary text-nowrap">
+                <i class="ti ti-file-invoice me-1"></i>Create Invoice
+            </a>
+            @endcan
         </form>
     </div>
 </div>

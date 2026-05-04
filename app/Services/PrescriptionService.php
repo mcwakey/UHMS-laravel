@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\PrescriptionStatus;
 use App\Events\PrescriptionCreated;
 use App\Models\MedicalRecord;
+use App\Models\Drug;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use Illuminate\Support\Facades\Auth;
@@ -66,9 +67,13 @@ class PrescriptionService
 
         if (!empty($data['items'])) {
             foreach ($data['items'] as $item) {
-                // Auto-resolve drug_id from drug_name if not already provided
-                if (empty($item['drug_id']) && !empty($item['drug_name'])) {
-                    $drug = \App\Models\Drug::where('name', $item['drug_name'])->first();
+                if (!empty($item['drug_id'])) {
+                    $drug = Drug::find($item['drug_id']);
+                    if ($drug) {
+                        $item['drug_name'] = $drug->name;
+                    }
+                } elseif (!empty($item['drug_name'])) {
+                    $drug = Drug::where('name', $item['drug_name'])->first();
                     if ($drug) {
                         $item['drug_id'] = $drug->id;
                     }

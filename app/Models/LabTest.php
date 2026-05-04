@@ -33,6 +33,11 @@ class LabTest extends Model
         return $this->hasMany(LabRequestItem::class);
     }
 
+    public function criteria(): HasMany
+    {
+        return $this->hasMany(\App\Models\LabTestCriterion::class)->orderBy('sort_order')->orderBy('id');
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

@@ -13,6 +13,11 @@
         </nav>
     </div>
     <div>
+        @can('invoices.create')
+        <a href="{{ route('admin.billing.invoices.create') }}" class="btn btn-primary btn-sm">
+            <i class="ti ti-file-invoice me-1"></i>Create Invoice
+        </a>
+        @endcan
         <a href="{{ route('admin.reports.daily-collection', array_merge(request()->query(), ['export' => 'pdf'])) }}" class="btn btn-danger btn-sm">
             <i class="ti ti-file-type-pdf me-1"></i>PDF
         </a>

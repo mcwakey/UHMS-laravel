@@ -37,7 +37,10 @@ class WorkflowJsonResponsesTest extends TestCase
 
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        $this->department = Department::factory()->create(['type' => DepartmentType::CONSULTATION]);
+        $this->department = Department::factory()->create([
+            'name' => 'General Consulting',
+            'type' => DepartmentType::CONSULTATION,
+        ]);
         $this->user = User::factory()->create(['department_id' => $this->department->id]);
 
         Role::findOrCreate('Accountant', 'web');
@@ -305,6 +308,38 @@ class WorkflowJsonResponsesTest extends TestCase
 
         $this->assertSame(InvoiceStatus::PAID, $invoice->status);
         $this->assertSame(VisitStatus::COMPLETED, $visit->status);
+    }
+
+    public function test_invoice_store_accepts_service_selected_rows_without_manual_description(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+        $visit = Visit::factory()->create([
+            'patient_id' => $patient->id,
+            'created_by' => $this->user->id,
+            'status' => VisitStatus::BILLING,
+        ]);
+        $service = $this->createService($this->department, 'Dressing Service');
+
+        $response = $this->actingAs($this->user)->post(route('admin.billing.invoices.store'), [
+            'visit_id' => $visit->id,
+            'patient_id' => $patient->id,
+            'billing_type' => BillingType::CASH->value,
+            'items' => [
+                ['description' => '', 'service_catalog_id' => $service->id, 'quantity' => 2, 'unit_price' => '100.00'],
+                ['description' => '', 'service_catalog_id' => '', 'quantity' => 1, 'unit_price' => '0'],
+            ],
+        ]);
+
+        $invoice = Invoice::latest('id')->first();
+
+        $response->assertRedirect(route('admin.billing.invoices.show', $invoice));
+        $this->assertDatabaseHas('invoice_items', [
+            'invoice_id' => $invoice->id,
+            'service_catalog_id' => $service->id,
+            'description' => 'Dressing Service',
+            'quantity' => 2,
+        ]);
+        $this->assertSame(1, $invoice->items()->count());
     }
 
     private function createService(Department $department, string $name, string $category = 'consultation'): ServiceCatalog

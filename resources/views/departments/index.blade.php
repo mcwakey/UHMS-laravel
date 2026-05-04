@@ -97,78 +97,6 @@
                         </td>
                     </tr>
 
-                    <!-- Edit Modal -->
-                    <div class="modal fade" id="editDeptModal-{{ $dept->id }}" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <form method="POST" action="{{ route('admin.departments.update', $dept) }}">
-                                    @csrf @method('PUT')
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Edit Department</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="mb-3">
-                                            <label class="form-label">Name <span class="text-danger">*</span></label>
-                                            <input type="text" name="name" class="form-control" value="{{ $dept->name }}" required>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Code <span class="text-danger">*</span></label>
-                                                <input type="text" name="code" class="form-control" value="{{ $dept->code }}" required maxlength="10">
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label class="form-label">Type</label>
-                                                <select name="type" class="form-select">
-                                                    <option value="">— Select Type —</option>
-                                                    @foreach($departmentTypes as $type)
-                                                        <option value="{{ $type->value }}" {{ $dept->type?->value === $type->value ? 'selected' : '' }}>
-                                                            {{ $type->label() }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label fw-medium">Result Type <span class="text-danger">*</span></label>
-                                            <select name="result_type" class="form-select" required>
-                                                @foreach($resultTypes as $rt)
-                                                <option value="{{ $rt->value }}" {{ $dept->result_type?->value === $rt->value ? 'selected' : '' }}>
-                                                    {{ $rt->label() }}
-                                                </option>
-                                                @endforeach
-                                            </select>
-                                            <div class="form-text">Determines what type of report/result this department sends back.</div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" name="is_stock_managed" value="1" id="stockEdit{{ $dept->id }}" {{ $dept->is_stock_managed ? 'checked' : '' }}>
-                                                <label class="form-check-label" for="stockEdit{{ $dept->id }}">
-                                                    <strong>Store manages stock for this department</strong>
-                                                    <div class="text-muted small">Items from this department appear in Procurement & Stock Transfers.</div>
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Description</label>
-                                            <textarea name="description" class="form-control" rows="3">{{ $dept->description }}</textarea>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Status <span class="text-danger">*</span></label>
-                                            <select name="status" class="form-select" required>
-                                                <option value="active" {{ $dept->status === 'active' ? 'selected' : '' }}>Active</option>
-                                                <option value="inactive" {{ $dept->status === 'inactive' ? 'selected' : '' }}>Inactive</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <button type="submit" class="btn btn-primary">Update</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
                     @empty
                     <tr>
                         <td colspan="8" class="text-center text-muted py-4">No departments found</td>
@@ -185,6 +113,81 @@
     {{ $departments->links() }}
 </div>
 @endif
+
+@foreach($departments as $dept)
+<!-- Edit Department Modal -->
+<div class="modal fade" id="editDeptModal-{{ $dept->id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.departments.update', $dept) }}">
+                @csrf @method('PUT')
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Department</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" value="{{ $dept->name }}" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Code <span class="text-danger">*</span></label>
+                            <input type="text" name="code" class="form-control" value="{{ $dept->code }}" required maxlength="10">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Type</label>
+                            <select name="type" class="form-select">
+                                <option value="">— Select Type —</option>
+                                @foreach($departmentTypes as $type)
+                                    <option value="{{ $type->value }}" {{ $dept->type?->value === $type->value ? 'selected' : '' }}>
+                                        {{ $type->label() }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Result Type <span class="text-danger">*</span></label>
+                        <select name="result_type" class="form-select" required>
+                            @foreach($resultTypes as $rt)
+                            <option value="{{ $rt->value }}" {{ $dept->result_type?->value === $rt->value ? 'selected' : '' }}>
+                                {{ $rt->label() }}
+                            </option>
+                            @endforeach
+                        </select>
+                        <div class="form-text">Determines what type of report/result this department sends back.</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="is_stock_managed" value="1" id="stockEdit{{ $dept->id }}" {{ $dept->is_stock_managed ? 'checked' : '' }}>
+                            <label class="form-check-label" for="stockEdit{{ $dept->id }}">
+                                <strong>Store manages stock for this department</strong>
+                                <div class="text-muted small">Items from this department appear in Procurement & Stock Transfers.</div>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="3">{{ $dept->description }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status <span class="text-danger">*</span></label>
+                        <select name="status" class="form-select" required>
+                            <option value="active" {{ $dept->status === 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="inactive" {{ $dept->status === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
 
 <!-- Add Department Modal -->
 <div class="modal fade" id="addDeptModal" tabindex="-1">

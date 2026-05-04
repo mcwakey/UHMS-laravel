@@ -129,7 +129,15 @@
                                 @if($item->status !== 'completed')
                                 <tr>
                                     <td class="fw-medium">{{ $item->labTest->name }} <small class="text-muted">({{ $item->labTest->code }})</small></td>
-                                    <td><small>{{ $item->labTest->normal_range ?? '-' }} {{ $item->labTest->unit ?? '' }}</small></td>
+                                    <td>
+                                        @if($item->labTest?->criteria?->isNotEmpty())
+                                            @foreach($item->labTest->criteria as $criterion)
+                                                <div><small><strong>{{ $criterion->name }}:</strong> {{ $criterion->normal_range ?? '-' }} {{ $criterion->unit ?? '' }}</small></div>
+                                            @endforeach
+                                        @else
+                                            <small>{{ $item->labTest->normal_range ?? '-' }} {{ $item->labTest->unit ?? '' }}</small>
+                                        @endif
+                                    </td>
                                     <td>
                                         <input type="text" name="results[{{ $item->id }}][result_value]" class="form-control form-control-sm" placeholder="Enter result">
                                     </td>
@@ -179,7 +187,15 @@
                         <td>{{ $index + 1 }}</td>
                         <td class="fw-medium">{{ $item->labTest->name ?? $item->name }} <small class="text-muted">({{ $item->labTest->code ?? '' }})</small></td>
                         <td>{{ $item->labTest->category->name ?? '-' }}</td>
-                        <td><small>{{ $item->labTest->normal_range ?? '-' }} {{ $item->labTest->unit ?? '' }}</small></td>
+                        <td>
+                            @if($item->labTest?->criteria?->isNotEmpty())
+                                @foreach($item->labTest->criteria as $criterion)
+                                    <div><small><strong>{{ $criterion->name }}:</strong> {{ $criterion->normal_range ?? '-' }} {{ $criterion->unit ?? '' }}</small></div>
+                                @endforeach
+                            @else
+                                <small>{{ $item->labTest->normal_range ?? '-' }} {{ $item->labTest->unit ?? '' }}</small>
+                            @endif
+                        </td>
                         <td><span class="badge bg-{{ $item->status_color }}">{{ ucfirst($item->status) }}</span></td>
                         <td>
                             @if($item->result)
@@ -237,7 +253,13 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                @if(($item->labTest->normal_range ?? null))
+                @if($item->labTest?->criteria?->isNotEmpty())
+                <div class="alert alert-info py-2 mb-3">
+                    @foreach($item->labTest->criteria as $criterion)
+                        <div><small><strong>{{ $criterion->name }}:</strong> {{ $criterion->normal_range ?? '-' }} {{ $criterion->unit ?? '' }}</small></div>
+                    @endforeach
+                </div>
+                @elseif(($item->labTest->normal_range ?? null))
                 <div class="alert alert-info py-2 mb-3">
                     <small><strong>Normal Range:</strong> {{ $item->labTest->normal_range }} {{ $item->labTest->unit ?? '' }}</small>
                 </div>

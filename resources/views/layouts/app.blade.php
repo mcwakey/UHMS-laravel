@@ -232,6 +232,49 @@
     @yield('scripts')
     <!--UHMS_LEGACY_SCRIPTS_END-->
 
+    <script>
+        (function () {
+            function cleanupModalState() {
+                var openModals = document.querySelectorAll('.modal.show');
+                if (openModals.length > 0) {
+                    return;
+                }
+
+                document.querySelectorAll('.modal-backdrop').forEach(function (backdrop) {
+                    backdrop.remove();
+                });
+
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('overflow');
+                document.body.style.removeProperty('padding-right');
+            }
+
+            window.uhmsCleanupModalState = cleanupModalState;
+
+            document.addEventListener('DOMContentLoaded', cleanupModalState);
+            document.addEventListener('hidden.bs.modal', cleanupModalState);
+            document.addEventListener('inertia:before', cleanupModalState);
+            document.addEventListener('inertia:navigate', cleanupModalState);
+            window.addEventListener('pageshow', cleanupModalState);
+            window.addEventListener('popstate', cleanupModalState);
+            window.addEventListener('beforeunload', cleanupModalState);
+
+            document.addEventListener('submit', function (event) {
+                var modalEl = event.target.closest('.modal.show');
+                if (!modalEl || event.defaultPrevented) {
+                    return;
+                }
+
+                var modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) {
+                    modal.hide();
+                }
+
+                setTimeout(cleanupModalState, 200);
+            }, true);
+        }());
+    </script>
+
     {{-- Reveal page once everything has loaded — kills the sidebar FOUC --}}
     <script>
         window.addEventListener('load', function () {

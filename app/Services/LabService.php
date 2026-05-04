@@ -34,7 +34,7 @@ class LabService
 
     public function getActiveCategories(): Collection
     {
-        return LabTestCategory::active()->with('activeTests')->orderBy('name')->get();
+        return LabTestCategory::active()->with('activeTests.criteria')->orderBy('name')->get();
     }
 
     public function storeCategory(array $data): LabTestCategory
@@ -59,13 +59,77 @@ class LabService
 
     public function storeTest(array $data): LabTest
     {
-        return LabTest::create($data);
+        return DB::transaction(function () use ($data) {
+            $criteria = $this->normalizeTestCriteria($data);
+            unset($data['criteria']);
+
+            if ($criteria->isNotEmpty()) {
+                $data['normal_range'] = $criteria->first()['normal_range'] ?? null;
+                $data['unit'] = $criteria->first()['unit'] ?? null;
+            }
+
+            $test = LabTest::create($data);
+            $this->syncTestCriteria($test, $criteria);
+
+            return $test->load('criteria');
+        });
     }
 
     public function updateTest(LabTest $test, array $data): LabTest
     {
-        $test->update($data);
-        return $test;
+        return DB::transaction(function () use ($test, $data) {
+            $criteria = $this->normalizeTestCriteria($data);
+            unset($data['criteria']);
+
+            if ($criteria->isNotEmpty()) {
+                $data['normal_range'] = $criteria->first()['normal_range'] ?? null;
+                $data['unit'] = $criteria->first()['unit'] ?? null;
+            }
+
+            $test->update($data);
+            $this->syncTestCriteria($test, $criteria);
+
+            return $test->load('criteria');
+        });
+    }
+
+    protected function normalizeTestCriteria(array $data): Collection
+    {
+        $criteria = collect($data['criteria'] ?? [])
+            ->filter(function ($criterion) {
+                return filled($criterion['name'] ?? null)
+                    || filled($criterion['normal_range'] ?? null)
+                    || filled($criterion['unit'] ?? null);
+            })
+            ->values()
+            ->map(function ($criterion, $index) {
+                return [
+                    'name' => ($criterion['name'] ?? null) ?: 'Result',
+                    'normal_range' => $criterion['normal_range'] ?? null,
+                    'unit' => $criterion['unit'] ?? null,
+                    'sort_order' => $index,
+                ];
+            });
+
+        if ($criteria->isEmpty() && (filled($data['normal_range'] ?? null) || filled($data['unit'] ?? null))) {
+            $criteria->push([
+                'name' => 'Result',
+                'normal_range' => $data['normal_range'] ?? null,
+                'unit' => $data['unit'] ?? null,
+                'sort_order' => 0,
+            ]);
+        }
+
+        return $criteria;
+    }
+
+    protected function syncTestCriteria(LabTest $test, Collection $criteria): void
+    {
+        $test->criteria()->delete();
+
+        $criteria->each(function ($criterion) use ($test) {
+            $test->criteria()->create($criterion);
+        });
     }
 
     public function toggleTest(LabTest $test): LabTest
@@ -82,7 +146,7 @@ class LabService
 
     public function getRequests(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = LabRequest::with(['patient', 'requestedBy', 'items.labTest', 'department', 'targetDepartment'])
+        $query = LabRequest::with(['patient', 'requestedBy', 'items.labTest.criteria', 'department', 'targetDepartment'])
             ->latest();
 
         if (!empty($filters['status'])) {
@@ -160,6 +224,7 @@ class LabService
             'department',
             'targetDepartment',
             'items.labTest.category',
+            'items.labTest.criteria',
             'items.result.performedBy',
             'items.result.verifiedBy',
         ]);
@@ -262,14 +327,14 @@ class LabService
                 }
             }
 
-            return $request->fresh(['items.labTest', 'items.result']);
+            return $request->fresh(['items.labTest.criteria', 'items.result']);
         });
     }
 
     public function getResults(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         $query = LabResult::with([
-            'requestItem.labTest',
+            'requestItem.labTest.criteria',
             'labRequest.patient',
             'performedBy',
             'verifiedBy',

@@ -20,7 +20,7 @@ class LabTestController extends Controller
     public function index(Request $request)
     {
         $categories = $this->labService->getCategories();
-        $tests = LabTest::with('category')
+        $tests = LabTest::with(['category', 'criteria'])
             ->when($request->search, function ($q, $search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('code', 'like', "%{$search}%");
@@ -90,6 +90,10 @@ class LabTestController extends Controller
             'code' => 'required|string|max:50|unique:lab_tests,code',
             'normal_range' => 'nullable|string|max:255',
             'unit' => 'nullable|string|max:50',
+            'criteria' => 'nullable|array',
+            'criteria.*.name' => 'nullable|string|max:255',
+            'criteria.*.normal_range' => 'nullable|string|max:255',
+            'criteria.*.unit' => 'nullable|string|max:50',
             'price' => 'nullable|numeric|min:0',
         ]);
 
@@ -110,6 +114,10 @@ class LabTestController extends Controller
             'code' => "required|string|max:50|unique:lab_tests,code,{$test->id}",
             'normal_range' => 'nullable|string|max:255',
             'unit' => 'nullable|string|max:50',
+            'criteria' => 'nullable|array',
+            'criteria.*.name' => 'nullable|string|max:255',
+            'criteria.*.normal_range' => 'nullable|string|max:255',
+            'criteria.*.unit' => 'nullable|string|max:50',
             'price' => 'nullable|numeric|min:0',
             'is_active' => 'nullable|boolean',
         ]);
@@ -136,7 +144,10 @@ class LabTestController extends Controller
     public function testsByCategory(LabTestCategory $category)
     {
         return response()->json(
-            $category->activeTests()->orderBy('name')->get(['id', 'name', 'code', 'normal_range', 'unit', 'price'])
+            $category->activeTests()
+                ->with('criteria')
+                ->orderBy('name')
+                ->get(['id', 'name', 'code', 'normal_range', 'unit', 'price', 'category_id'])
         );
     }
 }

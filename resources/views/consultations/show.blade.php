@@ -161,6 +161,12 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" id="tab-procedures" href="#procedures-section" data-bs-toggle="pill" role="tab">
+                                <i class="ti ti-activity-heartbeat me-1"></i>Procedures
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-procedures">{{ $patientProcedures->count() }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" id="tab-history" href="#history-section" data-bs-toggle="pill" role="tab">
                                 <i class="ti ti-history me-1"></i>History
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $history['total'] ?? 0 }}</span>
@@ -260,7 +266,7 @@
                         @can('consultations.create')
                         <div class="collapse mb-3" id="addComplaintForm">
                             <div class="card card-body bg-light">
-                                <form data-ajax-form="complaints" action="{{ route('admin.consultations.complaints.store', $visit) }}" method="POST">
+                                <form data-ajax-form="complaints" action="{{ route('admin.consultations.complaints.store', $visit) }}" method="POST" onsubmit="saveTabBeforeSubmit('complaints-section')">
                                     @csrf
                                     <div class="row g-2">
                                         <div class="col-12">
@@ -340,7 +346,7 @@
                         @can('consultations.create')
                         <div class="collapse mb-3" id="addDiagnosisForm">
                             <div class="card card-body bg-light">
-                                <form data-ajax-form="diagnoses" action="{{ route('admin.consultations.diagnoses.store', $visit) }}" method="POST">
+                                <form data-ajax-form="diagnoses" action="{{ route('admin.consultations.diagnoses.store', $visit) }}" method="POST" onsubmit="saveTabBeforeSubmit('diagnoses-section')">
                                     @csrf
                                     <div class="row g-2">
                                         <div class="col-12">
@@ -401,11 +407,11 @@
                                     @can('consultations.create')
                                     <div class="d-flex gap-1 ms-2 flex-shrink-0">
                                         <button type="button" class="btn btn-xs btn-outline-secondary toggle-type-btn"
-                                                title="Toggle Provisional / Final"
+                                                title="Mark as {{ $diagnosis->type === 'provisional' ? 'Final' : 'Provisional' }}"
                                                 data-id="{{ $diagnosis->id }}"
                                                 data-current="{{ $diagnosis->type }}"
                                                 data-url="{{ route('admin.consultations.diagnoses.update', $diagnosis) }}">
-                                            <i class="ti ti-pencil"></i>
+                                            <i class="ti ti-switch-2 me-1"></i><span class="toggle-type-label">{{ $diagnosis->type === 'provisional' ? 'Final' : 'Provisional' }}</span>
                                         </button>
                                         <button type="button" class="btn btn-xs btn-outline-warning set-primary-btn {{ $diagnosis->is_primary ? 'd-none' : '' }}"
                                                 title="Set as Primary diagnosis"
@@ -450,7 +456,7 @@
                         @can('consultations.create')
                         <div class="collapse mb-3" id="addInvestigationForm">
                             <div class="card card-body bg-light">
-                                <form data-ajax-form="investigations" action="{{ route('admin.consultations.investigations.store', $visit) }}" method="POST">
+                                <form data-ajax-form="investigations" action="{{ route('admin.consultations.investigations.store', $visit) }}" method="POST" onsubmit="saveTabBeforeSubmit('investigations-section')">
                                     @csrf
                                     <div class="row g-2">
                                         <div class="col-md-6">
@@ -549,7 +555,7 @@
                         @can('consultations.create')
                         <div class="collapse mb-3" id="addTreatmentForm">
                             <div class="card card-body bg-light">
-                                <form data-ajax-form="treatments" action="{{ route('admin.consultations.treatments.store', $visit) }}" method="POST">
+                                <form data-ajax-form="treatments" action="{{ route('admin.consultations.treatments.store', $visit) }}" method="POST" onsubmit="saveTabBeforeSubmit('treatments-section')">
                                     @csrf
                                     <div class="row g-2">
                                         <div class="col-md-4">
@@ -622,21 +628,23 @@
                         @can('prescriptions.create')
                         <div class="collapse mb-3" id="addPrescriptionForm">
                             <div class="card card-body bg-light">
-                                <form method="POST" action="{{ route('admin.consultations.prescriptions.store', $visit) }}" id="prescriptionForm">
+                                <form method="POST" action="{{ route('admin.consultations.prescriptions.store', $visit) }}" id="prescriptionForm" onsubmit="return preparePrescriptionSubmit() && saveTabBeforeSubmit('prescriptions-section')">
                                     @csrf
                                     <div id="prescriptionItems">
                                         <div class="prescription-item border rounded p-2 mb-2">
                                             <div class="row g-2">
                                                 <div class="col-md-4">
                                                     <label class="form-label small">Drug Name <span class="text-danger">*</span></label>
-                                                    <select name="items[0][drug_name]" class="form-select form-select-sm drug-select" required>
+                                                    <select name="items[0][drug_id]" class="form-select form-select-sm drug-select" required>
                                                         <option value="">-- Search drug --</option>
                                                         @foreach($drugs as $drug)
-                                                            <option value="{{ $drug->name }}"
+                                                            <option value="{{ $drug->id }}"
+                                                                data-name="{{ $drug->name }}"
                                                                 data-strength="{{ $drug->strength ?? '' }}"
                                                                 data-unit="{{ $drug->unit ?? '' }}">{{ $drug->name }}{{ $drug->generic_name ? ' ('.$drug->generic_name.')' : '' }}{{ $drug->strength ? ' - '.$drug->strength : '' }}{{ $drug->dosage_form ? ' ['.$drug->dosage_form.']' : '' }}</option>
                                                         @endforeach
                                                     </select>
+                                                    <input type="hidden" name="items[0][drug_name]" class="drug-name-input">
                                                 </div>
                                                 <div class="col-md-2">
                                                     <label class="form-label small">Dosage <span class="text-danger">*</span></label>
@@ -740,6 +748,100 @@
                             @empty
                             <div class="text-center text-muted py-4" id="prescriptions-empty">
                                 <i class="ti ti-prescription fs-1 d-block mb-2"></i>No prescriptions created yet.
+                            </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ========================= PROCEDURES ========================= --}}
+            <div class="tab-pane fade" id="procedures-section" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold mb-0"><i class="ti ti-activity-heartbeat me-1"></i>Procedures</h6>
+                        @can('consultations.create')
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addProcedureForm">
+                            <i class="ti ti-plus me-1"></i>Request
+                        </button>
+                        @endcan
+                    </div>
+                    <div class="card-body">
+                        @can('consultations.create')
+                        <div class="collapse mb-3" id="addProcedureForm">
+                            <div class="card card-body bg-light">
+                                <form method="POST" action="{{ route('admin.consultations.procedures.store', $visit) }}" onsubmit="return saveTabBeforeSubmit('procedures-section')">
+                                    @csrf
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <label class="form-label small">Procedure <span class="text-danger">*</span></label>
+                                            <select name="procedure_id" class="form-select form-select-sm" required>
+                                                <option value="">-- Select procedure --</option>
+                                                @foreach($procedures as $procedure)
+                                                    <option value="{{ $procedure->id }}">
+                                                        {{ $procedure->name }}{{ $procedure->department ? ' - '.$procedure->department->name : '' }}{{ $procedure->requires_consent ? ' (Consent)' : '' }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small">Date/Time <span class="text-danger">*</span></label>
+                                            <input type="datetime-local" name="scheduled_date" class="form-control form-control-sm" value="{{ now()->format('Y-m-d\\TH:i') }}" required>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small">Performer</label>
+                                            <select name="performed_by" class="form-select form-select-sm">
+                                                <option value="">To assign</option>
+                                                @foreach($doctors as $doctor)
+                                                    <option value="{{ $doctor->id }}">{{ $doctor->full_name ?? $doctor->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small">Notes</label>
+                                            <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Procedure notes or clinical indication..."></textarea>
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-check">
+                                                <input type="hidden" name="consent_signed" value="0">
+                                                <input class="form-check-input" type="checkbox" name="consent_signed" value="1" id="procedureConsent">
+                                                <label class="form-check-label small" for="procedureConsent">Consent signed where required</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-check me-1"></i>Save</button>
+                                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#addProcedureForm">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        @endcan
+
+                        <div id="procedures-list">
+                            @forelse($patientProcedures as $patientProcedure)
+                            <div class="ehr-item" id="patient-procedure-{{ $patientProcedure->id }}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <p class="mb-1">
+                                            <span class="badge bg-info-subtle text-info">{{ ucfirst($patientProcedure->status) }}</span>
+                                            <span class="fw-medium">{{ $patientProcedure->procedure->name ?? 'Procedure' }}</span>
+                                        </p>
+                                        <small class="text-muted">
+                                            {{ $patientProcedure->scheduled_date?->format('d M Y, h:i A') }}
+                                            @if($patientProcedure->performedByUser) &middot; {{ $patientProcedure->performedByUser->full_name ?? $patientProcedure->performedByUser->name }} @endif
+                                            @if($patientProcedure->procedure?->department) &middot; {{ $patientProcedure->procedure->department->name }} @endif
+                                            @if($patientProcedure->consent_signed) &middot; Consent signed @endif
+                                        </small>
+                                        @if($patientProcedure->notes)
+                                            <div><small class="text-muted">{{ $patientProcedure->notes }}</small></div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                            @empty
+                            <div class="text-center text-muted py-4" id="procedures-empty">
+                                <i class="ti ti-activity-heartbeat fs-1 d-block mb-2"></i>No procedures requested yet.
                             </div>
                             @endforelse
                         </div>
@@ -1297,11 +1399,9 @@ var prescriptionDestroyBase = '{{ url("admin/consultations/prescriptions") }}';
    TAB PERSISTENCE
    ================================================================ */
 (function () {
-    var saved = localStorage.getItem(tabStorageKey);
-    if (saved) {
-        var el = document.querySelector('#consultationTabs .nav-link[href="' + saved + '"]');
-        if (el) new bootstrap.Tab(el).show();
-    }
+    var saved = window.location.hash || localStorage.getItem(tabStorageKey);
+    if (saved) activateConsultationTab(saved);
+
     document.querySelectorAll('#consultationTabs .nav-link').forEach(function (link) {
         link.addEventListener('shown.bs.tab', function (e) {
             localStorage.setItem(tabStorageKey, e.target.getAttribute('href'));
@@ -1309,8 +1409,19 @@ var prescriptionDestroyBase = '{{ url("admin/consultations/prescriptions") }}';
     });
 }());
 
+function activateConsultationTab(tabSelector) {
+    if (!tabSelector) return false;
+    localStorage.setItem(tabStorageKey, tabSelector);
+    var el = document.querySelector('#consultationTabs .nav-link[href="' + tabSelector + '"]');
+    if (el) {
+        new bootstrap.Tab(el).show();
+        return true;
+    }
+    return false;
+}
+
 function saveTabBeforeSubmit(tabId) {
-    localStorage.setItem(tabStorageKey, '#' + tabId);
+    activateConsultationTab('#' + tabId);
     return true;
 }
 
@@ -1381,6 +1492,7 @@ document.querySelectorAll('[data-ajax-form]').forEach(function (form) {
     form.addEventListener('submit', function (e) {
         e.preventDefault();
         var section  = form.dataset.ajaxForm;
+        localStorage.setItem(tabStorageKey, '#' + section + '-section');
         var btn      = form.querySelector('[type="submit"]');
         var origHtml = btn ? btn.innerHTML : '';
         if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>'; }
@@ -1442,7 +1554,7 @@ function onFormSuccess(section, data, form) {
         html += ' <span class="badge bg-warning text-dark ms-1 diagnosis-primary-badge primary-indicator' + pClass + '" id="primary-badge-' + d.id + '"><i class="ti ti-star-filled me-1"></i>Primary</span>';
         html += '</p></div>';
         html += '<div class="d-flex gap-1 ms-2 flex-shrink-0">';
-        html += '<button type="button" class="btn btn-xs btn-outline-secondary toggle-type-btn" title="Toggle type" data-id="' + d.id + '" data-current="' + escapeHtml(d.type) + '" data-url="' + diagnosisBaseUrl + '/' + d.id + '"><i class="ti ti-pencil"></i></button>';
+        html += '<button type="button" class="btn btn-xs btn-outline-secondary toggle-type-btn" title="Mark as ' + (d.type === 'provisional' ? 'Final' : 'Provisional') + '" data-id="' + d.id + '" data-current="' + escapeHtml(d.type) + '" data-url="' + diagnosisBaseUrl + '/' + d.id + '"><i class="ti ti-switch-2 me-1"></i><span class="toggle-type-label">' + (d.type === 'provisional' ? 'Final' : 'Provisional') + '</span></button>';
         if (!d.is_primary) {
             html += '<button type="button" class="btn btn-xs btn-outline-warning set-primary-btn" title="Set as Primary" id="set-primary-' + d.id + '" data-id="' + d.id + '" data-url="' + diagnosisBaseUrl + '/' + d.id + '/primary"><i class="ti ti-star"></i></button>';
         }
@@ -1527,6 +1639,9 @@ function bindDiagnosisButtons() {
                         badge.className = 'badge bg-' + (newType === 'final' ? 'success' : 'warning') + ' ms-1 diagnosis-type-badge';
                     }
                     self.dataset.current = newType;
+                    self.title = 'Mark as ' + (newType === 'provisional' ? 'Final' : 'Provisional');
+                    var label = self.querySelector('.toggle-type-label');
+                    if (label) label.textContent = newType === 'provisional' ? 'Final' : 'Provisional';
                     showToast('Type set to ' + capFirst(newType) + '.');
                 }
             })
@@ -1680,6 +1795,11 @@ function loadLabReqItems(deptId) {
                 html += '<input type="checkbox" name="items[]" value="' + t.id + '" class="form-check-input" id="lt' + t.id + '">';
                 html += '<label class="form-check-label small" for="lt' + t.id + '">' + escapeHtml(t.name);
                 if (t.code) html += ' <span class="text-muted">(' + escapeHtml(t.code) + ')</span>';
+                if (t.criteria && t.criteria.length) {
+                    html += '<br><span class="text-muted small">' + t.criteria.map(function (c) {
+                        return escapeHtml(c.name) + (c.normal_range ? ': ' + escapeHtml(c.normal_range) : '') + (c.unit ? ' ' + escapeHtml(c.unit) : '');
+                    }).join(' &middot; ') + '</span>';
+                }
                 html += '</label></div></div>';
             });
             html += '</div>';
@@ -1778,13 +1898,25 @@ function addFreeTextItem() {
 /* ================================================================
    PRESCRIPTIONS — DYNAMIC DRUG ROWS
    ================================================================ */
-/* Initialize Select2 on the first drug select */
-$('.drug-select').select2({
-    theme: 'default',
-    width: '100%',
-    placeholder: '-- Search drug --',
-    allowClear: true,
-});
+function initDrugSelect(select) {
+    $(select).select2({
+        theme: 'default',
+        width: '100%',
+        placeholder: '-- Search drug --',
+        allowClear: true,
+    });
+}
+
+function syncDrugName(row) {
+    var drugSel = row.querySelector('.drug-select');
+    var hidden = row.querySelector('.drug-name-input');
+    if (!drugSel || !hidden) return;
+
+    var selected = drugSel.options[drugSel.selectedIndex];
+    hidden.value = selected && selected.value ? (selected.getAttribute('data-name') || selected.textContent.trim()) : '';
+}
+
+$('.drug-select').each(function () { initDrugSelect(this); });
 
 /* ----------------------------------------------------------------
    AUTO-CALCULATE QUANTITY
@@ -1859,7 +1991,7 @@ function bindRxCalc(row) {
     });
     row.querySelector('[name$="[frequency]"]')?.addEventListener('change', function(){ calcQty(row); });
     // Select2 fires a jQuery event
-    $(row).find('.drug-select').on('select2:select select2:clear', function(){ calcQty(row); });
+    $(row).find('.drug-select').on('select2:select select2:clear change', function(){ syncDrugName(row); calcQty(row); });
 }
 
 /* Bind on the first (pre-rendered) row */
@@ -1872,32 +2004,52 @@ var rxIdx = 1;
 document.getElementById('addItemBtn')?.addEventListener('click', function () {
     var cont = document.getElementById('prescriptionItems');
     var tpl  = cont.querySelector('.prescription-item').cloneNode(true);
+
+    tpl.querySelectorAll('.select2-container').forEach(function (container) { container.remove(); });
+
     tpl.querySelectorAll('[name]').forEach(function (inp) {
         inp.name = inp.name.replace(/items\[\d+\]/, 'items[' + rxIdx + ']');
         if (inp.tagName === 'INPUT') inp.value = inp.type === 'number' ? '1' : '';
         if (inp.tagName === 'SELECT' && inp.classList.contains('drug-select')) {
             inp.value = '';
-            // Destroy any existing select2 on the cloned element before re-init
-            if ($(inp).data('select2')) { $(inp).select2('destroy'); }
+            inp.classList.remove('select2-hidden-accessible');
+            inp.removeAttribute('data-select2-id');
+            inp.removeAttribute('aria-hidden');
+            inp.removeAttribute('tabindex');
         }
     });
+    tpl.querySelectorAll('option[data-select2-id]').forEach(function (opt) { opt.removeAttribute('data-select2-id'); });
     tpl.style.position = 'relative';
     var rm = document.createElement('button');
     rm.type = 'button'; rm.className = 'btn btn-xs btn-outline-danger position-absolute top-0 end-0 m-1';
-    rm.innerHTML = '<i class="ti ti-x"></i>'; rm.onclick = function () { tpl.remove(); };
+    rm.innerHTML = '<i class="ti ti-x"></i>'; rm.onclick = function () { tpl.remove(); reindexPrescriptionRows(); };
     tpl.appendChild(rm);
     cont.appendChild(tpl);
     /* Init Select2 on the new drug dropdown */
-    $(tpl).find('.drug-select').select2({
-        theme: 'default',
-        width: '100%',
-        placeholder: '-- Search drug --',
-        allowClear: true,
-    });
+    $(tpl).find('.drug-select').each(function () { initDrugSelect(this); });
     /* Bind auto-calc on the new row */
     bindRxCalc(tpl);
     rxIdx++;
 });
+
+function reindexPrescriptionRows() {
+    document.querySelectorAll('#prescriptionItems .prescription-item').forEach(function (row, index) {
+        row.querySelectorAll('[name]').forEach(function (field) {
+            field.name = field.name.replace(/items\[\d+\]/, 'items[' + index + ']');
+        });
+        syncDrugName(row);
+    });
+    rxIdx = document.querySelectorAll('#prescriptionItems .prescription-item').length;
+}
+
+function preparePrescriptionSubmit() {
+    document.querySelectorAll('#prescriptionItems .prescription-item').forEach(function (row) {
+        syncDrugName(row);
+        calcQty(row);
+    });
+    reindexPrescriptionRows();
+    return true;
+}
 
 /* ================================================================
    PREVIOUS VISIT PREVIEW MODAL

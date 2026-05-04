@@ -128,7 +128,7 @@
                                 <th>Code</th>
                                 <th>Name</th>
                                 <th>Category</th>
-                                <th>Normal Range</th>
+                                <th>Criteria</th>
                                 <th>Price</th>
                                 <th>Status</th>
                                 <th class="text-end">Actions</th>
@@ -140,7 +140,18 @@
                                 <td><span class="badge bg-light text-dark fw-medium">{{ $test->code }}</span></td>
                                 <td class="fw-medium">{{ $test->name }}</td>
                                 <td>{{ $test->category->name ?? '-' }}</td>
-                                <td><small>{{ $test->normal_range ?? '-' }} {{ $test->unit ?? '' }}</small></td>
+                                <td>
+                                    @if($test->criteria->isNotEmpty())
+                                        @foreach($test->criteria->take(3) as $criterion)
+                                            <div><small><strong>{{ $criterion->name }}:</strong> {{ $criterion->normal_range ?? '-' }} {{ $criterion->unit ?? '' }}</small></div>
+                                        @endforeach
+                                        @if($test->criteria->count() > 3)
+                                            <small class="text-muted">+{{ $test->criteria->count() - 3 }} more</small>
+                                        @endif
+                                    @else
+                                        <small>{{ $test->normal_range ?? '-' }} {{ $test->unit ?? '' }}</small>
+                                    @endif
+                                </td>
                                 <td>{{ $test->price ? 'GH₵ ' . number_format($test->price, 2) : '-' }}</td>
                                 <td>
                                     <span class="badge bg-{{ $test->is_active ? 'success' : 'danger' }}">
@@ -201,19 +212,48 @@
                                                         <input type="text" name="code" class="form-control" value="{{ $test->code }}" required>
                                                     </div>
                                                 </div>
-                                                <div class="row g-2 mt-1">
-                                                    <div class="col-md-5">
-                                                        <label class="form-label">Normal Range</label>
-                                                        <input type="text" name="normal_range" class="form-control" value="{{ $test->normal_range }}" placeholder="e.g. 4.5-11.0">
+                                                <div class="mt-3">
+                                                    <label class="form-label fw-medium">Criteria</label>
+                                                    <div class="criteria-container" data-next-index="{{ max(1, $test->criteria->count()) }}">
+                                                        @forelse($test->criteria as $criterionIndex => $criterion)
+                                                        <div class="criteria-row row g-2 mb-2">
+                                                            <div class="col-md-4">
+                                                                <input type="text" name="criteria[{{ $criterionIndex }}][name]" class="form-control" value="{{ $criterion->name }}" placeholder="e.g. Haemoglobin">
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <input type="text" name="criteria[{{ $criterionIndex }}][normal_range]" class="form-control" value="{{ $criterion->normal_range }}" placeholder="Range">
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <input type="text" name="criteria[{{ $criterionIndex }}][unit]" class="form-control" value="{{ $criterion->unit }}" placeholder="Unit">
+                                                            </div>
+                                                            <div class="col-md-1">
+                                                                <button type="button" class="btn btn-outline-danger w-100 remove-criterion-row"><i class="ti ti-x"></i></button>
+                                                            </div>
+                                                        </div>
+                                                        @empty
+                                                        <div class="criteria-row row g-2 mb-2">
+                                                            <div class="col-md-4">
+                                                                <input type="text" name="criteria[0][name]" class="form-control" value="Result" placeholder="e.g. Result">
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <input type="text" name="criteria[0][normal_range]" class="form-control" value="{{ $test->normal_range }}" placeholder="Range">
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <input type="text" name="criteria[0][unit]" class="form-control" value="{{ $test->unit }}" placeholder="Unit">
+                                                            </div>
+                                                            <div class="col-md-1">
+                                                                <button type="button" class="btn btn-outline-danger w-100 remove-criterion-row"><i class="ti ti-x"></i></button>
+                                                            </div>
+                                                        </div>
+                                                        @endforelse
                                                     </div>
-                                                    <div class="col-md-3">
-                                                        <label class="form-label">Unit</label>
-                                                        <input type="text" name="unit" class="form-control" value="{{ $test->unit }}" placeholder="e.g. g/dL">
-                                                    </div>
-                                                    <div class="col-md-4">
-                                                        <label class="form-label">Price (GH₵)</label>
-                                                        <input type="number" name="price" class="form-control" value="{{ $test->price }}" step="0.01" min="0">
-                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary add-criterion-row">
+                                                        <i class="ti ti-plus me-1"></i>Add Criterion
+                                                    </button>
+                                                </div>
+                                                <div class="mt-3">
+                                                    <label class="form-label">Price (GH₵)</label>
+                                                    <input type="number" name="price" class="form-control" value="{{ $test->price }}" step="0.01" min="0">
                                                 </div>
                                                 <div class="form-check mt-3">
                                                     <input type="hidden" name="is_active" value="0">
@@ -309,19 +349,31 @@
                             <input type="text" name="code" class="form-control" placeholder="e.g. FBC" required>
                         </div>
                     </div>
-                    <div class="row g-2 mt-1">
-                        <div class="col-md-5">
-                            <label class="form-label">Normal Range</label>
-                            <input type="text" name="normal_range" class="form-control" placeholder="e.g. 4.5-11.0">
+                    <div class="mt-3">
+                        <label class="form-label fw-medium">Criteria</label>
+                        <div class="criteria-container" data-next-index="1">
+                            <div class="criteria-row row g-2 mb-2">
+                                <div class="col-md-4">
+                                    <input type="text" name="criteria[0][name]" class="form-control" value="Result" placeholder="e.g. Haemoglobin">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" name="criteria[0][normal_range]" class="form-control" placeholder="Range">
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="text" name="criteria[0][unit]" class="form-control" placeholder="Unit">
+                                </div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-outline-danger w-100 remove-criterion-row"><i class="ti ti-x"></i></button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Unit</label>
-                            <input type="text" name="unit" class="form-control" placeholder="e.g. g/dL">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Price (GH₵)</label>
-                            <input type="number" name="price" class="form-control" placeholder="0.00" step="0.01" min="0">
-                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary add-criterion-row">
+                            <i class="ti ti-plus me-1"></i>Add Criterion
+                        </button>
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label">Price (GH₵)</label>
+                        <input type="number" name="price" class="form-control" placeholder="0.00" step="0.01" min="0">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -333,3 +385,40 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('click', function (event) {
+    var addButton = event.target.closest('.add-criterion-row');
+    if (addButton) {
+        var container = addButton.previousElementSibling;
+        var index = parseInt(container.dataset.nextIndex || container.querySelectorAll('.criteria-row').length || 0, 10);
+        container.insertAdjacentHTML('beforeend', criterionRow(index));
+        container.dataset.nextIndex = index + 1;
+        return;
+    }
+
+    var removeButton = event.target.closest('.remove-criterion-row');
+    if (removeButton) {
+        var row = removeButton.closest('.criteria-row');
+        var container = row.closest('.criteria-container');
+        if (container.querySelectorAll('.criteria-row').length > 1) {
+            row.remove();
+        } else {
+            row.querySelectorAll('input').forEach(function (input) {
+                input.value = input.name.indexOf('[name]') !== -1 ? 'Result' : '';
+            });
+        }
+    }
+});
+
+function criterionRow(index) {
+    return '<div class="criteria-row row g-2 mb-2">'
+        + '<div class="col-md-4"><input type="text" name="criteria[' + index + '][name]" class="form-control" placeholder="e.g. Haemoglobin"></div>'
+        + '<div class="col-md-4"><input type="text" name="criteria[' + index + '][normal_range]" class="form-control" placeholder="Range"></div>'
+        + '<div class="col-md-3"><input type="text" name="criteria[' + index + '][unit]" class="form-control" placeholder="Unit"></div>'
+        + '<div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100 remove-criterion-row"><i class="ti ti-x"></i></button></div>'
+        + '</div>';
+}
+</script>
+@endpush

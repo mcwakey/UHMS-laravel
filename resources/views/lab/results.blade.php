@@ -77,7 +77,13 @@
                             @endif
                         </td>
                         <td>
-                            <small>{{ $result->requestItem->labTest->normal_range ?? '-' }} {{ $result->requestItem->labTest->unit ?? '' }}</small>
+                            @if($result->requestItem->labTest?->criteria?->isNotEmpty())
+                                @foreach($result->requestItem->labTest->criteria as $criterion)
+                                    <div><small><strong>{{ $criterion->name }}:</strong> {{ $criterion->normal_range ?? '-' }} {{ $criterion->unit ?? '' }}</small></div>
+                                @endforeach
+                            @else
+                                <small>{{ $result->requestItem->labTest->normal_range ?? '-' }} {{ $result->requestItem->labTest->unit ?? '' }}</small>
+                            @endif
                         </td>
                         <td>
                             @if($result->is_verified)

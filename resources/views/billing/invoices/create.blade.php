@@ -223,6 +223,25 @@
 $(function() {
     let rowIndex = {{ count($suggestedItems) > 0 ? count($suggestedItems) : 1 }};
 
+    function renumberRows() {
+        $('#itemsBody .item-row').each(function(index) {
+            $(this).find('[name]').each(function() {
+                this.name = this.name.replace(/items\[\d+\]/, 'items[' + index + ']');
+            });
+        });
+        rowIndex = $('#itemsBody .item-row').length;
+    }
+
+    function completeRowFromService(row) {
+        let select = row.find('.service-select');
+        let opt = select.find(':selected');
+        let desc = row.find('[name$="[description]"]');
+
+        if (opt.val() && !desc.val()) {
+            desc.val(opt.text().trim());
+        }
+    }
+
     function recalculate() {
         let subtotal = 0, nhisTotal = 0;
         $('#itemsBody .item-row').each(function() {
@@ -262,6 +281,7 @@ $(function() {
         let opt = $(this).find(':selected');
         let row = $(this).closest('.item-row');
         if (opt.val()) {
+            completeRowFromService(row);
             row.find('.price-input').val(opt.data('price') || 0);
             if (opt.data('nhis') == 1) {
                 row.find('.nhis-check').prop('checked', true);
@@ -296,8 +316,26 @@ $(function() {
     $(document).on('click', '.remove-row', function() {
         if ($('#itemsBody .item-row').length > 1) {
             $(this).closest('.item-row').remove();
+            renumberRows();
             recalculate();
         }
+    });
+
+    $('#invoiceForm').on('submit', function() {
+        $('#itemsBody .item-row').each(function() {
+            let row = $(this);
+            completeRowFromService(row);
+
+            let hasDescription = row.find('[name$="[description]"]').val();
+            let hasService = row.find('.service-select').val();
+            let isOnlyRow = $('#itemsBody .item-row').length === 1;
+            if (!hasDescription && !hasService && !isOnlyRow) {
+                row.remove();
+            }
+        });
+
+        renumberRows();
+        recalculate();
     });
 
     // Initial calculation

@@ -15,6 +15,9 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
 
+/**
+ * @method bool hasAnyRole(array|string $roles, ?string $guard = null)
+ */
 class User extends Authenticatable
 {
     use HasFactory, Notifiable, SoftDeletes, HasRoles, LogsActivity;
