@@ -234,10 +234,24 @@
 
     <script>
         (function () {
-            function cleanupModalState() {
-                var openModals = document.querySelectorAll('.modal.show');
-                if (openModals.length > 0) {
-                    return;
+            function cleanupModalState(force) {
+                if (!force) {
+                    var openModals = document.querySelectorAll('.modal.show');
+                    if (openModals.length > 0) {
+                        return;
+                    }
+                }
+
+                // Force-hide any lingering modal instances first (Inertia nav case).
+                if (force && window.bootstrap && bootstrap.Modal) {
+                    document.querySelectorAll('.modal').forEach(function (el) {
+                        var inst = bootstrap.Modal.getInstance(el);
+                        if (inst) { try { inst.hide(); inst.dispose(); } catch (e) {} }
+                        el.classList.remove('show');
+                        el.style.display = '';
+                        el.removeAttribute('aria-modal');
+                        el.setAttribute('aria-hidden', 'true');
+                    });
                 }
 
                 document.querySelectorAll('.modal-backdrop').forEach(function (backdrop) {
@@ -249,15 +263,36 @@
                 document.body.style.removeProperty('padding-right');
             }
 
+            function forceCleanup() { cleanupModalState(true); }
+
             window.uhmsCleanupModalState = cleanupModalState;
+            window.uhmsForceCleanupModals = forceCleanup;
 
             document.addEventListener('DOMContentLoaded', cleanupModalState);
-            document.addEventListener('hidden.bs.modal', cleanupModalState);
-            document.addEventListener('inertia:before', cleanupModalState);
-            document.addEventListener('inertia:navigate', cleanupModalState);
+            document.addEventListener('hidden.bs.modal', function () {
+                // Defer so Bootstrap finishes its own teardown first.
+                setTimeout(cleanupModalState, 50);
+            });
+            // Inertia navigations destroy modal DOM without firing hidden.bs.modal.
+            document.addEventListener('inertia:before', forceCleanup);
+            document.addEventListener('inertia:navigate', forceCleanup);
+            document.addEventListener('inertia:success', forceCleanup);
             window.addEventListener('pageshow', cleanupModalState);
-            window.addEventListener('popstate', cleanupModalState);
-            window.addEventListener('beforeunload', cleanupModalState);
+            window.addEventListener('popstate', forceCleanup);
+            window.addEventListener('beforeunload', forceCleanup);
+
+            // Delegated dismiss button — covers dynamically-added modals.
+            document.addEventListener('click', function (event) {
+                var trigger = event.target.closest('[data-bs-dismiss="modal"]');
+                if (!trigger) return;
+                var modalEl = trigger.closest('.modal');
+                if (!modalEl) return;
+                if (window.bootstrap && bootstrap.Modal) {
+                    var inst = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    try { inst.hide(); } catch (e) {}
+                }
+                setTimeout(cleanupModalState, 250);
+            });
 
             document.addEventListener('submit', function (event) {
                 var modalEl = event.target.closest('.modal.show');

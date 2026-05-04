@@ -11,11 +11,14 @@ use App\Models\Patient;
 use App\Models\ServiceCatalog;
 use App\Models\User;
 use App\Models\Visit;
+use App\Services\BillingService;
 use App\Services\InsuranceService;
 use App\Services\QueueService;
 use App\Services\VisitService;
+use App\Enums\BillingType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class VisitController extends Controller
 {
@@ -23,6 +26,7 @@ class VisitController extends Controller
         protected VisitService $visitService,
         protected InsuranceService $insuranceService,
         protected QueueService $queueService,
+        protected BillingService $billingService,
     ) {}
 
     public function index(Request $request)
@@ -65,6 +69,10 @@ class VisitController extends Controller
                 $services = $request->validated()['services'] ?? [];
                 if (!empty($services)) {
                     $this->visitService->attachServices($v, $services);
+
+                    // Auto-create a single invoice covering all selected services so
+                    // billing is ready the moment the visit is saved.
+                    $this->autoCreateInvoiceForVisit($v->fresh(['visitServices.serviceCatalog', 'visitInsurance.insuranceProvider', 'patient']));
                 }
                 // No queue entry at waiting — it is created when pushed to Triage
 
@@ -352,5 +360,55 @@ class VisitController extends Controller
             'type_prices'      => $typePrices,
             'provider_prices'  => $providerPrices,
         ];
+    }
+
+    /**
+     * Auto-create a single invoice for the visit covering all attached
+     * services. Triggered on visit submission so billing is ready immediately.
+     * Failures are logged but do not abort the visit creation.
+     */
+    private function autoCreateInvoiceForVisit(Visit $visit): void
+    {
+        try {
+            // Skip if an invoice already exists for this visit (idempotent).
+            if ($visit->invoices()->exists()) {
+                return;
+            }
+
+            $items = $this->billingService->generateItemsFromVisit($visit);
+            if (empty($items)) {
+                return;
+            }
+
+            $billingType = $this->resolveBillingType($visit);
+
+            $this->billingService->createInvoice([
+                'visit_id'     => $visit->id,
+                'patient_id'   => $visit->patient_id,
+                'billing_type' => $billingType,
+                'tax_amount'   => 0,
+                'discount_amount' => 0,
+                'due_date'     => now()->addDays(30),
+                'notes'        => 'Auto-generated on visit creation.',
+            ], $items);
+        } catch (\Throwable $e) {
+            Log::warning('Auto invoice creation failed for visit ' . $visit->id . ': ' . $e->getMessage());
+        }
+    }
+
+    private function resolveBillingType(Visit $visit): string
+    {
+        $provider = $visit->visitInsurance?->insuranceProvider;
+        if (!$provider || $provider->is_default) {
+            return BillingType::CASH->value;
+        }
+        $type = strtolower((string) $provider->type);
+        if (str_contains($type, 'nhis')) {
+            return BillingType::NHIS->value;
+        }
+        if (str_contains($type, 'corporate') || str_contains($type, 'private')) {
+            return BillingType::CORPORATE->value;
+        }
+        return BillingType::MIXED->value;
     }
 }

@@ -22,7 +22,7 @@ class DepartmentController extends Controller
             ->paginate(15);
 
         $departmentTypes = DepartmentType::cases();
-        $resultTypes     = ResultType::cases();
+        $resultTypes     = ResultType::selectableCases();
 
         return view('departments.index', compact('departments', 'departmentTypes', 'resultTypes'));
     }

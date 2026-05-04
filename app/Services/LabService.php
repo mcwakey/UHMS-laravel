@@ -289,6 +289,18 @@ class LabService
                 $payload['result_value'] = $data['result_value'] ?? null;
             }
 
+            // Optional attachment can accompany ANY result type (image / document
+            // upload is always available alongside parameters or rich text).
+            if (
+                ! $resultType->isFileBased()
+                && isset($data['result_file'])
+                && $data['result_file'] instanceof UploadedFile
+            ) {
+                $path = $data['result_file']->store('investigation-results', 'public');
+                $payload['result_file']      = $path;
+                $payload['result_file_name'] = $data['result_file']->getClientOriginalName();
+            }
+
             $result = LabResult::updateOrCreate(
                 ['lab_request_item_id' => $item->id],
                 $payload

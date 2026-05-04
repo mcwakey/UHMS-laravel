@@ -245,7 +245,7 @@
 @if($request->status === 'processing' && $item->status !== 'completed')
 <div class="modal fade" id="resultModal-{{ $item->id }}" tabindex="-1">
     <div class="modal-dialog">
-        <form method="POST" action="{{ route('admin.lab.results.store', $item) }}" class="modal-content">
+        <form method="POST" action="{{ route('admin.lab.results.store', $item) }}" enctype="multipart/form-data" class="modal-content">
             @csrf
             <input type="hidden" name="result_type" value="parameters">
             <div class="modal-header">
@@ -278,6 +278,12 @@
                 <div class="mb-3">
                     <label class="form-label">Remarks</label>
                     <textarea name="remarks" class="form-control" rows="2" placeholder="Optional remarks..."></textarea>
+                </div>
+                <hr class="my-3">
+                <div class="mb-2">
+                    <label class="form-label small fw-medium"><i class="ti ti-paperclip me-1"></i>Attach image / document <span class="text-muted">(optional)</span></label>
+                    <input type="file" name="result_file" class="form-control form-control-sm" accept="image/*,.pdf,.doc,.docx">
+                    <div class="form-text">Image, PDF or Word — max 20MB. Always available regardless of result type.</div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -346,7 +352,7 @@
 @if($request->status === 'processing' && $item->status !== 'completed')
 <div class="modal fade" id="richtextModal-{{ $item->id }}" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <form method="POST" action="{{ route('admin.lab.results.store', $item) }}" class="modal-content">
+        <form method="POST" action="{{ route('admin.lab.results.store', $item) }}" enctype="multipart/form-data" class="modal-content">
             @csrf
             <input type="hidden" name="result_type" value="richtext">
             <div class="modal-header">
@@ -371,6 +377,12 @@
                 <div class="mt-2">
                     <label class="form-label">Remarks</label>
                     <input type="text" name="remarks" class="form-control" placeholder="Optional brief remark" value="{{ $item->result?->remarks }}">
+                </div>
+                <hr class="my-3">
+                <div class="mb-2">
+                    <label class="form-label small fw-medium"><i class="ti ti-paperclip me-1"></i>Attach image / document <span class="text-muted">(optional)</span></label>
+                    <input type="file" name="result_file" class="form-control form-control-sm" accept="image/*,.pdf,.doc,.docx">
+                    <div class="form-text">Image, PDF or Word — max 20MB. Always available regardless of result type.</div>
                 </div>
             </div>
             <div class="modal-footer">

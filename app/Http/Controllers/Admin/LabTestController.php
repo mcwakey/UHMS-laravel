@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Enums\DepartmentType;
+use App\Models\Department;
 use App\Models\LabTest;
 use App\Models\LabTestCategory;
 use App\Services\LabService;
@@ -20,7 +22,7 @@ class LabTestController extends Controller
     public function index(Request $request)
     {
         $categories = $this->labService->getCategories();
-        $tests = LabTest::with(['category', 'criteria'])
+        $tests = LabTest::with(['category.department', 'criteria'])
             ->when($request->search, function ($q, $search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('code', 'like', "%{$search}%");
@@ -31,7 +33,16 @@ class LabTestController extends Controller
             ->latest()
             ->paginate(15);
 
-        return view('lab.tests', compact('categories', 'tests'));
+        // Investigation-type departments are the only valid owners of a lab
+        // test category. Their result_type drives the test creation UI
+        // (parameters → criteria editor; richtext → description template).
+        $investigationDepartments = Department::query()
+            ->where('status', 'active')
+            ->where('type', DepartmentType::INVESTIGATION->value)
+            ->orderBy('name')
+            ->get();
+
+        return view('lab.tests', compact('categories', 'tests', 'investigationDepartments'));
     }
 
     /**
@@ -42,6 +53,7 @@ class LabTestController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:lab_test_categories,name',
             'description' => 'nullable|string|max:500',
+            'department_id' => 'nullable|exists:departments,id',
         ]);
 
         $validated['is_active'] = true;
@@ -58,6 +70,7 @@ class LabTestController extends Controller
         $validated = $request->validate([
             'name' => "required|string|max:255|unique:lab_test_categories,name,{$category->id}",
             'description' => 'nullable|string|max:500',
+            'department_id' => 'nullable|exists:departments,id',
             'is_active' => 'nullable|boolean',
         ]);
 
@@ -90,6 +103,7 @@ class LabTestController extends Controller
             'code' => 'required|string|max:50|unique:lab_tests,code',
             'normal_range' => 'nullable|string|max:255',
             'unit' => 'nullable|string|max:50',
+            'description_template' => 'nullable|string|max:10000',
             'criteria' => 'nullable|array',
             'criteria.*.name' => 'nullable|string|max:255',
             'criteria.*.normal_range' => 'nullable|string|max:255',
@@ -114,6 +128,7 @@ class LabTestController extends Controller
             'code' => "required|string|max:50|unique:lab_tests,code,{$test->id}",
             'normal_range' => 'nullable|string|max:255',
             'unit' => 'nullable|string|max:50',
+            'description_template' => 'nullable|string|max:10000',
             'criteria' => 'nullable|array',
             'criteria.*.name' => 'nullable|string|max:255',
             'criteria.*.normal_range' => 'nullable|string|max:255',

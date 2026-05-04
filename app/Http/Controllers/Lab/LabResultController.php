@@ -41,6 +41,9 @@ class LabResultController extends Controller
             'result_type' => ['required', 'string'],
             'is_abnormal' => ['nullable', 'boolean'],
             'remarks'     => ['nullable', 'string', 'max:2000'],
+            // Attachment is always allowed regardless of result type so users
+            // can pair an image / document with parameters or a written report.
+            'result_file' => ['nullable', 'file', 'max:20480'], // 20MB
         ];
 
         if ($resultType === ResultType::RICHTEXT) {
@@ -52,6 +55,11 @@ class LabResultController extends Controller
         }
 
         $validated = $request->validate($rules);
+        // Pass the uploaded file separately because $request->validate strips
+        // unrecognised non-validated keys.
+        if ($request->hasFile('result_file')) {
+            $validated['result_file'] = $request->file('result_file');
+        }
 
         $this->labService->enterResult($item, $validated);
 

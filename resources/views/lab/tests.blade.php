@@ -76,6 +76,18 @@
                                             <input type="text" name="name" class="form-control" value="{{ $cat->name }}" required>
                                         </div>
                                         <div class="mb-3">
+                                            <label class="form-label">Investigation Department</label>
+                                            <select name="department_id" class="form-select">
+                                                <option value="">— Unlinked —</option>
+                                                @foreach($investigationDepartments as $dept)
+                                                    <option value="{{ $dept->id }}" {{ $cat->department_id == $dept->id ? 'selected' : '' }}>
+                                                        {{ $dept->name }} ({{ $dept->result_type?->label() ?? '—' }})
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            <div class="form-text">Linking to a department drives whether tests use criteria or a rich-text template.</div>
+                                        </div>
+                                        <div class="mb-3">
                                             <label class="form-label">Description</label>
                                             <textarea name="description" class="form-control" rows="3">{{ $cat->description }}</textarea>
                                         </div>
@@ -196,9 +208,9 @@
                                             <div class="modal-body">
                                                 <div class="mb-3">
                                                     <label class="form-label">Category <span class="text-danger">*</span></label>
-                                                    <select name="category_id" class="form-select" required>
+                                                    <select name="category_id" class="form-select test-category-select" required>
                                                         @foreach($categories as $cat)
-                                                            <option value="{{ $cat->id }}" {{ $test->category_id == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                                                            <option value="{{ $cat->id }}" data-result-type="{{ $cat->department?->result_type?->value ?? 'parameters' }}" {{ $test->category_id == $cat->id ? 'selected' : '' }}>{{ $cat->name }}{{ $cat->department ? ' — ' . $cat->department->name : '' }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>
@@ -212,8 +224,8 @@
                                                         <input type="text" name="code" class="form-control" value="{{ $test->code }}" required>
                                                     </div>
                                                 </div>
-                                                <div class="mt-3">
-                                                    <label class="form-label fw-medium">Criteria</label>
+                                                <div class="mt-3 result-type-block result-type-parameters">
+                                                    <label class="form-label fw-medium">Criteria <small class="text-muted">(parameters)</small></label>
                                                     <div class="criteria-container" data-next-index="{{ max(1, $test->criteria->count()) }}">
                                                         @forelse($test->criteria as $criterionIndex => $criterion)
                                                         <div class="criteria-row row g-2 mb-2">
@@ -250,6 +262,11 @@
                                                     <button type="button" class="btn btn-sm btn-outline-primary add-criterion-row">
                                                         <i class="ti ti-plus me-1"></i>Add Criterion
                                                     </button>
+                                                </div>
+                                                <div class="mt-3 result-type-block result-type-richtext d-none">
+                                                    <label class="form-label fw-medium">Description Template <small class="text-muted">(rich text)</small></label>
+                                                    <textarea name="description_template" class="form-control" rows="6" placeholder="Default report skeleton: findings, impressions, conclusions...">{{ $test->description_template }}</textarea>
+                                                    <div class="form-text">Pre-filled into the result form for richtext-type investigation departments.</div>
                                                 </div>
                                                 <div class="mt-3">
                                                     <label class="form-label">Price (GH₵)</label>
@@ -306,6 +323,16 @@
                         <input type="text" name="name" class="form-control" placeholder="e.g. Haematology" required>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Investigation Department</label>
+                        <select name="department_id" class="form-select">
+                            <option value="">— Unlinked —</option>
+                            @foreach($investigationDepartments as $dept)
+                                <option value="{{ $dept->id }}">{{ $dept->name }} ({{ $dept->result_type?->label() ?? '—' }})</option>
+                            @endforeach
+                        </select>
+                        <div class="form-text">Linking to a department drives whether tests use criteria or a rich-text template.</div>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Description</label>
                         <textarea name="description" class="form-control" rows="3" placeholder="Brief description..."></textarea>
                     </div>
@@ -332,10 +359,10 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label">Category <span class="text-danger">*</span></label>
-                        <select name="category_id" class="form-select" required>
+                        <select name="category_id" class="form-select test-category-select" required>
                             <option value="">-- Select Category --</option>
                             @foreach($categories as $cat)
-                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                <option value="{{ $cat->id }}" data-result-type="{{ $cat->department?->result_type?->value ?? 'parameters' }}">{{ $cat->name }}{{ $cat->department ? ' — ' . $cat->department->name : '' }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -349,8 +376,8 @@
                             <input type="text" name="code" class="form-control" placeholder="e.g. FBC" required>
                         </div>
                     </div>
-                    <div class="mt-3">
-                        <label class="form-label fw-medium">Criteria</label>
+                    <div class="mt-3 result-type-block result-type-parameters">
+                        <label class="form-label fw-medium">Criteria <small class="text-muted">(parameters)</small></label>
                         <div class="criteria-container" data-next-index="1">
                             <div class="criteria-row row g-2 mb-2">
                                 <div class="col-md-4">
@@ -370,6 +397,11 @@
                         <button type="button" class="btn btn-sm btn-outline-primary add-criterion-row">
                             <i class="ti ti-plus me-1"></i>Add Criterion
                         </button>
+                    </div>
+                    <div class="mt-3 result-type-block result-type-richtext d-none">
+                        <label class="form-label fw-medium">Description Template <small class="text-muted">(rich text)</small></label>
+                        <textarea name="description_template" class="form-control" rows="6" placeholder="Default report skeleton: findings, impressions, conclusions..."></textarea>
+                        <div class="form-text">Pre-filled into the result form for richtext-type investigation departments.</div>
                     </div>
                     <div class="mt-3">
                         <label class="form-label">Price (GH₵)</label>
@@ -420,5 +452,38 @@ function criterionRow(index) {
         + '<div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100 remove-criterion-row"><i class="ti ti-x"></i></button></div>'
         + '</div>';
 }
+
+/**
+ * Toggle the criteria editor vs description template based on the linked
+ * department's result_type for the selected category.
+ */
+function syncResultTypeBlocks(select) {
+    if (!select) return;
+    var modal = select.closest('.modal-content') || select.closest('.modal') || document;
+    var opt = select.options[select.selectedIndex];
+    var rt = (opt && opt.dataset.resultType) || 'parameters';
+    var isRichtext = rt === 'richtext';
+
+    modal.querySelectorAll('.result-type-parameters').forEach(function (el) {
+        el.classList.toggle('d-none', isRichtext);
+        el.querySelectorAll('input, textarea').forEach(function (i) { i.disabled = isRichtext; });
+    });
+    modal.querySelectorAll('.result-type-richtext').forEach(function (el) {
+        el.classList.toggle('d-none', !isRichtext);
+        el.querySelectorAll('input, textarea').forEach(function (i) { i.disabled = !isRichtext; });
+    });
+}
+
+document.addEventListener('change', function (e) {
+    if (e.target.classList.contains('test-category-select')) {
+        syncResultTypeBlocks(e.target);
+    }
+});
+
+// Initialise visible test modals on open.
+document.addEventListener('shown.bs.modal', function (e) {
+    var sel = e.target.querySelector('.test-category-select');
+    if (sel) syncResultTypeBlocks(sel);
+});
 </script>
 @endpush

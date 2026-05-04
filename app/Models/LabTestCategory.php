@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class LabTestCategory extends Model
 {
     protected $fillable = [
+        'department_id',
         'name',
         'description',
         'is_active',
@@ -16,6 +17,11 @@ class LabTestCategory extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    public function department(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(\App\Models\Department::class);
+    }
 
     public function tests(): HasMany
     {

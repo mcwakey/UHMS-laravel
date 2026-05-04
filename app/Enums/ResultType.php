@@ -54,4 +54,14 @@ enum ResultType: string
     {
         return in_array($this, [self::IMAGE, self::DOCUMENT]);
     }
+
+    /**
+     * Result types selectable when configuring a department.
+     * Image / Document are deprecated as primary types — file uploads are
+     * now always available alongside parameters or rich text.
+     */
+    public static function selectableCases(): array
+    {
+        return [self::NONE, self::PARAMETERS, self::RICHTEXT];
+    }
 }

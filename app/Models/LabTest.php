@@ -14,6 +14,7 @@ class LabTest extends Model
         'code',
         'normal_range',
         'unit',
+        'description_template',
         'price',
         'is_active',
     ];

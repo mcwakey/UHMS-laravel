@@ -1375,26 +1375,38 @@ $visitHistoryJson = $history['records']->map(function($r) {
     ];
 })->values();
 @endphp
-<script>
-var visitHistoryData = @json($visitHistoryJson);
-
-var csrfToken      = '{{ csrf_token() }}';
-var tabStorageKey  = 'consult_tab_{{ $visit->id }}';
-var destroyUrls    = {
-    complaint:     '{{ url("admin/consultations/complaints") }}',
-    diagnosis:     '{{ url("admin/consultations/diagnoses") }}',
-    investigation: '{{ url("admin/consultations/investigations") }}',
-    treatment:     '{{ url("admin/consultations/treatments") }}',
-};
-var diagnosisBaseUrl  = '{{ url("admin/consultations/diagnoses") }}';
-var deptServicesBase  = '{{ url("admin/departments") }}';
-var prescriptionDestroyBase = '{{ url("admin/consultations/prescriptions") }}';
-</script>
 
 @endsection
 
 @push('scripts')
 <script>
+/* ================================================================
+   PAGE GLOBALS
+   The Inertia legacy bridge re-injects scripts from the @stack('scripts')
+   region (the body's <script> tags inside v-html are NOT executed),
+   so all page-scoped state must live here.
+   ================================================================ */
+window.visitHistoryData = @json($visitHistoryJson);
+window.csrfToken      = '{{ csrf_token() }}';
+window.tabStorageKey  = 'consult_tab_{{ $visit->id }}';
+window.destroyUrls    = {
+    complaint:     '{{ url("admin/consultations/complaints") }}',
+    diagnosis:     '{{ url("admin/consultations/diagnoses") }}',
+    investigation: '{{ url("admin/consultations/investigations") }}',
+    treatment:     '{{ url("admin/consultations/treatments") }}',
+};
+window.diagnosisBaseUrl  = '{{ url("admin/consultations/diagnoses") }}';
+window.deptServicesBase  = '{{ url("admin/departments") }}';
+window.prescriptionDestroyBase = '{{ url("admin/consultations/prescriptions") }}';
+
+var visitHistoryData = window.visitHistoryData;
+var csrfToken = window.csrfToken;
+var tabStorageKey = window.tabStorageKey;
+var destroyUrls = window.destroyUrls;
+var diagnosisBaseUrl = window.diagnosisBaseUrl;
+var deptServicesBase = window.deptServicesBase;
+var prescriptionDestroyBase = window.prescriptionDestroyBase;
+
 /* ================================================================
    TAB PERSISTENCE
    ================================================================ */
@@ -2232,5 +2244,23 @@ $(document).ready(function () {
         });
     }
 });
+
+/* ================================================================
+   EXPOSE TO GLOBAL SCOPE
+   The Inertia legacy bridge wraps each <script> tag in its own
+   function context, so top-level `function` and `var` declarations
+   are NOT global. Inline event handlers (onclick / onchange /
+   onsubmit) resolve identifiers against window. Map them here so
+   inline handlers and other script blocks can reach them.
+   ================================================================ */
+(function () {
+    var fns = ['saveTabBeforeSubmit','activateConsultationTab','loadInvestigationServices',
+               'loadLabReqItems','addFreeTextItem','freeTextItemRow','preparePrescriptionSubmit',
+               'previewVisit','escapeHtml','capFirst','showToast','reindexPrescriptionRows',
+               'initDrugSelect','syncDrugName','calcQty','bindRxCalc'];
+    fns.forEach(function (n) {
+        try { if (typeof eval(n) === 'function') window[n] = eval(n); } catch (e) {}
+    });
+})();
 </script>
 @endpush

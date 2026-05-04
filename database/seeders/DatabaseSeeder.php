@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             ServiceCatalogSeeder::class,
             DesignationSeeder::class,
             SpecialtySeeder::class,
+            IcdCodeSeeder::class,
             DemoUserSeeder::class,
             PatientSeeder::class,
         ]);
