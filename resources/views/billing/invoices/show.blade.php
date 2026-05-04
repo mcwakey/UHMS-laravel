@@ -2,6 +2,11 @@
 @section('title', 'Invoice ' . $invoice->invoice_number)
 
 @section('content')
+@php
+    $invoiceClaim = $invoice->claim;
+    $invoiceInsuranceProviderId = $invoice->visit?->visitInsurance?->insurance_provider_id;
+    $canCreateNhisClaim = (float) $invoice->nhis_amount > 0 && ! $invoiceClaim;
+@endphp
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
     <div class="flex-grow-1">
@@ -10,6 +15,31 @@
         </h6>
     </div>
     <div class="d-flex gap-2">
+        @can('claims.view')
+        @if($invoiceClaim)
+        <a href="{{ route('admin.claims.show', $invoiceClaim) }}" class="btn btn-outline-primary btn-md">
+            <i class="ti ti-file-dollar me-1"></i>View NHIS Claim
+        </a>
+        @endif
+        @endcan
+        @if($canCreateNhisClaim)
+            @can('claims.create')
+                @if($invoiceInsuranceProviderId)
+                <form method="POST" action="{{ route('admin.claims.store-from-invoice') }}" class="d-inline">
+                    @csrf
+                    <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
+                    <input type="hidden" name="insurance_provider_id" value="{{ $invoiceInsuranceProviderId }}">
+                    <button type="submit" class="btn btn-primary btn-md">
+                        <i class="ti ti-file-plus me-1"></i>Generate NHIS Claim
+                    </button>
+                </form>
+                @else
+                <a href="{{ route('admin.claims.create', ['invoice_id' => $invoice->id]) }}" class="btn btn-primary btn-md">
+                    <i class="ti ti-file-plus me-1"></i>Generate NHIS Claim
+                </a>
+                @endif
+            @endcan
+        @endif
         <a href="{{ route('admin.billing.invoices.print', $invoice) }}" target="_blank" class="btn btn-dark btn-md">
             <i class="ti ti-printer me-1"></i>Print
         </a>
@@ -275,6 +305,31 @@
                 <h6 class="fw-bold mb-0">Quick Actions</h6>
             </div>
             <div class="card-body d-grid gap-2">
+                @can('claims.view')
+                @if($invoiceClaim)
+                <a href="{{ route('admin.claims.show', $invoiceClaim) }}" class="btn btn-outline-primary">
+                    <i class="ti ti-file-dollar me-1"></i>View NHIS Claim
+                </a>
+                @endif
+                @endcan
+                @if($canCreateNhisClaim)
+                    @can('claims.create')
+                        @if($invoiceInsuranceProviderId)
+                        <form method="POST" action="{{ route('admin.claims.store-from-invoice') }}">
+                            @csrf
+                            <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
+                            <input type="hidden" name="insurance_provider_id" value="{{ $invoiceInsuranceProviderId }}">
+                            <button type="submit" class="btn btn-outline-primary w-100">
+                                <i class="ti ti-file-plus me-1"></i>Generate NHIS Claim
+                            </button>
+                        </form>
+                        @else
+                        <a href="{{ route('admin.claims.create', ['invoice_id' => $invoice->id]) }}" class="btn btn-outline-primary">
+                            <i class="ti ti-file-plus me-1"></i>Generate NHIS Claim
+                        </a>
+                        @endif
+                    @endcan
+                @endif
                 <a href="{{ route('admin.billing.invoices.print', $invoice) }}" target="_blank" class="btn btn-outline-dark">
                     <i class="ti ti-printer me-1"></i>Print Invoice
                 </a>

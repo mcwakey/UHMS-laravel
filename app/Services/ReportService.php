@@ -716,13 +716,24 @@ class ReportService
             $query->where('insurance_provider_id', $filters['provider_id']);
         }
 
+        $statsQuery = clone $query;
         $claims = $query->latest('claim_date')->paginate(25)->withQueryString();
 
+        $totalClaimed = (clone $statsQuery)->sum('total_amount');
+        $totalApproved = (clone $statsQuery)->whereNotNull('approved_amount')->sum('approved_amount');
+
         $stats = [
-            'total_claims' => $claims->total(),
-            'total_amount' => Claim::sum('total_amount'),
-            'approved_amount' => Claim::whereNotNull('approved_amount')->sum('approved_amount'),
-            'pending' => Claim::where('status', ClaimStatus::SUBMITTED)->count(),
+            'total_claims' => (clone $statsQuery)->count(),
+            'total_claimed' => $totalClaimed,
+            'total_approved' => $totalApproved,
+            'total_amount' => $totalClaimed,
+            'approved_amount' => $totalApproved,
+            'pending' => (clone $statsQuery)->whereIn('status', [
+                ClaimStatus::DRAFT->value,
+                ClaimStatus::SUBMITTED->value,
+                ClaimStatus::UNDER_REVIEW->value,
+                ClaimStatus::APPEALED->value,
+            ])->count(),
         ];
 
         $providers = InsuranceProvider::orderBy('name')->get();

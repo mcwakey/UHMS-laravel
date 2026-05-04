@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\ClaimItemStatus;
 use App\Enums\ClaimStatus;
+use App\Enums\InsuranceType;
 use App\Enums\ServiceType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreClaimRequest;
@@ -42,15 +43,27 @@ class ClaimController extends Controller
     public function create(Request $request)
     {
         $invoice = $request->has('invoice_id')
-            ? Invoice::with(['items', 'patient', 'visit'])->findOrFail($request->invoice_id)
+            ? Invoice::with(['items.serviceCatalog', 'patient', 'visit.visitInsurance.insuranceProvider', 'claim'])->findOrFail($request->invoice_id)
             : null;
 
-        $providers = InsuranceProvider::active()->orderBy('name')->get();
+        if ($invoice?->claim) {
+            return redirect()
+                ->route('admin.claims.show', $invoice->claim)
+                ->with('success', 'A claim already exists for this invoice.');
+        }
+
+        $providersQuery = InsuranceProvider::active();
+        if ($invoice && (float) $invoice->nhis_amount > 0) {
+            $providersQuery->where('type', InsuranceType::NHIA->value);
+        }
+
+        $providers = $providersQuery->orderBy('name')->get();
         $doctors = User::role('Doctor')->orderBy('first_name')->get();
         $patients = Patient::where('status', 'active')->orderBy('first_name')->get();
+        $visits = Visit::with('patient')->latest('visit_date')->limit(200)->get();
         $serviceTypes = ServiceType::cases();
 
-        return view('claims.create', compact('invoice', 'providers', 'doctors', 'patients', 'serviceTypes'));
+        return view('claims.create', compact('invoice', 'providers', 'doctors', 'patients', 'visits', 'serviceTypes'));
     }
 
     /**
@@ -60,21 +73,25 @@ class ClaimController extends Controller
     {
         $request->validate([
             'invoice_id' => ['required', 'exists:invoices,id'],
-            'insurance_provider_id' => ['required', 'exists:insurance_providers,id'],
+            'insurance_provider_id' => ['nullable', 'exists:insurance_providers,id'],
             'assigned_doctor_id' => ['nullable', 'exists:users,id'],
         ]);
 
-        $invoice = Invoice::with(['items', 'visit', 'patient'])->findOrFail($request->invoice_id);
+        $invoice = Invoice::with(['items.serviceCatalog', 'visit.visitInsurance.insuranceProvider', 'patient'])->findOrFail($request->invoice_id);
 
-        $claim = $this->claimService->createFromInvoice(
-            $invoice,
-            $request->insurance_provider_id,
-            $request->assigned_doctor_id,
-        );
+        try {
+            $claim = $this->claimService->createFromInvoice(
+                $invoice,
+                $request->integer('insurance_provider_id') ?: null,
+                $request->integer('assigned_doctor_id') ?: null,
+            );
+        } catch (\InvalidArgumentException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
 
         return redirect()
             ->route('admin.claims.show', $claim)
-            ->with('success', 'Claim created from invoice successfully.');
+            ->with('success', 'NHIS claim is ready for review.');
     }
 
     /**
@@ -142,8 +159,10 @@ class ClaimController extends Controller
     /**
      * Process review of individual items.
      */
-    public function reviewItem(Request $request, ClaimItem $item)
+    public function reviewItem(Request $request, Claim $claim, ClaimItem $item)
     {
+        abort_if($item->claim_id !== $claim->id, 404);
+
         $request->validate([
             'action' => ['required', 'in:approve,reject'],
             'approved_amount' => ['nullable', 'numeric', 'min:0'],

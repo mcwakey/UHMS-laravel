@@ -152,6 +152,11 @@
                 </thead>
                 <tbody>
                     @forelse($invoices as $invoice)
+                    @php
+                        $invoiceClaim = $invoice->claim;
+                        $invoiceInsuranceProviderId = $invoice->visit?->visitInsurance?->insurance_provider_id;
+                        $canCreateNhisClaim = (float) $invoice->nhis_amount > 0 && ! $invoiceClaim;
+                    @endphp
                     <tr>
                         <td>
                             <a href="{{ route('admin.billing.invoices.show', $invoice) }}" class="fw-medium text-primary">
@@ -183,6 +188,35 @@
                                             <i class="ti ti-eye me-1"></i>View
                                         </a>
                                     </li>
+                                    @can('claims.view')
+                                    @if($invoiceClaim)
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.claims.show', $invoiceClaim) }}">
+                                            <i class="ti ti-file-dollar me-1"></i>View NHIS Claim
+                                        </a>
+                                    </li>
+                                    @endif
+                                    @endcan
+                                    @if($canCreateNhisClaim)
+                                    @can('claims.create')
+                                    <li>
+                                        @if($invoiceInsuranceProviderId)
+                                        <form method="POST" action="{{ route('admin.claims.store-from-invoice') }}">
+                                            @csrf
+                                            <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
+                                            <input type="hidden" name="insurance_provider_id" value="{{ $invoiceInsuranceProviderId }}">
+                                            <button type="submit" class="dropdown-item">
+                                                <i class="ti ti-file-plus me-1"></i>Generate NHIS Claim
+                                            </button>
+                                        </form>
+                                        @else
+                                        <a class="dropdown-item" href="{{ route('admin.claims.create', ['invoice_id' => $invoice->id]) }}">
+                                            <i class="ti ti-file-plus me-1"></i>Generate NHIS Claim
+                                        </a>
+                                        @endif
+                                    </li>
+                                    @endcan
+                                    @endif
                                     @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::PAID, \App\Enums\InvoiceStatus::CANCELLED]))
                                     @can('invoices.edit')
                                     <li>

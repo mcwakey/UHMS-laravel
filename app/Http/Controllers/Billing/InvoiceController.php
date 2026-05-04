@@ -24,7 +24,7 @@ class InvoiceController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Invoice::with(['patient', 'visit', 'createdBy'])
+        $query = Invoice::with(['patient', 'visit.visitInsurance.insuranceProvider', 'claim', 'createdBy'])
             ->latest();
 
         if ($request->filled('status')) {
@@ -100,7 +100,7 @@ class InvoiceController extends Controller
      */
     public function show(Invoice $invoice)
     {
-        $invoice->load(['items.serviceCatalog', 'payments.receivedBy', 'patient', 'visit.department', 'createdBy']);
+        $invoice->load(['items.serviceCatalog', 'payments.receivedBy', 'patient', 'visit.department', 'visit.visitInsurance.insuranceProvider', 'claim', 'createdBy']);
 
         return view('billing.invoices.show', compact('invoice'));
     }

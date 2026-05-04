@@ -26,16 +26,28 @@
 
 @if($invoice)
 {{-- Create from Invoice --}}
+@php
+    $claimableItems = $invoice->items->filter(fn ($item) => $item->is_nhis_covered && (float) $item->nhis_approved_amount > 0)->values();
+    $claimTotal = $claimableItems->sum(fn ($item) => (float) $item->nhis_approved_amount);
+    $defaultProviderId = old('insurance_provider_id', $invoice->visit?->visitInsurance?->insurance_provider_id);
+@endphp
 <div class="alert alert-info">
     <i class="ti ti-info-circle me-1"></i>
-    Creating claim from Invoice <strong>{{ $invoice->invoice_number }}</strong> —
+    Creating NHIS claim from Invoice <strong>{{ $invoice->invoice_number }}</strong> —
     Patient: <strong>{{ $invoice->patient->first_name }} {{ $invoice->patient->last_name }}</strong> —
-    Amount: <strong>GH₵ {{ number_format($invoice->total_amount, 2) }}</strong>
+    Claimable Amount: <strong>GH₵ {{ number_format($claimTotal, 2) }}</strong>
 </div>
+
+@if($claimableItems->isEmpty())
+<div class="alert alert-warning">
+    <i class="ti ti-alert-circle me-1"></i>
+    This invoice does not have any NHIS-covered lines with an approved amount. Update the invoice items before creating a claim.
+</div>
+@endif
 
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title mb-0">Claim from Invoice</h5>
+        <h5 class="card-title mb-0">NHIS Claim from Invoice</h5>
     </div>
     <div class="card-body">
         <form method="POST" action="{{ route('admin.claims.store-from-invoice') }}">
@@ -48,7 +60,7 @@
                     <select name="insurance_provider_id" class="form-select select2" required>
                         <option value="">Select Provider...</option>
                         @foreach($providers as $provider)
-                            <option value="{{ $provider->id }}" {{ old('insurance_provider_id') == $provider->id ? 'selected' : '' }}>
+                            <option value="{{ $provider->id }}" {{ (string) $defaultProviderId === (string) $provider->id ? 'selected' : '' }}>
                                 {{ $provider->name }} ({{ $provider->type->label() }})
                             </option>
                         @endforeach
@@ -66,37 +78,41 @@
             </div>
 
             <!-- Invoice Items Preview -->
-            <h6 class="mb-2">Invoice Items (will be added to claim)</h6>
+            <h6 class="mb-2">NHIS-Covered Invoice Items</h6>
             <div class="table-responsive mb-3">
                 <table class="table table-sm table-bordered">
                     <thead class="table-light">
                         <tr>
                             <th>Service</th>
                             <th>Qty</th>
-                            <th class="text-end">Unit Price</th>
                             <th class="text-end">Total</th>
+                            <th class="text-end">NHIS Claim</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($invoice->items as $item)
+                        @forelse($claimableItems as $item)
                         <tr>
                             <td>{{ $item->description }}</td>
                             <td>{{ $item->quantity }}</td>
-                            <td class="text-end">GH₵ {{ number_format($item->unit_price, 2) }}</td>
                             <td class="text-end">GH₵ {{ number_format($item->total_price, 2) }}</td>
+                            <td class="text-end fw-bold text-primary">GH₵ {{ number_format($item->nhis_approved_amount, 2) }}</td>
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-3">No NHIS-covered items found.</td>
+                        </tr>
+                        @endforelse
                     </tbody>
                     <tfoot>
                         <tr class="fw-bold">
-                            <td colspan="3" class="text-end">Total:</td>
-                            <td class="text-end">GH₵ {{ number_format($invoice->total_amount, 2) }}</td>
+                            <td colspan="3" class="text-end">Claim Total:</td>
+                            <td class="text-end text-primary">GH₵ {{ number_format($claimTotal, 2) }}</td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
 
-            <button type="submit" class="btn btn-primary">
+            <button type="submit" class="btn btn-primary" {{ $claimableItems->isEmpty() ? 'disabled' : '' }}>
                 <i class="ti ti-file-plus me-1"></i>Create Claim from Invoice
             </button>
         </form>
@@ -114,7 +130,7 @@
             @csrf
 
             <div class="row mb-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Insurance Provider <span class="text-danger">*</span></label>
                     <select name="insurance_provider_id" class="form-select select2" required>
                         <option value="">Select Provider...</option>
@@ -125,7 +141,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label">Patient <span class="text-danger">*</span></label>
                     <select name="patient_id" class="form-select select2" required>
                         <option value="">Select Patient...</option>
@@ -136,7 +152,18 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
+                    <label class="form-label">Visit <span class="text-danger">*</span></label>
+                    <select name="visit_id" class="form-select select2" required>
+                        <option value="">Select Visit...</option>
+                        @foreach($visits as $visit)
+                            <option value="{{ $visit->id }}" {{ old('visit_id') == $visit->id ? 'selected' : '' }}>
+                                {{ $visit->visit_number }} — {{ $visit->patient?->full_name ?? 'Unknown Patient' }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
                     <label class="form-label">Assigned Doctor</label>
                     <select name="assigned_doctor_id" class="form-select select2">
                         <option value="">Select Doctor (Optional)...</option>
@@ -154,11 +181,11 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Period From</label>
-                    <input type="date" name="period_from" class="form-control" value="{{ old('period_from') }}">
+                    <input type="date" name="period_from" class="form-control" value="{{ old('period_from', date('Y-m-d')) }}" required>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">Period To</label>
-                    <input type="date" name="period_to" class="form-control" value="{{ old('period_to') }}">
+                    <input type="date" name="period_to" class="form-control" value="{{ old('period_to', date('Y-m-d')) }}" required>
                 </div>
             </div>
 

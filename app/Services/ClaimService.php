@@ -4,10 +4,12 @@ namespace App\Services;
 
 use App\Enums\ClaimItemStatus;
 use App\Enums\ClaimStatus;
+use App\Enums\ServiceType;
 use App\Models\Claim;
 use App\Models\ClaimItem;
 use App\Models\Invoice;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -19,6 +21,7 @@ class ClaimService
     public function list(array $filters = []): LengthAwarePaginator
     {
         return Claim::with(['insuranceProvider', 'patient', 'visit', 'invoice', 'assignedDoctor'])
+            ->withCount('items')
             ->when($filters['search'] ?? null, fn ($q, $s) => $q->search($s))
             ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
             ->when($filters['provider_id'] ?? null, fn ($q, $p) => $q->byProvider($p))
@@ -31,10 +34,31 @@ class ClaimService
     /**
      * Create a claim from an invoice.
      */
-    public function createFromInvoice(Invoice $invoice, int $providerId, ?int $doctorId = null): Claim
+    public function createFromInvoice(Invoice $invoice, ?int $providerId = null, ?int $doctorId = null): Claim
     {
         return DB::transaction(function () use ($invoice, $providerId, $doctorId) {
-            $invoice->load(['items', 'visit', 'patient']);
+            $invoice->load(['items.serviceCatalog', 'visit.visitInsurance.insuranceProvider', 'patient']);
+
+            $existingClaim = Claim::where('invoice_id', $invoice->id)->first();
+            if ($existingClaim) {
+                return $existingClaim->fresh(['items', 'insuranceProvider', 'patient', 'invoice']);
+            }
+
+            $providerId ??= $invoice->visit?->visitInsurance?->insurance_provider_id;
+
+            if (! $providerId) {
+                throw new \InvalidArgumentException('Select an NHIS provider before creating this claim.');
+            }
+
+            $claimableItems = $this->claimableInvoiceItems($invoice);
+
+            if ($claimableItems->isEmpty()) {
+                throw new \InvalidArgumentException('This invoice has no NHIS-covered items to claim.');
+            }
+
+            $periodDate = $invoice->visit?->visit_date?->toDateString()
+                ?? $invoice->created_at?->toDateString()
+                ?? now()->toDateString();
 
             $claim = Claim::create([
                 'claim_number' => Claim::generateClaimNumber(),
@@ -43,23 +67,25 @@ class ClaimService
                 'visit_id' => $invoice->visit_id,
                 'invoice_id' => $invoice->id,
                 'claim_date' => now()->toDateString(),
-                'period_from' => $invoice->visit->visit_date ?? now()->toDateString(),
-                'period_to' => $invoice->visit->visit_date ?? now()->toDateString(),
+                'period_from' => $periodDate,
+                'period_to' => $periodDate,
                 'total_amount' => 0,
                 'status' => ClaimStatus::DRAFT,
                 'assigned_doctor_id' => $doctorId,
                 'created_by' => Auth::id(),
             ]);
 
-            // Auto-populate items from invoice
-            foreach ($invoice->items as $item) {
+            foreach ($claimableItems as $item) {
+                $quantity = max(1, (int) ($item->quantity ?? 1));
+                $claimAmount = min((float) $item->nhis_approved_amount, (float) $item->total_price);
+
                 ClaimItem::create([
                     'claim_id' => $claim->id,
                     'service_name' => $item->description ?? $item->service_name ?? 'Service',
                     'service_type' => $this->mapServiceType($item),
-                    'quantity' => $item->quantity ?? 1,
-                    'unit_price' => $item->unit_price ?? $item->amount ?? 0,
-                    'total_price' => $item->total ?? ($item->quantity * ($item->unit_price ?? $item->amount ?? 0)),
+                    'quantity' => $quantity,
+                    'unit_price' => round($claimAmount / $quantity, 2),
+                    'total_price' => $claimAmount,
                     'status' => ClaimItemStatus::PENDING,
                 ]);
             }
@@ -246,6 +272,7 @@ class ClaimService
             'submitted' => Claim::where('status', ClaimStatus::SUBMITTED)->count(),
             'under_review' => Claim::where('status', ClaimStatus::UNDER_REVIEW)->count(),
             'approved' => Claim::where('status', ClaimStatus::APPROVED)->count(),
+            'partially_approved' => Claim::where('status', ClaimStatus::PARTIALLY_APPROVED)->count(),
             'rejected' => Claim::where('status', ClaimStatus::REJECTED)->count(),
             'paid' => Claim::where('status', ClaimStatus::PAID)->count(),
             'total_approved_amount' => Claim::where('status', ClaimStatus::PAID)->sum('approved_amount'),
@@ -262,11 +289,34 @@ class ClaimService
      */
     private function mapServiceType($item): string
     {
-        // Try to determine type from item attributes
-        if (isset($item->service_type)) {
-            return $item->service_type;
+        $serviceType = $item->service_type ?? null;
+        if ($serviceType instanceof ServiceType) {
+            return $serviceType->value;
         }
 
-        return 'other';
+        if (is_string($serviceType) && $serviceType !== '') {
+            return $serviceType;
+        }
+
+        $category = strtolower((string) ($item->serviceCatalog?->category ?? ''));
+
+        return match ($category) {
+            'consultation' => ServiceType::CONSULTATION->value,
+            'investigation', 'lab', 'laboratory', 'radiology', 'imaging' => ServiceType::INVESTIGATION->value,
+            'procedure', 'procedures' => ServiceType::PROCEDURE->value,
+            'pharmacy', 'drug', 'drugs', 'medication', 'medications' => ServiceType::MEDICATION->value,
+            'bed', 'bed_charge', 'ward', 'admission' => ServiceType::BED_CHARGE->value,
+            default => ServiceType::OTHER->value,
+        };
+    }
+
+    /**
+     * @return Collection<int, \App\Models\InvoiceItem>
+     */
+    private function claimableInvoiceItems(Invoice $invoice): Collection
+    {
+        return $invoice->items
+            ->filter(fn ($item) => $item->is_nhis_covered && (float) $item->nhis_approved_amount > 0)
+            ->values();
     }
 }
