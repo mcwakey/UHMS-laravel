@@ -188,7 +188,7 @@
                             <ul>
                                 <li><a href="{{url('patients')}}" class="{{ Request::is('patients', 'edit-patient', 'patients-grid') ? 'active' : '' }}">Patients</a></li>
                                 <li><a href="{{url('patient-details')}}" class="{{ Request::is('patient-details') ? 'active' : '' }}">Patient Details</a></li>
-                                <li><a href="{{url('create-patient')}}" class="{{ Request::is('create-patient') ? 'active' : '' }}">Create Patient</a></li>
+                                <li><a href="{{ route('admin.patients.create') }}" class="{{ request()->routeIs('admin.patients.create') ? 'active' : '' }}">Create Patient</a></li>
                             </ul>
                         </li>
                         <li class="submenu">

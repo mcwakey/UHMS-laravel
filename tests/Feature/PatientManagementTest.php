@@ -55,6 +55,13 @@ class PatientManagementTest extends TestCase
     {
         $response = $this->actingAs($this->user)->get(route('admin.patients.create'));
         $response->assertStatus(200);
+        $response->assertSee('Register New Patient');
+        $response->assertSee('Insurance Type');
+        $response->assertSee('Provider');
+        $response->assertSee('Tier');
+        $response->assertSee('insurances[0][type]', false);
+        $response->assertSee('insurances[0][provider_id]', false);
+        $response->assertSee('insurances[0][insurance_tier_id]', false);
     }
 
     public function test_patient_can_be_created(): void
@@ -74,6 +81,52 @@ class PatientManagementTest extends TestCase
         $this->assertDatabaseHas('patients', [
             'first_name' => 'Kofi',
             'last_name' => 'Mensah',
+        ]);
+    }
+
+    public function test_patient_registration_can_add_nhia_insurance_with_selected_tier(): void
+    {
+        $provider = InsuranceProvider::create([
+            'name' => 'NHIA Ghana',
+            'short_name' => 'NHIA',
+            'type' => InsuranceType::NHIA,
+            'is_active' => true,
+            'is_default' => false,
+        ]);
+
+        $tier = InsuranceTier::create([
+            'insurance_provider_id' => $provider->id,
+            'name' => 'Standard',
+            'code' => 'STD',
+            'is_default' => true,
+            'is_active' => true,
+            'coverage_percentage' => 100,
+        ]);
+
+        $response = $this->actingAs($this->user)->post(route('admin.patients.store'), [
+            'first_name' => 'Akua',
+            'last_name' => 'Boateng',
+            'date_of_birth' => '1992-08-10',
+            'gender' => 'female',
+            'phone' => '0244000000',
+            'insurances' => [[
+                'type' => InsuranceType::NHIA->value,
+                'provider_id' => $provider->id,
+                'insurance_tier_id' => $tier->id,
+                'membership_number' => 'NHIA-998877',
+                'expiry_date' => now()->addYear()->toDateString(),
+            ]],
+        ]);
+
+        $response->assertRedirect();
+
+        $patient = Patient::where('first_name', 'Akua')->firstOrFail();
+        $this->assertDatabaseHas('patient_insurances', [
+            'patient_id' => $patient->id,
+            'insurance_provider_id' => $provider->id,
+            'insurance_tier_id' => $tier->id,
+            'member_type' => 'holder',
+            'membership_number' => 'NHIA-998877',
         ]);
     }
 

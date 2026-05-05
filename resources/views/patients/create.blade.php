@@ -243,6 +243,14 @@
     </div>
 
     <!-- Insurance -->
+    @php
+        $registrationInsuranceTypes = $insuranceProviders
+            ->where('is_default', false)
+            ->pluck('type')
+            ->filter()
+            ->unique(fn ($type) => $type instanceof \BackedEnum ? $type->value : (string) $type)
+            ->sortBy(fn ($type) => $type instanceof \BackedEnum ? $type->label() : ucfirst((string) $type));
+    @endphp
     <div class="card">
         <div class="card-header">
             <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Insurance</h5>
@@ -259,17 +267,35 @@
                         <button type="button" class="btn btn-sm btn-outline-danger remove-ins d-none"><i class="ti ti-trash"></i></button>
                     </div>
                     <div class="row g-2">
-                        <div class="col-md-6">
-                            <label class="form-label form-label-sm">Provider</label>
-                            <select name="insurances[0][provider_id]" class="form-select form-select-sm ins-provider" data-idx="0">
+                        <div class="col-md-4">
+                            <label class="form-label form-label-sm">Insurance Type</label>
+                            <select name="insurances[0][type]" class="form-select form-select-sm ins-type" data-idx="0" data-selected-provider="{{ old('insurances.0.provider_id') }}" data-selected-tier="{{ old('insurances.0.insurance_tier_id') }}">
                                 <option value="">— None —</option>
-                                @foreach($insuranceProviders as $provider)
-                                    <option value="{{ $provider->id }}" {{ old('insurances.0.provider_id') == $provider->id ? 'selected' : '' }}>{{ $provider->name }} ({{ $provider->type->label() }})</option>
+                                @foreach($registrationInsuranceTypes as $type)
+                                    @php
+                                        $typeValue = $type instanceof \BackedEnum ? $type->value : (string) $type;
+                                        $typeLabel = method_exists($type, 'label') ? $type->label() : ucfirst($typeValue);
+                                    @endphp
+                                    <option value="{{ $typeValue }}" {{ old('insurances.0.type') === $typeValue ? 'selected' : '' }}>{{ $typeLabel }}</option>
                                 @endforeach
+                            </select>
+                            @error('insurances.0.type')<div class="text-danger small">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label form-label-sm">Provider</label>
+                            <select name="insurances[0][provider_id]" class="form-select form-select-sm ins-provider" data-idx="0" disabled>
+                                <option value="">Select type first</option>
                             </select>
                             @error('insurances.0.provider_id')<div class="text-danger small">{{ $message }}</div>@enderror
                         </div>
-                        <div class="col-md-6 ins-row-extra" style="display:none">
+                        <div class="col-md-4">
+                            <label class="form-label form-label-sm">Tier</label>
+                            <select name="insurances[0][insurance_tier_id]" class="form-select form-select-sm ins-tier" data-idx="0" disabled>
+                                <option value="">Select provider first</option>
+                            </select>
+                            @error('insurances.0.insurance_tier_id')<div class="text-danger small">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-4 ins-row-extra" style="display:none">
                             <label class="form-label form-label-sm">Membership / Card Number</label>
                             <input type="text" name="insurances[0][membership_number]" class="form-control form-control-sm" value="{{ old('insurances.0.membership_number') }}" placeholder="e.g. NHIS-123456789">
                         </div>
@@ -387,30 +413,143 @@
     }
 
     // ── Insurance rows ─────────────────────────────────────────────────
-    @php $insuranceProviderOptions = $insuranceProviders->map(fn($p) => ['id' => $p->id, 'label' => $p->name . ' (' . $p->type->label() . ')'])->values(); @endphp
-    const insProviders = {!! json_encode($insuranceProviderOptions) !!};
+    @php
+        $registrationInsuranceTypeOptions = $registrationInsuranceTypes->map(function ($type) {
+            $typeValue = $type instanceof \BackedEnum ? $type->value : (string) $type;
+            return [
+                'value' => $typeValue,
+                'label' => method_exists($type, 'label') ? $type->label() : ucfirst($typeValue),
+            ];
+        })->values();
+    @endphp
+    const insTypes = {!! json_encode($registrationInsuranceTypeOptions) !!};
+    const providerByTypeUrl = '{{ route("admin.insurance-providers.by-type") }}';
+    const tiersForProviderUrl = '{{ route("admin.insurance-providers.tiers.for-patient", ":pid") }}';
     let insCount = 1;
 
-    function buildInsOptions(selected) {
-        return insProviders.map(p =>
-            `<option value="${p.id}"${p.id == selected ? ' selected' : ''}>${p.label}</option>`
+    function escapeOptionText(value) {
+        const span = document.createElement('span');
+        span.textContent = value ?? '';
+        return span.innerHTML;
+    }
+
+    function buildInsTypeOptions(selected) {
+        return insTypes.map(t =>
+            `<option value="${t.value}"${t.value == selected ? ' selected' : ''}>${escapeOptionText(t.label)}</option>`
         ).join('');
     }
 
-    // toggle extra fields per row when provider changes
+    function resetInsProvider(row, message = 'Select type first') {
+        const provider = row.querySelector('.ins-provider');
+        provider.innerHTML = `<option value="">${message}</option>`;
+        provider.disabled = true;
+    }
+
+    function resetInsTier(row, message = 'Select provider first') {
+        const tier = row.querySelector('.ins-tier');
+        tier.innerHTML = `<option value="">${message}</option>`;
+        tier.disabled = true;
+    }
+
+    function toggleInsuranceExtras(row, show) {
+        row.querySelectorAll('.ins-row-extra').forEach(el => el.style.display = show ? '' : 'none');
+    }
+
+    function loadProvidersForRow(row, selectedProvider = '', selectedTier = '') {
+        const type = row.querySelector('.ins-type').value;
+        const provider = row.querySelector('.ins-provider');
+
+        resetInsProvider(row, type ? 'Loading providers...' : 'Select type first');
+        resetInsTier(row);
+        toggleInsuranceExtras(row, false);
+
+        if (!type) return;
+
+        fetch(providerByTypeUrl + '?type=' + encodeURIComponent(type), {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(providers => {
+            if (!providers.length) {
+                resetInsProvider(row, 'No providers for type');
+                return;
+            }
+
+            provider.innerHTML = '<option value="">Select Provider</option>';
+            providers.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.short_name ? p.name + ' (' + p.short_name + ')' : p.name;
+                provider.appendChild(opt);
+            });
+            provider.disabled = false;
+
+            if (selectedProvider) {
+                provider.value = selectedProvider;
+                if (provider.value) {
+                    toggleInsuranceExtras(row, true);
+                    loadTiersForRow(row, selectedTier);
+                }
+            }
+        })
+        .catch(() => resetInsProvider(row, 'Failed to load providers'));
+    }
+
+    function loadTiersForRow(row, selectedTier = '') {
+        const providerId = row.querySelector('.ins-provider').value;
+        const tier = row.querySelector('.ins-tier');
+
+        if (!providerId) {
+            resetInsTier(row);
+            toggleInsuranceExtras(row, false);
+            return;
+        }
+
+        tier.innerHTML = '<option value="">Loading tiers...</option>';
+        tier.disabled = true;
+        toggleInsuranceExtras(row, true);
+
+        fetch(tiersForProviderUrl.replace(':pid', providerId), {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(tiers => {
+            if (!tiers.length) {
+                resetInsTier(row, 'No tiers available');
+                return;
+            }
+
+            tier.innerHTML = '<option value="">Select Tier</option>';
+            tiers.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.name + (t.coverage_percentage ? ' (' + t.coverage_percentage + '% coverage)' : '');
+                if ((selectedTier && selectedTier == t.id) || (!selectedTier && t.is_default)) opt.selected = true;
+                tier.appendChild(opt);
+            });
+            tier.disabled = false;
+        })
+        .catch(() => resetInsTier(row, 'Failed to load tiers'));
+    }
+
+    // Cascade insurance type -> provider -> tier per row.
     document.getElementById('ins-wrapper').addEventListener('change', function (e) {
+        if (e.target.classList.contains('ins-type')) {
+            loadProvidersForRow(e.target.closest('.ins-row'));
+        }
+
         if (e.target.classList.contains('ins-provider')) {
             const row = e.target.closest('.ins-row');
-            const show = e.target.value !== '';
-            row.querySelectorAll('.ins-row-extra').forEach(el => el.style.display = show ? '' : 'none');
+            loadTiersForRow(row);
         }
     });
 
-    // Restore extra field visibility on page load (after validation failure)
-    document.querySelectorAll('.ins-provider').forEach(sel => {
-        const row = sel.closest('.ins-row');
-        const show = sel.value !== '';
-        row.querySelectorAll('.ins-row-extra').forEach(el => el.style.display = show ? '' : 'none');
+    // Restore cascade state on page load (after validation failure)
+    document.querySelectorAll('.ins-row').forEach(row => {
+        const type = row.querySelector('.ins-type');
+        if (type && type.value) {
+            loadProvidersForRow(row, type.dataset.selectedProvider || '', type.dataset.selectedTier || '');
+        }
     });
 
     document.getElementById('add-ins-btn').addEventListener('click', function () {
@@ -424,14 +563,26 @@
                 <button type="button" class="btn btn-sm btn-outline-danger remove-ins"><i class="ti ti-trash"></i></button>
             </div>
             <div class="row g-2">
-                <div class="col-md-6">
-                    <label class="form-label form-label-sm">Provider</label>
-                    <select name="insurances[${idx}][provider_id]" class="form-select form-select-sm ins-provider" data-idx="${idx}">
+                <div class="col-md-4">
+                    <label class="form-label form-label-sm">Insurance Type</label>
+                    <select name="insurances[${idx}][type]" class="form-select form-select-sm ins-type" data-idx="${idx}">
                         <option value="">— None —</option>
-                        ${buildInsOptions('')}
+                        ${buildInsTypeOptions('')}
                     </select>
                 </div>
-                <div class="col-md-6 ins-row-extra" style="display:none">
+                <div class="col-md-4">
+                    <label class="form-label form-label-sm">Provider</label>
+                    <select name="insurances[${idx}][provider_id]" class="form-select form-select-sm ins-provider" data-idx="${idx}" disabled>
+                        <option value="">Select type first</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label form-label-sm">Tier</label>
+                    <select name="insurances[${idx}][insurance_tier_id]" class="form-select form-select-sm ins-tier" data-idx="${idx}" disabled>
+                        <option value="">Select provider first</option>
+                    </select>
+                </div>
+                <div class="col-md-4 ins-row-extra" style="display:none">
                     <label class="form-label form-label-sm">Membership / Card Number</label>
                     <input type="text" name="insurances[${idx}][membership_number]" class="form-control form-control-sm" placeholder="e.g. NHIS-123456789">
                 </div>

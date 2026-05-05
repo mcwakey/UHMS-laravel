@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePatientRequest;
 use App\Http\Requests\UpdatePatientRequest;
 use App\Models\InsuranceProvider;
+use App\Models\InsuranceTier;
 use App\Models\Patient;
 use App\Services\PatientService;
 use App\Services\VisitService;
@@ -53,15 +54,30 @@ class PatientController extends Controller
         }
 
         // Create insurances submitted inline during registration
-        foreach ($request->input('insurances', []) as $index => $ins) {
+        foreach (($request->input('insurances') ?? []) as $index => $ins) {
             if (empty($ins['provider_id'])) {
                 continue;
             }
+            $tierId = $ins['insurance_tier_id'] ?? null;
+            if ($tierId) {
+                $tierId = InsuranceTier::where('id', $tierId)
+                    ->where('insurance_provider_id', $ins['provider_id'])
+                    ->value('id');
+            }
+            $tierId ??= InsuranceTier::where('insurance_provider_id', $ins['provider_id'])
+                ->where('is_active', true)
+                ->orderByDesc('is_default')
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->value('id');
+
             $patient->insurances()->create([
                 'insurance_provider_id' => $ins['provider_id'],
-                'membership_number'     => $ins['membership_number'] ?: null,
-                'policy_number'         => $ins['policy_number'] ?: null,
-                'expiry_date'           => $ins['expiry_date'] ?: null,
+                'insurance_tier_id'      => $tierId,
+                'member_type'            => 'holder',
+                'membership_number'     => ($ins['membership_number'] ?? null) ?: null,
+                'policy_number'         => ($ins['policy_number'] ?? null) ?: null,
+                'expiry_date'           => ($ins['expiry_date'] ?? null) ?: null,
                 'is_primary'            => $index === 0,
                 'is_active'             => true,
             ]);

@@ -298,7 +298,7 @@
                         <a href="{{url('patients-grid')}}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-layout-grid fs-14 text-body"></i> </a>
                     </div>
 
-                    <a href="{{url('create-patient')}}" class="btn btn-primary ms-2 fs-13 btn-md"><i class="ti ti-plus me-1"></i>New Patient</a>
+                    <a href="{{ route('admin.patients.create') }}" class="btn btn-primary ms-2 fs-13 btn-md"><i class="ti ti-plus me-1"></i>New Patient</a>
                 </div>
             </div>
             <!-- End Page Header -->

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\BloodGroup;
 use App\Enums\Gender;
+use App\Enums\InsuranceType;
 use App\Enums\MaritalStatus;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;
@@ -13,6 +14,23 @@ class StorePatientRequest extends FormRequest
     public function authorize(): bool
     {
         return $this->user()->can('patients.create');
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $insurances = collect($this->input('insurances', []))
+            ->filter(fn ($insurance) => filled($insurance['type'] ?? null)
+                || filled($insurance['provider_id'] ?? null)
+                || filled($insurance['insurance_tier_id'] ?? null)
+                || filled($insurance['membership_number'] ?? null)
+                || filled($insurance['policy_number'] ?? null)
+                || filled($insurance['expiry_date'] ?? null))
+            ->values()
+            ->all();
+
+        $this->merge([
+            'insurances' => $insurances ?: null,
+        ]);
     }
 
     public function rules(): array
@@ -47,7 +65,9 @@ class StorePatientRequest extends FormRequest
             'emergency_contacts.*.relationship'   => ['nullable', 'string', 'max:50'],
             // Insurances (inline during registration, multiple)
             'insurances'                          => ['nullable', 'array', 'max:10'],
+            'insurances.*.type'                   => ['nullable', new Enum(InsuranceType::class)],
             'insurances.*.provider_id'            => ['required_with:insurances.*', 'exists:insurance_providers,id'],
+            'insurances.*.insurance_tier_id'      => ['nullable', 'exists:insurance_tiers,id'],
             'insurances.*.membership_number'      => ['nullable', 'string', 'max:100'],
             'insurances.*.policy_number'          => ['nullable', 'string', 'max:100'],
             'insurances.*.expiry_date'            => ['nullable', 'date', 'after:today'],
