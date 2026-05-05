@@ -119,7 +119,7 @@ class NhisClaimWorkflowTest extends TestCase
         $provider = InsuranceProvider::create([
             'name' => 'Public Health Plan',
             'short_name' => 'PHP',
-            'type' => InsuranceType::PUBLIC->value,
+            'type' => InsuranceType::NHIA->value,
             'is_active' => true,
             'is_default' => false,
         ]);

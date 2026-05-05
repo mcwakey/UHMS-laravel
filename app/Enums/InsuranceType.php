@@ -5,7 +5,7 @@ namespace App\Enums;
 enum InsuranceType: string
 {
     case SELF = 'self';
-    case PUBLIC = 'public';
+    case NHIA = 'nhia';
     case PRIVATE = 'private';
     case CORPORATE = 'corporate';
 
@@ -13,7 +13,7 @@ enum InsuranceType: string
     {
         return match ($this) {
             self::SELF => 'SELF SPONSORED',
-            self::PUBLIC => 'PUBLIC',
+            self::NHIA => 'NHIA',
             self::PRIVATE => 'PRIVATE',
             self::CORPORATE => 'CORPORATE',
         };
@@ -23,7 +23,7 @@ enum InsuranceType: string
     {
         return match ($this) {
             self::SELF => 'danger',
-            self::PUBLIC => 'primary',
+            self::NHIA => 'primary',
             self::PRIVATE => 'info',
             self::CORPORATE => 'warning',
         };

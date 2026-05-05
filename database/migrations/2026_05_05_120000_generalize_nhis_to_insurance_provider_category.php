@@ -9,13 +9,14 @@ return new class extends Migration
     public function up(): void
     {
         if (Schema::hasTable('insurance_providers')) {
-            DB::table('insurance_providers')->where('type', 'nhia')->update(['type' => 'public']);
-            DB::table('insurance_providers')->where('type', 'nhis')->update(['type' => 'public']);
+            // Normalise legacy NHIS rows to the canonical NHIA category.
+            DB::table('insurance_providers')->where('type', 'nhis')->update(['type' => 'nhia']);
+            DB::table('insurance_providers')->where('type', 'public')->update(['type' => 'nhia']);
         }
 
         if (Schema::hasTable('service_prices')) {
-            DB::table('service_prices')->where('insurance_type', 'nhia')->update(['insurance_type' => 'public']);
-            DB::table('service_prices')->where('insurance_type', 'nhis')->update(['insurance_type' => 'public']);
+            DB::table('service_prices')->where('insurance_type', 'nhis')->update(['insurance_type' => 'nhia']);
+            DB::table('service_prices')->where('insurance_type', 'public')->update(['insurance_type' => 'nhia']);
         }
 
         if (Schema::hasTable('invoices')) {
@@ -60,4 +61,3 @@ return new class extends Migration
         }
     }
 };
- 

@@ -89,7 +89,7 @@ class PatientManagementTest extends TestCase
         $provider = InsuranceProvider::create([
             'name' => 'Public Health Plan',
             'short_name' => 'PHP',
-            'type' => InsuranceType::PUBLIC,
+            'type' => InsuranceType::NHIA,
             'is_active' => true,
             'is_default' => false,
         ]);
@@ -110,7 +110,7 @@ class PatientManagementTest extends TestCase
             'gender' => 'female',
             'phone' => '0244000000',
             'insurances' => [[
-                'type' => InsuranceType::PUBLIC->value,
+                'type' => InsuranceType::NHIA->value,
                 'provider_id' => $provider->id,
                 'insurance_tier_id' => $tier->id,
                 'membership_number' => 'INS-998877',
@@ -172,7 +172,7 @@ class PatientManagementTest extends TestCase
         $provider = InsuranceProvider::create([
             'name' => 'Community Health Plan',
             'short_name' => 'CHP',
-            'type' => InsuranceType::PUBLIC,
+            'type' => InsuranceType::NHIA,
             'is_active' => true,
             'is_default' => false,
         ]);
@@ -221,7 +221,7 @@ class PatientManagementTest extends TestCase
         $publicProvider = InsuranceProvider::create([
             'name' => 'Public Health Plan',
             'short_name' => 'PHP',
-            'type' => InsuranceType::PUBLIC,
+            'type' => InsuranceType::NHIA,
             'is_active' => true,
             'is_default' => false,
         ]);
@@ -235,7 +235,7 @@ class PatientManagementTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)->getJson(route('admin.insurance-providers.by-type', [
-            'type' => InsuranceType::PUBLIC->value,
+            'type' => InsuranceType::NHIA->value,
         ]));
 
         $response->assertOk()
