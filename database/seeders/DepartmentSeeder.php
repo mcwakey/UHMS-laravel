@@ -3,14 +3,25 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use App\Enums\DepartmentType;
+use App\Enums\ResultType;
 use App\Models\Department;
 
 class DepartmentSeeder extends Seeder
 {
     public function run(): void
     {
+        $hasResultType = $this->hasColumn('departments', 'result_type');
+        $hasStockManaged = $this->hasColumn('departments', 'is_stock_managed');
+        $hasType = $this->hasColumn('departments', 'type');
+
+        if ($hasResultType) {
+            DB::table('departments')
+                ->where('result_type', 'rich_text')
+                ->update(['result_type' => ResultType::RICHTEXT->value]);
+        }
+
         // type drives clinical routing (consultation / investigation / pharmacy / etc.).
         // result_type only applies to investigation departments and drives whether the
         // catalog of tests uses parameters (criteria) or rich-text templates.
@@ -30,9 +41,9 @@ class DepartmentSeeder extends Seeder
             ['name' => 'Family Planning',         'code' => 'FPL', 'type' => DepartmentType::CONSULTATION->value],
 
             // ── Investigation departments ──
-            ['name' => 'Laboratory',              'code' => 'LAB', 'type' => DepartmentType::INVESTIGATION->value, 'result_type' => 'parameters'],
-            ['name' => 'Radiology / X-Ray',       'code' => 'RAD', 'type' => DepartmentType::INVESTIGATION->value, 'result_type' => 'rich_text'],
-            ['name' => 'Ultrasound',              'code' => 'USG', 'type' => DepartmentType::INVESTIGATION->value, 'result_type' => 'rich_text'],
+            ['name' => 'Laboratory',              'code' => 'LAB', 'type' => DepartmentType::INVESTIGATION->value, 'result_type' => ResultType::PARAMETERS->value],
+            ['name' => 'Radiology / X-Ray',       'code' => 'RAD', 'type' => DepartmentType::INVESTIGATION->value, 'result_type' => ResultType::RICHTEXT->value],
+            ['name' => 'Ultrasound',              'code' => 'USG', 'type' => DepartmentType::INVESTIGATION->value, 'result_type' => ResultType::RICHTEXT->value],
 
             // ── Treatment / procedure ──
             ['name' => 'Physiotherapy',           'code' => 'PHY', 'type' => DepartmentType::TREATMENT->value],
@@ -49,13 +60,13 @@ class DepartmentSeeder extends Seeder
         foreach ($departments as $dept) {
             $defaults = array_merge($dept, ['status' => 'active']);
             // result_type column may not exist in some test setups
-            if (! Schema::hasColumn('departments', 'result_type')) {
+            if (! $hasResultType) {
                 unset($defaults['result_type']);
             }
-            if (! Schema::hasColumn('departments', 'is_stock_managed')) {
+            if (! $hasStockManaged) {
                 unset($defaults['is_stock_managed']);
             }
-            if (! Schema::hasColumn('departments', 'type')) {
+            if (! $hasType) {
                 unset($defaults['type']);
             }
             Department::firstOrCreate(
@@ -63,5 +74,13 @@ class DepartmentSeeder extends Seeder
                 $defaults
             );
         }
+    }
+
+    private function hasColumn(string $table, string $column): bool
+    {
+        return (bool) DB::selectOne(
+            'select 1 from information_schema.columns where table_schema = database() and table_name = ? and column_name = ? limit 1',
+            [$table, $column]
+        );
     }
 }
