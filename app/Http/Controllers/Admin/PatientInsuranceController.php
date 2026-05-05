@@ -8,6 +8,7 @@ use App\Models\InsuranceTier;
 use App\Models\Patient;
 use App\Models\PatientInsurance;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class PatientInsuranceController extends Controller
 {
@@ -23,6 +24,8 @@ class PatientInsuranceController extends Controller
             'expiry_date'              => ['nullable', 'date'],
             'is_primary'               => ['nullable', 'boolean'],
         ]);
+
+        $data = $this->resolveInsuranceTier($data);
 
         // Prevent duplicate provider assignment
         $exists = $patient->insurances()
@@ -84,6 +87,8 @@ class PatientInsuranceController extends Controller
             'is_active'                => ['nullable', 'boolean'],
         ]);
 
+        $data = $this->resolveInsuranceTier($data);
+
         if (! empty($data['is_primary'])) {
             $patient->insurances()->where('id', '!=', $insurance->id)->update(['is_primary' => false]);
         }
@@ -126,6 +131,38 @@ class PatientInsuranceController extends Controller
             ->get(['id', 'name', 'short_name', 'type']);
 
         return response()->json($providers);
+    }
+
+    /**
+     * Accept an omitted tier from the UI and fall back to the provider's default
+     * active tier. Also guards against mismatched provider/tier combinations.
+     */
+    private function resolveInsuranceTier(array $data): array
+    {
+        $provider = InsuranceProvider::with([
+            'tiers' => fn ($q) => $q->active()->orderByDesc('is_default')->orderBy('sort_order')->orderBy('name'),
+        ])->findOrFail($data['insurance_provider_id']);
+
+        if (! empty($data['insurance_tier_id'])) {
+            $selectedTierBelongsToProvider = $provider->tiers->contains(
+                fn ($tier) => (int) $tier->id === (int) $data['insurance_tier_id']
+            );
+
+            if (! $selectedTierBelongsToProvider) {
+                throw ValidationException::withMessages([
+                    'insurance_tier_id' => 'Selected insurance tier does not belong to the chosen provider.',
+                ]);
+            }
+
+            return $data;
+        }
+
+        $defaultTierId = $provider->tiers->first()?->id;
+        if ($defaultTierId) {
+            $data['insurance_tier_id'] = $defaultTierId;
+        }
+
+        return $data;
     }
 }
 

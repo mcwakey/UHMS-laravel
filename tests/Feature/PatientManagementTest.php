@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Department;
+use App\Enums\InsuranceType;
+use App\Models\InsuranceProvider;
+use App\Models\InsuranceTier;
 use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -108,6 +110,49 @@ class PatientManagementTest extends TestCase
         $response = $this->actingAs($this->user)->get(route('admin.patients.show', $patient));
         $response->assertStatus(200);
         $response->assertSee($patient->first_name);
+    }
+
+    public function test_patient_can_add_nhia_insurance_without_explicit_tier_selection(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+
+        $provider = InsuranceProvider::create([
+            'name' => 'NHIA Ghana',
+            'short_name' => 'NHIA',
+            'type' => InsuranceType::NHIA,
+            'is_active' => true,
+            'is_default' => false,
+        ]);
+
+        $tier = InsuranceTier::create([
+            'insurance_provider_id' => $provider->id,
+            'name' => 'Standard',
+            'code' => 'STD',
+            'is_default' => true,
+            'is_active' => true,
+            'coverage_percentage' => 100,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->from(route('admin.patients.show', $patient))
+            ->post(route('admin.patients.insurances.store', $patient), [
+                'insurance_provider_id' => $provider->id,
+                'member_type' => 'holder',
+                'membership_number' => 'NHIA-12345',
+                // Simulates the real UI case where the tier select is not submitted.
+                'insurance_tier_id' => null,
+            ]);
+
+        $response->assertRedirect(route('admin.patients.show', $patient));
+        $response->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('patient_insurances', [
+            'patient_id' => $patient->id,
+            'insurance_provider_id' => $provider->id,
+            'insurance_tier_id' => $tier->id,
+            'membership_number' => 'NHIA-12345',
+            'member_type' => 'holder',
+        ]);
     }
 
     // ── Update ──────────────────────────────────

@@ -782,10 +782,10 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Insurance Tier <span class="text-danger">*</span></label>
-                            <select name="insurance_tier_id" id="addInsTier" class="form-select" required disabled>
+                            <select name="insurance_tier_id" id="addInsTier" class="form-select" disabled>
                                 <option value="">Select provider first</option>
                             </select>
-                            <div id="addInsTierInfo" class="small text-muted mt-1"></div>
+                            <div id="addInsTierInfo" class="small text-muted mt-1">If no tier is chosen, the provider's default tier will be used.</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Member Type <span class="text-danger">*</span></label>
@@ -855,6 +855,7 @@
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
+                            <input type="hidden" name="insurance_provider_id" id="editInsProviderId">
                             <label class="form-label">Tier</label>
                             <div id="editInsTierDisplay" class="form-control-plaintext fw-medium text-muted">—</div>
                             <input type="hidden" name="insurance_tier_id" id="editInsTierId">
@@ -1006,6 +1007,7 @@
         btn.addEventListener('click', function() {
             const id = this.dataset.id;
             document.getElementById('editInsuranceForm').action = '{{ url("admin/patients/" . $patient->id . "/insurances") }}/' + id;
+            document.getElementById('editInsProviderId').value = this.dataset.provider || '';
             document.getElementById('editInsMembership').value = this.dataset.membership || '';
             document.getElementById('editInsPolicy').value = this.dataset.policy || '';
             document.getElementById('editInsExpiry').value = this.dataset.expiry || '';
