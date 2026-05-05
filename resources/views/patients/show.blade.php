@@ -760,6 +760,14 @@
 
 {{-- Add Insurance Modal --}}
 @can('patients.edit')
+@php
+    $addableInsuranceTypes = $insuranceProviders
+        ->where('is_default', false)
+        ->pluck('type')
+        ->filter()
+        ->unique(fn ($type) => $type instanceof \BackedEnum ? $type->value : (string) $type)
+        ->sortBy(fn ($type) => $type instanceof \BackedEnum ? $type->label() : ucfirst((string) $type));
+@endphp
 <div class="modal fade" id="addInsuranceModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -771,16 +779,26 @@
                 </div>
                 <div class="modal-body">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Insurance Provider <span class="text-danger">*</span></label>
-                            <select name="insurance_provider_id" id="addInsProvider" class="form-select" required>
-                                <option value="">Select Provider</option>
-                                @foreach($insuranceProviders->where('is_default', false) as $ip)
-                                    <option value="{{ $ip->id }}">{{ $ip->name }} ({{ ucfirst($ip->type instanceof \BackedEnum ? $ip->type->value : $ip->type) }})</option>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Insurance Type <span class="text-danger">*</span></label>
+                            <select id="addInsType" class="form-select" required>
+                                <option value="">Select Type</option>
+                                @foreach($addableInsuranceTypes as $type)
+                                    @php
+                                        $typeValue = $type instanceof \BackedEnum ? $type->value : (string) $type;
+                                        $typeLabel = method_exists($type, 'label') ? $type->label() : ucfirst($typeValue);
+                                    @endphp
+                                    <option value="{{ $typeValue }}">{{ $typeLabel }}</option>
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Insurance Provider <span class="text-danger">*</span></label>
+                            <select name="insurance_provider_id" id="addInsProvider" class="form-select" required disabled>
+                                <option value="">Select type first</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Insurance Tier <span class="text-danger">*</span></label>
                             <select name="insurance_tier_id" id="addInsTier" class="form-select" disabled>
                                 <option value="">Select provider first</option>
@@ -1022,23 +1040,69 @@
         });
     });
 
+    const providerByTypeUrl = '{{ route("admin.insurance-providers.by-type") }}';
+    const tiersForProviderUrl = '{{ route("admin.insurance-providers.tiers.for-patient", ":pid") }}';
+    const typeSelect = document.getElementById('addInsType');
+    const providerSelect = document.getElementById('addInsProvider');
+    const tierSelect = document.getElementById('addInsTier');
+    const tierInfo = document.getElementById('addInsTierInfo');
+
+    function resetProviderSelect(message = 'Select type first') {
+        providerSelect.innerHTML = '<option value="">' + message + '</option>';
+        providerSelect.disabled = true;
+    }
+
+    function resetTierSelect(message = 'Select provider first') {
+        tierSelect.innerHTML = '<option value="">' + message + '</option>';
+        tierSelect.disabled = true;
+        tierInfo.textContent = '';
+    }
+
+    // ── Add Insurance: Type → Provider cascade ──────────────────────────────
+    typeSelect.addEventListener('change', function() {
+        const type = this.value;
+        resetProviderSelect(type ? 'Loading providers…' : 'Select type first');
+        resetTierSelect();
+
+        if (!type) return;
+
+        fetch(providerByTypeUrl + '?type=' + encodeURIComponent(type), {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(providers => {
+            if (!providers.length) {
+                resetProviderSelect('No providers for selected type');
+                return;
+            }
+
+            providerSelect.innerHTML = '<option value="">Select Provider</option>';
+            providers.forEach(provider => {
+                const opt = document.createElement('option');
+                opt.value = provider.id;
+                opt.textContent = provider.short_name ? provider.name + ' (' + provider.short_name + ')' : provider.name;
+                providerSelect.appendChild(opt);
+            });
+            providerSelect.disabled = false;
+        })
+        .catch(() => {
+            resetProviderSelect('Failed to load providers');
+        });
+    });
+
     // ── Add Insurance: Provider → Tier cascade ───────────────────────────────
-    document.getElementById('addInsProvider').addEventListener('change', function() {
+    providerSelect.addEventListener('change', function() {
         const providerId = this.value;
-        const tierSelect = document.getElementById('addInsTier');
-        const tierInfo   = document.getElementById('addInsTierInfo');
 
         if (!providerId) {
-            tierSelect.innerHTML = '<option value="">Select provider first</option>';
-            tierSelect.disabled = true;
-            tierInfo.textContent = '';
+            resetTierSelect();
             return;
         }
 
         tierSelect.innerHTML = '<option value="">Loading…</option>';
         tierSelect.disabled = true;
 
-        fetch('{{ route("admin.insurance-providers.tiers.for-patient", ":pid") }}'.replace(':pid', providerId), {
+        fetch(tiersForProviderUrl.replace(':pid', providerId), {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(r => r.json())

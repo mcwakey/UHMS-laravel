@@ -155,6 +155,43 @@ class PatientManagementTest extends TestCase
         ]);
     }
 
+    public function test_insurance_provider_dropdown_filters_by_type_and_excludes_cash_default(): void
+    {
+        InsuranceProvider::create([
+            'name' => 'Cash & Carry',
+            'short_name' => 'CASH',
+            'type' => InsuranceType::PRIVATE,
+            'is_active' => true,
+            'is_default' => true,
+        ]);
+
+        $nhiaProvider = InsuranceProvider::create([
+            'name' => 'NHIA Ghana',
+            'short_name' => 'NHIA',
+            'type' => InsuranceType::NHIA,
+            'is_active' => true,
+            'is_default' => false,
+        ]);
+
+        InsuranceProvider::create([
+            'name' => 'Priority Insurance',
+            'short_name' => 'PRIORITY',
+            'type' => InsuranceType::PRIVATE,
+            'is_active' => true,
+            'is_default' => false,
+        ]);
+
+        $response = $this->actingAs($this->user)->getJson(route('admin.insurance-providers.by-type', [
+            'type' => InsuranceType::NHIA->value,
+        ]));
+
+        $response->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonFragment(['id' => $nhiaProvider->id, 'name' => 'NHIA Ghana'])
+            ->assertJsonMissing(['name' => 'Priority Insurance'])
+            ->assertJsonMissing(['name' => 'Cash & Carry']);
+    }
+
     // ── Update ──────────────────────────────────
 
     public function test_patient_can_be_updated(): void

@@ -125,6 +125,7 @@ class PatientInsuranceController extends Controller
         $type = $request->get('type');
 
         $providers = InsuranceProvider::active()
+            ->where('is_default', false)
             ->with(['tiers' => fn ($q) => $q->active()->orderBy('sort_order')->orderBy('name')])
             ->when($type, fn ($q) => $q->where('type', $type))
             ->orderBy('name')

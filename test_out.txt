@@ -3,8 +3,8 @@
 Runtime:       PHP 8.2.4
 Configuration: C:\xampp\htdocs\laravel\laravel\phpunit.xml
 
-∩╗┐.∩╗┐.∩╗┐.∩╗┐.∩╗┐.∩╗┐.∩╗┐.∩╗┐.∩╗┐.∩╗┐.                                                        10 / 10 (100%)
+∩╗┐.∩╗┐.∩╗┐.∩╗┐.∩╗┐.∩╗┐.∩╗┐.∩╗┐.∩╗┐.∩╗┐.∩╗┐.                                                       11 / 11 (100%)
 
-Time: 00:10.153, Memory: 60.00 MB
+Time: 00:11.247, Memory: 60.00 MB
 
-OK (10 tests, 23 assertions)
+OK (11 tests, 29 assertions)
