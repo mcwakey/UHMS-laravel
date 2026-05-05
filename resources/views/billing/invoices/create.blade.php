@@ -79,8 +79,8 @@
                             <th style="width:8%">Qty</th>
                             <th style="width:12%">Unit Price (&#8373;)</th>
                             <th style="width:12%">Total (&#8373;)</th>
-                            <th style="width:8%">NHIS?</th>
-                            <th style="width:12%">NHIS Amt (&#8373;)</th>
+                            <th style="width:8%">Covered?</th>
+                            <th style="width:12%">Covered Amt (&#8373;)</th>
                             <th style="width:3%"></th>
                         </tr>
                     </thead>
@@ -186,7 +186,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="fw-medium text-primary">NHIS Covered:</td>
+                            <td class="fw-medium text-primary">Insurance Covered:</td>
                             <td class="text-end text-primary fw-bold" id="nhisDisplay">&#8373;0.00</td>
                         </tr>
                         <tr class="border-top">

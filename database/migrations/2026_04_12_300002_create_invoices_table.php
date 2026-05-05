@@ -13,7 +13,7 @@ return new class extends Migration
             $table->string('invoice_number')->unique();
             $table->foreignId('visit_id')->constrained()->cascadeOnDelete();
             $table->foreignId('patient_id')->constrained()->cascadeOnDelete();
-            $table->string('billing_type'); // cash, nhis, corporate, mixed
+            $table->string('billing_type'); // cash, insurance, corporate, mixed
             $table->decimal('subtotal', 10, 2)->default(0);
             $table->decimal('tax_amount', 10, 2)->default(0);
             $table->decimal('discount_amount', 10, 2)->default(0);

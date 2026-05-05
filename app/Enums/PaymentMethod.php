@@ -10,7 +10,7 @@ enum PaymentMethod: string
     case AIRTELTIGO_MONEY = 'airteltigo_money';
     case BANK_TRANSFER = 'bank_transfer';
     case CARD = 'card';
-    case NHIS = 'nhis';
+    case INSURANCE = 'insurance';
     case CHEQUE = 'cheque';
 
     public function label(): string
@@ -22,7 +22,7 @@ enum PaymentMethod: string
             self::AIRTELTIGO_MONEY => 'AirtelTigo Money',
             self::BANK_TRANSFER => 'Bank Transfer',
             self::CARD => 'Card',
-            self::NHIS => 'NHIS',
+            self::INSURANCE => 'Insurance Settlement',
             self::CHEQUE => 'Cheque',
         };
     }

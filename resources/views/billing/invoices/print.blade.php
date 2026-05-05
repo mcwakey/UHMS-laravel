@@ -102,7 +102,7 @@
                     <th class="text-center">Qty</th>
                     <th class="text-end">Unit Price</th>
                     <th class="text-end">Total</th>
-                    <th class="text-center">NHIS</th>
+                    <th class="text-center">Insurance</th>
                 </tr>
             </thead>
             <tbody>
@@ -146,7 +146,7 @@
                 @endif
                 @if($invoice->nhis_amount > 0)
                 <tr>
-                    <td class="label">NHIS Covered</td>
+                    <td class="label">Insurance Covered</td>
                     <td class="text-end" style="color:#0d6efd;">&#8373;{{ number_format($invoice->nhis_amount, 2) }}</td>
                 </tr>
                 @endif

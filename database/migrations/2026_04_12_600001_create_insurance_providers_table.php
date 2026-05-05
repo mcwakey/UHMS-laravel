@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('short_name');
-            $table->string('type')->default('nhis');
+            $table->string('type')->default('public');
             $table->string('contact_phone')->nullable();
             $table->string('contact_email')->nullable();
             $table->text('address')->nullable();

@@ -33,21 +33,21 @@ class BillingService
             $invoiceNumber = Invoice::generateNumber('INV', 'invoices', 'invoice_number');
 
             // Calculate totals from items
-            $subtotal    = 0;
-            $nhisAmount  = 0;
+            $subtotal        = 0;
+            $insuranceAmount = 0;
 
             foreach ($items as $item) {
                 $lineTotal   = ($item['unit_price'] ?? 0) * ($item['quantity'] ?? 1);
                 $subtotal   += $lineTotal;
                 if (! empty($item['is_nhis_covered']) && ! empty($item['nhis_approved_amount'])) {
-                    $nhisAmount += $item['nhis_approved_amount'];
+                    $insuranceAmount += $item['nhis_approved_amount'];
                 }
             }
 
             $taxAmount      = $data['tax_amount'] ?? 0;
             $discountAmount = $data['discount_amount'] ?? 0;
             $totalAmount    = $subtotal + $taxAmount - $discountAmount;
-            $balance        = $totalAmount - $nhisAmount;
+            $balance        = $totalAmount - $insuranceAmount;
 
             $invoice = Invoice::create([
                 'invoice_number'  => $invoiceNumber,
@@ -57,11 +57,11 @@ class BillingService
                 'subtotal'        => $subtotal,
                 'tax_amount'      => $taxAmount,
                 'discount_amount' => $discountAmount,
-                'nhis_amount'     => $nhisAmount,
+                'nhis_amount'     => $insuranceAmount,
                 'total_amount'    => $totalAmount,
-                'amount_paid'     => $nhisAmount,
+                'amount_paid'     => $insuranceAmount,
                 'balance'         => max(0, $balance),
-                'status'          => $nhisAmount >= $totalAmount ? InvoiceStatus::PAID->value : InvoiceStatus::PENDING->value,
+                'status'          => $insuranceAmount >= $totalAmount ? InvoiceStatus::PAID->value : InvoiceStatus::PENDING->value,
                 'due_date'        => $data['due_date'] ?? now()->addDays(30),
                 'notes'           => $data['notes'] ?? null,
                 'created_by'      => Auth::id(),

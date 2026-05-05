@@ -40,8 +40,8 @@
             <div class="label">Lab Revenue</div>
         </div>
         <div class="stat-box">
-            <div class="value">₵{{ number_format($stats['nhis_revenue'] ?? 0, 2) }}</div>
-            <div class="label">NHIS Revenue</div>
+            <div class="value">₵{{ number_format($stats['insurance_revenue'] ?? 0, 2) }}</div>
+            <div class="label">Insurance Revenue</div>
         </div>
     </div>
 

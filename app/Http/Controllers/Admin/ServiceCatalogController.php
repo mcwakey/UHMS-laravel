@@ -109,7 +109,7 @@ class ServiceCatalogController extends Controller
             'type_prices'                    => ['nullable', 'array'],
             'type_prices.*'                  => ['nullable', 'numeric', 'min:0'],
             'provider_prices'                => ['nullable', 'array'],
-            'provider_prices.*.insurance_type'      => ['required', 'string', 'in:self,nhia,private,corporate'],
+            'provider_prices.*.insurance_type'      => ['required', 'string', 'in:self,public,private,corporate'],
             'provider_prices.*.insurance_provider_id' => ['required', 'exists:insurance_providers,id'],
             'provider_prices.*.price'        => ['required', 'numeric', 'min:0'],
         ]);

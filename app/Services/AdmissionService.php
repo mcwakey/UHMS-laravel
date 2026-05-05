@@ -118,26 +118,26 @@ class AdmissionService
             && $visitInsurance->insuranceProvider
             && ! $visitInsurance->insuranceProvider->is_default;
 
-        $label         = ucfirst($admissionType);
-        $totalNhis     = 0;
+        $label          = ucfirst($admissionType);
+        $totalInsurance = 0;
         $sessionOffset = 0.0;
 
         $buildItem = function (
             ?int $serviceCatalogId, string $description, int $quantity, float $unitPrice
-        ) use ($hasInsurance, $visitInsurance, $visit, &$sessionOffset, &$totalNhis): array {
-            $lineTotal   = round($unitPrice * $quantity, 2);
-            $nhisCovered = 0.0;
-            $isNhis      = false;
+        ) use ($hasInsurance, $visitInsurance, $visit, &$sessionOffset, &$totalInsurance): array {
+            $lineTotal        = round($unitPrice * $quantity, 2);
+            $insuranceCovered = 0.0;
+            $isInsured        = false;
 
             if ($hasInsurance && $lineTotal > 0) {
                 $coverage = $this->insuranceService->evaluateCoverage(
                     $visitInsurance, $visit, $lineTotal, $sessionOffset
                 );
                 if ($coverage['can_use']) {
-                    $nhisCovered   = $coverage['covered_amount'];
-                    $isNhis        = $nhisCovered > 0;
-                    $sessionOffset += $nhisCovered;
-                    $totalNhis    += $nhisCovered;
+                    $insuranceCovered = $coverage['covered_amount'];
+                    $isInsured        = $insuranceCovered > 0;
+                    $sessionOffset    += $insuranceCovered;
+                    $totalInsurance   += $insuranceCovered;
                 }
             }
 
@@ -147,8 +147,8 @@ class AdmissionService
                 'quantity'             => $quantity,
                 'unit_price'           => $unitPrice,
                 'total_price'          => $lineTotal,
-                'is_nhis_covered'      => $isNhis,
-                'nhis_approved_amount' => $nhisCovered,
+                'is_nhis_covered'      => $isInsured,
+                'nhis_approved_amount' => $insuranceCovered,
             ];
         };
 
@@ -175,17 +175,10 @@ class AdmissionService
 
         $subtotal    = array_sum(array_column($items, 'total_price'));
         $totalAmount = $subtotal;
-        $balance     = max(0, $totalAmount - $totalNhis);
+        $balance     = max(0, $totalAmount - $totalInsurance);
 
         // Determine billing type
-        $billingType = BillingType::CASH;
-        if ($hasInsurance) {
-            $providerType = $visitInsurance->insuranceProvider->insurance_type ?? null;
-            $billingType  = match ($providerType) {
-                'nhis'  => BillingType::NHIS,
-                default => BillingType::CASH,
-            };
-        }
+        $billingType = $hasInsurance ? BillingType::INSURANCE : BillingType::CASH;
 
         $invoice = Invoice::create([
             'invoice_number'  => Invoice::generateNumber('INV', 'invoices', 'invoice_number'),
@@ -195,9 +188,9 @@ class AdmissionService
             'subtotal'        => $subtotal,
             'tax_amount'      => 0,
             'discount_amount' => 0,
-            'nhis_amount'     => $totalNhis,
+            'nhis_amount'     => $totalInsurance,
             'total_amount'    => $totalAmount,
-            'amount_paid'     => $totalNhis,
+            'amount_paid'     => $totalInsurance,
             'balance'         => $balance,
             'status'          => $balance <= 0 ? InvoiceStatus::PAID : InvoiceStatus::PENDING,
             'created_by'      => Auth::id(),

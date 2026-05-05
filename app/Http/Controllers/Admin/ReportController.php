@@ -90,20 +90,25 @@ class ReportController extends Controller
     }
 
     /**
-     * NHIS claims report.
+    * Insurance claims report.
      */
-    public function nhis(Request $request)
+    public function insuranceClaims(Request $request)
     {
         $filters = $request->only(['date_from', 'date_to', 'status']);
-        $data = $this->reportService->nhisReport($filters);
+        $data = $this->reportService->insuranceClaimsReport($filters);
         $invoiceStatuses = InvoiceStatus::cases();
 
         if ($request->has('export') && $request->export === 'pdf') {
             $pdf = Pdf::loadView('reports.nhis-pdf', $data);
-            return $pdf->download('nhis-report.pdf');
+            return $pdf->download('insurance-claims-report.pdf');
         }
 
         return view('reports.nhis', array_merge($data, compact('invoiceStatuses', 'filters')));
+    }
+
+    public function nhis(Request $request)
+    {
+        return redirect()->route('admin.reports.insurance-claims', $request->query());
     }
 
     /*

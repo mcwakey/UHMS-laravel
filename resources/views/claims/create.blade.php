@@ -33,7 +33,7 @@
 @endphp
 <div class="alert alert-info">
     <i class="ti ti-info-circle me-1"></i>
-    Creating NHIS claim from Invoice <strong>{{ $invoice->invoice_number }}</strong> —
+    Creating insurance claim from Invoice <strong>{{ $invoice->invoice_number }}</strong> —
     Patient: <strong>{{ $invoice->patient->first_name }} {{ $invoice->patient->last_name }}</strong> —
     Claimable Amount: <strong>GH₵ {{ number_format($claimTotal, 2) }}</strong>
 </div>
@@ -41,13 +41,13 @@
 @if($claimableItems->isEmpty())
 <div class="alert alert-warning">
     <i class="ti ti-alert-circle me-1"></i>
-    This invoice does not have any NHIS-covered lines with an approved amount. Update the invoice items before creating a claim.
+    This invoice does not have any insurance-covered lines with an approved amount. Update the invoice items before creating a claim.
 </div>
 @endif
 
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title mb-0">NHIS Claim from Invoice</h5>
+        <h5 class="card-title mb-0">Insurance Claim from Invoice</h5>
     </div>
     <div class="card-body">
         <form method="POST" action="{{ route('admin.claims.store-from-invoice') }}">
@@ -78,7 +78,7 @@
             </div>
 
             <!-- Invoice Items Preview -->
-            <h6 class="mb-2">NHIS-Covered Invoice Items</h6>
+            <h6 class="mb-2">Insurance-Covered Invoice Items</h6>
             <div class="table-responsive mb-3">
                 <table class="table table-sm table-bordered">
                     <thead class="table-light">
@@ -86,7 +86,7 @@
                             <th>Service</th>
                             <th>Qty</th>
                             <th class="text-end">Total</th>
-                            <th class="text-end">NHIS Claim</th>
+                            <th class="text-end">Claim Amount</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -99,7 +99,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="4" class="text-center text-muted py-3">No NHIS-covered items found.</td>
+                            <td colspan="4" class="text-center text-muted py-3">No insurance-covered items found.</td>
                         </tr>
                         @endforelse
                     </tbody>

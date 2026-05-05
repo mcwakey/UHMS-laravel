@@ -84,12 +84,12 @@ class PatientManagementTest extends TestCase
         ]);
     }
 
-    public function test_patient_registration_can_add_nhia_insurance_with_selected_tier(): void
+    public function test_patient_registration_can_add_public_insurance_with_selected_tier(): void
     {
         $provider = InsuranceProvider::create([
-            'name' => 'NHIA Ghana',
-            'short_name' => 'NHIA',
-            'type' => InsuranceType::NHIA,
+            'name' => 'Public Health Plan',
+            'short_name' => 'PHP',
+            'type' => InsuranceType::PUBLIC,
             'is_active' => true,
             'is_default' => false,
         ]);
@@ -110,10 +110,10 @@ class PatientManagementTest extends TestCase
             'gender' => 'female',
             'phone' => '0244000000',
             'insurances' => [[
-                'type' => InsuranceType::NHIA->value,
+                'type' => InsuranceType::PUBLIC->value,
                 'provider_id' => $provider->id,
                 'insurance_tier_id' => $tier->id,
-                'membership_number' => 'NHIA-998877',
+                'membership_number' => 'INS-998877',
                 'expiry_date' => now()->addYear()->toDateString(),
             ]],
         ]);
@@ -126,7 +126,7 @@ class PatientManagementTest extends TestCase
             'insurance_provider_id' => $provider->id,
             'insurance_tier_id' => $tier->id,
             'member_type' => 'holder',
-            'membership_number' => 'NHIA-998877',
+            'membership_number' => 'INS-998877',
         ]);
     }
 
@@ -165,14 +165,14 @@ class PatientManagementTest extends TestCase
         $response->assertSee($patient->first_name);
     }
 
-    public function test_patient_can_add_nhia_insurance_without_explicit_tier_selection(): void
+    public function test_patient_can_add_insurance_without_explicit_tier_selection(): void
     {
         $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
 
         $provider = InsuranceProvider::create([
-            'name' => 'NHIA Ghana',
-            'short_name' => 'NHIA',
-            'type' => InsuranceType::NHIA,
+            'name' => 'Community Health Plan',
+            'short_name' => 'CHP',
+            'type' => InsuranceType::PUBLIC,
             'is_active' => true,
             'is_default' => false,
         ]);
@@ -191,7 +191,7 @@ class PatientManagementTest extends TestCase
             ->post(route('admin.patients.insurances.store', $patient), [
                 'insurance_provider_id' => $provider->id,
                 'member_type' => 'holder',
-                'membership_number' => 'NHIA-12345',
+                'membership_number' => 'INS-12345',
                 // Simulates the real UI case where the tier select is not submitted.
                 'insurance_tier_id' => null,
             ]);
@@ -203,7 +203,7 @@ class PatientManagementTest extends TestCase
             'patient_id' => $patient->id,
             'insurance_provider_id' => $provider->id,
             'insurance_tier_id' => $tier->id,
-            'membership_number' => 'NHIA-12345',
+            'membership_number' => 'INS-12345',
             'member_type' => 'holder',
         ]);
     }
@@ -218,10 +218,10 @@ class PatientManagementTest extends TestCase
             'is_default' => true,
         ]);
 
-        $nhiaProvider = InsuranceProvider::create([
-            'name' => 'NHIA Ghana',
-            'short_name' => 'NHIA',
-            'type' => InsuranceType::NHIA,
+        $publicProvider = InsuranceProvider::create([
+            'name' => 'Public Health Plan',
+            'short_name' => 'PHP',
+            'type' => InsuranceType::PUBLIC,
             'is_active' => true,
             'is_default' => false,
         ]);
@@ -235,12 +235,12 @@ class PatientManagementTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->user)->getJson(route('admin.insurance-providers.by-type', [
-            'type' => InsuranceType::NHIA->value,
+            'type' => InsuranceType::PUBLIC->value,
         ]));
 
         $response->assertOk()
             ->assertJsonCount(1)
-            ->assertJsonFragment(['id' => $nhiaProvider->id, 'name' => 'NHIA Ghana'])
+            ->assertJsonFragment(['id' => $publicProvider->id, 'name' => 'Public Health Plan'])
             ->assertJsonMissing(['name' => 'Priority Insurance'])
             ->assertJsonMissing(['name' => 'Cash & Carry']);
     }

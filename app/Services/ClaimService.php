@@ -47,13 +47,13 @@ class ClaimService
             $providerId ??= $invoice->visit?->visitInsurance?->insurance_provider_id;
 
             if (! $providerId) {
-                throw new \InvalidArgumentException('Select an NHIS provider before creating this claim.');
+                throw new \InvalidArgumentException('Select an insurance provider before creating this claim.');
             }
 
             $claimableItems = $this->claimableInvoiceItems($invoice);
 
             if ($claimableItems->isEmpty()) {
-                throw new \InvalidArgumentException('This invoice has no NHIS-covered items to claim.');
+                throw new \InvalidArgumentException('This invoice has no insurance-covered items to claim.');
             }
 
             $periodDate = $invoice->visit?->visit_date?->toDateString()

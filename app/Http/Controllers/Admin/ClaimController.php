@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\ClaimItemStatus;
 use App\Enums\ClaimStatus;
-use App\Enums\InsuranceType;
 use App\Enums\ServiceType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreClaimRequest;
@@ -52,10 +51,7 @@ class ClaimController extends Controller
                 ->with('success', 'A claim already exists for this invoice.');
         }
 
-        $providersQuery = InsuranceProvider::active();
-        if ($invoice && (float) $invoice->nhis_amount > 0) {
-            $providersQuery->where('type', InsuranceType::NHIA->value);
-        }
+        $providersQuery = InsuranceProvider::active()->where('is_default', false);
 
         $providers = $providersQuery->orderBy('name')->get();
         $doctors = User::role('Doctor')->orderBy('first_name')->get();
@@ -91,7 +87,7 @@ class ClaimController extends Controller
 
         return redirect()
             ->route('admin.claims.show', $claim)
-            ->with('success', 'NHIS claim is ready for review.');
+            ->with('success', 'Insurance claim is ready for review.');
     }
 
     /**

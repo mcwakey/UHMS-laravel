@@ -155,7 +155,7 @@
                     @php
                         $invoiceClaim = $invoice->claim;
                         $invoiceInsuranceProviderId = $invoice->visit?->visitInsurance?->insurance_provider_id;
-                        $canCreateNhisClaim = (float) $invoice->nhis_amount > 0 && ! $invoiceClaim;
+                        $canCreateInsuranceClaim = (float) $invoice->nhis_amount > 0 && ! $invoiceClaim;
                     @endphp
                     <tr>
                         <td>
@@ -192,12 +192,12 @@
                                     @if($invoiceClaim)
                                     <li>
                                         <a class="dropdown-item" href="{{ route('admin.claims.show', $invoiceClaim) }}">
-                                            <i class="ti ti-file-dollar me-1"></i>View NHIS Claim
+                                            <i class="ti ti-file-dollar me-1"></i>View Insurance Claim
                                         </a>
                                     </li>
                                     @endif
                                     @endcan
-                                    @if($canCreateNhisClaim)
+                                    @if($canCreateInsuranceClaim)
                                     @can('claims.create')
                                     <li>
                                         @if($invoiceInsuranceProviderId)
@@ -206,12 +206,12 @@
                                             <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
                                             <input type="hidden" name="insurance_provider_id" value="{{ $invoiceInsuranceProviderId }}">
                                             <button type="submit" class="dropdown-item">
-                                                <i class="ti ti-file-plus me-1"></i>Generate NHIS Claim
+                                                <i class="ti ti-file-plus me-1"></i>Generate Insurance Claim
                                             </button>
                                         </form>
                                         @else
                                         <a class="dropdown-item" href="{{ route('admin.claims.create', ['invoice_id' => $invoice->id]) }}">
-                                            <i class="ti ti-file-plus me-1"></i>Generate NHIS Claim
+                                            <i class="ti ti-file-plus me-1"></i>Generate Insurance Claim
                                         </a>
                                         @endif
                                     </li>

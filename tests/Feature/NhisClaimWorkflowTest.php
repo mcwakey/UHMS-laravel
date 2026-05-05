@@ -43,9 +43,9 @@ class NhisClaimWorkflowTest extends TestCase
         $this->user->assignRole($role);
     }
 
-    public function test_nhis_claim_from_invoice_uses_only_nhis_approved_invoice_lines(): void
+    public function test_insurance_claim_from_invoice_uses_only_covered_invoice_lines(): void
     {
-        $invoice = $this->createNhisInvoice();
+        $invoice = $this->createInsuranceInvoice();
 
         $response = $this->actingAs($this->user)->post(route('admin.claims.store-from-invoice'), [
             'invoice_id' => $invoice->id,
@@ -65,7 +65,7 @@ class NhisClaimWorkflowTest extends TestCase
 
     public function test_invoice_claim_generation_does_not_duplicate_existing_claim(): void
     {
-        $invoice = $this->createNhisInvoice();
+        $invoice = $this->createInsuranceInvoice();
 
         $this->actingAs($this->user)->post(route('admin.claims.store-from-invoice'), [
             'invoice_id' => $invoice->id,
@@ -79,9 +79,9 @@ class NhisClaimWorkflowTest extends TestCase
         $this->assertSame(1, Claim::first()->items()->count());
     }
 
-    public function test_invoice_without_nhis_covered_lines_cannot_create_claim(): void
+    public function test_invoice_without_insurance_covered_lines_cannot_create_claim(): void
     {
-        $invoice = $this->createNhisInvoice(0);
+        $invoice = $this->createInsuranceInvoice(0);
         $invoice->items()->update([
             'is_nhis_covered' => false,
             'nhis_approved_amount' => 0,
@@ -93,17 +93,17 @@ class NhisClaimWorkflowTest extends TestCase
             ]);
 
         $response->assertRedirect(route('admin.billing.invoices.show', $invoice));
-        $response->assertSessionHas('error', 'This invoice has no NHIS-covered items to claim.');
+        $response->assertSessionHas('error', 'This invoice has no insurance-covered items to claim.');
         $this->assertSame(0, Claim::count());
     }
 
-    public function test_invoice_show_links_to_generate_or_view_nhis_claim(): void
+    public function test_invoice_show_links_to_generate_or_view_insurance_claim(): void
     {
-        $invoice = $this->createNhisInvoice();
+        $invoice = $this->createInsuranceInvoice();
 
         $this->actingAs($this->user)->get(route('admin.billing.invoices.show', $invoice))
             ->assertOk()
-            ->assertSee('Generate NHIS Claim');
+            ->assertSee('Generate Insurance Claim');
 
         $this->actingAs($this->user)->post(route('admin.claims.store-from-invoice'), [
             'invoice_id' => $invoice->id,
@@ -111,15 +111,15 @@ class NhisClaimWorkflowTest extends TestCase
 
         $this->actingAs($this->user)->get(route('admin.billing.invoices.show', $invoice->fresh()))
             ->assertOk()
-            ->assertSee('View NHIS Claim');
+            ->assertSee('View Insurance Claim');
     }
 
-    private function createNhisInvoice(float $nhisAmount = 80.00): Invoice
+    private function createInsuranceInvoice(float $insuranceAmount = 80.00): Invoice
     {
         $provider = InsuranceProvider::create([
-            'name' => 'National Health Insurance Authority',
-            'short_name' => 'NHIA',
-            'type' => InsuranceType::NHIA->value,
+            'name' => 'Public Health Plan',
+            'short_name' => 'PHP',
+            'type' => InsuranceType::PUBLIC->value,
             'is_active' => true,
             'is_default' => false,
         ]);
@@ -142,7 +142,7 @@ class NhisClaimWorkflowTest extends TestCase
             'patient_id' => $patient->id,
             'insurance_provider_id' => $provider->id,
             'insurance_tier_id' => $tier->id,
-            'membership_number' => 'NHIS-123456789',
+            'membership_number' => 'INS-123456789',
             'start_date' => now()->subYear()->toDateString(),
             'expiry_date' => now()->addYear()->toDateString(),
             'is_primary' => true,
@@ -165,17 +165,17 @@ class NhisClaimWorkflowTest extends TestCase
         ]);
 
         $invoice = Invoice::create([
-            'invoice_number' => 'INV-NHIS-' . str_pad((string) random_int(1, 9999), 4, '0', STR_PAD_LEFT),
+            'invoice_number' => 'INV-INS-' . str_pad((string) random_int(1, 9999), 4, '0', STR_PAD_LEFT),
             'visit_id' => $visit->id,
             'patient_id' => $patient->id,
-            'billing_type' => BillingType::NHIS->value,
+            'billing_type' => BillingType::INSURANCE->value,
             'subtotal' => 150,
             'tax_amount' => 0,
             'discount_amount' => 0,
-            'nhis_amount' => $nhisAmount,
+            'nhis_amount' => $insuranceAmount,
             'total_amount' => 150,
-            'amount_paid' => $nhisAmount,
-            'balance' => 150 - $nhisAmount,
+            'amount_paid' => $insuranceAmount,
+            'balance' => 150 - $insuranceAmount,
             'status' => InvoiceStatus::PENDING->value,
             'due_date' => now()->addDays(30)->toDateString(),
             'created_by' => $this->user->id,
@@ -188,8 +188,8 @@ class NhisClaimWorkflowTest extends TestCase
             'quantity' => 1,
             'unit_price' => 100,
             'total_price' => 100,
-            'is_nhis_covered' => $nhisAmount > 0,
-            'nhis_approved_amount' => $nhisAmount,
+            'is_nhis_covered' => $insuranceAmount > 0,
+            'nhis_approved_amount' => $insuranceAmount,
         ]);
 
         InvoiceItem::create([

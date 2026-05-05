@@ -20,7 +20,7 @@ return new class extends Migration
             $table->foreignId('service_catalog_id')
                 ->constrained('service_catalog')
                 ->cascadeOnDelete();
-            $table->string('insurance_type', 50); // self, nhia, private, corporate
+            $table->string('insurance_type', 50); // self, public, private, corporate
             $table->foreignId('insurance_provider_id')->nullable()
                 ->constrained('insurance_providers')
                 ->cascadeOnDelete();

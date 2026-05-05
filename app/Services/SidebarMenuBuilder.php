@@ -489,7 +489,7 @@ class SidebarMenuBuilder
                         'active_patterns' => [
                             'admin.reports.income',
                             'admin.reports.daily-collection',
-                            'admin.reports.nhis',
+                            'admin.reports.insurance-claims',
                             'admin.reports.claims',
                             'admin.reports.statement-search',
                             'admin.reports.patient-statement',
@@ -497,7 +497,7 @@ class SidebarMenuBuilder
                         'children' => [
                             ['label' => 'Income Report', 'route' => 'admin.reports.income', 'active_patterns' => ['admin.reports.income'], 'permission' => 'reports.view', 'module' => 'reports'],
                             ['label' => 'Daily Collection', 'route' => 'admin.reports.daily-collection', 'active_patterns' => ['admin.reports.daily-collection'], 'permission' => 'reports.view', 'module' => 'reports'],
-                            ['label' => 'NHIS Report', 'route' => 'admin.reports.nhis', 'active_patterns' => ['admin.reports.nhis'], 'permission' => 'reports.view', 'module' => 'reports'],
+                            ['label' => 'Insurance Claims Report', 'route' => 'admin.reports.insurance-claims', 'active_patterns' => ['admin.reports.insurance-claims'], 'permission' => 'reports.view', 'module' => 'reports'],
                             ['label' => 'Claims Report', 'route' => 'admin.reports.claims', 'active_patterns' => ['admin.reports.claims'], 'permission' => 'reports.view', 'module' => 'reports'],
                             ['label' => 'Patient Statement', 'route' => 'admin.reports.statement-search', 'active_patterns' => ['admin.reports.statement-search', 'admin.reports.patient-statement'], 'permission' => 'reports.view', 'module' => 'reports'],
                         ],

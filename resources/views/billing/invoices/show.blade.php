@@ -5,7 +5,7 @@
 @php
     $invoiceClaim = $invoice->claim;
     $invoiceInsuranceProviderId = $invoice->visit?->visitInsurance?->insurance_provider_id;
-    $canCreateNhisClaim = (float) $invoice->nhis_amount > 0 && ! $invoiceClaim;
+    $canCreateInsuranceClaim = (float) $invoice->nhis_amount > 0 && ! $invoiceClaim;
 @endphp
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
@@ -18,11 +18,11 @@
         @can('claims.view')
         @if($invoiceClaim)
         <a href="{{ route('admin.claims.show', $invoiceClaim) }}" class="btn btn-outline-primary btn-md">
-            <i class="ti ti-file-dollar me-1"></i>View NHIS Claim
+            <i class="ti ti-file-dollar me-1"></i>View Insurance Claim
         </a>
         @endif
         @endcan
-        @if($canCreateNhisClaim)
+        @if($canCreateInsuranceClaim)
             @can('claims.create')
                 @if($invoiceInsuranceProviderId)
                 <form method="POST" action="{{ route('admin.claims.store-from-invoice') }}" class="d-inline">
@@ -30,12 +30,12 @@
                     <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
                     <input type="hidden" name="insurance_provider_id" value="{{ $invoiceInsuranceProviderId }}">
                     <button type="submit" class="btn btn-primary btn-md">
-                        <i class="ti ti-file-plus me-1"></i>Generate NHIS Claim
+                        <i class="ti ti-file-plus me-1"></i>Generate Insurance Claim
                     </button>
                 </form>
                 @else
                 <a href="{{ route('admin.claims.create', ['invoice_id' => $invoice->id]) }}" class="btn btn-primary btn-md">
-                    <i class="ti ti-file-plus me-1"></i>Generate NHIS Claim
+                    <i class="ti ti-file-plus me-1"></i>Generate Insurance Claim
                 </a>
                 @endif
             @endcan
@@ -195,7 +195,7 @@
                         @endif
                         @if($invoice->nhis_amount > 0)
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">NHIS Covered</span>
+                            <span class="text-muted">Insurance Covered</span>
                             <span class="text-primary">&#8373;{{ number_format($invoice->nhis_amount, 2) }}</span>
                         </div>
                         @endif
@@ -325,11 +325,11 @@
                 @can('claims.view')
                 @if($invoiceClaim)
                 <a href="{{ route('admin.claims.show', $invoiceClaim) }}" class="btn btn-outline-primary">
-                    <i class="ti ti-file-dollar me-1"></i>View NHIS Claim
+                    <i class="ti ti-file-dollar me-1"></i>View Insurance Claim
                 </a>
                 @endif
                 @endcan
-                @if($canCreateNhisClaim)
+                @if($canCreateInsuranceClaim)
                     @can('claims.create')
                         @if($invoiceInsuranceProviderId)
                         <form method="POST" action="{{ route('admin.claims.store-from-invoice') }}">
@@ -337,12 +337,12 @@
                             <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
                             <input type="hidden" name="insurance_provider_id" value="{{ $invoiceInsuranceProviderId }}">
                             <button type="submit" class="btn btn-outline-primary w-100">
-                                <i class="ti ti-file-plus me-1"></i>Generate NHIS Claim
+                                <i class="ti ti-file-plus me-1"></i>Generate Insurance Claim
                             </button>
                         </form>
                         @else
                         <a href="{{ route('admin.claims.create', ['invoice_id' => $invoice->id]) }}" class="btn btn-outline-primary">
-                            <i class="ti ti-file-plus me-1"></i>Generate NHIS Claim
+                            <i class="ti ti-file-plus me-1"></i>Generate Insurance Claim
                         </a>
                         @endif
                     @endcan

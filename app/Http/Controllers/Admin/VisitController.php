@@ -402,13 +402,6 @@ class VisitController extends Controller
         if (!$provider || $provider->is_default) {
             return BillingType::CASH->value;
         }
-        $type = strtolower((string) $provider->type);
-        if (str_contains($type, 'nhis')) {
-            return BillingType::NHIS->value;
-        }
-        if (str_contains($type, 'corporate') || str_contains($type, 'private')) {
-            return BillingType::CORPORATE->value;
-        }
-        return BillingType::MIXED->value;
+        return BillingType::INSURANCE->value;
     }
 }

@@ -67,7 +67,7 @@ class PaymentController extends Controller
             ->withQueryString();
 
         $paymentMethods = collect(PaymentMethod::cases())
-            ->reject(fn (PaymentMethod $method) => $method === PaymentMethod::NHIS)
+            ->reject(fn (PaymentMethod $method) => $method === PaymentMethod::INSURANCE)
             ->values();
         $openShift = $this->accountingService->getOpenShift();
         $invoiceStatuses = [InvoiceStatus::PENDING, InvoiceStatus::PARTIALLY_PAID];

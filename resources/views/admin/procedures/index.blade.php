@@ -139,7 +139,7 @@
                         <th>Category</th>
                         <th>Department</th>
                         <th class="text-end">Price (₵)</th>
-                        <th class="text-end">NHIS (₵)</th>
+                        <th class="text-end">Insurance (₵)</th>
                         <th class="text-center">Consent</th>
                         <th class="text-center">Status</th>
                         <th style="width:120px">Actions</th>
@@ -229,7 +229,7 @@
                                                 <input type="number" name="default_price" class="form-control" step="0.01" value="{{ $procedure->default_price }}" required>
                                             </div>
                                             <div class="col-md-4">
-                                                <label class="form-label">NHIS Price (₵)</label>
+                                                <label class="form-label">Insurance Price (₵)</label>
                                                 <input type="number" name="nhis_price" class="form-control" step="0.01" value="{{ $procedure->nhis_price }}">
                                             </div>
                                             <div class="col-md-4 d-flex align-items-end">
@@ -314,7 +314,7 @@
                             <input type="number" name="default_price" class="form-control" step="0.01" value="0" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">NHIS Price (₵)</label>
+                            <label class="form-label">Insurance Price (₵)</label>
                             <input type="number" name="nhis_price" class="form-control" step="0.01">
                         </div>
                         <div class="col-md-4 d-flex align-items-end">

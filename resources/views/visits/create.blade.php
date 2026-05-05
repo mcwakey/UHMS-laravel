@@ -750,7 +750,7 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function resolveServicePrice(svc) {
         if (!svc) return 0;
-        const insType = selectedInsurance ? selectedInsurance.type : null;            // e.g. 'nhia'
+        const insType = selectedInsurance ? selectedInsurance.type : null;
         const insProviderId = selectedInsurance ? selectedInsurance.provider_id : null; // numeric
 
         // Provider-specific override
@@ -984,7 +984,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function calculateInsuranceForLine(svc) {
         if (!selectedInsurance || selectedInsurance.is_default) return 0;
         if (!selectedInsurance.is_valid) return 0;
-        if (selectedInsurance.type === 'nhis' && !svc.is_nhis) return 0;
 
         const coverageRate = (selectedInsurance.coverage_percentage || 0) / 100;
         return Math.round(svc.price * svc.quantity * coverageRate * 100) / 100;

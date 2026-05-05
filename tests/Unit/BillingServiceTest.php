@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Enums\InvoiceStatus;
+use App\Enums\BillingType;
 use App\Enums\PaymentMethod;
 use App\Models\Department;
 use App\Models\Invoice;
@@ -11,6 +12,7 @@ use App\Models\User;
 use App\Models\Visit;
 use App\Services\BillingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class BillingServiceTest extends TestCase
@@ -25,14 +27,18 @@ class BillingServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
         $this->service = app(BillingService::class);
+
+        Role::firstOrCreate(['name' => 'Accountant', 'guard_name' => 'web']);
 
         $dept = Department::factory()->create();
         $this->user = User::factory()->create(['department_id' => $dept->id]);
         $this->patient = Patient::factory()->create(['registered_by' => $this->user->id]);
         $this->visit = Visit::factory()->create([
             'patient_id' => $this->patient->id,
-            'department_id' => $dept->id,
+            'current_department_id' => $dept->id,
             'created_by' => $this->user->id,
         ]);
     }
@@ -45,10 +51,10 @@ class BillingServiceTest extends TestCase
             [
                 'visit_id' => $this->visit->id,
                 'patient_id' => $this->patient->id,
-                'billing_type' => 'private',
+                'billing_type' => BillingType::CASH->value,
             ],
             [
-                ['description' => 'Consultation', 'amount' => 50.00, 'quantity' => 1],
+                ['description' => 'Consultation', 'unit_price' => 50.00, 'quantity' => 1],
             ]
         );
 
@@ -64,7 +70,7 @@ class BillingServiceTest extends TestCase
             'invoice_number' => 'INV00099',
             'visit_id' => $this->visit->id,
             'patient_id' => $this->patient->id,
-            'billing_type' => 'private',
+            'billing_type' => BillingType::CASH->value,
             'subtotal' => 100.00,
             'tax_amount' => 0,
             'discount_amount' => 0,
@@ -95,7 +101,7 @@ class BillingServiceTest extends TestCase
             'invoice_number' => 'INV00100',
             'visit_id' => $this->visit->id,
             'patient_id' => $this->patient->id,
-            'billing_type' => 'private',
+            'billing_type' => BillingType::CASH->value,
             'subtotal' => 100.00,
             'tax_amount' => 0,
             'discount_amount' => 0,
@@ -125,7 +131,7 @@ class BillingServiceTest extends TestCase
             'invoice_number' => 'INV00101',
             'visit_id' => $this->visit->id,
             'patient_id' => $this->patient->id,
-            'billing_type' => 'private',
+            'billing_type' => BillingType::CASH->value,
             'subtotal' => 100.00,
             'tax_amount' => 0,
             'discount_amount' => 0,

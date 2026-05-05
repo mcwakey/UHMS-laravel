@@ -1,19 +1,19 @@
 @extends('layouts.app')
-@section('title', 'NHIS Claims Report')
+@section('title', 'Insurance Claims Report')
 
 @section('content')
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
     <div>
-        <h4 class="fw-bold mb-0">NHIS Claims Report</h4>
+        <h4 class="fw-bold mb-0">Insurance Claims Report</h4>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">NHIS Report</li>
+                <li class="breadcrumb-item active">Insurance Claims Report</li>
             </ol>
         </nav>
     </div>
     <div>
-        <a href="{{ route('admin.reports.nhis', array_merge(request()->query(), ['export' => 'pdf'])) }}" class="btn btn-danger btn-sm">
+        <a href="{{ route('admin.reports.insurance-claims', array_merge(request()->query(), ['export' => 'pdf'])) }}" class="btn btn-danger btn-sm">
             <i class="ti ti-file-type-pdf me-1"></i>Export PDF
         </a>
     </div>
@@ -32,8 +32,8 @@
     <div class="col-xl-3 col-md-6">
         <div class="card border-start border-success border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Total NHIS Amount</p>
-                <h4 class="fw-bold mb-0 text-success">₵{{ number_format($stats['total_nhis_amount'] ?? 0, 2) }}</h4>
+                <p class="text-muted mb-1 small">Total Insurance Amount</p>
+                <h4 class="fw-bold mb-0 text-success">₵{{ number_format($stats['total_insurance_amount'] ?? 0, 2) }}</h4>
             </div>
         </div>
     </div>
@@ -48,8 +48,8 @@
     <div class="col-xl-3 col-md-6">
         <div class="card border-start border-warning border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">NHIS Patients</p>
-                <h4 class="fw-bold mb-0">{{ $stats['nhis_patients'] ?? 0 }}</h4>
+                <p class="text-muted mb-1 small">Pending Claims</p>
+                <h4 class="fw-bold mb-0">{{ $stats['pending_claims'] ?? 0 }}</h4>
             </div>
         </div>
     </div>
@@ -58,7 +58,7 @@
 <!-- Filter -->
 <div class="card mb-4">
     <div class="card-body">
-        <form method="GET" action="{{ route('admin.reports.nhis') }}" class="row g-3 align-items-end">
+        <form method="GET" action="{{ route('admin.reports.insurance-claims') }}" class="row g-3 align-items-end">
             <div class="col-md-3">
                 <label class="form-label">Date From</label>
                 <input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}">
@@ -88,7 +88,7 @@
 <!-- Data Table -->
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title mb-0">NHIS Invoice Records</h5>
+        <h5 class="card-title mb-0">Insurance Invoice Records</h5>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -99,7 +99,7 @@
                         <th>Patient</th>
                         <th>Department</th>
                         <th>Total Amount</th>
-                        <th>NHIS Amount</th>
+                        <th>Insurance Amount</th>
                         <th>Patient Pays</th>
                         <th>Status</th>
                         <th>Date</th>
@@ -123,7 +123,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center text-muted py-4">No NHIS claims found</td>
+                        <td colspan="8" class="text-center text-muted py-4">No insurance claims found</td>
                     </tr>
                     @endforelse
                 </tbody>

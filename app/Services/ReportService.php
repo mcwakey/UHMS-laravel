@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\AdmissionStatus;
+use App\Enums\BillingType;
 use App\Enums\ClaimStatus;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentMethod;
@@ -84,7 +85,7 @@ class ReportService
             'consultation_fees' => $categoryBreakdown['consultation'] ?? 0,
             'lab_revenue' => $categoryBreakdown['lab'] ?? 0,
             'pharmacy_sales' => $categoryBreakdown['pharmacy'] ?? 0,
-            'nhis_revenue' => (clone $totalQuery)->where('payment_method', 'nhis')->sum('amount'),
+            'insurance_revenue' => (clone $totalQuery)->whereIn('payment_method', [PaymentMethod::INSURANCE->value, 'nhis'])->sum('amount'),
         ];
 
         return compact('payments', 'stats', 'categoryBreakdown');
@@ -196,15 +197,19 @@ class ReportService
     }
 
     /**
-     * NHIS report data.
+     * Insurance claims report data.
      */
-    public function nhisReport(array $filters = []): array
+    public function insuranceClaimsReport(array $filters = []): array
     {
+        $insuranceBillingTypes = [
+            BillingType::INSURANCE->value,
+            BillingType::CORPORATE->value,
+            BillingType::MIXED->value,
+            'nhis',
+        ];
+
         $query = Invoice::with(['patient', 'items'])
-            ->where(function ($q) {
-                $q->where('billing_type', 'nhis')
-                    ->orWhere('billing_type', 'mixed');
-            });
+            ->whereIn('billing_type', $insuranceBillingTypes);
 
         if (!empty($filters['date_from'])) {
             $query->whereDate('created_at', '>=', $filters['date_from']);
@@ -219,9 +224,7 @@ class ReportService
         $invoices = $query->latest()->paginate(20)->withQueryString();
 
         // Stats
-        $baseQuery = Invoice::where(function ($q) {
-            $q->where('billing_type', 'nhis')->orWhere('billing_type', 'mixed');
-        });
+        $baseQuery = Invoice::whereIn('billing_type', $insuranceBillingTypes);
         if (!empty($filters['date_from'])) {
             $baseQuery->whereDate('created_at', '>=', $filters['date_from']);
         }
@@ -231,6 +234,7 @@ class ReportService
 
         $stats = [
             'total_claims' => (clone $baseQuery)->count(),
+            'total_insurance_amount' => (clone $baseQuery)->sum('nhis_amount'),
             'total_nhis_amount' => (clone $baseQuery)->sum('nhis_amount'),
             'approved_claims' => (clone $baseQuery)->whereIn('status', [
                 InvoiceStatus::PAID->value, InvoiceStatus::PARTIALLY_PAID->value,
@@ -241,6 +245,11 @@ class ReportService
         ];
 
         return compact('invoices', 'stats');
+    }
+
+    public function nhisReport(array $filters = []): array
+    {
+        return $this->insuranceClaimsReport($filters);
     }
 
     /**

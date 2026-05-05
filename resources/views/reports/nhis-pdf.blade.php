@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>NHIS Claims Report</title>
+    <title>Insurance Claims Report</title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #333; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #0d6efd; padding-bottom: 10px; }
@@ -18,8 +18,8 @@
 </head>
 <body>
     <div class="header">
-        <h1>UHMS - NHIS Claims Report</h1>
-        <p>Generated: {{ now()->format('d M Y H:i') }} | Total Claims: {{ $stats['total_claims'] ?? 0 }} | Amount: ₵{{ number_format($stats['total_nhis_amount'] ?? 0, 2) }}</p>
+        <h1>UHMS - Insurance Claims Report</h1>
+        <p>Generated: {{ now()->format('d M Y H:i') }} | Total Claims: {{ $stats['total_claims'] ?? 0 }} | Amount: ₵{{ number_format($stats['total_insurance_amount'] ?? 0, 2) }}</p>
     </div>
 
     <table>
@@ -29,7 +29,7 @@
                 <th>Patient</th>
                 <th>Department</th>
                 <th class="text-right">Total</th>
-                <th class="text-right">NHIS Amount</th>
+                <th class="text-right">Insurance Amount</th>
                 <th class="text-right">Patient Pays</th>
                 <th>Status</th>
                 <th>Date</th>

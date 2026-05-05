@@ -5,7 +5,7 @@ namespace App\Enums;
 enum BillingType: string
 {
     case CASH = 'cash';
-    case NHIS = 'nhis';
+    case INSURANCE = 'insurance';
     case CORPORATE = 'corporate';
     case MIXED = 'mixed';
 
@@ -13,7 +13,7 @@ enum BillingType: string
     {
         return match ($this) {
             self::CASH => 'Cash',
-            self::NHIS => 'NHIS',
+            self::INSURANCE => 'Insurance',
             self::CORPORATE => 'Corporate',
             self::MIXED => 'Mixed',
         };
@@ -23,7 +23,7 @@ enum BillingType: string
     {
         return match ($this) {
             self::CASH => 'success',
-            self::NHIS => 'primary',
+            self::INSURANCE => 'primary',
             self::CORPORATE => 'info',
             self::MIXED => 'warning',
         };

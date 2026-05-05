@@ -64,9 +64,9 @@
                         </div>
                         <div class="col-md-4 mb-2">
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" name="nhis_enabled" value="1"
-                                       id="nhisEnabled" {{ old('nhis_enabled', $settings['nhis_enabled'] ?? '1') == '1' ? 'checked' : '' }}>
-                                <label class="form-check-label" for="nhisEnabled"><i class="ti ti-heart-handshake me-1"></i>NHIS</label>
+                                <input class="form-check-input" type="checkbox" name="insurance_enabled" value="1"
+                                       id="insuranceEnabled" {{ old('insurance_enabled', $settings['insurance_enabled'] ?? '1') == '1' ? 'checked' : '' }}>
+                                <label class="form-check-label" for="insuranceEnabled"><i class="ti ti-heart-handshake me-1"></i>Insurance Settlements</label>
                             </div>
                         </div>
                         <div class="col-md-4 mb-2">

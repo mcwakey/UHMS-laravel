@@ -93,7 +93,7 @@ class SettingsController extends Controller
             'cash_enabled' => 'nullable|boolean',
             'momo_enabled' => 'nullable|boolean',
             'card_enabled' => 'nullable|boolean',
-            'nhis_enabled' => 'nullable|boolean',
+            'insurance_enabled' => 'nullable|boolean',
             'bank_transfer_enabled' => 'nullable|boolean',
             'momo_merchant_id' => 'nullable|string|max:100',
             'bank_name' => 'nullable|string|max:100',
@@ -101,7 +101,7 @@ class SettingsController extends Controller
             'bank_branch' => 'nullable|string|max:100',
         ]);
 
-        $booleanFields = ['cash_enabled', 'momo_enabled', 'card_enabled', 'nhis_enabled', 'bank_transfer_enabled'];
+        $booleanFields = ['cash_enabled', 'momo_enabled', 'card_enabled', 'insurance_enabled', 'bank_transfer_enabled'];
         foreach ($booleanFields as $field) {
             $validated[$field] = $request->boolean($field) ? '1' : '0';
         }

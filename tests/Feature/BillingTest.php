@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\InvoiceStatus;
+use App\Enums\BillingType;
 use App\Enums\PaymentMethod;
 use App\Models\Department;
 use App\Models\Invoice;
@@ -44,7 +45,7 @@ class BillingTest extends TestCase
         $this->patient = Patient::factory()->create(['registered_by' => $this->user->id]);
         $this->visit = Visit::factory()->create([
             'patient_id' => $this->patient->id,
-            'department_id' => $dept->id,
+            'current_department_id' => $dept->id,
             'created_by' => $this->user->id,
         ]);
     }
@@ -53,7 +54,7 @@ class BillingTest extends TestCase
 
     public function test_invoice_index_loads(): void
     {
-        $response = $this->actingAs($this->user)->get(route('admin.invoices.index'));
+        $response = $this->actingAs($this->user)->get(route('admin.billing.invoices.index'));
         $response->assertStatus(200);
     }
 
@@ -62,13 +63,13 @@ class BillingTest extends TestCase
         $data = [
             'visit_id' => $this->visit->id,
             'patient_id' => $this->patient->id,
-            'billing_type' => 'private',
+            'billing_type' => BillingType::CASH->value,
             'items' => [
-                ['description' => 'Consultation Fee', 'amount' => 50.00, 'quantity' => 1],
+                ['description' => 'Consultation Fee', 'unit_price' => 50.00, 'quantity' => 1],
             ],
         ];
 
-        $response = $this->actingAs($this->user)->post(route('admin.invoices.store'), $data);
+        $response = $this->actingAs($this->user)->post(route('admin.billing.invoices.store'), $data);
         $response->assertRedirect();
     }
 
@@ -76,7 +77,7 @@ class BillingTest extends TestCase
 
     public function test_payment_index_loads(): void
     {
-        $response = $this->actingAs($this->user)->get(route('admin.payments.index'));
+        $response = $this->actingAs($this->user)->get(route('admin.billing.payments.index'));
         $response->assertStatus(200);
     }
 
@@ -86,7 +87,7 @@ class BillingTest extends TestCase
             'invoice_number' => 'INV00001',
             'visit_id' => $this->visit->id,
             'patient_id' => $this->patient->id,
-            'billing_type' => 'private',
+            'billing_type' => BillingType::CASH->value,
             'subtotal' => 100.00,
             'tax_amount' => 0,
             'discount_amount' => 0,
@@ -99,12 +100,11 @@ class BillingTest extends TestCase
         ]);
 
         $data = [
-            'invoice_id' => $invoice->id,
             'amount' => 100.00,
-            'payment_method' => PaymentMethod::CASH->value,
+            'payment_method' => PaymentMethod::BANK_TRANSFER->value,
         ];
 
-        $response = $this->actingAs($this->user)->post(route('admin.payments.store'), $data);
+        $response = $this->actingAs($this->user)->post(route('admin.billing.payments.store', $invoice), $data);
         $response->assertRedirect();
     }
 }

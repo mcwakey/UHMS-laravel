@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignId('invoice_id')->constrained()->cascadeOnDelete();
             $table->foreignId('patient_id')->constrained()->cascadeOnDelete();
             $table->decimal('amount', 10, 2);
-            $table->string('payment_method'); // cash, mtn_momo, vodafone_cash, airteltigo_money, bank_transfer, card, nhis, cheque
+            $table->string('payment_method'); // cash, mtn_momo, vodafone_cash, airteltigo_money, bank_transfer, card, insurance, cheque
             $table->string('reference_number')->nullable();
             $table->foreignId('received_by')->constrained('users')->cascadeOnDelete();
             $table->text('notes')->nullable();

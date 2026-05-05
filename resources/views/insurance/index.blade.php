@@ -213,11 +213,11 @@
                     <div class="row mb-3">
                         <div class="col-md-8">
                             <label class="form-label">Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" placeholder="e.g. NHIS Ghana" required>
+                            <input type="text" name="name" class="form-control" placeholder="e.g. Acme Health Plan" required>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Short Name</label>
-                            <input type="text" name="short_name" class="form-control" placeholder="e.g. NHIS" maxlength="20">
+                            <input type="text" name="short_name" class="form-control" placeholder="e.g. ACME" maxlength="20">
                         </div>
                     </div>
                     <div class="mb-3">

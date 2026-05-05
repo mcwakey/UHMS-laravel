@@ -32,7 +32,7 @@ class PaymentNotification extends Notification
             'patient_id' => $patient->id,
             'patient_name' => $patient->full_name,
             'amount' => $this->payment->amount,
-            'url' => route('billing.invoices.show', $this->payment->invoice_id),
+            'url' => route('admin.billing.invoices.show', $this->payment->invoice_id),
             'icon' => 'ti-cash',
             'color' => 'warning',
         ];

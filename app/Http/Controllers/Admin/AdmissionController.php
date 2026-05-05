@@ -204,12 +204,12 @@ class AdmissionController extends Controller
                 // Recalculate invoice totals
                 $invoice->refresh()->load('items');
                 $newSubtotal   = $invoice->items->sum('total_price');
-                $newNhis       = $invoice->items->sum('nhis_approved_amount');
+                $newInsurance  = $invoice->items->sum('nhis_approved_amount');
                 $newTotal      = $newSubtotal + $invoice->tax_amount - $invoice->discount_amount;
                 $newBalance    = max(0, $newTotal - $invoice->amount_paid);
                 $invoice->update([
                     'subtotal'     => $newSubtotal,
-                    'nhis_amount'  => $newNhis,
+                    'nhis_amount'  => $newInsurance,
                     'total_amount' => $newTotal,
                     'balance'      => $newBalance,
                 ]);

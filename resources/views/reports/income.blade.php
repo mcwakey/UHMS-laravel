@@ -48,8 +48,8 @@
     <div class="col-xl-3 col-md-6">
         <div class="card border-start border-warning border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">NHIS Revenue</p>
-                <h4 class="fw-bold mb-0">₵{{ number_format($stats['nhis_revenue'] ?? 0, 2) }}</h4>
+                <p class="text-muted mb-1 small">Insurance Revenue</p>
+                <h4 class="fw-bold mb-0">₵{{ number_format($stats['insurance_revenue'] ?? 0, 2) }}</h4>
             </div>
         </div>
     </div>

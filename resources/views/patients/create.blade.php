@@ -297,7 +297,7 @@
                         </div>
                         <div class="col-md-4 ins-row-extra" style="display:none">
                             <label class="form-label form-label-sm">Membership / Card Number</label>
-                            <input type="text" name="insurances[0][membership_number]" class="form-control form-control-sm" value="{{ old('insurances.0.membership_number') }}" placeholder="e.g. NHIS-123456789">
+                            <input type="text" name="insurances[0][membership_number]" class="form-control form-control-sm" value="{{ old('insurances.0.membership_number') }}" placeholder="e.g. INS-123456789">
                         </div>
                         <div class="col-md-4 ins-row-extra" style="display:none">
                             <label class="form-label form-label-sm">Policy Number</label>
@@ -584,7 +584,7 @@
                 </div>
                 <div class="col-md-4 ins-row-extra" style="display:none">
                     <label class="form-label form-label-sm">Membership / Card Number</label>
-                    <input type="text" name="insurances[${idx}][membership_number]" class="form-control form-control-sm" placeholder="e.g. NHIS-123456789">
+                    <input type="text" name="insurances[${idx}][membership_number]" class="form-control form-control-sm" placeholder="e.g. INS-123456789">
                 </div>
                 <div class="col-md-4 ins-row-extra" style="display:none">
                     <label class="form-label form-label-sm">Policy Number</label>

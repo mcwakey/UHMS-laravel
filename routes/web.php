@@ -614,7 +614,8 @@ Route::middleware('auth')->group(function () {
             Route::get('income', [ReportController::class, 'income'])->name('income');
             Route::get('patients', [ReportController::class, 'patients'])->name('patients');
             Route::get('visits', [ReportController::class, 'visits'])->name('visits');
-            Route::get('nhis', [ReportController::class, 'nhis'])->name('nhis');
+            Route::get('insurance-claims', [ReportController::class, 'insuranceClaims'])->name('insurance-claims');
+            Route::get('nhis', fn () => redirect()->route('admin.reports.insurance-claims', request()->query()))->name('nhis');
 
             // Financial Reports
             Route::get('pharmacy-sales', [ReportController::class, 'pharmacySales'])->name('pharmacy-sales');

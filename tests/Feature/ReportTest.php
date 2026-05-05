@@ -46,9 +46,9 @@ class ReportTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_nhis_report_loads(): void
+    public function test_insurance_claims_report_loads(): void
     {
-        $response = $this->actingAs($this->user)->get(route('admin.reports.nhis'));
+        $response = $this->actingAs($this->user)->get(route('admin.reports.insurance-claims'));
         $response->assertStatus(200);
     }
 
