@@ -1020,6 +1020,7 @@
 
 @section('scripts')
 <script>
+(function () {
     // ── Edit Insurance Modal ──────────────────────────────────────────────────
     document.querySelectorAll('.edit-insurance-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -1163,5 +1164,6 @@
             document.getElementById('editEcPrimary').checked = this.dataset.primary === '1';
         });
     });
+})();
 </script>
 @endsection
