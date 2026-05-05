@@ -19,6 +19,7 @@ class BillingService
     public function __construct(
         protected InsuranceService $insuranceService,
         protected VisitWorkflowService $visitWorkflowService,
+        protected ServicePriceResolver $priceResolver,
     ) {}
 
     /**
@@ -67,17 +68,27 @@ class BillingService
             ]);
 
             foreach ($items as $item) {
-                $lineTotal = ($item['unit_price'] ?? 0) * ($item['quantity'] ?? 1);
+                $quantity   = $item['quantity'] ?? 1;
+                $unitPrice  = $item['unit_price'] ?? 0;
+                $lineTotal  = $unitPrice * $quantity;
+                $cashPrice  = $item['cash_price'] ?? $unitPrice;
+                $discount   = $item['discount_amount'] ?? max(0, ($cashPrice - $unitPrice) * $quantity);
 
                 InvoiceItem::create([
-                    'invoice_id'          => $invoice->id,
-                    'service_catalog_id'  => $item['service_catalog_id'] ?? null,
-                    'description'         => $item['description'],
-                    'quantity'            => $item['quantity'] ?? 1,
-                    'unit_price'          => $item['unit_price'],
-                    'total_price'         => $lineTotal,
-                    'is_nhis_covered'     => $item['is_nhis_covered'] ?? false,
+                    'invoice_id'           => $invoice->id,
+                    'service_catalog_id'   => $item['service_catalog_id'] ?? null,
+                    'description'          => $item['description'],
+                    'quantity'             => $quantity,
+                    'unit_price'           => $unitPrice,
+                    'total_price'          => $lineTotal,
+                    'is_nhis_covered'      => $item['is_nhis_covered'] ?? false,
                     'nhis_approved_amount' => $item['nhis_approved_amount'] ?? 0,
+                    'cash_price'           => $cashPrice,
+                    'selected_price'       => $unitPrice,
+                    'discount_amount'      => $discount,
+                    'payer_type'           => $item['payer_type'] ?? null,
+                    'insurance_provider_id' => $item['insurance_provider_id'] ?? null,
+                    'pricing_source'       => $item['pricing_source'] ?? null,
                 ]);
 
                 // Record usage for items that were evaluated at invoice time
@@ -202,19 +213,28 @@ class BillingService
         // 1. Visit Services ─────────────────────────────────────────────────
         // Coverage was already evaluated + recorded at attachServices() time.
         // Just read the stored amounts directly — do NOT re-evaluate.
-        $visit->loadMissing('visitServices.serviceCatalog');
+        $visit->loadMissing('visitServices.serviceCatalog.prices');
         foreach ($visit->visitServices as $vs) {
             $catalog       = $vs->serviceCatalog;
             $insuredAmount = (float) $vs->insurance_covered;
+            $cashPrice     = $catalog ? (float) $catalog->price : (float) $vs->unit_price;
+            $unitPrice     = (float) $vs->unit_price;
+            $quantity      = (int) $vs->quantity;
+            $discount      = max(0.0, round(($cashPrice - $unitPrice) * $quantity, 2));
 
             $items[] = [
-                'service_catalog_id'  => $vs->service_catalog_id,
-                'description'         => $catalog ? $catalog->name : 'Service',
-                'quantity'            => $vs->quantity,
-                'unit_price'          => $vs->unit_price,
-                'is_nhis_covered'     => $insuredAmount > 0,
+                'service_catalog_id'   => $vs->service_catalog_id,
+                'description'          => $catalog ? $catalog->name : 'Service',
+                'quantity'             => $quantity,
+                'unit_price'           => $unitPrice,
+                'is_nhis_covered'      => $insuredAmount > 0,
                 'nhis_approved_amount' => $insuredAmount,
-                '_record_usage'       => false, // already recorded in attachServices()
+                'cash_price'           => $cashPrice,
+                'discount_amount'      => $discount,
+                'payer_type'           => $hasInsurance ? 'insurance' : 'cash',
+                'insurance_provider_id' => $hasInsurance ? $visitInsurance->insurance_provider_id : null,
+                'pricing_source'       => $cashPrice > $unitPrice ? 'payer_specific_price' : 'cash_price',
+                '_record_usage'        => false, // already recorded in attachServices()
             ];
         }
 
@@ -229,21 +249,28 @@ class BillingService
                 ->first();
 
             if ($consultationService) {
+                $snap         = $this->priceResolver->resolveForVisit($consultationService, $visit);
+                $unitPrice    = $snap['selected_price'];
                 [$coveredAmt, $sessionOffset] = $this->evalAndOffset(
                     $hasInsurance, $visitInsurance, $visit,
-                    $consultationService->price, $sessionOffset
+                    $unitPrice, $sessionOffset
                 );
 
                 $items[] = [
-                    'service_catalog_id'  => $consultationService->id,
-                    'description'         => $consultationService->name,
-                    'quantity'            => 1,
-                    'unit_price'          => $consultationService->price,
-                    'is_nhis_covered'     => $coveredAmt > 0,
+                    'service_catalog_id'   => $consultationService->id,
+                    'description'          => $consultationService->name,
+                    'quantity'             => 1,
+                    'unit_price'           => $unitPrice,
+                    'is_nhis_covered'      => $coveredAmt > 0,
                     'nhis_approved_amount' => $coveredAmt,
-                    '_record_usage'       => $coveredAmt > 0,
-                    '_insurance'          => $visitInsurance,
-                    '_coverage_reason'    => null,
+                    'cash_price'           => $snap['cash_price'],
+                    'discount_amount'      => $snap['discount_amount'],
+                    'payer_type'           => $snap['payer_type'],
+                    'insurance_provider_id' => $snap['insurance_provider_id'],
+                    'pricing_source'       => $snap['pricing_source'],
+                    '_record_usage'        => $coveredAmt > 0,
+                    '_insurance'           => $visitInsurance,
+                    '_coverage_reason'     => null,
                 ];
             }
         }
@@ -258,21 +285,28 @@ class BillingService
                     ->first();
 
                 if ($labService) {
+                    $snap      = $this->priceResolver->resolveForVisit($labService, $visit);
+                    $unitPrice = $snap['selected_price'];
                     [$coveredAmt, $sessionOffset] = $this->evalAndOffset(
                         $hasInsurance, $visitInsurance, $visit,
-                        $labService->price, $sessionOffset
+                        $unitPrice, $sessionOffset
                     );
 
                     $items[] = [
-                        'service_catalog_id'  => $labService->id,
-                        'description'         => $item->labTest->name,
-                        'quantity'            => 1,
-                        'unit_price'          => $labService->price,
-                        'is_nhis_covered'     => $coveredAmt > 0,
+                        'service_catalog_id'   => $labService->id,
+                        'description'          => $item->labTest->name,
+                        'quantity'             => 1,
+                        'unit_price'           => $unitPrice,
+                        'is_nhis_covered'      => $coveredAmt > 0,
                         'nhis_approved_amount' => $coveredAmt,
-                        '_record_usage'       => $coveredAmt > 0,
-                        '_insurance'          => $visitInsurance,
-                        '_coverage_reason'    => null,
+                        'cash_price'           => $snap['cash_price'],
+                        'discount_amount'      => $snap['discount_amount'],
+                        'payer_type'           => $snap['payer_type'],
+                        'insurance_provider_id' => $snap['insurance_provider_id'],
+                        'pricing_source'       => $snap['pricing_source'],
+                        '_record_usage'        => $coveredAmt > 0,
+                        '_insurance'           => $visitInsurance,
+                        '_coverage_reason'     => null,
                     ];
                 }
             }
@@ -288,7 +322,9 @@ class BillingService
                     ->first();
 
                 if ($drugService) {
-                    $linePrice = $drugService->price * $prescItem->quantity;
+                    $snap         = $this->priceResolver->resolveForVisit($drugService, $visit);
+                    $unitPrice    = $snap['selected_price'];
+                    $linePrice    = $unitPrice * $prescItem->quantity;
 
                     [$coveredAmt, $sessionOffset] = $this->evalAndOffset(
                         $hasInsurance, $visitInsurance, $visit,
@@ -296,15 +332,20 @@ class BillingService
                     );
 
                     $items[] = [
-                        'service_catalog_id'  => $drugService->id,
-                        'description'         => $prescItem->drug->name . ' (' . $prescItem->quantity . ')',
-                        'quantity'            => $prescItem->quantity,
-                        'unit_price'          => $drugService->price,
-                        'is_nhis_covered'     => $coveredAmt > 0,
+                        'service_catalog_id'   => $drugService->id,
+                        'description'          => $prescItem->drug->name . ' (' . $prescItem->quantity . ')',
+                        'quantity'             => $prescItem->quantity,
+                        'unit_price'           => $unitPrice,
+                        'is_nhis_covered'      => $coveredAmt > 0,
                         'nhis_approved_amount' => $coveredAmt,
-                        '_record_usage'       => $coveredAmt > 0,
-                        '_insurance'          => $visitInsurance,
-                        '_coverage_reason'    => null,
+                        'cash_price'           => $snap['cash_price'],
+                        'discount_amount'      => max(0.0, round(($snap['cash_price'] - $unitPrice) * $prescItem->quantity, 2)),
+                        'payer_type'           => $snap['payer_type'],
+                        'insurance_provider_id' => $snap['insurance_provider_id'],
+                        'pricing_source'       => $snap['pricing_source'],
+                        '_record_usage'        => $coveredAmt > 0,
+                        '_insurance'           => $visitInsurance,
+                        '_coverage_reason'     => null,
                     ];
                 }
             }

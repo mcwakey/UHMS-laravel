@@ -109,14 +109,20 @@
                                 <th>#</th>
                                 <th>Description</th>
                                 <th class="text-center">Qty</th>
-                                <th class="text-end">Unit Price</th>
+                                <th class="text-end">Cash Price</th>
+                                <th class="text-end">Billed Price</th>
+                                <th class="text-end">Benefit</th>
                                 <th class="text-end">Total</th>
-                                <th class="text-center">NHIS</th>
-                                <th class="text-end">NHIS Amt</th>
+                                <th class="text-center">Insurance</th>
+                                <th class="text-end">Covered</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($invoice->items as $idx => $item)
+                            @php
+                                $cashPrice = $item->cash_price !== null ? (float) $item->cash_price : (float) $item->unit_price;
+                                $benefit   = (float) ($item->discount_amount ?? max(0, ($cashPrice - (float) $item->unit_price) * (int) $item->quantity));
+                            @endphp
                             <tr>
                                 <td>{{ $idx + 1 }}</td>
                                 <td>
@@ -124,9 +130,20 @@
                                     @if($item->serviceCatalog)
                                     <br><small class="text-muted">{{ $item->serviceCatalog->code }}</small>
                                     @endif
+                                    @if($item->pricing_source && $item->pricing_source !== 'cash_price')
+                                    <br><small class="text-info">{{ str_replace('_', ' ', $item->pricing_source) }}</small>
+                                    @endif
                                 </td>
                                 <td class="text-center">{{ $item->quantity }}</td>
+                                <td class="text-end">&#8373;{{ number_format($cashPrice, 2) }}</td>
                                 <td class="text-end">&#8373;{{ number_format($item->unit_price, 2) }}</td>
+                                <td class="text-end">
+                                    @if($benefit > 0)
+                                    <span class="text-success">&#8373;{{ number_format($benefit, 2) }}</span>
+                                    @else
+                                    —
+                                    @endif
+                                </td>
                                 <td class="text-end">&#8373;{{ number_format($item->total_price, 2) }}</td>
                                 <td class="text-center">
                                     @if($item->is_nhis_covered)
