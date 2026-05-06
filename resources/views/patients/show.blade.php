@@ -253,16 +253,16 @@
 <!-- Tabs -->
 <ul class="nav nav-tabs nav-bordered mb-3">
     <li class="nav-item">
-        <a href="#visits" data-bs-toggle="tab" class="nav-link active bg-transparent"><i class="ti ti-calendar-event me-1"></i>Visit History</a>
+        <a href="#visits" data-bs-toggle="tab" class="nav-link active bg-transparent"><i class="ti ti-calendar-event me-1"></i>Visit History <span class="badge bg-success ms-1">{{ $patient->visits->count() }}</span></a>
     </li>
     <li class="nav-item">
         <a href="#insurance" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-shield-check me-1"></i>Insurance <span class="badge bg-primary ms-1">{{ $patient->insurances->count() }}</span></a>
     </li>
     <li class="nav-item">
-        <a href="#emergency-contacts" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-urgent me-1"></i>Emergency Contacts</a>
+        <a href="#emergency-contacts" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-urgent me-1"></i>Emergency Contacts <span class="badge bg-secondary ms-1">{{ $patient->emergencyContacts->count() }}</span></a>
     </li>
     <li class="nav-item">
-        <a href="#billing" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-receipt me-1"></i>Billing</a>
+        <a href="#billing" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-receipt me-1"></i>Billing <span class="badge bg-warning text-dark ms-1">{{ $patient->visits->flatMap(fn($v) => $v->invoices)->count() }}</span></a>
     </li>
     <li class="nav-item">
         <a href="#registration-info" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-info-circle me-1"></i>Registration Info</a>

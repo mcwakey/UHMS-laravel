@@ -11,7 +11,8 @@
 
 <script setup>
 import { Head, router } from '@inertiajs/vue3';
-import { nextTick, onMounted, ref, watch } from 'vue';
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { cleanupBootstrapModals } from '../../utils/modalCleanup';
 
 const props = defineProps({
     html: {
@@ -266,12 +267,16 @@ function initialiseLegacyShell() {
 }
 
 async function afterPageSwap() {
+    // Dispose any open Bootstrap modals BEFORE Vue swaps the v-html DOM,
+    // preventing backdrop leaks and orphaned Bootstrap instances.
+    cleanupBootstrapModals();
     await nextTick();
     initialiseLegacyShell();
     executeLegacyScripts();
 }
 
 onMounted(afterPageSwap);
+onUnmounted(cleanupBootstrapModals);
 
 watch(
     () => [props.html, props.scripts, props.url],

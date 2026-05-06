@@ -58,6 +58,42 @@
     <script src="{{ URL::asset('build/js/script.js') }}"></script>
 
     @vite(['resources/js/inertia.js'])
+
+    {{-- One-time global Bootstrap modal cleanup for Inertia SPA navigations.
+         Fires on inertia:before so backdrops and body state are cleared before
+         Vue swaps the v-html DOM — preventing scroll-lock and orphaned instances.
+         The BladePage component also calls cleanupBootstrapModals() directly
+         (imported from resources/js/utils/modalCleanup.js) but this inline
+         handler acts as an early safety net for the inertia:before phase. --}}
+    <script>
+        (function () {
+            if (window._uhmsModalCleanup) { return; }
+            window._uhmsModalCleanup = true;
+
+            function cleanupBootstrapModals() {
+                document.querySelectorAll('.modal').forEach(function (el) {
+                    try {
+                        if (window.bootstrap && window.bootstrap.Modal) {
+                            var inst = window.bootstrap.Modal.getInstance(el);
+                            if (inst) { inst.dispose(); }
+                        }
+                    } catch (e) {}
+                    el.classList.remove('show', 'fade');
+                    el.style.display = 'none';
+                    el.setAttribute('aria-hidden', 'true');
+                    el.removeAttribute('aria-modal');
+                    el.removeAttribute('role');
+                });
+                document.querySelectorAll('.modal-backdrop').forEach(function (el) { el.remove(); });
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('overflow');
+                document.body.style.removeProperty('padding-right');
+            }
+
+            document.addEventListener('inertia:before', cleanupBootstrapModals);
+        }());
+    </script>
+
     <script src="{{ asset('register-sw.js') }}" defer></script>
 </body>
 </html>
