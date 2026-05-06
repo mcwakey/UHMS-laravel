@@ -65,6 +65,7 @@
                         <th>Phone</th>
                         <th>Email</th>
                         <th>Contract #</th>
+                        <th>Verification</th>
                         <th>Claims</th>
                         <th>Status</th>
                         <th class="text-end">Actions</th>
@@ -79,6 +80,15 @@
                         <td>{{ $provider->contact_phone ?? '-' }}</td>
                         <td>{{ $provider->contact_email ?? '-' }}</td>
                         <td>{{ $provider->contract_number ?? '-' }}</td>
+                        <td>
+                            @if($provider->verification_driver)
+                                <span class="badge bg-info" title="{{ $provider->verification_method ?? '' }}{{ $provider->verification_channel ? ' • '.$provider->verification_channel : '' }}">
+                                    <i class="ti ti-shield-check me-1"></i>{{ ucfirst($provider->verification_driver) }}
+                                </span>
+                            @else
+                                <span class="badge bg-light text-dark">Not required</span>
+                            @endif
+                        </td>
                         <td><span class="badge bg-soft-info">{{ $provider->claims_count ?? 0 }}</span></td>
                         <td>
                             <span class="badge bg-{{ $provider->is_active ? 'success' : 'danger' }}">
@@ -116,75 +126,9 @@
                             @endcan
                         </td>
                     </tr>
-
-                    <!-- Edit Modal -->
-                    <div class="modal fade" id="editProviderModal-{{ $provider->id }}" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <form method="POST" action="{{ route('admin.insurance-providers.update', $provider) }}">
-                                    @csrf @method('PUT')
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Edit Provider</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <div class="row mb-3">
-                                            <div class="col-md-8">
-                                                <label class="form-label">Name <span class="text-danger">*</span></label>
-                                                <input type="text" name="name" class="form-control" value="{{ $provider->name }}" required>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label">Short Name</label>
-                                                <input type="text" name="short_name" class="form-control" value="{{ $provider->short_name }}" maxlength="20">
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Type <span class="text-danger">*</span></label>
-                                            <select name="type" class="form-select" required>
-                                                @foreach(\App\Enums\InsuranceType::cases() as $type)
-                                                    <option value="{{ $type->value }}" {{ $provider->type === $type ? 'selected' : '' }}>{{ $type->label() }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                        <div class="row mb-3">
-                                            <div class="col-md-6">
-                                                <label class="form-label">Phone</label>
-                                                <input type="text" name="contact_phone" class="form-control" value="{{ $provider->contact_phone }}">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label class="form-label">Email</label>
-                                                <input type="email" name="contact_email" class="form-control" value="{{ $provider->contact_email }}">
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Address</label>
-                                            <textarea name="address" class="form-control" rows="2">{{ $provider->address }}</textarea>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Contract Number</label>
-                                            <input type="text" name="contract_number" class="form-control" value="{{ $provider->contract_number }}">
-                                        </div>
-                                        <div class="alert alert-info py-2 mb-3 small">
-                                            <i class="ti ti-info-circle me-1"></i>
-                                            Coverage rules (limits, coverage %, member types) are managed per <strong>Tier</strong>.
-                                            <a href="{{ route('admin.insurance-providers.tiers.index', $provider) }}" class="alert-link">Manage Tiers &rarr;</a>
-                                        </div>
-                                        <div class="form-check mb-3">
-                                            <input type="checkbox" name="is_default" class="form-check-input" value="1" id="editDefault{{ $provider->id }}" {{ $provider->is_default ? 'checked' : '' }}>
-                                            <label class="form-check-label" for="editDefault{{ $provider->id }}">Default Provider</label>
-                                        </div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <button type="submit" class="btn btn-primary">Update</button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center text-muted py-4">No insurance providers found</td>
+                        <td colspan="10" class="text-center text-muted py-4">No insurance providers found</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -199,9 +143,80 @@
 </div>
 @endif
 
+{{-- Edit Provider Modals (must live OUTSIDE the <table> -- modals inside <tbody> are invalid HTML
+     and the browser will hoist the <div> out, breaking the <form> wrapper around the submit button). --}}
+@foreach($providers as $provider)
+<div class="modal fade" id="editProviderModal-{{ $provider->id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.insurance-providers.update', $provider) }}">
+                @csrf @method('PUT')
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Provider</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label">Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" value="{{ $provider->name }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Short Name</label>
+                            <input type="text" name="short_name" class="form-control" value="{{ $provider->short_name }}" maxlength="20">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Type <span class="text-danger">*</span></label>
+                        <select name="type" class="form-select" required>
+                            @foreach(\App\Enums\InsuranceType::cases() as $type)
+                                <option value="{{ $type->value }}" {{ $provider->type === $type ? 'selected' : '' }}>{{ $type->label() }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input type="text" name="contact_phone" class="form-control" value="{{ $provider->contact_phone }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="contact_email" class="form-control" value="{{ $provider->contact_email }}">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Address</label>
+                        <textarea name="address" class="form-control" rows="2">{{ $provider->address }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Contract Number</label>
+                        <input type="text" name="contract_number" class="form-control" value="{{ $provider->contract_number }}">
+                    </div>
+                    <div class="alert alert-info py-2 mb-3 small">
+                        <i class="ti ti-info-circle me-1"></i>
+                        Coverage rules (limits, coverage %, member types) are managed per <strong>Tier</strong>.
+                        <a href="{{ route('admin.insurance-providers.tiers.index', $provider) }}" class="alert-link">Manage Tiers &rarr;</a>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" name="is_default" class="form-check-input" value="1" id="editDefault{{ $provider->id }}" {{ $provider->is_default ? 'checked' : '' }}>
+                        <label class="form-check-label" for="editDefault{{ $provider->id }}">Default Provider</label>
+                    </div>
+
+                    @include('insurance._verification_fields', ['provider' => $provider, 'idSuffix' => 'edit_'.$provider->id])
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endforeach
+
 <!-- Add Provider Modal -->
 <div class="modal fade" id="addProviderModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form method="POST" action="{{ route('admin.insurance-providers.store') }}">
                 @csrf
@@ -255,6 +270,8 @@
                         <input type="checkbox" name="is_default" class="form-check-input" value="1" id="addDefault">
                         <label class="form-check-label" for="addDefault">Default Provider</label>
                     </div>
+
+                    @include('insurance._verification_fields', ['provider' => null, 'idSuffix' => 'add'])
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -265,3 +282,23 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    // Toggle credentials key + JSON config rows based on the chosen verification driver.
+    function applyDriverVisibility(select) {
+        const suffix = select.dataset.suffix;
+        const driver = select.value;
+        const apiRow    = document.querySelector('.verification-api-row[data-suffix="' + suffix + '"]');
+        const configRow = document.querySelector('.verification-config-row[data-suffix="' + suffix + '"]');
+        if (apiRow)    apiRow.style.display    = (driver === 'api') ? '' : 'none';
+        if (configRow) configRow.style.display = (driver === 'api' || driver === 'code') ? '' : 'none';
+    }
+    document.querySelectorAll('.verification-driver-select').forEach(function (sel) {
+        applyDriverVisibility(sel);
+        sel.addEventListener('change', function () { applyDriverVisibility(sel); });
+    });
+})();
+</script>
+@endpush
