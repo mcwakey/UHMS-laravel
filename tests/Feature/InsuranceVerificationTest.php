@@ -82,13 +82,19 @@ class InsuranceVerificationTest extends TestCase
         $this->assertSame('manual', $verification->driver);
     }
 
-    public function test_manual_driver_returns_manual_override(): void
+    public function test_manual_driver_pending_without_reference_then_manual_override_with_reference(): void
     {
         $insurance = $this->makeInsurance(['verification_driver' => 'manual']);
-        $verification = app(InsuranceVerificationService::class)->verify($insurance);
+        $service = app(InsuranceVerificationService::class);
 
-        $this->assertSame(VerificationStatus::MANUAL_OVERRIDE, $verification->status);
-        $this->assertTrue($verification->isAcceptable());
+        $first = $service->verify($insurance);
+        $this->assertSame(VerificationStatus::PENDING, $first->status);
+        $this->assertFalse($first->isAcceptable());
+
+        $second = $service->verify($insurance, null, 'MANUAL-12345');
+        $this->assertSame(VerificationStatus::MANUAL_OVERRIDE, $second->status);
+        $this->assertSame('MANUAL-12345', $second->reference_code);
+        $this->assertTrue($second->isAcceptable());
     }
 
     public function test_code_driver_pending_without_reference_then_valid_with_reference(): void

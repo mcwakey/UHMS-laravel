@@ -29,7 +29,7 @@
                 <option value="{{ $d }}" {{ old('verification_driver', $current) === $d ? 'selected' : '' }}>{{ ucfirst($d) }}</option>
             @endforeach
         </select>
-        <div class="form-text">Style of verification, not provider name.</div>
+        <div class="form-text">Manual asks the visit desk to enter a reference code; Code validates a captured code; API calls an endpoint.</div>
     </div>
     <div class="col-md-4">
         <label class="form-label" for="ver_method_{{ $idSuffix }}">Method</label>
