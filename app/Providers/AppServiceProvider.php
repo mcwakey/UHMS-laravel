@@ -38,6 +38,8 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(ModuleService::class);
         $this->app->singleton(SidebarMenuBuilder::class);
+        $this->app->singleton(\App\Services\Insurance\Verification\VerificationManager::class);
+        $this->app->singleton(\App\Services\Insurance\Verification\InsuranceVerificationService::class);
     }
 
     /**

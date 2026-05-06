@@ -33,6 +33,7 @@ use App\Http\Controllers\Admin\WardController;
 use App\Http\Controllers\Admin\AdmissionController;
 use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\InsuranceProviderController;
+use App\Http\Controllers\Admin\InsuranceVerificationController;
 use App\Http\Controllers\Admin\InsuranceTierController;
 use App\Http\Controllers\Admin\PatientInsuranceController;
 use App\Http\Controllers\Admin\EmergencyContactController;
@@ -251,6 +252,11 @@ Route::middleware('auth')->group(function () {
             // Tier update/delete (standalone, not nested under provider)
             Route::put('insurance-tiers/{tier}', [InsuranceTierController::class, 'update'])->name('insurance-tiers.update')->middleware('can:claims.create');
             Route::delete('insurance-tiers/{tier}', [InsuranceTierController::class, 'destroy'])->name('insurance-tiers.destroy')->middleware('can:claims.create');
+
+            // Generic, provider-agnostic insurance verification endpoint.
+            Route::post('insurance/verify', [InsuranceVerificationController::class, 'verify'])
+                ->name('insurance.verify')
+                ->middleware('can:claims.view');
         });
 
         // Claims

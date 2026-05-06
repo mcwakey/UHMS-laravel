@@ -37,7 +37,7 @@ class ClaimService
     public function createFromInvoice(Invoice $invoice, ?int $providerId = null, ?int $doctorId = null): Claim
     {
         return DB::transaction(function () use ($invoice, $providerId, $doctorId) {
-            $invoice->load(['items.serviceCatalog', 'visit.visitInsurance.insuranceProvider', 'patient']);
+            $invoice->load(['items.serviceCatalog', 'visit.visitInsurance.insuranceProvider', 'visit.insuranceVerification', 'patient']);
 
             $existingClaim = Claim::where('invoice_id', $invoice->id)->first();
             if ($existingClaim) {
@@ -60,12 +60,16 @@ class ClaimService
                 ?? $invoice->created_at?->toDateString()
                 ?? now()->toDateString();
 
+            $verification = $invoice->visit?->insuranceVerification;
+
             $claim = Claim::create([
                 'claim_number' => Claim::generateClaimNumber(),
                 'insurance_provider_id' => $providerId,
                 'patient_id' => $invoice->patient_id,
                 'visit_id' => $invoice->visit_id,
                 'invoice_id' => $invoice->id,
+                'insurance_verification_id' => $verification?->id,
+                'verification_reference' => $verification?->reference_code,
                 'claim_date' => now()->toDateString(),
                 'period_from' => $periodDate,
                 'period_to' => $periodDate,

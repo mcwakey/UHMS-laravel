@@ -22,6 +22,8 @@ class Claim extends Model
         'patient_id',
         'visit_id',
         'invoice_id',
+        'insurance_verification_id',
+        'verification_reference',
         'claim_date',
         'period_from',
         'period_to',

@@ -27,6 +27,8 @@ class StoreVisitRequest extends FormRequest
             'start_time' => ['nullable', 'date_format:H:i'],
             'end_time' => ['nullable', 'date_format:H:i', 'after:start_time'],
             'visit_insurance_id' => ['nullable', 'exists:patient_insurances,id'],
+            'insurance_verification_id' => ['nullable', 'exists:insurance_verifications,id'],
+            'verification_reference_code' => ['nullable', 'string', 'max:80'],
             'consultation_mode' => ['nullable', 'string', 'in:in_person,telehealth,virtual'],
             'meeting_link' => ['nullable', 'url', 'max:500'],
 

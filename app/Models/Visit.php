@@ -47,6 +47,7 @@ class Visit extends Model
         'current_department_id',
         'triage_score',
         'visit_insurance_id',
+        'insurance_verification_id',
         'cancelled_by',
         'cancellation_reason',
         'rescheduled_from_id',
@@ -150,6 +151,11 @@ class Visit extends Model
     public function visitInsurance()
     {
         return $this->belongsTo(PatientInsurance::class, 'visit_insurance_id');
+    }
+
+    public function insuranceVerification()
+    {
+        return $this->belongsTo(InsuranceVerification::class, 'insurance_verification_id');
     }
 
     public function cancelledByUser()

@@ -23,13 +23,24 @@ class InsuranceProvider extends Model
         'contract_number',
         'is_active',
         'is_default',
+        'verification_driver',
+        'verification_method',
+        'verification_channel',
+        'verification_config',
+        'verification_credentials_key',
     ];
 
     protected $casts = [
-        'type'       => InsuranceType::class,
-        'is_active'  => 'boolean',
-        'is_default' => 'boolean',
+        'type'                => InsuranceType::class,
+        'is_active'           => 'boolean',
+        'is_default'          => 'boolean',
+        'verification_config' => 'array',
     ];
+
+    public function requiresVerification(): bool
+    {
+        return ! empty($this->verification_driver);
+    }
 
     public function getActivitylogOptions(): LogOptions
     {

@@ -124,6 +124,42 @@
                         </div>
                     </div>
                     <input type="hidden" name="visit_insurance_id" id="visitInsuranceId" value="">
+                    <input type="hidden" name="insurance_verification_id" id="insuranceVerificationId" value="">
+
+                    {{-- Provider-agnostic verification panel.
+                         Visibility / inputs are driven entirely by the response from
+                         /admin/insurance/verify; no provider names appear here. --}}
+                    <div id="verificationPanel" class="border rounded p-3 mt-3 d-none">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <h6 class="mb-0"><i class="ti ti-shield-lock me-1"></i>Verification</h6>
+                            <span class="badge bg-secondary" id="verificationStatusBadge">Not started</span>
+                        </div>
+                        <div class="text-muted small mb-2" id="verificationProviderMeta">&mdash;</div>
+
+                        <div class="row g-2 align-items-end" id="verificationCodeRow" style="display:none;">
+                            <div class="col-sm-8">
+                                <label class="form-label mb-1">Authorization / Reference Code</label>
+                                <input type="text" id="verificationReferenceInput" name="verification_reference_code"
+                                       class="form-control" placeholder="Enter code issued by the provider"
+                                       autocomplete="off">
+                            </div>
+                            <div class="col-sm-4 d-grid">
+                                <button type="button" class="btn btn-primary" id="runVerificationBtn">
+                                    <i class="ti ti-shield-check me-1"></i>Verify
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 align-items-end mt-1" id="verificationManualRow" style="display:none;">
+                            <div class="col-12 d-grid">
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="runVerificationBtn2">
+                                    <i class="ti ti-shield-check me-1"></i>Verify
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="verificationFeedback" class="small mt-2"></div>
+                    </div>
                 </div>
             </div>
 
@@ -741,6 +777,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 el.textContent = '\u20B5' + formatNumber(resolveServicePrice(svc));
             }
         });
+
+        // Hook: notify the verification panel that the insurance changed.
+        if (typeof onInsuranceSelectionChanged === 'function') {
+            onInsuranceSelectionChanged(insId);
+        }
     }
 
     /**
@@ -1052,6 +1093,110 @@ document.addEventListener('DOMContentLoaded', function() {
     function formatNumber(num) {
         return parseFloat(num).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     }
+
+    // ==========================================
+    // GENERIC INSURANCE VERIFICATION (provider-agnostic)
+    // ==========================================
+    const verifyUrl = "{{ route('admin.insurance.verify') }}";
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+    function resetVerificationPanel() {
+        const panel = document.getElementById('verificationPanel');
+        if (!panel) return;
+        panel.classList.add('d-none');
+        document.getElementById('insuranceVerificationId').value = '';
+        document.getElementById('verificationFeedback').innerHTML = '';
+        document.getElementById('verificationCodeRow').style.display = 'none';
+        document.getElementById('verificationManualRow').style.display = 'none';
+        const refInput = document.getElementById('verificationReferenceInput');
+        if (refInput) refInput.value = '';
+    }
+
+    function renderVerificationStatus(data) {
+        const badge = document.getElementById('verificationStatusBadge');
+        badge.className = 'badge bg-' + (data.status_color || 'secondary');
+        badge.textContent = data.status_label || data.status || 'Unknown';
+
+        const meta = [];
+        if (data.provider?.name)    meta.push(data.provider.name);
+        if (data.provider?.method)  meta.push('method: ' + data.provider.method);
+        if (data.provider?.channel) meta.push('via ' + data.provider.channel);
+        if (data.driver)            meta.push('driver: ' + data.driver);
+        document.getElementById('verificationProviderMeta').textContent = meta.join(' \u2022 ') || '\u2014';
+
+        const parts = [];
+        if (data.message)        parts.push('<div>' + escapeHtml(data.message) + '</div>');
+        if (data.member_name)    parts.push('<div><strong>Member:</strong> ' + escapeHtml(data.member_name) + '</div>');
+        if (data.reference_code) parts.push('<div><strong>Reference:</strong> <code>' + escapeHtml(data.reference_code) + '</code></div>');
+        if (data.expires_at)     parts.push('<div><strong>Expires:</strong> ' + escapeHtml(data.expires_at) + '</div>');
+        document.getElementById('verificationFeedback').innerHTML = parts.join('');
+
+        if (data.acceptable && data.verification_id) {
+            document.getElementById('insuranceVerificationId').value = data.verification_id;
+        } else {
+            document.getElementById('insuranceVerificationId').value = '';
+        }
+
+        const codeRow   = document.getElementById('verificationCodeRow');
+        const manualRow = document.getElementById('verificationManualRow');
+        if (data.requires_reference_code) {
+            codeRow.style.display = '';
+            manualRow.style.display = 'none';
+        } else if (data.acceptable) {
+            codeRow.style.display = 'none';
+            manualRow.style.display = 'none';
+        } else {
+            codeRow.style.display = 'none';
+            manualRow.style.display = '';
+        }
+    }
+
+    async function runVerification(refCode) {
+        const piId = document.getElementById('visitInsuranceId').value;
+        if (!piId) return;
+        const fb = document.getElementById('verificationFeedback');
+        fb.innerHTML = '<i class="ti ti-loader me-1"></i>Contacting provider...';
+        try {
+            const resp = await fetch(verifyUrl, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({
+                    patient_insurance_id: piId,
+                    reference_code: refCode || null,
+                }),
+            });
+            const data = await resp.json();
+            if (!resp.ok) {
+                fb.innerHTML = '<div class="text-danger">' + escapeHtml(data.message || 'Verification request failed.') + '</div>';
+                return;
+            }
+            renderVerificationStatus(data);
+        } catch (e) {
+            fb.innerHTML = '<div class="text-danger">Verification request failed: ' + escapeHtml(e.message) + '</div>';
+        }
+    }
+
+    // Hook called from selectInsurance() whenever the user changes selection.
+    function onInsuranceSelectionChanged(insId) {
+        resetVerificationPanel();
+        if (!insId) return;
+        document.getElementById('verificationPanel').classList.remove('d-none');
+        runVerification(null);
+    }
+
+    document.getElementById('runVerificationBtn').addEventListener('click', () => {
+        const code = document.getElementById('verificationReferenceInput').value.trim();
+        runVerification(code || null);
+    });
+    document.getElementById('runVerificationBtn2').addEventListener('click', () => {
+        runVerification(null);
+    });
 });
 </script>
 @endpush
