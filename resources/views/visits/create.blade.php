@@ -88,7 +88,7 @@
                     <div id="selectedInsuranceInfo" class="d-none">
                         <div class="alert alert-light border mb-0">
                             <div class="row">
-                                {{-- <div class="col-6">
+                                <div class="col-6">
                                     <small class="text-muted d-block">Insurance Type</small>
                                     <span class="fw-medium" id="insInfoType">&mdash;</span>
                                 </div>
@@ -103,7 +103,7 @@
                                 <div class="col-6 mt-2">
                                     <small class="text-muted d-block">Coverage</small>
                                     <span class="fw-medium" id="insInfoCoverage">&mdash;</span>
-                                </div> --}}
+                                </div>
                                 <div class="col-6 mt-2">
                                     <small class="text-muted d-block">Per-Visit Cap</small>
                                     <span class="fw-medium" id="insInfoPerVisit">&mdash;</span>
