@@ -268,11 +268,11 @@
                                         <h6 class="fw-bold mb-1">Provider-Specific Overrides</h6>
                                         <p class="text-muted small mb-3">Negotiated rates for specific insurance companies. These override the type default above.</p>
                                         <div id="providerPrices-{{ $service->id }}">
-                                            @foreach($providerPrices as $pp)
+                                            @foreach($providerPrices as $idx => $pp)
                                             <div class="row g-2 align-items-end mb-2 provider-price-row">
                                                 <div class="col-md-4">
                                                     <label class="form-label small">Type</label>
-                                                    <select name="provider_prices[][insurance_type]" class="form-select form-select-sm" required>
+                                                    <select name="provider_prices[{{ $idx }}][insurance_type]" class="form-select form-select-sm" required>
                                                         @foreach($insuranceTypes as $type)
                                                         <option value="{{ $type->value }}" {{ $pp->insurance_type === $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
                                                         @endforeach
@@ -280,7 +280,7 @@
                                                 </div>
                                                 <div class="col-md-4">
                                                     <label class="form-label small">Provider</label>
-                                                    <select name="provider_prices[][insurance_provider_id]" class="form-select form-select-sm" required>
+                                                    <select name="provider_prices[{{ $idx }}][insurance_provider_id]" class="form-select form-select-sm" required>
                                                         @foreach($insuranceProviders as $prov)
                                                         <option value="{{ $prov->id }}" {{ $pp->insurance_provider_id == $prov->id ? 'selected' : '' }}>{{ $prov->name }}</option>
                                                         @endforeach
@@ -290,7 +290,7 @@
                                                     <label class="form-label small">Price (&#8373;)</label>
                                                     <div class="input-group input-group-sm">
                                                         <span class="input-group-text">&#8373;</span>
-                                                        <input type="number" name="provider_prices[][price]" class="form-control" value="{{ number_format($pp->price, 2, '.', '') }}" step="0.01" min="0" required>
+                                                        <input type="number" name="provider_prices[{{ $idx }}][price]" class="form-control" value="{{ number_format($pp->price, 2, '.', '') }}" step="0.01" min="0" required>
                                                     </div>
                                                 </div>
                                                 <div class="col-md-1 d-flex align-items-end pb-1">
@@ -416,11 +416,17 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.add-provider-row').forEach(function (btn) {
+        // Start counter beyond any pre-rendered rows so we never collide with their indices.
+        const targetIdInit = btn.dataset.target;
+        const containerInit = document.getElementById(targetIdInit);
+        let rowCounter = containerInit ? containerInit.querySelectorAll('.provider-price-row').length + 1000 : 1000;
+
         btn.addEventListener('click', function () {
             const targetId = this.dataset.target;
             const container = document.getElementById(targetId);
             const types = JSON.parse(this.dataset.types);
             const providers = JSON.parse(this.dataset.providers);
+            const idx = rowCounter++;
 
             const typeOptions = types.map(t => `<option value="${escH(t.value)}">${escH(t.label)}</option>`).join('');
             const provOptions = providers.map(p => `<option value="${p.id}">${escH(p.name)}</option>`).join('');
@@ -430,13 +436,13 @@ document.addEventListener('DOMContentLoaded', function () {
             row.innerHTML = `
                 <div class="col-md-4">
                     <label class="form-label small">Type</label>
-                    <select name="provider_prices[][insurance_type]" class="form-select form-select-sm" required>
+                    <select name="provider_prices[${idx}][insurance_type]" class="form-select form-select-sm" required>
                         ${typeOptions}
                     </select>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label small">Provider</label>
-                    <select name="provider_prices[][insurance_provider_id]" class="form-select form-select-sm" required>
+                    <select name="provider_prices[${idx}][insurance_provider_id]" class="form-select form-select-sm" required>
                         ${provOptions}
                     </select>
                 </div>
@@ -444,7 +450,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <label class="form-label small">Price (&#8373;)</label>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text">&#8373;</span>
-                        <input type="number" name="provider_prices[][price]" class="form-control" step="0.01" min="0" required>
+                        <input type="number" name="provider_prices[${idx}][price]" class="form-control" step="0.01" min="0" required>
                     </div>
                 </div>
                 <div class="col-md-1 d-flex align-items-end pb-1">
