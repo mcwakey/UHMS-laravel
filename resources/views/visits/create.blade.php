@@ -84,45 +84,6 @@
                         </div>
                     </div>
 
-                    <!-- Selected Insurance Info Panel -->
-                    <div id="selectedInsuranceInfo" class="d-none">
-                        <div class="alert alert-light border mb-0">
-                            <div class="row">
-                                <!-- <div class="col-6">
-                                    <small class="text-muted d-block">Insurance Type</small>
-                                    <span class="fw-medium" id="insInfoType">&mdash;</span>
-                                </div>
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Tier</small>
-                                    <span class="fw-medium" id="insInfoTier">&mdash;</span>
-                                </div>
-                                <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Member Type</small>
-                                    <span class="fw-medium" id="insInfoMemberType">&mdash;</span>
-                                </div>
-                                <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Coverage</small>
-                                    <span class="fw-medium" id="insInfoCoverage">&mdash;</span>
-                                </div> -->
-                                <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Per-Visit Cap</small>
-                                    <span class="fw-medium" id="insInfoPerVisit">&mdash;</span>
-                                </div>
-                                <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Monthly Cap</small>
-                                    <span class="fw-medium" id="insInfoMonthly">&mdash;</span>
-                                </div>
-                                <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Total Billed (YTD)</small>
-                                    <span class="fw-medium" id="insInfoBilled">&mdash;</span>
-                                </div>
-                                <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Annual Remaining</small>
-                                    <span class="fw-bold" id="insInfoRemaining">&mdash;</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     <input type="hidden" name="visit_insurance_id" id="visitInsuranceId" value="">
                     <input type="hidden" name="insurance_verification_id" id="insuranceVerificationId" value="">
 
@@ -494,7 +455,6 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsDiv.innerHTML = '';
         resultsDiv.classList.add('d-none');
         document.getElementById('insuranceList').innerHTML = '<div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>Loading patient insurances...</div>';
-        document.getElementById('selectedInsuranceInfo').classList.add('d-none');
         document.getElementById('insuranceFallbackBadge').style.display = 'none';
         document.getElementById('visitInsuranceId').value = '';
 
@@ -724,43 +684,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function selectInsurance(insId) {
         selectedInsurance = patientInsurances.find(i => i.id === insId) || null;
         document.getElementById('visitInsuranceId').value = insId || '';
-
-        const infoPanel = document.getElementById('selectedInsuranceInfo');
-        if (selectedInsurance) {
-            infoPanel.classList.remove('d-none');
-            document.getElementById('insInfoType').innerHTML = '<span class="badge bg-' + selectedInsurance.type_color + '">' + escapeHtml(selectedInsurance.type_label) + '</span>';
-            // Tier
-            if (selectedInsurance.tier_name) {
-                document.getElementById('insInfoTier').innerHTML = '<span class="badge bg-primary bg-opacity-75">' + escapeHtml(selectedInsurance.tier_name) + '</span>';
-            } else {
-                document.getElementById('insInfoTier').textContent = '\u2014';
-            }
-            // Member type
-            const mt = selectedInsurance.member_type || 'holder';
-            const mtBadge = mt === 'beneficiary' ? 'bg-warning text-dark' : 'bg-info';
-            const mtLabel = mt === 'beneficiary' ? 'Beneficiary' : 'Card Holder';
-            document.getElementById('insInfoMemberType').innerHTML = '<span class="badge ' + mtBadge + '">' + mtLabel + '</span>';
-            // Coverage
-            document.getElementById('insInfoCoverage').textContent = (selectedInsurance.coverage_percentage || 0) + '%';
-            // Per-visit cap
-            document.getElementById('insInfoPerVisit').textContent = selectedInsurance.per_visit_limit
-                ? '\u20B5' + formatNumber(selectedInsurance.per_visit_limit)
-                : 'Unlimited';
-            // Monthly cap
-            document.getElementById('insInfoMonthly').textContent = selectedInsurance.max_per_month
-                ? '\u20B5' + formatNumber(selectedInsurance.max_per_month)
-                : 'Unlimited';
-            // YTD billed / annual remaining
-            const remaining = selectedInsurance.remaining_annual_limit;
-            document.getElementById('insInfoBilled').textContent = remaining != null
-                ? '\u20B5' + formatNumber((selectedInsurance.annual_limit || 0) - remaining)
-                : '\u2014';
-            document.getElementById('insInfoRemaining').textContent = remaining != null
-                ? '\u20B5' + formatNumber(remaining)
-                : 'Unlimited';
-        } else {
-            infoPanel.classList.add('d-none');
-        }
 
         // Re-price all already-selected services for the new insurance
         selectedServices.forEach(function(svc) {
