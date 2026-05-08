@@ -102,12 +102,24 @@
 
                 <!-- Items Table -->
                 <h6 class="fw-bold mb-3">Service Items</h6>
+                @php
+                    $sourceLabels = [
+                        'cash_and_carry'         => ['Cash & Carry',    'secondary'],
+                        'cash_price'             => ['Cash & Carry',    'secondary'],
+                        'provider_specific'      => ['Provider Rate',   'success'],
+                        'payer_specific_price'   => ['Provider Rate',   'success'],
+                        'insurance_type'         => ['Insurance Type',  'info'],
+                        'insurance_type_default' => ['Insurance Type',  'info'],
+                        'base_price'             => ['Base Price',      'light text-dark'],
+                    ];
+                @endphp
                 <div class="table-responsive mb-4">
-                    <table class="table table-bordered table-sm">
+                    <table class="table table-bordered table-sm align-middle">
                         <thead class="table-light">
                             <tr>
                                 <th>#</th>
                                 <th>Description</th>
+                                <th>Pricing</th>
                                 <th class="text-center">Qty</th>
                                 <th class="text-end">Cash Price</th>
                                 <th class="text-end">Billed Price</th>
@@ -122,6 +134,9 @@
                             @php
                                 $cashPrice = $item->cash_price !== null ? (float) $item->cash_price : (float) $item->unit_price;
                                 $benefit   = (float) ($item->discount_amount ?? max(0, ($cashPrice - (float) $item->unit_price) * (int) $item->quantity));
+                                $src       = $item->pricing_source ?? 'cash_and_carry';
+                                $meta      = $sourceLabels[$src] ?? [ucfirst(str_replace('_',' ',$src)), 'light text-dark'];
+                                $payer     = $item->payer_type ?? 'cash';
                             @endphp
                             <tr>
                                 <td>{{ $idx + 1 }}</td>
@@ -130,13 +145,21 @@
                                     @if($item->serviceCatalog)
                                     <br><small class="text-muted">{{ $item->serviceCatalog->code }}</small>
                                     @endif
-                                    @if($item->pricing_source && $item->pricing_source !== 'cash_price')
-                                    <br><small class="text-info">{{ str_replace('_', ' ', $item->pricing_source) }}</small>
-                                    @endif
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ $meta[1] }}">{{ $meta[0] }}</span>
+                                    <div class="small text-muted mt-1">
+                                        <i class="ti ti-{{ $payer === 'insurance' ? 'shield-check' : 'cash' }} me-1"></i>{{ ucfirst($payer) }}
+                                    </div>
                                 </td>
                                 <td class="text-center">{{ $item->quantity }}</td>
                                 <td class="text-end">&#8373;{{ number_format($cashPrice, 2) }}</td>
-                                <td class="text-end">&#8373;{{ number_format($item->unit_price, 2) }}</td>
+                                <td class="text-end">
+                                    <span class="fw-semibold">&#8373;{{ number_format($item->unit_price, 2) }}</span>
+                                    @if($cashPrice > $item->unit_price)
+                                    <div class="small text-muted text-decoration-line-through">&#8373;{{ number_format($cashPrice, 2) }}</div>
+                                    @endif
+                                </td>
                                 <td class="text-end">
                                     @if($benefit > 0)
                                     <span class="text-success">&#8373;{{ number_format($benefit, 2) }}</span>
@@ -144,7 +167,7 @@
                                     —
                                     @endif
                                 </td>
-                                <td class="text-end">&#8373;{{ number_format($item->total_price, 2) }}</td>
+                                <td class="text-end fw-medium">&#8373;{{ number_format($item->total_price, 2) }}</td>
                                 <td class="text-center">
                                     @if($item->is_nhis_covered)
                                     <span class="badge bg-success">Yes</span>

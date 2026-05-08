@@ -16,8 +16,13 @@ class VisitServiceItem extends Model
         'visit_id',
         'service_catalog_id',
         'department_id',
+        'patient_insurance_id',
+        'payment_type',
+        'insurance_type',
+        'pricing_source',
         'quantity',
         'unit_price',
+        'insurance_price',
         'insurance_covered',
         'patient_payable',
         'total_price',
@@ -28,10 +33,16 @@ class VisitServiceItem extends Model
     {
         return [
             'unit_price' => 'decimal:2',
+            'insurance_price' => 'decimal:2',
             'insurance_covered' => 'decimal:2',
             'patient_payable' => 'decimal:2',
             'total_price' => 'decimal:2',
         ];
+    }
+
+    public function patientInsurance(): BelongsTo
+    {
+        return $this->belongsTo(PatientInsurance::class, 'patient_insurance_id');
     }
 
     /*

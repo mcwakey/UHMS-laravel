@@ -94,27 +94,56 @@
         </div>
 
         <!-- Items Table -->
+        @php
+            $sourceLabels = [
+                'cash_and_carry'         => 'Cash & Carry',
+                'cash_price'             => 'Cash & Carry',
+                'provider_specific'      => 'Provider Rate',
+                'payer_specific_price'   => 'Provider Rate',
+                'insurance_type'         => 'Insurance Type',
+                'insurance_type_default' => 'Insurance Type',
+                'base_price'             => 'Base Price',
+            ];
+        @endphp
         <table>
             <thead>
                 <tr>
                     <th>#</th>
                     <th>Description</th>
+                    <th>Pricing</th>
                     <th class="text-center">Qty</th>
-                    <th class="text-end">Unit Price</th>
+                    <th class="text-end">Cash</th>
+                    <th class="text-end">Billed</th>
                     <th class="text-end">Total</th>
-                    <th class="text-center">Insurance</th>
+                    <th class="text-end">Insurance</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($invoice->items as $idx => $item)
+                @php
+                    $cashPrice = $item->cash_price !== null ? (float) $item->cash_price : (float) $item->unit_price;
+                    $src       = $item->pricing_source ?? 'cash_and_carry';
+                    $label     = $sourceLabels[$src] ?? ucwords(str_replace('_',' ', (string) $src));
+                    $payer     = $item->payer_type ?? 'cash';
+                @endphp
                 <tr>
                     <td>{{ $idx + 1 }}</td>
-                    <td>{{ $item->description }}</td>
+                    <td>
+                        {{ $item->description }}
+                        @if($item->serviceCatalog)
+                        <div style="font-size:11px; color:#666;">{{ $item->serviceCatalog->code }}</div>
+                        @endif
+                    </td>
+                    <td style="font-size:11px;">
+                        {{ $label }}<br>
+                        <span style="color:#666;">{{ ucfirst($payer) }}</span>
+                    </td>
                     <td class="text-center">{{ $item->quantity }}</td>
+                    <td class="text-end">&#8373;{{ number_format($cashPrice, 2) }}</td>
                     <td class="text-end">&#8373;{{ number_format($item->unit_price, 2) }}</td>
                     <td class="text-end">&#8373;{{ number_format($item->total_price, 2) }}</td>
-                    <td class="text-center">
-                        @if($item->is_nhis_covered)
+                    <td class="text-end">
+                        @if($item->is_nhis_covered && $item->nhis_approved_amount > 0)
                         &#8373;{{ number_format($item->nhis_approved_amount, 2) }}
                         @else
                         —

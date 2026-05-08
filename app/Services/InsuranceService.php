@@ -295,11 +295,17 @@ class InsuranceService
             ->orderByDesc('is_primary')
             ->get();
 
-        return $insurances->map(function (PatientInsurance $ins) {
+        $hasCashAndCarry = false;
+
+        $rows = $insurances->map(function (PatientInsurance $ins) use (&$hasCashAndCarry) {
             $provider    = $ins->insuranceProvider;
             $tier        = $ins->insuranceTier;
             $memberType  = $ins->member_type?->value ?? 'holder';
             $constraints = $tier ? $tier->effectiveConstraints($memberType) : null;
+
+            if ($provider && $provider->is_default) {
+                $hasCashAndCarry = true;
+            }
 
             return [
                 'id'                       => $ins->id,
@@ -332,6 +338,59 @@ class InsuranceService
                 'remaining_monthly_limit'  => $ins->remaining_monthly_limit,
             ];
         })->values()->toArray();
+
+        // ── Always offer Cash & Carry as a payment option ───────────────────
+        // If the patient has no record against the default provider, we
+        // ensure the option still appears so the desk can always pick it.
+        if (! $hasCashAndCarry) {
+            $cashProvider = InsuranceProvider::where('is_default', true)->first();
+            if ($cashProvider) {
+                $cashInsurance = PatientInsurance::firstOrCreate(
+                    [
+                        'patient_id'            => $patient->id,
+                        'insurance_provider_id' => $cashProvider->id,
+                    ],
+                    [
+                        'is_primary'  => false,
+                        'is_active'   => true,
+                        'member_type' => 'holder',
+                    ]
+                );
+
+                $rows[] = [
+                    'id'                       => $cashInsurance->id,
+                    'provider_id'              => $cashProvider->id,
+                    'provider_name'            => $cashProvider->name,
+                    'type'                     => $cashProvider->type?->value ?? $cashProvider->type,
+                    'type_label'               => $cashProvider->type?->label() ?? 'Cash & Carry',
+                    'type_color'               => $cashProvider->type?->color() ?? 'secondary',
+                    'tier_id'                  => null,
+                    'tier_name'                => null,
+                    'member_type'              => 'holder',
+                    'member_type_label'        => 'Card Holder',
+                    'card_holder_insurance_id' => null,
+                    'membership_number'        => null,
+                    'policy_number'            => null,
+                    'start_date'               => null,
+                    'expiry_date'              => null,
+                    'is_primary'               => false,
+                    'is_active'                => true,
+                    'is_expired'               => false,
+                    'is_valid'                 => true,
+                    'is_default'               => true,
+                    'coverage_percentage'      => 0,
+                    'annual_limit'             => null,
+                    'per_visit_limit'          => null,
+                    'max_per_month'            => null,
+                    'max_visits_per_month'     => null,
+                    'min_visit_interval_days'  => null,
+                    'remaining_annual_limit'   => null,
+                    'remaining_monthly_limit'  => null,
+                ];
+            }
+        }
+
+        return $rows;
     }
 
     public function getUsageSummary(PatientInsurance $insurance): array

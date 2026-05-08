@@ -33,7 +33,7 @@ class PatientInsuranceController extends Controller
             ->exists();
 
         if ($exists) {
-            return back()->with('error', 'Patient already has this insurance provider.');
+            return $this->respondError($request, 'Patient already has this insurance provider.');
         }
 
         $memberType = $data['member_type'] ?? 'holder';
@@ -41,7 +41,7 @@ class PatientInsuranceController extends Controller
         // Beneficiary-specific validation
         if ($memberType === 'beneficiary') {
             if (empty($data['card_holder_insurance_id'])) {
-                return back()->with('error', 'Card holder must be specified for beneficiaries.');
+                return $this->respondError($request, 'Card holder must be specified for beneficiaries.');
             }
 
             // Check max_beneficiaries on the tier
@@ -55,7 +55,7 @@ class PatientInsuranceController extends Controller
                         ->count();
 
                     if ($currentCount >= $tier->max_beneficiaries) {
-                        return back()->with('error', "Maximum beneficiaries ({$tier->max_beneficiaries}) already reached for this card holder on the selected tier.");
+                        return $this->respondError($request, "Maximum beneficiaries ({$tier->max_beneficiaries}) already reached for this card holder on the selected tier.");
                     }
                 }
             }
@@ -68,7 +68,14 @@ class PatientInsuranceController extends Controller
         $data['is_active']   = true;
         $data['member_type'] = $memberType;
 
-        $patient->insurances()->create($data);
+        $insurance = $patient->insurances()->create($data);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message'      => 'Insurance added to patient.',
+                'insurance_id' => $insurance->id,
+            ]);
+        }
 
         return back()->with('success', 'Insurance added to patient.');
     }
@@ -94,6 +101,13 @@ class PatientInsuranceController extends Controller
         }
 
         $insurance->update($data);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message'      => 'Insurance updated.',
+                'insurance_id' => $insurance->id,
+            ]);
+        }
 
         return back()->with('success', 'Insurance updated.');
     }
@@ -138,8 +152,7 @@ class PatientInsuranceController extends Controller
      * Accept an omitted tier from the UI and fall back to the provider's default
      * active tier. Also guards against mismatched provider/tier combinations.
      */
-    private function resolveInsuranceTier(array $data): array
-    {
+    private function resolveInsuranceTier(array $data): array{
         $provider = InsuranceProvider::with([
             'tiers' => fn ($q) => $q->active()->orderByDesc('is_default')->orderBy('sort_order')->orderBy('name'),
         ])->findOrFail($data['insurance_provider_id']);
@@ -164,6 +177,18 @@ class PatientInsuranceController extends Controller
         }
 
         return $data;
+    }
+
+    private function respondError(Request $request, string $message)
+    {
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+                'errors'  => ['_general' => [$message]],
+            ], 422);
+        }
+
+        return back()->with('error', $message);
     }
 }
 

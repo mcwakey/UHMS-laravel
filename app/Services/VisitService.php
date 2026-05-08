@@ -23,6 +23,7 @@ class VisitService
         protected QueueService $queueService,
         protected InsuranceService $insuranceService,
         protected VisitWorkflowService $workflowService,
+        protected ServicePricingService $pricingService,
     ) {}
 
     public function list(array $filters = []): LengthAwarePaginator
@@ -119,38 +120,39 @@ class VisitService
         $insurance       = $insuranceResult['insurance'];
         $isFallback      = $insuranceResult['is_fallback'];
 
-        // Resolve insurance type + provider for pricing lookup
-        $insuranceType      = null;
-        $insuranceProviderId = null;
-        if ($insurance && ! $isFallback) {
-            $provider           = $insurance->insuranceProvider;
-            $insuranceType      = $provider?->type;
-            $insuranceProviderId = $insurance->insurance_provider_id;
-        }
+        // The insurance used for pricing; ignore the synthetic cash & carry record.
+        $pricingInsurance = ($insurance && ! $isFallback) ? $insurance : null;
 
         foreach ($services as $serviceData) {
             $catalog  = ServiceCatalog::with('prices')->findOrFail($serviceData['service_catalog_id']);
             $quantity = max(1, (int) ($serviceData['quantity'] ?? 1));
 
-            // Use insurance-type/provider-specific price if available
-            $unitPrice  = $catalog->getPriceForInsurance($insuranceType, $insuranceProviderId);
-            $totalPrice = $unitPrice * $quantity;
+            // Resolve full pricing snapshot from the single source of truth.
+            $snapshot = $this->pricingService->resolvePriceForVisitService(
+                $catalog,
+                $pricingInsurance,
+                $quantity
+            );
 
-            // ── Real-time constraint evaluation ──────────────────────────────
-            $insuranceCovered = 0.0;
-            $patientPayable   = $totalPrice;
+            $unitPrice        = $snapshot['unit_price'];
+            $insurancePrice   = $snapshot['insurance_price'];
+            $totalPrice       = $snapshot['total_price'];
+            $insuranceCovered = $snapshot['insurance_covered'];
+            $patientPayable   = $snapshot['patient_payable'];
 
-            if ($insurance && ! $isFallback) {
-                $evaluation = $this->insuranceService->evaluateCoverage($insurance, $visit, $totalPrice);
+            // ── Real-time constraint evaluation (only for true insurance) ────
+            // The pricing snapshot already accounts for the negotiated rate;
+            // the constraint engine may further reduce coverage if a hard
+            // limit (per-visit cap, monthly cap, annual cap) is hit.
+            if ($pricingInsurance) {
+                $evaluation = $this->insuranceService->evaluateCoverage($pricingInsurance, $visit, $totalPrice);
 
-                $insuranceCovered = $evaluation['covered_amount'];
-                $patientPayable   = $evaluation['patient_amount'];
+                $insuranceCovered = (float) $evaluation['covered_amount'];
+                $patientPayable   = (float) $evaluation['patient_amount'];
 
-                // Record usage immediately so the next service in this loop sees
-                // updated running totals.
                 if ($evaluation['covered_amount'] > 0) {
                     $this->insuranceService->recordUsage(
-                        $insurance,
+                        $pricingInsurance,
                         $visit,
                         $evaluation['covered_amount'],
                         $evaluation['patient_amount'],
@@ -160,14 +162,20 @@ class VisitService
             }
 
             VisitServiceItem::create([
-                'visit_id'           => $visit->id,
-                'service_catalog_id' => $catalog->id,
-                'department_id'      => $catalog->department_id,
-                'quantity'           => $quantity,
-                'unit_price'         => $unitPrice,
-                'insurance_covered'  => $insuranceCovered,
-                'patient_payable'    => $patientPayable,
-                'total_price'        => $totalPrice,
+                'visit_id'             => $visit->id,
+                'service_catalog_id'   => $catalog->id,
+                'department_id'        => $catalog->department_id,
+                'patient_insurance_id' => $pricingInsurance?->id,
+                'payment_type'         => $snapshot['payment_type'],
+                'insurance_type'       => $snapshot['insurance_type'],
+                'pricing_source'       => $snapshot['pricing_source'],
+                'quantity'             => $quantity,
+                'unit_price'           => $unitPrice,
+                'insurance_price'      => $insurancePrice,
+                'insurance_covered'    => $insuranceCovered,
+                'patient_payable'      => $patientPayable,
+                'total_price'          => $totalPrice,
+                'notes'                => $serviceData['notes'] ?? null,
             ]);
         }
 

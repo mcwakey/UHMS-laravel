@@ -466,6 +466,84 @@ document.addEventListener('DOMContentLoaded', function () {
         d.appendChild(document.createTextNode(String(text)));
         return d.innerHTML;
     }
+
+    // ──────────────────────────────────────────────────────────────────
+    //  AJAX submit for "Insurance Prices" modals — keeps the modal open
+    //  on validation errors and avoids full-page reloads on success.
+    // ──────────────────────────────────────────────────────────────────
+    document.querySelectorAll('form[action*="/prices"]').forEach(function (form) {
+        if (! /\/services\/\d+\/prices$/.test(form.getAttribute('action') || '')) {
+            return;
+        }
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            // Clear any previous inline errors
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            form.querySelectorAll('.dynamic-invalid-feedback').forEach(el => el.remove());
+            const existingAlert = form.querySelector('.price-form-feedback');
+            if (existingAlert) existingAlert.remove();
+
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalLabel = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+            }
+
+            try {
+                const resp = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    body: new FormData(form),
+                });
+
+                const ct = resp.headers.get('content-type') || '';
+                const data = ct.includes('application/json') ? await resp.json() : {};
+
+                if (resp.ok) {
+                    showFormAlert(form, 'success', data.message || 'Prices updated.');
+                    return;
+                }
+
+                if (resp.status === 422 && data.errors) {
+                    Object.entries(data.errors).forEach(([field, msgs]) => {
+                        const el = form.querySelector('[name="' + field + '"]');
+                        if (!el) return;
+                        el.classList.add('is-invalid');
+                        const fb = document.createElement('div');
+                        fb.className = 'invalid-feedback d-block dynamic-invalid-feedback';
+                        fb.textContent = Array.isArray(msgs) ? msgs[0] : msgs;
+                        (el.closest('.input-group') || el).insertAdjacentElement('afterend', fb);
+                    });
+                    showFormAlert(form, 'danger', data.message || 'Please correct the highlighted fields.');
+                    return;
+                }
+
+                showFormAlert(form, 'danger', data.message || ('Save failed (HTTP ' + resp.status + ').'));
+            } catch (err) {
+                showFormAlert(form, 'danger', 'Network error while saving prices.');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalLabel;
+                }
+            }
+        });
+    });
+
+    function showFormAlert(form, type, message) {
+        const body = form.querySelector('.modal-body');
+        if (!body) return;
+        const div = document.createElement('div');
+        div.className = 'alert alert-' + type + ' price-form-feedback mb-3';
+        div.textContent = message;
+        body.prepend(div);
+    }
 });
 </script>
 @endpush

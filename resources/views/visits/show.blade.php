@@ -337,49 +337,84 @@
 
         <!-- Visit Services -->
         @if($visit->visitServices->isNotEmpty())
+        @php
+            $sourceLabels = [
+                'cash_and_carry'     => ['Cash & Carry',    'secondary'],
+                'provider_specific'  => ['Provider Rate',   'success'],
+                'insurance_type'     => ['Insurance Type',  'info'],
+                'base_price'         => ['Base Price',      'light text-dark'],
+            ];
+        @endphp
         <div class="card mb-3">
             <div class="card-header">
                 <h6 class="fw-bold mb-0"><i class="ti ti-receipt me-1"></i>Visit Services</h6>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-sm mb-0">
+                    <table class="table table-sm mb-0 align-middle">
                         <thead class="table-light">
                             <tr>
                                 <th>Service</th>
+                                <th>Pricing</th>
                                 <th class="text-center">Qty</th>
-                                <th class="text-end">Unit Price</th>
+                                <th class="text-end">Price</th>
                                 <th class="text-end">Insurance</th>
+                                <th class="text-end">Patient Pays</th>
                                 <th class="text-end">Total</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @php $totalAmt = 0; $totalIns = 0; @endphp
+                            @php $totalAmt = 0; $totalIns = 0; $totalPatient = 0; @endphp
                             @foreach($visit->visitServices as $vs)
+                            @php
+                                $src   = $vs->pricing_source ?? 'base_price';
+                                $meta  = $sourceLabels[$src] ?? [ucfirst(str_replace('_',' ',$src)), 'light text-dark'];
+                                $payType = $vs->payment_type ?? 'cash';
+                                $patientPays = $vs->patient_payable ?? ($vs->total_price - ($vs->insurance_covered ?? 0));
+                            @endphp
                             <tr>
                                 <td>
-                                    {{ $vs->serviceCatalog?->name ?? '—' }}
+                                    <div class="fw-medium small">{{ $vs->serviceCatalog?->name ?? '—' }}</div>
                                     @if($vs->department)
-                                        <span class="badge bg-light text-dark ms-1">{{ $vs->department->name }}</span>
+                                        <span class="badge bg-light text-dark mt-1">{{ $vs->department->name }}</span>
                                     @endif
                                 </td>
+                                <td>
+                                    <span class="badge bg-{{ $meta[1] }}">{{ $meta[0] }}</span>
+                                    <div class="small text-muted mt-1">
+                                        <i class="ti ti-{{ $payType === 'insurance' ? 'shield-check' : 'cash' }} me-1"></i>{{ ucfirst($payType) }}
+                                    </div>
+                                </td>
                                 <td class="text-center">{{ $vs->quantity }}</td>
-                                <td class="text-end">&#8373;{{ number_format($vs->unit_price, 2) }}</td>
-                                <td class="text-end text-success">&#8373;{{ number_format($vs->insurance_covered ?? 0, 2) }}</td>
+                                <td class="text-end">
+                                    @if(!is_null($vs->insurance_price) && $payType === 'insurance')
+                                        <div class="fw-semibold small">&#8373;{{ number_format($vs->insurance_price, 2) }}</div>
+                                        <div class="text-muted small text-decoration-line-through">&#8373;{{ number_format($vs->unit_price, 2) }}</div>
+                                    @else
+                                        <span class="fw-semibold small">&#8373;{{ number_format($vs->unit_price, 2) }}</span>
+                                    @endif
+                                </td>
+                                <td class="text-end text-success small">&#8373;{{ number_format($vs->insurance_covered ?? 0, 2) }}</td>
+                                <td class="text-end small">&#8373;{{ number_format($patientPays, 2) }}</td>
                                 <td class="text-end fw-medium">&#8373;{{ number_format($vs->total_price, 2) }}</td>
                             </tr>
-                            @php $totalAmt += $vs->total_price; $totalIns += ($vs->insurance_covered ?? 0); @endphp
+                            @php
+                                $totalAmt     += $vs->total_price;
+                                $totalIns     += ($vs->insurance_covered ?? 0);
+                                $totalPatient += $patientPays;
+                            @endphp
                             @endforeach
                         </tbody>
                         <tfoot>
                             <tr class="table-light fw-bold">
-                                <td colspan="3" class="text-end">Subtotal:</td>
+                                <td colspan="4" class="text-end">Subtotal:</td>
                                 <td class="text-end text-success">&#8373;{{ number_format($totalIns, 2) }}</td>
+                                <td class="text-end">&#8373;{{ number_format($totalPatient, 2) }}</td>
                                 <td class="text-end">&#8373;{{ number_format($totalAmt, 2) }}</td>
                             </tr>
                             <tr class="table-warning fw-bold">
-                                <td colspan="4" class="text-end">Patient Pays:</td>
-                                <td class="text-end">&#8373;{{ number_format($totalAmt - $totalIns, 2) }}</td>
+                                <td colspan="6" class="text-end">Overall Total:</td>
+                                <td class="text-end">&#8373;{{ number_format($totalAmt, 2) }}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -586,6 +621,9 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <span class="small fw-medium">{{ $vs->serviceCatalog?->name ?? '—' }}</span>
+                                @if($vs->payment_type === 'insurance')
+                                    <span class="badge bg-info-subtle text-info ms-1" style="font-size:0.6rem"><i class="ti ti-shield-check"></i></span>
+                                @endif
                                 @if($vs->department)
                                     <span class="badge bg-light text-dark ms-1 small">{{ $vs->department->name }}</span>
                                 @endif
@@ -596,10 +634,18 @@
                         </div>
                         @endforeach
                     </div>
-                    @php $visitTotal = $visit->visitServices->sum('total_price'); $visitIns = $visit->visitServices->sum('insurance_covered'); @endphp
-                    <div class="d-flex justify-content-between border-top mt-2 pt-1 small fw-bold">
+                    @php
+                        $visitTotal   = $visit->visitServices->sum('total_price');
+                        $visitIns     = $visit->visitServices->sum('insurance_covered');
+                        $visitPatient = $visit->visitServices->sum(fn($vs) => $vs->patient_payable ?? ($vs->total_price - ($vs->insurance_covered ?? 0)));
+                    @endphp
+                    <div class="d-flex justify-content-between border-top mt-2 pt-1 small">
+                        <span class="text-muted">Insurance Covers</span>
+                        <span class="text-success">&#8373;{{ number_format($visitIns, 2) }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between small fw-bold">
                         <span>Patient Pays</span>
-                        <span>&#8373;{{ number_format($visitTotal - $visitIns, 2) }}</span>
+                        <span>&#8373;{{ number_format($visitPatient, 2) }}</span>
                     </div>
                 </div>
                 @endif

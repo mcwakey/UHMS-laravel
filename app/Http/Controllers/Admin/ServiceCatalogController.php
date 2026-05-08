@@ -102,21 +102,56 @@ class ServiceCatalogController extends Controller
     /**
      * Save (upsert) insurance prices for a service.
      * Handles both default type prices and provider-specific prices.
+     *
+     * Filters out incomplete provider rows up front so adding an empty row
+     * in the UI without filling it doesn't fail the whole save.
      */
     public function storePrices(Request $request, ServiceCatalog $service)
     {
-        $request->validate([
-            'type_prices'                    => ['nullable', 'array'],
-            'type_prices.*'                  => ['nullable', 'numeric', 'min:0'],
-            'provider_prices'                => ['nullable', 'array'],
-            'provider_prices.*.insurance_type'      => ['required', 'string', 'in:self,nhia,private,corporate'],
-            'provider_prices.*.insurance_provider_id' => ['required', 'exists:insurance_providers,id'],
-            'provider_prices.*.price'        => ['required', 'numeric', 'min:0'],
+        // Drop incomplete provider rows BEFORE validation so an unfinished
+        // "Add Provider Override" click never blocks the save.
+        $providerPrices = collect($request->input('provider_prices', []))
+            ->filter(function ($row) {
+                return is_array($row)
+                    && ! empty($row['insurance_type'])
+                    && ! empty($row['insurance_provider_id'])
+                    && isset($row['price'])
+                    && $row['price'] !== '';
+            })
+            ->values()
+            ->all();
+
+        $request->merge(['provider_prices' => $providerPrices]);
+
+        $validTypes = collect(InsuranceType::cases())->pluck('value')->all();
+
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'type_prices'                              => ['nullable', 'array'],
+            'type_prices.*'                            => ['nullable', 'numeric', 'min:0'],
+            'provider_prices'                          => ['nullable', 'array'],
+            'provider_prices.*.insurance_type'         => ['required', 'string', \Illuminate\Validation\Rule::in($validTypes)],
+            'provider_prices.*.insurance_provider_id'  => ['required', 'exists:insurance_providers,id'],
+            'provider_prices.*.price'                  => ['required', 'numeric', 'min:0'],
         ]);
 
+        if ($validator->fails()) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'Please correct the highlighted fields.',
+                    'errors'  => $validator->errors(),
+                ], 422);
+            }
+
+            return back()->withErrors($validator)->withInput();
+        }
+
+        $data = $validator->validated();
+
         // Upsert default type prices
-        foreach (($request->type_prices ?? []) as $type => $price) {
-            if (!InsuranceType::tryFrom($type)) continue;
+        foreach (($data['type_prices'] ?? []) as $type => $price) {
+            if (! InsuranceType::tryFrom($type)) {
+                continue;
+            }
             if ($price === null || $price === '') {
                 // Remove if cleared
                 ServicePrice::where('service_catalog_id', $service->id)
@@ -127,8 +162,8 @@ class ServiceCatalogController extends Controller
             }
             ServicePrice::updateOrCreate(
                 [
-                    'service_catalog_id'   => $service->id,
-                    'insurance_type'       => $type,
+                    'service_catalog_id'    => $service->id,
+                    'insurance_type'        => $type,
                     'insurance_provider_id' => null,
                 ],
                 ['price' => $price]
@@ -136,27 +171,44 @@ class ServiceCatalogController extends Controller
         }
 
         // Upsert provider-specific prices
-        foreach (($request->provider_prices ?? []) as $row) {
+        foreach (($data['provider_prices'] ?? []) as $row) {
             ServicePrice::updateOrCreate(
                 [
-                    'service_catalog_id'   => $service->id,
-                    'insurance_type'       => $row['insurance_type'],
+                    'service_catalog_id'    => $service->id,
+                    'insurance_type'        => $row['insurance_type'],
                     'insurance_provider_id' => $row['insurance_provider_id'],
                 ],
                 ['price' => $row['price']]
             );
         }
 
-        return back()->with('success', "Prices for \"{$service->name}\" updated.");
+        $message = "Prices for \"{$service->name}\" updated.";
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => $message,
+                'service' => [
+                    'id'    => $service->id,
+                    'name'  => $service->name,
+                    'price' => (float) $service->price,
+                ],
+            ]);
+        }
+
+        return back()->with('success', $message);
     }
 
     /**
      * Delete a single service price entry.
      */
-    public function deletePrice(ServiceCatalog $service, ServicePrice $price)
+    public function deletePrice(Request $request, ServiceCatalog $service, ServicePrice $price)
     {
         abort_unless($price->service_catalog_id === $service->id, 403);
         $price->delete();
+
+        if ($request->expectsJson()) {
+            return response()->json(['message' => 'Price entry removed.']);
+        }
 
         return back()->with('success', 'Price entry removed.');
     }

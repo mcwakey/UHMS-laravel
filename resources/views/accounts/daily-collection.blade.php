@@ -88,7 +88,7 @@
                         <tbody>
                             @forelse($collection['payments'] as $pm)
                             <tr>
-                                <td class="fw-medium">{{ \App\Enums\PaymentMethod::tryFrom($pm->payment_method)?->label() ?? $pm->payment_method }}</td>
+                                <td class="fw-medium">{{ $pm->payment_method instanceof \App\Enums\PaymentMethod ? $pm->payment_method->label() : (\App\Enums\PaymentMethod::tryFrom((string) $pm->payment_method)?->label() ?? $pm->payment_method) }}</td>
                                 <td class="text-center">{{ $pm->count }}</td>
                                 <td class="text-end">GH₵ {{ number_format($pm->total, 2) }}</td>
                             </tr>

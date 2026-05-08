@@ -222,6 +222,13 @@ class BillingService
             $quantity      = (int) $vs->quantity;
             $discount      = max(0.0, round(($cashPrice - $unitPrice) * $quantity, 2));
 
+            // Prefer the snapshot stored on visit_services (already normalized by
+            // ServicePricingService). Fall back to a derived value for legacy rows.
+            $payerType = $vs->payment_type
+                ?? ($hasInsurance ? 'insurance' : 'cash');
+            $pricingSource = $vs->pricing_source
+                ?? ($cashPrice > $unitPrice ? 'provider_specific' : 'cash_and_carry');
+
             $items[] = [
                 'service_catalog_id'   => $vs->service_catalog_id,
                 'description'          => $catalog ? $catalog->name : 'Service',
@@ -231,9 +238,9 @@ class BillingService
                 'nhis_approved_amount' => $insuredAmount,
                 'cash_price'           => $cashPrice,
                 'discount_amount'      => $discount,
-                'payer_type'           => $hasInsurance ? 'insurance' : 'cash',
+                'payer_type'           => $payerType,
                 'insurance_provider_id' => $hasInsurance ? $visitInsurance->insurance_provider_id : null,
-                'pricing_source'       => $cashPrice > $unitPrice ? 'payer_specific_price' : 'cash_price',
+                'pricing_source'       => $pricingSource,
                 '_record_usage'        => false, // already recorded in attachServices()
             ];
         }

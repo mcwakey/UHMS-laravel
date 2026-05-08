@@ -158,7 +158,16 @@
                             <div>{{ $invoice->visit?->visit_number ?? 'Direct invoice' }}</div>
                             <small class="text-muted">{{ $invoice->visit?->department?->name ?? 'No department' }}</small>
                         </td>
-                        <td class="text-end">&#8373;{{ number_format($invoice->total_amount, 2) }}</td>
+                        <td class="text-end">
+                            <div>&#8373;{{ number_format($invoice->total_amount, 2) }}</div>
+                            @if($invoice->nhis_amount > 0)
+                                @php $patientShare = max(0, $invoice->total_amount - $invoice->nhis_amount); @endphp
+                                <small class="text-success d-block"><i class="ti ti-shield-check me-1"></i>Ins: &#8373;{{ number_format($invoice->nhis_amount, 2) }}</small>
+                                <small class="text-muted d-block"><i class="ti ti-user me-1"></i>Pt: &#8373;{{ number_format($patientShare, 2) }}</small>
+                            @else
+                                <small class="text-muted d-block"><i class="ti ti-cash me-1"></i>Cash & Carry</small>
+                            @endif
+                        </td>
                         <td class="text-end text-success">&#8373;{{ number_format($invoice->amount_paid, 2) }}</td>
                         <td class="text-end fw-bold text-danger">&#8373;{{ number_format($invoice->balance, 2) }}</td>
                         <td>

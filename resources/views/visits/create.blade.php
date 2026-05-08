@@ -74,7 +74,12 @@
             <div class="card d-none" id="insuranceCard">
                 <div class="card-header d-flex align-items-center justify-content-between">
                     <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Insurance</h5>
-                    <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">Default expired - using Cash &amp; Carry</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">Default expired - using Cash &amp; Carry</span>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="addInsuranceBtn">
+                            <i class="ti ti-plus me-1"></i>Add Insurance
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <!-- Insurance List (radio selection) -->
@@ -251,16 +256,14 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Service</th>
-                                        <th class="text-center" style="width: 70px;">Qty</th>
-                                        <th class="text-end" style="width: 100px;">Unit Price</th>
-                                        <th class="text-end" style="width: 100px;">Total</th>
-                                        <th style="width: 36px;"></th>
+                                        <th class="text-end" style="width: 120px;">Price</th>
+                                        <th class="text-center" style="width: 50px;">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody id="billingBody"></tbody>
                                 <tfoot>
                                     <tr class="table-light fw-bold">
-                                        <td colspan="3" class="text-end">Grand Total:</td>
+                                        <td class="text-end">Overall Total:</td>
                                         <td class="text-end" id="totalAmount">&#8373;0.00</td>
                                         <td></td>
                                     </tr>
@@ -303,6 +306,90 @@
         </div>
     </div>
 </form>
+
+{{-- ──────────────────────────────────────────────────────────────────────
+     Add / Edit / Renew Patient Insurance Modal — SPA: no full reload
+──────────────────────────────────────────────────────────────────────── --}}
+<div class="modal fade" id="insuranceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="insuranceForm" autocomplete="off">
+                @csrf
+                <input type="hidden" id="insuranceFormPatientId" name="_patient_id">
+                <input type="hidden" id="insuranceFormInsuranceId" name="_insurance_id">
+
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">
+                        <i class="ti ti-shield-plus me-1"></i><span id="insuranceModalTitle">Add Insurance</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="insuranceFormFeedback" class="alert d-none" role="alert"></div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Insurance Provider <span class="text-danger">*</span></label>
+                            <select name="insurance_provider_id" id="insuranceProviderSelect" class="form-select" required>
+                                <option value="">Select Provider</option>
+                                @foreach($insuranceProviders as $prov)
+                                    <option value="{{ $prov->id }}"
+                                            data-type="{{ $prov->type?->value }}"
+                                            data-tiers='@json($prov->tiers->map(fn($t) => ["id"=>$t->id, "name"=>$t->name]))'>
+                                        {{ $prov->name }} ({{ $prov->type?->label() }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Tier</label>
+                            <select name="insurance_tier_id" id="insuranceTierSelect" class="form-select">
+                                <option value="">— Default —</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Membership Number</label>
+                            <input type="text" name="membership_number" class="form-control" maxlength="50">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Policy Number</label>
+                            <input type="text" name="policy_number" class="form-control" maxlength="50">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Member Type</label>
+                            <select name="member_type" class="form-select">
+                                <option value="holder" selected>Card Holder</option>
+                                <option value="beneficiary">Beneficiary</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Expiry Date</label>
+                            <input type="date" name="expiry_date" class="form-control">
+                        </div>
+
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_primary" value="1" id="insIsPrimary">
+                                <label class="form-check-label" for="insIsPrimary">Set as primary insurance</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="insuranceFormSaveBtn">
+                        <i class="ti ti-device-floppy me-1"></i>Save Insurance
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -656,6 +743,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (ins.coverage_percentage != null) {
                         html += '<div class="small text-muted mt-1">' + ins.coverage_percentage + '% coverage</div>';
                     }
+                    if (!ins.is_default) {
+                        const editLabel = ins.is_expired ? 'Renew' : 'Edit';
+                        const editIcon  = ins.is_expired ? 'ti-refresh' : 'ti-pencil';
+                        html += '<button type="button" class="btn btn-link btn-sm p-0 mt-1 edit-insurance-btn" data-ins-id="' + ins.id + '">'
+                              + '<i class="ti ' + editIcon + ' me-1"></i>' + editLabel
+                              + '</button>';
+                    }
                     html += '</div>';
                     html += '</label>';
                 });
@@ -668,6 +762,15 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.insurance-radio').forEach(function(radio) {
                 radio.addEventListener('change', function() {
                     selectInsurance(parseInt(this.dataset.insId));
+                });
+            });
+
+            // Attach edit/renew handlers
+            document.querySelectorAll('.edit-insurance-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    openInsuranceModal('edit', parseInt(this.dataset.insId));
                 });
             });
 
@@ -902,21 +1005,15 @@ document.addEventListener('DOMContentLoaded', function() {
         let html = '';
 
         selectedServices.forEach(function(svc, idx) {
-            const lineTotal = svc.price * svc.quantity;
+            // Quantity is always 1 — UI no longer exposes a quantity selector.
+            const qty = svc.quantity || 1;
+            const lineTotal = svc.price * qty;
 
             html += '<tr>';
             html += '<td>' + escapeHtml(svc.name);
             html += '<input type="hidden" name="services[' + idx + '][service_catalog_id]" value="' + svc.service_catalog_id + '">';
-            html += '<input type="hidden" name="services[' + idx + '][quantity]" value="' + svc.quantity + '">';
+            html += '<input type="hidden" name="services[' + idx + '][quantity]" value="' + qty + '">';
             html += '</td>';
-            html += '<td class="text-center">'
-                + '<div class="input-group input-group-sm" style="width:70px;">'
-                + '<button type="button" class="btn btn-outline-secondary btn-xs qty-dec" data-index="' + idx + '">-</button>'
-                + '<span class="form-control form-control-sm text-center px-1">' + svc.quantity + '</span>'
-                + '<button type="button" class="btn btn-outline-secondary btn-xs qty-inc" data-index="' + idx + '">+</button>'
-                + '</div>'
-                + '</td>';
-            html += '<td class="text-end text-muted">\u20B5' + formatNumber(svc.price) + '</td>';
             html += '<td class="text-end fw-medium">\u20B5' + formatNumber(lineTotal) + '</td>';
             html += '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="' + idx + '"><i class="ti ti-trash"></i></button></td>';
             html += '</tr>';
@@ -927,18 +1024,6 @@ document.addEventListener('DOMContentLoaded', function() {
         tbody.querySelectorAll('.remove-service-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 removeServiceFromBilling(parseInt(this.dataset.index));
-            });
-        });
-
-        tbody.querySelectorAll('.qty-dec').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                updateServiceQuantity(parseInt(this.dataset.index), selectedServices[parseInt(this.dataset.index)].quantity - 1);
-            });
-        });
-
-        tbody.querySelectorAll('.qty-inc').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                updateServiceQuantity(parseInt(this.dataset.index), selectedServices[parseInt(this.dataset.index)].quantity + 1);
             });
         });
 
@@ -1120,6 +1205,186 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('runVerificationBtn2').addEventListener('click', () => {
         runVerification(null);
     });
+
+    // ==========================================
+    // Insurance Add/Edit/Renew Modal (SPA)
+    // ==========================================
+    const insuranceModalEl   = document.getElementById('insuranceModal');
+    const insuranceModal     = insuranceModalEl ? new bootstrap.Modal(insuranceModalEl) : null;
+    const insuranceForm      = document.getElementById('insuranceForm');
+    const insuranceFormFb    = document.getElementById('insuranceFormFeedback');
+    const providerSelect     = document.getElementById('insuranceProviderSelect');
+    const tierSelect         = document.getElementById('insuranceTierSelect');
+    const insModalTitle      = document.getElementById('insuranceModalTitle');
+    const insSaveBtn         = document.getElementById('insuranceFormSaveBtn');
+    const insIdInput         = document.getElementById('insuranceFormInsuranceId');
+    const insPatientIdInput  = document.getElementById('insuranceFormPatientId');
+
+    function clearInsuranceForm() {
+        insuranceForm.reset();
+        insIdInput.value = '';
+        insPatientIdInput.value = '';
+        tierSelect.innerHTML = '<option value="">— Default —</option>';
+        insuranceForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        insuranceForm.querySelectorAll('.dynamic-invalid-feedback').forEach(el => el.remove());
+        insuranceFormFb.classList.add('d-none');
+        insuranceFormFb.innerHTML = '';
+    }
+
+    function repopulateTiers(providerOption) {
+        tierSelect.innerHTML = '<option value="">— Default —</option>';
+        if (!providerOption) return;
+        let tiers = [];
+        try { tiers = JSON.parse(providerOption.dataset.tiers || '[]'); } catch (e) {}
+        tiers.forEach(function(t) {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.name;
+            tierSelect.appendChild(opt);
+        });
+    }
+
+    if (providerSelect) {
+        providerSelect.addEventListener('change', function() {
+            const opt = this.options[this.selectedIndex];
+            repopulateTiers(opt);
+        });
+    }
+
+    function openInsuranceModal(mode, insuranceId) {
+        if (!insuranceModal) return;
+        const patientId = patientIdInput.value;
+        if (!patientId) {
+            alert('Please select a patient first.');
+            return;
+        }
+        clearInsuranceForm();
+        insPatientIdInput.value = patientId;
+        insModalTitle.textContent = (mode === 'edit') ? 'Edit / Renew Insurance' : 'Add Insurance';
+
+        if (mode === 'edit' && insuranceId) {
+            const ins = patientInsurances.find(i => i.id === insuranceId);
+            if (ins) {
+                insIdInput.value = ins.id;
+                providerSelect.value = ins.provider_id;
+                repopulateTiers(providerSelect.options[providerSelect.selectedIndex]);
+                if (ins.tier_id) tierSelect.value = ins.tier_id;
+                insuranceForm.elements['membership_number'].value = ins.membership_number || '';
+                insuranceForm.elements['policy_number'].value = ins.policy_number || '';
+                insuranceForm.elements['member_type'].value = ins.member_type || 'holder';
+                insuranceForm.elements['expiry_date'].value = ins.expiry_date || '';
+                insuranceForm.elements['is_primary'].checked = !!ins.is_primary;
+            }
+        }
+
+        insuranceModal.show();
+    }
+
+    const addInsBtn = document.getElementById('addInsuranceBtn');
+    if (addInsBtn) {
+        addInsBtn.addEventListener('click', function() {
+            openInsuranceModal('add', null);
+        });
+    }
+
+    function showInsuranceFb(type, text) {
+        insuranceFormFb.className = 'alert alert-' + type;
+        insuranceFormFb.innerHTML = text;
+        insuranceFormFb.classList.remove('d-none');
+    }
+
+    function applyInsuranceErrors(errors) {
+        Object.entries(errors || {}).forEach(([field, msgs]) => {
+            const el = insuranceForm.querySelector('[name="' + field + '"]');
+            if (!el) return;
+            el.classList.add('is-invalid');
+            const fb = document.createElement('div');
+            fb.className = 'invalid-feedback d-block dynamic-invalid-feedback';
+            fb.textContent = Array.isArray(msgs) ? msgs[0] : msgs;
+            el.parentNode.insertBefore(fb, el.nextSibling);
+        });
+    }
+
+    if (insuranceForm) {
+        insuranceForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            insuranceFormFb.classList.add('d-none');
+            insuranceForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            insuranceForm.querySelectorAll('.dynamic-invalid-feedback').forEach(el => el.remove());
+
+            const patientId = insPatientIdInput.value;
+            const insId     = insIdInput.value;
+            const isEdit    = !!insId;
+
+            const baseUrl = '{{ url("/admin/patients") }}/' + patientId + '/insurances' + (isEdit ? ('/' + insId) : '');
+            const fd = new FormData(insuranceForm);
+            // Strip our private form-only fields and force HTTP method.
+            fd.delete('_patient_id');
+            fd.delete('_insurance_id');
+            if (isEdit) fd.append('_method', 'PUT');
+
+            insSaveBtn.disabled = true;
+            const originalLabel = insSaveBtn.innerHTML;
+            insSaveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+
+            try {
+                const resp = await fetch(baseUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    body: fd,
+                });
+
+                const ct = resp.headers.get('content-type') || '';
+                const data = ct.includes('application/json') ? await resp.json() : {};
+
+                if (resp.ok) {
+                    showInsuranceFb('success', data.message || 'Insurance saved.');
+                    // Reload insurance list and auto-select the new/edited one
+                    await reloadInsuranceListAndSelect(data.insurance_id || (isEdit ? parseInt(insId) : null));
+                    setTimeout(() => insuranceModal.hide(), 600);
+                    return;
+                }
+
+                if (resp.status === 422 && data.errors) {
+                    applyInsuranceErrors(data.errors);
+                    showInsuranceFb('danger', data.message || 'Please correct the highlighted fields.');
+                    return;
+                }
+
+                showInsuranceFb('danger', data.message || 'Failed to save insurance. Please try again.');
+            } catch (err) {
+                showInsuranceFb('danger', 'Network error while saving insurance.');
+            } finally {
+                insSaveBtn.disabled = false;
+                insSaveBtn.innerHTML = originalLabel;
+            }
+        });
+    }
+
+    function reloadInsuranceListAndSelect(targetInsuranceId) {
+        return new Promise(function(resolve) {
+            const patientId = patientIdInput.value;
+            if (!patientId) { resolve(); return; }
+            fetch('{{ route("admin.visits.patient-insurances") }}?patient_id=' + patientId, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(r => r.json())
+            .then(data => {
+                patientInsurances = data.insurances || [];
+                // Re-render list using the same rendering routine
+                loadPatientInsurances(patientId);
+                if (targetInsuranceId) {
+                    setTimeout(() => selectInsurance(targetInsuranceId), 200);
+                }
+                resolve();
+            })
+            .catch(() => resolve());
+        });
+    }
 });
 </script>
 @endpush

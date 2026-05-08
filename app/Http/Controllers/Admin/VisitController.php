@@ -56,7 +56,17 @@ class VisitController extends Controller
             $selectedPatient = Patient::find($request->patient_id);
         }
 
-        return view('visits.create', compact('departments', 'doctors', 'selectedPatient'));
+        // Insurance providers (excluding the synthetic Cash & Carry default)
+        // and their tiers, for the Add/Edit Insurance modal on this page.
+        $insuranceProviders = \App\Models\InsuranceProvider::where('is_active', true)
+            ->where(function ($q) {
+                $q->where('is_default', false)->orWhereNull('is_default');
+            })
+            ->with(['tiers' => fn ($t) => $t->orderBy('sort_order')->orderBy('name')])
+            ->orderBy('name')
+            ->get();
+
+        return view('visits.create', compact('departments', 'doctors', 'selectedPatient', 'insuranceProviders'));
     }
 
     public function store(StoreVisitRequest $request)
