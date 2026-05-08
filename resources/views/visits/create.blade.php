@@ -84,91 +84,6 @@
                         </div>
                     </div>
 
-                    
-                </div>
-            </div>
-
-            <!-- Visit Details -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>Visit Details</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Visit Type <span class="text-danger">*</span></label>
-                            <select name="visit_type" class="form-select @error('visit_type') is-invalid @enderror" required>
-                                <option value="">Select Type</option>
-                                @foreach(\App\Enums\VisitType::cases() as $type)
-                                    <option value="{{ $type->value }}" {{ old('visit_type') == $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
-                                @endforeach
-                            </select>
-                            @error('visit_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Priority <span class="text-danger">*</span></label>
-                            <select name="priority" class="form-select @error('priority') is-invalid @enderror" required>
-                                @foreach(\App\Enums\Priority::cases() as $priority)
-                                    <option value="{{ $priority->value }}" {{ old('priority', 'normal') == $priority->value ? 'selected' : '' }}>{{ $priority->label() }}</option>
-                                @endforeach
-                            </select>
-                            @error('priority')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Visit Date</label>
-                            <input type="date" name="visit_date" class="form-control @error('visit_date') is-invalid @enderror" value="{{ old('visit_date', date('Y-m-d')) }}" id="visitDate">
-                            @error('visit_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            <small class="text-muted" id="schedulingHint">Today = walk-in. Future date = scheduled visit.</small>
-                        </div>
-                    </div>
-
-                    {{-- Scheduling Fields (shown when future date selected) --}}
-                    <div class="row" id="schedulingFields" style="display: none;">
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Start Time</label>
-                            <input type="time" name="start_time" class="form-control @error('start_time') is-invalid @enderror" value="{{ old('start_time') }}">
-                            @error('start_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">End Time</label>
-                            <input type="time" name="end_time" class="form-control @error('end_time') is-invalid @enderror" value="{{ old('end_time') }}">
-                            @error('end_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label">Consultation Mode</label>
-                            <select name="consultation_mode" class="form-select @error('consultation_mode') is-invalid @enderror">
-                                @foreach(\App\Enums\ConsultationMode::cases() as $mode)
-                                    <option value="{{ $mode->value }}" {{ old('consultation_mode', 'in_person') == $mode->value ? 'selected' : '' }}>{{ $mode->label() }}</option>
-                                @endforeach
-                            </select>
-                            @error('consultation_mode')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Chief Complaint</label>
-                        <textarea name="chief_complaint" class="form-control @error('chief_complaint') is-invalid @enderror" rows="3" placeholder="Primary reason for visit...">{{ old('chief_complaint') }}</textarea>
-                        @error('chief_complaint')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Notes</label>
-                        <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" rows="2" placeholder="Additional notes...">{{ old('notes') }}</textarea>
-                        @error('notes')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Column - Department, Services & Submit -->
-        <div class="col-lg-4">
-            <!-- Department, Services & Doctor Selection -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-building-hospital me-1"></i>Department, Services & Doctor</h5>
-                </div>
-                <div class="card-body">
-                    {{-- <div class="row"> --}}
                     <!-- Selected Insurance Info Panel -->
                     <div id="selectedInsuranceInfo" class="d-none">
                         <div class="alert alert-light border mb-0">
@@ -247,6 +162,81 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Visit Details -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>Visit Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Visit Type <span class="text-danger">*</span></label>
+                            <select name="visit_type" class="form-select @error('visit_type') is-invalid @enderror" required>
+                                <option value="">Select Type</option>
+                                @foreach(\App\Enums\VisitType::cases() as $type)
+                                    <option value="{{ $type->value }}" {{ old('visit_type') == $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
+                                @endforeach
+                            </select>
+                            @error('visit_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Priority <span class="text-danger">*</span></label>
+                            <select name="priority" class="form-select @error('priority') is-invalid @enderror" required>
+                                @foreach(\App\Enums\Priority::cases() as $priority)
+                                    <option value="{{ $priority->value }}" {{ old('priority', 'normal') == $priority->value ? 'selected' : '' }}>{{ $priority->label() }}</option>
+                                @endforeach
+                            </select>
+                            @error('priority')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Visit Date</label>
+                            <input type="date" name="visit_date" class="form-control @error('visit_date') is-invalid @enderror" value="{{ old('visit_date', date('Y-m-d')) }}" id="visitDate">
+                            @error('visit_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <small class="text-muted" id="schedulingHint">Today = walk-in. Future date = scheduled visit.</small>
+                        </div>
+                    </div>
+
+                    {{-- Scheduling Fields (shown when future date selected) --}}
+                    <div class="row" id="schedulingFields" style="display: none;">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Start Time</label>
+                            <input type="time" name="start_time" class="form-control @error('start_time') is-invalid @enderror" value="{{ old('start_time') }}">
+                            @error('start_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">End Time</label>
+                            <input type="time" name="end_time" class="form-control @error('end_time') is-invalid @enderror" value="{{ old('end_time') }}">
+                            @error('end_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Consultation Mode</label>
+                            <select name="consultation_mode" class="form-select @error('consultation_mode') is-invalid @enderror">
+                                @foreach(\App\Enums\ConsultationMode::cases() as $mode)
+                                    <option value="{{ $mode->value }}" {{ old('consultation_mode', 'in_person') == $mode->value ? 'selected' : '' }}>{{ $mode->label() }}</option>
+                                @endforeach
+                            </select>
+                            @error('consultation_mode')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Chief Complaint</label>
+                        <textarea name="chief_complaint" class="form-control @error('chief_complaint') is-invalid @enderror" rows="3" placeholder="Primary reason for visit...">{{ old('chief_complaint') }}</textarea>
+                        @error('chief_complaint')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" rows="2" placeholder="Additional notes...">{{ old('notes') }}</textarea>
+                        @error('notes')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Department, Services & Submit -->
+        <div class="col-lg-4">
             <!-- Department, Services & Doctor Selection -->
             <div class="card">
                 <div class="card-header">
