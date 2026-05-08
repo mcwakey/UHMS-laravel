@@ -84,82 +84,7 @@
                         </div>
                     </div>
 
-                    <!-- Selected Insurance Info Panel -->
-                    <div id="selectedInsuranceInfo" class="d-none">
-                        <div class="alert alert-light border mb-0">
-                            <div class="row">
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Insurance Type</small>
-                                    <span class="fw-medium" id="insInfoType">&mdash;</span>
-                                </div>
-                                <div class="col-6">
-                                    <small class="text-muted d-block">Tier</small>
-                                    <span class="fw-medium" id="insInfoTier">&mdash;</span>
-                                </div>
-                                <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Member Type</small>
-                                    <span class="fw-medium" id="insInfoMemberType">&mdash;</span>
-                                </div>
-                                <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Coverage</small>
-                                    <span class="fw-medium" id="insInfoCoverage">&mdash;</span>
-                                </div>
-                                <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Per-Visit Cap</small>
-                                    <span class="fw-medium" id="insInfoPerVisit">&mdash;</span>
-                                </div>
-                                <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Monthly Cap</small>
-                                    <span class="fw-medium" id="insInfoMonthly">&mdash;</span>
-                                </div>
-                                <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Total Billed (YTD)</small>
-                                    <span class="fw-medium" id="insInfoBilled">&mdash;</span>
-                                </div>
-                                <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Annual Remaining</small>
-                                    <span class="fw-bold" id="insInfoRemaining">&mdash;</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <input type="hidden" name="visit_insurance_id" id="visitInsuranceId" value="">
-                    <input type="hidden" name="insurance_verification_id" id="insuranceVerificationId" value="">
-
-                    {{-- Provider-agnostic verification panel.
-                         Visibility / inputs are driven entirely by the response from
-                         /admin/insurance/verify; no provider names appear here. --}}
-                    <div id="verificationPanel" class="border rounded p-3 mt-3 d-none">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
-                            <h6 class="mb-0"><i class="ti ti-shield-lock me-1"></i>Verification</h6>
-                            <span class="badge bg-secondary" id="verificationStatusBadge">Not started</span>
-                        </div>
-                        <div class="text-muted small mb-2" id="verificationProviderMeta">&mdash;</div>
-
-                        <div class="row g-2 align-items-end" id="verificationCodeRow" style="display:none;">
-                            <div class="col-sm-8">
-                                <label class="form-label mb-1">Authorization / Reference Code</label>
-                                <input type="text" id="verificationReferenceInput" name="verification_reference_code"
-                                       class="form-control" placeholder="Enter code issued by the provider"
-                                       autocomplete="off">
-                            </div>
-                            <div class="col-sm-4 d-grid">
-                                <button type="button" class="btn btn-primary" id="runVerificationBtn">
-                                    <i class="ti ti-shield-check me-1"></i>Verify
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="row g-2 align-items-end mt-1" id="verificationManualRow" style="display:none;">
-                            <div class="col-12 d-grid">
-                                <button type="button" class="btn btn-outline-primary btn-sm" id="runVerificationBtn2">
-                                    <i class="ti ti-shield-check me-1"></i>Verify
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="verificationFeedback" class="small mt-2"></div>
-                    </div>
+                    
                 </div>
             </div>
 
@@ -237,6 +162,91 @@
 
         <!-- Right Column - Department, Services & Submit -->
         <div class="col-lg-4">
+            <!-- Department, Services & Doctor Selection -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="fw-bold mb-0"><i class="ti ti-building-hospital me-1"></i>Department, Services & Doctor</h5>
+                </div>
+                <div class="card-body">
+                    {{-- <div class="row"> --}}
+                    <!-- Selected Insurance Info Panel -->
+                    <div id="selectedInsuranceInfo" class="d-none">
+                        <div class="alert alert-light border mb-0">
+                            <div class="row">
+                                {{-- <div class="col-6">
+                                    <small class="text-muted d-block">Insurance Type</small>
+                                    <span class="fw-medium" id="insInfoType">&mdash;</span>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Tier</small>
+                                    <span class="fw-medium" id="insInfoTier">&mdash;</span>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <small class="text-muted d-block">Member Type</small>
+                                    <span class="fw-medium" id="insInfoMemberType">&mdash;</span>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <small class="text-muted d-block">Coverage</small>
+                                    <span class="fw-medium" id="insInfoCoverage">&mdash;</span>
+                                </div> --}}
+                                <div class="col-6 mt-2">
+                                    <small class="text-muted d-block">Per-Visit Cap</small>
+                                    <span class="fw-medium" id="insInfoPerVisit">&mdash;</span>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <small class="text-muted d-block">Monthly Cap</small>
+                                    <span class="fw-medium" id="insInfoMonthly">&mdash;</span>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <small class="text-muted d-block">Total Billed (YTD)</small>
+                                    <span class="fw-medium" id="insInfoBilled">&mdash;</span>
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <small class="text-muted d-block">Annual Remaining</small>
+                                    <span class="fw-bold" id="insInfoRemaining">&mdash;</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="visit_insurance_id" id="visitInsuranceId" value="">
+                    <input type="hidden" name="insurance_verification_id" id="insuranceVerificationId" value="">
+
+                    {{-- Provider-agnostic verification panel.
+                         Visibility / inputs are driven entirely by the response from
+                         /admin/insurance/verify; no provider names appear here. --}}
+                    <div id="verificationPanel" class="border rounded p-3 mt-3 d-none">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <h6 class="mb-0"><i class="ti ti-shield-lock me-1"></i>Verification</h6>
+                            <span class="badge bg-secondary" id="verificationStatusBadge">Not started</span>
+                        </div>
+                        <div class="text-muted small mb-2" id="verificationProviderMeta">&mdash;</div>
+
+                        <div class="row g-2 align-items-end" id="verificationCodeRow" style="display:none;">
+                            <div class="col-sm-8">
+                                <label class="form-label mb-1">Authorization / Reference Code</label>
+                                <input type="text" id="verificationReferenceInput" name="verification_reference_code"
+                                       class="form-control" placeholder="Enter code issued by the provider"
+                                       autocomplete="off">
+                            </div>
+                            <div class="col-sm-4 d-grid">
+                                <button type="button" class="btn btn-primary" id="runVerificationBtn">
+                                    <i class="ti ti-shield-check me-1"></i>Verify
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="row g-2 align-items-end mt-1" id="verificationManualRow" style="display:none;">
+                            <div class="col-12 d-grid">
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="runVerificationBtn2">
+                                    <i class="ti ti-shield-check me-1"></i>Verify
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="verificationFeedback" class="small mt-2"></div>
+                    </div>
+                </div>
+            </div>
             <!-- Department, Services & Doctor Selection -->
             <div class="card">
                 <div class="card-header">
