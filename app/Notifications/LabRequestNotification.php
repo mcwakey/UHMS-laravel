@@ -36,7 +36,7 @@ class LabRequestNotification extends Notification
             'patient_id' => $patient->id,
             'patient_name' => $patient->full_name,
             'request_number' => $this->labRequest->request_number,
-            'url' => route('lab.requests.show', $this->labRequest),
+            'url' => route('admin.lab.requests.show', $this->labRequest),
             'icon' => 'ti-microscope',
             'color' => 'primary',
         ];

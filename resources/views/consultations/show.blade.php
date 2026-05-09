@@ -628,8 +628,9 @@
                         @can('prescriptions.create')
                         <div class="collapse mb-3" id="addPrescriptionForm">
                             <div class="card card-body bg-light">
-                                <form method="POST" action="{{ route('admin.consultations.prescriptions.store', $visit) }}" id="prescriptionForm" onsubmit="return preparePrescriptionSubmit() && saveTabBeforeSubmit('prescriptions-section')">
+                                <form data-ajax-form="prescriptions" method="POST" action="{{ route('admin.consultations.prescriptions.store', $visit) }}" id="prescriptionForm" onsubmit="preparePrescriptionSubmit()">
                                     @csrf
+                                    <div id="prescriptionFormErrors" class="alert alert-danger d-none small py-2 mb-2"></div>
                                     <div id="prescriptionItems">
                                         <div class="prescription-item border rounded p-2 mb-2">
                                             <div class="row g-2">
@@ -1528,6 +1529,16 @@ document.querySelectorAll('[data-ajax-form]').forEach(function (form) {
             var msg = 'An error occurred.';
             if (err && err.errors) msg = Object.values(err.errors).flat().join('\n');
             else if (err && err.message) msg = err.message;
+            // Inline error display for prescription form (better UX than alert)
+            if (section === 'prescriptions') {
+                var errBox = document.getElementById('prescriptionFormErrors');
+                if (errBox) {
+                    errBox.classList.remove('d-none');
+                    errBox.innerHTML = '<i class="ti ti-alert-circle me-1"></i>' + escapeHtml(msg).replace(/\n/g, '<br>');
+                    errBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    return;
+                }
+            }
             alert(msg);
         })
         .finally(function () { if (btn) { btn.disabled = false; btn.innerHTML = origHtml; } });
@@ -1596,6 +1607,32 @@ function onFormSuccess(section, data, form) {
         html += '<div><p class="mb-1"><span class="badge bg-' + tc + '">' + capFirst(t.type) + '</span> ' + escapeHtml(t.description) + '</p></div>';
         html += '<button type="button" class="btn btn-xs btn-outline-danger ajax-delete" data-url="' + destroyUrls.treatment + '/' + t.id + '" data-target="#treatment-' + t.id + '" data-badge="badge-treatments" data-confirm="Remove this treatment?"><i class="ti ti-trash"></i></button>';
         html += '</div></div>';
+        count = 1;
+    } else if (section === 'prescriptions' && data.prescription) {
+        var rx = data.prescription;
+        var statusColor = rx.status === 'pending' ? 'warning' : (rx.status === 'active' ? 'info' : (rx.status === 'dispensed' ? 'success' : 'secondary'));
+        var statusLabel = capFirst(String(rx.status || 'pending').replace('_', ' '));
+        html  = '<div class="border rounded p-3 mb-3" id="prescription-' + rx.id + '">';
+        html += '<div class="d-flex justify-content-between align-items-center mb-2">';
+        html += '<div><span class="fw-bold">' + escapeHtml(rx.prescription_number) + '</span>';
+        html += ' <span class="badge bg-' + statusColor + ' ms-2">' + statusLabel + '</span></div>';
+        html += '<small class="text-muted">just now</small></div>';
+        html += '<div class="table-responsive"><table class="table table-sm table-borderless mb-0">';
+        html += '<thead><tr class="text-muted small"><th>Drug</th><th>Dosage</th><th>Freq</th><th>Duration</th><th>Qty</th><th>Route</th></tr></thead><tbody>';
+        (rx.items || []).forEach(function (it) {
+            html += '<tr><td class="fw-medium">' + escapeHtml(it.drug_name) + '</td>';
+            html += '<td>' + escapeHtml(it.dosage || '') + '</td>';
+            html += '<td>' + escapeHtml(it.frequency || '') + '</td>';
+            html += '<td>' + escapeHtml(it.duration || '') + '</td>';
+            html += '<td>' + escapeHtml(String(it.quantity ?? '')) + '</td>';
+            html += '<td>' + escapeHtml(it.route || '') + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+        if (rx.notes) html += '<small class="text-muted">Notes: ' + escapeHtml(rx.notes) + '</small>';
+        html += '</div>';
+        // Hide form errors box on success
+        var errBox = document.getElementById('prescriptionFormErrors');
+        if (errBox) { errBox.classList.add('d-none'); errBox.innerHTML = ''; }
         count = 1;
     }
 

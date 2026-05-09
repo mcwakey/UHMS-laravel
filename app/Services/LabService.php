@@ -146,7 +146,7 @@ class LabService
 
     public function getRequests(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = LabRequest::with(['patient', 'requestedBy', 'items.labTest.criteria', 'department', 'targetDepartment'])
+        $query = LabRequest::with(['patient', 'requestedBy', 'items.labTest.criteria', 'items.service', 'department', 'targetDepartment'])
             ->latest();
 
         if (!empty($filters['status'])) {
@@ -192,7 +192,15 @@ class LabService
             ]);
 
             foreach ($items as $item) {
-                if (is_numeric($item)) {
+                if (is_array($item)) {
+                    // Structured item — supports service_id, lab_test_id and free-text name
+                    $request->items()->create([
+                        'lab_test_id' => $item['lab_test_id'] ?? null,
+                        'service_id'  => $item['service_id'] ?? null,
+                        'name'        => $item['name'] ?? null,
+                        'status'      => $item['status'] ?? 'pending',
+                    ]);
+                } elseif (is_numeric($item)) {
                     // Item is a test-catalog ID
                     $request->items()->create([
                         'lab_test_id' => (int) $item,
@@ -225,8 +233,11 @@ class LabService
             'targetDepartment',
             'items.labTest.category',
             'items.labTest.criteria',
+            'items.service.investigationHeaders.criteria',
+            'items.service.investigationCriteria',
             'items.result.performedBy',
             'items.result.verifiedBy',
+            'items.result.values',
         ]);
     }
 

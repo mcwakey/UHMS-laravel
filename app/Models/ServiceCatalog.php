@@ -64,6 +64,16 @@ class ServiceCatalog extends Model
         return $this->hasMany(VisitServiceItem::class);
     }
 
+    public function investigationHeaders()
+    {
+        return $this->hasMany(InvestigationHeader::class, 'service_id')->orderBy('sort_order');
+    }
+
+    public function investigationCriteria()
+    {
+        return $this->hasMany(InvestigationCriterion::class, 'service_id')->orderBy('sort_order');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes

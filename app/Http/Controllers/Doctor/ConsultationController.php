@@ -323,15 +323,32 @@ class ConsultationController extends Controller
 
         $record = $this->consultationService->getOrCreateRecord($visit);
         $created = [];
+        $labRequest = null;
 
         if (!empty($request->service_ids)) {
             $services = ServiceCatalog::whereIn('id', $request->service_ids)->get();
+
             foreach ($services as $service) {
                 $created[] = $this->consultationService->addInvestigation($record, [
                     'investigation_type' => $service->name,
                     'description'        => $service->description ?? $service->name,
                     'urgency'            => $request->urgency ?? 'routine',
                     'notes'              => $request->notes,
+                ]);
+            }
+
+            // ALSO create a LabRequest so the investigation department sees it on their queue.
+            $items = $services->map(fn ($s) => [
+                'service_id' => $s->id,
+                'name'       => $s->name,
+                'status'     => 'pending',
+            ])->all();
+
+            if (!empty($items)) {
+                $labRequest = $this->labService->createRequest($visit, $items, [
+                    'target_department_id' => $request->department_id,
+                    'clinical_info'        => $request->notes,
+                    'urgency'              => $request->urgency ?? 'routine',
                 ]);
             }
         } elseif (!empty($request->investigation_type)) {
@@ -341,13 +358,32 @@ class ConsultationController extends Controller
                 'urgency'            => $request->urgency ?? 'routine',
                 'notes'              => $request->notes,
             ]);
+
+            // Create a free-text LabRequest for non-catalogue requests
+            $labRequest = $this->labService->createRequest($visit, [$request->investigation_type], [
+                'target_department_id' => $request->department_id,
+                'clinical_info'        => $request->description ?? $request->notes,
+                'urgency'              => $request->urgency ?? 'routine',
+            ]);
         }
 
         if ($this->shouldReturnJson($request)) {
-            return response()->json(['success' => true, 'investigations' => $created, 'count' => count($created)]);
+            return response()->json([
+                'success'        => true,
+                'investigations' => $created,
+                'count'          => count($created),
+                'lab_request'    => $labRequest?->only(['id', 'request_number', 'status']),
+            ]);
         }
 
-        return back()->with('success', count($created) . ' investigation(s) added.');
+        $msg = count($created) . ' investigation(s) added';
+        if ($labRequest) {
+            $msg .= " — request {$labRequest->request_number} sent to investigation department.";
+        } else {
+            $msg .= '.';
+        }
+
+        return back()->with('success', $msg);
     }
 
     public function destroyInvestigation(Investigation $investigation)

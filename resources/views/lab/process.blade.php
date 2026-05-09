@@ -128,7 +128,7 @@
                                 @foreach($request->items as $item)
                                 @if($item->status !== 'completed')
                                 <tr>
-                                    <td class="fw-medium">{{ $item->labTest->name }} <small class="text-muted">({{ $item->labTest->code }})</small></td>
+                                    <td class="fw-medium">{{ $item->labTest->name ?? $item->name }} <small class="text-muted">({{ $item->labTest->code ?? '' }})</small></td>
                                     <td>
                                         @if($item->labTest?->criteria?->isNotEmpty())
                                             @foreach($item->labTest->criteria as $criterion)
@@ -186,14 +186,16 @@
                     <tr class="{{ $item->result && $item->result->is_abnormal ? 'table-danger' : '' }}">
                         <td>{{ $index + 1 }}</td>
                         <td class="fw-medium">{{ $item->labTest->name ?? $item->name }} <small class="text-muted">({{ $item->labTest->code ?? '' }})</small></td>
-                        <td>{{ $item->labTest->category->name ?? '-' }}</td>
+                        <td>{{ $item->labTest?->category?->name ?? '-' }}</td>
                         <td>
                             @if($item->labTest?->criteria?->isNotEmpty())
                                 @foreach($item->labTest->criteria as $criterion)
                                     <div><small><strong>{{ $criterion->name }}:</strong> {{ $criterion->normal_range ?? '-' }} {{ $criterion->unit ?? '' }}</small></div>
                                 @endforeach
+                            @elseif($item->service_id)
+                                <small class="text-muted">See criteria form</small>
                             @else
-                                <small>{{ $item->labTest->normal_range ?? '-' }} {{ $item->labTest->unit ?? '' }}</small>
+                                <small>{{ $item->labTest?->normal_range ?? '-' }} {{ $item->labTest?->unit ?? '' }}</small>
                             @endif
                         </td>
                         <td><span class="badge bg-{{ $item->status_color }}">{{ ucfirst($item->status) }}</span></td>
@@ -263,6 +265,35 @@
                 <div class="alert alert-info py-2 mb-3">
                     <small><strong>Normal Range:</strong> {{ $item->labTest->normal_range }} {{ $item->labTest->unit ?? '' }}</small>
                 </div>
+                @endif
+                @php
+                    $serviceCriteria = $item->service?->investigationCriteria?->where('is_active', true) ?? collect();
+                    $serviceHeaders  = $item->service?->investigationHeaders?->where('is_active', true) ?? collect();
+                @endphp
+                @if($serviceCriteria->isNotEmpty())
+                    {{-- Investigation Catalogue criteria-based result entry --}}
+                    <div class="border rounded p-2 mb-3 bg-light">
+                        <div class="small fw-bold text-muted text-uppercase mb-2">Result Criteria</div>
+                        @foreach($serviceHeaders as $h)
+                            @php $hCriteria = $serviceCriteria->where('header_id', $h->id); @endphp
+                            @if($hCriteria->isNotEmpty())
+                                <div class="mb-3">
+                                    <h6 class="small fw-bold border-bottom pb-1 mb-2">{{ $h->name }}</h6>
+                                    @foreach($hCriteria as $c)
+                                        @include('lab._criterion_input', ['c' => $c])
+                                    @endforeach
+                                </div>
+                            @endif
+                        @endforeach
+                        @php $unsorted = $serviceCriteria->whereNull('header_id'); @endphp
+                        @if($unsorted->isNotEmpty())
+                            <div class="mb-2">
+                                @foreach($unsorted as $c)
+                                    @include('lab._criterion_input', ['c' => $c])
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
                 @endif
                 <div class="mb-3">
                     <label class="form-label">Result Value <span class="text-danger">*</span></label>

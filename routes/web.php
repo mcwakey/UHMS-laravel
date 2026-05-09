@@ -542,6 +542,20 @@ Route::middleware('auth')->group(function () {
             });
         });
 
+        // Investigation Catalogue (services from investigation-type departments + per-service headers/criteria)
+        Route::prefix('investigation-catalogue')->name('investigation-catalogue.')->middleware('can:lab.tests.manage')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'index'])->name('index');
+            Route::get('/{service}', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'show'])->name('show');
+
+            Route::post('/{service}/headers', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'storeHeader'])->name('headers.store');
+            Route::put('/headers/{header}', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'updateHeader'])->name('headers.update');
+            Route::delete('/headers/{header}', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'destroyHeader'])->name('headers.destroy');
+
+            Route::post('/{service}/criteria', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'storeCriterion'])->name('criteria.store');
+            Route::put('/criteria/{criterion}', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'updateCriterion'])->name('criteria.update');
+            Route::delete('/criteria/{criterion}', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'destroyCriterion'])->name('criteria.destroy');
+        });
+
         // Pharmacy
         Route::prefix('pharmacy')->name('pharmacy.')->group(function () {
             // Dispensing

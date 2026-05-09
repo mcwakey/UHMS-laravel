@@ -250,10 +250,10 @@ class SidebarMenuBuilder
                         'module' => 'investigations',
                     ],
                     [
-                        'label' => 'Test Catalog',
+                        'label' => 'Investigation Catalogue',
                         'icon' => 'ti ti-flask',
-                        'route' => 'admin.lab.tests.index',
-                        'active_patterns' => ['admin.lab.tests.*'],
+                        'route' => 'admin.investigation-catalogue.index',
+                        'active_patterns' => ['admin.investigation-catalogue.*'],
                         'permission' => 'lab.tests.manage',
                         'module' => 'investigations',
                     ],

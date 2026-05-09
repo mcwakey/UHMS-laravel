@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LabResult extends Model
 {
@@ -48,6 +49,11 @@ class LabResult extends Model
     public function verifiedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    public function values(): HasMany
+    {
+        return $this->hasMany(InvestigationResultValue::class, 'lab_result_id')->orderBy('sort_order');
     }
 
     public function getIsVerifiedAttribute(): bool

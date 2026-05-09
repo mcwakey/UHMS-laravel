@@ -44,6 +44,13 @@ class LabResultController extends Controller
             // Attachment is always allowed regardless of result type so users
             // can pair an image / document with parameters or a written report.
             'result_file' => ['nullable', 'file', 'max:20480'], // 20MB
+            // Investigation Catalogue criteria-based values (optional)
+            'values'                       => ['nullable', 'array'],
+            'values.*.value'               => ['nullable', 'string', 'max:500'],
+            'values.*.name'                => ['nullable', 'string', 'max:191'],
+            'values.*.unit'                => ['nullable', 'string', 'max:50'],
+            'values.*.reference_range'     => ['nullable', 'string', 'max:191'],
+            'values.*.flag'                => ['nullable', 'string', 'max:30'],
         ];
 
         if ($resultType === ResultType::RICHTEXT) {
@@ -51,7 +58,12 @@ class LabResultController extends Controller
         } elseif ($resultType->isFileBased()) {
             $rules['result_file'] = ['required', 'file', 'max:20480']; // 20MB
         } else {
-            $rules['result_value'] = ['required', 'string', 'max:5000'];
+            // For criteria-based result entry, result_value can be derived/empty.
+            if ($request->filled('values')) {
+                $rules['result_value'] = ['nullable', 'string', 'max:5000'];
+            } else {
+                $rules['result_value'] = ['required', 'string', 'max:5000'];
+            }
         }
 
         $validated = $request->validate($rules);
@@ -61,7 +73,40 @@ class LabResultController extends Controller
             $validated['result_file'] = $request->file('result_file');
         }
 
-        $this->labService->enterResult($item, $validated);
+        // If values[] is provided but no result_value, build a summary string.
+        if (empty($validated['result_value'] ?? null) && !empty($validated['values'] ?? [])) {
+            $summary = collect($validated['values'])
+                ->map(function ($v, $key) {
+                    $name = $v['name'] ?? $key;
+                    $val = $v['value'] ?? '';
+                    return $val !== '' ? "{$name}: {$val}" : null;
+                })
+                ->filter()
+                ->implode(' | ');
+            $validated['result_value'] = $summary ?: '(criteria-based result)';
+        }
+
+        $result = $this->labService->enterResult($item, $validated);
+
+        // Persist criteria-based values if provided.
+        if (!empty($validated['values'] ?? []) && $result instanceof LabResult) {
+            $sort = 0;
+            foreach ($validated['values'] as $criteriaId => $row) {
+                $value = $row['value'] ?? null;
+                if ($value === null || $value === '') {
+                    continue;
+                }
+                $result->values()->create([
+                    'criteria_id'     => is_numeric($criteriaId) ? (int) $criteriaId : null,
+                    'name'            => $row['name'] ?? '',
+                    'value'           => (string) $value,
+                    'unit'            => $row['unit'] ?? null,
+                    'reference_range' => $row['reference_range'] ?? null,
+                    'flag'            => $row['flag'] ?? null,
+                    'sort_order'      => $sort++,
+                ]);
+            }
+        }
 
         return back()->with('success', 'Result saved successfully.');
     }

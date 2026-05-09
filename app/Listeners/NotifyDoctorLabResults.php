@@ -9,8 +9,8 @@ class NotifyDoctorLabResults
 {
     public function handle(LabResultsCompleted $event): void
     {
-        $labRequest = $event->labRequest->load('visit.doctor');
-        $doctor = $labRequest->visit?->doctor;
+        $labRequest = $event->labRequest->load('visit.assignedDoctor');
+        $doctor = $labRequest->visit?->assignedDoctor;
 
         if ($doctor) {
             $doctor->notify(new LabRequestNotification($labRequest, 'completed'));
