@@ -81,9 +81,24 @@
                         <td>{{ $visit->assignedDoctor ? 'Dr. ' . $visit->assignedDoctor->full_name : '—' }}</td>
                         <td><small>{{ Str::limit($visit->chief_complaint, 40) ?? '—' }}</small></td>
                         <td>
-                            <a href="{{ route('admin.consultations.show', $visit) }}" class="btn btn-sm btn-primary">
-                                <i class="ti ti-stethoscope me-1"></i>Consult
-                            </a>
+                            @if($visit->status === \App\Enums\VisitStatus::WAITING_CONSULTATION)
+                                @can('consultations.create')
+                                <form method="POST" action="{{ route('admin.consultations.start', $visit) }}" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-warning">
+                                        <i class="ti ti-player-play me-1"></i>Start Consultation
+                                    </button>
+                                </form>
+                                @endcan
+                            @elseif($visit->status === \App\Enums\VisitStatus::CONSULTING)
+                                <a href="{{ route('admin.consultations.show', $visit) }}" class="btn btn-sm btn-success">
+                                    <i class="ti ti-pencil me-1"></i>Continue Consultation
+                                </a>
+                            @else
+                                <a href="{{ route('admin.consultations.show', $visit) }}" class="btn btn-sm btn-primary">
+                                    <i class="ti ti-stethoscope me-1"></i>Consult
+                                </a>
+                            @endif
                         </td>
                     </tr>
                     @empty

@@ -427,6 +427,7 @@ Route::middleware('auth')->group(function () {
             Route::get('consultations/{visit}', [ConsultationController::class, 'show'])->name('consultations.show');
             Route::get('consultations/{visit}/history', [ConsultationController::class, 'history'])->name('consultations.history');
             Route::patch('consultations/{visit}/transition', [ConsultationController::class, 'transitionVisit'])->name('consultations.transition')->middleware('can:visits.transition');
+            Route::post('consultations/{visit}/start', [ConsultationController::class, 'startConsultation'])->name('consultations.start')->middleware('can:consultations.create');
 
             // Referral to another department
             Route::post('consultations/{visit}/refer', [ConsultationController::class, 'refer'])->name('consultations.refer')->middleware('can:consultations.create');
@@ -446,6 +447,7 @@ Route::middleware('auth')->group(function () {
 
                 Route::post('consultations/{visit}/investigations', [ConsultationController::class, 'storeInvestigation'])->name('consultations.investigations.store');
                 Route::delete('consultations/investigations/{investigation}', [ConsultationController::class, 'destroyInvestigation'])->name('consultations.investigations.destroy');
+                Route::delete('consultations/investigation-items/{item}', [ConsultationController::class, 'destroyInvestigationItem'])->name('consultations.investigation-items.destroy');
 
                 Route::post('consultations/{visit}/treatments', [ConsultationController::class, 'storeTreatment'])->name('consultations.treatments.store');
                 Route::delete('consultations/treatments/{treatment}', [ConsultationController::class, 'destroyTreatment'])->name('consultations.treatments.destroy');
@@ -517,6 +519,7 @@ Route::middleware('auth')->group(function () {
                 Route::get('requests', [LabRequestController::class, 'index'])->name('requests.index');
                 Route::get('requests/{labRequest}', [LabRequestController::class, 'show'])->name('requests.show');
                 Route::patch('requests/{labRequest}/accept', [LabRequestController::class, 'accept'])->name('requests.accept')->middleware('can:lab.results.create');
+                Route::post('requests/{labRequest}/accept-selected', [LabRequestController::class, 'acceptSelected'])->name('requests.accept-selected')->middleware('can:lab.results.create');
                 Route::patch('requests/{labRequest}/cancel', [LabRequestController::class, 'cancel'])->name('requests.cancel')->middleware('can:lab.results.create');
             });
 
@@ -526,6 +529,8 @@ Route::middleware('auth')->group(function () {
                 Route::post('results/{item}', [LabResultController::class, 'store'])->name('results.store')->middleware('can:lab.results.create');
                 Route::post('results/batch/{labRequest}', [LabResultController::class, 'batchStore'])->name('results.batch')->middleware('can:lab.results.create');
                 Route::patch('results/{result}/verify', [LabResultController::class, 'verify'])->name('results.verify')->middleware('can:lab.results.create');
+                Route::get('results/{item}/view', [LabResultController::class, 'view'])->name('results.view');
+                Route::get('results/{item}/print', [LabResultController::class, 'print'])->name('results.print');
             });
 
             // Lab Test Catalog Management

@@ -14,6 +14,17 @@ class LabRequestItem extends Model
         'service_id',
         'status',
         'name',
+        'accepted_at',
+        'accepted_by',
+        'billed_at',
+        'invoice_item_id',
+        'unit_price',
+    ];
+
+    protected $casts = [
+        'accepted_at' => 'datetime',
+        'billed_at'   => 'datetime',
+        'unit_price'  => 'decimal:2',
     ];
 
     public function labRequest(): BelongsTo
@@ -59,10 +70,36 @@ class LabRequestItem extends Model
     public function getStatusColorAttribute(): string
     {
         return match ($this->status) {
-            'pending' => 'warning',
+            'pending'    => 'warning',
+            'accepted'   => 'primary',
             'processing' => 'info',
-            'completed' => 'success',
-            default => 'secondary',
+            'completed'  => 'success',
+            'verified'   => 'success',
+            'cancelled'  => 'secondary',
+            'rejected'   => 'danger',
+            default      => 'secondary',
         };
+    }
+
+    public function isAccepted(): bool
+    {
+        return !is_null($this->accepted_at) || in_array($this->status, ['accepted', 'processing', 'completed', 'verified']);
+    }
+
+    public function hasResult(): bool
+    {
+        return $this->result()->exists();
+    }
+
+    /**
+     * Whether this item can still be deleted/cancelled by the requesting doctor.
+     * Forbidden once a result exists or workflow has progressed past entry.
+     */
+    public function isDeletable(): bool
+    {
+        if ($this->hasResult()) {
+            return false;
+        }
+        return in_array($this->status, ['pending', 'rejected', 'cancelled']);
     }
 }

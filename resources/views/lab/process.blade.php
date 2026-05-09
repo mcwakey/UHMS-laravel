@@ -14,12 +14,6 @@
         @if($request->targetDepartment)<small class="text-muted">Department: <strong>{{ $request->targetDepartment->name }}</strong></small>@endif
     </div>
     <div class="d-flex gap-2">
-        @if($request->status === 'pending')
-        <form method="POST" action="{{ route('admin.lab.requests.accept', $request) }}">
-            @csrf @method('PATCH')
-            <button type="submit" class="btn btn-success btn-md"><i class="ti ti-check me-1"></i>Accept Request</button>
-        </form>
-        @endif
         @if(!in_array($request->status, ['completed', 'cancelled']))
         <form method="POST" action="{{ route('admin.lab.requests.cancel', $request) }}" onsubmit="return confirm('Cancel this lab request?')">
             @csrf @method('PATCH')
@@ -28,6 +22,109 @@
         @endif
     </div>
 </div>
+
+@if($request->status === 'pending')
+{{-- ===================== SELECTIVE ACCEPTANCE ===================== --}}
+<div class="card mb-3 border-primary">
+    <div class="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
+        <h6 class="fw-bold mb-0"><i class="ti ti-list-check me-1"></i>Select Items to Accept &amp; Bill</h6>
+        <small class="text-muted"><span id="selCount">0</span> of {{ $request->items->where('status','pending')->count() }} selected</small>
+    </div>
+    <div class="card-body">
+        <form id="acceptSelectedForm" method="POST" action="{{ route('admin.lab.requests.accept-selected', $request) }}">
+            @csrf
+            <div id="acceptSelectedErrors" class="alert alert-danger d-none small py-2 mb-2"></div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-2">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:36px;"><input type="checkbox" id="selectAllItems" class="form-check-input"></th>
+                            <th>Item</th>
+                            <th>Status</th>
+                            <th class="text-end">Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach($request->items as $it)
+                        @php
+                            $price = $it->service?->price ?? null;
+                        @endphp
+                        <tr class="{{ $it->status !== 'pending' ? 'text-muted' : '' }}">
+                            <td>
+                                @if($it->status === 'pending')
+                                    <input type="checkbox" name="item_ids[]" value="{{ $it->id }}" class="form-check-input acceptSelectedCb">
+                                @else
+                                    <i class="ti ti-lock text-muted"></i>
+                                @endif
+                            </td>
+                            <td>
+                                <span class="fw-medium">{{ $it->display_name }}</span>
+                                @if($it->service)<small class="text-muted d-block">{{ $it->service->code ?? '' }}</small>@endif
+                            </td>
+                            <td><span class="badge bg-{{ $it->status_color }}">{{ ucfirst($it->status) }}</span></td>
+                            <td class="text-end">{{ $price !== null ? number_format($price, 2) : '—' }}</td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted"><i class="ti ti-info-circle me-1"></i>Only selected items are accepted &amp; invoiced. Unselected items remain pending.</small>
+                <button type="submit" id="acceptSelectedBtn" class="btn btn-success" disabled>
+                    <i class="ti ti-check me-1"></i>Accept Selected &amp; Generate Invoice
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@push('scripts')
+<script>
+(function() {
+    const form = document.getElementById('acceptSelectedForm');
+    if (!form) return;
+    const cbs   = form.querySelectorAll('.acceptSelectedCb');
+    const all   = document.getElementById('selectAllItems');
+    const cnt   = document.getElementById('selCount');
+    const btn   = document.getElementById('acceptSelectedBtn');
+    const errs  = document.getElementById('acceptSelectedErrors');
+    const sync = () => {
+        const checked = [...cbs].filter(c => c.checked).length;
+        cnt.textContent = checked;
+        btn.disabled = checked === 0;
+        all.checked = checked === cbs.length && cbs.length > 0;
+        all.indeterminate = checked > 0 && checked < cbs.length;
+    };
+    all.addEventListener('change', () => { cbs.forEach(c => c.checked = all.checked); sync(); });
+    cbs.forEach(c => c.addEventListener('change', sync));
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errs.classList.add('d-none');
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing…';
+        try {
+            const fd = new FormData(form);
+            const r = await fetch(form.action, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                body: fd
+            });
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                errs.textContent = data.error || ('Error ' + r.status);
+                errs.classList.remove('d-none');
+                btn.disabled = false; btn.innerHTML = '<i class="ti ti-check me-1"></i>Accept Selected &amp; Generate Invoice';
+                return;
+            }
+            window.location.href = data.redirect || window.location.href;
+        } catch (err) {
+            errs.textContent = err.message;
+            errs.classList.remove('d-none');
+            btn.disabled = false; btn.innerHTML = '<i class="ti ti-check me-1"></i>Accept Selected &amp; Generate Invoice';
+        }
+    });
+})();
+</script>
+@endpush
+@endif
 
 <!-- Request Info -->
 <div class="row g-3 mb-3">
@@ -220,6 +317,11 @@
                             @else - @endif
                         </td>
                         <td class="text-end">
+                            @if($item->result)
+                            <button type="button" class="btn btn-sm btn-outline-info viewResultBtn"
+                                data-url="{{ route('admin.lab.results.view', $item) }}"
+                                title="View Result"><i class="ti ti-eye"></i></button>
+                            @endif
                             @if($item->result && !$item->result->is_verified)
                             @can('lab.results.create')
                             <form method="POST" action="{{ route('admin.lab.results.verify', $item->result) }}" class="d-inline">
@@ -228,9 +330,12 @@
                             </form>
                             @endcan
                             @endif
-                            @if($request->status === 'processing' && $item->status !== 'completed')
+                            @if($item->result && $item->result->is_verified)
+                            <a href="{{ route('admin.lab.results.print', $item) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Print"><i class="ti ti-printer"></i></a>
+                            @endif
+                            @if(in_array($request->status, ['processing']) && in_array($item->status, ['accepted','processing']) && !$item->result)
                             @can('lab.results.create')
-                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#resultModal-{{ $item->id }}"><i class="ti ti-edit"></i></button>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#resultModal-{{ $item->id }}" title="Enter Result"><i class="ti ti-edit"></i></button>
                             @endcan
                             @endif
                         </td>
@@ -244,7 +349,7 @@
 
 {{-- Per-item modals (parameters) --}}
 @foreach($request->items as $item)
-@if($request->status === 'processing' && $item->status !== 'completed')
+@if(in_array($request->status, ['processing']) && in_array($item->status, ['accepted','processing']) && !$item->result)
 <div class="modal fade" id="resultModal-{{ $item->id }}" tabindex="-1">
     <div class="modal-dialog">
         <form method="POST" action="{{ route('admin.lab.results.store', $item) }}" enctype="multipart/form-data" class="modal-content">
@@ -526,4 +631,40 @@
 @endif
 @endforeach
 @endif
+
+{{-- View Result Modal (lazy-loaded via fetch) --}}
+<div class="modal fade" id="viewResultModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ti ti-clipboard-data me-1"></i>Investigation Result</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="viewResultBody">
+                <div class="text-center py-4 text-muted"><div class="spinner-border"></div></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+@push('scripts')
+<script>
+document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.viewResultBtn');
+    if (!btn) return;
+    const modal = new bootstrap.Modal(document.getElementById('viewResultModal'));
+    const body  = document.getElementById('viewResultBody');
+    body.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border"></div></div>';
+    modal.show();
+    try {
+        const r = await fetch(btn.dataset.url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        body.innerHTML = await r.text();
+    } catch (err) {
+        body.innerHTML = '<div class="alert alert-danger">' + err.message + '</div>';
+    }
+});
+</script>
+@endpush
 @endsection

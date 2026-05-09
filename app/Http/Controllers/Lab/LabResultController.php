@@ -140,4 +140,51 @@ class LabResultController extends Controller
             return back()->with('error', $e->getMessage());
         }
     }
+
+    /**
+     * AJAX: render result snippet for modal viewing (used by both lab page and consultation).
+     */
+    public function view(LabRequestItem $item)
+    {
+        $item->load([
+            'labRequest.patient',
+            'service.investigationHeaders.criteria',
+            'service.investigationCriteria',
+            'labTest.criteria',
+            'result.values',
+            'result.performedBy',
+            'result.verifiedBy',
+        ]);
+
+        if (!$item->result) {
+            return response()->view('lab._result_modal', ['item' => $item, 'noResult' => true]);
+        }
+
+        return view('lab._result_modal', ['item' => $item, 'noResult' => false]);
+    }
+
+    /**
+     * Print a verified result.
+     */
+    public function print(LabRequestItem $item)
+    {
+        $item->load([
+            'labRequest.patient',
+            'labRequest.requestedBy',
+            'labRequest.targetDepartment',
+            'labRequest.visit.assignedDoctor',
+            'service.investigationHeaders.criteria',
+            'service.investigationCriteria',
+            'labTest.criteria',
+            'result.values',
+            'result.performedBy',
+            'result.verifiedBy',
+        ]);
+
+        if (!$item->result || !$item->result->is_verified) {
+            abort(403, 'Only verified results can be printed.');
+        }
+
+        return view('lab.print', ['item' => $item]);
+    }
 }

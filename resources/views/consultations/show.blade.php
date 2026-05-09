@@ -120,6 +120,34 @@
 </div>
 
 {{-- ============================================================ --}}
+{{-- CONSULTATION GATING — Start Consultation banner --}}
+{{-- ============================================================ --}}
+@php
+    $canEdit = $visit->status === \App\Enums\VisitStatus::CONSULTING;
+    $needsStart = $visit->status === \App\Enums\VisitStatus::WAITING_CONSULTATION;
+@endphp
+@if($needsStart)
+<div class="card border-warning mb-3">
+    <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <h6 class="fw-bold mb-1 text-warning"><i class="ti ti-player-play me-1"></i>Consultation Not Started</h6>
+            <small class="text-muted">Click <strong>Start Consultation</strong> to begin entering clinical information.</small>
+        </div>
+        @can('consultations.create')
+        <form method="POST" action="{{ route('admin.consultations.start', $visit) }}">
+            @csrf
+            <button type="submit" class="btn btn-warning"><i class="ti ti-player-play me-1"></i>Start Consultation</button>
+        </form>
+        @endcan
+    </div>
+</div>
+@elseif($canEdit)
+<div class="alert alert-success py-2 mb-3 small d-flex align-items-center">
+    <i class="ti ti-pencil me-2"></i><strong>Consultation in progress</strong>&nbsp;— you may now enter clinical information.
+</div>
+@endif
+
+{{-- ============================================================ --}}
 {{-- MAIN 3-COLUMN LAYOUT --}}
 {{-- ============================================================ --}}
 <div class="row g-3">
@@ -505,36 +533,65 @@
                         @endcan
 
                         <div id="investigations-list">
-                            @forelse($record?->investigations ?? [] as $investigation)
-                            <div class="ehr-item" id="investigation-{{ $investigation->id }}">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <p class="mb-1">
-                                            <span class="badge bg-dark">{{ $investigation->investigation_type }}</span>
-                                            @if($investigation->description && $investigation->description !== $investigation->investigation_type) {{ $investigation->description }} @endif
-                                        </p>
-                                        <small class="text-muted">
-                                            Urgency: <span class="badge bg-{{ $investigation->urgency === 'emergency' ? 'danger' : ($investigation->urgency === 'urgent' ? 'warning' : 'secondary') }}">{{ ucfirst($investigation->urgency) }}</span>
-                                            &middot; Status: <span class="badge bg-{{ $investigation->status === 'completed' ? 'success' : ($investigation->status === 'in_progress' ? 'info' : 'warning') }}">{{ ucfirst(str_replace('_', ' ', $investigation->status)) }}</span>
-                                            @if($investigation->notes) &middot; {{ $investigation->notes }} @endif
-                                        </small>
-                                    </div>
-                                    @can('consultations.create')
-                                    <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
-                                            data-url="{{ route('admin.consultations.investigations.destroy', $investigation) }}"
-                                            data-target="#investigation-{{ $investigation->id }}"
-                                            data-badge="badge-investigations"
-                                            data-confirm="Remove this investigation?">
-                                        <i class="ti ti-trash"></i>
-                                    </button>
-                                    @endcan
+                            @php
+                                $allItems = collect($labRequests ?? [])->flatMap(fn($r) => $r->items ?? collect())->filter();
+                                $grouped  = collect($labRequests ?? [])->groupBy(fn($r) => $r->targetDepartment->name ?? 'Other');
+                            @endphp
+                            @if($grouped->isNotEmpty())
+                                @foreach($grouped as $deptName => $reqs)
+                                <div class="mb-3">
+                                    <h6 class="small fw-bold border-bottom pb-1 mb-2 text-uppercase text-muted">
+                                        <i class="ti ti-building-hospital me-1"></i>{{ $deptName }}
+                                        <span class="badge bg-light text-dark ms-1">{{ collect($reqs)->sum(fn($r) => $r->items?->count() ?? 0) }}</span>
+                                    </h6>
+                                    @foreach($reqs as $req)
+                                        @foreach($req->items ?? [] as $item)
+                                        <div class="ehr-item d-flex justify-content-between align-items-start" id="lab-item-{{ $item->id }}">
+                                            <div class="flex-grow-1">
+                                                <p class="mb-1">
+                                                    <strong>{{ $item->display_name ?? $item->name }}</strong>
+                                                    <span class="badge bg-{{ $item->status_color }} ms-1">{{ ucfirst($item->status) }}</span>
+                                                    @if($item->result?->is_verified)
+                                                        <span class="badge bg-success ms-1"><i class="ti ti-check"></i> Verified</span>
+                                                    @elseif($item->result)
+                                                        <span class="badge bg-warning ms-1">Unverified</span>
+                                                    @endif
+                                                </p>
+                                                <small class="text-muted">
+                                                    Req #{{ $req->request_number }} &middot; {{ $req->created_at?->format('d M H:i') }}
+                                                    @if($item->accepted_at) &middot; Accepted {{ $item->accepted_at->format('d M H:i') }} @endif
+                                                </small>
+                                            </div>
+                                            <div class="d-flex gap-1">
+                                                @if($item->result)
+                                                <button type="button" class="btn btn-xs btn-outline-info viewResultBtn"
+                                                        data-url="{{ route('admin.lab.results.view', $item) }}"
+                                                        title="View Result"><i class="ti ti-eye"></i></button>
+                                                @endif
+                                                @if($item->result?->is_verified)
+                                                <a href="{{ route('admin.lab.results.print', $item) }}" target="_blank" class="btn btn-xs btn-outline-secondary" title="Print"><i class="ti ti-printer"></i></a>
+                                                @endif
+                                                @can('consultations.create')
+                                                @if($item->isDeletable() && $canEdit)
+                                                <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                                        data-url="{{ route('admin.consultations.investigation-items.destroy', $item) }}"
+                                                        data-method="DELETE"
+                                                        data-target="#lab-item-{{ $item->id }}"
+                                                        data-confirm="Remove this investigation item?"
+                                                        title="Delete"><i class="ti ti-trash"></i></button>
+                                                @endif
+                                                @endcan
+                                            </div>
+                                        </div>
+                                        @endforeach
+                                    @endforeach
                                 </div>
-                            </div>
-                            @empty
+                                @endforeach
+                            @else
                             <div class="text-center text-muted py-4" id="investigations-empty">
                                 <i class="ti ti-test-pipe fs-1 d-block mb-2"></i>No investigations requested yet.
                             </div>
-                            @endforelse
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -1377,6 +1434,24 @@ $visitHistoryJson = $history['records']->map(function($r) {
 })->values();
 @endphp
 
+{{-- View Result Modal (used by investigations tab) --}}
+<div class="modal fade" id="viewResultModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ti ti-clipboard-data me-1"></i>Investigation Result</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="viewResultBody">
+                <div class="text-center py-4 text-muted"><div class="spinner-border"></div></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -1399,6 +1474,38 @@ window.destroyUrls    = {
 window.diagnosisBaseUrl  = '{{ url("admin/consultations/diagnoses") }}';
 window.deptServicesBase  = '{{ url("admin/departments") }}';
 window.prescriptionDestroyBase = '{{ url("admin/consultations/prescriptions") }}';
+window.canEditConsultation = @json($canEdit);
+@if(!$canEdit)
+document.addEventListener('DOMContentLoaded', () => {
+    // Disable all clinical entry forms until consultation is started
+    document.querySelectorAll('[data-ajax-form]').forEach(form => {
+        form.querySelectorAll('input, select, textarea, button').forEach(el => { el.disabled = true; });
+        form.classList.add('opacity-50');
+    });
+    // Disable Add toggles (buttons that open clinical-entry collapses/modals)
+    document.querySelectorAll('button[data-bs-target^="#add"], button[data-bs-target="#investigationModal"], button[data-bs-target="#referralModal"], button[data-bs-target="#savePatternModal"]').forEach(b => {
+        b.disabled = true; b.classList.add('disabled');
+    });
+});
+@endif
+
+/* View Investigation Result modal loader */
+document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.viewResultBtn');
+    if (!btn) return;
+    const modalEl = document.getElementById('viewResultModal');
+    if (!modalEl) return;
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    const body  = document.getElementById('viewResultBody');
+    body.innerHTML = '<div class="text-center py-4 text-muted"><div class="spinner-border"></div></div>';
+    modal.show();
+    try {
+        const r = await fetch(btn.dataset.url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        body.innerHTML = await r.text();
+    } catch (err) {
+        body.innerHTML = '<div class="alert alert-danger">' + err.message + '</div>';
+    }
+});
 
 var visitHistoryData = window.visitHistoryData;
 var csrfToken = window.csrfToken;

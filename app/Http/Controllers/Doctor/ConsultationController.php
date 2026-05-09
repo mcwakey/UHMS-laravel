@@ -11,6 +11,7 @@ use App\Models\Department;
 use App\Models\Diagnosis;
 use App\Models\Drug;
 use App\Models\Investigation;
+use App\Models\LabRequestItem;
 use App\Models\PatientProcedure;
 use App\Models\Procedure;
 use App\Models\ServiceCatalog;
@@ -22,6 +23,7 @@ use App\Services\LabService;
 use App\Services\MedicalPatternService;
 use App\Services\PrescriptionService;
 use App\Services\VisitService;
+use App\Services\VisitWorkflowService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
@@ -35,10 +37,49 @@ class ConsultationController extends Controller
         protected LabService $labService,
         protected ClinicalService $clinicalService,
     ) {}
-    
+
     private function shouldReturnJson(Request $request): bool
     {
         return $request->ajax() && ! $request->headers->has('X-Inertia');
+    }
+
+    /**
+     * Doctor explicitly starts the consultation (WAITING_CONSULTATION → CONSULTING).
+     */
+    public function startConsultation(Request $request, Visit $visit, VisitWorkflowService $workflow)
+    {
+        try {
+            $workflow->startConsultation($visit, Auth::user());
+        } catch (\Throwable $e) {
+            if ($this->shouldReturnJson($request)) {
+                return response()->json(['error' => $e->getMessage()], 422);
+            }
+            return back()->with('error', $e->getMessage());
+        }
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json(['success' => 'Consultation started.', 'redirect' => route('admin.consultations.show', $visit)]);
+        }
+        return redirect()->route('admin.consultations.show', $visit)->with('success', 'Consultation started.');
+    }
+
+    /**
+     * Delete a single LabRequestItem (doctor-side cancel) — disallowed once a result exists.
+     */
+    public function destroyInvestigationItem(Request $request, LabRequestItem $item)
+    {
+        if (!$item->isDeletable()) {
+            $msg = 'Cannot delete this investigation: a result has already been entered.';
+            if ($this->shouldReturnJson($request)) {
+                return response()->json(['error' => $msg], 422);
+            }
+            return back()->with('error', $msg);
+        }
+        $item->update(['status' => 'cancelled']);
+        if ($this->shouldReturnJson($request)) {
+            return response()->json(['success' => 'Investigation removed.']);
+        }
+        return back()->with('success', 'Investigation removed.');
     }
 
     /**
@@ -57,9 +98,8 @@ class ConsultationController extends Controller
 
         $query = Visit::with(['patient', 'assignedDoctor', 'medicalRecord', 'currentDepartment'])
             ->whereIn('status', [
+                VisitStatus::WAITING_CONSULTATION->value,
                 VisitStatus::CONSULTING->value,
-                VisitStatus::TRIAGE->value,
-                VisitStatus::LAB->value,
             ]);
 
         /** @var \App\Models\User|null $user */

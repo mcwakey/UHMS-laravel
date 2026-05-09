@@ -126,4 +126,24 @@ class VisitWorkflowService
 
         return $visit->fresh();
     }
+
+    /**
+     * Doctor explicitly starts a consultation. Transitions WAITING_CONSULTATION → CONSULTING.
+     */
+    public function startConsultation(Visit $visit, ?\App\Models\User $doctor = null): Visit
+    {
+        if ($visit->status === VisitStatus::CONSULTING) {
+            return $visit;
+        }
+        if ($visit->status !== VisitStatus::WAITING_CONSULTATION) {
+            throw new \RuntimeException('Consultation can only be started from waiting status. Current: ' . $visit->status->label());
+        }
+
+        $doctor = $doctor ?: \Illuminate\Support\Facades\Auth::user();
+        if ($doctor && $visit->assigned_doctor_id === null) {
+            $visit->update(['assigned_doctor_id' => $doctor->id]);
+        }
+
+        return $this->transition($visit, VisitStatus::CONSULTING, 'Doctor started consultation');
+    }
 }

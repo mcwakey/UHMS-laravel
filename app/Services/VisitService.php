@@ -435,7 +435,7 @@ class VisitService
         // Determine next visit status based on triage score
         $nextStatus = match ($score) {
             TriageScore::EMERGENCY => VisitStatus::EMERGENCY,
-            default                => VisitStatus::CONSULTING,
+            default                => VisitStatus::WAITING_CONSULTATION,
         };
 
         // Assign consultation department if provided
