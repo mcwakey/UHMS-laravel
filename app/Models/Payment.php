@@ -64,6 +64,11 @@ class Payment extends Model
         return $this->belongsTo(User::class, 'received_by');
     }
 
+    public function allocations()
+    {
+        return $this->hasMany(PaymentAllocation::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Accessors

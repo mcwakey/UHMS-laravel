@@ -380,27 +380,29 @@ class VisitController extends Controller
     private function autoCreateInvoiceForVisit(Visit $visit): void
     {
         try {
-            // Skip if an invoice already exists for this visit (idempotent).
-            if ($visit->invoices()->exists()) {
-                return;
+            $visit->loadMissing(['visitServices.serviceCatalog', 'visitInsurance.insuranceProvider']);
+
+            $invoiceService = app(\App\Services\InvoiceService::class);
+            $invoice = $invoiceService->getOrCreateVisitInvoice($visit);
+
+            foreach ($visit->visitServices as $vs) {
+                if (! $vs->serviceCatalog) continue;
+                try {
+                    $this->billingService->addItemToVisitInvoice(
+                        $visit,
+                        $vs->serviceCatalog,
+                        'visit_service',
+                        $vs->id,
+                        (int) ($vs->quantity ?? 1),
+                        $vs->department_id ?? null,
+                    );
+                } catch (\RuntimeException $e) {
+                    // already billed for this visit_service → skip silently
+                    if (! str_contains($e->getMessage(), 'Duplicate')) {
+                        throw $e;
+                    }
+                }
             }
-
-            $items = $this->billingService->generateItemsFromVisit($visit);
-            if (empty($items)) {
-                return;
-            }
-
-            $billingType = $this->resolveBillingType($visit);
-
-            $this->billingService->createInvoice([
-                'visit_id'     => $visit->id,
-                'patient_id'   => $visit->patient_id,
-                'billing_type' => $billingType,
-                'tax_amount'   => 0,
-                'discount_amount' => 0,
-                'due_date'     => now()->addDays(30),
-                'notes'        => 'Auto-generated on visit creation.',
-            ], $items);
         } catch (\Throwable $e) {
             Log::warning('Auto invoice creation failed for visit ' . $visit->id . ': ' . $e->getMessage());
         }

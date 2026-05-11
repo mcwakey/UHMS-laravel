@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\InvoiceStatus;
 use App\Enums\VisitStatus;
-use App\Events\PaymentRecorded;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
@@ -20,7 +19,154 @@ class BillingService
         protected InsuranceService $insuranceService,
         protected VisitWorkflowService $visitWorkflowService,
         protected ServicePriceResolver $priceResolver,
-    ) {}
+        protected ?InvoiceService $invoiceService = null,
+    ) {
+        $this->invoiceService = $this->invoiceService ?: app(InvoiceService::class);
+    }
+
+    /**
+     * Add a single billable item to the visit's (single) invoice.
+     *
+     * Enforces:
+     *  - exactly one active invoice per visit (delegates to InvoiceService::getOrCreateVisitInvoice)
+     *  - duplicate-billing prevention on (source_type, source_id)
+     *  - centralised insurance-aware pricing snapshot via ServicePriceResolver
+     *  - insurance limit/fallback evaluation via InsuranceService
+     *  - automatic invoice total + status recalculation
+     *
+     * @return \App\Models\InvoiceItem
+     * @throws \RuntimeException on duplicate billing
+     */
+    public function addItemToVisitInvoice(
+        Visit $visit,
+        ServiceCatalog $service,
+        string $sourceType,
+        ?int $sourceId = null,
+        int $quantity = 1,
+        ?int $departmentId = null,
+        ?string $description = null,
+    ): InvoiceItem {
+        if ($quantity < 1) {
+            throw new \RuntimeException('Quantity must be at least 1.');
+        }
+
+        return DB::transaction(function () use ($visit, $service, $sourceType, $sourceId, $quantity, $departmentId, $description) {
+            $invoice = $this->invoiceService->getOrCreateVisitInvoice($visit);
+
+            // Duplicate guard: same source_type+source_id may only appear once per invoice.
+            if ($sourceId !== null) {
+                $dup = InvoiceItem::where('invoice_id', $invoice->id)
+                    ->where('source_type', $sourceType)
+                    ->where('source_id', $sourceId)
+                    ->exists();
+                if ($dup) {
+                    throw new \RuntimeException(
+                        "Duplicate billing prevented for {$sourceType}#{$sourceId} on invoice {$invoice->invoice_number}."
+                    );
+                }
+            }
+
+            // Resolve insurance-aware pricing snapshot.
+            $snap        = $this->priceResolver->resolveForVisit($service, $visit);
+            $unitPrice   = (float) ($snap['selected_price'] ?? $service->price);
+            $cashPrice   = (float) ($snap['cash_price']     ?? $service->price);
+            $payerType   = $snap['payer_type']           ?? 'cash';
+            $providerId  = $snap['insurance_provider_id'] ?? null;
+            $insType     = $snap['insurance_type']        ?? null;
+            $pricingSrc  = $snap['pricing_source']        ?? 'cash_price';
+            $lineTotal   = round($unitPrice * $quantity, 2);
+            $discount    = max(0.0, round(($cashPrice - $unitPrice) * $quantity, 2));
+
+            // Evaluate insurance coverage subject to limits, with running offset.
+            $visit->loadMissing('visitInsurance.insuranceProvider');
+            $visitIns   = $visit->visitInsurance;
+            $hasIns     = $visitIns && $visitIns->is_active && ! $visitIns->is_expired
+                && $visitIns->insuranceProvider && ! $visitIns->insuranceProvider->is_default;
+
+            $coveredAmount = 0.0;
+            $coverageReason = null;
+            if ($hasIns && $payerType === 'insurance') {
+                $sessionOffset = (float) InvoiceItem::where('invoice_id', $invoice->id)->sum('insurance_covered');
+                $eval = $this->insuranceService->evaluateCoverage($visitIns, $visit, $lineTotal, $sessionOffset);
+                if ($eval['can_use']) {
+                    $coveredAmount  = (float) $eval['covered_amount'];
+                    $coverageReason = $eval['reason'] ?? null;
+                }
+            }
+
+            $patientPayable = round($lineTotal - $coveredAmount, 2);
+            $patientPayable = max(0.0, $patientPayable);
+
+            $item = InvoiceItem::create([
+                'invoice_id'            => $invoice->id,
+                'visit_id'              => $visit->id,
+                'patient_id'            => $invoice->patient_id,
+                'service_catalog_id'    => $service->id,
+                'department_id'         => $departmentId ?? $service->department_id,
+                'source_type'           => $sourceType,
+                'source_id'             => $sourceId,
+                'description'           => $description ?: $service->name,
+                'quantity'              => $quantity,
+                'unit_price'            => $unitPrice,
+                'insurance_price'       => $payerType === 'insurance' ? $unitPrice : null,
+                'insurance_covered'     => $coveredAmount,
+                'patient_payable'       => $patientPayable,
+                'paid_amount'           => 0,
+                'balance'               => $patientPayable,
+                'payment_status'        => $patientPayable > 0 ? 'unpaid' : 'paid',
+                'total_price'           => $lineTotal,
+                'is_nhis_covered'       => $coveredAmount > 0,
+                'nhis_approved_amount'  => $coveredAmount,
+                'cash_price'            => $cashPrice,
+                'selected_price'        => $unitPrice,
+                'discount_amount'       => $discount,
+                'payer_type'            => $payerType,
+                'insurance_provider_id' => $providerId,
+                'patient_insurance_id'  => $hasIns ? $visitIns->id : null,
+                'insurance_type'        => $insType,
+                'pricing_source'        => $pricingSrc,
+                'created_by'            => Auth::id(),
+            ]);
+
+            // Record insurance usage so future items on the same visit honour caps.
+            if ($coveredAmount > 0 && $hasIns) {
+                $this->insuranceService->recordUsage(
+                    $visitIns, $visit, $coveredAmount,
+                    $patientPayable, $coverageReason, $invoice->id
+                );
+            }
+
+            // Update invoice header totals + status.
+            $this->invoiceService->recalculateTotals($invoice->fresh('items'));
+
+            return $item->fresh();
+        });
+    }
+
+    /**
+     * Convenience: skip if already billed; return existing item.
+     */
+    public function addItemIfNotBilled(
+        Visit $visit,
+        ServiceCatalog $service,
+        string $sourceType,
+        int $sourceId,
+        int $quantity = 1,
+        ?int $departmentId = null,
+        ?string $description = null,
+    ): InvoiceItem {
+        $invoice  = $this->invoiceService->getOrCreateVisitInvoice($visit);
+        $existing = InvoiceItem::where('invoice_id', $invoice->id)
+            ->where('source_type', $sourceType)
+            ->where('source_id', $sourceId)
+            ->first();
+        if ($existing) {
+            return $existing;
+        }
+        return $this->addItemToVisitInvoice(
+            $visit, $service, $sourceType, $sourceId, $quantity, $departmentId, $description
+        );
+    }
 
     /**
      * Create an invoice for a visit.
@@ -73,22 +219,38 @@ class BillingService
                 $lineTotal  = $unitPrice * $quantity;
                 $cashPrice  = $item['cash_price'] ?? $unitPrice;
                 $discount   = $item['discount_amount'] ?? max(0, ($cashPrice - $unitPrice) * $quantity);
+                $covered    = (float) ($item['nhis_approved_amount'] ?? 0);
+                $payable    = max(0.0, round($lineTotal - $covered, 2));
 
                 InvoiceItem::create([
                     'invoice_id'           => $invoice->id,
+                    'visit_id'             => $data['visit_id'],
+                    'patient_id'           => $data['patient_id'],
                     'service_catalog_id'   => $item['service_catalog_id'] ?? null,
+                    'department_id'        => $item['department_id'] ?? null,
+                    'source_type'          => $item['source_type'] ?? null,
+                    'source_id'            => $item['source_id'] ?? null,
                     'description'          => $item['description'],
                     'quantity'             => $quantity,
                     'unit_price'           => $unitPrice,
+                    'insurance_price'      => ($item['payer_type'] ?? null) === 'insurance' ? $unitPrice : null,
+                    'insurance_covered'    => $covered,
+                    'patient_payable'      => $payable,
+                    'paid_amount'          => 0,
+                    'balance'              => $payable,
+                    'payment_status'       => $payable > 0 ? 'unpaid' : 'paid',
                     'total_price'          => $lineTotal,
                     'is_nhis_covered'      => $item['is_nhis_covered'] ?? false,
-                    'nhis_approved_amount' => $item['nhis_approved_amount'] ?? 0,
+                    'nhis_approved_amount' => $covered,
                     'cash_price'           => $cashPrice,
                     'selected_price'       => $unitPrice,
                     'discount_amount'      => $discount,
                     'payer_type'           => $item['payer_type'] ?? null,
                     'insurance_provider_id' => $item['insurance_provider_id'] ?? null,
+                    'patient_insurance_id' => $item['patient_insurance_id'] ?? null,
+                    'insurance_type'       => $item['insurance_type'] ?? null,
                     'pricing_source'       => $item['pricing_source'] ?? null,
+                    'created_by'           => Auth::id(),
                 ]);
 
                 // Record usage for items that were evaluated at invoice time
@@ -126,52 +288,15 @@ class BillingService
 
     /**
      * Record a payment against an invoice.
+     *
+     * Backward-compatible: when called without explicit allocations the payment
+     * is auto-distributed across unpaid invoice items (oldest first). For
+     * itemised payments, use PaymentService::recordPayment directly with
+     * the allocations array.
      */
-    public function recordPayment(Invoice $invoice, array $data): Payment
+    public function recordPayment(Invoice $invoice, array $data, array $allocations = []): Payment
     {
-        $payment = DB::transaction(function () use ($invoice, $data) {
-            $paymentNumber = Payment::generateNumber('PAY', 'payments', 'payment_number');
-
-            $payment = Payment::create([
-                'payment_number'   => $paymentNumber,
-                'invoice_id'       => $invoice->id,
-                'patient_id'       => $invoice->patient_id,
-                'amount'           => $data['amount'],
-                'payment_method'   => $data['payment_method'],
-                'reference_number' => $data['reference_number'] ?? null,
-                'received_by'      => Auth::id(),
-                'notes'            => $data['notes'] ?? null,
-                'paid_at'          => $data['paid_at'] ?? now(),
-            ]);
-
-            $totalPaid = $invoice->amount_paid + $data['amount'];
-            $balance   = $invoice->total_amount - $totalPaid;
-
-            $status = InvoiceStatus::PARTIALLY_PAID;
-            if ($balance <= 0) {
-                $status  = InvoiceStatus::PAID;
-                $balance = 0;
-            }
-
-            $invoice->update([
-                'amount_paid' => $totalPaid,
-                'balance'     => $balance,
-                'status'      => $status->value,
-            ]);
-
-            if ($status === InvoiceStatus::PAID) {
-                $visit = $invoice->visit;
-                if ($visit && $visit->status === VisitStatus::BILLING) {
-                    $this->visitWorkflowService->completeAfterPayment($visit);
-                }
-            }
-
-            return $payment->load('invoice', 'patient');
-        });
-
-        PaymentRecorded::dispatch($payment);
-
-        return $payment;
+        return app(PaymentService::class)->recordPayment($invoice, $data, $allocations);
     }
 
     /**

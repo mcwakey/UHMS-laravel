@@ -156,7 +156,11 @@ class PaymentController extends Controller
             return back()->with('error', 'Open a cashier shift before accepting cash payments.');
         }
 
-        $payment = $this->billingService->recordPayment($invoice, $validated);
+        $payment = $this->billingService->recordPayment(
+            $invoice,
+            $validated,
+            $validated['allocations'] ?? [],
+        );
         $payment->loadMissing(['invoice.visit']);
         $invoice->refresh();
         $visit = $invoice->visit?->fresh();

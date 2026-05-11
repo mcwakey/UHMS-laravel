@@ -21,6 +21,9 @@ class StorePaymentRequest extends FormRequest
             'reference_number' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'paid_at' => ['nullable', 'date'],
+            'allocations' => ['nullable', 'array'],
+            'allocations.*.invoice_item_id' => ['required_with:allocations', 'integer', 'exists:invoice_items,id'],
+            'allocations.*.amount' => ['required_with:allocations', 'numeric', 'min:0.01'],
         ];
     }
 }

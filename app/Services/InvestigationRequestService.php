@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\BillingType;
 use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 use App\Models\User;
@@ -46,55 +45,42 @@ class InvestigationRequestService
                 throw new \RuntimeException('Only pending items can be accepted. Some selected items are already processed.');
             }
 
-            // Build invoice items snapshot (only for selected, billable items)
+            // Bill each selected item against the single visit invoice.
             $visit = $labRequest->visit;
-            $invoiceItemsPayload = [];
+            $invoice = null;
+            $billedCount = 0;
             foreach ($items as $item) {
                 $service = $item->service;
                 if (!$service) {
-                    // Free-text or test-catalog-only items have no service price → skip billing for them
-                    // but still mark accepted.
+                    // Free-text or test-catalog-only items have no service price → skip billing
                     continue;
                 }
-                $snap = $this->priceResolver->resolveForVisit($service, $visit);
-                $unitPrice = (float) ($snap['selected_price'] ?? 0);
-                $invoiceItemsPayload[] = [
-                    'service_catalog_id'    => $service->id,
-                    'description'           => $service->name . ' — ' . $labRequest->request_number,
-                    'quantity'              => 1,
-                    'unit_price'            => $unitPrice,
-                    'is_nhis_covered'       => false,
-                    'nhis_approved_amount'  => 0,
-                    'cash_price'            => $snap['cash_price'] ?? $unitPrice,
-                    'discount_amount'       => $snap['discount_amount'] ?? 0,
-                    'payer_type'            => $snap['payer_type'] ?? 'cash',
-                    'insurance_provider_id' => $snap['insurance_provider_id'] ?? null,
-                    'pricing_source'        => $snap['pricing_source'] ?? 'cash_price',
-                    '_lab_request_item_id'  => $item->id,
-                ];
-            }
-
-            $invoice = null;
-            if (!empty($invoiceItemsPayload)) {
-                $invoice = $this->billingService->createInvoice([
-                    'visit_id'     => $visit->id,
-                    'patient_id'   => $labRequest->patient_id,
-                    'billing_type' => $visit?->visitInsurance?->is_active ? BillingType::INSURANCE->value : BillingType::CASH->value,
-                    'notes'        => 'Auto-generated for investigation request ' . $labRequest->request_number,
-                ], $invoiceItemsPayload);
-
-                // Map invoice items back to lab_request_items by service_catalog_id + service id
-                $invoice->loadMissing('items');
-                foreach ($invoiceItemsPayload as $payload) {
-                    $invItem = $invoice->items->firstWhere('service_catalog_id', $payload['service_catalog_id']);
-                    if ($invItem) {
-                        LabRequestItem::where('id', $payload['_lab_request_item_id'])->update([
-                            'invoice_item_id' => $invItem->id,
-                            'unit_price'      => $payload['unit_price'],
-                            'billed_at'       => now(),
-                        ]);
+                try {
+                    $invItem = $this->billingService->addItemToVisitInvoice(
+                        $visit,
+                        $service,
+                        'lab_request_item',
+                        $item->id,
+                        1,
+                        null,
+                        $service->name . ' — ' . $labRequest->request_number,
+                    );
+                } catch (\RuntimeException $e) {
+                    // Already billed earlier — fetch existing line.
+                    $invItem = \App\Models\InvoiceItem::where('source_type', 'lab_request_item')
+                        ->where('source_id', $item->id)
+                        ->first();
+                    if (! $invItem) {
+                        throw $e;
                     }
                 }
+                LabRequestItem::where('id', $item->id)->update([
+                    'invoice_item_id' => $invItem->id,
+                    'unit_price'      => $invItem->unit_price,
+                    'billed_at'       => now(),
+                ]);
+                $invoice = $invItem->invoice;
+                $billedCount++;
             }
 
             // Mark all selected items accepted (whether billed or not).

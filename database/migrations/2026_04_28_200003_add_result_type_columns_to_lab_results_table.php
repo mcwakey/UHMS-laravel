@@ -1,37 +1,41 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
+    private function cols(): array
+    {
+        return array_map(fn ($r) => $r->Field, DB::select('SHOW COLUMNS FROM `lab_results`'));
+    }
+
     public function up(): void
     {
-        if (Schema::hasColumn('lab_results', 'result_type')) {
-            return; // already exists
-        }
-        Schema::table('lab_results', function (Blueprint $table) {
-            // Make result_value nullable — richtext/file results don't use it
-            $table->text('result_value')->nullable()->change();
+        $existing = $this->cols();
+        if (in_array('result_type', $existing)) return; // already exists
 
-            // New columns for multi-type result support
-            $table->string('result_type')->default('parameters')->after('lab_request_id');
-            $table->longText('result_text')->nullable()->after('result_value');
-            $table->string('result_file')->nullable()->after('result_text');
-            $table->string('result_file_name')->nullable()->after('result_file');
-        });
+        // Ensure result_value is nullable via MODIFY — use raw SQL to avoid generation_expression issue.
+        // Only needed if the column is currently NOT NULL.
+        $rvRow = collect(DB::select('SHOW COLUMNS FROM `lab_results`'))->firstWhere('Field', 'result_value');
+        if ($rvRow && $rvRow->Null === 'NO') {
+            DB::statement('ALTER TABLE `lab_results` MODIFY COLUMN `result_value` TEXT NULL');
+        }
+
+        $adds = [];
+        if (!in_array('result_type', $existing))      $adds[] = "ADD COLUMN `result_type` VARCHAR(191) NOT NULL DEFAULT 'parameters' AFTER `lab_request_id`";
+        if (!in_array('result_text', $existing))      $adds[] = 'ADD COLUMN `result_text` LONGTEXT NULL AFTER `result_value`';
+        if (!in_array('result_file', $existing))      $adds[] = 'ADD COLUMN `result_file` VARCHAR(191) NULL AFTER `result_text`';
+        if (!in_array('result_file_name', $existing)) $adds[] = 'ADD COLUMN `result_file_name` VARCHAR(191) NULL AFTER `result_file`';
+        if (!empty($adds)) DB::statement('ALTER TABLE `lab_results` ' . implode(', ', $adds));
     }
 
     public function down(): void
     {
-        if (! Schema::hasColumn('lab_results', 'result_type')) {
-            return;
-        }
+        $existing = $this->cols();
+        if (!in_array('result_type', $existing)) return;
 
-        Schema::table('lab_results', function (Blueprint $table) {
-            $table->text('result_value')->nullable(false)->change();
-            $table->dropColumn(['result_type', 'result_text', 'result_file', 'result_file_name']);
-        });
+        $toDrop = array_filter(['result_type','result_text','result_file','result_file_name'], fn ($c) => in_array($c, $existing));
+        if (!empty($toDrop)) DB::statement('ALTER TABLE `lab_results` ' . implode(', ', array_map(fn ($c) => "DROP COLUMN `{$c}`", $toDrop)));
     }
 };

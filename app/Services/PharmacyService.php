@@ -2,15 +2,13 @@
 
 namespace App\Services;
 
-use App\Enums\BillingType;
-use App\Enums\InvoiceStatus;
+
 use App\Enums\PrescriptionStatus;
 use App\Events\StockLow;
 use App\Models\DispensingRecord;
 use App\Models\Drug;
 use App\Models\DrugCategory;
 use App\Models\DrugStock;
-use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
@@ -268,93 +266,39 @@ class PharmacyService
             $this->updatePrescriptionStatus($prescription);
 
             // ── BILLING ──────────────────────────────────────────────────
-            // Add an invoice line for the dispensed drugs
+            // Add an invoice line on the visit's single invoice for the dispensed drugs
             if ($prescription->visit_id && $drug->price > 0) {
                 $unitPrice = (float) $drug->price;
-                $lineTotal = $unitPrice * $quantity;
+                $lineTotal = round($unitPrice * $quantity, 2);
 
-                // Find the visit's latest open invoice, or create one
-                $invoice = Invoice::where('visit_id', $prescription->visit_id)
-                    ->whereNotIn('status', [InvoiceStatus::PAID->value, InvoiceStatus::CANCELLED->value])
-                    ->latest()
-                    ->first();
+                $visit = \App\Models\Visit::find($prescription->visit_id);
+                if ($visit) {
+                    $invoice = app(\App\Services\InvoiceService::class)->getOrCreateVisitInvoice($visit);
 
-                if (!$invoice) {
-                    $invoice = Invoice::create([
-                        'invoice_number'  => Invoice::generateNumber('INV', 'invoices', 'invoice_number'),
-                        'visit_id'        => $prescription->visit_id,
-                        'patient_id'      => $prescription->patient_id,
-                        'billing_type'    => BillingType::CASH->value,
-                        'subtotal'        => 0,
-                        'tax_amount'      => 0,
-                        'discount_amount' => 0,
-                        'nhis_amount'     => 0,
-                        'total_amount'    => 0,
-                        'amount_paid'     => 0,
-                        'balance'         => 0,
-                        'status'          => InvoiceStatus::PENDING->value,
-                        'due_date'        => now()->addDays(30),
-                        'created_by'      => Auth::id(),
+                    InvoiceItem::create([
+                        'invoice_id'          => $invoice->id,
+                        'visit_id'            => $visit->id,
+                        'patient_id'          => $prescription->patient_id,
+                        'department_id'       => null,
+                        'source_type'         => 'prescription_item',
+                        'source_id'           => $item->id,
+                        'description'         => $drug->display_name . ' × ' . $quantity . ' ' . ($drug->unit ?? 'unit(s)'),
+                        'quantity'            => $quantity,
+                        'unit_price'          => $unitPrice,
+                        'total_price'         => $lineTotal,
+                        'patient_payable'     => $lineTotal,
+                        'paid_amount'         => 0,
+                        'balance'             => $lineTotal,
+                        'payment_status'      => 'unpaid',
+                        'cash_price'          => $unitPrice,
+                        'selected_price'      => $unitPrice,
+                        'payer_type'          => 'cash',
+                        'pricing_source'      => 'drug_price',
+                        'created_by'          => Auth::id(),
                     ]);
 
-                    // Seed consultation + visit service charges into the new invoice
-                    $visit = \App\Models\Visit::with('visitServices.serviceCatalog')->find($prescription->visit_id);
-                    if ($visit) {
-                        foreach ($visit->visitServices as $vs) {
-                            $cat = $vs->serviceCatalog;
-                            if (!$cat) continue;
-                            $svcTotal = (float) $vs->unit_price * (int) $vs->quantity;
-                            InvoiceItem::create([
-                                'invoice_id'          => $invoice->id,
-                                'service_catalog_id'  => $vs->service_catalog_id,
-                                'description'         => $cat->name,
-                                'quantity'            => $vs->quantity,
-                                'unit_price'          => $vs->unit_price,
-                                'total_price'         => $svcTotal,
-                                'is_nhis_covered'     => (float) $vs->insurance_covered > 0,
-                                'nhis_approved_amount'=> (float) $vs->insurance_covered,
-                            ]);
-                        }
-
-                        // If no consultation service was in visitServices, auto-add one
-                        $hasConsultation = $visit->visitServices
-                            ->filter(fn($vs) => $vs->serviceCatalog && $vs->serviceCatalog->category === 'consultation')
-                            ->isNotEmpty();
-
-                        if (!$hasConsultation) {
-                            $consultationSvc = \App\Models\ServiceCatalog::where('category', 'consultation')
-                                ->where('is_active', true)
-                                ->first();
-                            if ($consultationSvc) {
-                                InvoiceItem::create([
-                                    'invoice_id'  => $invoice->id,
-                                    'service_catalog_id' => $consultationSvc->id,
-                                    'description' => $consultationSvc->name,
-                                    'quantity'    => 1,
-                                    'unit_price'  => (float) $consultationSvc->price,
-                                    'total_price' => (float) $consultationSvc->price,
-                                ]);
-                            }
-                        }
-                    }
+                    app(\App\Services\InvoiceService::class)->recalculateTotals($invoice->fresh('items'));
                 }
-
-                InvoiceItem::create([
-                    'invoice_id'  => $invoice->id,
-                    'description' => $drug->display_name . ' × ' . $quantity . ' ' . ($drug->unit ?? 'unit(s)'),
-                    'quantity'    => $quantity,
-                    'unit_price'  => $unitPrice,
-                    'total_price' => $lineTotal,
-                ]);
-
-                // Recalculate invoice totals
-                $newSubtotal = (float) $invoice->items()->sum('total_price');
-                $newTotal    = $newSubtotal + (float) $invoice->tax_amount - (float) $invoice->discount_amount;
-                $invoice->update([
-                    'subtotal'     => $newSubtotal,
-                    'total_amount' => $newTotal,
-                    'balance'      => max(0, $newTotal - (float) $invoice->amount_paid),
-                ]);
             }
             // ─────────────────────────────────────────────────────────────
 

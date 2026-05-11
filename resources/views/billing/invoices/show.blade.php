@@ -112,6 +112,25 @@
                         'insurance_type_default' => ['Insurance Type',  'info'],
                         'base_price'             => ['Base Price',      'light text-dark'],
                     ];
+                    $sourceTypeLabels = [
+                        'visit_service'     => 'Consultation / Visit Services',
+                        'lab_request_item'  => 'Investigations',
+                        'prescription_item' => 'Pharmacy',
+                        'ward_charge'       => 'Ward / Admission',
+                        'scan_request_item' => 'Scans',
+                        'xray_request_item' => 'X-Ray',
+                        'procedure'         => 'Procedures',
+                    ];
+                    $statusBadge = [
+                        'paid'           => 'success',
+                        'partially_paid' => 'warning',
+                        'unpaid'         => 'danger',
+                        'waived'         => 'info',
+                        'cancelled'      => 'secondary',
+                        'voided'         => 'secondary',
+                    ];
+                    $groupedItems = $invoice->items->sortBy(['source_type', 'id']);
+                    $currentGroup = null;
                 @endphp
                 <div class="table-responsive mb-4">
                     <table class="table table-bordered table-sm align-middle">
@@ -123,23 +142,35 @@
                                 <th class="text-center">Qty</th>
                                 <th class="text-end">Cash Price</th>
                                 <th class="text-end">Billed Price</th>
-                                <th class="text-end">Benefit</th>
                                 <th class="text-end">Total</th>
-                                <th class="text-center">Insurance</th>
                                 <th class="text-end">Covered</th>
+                                <th class="text-end">Paid</th>
+                                <th class="text-end">Balance</th>
+                                <th class="text-center">Status</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($invoice->items as $idx => $item)
+                            @foreach($groupedItems as $idx => $item)
                             @php
                                 $cashPrice = $item->cash_price !== null ? (float) $item->cash_price : (float) $item->unit_price;
-                                $benefit   = (float) ($item->discount_amount ?? max(0, ($cashPrice - (float) $item->unit_price) * (int) $item->quantity));
                                 $src       = $item->pricing_source ?? 'cash_and_carry';
                                 $meta      = $sourceLabels[$src] ?? [ucfirst(str_replace('_',' ',$src)), 'light text-dark'];
                                 $payer     = $item->payer_type ?? 'cash';
+                                $groupKey  = $item->source_type ?: 'other';
+                                $groupLabel = $sourceTypeLabels[$groupKey] ?? ucfirst(str_replace('_',' ',$groupKey));
+                                $payStatus  = $item->payment_status ?: 'unpaid';
+                                $payColor   = $statusBadge[$payStatus] ?? 'secondary';
                             @endphp
+                            @if($currentGroup !== $groupKey)
+                            <tr class="table-secondary">
+                                <th colspan="11" class="small text-uppercase">
+                                    <i class="ti ti-folder me-1"></i>{{ $groupLabel }}
+                                </th>
+                            </tr>
+                            @php $currentGroup = $groupKey; @endphp
+                            @endif
                             <tr>
-                                <td>{{ $idx + 1 }}</td>
+                                <td>{{ $loop->iteration }}</td>
                                 <td>
                                     {{ $item->description }}
                                     @if($item->serviceCatalog)
@@ -160,27 +191,20 @@
                                     <div class="small text-muted text-decoration-line-through">&#8373;{{ number_format($cashPrice, 2) }}</div>
                                     @endif
                                 </td>
-                                <td class="text-end">
-                                    @if($benefit > 0)
-                                    <span class="text-success">&#8373;{{ number_format($benefit, 2) }}</span>
-                                    @else
-                                    —
-                                    @endif
-                                </td>
                                 <td class="text-end fw-medium">&#8373;{{ number_format($item->total_price, 2) }}</td>
-                                <td class="text-center">
-                                    @if($item->is_nhis_covered)
-                                    <span class="badge bg-success">Yes</span>
-                                    @else
-                                    <span class="text-muted">—</span>
-                                    @endif
-                                </td>
                                 <td class="text-end">
-                                    @if($item->nhis_approved_amount > 0)
-                                    &#8373;{{ number_format($item->nhis_approved_amount, 2) }}
+                                    @if((float) $item->insurance_covered > 0)
+                                    <span class="text-success">&#8373;{{ number_format($item->insurance_covered, 2) }}</span>
                                     @else
                                     —
                                     @endif
+                                </td>
+                                <td class="text-end">&#8373;{{ number_format($item->paid_amount, 2) }}</td>
+                                <td class="text-end {{ (float) $item->balance > 0 ? 'text-danger fw-semibold' : 'text-muted' }}">
+                                    &#8373;{{ number_format($item->balance, 2) }}
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-{{ $payColor }} text-uppercase">{{ str_replace('_',' ', $payStatus) }}</span>
                                 </td>
                             </tr>
                             @endforeach
@@ -311,6 +335,44 @@
                         <label class="form-label fw-medium">Reference / Transaction ID</label>
                         <input type="text" name="reference_number" class="form-control" placeholder="e.g. MoMo Transaction ID">
                     </div>
+
+                    {{-- Per-line allocations: optional. If none ticked, payment auto-distributes oldest-first. --}}
+                    @php
+                        $unpaidItems = $invoice->items->filter(function($i){
+                            return !in_array($i->payment_status, ['paid','cancelled','voided'])
+                                && (float) $i->balance > 0;
+                        })->values();
+                    @endphp
+                    @if($unpaidItems->isNotEmpty())
+                    <div class="mb-3">
+                        <details>
+                            <summary class="fw-medium text-primary" style="cursor:pointer;">
+                                <i class="ti ti-list-check me-1"></i>Pay specific items
+                                <small class="text-muted">(optional — leave unchecked to auto-distribute)</small>
+                            </summary>
+                            <div class="mt-2 border rounded p-2" style="max-height:260px;overflow:auto;">
+                                @foreach($unpaidItems as $uIdx => $uItem)
+                                <div class="row g-1 align-items-center mb-2 py-1 border-bottom">
+                                    <div class="col-auto">
+                                        <input type="checkbox" class="form-check-input alloc-toggle" data-row="{{ $uIdx }}">
+                                    </div>
+                                    <div class="col">
+                                        <div class="small fw-medium">{{ $uItem->description }}</div>
+                                        <div class="small text-muted">Balance: &#8373;{{ number_format($uItem->balance, 2) }}</div>
+                                        <input type="hidden" name="allocations[{{ $uIdx }}][invoice_item_id]" value="{{ $uItem->id }}" disabled class="alloc-id">
+                                    </div>
+                                    <div class="col-4">
+                                        <input type="number" step="0.01" min="0.01" max="{{ $uItem->balance }}"
+                                            name="allocations[{{ $uIdx }}][amount]"
+                                            value="{{ number_format($uItem->balance, 2, '.', '') }}"
+                                            class="form-control form-control-sm alloc-amount" disabled>
+                                    </div>
+                                </div>
+                                @endforeach
+                            </div>
+                        </details>
+                    </div>
+                    @endif
 
                     <div class="mb-3">
                         <label class="form-label fw-medium">Notes</label>
@@ -505,6 +567,32 @@ $(function() {
         let needsRef = ['mtn_momo', 'vodafone_cash', 'airteltigo_money', 'bank_transfer', 'card', 'cheque'].includes(method);
         referenceGroup.toggle(needsRef);
     }).trigger('change');
+
+    // Line-allocation toggle: enable amount + hidden id when checkbox ticked,
+    // and sum allocations into the main amount field.
+    function syncAllocations() {
+        const $rows = $('.alloc-toggle');
+        if (!$rows.length) return;
+        let any = false, sum = 0;
+        $rows.each(function() {
+            const $row    = $(this).closest('.row');
+            const $idHid  = $row.find('.alloc-id');
+            const $amount = $row.find('.alloc-amount');
+            const on = $(this).is(':checked');
+            $idHid.prop('disabled', !on);
+            $amount.prop('disabled', !on);
+            if (on) {
+                any = true;
+                sum += parseFloat($amount.val() || 0);
+            }
+        });
+        if (any) {
+            $('#paymentAmountInput').val(sum.toFixed(2)).prop('readonly', true);
+        } else {
+            $('#paymentAmountInput').prop('readonly', false);
+        }
+    }
+    $(document).on('change', '.alloc-toggle, .alloc-amount', syncAllocations);
 
     paymentForm.on('submit', async function(event) {
         event.preventDefault();
