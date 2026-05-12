@@ -181,6 +181,8 @@ class VisitController extends Controller
             'visitInsurance.insuranceTier',
             'visitServices.serviceCatalog',
             'visitServices.department',
+            'invoices.items.department',
+            'invoices.items.serviceCatalog',
             'triage.triagedBy',
             'triage.department',
             'departmentHistory.department',

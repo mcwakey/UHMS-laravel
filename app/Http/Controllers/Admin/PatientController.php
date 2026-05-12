@@ -77,6 +77,7 @@ class PatientController extends Controller
                 'member_type'            => 'holder',
                 'membership_number'     => ($ins['membership_number'] ?? null) ?: null,
                 'policy_number'         => ($ins['policy_number'] ?? null) ?: null,
+                'ccc_code'              => ($ins['ccc_code'] ?? null) ?: null,
                 'expiry_date'           => ($ins['expiry_date'] ?? null) ?: null,
                 'is_primary'            => $index === 0,
                 'is_active'             => true,

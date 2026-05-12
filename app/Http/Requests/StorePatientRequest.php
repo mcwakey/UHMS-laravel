@@ -70,6 +70,7 @@ class StorePatientRequest extends FormRequest
             'insurances.*.insurance_tier_id'      => ['nullable', 'exists:insurance_tiers,id'],
             'insurances.*.membership_number'      => ['nullable', 'string', 'max:100'],
             'insurances.*.policy_number'          => ['nullable', 'string', 'max:100'],
+            'insurances.*.ccc_code'               => ['nullable', 'string', 'max:64'],
             'insurances.*.expiry_date'            => ['nullable', 'date', 'after:today'],
         ];
     }

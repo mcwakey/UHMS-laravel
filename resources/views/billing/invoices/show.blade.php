@@ -139,11 +139,10 @@
                                 <th>#</th>
                                 <th>Description</th>
                                 <th>Pricing</th>
-                                <th class="text-center">Qty</th>
-                                <th class="text-end">Cash Price</th>
-                                <th class="text-end">Billed Price</th>
+                                <th class="text-end">Selected Price</th>
                                 <th class="text-end">Total</th>
                                 <th class="text-end">Covered</th>
+                                <th class="text-end">Patient Payable</th>
                                 <th class="text-end">Paid</th>
                                 <th class="text-end">Balance</th>
                                 <th class="text-center">Status</th>
@@ -152,7 +151,9 @@
                         <tbody>
                             @foreach($groupedItems as $idx => $item)
                             @php
-                                $cashPrice = $item->cash_price !== null ? (float) $item->cash_price : (float) $item->unit_price;
+                                $selectedPrice = $item->selected_price !== null
+                                    ? (float) $item->selected_price
+                                    : (float) ($item->unit_price ?? 0);
                                 $src       = $item->pricing_source ?? 'cash_and_carry';
                                 $meta      = $sourceLabels[$src] ?? [ucfirst(str_replace('_',' ',$src)), 'light text-dark'];
                                 $payer     = $item->payer_type ?? 'cash';
@@ -163,7 +164,7 @@
                             @endphp
                             @if($currentGroup !== $groupKey)
                             <tr class="table-secondary">
-                                <th colspan="11" class="small text-uppercase">
+                                <th colspan="10" class="small text-uppercase">
                                     <i class="ti ti-folder me-1"></i>{{ $groupLabel }}
                                 </th>
                             </tr>
@@ -183,14 +184,7 @@
                                         <i class="ti ti-{{ $payer === 'insurance' ? 'shield-check' : 'cash' }} me-1"></i>{{ ucfirst($payer) }}
                                     </div>
                                 </td>
-                                <td class="text-center">{{ $item->quantity }}</td>
-                                <td class="text-end">&#8373;{{ number_format($cashPrice, 2) }}</td>
-                                <td class="text-end">
-                                    <span class="fw-semibold">&#8373;{{ number_format($item->unit_price, 2) }}</span>
-                                    @if($cashPrice > $item->unit_price)
-                                    <div class="small text-muted text-decoration-line-through">&#8373;{{ number_format($cashPrice, 2) }}</div>
-                                    @endif
-                                </td>
+                                <td class="text-end fw-semibold">&#8373;{{ number_format($selectedPrice, 2) }}</td>
                                 <td class="text-end fw-medium">&#8373;{{ number_format($item->total_price, 2) }}</td>
                                 <td class="text-end">
                                     @if((float) $item->insurance_covered > 0)
@@ -199,6 +193,7 @@
                                     —
                                     @endif
                                 </td>
+                                <td class="text-end">&#8373;{{ number_format($item->patient_payable, 2) }}</td>
                                 <td class="text-end">&#8373;{{ number_format($item->paid_amount, 2) }}</td>
                                 <td class="text-end {{ (float) $item->balance > 0 ? 'text-danger fw-semibold' : 'text-muted' }}">
                                     &#8373;{{ number_format($item->balance, 2) }}

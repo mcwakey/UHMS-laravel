@@ -67,15 +67,15 @@ class BillingService
             }
 
             // Resolve insurance-aware pricing snapshot.
-            $snap        = $this->priceResolver->resolveForVisit($service, $visit);
-            $unitPrice   = (float) ($snap['selected_price'] ?? $service->price);
-            $cashPrice   = (float) ($snap['cash_price']     ?? $service->price);
-            $payerType   = $snap['payer_type']           ?? 'cash';
-            $providerId  = $snap['insurance_provider_id'] ?? null;
-            $insType     = $snap['insurance_type']        ?? null;
-            $pricingSrc  = $snap['pricing_source']        ?? 'cash_price';
-            $lineTotal   = round($unitPrice * $quantity, 2);
-            $discount    = max(0.0, round(($cashPrice - $unitPrice) * $quantity, 2));
+            $snap          = $this->priceResolver->resolveForVisit($service, $visit);
+            $selectedPrice = (float) ($snap['selected_price'] ?? $service->price);
+            $cashPrice     = (float) ($snap['cash_price']     ?? $service->price);
+            $payerType     = $snap['payer_type']           ?? 'cash';
+            $providerId    = $snap['insurance_provider_id'] ?? null;
+            $insType       = $snap['insurance_type']        ?? null;
+            $pricingSrc    = $snap['pricing_source']        ?? 'cash_price';
+            $lineTotal     = round($selectedPrice * $quantity, 2);
+            $discount      = max(0.0, round(($cashPrice - $selectedPrice) * $quantity, 2));
 
             // Evaluate insurance coverage subject to limits, with running offset.
             $visit->loadMissing('visitInsurance.insuranceProvider');
@@ -107,18 +107,20 @@ class BillingService
                 'source_id'             => $sourceId,
                 'description'           => $description ?: $service->name,
                 'quantity'              => $quantity,
-                'unit_price'            => $unitPrice,
-                'insurance_price'       => $payerType === 'insurance' ? $unitPrice : null,
+                // Simplified pricing model — `selected_price` is the canonical
+                // per-unit price applied. `unit_price` is kept in sync for
+                // backwards compatibility with legacy readers but should be
+                // considered deprecated.
+                'selected_price'        => $selectedPrice,
+                'unit_price'            => $selectedPrice,
+                'cash_price'            => $cashPrice,
+                'insurance_price'       => $payerType === 'insurance' ? $selectedPrice : null,
                 'insurance_covered'     => $coveredAmount,
                 'patient_payable'       => $patientPayable,
                 'paid_amount'           => 0,
                 'balance'               => $patientPayable,
                 'payment_status'        => $patientPayable > 0 ? 'unpaid' : 'paid',
                 'total_price'           => $lineTotal,
-                'is_nhis_covered'       => $coveredAmount > 0,
-                'nhis_approved_amount'  => $coveredAmount,
-                'cash_price'            => $cashPrice,
-                'selected_price'        => $unitPrice,
                 'discount_amount'       => $discount,
                 'payer_type'            => $payerType,
                 'insurance_provider_id' => $providerId,

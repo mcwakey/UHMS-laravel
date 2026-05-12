@@ -38,6 +38,7 @@ class ServicePricingService
     /**
      * @return array{
      *   unit_price: float,
+     *   selected_price: float,
      *   insurance_price: ?float,
      *   total_price: float,
      *   insurance_covered: float,
@@ -56,13 +57,15 @@ class ServicePricingService
         $quantity = max(1, $quantity);
         $snapshot = $this->resolver->resolveForInsurance($service, $patientInsurance);
 
-        $unitPrice  = $snapshot['cash_price'];
-        $totalPrice = round($snapshot['selected_price'] * $quantity, 2);
-        $isCash     = $snapshot['payer_type'] === 'cash';
+        $unitPrice     = $snapshot['cash_price'];
+        $selectedPrice = (float) $snapshot['selected_price'];
+        $totalPrice    = round($selectedPrice * $quantity, 2);
+        $isCash        = $snapshot['payer_type'] === 'cash';
 
         if ($isCash) {
             return [
                 'unit_price'            => $unitPrice,
+                'selected_price'        => $selectedPrice,
                 'insurance_price'       => null,
                 'total_price'           => $totalPrice,
                 'insurance_covered'     => 0.0,
@@ -74,12 +77,13 @@ class ServicePricingService
             ];
         }
 
-        $insurancePrice    = $snapshot['selected_price'];
+        $insurancePrice    = $selectedPrice;
         $insuranceCovered  = round($snapshot['discount_amount'] * $quantity, 2);
         $patientPayable    = $totalPrice; // before constraint engine
 
         return [
             'unit_price'            => $unitPrice,
+            'selected_price'        => $selectedPrice,
             'insurance_price'       => $insurancePrice,
             'total_price'           => $totalPrice,
             'insurance_covered'     => $insuranceCovered,

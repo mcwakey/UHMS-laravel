@@ -85,7 +85,11 @@
         @php
             $isWaiting  = $visit->status === \App\Enums\VisitStatus::WAITING;
             $isTriage   = $visit->status === \App\Enums\VisitStatus::TRIAGE;
-            $serviceDepts = $visit->visitServices->pluck('department')->filter()->unique('id');
+            $serviceDepts = $visit->invoices
+                ->flatMap->items
+                ->pluck('department')
+                ->filter()
+                ->unique('id');
 
             // Statuses that can use the department send button (triage or at a service dept)
             $canSendToDept = in_array($visit->status, [
@@ -335,86 +339,115 @@
             </div>
         </div>
 
-        <!-- Visit Services -->
-        @if($visit->visitServices->isNotEmpty())
+        <!-- Visit Invoice (replaces legacy visit_services display) -->
+        @php
+            $visitInvoice = $visit->invoices
+                ->whereNotIn('status', [\App\Enums\InvoiceStatus::CANCELLED ?? null, \App\Enums\InvoiceStatus::REFUNDED ?? null])
+                ->sortByDesc('id')
+                ->first();
+        @endphp
+        @if($visitInvoice && $visitInvoice->items->isNotEmpty())
         @php
             $sourceLabels = [
-                'cash_and_carry'     => ['Cash & Carry',    'secondary'],
-                'provider_specific'  => ['Provider Rate',   'success'],
-                'insurance_type'     => ['Insurance Type',  'info'],
-                'base_price'         => ['Base Price',      'light text-dark'],
+                'cash_and_carry'         => ['Cash & Carry',    'secondary'],
+                'cash_price'             => ['Cash & Carry',    'secondary'],
+                'provider_specific'      => ['Provider Rate',   'success'],
+                'payer_specific_price'   => ['Provider Rate',   'success'],
+                'insurance_type'         => ['Insurance Type',  'info'],
+                'insurance_type_default' => ['Insurance Type',  'info'],
+                'base_price'             => ['Base Price',      'light text-dark'],
+                'drug_price'             => ['Drug Price',      'light text-dark'],
             ];
+            $sourceTypeLabels = [
+                'visit_service'     => 'Consultation / Visit Services',
+                'lab_request_item'  => 'Investigations',
+                'prescription_item' => 'Pharmacy',
+                'ward_charge'       => 'Ward / Admission',
+                'scan_request_item' => 'Scans',
+                'xray_request_item' => 'X-Ray',
+                'procedure'         => 'Procedures',
+            ];
+            $groupedItems = $visitInvoice->items->sortBy(['source_type', 'id']);
+            $currentGroup = null;
         @endphp
         <div class="card mb-3">
-            <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-receipt me-1"></i>Visit Services</h6>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0">
+                    <i class="ti ti-receipt me-1"></i>Visit Invoice
+                    <span class="badge bg-secondary ms-2">{{ $visitInvoice->invoice_number }}</span>
+                </h6>
+                @can('billing.view')
+                <a href="{{ route('admin.billing.invoices.show', $visitInvoice) }}" class="btn btn-sm btn-outline-primary">
+                    <i class="ti ti-external-link me-1"></i>Open Invoice
+                </a>
+                @endcan
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-sm mb-0 align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th>Service</th>
+                                <th>Service / Description</th>
                                 <th>Pricing</th>
-                                <th class="text-center">Qty</th>
-                                <th class="text-end">Price</th>
-                                <th class="text-end">Insurance</th>
-                                <th class="text-end">Patient Pays</th>
+                                <th class="text-end">Selected Price</th>
                                 <th class="text-end">Total</th>
+                                <th class="text-end">Patient Pays</th>
+                                <th class="text-end">Balance</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @php $totalAmt = 0; $totalIns = 0; $totalPatient = 0; @endphp
-                            @foreach($visit->visitServices as $vs)
+                            @php $totalAmt = 0; $totalIns = 0; $totalPatient = 0; $totalBalance = 0; @endphp
+                            @foreach($groupedItems as $item)
                             @php
-                                $src   = $vs->pricing_source ?? 'base_price';
-                                $meta  = $sourceLabels[$src] ?? [ucfirst(str_replace('_',' ',$src)), 'light text-dark'];
-                                $payType = $vs->payment_type ?? 'cash';
-                                $patientPays = $vs->patient_payable ?? ($vs->total_price - ($vs->insurance_covered ?? 0));
+                                $src       = $item->pricing_source ?? 'cash_and_carry';
+                                $meta      = $sourceLabels[$src] ?? [ucfirst(str_replace('_',' ',$src)), 'light text-dark'];
+                                $payer     = $item->payer_type ?? 'cash';
+                                $groupKey  = $item->source_type ?: 'other';
+                                $groupLabel = $sourceTypeLabels[$groupKey] ?? ucfirst(str_replace('_',' ',$groupKey));
+                                $selectedPrice = $item->selected_price !== null ? (float) $item->selected_price : (float) ($item->unit_price ?? 0);
                             @endphp
+                            @if($currentGroup !== $groupKey)
+                            <tr class="table-secondary">
+                                <th colspan="6" class="small text-uppercase">
+                                    <i class="ti ti-folder me-1"></i>{{ $groupLabel }}
+                                </th>
+                            </tr>
+                            @php $currentGroup = $groupKey; @endphp
+                            @endif
                             <tr>
                                 <td>
-                                    <div class="fw-medium small">{{ $vs->serviceCatalog?->name ?? '—' }}</div>
-                                    @if($vs->department)
-                                        <span class="badge bg-light text-dark mt-1">{{ $vs->department->name }}</span>
+                                    <div class="fw-medium small">{{ $item->description }}</div>
+                                    @if($item->department)
+                                        <span class="badge bg-light text-dark mt-1">{{ $item->department->name }}</span>
                                     @endif
                                 </td>
                                 <td>
                                     <span class="badge bg-{{ $meta[1] }}">{{ $meta[0] }}</span>
                                     <div class="small text-muted mt-1">
-                                        <i class="ti ti-{{ $payType === 'insurance' ? 'shield-check' : 'cash' }} me-1"></i>{{ ucfirst($payType) }}
+                                        <i class="ti ti-{{ $payer === 'insurance' ? 'shield-check' : 'cash' }} me-1"></i>{{ ucfirst($payer) }}
                                     </div>
                                 </td>
-                                <td class="text-center">{{ $vs->quantity }}</td>
-                                <td class="text-end">
-                                    @if(!is_null($vs->insurance_price) && $payType === 'insurance')
-                                        <div class="fw-semibold small">&#8373;{{ number_format($vs->insurance_price, 2) }}</div>
-                                        <div class="text-muted small text-decoration-line-through">&#8373;{{ number_format($vs->unit_price, 2) }}</div>
-                                    @else
-                                        <span class="fw-semibold small">&#8373;{{ number_format($vs->unit_price, 2) }}</span>
-                                    @endif
+                                <td class="text-end fw-semibold small">&#8373;{{ number_format($selectedPrice, 2) }}</td>
+                                <td class="text-end small">&#8373;{{ number_format($item->total_price, 2) }}</td>
+                                <td class="text-end small">&#8373;{{ number_format($item->patient_payable, 2) }}</td>
+                                <td class="text-end small {{ (float) $item->balance > 0 ? 'text-danger fw-semibold' : 'text-muted' }}">
+                                    &#8373;{{ number_format($item->balance, 2) }}
                                 </td>
-                                <td class="text-end text-success small">&#8373;{{ number_format($vs->insurance_covered ?? 0, 2) }}</td>
-                                <td class="text-end small">&#8373;{{ number_format($patientPays, 2) }}</td>
-                                <td class="text-end fw-medium">&#8373;{{ number_format($vs->total_price, 2) }}</td>
                             </tr>
                             @php
-                                $totalAmt     += $vs->total_price;
-                                $totalIns     += ($vs->insurance_covered ?? 0);
-                                $totalPatient += $patientPays;
+                                $totalAmt     += $item->total_price;
+                                $totalIns     += ($item->insurance_covered ?? 0);
+                                $totalPatient += $item->patient_payable;
+                                $totalBalance += $item->balance;
                             @endphp
                             @endforeach
                         </tbody>
                         <tfoot>
                             <tr class="table-light fw-bold">
-                                <td colspan="4" class="text-end">Subtotal:</td>
-                                <td class="text-end text-success">&#8373;{{ number_format($totalIns, 2) }}</td>
+                                <td colspan="3" class="text-end">Subtotal:</td>
+                                <td class="text-end">&#8373;{{ number_format($totalAmt, 2) }}</td>
                                 <td class="text-end">&#8373;{{ number_format($totalPatient, 2) }}</td>
-                                <td class="text-end">&#8373;{{ number_format($totalAmt, 2) }}</td>
-                            </tr>
-                            <tr class="table-warning fw-bold">
-                                <td colspan="6" class="text-end">Overall Total:</td>
-                                <td class="text-end">&#8373;{{ number_format($totalAmt, 2) }}</td>
+                                <td class="text-end {{ $totalBalance > 0 ? 'text-danger' : 'text-success' }}">&#8373;{{ number_format($totalBalance, 2) }}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -422,6 +455,9 @@
             </div>
         </div>
         @endif
+
+        {{-- Legacy visit_services block intentionally removed.
+             Visit billing is now represented by the visit invoice above. --}}
 
         <!-- Status Timeline -->
         <div class="card">
@@ -613,31 +649,31 @@
                         </tbody>
                     </table>
                 </div>
-                @if($visit->visitServices->isNotEmpty())
+                @if($visitInvoice && $visitInvoice->items->isNotEmpty())
                 <div class="border-top px-3 py-2">
-                    <p class="text-muted small fw-bold mb-1">Services</p>
+                    <p class="text-muted small fw-bold mb-1">Invoice Items</p>
                     <div class="d-flex flex-column gap-1">
-                        @foreach($visit->visitServices as $vs)
+                        @foreach($visitInvoice->items as $invItem)
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <span class="small fw-medium">{{ $vs->serviceCatalog?->name ?? '—' }}</span>
-                                @if($vs->payment_type === 'insurance')
+                                <span class="small fw-medium">{{ $invItem->description }}</span>
+                                @if(($invItem->payer_type ?? 'cash') === 'insurance')
                                     <span class="badge bg-info-subtle text-info ms-1" style="font-size:0.6rem"><i class="ti ti-shield-check"></i></span>
                                 @endif
-                                @if($vs->department)
-                                    <span class="badge bg-light text-dark ms-1 small">{{ $vs->department->name }}</span>
+                                @if($invItem->department)
+                                    <span class="badge bg-light text-dark ms-1 small">{{ $invItem->department->name }}</span>
                                 @endif
                             </div>
                             <div class="text-end small text-muted">
-                                x{{ $vs->quantity }} &bull; &#8373;{{ number_format($vs->total_price, 2) }}
+                                &#8373;{{ number_format($invItem->total_price, 2) }}
                             </div>
                         </div>
                         @endforeach
                     </div>
                     @php
-                        $visitTotal   = $visit->visitServices->sum('total_price');
-                        $visitIns     = $visit->visitServices->sum('insurance_covered');
-                        $visitPatient = $visit->visitServices->sum(fn($vs) => $vs->patient_payable ?? ($vs->total_price - ($vs->insurance_covered ?? 0)));
+                        $visitTotal   = $visitInvoice->items->sum('total_price');
+                        $visitIns     = $visitInvoice->items->sum('insurance_covered');
+                        $visitPatient = $visitInvoice->items->sum('patient_payable');
                     @endphp
                     <div class="d-flex justify-content-between border-top mt-2 pt-1 small">
                         <span class="text-muted">Insurance Covers</span>

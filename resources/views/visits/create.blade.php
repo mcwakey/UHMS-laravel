@@ -360,6 +360,11 @@
                         </div>
 
                         <div class="col-md-6">
+                            <label class="form-label">CCC Code <small class="text-muted">(optional)</small></label>
+                            <input type="text" name="ccc_code" class="form-control" maxlength="64">
+                        </div>
+
+                        <div class="col-md-6">
                             <label class="form-label">Member Type</label>
                             <select name="member_type" class="form-select">
                                 <option value="holder" selected>Card Holder</option>

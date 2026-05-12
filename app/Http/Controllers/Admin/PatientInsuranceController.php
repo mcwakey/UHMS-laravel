@@ -21,6 +21,7 @@ class PatientInsuranceController extends Controller
             'card_holder_insurance_id' => ['nullable', 'exists:patient_insurances,id'],
             'membership_number'        => ['nullable', 'string', 'max:50'],
             'policy_number'            => ['nullable', 'string', 'max:50'],
+            'ccc_code'                 => ['nullable', 'string', 'max:64'],
             'expiry_date'              => ['nullable', 'date'],
             'is_primary'               => ['nullable', 'boolean'],
         ]);
@@ -89,6 +90,7 @@ class PatientInsuranceController extends Controller
             'card_holder_insurance_id' => ['nullable', 'exists:patient_insurances,id'],
             'membership_number'        => ['nullable', 'string', 'max:50'],
             'policy_number'            => ['nullable', 'string', 'max:50'],
+            'ccc_code'                 => ['nullable', 'string', 'max:64'],
             'expiry_date'              => ['nullable', 'date'],
             'is_primary'               => ['nullable', 'boolean'],
             'is_active'                => ['nullable', 'boolean'],

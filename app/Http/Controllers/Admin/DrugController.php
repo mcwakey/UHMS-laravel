@@ -80,7 +80,7 @@ class DrugController extends Controller
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:drug_categories,id',
-            'name' => 'required|string|max:255',
+            'name' => 'required|string|max:255|unique:drugs,name',
             'generic_name' => 'nullable|string|max:255',
             'brand_name' => 'nullable|string|max:255',
             'dosage_form' => 'required|string|max:100',
@@ -105,7 +105,7 @@ class DrugController extends Controller
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:drug_categories,id',
-            'name' => 'required|string|max:255',
+            'name' => "required|string|max:255|unique:drugs,name,{$drug->id}",
             'generic_name' => 'nullable|string|max:255',
             'brand_name' => 'nullable|string|max:255',
             'dosage_form' => 'required|string|max:100',

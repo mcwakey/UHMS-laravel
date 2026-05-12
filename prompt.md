@@ -1,191 +1,184 @@
 You are a senior Laravel + Inertia/Vue architect working on **UHMS — Ultimate Hospital Management System**.
 
-We need to redesign the billing system around a **single invoice per visit** model with centralized, insurance-aware pricing.
+We need to fix several issues around **modules loading, pharmacy drug saving, CCC code storage, insurance pricing simplification, invoice_items cleanup, invoice display, and removal of visit_services dependency**.
 
-Focus only on billing, invoice, payments, insurance pricing consistency, and related department billing flows. Do not refactor unrelated modules.
-
----
-
-# 1. Main Objective
-
-Implement this billing model:
-
-```text
-One Visit
-    ↓
-One Main Invoice
-    ↓
-Many Invoice Items
-    ↓
-Many Payments
-    ↓
-Payments allocated to specific invoice items
-```
-
-The goal is to avoid creating many separate invoices for one patient visit.
-
-Every billable action during a visit must add items to the same visit invoice.
+Focus only on these issues. Do not refactor unrelated modules.
 
 ---
 
-# 2. Core Billing Rule
+# 1. Main Problems to Fix
 
-For every visit:
+Fix the following:
 
-```text
-1 Visit = 1 Invoice
-```
+1. Modules are not loading.
+2. Pharmacy cannot add more than one drug.
+3. Adding drugs redirects with HTTP `302` and shows no useful error.
+4. CCC code is not being saved anywhere.
+5. Coverage should be removed from insurance and price calculation.
+6. `invoice_items` model/table needs cleanup.
+7. Remove fields no longer needed:
 
-The invoice should be created automatically when the visit starts or when the first billable item is added.
+   * `unit_price`
+   * `is_nhis_covered`
+   * `nhis_approved_amount`
+   * any NHIS-specific/relevance fields no longer required
+8. Use `selected_price` instead of `unit_price` in views.
+9. On invoice view page, remove:
 
-There must never be multiple active invoices for the same visit.
-
-Enforce this with logic and, if possible, a unique database constraint on:
-
-```text
-invoices.visit_id
-```
-
----
-
-# 3. Department Billing Behavior
-
-All departments must add billable items to the same visit invoice.
-
-Examples:
-
-```text
-Visit Invoice
-├── Consultation service
-├── Investigation service
-├── Pharmacy item
-├── Procedure
-├── Ward charge
-├── Scan
-├── X-ray
-└── Other billable services
-```
-
-Do not create separate invoices for:
-
-* consultation
-* lab
-* scan
-* x-ray
-* pharmacy
-* ward
-* procedure
-
-Instead, create invoice items under the visit’s main invoice.
+   * Qty column
+   * Cash Price column
+10. Remove `visit_services` table usage from the project.
+11. Display the visit’s invoice instead of visit services.
 
 ---
 
-# 4. Centralized Billing Service Rule
+# 2. Fix Modules Not Loading
 
-No module, controller, or Vue component should create invoice items directly.
+Investigate why modules are not loading.
 
-Every billable action must go through:
+Check:
 
-```php
-BillingService::addItemToVisitInvoice(...)
+* `modules` table
+* module seeders
+* module middleware
+* `ModuleService`
+* sidebar module filtering
+* route middleware
+* permission checks
+* cache issues
+* config cache
+* database records
+* frontend props/shared Inertia data
+
+Required behavior:
+
+* Core modules must always load.
+* Enabled optional modules must load.
+* Disabled modules must not load.
+* Sidebar must show enabled modules according to user permission.
+* Module state should not break route loading.
+
+After fixing, run or recommend:
+
+```bash
+php artisan optimize:clear
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
 ```
 
-`BillingService` must call:
-
-```php
-ServicePricingService::resolvePriceForVisitService(...)
-```
-
-and, where relevant:
-
-```php
-InsuranceService::evaluateCoverage(...)
-```
-
-This ensures consistent pricing across:
-
-* visit creation
-* triage/consultation billing
-* investigation acceptance
-* pharmacy dispensing
-* ward charges
-* procedures
-* scans
-* x-rays
+If module state is cached, refresh cache after module updates.
 
 ---
 
-# 5. Insurance Pricing Consistency
+# 3. Fix Pharmacy Drug Saving Issue
 
-Currently, visit creation respects insurance pricing, but investigation/pharmacy billing does not always pick the patient’s insurance price.
+Currently, the user cannot add more than one drug. The save request redirects with status `302`, no useful error appears, and the drug does not save.
 
-Fix this.
+Investigate and fix.
 
-All invoice items, regardless of source department, must use the same insurance-aware pricing logic.
+Check:
 
-Pricing priority:
+* route method
+* form method
+* form action
+* CSRF token
+* validation rules
+* request payload
+* controller method
+* service method
+* model `$fillable`
+* database required fields
+* unique constraints
+* quantity calculation
+* stock availability calculation
+* duplicate drug prevention logic
+* whether the system wrongly blocks adding a second drug
+* whether validation errors are being lost after redirect
+* whether Inertia/Vue form is not displaying errors
+* whether the save button submits correctly
+* whether modal/form is being dismissed too early
 
-```text
-Provider-specific insurance service price
-    ↓
-General insurance type service price
-    ↓
-Base price / Cash and Carry price
-```
+Required behavior:
 
-Cash and Carry must use the service base price.
+* User can add multiple drugs where allowed.
+* Each drug must save properly.
+* If duplicate drug is not allowed, show clear validation error.
+* If stock is insufficient, show clear validation error.
+* If quantity is invalid, show clear validation error.
+* No silent `302` redirect without visible errors.
+* Drug list updates without full page reload.
 
-Provider-specific price must override general insurance type price.
-
-Do not hardcode NHIS. NHIS is only one insurance type.
+Do not just suppress the redirect. Find and fix the real cause.
 
 ---
 
-# 6. Invoice Table Design
+# 4. CCC Code Storage
 
-Use existing tables if already present, but adjust them if needed.
+There is currently nowhere saving the CCC code.
 
-Recommended `invoices` fields:
+Add support for CCC code storage.
+
+First inspect the existing domain model and determine where CCC code belongs.
+
+Likely places:
+
+* patient visit insurance snapshot
+* claim/verification record
+
+Preferred approach:
+
+If CCC code is related to the patient’s insurance membership, store it on `patient_insurances`.
+
+Add field if missing:
 
 ```text
-id
-invoice_number
-visit_id
-patient_id
-patient_insurance_id nullable
-status
-subtotal
-insurance_total
-patient_total
-paid_amount
-outstanding_amount
-created_by nullable
-created_at
-updated_at
+ccc_code nullable
 ```
+
+If the project already has a claim/verification table, ensure CCC code is also copied/snapshotted where needed.
 
 Rules:
 
-* `visit_id` must be unique for active visit invoice.
-* invoice totals should be recalculated whenever invoice items or payments change.
-* invoice status should reflect item/payment status.
-
-Recommended invoice statuses:
-
-```text
-DRAFT
-OPEN
-PARTIALLY_PAID
-PAID
-CANCELLED
-VOIDED
-```
+* CCC code must be saved when adding/editing patient insurance.
+* CCC code must be visible where insurance details are displayed.
+* CCC code must be available during visit creation if that insurance is selected.
+* CCC code must not be required for Cash and Carry.
+* CCC code should not be hardcoded to NHIS only unless the current business rule requires it.
 
 ---
 
-# 7. Invoice Item Table Design
+# 6. invoice_items Model/Table Cleanup
 
-Recommended `invoice_items` fields:
+Update `invoice_items` to match the simplified pricing model.
+
+Remove or stop using these fields:
+
+```text
+unit_price
+is_nhis_covered
+nhis_approved_amount
+coverage_percentage
+approved_amount
+```
+
+Also remove any NHIS-specific fields or logic that no longer applies, unless still needed elsewhere for claims.
+
+Use:
+
+```text
+selected_price
+total_price
+patient_payable
+patient_insurance_id nullable
+pricing_source
+insurance_type nullable
+payment_status
+paid_amount
+balance
+```
+
+Recommended `invoice_items` structure:
 
 ```text
 id
@@ -199,12 +192,13 @@ source_type
 source_id nullable
 
 description
-quantity
+quantity nullable/default 1
 
-unit_price
 insurance_price
-total_price
+cash_price
+selected_price
 insurance_covered
+total_price
 patient_payable
 
 paid_amount
@@ -220,517 +214,283 @@ created_at
 updated_at
 ```
 
-## Important Field Meaning
-
-```text
-unit_price = base price / Cash and Carry price
-insurance_price = applied insurance price, if insurance applies
-total_price = insurance_price * quantity for insured patients, or unit_price * quantity for cash patients
-insurance_covered = difference or covered portion depending on existing system rules
-patient_payable = amount patient must pay personally
-paid_amount = amount paid against this item
-balance = patient_payable - paid_amount
-```
+If quantity is no longer shown in some views, it may still remain in the database for pharmacy or future quantity-based billing. But the invoice view should hide it where requested.
 
 ---
 
-# 8. Source Tracking and Duplicate Prevention
+# 7. Use selected_price Instead of unit_price
 
-Every invoice item must know where it came from.
-
-Use:
+Replace `unit_price` usage in views and display logic with:
 
 ```text
-source_type
-source_id
-```
-
-Examples:
-
-```text
-source_type = visit_service
-source_id = visit_services.id
-
-source_type = investigation_request_item
-source_id = investigation_request_items.id
-
-source_type = prescription_item
-source_id = prescription_items.id
-
-source_type = ward_charge
-source_id = ward_charges.id
+selected_price
 ```
 
 Rules:
 
-* Prevent duplicate billing for the same `source_type + source_id`.
-* If an investigation item has already been billed, do not bill it again.
-* If a pharmacy item has already been billed, do not bill it again.
-* If duplicate billing is attempted, return a clear error.
+* `selected_price` is the actual price applied to the invoice item.
+* For Cash and Carry, `selected_price = base price`.
+* For insurance, `selected_price = resolved insurance price`.
+* Views must not display old `unit_price`.
+* Do not show “Cash Price” column if it is no longer required.
 
----
-
-# 9. Payment Model
-
-Patients must be able to make payments while the visit is still ongoing.
-
-Payments can clear:
-
-* full invoice
-* selected invoice items
-* part of an invoice item
-* multiple invoice items at once
-
-Use two levels:
-
-## payments
+Search and update:
 
 ```text
-id
-invoice_id
-visit_id
-patient_id
-amount
-payment_method
-reference nullable
-received_by
-paid_at
-notes nullable
-created_at
-updated_at
+unit_price
+is_nhis_covered
+nhis_approved_amount
+coverage_percentage
 ```
 
-## payment_allocations
+Make sure old references do not break pages.
+
+---
+
+# 8. Invoice View Page Changes
+
+On the invoice view page, remove the following columns:
 
 ```text
-id
-payment_id
-invoice_item_id
-amount
-created_at
-updated_at
+Qty
+Cash Price
 ```
 
-`payment_allocations` is required so the system can know exactly which bill lines are paid, partially paid, or still owed.
-
----
-
-# 10. Line-Level Payment Status
-
-Each invoice item must have its own payment status.
-
-Recommended statuses:
+The invoice item table should show only useful simplified columns, such as:
 
 ```text
-UNPAID
-PARTIALLY_PAID
-PAID
-WAIVED
-CANCELLED
-VOIDED
+Service / Description
+Department / Source
+Selected Price
+Patient Payable
+Paid Amount
+Balance
+Status
+Action
 ```
 
-When a payment is made:
-
-* allocate payment to selected invoice items.
-* update each item’s `paid_amount`.
-* update each item’s `balance`.
-* update each item’s `payment_status`.
-* recalculate invoice totals.
-* update invoice status.
-
-Example:
-
-```text
-Consultation fee      PAID
-Full Blood Count      PAID
-Malaria Test          UNPAID
-Pharmacy Drugs        PARTIALLY_PAID
-X-ray                 UNPAID
-```
-
----
-
-# 11. Payment Allocation Rules
-
-When cashier receives payment:
-
-User should be able to:
-
-1. Pay selected invoice lines.
-2. Pay full outstanding balance.
-3. Pay partial amount against one or more lines.
-
-Rules:
-
-* Do not allocate more than the balance of a line.
-* Do not accept negative or zero payments.
-* If payment amount exceeds selected line balances, reject or handle as advance only if existing system supports advances.
-* If no advance system exists, reject excess payment.
-* Paid invoice items should not be casually deleted.
-* Cancelling or reversing paid lines should require a reversal/refund workflow later.
-
----
-
-# 12. Insurance and Patient Payable Formula
-
-Use existing project coverage format consistently.
-
-For insurance-based pricing:
-
-```text
-unit_price = service base price
-insurance_price = resolved insurance price
-total_price = insurance_price * quantity
-insurance_covered = unit_price - insurance_price
-patient_payable = total_price - (total_price * coverage_percentage)
-```
-
-Examples:
-
-```text
-Base price = 100
-NHIS price = 60
-Quantity = 1
-Coverage = 100%
-
-unit_price = 100
-insurance_price = 60
-total_price = 60
-insurance_covered = 40
-patient_payable = 0
-```
-
-```text
-Base price = 100
-NHIS price = 60
-Quantity = 1
-Coverage = 80%
-
-unit_price = 100
-insurance_price = 60
-total_price = 60
-insurance_covered = 40
-patient_payable = 12
-```
-
-For Cash and Carry:
-
-```text
-unit_price = base_price
-insurance_price = null or base_price depending on existing schema
-total_price = unit_price * quantity
-insurance_covered = 0
-patient_payable = total_price
-```
-
----
-
-# 13. Insurance Limits and Fallback
-
-When adding an invoice item:
-
-1. Resolve the patient’s selected visit insurance.
-2. Check whether insurance is valid.
-3. Check per-visit, monthly, yearly, and monthly visit-count limits.
-4. If insurance can cover the item, apply insurance pricing.
-5. If insurance is exhausted or invalid, fallback to Cash and Carry for this and future billable items.
-
-Rules:
-
-* Do not recalculate old invoice items.
-* Do not change previous invoice items when insurance becomes exhausted.
-* Only new/future invoice items should fallback to Cash and Carry.
-* Store pricing snapshot on every invoice item.
-
----
-
-# 14. Visit Creation Flow
-
-When a visit is created:
-
-1. Create visit.
-2. Determine selected insurance or fallback to Cash and Carry.
-3. Create or get the visit invoice.
-4. Add selected visit services as invoice items through `BillingService`.
-5. Save pricing snapshot on invoice items.
-6. Do not create another invoice for the same visit.
-
----
-
-# 15. Investigation Acceptance Flow
-
-When investigation staff accepts selected requested test/service items:
-
-1. Select items from request data table.
-2. Accept only selected items.
-3. Call `BillingService::addItemToVisitInvoice(...)` for each selected item.
-4. Add items to the same visit invoice.
-5. Use insurance-aware pricing.
-6. Prevent duplicate billing.
-7. Do not bill unselected items.
-
----
-
-# 16. Pharmacy Dispensing Flow
-
-When pharmacy dispenses drugs/items:
-
-1. Bill only dispensed items.
-2. Add items to the same visit invoice.
-3. Use insurance-aware pricing or pharmacy-specific pricing rules through the same pricing service.
-4. Prevent duplicate billing for already billed prescription/dispensed items.
-
----
-
-# 17. Cashier Invoice View
-
-The cashier invoice screen must show one invoice per visit.
-
-Display:
-
-* invoice number
-* patient
-* visit number
-* visit status
-* active insurance/payment type
-* invoice total
-* paid amount
-* outstanding amount
-
-Show invoice items grouped by source/department:
+If needed, group items by source/department:
 
 ```text
 Consultation
-- General Consultation — PAID
-
 Investigations
-- Full Blood Count — UNPAID
-- Malaria Test — PAID
-
 Pharmacy
-- Paracetamol — PARTIALLY_PAID
+Ward
+Procedures
 ```
 
-Each line must show:
-
-* description/service
-* department/source
-* total price
-* patient payable
-* paid amount
-* balance
-* payment status
-
 ---
 
-# 18. Cashier Payment UI
+# 9. Remove visit_services Table Usage
 
-The cashier must be able to:
+Remove `visit_services` from the active project workflow.
 
-* select invoice items to pay.
-* enter payment amount.
-* choose payment method.
-* allocate payment to selected lines.
-* see updated paid/unpaid status immediately.
-* print receipt for payment.
+The visit’s selected services should now be represented by invoice items under the visit’s invoice.
 
-Do not require the visit to be completed before payment.
+Required behavior:
 
----
+* Do not create new `visit_services` rows.
+* Do not display visit services table.
+* Do not depend on visit_services for visit billing.
+* Show the visit invoice instead.
+* Any previous logic that reads visit_services should be updated to read invoice items.
 
-# 19. Data Integrity Rules
-
-* One active invoice per visit.
-* All billable departments add to the same invoice.
-* All invoice items store pricing snapshots.
-* Do not duplicate invoice items for the same source.
-* Do not delete paid invoice items directly.
-* Do not recalculate old invoice items after price changes.
-* Do not bypass `BillingService`.
-* Do not bypass `ServicePricingService`.
-* Do not bypass `InsuranceService` where insurance applies.
-* Do not create invoices directly in controllers.
-
----
-
-# 20. Backend Services
-
-Create or update:
+When displaying a visit’s billable services, use:
 
 ```text
-InvoiceService
-BillingService
-ServicePricingService
-InsuranceService
-PaymentService
+visit → invoice → invoice_items
 ```
 
-## InvoiceService
+not:
 
-Responsible for:
-
-* creating/getting invoice for visit.
-* enforcing one invoice per visit.
-* recalculating totals.
-* updating invoice status.
-
-Required methods:
-
-```php
-getOrCreateVisitInvoice(Visit $visit): Invoice
-recalculateTotals(Invoice $invoice): Invoice
-updateStatus(Invoice $invoice): Invoice
+```text
+visit → visit_services
 ```
 
-## BillingService
+If the physical table still exists temporarily for migration safety, stop using it in the app. Remove the migration/table only if safe.
 
-Responsible for:
+---
 
-* adding billable items to visit invoice.
-* calling pricing service.
-* preventing duplicates.
-* updating invoice totals.
+# 10. ServicePricingService Update
+
+Update the pricing service to return simplified values.
 
 Required method:
 
 ```php
-addItemToVisitInvoice(
-    Visit $visit,
-    Service $service,
-    string $sourceType,
-    ?int $sourceId = null,
-    int $quantity = 1,
-    ?Department $department = null,
-    ?User $createdBy = null
-): InvoiceItem
+resolvePriceForVisitService(Service $service, ?PatientInsurance $patientInsurance = null, int $quantity = 1): array
 ```
 
-## ServicePricingService
-
-Responsible for:
-
-* resolving base price.
-* resolving provider-specific price.
-* resolving insurance type price.
-* calculating total and patient payable.
-
-## InsuranceService
-
-Responsible for:
-
-* checking validity.
-* checking limits.
-* applying fallback to Cash and Carry.
-* returning active pricing context.
-
-## PaymentService
-
-Responsible for:
-
-* receiving payments.
-* allocating payments to invoice items.
-* updating line statuses.
-* updating invoice totals/status.
-
-Required method:
+Return:
 
 ```php
-recordPayment(
-    Invoice $invoice,
-    array $allocations,
-    string $paymentMethod,
-    ?string $reference,
-    User $receivedBy
-): Payment
+[
+    'selected_price' => 60,
+    'total_price' => 60,
+    'patient_payable' => 60,
+    'pricing_source' => 'provider_specific | insurance_type | cash_and_carry | base_price',
+    'insurance_type' => 'cash | nhis | private | corporate | other',
+]
+```
+
+Do not return or use:
+
+```text
+unit_price
+coverage_percentage
+insurance_covered
+nhis_approved_amount
+is_nhis_covered
+```
+
+unless kept only for backward compatibility internally and not saved/displayed.
+
+---
+
+# 11. BillingService Update
+
+Update `BillingService::addItemToVisitInvoice(...)` to save invoice items using the simplified model.
+
+It must:
+
+* get or create the visit invoice.
+* resolve selected price using `ServicePricingService`.
+* save `selected_price`.
+* save `total_price`.
+* save `patient_payable`.
+* save `patient_insurance_id` if insurance applies.
+* save `pricing_source`.
+* save `insurance_type`.
+* prevent duplicate billing by `source_type + source_id`.
+* update invoice totals.
+
+Do not save `unit_price`.
+
+---
+
+# 12. Invoice Totals
+
+Invoice totals should be based on `invoice_items.patient_payable` or `invoice_items.total_price` according to the system’s billing rule.
+
+Recommended:
+
+```text
+subtotal = sum(total_price)
+patient_total = sum(patient_payable)
+paid_amount = sum(invoice_items.paid_amount)
+outstanding_amount = sum(invoice_items.balance)
+```
+
+Each invoice item:
+
+```text
+balance = patient_payable - paid_amount
+```
+
+If no payment has been made:
+
+```text
+paid_amount = 0
+balance = patient_payable
+payment_status = UNPAID
 ```
 
 ---
 
-# 21. Validation Rules
+# 13. Data Migration / Backward Compatibility
 
-## Add Invoice Item
+If existing data has `unit_price`, migrate it carefully.
 
-* visit must exist.
-* service must exist.
-* source_type required.
-* source_id required where applicable.
-* duplicate source billing must be prevented.
-* quantity must be greater than zero.
+Suggested migration rule:
 
-## Record Payment
+```text
+selected_price = unit_price where selected_price is null
+total_price = selected_price * quantity where total_price is null
+patient_payable = total_price where patient_payable is null
+balance = patient_payable - paid_amount
+```
 
-* invoice must exist.
-* allocations required.
-* each invoice item must belong to invoice.
-* amount must be greater than zero.
-* allocation amount must not exceed item balance.
-* total allocation must equal payment amount.
-* paid/voided/cancelled items cannot receive payment.
+Only drop old columns after confirming nothing uses them.
 
----
+If immediate dropping is risky:
 
-# 22. Performance Rules
-
-* Eager-load invoice items with service, department, source where needed.
-* Avoid N+1 queries in cashier invoice view.
-* Use database indexes:
-
-  * invoices.visit_id
-  * invoices.patient_id
-  * invoice_items.invoice_id
-  * invoice_items.visit_id
-  * invoice_items.patient_id
-  * invoice_items.source_type
-  * invoice_items.source_id
-  * payments.invoice_id
-  * payment_allocations.payment_id
-  * payment_allocations.invoice_item_id
-* Recalculate totals efficiently.
-* Do not load all historical invoices unnecessarily.
-* Paginate invoice/payment history where needed.
+* keep columns temporarily
+* stop writing to them
+* stop displaying them
+* remove in a later cleanup migration
 
 ---
 
-# 23. Deliverables
+# 14. Validation and Error Display
+
+For the drug saving issue and service/module saves:
+
+* Do not allow silent redirects.
+* Show validation errors clearly.
+* Use Inertia/Vue form errors properly.
+* Preserve page state after validation errors.
+* Do not dismiss modals before successful response.
+* Log server-side errors where needed.
+
+For any 302:
+
+* identify whether it is validation redirect, auth redirect, middleware redirect, or route mismatch.
+* fix the underlying cause.
+
+---
+
+# 15. Performance Rules
+
+* Eager-load invoice with items, service, department, and patient insurance.
+* Avoid N+1 queries in invoice view.
+* Do not load unnecessary module data repeatedly.
+* Cache enabled modules safely.
+* Recalculate invoice totals efficiently.
+* Keep pharmacy drug adding fast.
+* Do not perform heavy calculations in Vue if they belong in backend pricing service.
+
+---
+
+# 16. Deliverables
 
 Provide:
 
-1. Root cause of inconsistent pricing across investigation/pharmacy if found.
-2. Files modified.
-3. New migrations if needed.
-4. Updated models and relationships.
-5. `InvoiceService` implementation.
-6. `BillingService` implementation/update.
-7. `PaymentService` implementation.
-8. Updated visit creation billing flow.
-9. Updated investigation acceptance billing flow.
-10. Updated pharmacy dispensing billing flow.
-11. Cashier invoice view showing line payment statuses.
-12. Payment allocation UI/backend.
-13. Confirmation that there is only one invoice per visit.
-14. Confirmation that insurance-aware pricing is used across all departments.
-15. Confirmation that selected/accepted investigation items only are billed.
-16. Confirmation that invoice items distinguish paid, partially paid, and unpaid lines.
+1. Root cause of modules not loading.
+2. Root cause of drug save `302` redirect.
+3. Confirmation that multiple drugs can now be added where allowed.
+4. CCC code storage implementation.
+5. Migrations added or changed.
+6. Updated models and `$fillable`.
+7. Updated `ServicePricingService`.
+8. Updated `BillingService`.
+9. Updated `invoice_items` model/table usage.
+10. Confirmation that coverage is removed from pricing.
+11. Confirmation that `unit_price`, NHIS-specific approval fields, and old relevance fields are removed or no longer used.
+12. Updated invoice view using `selected_price`.
+13. Confirmation that Qty and Cash Price columns are removed from invoice view.
+14. Confirmation that `visit_services` is no longer used and visit invoice is displayed instead.
+15. Files modified.
 
 ---
 
-# 24. Important Rules
+# 17. Important Rules
 
-Do not generate multiple invoices for the same visit.
+Do not hardcode NHIS-specific pricing logic.
 
-Do not bill all investigation request items unless all were selected and accepted.
+Do not use coverage percentage in price calculation.
 
-Do not bill undispensed pharmacy items.
+Do not save `unit_price` into invoice items.
 
-Do not create invoice items directly from controllers.
+Do not display `unit_price`; display `selected_price`.
 
-Do not bypass insurance pricing in investigation or pharmacy.
+Do not create or display `visit_services`.
 
-Do not recalculate old invoice items when prices change.
+Do not bypass `BillingService`.
 
-Do not delete paid invoice items directly.
+Do not bypass `ServicePricingService`.
 
-Do not allow overpayment unless an advance payment system already exists.
+Do not allow silent `302` redirects without visible error feedback.
 
-Now inspect the existing billing, visit, investigation, pharmacy, insurance, and payment implementation and redesign it carefully around the single visit invoice model.
+Do not remove old columns blindly if existing data or code still depends on them; phase the cleanup safely.
+
+Now inspect the current implementation and apply these fixes carefully.

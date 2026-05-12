@@ -20,6 +20,7 @@ class PatientInsurance extends Model
         'card_holder_insurance_id',
         'membership_number',
         'policy_number',
+        'ccc_code',
         'start_date',
         'expiry_date',
         'is_primary',

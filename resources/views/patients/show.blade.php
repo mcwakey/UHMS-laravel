@@ -414,7 +414,11 @@
                                         <span class="badge bg-info">Card Holder</span>
                                     @endif
                                 </td>
-                                <td>{{ $ins->membership_number ?? '—' }}</td>
+                                <td>{{ $ins->membership_number ?? '—' }}
+                                    @if($ins->ccc_code)
+                                        <div class="small text-muted">CCC: {{ $ins->ccc_code }}</div>
+                                    @endif
+                                </td>
                                 <td>
                                     @if($ins->expiry_date)
                                         <span class="{{ $ins->is_expired ? 'text-danger' : '' }}">{{ $ins->expiry_date->format('d M Y') }}</span>
@@ -456,6 +460,7 @@
                                         data-card-holder="{{ $ins->card_holder_insurance_id }}"
                                         data-membership="{{ $ins->membership_number }}"
                                         data-policy="{{ $ins->policy_number }}"
+                                        data-ccc-code="{{ $ins->ccc_code }}"
                                         data-expiry="{{ $ins->expiry_date?->format('Y-m-d') }}"
                                         data-active="{{ $ins->is_active }}"
                                         data-bs-toggle="modal" data-bs-target="#editInsuranceModal">
@@ -840,6 +845,10 @@
                             <input type="text" name="policy_number" class="form-control">
                         </div>
                         <div class="col-md-6 mb-3">
+                            <label class="form-label">CCC Code <small class="text-muted">(optional)</small></label>
+                            <input type="text" name="ccc_code" class="form-control" maxlength="64" placeholder="e.g. NHIS CCC reference">
+                        </div>
+                        <div class="col-md-6 mb-3">
                             <label class="form-label">Expiry Date</label>
                             <input type="date" name="expiry_date" class="form-control">
                         </div>
@@ -902,6 +911,10 @@
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Policy Number</label>
                             <input type="text" name="policy_number" class="form-control" id="editInsPolicy">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">CCC Code <small class="text-muted">(optional)</small></label>
+                            <input type="text" name="ccc_code" class="form-control" id="editInsCccCode" maxlength="64">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Expiry Date</label>
@@ -1029,6 +1042,8 @@
             document.getElementById('editInsProviderId').value = this.dataset.provider || '';
             document.getElementById('editInsMembership').value = this.dataset.membership || '';
             document.getElementById('editInsPolicy').value = this.dataset.policy || '';
+            var cccEl = document.getElementById('editInsCccCode');
+            if (cccEl) cccEl.value = this.dataset.cccCode || '';
             document.getElementById('editInsExpiry').value = this.dataset.expiry || '';
             document.getElementById('editInsActive').checked = this.dataset.active === '1';
             // Tier display

@@ -9,7 +9,6 @@ use App\Models\Triage;
 use App\Models\Vital;
 use App\Models\VisitDepartmentHistory;
 use App\Models\Visit;
-use App\Models\VisitServiceItem;
 use App\Models\ServiceCatalog;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -24,6 +23,7 @@ class VisitService
         protected InsuranceService $insuranceService,
         protected VisitWorkflowService $workflowService,
         protected ServicePricingService $pricingService,
+        protected BillingService $billingService,
     ) {}
 
     public function list(array $filters = []): LengthAwarePaginator
@@ -107,79 +107,40 @@ class VisitService
     }
 
     /**
-     * Attach services to a visit and create billing line items.
-     * Each service is evaluated against all four insurance constraints in real
-     * time; if a limit is reached the remainder is recorded as cash & carry.
+     * Attach services to a visit by creating invoice line items directly.
+     *
+     * NOTE: This method no longer creates `visit_services` rows. Per the
+     * simplified billing model the visit's invoice (invoice_items) is the
+     * single source of truth for billable services. The legacy
+     * `VisitServiceItem` model/table is retained only for read-only history.
      *
      * @param array $services Array of ['service_catalog_id' => int, 'quantity' => int, 'notes' => ?string]
      */
     public function attachServices(Visit $visit, array $services): Visit
     {
-        $patient         = $visit->patient;
-        $insuranceResult = $this->insuranceService->resolveForVisit($patient, $visit->visit_insurance_id);
-        $insurance       = $insuranceResult['insurance'];
-        $isFallback      = $insuranceResult['is_fallback'];
-
-        // The insurance used for pricing; ignore the synthetic cash & carry record.
-        $pricingInsurance = ($insurance && ! $isFallback) ? $insurance : null;
-
         foreach ($services as $serviceData) {
-            $catalog  = ServiceCatalog::with('prices')->findOrFail($serviceData['service_catalog_id']);
+            $catalog  = ServiceCatalog::findOrFail($serviceData['service_catalog_id']);
             $quantity = max(1, (int) ($serviceData['quantity'] ?? 1));
 
-            // Resolve full pricing snapshot from the single source of truth.
-            $snapshot = $this->pricingService->resolvePriceForVisitService(
-                $catalog,
-                $pricingInsurance,
-                $quantity
-            );
-
-            $unitPrice        = $snapshot['unit_price'];
-            $insurancePrice   = $snapshot['insurance_price'];
-            $totalPrice       = $snapshot['total_price'];
-            $insuranceCovered = $snapshot['insurance_covered'];
-            $patientPayable   = $snapshot['patient_payable'];
-
-            // ── Real-time constraint evaluation (only for true insurance) ────
-            // The pricing snapshot already accounts for the negotiated rate;
-            // the constraint engine may further reduce coverage if a hard
-            // limit (per-visit cap, monthly cap, annual cap) is hit.
-            if ($pricingInsurance) {
-                $evaluation = $this->insuranceService->evaluateCoverage($pricingInsurance, $visit, $totalPrice);
-
-                $insuranceCovered = (float) $evaluation['covered_amount'];
-                $patientPayable   = (float) $evaluation['patient_amount'];
-
-                if ($evaluation['covered_amount'] > 0) {
-                    $this->insuranceService->recordUsage(
-                        $pricingInsurance,
-                        $visit,
-                        $evaluation['covered_amount'],
-                        $evaluation['patient_amount'],
-                        $evaluation['reason'],
-                    );
+            try {
+                $this->billingService->addItemToVisitInvoice(
+                    visit: $visit,
+                    service: $catalog,
+                    sourceType: 'service_catalog',
+                    sourceId: $catalog->id,
+                    quantity: $quantity,
+                    departmentId: $catalog->department_id,
+                    description: $serviceData['notes'] ?? null,
+                );
+            } catch (\RuntimeException $e) {
+                // Silently skip duplicates so re-attaching the same service is idempotent.
+                if (! str_contains($e->getMessage(), 'Duplicate billing prevented')) {
+                    throw $e;
                 }
             }
-
-            VisitServiceItem::create([
-                'visit_id'             => $visit->id,
-                'service_catalog_id'   => $catalog->id,
-                'department_id'        => $catalog->department_id,
-                'patient_insurance_id' => $pricingInsurance?->id,
-                'payment_type'         => $snapshot['payment_type'],
-                'insurance_type'       => $snapshot['insurance_type'],
-                'pricing_source'       => $snapshot['pricing_source'],
-                'quantity'             => $quantity,
-                'unit_price'           => $unitPrice,
-                'insurance_price'      => $insurancePrice,
-                'insurance_covered'    => $insuranceCovered,
-                'patient_payable'      => $patientPayable,
-                'total_price'          => $totalPrice,
-                'notes'                => $serviceData['notes'] ?? null,
-            ]);
         }
 
-        return $visit->fresh(['visitServices.serviceCatalog', 'visitServices.department']);
+        return $visit->fresh(['invoices.items.serviceCatalog', 'invoices.items.department']);
     }
 
     /**
