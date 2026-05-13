@@ -14,7 +14,7 @@ This manual is workflow-first. Each section walks you through what to do, in wha
 > - **NHIS is just one insurance type.** It is not given special handling outside of normal insurance configuration.
 > - **Investigation Catalogue replaces the old "Lab Test Catalogue"** concept; investigation departments include Lab, X-ray, Scan, CT-scan, Ultrasound, ECG, and any other investigation-type department.
 >
-> Screenshots in this document were captured from earlier UI revisions and may not show the very latest button placement; the documented workflows and rules are authoritative.
+> **Screenshot note:** Screenshots are generated from the running UHMS app using the Playwright capture script. If the UI changes, rerun `npm run screenshots` to refresh them. See [Regenerating screenshots](#regenerating-screenshots) at the end of this manual.
 
 ## Table of Contents
 
@@ -920,9 +920,9 @@ stateDiagram-v2
 
 Investigation Results lists all entered results, supports filtering, and lets authorized staff verify entries.
 
-![Test catalog](assets/user-manual/31-test-catalog.png)
+![Investigation Catalogue](assets/user-manual/31-test-catalog.png)
 
-Test Catalog manages categories and individual tests, each with parameter definitions and reference ranges.
+The Investigation Catalogue manages investigation services and their headers/criteria. Each service is owned by an investigation-type department; criteria carry units and reference ranges.
 
 ![Investigation items](assets/user-manual/32-investigation-items.png)
 
@@ -2054,3 +2054,47 @@ This is expected. Print and PDF views use normal browser navigation so they can 
 - Configure organization, invoices, and payment methods.
 - Review activity logs.
 - Enable or disable modules.
+
+## Regenerating screenshots
+
+The screenshots in this manual under `docs/user-manual/screenshots/` are produced by a Playwright-based capture script and should be refreshed whenever the UI changes meaningfully.
+
+### Prerequisites
+
+1. Install Node dependencies: `npm install`.
+2. Install the Playwright Chromium browser once: `npx playwright install chromium`.
+3. Have UHMS running locally (e.g. `php artisan serve`) and reachable from the URL you pass to the script.
+4. Use a non-production database seeded with demo data — never run captures against a database with real patient data.
+
+### Run the capture
+
+```bash
+npm run screenshots
+```
+
+### Configuration via environment variables
+
+| Variable          | Default                  | Purpose |
+| ----------------- | ------------------------ | ------- |
+| `UHMS_URL`        | `http://127.0.0.1:8000`  | Base URL of the running app |
+| `UHMS_EMAIL`      | `admin@uhms.local`       | Login email used to authenticate |
+| `UHMS_PASSWORD`   | `password`               | Login password (do **not** commit real credentials) |
+| `UHMS_HEADFUL`    | unset                    | Set to `1` to watch the browser |
+| `UHMS_SKIP_LOGIN` | unset                    | Set to `1` to skip the login step (e.g. for public pages only) |
+
+Example:
+
+```powershell
+$env:UHMS_URL = "http://127.0.0.1:8000"
+$env:UHMS_EMAIL = "admin@uhms.local"
+$env:UHMS_PASSWORD = "password"
+npm run screenshots
+```
+
+### Behavior and rules
+
+- The script tries the documented URL first (e.g. `/visits/create`), then falls back to the actual UHMS route (e.g. `/admin/visits/create`).
+- Pages that 404 or redirect to login are logged and skipped — the script does not abort on a missing route.
+- Captures use a fixed 1440×900 viewport with `fullPage: true` for consistent output.
+- The script never commits credentials. Use environment variables (or a local `.env`-style shell setup) and seed/demo data only.
+
