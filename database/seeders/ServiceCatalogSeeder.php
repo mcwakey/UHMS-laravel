@@ -108,6 +108,25 @@ class ServiceCatalogSeeder extends Seeder
                 ['name' => 'IUD Insertion', 'code' => 'FPL-IUD', 'category' => 'procedure', 'price' => 150.00],
                 ['name' => 'Injectable Contraceptive', 'code' => 'FPL-INJ', 'category' => 'procedure', 'price' => 50.00],
             ],
+            'Theatre / Procedures' => [
+                ['name' => 'Appendicectomy', 'code' => 'THT-APP', 'category' => 'surgery', 'price' => 2500.00],
+                ['name' => 'Caesarean Section (C/S)', 'code' => 'THT-CS', 'category' => 'surgery', 'price' => 3000.00],
+                ['name' => 'Hernia Repair', 'code' => 'THT-HRN', 'category' => 'surgery', 'price' => 2000.00],
+                ['name' => 'Laparotomy', 'code' => 'THT-LAP', 'category' => 'surgery', 'price' => 3500.00],
+                ['name' => 'Myomectomy', 'code' => 'THT-MYO', 'category' => 'surgery', 'price' => 3000.00],
+                ['name' => 'Hysterectomy', 'code' => 'THT-HYS', 'category' => 'surgery', 'price' => 4000.00],
+                ['name' => 'Prostatectomy', 'code' => 'THT-PRO', 'category' => 'surgery', 'price' => 4500.00],
+                ['name' => 'Cholecystectomy', 'code' => 'THT-CHO', 'category' => 'surgery', 'price' => 3000.00],
+                ['name' => 'Thyroidectomy', 'code' => 'THT-THY', 'category' => 'surgery', 'price' => 3500.00],
+                ['name' => 'Mastectomy', 'code' => 'THT-MAS', 'category' => 'surgery', 'price' => 3500.00],
+                ['name' => 'Colostomy', 'code' => 'THT-COL', 'category' => 'surgery', 'price' => 3000.00],
+                ['name' => 'Inguinal Herniorrhaphy', 'code' => 'THT-IHR', 'category' => 'surgery', 'price' => 2200.00],
+                ['name' => 'ORIF (Fracture Fixation)', 'code' => 'THT-ORI', 'category' => 'surgery', 'price' => 4000.00],
+                ['name' => 'Exploratory Laparotomy', 'code' => 'THT-EXL', 'category' => 'surgery', 'price' => 3500.00],
+                ['name' => 'General Anaesthesia', 'code' => 'THT-GAN', 'category' => 'anaesthesia', 'price' => 800.00],
+                ['name' => 'Spinal Anaesthesia', 'code' => 'THT-SPA', 'category' => 'anaesthesia', 'price' => 500.00],
+                ['name' => 'Theatre Fee', 'code' => 'THT-FEE', 'category' => 'procedure', 'price' => 300.00],
+            ],
         ];
 
         foreach ($departmentServices as $deptName => $services) {

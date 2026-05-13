@@ -817,89 +817,137 @@
             <div class="tab-pane fade" id="procedures-section" role="tabpanel">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h6 class="fw-bold mb-0"><i class="ti ti-activity-heartbeat me-1"></i>Procedures</h6>
-                        @can('consultations.create')
+                        <h6 class="fw-bold mb-0"><i class="ti ti-activity-heartbeat me-1"></i>Theatre / Procedure Requests</h6>
+                        @can('procedure.request')
                         <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addProcedureForm">
-                            <i class="ti ti-plus me-1"></i>Request
+                            <i class="ti ti-plus me-1"></i>Request Procedure
                         </button>
                         @endcan
                     </div>
                     <div class="card-body">
-                        @can('consultations.create')
+                        @can('procedure.request')
                         <div class="collapse mb-3" id="addProcedureForm">
                             <div class="card card-body bg-light">
                                 <form method="POST" action="{{ route('admin.consultations.procedures.store', $visit) }}" onsubmit="return saveTabBeforeSubmit('procedures-section')">
                                     @csrf
                                     <div class="row g-2">
                                         <div class="col-md-6">
-                                            <label class="form-label small">Procedure <span class="text-danger">*</span></label>
-                                            <select name="procedure_id" class="form-select form-select-sm" required>
-                                                <option value="">-- Select procedure --</option>
-                                                @foreach($procedures as $procedure)
-                                                    <option value="{{ $procedure->id }}">
-                                                        {{ $procedure->name }}{{ $procedure->department ? ' - '.$procedure->department->name : '' }}{{ $procedure->requires_consent ? ' (Consent)' : '' }}
-                                                    </option>
+                                            <label class="form-label small">Theatre / Procedure Department <span class="text-danger">*</span></label>
+                                            <select name="department_id" id="procedureDeptSelect" class="form-select form-select-sm" required>
+                                                <option value="">-- Select department --</option>
+                                                @foreach($procedureDepartments as $dept)
+                                                    <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label small">Date/Time <span class="text-danger">*</span></label>
-                                            <input type="datetime-local" name="scheduled_date" class="form-control form-control-sm" value="{{ now()->format('Y-m-d\\TH:i') }}" required>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label small">Performer</label>
-                                            <select name="performed_by" class="form-select form-select-sm">
-                                                <option value="">To assign</option>
-                                                @foreach($doctors as $doctor)
-                                                    <option value="{{ $doctor->id }}">{{ $doctor->full_name ?? $doctor->name }}</option>
-                                                @endforeach
+                                        <div class="col-md-6">
+                                            <label class="form-label small">Service <span class="text-danger">*</span></label>
+                                            <select name="service_catalog_id" id="procedureServiceSelect" class="form-select form-select-sm" required disabled>
+                                                <option value="">Select department first</option>
                                             </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small">Priority <span class="text-danger">*</span></label>
+                                            <select name="priority" class="form-select form-select-sm" required>
+                                                <option value="routine">Routine</option>
+                                                <option value="urgent">Urgent</option>
+                                                <option value="emergency">Emergency</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <label class="form-label small">Preferred date/time (optional)</label>
+                                            <input type="datetime-local" name="preferred_datetime" class="form-control form-control-sm">
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small">Indication / Reason <span class="text-danger">*</span></label>
+                                            <textarea name="indication" class="form-control form-control-sm" rows="2" required placeholder="Clinical indication for the procedure..."></textarea>
                                         </div>
                                         <div class="col-12">
                                             <label class="form-label small">Notes</label>
-                                            <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Procedure notes or clinical indication..."></textarea>
-                                        </div>
-                                        <div class="col-12">
-                                            <div class="form-check">
-                                                <input type="hidden" name="consent_signed" value="0">
-                                                <input class="form-check-input" type="checkbox" name="consent_signed" value="1" id="procedureConsent">
-                                                <label class="form-check-label small" for="procedureConsent">Consent signed where required</label>
-                                            </div>
+                                            <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Additional notes..."></textarea>
                                         </div>
                                     </div>
                                     <div class="mt-2 d-flex gap-2">
-                                        <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-check me-1"></i>Save</button>
+                                        <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-check me-1"></i>Submit Request</button>
                                         <button type="button" class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#addProcedureForm">Cancel</button>
                                     </div>
                                 </form>
                             </div>
                         </div>
+                        <script>
+                            (function () {
+                                const dept = document.getElementById('procedureDeptSelect');
+                                const svc  = document.getElementById('procedureServiceSelect');
+                                if (!dept || !svc) return;
+                                dept.addEventListener('change', function () {
+                                    const id = this.value;
+                                    svc.innerHTML = '<option value="">Loading…</option>';
+                                    svc.disabled = true;
+                                    if (!id) { svc.innerHTML = '<option value="">Select department first</option>'; return; }
+                                    fetch("{{ url('admin/theatre/departments') }}/" + id + "/services", { headers: { 'Accept': 'application/json' } })
+                                        .then(r => r.json())
+                                        .then(items => {
+                                            if (!items || items.length === 0) {
+                                                svc.innerHTML = '<option value="">No services found for this department</option>';
+                                                return;
+                                            }
+                                            svc.innerHTML = '<option value="">-- Select service --</option>';
+                                            (items || []).forEach(it => {
+                                                const opt = document.createElement('option');
+                                                opt.value = it.id;
+                                                opt.textContent = it.name + (it.selling_price ? (' — ' + it.selling_price) : '');
+                                                svc.appendChild(opt);
+                                            });
+                                            svc.disabled = false;
+                                        })
+                                        .catch(() => { svc.innerHTML = '<option value="">Failed to load</option>'; });
+                                });
+                            })();
+                        </script>
                         @endcan
 
                         <div id="procedures-list">
-                            @forelse($patientProcedures as $patientProcedure)
-                            <div class="ehr-item" id="patient-procedure-{{ $patientProcedure->id }}">
+                            @forelse($procedureRequests as $pr)
+                            <div class="ehr-item">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
                                         <p class="mb-1">
-                                            <span class="badge bg-info-subtle text-info">{{ ucfirst($patientProcedure->status) }}</span>
-                                            <span class="fw-medium">{{ $patientProcedure->procedure->name ?? 'Procedure' }}</span>
+                                            <span class="badge" style="background-color: {{ $pr->status->color() }}; color:#fff;">{{ $pr->status->label() }}</span>
+                                            <span class="fw-medium">{{ $pr->service?->name ?? 'Procedure' }}</span>
+                                            <small class="text-muted">· {{ $pr->request_number }}</small>
                                         </p>
                                         <small class="text-muted">
-                                            {{ $patientProcedure->scheduled_date?->format('d M Y, h:i A') }}
-                                            @if($patientProcedure->performedByUser) &middot; {{ $patientProcedure->performedByUser->full_name ?? $patientProcedure->performedByUser->name }} @endif
-                                            @if($patientProcedure->procedure?->department) &middot; {{ $patientProcedure->procedure->department->name }} @endif
-                                            @if($patientProcedure->consent_signed) &middot; Consent signed @endif
+                                            {{ ucfirst($pr->priority) }} ·
+                                            {{ $pr->department?->name }} ·
+                                            Requested {{ optional($pr->requested_at)->format('d M Y H:i') }}
+                                            @if($pr->schedule)
+                                                · Scheduled {{ optional($pr->schedule->scheduled_start)->format('d M Y H:i') }}
+                                                @if($pr->schedule->theatreRoom) ({{ $pr->schedule->theatreRoom->name }}) @endif
+                                            @endif
                                         </small>
-                                        @if($patientProcedure->notes)
-                                            <div><small class="text-muted">{{ $patientProcedure->notes }}</small></div>
+                                        @if($pr->indication)
+                                            <div><small><strong>Indication:</strong> {{ $pr->indication }}</small></div>
+                                        @endif
+                                        @if($pr->rejection_reason)
+                                            <div><small class="text-danger"><strong>Rejected:</strong> {{ $pr->rejection_reason }}</small></div>
+                                        @endif
+                                        @if($pr->cancellation_reason)
+                                            <div><small class="text-warning"><strong>Cancelled:</strong> {{ $pr->cancellation_reason }}</small></div>
+                                        @endif
+                                    </div>
+                                    <div class="text-end">
+                                        <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.theatre.show', $pr) }}">
+                                            <i class="ti ti-eye me-1"></i>Open
+                                        </a>
+                                        @if($pr->status === \App\Enums\ProcedureStatus::COMPLETED)
+                                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.theatre.report', $pr) }}" target="_blank">Report</a>
                                         @endif
                                     </div>
                                 </div>
                             </div>
                             @empty
                             <div class="text-center text-muted py-4" id="procedures-empty">
-                                <i class="ti ti-activity-heartbeat fs-1 d-block mb-2"></i>No procedures requested yet.
+                                <i class="ti ti-activity-heartbeat fs-1 d-block mb-2"></i>No procedure requests for this visit yet.
                             </div>
                             @endforelse
                         </div>

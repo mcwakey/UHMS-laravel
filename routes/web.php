@@ -478,7 +478,7 @@ Route::middleware('auth')->group(function () {
 
             Route::post('consultations/{visit}/prescriptions', [ConsultationController::class, 'storePrescription'])->name('consultations.prescriptions.store')->middleware('can:prescriptions.create');
             Route::delete('consultations/prescriptions/{prescription}', [ConsultationController::class, 'destroyPrescription'])->name('consultations.prescriptions.destroy')->middleware('can:prescriptions.create');
-            Route::post('consultations/{visit}/procedures', [ConsultationController::class, 'storeProcedureRequest'])->name('consultations.procedures.store')->middleware('can:consultations.create');
+            Route::post('consultations/{visit}/procedures', [ConsultationController::class, 'storeProcedureRequest'])->name('consultations.procedures.store')->middleware('can:procedure.request');
             Route::post('consultations/{visit}/lab-request', [ConsultationController::class, 'storeLabRequest'])->name('consultations.lab-request.store')->middleware('can:lab.requests.create');
 
             // Suggestion endpoints
@@ -733,6 +733,66 @@ Route::middleware('auth')->group(function () {
             Route::patch('procedures/{patientProcedure}/start', [ProcedureController::class, 'startProcedure'])->name('procedures.start')->middleware('can:procedures.create');
             Route::patch('procedures/{patientProcedure}/complete', [ProcedureController::class, 'completeProcedure'])->name('procedures.complete')->middleware('can:procedures.create');
             Route::patch('procedures/{patientProcedure}/cancel', [ProcedureController::class, 'cancelProcedure'])->name('procedures.cancel')->middleware('can:procedures.create');
+        });
+
+        // ── Theatre / Procedure Workflow ───────────────────────────────
+        Route::prefix('theatre')->name('theatre.')->group(function () {
+            // Dashboard + detail
+            Route::middleware('can:procedure.view')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Theatre\TheatreController::class, 'index'])->name('index');
+                Route::get('procedures/{procedure}', [\App\Http\Controllers\Theatre\TheatreController::class, 'show'])->name('show');
+                Route::get('procedures/{procedure}/report', [\App\Http\Controllers\Theatre\TheatreController::class, 'fullReport'])
+                    ->name('report')->middleware('can:procedure.view_report');
+            });
+
+            // Workflow actions
+            Route::middleware('can:procedure.accept')->group(function () {
+                Route::post('procedures/{procedure}/accept', [\App\Http\Controllers\Theatre\TheatreController::class, 'accept'])->name('accept');
+            });
+            Route::middleware('can:procedure.reject')->group(function () {
+                Route::post('procedures/{procedure}/reject', [\App\Http\Controllers\Theatre\TheatreController::class, 'reject'])->name('reject');
+            });
+            Route::middleware('can:procedure.bill')->group(function () {
+                Route::post('procedures/{procedure}/bill', [\App\Http\Controllers\Theatre\TheatreController::class, 'generateBilling'])->name('bill');
+            });
+            Route::middleware('can:procedure.schedule')->group(function () {
+                Route::post('procedures/{procedure}/schedule', [\App\Http\Controllers\Theatre\TheatreController::class, 'schedule'])->name('schedule');
+            });
+            Route::middleware('can:procedure.reschedule')->group(function () {
+                Route::post('procedures/{procedure}/reschedule', [\App\Http\Controllers\Theatre\TheatreController::class, 'reschedule'])->name('reschedule');
+            });
+            Route::middleware('can:procedure.record_preop')->group(function () {
+                Route::post('procedures/{procedure}/preop', [\App\Http\Controllers\Theatre\TheatreController::class, 'preop'])->name('preop');
+            });
+            Route::middleware('can:procedure.record_anaesthesia')->group(function () {
+                Route::post('procedures/{procedure}/anaesthesia', [\App\Http\Controllers\Theatre\TheatreController::class, 'anaesthesia'])->name('anaesthesia');
+            });
+            Route::middleware('can:procedure.record_surgery')->group(function () {
+                Route::post('procedures/{procedure}/start-surgery', [\App\Http\Controllers\Theatre\TheatreController::class, 'startSurgery'])->name('start-surgery');
+                Route::post('procedures/{procedure}/operative-note', [\App\Http\Controllers\Theatre\TheatreController::class, 'operativeNote'])->name('operative-note');
+                Route::post('procedures/{procedure}/complete-surgery', [\App\Http\Controllers\Theatre\TheatreController::class, 'completeSurgery'])->name('complete-surgery');
+            });
+            Route::middleware('can:procedure.record_postop')->group(function () {
+                Route::post('procedures/{procedure}/postop', [\App\Http\Controllers\Theatre\TheatreController::class, 'postop'])->name('postop');
+            });
+            Route::middleware('can:procedure.complete')->group(function () {
+                Route::post('procedures/{procedure}/complete', [\App\Http\Controllers\Theatre\TheatreController::class, 'complete'])->name('complete');
+            });
+            Route::middleware('can:procedure.cancel')->group(function () {
+                Route::post('procedures/{procedure}/cancel', [\App\Http\Controllers\Theatre\TheatreController::class, 'cancel'])->name('cancel');
+            });
+
+            // Doctor: request procedure from consultation page
+            Route::middleware('can:procedure.request')->group(function () {
+                Route::post('visits/{visit}/request', [\App\Http\Controllers\Theatre\TheatreController::class, 'requestStore'])->name('request');
+                // Lookups for the consultation form
+                Route::get('departments', function () {
+                    return response()->json(app(\App\Services\ProcedureRequestService::class)->procedureDepartments());
+                })->name('departments');
+                Route::get('departments/{department}/services', function (\App\Models\Department $department) {
+                    return response()->json(app(\App\Services\ProcedureRequestService::class)->servicesForDepartment($department->id));
+                })->name('department-services');
+            });
         });
 
         // Investigation Items (Catalog + Stock for Lab/Radiology/Investigation departments)

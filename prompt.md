@@ -1,1066 +1,1152 @@
 You are a senior Laravel + Inertia/Vue architect working on **UHMS — Ultimate Hospital Management System**.
 
-The project user manual has been updated with the latest UHMS workflows. Your task is to align the actual codebase with the documented workflow.
+We need to design and implement a complete **Theatre / Procedure Workflow Module**.
 
-Use the updated manual as the source of truth:
+Focus only on theatre procedures, procedure requests, theatre scheduling, procedure billing, pre-op records, anaesthesia notes, surgeon operative notes, post-op notes, procedure timeline, and consultation integration.
 
-```text
-docs/UHMS_Updated_User_Manual.md
-```
-
-Also inspect the existing manual if present:
-
-```text
-UHMS_USER_MANUAL.md
-```
-
-Your job is to compare the current implementation against the updated manual, identify gaps, and implement the required workflow corrections carefully.
-
-Do not rewrite the whole project blindly. Work module by module, preserve working code, and avoid unrelated refactors.
+Do not refactor unrelated modules.
 
 ---
 
 # 1. Main Objective
 
-Align the UHMS codebase with the updated documented workflows:
+Implement a full theatre procedure workflow:
 
-1. One visit starts at triage.
-2. Triage completion sends the patient to waiting consultation.
-3. Doctor must click `Start Consultation` before entering clinical data.
-4. One visit has one main invoice.
-5. Every department adds billable items to the same visit invoice.
-6. Billing must use consistent invoice item calculations.
-7. Insurance pricing must be applied consistently everywhere.
-8. Insurance covered is not payment.
-9. Discount is manually entered by authorized users.
-10. Paid amount only comes from real payments.
-11. Prescribing does not reduce stock.
-12. Dispensing reduces stock.
-13. Stock movements are the source of truth.
-14. Stock balances are only cached current quantity.
-15. Optional modules must not break the core visit workflow.
+```text
+Doctor requests procedure
+    ↓
+Procedure status = REQUESTED
+
+Theatre accepts procedure
+    ↓
+Procedure status = ACCEPTED
+
+System creates billing item
+    ↓
+Procedure status = BILLED
+
+Theatre schedules procedure
+    ↓
+Procedure status = SCHEDULED
+
+Theatre records pre-op vitals
+    ↓
+Procedure status = PRE_OP
+
+Anaesthetist records anaesthesia note
+    ↓
+Procedure status = ANAESTHESIA
+
+Surgeon records operative note
+    ↓
+Procedure status = IN_SURGERY or SURGERY_DONE
+
+Recovery/post-op note entered
+    ↓
+Procedure status = POST_OP
+
+Procedure finalized
+    ↓
+Procedure status = COMPLETED
+```
+
+This workflow must be linked to the patient visit and visible in the patient’s visit history.
 
 ---
 
-# 2. First Step: Audit the Current Codebase
+# 2. Core Business Rules
 
-Before implementing anything, inspect the current project.
+1. A doctor requests a procedure from the Consultation page.
+2. The procedure request must be linked to:
 
-Check:
-
-* routes
-* controllers
-* models
-* migrations
-* services
-* Vue/Inertia pages
-* layouts
-* sidebar/module logic
-* billing implementation
-* inventory implementation
-* pharmacy workflow
-* investigation workflow
-* consultation workflow
-* triage workflow
-* documentation files
-
-Create an audit note listing:
-
-```text
-Implemented correctly
-Partially implemented
-Missing
-Broken
-Legacy/unused logic still present
-```
-
-Do not start coding until you understand what already exists.
+   * patient
+   * visit
+   * requesting doctor
+   * selected procedure service
+   * theatre/procedure department
+3. Theatre must accept the procedure before billing.
+4. Billing happens after theatre acceptance.
+5. Billing must create a billable item on the **same visit invoice**.
+6. Do not create a separate invoice for theatre.
+7. Billing must go through `BillingService`.
+8. Theatre billing must respect the patient’s selected visit insurance or Cash and Carry fallback.
+9. Scheduling happens after billing.
+10. Pre-op must not start before billing, unless emergency override is explicitly allowed.
+11. Anaesthesia note and surgeon operative note must be separate.
+12. Vitals must be recordable at multiple procedure stages.
+13. Completed procedure must be visible from the Consultation page and Patient Visit History.
+14. Cancelled/rejected procedures must require a reason.
+15. If a billed procedure is cancelled, do not delete the invoice item silently. Void/cancel/reverse it with reason.
 
 ---
 
-# 3. Required Architecture Rules
+# 3. Required Procedure Statuses
 
-Use this architecture:
+Create or update a procedure status enum.
 
-```text
-Controllers
-    ↓
-Form Requests
-    ↓
-Services
-    ↓
-Models / Repositories
-    ↓
-Events / Jobs / Notifications
-```
-
-Controllers must remain thin.
-
-Business logic must be placed in services.
-
-Required services include or should be created/updated:
+Recommended statuses:
 
 ```text
-VisitWorkflowService
-TriageService
-ConsultationService
-BillingService
-InvoiceService
-PaymentService
-InsuranceService
-ServicePricingService
-PrescriptionService
-InvestigationRequestService
-InvestigationCatalogueService
-InvestigationResultService
-PharmacyDispensingService
-StockMovementService
-StockBalanceService
-StockTransferService
-StockAdjustmentService
-StockReturnService
-ModuleService
+REQUESTED
+ACCEPTED
+BILLED
+SCHEDULED
+PRE_OP
+ANAESTHESIA
+IN_SURGERY
+SURGERY_DONE
+POST_OP
+COMPLETED
+REJECTED
+CANCELLED
+ON_HOLD
+RESCHEDULED
 ```
 
-Do not put workflow, billing, insurance, stock, or investigation rules directly in controllers or Vue components.
+Use existing project enum conventions if available.
 
 ---
 
-# 4. Visit and Triage Workflow
+# 4. Procedure Request from Consultation
 
-## Documented Rule
+On the Doctor Consultation page, add a **Procedure / Theatre Request** section or tab.
 
-Every visit starts at triage.
+The doctor should be able to select:
 
-When a visit is created:
+* procedure department / theatre department
+* procedure service
+* priority
+* indication / reason for procedure
+* provisional diagnosis or linked diagnosis if available
+* notes
+* preferred date/time optional
 
-```text
-status = TRIAGE
-```
+When submitted:
 
-When triage is saved:
-
-```text
-TRIAGE → WAITING_CONSULTATION
-```
-
-## Implementation Requirements
-
-Ensure visit creation:
-
-1. creates the visit
-2. selects valid insurance or Cash and Carry
-3. creates/gets the main visit invoice
-4. adds initial selected services to the invoice if applicable
-5. sends patient to triage
-
-Ensure triage save:
-
-1. saves vitals
-2. calculates triage score
-3. stores triage score
-4. changes visit status to `WAITING_CONSULTATION`
-5. logs the transition
-6. updates queue without full page reload
-
-All status changes must go through:
-
-```php
-VisitWorkflowService
-```
-
-Do not update visit status directly from controllers or Vue.
-
----
-
-# 5. Consultation Workflow
-
-## Documented Rule
-
-Doctor must click:
-
-```text
-Start Consultation
-```
-
-before entering clinical data.
-
-This changes status:
-
-```text
-WAITING_CONSULTATION → CONSULTING
-```
-
-If already started, show:
-
-```text
-Continue Consultation
-```
-
-## Implementation Requirements
-
-On consultation queue:
-
-* show only visits with:
-
-  * `WAITING_CONSULTATION`
-  * `CONSULTING`
-
-Action button logic:
-
-```text
-WAITING_CONSULTATION → Start Consultation
-CONSULTING → Continue Consultation
-```
-
-On consultation page:
-
-* disable complaints, diagnosis, prescriptions, investigations, treatment, and notes until consultation is started
-* show clear message: `Click Start Consultation to begin entering clinical information.`
-* preserve active tab after saving
-* avoid full page reloads
+* create a procedure request
+* status = `REQUESTED`
+* do not create billing yet
+* show success without full page reload
+* keep doctor on the same consultation page/tab
+* show the request under the patient’s procedure list/timeline
 
 Use:
 
 ```php
-VisitWorkflowService::startConsultation(...)
-ConsultationService
+ProcedureRequestService::requestProcedure(...)
 ```
 
 ---
 
-# 6. Diagnosis Workflow
+# 5. Theatre Dashboard / Queue
 
-Implement or verify:
+Create or update a Theatre dashboard.
 
-* diagnosis can be provisional or final
-* first diagnosis becomes primary by default
-* user can set another diagnosis as primary
-* only one primary diagnosis per visit
-* diagnosis type can be edited if allowed
+It should have tabs or filters:
 
-Do not reset the consultation page after saving diagnosis.
+```text
+Pending Requests
+Accepted
+Billed
+Scheduled Today
+In Theatre
+Recovery / Post-op
+Completed
+Cancelled / Rejected
+```
+
+Each row should display:
+
+* patient name
+* visit number
+* age/gender
+* requested procedure service
+* requesting doctor
+* priority
+* request date/time
+* current status
+* billing status
+* insurance/payment type
+* scheduled time if available
+* surgeon if assigned
+* anaesthetist if assigned
+* action button
+
+Action buttons should depend on status:
+
+```text
+REQUESTED → Accept / Reject
+ACCEPTED → Generate Billing
+BILLED → Schedule
+SCHEDULED → Record Pre-op
+PRE_OP → Record Anaesthesia
+ANAESTHESIA → Start Surgery / Record Surgeon Note
+IN_SURGERY → Complete Surgery
+SURGERY_DONE → Record Post-op
+POST_OP → Finalize Procedure
+COMPLETED → View / Print Report
+```
 
 ---
 
-# 7. Prescription Workflow
+# 6. Theatre Acceptance
 
-## Documented Rule
+When theatre accepts the procedure:
 
-Prescribing does not reduce stock.
+* validate the procedure is in `REQUESTED`
+* set status to `ACCEPTED`
+* save accepted_by
+* save accepted_at
+* optionally add acceptance notes
 
-Stock is reduced only when pharmacy dispenses the drug.
-
-## Implementation Requirements
-
-Fix/verify prescription creation:
-
-* prescription saves correctly
-* linked to visit
-* linked to doctor
-* linked to patient if needed
-* validation errors display properly
-* no silent `302` redirect
-* prescription list updates without full reload
-* adding multiple drugs works where allowed
-
-Do not create stock movements during prescription creation.
+Do not create billing before acceptance.
 
 Use:
 
 ```php
-PrescriptionService
+ProcedureWorkflowService::acceptProcedure(...)
+```
+
+If rejected:
+
+* require rejection reason
+* set status to `REJECTED`
+* save rejected_by
+* save rejected_at
+* do not create billing
+
+---
+
+# 7. Procedure Billing
+
+After acceptance, create billing item.
+
+When theatre generates billing:
+
+* validate status is `ACCEPTED`
+* get the visit’s main invoice
+* add procedure service as an invoice item through `BillingService`
+* apply patient’s selected visit insurance or Cash and Carry fallback
+* save invoice_item_id / billing_item_id on the procedure request
+* set procedure status to `BILLED`
+
+Use:
+
+```php
+BillingService::addItemToVisitInvoice(...)
+ProcedureWorkflowService::markBilled(...)
+```
+
+Required billing source:
+
+```text
+source_type = procedure_request
+source_id = procedure_requests.id
+```
+
+Rules:
+
+* do not create a separate theatre invoice
+* prevent duplicate billing for same procedure request
+* if already billed, return clear error
+* if billing fails, do not move status to `BILLED`
+* if procedure is cancelled after billing, void/cancel invoice item with reason; do not delete silently
+
+---
+
+# 8. Theatre Scheduling
+
+After billing, theatre can schedule the procedure.
+
+Scheduling should capture:
+
+* theatre room
+* scheduled start date/time
+* scheduled end date/time optional
+* surgeon
+* anaesthetist
+* assistant surgeon optional
+* theatre nurses optional
+* required equipment optional
+* notes
+
+When scheduling:
+
+* validate procedure status is `BILLED`
+* create or update procedure schedule
+* set status = `SCHEDULED`
+* save scheduled_by
+* save scheduled_at
+
+Use:
+
+```php
+ProcedureScheduleService::scheduleProcedure(...)
+```
+
+If rescheduled:
+
+* keep previous schedule history if possible
+* set status = `RESCHEDULED` or keep `SCHEDULED` with reschedule log
+* require reason
+
+---
+
+# 9. Pre-op Vitals and Checklist
+
+After scheduling, theatre records pre-op vitals and checklist.
+
+Pre-op vitals may include:
+
+* temperature
+* blood pressure
+* pulse
+* respiratory rate
+* oxygen saturation
+* weight
+* pain score
+* notes
+
+Pre-op checklist may include:
+
+* consent signed
+* fasting confirmed
+* allergies checked
+* blood available if needed
+* site marked if applicable
+* pre-op diagnosis
+* equipment ready
+* anaesthesia review done
+
+When pre-op is saved:
+
+* validate procedure status is `SCHEDULED`
+* create procedure vitals with stage `PRE_OP`
+* save checklist details
+* set status = `PRE_OP`
+* save recorded_by and recorded_at
+
+Use:
+
+```php
+ProcedureClinicalService::recordPreOp(...)
 ```
 
 ---
 
-# 8. Investigation Workflow
+# 10. Anaesthesia Note
 
-Investigations are not limited to Lab.
+Anaesthetist records anaesthesia note after pre-op.
 
-Investigation departments may include:
+Anaesthesia note fields:
 
-```text
-Lab
-X-ray
-Scan
-CT-scan
-Ultrasound
-ECG
-any configured investigation-type department
+* anaesthetist
+* anaesthesia type:
+
+  * local
+  * regional
+  * spinal
+  * general
+  * sedation
+  * other
+* pre-anaesthesia assessment
+* drugs used
+* dosage / medication notes
+* airway management
+* monitoring notes
+* complications
+* start time
+* end time
+* notes
+
+When anaesthesia note is saved:
+
+* validate procedure status is `PRE_OP`
+* create anaesthesia note
+* set status = `ANAESTHESIA`
+* save anaesthetist_id
+* save timestamp
+
+Use:
+
+```php
+ProcedureClinicalService::recordAnaesthesiaNote(...)
 ```
 
-## Doctor Request Flow
+---
 
-On consultation page:
+# 11. Surgeon Operative Note
 
-1. doctor selects investigation department
-2. system loads services under that department
-3. doctor selects one or more services
-4. system creates investigation request
-5. request appears on the correct investigation department request page
+Surgeon records operative note.
 
-## Display Rule
+Operative note fields:
 
-On consultation page, requested investigations must be grouped by department.
+* surgeon
+* assistant surgeon optional
+* procedure performed
+* pre-op diagnosis
+* post-op diagnosis
+* findings
+* incision
+* technique
+* blood loss
+* complications
+* specimens taken
+* implants/materials used
+* start time
+* end time
+* outcome
+* notes
+
+When surgeon note is started/saved:
+
+* validate procedure status is `ANAESTHESIA`
+* set status = `IN_SURGERY` when surgery begins
+* save operative note
+* set status = `SURGERY_DONE` when operative note is completed
+
+Use:
+
+```php
+ProcedureClinicalService::startSurgery(...)
+ProcedureClinicalService::recordOperativeNote(...)
+ProcedureClinicalService::completeSurgery(...)
+```
+
+---
+
+# 12. Post-op / Recovery Note
+
+After surgery, recovery/post-op note is entered.
+
+Post-op fields:
+
+* recorded_by
+* recovery status
+* post-op vitals
+* pain score
+* consciousness level
+* post-op instructions
+* medications
+* complications
+* transfer destination:
+
+  * ward
+  * ICU
+  * outpatient discharge
+  * emergency observation
+  * recovery room
+* notes
+
+When post-op note is saved:
+
+* validate procedure status is `SURGERY_DONE`
+* create post-op note
+* optionally create procedure vitals with stage `POST_OP` or `RECOVERY`
+* set status = `POST_OP`
+
+Use:
+
+```php
+ProcedureClinicalService::recordPostOp(...)
+```
+
+---
+
+# 13. Finalize Procedure
+
+When all required notes are completed:
+
+* validate status is `POST_OP`
+* set status = `COMPLETED`
+* save completed_by
+* save completed_at
+* make full procedure report available
+
+Use:
+
+```php
+ProcedureWorkflowService::completeProcedure(...)
+```
+
+---
+
+# 14. Procedure Timeline Feature
+
+Implement a Procedure Timeline view.
+
+Timeline should show each step:
+
+```text
+Requested
+Accepted
+Billed
+Scheduled
+Pre-op Vitals
+Anaesthesia
+Surgery
+Post-op
+Completed
+```
+
+Each timeline item should show:
+
+* status
+* timestamp
+* responsible user
+* notes summary
+* action button if action is pending
+* view details button if completed
 
 Example:
 
 ```text
-LAB
-- Full Blood Count — Pending
-- Malaria Test — Done
-
-X-RAY
-- Chest X-Ray — Accepted
+✓ Requested by Dr. Mensah
+✓ Accepted by Theatre Nurse
+✓ Billed on Visit Invoice #INV-00034
+✓ Scheduled for 10:30 AM in Theatre Room 1
+✓ Pre-op vitals recorded
+✓ Anaesthesia note entered
+✓ Surgeon operative note entered
+✓ Post-op note entered
+✓ Completed
 ```
 
-Doctors must be able to view results from the consultation page.
+This timeline should be visible:
 
-Doctors must not be able to delete an investigation item after results have been entered.
-
-Use:
-
-```php
-InvestigationRequestService
-InvestigationResultService
-BillingService
-```
+* on Theatre procedure detail page
+* in Patient Visit History
+* from Consultation page under Procedures/Theatre section
 
 ---
 
-# 9. Investigation Request Acceptance
+# 15. Consultation Page Integration
 
-## Documented Rule
+On the consultation page:
 
-Investigation staff must select requested items before accepting.
+* doctors can request procedures
+* doctors can see procedure requests grouped/listed by status
+* doctors can see current theatre status
+* doctors can view completed procedure reports
+* doctors cannot delete/cancel a procedure after theatre has accepted it unless permitted
+* if procedure is billed or completed, cancellation must follow backend rules
 
-Only selected accepted items are billed.
-
-## Implementation Requirements
-
-On investigation request view page:
-
-* show requested items in a table
-* each item has checkbox/select option
-* Accept button disabled until at least one item is selected
-* clicking Accept:
-
-  1. validates selected items
-  2. accepts only selected items
-  3. bills only selected items
-  4. adds invoice items to the visit’s main invoice
-  5. does not bill unselected items
-  6. updates request/item statuses
-
-Do not create a separate invoice.
-
-Use:
-
-```php
-BillingService::addItemToVisitInvoice(...)
-InvoiceService::getOrCreateVisitInvoice(...)
-```
-
----
-
-# 10. Investigation Catalogue
-
-## Documented Rule
-
-Replace old concept:
+The doctor should see:
 
 ```text
-Lab Test Catalogue
-```
-
-with:
-
-```text
-Investigation Catalogue
-```
-
-The catalogue is based on services from investigation-type departments.
-
-Correct structure:
-
-```text
-Investigation Service
-    → Optional Headers / Categories
-    → Criteria
-```
-
-Do not create separate catalogue tests detached from services.
-
-## Implementation Requirements
-
-Investigation Catalogue page should:
-
-1. list services where department type is `investigation`
-2. allow selecting a service
-3. allow configuring headers/categories for that service
-4. allow configuring criteria for that service
-5. allow criteria to belong to a header or stand alone
-
-Suggested models/tables:
-
-```text
-investigation_headers
-investigation_criteria
-```
-
-Criteria must belong to a service.
-
-Headers must belong to a service.
-
-Use:
-
-```php
-InvestigationCatalogueService
-```
-
----
-
-# 11. Investigation Results, Verification, and Printing
-
-Result entry must load configured headers and criteria from Investigation Catalogue.
-
-When result is entered:
-
-* save values against criteria
-* preserve unit/reference range snapshot
-* update item status
-* allow View Result
-* allow Verify Result for authorized users
-* allow Print only after verification unless system setting allows otherwise
-
-Doctors must be able to view results from the consultation page.
-
-Use:
-
-```php
-InvestigationResultService
-```
-
-Do not save results only as unstructured text.
-
----
-
-# 12. Billing Model
-
-## Documented Rule
-
-```text
-One Visit = One Main Invoice
-```
-
-All billable activities during a visit add items to the same invoice.
-
-Examples:
-
-* consultation service
-* investigation item
-* pharmacy item
-* ward charge
-* procedure
-* scan
-* x-ray
-
-Do not create multiple active invoices for the same visit.
-
-## Implementation Requirements
-
-Ensure:
-
-* invoice is created automatically when visit starts or first billable item is added
-* only one active invoice exists per visit
-* every billable department uses the same billing service
-* no controller creates invoice items directly
-
-Use:
-
-```php
-InvoiceService::getOrCreateVisitInvoice(...)
-BillingService::addItemToVisitInvoice(...)
-```
-
----
-
-# 13. Invoice Item Calculation Rules
-
-Update invoice item logic to match the manual.
-
-Required fields:
-
-```text
-cash_price
-insurance_price
-selected_price
-quantity
-discount_amount
-insurance_covered
-patient_payable
-paid_amount
-balance
-payment_status
-```
-
-## Formulas
-
-```text
-insurance_covered = cash_price - insurance_price
-```
-
-If no insurance applies:
-
-```text
-insurance_covered = 0
-```
-
-```text
-patient_payable = (selected_price * quantity) - discount_amount
-```
-
-```text
-balance = patient_payable - paid_amount
-```
-
-Important:
-
-* `insurance_covered` is not a payment
-* `insurance_covered` must not be assigned to `paid_amount`
-* `discount_amount` is manually entered
-* discount must not equal insurance covered automatically
-* `paid_amount` only comes from real payments/payment allocations
-
-Remove or stop using legacy fields such as:
-
-```text
-unit_price
-is_nhis_covered
-nhis_approved_amount
-approved_amount
-coverage_percentage
-covered_amount
-insurance_paid
-insurance_payment
-relevance
-```
-
-Use `selected_price` in views instead of `unit_price`.
-
----
-
-# 14. Insurance Pricing Rules
-
-Insurance must be applied consistently everywhere.
-
-Pricing priority:
-
-```text
-Provider-specific insurance service price
-    ↓
-General insurance type service price
-    ↓
-Base price / Cash and Carry price
-```
-
-Rules:
-
-* Cash and Carry uses service base price.
-* NHIS is not special; it is one insurance type.
-* Provider-specific prices override general insurance type prices.
-* Coverage percentage must not be used in price calculation.
-* If insurance is invalid/expired/exhausted/missing, fallback to Cash and Carry.
-* Store CCC code where applicable, preferably on patient insurance.
-
-Use:
-
-```php
-InsuranceService
-ServicePricingService
-```
-
-Every department must respect the patient’s selected visit insurance through the central billing/pricing services.
-
----
-
-# 15. Payments and Payment Allocation
-
-Patients can pay during an ongoing visit.
-
-Payments may clear:
-
-* full invoice
-* selected invoice items
-* part of selected invoice items
-
-Implement or verify:
-
-```text
-payments
-payment_allocations
-```
-
-Payment allocation must update:
-
-* item paid amount
-* item balance
-* item payment status
-* invoice totals
-* invoice status
-
-Do not allow payment to affect stock.
-
-Use:
-
-```php
-PaymentService
-InvoiceService
-```
-
----
-
-# 16. Manual Discounts
-
-Discounts are entered manually from the Invoice View page.
-
-Implementation requirements:
-
-* add discount input or Apply Discount modal per invoice item
-* only authorized users can apply discounts
-* discount cannot be negative
-* discount cannot exceed `selected_price * quantity`
-* discount recalculates:
-
-  * patient payable
-  * balance
-  * payment status
-  * invoice totals
-
-Use:
-
-```php
-BillingService::applyDiscount(...)
-```
-
-Do not calculate discount only in Vue.
-
-Backend must be authoritative.
-
----
-
-# 17. Invoice View UI
-
-Invoice view should show simplified, accurate data.
-
-Recommended columns:
-
-```text
-Service / Description
-Selected Price
-Discount
-Patient Payable
-Paid Amount
-Balance
+Procedure
 Status
-Action
+Billing Status
+Scheduled Date
+Surgeon
+Anaesthetist
+Actions: View Timeline / View Report
 ```
-
-Remove or avoid showing:
-
-```text
-Qty
-Cash Price
-unit_price
-NHIS approved amount
-coverage percentage
-legacy relevance fields
-```
-
-If quantity and cash price are needed internally, keep them in the database but do not show them on the simplified invoice view.
 
 ---
 
-# 18. Pharmacy and Dispensing
+# 16. Patient Visit History Integration
 
-## Documented Rule
+The procedure must be visible in patient visit history.
 
-* prescribing does not reduce stock
-* dispensing reduces stock
-* only dispensed drugs are billed
-* dispensed drugs are added to the visit’s main invoice
-* dispensing creates a `PHARMACY_DISPENSED` OUT stock movement
+Visit history should show:
 
-Implementation requirements:
+* procedure requested
+* theatre acceptance
+* billing item
+* schedule
+* pre-op vitals
+* anaesthesia note
+* operative note
+* post-op note
+* completion status
+* printable report
 
-1. pharmacy can dispense multiple drugs where valid
-2. no silent `302` redirects
-3. validation errors display clearly
-4. stock availability is checked from stock balance
-5. billing uses `BillingService`
-6. stock uses `StockMovementService`
+---
 
-Use:
+# 17. Printing / Reports
+
+Create printable reports:
+
+1. Procedure request form
+2. Theatre schedule
+3. Pre-op checklist
+4. Anaesthesia report
+5. Operative note
+6. Post-op report
+7. Full procedure report
+
+Full procedure report should include:
+
+* hospital information
+* patient details
+* visit details
+* procedure service
+* requesting doctor
+* priority
+* indication
+* billing/invoice reference
+* schedule details
+* pre-op vitals/checklist
+* anaesthesia note
+* operative note
+* post-op note
+* surgeon
+* anaesthetist
+* theatre room
+* timestamps
+* completion status
+
+Only completed procedures should show final full procedure report unless preview/draft mode is explicitly allowed.
+
+---
+
+# 18. Suggested Database Tables
+
+Use existing tables if available. Otherwise create clean migrations.
+
+## procedure_requests
+
+```text
+id
+visit_id
+patient_id
+requested_by
+department_id
+service_id
+priority
+indication
+notes
+status
+billing_item_id nullable
+accepted_by nullable
+accepted_at nullable
+rejected_by nullable
+rejected_at nullable
+rejection_reason nullable
+cancelled_by nullable
+cancelled_at nullable
+cancellation_reason nullable
+completed_by nullable
+completed_at nullable
+requested_at
+created_at
+updated_at
+```
+
+## procedure_schedules
+
+```text
+id
+procedure_request_id
+theatre_room_id nullable
+scheduled_start
+scheduled_end nullable
+surgeon_id nullable
+anaesthetist_id nullable
+assistant_surgeon_id nullable
+status
+notes
+scheduled_by
+scheduled_at
+created_at
+updated_at
+```
+
+## procedure_vitals
+
+```text
+id
+procedure_request_id
+stage
+temperature nullable
+blood_pressure nullable
+pulse nullable
+respiratory_rate nullable
+oxygen_saturation nullable
+weight nullable
+pain_score nullable
+recorded_by
+recorded_at
+notes nullable
+created_at
+updated_at
+```
+
+Stages:
+
+```text
+PRE_OP
+INTRA_OP
+POST_OP
+RECOVERY
+```
+
+## procedure_checklists
+
+```text
+id
+procedure_request_id
+consent_signed
+fasting_confirmed
+allergies_checked
+blood_available
+site_marked
+equipment_ready
+anaesthesia_review_done
+pre_op_diagnosis nullable
+completed_by
+completed_at
+notes nullable
+created_at
+updated_at
+```
+
+## anaesthesia_notes
+
+```text
+id
+procedure_request_id
+anaesthetist_id
+anaesthesia_type
+pre_assessment nullable
+drugs_used nullable
+dosage_notes nullable
+airway_management nullable
+monitoring_notes nullable
+complications nullable
+start_time nullable
+end_time nullable
+notes nullable
+created_at
+updated_at
+```
+
+## operative_notes
+
+```text
+id
+procedure_request_id
+surgeon_id
+assistant_surgeon_id nullable
+procedure_performed
+pre_op_diagnosis nullable
+post_op_diagnosis nullable
+findings nullable
+incision nullable
+technique nullable
+blood_loss nullable
+complications nullable
+specimens nullable
+implants nullable
+start_time nullable
+end_time nullable
+outcome nullable
+notes nullable
+created_at
+updated_at
+```
+
+## post_op_notes
+
+```text
+id
+procedure_request_id
+recorded_by
+recovery_status nullable
+pain_score nullable
+consciousness_level nullable
+post_op_instructions nullable
+medications nullable
+complications nullable
+transfer_destination nullable
+notes nullable
+created_at
+updated_at
+```
+
+## theatre_rooms
+
+```text
+id
+name
+location nullable
+is_active
+created_at
+updated_at
+```
+
+## procedure_status_logs
+
+```text
+id
+procedure_request_id
+from_status nullable
+to_status
+changed_by
+reason nullable
+notes nullable
+created_at
+updated_at
+```
+
+---
+
+# 19. Models and Relationships
+
+Create/update models:
+
+```text
+ProcedureRequest
+ProcedureSchedule
+ProcedureVital
+ProcedureChecklist
+AnaesthesiaNote
+OperativeNote
+PostOpNote
+TheatreRoom
+ProcedureStatusLog
+```
+
+Relationships:
+
+## ProcedureRequest
 
 ```php
-PharmacyDispensingService
+visit()
+patient()
+requestingDoctor()
+department()
+service()
+billingItem()
+schedule()
+vitals()
+checklist()
+anaesthesiaNote()
+operativeNote()
+postOpNote()
+statusLogs()
+```
+
+## ProcedureSchedule
+
+```php
+procedureRequest()
+theatreRoom()
+surgeon()
+anaesthetist()
+assistantSurgeon()
+scheduledBy()
+```
+
+---
+
+# 20. Services
+
+Create or update:
+
+```text
+ProcedureRequestService
+ProcedureWorkflowService
+ProcedureScheduleService
+ProcedureClinicalService
+ProcedureReportService
 BillingService
-StockMovementService
-StockBalanceService
+InvoiceService
+ServicePricingService
+InsuranceService
 ```
+
+## ProcedureRequestService
+
+Handles:
+
+* doctor procedure request
+* validation
+* listing requests
+* consultation page integration
+
+## ProcedureWorkflowService
+
+Handles:
+
+* accept
+* reject
+* mark billed
+* cancel
+* complete
+* status transitions
+* status logs
+
+## ProcedureScheduleService
+
+Handles:
+
+* schedule
+* reschedule
+* room/doctor assignment
+
+## ProcedureClinicalService
+
+Handles:
+
+* pre-op vitals
+* checklist
+* anaesthesia note
+* surgery start
+* operative note
+* post-op note
+
+## ProcedureReportService
+
+Handles:
+
+* timeline data
+* printable reports
+* visit history summary
 
 ---
 
-# 19. Inventory and Stock Movement System
+# 21. Required Methods
 
-## Documented Rule
-
-```text
-stock_movements = source of truth
-stock_balances = fast current stock cache
-```
-
-Current stock:
-
-```text
-Total IN movements - Total OUT movements
-```
-
-Do not manually overwrite product/drug quantity as current stock.
-
-## Required Movement Types
-
-```text
-OPENING_STOCK
-PURCHASE_RECEIVED
-PHARMACY_DISPENSED
-TRANSFER_IN
-TRANSFER_OUT
-RETURN_IN
-RETURN_OUT
-ADJUSTMENT_IN
-ADJUSTMENT_OUT
-DAMAGED
-EXPIRED
-REVERSAL_IN
-REVERSAL_OUT
-```
-
-Implementation requirements:
-
-* opening stock creates opening stock movement
-* purchase receiving creates IN movement
-* pharmacy dispensing creates OUT movement
-* transfers create paired OUT and IN movements
-* returns create return movements
-* stock adjustments create adjustment movements
-* damaged/expired stock creates OUT movements
-* corrections use reversal movements, not deletion
-
-Use:
+Implement methods like:
 
 ```php
-StockMovementService
-StockBalanceService
-StockTransferService
-StockAdjustmentService
-StockReturnService
+ProcedureRequestService::requestProcedure(array $data, User $doctor): ProcedureRequest
+
+ProcedureWorkflowService::acceptProcedure(ProcedureRequest $procedure, User $user, ?string $notes = null): ProcedureRequest
+
+ProcedureWorkflowService::rejectProcedure(ProcedureRequest $procedure, User $user, string $reason): ProcedureRequest
+
+ProcedureWorkflowService::generateBilling(ProcedureRequest $procedure, User $user): ProcedureRequest
+
+ProcedureScheduleService::scheduleProcedure(ProcedureRequest $procedure, array $data, User $user): ProcedureSchedule
+
+ProcedureClinicalService::recordPreOp(ProcedureRequest $procedure, array $data, User $user): ProcedureRequest
+
+ProcedureClinicalService::recordAnaesthesiaNote(ProcedureRequest $procedure, array $data, User $user): AnaesthesiaNote
+
+ProcedureClinicalService::startSurgery(ProcedureRequest $procedure, User $user): ProcedureRequest
+
+ProcedureClinicalService::recordOperativeNote(ProcedureRequest $procedure, array $data, User $user): OperativeNote
+
+ProcedureClinicalService::recordPostOp(ProcedureRequest $procedure, array $data, User $user): PostOpNote
+
+ProcedureWorkflowService::completeProcedure(ProcedureRequest $procedure, User $user): ProcedureRequest
+
+ProcedureReportService::getTimeline(ProcedureRequest $procedure): array
 ```
 
 ---
 
-# 20. Purchase Orders and Receiving
+# 22. Validation Rules
 
-## Documented Rule
+## Request Procedure
 
-Creating a purchase order does not increase stock.
+* visit_id required
+* patient_id must match visit patient
+* department_id required
+* department must be theatre/procedure department
+* service_id required
+* service must belong to selected department
+* priority required
+* indication required
+* requested_by required
 
-Stock increases only when purchase items are received.
+## Accept Procedure
 
-Implementation requirements:
+* status must be `REQUESTED`
+* user must have permission to accept procedure
 
-* fix error: `at least one item is required` even when items are selected
-* ensure selected items are sent to backend under the expected key, preferably `items`
-* validation errors display properly
-* purchase order saves with multiple items
-* receiving purchase items creates `PURCHASE_RECEIVED` stock movement
-* receiving updates stock balance
-* purchase order status supports:
+## Generate Billing
 
-  * pending
-  * partially received
-  * received
-  * cancelled
+* status must be `ACCEPTED`
+* procedure must not already be billed
+* service must be billable
+* visit must have invoice or be able to create one
+* billing must use patient insurance/cash fallback
 
-Do not increase stock when purchase order is merely created unless the workflow explicitly says received immediately.
+## Schedule Procedure
 
----
+* status must be `BILLED`
+* scheduled_start required
+* theatre room required if system requires it
+* surgeon required if system requires it
+* anaesthetist required if system requires it
 
-# 21. Stock Transfers
+## Pre-op
 
-Transfers move stock from one location to another.
+* status must be `SCHEDULED`
+* vitals required according to system rules
+* checklist required according to system rules
 
-A completed transfer must create:
+## Anaesthesia
 
-```text
-TRANSFER_OUT from source location
-TRANSFER_IN into destination location
-```
+* status must be `PRE_OP`
+* anaesthesia type required
+* anaesthetist required
 
-Rules:
+## Operative Note
 
-* source and destination must be different
-* quantity must be greater than zero
-* source must have enough stock
-* both movements must link to the same transfer record
+* status must be `ANAESTHESIA` or `IN_SURGERY`
+* surgeon required
+* procedure performed required
+* start/end time validation
 
----
+## Post-op
 
-# 22. Stock Returns
+* status must be `SURGERY_DONE`
+* recovery status or notes required
 
-Returns must create stock movements.
+## Complete Procedure
 
-```text
-RETURN_IN = stock comes back into a location
-RETURN_OUT = stock leaves a location, e.g. supplier return
-```
-
-Do not delete original stock movements.
-
----
-
-# 23. Stock Adjustments, Damaged, Expired, and Reversals
-
-Stock adjustment is for physical count corrections.
-
-Adjustment types:
-
-```text
-ADJUSTMENT_IN
-ADJUSTMENT_OUT
-```
-
-Adjustment requires:
-
-* product/drug
-* location
-* adjustment type
-* quantity
-* reason
-* authorized user
-
-Damaged stock:
-
-```text
-DAMAGED + OUT
-```
-
-Expired stock:
-
-```text
-EXPIRED + OUT
-```
-
-Corrections must use reversals:
-
-```text
-REVERSAL_IN
-REVERSAL_OUT
-```
-
-Do not delete old stock movements.
+* status must be `POST_OP`
+* required notes must exist
 
 ---
 
-# 24. Module System
+# 23. Permissions
 
-Core modules should always remain active:
-
-```text
-auth
-users/roles
-patients
-visits
-triage
-consultation
-departments
-services
-billing
-settings
-```
-
-Optional modules can be enabled/disabled:
+Add or verify permissions:
 
 ```text
-insurance
-claims
-pharmacy
-inventory
-investigations
-analyzer
-HR
-reports
-notifications
+procedure.request
+procedure.view
+procedure.accept
+procedure.reject
+procedure.bill
+procedure.schedule
+procedure.reschedule
+procedure.record_preop
+procedure.record_anaesthesia
+procedure.record_surgery
+procedure.record_postop
+procedure.complete
+procedure.cancel
+procedure.print
+procedure.view_report
 ```
 
-If optional module is disabled:
+Roles that may use them:
 
-* hide it from sidebar
-* protect routes
-* use safe fallback behavior
-
-Examples:
-
-* Insurance disabled → Cash and Carry is used
-* Pharmacy disabled → prescriptions can be recorded but dispensing unavailable
-* Analyzer disabled → investigation results entered manually
-
-Fix any issue where modules are not loading.
-
-Use:
-
-```php
-ModuleService
-```
+* doctor
+* theatre nurse
+* anaesthetist
+* surgeon
+* cashier/admin
+* superadmin
 
 ---
 
-# 25. SPA / Inertia / Vue Requirements
+# 24. Inertia/Vue Pages and Components
 
-Critical pages must not perform unnecessary full page reloads:
+Create or update:
 
-* visit creation
-* triage
-* consultation
-* prescriptions
-* investigation requests
-* result entry
-* invoice view
-* payment allocation
-* pharmacy dispensing
-* purchase orders
-* stock movements
+```text
+resources/js/Pages/Procedures/Index.vue
+resources/js/Pages/Procedures/Show.vue
+resources/js/Pages/Procedures/Schedule.vue
+resources/js/Pages/Procedures/Reports/FullReport.vue
+resources/js/Components/Procedures/ProcedureTimeline.vue
+resources/js/Components/Procedures/ProcedureRequestForm.vue
+resources/js/Components/Procedures/PreOpForm.vue
+resources/js/Components/Procedures/AnaesthesiaNoteForm.vue
+resources/js/Components/Procedures/OperativeNoteForm.vue
+resources/js/Components/Procedures/PostOpNoteForm.vue
+```
 
-Requirements:
+On Consultation page, add or update:
 
-* preserve active tabs
-* show validation errors in-page
+```text
+ProcedureRequestForm
+ProcedureList
+ProcedureTimelineModal
+ProcedureReportModal
+```
+
+Use SPA behavior:
+
+* no full page reloads
+* preserve active tab
+* show validation errors inline
 * do not dismiss modals before successful response
-* do not produce silent `302` redirects without visible errors
-* use Inertia form errors properly
-* keep UI state after validation failure
+* show loading states
 
 ---
 
-# 26. Reports
+# 25. Theatre Module Sidebar / Routes
 
-Ensure reports use the correct source records.
-
-Billing reports should use:
+Add module navigation if procedure/theatre module is enabled:
 
 ```text
-invoices
-invoice_items
-payments
-payment_allocations
+Theatre / Procedures
+    - Requests
+    - Schedule
+    - In Theatre
+    - Completed
+    - Rooms
+    - Reports
 ```
 
-Inventory reports should use:
+If module system exists:
 
-```text
-stock_movements
-stock_balances
-```
-
-Investigation reports should use:
-
-```text
-investigation_requests
-investigation_request_items
-investigation_results
-investigation_result_values
-```
-
-Do not report from legacy/removed tables like `visit_services`.
+* register theatre/procedure module
+* hide menu if disabled
+* protect routes with module middleware
 
 ---
 
-# 27. Legacy Cleanup
+# 26. Data Integrity Rules
 
-Search for and remove/replace active usage of legacy concepts:
-
-```text
-visit_services
-unit_price
-coverage_percentage
-is_nhis_covered
-nhis_approved_amount
-Lab Test Catalogue as primary concept
-hard product quantity as current stock
-separate invoices per department
-insurance covered as paid amount
-discount automatically derived from insurance
-```
-
-Do not drop database columns blindly until code no longer uses them.
-
-Recommended cleanup approach:
-
-1. stop writing to legacy fields
-2. stop reading from legacy fields
-3. migrate data if needed
-4. update views
-5. remove columns/tables only when safe
+* Do not bill before theatre accepts the request.
+* Do not schedule before billing.
+* Do not start pre-op before scheduling.
+* Do not record anaesthesia before pre-op.
+* Do not record surgeon note before anaesthesia.
+* Do not complete procedure before post-op note.
+* Do not create separate invoice for theatre.
+* Do not duplicate billing for the same procedure request.
+* Do not delete billed procedures silently.
+* Do not cancel without reason.
+* Do not reject without reason.
+* Do not bypass `BillingService`.
+* Do not bypass procedure workflow status transitions.
+* Do not let frontend update status directly.
 
 ---
 
-# 28. Testing and Verification
+# 27. Performance Rules
+
+* Eager-load procedure requests with patient, visit, service, department, schedule, billing item, and status logs where needed.
+* Paginate theatre queues.
+* Do not load full procedure report until requested.
+* Load timeline summary efficiently.
+* Avoid N+1 queries on theatre dashboard.
+* Cache static theatre room/service lists where safe.
+
+---
+
+# 28. Testing / Verification
 
 Add or update tests for:
 
-## Visit / Triage
-
-* visit starts at triage
-* triage save changes status to waiting consultation
-
-## Consultation
-
-* cannot enter clinical data before start
-* start consultation changes status to consulting
-* prescription saves without stock reduction
-
-## Investigation
-
-* doctor request appears in investigation queue
-* only accepted selected items are billed
-* result entry blocks doctor deletion
-* doctor can view result
-
-## Billing
-
-* one invoice per visit
-* all departments add to same invoice
-* insurance pricing is consistent
-* insurance covered is not paid amount
-* discount is manual
-* balance = patient payable - paid amount
-
-## Payments
-
-* payment allocation updates invoice item statuses
-* partial payment works
-* full payment works
-
-## Inventory
-
-* purchase order creation does not affect stock
-* receiving purchase increases stock
-* dispensing decreases stock
-* transfer creates IN and OUT
-* adjustment works
-* reversal works
-* stock balance rebuild works
+1. Doctor can request procedure.
+2. Procedure starts as `REQUESTED`.
+3. Theatre can accept procedure.
+4. Accepted procedure can be billed.
+5. Billing creates invoice item on same visit invoice.
+6. Duplicate billing is prevented.
+7. Billed procedure can be scheduled.
+8. Scheduled procedure can record pre-op.
+9. Pre-op procedure can record anaesthesia.
+10. Anaesthesia procedure can record operative note.
+11. Surgery can be marked done.
+12. Post-op can be recorded.
+13. Procedure can be completed.
+14. Rejected procedure requires reason.
+15. Cancelled billed procedure does not delete invoice item silently.
+16. Procedure timeline shows all completed steps.
+17. Doctor can view procedure report from consultation page.
 
 ---
 
@@ -1068,47 +1154,46 @@ Add or update tests for:
 
 Provide:
 
-1. Gap analysis against `docs/UHMS_Updated_User_Manual.md`
-2. Files modified
-3. New or updated migrations
-4. Updated models and relationships
-5. Updated services
-6. Updated Inertia/Vue pages
-7. Updated validation requests
-8. Updated tests or verification notes
-9. Confirmation that documented workflows match the implementation
-10. Any remaining TODOs or manual migration notes
+1. New/updated migrations.
+2. New/updated models and relationships.
+3. Procedure status enum.
+4. Services implementation.
+5. Controllers and Form Requests.
+6. Inertia/Vue pages and components.
+7. Consultation page integration.
+8. Theatre dashboard.
+9. Procedure timeline.
+10. Billing integration through `BillingService`.
+11. Report/print views.
+12. Permissions.
+13. Tests or verification notes.
+14. List of files modified.
+15. Remaining TODOs if any.
 
 ---
 
 # 30. Important Rules
 
-Do not rewrite the whole system blindly.
+Do not hardcode theatre as a single room or single service.
 
-Do not refactor unrelated modules.
+Do not create separate invoices.
 
-Do not bypass services.
+Do not bill before acceptance.
 
-Do not create invoices directly in controllers.
+Do not schedule before billing.
 
-Do not create invoice items outside `BillingService`.
+Do not allow status jumps outside the allowed workflow.
 
-Do not update visit status outside `VisitWorkflowService`.
+Do not put procedure workflow logic in controllers.
 
-Do not reduce stock on prescription creation.
+Do not update status from Vue directly.
 
-Do not let payment affect stock.
+Do not remove existing working consultation features.
 
-Do not use product quantity as source of truth.
+Do not break patient visit history.
 
-Do not treat NHIS as special.
+Do not ignore insurance pricing.
 
-Do not treat insurance covered as paid amount.
+Do not silently delete billed/cancelled procedure records.
 
-Do not auto-calculate discount from insurance.
-
-Do not use `visit_services` for the active visit billing display.
-
-Do not allow full page reloads where SPA behavior is expected.
-
-Now inspect the current codebase, compare it with `docs/UHMS_Updated_User_Manual.md`, then implement the required changes module by module while preserving existing working functionality.
+Now inspect the existing UHMS implementation and build the Theatre / Procedure Workflow module carefully according to this specification.

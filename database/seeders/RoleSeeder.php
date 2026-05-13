@@ -136,6 +136,23 @@ class RoleSeeder extends Seeder
             'procedures.create',
             'procedures.edit',
 
+            // Theatre / Procedure Workflow
+            'procedure.request',
+            'procedure.view',
+            'procedure.accept',
+            'procedure.reject',
+            'procedure.bill',
+            'procedure.schedule',
+            'procedure.reschedule',
+            'procedure.record_preop',
+            'procedure.record_anaesthesia',
+            'procedure.record_surgery',
+            'procedure.record_postop',
+            'procedure.complete',
+            'procedure.cancel',
+            'procedure.print',
+            'procedure.view_report',
+
             // Analyzer Integration
             'analyzer.manage',
 
@@ -175,6 +192,8 @@ class RoleSeeder extends Seeder
             'appointments.view', 'appointments.create', 'appointments.edit',
             'notifications.view',
             'procedures.view', 'procedures.create',
+            'procedure.request', 'procedure.view', 'procedure.view_report',
+            'procedure.record_anaesthesia', 'procedure.record_surgery',
         ]);
 
         $nurse = Role::firstOrCreate(['name' => 'Nurse']);
@@ -187,6 +206,7 @@ class RoleSeeder extends Seeder
             'ward.view', 'beds.view',
             'notifications.view',
             'procedures.view',
+            'procedure.view', 'procedure.record_preop', 'procedure.record_postop',
         ]);
 
         $receptionist = Role::firstOrCreate(['name' => 'Receptionist']);

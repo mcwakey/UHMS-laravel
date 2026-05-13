@@ -174,6 +174,11 @@ class ConsultationController extends Controller
             ->latest('scheduled_date')
             ->get();
 
+        // Theatre / new procedure workflow
+        $procedureRequestService = app(\App\Services\ProcedureRequestService::class);
+        $procedureRequests = $procedureRequestService->forVisit($visit->id);
+        $procedureDepartments = $procedureRequestService->procedureDepartments();
+
         return view('consultations.show', [
             'visit' => $data['visit'],
             'record' => $data['record'],
@@ -187,6 +192,8 @@ class ConsultationController extends Controller
             'drugs' => $drugs,
             'procedures' => $procedures,
             'patientProcedures' => $patientProcedures,
+            'procedureRequests' => $procedureRequests,
+            'procedureDepartments' => $procedureDepartments,
         ]);
     }
 
@@ -516,42 +523,38 @@ class ConsultationController extends Controller
     public function storeProcedureRequest(Request $request, Visit $visit)
     {
         $data = $request->validate([
-            'procedure_id' => ['required', 'exists:procedures,id'],
-            'scheduled_date' => ['required', 'date', 'after_or_equal:today'],
-            'performed_by' => ['nullable', 'exists:users,id'],
-            'notes' => ['nullable', 'string', 'max:2000'],
-            'consent_signed' => ['nullable', 'boolean'],
+            'department_id'      => ['required', 'exists:departments,id'],
+            'service_catalog_id' => ['required', 'exists:service_catalog,id'],
+            'procedure_id'       => ['nullable', 'exists:procedures,id'],
+            'priority'           => ['required', 'in:routine,urgent,emergency'],
+            'indication'         => ['required', 'string', 'max:2000'],
+            'notes'              => ['nullable', 'string', 'max:2000'],
+            'preferred_datetime' => ['nullable', 'date'],
         ]);
-
         $data['visit_id'] = $visit->id;
-        $data['patient_id'] = $visit->patient_id;
-        $data['consent_signed'] = $request->boolean('consent_signed');
 
-        $procedure = Procedure::findOrFail($data['procedure_id']);
-        if ($procedure->requires_consent && ! $data['consent_signed']) {
+        try {
+            $procedureRequest = app(\App\Services\ProcedureRequestService::class)
+                ->requestProcedure($data, \Illuminate\Support\Facades\Auth::user());
+        } catch (\Throwable $e) {
             if ($this->shouldReturnJson($request)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This procedure requires signed consent before scheduling.',
-                ], 422);
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
             }
-
-            return back()->with('error', 'This procedure requires signed consent before scheduling.');
+            return back()->withInput()->with('error', $e->getMessage());
         }
-
-        $patientProcedure = $this->clinicalService->scheduleProcedure($data);
 
         if ($this->shouldReturnJson($request)) {
             return response()->json([
-                'success' => true,
-                'procedure' => $patientProcedure->load(['procedure.department', 'performedByUser']),
+                'success'   => true,
+                'message'   => 'Procedure request submitted (' . $procedureRequest->request_number . ').',
+                'procedure' => $procedureRequest->only(['id', 'request_number', 'status', 'priority']),
             ]);
         }
 
         return redirect()
             ->route('admin.consultations.show', $visit)
             ->withFragment('procedures-section')
-            ->with('success', 'Procedure requested.');
+            ->with('success', 'Procedure request submitted (' . $procedureRequest->request_number . ').');
     }
 
     /**

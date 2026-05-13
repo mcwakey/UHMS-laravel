@@ -18,7 +18,7 @@
     </li>
 @else
     <li class="{{ !empty($item['active']) ? 'active' : '' }}">
-        <a href="{{ route($item['route']) }}" class="{{ !empty($item['active']) ? 'active' : '' }}">
+        <a href="{{ route($item['route'], $item['route_params'] ?? []) }}" class="{{ !empty($item['active']) ? 'active' : '' }}">
             @if(!empty($item['icon']))
                 <i class="{{ $item['icon'] }}"></i>
             @endif
