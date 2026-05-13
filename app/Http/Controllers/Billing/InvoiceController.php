@@ -128,4 +128,31 @@ class InvoiceController extends Controller
 
         return view('billing.invoices.print', compact('invoice'));
     }
+
+    /**
+     * Apply a manual discount to an invoice line item.
+     *
+     * POST /admin/billing/invoices/{invoice}/items/{item}/discount
+     *   body: { discount_amount: numeric }
+     */
+    public function applyItemDiscount(Request $request, Invoice $invoice, \App\Models\InvoiceItem $item)
+    {
+        if ($item->invoice_id !== $invoice->id) {
+            return back()->with('error', 'Item does not belong to this invoice.');
+        }
+
+        $data = $request->validate([
+            'discount_amount' => ['required', 'numeric', 'min:0'],
+        ]);
+
+        try {
+            $this->billingService->applyDiscount($item, (float) $data['discount_amount']);
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', 'Discount applied successfully.');
+    }
 }

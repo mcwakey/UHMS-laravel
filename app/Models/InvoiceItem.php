@@ -19,19 +19,18 @@ class InvoiceItem extends Model
         'source_id',
         'description',
         'quantity',
-        'unit_price',
+        'cash_price',
         'insurance_price',
+        'selected_price',
         'insurance_covered',
+        'discount_amount',
         'patient_payable',
         'paid_amount',
         'balance',
         'payment_status',
+        // total_price retained for backwards-compat (= selected_price * quantity);
+        // BillingService keeps it in sync but it is no longer the canonical total.
         'total_price',
-        'is_nhis_covered',
-        'nhis_approved_amount',
-        'cash_price',
-        'selected_price',
-        'discount_amount',
         'payer_type',
         'insurance_provider_id',
         'patient_insurance_id',
@@ -43,18 +42,16 @@ class InvoiceItem extends Model
     protected function casts(): array
     {
         return [
-            'unit_price' => 'decimal:2',
-            'insurance_price' => 'decimal:2',
+            'quantity'          => 'integer',
+            'cash_price'        => 'decimal:2',
+            'insurance_price'   => 'decimal:2',
+            'selected_price'    => 'decimal:2',
             'insurance_covered' => 'decimal:2',
-            'patient_payable' => 'decimal:2',
-            'paid_amount' => 'decimal:2',
-            'balance' => 'decimal:2',
-            'total_price' => 'decimal:2',
-            'nhis_approved_amount' => 'decimal:2',
-            'cash_price' => 'decimal:2',
-            'selected_price' => 'decimal:2',
-            'discount_amount' => 'decimal:2',
-            'is_nhis_covered' => 'boolean',
+            'discount_amount'   => 'decimal:2',
+            'patient_payable'   => 'decimal:2',
+            'paid_amount'       => 'decimal:2',
+            'balance'           => 'decimal:2',
+            'total_price'       => 'decimal:2',
         ];
     }
 
@@ -97,6 +94,30 @@ class InvoiceItem extends Model
     public function allocations()
     {
         return $this->hasMany(PaymentAllocation::class);
+    }
+
+    /**
+     * Alias of allocations() to match spec naming.
+     */
+    public function paymentAllocations()
+    {
+        return $this->hasMany(PaymentAllocation::class);
+    }
+
+    /**
+     * Alias of serviceCatalog() — spec calls it service().
+     */
+    public function service()
+    {
+        return $this->belongsTo(ServiceCatalog::class, 'service_catalog_id');
+    }
+
+    /**
+     * The user who created this invoice item.
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /*

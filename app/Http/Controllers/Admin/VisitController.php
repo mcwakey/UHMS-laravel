@@ -97,9 +97,14 @@ class VisitController extends Controller
 
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         } catch (\Exception $e) {
+            Log::error('VisitController::store failed: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request' => $request->except('_token'),
+            ]);
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Failed to create visit. Please try again.',
+                    'debug' => $e->getMessage(), // TODO: remove in production
                 ], 500);
             }
 

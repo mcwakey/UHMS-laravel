@@ -1,184 +1,33 @@
-You are a senior Laravel + Inertia/Vue architect working on **UHMS — Ultimate Hospital Management System**.
+You are a senior Laravel architect working on **UHMS — Ultimate Hospital Management System**.
 
-We need to fix several issues around **modules loading, pharmacy drug saving, CCC code storage, insurance pricing simplification, invoice_items cleanup, invoice display, and removal of visit_services dependency**.
+We need to fix the **BillingService** starting with the `invoice_items` model/table and make billing calculations consistent everywhere in the system.
 
-Focus only on these issues. Do not refactor unrelated modules.
-
----
-
-# 1. Main Problems to Fix
-
-Fix the following:
-
-1. Modules are not loading.
-2. Pharmacy cannot add more than one drug.
-3. Adding drugs redirects with HTTP `302` and shows no useful error.
-4. CCC code is not being saved anywhere.
-5. Coverage should be removed from insurance and price calculation.
-6. `invoice_items` model/table needs cleanup.
-7. Remove fields no longer needed:
-
-   * `unit_price`
-   * `is_nhis_covered`
-   * `nhis_approved_amount`
-   * any NHIS-specific/relevance fields no longer required
-8. Use `selected_price` instead of `unit_price` in views.
-9. On invoice view page, remove:
-
-   * Qty column
-   * Cash Price column
-10. Remove `visit_services` table usage from the project.
-11. Display the visit’s invoice instead of visit services.
+Focus only on billing calculation, `invoice_items`, invoice totals, and removal of legacy/unused billing fields. Do not refactor unrelated modules.
 
 ---
 
-# 2. Fix Modules Not Loading
+# 1. Main Objective
 
-Investigate why modules are not loading.
+Update the billing system so that every billable item in UHMS follows one consistent calculation rule.
 
-Check:
+This applies everywhere:
 
-* `modules` table
-* module seeders
-* module middleware
-* `ModuleService`
-* sidebar module filtering
-* route middleware
-* permission checks
-* cache issues
-* config cache
-* database records
-* frontend props/shared Inertia data
+* Visit creation
+* Consultation services
+* Investigation acceptance
+* Pharmacy dispensing
+* Ward charges
+* Procedures
+* Scan/X-ray/Lab
+* Any other billable service
 
-Required behavior:
-
-* Core modules must always load.
-* Enabled optional modules must load.
-* Disabled modules must not load.
-* Sidebar must show enabled modules according to user permission.
-* Module state should not break route loading.
-
-After fixing, run or recommend:
-
-```bash
-php artisan optimize:clear
-php artisan config:clear
-php artisan cache:clear
-php artisan route:clear
-```
-
-If module state is cached, refresh cache after module updates.
+All billing must go through `BillingService`.
 
 ---
 
-# 3. Fix Pharmacy Drug Saving Issue
+# 2. Required Invoice Item Fields
 
-Currently, the user cannot add more than one drug. The save request redirects with status `302`, no useful error appears, and the drug does not save.
-
-Investigate and fix.
-
-Check:
-
-* route method
-* form method
-* form action
-* CSRF token
-* validation rules
-* request payload
-* controller method
-* service method
-* model `$fillable`
-* database required fields
-* unique constraints
-* quantity calculation
-* stock availability calculation
-* duplicate drug prevention logic
-* whether the system wrongly blocks adding a second drug
-* whether validation errors are being lost after redirect
-* whether Inertia/Vue form is not displaying errors
-* whether the save button submits correctly
-* whether modal/form is being dismissed too early
-
-Required behavior:
-
-* User can add multiple drugs where allowed.
-* Each drug must save properly.
-* If duplicate drug is not allowed, show clear validation error.
-* If stock is insufficient, show clear validation error.
-* If quantity is invalid, show clear validation error.
-* No silent `302` redirect without visible errors.
-* Drug list updates without full page reload.
-
-Do not just suppress the redirect. Find and fix the real cause.
-
----
-
-# 4. CCC Code Storage
-
-There is currently nowhere saving the CCC code.
-
-Add support for CCC code storage.
-
-First inspect the existing domain model and determine where CCC code belongs.
-
-Likely places:
-
-* patient visit insurance snapshot
-* claim/verification record
-
-Preferred approach:
-
-If CCC code is related to the patient’s insurance membership, store it on `patient_insurances`.
-
-Add field if missing:
-
-```text
-ccc_code nullable
-```
-
-If the project already has a claim/verification table, ensure CCC code is also copied/snapshotted where needed.
-
-Rules:
-
-* CCC code must be saved when adding/editing patient insurance.
-* CCC code must be visible where insurance details are displayed.
-* CCC code must be available during visit creation if that insurance is selected.
-* CCC code must not be required for Cash and Carry.
-* CCC code should not be hardcoded to NHIS only unless the current business rule requires it.
-
----
-
-# 6. invoice_items Model/Table Cleanup
-
-Update `invoice_items` to match the simplified pricing model.
-
-Remove or stop using these fields:
-
-```text
-unit_price
-is_nhis_covered
-nhis_approved_amount
-coverage_percentage
-approved_amount
-```
-
-Also remove any NHIS-specific fields or logic that no longer applies, unless still needed elsewhere for claims.
-
-Use:
-
-```text
-selected_price
-total_price
-patient_payable
-patient_insurance_id nullable
-pricing_source
-insurance_type nullable
-payment_status
-paid_amount
-balance
-```
-
-Recommended `invoice_items` structure:
+The `invoice_items` model/table should use these fields:
 
 ```text
 id
@@ -188,25 +37,27 @@ patient_id
 department_id nullable
 service_id nullable
 
-source_type
+source_type nullable
 source_id nullable
 
 description
-quantity nullable/default 1
+quantity
 
-insurance_price
 cash_price
+insurance_price nullable
 selected_price
-insurance_covered
-total_price
-patient_payable
 
+insurance_covered
+discount_amount
+
+patient_payable
 paid_amount
 balance
+
 payment_status
 
 patient_insurance_id nullable
-pricing_source
+pricing_source nullable
 insurance_type nullable
 
 created_by nullable
@@ -214,240 +65,502 @@ created_at
 updated_at
 ```
 
-If quantity is no longer shown in some views, it may still remain in the database for pharmacy or future quantity-based billing. But the invoice view should hide it where requested.
+---
+
+# 3. Meaning of Each Price Field
+
+## `cash_price`
+
+This is the normal service base price.
+
+For Cash and Carry:
+
+```text
+cash_price = service base price
+```
+
+For insurance patients:
+
+```text
+cash_price = service base price
+```
+
+So `cash_price` must always represent the original/base/cash price of the item.
 
 ---
 
-# 7. Use selected_price Instead of unit_price
+## `insurance_price`
 
-Replace `unit_price` usage in views and display logic with:
+This is the price selected based on the patient’s insurance.
+
+If the patient is on NHIS, Private, Corporate, or provider-specific insurance:
 
 ```text
-selected_price
+insurance_price = resolved insurance price
 ```
+
+If patient is Cash and Carry:
+
+```text
+insurance_price = null
+```
+
+or keep it equal to `cash_price` only if the current database structure requires it.
+
+---
+
+## `selected_price`
+
+This is the actual price being used for billing before discounts.
 
 Rules:
 
-* `selected_price` is the actual price applied to the invoice item.
-* For Cash and Carry, `selected_price = base price`.
-* For insurance, `selected_price = resolved insurance price`.
-* Views must not display old `unit_price`.
-* Do not show “Cash Price” column if it is no longer required.
-
-Search and update:
-
 ```text
-unit_price
-is_nhis_covered
-nhis_approved_amount
-coverage_percentage
+If Cash and Carry:
+selected_price = cash_price
+
+If insurance applies:
+selected_price = insurance_price
 ```
 
-Make sure old references do not break pages.
-
----
-
-# 8. Invoice View Page Changes
-
-On the invoice view page, remove the following columns:
+If insurance price does not exist:
 
 ```text
-Qty
-Cash Price
-```
-
-The invoice item table should show only useful simplified columns, such as:
-
-```text
-Service / Description
-Department / Source
-Selected Price
-Patient Payable
-Paid Amount
-Balance
-Status
-Action
-```
-
-If needed, group items by source/department:
-
-```text
-Consultation
-Investigations
-Pharmacy
-Ward
-Procedures
+selected_price = cash_price
+pricing_source = base_price
 ```
 
 ---
 
-# 9. Remove visit_services Table Usage
+# 4. Correct Billing Calculations
 
-Remove `visit_services` from the active project workflow.
+Use these formulas everywhere.
 
-The visit’s selected services should now be represented by invoice items under the visit’s invoice.
-
-Required behavior:
-
-* Do not create new `visit_services` rows.
-* Do not display visit services table.
-* Do not depend on visit_services for visit billing.
-* Show the visit invoice instead.
-* Any previous logic that reads visit_services should be updated to read invoice items.
-
-When displaying a visit’s billable services, use:
+## Insurance Covered
 
 ```text
-visit → invoice → invoice_items
+insurance_covered = cash_price - insurance_price
 ```
 
-not:
+Important:
+
+* `insurance_covered` is not paid amount.
+* Do not assume insurance coverage is a payment.
+* It is only the difference between the cash/base price and the insurance price.
+* If Cash and Carry:
 
 ```text
-visit → visit_services
+insurance_covered = 0
 ```
 
-If the physical table still exists temporarily for migration safety, stop using it in the app. Remove the migration/table only if safe.
+* If insurance price is null:
+
+```text
+insurance_covered = 0
+```
+
+Example:
+
+```text
+cash_price = 100
+insurance_price = 60
+
+insurance_covered = 100 - 60 = 40
+```
 
 ---
 
-# 10. ServicePricingService Update
+## Patient Payable
 
-Update the pricing service to return simplified values.
-
-Required method:
-
-```php
-resolvePriceForVisitService(Service $service, ?PatientInsurance $patientInsurance = null, int $quantity = 1): array
+```text
+patient_payable = (selected_price * quantity) - discount_amount
 ```
 
-Return:
+If no discount:
+
+```text
+patient_payable = selected_price * quantity
+```
+
+Important:
+
+* `patient_payable` should NOT be reduced by `insurance_covered`.
+* `patient_payable` should NOT treat `insurance_covered` as paid.
+* `patient_payable` is the amount the patient is expected to pay after manual discount.
+
+Example without discount:
+
+```text
+selected_price = 60
+quantity = 2
+
+patient_payable = 60 * 2 = 120
+```
+
+Example with discount:
+
+```text
+selected_price = 60
+quantity = 2
+discount_amount = 20
+
+patient_payable = (60 * 2) - 20 = 100
+```
+
+---
+
+## Paid Amount
+
+```text
+paid_amount = sum(payment allocations for this invoice item)
+```
+
+Important:
+
+* `paid_amount` only comes from actual payment.
+* Do not set `paid_amount = insurance_covered`.
+* Do not set `paid_amount = discount_amount`.
+* Do not set `paid_amount = selected_price`.
+
+---
+
+## Balance
+
+```text
+balance = patient_payable - paid_amount
+```
+
+Example:
+
+```text
+patient_payable = 120
+paid_amount = 50
+
+balance = 120 - 50 = 70
+```
+
+---
+
+## Discount Amount
+
+`discount_amount` must be entered manually by an authorized user.
+
+Rules:
+
+* Do not auto-set discount amount from insurance.
+* Do not calculate discount as `insurance_covered`.
+* Do not calculate discount as `cash_price - selected_price`.
+* Discount must be stored separately in:
+
+```text
+discount_amount
+```
+
+When discount changes, recalculate:
+
+```text
+patient_payable = (selected_price * quantity) - discount_amount
+balance = patient_payable - paid_amount
+```
+
+Validation:
+
+* discount_amount must be >= 0
+* discount_amount must not exceed `selected_price * quantity`
+* only authorized users can apply discounts
+
+---
+
+# 5. Payment Status Calculation
+
+Update `payment_status` based on `balance` and `paid_amount`.
+
+Rules:
+
+```text
+If patient_payable <= 0:
+payment_status = PAID
+
+If paid_amount <= 0 and balance > 0:
+payment_status = UNPAID
+
+If paid_amount > 0 and balance > 0:
+payment_status = PARTIALLY_PAID
+
+If balance <= 0:
+payment_status = PAID
+```
+
+Supported statuses:
+
+```text
+UNPAID
+PARTIALLY_PAID
+PAID
+WAIVED
+CANCELLED
+VOIDED
+```
+
+---
+
+# 6. BillingService Requirements
+
+Update `BillingService` so every invoice item is created using the correct formulas.
+
+When creating an invoice item:
+
+1. Resolve `cash_price`.
+2. Resolve `insurance_price` if insurance applies.
+3. Resolve `selected_price`.
+4. Set `quantity`.
+5. Set `discount_amount = 0` by default unless provided manually.
+6. Calculate:
+
+```text
+insurance_covered = cash_price - insurance_price
+patient_payable = (selected_price * quantity) - discount_amount
+paid_amount = 0
+balance = patient_payable
+payment_status = UNPAID or PAID if patient_payable is 0
+```
+
+Do not set `paid_amount` from insurance.
+
+Do not set `discount_amount` from insurance.
+
+---
+
+# 7. ServicePricingService Requirements
+
+Update `ServicePricingService` to return pricing values clearly.
+
+Required response:
 
 ```php
 [
+    'cash_price' => 100,
+    'insurance_price' => 60,
     'selected_price' => 60,
-    'total_price' => 60,
-    'patient_payable' => 60,
     'pricing_source' => 'provider_specific | insurance_type | cash_and_carry | base_price',
     'insurance_type' => 'cash | nhis | private | corporate | other',
 ]
 ```
 
-Do not return or use:
+It should not calculate paid amount.
 
-```text
-unit_price
-coverage_percentage
-insurance_covered
-nhis_approved_amount
-is_nhis_covered
+It should not calculate discount.
+
+It should not calculate balance.
+
+Those are billing/payment responsibilities.
+
+---
+
+# 8. Discount Workflow
+
+Add or fix a way to manually apply discount on invoice items.
+
+Discount should be applied through a controlled backend method, not directly from frontend calculation.
+
+Suggested method:
+
+```php
+BillingService::applyDiscount(InvoiceItem $item, float $discountAmount, User $user): InvoiceItem
 ```
 
-unless kept only for backward compatibility internally and not saved/displayed.
+This method must:
+
+1. Validate user permission.
+2. Validate discount amount.
+3. Save `discount_amount`.
+4. Recalculate `patient_payable`.
+5. Recalculate `balance`.
+6. Update `payment_status`.
+7. Recalculate parent invoice totals.
+8. Log who applied the discount.
 
 ---
 
-# 11. BillingService Update
+# 9. Invoice Totals
 
-Update `BillingService::addItemToVisitInvoice(...)` to save invoice items using the simplified model.
+Update invoice totals based on invoice items.
 
-It must:
-
-* get or create the visit invoice.
-* resolve selected price using `ServicePricingService`.
-* save `selected_price`.
-* save `total_price`.
-* save `patient_payable`.
-* save `patient_insurance_id` if insurance applies.
-* save `pricing_source`.
-* save `insurance_type`.
-* prevent duplicate billing by `source_type + source_id`.
-* update invoice totals.
-
-Do not save `unit_price`.
-
----
-
-# 12. Invoice Totals
-
-Invoice totals should be based on `invoice_items.patient_payable` or `invoice_items.total_price` according to the system’s billing rule.
-
-Recommended:
+Recommended calculations:
 
 ```text
-subtotal = sum(total_price)
+subtotal = sum(selected_price * quantity)
+total_discount = sum(discount_amount)
+insurance_total = sum(insurance_covered)
 patient_total = sum(patient_payable)
 paid_amount = sum(invoice_items.paid_amount)
 outstanding_amount = sum(invoice_items.balance)
 ```
 
-Each invoice item:
+Important:
+
+* `insurance_total` is informational.
+* It is not paid amount.
+* Actual payment comes only from `payments` and `payment_allocations`.
+
+---
+
+# 10. Remove Legacy or Unused Fields
+
+Remove or stop using legacy fields that conflict with the new billing logic.
+
+Search and remove/replace usage of:
 
 ```text
-balance = patient_payable - paid_amount
+unit_price
+is_nhis_covered
+nhis_approved_amount
+approved_amount
+insurance_paid
+insurance_payment
+relevance
 ```
 
-If no payment has been made:
+Do not drop columns blindly if existing code still depends on them.
+
+Use safe cleanup:
+
+1. Stop writing to legacy fields.
+2. Stop reading from legacy fields.
+3. Replace views/controllers/services with new fields.
+4. Add migration to drop legacy columns only when safe.
+5. If dropping now, ensure migrations and code are consistent.
+
+---
+
+# 11. Invoice Item Model
+
+Update `InvoiceItem` model:
+
+* `$fillable`
+* casts for money fields
+* relationships
+* helper methods if useful
+
+Suggested casts:
+
+```php
+protected $casts = [
+    'quantity' => 'integer',
+    'cash_price' => 'decimal:2',
+    'insurance_price' => 'decimal:2',
+    'selected_price' => 'decimal:2',
+    'insurance_covered' => 'decimal:2',
+    'discount_amount' => 'decimal:2',
+    'patient_payable' => 'decimal:2',
+    'paid_amount' => 'decimal:2',
+    'balance' => 'decimal:2',
+];
+```
+
+Relationships:
+
+```php
+invoice()
+visit()
+patient()
+department()
+service()
+patientInsurance()
+creator()
+paymentAllocations()
+```
+
+---
+
+# 13. Data Integrity Rules
+
+* `insurance_covered` must never be treated as payment.
+* `discount_amount` must never be auto-filled from insurance.
+* `paid_amount` must only come from payment allocations.
+* `balance` must always equal `patient_payable - paid_amount`.
+* `patient_payable` must always equal `(selected_price * quantity) - discount_amount`.
+* Old invoice items must preserve their historical pricing.
+* New billing logic must be consistent everywhere.
+
+---
+
+# 14. Validation Rules
+
+When creating or updating invoice items:
+
+* quantity must be greater than 0
+* selected_price must be >= 0
+* cash_price must be >= 0
+* insurance_price must be nullable and >= 0
+* discount_amount must be >= 0
+* discount_amount must not exceed `selected_price * quantity`
+* paid_amount must not be manually edited except through payment allocation logic
+
+---
+
+# 15. Tests / Verification
+
+Add or update tests for these scenarios:
+
+## Cash and Carry
 
 ```text
+cash_price = 100
+selected_price = 100
+quantity = 1
+discount = 0
+patient_payable = 100
 paid_amount = 0
-balance = patient_payable
-payment_status = UNPAID
+balance = 100
+insurance_covered = 0
 ```
 
----
-
-# 13. Data Migration / Backward Compatibility
-
-If existing data has `unit_price`, migrate it carefully.
-
-Suggested migration rule:
+## Insurance
 
 ```text
-selected_price = unit_price where selected_price is null
-total_price = selected_price * quantity where total_price is null
-patient_payable = total_price where patient_payable is null
-balance = patient_payable - paid_amount
+cash_price = 100
+insurance_price = 60
+selected_price = 60
+quantity = 1
+discount = 0
+insurance_covered = 40
+patient_payable = 60
+paid_amount = 0
+balance = 60
 ```
 
-Only drop old columns after confirming nothing uses them.
+## Insurance with Discount
 
-If immediate dropping is risky:
+```text
+cash_price = 100
+insurance_price = 60
+selected_price = 60
+quantity = 1
+discount = 10
+insurance_covered = 40
+patient_payable = 50
+paid_amount = 0
+balance = 50
+```
 
-* keep columns temporarily
-* stop writing to them
-* stop displaying them
-* remove in a later cleanup migration
+## Partial Payment
 
----
+```text
+patient_payable = 60
+paid_amount = 20
+balance = 40
+payment_status = PARTIALLY_PAID
+```
 
-# 14. Validation and Error Display
+## Full Payment
 
-For the drug saving issue and service/module saves:
-
-* Do not allow silent redirects.
-* Show validation errors clearly.
-* Use Inertia/Vue form errors properly.
-* Preserve page state after validation errors.
-* Do not dismiss modals before successful response.
-* Log server-side errors where needed.
-
-For any 302:
-
-* identify whether it is validation redirect, auth redirect, middleware redirect, or route mismatch.
-* fix the underlying cause.
-
----
-
-# 15. Performance Rules
-
-* Eager-load invoice with items, service, department, and patient insurance.
-* Avoid N+1 queries in invoice view.
-* Do not load unnecessary module data repeatedly.
-* Cache enabled modules safely.
-* Recalculate invoice totals efficiently.
-* Keep pharmacy drug adding fast.
-* Do not perform heavy calculations in Vue if they belong in backend pricing service.
+```text
+patient_payable = 60
+paid_amount = 60
+balance = 0
+payment_status = PAID
+```
 
 ---
 
@@ -455,42 +568,37 @@ For any 302:
 
 Provide:
 
-1. Root cause of modules not loading.
-2. Root cause of drug save `302` redirect.
-3. Confirmation that multiple drugs can now be added where allowed.
-4. CCC code storage implementation.
-5. Migrations added or changed.
-6. Updated models and `$fillable`.
-7. Updated `ServicePricingService`.
-8. Updated `BillingService`.
-9. Updated `invoice_items` model/table usage.
-10. Confirmation that coverage is removed from pricing.
-11. Confirmation that `unit_price`, NHIS-specific approval fields, and old relevance fields are removed or no longer used.
-12. Updated invoice view using `selected_price`.
-13. Confirmation that Qty and Cash Price columns are removed from invoice view.
-14. Confirmation that `visit_services` is no longer used and visit invoice is displayed instead.
-15. Files modified.
+1. Updated `invoice_items` migration or cleanup migration.
+2. Updated `InvoiceItem` model.
+3. Updated `ServicePricingService`.
+4. Updated `BillingService`.
+5. Updated `InvoiceService` totals recalculation.
+6. Updated `PaymentService` if needed.
+7. Updated invoice views.
+8. Discount application logic.
+9. Removal or deactivation of legacy/unused fields.
+10. Tests or verification notes proving calculations are correct.
 
 ---
 
 # 17. Important Rules
 
-Do not hardcode NHIS-specific pricing logic.
+Do not assume insurance coverage is paid amount.
 
-Do not use coverage percentage in price calculation.
+Do not make discount equal to insurance covered.
 
-Do not save `unit_price` into invoice items.
+Do not calculate patient payable from cash price when insurance selected.
 
-Do not display `unit_price`; display `selected_price`.
+Do not use coverage percentage.
 
-Do not create or display `visit_services`.
+Do not use NHIS-specific legacy fields.
+
+Do not manually edit paid amount except through payments.
 
 Do not bypass `BillingService`.
 
 Do not bypass `ServicePricingService`.
 
-Do not allow silent `302` redirects without visible error feedback.
+Do not break historical invoice data.
 
-Do not remove old columns blindly if existing data or code still depends on them; phase the cleanup safely.
-
-Now inspect the current implementation and apply these fixes carefully.
+Now inspect the current billing implementation and update `invoice_items`, pricing, discount, payment, and invoice total calculations to follow this model everywhere in UHMS.

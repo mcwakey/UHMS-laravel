@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\DischargeRequest;
 use App\Http\Requests\StoreAdmissionRequest;
 use App\Models\Admission;
-use App\Models\InvoiceItem;
 use App\Models\ServiceCatalog;
 use App\Models\Visit;
 use App\Models\Vital;
@@ -179,42 +178,15 @@ class AdmissionController extends Controller
 
         $qty = $request->quantity ?? 1;
 
-        $updatedVisit = $this->visitService->attachServices($admission->visit, [[
+        $this->visitService->attachServices($admission->visit, [[
             'service_catalog_id' => $request->service_catalog_id,
             'quantity'           => $qty,
             'notes'              => $request->notes,
         ]]);
 
-        // Also append the charge to the admission invoice so it appears on the invoice
-        $invoice = $admission->visit->latestInvoice;
-        if ($invoice) {
-            $svcItem = $updatedVisit->visitServices->sortByDesc('id')->first();
-            if ($svcItem) {
-                InvoiceItem::create([
-                    'invoice_id'           => $invoice->id,
-                    'service_catalog_id'   => $svcItem->service_catalog_id,
-                    'description'          => $svcItem->serviceCatalog->name ?? 'Service',
-                    'quantity'             => $svcItem->quantity,
-                    'unit_price'           => $svcItem->unit_price,
-                    'total_price'          => $svcItem->total_price,
-                    'is_nhis_covered'      => $svcItem->insurance_covered > 0,
-                    'nhis_approved_amount' => $svcItem->insurance_covered,
-                ]);
-
-                // Recalculate invoice totals
-                $invoice->refresh()->load('items');
-                $newSubtotal   = $invoice->items->sum('total_price');
-                $newInsurance  = $invoice->items->sum('nhis_approved_amount');
-                $newTotal      = $newSubtotal + $invoice->tax_amount - $invoice->discount_amount;
-                $newBalance    = max(0, $newTotal - $invoice->amount_paid);
-                $invoice->update([
-                    'subtotal'     => $newSubtotal,
-                    'nhis_amount'  => $newInsurance,
-                    'total_amount' => $newTotal,
-                    'balance'      => $newBalance,
-                ]);
-            }
-        }
+        // VisitService::attachServices already creates the invoice line item via
+        // BillingService::addItemToVisitInvoice and recalculates invoice totals.
+        // No additional bookkeeping is needed here.
 
         return redirect()
             ->route('admin.admissions.show', $admission)

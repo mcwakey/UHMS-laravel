@@ -75,28 +75,36 @@ class InvoiceService
 
     /**
      * Recompute invoice header totals from its items + payments.
-     * Does NOT touch existing item rows.
+     *
+     * Canonical formulas (UHMS billing rules):
+     *   subtotal           = sum(selected_price * quantity)         [== sum(total_price)]
+     *   total_discount     = sum(items.discount_amount)
+     *   insurance_total    = sum(items.insurance_covered)            (informational only)
+     *   total_amount       = sum(items.patient_payable)              (what the patient owes)
+     *   amount_paid        = sum(items.paid_amount)                  (ONLY from real payments)
+     *   balance            = sum(items.balance)
+     *
+     * IMPORTANT: insurance_covered is NEVER added to amount_paid.
+     * Does NOT modify any item rows.
      */
     public function recalculateTotals(Invoice $invoice): Invoice
     {
         $invoice->loadMissing('items');
 
-        $subtotal          = (float) $invoice->items->sum('total_price');
-        $insuranceCovered  = (float) $invoice->items->sum('insurance_covered');
-        $patientPayable    = (float) $invoice->items->sum('patient_payable');
-        $paidPerLine       = (float) $invoice->items->sum('paid_amount');
-
-        // amount_paid = insurance-covered + actual line payments received from patient
-        $amountPaid = round($insuranceCovered + $paidPerLine, 2);
-        $totalAmount = round($subtotal, 2);
-        $balance     = max(0.0, round($totalAmount - $amountPaid, 2));
+        $subtotal         = (float) $invoice->items->sum(fn ($i) => (float) $i->selected_price * (int) $i->quantity);
+        $totalDiscount    = (float) $invoice->items->sum('discount_amount');
+        $insuranceCovered = (float) $invoice->items->sum('insurance_covered');
+        $patientTotal     = (float) $invoice->items->sum('patient_payable');
+        $paidAmount       = (float) $invoice->items->sum('paid_amount');
+        $balance          = max(0.0, (float) $invoice->items->sum('balance'));
 
         $invoice->forceFill([
-            'subtotal'     => $subtotal,
-            'nhis_amount'  => $insuranceCovered,
-            'total_amount' => $totalAmount,
-            'amount_paid'  => $amountPaid,
-            'balance'      => $balance,
+            'subtotal'        => round($subtotal, 2),
+            'discount_amount' => round($totalDiscount, 2),
+            'nhis_amount'     => round($insuranceCovered, 2), // info only, retained for compat
+            'total_amount'    => round($patientTotal, 2),
+            'amount_paid'     => round($paidAmount, 2),
+            'balance'         => round($balance, 2),
         ])->save();
 
         return $this->updateStatus($invoice);

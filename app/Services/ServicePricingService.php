@@ -14,20 +14,24 @@ use App\Models\ServiceCatalog;
  *   2) Insurance-type default price (service_prices with provider_id = null)
  *   3) Base / cash & carry price (service_catalog.price)
  *
- * Cash & carry rule:
- *   - When the resolved insurance is missing, inactive, expired, or the
- *     provider is the platform's default ("cash & carry") provider, the
- *     cash price is used.
- *   - cash_and_carry pricing applies no discount: insurance_covered = 0,
- *     patient_payable = total_price.
+ * RESPONSIBILITIES:
+ *   This service ONLY resolves prices. It does NOT compute:
+ *     - paid_amount
+ *     - discount_amount
+ *     - patient_payable
+ *     - balance
+ *   Those are the responsibility of BillingService / PaymentService.
  *
- * Insurance pricing rule:
- *   - The resolved insurance price IS the final billable amount per unit.
- *   - insurance_covered = (cash_price - insurance_price) * quantity
- *     (the "discount" the insurance provides off cash rate)
- *   - patient_payable = total_price (the patient pays the insurance rate
- *     unless the back-end constraint engine reduces it further at billing
- *     time via InsuranceService::evaluateCoverage()).
+ * Returned shape (canonical):
+ *   [
+ *     'cash_price'            => float,
+ *     'insurance_price'       => ?float,
+ *     'selected_price'        => float,
+ *     'pricing_source'        => 'provider_specific' | 'insurance_type' | 'cash_and_carry' | 'base_price',
+ *     'payment_type'          => 'cash' | 'insurance',
+ *     'insurance_type'        => ?string,
+ *     'insurance_provider_id' => ?int,
+ *   ]
  */
 class ServicePricingService
 {
@@ -36,13 +40,12 @@ class ServicePricingService
     }
 
     /**
+     * Resolve pricing for a service against an explicit (optional) insurance.
+     *
      * @return array{
-     *   unit_price: float,
-     *   selected_price: float,
+     *   cash_price: float,
      *   insurance_price: ?float,
-     *   total_price: float,
-     *   insurance_covered: float,
-     *   patient_payable: float,
+     *   selected_price: float,
      *   pricing_source: string,
      *   payment_type: string,
      *   insurance_type: ?string,
@@ -54,44 +57,19 @@ class ServicePricingService
         ?PatientInsurance $patientInsurance,
         int $quantity = 1
     ): array {
-        $quantity = max(1, $quantity);
-        $snapshot = $this->resolver->resolveForInsurance($service, $patientInsurance);
-
-        $unitPrice     = $snapshot['cash_price'];
+        $snapshot      = $this->resolver->resolveForInsurance($service, $patientInsurance);
+        $cashPrice     = (float) $snapshot['cash_price'];
         $selectedPrice = (float) $snapshot['selected_price'];
-        $totalPrice    = round($selectedPrice * $quantity, 2);
         $isCash        = $snapshot['payer_type'] === 'cash';
 
-        if ($isCash) {
-            return [
-                'unit_price'            => $unitPrice,
-                'selected_price'        => $selectedPrice,
-                'insurance_price'       => null,
-                'total_price'           => $totalPrice,
-                'insurance_covered'     => 0.0,
-                'patient_payable'       => $totalPrice,
-                'pricing_source'        => $this->normalizeSource($snapshot['pricing_source']),
-                'payment_type'          => 'cash',
-                'insurance_type'        => null,
-                'insurance_provider_id' => null,
-            ];
-        }
-
-        $insurancePrice    = $selectedPrice;
-        $insuranceCovered  = round($snapshot['discount_amount'] * $quantity, 2);
-        $patientPayable    = $totalPrice; // before constraint engine
-
         return [
-            'unit_price'            => $unitPrice,
+            'cash_price'            => $cashPrice,
+            'insurance_price'       => $isCash ? null : $selectedPrice,
             'selected_price'        => $selectedPrice,
-            'insurance_price'       => $insurancePrice,
-            'total_price'           => $totalPrice,
-            'insurance_covered'     => $insuranceCovered,
-            'patient_payable'       => $patientPayable,
             'pricing_source'        => $this->normalizeSource($snapshot['pricing_source']),
-            'payment_type'          => 'insurance',
-            'insurance_type'        => $snapshot['insurance_type'],
-            'insurance_provider_id' => $snapshot['insurance_provider_id'],
+            'payment_type'          => $isCash ? 'cash' : 'insurance',
+            'insurance_type'        => $isCash ? null : $snapshot['insurance_type'],
+            'insurance_provider_id' => $isCash ? null : $snapshot['insurance_provider_id'],
         ];
     }
 
@@ -106,3 +84,4 @@ class ServicePricingService
         };
     }
 }
+

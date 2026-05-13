@@ -148,9 +148,11 @@
             <tbody>
                 @foreach($inv->items as $item)
                 @php
-                    $src   = $item->pricing_source ?? 'cash_and_carry';
-                    $label = $sourceLabels[$src] ?? ucwords(str_replace('_',' ', (string) $src));
-                    $payer = $item->payer_type ?? 'cash';
+                    $src           = $item->pricing_source ?? 'cash_and_carry';
+                    $label         = $sourceLabels[$src] ?? ucwords(str_replace('_',' ', (string) $src));
+                    $payer         = $item->payer_type ?? 'cash';
+                    $selectedPrice = $item->selected_price !== null ? (float) $item->selected_price : (float) ($item->unit_price ?? 0);
+                    $lineTotal     = round($selectedPrice * (int) $item->quantity, 2);
                 @endphp
                 <tr>
                     <td>{{ $item->description }}</td>
@@ -159,15 +161,15 @@
                         <span style="color:#666;">{{ ucfirst($payer) }}</span>
                     </td>
                     <td class="text-center">{{ $item->quantity }}</td>
-                    <td class="text-end">&#8373;{{ number_format($item->unit_price, 2) }}</td>
+                    <td class="text-end">&#8373;{{ number_format($selectedPrice, 2) }}</td>
                     <td class="text-end">
-                        @if($item->is_nhis_covered && $item->nhis_approved_amount > 0)
-                            &#8373;{{ number_format($item->nhis_approved_amount, 2) }}
+                        @if((float) $item->insurance_covered > 0)
+                            &#8373;{{ number_format($item->insurance_covered, 2) }}
                         @else
                             —
                         @endif
                     </td>
-                    <td class="text-end">&#8373;{{ number_format($item->total_price, 2) }}</td>
+                    <td class="text-end">&#8373;{{ number_format($lineTotal, 2) }}</td>
                 </tr>
                 @endforeach
             </tbody>

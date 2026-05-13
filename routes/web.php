@@ -605,6 +605,9 @@ Route::middleware('auth')->group(function () {
                 Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
                 Route::patch('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel')->middleware('can:invoices.edit');
                 Route::get('invoices/{invoice}/print', [InvoiceController::class, 'print'])->name('invoices.print');
+                Route::post('invoices/{invoice}/items/{item}/discount', [InvoiceController::class, 'applyItemDiscount'])
+                    ->name('invoices.items.discount')
+                    ->middleware('can:invoices.edit');
             });
 
             // Payments

@@ -110,21 +110,23 @@
                 <tr>
                     <th>#</th>
                     <th>Description</th>
-                    <th>Pricing</th>
-                    <th class="text-center">Qty</th>
-                    <th class="text-end">Cash</th>
-                    <th class="text-end">Billed</th>
-                    <th class="text-end">Total</th>
-                    <th class="text-end">Insurance</th>
+                    {{-- <th>Pricing</th> --}}
+                    {{-- <th class="text-center">Qty</th> --}}
+                    <th class="text-end">Price</th>
+                    {{-- <th class="text-end">Total</th> --}}
+                    {{-- <th class="text-end">Insurance Covered</th> --}}
+                    <th class="text-end">Patient Payable</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($invoice->items as $idx => $item)
                 @php
-                    $cashPrice = $item->cash_price !== null ? (float) $item->cash_price : (float) $item->unit_price;
-                    $src       = $item->pricing_source ?? 'cash_and_carry';
-                    $label     = $sourceLabels[$src] ?? ucwords(str_replace('_',' ', (string) $src));
-                    $payer     = $item->payer_type ?? 'cash';
+                    $cashPrice     = $item->cash_price !== null ? (float) $item->cash_price : (float) ($item->selected_price ?? $item->unit_price ?? 0);
+                    $selectedPrice = $item->selected_price !== null ? (float) $item->selected_price : (float) ($item->unit_price ?? 0);
+                    $lineTotal     = round($selectedPrice * (int) $item->quantity, 2);
+                    $src           = $item->pricing_source ?? 'cash_and_carry';
+                    $label         = $sourceLabels[$src] ?? ucwords(str_replace('_',' ', (string) $src));
+                    $payer         = $item->payer_type ?? 'cash';
                 @endphp
                 <tr>
                     <td>{{ $idx + 1 }}</td>
@@ -134,21 +136,21 @@
                         <div style="font-size:11px; color:#666;">{{ $item->serviceCatalog->code }}</div>
                         @endif
                     </td>
-                    <td style="font-size:11px;">
+                    {{-- <td style="font-size:11px;">
                         {{ $label }}<br>
                         <span style="color:#666;">{{ ucfirst($payer) }}</span>
-                    </td>
-                    <td class="text-center">{{ $item->quantity }}</td>
-                    <td class="text-end">&#8373;{{ number_format($cashPrice, 2) }}</td>
-                    <td class="text-end">&#8373;{{ number_format($item->unit_price, 2) }}</td>
-                    <td class="text-end">&#8373;{{ number_format($item->total_price, 2) }}</td>
-                    <td class="text-end">
-                        @if($item->is_nhis_covered && $item->nhis_approved_amount > 0)
-                        &#8373;{{ number_format($item->nhis_approved_amount, 2) }}
+                    </td> --}}
+                    {{-- <td class="text-center">{{ $item->quantity }}</td> --}}
+                    <td class="text-end">&#8373;{{ number_format($selectedPrice, 2) }}</td>
+                    {{-- <td class="text-end">&#8373;{{ number_format($lineTotal, 2) }}</td> --}}
+                    {{-- <td class="text-end">
+                        @if((float) $item->insurance_covered > 0)
+                        &#8373;{{ number_format($item->insurance_covered, 2) }}
                         @else
                         —
                         @endif
-                    </td>
+                    </td> --}}
+                    <td class="text-end">&#8373;{{ number_format($item->patient_payable, 2) }}</td>
                 </tr>
                 @endforeach
             </tbody>

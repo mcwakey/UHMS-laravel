@@ -139,8 +139,8 @@
                                 <th>#</th>
                                 <th>Description</th>
                                 <th>Pricing</th>
-                                <th class="text-end">Selected Price</th>
-                                <th class="text-end">Total</th>
+                                <th class="text-end">Price</th>
+                                {{-- <th class="text-end">Total</th> --}}
                                 <th class="text-end">Covered</th>
                                 <th class="text-end">Patient Payable</th>
                                 <th class="text-end">Paid</th>
@@ -184,8 +184,14 @@
                                         <i class="ti ti-{{ $payer === 'insurance' ? 'shield-check' : 'cash' }} me-1"></i>{{ ucfirst($payer) }}
                                     </div>
                                 </td>
-                                <td class="text-end fw-semibold">&#8373;{{ number_format($selectedPrice, 2) }}</td>
-                                <td class="text-end fw-medium">&#8373;{{ number_format($item->total_price, 2) }}</td>
+                                {{-- <td class="text-end fw-semibold">&#8373;{{ number_format($selectedPrice, 2) }}</td> --}}
+                                <td class="text-end">
+                                    @if($item->cash_price > $selectedPrice)
+                                    <div class="small text-muted text-decoration-line-through">&#8373;{{ number_format($item->cash_price, 2) }}</div>
+                                    @endif
+                                    <span class="fw-semibold">&#8373;{{ number_format($selectedPrice, 2) }}</span>
+                                </td>
+                                {{-- <td class="text-end fw-medium">&#8373;{{ number_format($item->total_price, 2) }}</td> --}}
                                 <td class="text-end">
                                     @if((float) $item->insurance_covered > 0)
                                     <span class="text-success">&#8373;{{ number_format($item->insurance_covered, 2) }}</span>
