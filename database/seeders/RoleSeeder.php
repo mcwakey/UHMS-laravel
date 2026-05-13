@@ -50,6 +50,7 @@ class RoleSeeder extends Seeder
             'lab.requests.create',
             'lab.results.view',
             'lab.results.create',
+            'lab.results.verify',
             'lab.tests.manage',
 
             // Pharmacy
@@ -203,7 +204,7 @@ class RoleSeeder extends Seeder
             'patients.view',
             'visits.view',
             'lab.requests.view',
-            'lab.results.view', 'lab.results.create',
+            'lab.results.view', 'lab.results.create', 'lab.results.verify',
             'lab.tests.manage',
             'analyzer.manage',
             'queue.view',

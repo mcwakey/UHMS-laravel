@@ -206,6 +206,8 @@ class StockTransferService
             $svc->createMovement(array_merge($shared, [
                 'stock_location_id' => $fromLoc->id,
                 'movement_type'     => StockMovementType::TRANSFER_OUT,
+                // Source-of-truth deduction (DrugStock) already validated above
+                // by deductStock(); the ledger is a mirror so allow_negative is safe here.
                 'allow_negative'    => true,
             ]));
 

@@ -40,7 +40,21 @@ class PurchaseOrderController extends Controller
 
     public function store(StorePurchaseOrderRequest $request)
     {
-        $po = $this->procurementService->create($request->validated());
+        try {
+            $po = $this->procurementService->create($request->validated());
+        } catch (\Throwable $e) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['error' => $e->getMessage()], 422);
+            }
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success'  => 'Purchase order created successfully.',
+                'redirect' => route('admin.store.purchase-orders.show', $po),
+            ], 201);
+        }
 
         return redirect()
             ->route('admin.store.purchase-orders.show', $po)
@@ -114,9 +128,16 @@ class PurchaseOrderController extends Controller
             'unit_cost'             => ['required', 'numeric', 'min:0'],
         ]);
 
-        $this->procurementService->addItem($purchaseOrder, $request->only([
-            'item_type', 'drug_id', 'investigation_item_id', 'quantity_ordered', 'unit_cost',
-        ]));
+        try {
+            $this->procurementService->addItem($purchaseOrder, $request->only([
+                'item_type', 'drug_id', 'investigation_item_id', 'quantity_ordered', 'unit_cost',
+            ]));
+        } catch (\Throwable $e) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['error' => $e->getMessage()], 422);
+            }
+            return back()->withInput()->with('error', $e->getMessage());
+        }
 
         return back()->with('success', 'Item added to purchase order.');
     }

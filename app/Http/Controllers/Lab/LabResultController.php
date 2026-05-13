@@ -130,9 +130,16 @@ class LabResultController extends Controller
 
     /**
      * Verify a lab result.
+     *
+     * Authorization is enforced both at the route level (can:lab.results.verify)
+     * and here in the controller for defense-in-depth.
      */
-    public function verify(LabResult $result)
+    public function verify(\Illuminate\Http\Request $request, LabResult $result)
     {
+        if (! $request->user()?->can('lab.results.verify')) {
+            abort(403, 'You are not authorized to verify lab results.');
+        }
+
         try {
             $this->labService->verifyResult($result);
             return back()->with('success', 'Result verified successfully.');
