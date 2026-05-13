@@ -1,8 +1,20 @@
 # UHMS User Manual
 
-Current system state as of May 2, 2026.
+Current system state as of May 13, 2026.
 
 This manual is workflow-first. Each section walks you through what to do, in what order, and which screen to use. It is illustrated with screenshots from the running system and includes flow diagrams for the most important processes.
+
+> **Important — Updated Workflow Edition.** This manual now reflects the consolidated UHMS workflow described in [UHMS_Updated_User_Manual.md](UHMS_Updated_User_Manual.md). Key rules to keep in mind throughout:
+>
+> - **One visit = one main invoice.** Every billable activity (consultation, investigation, pharmacy, ward, procedure) adds an item to the same visit invoice.
+> - **Every visit starts at triage.** Triage completion moves the visit from `TRIAGE` to `WAITING_CONSULTATION`.
+> - **Doctors must click `Start Consultation`** to move the visit from `WAITING_CONSULTATION` to `CONSULTING` before clinical forms become editable.
+> - **Stock movements are the source of truth.** Product/drug quantity is never edited directly; current stock = total IN movements − total OUT movements. Prescribing does not reduce stock — dispensing does.
+> - **Insurance covered is not a payment.** Discounts are entered manually by authorized users and never auto-calculated from insurance.
+> - **NHIS is just one insurance type.** It is not given special handling outside of normal insurance configuration.
+> - **Investigation Catalogue replaces the old "Lab Test Catalogue"** concept; investigation departments include Lab, X-ray, Scan, CT-scan, Ultrasound, ECG, and any other investigation-type department.
+>
+> Screenshots in this document were captured from earlier UI revisions and may not show the very latest button placement; the documented workflows and rules are authoritative.
 
 ## Table of Contents
 
@@ -600,6 +612,10 @@ The appointment calendar groups bookings by day and supports week navigation, do
 
 A visit is the central operational record connecting patient, services, departments, billing, and clinical data.
 
+**Single-invoice rule.** Every visit has exactly one main invoice. All billable activity during the visit — consultation services, investigation items, dispensed pharmacy items, ward charges, procedures, scans, x-rays — adds items to this same invoice. UHMS does not create multiple active invoices for one visit.
+
+**Insurance and Cash and Carry.** Cash and Carry is always available, even when the patient has insurance. When the patient's default insurance is invalid, expired, exhausted, or missing, UHMS automatically selects Cash and Carry. The user can switch to another valid insurance, or add/edit/renew insurance directly from the visit creation page. Cash and Carry uses the service base price; insurance uses the resolved insurance price.
+
 ### Visit lifecycle
 
 ```mermaid
@@ -629,9 +645,15 @@ The Create Visit form supports walk-in registration with patient search, departm
 1. Go to Patient Services > Visits / OPD.
 2. Select Create Visit.
 3. Search for or select the patient.
-4. Choose visit type, department, doctor, insurance, services, and priority where applicable.
-5. Save the visit.
-6. The system creates a visit number and moves the patient into the next workflow state.
+4. Choose insurance or Cash and Carry. If the default insurance is invalid, Cash and Carry is auto-selected.
+5. Choose visit type, department, doctor, services, and priority where applicable.
+6. Save the visit. UHMS:
+   - creates the visit and a unique visit number,
+   - creates the single main invoice for the visit,
+   - adds the selected services as invoice items, and
+   - sends the patient to triage automatically.
+
+The Selected Services table on the visit creation page is simplified: service, price, action, and an overall total. The visit invoice and its items are the authoritative record of billable services — there is no separate `visit_services` display.
 
 ### 8.2 View visits
 
@@ -646,7 +668,14 @@ The Visits / OPD page shows visit status, patient details, linked appointment in
 
 ### 8.3 Transition a visit
 
-Users with transition permission can move visits through workflow states. Common transitions include sending the patient to triage, consultation, investigation, completion, referral, or admission-related flow depending on current status and business rules.
+Users with transition permission can move visits through workflow states. The standard sequence is:
+
+1. `TRIAGE` — set automatically on visit creation.
+2. `WAITING_CONSULTATION` — set automatically when the triage user saves vitals.
+3. `CONSULTING` — set when the doctor clicks **Start Consultation** (see [Section 11](#11-consultations)).
+4. Investigation, referral, admission, or completion — depending on doctor decision and downstream workflow.
+
+Clinical forms remain disabled until the doctor has started consultation.
 
 ## 9. Queue Management
 
@@ -702,13 +731,18 @@ The vitals form captures temperature, blood pressure, pulse, respiration, oxygen
 ### 10.2 Record vitals
 
 1. Open the visit's triage or vitals screen.
-2. Enter temperature, blood pressure, pulse, respiratory rate, oxygen saturation, and other available fields.
+2. Enter temperature, blood pressure, pulse, respiratory rate, oxygen saturation, weight, height, and other available fields.
 3. Select or confirm priority where required.
-4. Save the triage record.
+4. Save the triage record. UHMS:
+   - calculates the triage score,
+   - changes the visit status from `TRIAGE` to `WAITING_CONSULTATION`, and
+   - adds the patient to the consultation queue.
+
+The triage score may help identify routine, urgent, emergency, or inpatient cases.
 
 ### 10.3 Send patient onward
 
-After triage, the patient may be assigned to consultation, moved to another department, or treated according to urgency. The exact available actions depend on visit status and staff permissions.
+After triage, the patient appears in the doctor's consultation queue automatically. Emergency or severe cases may be routed directly to the emergency department or to inpatient admission. The exact available actions depend on visit status and staff permissions.
 
 ## 11. Consultations
 
@@ -754,20 +788,25 @@ The consultation list helps clinicians find consultable visits and filter by vis
 
 ### 11.2 Consultation workspace
 
-The consultation screen can include:
+The consultation page is an SPA-like clinical workspace. It typically shows:
 
-- Patient summary
-- Visit information
-- Vitals
-- Medical history
-- Complaints
-- Diagnoses
-- Investigations
-- Treatments
-- Prescriptions
-- Tasks
-- Medical patterns
-- Investigation request tools
+- Patient header
+- Vitals panel
+- Triage score
+- Current visit status
+- Insurance summary
+- Previous visits panel
+- Consultation tabs: complaints, history, diagnosis, investigations, prescriptions, treatment, notes
+
+Saving within a tab does not reload the whole page or reset the active tab.
+
+### 11.2.1 Start Consultation (required gate)
+
+Before entering any clinical information, the doctor must click **Start Consultation**.
+
+- This changes the visit status from `WAITING_CONSULTATION` to `CONSULTING`.
+- Clinical forms (complaints, diagnoses, prescriptions, investigation requests, treatment, notes) remain **disabled** until consultation has started.
+- If the visit is already in consultation, the button shows **Continue Consultation** instead.
 
 ### 11.3 Add complaints
 
@@ -779,8 +818,8 @@ The consultation screen can include:
 ### 11.4 Add diagnoses
 
 1. Open the diagnosis section.
-2. Add diagnosis details.
-3. Mark the primary diagnosis where applicable.
+2. Add diagnosis details. UHMS supports provisional, final, and primary diagnoses.
+3. The first diagnosis is set as primary by default; the doctor may later mark another diagnosis as primary.
 4. Use ICD-10 search/coding if available.
 5. Save changes.
 
@@ -795,17 +834,22 @@ The consultation screen can include:
 1. Open the prescription section.
 2. Add one or more drug items.
 3. Enter dosage, frequency, duration, and instructions.
-4. Save the prescription.
+4. Save the prescription. The prescription is linked to the patient visit and prescribing doctor. The list updates without a full page reload.
 5. Pharmacy users can later dispense it.
+
+**Important:** Saving a prescription does **not** reduce stock. Stock is only reduced when pharmacy dispenses the drug.
 
 ### 11.7 Request investigations
 
-1. Open the investigation request section.
-2. Select the target investigation department.
-3. Choose catalog tests or enter free-text investigation items when applicable.
+1. Open the Investigations tab.
+2. Select the target investigation department (Lab, X-ray, Scan, CT-scan, Ultrasound, ECG, or any configured investigation-type department).
+3. Select one or more services under that department.
 4. Add clinical information and urgency.
-5. Submit the request.
-6. The request appears in the Investigation Requests queue.
+5. Submit the request. It appears on the correct investigation department request page.
+
+Requested investigations on the consultation page are grouped by department, and the doctor can view available results directly from the Investigations tab.
+
+**Doctors cannot delete an investigation item after results have been entered for it.**
 
 ### 11.8 Refer a patient
 
@@ -827,7 +871,40 @@ Common actions:
 
 ## 12. Investigations
 
-The Investigations module covers the full lifecycle of test requests from the moment a doctor orders them until results are verified.
+The Investigations module covers the full lifecycle of test requests from the moment a doctor orders them until results are verified and printed.
+
+**Investigations are not limited to Lab.** Investigation departments may include Lab, X-ray, Scan, CT-scan, Ultrasound, ECG, and any other configured investigation-type department. Some backend route names still use `lab`, but the user-facing workflow is **Investigations**.
+
+### Investigation Catalogue (replaces "Lab Test Catalogue")
+
+The old "Lab Test Catalogue" concept is replaced with the **Investigation Catalogue**, which is based on services from investigation-type departments. The system does not create catalogue tests detached from services.
+
+Correct structure:
+
+```text
+Investigation Service
+    → Optional Headers / Categories
+    → Criteria
+```
+
+A criterion may belong to a header/category or stand alone. Authorized users configure headers and criteria when an investigation service is selected.
+
+Example for Full Blood Count:
+
+```text
+Service: Full Blood Count
+
+Header: Red Cell Indices
+  - Hemoglobin
+  - RBC
+  - HCT
+
+Header: White Cell Count
+  - WBC
+
+General
+  - ESR
+```
 
 ```mermaid
 stateDiagram-v2
@@ -871,35 +948,53 @@ Investigation staff use this queue to filter, accept, process, and track request
 
 ### 12.2 Accept a request
 
+Investigation staff must explicitly select which requested items they intend to perform before accepting.
+
 1. Open a pending request.
-2. Select Accept.
-3. The request and pending items move into processing status.
+2. Select the items to perform.
+3. Select Accept.
+4. The request and the selected items move into processing status.
+
+**Billing rule:** Only accepted selected items are added to the visit invoice. Unselected items are not billed.
 
 ### 12.3 Enter results
 
 1. Open a processing request.
-2. Enter results for each request item.
-3. Depending on result type, enter parameter values, rich text, or upload a file result.
+2. For each request item, the result form loads the configured headers and criteria from the Investigation Catalogue.
+3. Enter values against each criterion. Depending on result type, enter parameter values, rich text, or upload a file result.
 4. Mark abnormal results where applicable.
 5. Save.
 6. When all request items are completed, the request status becomes completed.
 
-### 12.4 Verify results
+Once results have been entered for an investigation item, the doctor cannot delete that item from the consultation.
+
+### 12.3.1 View result
+
+After results are entered, a **View Result** button appears. The result view shows patient information, visit information, investigation service, result values, units, reference ranges, and status.
+
+Doctors can view results directly from Consultation → Investigations tab.
+
+### 12.4 Verify and print results
 
 1. Open an entered result.
-2. Select Verify if you have result creation/verification permission.
-3. The result records verifier and verification time.
+2. Authorized users select **Verify**.
+3. The result status becomes Verified and the Print button becomes available.
+4. **Only verified results should be printed** unless system settings allow otherwise.
 
-### 12.5 Test catalog
+A printed result includes: hospital information, patient details, visit details, investigation service, result values, units, reference ranges, performed by, verified by, and date/time.
 
-Use Test Catalog to maintain investigation categories and catalog tests.
+### 12.5 Test catalog (Investigation Catalogue maintenance)
+
+Use Test Catalog to maintain the Investigation Catalogue: investigation services, headers/categories, and criteria.
 
 Typical actions:
 
-1. Add or update test categories.
-2. Add or update tests.
-3. Toggle tests active/inactive.
-4. View tests by category.
+1. Add or update categories/headers under an investigation service.
+2. Add or update criteria (with units and reference ranges).
+3. Toggle services or criteria active/inactive.
+4. View services grouped by department.
+
+Do not create catalogue tests that are detached from services.
 
 ### 12.6 Investigation items and stock
 
@@ -968,7 +1063,17 @@ Drug Stock tracks batches, quantities, and expiry; the alerts section highlights
 2. Open a prescription.
 3. Dispense individual items or use batch dispensing.
 4. Confirm quantities and instructions.
-5. Review dispensing history when required.
+5. Save the dispensing. UHMS:
+   - adds the dispensed drug as an item on the visit's main invoice,
+   - creates a `PHARMACY_DISPENSED` OUT stock movement that reduces stock through the ledger, and
+   - updates the prescription/dispensing status.
+
+**Stock rules:**
+
+- Prescribing does **not** reduce stock.
+- Dispensing **does** reduce stock (through a stock movement, never by editing quantity directly).
+- Payment does **not** affect stock.
+- Only dispensed drugs are billed — prescriptions that are never dispensed produce no invoice line.
 
 ### 13.3 Drug catalog
 
@@ -984,17 +1089,81 @@ Typical actions:
 
 ### 13.4 Drug stock
 
-Use Drug Stock to manage available inventory and stock alerts.
+Drug Stock shows current quantity by location and stock alerts. Current stock is computed from the stock movement ledger — see [Section 18](#18-store-and-procurement) for the full inventory model.
 
 Typical actions:
 
-1. Add stock records.
-2. Update stock records.
-3. Review low stock or expiry alerts.
+1. Review current stock per location.
+2. Review low stock and expiry alerts.
+3. Initiate transfers, returns, adjustments, damaged or expired removals from the inventory pages — each creates a new stock movement rather than overwriting quantity.
 
 ## 14. Billing and Payments
 
-Billing turns clinical activity into invoices and payments. It links into visits, services, claims, and accounts.
+Billing turns clinical activity into invoice items, payments, allocations, and (where applicable) insurance claims.
+
+### Single visit invoice model
+
+```text
+One Visit = One Main Invoice
+```
+
+All billable activities during the visit add items to **the same** invoice:
+
+- consultation service
+- investigation item (only for accepted selected items)
+- pharmacy item (only for dispensed drugs)
+- ward charge
+- procedure
+- scan, x-ray, etc.
+
+UHMS does not create multiple active invoices for one visit. The visit's main invoice is created automatically when the visit is created (see [Section 8.1](#81-create-a-walk-in-visit)); subsequent departments add items to it.
+
+### Invoice item fields and formulas
+
+Each invoice item stores a pricing snapshot:
+
+- `cash_price`
+- `insurance_price`
+- `selected_price`
+- `quantity`
+- `discount_amount`
+- `insurance_covered`
+- `patient_payable`
+- `paid_amount`
+- `balance`
+- `payment_status`
+
+Cash and Carry:
+
+```text
+selected_price  = cash_price
+patient_payable = (selected_price * quantity) - discount_amount
+```
+
+Insurance:
+
+```text
+selected_price    = resolved insurance price
+insurance_covered = cash_price - insurance_price
+patient_payable   = (selected_price * quantity) - discount_amount
+```
+
+Both modes:
+
+```text
+balance = patient_payable - paid_amount
+
+payment_status =
+    PAID            if paid_amount >= patient_payable
+    PARTIALLY_PAID  if 0 < paid_amount < patient_payable
+    UNPAID          if paid_amount = 0
+```
+
+Rules:
+
+- `insurance_covered` is **not** a payment.
+- `discount_amount` is entered manually by authorized users; it is never auto-calculated from insurance.
+- `paid_amount` only comes from actual payments.
 
 ```mermaid
 flowchart LR
@@ -1043,14 +1212,34 @@ The Invoices page centralizes billing status, outstanding balances, payments, an
 2. Filter by status, billing type, or search text.
 3. Open an invoice to review items, patient, visit, payments, and totals.
 
-### 14.2 Create invoice
+### 14.2 Create or open the visit invoice
 
-1. Go to Billing > Invoices > Create.
-2. Select patient or visit.
-3. If a visit is selected, UHMS can suggest billable items from visit services, investigations, and prescriptions.
-4. Add or update invoice items.
-5. Select billing type, tax, discount, due date, and notes.
-6. Save the invoice.
+In the updated workflow, the visit's main invoice is created automatically when the visit is created. The Create Invoice form is mainly used for:
+
+1. Reviewing or adjusting invoice items on the existing visit invoice.
+2. Adding billable items that other departments did not auto-add.
+3. Creating a one-off non-visit invoice where your facility policy allows it.
+
+Steps:
+
+1. Go to Billing > Invoices and open the visit's existing invoice (preferred), or use Create only when no visit invoice exists.
+2. Review pre-populated items from visit services, accepted investigations, and dispensed pharmacy items.
+3. Add or update items.
+4. Save.
+
+### 14.2.1 Apply a manual discount
+
+Discounts are entered manually on the Invoice View page, per invoice item, by authorized users.
+
+Rules:
+
+- Discount cannot be negative.
+- Discount cannot exceed `selected_price * quantity`.
+- Discount is **not** the same as insurance covered.
+- Discount is **never** auto-calculated.
+- Applying a discount recalculates `patient_payable`, `balance`, `payment_status`, and the invoice totals.
+
+Apply discounts through the Apply Discount action or the discount input on the invoice item row.
 
 ### 14.3 Receive payments as cashier
 
@@ -1063,13 +1252,32 @@ The Invoices page centralizes billing status, outstanding balances, payments, an
 
 Cash is disabled when the cashier has no open shift. Open the shift from Accounts > Cashier Handover before accepting cash. Mobile money, card, bank transfer, cheque, and similar non-cash payments can still be recorded according to your facility policy. NHIS is not treated as a manual cashier collection method; it belongs in the claims workflow.
 
-### 14.4 Record payment from an invoice
+### 14.4 Record payment and payment allocation
+
+Patients can pay while the visit is still ongoing. A single payment can clear:
+
+- the full invoice,
+- selected invoice items, or
+- part of selected invoice items.
+
+Payment allocation lets UHMS track which invoice lines are UNPAID, PARTIALLY_PAID, or PAID:
+
+```text
+Consultation Fee  — PAID
+Full Blood Count  — PAID
+Pharmacy Drugs    — PARTIALLY PAID
+X-Ray             — UNPAID
+```
+
+Steps:
 
 1. Open the invoice.
 2. Use the payment form.
-3. Enter amount, payment method, and reference details.
-4. Save payment.
-5. UHMS updates invoice payment status and provides receipt access.
+3. Enter amount, payment method, reference, and (where applicable) the items to allocate against.
+4. Save the payment.
+5. UHMS updates each affected item's `paid_amount`, `balance`, and `payment_status`, then the invoice totals.
+
+**Payments never affect stock.**
 
 ### 14.5 Print invoice or receipt
 
@@ -1123,6 +1331,8 @@ The New Claim form binds patient, insurer, and invoice into a submittable claim.
 ![Insurance providers](assets/user-manual/41-insurance-providers.png)
 
 Insurance Providers maintains insurers and their tier structure.
+
+> **NHIS is just one insurance type.** UHMS does not give NHIS special handling outside normal insurance configuration. Insurance pricing is applied consistently across all departments through the configured provider/tier, and the resolved insurance price feeds into the invoice item `selected_price` and `insurance_covered` fields (see [Section 14](#14-billing-and-payments)).
 
 ### 15.1 Insurance providers and tiers
 
@@ -1248,6 +1458,31 @@ Use actions on scheduled procedures to move them through their workflow.
 
 Procurement keeps both pharmacy and investigation stock supplied.
 
+### Stock movement ledger model
+
+UHMS uses a **stock movement ledger** as the source of truth. Product/drug quantity is never overwritten directly.
+
+```text
+stock_movements = source of truth
+stock_balances  = fast current stock cache
+
+Current Stock = Total IN movements - Total OUT movements
+```
+
+Movement types:
+
+- `OPENING_STOCK`
+- `PURCHASE_RECEIVED`
+- `PHARMACY_DISPENSED`
+- `TRANSFER_IN` / `TRANSFER_OUT`
+- `RETURN_IN` / `RETURN_OUT`
+- `ADJUSTMENT_IN` / `ADJUSTMENT_OUT`
+- `DAMAGED`
+- `EXPIRED`
+- `REVERSAL_IN` / `REVERSAL_OUT`
+
+**Do not delete old stock movements.** Correct mistakes with reversal movements (`REVERSAL_IN`/`REVERSAL_OUT`) or adjustments instead.
+
 ```mermaid
 stateDiagram-v2
   [*] --> Draft
@@ -1275,21 +1510,64 @@ stateDiagram-v2
 
 ### 18.2 Purchase orders
 
+Creating a purchase order does **not** automatically increase stock. Stock increases only when items are marked received — receiving creates `PURCHASE_RECEIVED` IN stock movements.
+
+Purchase order statuses: pending, partially received, received, cancelled.
+
+Steps:
+
 1. Go to Purchase Orders.
-2. Create a purchase order.
-3. Add items.
-4. Submit for approval.
-5. Approver reviews and approves.
-6. Receive goods when delivered.
-7. Cancel if necessary.
+2. Create a purchase order and add items.
+3. Submit for approval.
+4. Approver reviews and approves.
+5. When goods arrive, receive them — fully or partially. Each receiving action creates `PURCHASE_RECEIVED` movements and updates stock balances.
+6. Cancel the PO if necessary.
+
+If saving a PO fails with “at least one item is required,” confirm the selected items are being sent to the backend.
 
 ### 18.3 Stock transfers
 
+A completed transfer creates **two** stock movements linked to the same transfer record:
+
+1. `TRANSFER_OUT` from the source location.
+2. `TRANSFER_IN` into the destination location.
+
+Rules:
+
+- Source and destination must be different.
+- Quantity must be greater than zero.
+- Source must have enough stock.
+
+Steps:
+
 1. Go to Stock Transfers.
 2. Create a transfer.
-3. Select source and destination stock context.
-4. Add drug stock or investigation stock items.
+3. Select source and destination locations (e.g. Main Store → Pharmacy).
+4. Add drug stock or investigation stock items with quantities.
 5. Submit, approve, complete, or cancel according to workflow.
+
+### 18.4 Stock returns
+
+Returns are recorded as new stock movements; original movements are never deleted.
+
+- `RETURN_IN` (direction IN) — stock comes back into a location.
+- `RETURN_OUT` (direction OUT) — stock leaves a location, e.g. return to supplier.
+
+### 18.5 Stock adjustments, damaged, and expired stock
+
+Use adjustments when physical count differs from the system:
+
+- `ADJUSTMENT_IN` or `ADJUSTMENT_OUT` — requires product/drug, location, type, quantity, reason, and an authorized user.
+
+Damaged and expired stock are removed through dedicated OUT movements:
+
+- `DAMAGED` (direction OUT)
+- `EXPIRED` (direction OUT)
+
+Corrections to earlier movements use reversal movements:
+
+- Over-received 20 of 100 → `REVERSAL_OUT 20`.
+- Wrongly dispensed 4 of 10 → `REVERSAL_IN 4`.
 
 ## 19. Accounts and Finance
 
@@ -1548,6 +1826,15 @@ To manage modules:
 4. If disabling a module, disable dependent modules first.
 5. If enabling a dependent module, enable its parent module first.
 6. Flush module cache if menu visibility does not update as expected.
+
+### 23.5.1 Safe fallback behavior
+
+Disabling an optional module must not break the core visit workflow. Examples:
+
+- **Insurance disabled** \u2192 Cash and Carry is used everywhere; insurance selection UI is hidden.
+- **Pharmacy disabled** \u2192 prescriptions can still be recorded during consultation, but dispensing is unavailable and no `PHARMACY_DISPENSED` movements are created.
+- **Analyzer disabled** \u2192 investigation results are entered manually using the Investigation Catalogue criteria.
+- **Claims disabled** \u2192 invoices still record payments; no claim is created or submitted.
 
 ## 24. Notifications
 
