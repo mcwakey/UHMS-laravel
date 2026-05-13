@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Enums\StockTransferStatus;
+use App\Enums\StockMovementType;
 use App\Models\DrugStock;
 use App\Models\InvestigationItemStock;
+use App\Models\StockLocation;
 use App\Models\StockTransfer;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -146,7 +148,72 @@ class StockTransferService
             }
 
             $transfer->update(['status' => StockTransferStatus::COMPLETED]);
+
+            // Mirror to the unified movement ledger.
+            $this->emitTransferMovements($transfer->fresh('items'));
         });
+    }
+
+    /**
+     * Resolve a legacy location string (e.g. "store", "pharmacy") to a
+     * stock_locations row. Falls back to the first row whose type matches.
+     */
+    protected function resolveStockLocation(string $name): ?StockLocation
+    {
+        $name = (string) $name;
+        return StockLocation::query()
+            ->where('name', $name)
+            ->orWhere('type', $name)
+            ->orderBy('id')
+            ->first();
+    }
+
+    /**
+     * Emit paired TRANSFER_OUT + TRANSFER_IN ledger movements for a transfer.
+     */
+    public function emitTransferMovements(StockTransfer $transfer): void
+    {
+        $fromKey = $transfer->from_location instanceof \BackedEnum
+            ? $transfer->from_location->value
+            : (string) $transfer->from_location;
+        $toKey = $transfer->to_location instanceof \BackedEnum
+            ? $transfer->to_location->value
+            : (string) $transfer->to_location;
+
+        $fromLoc = $this->resolveStockLocation($fromKey);
+        $toLoc   = $this->resolveStockLocation($toKey);
+
+        if (! $fromLoc || ! $toLoc) {
+            return; // Locations not mapped — skip ledger writes silently.
+        }
+
+        $svc = app(StockMovementService::class);
+
+        foreach ($transfer->items as $item) {
+            if ($item->item_type !== 'drug' || ! $item->drug_id) {
+                continue;
+            }
+
+            $shared = [
+                'drug_id'     => $item->drug_id,
+                'quantity'    => $item->quantity,
+                'batch_no'    => $item->batch_number,
+                'source_type' => StockTransfer::class,
+                'source_id'   => $transfer->id,
+                'notes'       => 'Stock transfer ' . $transfer->transfer_number,
+            ];
+
+            $svc->createMovement(array_merge($shared, [
+                'stock_location_id' => $fromLoc->id,
+                'movement_type'     => StockMovementType::TRANSFER_OUT,
+                'allow_negative'    => true,
+            ]));
+
+            $svc->createMovement(array_merge($shared, [
+                'stock_location_id' => $toLoc->id,
+                'movement_type'     => StockMovementType::TRANSFER_IN,
+            ]));
+        }
     }
 
     /**
@@ -220,13 +287,16 @@ class StockTransferService
 
     /**
      * Get available stock at a location for a drug.
+     * Reads from the new stock_balances source of truth, matched by location name OR type.
      */
     public function getAvailableStock(int $drugId, string $location = 'store'): int
     {
-        return (int) DrugStock::where('drug_id', $drugId)
-            ->atLocation($location)
-            ->available()
-            ->sum('quantity');
+        return (int) \App\Models\StockBalance::query()
+            ->where('drug_id', $drugId)
+            ->whereHas('location', function ($q) use ($location) {
+                $q->where('type', $location)->orWhere('name', $location);
+            })
+            ->sum('quantity_on_hand');
     }
 
     /**

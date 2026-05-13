@@ -140,12 +140,15 @@
                                 <th>Description</th>
                                 <th>Pricing</th>
                                 <th class="text-end">Price</th>
-                                {{-- <th class="text-end">Total</th> --}}
                                 <th class="text-end">Covered</th>
+                                <th class="text-end">Discount</th>
                                 <th class="text-end">Patient Payable</th>
                                 <th class="text-end">Paid</th>
                                 <th class="text-end">Balance</th>
                                 <th class="text-center">Status</th>
+                                @can('invoices.edit')
+                                <th class="text-center" style="width:60px;">Actions</th>
+                                @endcan
                             </tr>
                         </thead>
                         <tbody>
@@ -164,7 +167,7 @@
                             @endphp
                             @if($currentGroup !== $groupKey)
                             <tr class="table-secondary">
-                                <th colspan="10" class="small text-uppercase">
+                                <th colspan="{{ auth()->user()->can('invoices.edit') ? 11 : 10 }}" class="small text-uppercase">
                                     <i class="ti ti-folder me-1"></i>{{ $groupLabel }}
                                 </th>
                             </tr>
@@ -199,6 +202,13 @@
                                     —
                                     @endif
                                 </td>
+                                <td class="text-end">
+                                    @if((float) $item->discount_amount > 0)
+                                    <span class="text-danger">-&#8373;{{ number_format($item->discount_amount, 2) }}</span>
+                                    @else
+                                    —
+                                    @endif
+                                </td>
                                 <td class="text-end">&#8373;{{ number_format($item->patient_payable, 2) }}</td>
                                 <td class="text-end">&#8373;{{ number_format($item->paid_amount, 2) }}</td>
                                 <td class="text-end {{ (float) $item->balance > 0 ? 'text-danger fw-semibold' : 'text-muted' }}">
@@ -207,6 +217,24 @@
                                 <td class="text-center">
                                     <span class="badge bg-{{ $payColor }} text-uppercase">{{ str_replace('_',' ', $payStatus) }}</span>
                                 </td>
+                                @can('invoices.edit')
+                                <td class="text-center">
+                                    @if(! in_array($payStatus, ['paid','cancelled','voided','waived']))
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-warning"
+                                            title="Apply Discount"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#discountModal"
+                                            data-item-id="{{ $item->id }}"
+                                            data-item-desc="{{ $item->description }}"
+                                            data-line-total="{{ number_format(((float)$item->selected_price) * ((float)$item->quantity), 2, '.', '') }}"
+                                            data-current-discount="{{ number_format((float)$item->discount_amount, 2, '.', '') }}"
+                                            data-action-url="{{ route('admin.billing.invoices.items.discount', [$invoice, $item]) }}">
+                                        <i class="ti ti-discount-2"></i>
+                                    </button>
+                                    @endif
+                                </td>
+                                @endcan
                             </tr>
                             @endforeach
                         </tbody>
@@ -456,9 +484,63 @@
         </div>
     </div>
 </div>
+
+@can('invoices.edit')
+<!-- Apply Discount Modal -->
+<div class="modal fade" id="discountModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="" id="discountForm">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="ti ti-discount-2 me-1"></i>Apply Discount</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2"><strong>Item:</strong> <span id="discountItemDesc">—</span></p>
+                    <p class="mb-3 text-muted small">Line Total: &#8373;<span id="discountLineTotal">0.00</span></p>
+                    <div class="mb-3">
+                        <label class="form-label">Discount Amount (GH&#8373;) <span class="text-danger">*</span></label>
+                        <input type="number" name="discount_amount" id="discountAmountInput"
+                               class="form-control" step="0.01" min="0" required>
+                        <div class="form-text">Enter <strong>0</strong> to remove an existing discount.
+                            Must not exceed the line total.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning"><i class="ti ti-check me-1"></i>Apply Discount</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@endcan
+
 @endsection
 
 @section('scripts')
+<script>
+$(function() {
+    // Discount modal wiring
+    const discountModal = document.getElementById('discountModal');
+    if (discountModal) {
+        discountModal.addEventListener('show.bs.modal', function(event) {
+            const btn = event.relatedTarget;
+            if (!btn) return;
+            const url = btn.getAttribute('data-action-url');
+            document.getElementById('discountForm').setAttribute('action', url);
+            document.getElementById('discountItemDesc').textContent = btn.getAttribute('data-item-desc') || '—';
+            document.getElementById('discountLineTotal').textContent = btn.getAttribute('data-line-total') || '0.00';
+            const current = btn.getAttribute('data-current-discount') || '0';
+            const input = document.getElementById('discountAmountInput');
+            input.value = current;
+            input.setAttribute('max', btn.getAttribute('data-line-total') || '');
+            setTimeout(() => input.focus(), 200);
+        });
+    }
+});
+</script>
 <script>
 $(function() {
     const feedback = $('#paymentFormFeedback');

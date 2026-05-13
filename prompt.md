@@ -1,371 +1,90 @@
-You are a senior Laravel architect working on **UHMS — Ultimate Hospital Management System**.
+You are a senior Laravel + Inertia/Vue architect working on **UHMS — Ultimate Hospital Management System**.
 
-We need to fix the **BillingService** starting with the `invoice_items` model/table and make billing calculations consistent everywhere in the system.
+We need to improve the **Invoice Discount UI**, fix the **Purchase Order selected-items save issue**, and redesign inventory around a proper **Stock Movement Ledger** system.
 
-Focus only on billing calculation, `invoice_items`, invoice totals, and removal of legacy/unused billing fields. Do not refactor unrelated modules.
+Focus only on:
 
----
+1. Invoice item discount entry.
+2. Purchase order save issue.
+3. Stock movement system.
+4. Stock adjustments, transfers, returns, purchases, dispensing, reversals, and stock balance calculation.
 
-# 1. Main Objective
-
-Update the billing system so that every billable item in UHMS follows one consistent calculation rule.
-
-This applies everywhere:
-
-* Visit creation
-* Consultation services
-* Investigation acceptance
-* Pharmacy dispensing
-* Ward charges
-* Procedures
-* Scan/X-ray/Lab
-* Any other billable service
-
-All billing must go through `BillingService`.
+Do not refactor unrelated modules.
 
 ---
 
-# 2. Required Invoice Item Fields
+# 1. Main Objectives
 
-The `invoice_items` model/table should use these fields:
+Implement the following:
 
-```text
-id
-invoice_id
-visit_id
-patient_id
-department_id nullable
-service_id nullable
+1. Add a place on the Invoice View UI for authorized users to enter and apply discounts per invoice item.
+2. Fix purchase order saving error: **“at least one item is required”**, even though items are selected.
+3. Redesign stock quantity handling so the database does not depend on manually updating a hard `quantity` field.
+4. Implement a complete stock movement system.
+5. Add movement features:
 
-source_type nullable
-source_id nullable
-
-description
-quantity
-
-cash_price
-insurance_price nullable
-selected_price
-
-insurance_covered
-discount_amount
-
-patient_payable
-paid_amount
-balance
-
-payment_status
-
-patient_insurance_id nullable
-pricing_source nullable
-insurance_type nullable
-
-created_by nullable
-created_at
-updated_at
-```
+   * Opening stock
+   * Purchase receiving
+   * Pharmacy dispensing
+   * Transfers
+   * Returns
+   * Stock adjustments
+   * Damaged stock
+   * Expired stock
+   * Reversals/corrections
+6. Use `stock_movements` as the source of truth.
+7. Use `stock_balances` as a fast cached quantity for performance.
 
 ---
 
-# 3. Meaning of Each Price Field
+# 2. Invoice Discount UI
 
-## `cash_price`
+There is currently no place on the Invoice View page for the user to manually enter discount.
 
-This is the normal service base price.
+Add discount functionality to the Invoice View.
 
-For Cash and Carry:
+## Required UI
 
-```text
-cash_price = service base price
+On each invoice item row, provide one of these options:
+
+```text id="nrz2t2"
+Discount input + Apply button
 ```
 
-For insurance patients:
+or:
 
-```text
-cash_price = service base price
+```text id="jd8sun"
+Apply Discount action button that opens a modal
 ```
 
-So `cash_price` must always represent the original/base/cash price of the item.
+Recommended invoice columns:
 
----
-
-## `insurance_price`
-
-This is the price selected based on the patient’s insurance.
-
-If the patient is on NHIS, Private, Corporate, or provider-specific insurance:
-
-```text
-insurance_price = resolved insurance price
+```text id="i25kbh"
+Service / Description
+Selected Price
+Discount
+Patient Payable
+Paid Amount
+Balance
+Status
+Actions
 ```
 
-If patient is Cash and Carry:
+## Discount Rules
 
-```text
-insurance_price = null
-```
+* Discount is manually entered by an authorized user.
+* Discount must be saved as `discount_amount`.
+* Discount must not be automatically calculated from insurance.
+* Discount must not equal `insurance_covered`.
+* Discount must not exceed `selected_price * quantity`.
+* Discount must not be negative.
+* Discount should not be applied freely after full payment unless a reversal/refund workflow exists.
 
-or keep it equal to `cash_price` only if the current database structure requires it.
+## Backend Method
 
----
+Use or create:
 
-## `selected_price`
-
-This is the actual price being used for billing before discounts.
-
-Rules:
-
-```text
-If Cash and Carry:
-selected_price = cash_price
-
-If insurance applies:
-selected_price = insurance_price
-```
-
-If insurance price does not exist:
-
-```text
-selected_price = cash_price
-pricing_source = base_price
-```
-
----
-
-# 4. Correct Billing Calculations
-
-Use these formulas everywhere.
-
-## Insurance Covered
-
-```text
-insurance_covered = cash_price - insurance_price
-```
-
-Important:
-
-* `insurance_covered` is not paid amount.
-* Do not assume insurance coverage is a payment.
-* It is only the difference between the cash/base price and the insurance price.
-* If Cash and Carry:
-
-```text
-insurance_covered = 0
-```
-
-* If insurance price is null:
-
-```text
-insurance_covered = 0
-```
-
-Example:
-
-```text
-cash_price = 100
-insurance_price = 60
-
-insurance_covered = 100 - 60 = 40
-```
-
----
-
-## Patient Payable
-
-```text
-patient_payable = (selected_price * quantity) - discount_amount
-```
-
-If no discount:
-
-```text
-patient_payable = selected_price * quantity
-```
-
-Important:
-
-* `patient_payable` should NOT be reduced by `insurance_covered`.
-* `patient_payable` should NOT treat `insurance_covered` as paid.
-* `patient_payable` is the amount the patient is expected to pay after manual discount.
-
-Example without discount:
-
-```text
-selected_price = 60
-quantity = 2
-
-patient_payable = 60 * 2 = 120
-```
-
-Example with discount:
-
-```text
-selected_price = 60
-quantity = 2
-discount_amount = 20
-
-patient_payable = (60 * 2) - 20 = 100
-```
-
----
-
-## Paid Amount
-
-```text
-paid_amount = sum(payment allocations for this invoice item)
-```
-
-Important:
-
-* `paid_amount` only comes from actual payment.
-* Do not set `paid_amount = insurance_covered`.
-* Do not set `paid_amount = discount_amount`.
-* Do not set `paid_amount = selected_price`.
-
----
-
-## Balance
-
-```text
-balance = patient_payable - paid_amount
-```
-
-Example:
-
-```text
-patient_payable = 120
-paid_amount = 50
-
-balance = 120 - 50 = 70
-```
-
----
-
-## Discount Amount
-
-`discount_amount` must be entered manually by an authorized user.
-
-Rules:
-
-* Do not auto-set discount amount from insurance.
-* Do not calculate discount as `insurance_covered`.
-* Do not calculate discount as `cash_price - selected_price`.
-* Discount must be stored separately in:
-
-```text
-discount_amount
-```
-
-When discount changes, recalculate:
-
-```text
-patient_payable = (selected_price * quantity) - discount_amount
-balance = patient_payable - paid_amount
-```
-
-Validation:
-
-* discount_amount must be >= 0
-* discount_amount must not exceed `selected_price * quantity`
-* only authorized users can apply discounts
-
----
-
-# 5. Payment Status Calculation
-
-Update `payment_status` based on `balance` and `paid_amount`.
-
-Rules:
-
-```text
-If patient_payable <= 0:
-payment_status = PAID
-
-If paid_amount <= 0 and balance > 0:
-payment_status = UNPAID
-
-If paid_amount > 0 and balance > 0:
-payment_status = PARTIALLY_PAID
-
-If balance <= 0:
-payment_status = PAID
-```
-
-Supported statuses:
-
-```text
-UNPAID
-PARTIALLY_PAID
-PAID
-WAIVED
-CANCELLED
-VOIDED
-```
-
----
-
-# 6. BillingService Requirements
-
-Update `BillingService` so every invoice item is created using the correct formulas.
-
-When creating an invoice item:
-
-1. Resolve `cash_price`.
-2. Resolve `insurance_price` if insurance applies.
-3. Resolve `selected_price`.
-4. Set `quantity`.
-5. Set `discount_amount = 0` by default unless provided manually.
-6. Calculate:
-
-```text
-insurance_covered = cash_price - insurance_price
-patient_payable = (selected_price * quantity) - discount_amount
-paid_amount = 0
-balance = patient_payable
-payment_status = UNPAID or PAID if patient_payable is 0
-```
-
-Do not set `paid_amount` from insurance.
-
-Do not set `discount_amount` from insurance.
-
----
-
-# 7. ServicePricingService Requirements
-
-Update `ServicePricingService` to return pricing values clearly.
-
-Required response:
-
-```php
-[
-    'cash_price' => 100,
-    'insurance_price' => 60,
-    'selected_price' => 60,
-    'pricing_source' => 'provider_specific | insurance_type | cash_and_carry | base_price',
-    'insurance_type' => 'cash | nhis | private | corporate | other',
-]
-```
-
-It should not calculate paid amount.
-
-It should not calculate discount.
-
-It should not calculate balance.
-
-Those are billing/payment responsibilities.
-
----
-
-# 8. Discount Workflow
-
-Add or fix a way to manually apply discount on invoice items.
-
-Discount should be applied through a controlled backend method, not directly from frontend calculation.
-
-Suggested method:
-
-```php
+```php id="4c1za4"
 BillingService::applyDiscount(InvoiceItem $item, float $discountAmount, User $user): InvoiceItem
 ```
 
@@ -374,231 +93,831 @@ This method must:
 1. Validate user permission.
 2. Validate discount amount.
 3. Save `discount_amount`.
-4. Recalculate `patient_payable`.
-5. Recalculate `balance`.
-6. Update `payment_status`.
-7. Recalculate parent invoice totals.
-8. Log who applied the discount.
+4. Recalculate:
+
+```text id="x5mril"
+patient_payable = (selected_price * quantity) - discount_amount
+balance = patient_payable - paid_amount
+```
+
+5. Update `payment_status`.
+6. Recalculate parent invoice totals.
+7. Log who applied the discount.
+
+Do not calculate discount in the Vue component only. Backend must be authoritative.
 
 ---
 
-# 9. Invoice Totals
+# 3. Fix Purchase Order Save Error
 
-Update invoice totals based on invoice items.
+Purchase order currently fails with:
 
-Recommended calculations:
-
-```text
-subtotal = sum(selected_price * quantity)
-total_discount = sum(discount_amount)
-insurance_total = sum(insurance_covered)
-patient_total = sum(patient_payable)
-paid_amount = sum(invoice_items.paid_amount)
-outstanding_amount = sum(invoice_items.balance)
+```text id="jwdc09"
+at least one item is required
 ```
+
+even though items are selected.
+
+Investigate and fix the real cause.
+
+Check:
+
+* frontend selected item array name
+* backend validation key
+* request payload
+* form submit method
+* route method
+* controller method
+* request validation
+* `FormRequest` rules
+* model `$fillable`
+* item IDs/keys
+* selected items are copied into form data before submit
+* Inertia/Vue form errors are displayed
+* modal/page is not dismissing before validation response
+* backend expects `items`, but frontend sends `selectedItems`, `purchase_items`, or another name
+
+## Required Behavior
+
+* User can add multiple purchase order items.
+* Submitting purchase order sends selected items correctly.
+* Backend receives an array named consistently, preferably:
+
+```text id="o9rksf"
+items
+```
+
+Each item should include at minimum:
+
+```text id="ek1nkd"
+product_id / drug_id
+quantity
+unit_cost
+```
+
+* Validation errors must show clearly.
+* No silent `302` redirect without visible errors.
+* Purchase order saves successfully when items are valid.
+
+---
+
+# 4. Inventory Design Decision
+
+Do not treat a product/drug `quantity` field as the main source of truth.
+
+The correct inventory model is:
+
+```text id="v94d1x"
+Opening stock + stock movements = current stock
+```
+
+More precisely:
+
+```text id="g8mjdn"
+Current Stock =
+SUM(IN movements)
+-
+SUM(OUT movements)
+```
+
+For performance, maintain a cached balance table:
+
+```text id="vlz0gb"
+stock_movements = source of truth
+stock_balances = fast current quantity cache
+```
+
+---
+
+# 5. Product / Drug Quantity Rule
+
+The only initial hard quantity should be the opening stock.
+
+After opening stock:
+
+* Purchases add stock through stock movements.
+* Dispensing reduces stock through stock movements.
+* Transfers create OUT movement from source and IN movement to destination.
+* Returns create return movements.
+* Adjustments create adjustment movements.
+* Damaged/expired stock creates OUT movements.
+* Corrections are handled through reversal/adjustment movements.
+
+Do not silently overwrite product quantity.
+
+---
+
+# 6. Required Tables
+
+Use existing tables where possible. Add migrations if missing.
+
+## products / drugs
+
+The product/drug table stores item information.
+
+Fields may include:
+
+```text id="cnhoob"
+id
+name
+code
+category_id nullable
+unit
+reorder_level
+opening_stock
+opening_stock_date
+is_active
+created_at
+updated_at
+```
+
+If using an existing `drugs` table, adapt names accordingly.
+
+Do not use `quantity` as the authoritative current stock.
+
+---
+
+## stock_locations
+
+Create if not existing.
+
+```text id="ki1toy"
+id
+name
+type
+department_id nullable
+is_active
+created_at
+updated_at
+```
+
+Examples:
+
+```text id="e6yam7"
+Main Store
+Pharmacy
+Ward Store
+Theater Store
+Laboratory Store
+```
+
+---
+
+## stock_movements
+
+Create a stock ledger table.
+
+```text id="1cgwks"
+id
+product_id / drug_id
+stock_location_id
+movement_type
+direction
+quantity
+unit_cost nullable
+batch_no nullable
+expiry_date nullable
+source_type nullable
+source_id nullable
+performed_by nullable
+movement_date
+notes nullable
+created_at
+updated_at
+```
+
+## Direction
+
+```text id="mc7a9n"
+IN
+OUT
+```
+
+## Movement Types
+
+Implement at least:
+
+```text id="jo5odn"
+OPENING_STOCK
+PURCHASE_RECEIVED
+PHARMACY_DISPENSED
+TRANSFER_IN
+TRANSFER_OUT
+RETURN_IN
+RETURN_OUT
+ADJUSTMENT_IN
+ADJUSTMENT_OUT
+DAMAGED
+EXPIRED
+REVERSAL_IN
+REVERSAL_OUT
+```
+
+---
+
+## stock_balances
+
+Create a cached current-stock table.
+
+```text id="djnk4y"
+id
+product_id / drug_id
+stock_location_id
+quantity_on_hand
+last_movement_at
+created_at
+updated_at
+```
+
+Add unique constraint:
+
+```text id="7vjqe2"
+product_id + stock_location_id
+```
+
+---
+
+# 7. Stock Movement Service
+
+Create or update:
+
+```text id="nny48q"
+StockMovementService
+StockBalanceService
+PurchaseOrderService
+PharmacyDispensingService
+StockTransferService
+StockAdjustmentService
+StockReturnService
+```
+
+---
+
+## StockMovementService
+
+Responsible for creating stock movement records.
+
+Required method:
+
+```php id="riknuh"
+createMovement(array $data): StockMovement
+```
+
+This method must:
+
+1. Validate movement type.
+2. Validate direction.
+3. Validate quantity > 0.
+4. Validate stock location.
+5. Validate product/drug.
+6. Prevent OUT movement if insufficient stock, unless explicitly allowed by system setting.
+7. Create stock movement.
+8. Update stock balance.
+9. Log source information.
+
+---
+
+## StockBalanceService
+
+Responsible for current stock.
+
+Required methods:
+
+```php id="sg8fjw"
+getCurrentStock($productId, $locationId): float
+
+increase($productId, $locationId, float $quantity): void
+
+decrease($productId, $locationId, float $quantity): void
+
+rebuildBalance($productId, $locationId): void
+
+rebuildAllBalances(): void
+```
+
+Balance formula:
+
+```text id="tcc0q9"
+quantity_on_hand = total IN movements - total OUT movements
+```
+
+---
+
+# 8. Opening Stock
+
+When a drug/product is created with opening stock:
+
+1. Save product/drug information.
+2. Create an `OPENING_STOCK` movement.
+3. Direction = `IN`.
+4. Update stock balance.
+
+If opening stock is edited later:
+
+* Do not silently change old movement.
+* Create an adjustment or reversal movement.
+
+---
+
+# 9. Purchase Order Workflow
+
+Purchase order creation should not automatically increase stock unless the items are actually received.
+
+Recommended flow:
+
+```text id="5e6h5s"
+Purchase Order Created
+        ↓
+Pending
+        ↓
+Received / Partially Received
+        ↓
+Stock Movement Created
+        ↓
+Stock Balance Updated
+```
+
+## Purchase Order Save
+
+When saving a purchase order:
+
+* Validate at least one item exists.
+* Save purchase order.
+* Save purchase order items.
+* Do not create stock movements yet unless the workflow marks items as received immediately.
+
+## Purchase Receiving
+
+When items are received:
+
+For each received item:
+
+```text id="rj1gam"
+movement_type = PURCHASE_RECEIVED
+direction = IN
+source_type = purchase_order_item
+source_id = purchase_order_items.id
+quantity = received_quantity
+unit_cost = item unit cost
+stock_location_id = selected receiving location
+```
+
+Update purchase order status:
+
+```text id="i0g1vm"
+PENDING
+PARTIALLY_RECEIVED
+RECEIVED
+CANCELLED
+```
+
+---
+
+# 10. Pharmacy Dispensing Workflow
+
+When pharmacy dispenses drugs:
+
+1. Validate stock availability.
+2. Create invoice item through `BillingService`.
+3. Create stock movement:
+
+```text id="sgj6je"
+movement_type = PHARMACY_DISPENSED
+direction = OUT
+source_type = prescription_item or dispensing_item
+source_id = related item id
+```
+
+4. Update stock balance.
 
 Important:
 
-* `insurance_total` is informational.
-* It is not paid amount.
-* Actual payment comes only from `payments` and `payment_allocations`.
+* Billing and stock are related but separate.
+* Payment does not affect stock.
+* Dispensing affects stock.
+* Invoice/payment affects billing.
 
 ---
 
-# 10. Remove Legacy or Unused Fields
+# 11. Transfers
 
-Remove or stop using legacy fields that conflict with the new billing logic.
+Implement stock transfer workflow.
 
-Search and remove/replace usage of:
+A transfer moves stock from one location to another.
 
-```text
-unit_price
-is_nhis_covered
-nhis_approved_amount
-approved_amount
-insurance_paid
-insurance_payment
-relevance
+Example:
+
+```text id="ro3w0j"
+Main Store → Pharmacy
 ```
 
-Do not drop columns blindly if existing code still depends on them.
+When transfer is completed:
 
-Use safe cleanup:
+Create two movements:
 
-1. Stop writing to legacy fields.
-2. Stop reading from legacy fields.
-3. Replace views/controllers/services with new fields.
-4. Add migration to drop legacy columns only when safe.
-5. If dropping now, ensure migrations and code are consistent.
+## Source Location
+
+```text id="np6igd"
+movement_type = TRANSFER_OUT
+direction = OUT
+stock_location_id = source_location_id
+```
+
+## Destination Location
+
+```text id="6ynbwh"
+movement_type = TRANSFER_IN
+direction = IN
+stock_location_id = destination_location_id
+```
+
+Both movements should share a common `source_type` / `source_id`, such as:
+
+```text id="v4x8o9"
+source_type = stock_transfer
+source_id = stock_transfers.id
+```
+
+Rules:
+
+* Validate source and destination are different.
+* Validate quantity > 0.
+* Validate source has enough stock.
+* Update both balances.
+* Keep transfer audit trail.
 
 ---
 
-# 11. Invoice Item Model
+# 12. Returns
 
-Update `InvoiceItem` model:
+Implement stock returns.
 
-* `$fillable`
-* casts for money fields
-* relationships
-* helper methods if useful
+Return types:
 
-Suggested casts:
-
-```php
-protected $casts = [
-    'quantity' => 'integer',
-    'cash_price' => 'decimal:2',
-    'insurance_price' => 'decimal:2',
-    'selected_price' => 'decimal:2',
-    'insurance_covered' => 'decimal:2',
-    'discount_amount' => 'decimal:2',
-    'patient_payable' => 'decimal:2',
-    'paid_amount' => 'decimal:2',
-    'balance' => 'decimal:2',
-];
+```text id="6o0f7g"
+RETURN_IN
+RETURN_OUT
 ```
 
-Relationships:
+Examples:
 
-```php
-invoice()
-visit()
-patient()
-department()
-service()
-patientInsurance()
-creator()
-paymentAllocations()
+## Patient/Pharmacy Return
+
+Drug returned to pharmacy:
+
+```text id="l6lu42"
+movement_type = RETURN_IN
+direction = IN
 ```
+
+## Return to Supplier
+
+Drug returned to supplier:
+
+```text id="qmxrno"
+movement_type = RETURN_OUT
+direction = OUT
+```
+
+Rules:
+
+* Returns must reference a source when possible.
+* Validate quantity.
+* Update balance.
+* Do not delete original dispense/purchase movement.
+* Create return movement instead.
 
 ---
 
-# 13. Data Integrity Rules
+# 13. Stock Adjustments
 
-* `insurance_covered` must never be treated as payment.
-* `discount_amount` must never be auto-filled from insurance.
-* `paid_amount` must only come from payment allocations.
-* `balance` must always equal `patient_payable - paid_amount`.
-* `patient_payable` must always equal `(selected_price * quantity) - discount_amount`.
-* Old invoice items must preserve their historical pricing.
-* New billing logic must be consistent everywhere.
+Implement stock adjustment feature.
+
+Stock adjustment is used for corrections after stock count or administrative correction.
+
+Adjustment types:
+
+```text id="kf1uq7"
+ADJUSTMENT_IN
+ADJUSTMENT_OUT
+```
+
+Examples:
+
+* Physical count found extra stock → `ADJUSTMENT_IN`
+* Physical count found missing stock → `ADJUSTMENT_OUT`
+* Correction after wrong entry → adjustment movement
+
+## Adjustment UI
+
+Create a Stock Adjustment page or modal where authorized users can enter:
+
+```text id="z5ys4o"
+product/drug
+location
+adjustment_type
+quantity
+reason
+notes
+```
+
+Rules:
+
+* Only authorized users can adjust stock.
+* Reason is required.
+* Quantity must be greater than zero.
+* For `ADJUSTMENT_OUT`, validate stock is enough unless negative stock is allowed.
+* Create stock movement.
+* Update stock balance.
+* Log user and reason.
 
 ---
 
-# 14. Validation Rules
+# 14. Damaged and Expired Stock
 
-When creating or updating invoice items:
+Implement stock removal for damaged/expired items.
 
-* quantity must be greater than 0
-* selected_price must be >= 0
-* cash_price must be >= 0
-* insurance_price must be nullable and >= 0
-* discount_amount must be >= 0
-* discount_amount must not exceed `selected_price * quantity`
-* paid_amount must not be manually edited except through payment allocation logic
+## Damaged
+
+```text id="ltl1t4"
+movement_type = DAMAGED
+direction = OUT
+```
+
+## Expired
+
+```text id="4kwi4n"
+movement_type = EXPIRED
+direction = OUT
+```
+
+Rules:
+
+* Must include reason/notes.
+* Must update stock balance.
+* Must not silently reduce product quantity.
 
 ---
 
-# 15. Tests / Verification
+# 15. Reversals and Corrections
 
-Add or update tests for these scenarios:
+Do not edit/delete old movements silently when correcting stock.
 
-## Cash and Carry
+Use reversal movements.
 
-```text
-cash_price = 100
-selected_price = 100
-quantity = 1
-discount = 0
-patient_payable = 100
-paid_amount = 0
-balance = 100
-insurance_covered = 0
+Examples:
+
+Original purchase received:
+
+```text id="dzfwpr"
++100
 ```
 
-## Insurance
+Correction: only 80 were actually received.
 
-```text
-cash_price = 100
-insurance_price = 60
-selected_price = 60
-quantity = 1
-discount = 0
-insurance_covered = 40
-patient_payable = 60
-paid_amount = 0
-balance = 60
+Create:
+
+```text id="dj777g"
+REVERSAL_OUT 20
 ```
 
-## Insurance with Discount
+Original dispensing:
 
-```text
-cash_price = 100
-insurance_price = 60
-selected_price = 60
-quantity = 1
-discount = 10
-insurance_covered = 40
-patient_payable = 50
-paid_amount = 0
-balance = 50
+```text id="9t97l3"
+-10
 ```
 
-## Partial Payment
+Correction: only 6 were dispensed.
 
-```text
-patient_payable = 60
-paid_amount = 20
-balance = 40
-payment_status = PARTIALLY_PAID
+Create:
+
+```text id="7lcaj8"
+REVERSAL_IN 4
 ```
 
-## Full Payment
+Rules:
 
-```text
-patient_payable = 60
-paid_amount = 60
-balance = 0
-payment_status = PAID
-```
+* Reversal must reference original source/movement where possible.
+* Reversal must have notes/reason.
+* Reversal updates stock balance.
+* Original movement remains for audit.
 
 ---
 
-# 16. Deliverables
+# 16. Current Stock Display
+
+Whenever displaying stock quantity, use:
+
+```text id="sasz75"
+stock_balances.quantity_on_hand
+```
+
+or:
+
+```php id="2le0gk"
+StockBalanceService::getCurrentStock($productId, $locationId)
+```
+
+Do not display old product/drug `quantity` field as current stock.
+
+If old quantity field exists:
+
+* stop using it for current stock.
+* optionally rename/display as opening stock only.
+* remove later if safe.
+
+---
+
+# 17. Stock Reports
+
+Add or prepare for reports:
+
+* Stock ledger by product.
+* Stock ledger by location.
+* Current stock by location.
+* Low stock report.
+* Expired stock report.
+* Purchase received report.
+* Dispensing stock movement report.
+* Transfer report.
+* Adjustment report.
+
+Reports must read from stock movements and stock balances.
+
+---
+
+# 18. Validation Rules
+
+## Movement
+
+* product/drug required
+* location required
+* movement_type required
+* direction required
+* quantity required and greater than 0
+* OUT movements must not exceed current stock unless negative stock is explicitly allowed
+* movement_date required
+
+## Transfer
+
+* source location required
+* destination location required
+* source and destination must be different
+* quantity required and greater than 0
+* source must have enough stock
+
+## Adjustment
+
+* product/drug required
+* location required
+* adjustment type required
+* quantity required
+* reason required
+* authorized user required
+
+## Purchase Order
+
+* supplier/vendor if applicable
+* items required
+* each item must have product/drug
+* quantity required and greater than 0
+* unit_cost required and >= 0
+
+---
+
+# 19. Data Integrity Rules
+
+* Stock movements are the source of truth.
+* Stock balances are cache only.
+* Do not silently overwrite current quantity.
+* Do not delete old stock movements.
+* Use reversals or adjustments.
+* Payment does not affect stock.
+* Dispensing affects stock.
+* Purchase order does not affect stock until received.
+* Transfers must create both OUT and IN movements.
+* Opening stock must create an opening movement.
+* Every stock movement must have a user and reason/source where possible.
+
+---
+
+# 20. Performance Rules
+
+* Use `stock_balances` for fast stock display.
+* Use indexes:
+
+  * stock_movements.product_id
+  * stock_movements.stock_location_id
+  * stock_movements.movement_type
+  * stock_movements.direction
+  * stock_movements.source_type
+  * stock_movements.source_id
+  * stock_movements.movement_date
+  * stock_balances.product_id
+  * stock_balances.stock_location_id
+* Paginate stock movement reports.
+* Do not recalculate full movement history on every page load.
+* Rebuild balances only through command/manual admin action.
+
+---
+
+# 21. Artisan Command
+
+Create an Artisan command:
+
+```bash id="6n392i"
+php artisan stock:rebuild-balances
+```
+
+This command must:
+
+1. Clear/recalculate stock balances from stock movements.
+2. Rebuild all balances, or optionally one product/location.
+3. Log summary output.
+
+---
+
+# 22. Frontend Requirements
+
+## Invoice View
+
+* Add discount input or discount modal per invoice item.
+* Apply discount without full page reload.
+* Show validation errors.
+* Update invoice totals after discount.
+
+## Purchase Order Page
+
+* Fix selected items payload.
+* Show selected items before submit.
+* Show validation errors clearly.
+* Submit without losing selected items.
+
+## Stock Movement Pages
+
+Create or update UI for:
+
+* Opening stock creation
+* Purchase receiving
+* Transfers
+* Returns
+* Adjustments
+* Damaged stock
+* Expired stock
+* Stock ledger
+* Current stock by location
+
+Use SPA behavior where applicable.
+
+---
+
+# 23. Deliverables
 
 Provide:
 
-1. Updated `invoice_items` migration or cleanup migration.
-2. Updated `InvoiceItem` model.
-3. Updated `ServicePricingService`.
-4. Updated `BillingService`.
-5. Updated `InvoiceService` totals recalculation.
-6. Updated `PaymentService` if needed.
-7. Updated invoice views.
-8. Discount application logic.
-9. Removal or deactivation of legacy/unused fields.
-10. Tests or verification notes proving calculations are correct.
+1. Root cause of purchase order “at least one item is required” error.
+2. Files modified.
+3. New migrations.
+4. Updated models and relationships.
+5. `StockMovementService`.
+6. `StockBalanceService`.
+7. `StockTransferService`.
+8. `StockAdjustmentService`.
+9. `StockReturnService`.
+10. Updated purchase order save flow.
+11. Purchase receiving flow.
+12. Pharmacy dispensing stock OUT flow.
+13. Transfer IN/OUT movement flow.
+14. Return movement flow.
+15. Adjustment movement flow.
+16. Damaged/expired movement flow.
+17. Stock balance rebuild command.
+18. Invoice discount UI and backend.
+19. Confirmation that current stock is read from `stock_balances`.
+20. Confirmation that old hard quantity is no longer used as current stock.
 
 ---
 
-# 17. Important Rules
+# 24. Important Rules
 
-Do not assume insurance coverage is paid amount.
+Do not use product/drug quantity as the source of truth.
 
-Do not make discount equal to insurance covered.
+Do not silently edit stock movements.
 
-Do not calculate patient payable from cash price when insurance selected.
+Do not delete old movements.
 
-Do not use coverage percentage.
+Do not increase stock when purchase order is merely created unless the workflow explicitly marks it as received.
 
-Do not use NHIS-specific legacy fields.
+Do not reduce stock when an item is only prescribed; reduce stock only when dispensed.
 
-Do not manually edit paid amount except through payments.
+Do not let payment affect stock.
 
-Do not bypass `BillingService`.
+Do not bypass `StockMovementService`.
 
-Do not bypass `ServicePricingService`.
+Do not bypass `StockBalanceService`.
 
-Do not break historical invoice data.
+Do not apply discounts without authorization.
 
-Now inspect the current billing implementation and update `invoice_items`, pricing, discount, payment, and invoice total calculations to follow this model everywhere in UHMS.
+Do not hide purchase order validation errors.
+
+Now inspect the current implementation and apply these changes carefully.

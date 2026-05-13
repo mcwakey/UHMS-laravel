@@ -87,6 +87,8 @@ class DrugController extends Controller
             'strength' => 'nullable|string|max:100',
             'unit' => 'required|string|max:50',
             'price' => 'required|numeric|min:0',
+            'opening_stock' => 'nullable|numeric|min:0',
+            'reorder_level' => 'nullable|numeric|min:0',
             'requires_prescription' => 'nullable|boolean',
             'description' => 'nullable|string|max:1000',
         ]);

@@ -43,10 +43,11 @@ class StockTransferController extends Controller
             ->orderBy('name')
             ->get();
 
-        // Get store stock for each drug
-        $storeStock = DrugStock::where('location', 'store')
-            ->where('quantity', '>', 0)
-            ->selectRaw('drug_id, SUM(quantity) as total_qty')
+        // Get store stock-on-hand for each drug from the new stock_balances SoT.
+        $storeStock = \App\Models\StockBalance::query()
+            ->whereHas('location', fn ($q) => $q->where('type', 'store'))
+            ->where('quantity_on_hand', '>', 0)
+            ->selectRaw('drug_id, SUM(quantity_on_hand) as total_qty')
             ->groupBy('drug_id')
             ->pluck('total_qty', 'drug_id');
 

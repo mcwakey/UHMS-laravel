@@ -20,7 +20,6 @@ use App\Http\Controllers\Lab\LabRequestController;
 use App\Http\Controllers\Lab\LabResultController;
 use App\Http\Controllers\Admin\LabTestController;
 use App\Http\Controllers\Admin\DrugController;
-use App\Http\Controllers\Admin\DrugStockController;
 use App\Http\Controllers\Admin\ServiceCatalogController;
 use App\Http\Controllers\Billing\InvoiceController;
 use App\Http\Controllers\Billing\PaymentController;
@@ -42,6 +41,7 @@ use App\Http\Controllers\Admin\ClaimController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\StockTransferController;
+use App\Http\Controllers\Admin\StockController;
 use App\Http\Controllers\Admin\AccountCategoryController;
 use App\Http\Controllers\Admin\FinancialEntryController;
 use App\Http\Controllers\Admin\CashierShiftController;
@@ -312,6 +312,26 @@ Route::middleware('auth')->group(function () {
                 Route::post('transfers/{transfer}/cancel', [StockTransferController::class, 'cancel'])->name('transfers.cancel')->middleware('can:store.transfer.create');
                 Route::get('transfers/drug-stock', [StockTransferController::class, 'drugStock'])->name('transfers.drug-stock');
                 Route::get('transfers/investigation-stock', [StockTransferController::class, 'investigationItemStock'])->name('transfers.investigation-stock');
+            });
+
+            // Stock Movement Ledger / Balances / Adjustments / Returns / Locations
+            Route::middleware('can:store.purchase.view')->group(function () {
+                Route::get('stock/balances', [StockController::class, 'balances'])->name('stock.balances');
+                Route::get('stock/ledger',   [StockController::class, 'ledger'])->name('stock.ledger');
+
+                Route::get('stock/locations',  [StockController::class, 'locations'])->name('stock.locations.index');
+                Route::post('stock/locations', [StockController::class, 'storeLocation'])
+                    ->name('stock.locations.store')->middleware('can:store.purchase.create');
+                Route::put('stock/locations/{location}', [StockController::class, 'updateLocation'])
+                    ->name('stock.locations.update')->middleware('can:store.purchase.create');
+
+                Route::middleware('can:store.purchase.create')->group(function () {
+                    Route::get('stock/adjustments/create',  [StockController::class, 'adjustmentForm'])->name('stock.adjustments.create');
+                    Route::post('stock/adjustments',        [StockController::class, 'storeAdjustment'])->name('stock.adjustments.store');
+
+                    Route::get('stock/returns/create',      [StockController::class, 'returnForm'])->name('stock.returns.create');
+                    Route::post('stock/returns',            [StockController::class, 'storeReturn'])->name('stock.returns.store');
+                });
             });
         });
 
@@ -586,13 +606,10 @@ Route::middleware('auth')->group(function () {
                 Route::delete('drug-categories/{category}', [DrugController::class, 'destroyCategory'])->name('drug-categories.destroy');
             });
 
-            // Stock Management
-            Route::middleware('can:pharmacy.stock.manage')->group(function () {
-                Route::get('stock', [DrugStockController::class, 'index'])->name('stock.index');
-                Route::post('stock', [DrugStockController::class, 'store'])->name('stock.store');
-                Route::put('stock/{stock}', [DrugStockController::class, 'update'])->name('stock.update');
-                Route::get('stock/alerts', [DrugStockController::class, 'alerts'])->name('stock.alerts');
-            });
+            // Legacy per-batch Drug Stock UI removed. Stock is now managed via
+            // admin.store.stock.* (single source of truth backed by stock_movements
+            // and stock_balances). Batch records (DrugStock model) remain as an
+            // internal table written by PO receive and consumed by dispense FEFO.
         });
 
         // Billing

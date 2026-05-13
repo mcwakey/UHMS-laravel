@@ -417,6 +417,15 @@
                             <input type="number" name="price" class="form-control" step="0.01" min="0" required>
                         </div>
                         <div class="col-md-4">
+                            <label class="form-label">Opening Stock</label>
+                            <input type="number" name="opening_stock" class="form-control" step="0.0001" min="0" value="0">
+                            <small class="text-muted">Creates an OPENING_STOCK movement in Main Store.</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Reorder Level</label>
+                            <input type="number" name="reorder_level" class="form-control" step="0.0001" min="0" value="0">
+                        </div>
+                        <div class="col-md-4">
                             <div class="form-check mt-4">
                                 <input type="hidden" name="requires_prescription" value="0">
                                 <input type="checkbox" name="requires_prescription" value="1" class="form-check-input" id="newRxReq" checked>

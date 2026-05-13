@@ -121,7 +121,7 @@ $(document).ready(function() {
 
     function initDrugSelect($select) {
         if ($.fn.select2 && !$select.data('select2')) {
-            $select.select2({ width: '100%', placeholder: 'Select Drug...', allowClear: true });
+            $select.select2({ width: '100%', placeholder: 'Select Drug...', allowClear: false });
         }
     }
 
@@ -181,20 +181,35 @@ $(document).ready(function() {
         calculateTotal();
     });
 
-    $('#poForm').on('submit', function() {
+    $('#poForm').on('submit', function(e) {
+        let validIdx = 0;
+
         $('.item-row').each(function() {
-            const hasDrug = $(this).find('.drug-select').val();
-            const isOnlyRow = $('.item-row').length === 1;
-            if (!hasDrug && !isOnlyRow) {
-                const $select = $(this).find('.drug-select');
-                if ($.fn.select2 && $select.data('select2')) $select.select2('destroy');
-                $(this).remove();
+            const $row = $(this);
+            // Read value directly from native DOM to avoid any Select2 quirks.
+            const selectEl = $row.find('.drug-select')[0];
+            const drugVal  = selectEl ? selectEl.value : '';
+
+            if (!drugVal) {
+                // Disable inputs in empty rows — disabled fields are never submitted.
+                $row.find('input, select').prop('disabled', true);
+            } else {
+                $row.find('input, select').prop('disabled', false);
+                // Renumber to produce contiguous items[0], items[1], …
+                $row.find('[name]').each(function() {
+                    this.name = this.name.replace(/items\[\d+\]/, 'items[' + validIdx + ']');
+                });
+                validIdx++;
             }
         });
 
-        renumberRows();
-        syncDrugOptions();
-        calculateTotal();
+        if (validIdx === 0) {
+            e.preventDefault();
+            // Re-enable so the user can still interact with the form.
+            $('.item-row').find('input, select').prop('disabled', false);
+            alert('Please select at least one drug before saving the purchase order.');
+            return false;
+        }
     });
 
     function calculateTotal() {

@@ -4,6 +4,7 @@ namespace App\Services;
 
 
 use App\Enums\PrescriptionStatus;
+use App\Enums\StockMovementType;
 use App\Events\StockLow;
 use App\Models\DispensingRecord;
 use App\Models\Drug;
@@ -12,6 +13,7 @@ use App\Models\DrugStock;
 use App\Models\InvoiceItem;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
+use App\Models\StockLocation;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -77,7 +79,31 @@ class PharmacyService
 
     public function storeDrug(array $data): Drug
     {
-        return Drug::create($data);
+        return DB::transaction(function () use ($data) {
+            $opening = (float) ($data['opening_stock'] ?? 0);
+            $drug = Drug::create($data);
+
+            if ($opening > 0) {
+                $store = StockLocation::query()
+                    ->where('name', 'Main Store')
+                    ->orWhere('type', 'store')
+                    ->orderBy('id')
+                    ->first();
+
+                if ($store) {
+                    app(StockMovementService::class)->createMovement([
+                        'drug_id'           => $drug->id,
+                        'stock_location_id' => $store->id,
+                        'movement_type'     => StockMovementType::OPENING_STOCK,
+                        'quantity'          => $opening,
+                        'unit_cost'         => $drug->price ?? null,
+                        'notes'             => 'Opening stock when drug was created.',
+                    ]);
+                }
+            }
+
+            return $drug;
+        });
     }
 
     public function updateDrug(Drug $drug, array $data): Drug
@@ -254,6 +280,28 @@ class PharmacyService
 
                 $stock->decrement('quantity', $deduct);
                 $remaining -= $deduct;
+
+                // Ledger: PHARMACY_DISPENSED OUT movement.
+                $pharmacyLocation = StockLocation::query()
+                    ->where('name', 'Pharmacy')
+                    ->orWhere('type', 'pharmacy')
+                    ->orderBy('id')
+                    ->first();
+                if ($pharmacyLocation) {
+                    app(StockMovementService::class)->createMovement([
+                        'drug_id'           => $drug->id,
+                        'stock_location_id' => $pharmacyLocation->id,
+                        'movement_type'     => StockMovementType::PHARMACY_DISPENSED,
+                        'quantity'          => $deduct,
+                        'unit_cost'         => $stock->unit_cost ?? null,
+                        'batch_no'          => $stock->batch_number ?? null,
+                        'expiry_date'       => $stock->expiry_date ?? null,
+                        'source_type'       => PrescriptionItem::class,
+                        'source_id'         => $item->id,
+                        'allow_negative'    => true, // legacy drug_stock is the SoT for now
+                        'notes'             => 'Dispensed for prescription ' . ($prescription->prescription_number ?? $prescription->id),
+                    ]);
+                }
             }
 
             // Mark item as dispensed if fully dispensed

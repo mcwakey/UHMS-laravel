@@ -21,6 +21,8 @@ class Drug extends Model
         'strength',
         'unit',
         'price',
+        'opening_stock',
+        'reorder_level',
         'requires_prescription',
         'is_active',
         'description',
@@ -28,6 +30,8 @@ class Drug extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'opening_stock' => 'decimal:4',
+        'reorder_level' => 'decimal:4',
         'requires_prescription' => 'boolean',
         'is_active' => 'boolean',
     ];

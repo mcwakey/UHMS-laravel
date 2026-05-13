@@ -3,16 +3,24 @@
 namespace App\Services;
 
 use App\Enums\PurchaseOrderStatus;
+use App\Enums\StockMovementType;
 use App\Models\DrugStock;
 use App\Models\InvestigationItemStock;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Models\StockLocation;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ProcurementService
 {
+    public function __construct(
+        private ?StockMovementService $stockMovements = null,
+    ) {
+        $this->stockMovements ??= app(StockMovementService::class);
+    }
+
     /**
      * List purchase orders with filters.
      */
@@ -193,6 +201,28 @@ class ProcurementService
                         'received_date' => now(),
                         'received_by'   => Auth::id(),
                     ]);
+
+                    // Ledger: record a PURCHASE_RECEIVED IN movement at Main Store.
+                    $mainStore = StockLocation::query()
+                        ->where('name', 'Main Store')
+                        ->orWhere('type', 'store')
+                        ->orderBy('id')
+                        ->first();
+
+                    if ($mainStore) {
+                        $this->stockMovements->createMovement([
+                            'drug_id'           => $poItem->drug_id,
+                            'stock_location_id' => $mainStore->id,
+                            'movement_type'     => StockMovementType::PURCHASE_RECEIVED,
+                            'quantity'          => $qtyToReceive,
+                            'unit_cost'         => $poItem->unit_cost,
+                            'batch_no'          => $itemData['batch_number'] ?? null,
+                            'expiry_date'       => $itemData['expiry_date'] ?? null,
+                            'source_type'       => PurchaseOrderItem::class,
+                            'source_id'         => $poItem->id,
+                            'notes'             => 'Received against PO ' . $po->po_number,
+                        ]);
+                    }
                 }
             }
 

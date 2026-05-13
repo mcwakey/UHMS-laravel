@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Visit;
 use App\Models\Appointment;
+use App\Models\StockBalance;
 use App\Models\DrugStock;
 use App\Models\LabRequest;
 use App\Models\Prescription;
 use App\Models\Invoice;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class StaffDashboardController extends Controller
 {
@@ -42,7 +44,12 @@ class StaffDashboardController extends Controller
 
         if ($user->hasRole('Pharmacist')) {
             $stats['pendingRx']  = Prescription::where('status', 'pending')->count();
-            $stats['lowStock']   = DrugStock::whereColumn('quantity', '<=', 'reorder_level')->where('quantity', '>', 0)->count();
+            // Low stock from new stock_balances + drugs.reorder_level (SoT).
+            $stats['lowStock']   = StockBalance::query()
+                ->where('quantity_on_hand', '>', 0)
+                ->whereColumn('quantity_on_hand', '<=', DB::raw('COALESCE((SELECT reorder_level FROM drugs WHERE drugs.id = stock_balances.drug_id), 0)'))
+                ->count();
+            // Expired stock still tracked at batch level via DrugStock (internal).
             $stats['expired']    = DrugStock::whereDate('expiry_date', '<', today())->where('quantity', '>', 0)->count();
             $lists['recentRx']   = Prescription::with(['patient'])->latest()->take(8)->get();
         }

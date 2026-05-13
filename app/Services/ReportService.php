@@ -267,8 +267,10 @@ class ReportService
             'active_doctors'        => \App\Models\User::role('Doctor')
                                         ->where('status', 'active')->count(),
             'pending_lab'           => LabRequest::where('status', 'pending')->count(),
-            'low_stock_alerts'      => DrugStock::whereColumn('quantity', '<=', 'reorder_level')
-                                        ->where('quantity', '>', 0)->count(),
+            'low_stock_alerts'      => \App\Models\StockBalance::query()
+                                        ->where('quantity_on_hand', '>', 0)
+                                        ->whereColumn('quantity_on_hand', '<=', DB::raw('COALESCE((SELECT reorder_level FROM drugs WHERE drugs.id = stock_balances.drug_id), 0)'))
+                                        ->count(),
             'today_appointments'    => Appointment::today()->count(),
             'today_admissions'      => Admission::whereDate('created_at', today())->count(),
             'active_admissions'     => Admission::where('status', AdmissionStatus::ADMITTED)->count(),
