@@ -191,9 +191,12 @@
                                 <td>{{ $drug->unit }}</td>
                                 <td>{{ number_format($drug->price, 2) }}</td>
                                 <td>
-                                    @php $stock = $drug->total_stock; @endphp
+                                    @php
+                                        $stock = (float) $drug->total_stock;
+                                        $stockDisplay = rtrim(rtrim(number_format($stock, 4), '0'), '.');
+                                    @endphp
                                     <span class="badge bg-{{ $stock > 10 ? 'success' : ($stock > 0 ? 'warning' : 'danger') }}">
-                                        {{ $stock }}
+                                        {{ $stockDisplay }}
                                     </span>
                                     @if($drug->is_low_stock)
                                         <small class="text-danger d-block"><i class="ti ti-alert-triangle"></i> Low</small>

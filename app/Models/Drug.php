@@ -54,6 +54,14 @@ class Drug extends Model
             ->orderBy('expiry_date'); // FEFO: First Expiry, First Out
     }
 
+    /**
+     * Stock balances (source of truth) — one row per (drug, stock_location).
+     */
+    public function balances(): HasMany
+    {
+        return $this->hasMany(\App\Models\StockBalance::class);
+    }
+
     public function dispensingRecords(): HasManyThrough
     {
         return $this->hasManyThrough(DispensingRecord::class, DrugStock::class);
@@ -75,17 +83,19 @@ class Drug extends Model
         });
     }
 
-    public function getTotalStockAttribute(): int
+    /**
+     * Aggregate on-hand quantity across all stock locations.
+     * Reads from stock_balances (single source of truth).
+     */
+    public function getTotalStockAttribute()
     {
-        return $this->activeStocks()->sum('quantity');
+        return (float) $this->balances()->sum('quantity_on_hand');
     }
 
     public function getIsLowStockAttribute(): bool
     {
-        $stock = $this->activeStocks()->first();
-        if (!$stock) return true;
-
-        return $this->total_stock <= $stock->reorder_level;
+        $reorder = (float) ($this->reorder_level ?? 0);
+        return $this->total_stock <= $reorder;
     }
 
     public function getDisplayNameAttribute(): string
