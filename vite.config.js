@@ -20,7 +20,7 @@ export default defineConfig({
                         return 'icons/' + css.name;
                     }
                 },
-                entryFileNames: 'js/' + `[name]` + `.bundle.js`,
+                entryFileNames: 'js/' + `[name]` + `.[hash].bundle.js`,
                 chunkFileNames: 'js/' + `[name]` + `.[hash].js`,
             },
         },
@@ -84,6 +84,20 @@ export default defineConfig({
                     /^\/logout/,
                 ],
                 runtimeCaching: [
+                    {
+                        urlPattern: ({ url }) =>
+                            url.pathname.startsWith('/build/js/') ||
+                            url.pathname.startsWith('/build/css/') ||
+                            url.pathname === '/build/manifest.json' ||
+                            url.pathname === '/build/registerSW.js' ||
+                            url.pathname === '/build/sw.js',
+                        handler: 'NetworkFirst',
+                        options: {
+                            cacheName: 'uhms-build-code',
+                            networkTimeoutSeconds: 3,
+                            expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 },
+                        },
+                    },
                     {
                         urlPattern: ({ url }) =>
                             url.pathname.startsWith('/build/') ||

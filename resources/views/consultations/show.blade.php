@@ -874,11 +874,6 @@
                                 </form>
                             </div>
                         </div>
-                        <script>
-                            /* moved to @push('scripts') — see loadProcedureServices() below.
-                               Scripts inside @section('content') are not executed by the
-                               Inertia legacy bridge (they get injected via v-html). */
-                        </script>
                         @endcan
 
                         <div id="procedures-list">

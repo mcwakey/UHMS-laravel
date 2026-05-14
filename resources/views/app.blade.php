@@ -94,6 +94,6 @@
         }());
     </script>
 
-    <script src="{{ asset('register-sw.js') }}" defer></script>
+    <script src="{{ asset('register-sw.js') }}?v={{ filemtime(public_path('register-sw.js')) }}" defer></script>
 </body>
 </html>

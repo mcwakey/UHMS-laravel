@@ -159,7 +159,7 @@ class TheatreController extends Controller
 
         $timeline      = $this->reports->getTimeline($procedure);
         $theatreRooms  = TheatreRoom::active()->orderBy('name')->get();
-        $clinicians    = User::query()->where('status', 'active')->orderBy('first_name')->get(['id', 'first_name', 'last_name', 'name']);
+        $clinicians    = User::query()->where('status', 'active')->orderBy('first_name')->get(['id', 'first_name', 'last_name']);
 
         // Dynamic procedure template (Phase A): build per-stage section/field views with saved values.
         $stageTemplates = [];

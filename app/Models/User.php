@@ -69,6 +69,11 @@ class User extends Authenticatable
         return "{$this->first_name} {$this->last_name}";
     }
 
+    public function getNameAttribute(): string
+    {
+        return trim("{$this->first_name} {$this->last_name}");
+    }
+
     /* ── Relationships ────────────────────────────────── */
 
     public function department(): BelongsTo

@@ -25,6 +25,7 @@ class ConvertBladeViewsToInertia
 
         return Inertia::render('Legacy/BladePage', [
             'html' => $this->extractBetween($html, '<!--UHMS_LEGACY_BODY_START-->', '<!--UHMS_LEGACY_BODY_END-->') ?: '',
+            'styles' => $this->extractBetween($html, '<!--UHMS_LEGACY_STYLES_START-->', '<!--UHMS_LEGACY_STYLES_END-->') ?: '',
             'scripts' => $this->extractBetween($html, '<!--UHMS_LEGACY_SCRIPTS_START-->', '<!--UHMS_LEGACY_SCRIPTS_END-->') ?: '',
             'title' => $this->extractTitle($html),
             'url' => $request->fullUrl(),

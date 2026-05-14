@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\ProcedureRequest;
-use App\Models\ProcedureTemplateField;
 use App\Models\ProcedureTemplateValue;
 use App\Models\ServiceCatalog;
 use Illuminate\Support\Facades\Auth;
@@ -110,11 +109,28 @@ class ProcedureTemplateService
         $values   = $request ? $this->getValues($request, $templateType) : [];
 
         $bySection = [];
+        foreach ($sections as $section) {
+            $bySection[$section->id] = [
+                'section' => $section,
+                'fields' => [],
+            ];
+        }
+
         $ungrouped = [];
         foreach ($fields as $f) {
             $f->_value = $values[$f->field_key] ?? $f->default_value;
             if ($f->section_id) {
-                $bySection[$f->section_id][] = $f;
+                if (! isset($bySection[$f->section_id])) {
+                    $bySection[$f->section_id] = [
+                        'section' => (object) [
+                            'name' => 'Additional Fields',
+                            'description' => null,
+                        ],
+                        'fields' => [],
+                    ];
+                }
+
+                $bySection[$f->section_id]['fields'][] = $f;
             } else {
                 $ungrouped[] = $f;
             }
@@ -122,7 +138,7 @@ class ProcedureTemplateService
 
         return [
             'sections'  => $sections,
-            'by_section' => $bySection,
+            'by_section' => array_values(array_filter($bySection, fn (array $group): bool => ! empty($group['fields']))),
             'ungrouped' => $ungrouped,
             'values'    => $values,
         ];

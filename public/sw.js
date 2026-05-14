@@ -1,14 +1,19 @@
-const UHMS_CACHE = 'uhms-static-v1';
+const UHMS_CACHE = 'uhms-static-v2';
 
 const STATIC_ASSETS = [
     '/offline.html',
     '/manifest.webmanifest',
-    '/build/css/style.css',
-    '/build/js/jquery-3.7.1.min.js',
-    '/build/js/bootstrap.bundle.min.js',
-    '/build/js/script.js',
     '/build/img/favicon.png',
     '/build/img/logo-small.svg'
+];
+
+const NETWORK_FIRST_PATHS = [
+    '/sw.js',
+    '/register-sw.js',
+    '/manifest.webmanifest',
+    '/build/manifest.json',
+    '/build/registerSW.js',
+    '/build/sw.js'
 ];
 
 self.addEventListener('install', (event) => {
@@ -42,7 +47,17 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    if (url.pathname.startsWith('/build/') || ['style', 'script', 'font', 'image'].includes(request.destination)) {
+    if (
+        NETWORK_FIRST_PATHS.includes(url.pathname)
+        || url.pathname.startsWith('/build/js/')
+        || url.pathname.startsWith('/build/css/')
+        || ['style', 'script'].includes(request.destination)
+    ) {
+        event.respondWith(networkFirst(request));
+        return;
+    }
+
+    if (url.pathname.startsWith('/build/') || ['font', 'image'].includes(request.destination)) {
         event.respondWith(cacheFirst(request));
         return;
     }
@@ -69,4 +84,26 @@ async function cacheFirst(request) {
     }
 
     return response;
+}
+
+async function networkFirst(request) {
+    const cache = await caches.open(UHMS_CACHE);
+
+    try {
+        const response = await fetch(request);
+
+        if (response && response.ok) {
+            cache.put(request, response.clone());
+        }
+
+        return response;
+    } catch (error) {
+        const cached = await cache.match(request);
+
+        if (cached) {
+            return cached;
+        }
+
+        throw error;
+    }
 }

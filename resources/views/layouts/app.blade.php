@@ -63,7 +63,9 @@
     </style>
     <script>document.documentElement.classList.add('uhms-loading');</script>
 
+    <!--UHMS_LEGACY_STYLES_START-->
     @stack('styles')
+    <!--UHMS_LEGACY_STYLES_END-->
 </head>
 <body>
     <!--UHMS_LEGACY_LAYOUT-->

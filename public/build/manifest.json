@@ -9,7 +9,7 @@
     "src": "resources/img/auth/auth-bg.jpg"
   },
   "resources/js/Pages/Legacy/BladePage.vue": {
-    "file": "js/BladePage.B9yXSoiy.js",
+    "file": "js/BladePage.DqXas9Ul.js",
     "name": "BladePage",
     "src": "resources/js/Pages/Legacy/BladePage.vue",
     "isDynamicEntry": true,
@@ -21,7 +21,7 @@
     ]
   },
   "resources/js/inertia.js": {
-    "file": "js/inertia.bundle.js",
+    "file": "js/inertia.ba1nRgO9.bundle.js",
     "name": "inertia",
     "src": "resources/js/inertia.js",
     "isEntry": true,
@@ -30,7 +30,7 @@
     ]
   },
   "resources/js/script.js": {
-    "file": "js/script.bundle.js",
+    "file": "js/script.B2Xx7el9.bundle.js",
     "name": "script",
     "src": "resources/js/script.js",
     "isEntry": true

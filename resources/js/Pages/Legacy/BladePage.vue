@@ -1,17 +1,14 @@
 <template>
     <Head :title="title" />
     <div
-        ref="legacyRoot"
         class="uhms-inertia-legacy-page"
         v-html="html"
-        @click="handleClick"
-        @submit="handleSubmit"
     />
 </template>
 
 <script setup>
-import { Head, router } from '@inertiajs/vue3';
-import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { Head } from '@inertiajs/vue3';
+import { nextTick, onMounted, onUnmounted, watch } from 'vue';
 import { cleanupBootstrapModals } from '../../utils/modalCleanup';
 
 const props = defineProps({
@@ -20,6 +17,10 @@ const props = defineProps({
         required: true,
     },
     scripts: {
+        type: String,
+        default: '',
+    },
+    styles: {
         type: String,
         default: '',
     },
@@ -33,130 +34,45 @@ const props = defineProps({
     },
 });
 
-const legacyRoot = ref(null);
 let scriptRunId = 0;
+let styleRunId = 0;
 
-function isPlainLeftClick(event) {
-    return event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey;
-}
+function injectLegacyStyles() {
+    document
+        .querySelectorAll('[data-uhms-legacy-style], [data-uhms-legacy-style-link]')
+        .forEach((node) => node.remove());
 
-function sameOriginUrl(href) {
-    try {
-        const url = new URL(href, window.location.href);
-        return url.origin === window.location.origin ? url : null;
-    } catch (error) {
-        return null;
-    }
-}
-
-function shouldIgnoreAnchor(anchor) {
-    const href = anchor.getAttribute('href') || '';
-    const url = sameOriginUrl(anchor.href);
-
-    return !href
-        || href === '#'
-        || href.startsWith('#')
-        || href.startsWith('javascript:')
-        || href.startsWith('mailto:')
-        || href.startsWith('tel:')
-        || anchor.hasAttribute('download')
-        || anchor.target
-        || anchor.closest('[data-bs-toggle]')
-        || anchor.dataset.spaIgnore === 'true'
-        || anchor.dataset.inertiaIgnore === 'true'
-        || (url && (url.pathname.includes('/print') || url.searchParams.get('export') === 'pdf'));
-}
-
-function handleClick(event) {
-    if (event.defaultPrevented || !isPlainLeftClick(event)) {
+    if (!props.styles) {
         return;
     }
 
-    const anchor = event.target.closest('a[href]');
+    const template = document.createElement('template');
+    template.innerHTML = props.styles;
+    styleRunId += 1;
 
-    if (!anchor || !legacyRoot.value?.contains(anchor) || shouldIgnoreAnchor(anchor)) {
-        return;
-    }
+    const nodes = Array.from(template.content.querySelectorAll('style, link[rel="stylesheet"]'));
 
-    const url = sameOriginUrl(anchor.href);
-
-    if (!url) {
-        return;
-    }
-
-    if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) {
-        return;
-    }
-
-    event.preventDefault();
-
-    router.visit(url.pathname + url.search + url.hash, {
-        method: 'get',
-        preserveScroll: false,
-        preserveState: false,
-    });
-}
-
-function formDataToObject(formData) {
-    const data = {};
-
-    for (const [key, value] of formData.entries()) {
-        if (key.endsWith('[]')) {
-            const normalizedKey = key.slice(0, -2);
-            data[normalizedKey] = Array.isArray(data[normalizedKey]) ? [...data[normalizedKey], value] : [value];
+    nodes.forEach((source, index) => {
+        if (source.tagName === 'STYLE') {
+            const style = document.createElement('style');
+            style.dataset.uhmsLegacyStyle = `${styleRunId}-${index}`;
+            Array.from(source.attributes).forEach((attribute) => {
+                if (attribute.name !== 'data-uhms-legacy-style') {
+                    style.setAttribute(attribute.name, attribute.value);
+                }
+            });
+            style.textContent = source.textContent;
+            document.head.appendChild(style);
         } else {
-            data[key] = value;
+            const link = document.createElement('link');
+            link.dataset.uhmsLegacyStyleLink = `${styleRunId}-${index}`;
+            Array.from(source.attributes).forEach((attribute) => {
+                if (attribute.name !== 'data-uhms-legacy-style-link') {
+                    link.setAttribute(attribute.name, attribute.value);
+                }
+            });
+            document.head.appendChild(link);
         }
-    }
-
-    return data;
-}
-
-function formHasFiles(form) {
-    return Array.from(form.querySelectorAll('input[type="file"]')).some((input) => input.files.length > 0);
-}
-
-function handleSubmit(event) {
-    if (event.defaultPrevented) {
-        return;
-    }
-
-    const form = event.target;
-
-    if (!(form instanceof HTMLFormElement)) {
-        return;
-    }
-
-    if (form.dataset.spaIgnore === 'true' || form.dataset.inertiaIgnore === 'true' || form.target) {
-        return;
-    }
-
-    const actionUrl = sameOriginUrl(form.action || window.location.href);
-
-    if (!actionUrl) {
-        return;
-    }
-
-    event.preventDefault();
-
-    let formData;
-
-    try {
-        formData = new FormData(form, event.submitter || undefined);
-    } catch (error) {
-        formData = new FormData(form);
-    }
-
-    const method = (form.method || 'get').toLowerCase();
-    const hasFiles = formHasFiles(form);
-    const shouldUseFormData = hasFiles || method !== 'get';
-
-    router.visit(actionUrl.pathname + actionUrl.search, {
-        method,
-        data: shouldUseFormData ? formData : formDataToObject(formData),
-        forceFormData: shouldUseFormData,
-        preserveScroll: false,
-        preserveState: false,
     });
 }
 
@@ -273,15 +189,21 @@ async function afterPageSwap() {
     // preventing backdrop leaks and orphaned Bootstrap instances.
     cleanupBootstrapModals();
     await nextTick();
+    injectLegacyStyles();
     initialiseLegacyShell();
     executeLegacyScripts();
 }
 
 onMounted(afterPageSwap);
-onUnmounted(cleanupBootstrapModals);
+onUnmounted(() => {
+    cleanupBootstrapModals();
+    document
+        .querySelectorAll('[data-uhms-legacy-style], [data-uhms-legacy-style-link]')
+        .forEach((node) => node.remove());
+});
 
 watch(
-    () => [props.html, props.scripts, props.url],
+    () => [props.html, props.scripts, props.styles, props.url],
     afterPageSwap,
 );
 </script>
