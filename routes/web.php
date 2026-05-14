@@ -285,6 +285,10 @@ Route::middleware('auth')->group(function () {
                 Route::post('suppliers', [SupplierController::class, 'store'])->name('suppliers.store')->middleware('can:store.purchase.create');
                 Route::put('suppliers/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update')->middleware('can:store.purchase.create');
                 Route::patch('suppliers/{supplier}/toggle', [SupplierController::class, 'toggle'])->name('suppliers.toggle')->middleware('can:store.purchase.create');
+
+                Route::get('suppliers/{supplier}/ledger', [SupplierController::class, 'ledger'])->name('suppliers.ledger');
+                Route::post('suppliers/{supplier}/ledger', [SupplierController::class, 'recordLedgerEntry'])
+                    ->name('suppliers.ledger.store')->middleware('can:store.purchase.create');
             });
 
             // Purchase Orders
@@ -579,6 +583,12 @@ Route::middleware('auth')->group(function () {
             Route::post('/{service}/criteria', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'storeCriterion'])->name('criteria.store');
             Route::put('/criteria/{criterion}', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'updateCriterion'])->name('criteria.update');
             Route::delete('/criteria/{criterion}', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'destroyCriterion'])->name('criteria.destroy');
+
+            // Default consumables
+            Route::post('/{service}/consumables', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'storeConsumable'])
+                ->name('consumables.store')->middleware('can:service_consumable.manage');
+            Route::delete('/{service}/consumables/{product}', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'destroyConsumable'])
+                ->name('consumables.destroy')->middleware('can:service_consumable.manage');
         });
 
         // Pharmacy

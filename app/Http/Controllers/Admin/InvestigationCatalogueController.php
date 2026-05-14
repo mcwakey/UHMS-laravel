@@ -122,4 +122,31 @@ class InvestigationCatalogueController extends Controller
         $this->service->deleteCriterion($criterion);
         return response()->json(['success' => true]);
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Consumables
+    |--------------------------------------------------------------------------
+    */
+    public function storeConsumable(Request $request, ServiceCatalog $service)
+    {
+        $data = $request->validate([
+            'product_id'       => 'required|integer|exists:products,id',
+            'default_quantity' => 'required|numeric|min:0.0001',
+            'is_required'      => 'nullable|boolean',
+            'notes'            => 'nullable|string',
+        ]);
+        try {
+            app(\App\Services\ServiceConsumableService::class)->upsert($service, $data);
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+        return back()->with('success', 'Consumable saved.');
+    }
+
+    public function destroyConsumable(ServiceCatalog $service, int $product)
+    {
+        app(\App\Services\ServiceConsumableService::class)->delete($service, $product);
+        return back()->with('success', 'Consumable removed.');
+    }
 }

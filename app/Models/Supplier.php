@@ -35,6 +35,16 @@ class Supplier extends Model
         return $this->hasMany(PurchaseOrder::class);
     }
 
+    public function ledgerEntries(): HasMany
+    {
+        return $this->hasMany(SupplierLedgerEntry::class)->orderBy('entry_date')->orderBy('id');
+    }
+
+    public function getOutstandingBalanceAttribute(): float
+    {
+        return (float) ($this->ledgerEntries()->selectRaw('COALESCE(SUM(credit),0) - COALESCE(SUM(debit),0) AS bal')->value('bal') ?? 0);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

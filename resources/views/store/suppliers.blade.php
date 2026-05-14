@@ -67,6 +67,11 @@
                                     <i class="ti ti-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.store.suppliers.ledger', $supplier) }}">
+                                            <i class="ti ti-notebook me-1"></i>Ledger / Statement
+                                        </a>
+                                    </li>
                                     @can('store.purchase.create')
                                     <li>
                                         <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editSupplierModal-{{ $supplier->id }}">

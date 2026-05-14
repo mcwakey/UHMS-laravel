@@ -65,10 +65,15 @@ class InvestigationCatalogueService
             'investigationCriteria' => fn ($q) => $q->whereNull('header_id')->orderBy('sort_order'),
         ]);
 
+        $serviceConsumables = $service->consumables()->with('product')->get();
+        $availableProducts  = app(\App\Services\ServiceConsumableService::class)->availableProductsFor($service);
+
         return [
-            'service'           => $service,
-            'headers'           => $service->investigationHeaders,
-            'unsorted_criteria' => $service->investigationCriteria, // criteria without a header
+            'service'             => $service,
+            'headers'             => $service->investigationHeaders,
+            'unsorted_criteria'   => $service->investigationCriteria,
+            'serviceConsumables'  => $serviceConsumables,
+            'availableProducts'   => $availableProducts,
         ];
     }
 

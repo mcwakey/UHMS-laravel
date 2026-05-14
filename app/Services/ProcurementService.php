@@ -9,6 +9,7 @@ use App\Models\InvestigationItemStock;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\StockLocation;
+use App\Models\SupplierLedgerEntry;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,8 +18,10 @@ class ProcurementService
 {
     public function __construct(
         private ?StockMovementService $stockMovements = null,
+        private ?SupplierLedgerService $supplierLedger = null,
     ) {
         $this->stockMovements ??= app(StockMovementService::class);
+        $this->supplierLedger ??= app(SupplierLedgerService::class);
     }
 
     /**
@@ -148,6 +151,9 @@ class ProcurementService
         }
 
         DB::transaction(function () use ($po, $receivedItems) {
+            $receivedValue = 0.0;
+            $receivedQty   = 0;
+
             foreach ($receivedItems as $itemData) {
                 $poItem = PurchaseOrderItem::findOrFail($itemData['item_id']);
 
@@ -163,6 +169,9 @@ class ProcurementService
                 if ($qtyToReceive <= 0) {
                     continue;
                 }
+
+                $receivedValue += (float) $qtyToReceive * (float) $poItem->unit_cost;
+                $receivedQty   += $qtyToReceive;
 
                 // Update PO item received quantity
                 $poItem->update([
@@ -237,6 +246,19 @@ class ProcurementService
                 ]);
             } elseif ($anyReceived) {
                 $po->update(['status' => PurchaseOrderStatus::PARTIALLY_RECEIVED]);
+            }
+
+            // Supplier ledger: GOODS_RECEIVED creates a credit (facility now owes supplier).
+            if ($receivedValue > 0 && $po->supplier) {
+                $this->supplierLedger->recordEntry(
+                    supplier: $po->supplier,
+                    entryType: SupplierLedgerEntry::TYPE_GOODS_RECEIVED,
+                    debit: 0,
+                    credit: round($receivedValue, 2),
+                    description: "Goods received against PO {$po->po_number} ({$receivedQty} unit" . ($receivedQty === 1 ? '' : 's') . ').',
+                    sourceType: PurchaseOrder::class,
+                    sourceId: $po->id,
+                );
             }
         });
     }

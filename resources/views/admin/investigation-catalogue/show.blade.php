@@ -143,6 +143,86 @@
     </div>
 </div>
 
+{{-- Default Consumables --}}
+@can('service_consumable.manage')
+<div class="card mt-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0"><i class="ti ti-package me-1"></i> Default Consumables</h5>
+        <small class="text-muted">Pre-loaded during result entry; actual usage deducts stock.</small>
+    </div>
+    <div class="card-body">
+        @if(($availableProducts ?? collect())->isEmpty())
+            <div class="alert alert-warning small">
+                No products linked to <strong>{{ $service->department->name ?? 'this department' }}</strong>.
+                Link consumable/reagent products to this department first under
+                <a href="{{ route('admin.products.index') }}">Products</a>.
+            </div>
+        @else
+            <form method="POST" action="{{ route('admin.investigation-catalogue.consumables.store', $service) }}" class="row g-2 align-items-end mb-3">
+                @csrf
+                <div class="col-md-5">
+                    <label class="form-label small mb-1">Product *</label>
+                    <select name="product_id" class="form-select form-select-sm" required>
+                        <option value="">— Select product —</option>
+                        @foreach($availableProducts as $p)
+                            <option value="{{ $p->id }}">{{ $p->name }}@if($p->unit) ({{ $p->unit }})@endif</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Default Qty *</label>
+                    <input type="number" step="0.0001" min="0.0001" name="default_quantity" value="1" class="form-control form-control-sm" required>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check small mt-3">
+                        <input class="form-check-input" type="checkbox" name="is_required" value="1" id="consReq">
+                        <label class="form-check-label" for="consReq">Required</label>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <input type="text" name="notes" class="form-control form-control-sm" placeholder="Notes">
+                </div>
+                <div class="col-md-1 d-grid">
+                    <button class="btn btn-primary btn-sm"><i class="ti ti-plus"></i></button>
+                </div>
+            </form>
+        @endif
+
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Product</th>
+                        <th class="text-end">Default Qty</th>
+                        <th>Required?</th>
+                        <th>Notes</th>
+                        <th class="text-end"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @forelse($serviceConsumables ?? [] as $sc)
+                    <tr>
+                        <td>{{ $sc->product->name ?? '—' }} <small class="text-muted">{{ $sc->product->unit ?? '' }}</small></td>
+                        <td class="text-end">{{ rtrim(rtrim(number_format((float) $sc->default_quantity, 4, '.', ''), '0'), '.') }}</td>
+                        <td>{!! $sc->is_required ? '<span class="badge bg-danger-subtle text-danger">Required</span>' : '<span class="text-muted small">Optional</span>' !!}</td>
+                        <td class="small text-muted">{{ $sc->notes }}</td>
+                        <td class="text-end">
+                            <form method="POST" action="{{ route('admin.investigation-catalogue.consumables.destroy', [$service, $sc->product_id]) }}" onsubmit="return confirm('Remove consumable?')">
+                                @csrf @method('DELETE')
+                                <button class="btn btn-xs btn-outline-danger"><i class="ti ti-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="5" class="text-center text-muted py-3">No default consumables configured.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+@endcan
+
 @push('scripts')
 <script>
 (function() {
