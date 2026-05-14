@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Department;
 use App\Models\Drug;
 use App\Models\DrugCategory;
+use App\Models\Product;
 use App\Services\PharmacyService;
 use Illuminate\Http\Request;
 
@@ -25,7 +27,16 @@ class DrugController extends Controller
             'category_id' => $request->category_id,
         ]);
 
-        return view('pharmacy.drugs', compact('categories', 'drugs'));
+        // Products linked to the Pharmacy department, type=DRUG, that can back a drug entry.
+        $pharmacyDept = Department::where('type', 'pharmacy')->first();
+        $pharmacyProducts = Product::query()
+            ->where('is_active', true)
+            ->where('product_type', \App\Enums\ProductType::DRUG)
+            ->when($pharmacyDept, fn ($q) => $q->whereHas('departments', fn ($qq) => $qq->where('departments.id', $pharmacyDept->id)))
+            ->orderBy('name')
+            ->get(['id', 'name', 'code', 'unit']);
+
+        return view('pharmacy.drugs', compact('categories', 'drugs', 'pharmacyProducts'));
     }
 
     /**
@@ -79,8 +90,9 @@ class DrugController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'product_id'  => 'required|integer|exists:products,id',
             'category_id' => 'required|exists:drug_categories,id',
-            'name' => 'required|string|max:255|unique:drugs,name',
+            'name' => 'nullable|string|max:255|unique:drugs,name',
             'generic_name' => 'nullable|string|max:255',
             'brand_name' => 'nullable|string|max:255',
             'dosage_form' => 'required|string|max:100',
@@ -92,6 +104,12 @@ class DrugController extends Controller
             'requires_prescription' => 'nullable|boolean',
             'description' => 'nullable|string|max:1000',
         ]);
+
+        // Derive the drug name from the linked product when not supplied.
+        if (empty($validated['name'])) {
+            $product = Product::find($validated['product_id']);
+            $validated['name'] = $product?->name ?? 'Unnamed Drug';
+        }
 
         $validated['requires_prescription'] = $request->boolean('requires_prescription', true);
         $validated['is_active'] = true;
@@ -106,6 +124,7 @@ class DrugController extends Controller
     public function update(Request $request, Drug $drug)
     {
         $validated = $request->validate([
+            'product_id'  => 'nullable|integer|exists:products,id',
             'category_id' => 'required|exists:drug_categories,id',
             'name' => "required|string|max:255|unique:drugs,name,{$drug->id}",
             'generic_name' => 'nullable|string|max:255',

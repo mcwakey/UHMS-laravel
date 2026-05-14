@@ -795,6 +795,72 @@ Route::middleware('auth')->group(function () {
             });
         });
 
+        // ── Admin: Procedure Catalogue (templates + default consumables per procedure service) ──
+        Route::prefix('procedure-catalogue')->name('procedure-catalogue.')->group(function () {
+            Route::middleware('can:procedure_catalogue.view')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'index'])->name('index');
+                Route::get('{service}', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'show'])->name('show');
+            });
+            Route::middleware('can:procedure_catalogue.manage')->group(function () {
+                // Sections
+                Route::post('{service}/sections', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'storeSection'])->name('sections.store');
+                Route::put('sections/{section}', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'updateSection'])->name('sections.update');
+                Route::delete('sections/{section}', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'destroySection'])->name('sections.destroy');
+                // Fields
+                Route::post('{service}/fields', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'storeField'])->name('fields.store');
+                Route::put('fields/{field}', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'updateField'])->name('fields.update');
+                Route::delete('fields/{field}', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'destroyField'])->name('fields.destroy');
+                // Default Consumables
+                Route::post('{service}/consumables', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'storeConsumable'])->name('consumables.store');
+                Route::delete('{service}/consumables/{product}', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'destroyConsumable'])->name('consumables.destroy');
+            });
+        });
+
+        // ── Admin: Products (parallel store catalogue for consumables/reagents/supplies) ──
+        Route::prefix('products')->name('products.')->group(function () {
+            Route::middleware('can:product.view')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Admin\ProductController::class, 'index'])->name('index');
+                Route::get('for-department/{department}', [\App\Http\Controllers\Admin\ProductController::class, 'forDepartment'])->name('for-department');
+            });
+            Route::middleware('can:product.create')->group(function () {
+                Route::post('/', [\App\Http\Controllers\Admin\ProductController::class, 'store'])->name('store');
+            });
+            Route::middleware('can:product.edit')->group(function () {
+                Route::put('{product}', [\App\Http\Controllers\Admin\ProductController::class, 'update'])->name('update');
+                Route::patch('{product}/toggle', [\App\Http\Controllers\Admin\ProductController::class, 'toggle'])->name('toggle');
+            });
+        });
+
+        // ── Admin: Stock Locations (Main Store + department stores) ──
+        Route::prefix('stock-locations')->name('stock-locations.')->middleware('can:stock_location.manage')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\StockLocationController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\Admin\StockLocationController::class, 'store'])->name('store');
+            Route::put('{stockLocation}', [\App\Http\Controllers\Admin\StockLocationController::class, 'update'])->name('update');
+            Route::patch('{stockLocation}/toggle', [\App\Http\Controllers\Admin\StockLocationController::class, 'toggle'])->name('toggle');
+        });
+
+        // ── Admin: Product Stock (balances, ledger, receive, transfer, adjust, return) ──
+        Route::prefix('product-stock')->name('product-stock.')->group(function () {
+            Route::middleware('can:stock.view')->group(function () {
+                Route::get('balances',  [\App\Http\Controllers\Admin\ProductStockController::class, 'balances'])->name('balances');
+                Route::get('ledger',    [\App\Http\Controllers\Admin\ProductStockController::class, 'ledger'])->name('ledger');
+            });
+            Route::middleware('can:stock.adjust')->group(function () {
+                Route::get('receive',   [\App\Http\Controllers\Admin\ProductStockController::class, 'receiveForm'])->name('receive.form');
+                Route::post('receive',  [\App\Http\Controllers\Admin\ProductStockController::class, 'receive'])->name('receive');
+                Route::get('adjust',    [\App\Http\Controllers\Admin\ProductStockController::class, 'adjustForm'])->name('adjust.form');
+                Route::post('adjust',   [\App\Http\Controllers\Admin\ProductStockController::class, 'adjust'])->name('adjust');
+            });
+            Route::middleware('can:stock.transfer')->group(function () {
+                Route::get('transfer',  [\App\Http\Controllers\Admin\ProductStockController::class, 'transferForm'])->name('transfer.form');
+                Route::post('transfer', [\App\Http\Controllers\Admin\ProductStockController::class, 'transfer'])->name('transfer');
+            });
+            Route::middleware('can:stock.return')->group(function () {
+                Route::get('return',    [\App\Http\Controllers\Admin\ProductStockController::class, 'returnForm'])->name('return.form');
+                Route::post('return',   [\App\Http\Controllers\Admin\ProductStockController::class, 'returnStock'])->name('return');
+            });
+        });
+
         // Investigation Items (Catalog + Stock for Lab/Radiology/Investigation departments)
         Route::prefix('investigations')->name('investigations.')->group(function () {
             // Item Catalog

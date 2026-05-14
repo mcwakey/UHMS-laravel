@@ -74,6 +74,11 @@ class ServiceCatalog extends Model
         return $this->hasMany(InvestigationCriterion::class, 'service_id')->orderBy('sort_order');
     }
 
+    public function consumables()
+    {
+        return $this->hasMany(ServiceConsumable::class, 'service_id');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes

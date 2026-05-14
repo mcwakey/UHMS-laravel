@@ -153,6 +153,25 @@ class RoleSeeder extends Seeder
             'procedure.print',
             'procedure.view_report',
 
+            // Procedure Catalogue (templates + default consumables)
+            'procedure_catalogue.view',
+            'procedure_catalogue.manage',
+            'procedure_template.manage',
+            'service_consumable.manage',
+            'consumable_usage.record',
+
+            // Products (parallel store catalogue)
+            'product.view',
+            'product.create',
+            'product.edit',
+            'product.link_departments',
+            'stock_location.manage',
+            'stock.view',
+            'stock.transfer',
+            'stock.adjust',
+            'stock.return',
+            'stock.override_negative',
+
             // Analyzer Integration
             'analyzer.manage',
 
@@ -194,6 +213,8 @@ class RoleSeeder extends Seeder
             'procedures.view', 'procedures.create',
             'procedure.request', 'procedure.view', 'procedure.view_report',
             'procedure.record_anaesthesia', 'procedure.record_surgery',
+            'procedure_catalogue.view', 'consumable_usage.record',
+            'product.view',
         ]);
 
         $nurse = Role::firstOrCreate(['name' => 'Nurse']);
@@ -207,6 +228,8 @@ class RoleSeeder extends Seeder
             'notifications.view',
             'procedures.view',
             'procedure.view', 'procedure.record_preop', 'procedure.record_postop',
+            'procedure_catalogue.view', 'consumable_usage.record',
+            'product.view',
         ]);
 
         $receptionist = Role::firstOrCreate(['name' => 'Receptionist']);
@@ -227,6 +250,8 @@ class RoleSeeder extends Seeder
             'lab.results.view', 'lab.results.create', 'lab.results.verify',
             'lab.tests.manage',
             'analyzer.manage',
+            'product.view', 'stock.view',
+            'consumable_usage.record',
             'queue.view',
             'notifications.view',
         ]);
@@ -239,6 +264,8 @@ class RoleSeeder extends Seeder
             'pharmacy.dispensing.view', 'pharmacy.dispensing.create',
             'pharmacy.drugs.manage', 'pharmacy.stock.manage',
             'store.transfer.view',
+            'product.view', 'stock.view', 'stock.return',
+            'consumable_usage.record',
             'queue.view',
             'notifications.view',
         ]);
@@ -274,6 +301,10 @@ class RoleSeeder extends Seeder
             'store.purchase.view', 'store.purchase.create', 'store.purchase.approve',
             'store.transfer.view', 'store.transfer.create',
             'pharmacy.drugs.manage', 'pharmacy.stock.manage',
+            // Product / stock management (Store is the only catalogue creator)
+            'product.view', 'product.create', 'product.edit', 'product.link_departments',
+            'stock_location.manage',
+            'stock.view', 'stock.transfer', 'stock.adjust', 'stock.return',
             'notifications.view',
         ]);
 

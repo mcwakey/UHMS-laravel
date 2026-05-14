@@ -415,6 +415,7 @@
                     <label class="form-label">Remarks</label>
                     <textarea name="remarks" class="form-control" rows="2" placeholder="Optional remarks..."></textarea>
                 </div>
+                @include('lab._consumables', ['item' => $item])
                 <hr class="my-3">
                 <div class="mb-2">
                     <label class="form-label small fw-medium"><i class="ti ti-paperclip me-1"></i>Attach image / document <span class="text-muted">(optional)</span></label>

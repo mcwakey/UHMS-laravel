@@ -13,6 +13,7 @@ class Drug extends Model
     use SoftDeletes;
 
     protected $fillable = [
+        'product_id',
         'category_id',
         'name',
         'generic_name',
@@ -39,6 +40,11 @@ class Drug extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(DrugCategory::class, 'category_id');
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
     }
 
     public function stocks(): HasMany

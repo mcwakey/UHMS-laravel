@@ -7,6 +7,7 @@ use App\Enums\ResultType;
 use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 use App\Models\LabResult;
+use App\Services\ConsumableUsageService;
 use App\Services\LabService;
 use Illuminate\Http\Request;
 
@@ -14,6 +15,7 @@ class LabResultController extends Controller
 {
     public function __construct(
         protected LabService $labService,
+        protected ConsumableUsageService $consumableUsage,
     ) {}
 
     /**
@@ -51,6 +53,11 @@ class LabResultController extends Controller
             'values.*.unit'                => ['nullable', 'string', 'max:50'],
             'values.*.reference_range'     => ['nullable', 'string', 'max:191'],
             'values.*.flag'                => ['nullable', 'string', 'max:30'],
+            // Consumables actually used to perform this test (optional)
+            'consumables'              => ['nullable', 'array'],
+            'consumables.*.product_id' => ['required_with:consumables.*.quantity', 'integer', 'exists:products,id'],
+            'consumables.*.quantity'   => ['required_with:consumables.*.product_id', 'numeric', 'gt:0'],
+            'consumables.*.notes'      => ['nullable', 'string', 'max:255'],
         ];
 
         if ($resultType === ResultType::RICHTEXT) {
@@ -105,6 +112,26 @@ class LabResultController extends Controller
                     'flag'            => $row['flag'] ?? null,
                     'sort_order'      => $sort++,
                 ]);
+            }
+        }
+
+        // Record actual consumable usage (deducts stock from the lab/investigation location).
+        if ($result instanceof LabResult && $request->filled('consumables')) {
+            try {
+                $visit   = $item->labRequest?->visit;
+                $service = $item->service ?? ($item->service_id ? \App\Models\ServiceCatalog::find($item->service_id) : null);
+                if ($visit) {
+                    $this->consumableUsage->recordUsageForSource(
+                        $visit,
+                        $service,
+                        'investigation_result',
+                        $result->id,
+                        $request->input('consumables', []),
+                        \Illuminate\Support\Facades\Auth::id(),
+                    );
+                }
+            } catch (\Throwable $e) {
+                return back()->with('warning', 'Result saved, but consumable usage failed: '.$e->getMessage());
             }
         }
 

@@ -6,10 +6,13 @@ use App\Enums\StockMovementDirection;
 
 enum StockMovementType: string
 {
-    case OPENING_STOCK       = 'opening_stock';
-    case PURCHASE_RECEIVED   = 'purchase_received';
-    case PHARMACY_DISPENSED  = 'pharmacy_dispensed';
-    case TRANSFER_IN         = 'transfer_in';
+    case OPENING_STOCK          = 'opening_stock';
+    case PURCHASE_RECEIVED      = 'purchase_received';
+    case PHARMACY_DISPENSED     = 'pharmacy_dispensed';
+    case INVESTIGATION_CONSUMED = 'investigation_consumed';
+    case PROCEDURE_CONSUMED     = 'procedure_consumed';
+    case WARD_CONSUMED          = 'ward_consumed';
+    case TRANSFER_IN            = 'transfer_in';
     case TRANSFER_OUT        = 'transfer_out';
     case RETURN_IN           = 'return_in';
     case RETURN_OUT          = 'return_out';
@@ -34,6 +37,9 @@ enum StockMovementType: string
             self::REVERSAL_IN          => StockMovementDirection::IN,
 
             self::PHARMACY_DISPENSED,
+            self::INVESTIGATION_CONSUMED,
+            self::PROCEDURE_CONSUMED,
+            self::WARD_CONSUMED,
             self::TRANSFER_OUT,
             self::RETURN_OUT,
             self::ADJUSTMENT_OUT,
@@ -49,6 +55,9 @@ enum StockMovementType: string
             self::OPENING_STOCK       => 'Opening Stock',
             self::PURCHASE_RECEIVED   => 'Purchase Received',
             self::PHARMACY_DISPENSED  => 'Pharmacy Dispensed',
+            self::INVESTIGATION_CONSUMED => 'Investigation Consumed',
+            self::PROCEDURE_CONSUMED  => 'Procedure Consumed',
+            self::WARD_CONSUMED       => 'Ward Consumed',
             self::TRANSFER_IN         => 'Transfer In',
             self::TRANSFER_OUT        => 'Transfer Out',
             self::RETURN_IN           => 'Return In',

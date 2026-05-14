@@ -7,11 +7,15 @@ use App\Http\Controllers\Controller;
 use App\Models\ProcedureRequest;
 use App\Models\TheatreRoom;
 use App\Models\User;
+use App\Services\ConsumableUsageService;
+use App\Services\ProcedureCatalogueService;
 use App\Services\ProcedureClinicalService;
 use App\Services\ProcedureReportService;
 use App\Services\ProcedureRequestService;
 use App\Services\ProcedureScheduleService;
+use App\Services\ProcedureTemplateService;
 use App\Services\ProcedureWorkflowService;
+use App\Services\ServiceConsumableService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -23,7 +27,59 @@ class TheatreController extends Controller
         protected ProcedureScheduleService $scheduleService,
         protected ProcedureClinicalService $clinical,
         protected ProcedureReportService $reports,
+        protected ProcedureTemplateService $templates,
+        protected ConsumableUsageService $consumableUsage,
+        protected ServiceConsumableService $serviceConsumables,
     ) {}
+
+    /**
+     * Persist dynamic template values for a stage if any are submitted.
+     */
+    protected function saveStageTemplateValues(Request $request, ProcedureRequest $procedure, string $templateType): void
+    {
+        $values = $request->input('template_values', []);
+        if (! is_array($values) || empty($values)) {
+            return;
+        }
+        $procedure->loadMissing('service');
+        if (! $procedure->service) {
+            return;
+        }
+        $this->templates->saveValues($procedure, $templateType, $values, Auth::id());
+    }
+
+    /**
+     * Record consumable usage for a stage if any consumables were submitted.
+     * Items shape: [['product_id'=>..,'quantity'=>..,'notes'=>..], ...]
+     */
+    protected function saveStageConsumables(Request $request, ProcedureRequest $procedure): void
+    {
+        $items = $request->input('consumables', []);
+        if (! is_array($items) || empty($items)) {
+            return;
+        }
+        $items = array_values(array_filter($items, function ($row) {
+            return is_array($row)
+                && ! empty($row['product_id'])
+                && isset($row['quantity'])
+                && (float) $row['quantity'] > 0;
+        }));
+        if (empty($items)) {
+            return;
+        }
+        $procedure->loadMissing(['visit', 'service']);
+        if (! $procedure->visit) {
+            return;
+        }
+        $this->consumableUsage->recordUsageForSource(
+            $procedure->visit,
+            $procedure->service,
+            'procedure_request',
+            $procedure->id,
+            $items,
+            Auth::id(),
+        );
+    }
 
     private function shouldReturnJson(Request $request): bool
     {
@@ -105,7 +161,23 @@ class TheatreController extends Controller
         $theatreRooms  = TheatreRoom::active()->orderBy('name')->get();
         $clinicians    = User::query()->where('status', 'active')->orderBy('first_name')->get(['id', 'first_name', 'last_name', 'name']);
 
-        return view('theatre.show', compact('procedure', 'timeline', 'theatreRooms', 'clinicians'));
+        // Dynamic procedure template (Phase A): build per-stage section/field views with saved values.
+        $stageTemplates = [];
+        if ($procedure->service) {
+            foreach (ProcedureCatalogueService::TEMPLATE_TYPES as $tt) {
+                $stageTemplates[$tt] = $this->templates->buildStageView($procedure->service, $tt, $procedure);
+            }
+        }
+
+        // Default consumables for the service (used to prepopulate the consumables picker).
+        $defaultConsumables = $procedure->service
+            ? $this->consumableUsage->defaultsForService($procedure->service->id)
+            : collect();
+
+        return view('theatre.show', compact(
+            'procedure', 'timeline', 'theatreRooms', 'clinicians',
+            'stageTemplates', 'defaultConsumables',
+        ));
     }
 
     public function fullReport(ProcedureRequest $procedure)
@@ -261,6 +333,8 @@ class TheatreController extends Controller
 
         try {
             $this->clinical->recordPreOp($procedure, $data, Auth::user());
+            $this->saveStageTemplateValues($request, $procedure, ProcedureCatalogueService::TPL_PRE_OP);
+            $this->saveStageConsumables($request, $procedure);
         } catch (\Throwable $e) {
             return $this->errorBack($request, $e);
         }
@@ -285,6 +359,8 @@ class TheatreController extends Controller
 
         try {
             $this->clinical->recordAnaesthesiaNote($procedure, $data, Auth::user());
+            $this->saveStageTemplateValues($request, $procedure, ProcedureCatalogueService::TPL_ANAESTHESIA);
+            $this->saveStageConsumables($request, $procedure);
         } catch (\Throwable $e) {
             return $this->errorBack($request, $e);
         }
@@ -325,6 +401,8 @@ class TheatreController extends Controller
 
         try {
             $this->clinical->recordOperativeNote($procedure, $data, Auth::user());
+            $this->saveStageTemplateValues($request, $procedure, ProcedureCatalogueService::TPL_OPERATIVE_NOTE);
+            $this->saveStageConsumables($request, $procedure);
         } catch (\Throwable $e) {
             return $this->errorBack($request, $e);
         }
@@ -362,6 +440,8 @@ class TheatreController extends Controller
 
         try {
             $this->clinical->recordPostOp($procedure, $data, Auth::user());
+            $this->saveStageTemplateValues($request, $procedure, ProcedureCatalogueService::TPL_POST_OP);
+            $this->saveStageConsumables($request, $procedure);
         } catch (\Throwable $e) {
             return $this->errorBack($request, $e);
         }

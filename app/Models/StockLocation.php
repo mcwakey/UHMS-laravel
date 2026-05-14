@@ -18,11 +18,13 @@ class StockLocation extends Model
         'type',
         'department_id',
         'is_active',
+        'is_main',
         'notes',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'is_main'   => 'boolean',
     ];
 
     public function department(): BelongsTo
@@ -38,6 +40,21 @@ class StockLocation extends Model
     public function balances(): HasMany
     {
         return $this->hasMany(StockBalance::class);
+    }
+
+    public function productMovements(): HasMany
+    {
+        return $this->hasMany(ProductStockMovement::class);
+    }
+
+    public function productBalances(): HasMany
+    {
+        return $this->hasMany(ProductStockBalance::class);
+    }
+
+    public function scopeMain($q)
+    {
+        return $q->where('is_main', true);
     }
 
     public function scopeActive($q)

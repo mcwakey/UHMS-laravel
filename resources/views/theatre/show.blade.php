@@ -164,6 +164,8 @@
                                 <label class="form-label small">Checklist notes</label>
                                 <textarea name="checklist_notes" class="form-control form-control-sm" rows="2"></textarea>
                             </div>
+                            @include('theatre.partials._template_fields', ['stage' => 'PRE_OP'])
+                            @include('theatre.partials._consumables', ['stage' => 'PRE_OP'])
                             <button class="btn btn-primary mt-3">Save Pre-op</button>
                         </form>
                     </div>
@@ -203,6 +205,8 @@
                             <div class="mt-2"><label class="form-label small">Monitoring</label><textarea name="monitoring_notes" class="form-control form-control-sm" rows="2"></textarea></div>
                             <div class="mt-2"><label class="form-label small">Complications</label><textarea name="complications" class="form-control form-control-sm" rows="2"></textarea></div>
                             <div class="mt-2"><label class="form-label small">Notes</label><textarea name="notes" class="form-control form-control-sm" rows="2"></textarea></div>
+                            @include('theatre.partials._template_fields', ['stage' => 'ANAESTHESIA'])
+                            @include('theatre.partials._consumables', ['stage' => 'ANAESTHESIA'])
                             <button class="btn btn-primary mt-3">Save Anaesthesia Note</button>
                         </form>
                     </div>
@@ -264,6 +268,8 @@
                                 <input class="form-check-input" type="checkbox" name="completed" id="op_completed" value="1">
                                 <label class="form-check-label" for="op_completed">Surgery completed — mark as SURGERY DONE</label>
                             </div>
+                            @include('theatre.partials._template_fields', ['stage' => 'OPERATIVE_NOTE'])
+                            @include('theatre.partials._consumables', ['stage' => 'OPERATIVE_NOTE'])
                             <button class="btn btn-primary mt-3">Save Operative Note</button>
                         </form>
                     </div>
@@ -317,6 +323,8 @@
                                 <div class="col-md-2"><input type="number" name="vitals[respiratory_rate]" placeholder="RR" class="form-control form-control-sm"></div>
                                 <div class="col-md-2"><input type="number" name="vitals[oxygen_saturation]" placeholder="SpO₂" class="form-control form-control-sm"></div>
                             </div>
+                            @include('theatre.partials._template_fields', ['stage' => 'POST_OP'])
+                            @include('theatre.partials._consumables', ['stage' => 'POST_OP'])
                             <button class="btn btn-primary mt-3">Save Post-op</button>
                         </form>
                     </div>

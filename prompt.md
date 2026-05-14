@@ -1,8 +1,11 @@
 You are a senior Laravel + Inertia/Vue architect working on **UHMS — Ultimate Hospital Management System**.
 
-We need to design and implement a complete **Theatre / Procedure Workflow Module**.
+We need to implement two connected features:
 
-Focus only on theatre procedures, procedure requests, theatre scheduling, procedure billing, pre-op records, anaesthesia notes, surgeon operative notes, post-op notes, procedure timeline, and consultation integration.
+1. **Department-aware Store / Stock Management**
+2. **Procedure Catalogue based on Procedure-type department services**, similar to the Investigation Catalogue
+
+Focus only on Store/Stock, product-department availability, stock locations, consumable usage, and Procedure Catalogue/templates.
 
 Do not refactor unrelated modules.
 
@@ -10,1190 +13,1111 @@ Do not refactor unrelated modules.
 
 # 1. Main Objective
 
-Implement a full theatre procedure workflow:
+Build a clean inventory and procedure catalogue architecture where:
+
+* Store/Procurement is the only module allowed to create products.
+* Products can be drugs, consumables, reagents, supplies, or equipment.
+* Products can be linked to one or more departments.
+* Stock locations are linked to departments.
+* Departments consume stock only from their own linked stock location.
+* Pharmacy cannot create drugs directly.
+* Lab/Investigation cannot create investigation consumables directly.
+* Procedure/Theatre cannot create consumables directly.
+* Investigation Catalogue loads services from investigation-type departments.
+* Procedure Catalogue loads services from procedure/theatre-type departments.
+* Procedure services can have configurable report templates, sections, fields, and default consumables.
+
+---
+
+# 2. Core Store / Stock Rules
+
+## Store Controls Products
+
+Only Store/Procurement users can create and manage products.
+
+Departments such as:
+
+* Pharmacy
+* Laboratory
+* Investigation departments
+* Theatre
+* Ward
+* X-ray
+* Scan
+
+must not create products directly.
+
+They can only use products that Store has created and made available to them.
+
+---
+
+# 3. Product Types
+
+Products should support types such as:
 
 ```text
-Doctor requests procedure
-    ↓
-Procedure status = REQUESTED
-
-Theatre accepts procedure
-    ↓
-Procedure status = ACCEPTED
-
-System creates billing item
-    ↓
-Procedure status = BILLED
-
-Theatre schedules procedure
-    ↓
-Procedure status = SCHEDULED
-
-Theatre records pre-op vitals
-    ↓
-Procedure status = PRE_OP
-
-Anaesthetist records anaesthesia note
-    ↓
-Procedure status = ANAESTHESIA
-
-Surgeon records operative note
-    ↓
-Procedure status = IN_SURGERY or SURGERY_DONE
-
-Recovery/post-op note entered
-    ↓
-Procedure status = POST_OP
-
-Procedure finalized
-    ↓
-Procedure status = COMPLETED
+DRUG
+CONSUMABLE
+REAGENT
+SUPPLY
+EQUIPMENT
+GENERAL_ITEM
 ```
 
-This workflow must be linked to the patient visit and visible in the patient’s visit history.
-
----
-
-# 2. Core Business Rules
-
-1. A doctor requests a procedure from the Consultation page.
-2. The procedure request must be linked to:
-
-   * patient
-   * visit
-   * requesting doctor
-   * selected procedure service
-   * theatre/procedure department
-3. Theatre must accept the procedure before billing.
-4. Billing happens after theatre acceptance.
-5. Billing must create a billable item on the **same visit invoice**.
-6. Do not create a separate invoice for theatre.
-7. Billing must go through `BillingService`.
-8. Theatre billing must respect the patient’s selected visit insurance or Cash and Carry fallback.
-9. Scheduling happens after billing.
-10. Pre-op must not start before billing, unless emergency override is explicitly allowed.
-11. Anaesthesia note and surgeon operative note must be separate.
-12. Vitals must be recordable at multiple procedure stages.
-13. Completed procedure must be visible from the Consultation page and Patient Visit History.
-14. Cancelled/rejected procedures must require a reason.
-15. If a billed procedure is cancelled, do not delete the invoice item silently. Void/cancel/reverse it with reason.
-
----
-
-# 3. Required Procedure Statuses
-
-Create or update a procedure status enum.
-
-Recommended statuses:
+Examples:
 
 ```text
-REQUESTED
-ACCEPTED
-BILLED
-SCHEDULED
-PRE_OP
-ANAESTHESIA
-IN_SURGERY
-SURGERY_DONE
-POST_OP
-COMPLETED
-REJECTED
-CANCELLED
-ON_HOLD
-RESCHEDULED
+Paracetamol → DRUG
+Syringe → CONSUMABLE
+Malaria test strip → REAGENT
+Gloves → CONSUMABLE
+X-ray film → CONSUMABLE
+Sutures → CONSUMABLE
+Theatre instrument → EQUIPMENT
 ```
 
-Use existing project enum conventions if available.
+Use enum/constants if the project already uses enums.
 
 ---
 
-# 4. Procedure Request from Consultation
+# 4. Products Linked to Departments
 
-On the Doctor Consultation page, add a **Procedure / Theatre Request** section or tab.
+A product can be linked to one or more departments.
 
-The doctor should be able to select:
-
-* procedure department / theatre department
-* procedure service
-* priority
-* indication / reason for procedure
-* provisional diagnosis or linked diagnosis if available
-* notes
-* preferred date/time optional
-
-When submitted:
-
-* create a procedure request
-* status = `REQUESTED`
-* do not create billing yet
-* show success without full page reload
-* keep doctor on the same consultation page/tab
-* show the request under the patient’s procedure list/timeline
-
-Use:
-
-```php
-ProcedureRequestService::requestProcedure(...)
-```
-
----
-
-# 5. Theatre Dashboard / Queue
-
-Create or update a Theatre dashboard.
-
-It should have tabs or filters:
+Examples:
 
 ```text
-Pending Requests
-Accepted
-Billed
-Scheduled Today
-In Theatre
-Recovery / Post-op
-Completed
-Cancelled / Rejected
+Paracetamol → Pharmacy
+Gloves → Pharmacy, Lab, Theatre, Ward
+Malaria RDT Kit → Lab
+X-ray Film → X-ray
+Sutures → Theatre
 ```
 
-Each row should display:
-
-* patient name
-* visit number
-* age/gender
-* requested procedure service
-* requesting doctor
-* priority
-* request date/time
-* current status
-* billing status
-* insurance/payment type
-* scheduled time if available
-* surgeon if assigned
-* anaesthetist if assigned
-* action button
-
-Action buttons should depend on status:
+Create or update pivot table:
 
 ```text
-REQUESTED → Accept / Reject
-ACCEPTED → Generate Billing
-BILLED → Schedule
-SCHEDULED → Record Pre-op
-PRE_OP → Record Anaesthesia
-ANAESTHESIA → Start Surgery / Record Surgeon Note
-IN_SURGERY → Complete Surgery
-SURGERY_DONE → Record Post-op
-POST_OP → Finalize Procedure
-COMPLETED → View / Print Report
-```
-
----
-
-# 6. Theatre Acceptance
-
-When theatre accepts the procedure:
-
-* validate the procedure is in `REQUESTED`
-* set status to `ACCEPTED`
-* save accepted_by
-* save accepted_at
-* optionally add acceptance notes
-
-Do not create billing before acceptance.
-
-Use:
-
-```php
-ProcedureWorkflowService::acceptProcedure(...)
-```
-
-If rejected:
-
-* require rejection reason
-* set status to `REJECTED`
-* save rejected_by
-* save rejected_at
-* do not create billing
-
----
-
-# 7. Procedure Billing
-
-After acceptance, create billing item.
-
-When theatre generates billing:
-
-* validate status is `ACCEPTED`
-* get the visit’s main invoice
-* add procedure service as an invoice item through `BillingService`
-* apply patient’s selected visit insurance or Cash and Carry fallback
-* save invoice_item_id / billing_item_id on the procedure request
-* set procedure status to `BILLED`
-
-Use:
-
-```php
-BillingService::addItemToVisitInvoice(...)
-ProcedureWorkflowService::markBilled(...)
-```
-
-Required billing source:
-
-```text
-source_type = procedure_request
-source_id = procedure_requests.id
+product_department
+- id
+- product_id
+- department_id
+- is_active
+- created_at
+- updated_at
 ```
 
 Rules:
 
-* do not create a separate theatre invoice
-* prevent duplicate billing for same procedure request
-* if already billed, return clear error
-* if billing fails, do not move status to `BILLED`
-* if procedure is cancelled after billing, void/cancel invoice item with reason; do not delete silently
+* A department can only see/use products linked to it.
+* Product availability is controlled from Store/Procurement.
+* Department users cannot link products to themselves unless they have Store/Admin permission.
 
 ---
 
-# 8. Theatre Scheduling
+# 5. Stock Locations Linked to Departments
 
-After billing, theatre can schedule the procedure.
+Each stock location must belong to a department.
 
-Scheduling should capture:
-
-* theatre room
-* scheduled start date/time
-* scheduled end date/time optional
-* surgeon
-* anaesthetist
-* assistant surgeon optional
-* theatre nurses optional
-* required equipment optional
-* notes
-
-When scheduling:
-
-* validate procedure status is `BILLED`
-* create or update procedure schedule
-* set status = `SCHEDULED`
-* save scheduled_by
-* save scheduled_at
-
-Use:
-
-```php
-ProcedureScheduleService::scheduleProcedure(...)
-```
-
-If rescheduled:
-
-* keep previous schedule history if possible
-* set status = `RESCHEDULED` or keep `SCHEDULED` with reschedule log
-* require reason
-
----
-
-# 9. Pre-op Vitals and Checklist
-
-After scheduling, theatre records pre-op vitals and checklist.
-
-Pre-op vitals may include:
-
-* temperature
-* blood pressure
-* pulse
-* respiratory rate
-* oxygen saturation
-* weight
-* pain score
-* notes
-
-Pre-op checklist may include:
-
-* consent signed
-* fasting confirmed
-* allergies checked
-* blood available if needed
-* site marked if applicable
-* pre-op diagnosis
-* equipment ready
-* anaesthesia review done
-
-When pre-op is saved:
-
-* validate procedure status is `SCHEDULED`
-* create procedure vitals with stage `PRE_OP`
-* save checklist details
-* set status = `PRE_OP`
-* save recorded_by and recorded_at
-
-Use:
-
-```php
-ProcedureClinicalService::recordPreOp(...)
-```
-
----
-
-# 10. Anaesthesia Note
-
-Anaesthetist records anaesthesia note after pre-op.
-
-Anaesthesia note fields:
-
-* anaesthetist
-* anaesthesia type:
-
-  * local
-  * regional
-  * spinal
-  * general
-  * sedation
-  * other
-* pre-anaesthesia assessment
-* drugs used
-* dosage / medication notes
-* airway management
-* monitoring notes
-* complications
-* start time
-* end time
-* notes
-
-When anaesthesia note is saved:
-
-* validate procedure status is `PRE_OP`
-* create anaesthesia note
-* set status = `ANAESTHESIA`
-* save anaesthetist_id
-* save timestamp
-
-Use:
-
-```php
-ProcedureClinicalService::recordAnaesthesiaNote(...)
-```
-
----
-
-# 11. Surgeon Operative Note
-
-Surgeon records operative note.
-
-Operative note fields:
-
-* surgeon
-* assistant surgeon optional
-* procedure performed
-* pre-op diagnosis
-* post-op diagnosis
-* findings
-* incision
-* technique
-* blood loss
-* complications
-* specimens taken
-* implants/materials used
-* start time
-* end time
-* outcome
-* notes
-
-When surgeon note is started/saved:
-
-* validate procedure status is `ANAESTHESIA`
-* set status = `IN_SURGERY` when surgery begins
-* save operative note
-* set status = `SURGERY_DONE` when operative note is completed
-
-Use:
-
-```php
-ProcedureClinicalService::startSurgery(...)
-ProcedureClinicalService::recordOperativeNote(...)
-ProcedureClinicalService::completeSurgery(...)
-```
-
----
-
-# 12. Post-op / Recovery Note
-
-After surgery, recovery/post-op note is entered.
-
-Post-op fields:
-
-* recorded_by
-* recovery status
-* post-op vitals
-* pain score
-* consciousness level
-* post-op instructions
-* medications
-* complications
-* transfer destination:
-
-  * ward
-  * ICU
-  * outpatient discharge
-  * emergency observation
-  * recovery room
-* notes
-
-When post-op note is saved:
-
-* validate procedure status is `SURGERY_DONE`
-* create post-op note
-* optionally create procedure vitals with stage `POST_OP` or `RECOVERY`
-* set status = `POST_OP`
-
-Use:
-
-```php
-ProcedureClinicalService::recordPostOp(...)
-```
-
----
-
-# 13. Finalize Procedure
-
-When all required notes are completed:
-
-* validate status is `POST_OP`
-* set status = `COMPLETED`
-* save completed_by
-* save completed_at
-* make full procedure report available
-
-Use:
-
-```php
-ProcedureWorkflowService::completeProcedure(...)
-```
-
----
-
-# 14. Procedure Timeline Feature
-
-Implement a Procedure Timeline view.
-
-Timeline should show each step:
+Examples:
 
 ```text
-Requested
-Accepted
-Billed
-Scheduled
-Pre-op Vitals
-Anaesthesia
-Surgery
-Post-op
-Completed
+Main Store Location → Store Department
+Pharmacy Stock Location → Pharmacy Department
+Laboratory Stock Location → Laboratory Department
+Theatre Stock Location → Theatre Department
+Ward Stock Location → Ward Department
+X-ray Stock Location → X-ray Department
 ```
 
-Each timeline item should show:
-
-* status
-* timestamp
-* responsible user
-* notes summary
-* action button if action is pending
-* view details button if completed
-
-Example:
-
-```text
-✓ Requested by Dr. Mensah
-✓ Accepted by Theatre Nurse
-✓ Billed on Visit Invoice #INV-00034
-✓ Scheduled for 10:30 AM in Theatre Room 1
-✓ Pre-op vitals recorded
-✓ Anaesthesia note entered
-✓ Surgeon operative note entered
-✓ Post-op note entered
-✓ Completed
-```
-
-This timeline should be visible:
-
-* on Theatre procedure detail page
-* in Patient Visit History
-* from Consultation page under Procedures/Theatre section
-
----
-
-# 15. Consultation Page Integration
-
-On the consultation page:
-
-* doctors can request procedures
-* doctors can see procedure requests grouped/listed by status
-* doctors can see current theatre status
-* doctors can view completed procedure reports
-* doctors cannot delete/cancel a procedure after theatre has accepted it unless permitted
-* if procedure is billed or completed, cancellation must follow backend rules
-
-The doctor should see:
-
-```text
-Procedure
-Status
-Billing Status
-Scheduled Date
-Surgeon
-Anaesthetist
-Actions: View Timeline / View Report
-```
-
----
-
-# 16. Patient Visit History Integration
-
-The procedure must be visible in patient visit history.
-
-Visit history should show:
-
-* procedure requested
-* theatre acceptance
-* billing item
-* schedule
-* pre-op vitals
-* anaesthesia note
-* operative note
-* post-op note
-* completion status
-* printable report
-
----
-
-# 17. Printing / Reports
-
-Create printable reports:
-
-1. Procedure request form
-2. Theatre schedule
-3. Pre-op checklist
-4. Anaesthesia report
-5. Operative note
-6. Post-op report
-7. Full procedure report
-
-Full procedure report should include:
-
-* hospital information
-* patient details
-* visit details
-* procedure service
-* requesting doctor
-* priority
-* indication
-* billing/invoice reference
-* schedule details
-* pre-op vitals/checklist
-* anaesthesia note
-* operative note
-* post-op note
-* surgeon
-* anaesthetist
-* theatre room
-* timestamps
-* completion status
-
-Only completed procedures should show final full procedure report unless preview/draft mode is explicitly allowed.
-
----
-
-# 18. Suggested Database Tables
-
-Use existing tables if available. Otherwise create clean migrations.
-
-## procedure_requests
-
-```text
-id
-visit_id
-patient_id
-requested_by
-department_id
-service_id
-priority
-indication
-notes
-status
-billing_item_id nullable
-accepted_by nullable
-accepted_at nullable
-rejected_by nullable
-rejected_at nullable
-rejection_reason nullable
-cancelled_by nullable
-cancelled_at nullable
-cancellation_reason nullable
-completed_by nullable
-completed_at nullable
-requested_at
-created_at
-updated_at
-```
-
-## procedure_schedules
-
-```text
-id
-procedure_request_id
-theatre_room_id nullable
-scheduled_start
-scheduled_end nullable
-surgeon_id nullable
-anaesthetist_id nullable
-assistant_surgeon_id nullable
-status
-notes
-scheduled_by
-scheduled_at
-created_at
-updated_at
-```
-
-## procedure_vitals
-
-```text
-id
-procedure_request_id
-stage
-temperature nullable
-blood_pressure nullable
-pulse nullable
-respiratory_rate nullable
-oxygen_saturation nullable
-weight nullable
-pain_score nullable
-recorded_by
-recorded_at
-notes nullable
-created_at
-updated_at
-```
-
-Stages:
-
-```text
-PRE_OP
-INTRA_OP
-POST_OP
-RECOVERY
-```
-
-## procedure_checklists
-
-```text
-id
-procedure_request_id
-consent_signed
-fasting_confirmed
-allergies_checked
-blood_available
-site_marked
-equipment_ready
-anaesthesia_review_done
-pre_op_diagnosis nullable
-completed_by
-completed_at
-notes nullable
-created_at
-updated_at
-```
-
-## anaesthesia_notes
-
-```text
-id
-procedure_request_id
-anaesthetist_id
-anaesthesia_type
-pre_assessment nullable
-drugs_used nullable
-dosage_notes nullable
-airway_management nullable
-monitoring_notes nullable
-complications nullable
-start_time nullable
-end_time nullable
-notes nullable
-created_at
-updated_at
-```
-
-## operative_notes
-
-```text
-id
-procedure_request_id
-surgeon_id
-assistant_surgeon_id nullable
-procedure_performed
-pre_op_diagnosis nullable
-post_op_diagnosis nullable
-findings nullable
-incision nullable
-technique nullable
-blood_loss nullable
-complications nullable
-specimens nullable
-implants nullable
-start_time nullable
-end_time nullable
-outcome nullable
-notes nullable
-created_at
-updated_at
-```
-
-## post_op_notes
-
-```text
-id
-procedure_request_id
-recorded_by
-recovery_status nullable
-pain_score nullable
-consciousness_level nullable
-post_op_instructions nullable
-medications nullable
-complications nullable
-transfer_destination nullable
-notes nullable
-created_at
-updated_at
-```
-
-## theatre_rooms
+Update or create `stock_locations`:
 
 ```text
 id
 name
-location nullable
+department_id
+is_main
 is_active
 created_at
 updated_at
 ```
 
-## procedure_status_logs
+Rules:
+
+* Main Store location must be linked to the Store department.
+* Only one location should be marked as `is_main = true`, unless system design allows multiple main locations.
+* Each department should have one default stock location, but the system may allow multiple later.
+* Department stock usage must deduct from the stock location linked to that department.
+
+---
+
+# 6. Main Store Transfer Rules
+
+Transfers should involve the Main Store at first.
+
+Allowed:
+
+```text
+Main Store → Department Stock Location
+Department Stock Location → Main Store
+```
+
+Not allowed initially:
+
+```text
+Pharmacy → Laboratory
+Ward → Theatre
+Department → Department
+```
+
+Unless a future system setting enables inter-department transfers.
+
+Transfer rules:
+
+* Source and destination must be different.
+* Quantity must be greater than zero.
+* Source location must have enough stock.
+* Transfer must create two stock movements:
+
+  * `TRANSFER_OUT` from source
+  * `TRANSFER_IN` into destination
+* Both movements must be linked to the same transfer record.
+
+---
+
+# 7. Stock Movement System
+
+Stock movements remain the source of truth.
+
+```text
+stock_movements = source of truth
+stock_balances = fast current stock cache
+```
+
+Current stock:
+
+```text
+Total IN movements - Total OUT movements
+```
+
+Do not use product/drug quantity as current stock.
+
+Required movement types:
+
+```text
+OPENING_STOCK
+PURCHASE_RECEIVED
+PHARMACY_DISPENSED
+INVESTIGATION_CONSUMED
+PROCEDURE_CONSUMED
+WARD_CONSUMED
+TRANSFER_IN
+TRANSFER_OUT
+RETURN_IN
+RETURN_OUT
+ADJUSTMENT_IN
+ADJUSTMENT_OUT
+DAMAGED
+EXPIRED
+REVERSAL_IN
+REVERSAL_OUT
+```
+
+---
+
+# 8. Stock Movement Tables
+
+Use existing tables where possible. Add migrations if missing.
+
+## products
 
 ```text
 id
-procedure_request_id
-from_status nullable
-to_status
-changed_by
-reason nullable
-notes nullable
+name
+code
+product_type
+unit
+description nullable
+reorder_level nullable
+is_active
+created_by nullable
+created_at
+updated_at
+```
+
+Do not store current quantity as the main stock value.
+
+If an old quantity field exists, stop using it as current stock.
+
+---
+
+## stock_locations
+
+```text
+id
+name
+department_id
+is_main
+is_active
 created_at
 updated_at
 ```
 
 ---
 
-# 19. Models and Relationships
-
-Create/update models:
+## stock_movements
 
 ```text
-ProcedureRequest
-ProcedureSchedule
-ProcedureVital
-ProcedureChecklist
-AnaesthesiaNote
-OperativeNote
-PostOpNote
-TheatreRoom
-ProcedureStatusLog
+id
+product_id
+stock_location_id
+movement_type
+direction
+quantity
+unit_cost nullable
+batch_no nullable
+expiry_date nullable
+source_type nullable
+source_id nullable
+performed_by nullable
+movement_date
+notes nullable
+created_at
+updated_at
 ```
 
-Relationships:
+Direction:
 
-## ProcedureRequest
-
-```php
-visit()
-patient()
-requestingDoctor()
-department()
-service()
-billingItem()
-schedule()
-vitals()
-checklist()
-anaesthesiaNote()
-operativeNote()
-postOpNote()
-statusLogs()
-```
-
-## ProcedureSchedule
-
-```php
-procedureRequest()
-theatreRoom()
-surgeon()
-anaesthetist()
-assistantSurgeon()
-scheduledBy()
+```text
+IN
+OUT
 ```
 
 ---
 
-# 20. Services
+## stock_balances
+
+```text
+id
+product_id
+stock_location_id
+quantity_on_hand
+last_movement_at
+created_at
+updated_at
+```
+
+Add unique constraint:
+
+```text
+product_id + stock_location_id
+```
+
+---
+
+# 9. Department Stock Consumption Rules
+
+## Pharmacy
+
+Pharmacy can only dispense products where:
+
+```text
+product.type = DRUG
+product is linked to Pharmacy department
+stock exists in Pharmacy stock location
+```
+
+When pharmacy dispenses:
+
+```text
+movement_type = PHARMACY_DISPENSED
+direction = OUT
+stock_location = Pharmacy stock location
+source_type = dispensing_item / prescription_item
+```
+
+Pharmacy must not create drugs.
+
+---
+
+## Laboratory / Investigation
+
+When lab/investigation users enter results, they should be able to specify consumables used.
+
+Consumables must be deducted from the stock location linked to that investigation department.
+
+Example:
+
+```text
+Malaria Test result entry:
+- Malaria RDT Kit × 1
+- Gloves × 1
+- Lancet × 1
+```
+
+When saved:
+
+```text
+movement_type = INVESTIGATION_CONSUMED
+direction = OUT
+stock_location = Lab stock location
+source_type = investigation_result
+```
+
+Investigation users must not create products.
+
+---
+
+## Theatre / Procedure
+
+When theatre/procedure users record a procedure, they should be able to specify consumables used.
+
+Consumables must be deducted from the Theatre stock location.
+
+Example:
+
+```text
+Appendectomy:
+- Surgical gloves × 4
+- Sutures × 2
+- Gauze × 10
+```
+
+When saved:
+
+```text
+movement_type = PROCEDURE_CONSUMED
+direction = OUT
+stock_location = Theatre stock location
+source_type = procedure_request / procedure_record
+```
+
+Theatre users must not create products.
+
+---
+
+# 10. Service Default Consumables
+
+Investigation services and procedure services should support default consumables.
+
+Create or update table:
+
+```text
+service_consumables
+- id
+- service_id
+- product_id
+- default_quantity
+- is_required
+- notes nullable
+- created_at
+- updated_at
+```
+
+Rules:
+
+* Service consumables are configured against a service.
+* Product must be linked to the department that owns the service.
+* Default consumables are preloaded during result/procedure entry.
+* User can confirm, adjust, remove, or add actual consumables used if allowed.
+* Actual stock deduction happens only when actual usage is saved.
+
+---
+
+# 11. Actual Consumable Usage
+
+Create or update table:
+
+```text
+consumable_usages
+- id
+- visit_id
+- patient_id
+- service_id
+- source_type
+- source_id
+- product_id
+- stock_location_id
+- quantity_used
+- stock_movement_id nullable
+- used_by
+- used_at
+- notes nullable
+- created_at
+- updated_at
+```
+
+Examples:
+
+```text
+source_type = investigation_result
+source_id = investigation_results.id
+
+source_type = procedure_request
+source_id = procedure_requests.id
+
+source_type = ward_care
+source_id = ward_care_records.id
+```
+
+Rules:
+
+* Every actual consumable usage should create a stock OUT movement.
+* Every consumable usage should link to the created stock movement.
+* If stock is insufficient, block saving unless authorized negative-stock override exists.
+* Product must be available to the department.
+* Stock must deduct from the department’s stock location.
+
+---
+
+# 12. Investigation Consumable Workflow
+
+When entering investigation results:
+
+1. Determine the investigation department.
+2. Get the department’s stock location.
+3. Load default consumables from `service_consumables`.
+4. Show consumables in the result entry form.
+5. Allow user to confirm/edit actual quantity used.
+6. On result save:
+
+   * save result values
+   * save consumable usages
+   * create stock OUT movements
+   * update stock balances
+
+Rules:
+
+* Not every investigation must require consumables.
+* If service has required consumables, they must be confirmed before finalizing result.
+* Result entry should not deduct stock from Main Store unless the investigation department is actually linked to Main Store, which should not normally happen.
+
+---
+
+# 13. Procedure Consumable Workflow
+
+When recording procedure/theatre notes:
+
+1. Determine the procedure service.
+2. Determine the procedure/theatre department.
+3. Get the theatre/procedure stock location.
+4. Load default consumables from `service_consumables`.
+5. Allow theatre staff to confirm/edit actual consumables used.
+6. On procedure stage save or finalization:
+
+   * save clinical procedure data
+   * save consumable usages
+   * create stock OUT movements
+   * update stock balances
+
+Rules:
+
+* Procedure consumables must not deduct from pharmacy stock.
+* Procedure consumables must deduct from the stock location linked to the procedure/theatre department.
+* If stock is insufficient, block unless authorized override exists.
+
+---
+
+# 14. Procedure Catalogue
+
+Build the **Procedure Catalogue** using the same service-based approach as Investigation Catalogue.
+
+Do not create separate procedure items detached from services.
+
+## Procedure Catalogue Source
+
+The Procedure Catalogue should list services where:
+
+```text
+service.department.type = procedure
+```
+
+or, if the system uses theatre terminology:
+
+```text
+service.department.type = theatre
+```
+
+Use the project’s existing department type naming convention.
+
+Examples:
+
+```text
+Appendectomy
+Caesarean Section
+Wound Debridement
+Suturing
+Circumcision
+Hernia Repair
+```
+
+These are services under procedure/theatre-type departments.
+
+---
+
+# 15. Procedure Catalogue Structure
+
+Correct structure:
+
+```text
+Procedure Catalogue
+    → Procedure Service
+        → Report Templates
+        → Sections / Headers
+        → Fields / Criteria
+        → Default Consumables
+```
+
+The service controls:
+
+* billing
+* procedure request
+* procedure report template
+* default consumables
+
+Do not create a separate catalogue test/procedure entity that duplicates the service.
+
+---
+
+# 16. Procedure Report Templates
+
+For each procedure service, allow configuration of templates.
+
+Templates may include:
+
+1. Pre-op template
+2. Anaesthesia template
+3. Surgeon operative template
+4. Post-op template
+5. Full procedure report template
+
+Each template can have:
+
+* sections/headers
+* fields/criteria
+* input types
+* options
+* required/optional flags
+* sort order
+
+---
+
+# 17. Suggested Procedure Template Tables
+
+Use existing generic template tables if available. Otherwise create clean tables.
+
+## procedure_template_sections
+
+```text
+id
+service_id
+template_type
+name
+description nullable
+sort_order
+is_active
+created_at
+updated_at
+```
+
+`template_type` examples:
+
+```text
+PRE_OP
+ANAESTHESIA
+OPERATIVE_NOTE
+POST_OP
+FULL_REPORT
+```
+
+## procedure_template_fields
+
+```text
+id
+service_id
+section_id nullable
+template_type
+label
+field_key
+input_type
+options nullable
+default_value nullable
+is_required
+sort_order
+is_active
+created_at
+updated_at
+```
+
+Input types:
+
+```text
+text
+textarea
+number
+select
+checkbox
+date
+time
+datetime
+file
+```
+
+Example:
+
+```text
+Field: Anaesthesia Type
+input_type: select
+options: Local, Regional, Spinal, General, Sedation
+```
+
+---
+
+# 18. Procedure Template Values
+
+When a procedure is performed, save values entered against the configured template fields.
 
 Create or update:
 
 ```text
-ProcedureRequestService
-ProcedureWorkflowService
-ProcedureScheduleService
-ProcedureClinicalService
-ProcedureReportService
-BillingService
-InvoiceService
-ServicePricingService
-InsuranceService
+procedure_template_values
+- id
+- procedure_request_id
+- service_id
+- template_field_id
+- template_type
+- value nullable
+- recorded_by
+- recorded_at
+- created_at
+- updated_at
 ```
 
-## ProcedureRequestService
+Rules:
 
-Handles:
-
-* doctor procedure request
-* validation
-* listing requests
-* consultation page integration
-
-## ProcedureWorkflowService
-
-Handles:
-
-* accept
-* reject
-* mark billed
-* cancel
-* complete
-* status transitions
-* status logs
-
-## ProcedureScheduleService
-
-Handles:
-
-* schedule
-* reschedule
-* room/doctor assignment
-
-## ProcedureClinicalService
-
-Handles:
-
-* pre-op vitals
-* checklist
-* anaesthesia note
-* surgery start
-* operative note
-* post-op note
-
-## ProcedureReportService
-
-Handles:
-
-* timeline data
-* printable reports
-* visit history summary
+* Store values against the field used at that time.
+* Preserve labels/unit/options snapshot if the system already uses snapshot fields.
+* Future template changes must not corrupt old procedure reports.
+* If a field is required, it must be filled before completing that stage.
 
 ---
 
-# 21. Required Methods
+# 19. Procedure Template Workflow
 
-Implement methods like:
+When theatre opens a scheduled procedure:
+
+1. System identifies procedure service.
+2. System loads templates configured for that service.
+3. User enters values for the current stage:
+
+   * Pre-op
+   * Anaesthesia
+   * Operative note
+   * Post-op
+4. System saves values.
+5. System validates required fields.
+6. System updates procedure status according to workflow.
+7. System makes values available in procedure timeline and report.
+
+---
+
+# 20. Procedure Catalogue UI
+
+Create or update Procedure Catalogue page.
+
+First screen:
+
+```text
+List of procedure services
+```
+
+Only show services under procedure/theatre-type departments.
+
+When service is selected, allow configuration of:
+
+* template sections
+* template fields
+* default consumables
+
+UI should be similar to Investigation Catalogue.
+
+Sections:
+
+```text
+Service Details
+Templates
+Default Consumables
+Preview
+```
+
+Template management should allow:
+
+* create section
+* edit section
+* delete/deactivate section
+* create field
+* edit field
+* delete/deactivate field
+* reorder sections/fields
+
+Default consumables management should allow:
+
+* add product
+* set default quantity
+* mark required/not required
+* remove/deactivate consumable
+
+---
+
+# 21. Investigation Catalogue Consistency
+
+Ensure Investigation Catalogue and Procedure Catalogue follow the same design philosophy:
+
+## Investigation Catalogue
+
+```text
+Investigation Service
+    → Headers / Categories
+    → Criteria
+    → Default Consumables
+```
+
+## Procedure Catalogue
+
+```text
+Procedure Service
+    → Template Sections
+    → Template Fields
+    → Default Consumables
+```
+
+Both are based on services.
+
+Do not create separate detached “test” or “procedure item” records.
+
+---
+
+# 22. Product Availability in Catalogues
+
+When configuring default consumables for a service:
+
+* Only show products linked to the service’s department.
+* For Investigation services, show products linked to the investigation department.
+* For Procedure services, show products linked to the procedure/theatre department.
+* Do not show products not available to that department.
+* Do not allow department users to create new products from the catalogue page.
+
+If a needed product is missing, user must request Store/Procurement to create/link it.
+
+---
+
+# 23. Services
+
+Create or update these services:
+
+```text
+ProductService
+StockLocationService
+StockMovementService
+StockBalanceService
+StockTransferService
+ConsumableUsageService
+ServiceConsumableService
+ProcedureCatalogueService
+ProcedureTemplateService
+InvestigationCatalogueService
+```
+
+## ProductService
+
+Handles:
+
+* product creation by Store/Admin
+* product-department linking
+* product type management
+* product availability
+
+## StockLocationService
+
+Handles:
+
+* department stock locations
+* main store location
+* default stock location resolution
+
+Required method:
 
 ```php
-ProcedureRequestService::requestProcedure(array $data, User $doctor): ProcedureRequest
-
-ProcedureWorkflowService::acceptProcedure(ProcedureRequest $procedure, User $user, ?string $notes = null): ProcedureRequest
-
-ProcedureWorkflowService::rejectProcedure(ProcedureRequest $procedure, User $user, string $reason): ProcedureRequest
-
-ProcedureWorkflowService::generateBilling(ProcedureRequest $procedure, User $user): ProcedureRequest
-
-ProcedureScheduleService::scheduleProcedure(ProcedureRequest $procedure, array $data, User $user): ProcedureSchedule
-
-ProcedureClinicalService::recordPreOp(ProcedureRequest $procedure, array $data, User $user): ProcedureRequest
-
-ProcedureClinicalService::recordAnaesthesiaNote(ProcedureRequest $procedure, array $data, User $user): AnaesthesiaNote
-
-ProcedureClinicalService::startSurgery(ProcedureRequest $procedure, User $user): ProcedureRequest
-
-ProcedureClinicalService::recordOperativeNote(ProcedureRequest $procedure, array $data, User $user): OperativeNote
-
-ProcedureClinicalService::recordPostOp(ProcedureRequest $procedure, array $data, User $user): PostOpNote
-
-ProcedureWorkflowService::completeProcedure(ProcedureRequest $procedure, User $user): ProcedureRequest
-
-ProcedureReportService::getTimeline(ProcedureRequest $procedure): array
+getDefaultLocationForDepartment(Department $department): StockLocation
 ```
 
+## ConsumableUsageService
+
+Handles:
+
+* loading default consumables
+* validating actual consumables
+* creating consumable usage rows
+* creating stock OUT movements
+* linking movements to usage records
+
+Required method:
+
+```php
+recordUsageForSource(
+    Visit $visit,
+    Service $service,
+    string $sourceType,
+    int $sourceId,
+    array $items,
+    User $user
+): void
+```
+
+## ProcedureCatalogueService
+
+Handles:
+
+* loading procedure services
+* managing template sections
+* managing template fields
+* managing default consumables
+
+## ProcedureTemplateService
+
+Handles:
+
+* loading templates for a procedure service
+* validating required fields
+* saving template values
+* building printable reports
+
 ---
 
-# 22. Validation Rules
+# 24. Validation Rules
 
-## Request Procedure
+## Product
 
-* visit_id required
-* patient_id must match visit patient
+* name required
+* code unique if used
+* product_type required
+* unit required
+* only Store/Admin can create product
+* department links must reference valid departments
+
+## Stock Location
+
+* name required
 * department_id required
-* department must be theatre/procedure department
-* service_id required
-* service must belong to selected department
-* priority required
-* indication required
-* requested_by required
+* main location must belong to Store department
+* department location must be active before use
 
-## Accept Procedure
+## Transfer
 
-* status must be `REQUESTED`
-* user must have permission to accept procedure
+* source and destination required
+* transfer must involve Main Store unless inter-department transfer is enabled
+* source and destination must be different
+* quantity > 0
+* source must have enough stock
 
-## Generate Billing
+## Consumable Usage
 
-* status must be `ACCEPTED`
-* procedure must not already be billed
-* service must be billable
-* visit must have invoice or be able to create one
-* billing must use patient insurance/cash fallback
+* product required
+* product must be linked to service department
+* stock location must match service department
+* quantity_used > 0
+* sufficient stock required unless override allowed
+* required consumables must be confirmed
 
-## Schedule Procedure
+## Procedure Template
 
-* status must be `BILLED`
-* scheduled_start required
-* theatre room required if system requires it
-* surgeon required if system requires it
-* anaesthetist required if system requires it
-
-## Pre-op
-
-* status must be `SCHEDULED`
-* vitals required according to system rules
-* checklist required according to system rules
-
-## Anaesthesia
-
-* status must be `PRE_OP`
-* anaesthesia type required
-* anaesthetist required
-
-## Operative Note
-
-* status must be `ANAESTHESIA` or `IN_SURGERY`
-* surgeon required
-* procedure performed required
-* start/end time validation
-
-## Post-op
-
-* status must be `SURGERY_DONE`
-* recovery status or notes required
-
-## Complete Procedure
-
-* status must be `POST_OP`
-* required notes must exist
+* service must belong to procedure/theatre department
+* section name required
+* field label required
+* input_type required
+* required fields must have values before completing stage
 
 ---
 
-# 23. Permissions
+# 25. Permissions
 
 Add or verify permissions:
 
 ```text
-procedure.request
-procedure.view
-procedure.accept
-procedure.reject
-procedure.bill
-procedure.schedule
-procedure.reschedule
-procedure.record_preop
-procedure.record_anaesthesia
-procedure.record_surgery
-procedure.record_postop
-procedure.complete
-procedure.cancel
-procedure.print
-procedure.view_report
+product.create
+product.edit
+product.link_departments
+stock_location.manage
+stock.transfer
+stock.adjust
+stock.return
+stock.view
+stock.override_negative
+service_consumable.manage
+consumable_usage.record
+procedure_catalogue.view
+procedure_catalogue.manage
+procedure_template.manage
 ```
 
-Roles that may use them:
+Department restrictions:
 
-* doctor
-* theatre nurse
-* anaesthetist
-* surgeon
-* cashier/admin
-* superadmin
+* Pharmacy users cannot create products.
+* Lab users cannot create products.
+* Theatre users cannot create products.
+* Only Store/Admin can create products and link them to departments.
+* Department users can consume products assigned to their department.
 
 ---
 
-# 24. Inertia/Vue Pages and Components
+# 26. Frontend Requirements
 
-Create or update:
+## Store / Procurement
+
+Create or update pages for:
+
+* Product list
+* Create/edit product
+* Link product to departments
+* Stock locations
+* Stock balances
+* Stock transfer
+* Stock ledger
+* Stock adjustment
+* Returns
+* Damaged/expired stock
+
+## Department Usage
+
+Update these screens:
+
+* Pharmacy dispensing
+* Investigation result entry
+* Theatre/procedure recording
+
+They must consume products from their department stock location.
+
+## Procedure Catalogue
+
+Create/update:
 
 ```text
-resources/js/Pages/Procedures/Index.vue
-resources/js/Pages/Procedures/Show.vue
-resources/js/Pages/Procedures/Schedule.vue
-resources/js/Pages/Procedures/Reports/FullReport.vue
-resources/js/Components/Procedures/ProcedureTimeline.vue
-resources/js/Components/Procedures/ProcedureRequestForm.vue
-resources/js/Components/Procedures/PreOpForm.vue
-resources/js/Components/Procedures/AnaesthesiaNoteForm.vue
-resources/js/Components/Procedures/OperativeNoteForm.vue
-resources/js/Components/Procedures/PostOpNoteForm.vue
+ProcedureCatalogue/Index.vue
+ProcedureCatalogue/Show.vue
+ProcedureCatalogue/Templates.vue
+ProcedureCatalogue/Consumables.vue
 ```
 
-On Consultation page, add or update:
+## Investigation Catalogue
 
-```text
-ProcedureRequestForm
-ProcedureList
-ProcedureTimelineModal
-ProcedureReportModal
-```
-
-Use SPA behavior:
-
-* no full page reloads
-* preserve active tab
-* show validation errors inline
-* do not dismiss modals before successful response
-* show loading states
+Update to support default consumables if not already implemented.
 
 ---
 
-# 25. Theatre Module Sidebar / Routes
+# 27. Data Integrity Rules
 
-Add module navigation if procedure/theatre module is enabled:
-
-```text
-Theatre / Procedures
-    - Requests
-    - Schedule
-    - In Theatre
-    - Completed
-    - Rooms
-    - Reports
-```
-
-If module system exists:
-
-* register theatre/procedure module
-* hide menu if disabled
-* protect routes with module middleware
+* Store is the only product creator.
+* Department users cannot create products directly.
+* Stock locations must belong to departments.
+* Department usage must deduct from that department’s stock location.
+* Main Store belongs to Store department.
+* Transfers should involve Main Store by default.
+* Stock movements remain the source of truth.
+* Stock balances are cache only.
+* Service default consumables do not deduct stock until actual usage is saved.
+* Actual consumable usage must create stock movements.
+* Procedure Catalogue must be service-based.
+* Investigation Catalogue must be service-based.
+* Do not duplicate services into separate catalogue item records.
 
 ---
 
-# 26. Data Integrity Rules
+# 28. Performance Rules
 
-* Do not bill before theatre accepts the request.
-* Do not schedule before billing.
-* Do not start pre-op before scheduling.
-* Do not record anaesthesia before pre-op.
-* Do not record surgeon note before anaesthesia.
-* Do not complete procedure before post-op note.
-* Do not create separate invoice for theatre.
-* Do not duplicate billing for the same procedure request.
-* Do not delete billed procedures silently.
-* Do not cancel without reason.
-* Do not reject without reason.
-* Do not bypass `BillingService`.
-* Do not bypass procedure workflow status transitions.
-* Do not let frontend update status directly.
+* Use stock_balances for current stock display.
+* Do not calculate stock from all movements on every page.
+* Eager-load product departments where needed.
+* Load default consumables only for selected service.
+* Paginate product and stock movement lists.
+* Avoid N+1 queries in stock reports and catalogue pages.
+* Cache product availability per department where safe.
 
 ---
 
-# 27. Performance Rules
-
-* Eager-load procedure requests with patient, visit, service, department, schedule, billing item, and status logs where needed.
-* Paginate theatre queues.
-* Do not load full procedure report until requested.
-* Load timeline summary efficiently.
-* Avoid N+1 queries on theatre dashboard.
-* Cache static theatre room/service lists where safe.
-
----
-
-# 28. Testing / Verification
+# 29. Testing / Verification
 
 Add or update tests for:
 
-1. Doctor can request procedure.
-2. Procedure starts as `REQUESTED`.
-3. Theatre can accept procedure.
-4. Accepted procedure can be billed.
-5. Billing creates invoice item on same visit invoice.
-6. Duplicate billing is prevented.
-7. Billed procedure can be scheduled.
-8. Scheduled procedure can record pre-op.
-9. Pre-op procedure can record anaesthesia.
-10. Anaesthesia procedure can record operative note.
-11. Surgery can be marked done.
-12. Post-op can be recorded.
-13. Procedure can be completed.
-14. Rejected procedure requires reason.
-15. Cancelled billed procedure does not delete invoice item silently.
-16. Procedure timeline shows all completed steps.
-17. Doctor can view procedure report from consultation page.
+1. Store can create product.
+2. Pharmacy cannot create product.
+3. Lab cannot create product.
+4. Product can be linked to multiple departments.
+5. Department sees only linked products.
+6. Stock location belongs to department.
+7. Pharmacy dispensing deducts from Pharmacy stock location.
+8. Lab result consumables deduct from Lab stock location.
+9. Theatre procedure consumables deduct from Theatre stock location.
+10. Main Store can transfer to department location.
+11. Department can return stock to Main Store.
+12. Department-to-department transfer is blocked unless enabled.
+13. Procedure Catalogue loads only procedure/theatre department services.
+14. Procedure template fields save and load correctly.
+15. Procedure template values save against procedure request.
+16. Default consumables preload for procedure service.
+17. Actual consumable usage creates stock movements.
+18. Stock balance updates correctly after usage.
 
 ---
 
-# 29. Deliverables
+# 30. Deliverables
 
 Provide:
 
 1. New/updated migrations.
 2. New/updated models and relationships.
-3. Procedure status enum.
-4. Services implementation.
-5. Controllers and Form Requests.
-6. Inertia/Vue pages and components.
-7. Consultation page integration.
-8. Theatre dashboard.
-9. Procedure timeline.
-10. Billing integration through `BillingService`.
-11. Report/print views.
-12. Permissions.
-13. Tests or verification notes.
-14. List of files modified.
-15. Remaining TODOs if any.
+3. Product-department linking implementation.
+4. Stock location department linking.
+5. Main Store rules.
+6. Stock transfer rules.
+7. Department consumption rules.
+8. Consumable usage implementation.
+9. Service default consumables implementation.
+10. Procedure Catalogue implementation.
+11. Procedure template sections/fields/values.
+12. Procedure default consumables.
+13. Investigation Catalogue default consumable update if needed.
+14. Updated Vue/Inertia pages.
+15. Updated validation requests.
+16. Updated permissions.
+17. Tests or verification notes.
+18. List of modified files.
+19. Remaining TODOs if any.
 
 ---
 
-# 30. Important Rules
+# 31. Important Rules
 
-Do not hardcode theatre as a single room or single service.
+Do not let Pharmacy create drugs.
 
-Do not create separate invoices.
+Do not let Lab/Investigation create products.
 
-Do not bill before acceptance.
+Do not let Theatre create products.
 
-Do not schedule before billing.
+Do not use product quantity as current stock.
 
-Do not allow status jumps outside the allowed workflow.
+Do not deduct stock from Main Store when department stock should be used.
 
-Do not put procedure workflow logic in controllers.
+Do not allow direct department-to-department transfer unless explicitly enabled.
 
-Do not update status from Vue directly.
+Do not create Procedure Catalogue items detached from services.
 
-Do not remove existing working consultation features.
+Do not create Investigation Catalogue tests detached from services.
 
-Do not break patient visit history.
+Do not deduct default consumables until actual usage is saved.
 
-Do not ignore insurance pricing.
+Do not bypass StockMovementService.
 
-Do not silently delete billed/cancelled procedure records.
+Do not bypass StockBalanceService.
 
-Now inspect the existing UHMS implementation and build the Theatre / Procedure Workflow module carefully according to this specification.
+Do not break existing pharmacy, investigation, or procedure workflows.
+
+Now inspect the current UHMS implementation and apply these changes carefully.

@@ -136,6 +136,17 @@ class ProcedureRequest extends Model
         return $this->hasMany(ProcedureStatusLog::class)->orderBy('id');
     }
 
+    public function templateValues(): HasMany
+    {
+        return $this->hasMany(ProcedureTemplateValue::class);
+    }
+
+    public function consumableUsages(): HasMany
+    {
+        return $this->hasMany(ConsumableUsage::class, 'source_id')
+            ->where('source_type', 'procedure_request');
+    }
+
     /* ── Scopes ────────────────────────────────────────────────── */
 
     public function scopeStatus(Builder $q, $status)

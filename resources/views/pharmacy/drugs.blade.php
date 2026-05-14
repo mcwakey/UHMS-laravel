@@ -238,6 +238,15 @@
                                             <div class="modal-body">
                                                 <div class="row g-3">
                                                     <div class="col-md-6">
+                                                        <label class="form-label">Linked Product</label>
+                                                        <select name="product_id" class="form-select">
+                                                            <option value="">— None —</option>
+                                                            @foreach($pharmacyProducts ?? [] as $p)
+                                                                <option value="{{ $p->id }}" {{ $drug->product_id == $p->id ? 'selected' : '' }}>{{ $p->name }}@if($p->code) ({{ $p->code }})@endif</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-6">
                                                         <label class="form-label">Drug Name <span class="text-danger">*</span></label>
                                                         <input type="text" name="name" class="form-control" value="{{ $drug->name }}" required>
                                                     </div>
@@ -373,8 +382,21 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Drug Name <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" required>
+                            <label class="form-label">Drug (from Products) <span class="text-danger">*</span></label>
+                            <select name="product_id" class="form-select" required onchange="document.getElementById('newDrugName').value = this.options[this.selectedIndex].dataset.name || '';">
+                                <option value="">Select product...</option>
+                                @foreach($pharmacyProducts ?? [] as $p)
+                                    <option value="{{ $p->id }}" data-name="{{ $p->name }}" data-unit="{{ $p->unit }}">{{ $p->name }}@if($p->code) ({{ $p->code }})@endif</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">
+                                Only products linked to the Pharmacy department of type "Drug" appear here.
+                                @if(($pharmacyProducts ?? collect())->isEmpty())
+                                    <span class="text-warning">No pharmacy drug products found — create them under
+                                        <a href="{{ route('admin.products.index') }}">Store / Products</a> first.</span>
+                                @endif
+                            </small>
+                            <input type="hidden" name="name" id="newDrugName" value="">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Category <span class="text-danger">*</span></label>
