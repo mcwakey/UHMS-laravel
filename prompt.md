@@ -1,86 +1,225 @@
 You are a senior Laravel + Inertia/Vue architect working on **UHMS — Ultimate Hospital Management System**.
 
-We need to resolve a major inventory/catalogue architecture conflict by making **Product** the single source of truth for every physical item in the facility, while **Service** remains the source of truth for billable hospital activities.
+We need to make broad system and UI changes so UHMS properly supports the new **Product-as-single-source** architecture, department stock locations, service-based Investigation/Procedure catalogues, consumable usage, and supplier ledger.
 
-Focus only on:
-
-1. Unified product architecture
-2. Product-department availability
-3. Department stock locations
-4. Pharmacy product/drug catalogue
-5. Investigation consumables/items
-6. Procedure consumables/items
-7. Investigation Catalogue based on services
-8. Procedure Catalogue based on services
-9. Stock movements and stock balances
-10. Supplier ledger
+Focus on aligning UI, workflows, permissions, validation, and backend logic with this architecture.
 
 Do not refactor unrelated modules.
 
 ---
 
-# 1. Core Architecture Decision
+# 1. Core Architecture Rule
 
-The system must follow this rule:
-
-```text
-If it is physically stocked, purchased, transferred, consumed, dispensed, returned, damaged, or expired, it is a Product.
-```
-
-And:
+Apply this rule everywhere:
 
 ```text
-If it is billed as a hospital activity/service, it is a Service.
+Products = physical items
+Services = billable hospital activities
 ```
 
-Therefore:
+## Products
 
-* Products = physical items
-* Services = billable hospital activities
-
----
-
-# 2. Remove Separate Physical Item Concepts
-
-Do not create or use separate item tables such as:
-
-```text
-drugs
-lab_items
-procedure_items
-consumables
-```
-
-All physical items must be stored in:
-
-```text
-products
-```
+A product is anything physically stocked, purchased, transferred, dispensed, consumed, returned, damaged, or expired.
 
 Examples:
 
 ```text
-Paracetamol tablet        → Product, type = DRUG
-Ceftriaxone injection     → Product, type = DRUG
-Gloves                    → Product, type = CONSUMABLE
-Malaria RDT kit           → Product, type = REAGENT / CONSUMABLE
-EDTA tube                 → Product, type = CONSUMABLE
-X-ray film                → Product, type = CONSUMABLE
-Sutures                   → Product, type = SURGICAL_SUPPLY
-Gauze                     → Product, type = CONSUMABLE
-Syringe                   → Product, type = CONSUMABLE
-Oxygen mask               → Product, type = MEDICAL_SUPPLY
+Paracetamol
+Ceftriaxone
+Gloves
+EDTA Tube
+Malaria RDT Kit
+Sutures
+Gauze
+Syringe
+X-ray Film
+Oxygen Mask
 ```
 
-Since this project is still in development, we do not need legacy compatibility for old `drugs`, `lab_items`, or `procedure_items` tables. Avoid creating them.
+## Services
+
+A service is a billable hospital activity.
+
+Examples:
+
+```text
+General Consultation
+Full Blood Count
+Malaria Test
+Appendectomy
+Chest X-Ray
+Caesarean Section
+Wound Dressing
+```
+
+Important:
+
+* Do not create `drugs`, `lab_items`, `procedure_items`, or standalone `consumables` tables.
+* Products must handle all physical items.
+* Services must handle all billable hospital activities.
+* Investigation Catalogue is service-based.
+* Procedure Catalogue is service-based.
 
 ---
 
-# 3. Product Types
+# 2. Main Objective
 
-Create or update product type enum/constants.
+Update the system so that:
 
-Recommended product types:
+1. Store/Procurement is the only place that creates products.
+2. Products can be linked to one or more departments.
+3. Department users can only see/use products linked to their department.
+4. Stock locations are linked to departments.
+5. Departments consume stock from their own stock location only.
+6. Pharmacy catalogue loads drugs from `products`.
+7. Investigation consumables load from `products`.
+8. Procedure consumables load from `products`.
+9. Investigation Catalogue loads services from investigation-type departments.
+10. Procedure Catalogue loads services from procedure/theatre-type departments.
+11. Default consumables are configured per service using products.
+12. Actual consumable usage creates stock movements.
+13. Supplier ledger tracks supplier-related purchases, payments, returns, and balances.
+14. UI menus and labels must reflect this new architecture clearly.
+
+---
+
+# 3. Menu and UI Restructure
+
+## Store / Procurement Menu
+
+Update Store/Procurement menu to be the master place for products and stock:
+
+```text
+Store / Procurement
+├── Dashboard
+├── Products
+│   ├── All Products
+│   ├── Create Product
+│   ├── Product Types / Categories
+│   └── Department Availability
+│
+├── Stock Locations
+├── Stock Balances
+├── Stock Movements
+├── Purchase Orders
+├── Goods Receiving
+├── Stock Transfers
+├── Stock Adjustments
+├── Stock Returns
+├── Damaged / Expired Stock
+├── Suppliers
+└── Supplier Ledger
+```
+
+## Pharmacy Menu
+
+Pharmacy must not create drugs.
+
+Recommended Pharmacy menu:
+
+```text
+Pharmacy
+├── Dashboard
+├── Drug Catalogue
+├── Pending Prescriptions
+├── Dispensing
+├── Dispensing History
+└── Stock Balance
+```
+
+`Drug Catalogue` must read from:
+
+```text
+products linked to Pharmacy department
+AND product_type = DRUG
+```
+
+## Investigation Menu
+
+Recommended Investigation menu:
+
+```text
+Investigations
+├── Dashboard
+├── Requests
+├── Result Entry
+├── Results
+├── Investigation Catalogue
+├── Department Consumables
+└── Stock Balance
+```
+
+`Department Consumables` must read from products linked to the investigation department.
+
+`Investigation Catalogue` must read from services under investigation-type departments.
+
+## Theatre / Procedure Menu
+
+Recommended Theatre/Procedure menu:
+
+```text
+Theatre / Procedures
+├── Dashboard
+├── Procedure Requests
+├── Theatre Schedule
+├── In Theatre
+├── Procedure Catalogue
+├── Procedure Consumables
+├── Theatre Rooms
+├── Completed Procedures
+└── Stock Balance
+```
+
+`Procedure Consumables` must read from products linked to the procedure/theatre department.
+
+`Procedure Catalogue` must read from services under procedure/theatre-type departments.
+
+---
+
+# 4. Rename Confusing Labels
+
+Update UI labels to avoid confusion.
+
+| Old / Confusing Label | New Label                                |
+| --------------------- | ---------------------------------------- |
+| Add Drug              | Add Product                              |
+| Drugs Table           | Pharmacy Drug Catalogue                  |
+| Lab Items             | Investigation Consumables                |
+| Procedure Items       | Procedure Consumables                    |
+| Theatre Items         | Procedure Consumables                    |
+| Test Catalogue        | Investigation Catalogue                  |
+| Lab Test Catalogue    | Investigation Catalogue                  |
+| Quantity              | Stock Balance / Quantity on Hand         |
+| Product Quantity      | Current Stock by Location                |
+| Add Lab Item          | Link Product to Investigation Department |
+| Add Procedure Item    | Link Product to Procedure Department     |
+
+Important:
+
+* Product creation must only appear under Store/Procurement.
+* Department catalogues should be read-only views of products assigned to that department unless the user has Store/Admin permission.
+
+---
+
+# 5. Product Form Requirements
+
+Under Store/Procurement, Product form should include:
+
+```text
+Product Name
+Product Code
+Product Type
+Unit
+Description
+Reorder Level
+Status
+Departments where product is available
+Opening Stock optional
+Opening Stock Location
+Supplier optional
+```
+
+Product type options:
 
 ```text
 DRUG
@@ -92,808 +231,239 @@ EQUIPMENT
 GENERAL_ITEM
 ```
 
-A product type describes what the item is.
+Rules:
 
-A product type does not determine department access by itself.
-
-Department access must be controlled through product-department linking.
-
----
-
-# 4. Products Table
-
-Create or update `products` table.
-
-Recommended fields:
-
-```text
-id
-name
-code
-product_type
-unit
-description nullable
-reorder_level nullable
-is_active
-created_by nullable
-created_at
-updated_at
-```
-
-Important:
-
-* Do not store current stock quantity as the main source of truth.
-* Current stock must come from stock balances/movements.
-* Product is the facility-wide item definition.
-* Same product can exist in different stock locations with different balances.
+* If opening stock is entered, create an `OPENING_STOCK` stock movement.
+* Do not save opening stock as current stock.
+* Do not use product quantity as current stock.
+* Current stock must come from `stock_balances`.
 
 ---
 
-# 5. Product-Department Linking
+# 6. Product Department Availability UI
 
-A product can be linked to one or more departments.
+Create a clear UI for linking products to departments.
 
-Create or update pivot table:
+On Product Details page, show:
 
 ```text
-product_department
-- id
-- product_id
-- department_id
-- is_active
-- created_at
-- updated_at
+Available Departments
+[✓] Pharmacy
+[✓] Laboratory
+[ ] Theatre
+[✓] Ward
+[ ] X-ray
 ```
 
-Examples:
+Or provide a Department Availability page:
 
 ```text
-Paracetamol       → Pharmacy
-Gloves            → Pharmacy, Lab, Theatre, Ward
-Malaria RDT Kit   → Lab
-X-ray Film        → X-ray
-Sutures           → Theatre
+Products Available to Laboratory
+- Gloves
+- Malaria RDT Kit
+- EDTA Tube
 ```
 
 Rules:
 
-* A department can only see/use products linked to it.
-* Product availability is controlled by Store/Procurement or Admin.
-* Department users cannot create products directly.
-* Department users cannot link products to their department unless they have Store/Admin permission.
-* Product-department links should be respected everywhere in the system.
+* Store/Admin can link products to departments.
+* Department users cannot create/link products unless authorized.
+* Department screens must only load linked products.
 
 ---
 
-# 6. User Department Access
+# 7. Stock Location UI
 
-Department access should follow the logged-in user’s department.
-
-Example:
+Each stock location must show:
 
 ```text
-user.department_id = Pharmacy
-```
-
-Then Pharmacy pages should load:
-
-```text
-products linked to Pharmacy department
-stock location linked to Pharmacy department
-```
-
-Example:
-
-```text
-user.department_id = Laboratory
-```
-
-Then Lab pages should load:
-
-```text
-products linked to Laboratory department
-stock location linked to Laboratory department
-```
-
-Do not allow a department user to consume stock from another department’s location unless explicitly authorized.
-
----
-
-# 7. Stock Locations Linked to Departments
-
-Stock locations represent where physical quantities are stored.
-
-Create or update `stock_locations`:
-
-```text
-id
-name
-department_id
-is_main
-is_active
-created_at
-updated_at
-```
-
-Examples:
-
-```text
-Main Store Location → Store Department
-Pharmacy Stock Location → Pharmacy Department
-Laboratory Stock Location → Laboratory Department
-Theatre Stock Location → Theatre Department
-Ward Stock Location → Ward Department
-X-ray Stock Location → X-ray Department
+Name
+Department
+Is Main Store?
+Is Active?
+Current products/balances
 ```
 
 Rules:
 
-* Main Store location must be linked to the Store department.
-* Department stock usage must deduct from the stock location linked to that department.
-* Each department should have a default stock location.
-* Same product can have different balances across different locations.
+* Main Store must be linked to Store department.
+* Only one Main Store should exist unless system settings allow multiple.
+* Department users should not change stock locations.
+* Store/Admin manages stock locations.
 
 ---
 
-# 8. Product vs Stock Location Meaning
+# 8. Stock Balance UI
 
-Product-department linking answers:
-
-```text
-Which department is allowed to use this product?
-```
-
-Stock location answers:
-
-```text
-Where is the physical quantity stored?
-```
+Stock balance must be shown by product and location.
 
 Example:
 
 ```text
-Product: Gloves
-Linked departments: Pharmacy, Lab, Theatre
-
-Stock balances:
-- Pharmacy Stock Location: 50
-- Lab Stock Location: 100
-- Theatre Stock Location: 200
+Product       Location       Quantity on Hand
+Gloves        Main Store     1000
+Gloves        Pharmacy       50
+Gloves        Lab            120
+Gloves        Theatre        300
 ```
 
-When Lab uses gloves, deduct from Lab stock.
+Do not display old product quantity as current stock.
 
-When Theatre uses gloves, deduct from Theatre stock.
-
-Do not deduct from Main Store unless the user/action belongs to the Store location.
-
----
-
-# 9. Stock Movement System
-
-Stock movements remain the source of truth.
+Current stock must come from:
 
 ```text
-stock_movements = source of truth
-stock_balances = fast current stock cache
+stock_balances.quantity_on_hand
 ```
 
-Current stock formula:
-
-```text
-Current Stock = Total IN movements - Total OUT movements
-```
-
-Do not use product quantity as current stock.
-
----
-
-# 10. Stock Movement Tables
-
-Create or update:
-
-## stock_movements
-
-```text
-id
-product_id
-stock_location_id
-movement_type
-direction
-quantity
-unit_cost nullable
-batch_no nullable
-expiry_date nullable
-source_type nullable
-source_id nullable
-performed_by nullable
-movement_date
-notes nullable
-created_at
-updated_at
-```
-
-Direction:
-
-```text
-IN
-OUT
-```
-
-Movement types:
-
-```text
-OPENING_STOCK
-PURCHASE_RECEIVED
-PHARMACY_DISPENSED
-INVESTIGATION_CONSUMED
-PROCEDURE_CONSUMED
-WARD_CONSUMED
-TRANSFER_IN
-TRANSFER_OUT
-RETURN_IN
-RETURN_OUT
-ADJUSTMENT_IN
-ADJUSTMENT_OUT
-DAMAGED
-EXPIRED
-REVERSAL_IN
-REVERSAL_OUT
-```
-
-## stock_balances
-
-```text
-id
-product_id
-stock_location_id
-quantity_on_hand
-last_movement_at
-created_at
-updated_at
-```
-
-Add unique constraint:
-
-```text
-product_id + stock_location_id
-```
-
----
-
-# 11. Stock Movement Services
-
-Create or update:
-
-```text
-StockMovementService
-StockBalanceService
-StockLocationService
-StockTransferService
-StockAdjustmentService
-StockReturnService
-ConsumableUsageService
-```
-
-## StockLocationService
-
-Required method:
+or:
 
 ```php
-getDefaultLocationForDepartment(Department $department): StockLocation
+StockBalanceService::getCurrentStock(...)
 ```
 
-## StockMovementService
+---
 
-Must:
+# 9. Stock Transfer UI
 
-* validate product
-* validate stock location
-* validate direction
-* validate movement type
-* validate quantity > 0
-* block OUT movement if insufficient stock unless override is explicitly allowed
-* create stock movement
+Transfer page must enforce source and destination rules.
+
+Allowed initially:
+
+```text
+Main Store → Department Location
+Department Location → Main Store
+```
+
+Blocked initially:
+
+```text
+Pharmacy → Lab
+Lab → Theatre
+Ward → Pharmacy
+Department → Department
+```
+
+unless inter-department transfer is explicitly enabled.
+
+Transfer form should include:
+
+```text
+Source Location
+Destination Location
+Product
+Available Quantity
+Transfer Quantity
+Notes
+```
+
+When source location and product are selected, display current stock.
+
+Transfer must create:
+
+```text
+TRANSFER_OUT from source
+TRANSFER_IN into destination
+```
+
+Both movements must link to the same transfer record.
+
+---
+
+# 10. Purchase Order and Receiving UI
+
+Creating a purchase order must not automatically increase stock.
+
+Flow:
+
+```text
+Purchase Order Created
+↓
+Pending
+↓
+Goods Receiving
+↓
+Stock Movement Created
+↓
+Stock Balance Updated
+↓
+Supplier Ledger Updated
+```
+
+## Purchase Order Form
+
+Show:
+
+```text
+Supplier
+Order Date
+Items
+Expected Quantity
+Unit Cost
+Status
+```
+
+## Goods Receiving Form
+
+Show:
+
+```text
+Purchase Order
+Items Ordered
+Quantity Already Received
+Quantity to Receive
+Receiving Location, usually Main Store
+Batch Number
+Expiry Date
+Unit Cost
+```
+
+When received:
+
+* create `PURCHASE_RECEIVED` movement
 * update stock balance
-* preserve source_type/source_id
-* preserve performed_by
-
-## StockBalanceService
-
-Must:
-
-* get current stock from stock_balances
-* update stock balance after each movement
-* rebuild balances from stock_movements if needed
-
-Required methods:
-
-```php
-getCurrentStock($productId, $locationId): float
-increase($productId, $locationId, float $quantity): void
-decrease($productId, $locationId, float $quantity): void
-rebuildBalance($productId, $locationId): void
-rebuildAllBalances(): void
-```
+* create supplier ledger entry
+* update purchase order status
 
 ---
 
-# 12. Store / Procurement Responsibilities
+# 11. Supplier Ledger UI
 
-Only Store/Procurement or Admin can:
-
-* create products
-* edit products
-* link products to departments
-* receive stock from suppliers
-* transfer stock to department locations
-* process returns to supplier
-* perform authorized stock adjustments
-* manage damaged/expired stock
-* view supplier ledger
-
-Department users should not create products.
-
----
-
-# 13. Pharmacy Catalogue
-
-Pharmacy should no longer have its own `drugs` table.
-
-The Pharmacy Drugs Catalogue should load from products:
+Create/update supplier pages:
 
 ```text
-products
-WHERE product_department.department_id = Pharmacy department
-AND product_type = DRUG
+Suppliers
+Supplier Details
+Supplier Ledger
+Supplier Payments
+Supplier Returns
 ```
 
-Rules:
-
-* Pharmacy cannot create drugs directly.
-* Pharmacy can only view/use drug products linked to Pharmacy.
-* Pharmacy dispensing deducts stock from Pharmacy stock location.
-* Dispensing creates stock movement:
+Supplier detail page should show:
 
 ```text
-movement_type = PHARMACY_DISPENSED
-direction = OUT
-stock_location = Pharmacy Stock Location
-source_type = dispensing_item / prescription_item
+Supplier Profile
+Purchase Orders
+Goods Received
+Payments
+Returns
+Outstanding Balance
+Ledger
 ```
 
-Prescribing does not reduce stock.
-
-Only dispensing reduces stock.
-
----
-
-# 14. Investigation Items / Consumables
-
-Investigation/Lab item lists should load from products, not a separate lab item table.
-
-For investigation departments:
+Ledger columns:
 
 ```text
-products
-WHERE product_department.department_id = current investigation department
-AND product_type IN (CONSUMABLE, REAGENT, MEDICAL_SUPPLY, GENERAL_ITEM)
+Date
+Type
+Description
+Debit
+Credit
+Balance
+Source
+Created By
 ```
 
-Rules:
-
-* Lab/Investigation users cannot create products.
-* Investigation consumables must be linked to the investigation department.
-* Investigation result entry consumes stock from the investigation department’s stock location.
-* Result entry creates stock movement:
-
-```text
-movement_type = INVESTIGATION_CONSUMED
-direction = OUT
-source_type = investigation_result
-```
-
----
-
-# 15. Procedure / Theatre Consumables
-
-Procedure/Theatre consumables should load from products, not separate procedure item tables.
-
-For procedure departments:
-
-```text
-products
-WHERE product_department.department_id = procedure/theatre department
-AND product_type IN (CONSUMABLE, SURGICAL_SUPPLY, MEDICAL_SUPPLY, GENERAL_ITEM)
-```
-
-Rules:
-
-* Theatre users cannot create products.
-* Procedure consumables must be linked to the procedure/theatre department.
-* Procedure consumable usage deducts from Theatre/Procedure stock location.
-* Procedure usage creates stock movement:
-
-```text
-movement_type = PROCEDURE_CONSUMED
-direction = OUT
-source_type = procedure_request / procedure_record
-```
-
----
-
-# 16. Services vs Products
-
-Keep this separation strict.
-
-## Services
-
-Billable hospital activities:
-
-```text
-General Consultation
-Full Blood Count
-Malaria Test
-Appendectomy
-Chest X-Ray
-Caesarean Section
-```
-
-## Products
-
-Physical stock items:
-
-```text
-Paracetamol
-Gloves
-EDTA Tube
-Malaria RDT Kit
-Sutures
-Gauze
-X-ray Film
-```
-
-Rules:
-
-* Investigation Catalogue is based on services.
-* Procedure Catalogue is based on services.
-* Products are only linked as default consumables or physical stock items.
-* Do not duplicate services as products.
-* Do not duplicate products as services unless they are intentionally billable as a separate service/product sale through billing logic.
-
----
-
-# 17. Investigation Catalogue
-
-Investigation Catalogue must load:
-
-```text
-services where department.type = investigation
-```
-
-Example services:
-
-```text
-Full Blood Count
-Malaria Test
-Liver Function Test
-Chest X-Ray
-Abdominal Scan
-```
-
-For each investigation service, allow configuration of:
-
-* headers/categories
-* criteria
-* default consumables/products
-
-Correct structure:
-
-```text
-Investigation Service
-    → Headers / Categories
-    → Criteria
-    → Default Products / Consumables
-```
-
-Default consumables must be selected from `products` linked to that investigation department.
-
-Do not create separate catalogue tests detached from services.
-
----
-
-# 18. Procedure Catalogue
-
-Procedure Catalogue must load:
-
-```text
-services where department.type = procedure
-```
-
-or if the project uses theatre terminology:
-
-```text
-services where department.type = theatre
-```
-
-Use the existing department type naming convention.
-
-Example services:
-
-```text
-Appendectomy
-Caesarean Section
-Wound Debridement
-Suturing
-Hernia Repair
-```
-
-For each procedure service, allow configuration of:
-
-* report templates
-* template sections
-* template fields
-* default consumables/products
-
-Correct structure:
-
-```text
-Procedure Service
-    → Template Sections
-    → Template Fields
-    → Default Products / Consumables
-```
-
-Do not create separate procedure catalogue items detached from services.
-
----
-
-# 19. Procedure Templates
-
-For each procedure service, configure templates for:
-
-```text
-PRE_OP
-ANAESTHESIA
-OPERATIVE_NOTE
-POST_OP
-FULL_REPORT
-```
-
-Suggested tables:
-
-## procedure_template_sections
-
-```text
-id
-service_id
-template_type
-name
-description nullable
-sort_order
-is_active
-created_at
-updated_at
-```
-
-## procedure_template_fields
-
-```text
-id
-service_id
-section_id nullable
-template_type
-label
-field_key
-input_type
-options nullable
-default_value nullable
-is_required
-sort_order
-is_active
-created_at
-updated_at
-```
-
-Input types:
-
-```text
-text
-textarea
-number
-select
-checkbox
-date
-time
-datetime
-file
-```
-
-## procedure_template_values
-
-```text
-id
-procedure_request_id
-service_id
-template_field_id
-template_type
-value nullable
-recorded_by
-recorded_at
-created_at
-updated_at
-```
-
-Rules:
-
-* Templates are configured per procedure service.
-* Values are saved against procedure request.
-* Required fields must be completed before moving to the next relevant procedure stage.
-* Future template changes must not corrupt old procedure records.
-
----
-
-# 20. Service Default Consumables
-
-Both Investigation services and Procedure services can have default consumables.
-
-Create or update:
-
-```text
-service_consumables
-- id
-- service_id
-- product_id
-- default_quantity
-- is_required
-- notes nullable
-- created_at
-- updated_at
-```
-
-Rules:
-
-* Product must be linked to the department that owns the service.
-* Default consumables do not deduct stock.
-* Actual consumable usage deducts stock.
-* Default consumables are preloaded during result/procedure entry.
-* Users may confirm, adjust, remove, or add actual usage if allowed.
-
----
-
-# 21. Actual Consumable Usage
-
-Create or update:
-
-```text
-consumable_usages
-- id
-- visit_id
-- patient_id
-- service_id
-- source_type
-- source_id
-- product_id
-- stock_location_id
-- quantity_used
-- stock_movement_id nullable
-- used_by
-- used_at
-- notes nullable
-- created_at
-- updated_at
-```
-
-Examples:
-
-```text
-source_type = investigation_result
-source_id = investigation_results.id
-
-source_type = procedure_request
-source_id = procedure_requests.id
-
-source_type = ward_care
-source_id = ward_care_records.id
-```
-
-Rules:
-
-* Actual usage creates stock OUT movement.
-* Usage must link to created stock movement.
-* Product must be available to the department.
-* Stock location must match the service department.
-* If stock is insufficient, block unless authorized override exists.
-
----
-
-# 22. Investigation Result Consumable Workflow
-
-When entering investigation results:
-
-1. Identify the investigation service.
-2. Identify the service department.
-3. Get the department stock location.
-4. Load default consumables from `service_consumables`.
-5. Allow user to confirm/edit actual quantities.
-6. Save result values.
-7. Save consumable usages.
-8. Create `INVESTIGATION_CONSUMED` OUT movements.
-9. Update stock balances.
-
-Do not deduct from Main Store unless the investigation department actually uses Main Store, which should not normally happen.
-
----
-
-# 23. Procedure Consumable Workflow
-
-When recording procedure/theatre stages:
-
-1. Identify procedure service.
-2. Identify procedure/theatre department.
-3. Get the department stock location.
-4. Load default consumables from `service_consumables`.
-5. Allow user to confirm/edit actual quantities.
-6. Save procedure template/clinical values.
-7. Save consumable usages.
-8. Create `PROCEDURE_CONSUMED` OUT movements.
-9. Update stock balances.
-
-Do not deduct from Pharmacy stock or Main Store unless that is the configured department stock location.
-
----
-
-# 24. Supplier Ledger
-
-Build a supplier ledger to track everything happening with suppliers.
-
-## suppliers
-
-```text
-id
-name
-phone nullable
-email nullable
-address nullable
-contact_person nullable
-tax_id nullable
-status
-created_at
-updated_at
-```
-
-## supplier_ledger_entries
-
-```text
-id
-supplier_id
-entry_date
-entry_type
-source_type nullable
-source_id nullable
-description
-debit
-credit
-balance_after nullable
-created_by
-created_at
-updated_at
-```
-
-Entry types:
-
-```text
-PURCHASE_ORDER
-GOODS_RECEIVED
-SUPPLIER_INVOICE
-PAYMENT
-RETURN_TO_SUPPLIER
-CREDIT_NOTE
-DEBIT_NOTE
-ADJUSTMENT
-```
-
-Recommended simple convention:
+Use this convention unless project already defines another:
 
 ```text
 credit = amount facility owes supplier
@@ -908,7 +478,7 @@ Goods received worth 5,000:
 credit = 5000
 ```
 
-Payment to supplier of 2,000:
+Supplier payment of 2,000:
 
 ```text
 debit = 2000
@@ -928,83 +498,346 @@ credits - debits
 
 ---
 
-# 25. Supplier Ledger Workflow
+# 12. Pharmacy UI Changes
 
-## Purchase Order Created
+Pharmacy must use products, not a drugs table.
 
-Purchase order creation may optionally create a commitment record, but should not necessarily affect supplier balance unless the system requires commitments.
+## Drug Catalogue
 
-## Goods Received
+Load:
 
-When purchase items are received:
+```text
+products linked to Pharmacy department
+AND product_type = DRUG
+```
 
-1. Create `PURCHASE_RECEIVED` stock movement.
-2. Update stock balance.
-3. Create supplier ledger credit entry.
-4. Update supplier balance.
-5. Update purchase order received status.
+Pharmacy users should not see Create Product button unless they have Store/Admin permission.
 
-## Supplier Payment
+## Dispensing Page
 
-When supplier is paid:
+When dispensing, show stock from Pharmacy stock location only:
 
-1. Create supplier ledger debit entry.
-2. Link to payment record if payment table exists.
-3. Update supplier balance.
+```text
+Drug: Paracetamol
+Available in Pharmacy: 50
+Quantity to dispense: 10
+```
 
-## Return to Supplier
+Rules:
 
-When stock is returned to supplier:
-
-1. Create `RETURN_OUT` stock movement.
-2. Reduce stock balance.
-3. Create supplier ledger debit or credit note entry.
-4. Link to supplier.
-5. Record reason.
+* If Pharmacy has 0 but Main Store has 100, pharmacy cannot dispense.
+* Stock must be transferred to Pharmacy first.
+* Dispensing creates `PHARMACY_DISPENSED` OUT movement from Pharmacy stock location.
+* Prescribing does not affect stock.
+* Payment does not affect stock.
 
 ---
 
-# 26. Supplier Ledger UI
+# 13. Investigation Result Entry UI
 
-Create supplier pages:
-
-```text
-Suppliers
-Supplier Details
-Supplier Ledger
-Supplier Payments
-Supplier Returns
-```
-
-Supplier ledger view should show:
-
-```text
-Date
-Type
-Description
-Debit
-Credit
-Balance
-Source
-Created By
-```
+When entering results, add a Consumables Used section.
 
 Example:
 
 ```text
-Supplier: MedSupply Ltd
+Consumables Used
+[✓] Malaria RDT Kit    Qty: 1
+[✓] Gloves             Qty: 1
+[✓] Lancet             Qty: 1
+[+] Add Consumable
+```
 
-Date        Type              Description              Debit    Credit    Balance
-01/02/26    Goods Received     PO-0001 received          0        5000      5000
-05/02/26    Payment            Bank payment              2000     0         3000
-07/02/26    Return             Expired stock returned    500      0         2500
+Rules:
+
+* Preload default consumables from the investigation service.
+* Consumable list must load products linked to that investigation department.
+* Saving result should also save actual consumable usage.
+* Actual usage creates `INVESTIGATION_CONSUMED` OUT movements.
+* Deduct from the investigation department stock location.
+* Do not deduct from Main Store.
+
+If stock is insufficient:
+
+* block save unless authorized override exists
+* show clear error message
+
+---
+
+# 14. Procedure / Theatre UI Changes
+
+On procedure workflow pages, add a Consumables Used section.
+
+Example:
+
+```text
+Procedure Consumables Used
+[✓] Surgical Gloves    Qty: 4
+[✓] Sutures            Qty: 2
+[✓] Gauze              Qty: 10
+[+] Add Consumable
+```
+
+Rules:
+
+* Preload default consumables from the procedure service.
+* Consumables list must load products linked to procedure/theatre department.
+* Saving usage creates `PROCEDURE_CONSUMED` OUT movements.
+* Deduct from procedure/theatre stock location.
+* Do not deduct from Pharmacy or Main Store unless configured as that department’s stock location.
+
+---
+
+# 15. Investigation Catalogue UI
+
+Investigation Catalogue should show:
+
+```text
+Investigation Services
+```
+
+It must load:
+
+```text
+services where department.type = investigation
+```
+
+When a service is selected, show sections:
+
+```text
+Service Details
+Headers / Categories
+Criteria
+Default Consumables
+Preview
+```
+
+Default Consumables must load products linked to the selected service’s department.
+
+Do not create detached tests.
+
+---
+
+# 16. Procedure Catalogue UI
+
+Procedure Catalogue should mirror Investigation Catalogue.
+
+First page:
+
+```text
+Procedure Services
+```
+
+It must load:
+
+```text
+services where department.type = procedure
+```
+
+or:
+
+```text
+services where department.type = theatre
+```
+
+depending on the existing department type naming.
+
+When selected, show sections:
+
+```text
+Service Details
+Templates
+Template Sections
+Template Fields
+Default Consumables
+Preview Report
+```
+
+Default Consumables must load products linked to the selected service’s department.
+
+Do not create detached procedure items.
+
+---
+
+# 17. Billing UI Changes
+
+Billing must clearly distinguish service billing and product billing.
+
+Invoice item source may include:
+
+```text
+consultation_service
+investigation_service
+procedure_service
+pharmacy_product
+ward_consumable
+```
+
+Invoice item descriptions should be clear:
+
+```text
+General Consultation
+Full Blood Count
+Appendectomy
+Paracetamol 500mg
+Surgical Gloves
+```
+
+Rules:
+
+* Services are billed as services.
+* Dispensed products can create invoice items when billable.
+* Consumables may or may not be billable depending on configuration.
+* Backend must know source type and source ID.
+* Billing must still use the visit’s single invoice.
+
+---
+
+# 18. Permissions
+
+Add or verify permissions:
+
+```text
+product.create
+product.edit
+product.link_department
+product.view
+
+stock.location.manage
+stock.transfer
+stock.adjust
+stock.receive
+stock.return
+stock.view_balance
+
+supplier.manage
+supplier.ledger.view
+supplier.payment.create
+supplier.return.create
+
+consumable.use
+
+procedure.catalogue.manage
+investigation.catalogue.manage
+```
+
+Permission rules:
+
+* Store/Admin can create products.
+* Store/Admin can link products to departments.
+* Pharmacy can view pharmacy products and dispense.
+* Lab can view linked consumables and consume during results.
+* Theatre can view linked consumables and consume during procedures.
+* Departments cannot create products unless explicitly authorized.
+
+---
+
+# 19. Dashboard Changes
+
+## Store Dashboard
+
+Show:
+
+```text
+Total products
+Low stock items
+Pending purchase orders
+Recent stock movements
+Supplier balances
+Pending transfers
+```
+
+## Pharmacy Dashboard
+
+Show:
+
+```text
+Pending prescriptions
+Low pharmacy stock
+Dispensed today
+Pharmacy stock value
+```
+
+## Lab / Investigation Dashboard
+
+Show:
+
+```text
+Pending investigations
+Results pending
+Low consumables
+Consumables used today
+```
+
+## Theatre Dashboard
+
+Show:
+
+```text
+Pending procedures
+Scheduled procedures
+Low theatre supplies
+Procedures completed today
 ```
 
 ---
 
-# 27. Services to Create or Update
+# 20. Validation Rules
 
-Create/update:
+Enforce these validations:
+
+## Product
+
+* product name required
+* product type required
+* unit required
+* only Store/Admin can create product
+
+## Product Department Link
+
+* product required
+* department required
+* duplicate active links should be prevented
+
+## Department Usage
+
+* product must be linked to the user/service department
+* department must have active stock location
+* cannot consume more than available stock unless override enabled
+
+## Transfer
+
+* source required
+* destination required
+* source and destination must be different
+* transfer must involve Main Store unless inter-department transfer is enabled
+* quantity must be greater than zero
+* source must have enough stock
+
+## Service Consumables
+
+* product must be linked to the service department
+* default quantity must be greater than zero
+* required consumables must be confirmed before finalization if configured
+
+## Purchase Receiving
+
+* purchase order required
+* receiving location required
+* received quantity must be greater than zero
+* received quantity must not exceed remaining ordered quantity unless over-receiving is allowed
+
+## Supplier Ledger
+
+* supplier required
+* entry type required
+* debit/credit must be valid
+* source should be linked where possible
+
+---
+
+# 21. Backend Services to Use
+
+Create or update these services:
 
 ```text
 ProductService
@@ -1025,32 +858,33 @@ SupplierLedgerService
 PurchaseOrderService
 ```
 
-## ProductService
+Important:
 
-Handles product creation and updates.
+* Product creation must go through `ProductService`.
+* Product-department linking must go through `ProductDepartmentService`.
+* Stock usage must go through `StockMovementService`.
+* Current stock must use `StockBalanceService`.
+* Consumable usage must go through `ConsumableUsageService`.
+* Supplier events must go through `SupplierLedgerService`.
 
-## ProductDepartmentService
+---
 
-Handles product availability per department.
+# 22. Required Service Behavior
 
 ## StockLocationService
 
-Handles department stock location resolution.
+Must resolve the correct stock location for a department:
+
+```php
+getDefaultLocationForDepartment(Department $department): StockLocation
+```
 
 ## ConsumableUsageService
 
-Handles actual product usage and stock OUT movement.
-
-## SupplierLedgerService
-
-Handles supplier ledger entries and balance calculations.
-
-Required method examples:
+Must record actual consumable use:
 
 ```php
-StockLocationService::getDefaultLocationForDepartment(Department $department): StockLocation
-
-ConsumableUsageService::recordUsageForSource(
+recordUsageForSource(
     Visit $visit,
     Service $service,
     string $sourceType,
@@ -1058,8 +892,24 @@ ConsumableUsageService::recordUsageForSource(
     array $items,
     User $user
 ): void
+```
 
-SupplierLedgerService::recordEntry(
+This method must:
+
+* validate department access
+* validate product availability
+* validate stock location
+* validate quantity
+* create consumable usage records
+* create stock OUT movements
+* update stock balances
+
+## SupplierLedgerService
+
+Must record supplier events:
+
+```php
+recordEntry(
     Supplier $supplier,
     string $entryType,
     float $debit,
@@ -1073,98 +923,9 @@ SupplierLedgerService::recordEntry(
 
 ---
 
-# 28. Validation Rules
+# 23. Frontend / Inertia Pages
 
-## Product
-
-* name required
-* code unique if used
-* product_type required
-* unit required
-* only Store/Admin can create or edit products
-* department links must reference valid departments
-
-## Product Department Link
-
-* product required
-* department required
-* duplicate active links should be prevented
-
-## Stock Location
-
-* name required
-* department required
-* main stock location must belong to Store department
-* location must be active before use
-
-## Consumable Usage
-
-* product required
-* product must be linked to service department
-* stock location must match service department
-* quantity_used > 0
-* sufficient stock required unless override allowed
-* required consumables must be confirmed
-
-## Procedure Catalogue
-
-* service must belong to procedure/theatre-type department
-* template section name required
-* template field label required
-* input_type required
-* required fields must have values before completing relevant stage
-
-## Supplier Ledger
-
-* supplier required
-* entry_type required
-* debit and credit must be >= 0
-* debit and credit cannot both be zero unless allowed for memo entries
-* source_type/source_id should be stored when entry comes from purchase, receipt, return, or payment
-
----
-
-# 29. Permissions
-
-Add or verify permissions:
-
-```text
-product.create
-product.edit
-product.view
-product.link_departments
-stock_location.manage
-stock.view
-stock.transfer
-stock.adjust
-stock.return
-stock.override_negative
-service_consumable.manage
-consumable_usage.record
-procedure_catalogue.view
-procedure_catalogue.manage
-procedure_template.manage
-supplier.view
-supplier.create
-supplier.edit
-supplier.ledger.view
-supplier.payment.create
-supplier.return.create
-```
-
-Rules:
-
-* Pharmacy users cannot create products.
-* Lab users cannot create products.
-* Theatre users cannot create products.
-* Only Store/Admin can create products and link them to departments.
-* Department users can consume only products assigned to their department.
-
----
-
-# 30. Frontend / Inertia Pages
-
-Create or update:
+Create or update these page groups.
 
 ## Store / Products
 
@@ -1185,36 +946,7 @@ StockBalances/Index.vue
 StockTransfers/Index.vue
 StockAdjustments/Index.vue
 StockReturns/Index.vue
-```
-
-## Department Catalogues
-
-```text
-Pharmacy/ProductCatalogue.vue
-Investigations/Consumables.vue
-Procedures/Consumables.vue
-```
-
-These should read from `products`, filtered by department and product type.
-
-## Investigation Catalogue
-
-Update to support:
-
-* services from investigation departments
-* headers/categories
-* criteria
-* default consumables from products
-
-## Procedure Catalogue
-
-Create/update:
-
-```text
-ProcedureCatalogue/Index.vue
-ProcedureCatalogue/Show.vue
-ProcedureCatalogue/Templates.vue
-ProcedureCatalogue/Consumables.vue
+GoodsReceiving/Index.vue
 ```
 
 ## Supplier Ledger
@@ -1227,41 +959,68 @@ Suppliers/Payments.vue
 Suppliers/Returns.vue
 ```
 
+## Pharmacy
+
+```text
+Pharmacy/DrugCatalogue.vue
+Pharmacy/Dispensing.vue
+Pharmacy/StockBalance.vue
+```
+
+## Investigations
+
+```text
+Investigations/Consumables.vue
+Investigations/ResultEntry.vue
+InvestigationCatalogue/Index.vue
+InvestigationCatalogue/Show.vue
+```
+
+## Procedures
+
+```text
+Procedures/Consumables.vue
+ProcedureCatalogue/Index.vue
+ProcedureCatalogue/Show.vue
+ProcedureCatalogue/Templates.vue
+ProcedureCatalogue/Consumables.vue
+```
+
 ---
 
-# 31. Data Integrity Rules
+# 24. Data Integrity Rules
 
-* Product is the only table for physical items.
-* Do not create `drugs`, `lab_items`, `procedure_items`, or standalone `consumables` tables.
-* Services are billable hospital activities.
-* Products are stock items.
-* Department access to products must use product_department.
-* Department stock usage must deduct from that department’s stock location.
+* Product is the only source for physical items.
+* Services are the only source for billable hospital activities.
+* Product-department links control product availability.
+* Stock locations control physical quantity by department.
+* Department consumption must use department stock location.
 * Stock movements are the source of truth.
 * Stock balances are cache only.
-* Purchase receiving affects stock.
-* Purchase order creation alone does not affect stock unless explicitly received.
-* Default consumables do not affect stock.
-* Actual consumable usage affects stock.
-* Investigation Catalogue is service-based.
-* Procedure Catalogue is service-based.
-* Supplier ledger records supplier-related financial/stock events.
+* Default consumables do not deduct stock.
+* Actual usage deducts stock.
+* Purchase order creation does not increase stock.
+* Goods receiving increases stock.
+* Supplier ledger tracks supplier events.
+* Investigation Catalogue must be service-based.
+* Procedure Catalogue must be service-based.
+* Do not create detached tests/procedure items.
 
 ---
 
-# 32. Performance Rules
+# 25. Performance Rules
 
-* Use stock_balances for current stock display.
-* Do not calculate current stock from all movements on every page.
+* Use `stock_balances` for current stock display.
+* Do not calculate stock from all movements on every page.
 * Eager-load product departments where needed.
-* Load default consumables only for selected services.
-* Paginate products, movements, suppliers, and ledger entries.
+* Load consumables only for selected service.
+* Paginate product, movement, supplier, and ledger lists.
 * Avoid N+1 queries in catalogues and stock pages.
 * Cache product availability per department where safe.
 
 ---
 
-# 33. Tests / Verification
+# 26. Testing / Verification
 
 Add or update tests for:
 
@@ -1269,54 +1028,56 @@ Add or update tests for:
 2. Pharmacy cannot create product.
 3. Lab cannot create product.
 4. Theatre cannot create product.
-5. Product can be linked to multiple departments.
-6. Department only sees linked products.
-7. Pharmacy Drugs Catalogue loads products linked to Pharmacy with type DRUG.
+5. Product can be linked to departments.
+6. Department sees only linked products.
+7. Pharmacy Drug Catalogue loads products linked to Pharmacy with type DRUG.
 8. Investigation consumables load products linked to investigation department.
 9. Procedure consumables load products linked to procedure department.
 10. Stock location belongs to department.
 11. Pharmacy dispensing deducts from Pharmacy stock location.
 12. Investigation result consumables deduct from investigation department stock location.
 13. Procedure consumables deduct from procedure department stock location.
-14. Investigation Catalogue loads services from investigation-type departments.
-15. Procedure Catalogue loads services from procedure/theatre-type departments.
-16. Procedure template fields save and load correctly.
+14. Main Store can transfer to department.
+15. Department can return stock to Main Store.
+16. Purchase receiving creates stock IN movement.
 17. Goods received creates supplier ledger credit.
 18. Supplier payment creates supplier ledger debit.
 19. Return to supplier creates stock OUT and supplier ledger entry.
-20. Supplier balance is calculated correctly.
+20. Investigation Catalogue loads services from investigation departments.
+21. Procedure Catalogue loads services from procedure/theatre departments.
+22. Default consumables only load linked products.
+23. Actual consumable usage creates stock movement.
+24. Stock balance updates correctly after usage.
 
 ---
 
-# 34. Deliverables
+# 27. Deliverables
 
 Provide:
 
-1. New/updated migrations.
-2. New/updated models and relationships.
-3. Product architecture implementation.
-4. Product-department linking.
-5. Department stock location implementation.
-6. Stock movement/balance updates.
-7. Pharmacy catalogue reading from products.
-8. Investigation consumables reading from products.
-9. Procedure consumables reading from products.
-10. Investigation Catalogue service-based update.
-11. Procedure Catalogue service-based implementation.
-12. Procedure templates implementation.
-13. Service default consumables implementation.
-14. Actual consumable usage implementation.
-15. Supplier ledger implementation.
-16. Updated Vue/Inertia pages.
-17. Updated validation requests.
-18. Updated permissions.
-19. Tests or verification notes.
-20. List of modified files.
-21. Remaining TODOs if any.
+1. Gap analysis of current implementation.
+2. Updated menus/navigation.
+3. Updated labels.
+4. New/updated migrations.
+5. Updated models and relationships.
+6. Updated services.
+7. Updated permissions.
+8. Updated Vue/Inertia pages.
+9. Updated validation requests.
+10. Updated Store/Product UI.
+11. Updated Pharmacy product catalogue.
+12. Updated Investigation consumable flow.
+13. Updated Procedure consumable flow.
+14. Updated Investigation Catalogue.
+15. Updated Procedure Catalogue.
+16. Updated Supplier Ledger.
+17. Tests or verification notes.
+18. List of modified files.
+19. Remaining TODOs if any.
 
 ---
 
-# 35. Important Rules
+# 28. Important Rules
 
 Do not create a drugs table.
 
@@ -1324,17 +1085,19 @@ Do not create lab_items table.
 
 Do not create procedure_items table.
 
-Do not create standalone consumables table for physical items.
+Do not create standalone consumables table.
 
-Do not let departments create products.
+Do not allow Pharmacy/Lab/Theatre to create products.
 
 Do not use product quantity as current stock.
 
-Do not deduct stock from wrong department location.
+Do not deduct stock from Main Store when department stock should be used.
 
-Do not create Procedure Catalogue items detached from services.
+Do not allow direct department-to-department transfer unless explicitly enabled.
 
 Do not create Investigation Catalogue tests detached from services.
+
+Do not create Procedure Catalogue items detached from services.
 
 Do not deduct default consumables until actual usage is saved.
 
@@ -1342,6 +1105,10 @@ Do not bypass StockMovementService.
 
 Do not bypass StockBalanceService.
 
-Do not bypass SupplierLedgerService for supplier events.
+Do not bypass SupplierLedgerService.
 
-Now inspect the current UHMS implementation and apply this architecture carefully.
+Do not break existing billing, pharmacy, investigation, and procedure workflows.
+
+Now inspect the current UHMS implementation and apply these changes carefully, module by module.
+
+Make all the relevace changes

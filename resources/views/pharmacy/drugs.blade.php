@@ -37,7 +37,7 @@
             <i class="ti ti-folder-plus me-1"></i>Add Category
         </button>
         <button class="btn btn-primary btn-md" data-bs-toggle="modal" data-bs-target="#addDrugModal">
-            <i class="ti ti-plus me-1"></i>Add Drug
+            <i class="ti ti-plus me-1"></i>Link Pharmacy Product
         </button>
     </div>
 </div>
@@ -465,7 +465,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Drug</button>
+                    <button type="submit" class="btn btn-primary">Link Product</button>
                 </div>
             </form>
         </div>

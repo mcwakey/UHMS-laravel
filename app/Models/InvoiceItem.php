@@ -9,6 +9,27 @@ class InvoiceItem extends Model
 {
     use HasFactory;
 
+    /**
+     * Canonical source_type values for billable line items (Section 17 of UHMS spec).
+     * Stored as plain strings; helpers ensure consistent usage across services.
+     */
+    public const SOURCE_CONSULTATION_SERVICE = 'consultation_service';
+    public const SOURCE_INVESTIGATION_SERVICE = 'investigation_service';
+    public const SOURCE_PROCEDURE_SERVICE = 'procedure_service';
+    public const SOURCE_PHARMACY_PRODUCT = 'pharmacy_product';
+    public const SOURCE_WARD_CONSUMABLE = 'ward_consumable';
+
+    public static function sourceTypes(): array
+    {
+        return [
+            self::SOURCE_CONSULTATION_SERVICE,
+            self::SOURCE_INVESTIGATION_SERVICE,
+            self::SOURCE_PROCEDURE_SERVICE,
+            self::SOURCE_PHARMACY_PRODUCT,
+            self::SOURCE_WARD_CONSUMABLE,
+        ];
+    }
+
     protected $fillable = [
         'invoice_id',
         'visit_id',

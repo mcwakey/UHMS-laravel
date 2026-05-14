@@ -165,12 +165,28 @@ class RoleSeeder extends Seeder
             'product.create',
             'product.edit',
             'product.link_departments',
+            'product.link_department', // alias used by some routes
             'stock_location.manage',
             'stock.view',
+            'stock.view_balance',
             'stock.transfer',
             'stock.adjust',
+            'stock.receive',
             'stock.return',
             'stock.override_negative',
+
+            // Supplier ledger
+            'supplier.manage',
+            'supplier.ledger.view',
+            'supplier.payment.create',
+            'supplier.return.create',
+
+            // Investigation catalogue (parallel to procedure_catalogue.manage)
+            'investigation.catalogue.view',
+            'investigation.catalogue.manage',
+
+            // Consumable usage (semantic alias)
+            'consumable.use',
 
             // Analyzer Integration
             'analyzer.manage',
@@ -249,9 +265,10 @@ class RoleSeeder extends Seeder
             'lab.requests.view',
             'lab.results.view', 'lab.results.create', 'lab.results.verify',
             'lab.tests.manage',
+            'investigation.catalogue.view',
             'analyzer.manage',
-            'product.view', 'stock.view',
-            'consumable_usage.record',
+            'product.view', 'stock.view', 'stock.view_balance',
+            'consumable_usage.record', 'consumable.use',
             'queue.view',
             'notifications.view',
         ]);
@@ -264,8 +281,8 @@ class RoleSeeder extends Seeder
             'pharmacy.dispensing.view', 'pharmacy.dispensing.create',
             'pharmacy.drugs.manage', 'pharmacy.stock.manage',
             'store.transfer.view',
-            'product.view', 'stock.view', 'stock.return',
-            'consumable_usage.record',
+            'product.view', 'stock.view', 'stock.view_balance', 'stock.return',
+            'consumable_usage.record', 'consumable.use',
             'queue.view',
             'notifications.view',
         ]);
@@ -302,9 +319,11 @@ class RoleSeeder extends Seeder
             'store.transfer.view', 'store.transfer.create',
             'pharmacy.drugs.manage', 'pharmacy.stock.manage',
             // Product / stock management (Store is the only catalogue creator)
-            'product.view', 'product.create', 'product.edit', 'product.link_departments',
+            'product.view', 'product.create', 'product.edit', 'product.link_departments', 'product.link_department',
             'stock_location.manage',
-            'stock.view', 'stock.transfer', 'stock.adjust', 'stock.return',
+            'stock.view', 'stock.view_balance', 'stock.transfer', 'stock.adjust', 'stock.receive', 'stock.return',
+            // Supplier ledger
+            'supplier.manage', 'supplier.ledger.view', 'supplier.payment.create', 'supplier.return.create',
             'notifications.view',
         ]);
 
