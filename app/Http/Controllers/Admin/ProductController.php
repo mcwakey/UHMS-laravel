@@ -69,14 +69,12 @@ class ProductController extends Controller
 
     protected function validatePayload(Request $request, ?int $ignoreId = null): array
     {
-        // Ensure department_ids is always present in the validated payload so
-        // unchecking all departments correctly clears the link table (instead of
-        // silently keeping the old links because the key was missing).
-        if (!$request->has('department_ids')) {
-            $request->merge(['department_ids' => []]);
+        $payload = $request->all();
+        if (! array_key_exists('department_ids', $payload) && array_key_exists('department_ids[]', $payload)) {
+            $request->merge(['department_ids' => (array) $payload['department_ids[]']]);
         }
 
-        return $request->validate([
+        $validated = $request->validate([
             'name'           => 'required|string|max:191',
             'code'           => 'nullable|string|max:60',
             'product_type'   => 'required|string|in:' . implode(',', array_column(ProductType::cases(), 'value')),
@@ -85,8 +83,14 @@ class ProductController extends Controller
             'reorder_level'  => 'nullable|numeric|min:0',
             'default_cost'   => 'nullable|numeric|min:0',
             'is_active'      => 'nullable|boolean',
-            'department_ids' => 'present|array',
+            'department_ids' => 'nullable|array',
             'department_ids.*' => 'integer|exists:departments,id',
         ]);
+
+        // Unchecked checkboxes are not submitted by browsers; default to [] so
+        // syncDepartments always runs and can clear stale links.
+        $validated['department_ids'] = $validated['department_ids'] ?? [];
+
+        return $validated;
     }
 }

@@ -58,9 +58,7 @@ class ProductService
                 'reorder_level', 'default_cost', 'is_active',
             ])))->save();
 
-            if (array_key_exists('department_ids', $data)) {
-                $this->syncDepartments($product, (array) $data['department_ids']);
-            }
+            $this->syncDepartments($product, (array) ($data['department_ids'] ?? []));
             return $product;
         });
     }

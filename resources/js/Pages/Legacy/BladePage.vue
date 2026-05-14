@@ -101,8 +101,9 @@ function formDataToObject(formData) {
     const data = {};
 
     for (const [key, value] of formData.entries()) {
-        if (key in data) {
-            data[key] = Array.isArray(data[key]) ? [...data[key], value] : [data[key], value];
+        if (key.endsWith('[]')) {
+            const normalizedKey = key.slice(0, -2);
+            data[normalizedKey] = Array.isArray(data[normalizedKey]) ? [...data[normalizedKey], value] : [value];
         } else {
             data[key] = value;
         }
@@ -148,11 +149,12 @@ function handleSubmit(event) {
 
     const method = (form.method || 'get').toLowerCase();
     const hasFiles = formHasFiles(form);
+    const shouldUseFormData = hasFiles || method !== 'get';
 
     router.visit(actionUrl.pathname + actionUrl.search, {
         method,
-        data: hasFiles ? formData : formDataToObject(formData),
-        forceFormData: hasFiles,
+        data: shouldUseFormData ? formData : formDataToObject(formData),
+        forceFormData: shouldUseFormData,
         preserveScroll: false,
         preserveState: false,
     });

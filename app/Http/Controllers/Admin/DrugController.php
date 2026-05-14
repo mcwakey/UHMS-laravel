@@ -110,6 +110,9 @@ class DrugController extends Controller
         // Drug name is always derived from the linked Product (single source of truth).
         $product = Product::find($validated['product_id']);
         $validated['name'] = $product?->name ?? 'Unnamed Drug';
+        $validated['generic_name_id'] = filled($validated['generic_name_id'] ?? null)
+            ? (int) $validated['generic_name_id']
+            : null;
 
         // Mirror the generic-name text into the legacy `generic_name` column for backwards-compat lookups.
         if (!empty($validated['generic_name_id'])) {
@@ -145,6 +148,9 @@ class DrugController extends Controller
         // Always mirror the linked product's name into the drug row.
         $product = Product::find($validated['product_id']);
         $validated['name'] = $product?->name ?? $drug->name;
+        $validated['generic_name_id'] = filled($validated['generic_name_id'] ?? null)
+            ? (int) $validated['generic_name_id']
+            : null;
 
         if (!empty($validated['generic_name_id'])) {
             $validated['generic_name'] = optional(DrugGenericName::find($validated['generic_name_id']))->name;

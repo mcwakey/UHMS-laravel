@@ -833,7 +833,7 @@
                                     <div class="row g-2">
                                         <div class="col-md-6">
                                             <label class="form-label small">Theatre / Procedure Department <span class="text-danger">*</span></label>
-                                            <select name="department_id" id="procedureDeptSelect" class="form-select form-select-sm" required>
+                                            <select name="department_id" id="procedureDeptSelect" class="form-select form-select-sm" required onchange="loadProcedureServices(this.value)">
                                                 <option value="">-- Select department --</option>
                                                 @foreach($procedureDepartments as $dept)
                                                     <option value="{{ $dept->id }}">{{ $dept->name }}</option>
@@ -875,34 +875,9 @@
                             </div>
                         </div>
                         <script>
-                            (function () {
-                                const dept = document.getElementById('procedureDeptSelect');
-                                const svc  = document.getElementById('procedureServiceSelect');
-                                if (!dept || !svc) return;
-                                dept.addEventListener('change', function () {
-                                    const id = this.value;
-                                    svc.innerHTML = '<option value="">Loading…</option>';
-                                    svc.disabled = true;
-                                    if (!id) { svc.innerHTML = '<option value="">Select department first</option>'; return; }
-                                    fetch("{{ url('admin/theatre/departments') }}/" + id + "/services", { headers: { 'Accept': 'application/json' } })
-                                        .then(r => r.json())
-                                        .then(items => {
-                                            if (!items || items.length === 0) {
-                                                svc.innerHTML = '<option value="">No services found for this department</option>';
-                                                return;
-                                            }
-                                            svc.innerHTML = '<option value="">-- Select service --</option>';
-                                            (items || []).forEach(it => {
-                                                const opt = document.createElement('option');
-                                                opt.value = it.id;
-                                                opt.textContent = it.name + (it.selling_price ? (' — ' + it.selling_price) : '');
-                                                svc.appendChild(opt);
-                                            });
-                                            svc.disabled = false;
-                                        })
-                                        .catch(() => { svc.innerHTML = '<option value="">Failed to load</option>'; });
-                                });
-                            })();
+                            /* moved to @push('scripts') — see loadProcedureServices() below.
+                               Scripts inside @section('content') are not executed by the
+                               Inertia legacy bridge (they get injected via v-html). */
                         </script>
                         @endcan
 
@@ -1521,6 +1496,7 @@ window.destroyUrls    = {
 };
 window.diagnosisBaseUrl  = '{{ url("admin/consultations/diagnoses") }}';
 window.deptServicesBase  = '{{ url("admin/departments") }}';
+window.procedureDeptServicesBase = '{{ url("admin/theatre/departments") }}';
 window.prescriptionDestroyBase = '{{ url("admin/consultations/prescriptions") }}';
 window.canEditConsultation = @json($canEdit);
 @if(!$canEdit)
@@ -1561,6 +1537,7 @@ var tabStorageKey = window.tabStorageKey;
 var destroyUrls = window.destroyUrls;
 var diagnosisBaseUrl = window.diagnosisBaseUrl;
 var deptServicesBase = window.deptServicesBase;
+var procedureDeptServicesBase = window.procedureDeptServicesBase;
 var prescriptionDestroyBase = window.prescriptionDestroyBase;
 
 /* ================================================================
@@ -1919,6 +1896,49 @@ function loadInvestigationServices(deptId) {
         container.innerHTML = html;
     })
     .catch(function () { container.innerHTML = '<span class="text-danger small">Failed to load services.</span>'; });
+}
+
+/* ================================================================
+   PROCEDURE DEPARTMENT → SERVICES (Theatre / Procedure Request)
+   ================================================================ */
+function loadProcedureServices(deptId) {
+    var svc = document.getElementById('procedureServiceSelect');
+    if (!svc) return;
+    if (!deptId) {
+        svc.innerHTML = '<option value="">Select department first</option>';
+        svc.disabled = true;
+        return;
+    }
+    svc.innerHTML = '<option value="">Loading…</option>';
+    svc.disabled = true;
+
+    fetch(procedureDeptServicesBase + '/' + deptId + '/services', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+    .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+    })
+    .then(function (items) {
+        if (!items || items.length === 0) {
+            svc.innerHTML = '<option value="">No procedure services found for this department</option>';
+            svc.disabled = true;
+            return;
+        }
+        svc.innerHTML = '<option value="">-- Select service --</option>';
+        items.forEach(function (it) {
+            var opt = document.createElement('option');
+            opt.value = it.id;
+            var price = it.price || it.selling_price;
+            opt.textContent = it.name + (price ? (' — GH₵' + parseFloat(price).toFixed(2)) : '');
+            svc.appendChild(opt);
+        });
+        svc.disabled = false;
+    })
+    .catch(function () {
+        svc.innerHTML = '<option value="">Failed to load services</option>';
+        svc.disabled = true;
+    });
 }
 
 /* ================================================================
@@ -2447,6 +2467,7 @@ $(document).ready(function () {
    ================================================================ */
 (function () {
     var fns = ['saveTabBeforeSubmit','activateConsultationTab','loadInvestigationServices',
+               'loadProcedureServices',
                'loadLabReqItems','addFreeTextItem','freeTextItemRow','preparePrescriptionSubmit',
                'previewVisit','escapeHtml','capFirst','showToast','reindexPrescriptionRows',
                'initDrugSelect','syncDrugName','calcQty','bindRxCalc'];

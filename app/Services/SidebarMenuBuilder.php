@@ -131,26 +131,44 @@ class SidebarMenuBuilder
                         'permission' => 'consultations.view',
                         'module' => 'medical-patterns',
                     ],
+                    // [
+                    //     'label' => 'Procedures',
+                    //     'icon' => 'ti ti-surgery',
+                    //     'permission' => 'procedures.view',
+                    //     'active_patterns' => ['admin.procedures.*', 'admin.procedure-catalogue.*'],
+                    //     'children' => [
+                    //         [
+                    //             'label' => 'Procedure Catalog',
+                    //             'route' => 'admin.procedure-catalogue.index',
+                    //             'active_patterns' => ['admin.procedure-catalogue.*'],
+                    //             'permission' => 'procedure_catalogue.view',
+                    //         ],
+                    //         [
+                    //             'label' => 'Scheduled Procedures',
+                    //             'route' => 'admin.procedures.schedule',
+                    //             'active_patterns' => ['admin.procedures.schedule'],
+                    //             'permission' => 'procedures.view',
+                    //         ],
+                    //     ],
+                    // ],
                     [
-                        'label' => 'Procedures',
-                        'icon' => 'ti ti-surgery',
-                        'permission' => 'procedures.view',
-                        'active_patterns' => ['admin.procedures.*'],
+                        'label' => 'Theatre / Procedures',
+                        'icon' => 'ti ti-stethoscope',
+                        'permission' => 'procedure.view',
+                        'active_patterns' => ['admin.theatre.*'],
                         'children' => [
+                            [
+                                'label' => 'Procedure Catalogue',
+                                'route' => 'admin.procedure-catalogue.index',
+                                'active_patterns' => ['admin.procedure-catalogue.*'],
+                                'permission' => 'procedure_catalogue.view',
+                            ],
                             [
                                 'label' => 'Scheduled Procedures',
                                 'route' => 'admin.procedures.schedule',
                                 'active_patterns' => ['admin.procedures.schedule'],
                                 'permission' => 'procedures.view',
                             ],
-                        ],
-                    ],
-                    [
-                        'label' => 'Theatre',
-                        'icon' => 'ti ti-stethoscope',
-                        'permission' => 'procedure.view',
-                        'active_patterns' => ['admin.theatre.*'],
-                        'children' => [
                             [
                                 'label' => 'All Requests',
                                 'route' => 'admin.theatre.index',
@@ -185,12 +203,6 @@ class SidebarMenuBuilder
                                 'route_params' => ['tab' => 'completed'],
                                 'active_patterns' => ['admin.theatre.index'],
                                 'permission' => 'procedure.view',
-                            ],
-                            [
-                                'label' => 'Procedure Catalogue',
-                                'route' => 'admin.procedure-catalogue.index',
-                                'active_patterns' => ['admin.procedure-catalogue.*'],
-                                'permission' => 'procedure_catalogue.view',
                             ],
                         ],
                     ],
