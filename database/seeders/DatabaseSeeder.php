@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             CashAndCarrySeeder::class,
             ServiceCatalogSeeder::class,
+            DrugGenericNameSeeder::class,
             DesignationSeeder::class,
             SpecialtySeeder::class,
             IcdCodeSeeder::class,

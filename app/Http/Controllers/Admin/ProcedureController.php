@@ -23,6 +23,14 @@ class ProcedureController extends Controller
 
     public function index(Request $request)
     {
+        // Legacy `procedures` catalogue is deprecated — the canonical source is now
+        // service_catalogs filtered by procedure/theatre departments (Section 16 of UHMS spec).
+        // Redirect to the service-based Procedure Catalogue so users no longer
+        // see two parallel pickers.
+        if (\Illuminate\Support\Facades\Route::has('admin.procedure-catalogue.index')) {
+            return redirect()->route('admin.procedure-catalogue.index');
+        }
+
         $procedures = $this->clinicalService->listProcedures($request->only('search', 'category', 'department_id', 'is_active'));
         $departments = Department::orderBy('name')->pluck('name', 'id');
         $categories = ['surgical', 'diagnostic', 'therapeutic', 'other'];

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Drug;
 use App\Models\DrugCategory;
+use App\Models\DrugGenericName;
 use App\Models\Product;
 use App\Services\PharmacyService;
 use Illuminate\Http\Request;
@@ -36,7 +37,9 @@ class DrugController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'code', 'unit']);
 
-        return view('pharmacy.drugs', compact('categories', 'drugs', 'pharmacyProducts'));
+        $generics = DrugGenericName::active()->orderBy('name')->get(['id', 'name', 'therapeutic_class']);
+
+        return view('pharmacy.drugs', compact('categories', 'drugs', 'pharmacyProducts', 'generics'));
     }
 
     /**
@@ -90,25 +93,27 @@ class DrugController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'product_id'  => 'required|integer|exists:products,id',
-            'category_id' => 'required|exists:drug_categories,id',
-            'name' => 'nullable|string|max:255|unique:drugs,name',
-            'generic_name' => 'nullable|string|max:255',
-            'brand_name' => 'nullable|string|max:255',
-            'dosage_form' => 'required|string|max:100',
-            'strength' => 'nullable|string|max:100',
-            'unit' => 'required|string|max:50',
-            'price' => 'required|numeric|min:0',
-            'opening_stock' => 'nullable|numeric|min:0',
-            'reorder_level' => 'nullable|numeric|min:0',
+            'product_id'      => 'required|integer|exists:products,id',
+            'category_id'     => 'required|exists:drug_categories,id',
+            'generic_name_id' => 'nullable|integer|exists:drug_generic_names,id',
+            'brand_name'      => 'nullable|string|max:255',
+            'dosage_form'     => 'required|string|max:100',
+            'strength'        => 'nullable|string|max:100',
+            'unit'            => 'required|string|max:50',
+            'price'           => 'required|numeric|min:0',
+            'opening_stock'   => 'nullable|numeric|min:0',
+            'reorder_level'   => 'nullable|numeric|min:0',
             'requires_prescription' => 'nullable|boolean',
-            'description' => 'nullable|string|max:1000',
+            'description'     => 'nullable|string|max:1000',
         ]);
 
-        // Derive the drug name from the linked product when not supplied.
-        if (empty($validated['name'])) {
-            $product = Product::find($validated['product_id']);
-            $validated['name'] = $product?->name ?? 'Unnamed Drug';
+        // Drug name is always derived from the linked Product (single source of truth).
+        $product = Product::find($validated['product_id']);
+        $validated['name'] = $product?->name ?? 'Unnamed Drug';
+
+        // Mirror the generic-name text into the legacy `generic_name` column for backwards-compat lookups.
+        if (!empty($validated['generic_name_id'])) {
+            $validated['generic_name'] = optional(DrugGenericName::find($validated['generic_name_id']))->name;
         }
 
         $validated['requires_prescription'] = $request->boolean('requires_prescription', true);
@@ -124,19 +129,28 @@ class DrugController extends Controller
     public function update(Request $request, Drug $drug)
     {
         $validated = $request->validate([
-            'product_id'  => 'nullable|integer|exists:products,id',
-            'category_id' => 'required|exists:drug_categories,id',
-            'name' => "required|string|max:255|unique:drugs,name,{$drug->id}",
-            'generic_name' => 'nullable|string|max:255',
-            'brand_name' => 'nullable|string|max:255',
-            'dosage_form' => 'required|string|max:100',
-            'strength' => 'nullable|string|max:100',
-            'unit' => 'required|string|max:50',
-            'price' => 'required|numeric|min:0',
+            'product_id'      => 'required|integer|exists:products,id',
+            'category_id'     => 'required|exists:drug_categories,id',
+            'generic_name_id' => 'nullable|integer|exists:drug_generic_names,id',
+            'brand_name'      => 'nullable|string|max:255',
+            'dosage_form'     => 'required|string|max:100',
+            'strength'        => 'nullable|string|max:100',
+            'unit'            => 'required|string|max:50',
+            'price'           => 'required|numeric|min:0',
             'requires_prescription' => 'nullable|boolean',
-            'is_active' => 'nullable|boolean',
-            'description' => 'nullable|string|max:1000',
+            'is_active'       => 'nullable|boolean',
+            'description'     => 'nullable|string|max:1000',
         ]);
+
+        // Always mirror the linked product's name into the drug row.
+        $product = Product::find($validated['product_id']);
+        $validated['name'] = $product?->name ?? $drug->name;
+
+        if (!empty($validated['generic_name_id'])) {
+            $validated['generic_name'] = optional(DrugGenericName::find($validated['generic_name_id']))->name;
+        } else {
+            $validated['generic_name'] = null;
+        }
 
         $validated['requires_prescription'] = $request->boolean('requires_prescription', true);
         $validated['is_active'] = $request->boolean('is_active', true);

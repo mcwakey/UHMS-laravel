@@ -159,7 +159,7 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Drug Name</th>
+                                <th>Product Name</th>
                                 <th>Category</th>
                                 <th>Form</th>
                                 <th>Strength</th>
@@ -174,9 +174,9 @@
                             @forelse($drugs as $drug)
                             <tr class="{{ !$drug->is_active ? 'table-secondary' : '' }}">
                                 <td>
-                                    <span class="fw-medium">{{ $drug->name }}</span>
-                                    @if($drug->generic_name)
-                                        <br><small class="text-muted">Generic: {{ $drug->generic_name }}</small>
+                                    <span class="fw-medium">{{ $drug->product?->name ?? $drug->name }}</span>
+                                    @if($drug->generic_name_id || $drug->generic_name)
+                                        <br><small class="text-muted">Generic: {{ $drug->genericName?->name ?? $drug->generic_name }}</small>
                                     @endif
                                     @if($drug->brand_name)
                                         <br><small class="text-info">Brand: {{ $drug->brand_name }}</small>
@@ -232,35 +232,37 @@
                                         <form method="POST" action="{{ route('admin.pharmacy.drugs.update', $drug) }}">
                                             @csrf @method('PUT')
                                             <div class="modal-header">
-                                                <h5 class="modal-title">Edit Drug: {{ $drug->name }}</h5>
+                                                <h5 class="modal-title">Edit Drug: {{ $drug->product?->name ?? $drug->name }}</h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                             </div>
                                             <div class="modal-body">
                                                 <div class="row g-3">
                                                     <div class="col-md-6">
-                                                        <label class="form-label">Linked Product</label>
-                                                        <select name="product_id" class="form-select">
-                                                            <option value="">— None —</option>
+                                                        <label class="form-label">Linked Product <span class="text-danger">*</span></label>
+                                                        <select name="product_id" class="form-select" required>
+                                                            <option value="">— Select product —</option>
                                                             @foreach($pharmacyProducts ?? [] as $p)
-                                                                <option value="{{ $p->id }}" {{ $drug->product_id == $p->id ? 'selected' : '' }}>{{ $p->name }}@if($p->code) ({{ $p->code }})@endif</option>
+                                                                <option value="{{ $p->id }}" @selected($drug->product_id == $p->id)>{{ $p->name }}@if($p->code) ({{ $p->code }})@endif</option>
                                                             @endforeach
                                                         </select>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <label class="form-label">Drug Name <span class="text-danger">*</span></label>
-                                                        <input type="text" name="name" class="form-control" value="{{ $drug->name }}" required>
+                                                        <small class="text-muted">The product's name is used as the drug name.</small>
                                                     </div>
                                                     <div class="col-md-6">
                                                         <label class="form-label">Category <span class="text-danger">*</span></label>
                                                         <select name="category_id" class="form-select" required>
                                                             @foreach($categories as $cat)
-                                                            <option value="{{ $cat->id }}" {{ $drug->category_id == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                                                            <option value="{{ $cat->id }}" @selected($drug->category_id == $cat->id)>{{ $cat->name }}</option>
                                                             @endforeach
                                                         </select>
                                                     </div>
                                                     <div class="col-md-6">
                                                         <label class="form-label">Generic Name</label>
-                                                        <input type="text" name="generic_name" class="form-control" value="{{ $drug->generic_name }}">
+                                                        <select name="generic_name_id" class="form-select">
+                                                            <option value="">— None —</option>
+                                                            @foreach($generics ?? [] as $g)
+                                                                <option value="{{ $g->id }}" @selected($drug->generic_name_id == $g->id)>{{ $g->name }}</option>
+                                                            @endforeach
+                                                        </select>
                                                     </div>
                                                     <div class="col-md-6">
                                                         <label class="form-label">Brand Name</label>
@@ -383,20 +385,19 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Drug (from Products) <span class="text-danger">*</span></label>
-                            <select name="product_id" class="form-select" required onchange="document.getElementById('newDrugName').value = this.options[this.selectedIndex].dataset.name || '';">
+                            <select name="product_id" class="form-select" required>
                                 <option value="">Select product...</option>
                                 @foreach($pharmacyProducts ?? [] as $p)
                                     <option value="{{ $p->id }}" data-name="{{ $p->name }}" data-unit="{{ $p->unit }}">{{ $p->name }}@if($p->code) ({{ $p->code }})@endif</option>
                                 @endforeach
                             </select>
                             <small class="text-muted">
-                                Only products linked to the Pharmacy department of type "Drug" appear here.
+                                The product's name is used as the drug name.
                                 @if(($pharmacyProducts ?? collect())->isEmpty())
                                     <span class="text-warning">No pharmacy drug products found — create them under
                                         <a href="{{ route('admin.products.index') }}">Store / Products</a> first.</span>
                                 @endif
                             </small>
-                            <input type="hidden" name="name" id="newDrugName" value="">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Category <span class="text-danger">*</span></label>
@@ -409,7 +410,13 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Generic Name</label>
-                            <input type="text" name="generic_name" class="form-control">
+                            <select name="generic_name_id" class="form-select">
+                                <option value="">— None —</option>
+                                @foreach($generics ?? [] as $g)
+                                    <option value="{{ $g->id }}">{{ $g->name }}@if($g->therapeutic_class) — <span>{{ $g->therapeutic_class }}</span>@endif</option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Pick from the seeded WHO/essential drugs list.</small>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Brand Name</label>

@@ -15,6 +15,7 @@ class Drug extends Model
     protected $fillable = [
         'product_id',
         'category_id',
+        'generic_name_id',
         'name',
         'generic_name',
         'brand_name',
@@ -45,6 +46,33 @@ class Drug extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function genericName(): BelongsTo
+    {
+        return $this->belongsTo(DrugGenericName::class, 'generic_name_id');
+    }
+
+    /**
+     * Resolve the displayed name: prefer the linked Product's name, fall back to the local column.
+     */
+    public function getDisplayNameAttribute(): string
+    {
+        $base = $this->product?->name ?? ($this->name ?? '—');
+        if ($this->strength) {
+            $base .= " ({$this->strength})";
+        }
+        return $base;
+    }
+
+    /**
+     * Resolve the generic name: prefer the linked DrugGenericName, fall back to the legacy string column.
+     */
+    public function getGenericLabelAttribute(): ?string
+    {
+        return $this->relationLoaded('genericName')
+            ? ($this->genericName?->name ?? $this->generic_name)
+            : ($this->generic_name_id ? optional($this->genericName)->name : $this->generic_name);
     }
 
     public function stocks(): HasMany
@@ -102,14 +130,5 @@ class Drug extends Model
     {
         $reorder = (float) ($this->reorder_level ?? 0);
         return $this->total_stock <= $reorder;
-    }
-
-    public function getDisplayNameAttribute(): string
-    {
-        $name = $this->name;
-        if ($this->strength) {
-            $name .= " ({$this->strength})";
-        }
-        return $name;
     }
 }

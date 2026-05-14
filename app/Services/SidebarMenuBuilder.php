@@ -138,12 +138,6 @@ class SidebarMenuBuilder
                         'active_patterns' => ['admin.procedures.*'],
                         'children' => [
                             [
-                                'label' => 'Procedure Catalog',
-                                'route' => 'admin.procedures.index',
-                                'active_patterns' => ['admin.procedures.index'],
-                                'permission' => 'procedures.view',
-                            ],
-                            [
                                 'label' => 'Scheduled Procedures',
                                 'route' => 'admin.procedures.schedule',
                                 'active_patterns' => ['admin.procedures.schedule'],

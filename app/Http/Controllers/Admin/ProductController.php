@@ -69,6 +69,13 @@ class ProductController extends Controller
 
     protected function validatePayload(Request $request, ?int $ignoreId = null): array
     {
+        // Ensure department_ids is always present in the validated payload so
+        // unchecking all departments correctly clears the link table (instead of
+        // silently keeping the old links because the key was missing).
+        if (!$request->has('department_ids')) {
+            $request->merge(['department_ids' => []]);
+        }
+
         return $request->validate([
             'name'           => 'required|string|max:191',
             'code'           => 'nullable|string|max:60',
@@ -78,7 +85,7 @@ class ProductController extends Controller
             'reorder_level'  => 'nullable|numeric|min:0',
             'default_cost'   => 'nullable|numeric|min:0',
             'is_active'      => 'nullable|boolean',
-            'department_ids' => 'nullable|array',
+            'department_ids' => 'present|array',
             'department_ids.*' => 'integer|exists:departments,id',
         ]);
     }
