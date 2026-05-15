@@ -1,14 +1,17 @@
 <template>
     <Head :title="title" />
     <div
+        ref="legacyRoot"
         class="uhms-inertia-legacy-page"
         v-html="html"
+        @click="handleClick"
+        @submit="handleSubmit"
     />
 </template>
 
 <script setup>
-import { Head } from '@inertiajs/vue3';
-import { nextTick, onMounted, onUnmounted, watch } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
+import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { cleanupBootstrapModals } from '../../utils/modalCleanup';
 
 const props = defineProps({
@@ -36,6 +39,107 @@ const props = defineProps({
 
 let scriptRunId = 0;
 let styleRunId = 0;
+const legacyRoot = ref(null);
+
+function isPlainLeftClick(event) {
+    return (
+        event.button === 0 &&
+        !event.metaKey &&
+        !event.ctrlKey &&
+        !event.shiftKey &&
+        !event.altKey
+    );
+}
+
+function isSameOrigin(url) {
+    try {
+        const u = new URL(url, window.location.href);
+        return u.origin === window.location.origin;
+    } catch (_) {
+        return false;
+    }
+}
+
+function shouldIgnoreAnchor(anchor) {
+    if (!anchor || !anchor.getAttribute) return true;
+    const href = anchor.getAttribute('href');
+    if (!href) return true;
+    if (href.startsWith('#')) return true;
+    if (/^(mailto:|tel:|javascript:|data:|blob:)/i.test(href)) return true;
+    if (anchor.hasAttribute('download')) return true;
+    if (anchor.hasAttribute('data-no-inertia')) return true;
+    if (anchor.target && anchor.target !== '' && anchor.target !== '_self') return true;
+    if (anchor.getAttribute('role') === 'button' && !href.replace('#', '')) return true;
+    // Skip Bootstrap / jQuery toggle anchors that shouldn't navigate.
+    const toggle = anchor.getAttribute('data-bs-toggle') || anchor.getAttribute('data-toggle');
+    if (toggle) return true;
+    if (!isSameOrigin(anchor.href)) return true;
+    return false;
+}
+
+function handleClick(event) {
+    if (!isPlainLeftClick(event)) return;
+    const anchor = event.target.closest('a');
+    if (!anchor) return;
+    if (shouldIgnoreAnchor(anchor)) return;
+
+    const url = anchor.href;
+    event.preventDefault();
+
+    try {
+        router.visit(url, {
+            preserveScroll: false,
+            preserveState: false,
+            onError: () => {
+                window.location.href = url;
+            },
+        });
+    } catch (_) {
+        window.location.href = url;
+    }
+}
+
+function formHasFiles(form) {
+    return Array.from(form.elements).some(
+        (el) => el.type === 'file' && el.files && el.files.length > 0,
+    );
+}
+
+function handleSubmit(event) {
+    const form = event.target.closest('form');
+    if (!form) return;
+    if (form.hasAttribute('data-no-inertia')) return;
+    if (form.target && form.target !== '' && form.target !== '_self') return;
+    const action = form.action || window.location.href;
+    if (!isSameOrigin(action)) return;
+
+    const method = (form.getAttribute('method') || 'get').toLowerCase();
+    event.preventDefault();
+
+    const submitNative = () => {
+        // Remove our handler effect; submit through the form natively.
+        form.submit();
+    };
+
+    try {
+        const data = new FormData(form);
+        const visitMethod = method === 'get' ? 'get' : method;
+        const hasFiles = formHasFiles(form);
+        const enctype = (form.getAttribute('enctype') || '').toLowerCase();
+        const forceFormData = hasFiles || enctype === 'multipart/form-data';
+
+        router.visit(action, {
+            method: visitMethod,
+            data,
+            forceFormData,
+            preserveScroll: false,
+            preserveState: false,
+            onError: submitNative,
+        });
+    } catch (_) {
+        submitNative();
+    }
+}
 
 function injectLegacyStyles() {
     document
