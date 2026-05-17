@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
 class SidebarMenuBuilder
@@ -15,6 +16,15 @@ class SidebarMenuBuilder
     {
         if (! $user) {
             return [];
+        }
+
+        // Non-admin clinical staff get a focused consultation sidebar
+        if ($user->isConsultationUser() && ! $user->isAdminUser()) {
+            return $this->finaliseSections(
+                $this->consultationSections($unreadNotifications),
+                $user,
+                $currentRouteName
+            );
         }
 
         $sections = [
@@ -759,10 +769,197 @@ class SidebarMenuBuilder
             ],
         ];
 
+        return $this->finaliseSections($sections, $user, $currentRouteName);
+    }
+
+    protected function finaliseSections(array $sections, User $user, string $currentRouteName): array
+    {
         return array_values(array_filter(array_map(
             fn (array $section) => $this->filterSection($section, $user, $currentRouteName),
             $sections,
         )));
+    }
+
+    // ------------------------------------------------------------------
+    // Consultation / Doctor focused sidebar
+    // ------------------------------------------------------------------
+    protected function consultationSections(int $unreadNotifications): array
+    {
+        return [
+            [
+                'title' => 'Main Menu',
+                'items' => [
+                    [
+                        'label' => 'Dashboard',
+                        'icon' => 'ti ti-layout-dashboard',
+                        'route' => 'admin.dashboard',
+                        'active_patterns' => ['admin.dashboard', 'doctor.dashboard', 'dashboard'],
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Consultation Queue',
+                'items' => [
+                    [
+                        'label' => 'Consultation Queue',
+                        'icon' => 'ti ti-list-numbers',
+                        'route' => 'admin.queue.manage',
+                        'active_patterns' => ['admin.queue.*'],
+                        'permission' => 'consultation.queue',
+                    ],
+                    [
+                        'label' => 'My Appointments',
+                        'icon' => 'ti ti-calendar-event',
+                        'route' => 'admin.appointments.index',
+                        'active_patterns' => ['admin.appointments.*'],
+                        'permission' => 'appointments.view',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Clinical Work',
+                'items' => [
+                    [
+                        'label' => 'Patients',
+                        'icon' => 'ti ti-user-heart',
+                        'route' => 'admin.patients.index',
+                        'active_patterns' => ['admin.patients.*'],
+                        'permission' => 'consultation.view_patient',
+                    ],
+                    [
+                        'label' => 'Consultations',
+                        'icon' => 'ti ti-stethoscope',
+                        'route' => 'admin.consultations.index',
+                        'active_patterns' => ['admin.consultations.*'],
+                        'permission' => 'consultation.create',
+                    ],
+                    [
+                        'label' => 'Vitals',
+                        'icon' => 'ti ti-heartbeat',
+                        'route' => 'admin.vitals.create',
+                        'active_patterns' => ['admin.vitals.*'],
+                        'permission' => 'vitals.view',
+                    ],
+                    [
+                        'label' => 'Visits / OPD',
+                        'icon' => 'ti ti-calendar-check',
+                        'route' => 'admin.visits.index',
+                        'active_patterns' => ['admin.visits.*'],
+                        'permission' => 'visits.view',
+                    ],
+                    [
+                        'label' => 'Admissions',
+                        'icon' => 'ti ti-bed',
+                        'route' => 'admin.admissions.index',
+                        'active_patterns' => ['admin.admissions.*'],
+                        'permission' => 'ward.view',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Requests & Results',
+                'items' => [
+                    [
+                        'label' => 'Prescriptions',
+                        'icon' => 'ti ti-prescription',
+                        'route' => 'admin.prescriptions.index',
+                        'active_patterns' => ['admin.prescriptions.*'],
+                        'permission' => 'consultation.prescribe',
+                    ],
+                    [
+                        'label' => 'Lab Requests',
+                        'icon' => 'ti ti-test-pipe',
+                        'route' => 'admin.lab.requests.index',
+                        'active_patterns' => ['admin.lab.requests.*'],
+                        'permission' => 'consultation.request_lab',
+                    ],
+                    [
+                        'label' => 'Lab Results',
+                        'icon' => 'ti ti-report-medical',
+                        'route' => 'admin.lab.results.index',
+                        'active_patterns' => ['admin.lab.results.*'],
+                        'permission' => 'consultation.view_results',
+                    ],
+                    [
+                        'label' => 'Procedures',
+                        'icon' => 'ti ti-surgery',
+                        'route' => 'admin.theatre.index',
+                        'active_patterns' => ['admin.theatre.*'],
+                        'permission' => 'consultation.request_procedure',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Clinical Tools',
+                'items' => [
+                    [
+                        'label' => 'ICD-10 Codes',
+                        'icon' => 'ti ti-medical-cross',
+                        'route' => 'admin.icd-codes.index',
+                        'active_patterns' => ['admin.icd-codes.*'],
+                        'permission' => 'icd.view',
+                    ],
+                    [
+                        'label' => 'Procedure Catalogue',
+                        'icon' => 'ti ti-list-details',
+                        'route' => 'admin.procedure-catalogue.index',
+                        'active_patterns' => ['admin.procedure-catalogue.*'],
+                        'permission' => 'procedure.catalogue.view',
+                    ],
+                    [
+                        'label' => 'Investigation Catalogue',
+                        'icon' => 'ti ti-flask',
+                        'route' => 'admin.investigation-catalogue.index',
+                        'active_patterns' => ['admin.investigation-catalogue.*'],
+                        'permission' => 'investigation.catalogue.view',
+                    ],
+                    [
+                        'label' => 'Medical Patterns',
+                        'icon' => 'ti ti-template',
+                        'route' => 'admin.patterns.index',
+                        'active_patterns' => ['admin.patterns.*'],
+                        'permission' => 'consultations.view',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Reports',
+                'items' => [
+                    [
+                        'label' => 'Clinical Reports',
+                        'icon' => 'ti ti-report',
+                        'route' => 'admin.reports.visits',
+                        'active_patterns' => ['admin.reports.*'],
+                        'permission' => 'reports.view',
+                    ],
+                ],
+            ],
+            [
+                'title' => null,
+                'items' => [
+                    [
+                        'label' => 'Notifications',
+                        'icon' => 'ti ti-bell',
+                        'route' => 'admin.notifications.index',
+                        'active_patterns' => ['admin.notifications.*'],
+                        'permission' => 'notifications.view',
+                        'badge' => $unreadNotifications > 0 ? $unreadNotifications : null,
+                        'badge_class' => 'badge bg-danger rounded-pill ms-auto',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Profile',
+                'items' => [
+                    [
+                        'label' => 'My Profile',
+                        'icon' => 'ti ti-user-circle',
+                        'route' => 'admin.profile',
+                        'active_patterns' => ['admin.profile'],
+                    ],
+                ],
+            ],
+        ];
     }
 
     protected function filterSection(array $section, User $user, string $currentRouteName): ?array
@@ -808,6 +1005,11 @@ class SidebarMenuBuilder
 
     protected function isVisible(array $item, User $user): bool
     {
+        // Drop items whose named route doesn't exist in this installation
+        if (! empty($item['route']) && ! Route::has($item['route'])) {
+            return false;
+        }
+
         if (! empty($item['module']) && ! $this->moduleService->enabled($item['module'])) {
             return false;
         }

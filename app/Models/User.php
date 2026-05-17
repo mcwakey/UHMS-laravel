@@ -108,4 +108,78 @@ class User extends Authenticatable
     {
         return $query->role($role);
     }
+
+    /* ── Role helpers ─────────────────────────────────── */
+
+    /**
+     * Roles that have access to the consultation/clinical workflow.
+     * Used by SidebarMenuBuilder and middleware to gate the doctor view.
+     */
+    public const CONSULTATION_ROLES = [
+        'Doctor',
+        'Consultant',
+        'Specialist',
+        'Physician Assistant',
+        'Anaesthetist',
+    ];
+
+    /**
+     * Roles that operate in theatre/procedure workflow.
+     */
+    public const THEATRE_ROLES = [
+        'Anaesthetist',
+        'Theatre Nurse',
+    ];
+
+    public function isAdminUser(): bool
+    {
+        return $this->hasAnyRole(['Super Admin', 'Admin']);
+    }
+
+    public function isDoctor(): bool
+    {
+        return $this->hasAnyRole(self::CONSULTATION_ROLES);
+    }
+
+    /**
+     * True when the user should see the consultation-focused sidebar.
+     * Checks role name first (fast), then department type, then permission.
+     */
+    public function isConsultationUser(): bool
+    {
+        if ($this->hasAnyRole(self::CONSULTATION_ROLES)) {
+            return true;
+        }
+
+        // Department-based check (lazy-loaded)
+        if ($this->relationLoaded('department') && $this->department) {
+            $type = $this->department->type;
+            $typeValue = ($type instanceof \BackedEnum) ? $type->value : (string) $type;
+            if ($typeValue === 'consultation') {
+                return true;
+            }
+        }
+
+        // Permission-based fallback
+        try {
+            return $this->can('consultation.access');
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    public function isStoreUser(): bool
+    {
+        return $this->hasAnyRole(['Super Admin', 'Admin', 'Store Keeper']);
+    }
+
+    public function isLabUser(): bool
+    {
+        return $this->hasAnyRole(['Lab Technician', 'Lab Manager', 'Radiologist']);
+    }
+
+    public function isTheatreUser(): bool
+    {
+        return $this->hasAnyRole(array_merge(['Theatre Nurse'], self::THEATRE_ROLES));
+    }
 }

@@ -13,39 +13,55 @@ class RoleSeeder extends Seeder
         // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Define permissions grouped by module
+        // ------------------------------------------------------------------
+        // PERMISSION DEFINITIONS
+        // Grouped by module for readability. All permissions use dot-notation.
+        // ------------------------------------------------------------------
         $permissions = [
-            // Patient module
+            // ── Patients ─────────────────────────────────────────────────
             'patients.view',
             'patients.create',
             'patients.edit',
             'patients.delete',
 
-            // Visit module
+            // ── Visits ────────────────────────────────────────────────────
             'visits.view',
             'visits.create',
             'visits.edit',
             'visits.transition',
 
-            // Queue module
+            // ── Queue ─────────────────────────────────────────────────────
             'queue.view',
             'queue.manage',
 
-            // Consultation / EHR
+            // ── Consultation / Clinical EHR ───────────────────────────────
             'consultations.view',
             'consultations.create',
             'consultations.edit',
+            // Consultation workflow (for Doctors, Consultants, etc.)
+            'consultation.access',          // can enter consultation area
+            'consultation.dashboard',       // consultation summary dashboard
+            'consultation.queue',           // see & pick up consultation queue
+            'consultation.history',         // view patient consultation history
+            'consultation.create',          // write a new consultation note
+            'consultation.complete',        // mark consultation as complete
+            'consultation.refer',           // refer patient to another dept
+            'consultation.prescribe',       // prescribe from consultation
+            'consultation.request_lab',     // request investigations
+            'consultation.request_procedure', // request procedures
+            'consultation.view_results',    // view lab/procedure results
+            'consultation.view_patient',    // view full patient profile
 
-            // Vitals
+            // ── Vitals ────────────────────────────────────────────────────
             'vitals.view',
             'vitals.create',
 
-            // Prescriptions
+            // ── Prescriptions ─────────────────────────────────────────────
             'prescriptions.view',
             'prescriptions.create',
             'prescriptions.edit',
 
-            // Lab
+            // ── Lab / Investigations ──────────────────────────────────────
             'lab.requests.view',
             'lab.requests.create',
             'lab.results.view',
@@ -53,69 +69,96 @@ class RoleSeeder extends Seeder
             'lab.results.verify',
             'lab.tests.manage',
 
-            // Pharmacy
+            // ── Pharmacy ──────────────────────────────────────────────────
             'pharmacy.dispensing.view',
             'pharmacy.dispensing.create',
             'pharmacy.drugs.manage',
             'pharmacy.stock.manage',
 
-            // Billing
+            // ── Billing & Finance ─────────────────────────────────────────
             'invoices.view',
             'invoices.create',
             'invoices.edit',
+            'invoices.void',
             'payments.view',
             'payments.create',
+            'payments.void',
             'services.manage',
 
-            // Users & Roles
+            // ── Users & Roles ─────────────────────────────────────────────
             'users.view',
             'users.create',
             'users.edit',
             'users.delete',
             'roles.manage',
 
-            // Departments
+            // ── Departments ───────────────────────────────────────────────
             'departments.view',
             'departments.manage',
             'departments.create',
             'departments.edit',
             'departments.delete',
 
-            // Appointments
+            // ── Appointments ──────────────────────────────────────────────
             'appointments.view',
             'appointments.create',
             'appointments.edit',
             'appointments.delete',
 
-            // Claims & Insurance
+            // ── Claims & Insurance ────────────────────────────────────────
             'claims.view',
             'claims.create',
             'claims.approve',
             'claims.export',
 
-            // Store & Procurement
+            // ── Store & Procurement ───────────────────────────────────────
             'store.purchase.view',
             'store.purchase.create',
             'store.purchase.approve',
             'store.transfer.view',
             'store.transfer.create',
 
-            // Accounts & Finance
+            // ── Products (master catalogue — Store/Admin only creates) ─────
+            'product.view',
+            'product.create',
+            'product.edit',
+            'product.link_departments',
+            'product.link_department',      // alias used by some routes
+
+            // ── Stock Management ──────────────────────────────────────────
+            'stock.location.manage',        // create/edit stock locations
+            'stock_location.manage',        // legacy alias kept for old routes
+            'stock.view',
+            'stock.view_balance',
+            'stock.transfer',
+            'stock.adjust',
+            'stock.receive',
+            'stock.return',
+            'stock.override_negative',      // allow dispensing below zero
+
+            // ── Supplier Ledger ───────────────────────────────────────────
+            'supplier.manage',
+            'supplier.ledger.view',
+            'supplier.payment.create',
+            'supplier.return.create',
+
+            // ── Accounts & Finance ────────────────────────────────────────
             'accounts.manage',
             'accounts.entries.view',
             'accounts.entries.create',
             'accounts.entries.approve',
             'accounts.cashier',
 
-            // Ward & Inpatient
+            // ── Ward & Inpatient ──────────────────────────────────────────
             'ward.view',
             'ward.manage',
             'ward.admit',
             'ward.discharge',
+            'ward.consumable.use',          // record ward consumable usage
             'beds.view',
             'beds.manage',
 
-            // HR & Payroll
+            // ── HR & Payroll ──────────────────────────────────────────────
             'hr.employees.view',
             'hr.employees.create',
             'hr.employees.edit',
@@ -127,16 +170,17 @@ class RoleSeeder extends Seeder
             'hr.attendance.view',
             'hr.attendance.manage',
 
-            // Notifications
+            // ── Notifications ─────────────────────────────────────────────
             'notifications.view',
 
-            // Clinical Coding & Procedures
+            // ── Clinical Coding ───────────────────────────────────────────
+            'icd.view',
             'icd.manage',
+
+            // ── Procedure / Theatre Workflow ──────────────────────────────
             'procedures.view',
             'procedures.create',
             'procedures.edit',
-
-            // Theatre / Procedure Workflow
             'procedure.request',
             'procedure.view',
             'procedure.accept',
@@ -153,71 +197,64 @@ class RoleSeeder extends Seeder
             'procedure.print',
             'procedure.view_report',
 
-            // Procedure Catalogue (templates + default consumables)
-            'procedure_catalogue.view',
+            // ── Procedure Catalogue ───────────────────────────────────────
+            'procedure.catalogue.view',     // dotted canonical
+            'procedure.catalogue.manage',
+            'procedure_catalogue.view',     // legacy underscore alias
             'procedure_catalogue.manage',
             'procedure_template.manage',
             'service_consumable.manage',
-            'consumable_usage.record',
 
-            // Products (parallel store catalogue)
-            'product.view',
-            'product.create',
-            'product.edit',
-            'product.link_departments',
-            'product.link_department', // alias used by some routes
-            'stock_location.manage',
-            'stock.view',
-            'stock.view_balance',
-            'stock.transfer',
-            'stock.adjust',
-            'stock.receive',
-            'stock.return',
-            'stock.override_negative',
-
-            // Supplier ledger
-            'supplier.manage',
-            'supplier.ledger.view',
-            'supplier.payment.create',
-            'supplier.return.create',
-
-            // Investigation catalogue (parallel to procedure_catalogue.manage)
+            // ── Investigation Catalogue ────────────────────────────────────
             'investigation.catalogue.view',
             'investigation.catalogue.manage',
 
-            // Consumable usage (semantic alias)
-            'consumable.use',
+            // ── Consumable Usage ──────────────────────────────────────────
+            'consumable_usage.record',      // legacy alias
+            'consumable.use',               // canonical
 
-            // Analyzer Integration
+            // ── Analyzer Integration ──────────────────────────────────────
             'analyzer.manage',
 
-            // Reports
+            // ── Reports ───────────────────────────────────────────────────
             'reports.view',
+            'reports.generate',
 
-            // Settings
+            // ── Settings ─────────────────────────────────────────────────
+            'settings.view',
             'settings.manage',
 
-            // Modules Management (admin-only)
+            // ── Modules ───────────────────────────────────────────────────
             'modules.manage',
         ];
 
-        // Create permissions
+        // Create all permissions
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission]);
         }
 
-        // Create roles and assign permissions
+        // ------------------------------------------------------------------
+        // ROLE DEFINITIONS
+        // ------------------------------------------------------------------
+
+        // ── Super Admin & Admin ───────────────────────────────────────────
         $superAdmin = Role::firstOrCreate(['name' => 'Super Admin']);
-        $superAdmin->givePermissionTo(Permission::all());
+        $superAdmin->syncPermissions(Permission::all());
 
         $admin = Role::firstOrCreate(['name' => 'Admin']);
-        $admin->givePermissionTo(Permission::all());
+        $admin->syncPermissions(Permission::all());
 
-        $doctor = Role::firstOrCreate(['name' => 'Doctor']);
-        $doctor->givePermissionTo([
+        // ── Doctor ────────────────────────────────────────────────────────
+        // Full clinical access including consultation workflow
+        $doctorPerms = [
             'patients.view',
             'visits.view', 'visits.transition',
             'consultations.view', 'consultations.create', 'consultations.edit',
+            'consultation.access', 'consultation.dashboard', 'consultation.queue',
+            'consultation.history', 'consultation.create', 'consultation.complete',
+            'consultation.refer', 'consultation.prescribe',
+            'consultation.request_lab', 'consultation.request_procedure',
+            'consultation.view_results', 'consultation.view_patient',
             'vitals.view',
             'prescriptions.view', 'prescriptions.create', 'prescriptions.edit',
             'lab.requests.view', 'lab.requests.create',
@@ -229,12 +266,56 @@ class RoleSeeder extends Seeder
             'procedures.view', 'procedures.create',
             'procedure.request', 'procedure.view', 'procedure.view_report',
             'procedure.record_anaesthesia', 'procedure.record_surgery',
-            'procedure_catalogue.view', 'consumable_usage.record',
+            'procedure.catalogue.view', 'procedure_catalogue.view',
+            'consumable_usage.record', 'consumable.use',
+            'investigation.catalogue.view',
+            'icd.view',
+            'product.view',
+            'reports.view',
+        ];
+
+        $doctor = Role::firstOrCreate(['name' => 'Doctor']);
+        $doctor->syncPermissions($doctorPerms);
+
+        // ── Consultant ────────────────────────────────────────────────────
+        // Same clinical depth as Doctor; specialised outpatient consultant
+        $consultant = Role::firstOrCreate(['name' => 'Consultant']);
+        $consultant->syncPermissions($doctorPerms);
+
+        // ── Specialist ────────────────────────────────────────────────────
+        $specialist = Role::firstOrCreate(['name' => 'Specialist']);
+        $specialist->syncPermissions($doctorPerms);
+
+        // ── Physician Assistant ───────────────────────────────────────────
+        // Slightly reduced: no admit/discharge, no procedure recording
+        $physicianAssistant = Role::firstOrCreate(['name' => 'Physician Assistant']);
+        $physicianAssistant->syncPermissions([
+            'patients.view',
+            'visits.view', 'visits.transition',
+            'consultations.view', 'consultations.create', 'consultations.edit',
+            'consultation.access', 'consultation.dashboard', 'consultation.queue',
+            'consultation.history', 'consultation.create', 'consultation.complete',
+            'consultation.refer', 'consultation.prescribe',
+            'consultation.request_lab', 'consultation.request_procedure',
+            'consultation.view_results', 'consultation.view_patient',
+            'vitals.view',
+            'prescriptions.view', 'prescriptions.create',
+            'lab.requests.view', 'lab.requests.create',
+            'lab.results.view',
+            'queue.view',
+            'ward.view',
+            'appointments.view', 'appointments.create',
+            'notifications.view',
+            'procedures.view', 'procedure.request', 'procedure.view',
+            'procedure.catalogue.view', 'procedure_catalogue.view',
+            'investigation.catalogue.view',
+            'icd.view',
             'product.view',
         ]);
 
+        // ── Nurse ─────────────────────────────────────────────────────────
         $nurse = Role::firstOrCreate(['name' => 'Nurse']);
-        $nurse->givePermissionTo([
+        $nurse->syncPermissions([
             'patients.view',
             'visits.view', 'visits.transition',
             'vitals.view', 'vitals.create',
@@ -244,12 +325,70 @@ class RoleSeeder extends Seeder
             'notifications.view',
             'procedures.view',
             'procedure.view', 'procedure.record_preop', 'procedure.record_postop',
-            'procedure_catalogue.view', 'consumable_usage.record',
-            'product.view',
+            'procedure.catalogue.view', 'procedure_catalogue.view',
+            'consumable_usage.record', 'consumable.use',
+            'product.view', 'stock.view_balance',
         ]);
 
+        // ── Ward Nurse ────────────────────────────────────────────────────
+        // Nurse with expanded inpatient and ward consumable access
+        $wardNurse = Role::firstOrCreate(['name' => 'Ward Nurse']);
+        $wardNurse->syncPermissions([
+            'patients.view',
+            'visits.view', 'visits.transition',
+            'vitals.view', 'vitals.create',
+            'queue.view', 'queue.manage',
+            'prescriptions.view',
+            'ward.view', 'ward.admit', 'ward.discharge', 'ward.manage',
+            'beds.view', 'beds.manage',
+            'notifications.view',
+            'procedures.view',
+            'procedure.view', 'procedure.record_preop', 'procedure.record_postop',
+            'procedure.catalogue.view', 'procedure_catalogue.view',
+            'consumable_usage.record', 'consumable.use', 'ward.consumable.use',
+            'product.view', 'stock.view_balance',
+        ]);
+
+        // ── Theatre Nurse ─────────────────────────────────────────────────
+        // Scrub/circulating nurse: full procedure workflow + consumable recording
+        $theatreNurse = Role::firstOrCreate(['name' => 'Theatre Nurse']);
+        $theatreNurse->syncPermissions([
+            'patients.view',
+            'visits.view',
+            'vitals.view', 'vitals.create',
+            'queue.view',
+            'prescriptions.view',
+            'procedures.view',
+            'procedure.view', 'procedure.accept',
+            'procedure.record_preop', 'procedure.record_postop',
+            'procedure.schedule', 'procedure.complete', 'procedure.print',
+            'procedure.catalogue.view', 'procedure_catalogue.view',
+            'consumable_usage.record', 'consumable.use',
+            'product.view', 'stock.view', 'stock.view_balance',
+            'notifications.view',
+        ]);
+
+        // ── Anaesthetist ──────────────────────────────────────────────────
+        $anaesthetist = Role::firstOrCreate(['name' => 'Anaesthetist']);
+        $anaesthetist->syncPermissions([
+            'patients.view',
+            'visits.view',
+            'vitals.view', 'vitals.create',
+            'queue.view',
+            'procedures.view',
+            'procedure.view', 'procedure.record_preop',
+            'procedure.record_anaesthesia', 'procedure.record_surgery',
+            'procedure.record_postop', 'procedure.view_report',
+            'procedure.catalogue.view', 'procedure_catalogue.view',
+            'icd.view',
+            'consumable_usage.record', 'consumable.use',
+            'product.view', 'stock.view_balance',
+            'notifications.view',
+        ]);
+
+        // ── Receptionist ──────────────────────────────────────────────────
         $receptionist = Role::firstOrCreate(['name' => 'Receptionist']);
-        $receptionist->givePermissionTo([
+        $receptionist->syncPermissions([
             'patients.view', 'patients.create', 'patients.edit',
             'visits.view', 'visits.create', 'visits.edit', 'visits.transition',
             'queue.view', 'queue.manage',
@@ -258,8 +397,21 @@ class RoleSeeder extends Seeder
             'notifications.view',
         ]);
 
+        // ── Cashier ───────────────────────────────────────────────────────
+        // Payment collection only; cannot modify invoices
+        $cashier = Role::firstOrCreate(['name' => 'Cashier']);
+        $cashier->syncPermissions([
+            'patients.view',
+            'visits.view',
+            'invoices.view',
+            'payments.view', 'payments.create',
+            'accounts.cashier',
+            'notifications.view',
+        ]);
+
+        // ── Lab Technician ────────────────────────────────────────────────
         $labTech = Role::firstOrCreate(['name' => 'Lab Technician']);
-        $labTech->givePermissionTo([
+        $labTech->syncPermissions([
             'patients.view',
             'visits.view',
             'lab.requests.view',
@@ -270,11 +422,52 @@ class RoleSeeder extends Seeder
             'product.view', 'stock.view', 'stock.view_balance',
             'consumable_usage.record', 'consumable.use',
             'queue.view',
+            'icd.view',
             'notifications.view',
         ]);
 
+        // ── Lab Manager ───────────────────────────────────────────────────
+        // Lab Tech + catalogue management + stock adjustments for lab
+        $labManager = Role::firstOrCreate(['name' => 'Lab Manager']);
+        $labManager->syncPermissions([
+            'patients.view',
+            'visits.view',
+            'lab.requests.view',
+            'lab.results.view', 'lab.results.create', 'lab.results.verify',
+            'lab.tests.manage',
+            'investigation.catalogue.view', 'investigation.catalogue.manage',
+            'analyzer.manage',
+            'product.view', 'stock.view', 'stock.view_balance',
+            'stock.adjust', 'stock.return',
+            'consumable_usage.record', 'consumable.use',
+            'queue.view',
+            'icd.view',
+            'reports.view',
+            'notifications.view',
+        ]);
+
+        // ── Radiologist ───────────────────────────────────────────────────
+        // Reads imaging requests, records findings, can request procedures
+        $radiologist = Role::firstOrCreate(['name' => 'Radiologist']);
+        $radiologist->syncPermissions([
+            'patients.view',
+            'visits.view',
+            'lab.requests.view',
+            'lab.results.view', 'lab.results.create', 'lab.results.verify',
+            'procedures.view',
+            'procedure.view', 'procedure.record_surgery', 'procedure.view_report',
+            'procedure.catalogue.view', 'procedure_catalogue.view',
+            'investigation.catalogue.view',
+            'icd.view',
+            'product.view', 'stock.view_balance',
+            'consumable_usage.record', 'consumable.use',
+            'queue.view',
+            'notifications.view',
+        ]);
+
+        // ── Pharmacist ────────────────────────────────────────────────────
         $pharmacist = Role::firstOrCreate(['name' => 'Pharmacist']);
-        $pharmacist->givePermissionTo([
+        $pharmacist->syncPermissions([
             'patients.view',
             'visits.view', 'visits.transition',
             'prescriptions.view',
@@ -287,23 +480,26 @@ class RoleSeeder extends Seeder
             'notifications.view',
         ]);
 
+        // ── Accountant ────────────────────────────────────────────────────
         $accountant = Role::firstOrCreate(['name' => 'Accountant']);
-        $accountant->givePermissionTo([
+        $accountant->syncPermissions([
             'patients.view',
             'visits.view',
-            'invoices.view', 'invoices.create', 'invoices.edit',
-            'payments.view', 'payments.create',
+            'invoices.view', 'invoices.create', 'invoices.edit', 'invoices.void',
+            'payments.view', 'payments.create', 'payments.void',
             'services.manage',
-            'reports.view',
+            'reports.view', 'reports.generate',
             'claims.view',
             'accounts.manage',
             'accounts.entries.view', 'accounts.entries.create', 'accounts.entries.approve',
             'accounts.cashier',
+            'supplier.ledger.view',
             'notifications.view',
         ]);
 
+        // ── Claims Officer ────────────────────────────────────────────────
         $claimsOfficer = Role::firstOrCreate(['name' => 'Claims Officer']);
-        $claimsOfficer->givePermissionTo([
+        $claimsOfficer->syncPermissions([
             'patients.view',
             'visits.view',
             'invoices.view',
@@ -312,23 +508,29 @@ class RoleSeeder extends Seeder
             'notifications.view',
         ]);
 
+        // ── Store Keeper ──────────────────────────────────────────────────
+        // Only role (outside Admin) that can CREATE products and manage stock
         $storeKeeper = Role::firstOrCreate(['name' => 'Store Keeper']);
-        $storeKeeper->givePermissionTo([
+        $storeKeeper->syncPermissions([
             'patients.view',
             'store.purchase.view', 'store.purchase.create', 'store.purchase.approve',
             'store.transfer.view', 'store.transfer.create',
             'pharmacy.drugs.manage', 'pharmacy.stock.manage',
-            // Product / stock management (Store is the only catalogue creator)
-            'product.view', 'product.create', 'product.edit', 'product.link_departments', 'product.link_department',
-            'stock_location.manage',
-            'stock.view', 'stock.view_balance', 'stock.transfer', 'stock.adjust', 'stock.receive', 'stock.return',
-            // Supplier ledger
-            'supplier.manage', 'supplier.ledger.view', 'supplier.payment.create', 'supplier.return.create',
+            'product.view', 'product.create', 'product.edit',
+            'product.link_departments', 'product.link_department',
+            'stock.location.manage', 'stock_location.manage',
+            'stock.view', 'stock.view_balance',
+            'stock.transfer', 'stock.adjust', 'stock.receive', 'stock.return',
+            'stock.override_negative',
+            'supplier.manage', 'supplier.ledger.view',
+            'supplier.payment.create', 'supplier.return.create',
+            'reports.view',
             'notifications.view',
         ]);
 
+        // ── HR Manager ────────────────────────────────────────────────────
         $hrManager = Role::firstOrCreate(['name' => 'HR Manager']);
-        $hrManager->givePermissionTo([
+        $hrManager->syncPermissions([
             'hr.employees.view', 'hr.employees.create', 'hr.employees.edit',
             'hr.leave.view', 'hr.leave.create', 'hr.leave.approve',
             'hr.payroll.view', 'hr.payroll.process',
