@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
 class SidebarMenuBuilder
@@ -15,6 +16,16 @@ class SidebarMenuBuilder
     {
         if (! $user) {
             return [];
+        }
+
+        // Consultation-type clinicians get a focused clinical menu instead of
+        // the full super-admin tree. Admins always keep the full menu.
+        if ($user->isConsultationUser() && ! $user->isAdminUser()) {
+            return $this->finaliseSections(
+                $this->consultationSections($unreadNotifications),
+                $user,
+                $currentRouteName,
+            );
         }
 
         $sections = [
@@ -759,6 +770,11 @@ class SidebarMenuBuilder
             ],
         ];
 
+        return $this->finaliseSections($sections, $user, $currentRouteName);
+    }
+
+    protected function finaliseSections(array $sections, User $user, string $currentRouteName): array
+    {
         return array_values(array_filter(array_map(
             fn (array $section) => $this->filterSection($section, $user, $currentRouteName),
             $sections,
@@ -808,6 +824,12 @@ class SidebarMenuBuilder
 
     protected function isVisible(array $item, User $user): bool
     {
+        // Defensive: silently drop any menu entry pointing at a route that
+        // doesn't exist (e.g. mapped to a module that was disabled or removed).
+        if (! empty($item['route']) && ! Route::has($item['route'])) {
+            return false;
+        }
+
         if (! empty($item['module']) && ! $this->moduleService->enabled($item['module'])) {
             return false;
         }
@@ -842,5 +864,181 @@ class SidebarMenuBuilder
         }
 
         return false;
+    }
+
+    /**
+     * Focused sidebar for consultation-type clinicians (Doctor / Consultant /
+     * Specialist / Physician Assistant / consultation-department users).
+     *
+     * Only includes items whose underlying route exists today (enforced by
+     * `Route::has()` in `isVisible()`). Items that map to features not yet
+     * built are silently hidden, never broken links.
+     */
+    protected function consultationSections(int $unreadNotifications = 0): array
+    {
+        return [
+            [
+                'title' => 'Main Menu',
+                'items' => [
+                    [
+                        'label' => 'Consultation Dashboard',
+                        'icon' => 'ti ti-layout-dashboard',
+                        'route' => 'doctor.dashboard',
+                        'active_patterns' => ['doctor.dashboard', 'dashboard', 'consultation.dashboard'],
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Consultation Queue',
+                'items' => [
+                    [
+                        'label' => 'Active Consultations',
+                        'icon' => 'ti ti-stethoscope',
+                        'route' => 'admin.consultations.index',
+                        'active_patterns' => ['admin.consultations.*'],
+                        'permission' => 'consultations.view',
+                        'module' => 'consultation',
+                    ],
+                    [
+                        'label' => 'Department Queue',
+                        'icon' => 'ti ti-list-numbers',
+                        'route' => 'admin.queue.manage',
+                        'active_patterns' => ['admin.queue.manage'],
+                        'permission' => 'queue.view',
+                    ],
+                    [
+                        'label' => 'Queue Board',
+                        'icon' => 'ti ti-layout-board',
+                        'route' => 'admin.queue.board',
+                        'active_patterns' => ['admin.queue.board'],
+                        'permission' => 'queue.view',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Clinical Work',
+                'items' => [
+                    [
+                        'label' => 'Patient Search',
+                        'icon' => 'ti ti-user-search',
+                        'route' => 'admin.patients.index',
+                        'active_patterns' => ['admin.patients.*'],
+                        'permission' => 'patients.view',
+                        'module' => 'patients',
+                    ],
+                    [
+                        'label' => 'Visits / OPD',
+                        'icon' => 'ti ti-calendar-check',
+                        'route' => 'admin.visits.index',
+                        'active_patterns' => ['admin.visits.*'],
+                        'permission' => 'visits.view',
+                        'module' => 'visits',
+                    ],
+                    [
+                        'label' => 'Follow-ups / Appointments',
+                        'icon' => 'ti ti-calendar-event',
+                        'route' => 'admin.appointments.index',
+                        'active_patterns' => ['admin.appointments.*'],
+                        'permission' => 'appointments.view',
+                    ],
+                    [
+                        'label' => 'Triage',
+                        'icon' => 'ti ti-heartbeat',
+                        'route' => 'admin.triage.index',
+                        'active_patterns' => ['admin.triage.*'],
+                        'permission' => 'vitals.view',
+                        'module' => 'triage',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Requests & Results',
+                'items' => [
+                    [
+                        'label' => 'Lab Requests',
+                        'icon' => 'ti ti-flask',
+                        'route' => 'admin.lab.requests.index',
+                        'active_patterns' => ['admin.lab.requests.*'],
+                        'permission' => 'lab.requests.view',
+                        'module' => 'investigations',
+                    ],
+                    [
+                        'label' => 'Investigation Results',
+                        'icon' => 'ti ti-report-medical',
+                        'route' => 'admin.lab.results.index',
+                        'active_patterns' => ['admin.lab.results.*'],
+                        'permission' => 'lab.results.view',
+                        'module' => 'investigations',
+                    ],
+                    [
+                        'label' => 'Procedure Reports',
+                        'icon' => 'ti ti-file-description',
+                        'route' => 'admin.procedures.index',
+                        'active_patterns' => ['admin.procedures.*'],
+                        'permission' => 'procedures.view',
+                        'module' => 'consultation',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Clinical Tools',
+                'items' => [
+                    [
+                        'label' => 'ICD-10 Codes',
+                        'icon' => 'ti ti-medical-cross',
+                        'route' => 'admin.icd-codes.index',
+                        'active_patterns' => ['admin.icd-codes.*', 'admin.icd-search'],
+                        'permissions_any' => ['icd.view', 'icd.manage'],
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Reports',
+                'items' => [
+                    [
+                        'label' => 'Consultation Stats',
+                        'icon' => 'ti ti-report',
+                        'route' => 'admin.reports.consultation-stats',
+                        'active_patterns' => ['admin.reports.consultation-stats'],
+                        'permission' => 'reports.view',
+                        'module' => 'reports',
+                    ],
+                    [
+                        'label' => 'Visits Report',
+                        'icon' => 'ti ti-report-analytics',
+                        'route' => 'admin.reports.visits',
+                        'active_patterns' => ['admin.reports.visits'],
+                        'permission' => 'reports.view',
+                        'module' => 'reports',
+                    ],
+                ],
+            ],
+            [
+                'title' => null,
+                'items' => [
+                    [
+                        'label' => 'Notifications',
+                        'icon' => 'ti ti-bell',
+                        'route' => 'admin.notifications.index',
+                        'active_patterns' => ['admin.notifications.*'],
+                        'permission' => 'notifications.view',
+                        'module' => 'notifications',
+                        'badge' => $unreadNotifications > 0 ? $unreadNotifications : null,
+                        'badge_class' => 'badge bg-danger rounded-pill ms-auto',
+                    ],
+                ],
+            ],
+            [
+                'title' => 'Profile',
+                'items' => [
+                    [
+                        'label' => 'My Profile',
+                        'icon' => 'ti ti-user',
+                        'route' => 'admin.profile',
+                        'active_patterns' => ['admin.profile', 'admin.profile.*'],
+                    ],
+                ],
+            ],
+        ];
     }
 }

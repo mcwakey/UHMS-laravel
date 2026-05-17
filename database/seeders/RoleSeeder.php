@@ -199,6 +199,23 @@ class RoleSeeder extends Seeder
 
             // Modules Management (admin-only)
             'modules.manage',
+
+            // Consultation-type clinician menu/dashboard access
+            'consultation.access',
+            'consultation.dashboard.view',
+            'consultation.queue.view',
+            'consultation.start',
+            'consultation.continue',
+            'consultation.patient_search',
+            'consultation.previous_visits.view',
+            'consultation.appointments.view',
+            'consultation.results.view',
+            'consultation.procedure_reports.view',
+            'consultation.reports.view',
+            'consultation.referred.view',
+
+            // ICD view alias (icd.manage already covers editing)
+            'icd.view',
         ];
 
         // Create permissions
@@ -231,6 +248,21 @@ class RoleSeeder extends Seeder
             'procedure.record_anaesthesia', 'procedure.record_surgery',
             'procedure_catalogue.view', 'consumable_usage.record',
             'product.view',
+            // Consultation-type menu & dashboard
+            'consultation.access',
+            'consultation.dashboard.view',
+            'consultation.queue.view',
+            'consultation.start',
+            'consultation.continue',
+            'consultation.patient_search',
+            'consultation.previous_visits.view',
+            'consultation.appointments.view',
+            'consultation.results.view',
+            'consultation.procedure_reports.view',
+            'consultation.reports.view',
+            'consultation.referred.view',
+            'icd.view',
+            'reports.view',
         ]);
 
         $nurse = Role::firstOrCreate(['name' => 'Nurse']);
@@ -336,5 +368,12 @@ class RoleSeeder extends Seeder
             'reports.view',
             'notifications.view',
         ]);
+
+        // Consultation-type clinician roles — share the Doctor permission set.
+        // Kept as separate roles so departments/HR can assign granular titles.
+        foreach (['Consultant', 'Specialist', 'Physician Assistant'] as $clinicalRole) {
+            $role = Role::firstOrCreate(['name' => $clinicalRole]);
+            $role->syncPermissions($doctor->permissions);
+        }
     }
 }

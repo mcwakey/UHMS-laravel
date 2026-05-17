@@ -1,1114 +1,867 @@
 You are a senior Laravel + Inertia/Vue architect working on **UHMS — Ultimate Hospital Management System**.
 
-We need to make broad system and UI changes so UHMS properly supports the new **Product-as-single-source** architecture, department stock locations, service-based Investigation/Procedure catalogues, consumable usage, and supplier ledger.
+We need to redesign the **dashboard and sidebar/menu for consultation-type users** using the existing super-admin `SidebarMenuBuilder` as reference, but filtered and reshaped for clinical consultation work only.
 
-Focus on aligning UI, workflows, permissions, validation, and backend logic with this architecture.
+The current super-admin menu contains many sections such as Patient Services, Clinical, Ward/Inpatient, Pharmacy, Investigations, Billing, Claims, Store, Accounts, HR, Reports, Administration, Notifications, and Settings. Consultation-type users should not see all of these. Their menu must be focused on their daily clinical work.
 
-Do not refactor unrelated modules.
-
----
-
-# 1. Core Architecture Rule
-
-Apply this rule everywhere:
-
-```text
-Products = physical items
-Services = billable hospital activities
-```
-
-## Products
-
-A product is anything physically stocked, purchased, transferred, dispensed, consumed, returned, damaged, or expired.
-
-Examples:
-
-```text
-Paracetamol
-Ceftriaxone
-Gloves
-EDTA Tube
-Malaria RDT Kit
-Sutures
-Gauze
-Syringe
-X-ray Film
-Oxygen Mask
-```
-
-## Services
-
-A service is a billable hospital activity.
-
-Examples:
-
-```text
-General Consultation
-Full Blood Count
-Malaria Test
-Appendectomy
-Chest X-Ray
-Caesarean Section
-Wound Dressing
-```
-
-Important:
-
-* Do not create `drugs`, `lab_items`, `procedure_items`, or standalone `consumables` tables.
-* Products must handle all physical items.
-* Services must handle all billable hospital activities.
-* Investigation Catalogue is service-based.
-* Procedure Catalogue is service-based.
+Focus only on consultation-type dashboard/menu/sidebar, permissions, route visibility, queue shortcuts, and clinical reports. Do not refactor unrelated modules.
 
 ---
 
-# 2. Main Objective
+# 1. Main Objective
 
-Update the system so that:
+Create a dedicated menu and dashboard experience for consultation-type staff.
 
-1. Store/Procurement is the only place that creates products.
-2. Products can be linked to one or more departments.
-3. Department users can only see/use products linked to their department.
-4. Stock locations are linked to departments.
-5. Departments consume stock from their own stock location only.
-6. Pharmacy catalogue loads drugs from `products`.
-7. Investigation consumables load from `products`.
-8. Procedure consumables load from `products`.
-9. Investigation Catalogue loads services from investigation-type departments.
-10. Procedure Catalogue loads services from procedure/theatre-type departments.
-11. Default consumables are configured per service using products.
-12. Actual consumable usage creates stock movements.
-13. Supplier ledger tracks supplier-related purchases, payments, returns, and balances.
-14. UI menus and labels must reflect this new architecture clearly.
+Consultation-type users should see only menus relevant to:
+
+* consultation queue
+* active consultations
+* referred patients
+* patient clinical search
+* previous visits
+* prescriptions
+* investigation requests/results
+* procedure requests/reports
+* follow-up appointments
+* clinical tools
+* doctor-specific reports
+* notifications
+* profile/settings
+
+They must not see unrelated operational/admin areas unless explicitly permitted.
 
 ---
 
-# 3. Menu and UI Restructure
+# 2. Consultation-Type User Definition
 
-## Store / Procurement Menu
-
-Update Store/Procurement menu to be the master place for products and stock:
+A consultation-type user may be identified by one or more of:
 
 ```text
+role = doctor
+role = physician_assistant
+role = consultant
+role = specialist
+department.type = consultation
+user has permission consultation.access
+```
+
+Do not hardcode only `doctor`.
+
+Add or verify a helper on `User`:
+
+```php
+public function isConsultationUser(): bool
+{
+    return $this->hasAnyRole(['doctor', 'physician_assistant', 'consultant', 'specialist'])
+        || optional($this->department)->type === 'consultation'
+        || $this->can('consultation.access');
+}
+```
+
+Adapt to the project’s existing role/permission conventions.
+
+---
+
+# 3. Menu Builder Rule
+
+Update `SidebarMenuBuilder` or create a dedicated builder such as:
+
+```php
+ConsultationSidebarMenuBuilder
+```
+
+Recommended approach:
+
+```php
+if ($user->isConsultationUser() && ! $user->hasAnyRole(['super-admin', 'admin'])) {
+    return $this->buildConsultationMenu($user, $currentRouteName, $unreadNotifications);
+}
+```
+
+Rules:
+
+* Super-admin/admin still get the full menu.
+* Consultation-type users get the focused consultation menu.
+* Users with multiple roles may receive full access only if they have admin-level role/permission.
+* Do not hardcode user IDs or emails.
+* Continue respecting modules, permissions, and active route patterns.
+
+---
+
+# 4. Remove These Menus for Consultation-Only Users
+
+Consultation-type users should not see these menus unless explicitly permitted:
+
+```text
+Admin
+Users
+Roles & Permissions
+Departments management
+Designations
 Store / Procurement
-├── Dashboard
-├── Products
-│   ├── All Products
-│   ├── Create Product
-│   ├── Product Types / Categories
-│   └── Department Availability
-│
-├── Stock Locations
-├── Stock Balances
-├── Stock Movements
-├── Purchase Orders
-├── Goods Receiving
-├── Stock Transfers
-├── Stock Adjustments
-├── Stock Returns
-├── Damaged / Expired Stock
-├── Suppliers
-└── Supplier Ledger
-```
-
-## Pharmacy Menu
-
-Pharmacy must not create drugs.
-
-Recommended Pharmacy menu:
-
-```text
-Pharmacy
-├── Dashboard
-├── Drug Catalogue
-├── Pending Prescriptions
-├── Dispensing
-├── Dispensing History
-└── Stock Balance
-```
-
-`Drug Catalogue` must read from:
-
-```text
-products linked to Pharmacy department
-AND product_type = DRUG
-```
-
-## Investigation Menu
-
-Recommended Investigation menu:
-
-```text
-Investigations
-├── Dashboard
-├── Requests
-├── Result Entry
-├── Results
-├── Investigation Catalogue
-├── Department Consumables
-└── Stock Balance
-```
-
-`Department Consumables` must read from products linked to the investigation department.
-
-`Investigation Catalogue` must read from services under investigation-type departments.
-
-## Theatre / Procedure Menu
-
-Recommended Theatre/Procedure menu:
-
-```text
-Theatre / Procedures
-├── Dashboard
-├── Procedure Requests
-├── Theatre Schedule
-├── In Theatre
-├── Procedure Catalogue
-├── Procedure Consumables
-├── Theatre Rooms
-├── Completed Procedures
-└── Stock Balance
-```
-
-`Procedure Consumables` must read from products linked to the procedure/theatre department.
-
-`Procedure Catalogue` must read from services under procedure/theatre-type departments.
-
----
-
-# 4. Rename Confusing Labels
-
-Update UI labels to avoid confusion.
-
-| Old / Confusing Label | New Label                                |
-| --------------------- | ---------------------------------------- |
-| Add Drug              | Add Product                              |
-| Drugs Table           | Pharmacy Drug Catalogue                  |
-| Lab Items             | Investigation Consumables                |
-| Procedure Items       | Procedure Consumables                    |
-| Theatre Items         | Procedure Consumables                    |
-| Test Catalogue        | Investigation Catalogue                  |
-| Lab Test Catalogue    | Investigation Catalogue                  |
-| Quantity              | Stock Balance / Quantity on Hand         |
-| Product Quantity      | Current Stock by Location                |
-| Add Lab Item          | Link Product to Investigation Department |
-| Add Procedure Item    | Link Product to Procedure Department     |
-
-Important:
-
-* Product creation must only appear under Store/Procurement.
-* Department catalogues should be read-only views of products assigned to that department unless the user has Store/Admin permission.
-
----
-
-# 5. Product Form Requirements
-
-Under Store/Procurement, Product form should include:
-
-```text
-Product Name
-Product Code
-Product Type
-Unit
-Description
-Reorder Level
-Status
-Departments where product is available
-Opening Stock optional
-Opening Stock Location
-Supplier optional
-```
-
-Product type options:
-
-```text
-DRUG
-CONSUMABLE
-REAGENT
-SURGICAL_SUPPLY
-MEDICAL_SUPPLY
-EQUIPMENT
-GENERAL_ITEM
-```
-
-Rules:
-
-* If opening stock is entered, create an `OPENING_STOCK` stock movement.
-* Do not save opening stock as current stock.
-* Do not use product quantity as current stock.
-* Current stock must come from `stock_balances`.
-
----
-
-# 6. Product Department Availability UI
-
-Create a clear UI for linking products to departments.
-
-On Product Details page, show:
-
-```text
-Available Departments
-[✓] Pharmacy
-[✓] Laboratory
-[ ] Theatre
-[✓] Ward
-[ ] X-ray
-```
-
-Or provide a Department Availability page:
-
-```text
-Products Available to Laboratory
-- Gloves
-- Malaria RDT Kit
-- EDTA Tube
-```
-
-Rules:
-
-* Store/Admin can link products to departments.
-* Department users cannot create/link products unless authorized.
-* Department screens must only load linked products.
-
----
-
-# 7. Stock Location UI
-
-Each stock location must show:
-
-```text
-Name
-Department
-Is Main Store?
-Is Active?
-Current products/balances
-```
-
-Rules:
-
-* Main Store must be linked to Store department.
-* Only one Main Store should exist unless system settings allow multiple.
-* Department users should not change stock locations.
-* Store/Admin manages stock locations.
-
----
-
-# 8. Stock Balance UI
-
-Stock balance must be shown by product and location.
-
-Example:
-
-```text
-Product       Location       Quantity on Hand
-Gloves        Main Store     1000
-Gloves        Pharmacy       50
-Gloves        Lab            120
-Gloves        Theatre        300
-```
-
-Do not display old product quantity as current stock.
-
-Current stock must come from:
-
-```text
-stock_balances.quantity_on_hand
-```
-
-or:
-
-```php
-StockBalanceService::getCurrentStock(...)
-```
-
----
-
-# 9. Stock Transfer UI
-
-Transfer page must enforce source and destination rules.
-
-Allowed initially:
-
-```text
-Main Store → Department Location
-Department Location → Main Store
-```
-
-Blocked initially:
-
-```text
-Pharmacy → Lab
-Lab → Theatre
-Ward → Pharmacy
-Department → Department
-```
-
-unless inter-department transfer is explicitly enabled.
-
-Transfer form should include:
-
-```text
-Source Location
-Destination Location
-Product
-Available Quantity
-Transfer Quantity
-Notes
-```
-
-When source location and product are selected, display current stock.
-
-Transfer must create:
-
-```text
-TRANSFER_OUT from source
-TRANSFER_IN into destination
-```
-
-Both movements must link to the same transfer record.
-
----
-
-# 10. Purchase Order and Receiving UI
-
-Creating a purchase order must not automatically increase stock.
-
-Flow:
-
-```text
-Purchase Order Created
-↓
-Pending
-↓
-Goods Receiving
-↓
-Stock Movement Created
-↓
-Stock Balance Updated
-↓
-Supplier Ledger Updated
-```
-
-## Purchase Order Form
-
-Show:
-
-```text
-Supplier
-Order Date
-Items
-Expected Quantity
-Unit Cost
-Status
-```
-
-## Goods Receiving Form
-
-Show:
-
-```text
-Purchase Order
-Items Ordered
-Quantity Already Received
-Quantity to Receive
-Receiving Location, usually Main Store
-Batch Number
-Expiry Date
-Unit Cost
-```
-
-When received:
-
-* create `PURCHASE_RECEIVED` movement
-* update stock balance
-* create supplier ledger entry
-* update purchase order status
-
----
-
-# 11. Supplier Ledger UI
-
-Create/update supplier pages:
-
-```text
+Products
+Stock Locations
+Stock Transfers
+Stock Adjustments
 Suppliers
-Supplier Details
 Supplier Ledger
-Supplier Payments
-Supplier Returns
-```
-
-Supplier detail page should show:
-
-```text
-Supplier Profile
-Purchase Orders
-Goods Received
-Payments
-Returns
-Outstanding Balance
-Ledger
-```
-
-Ledger columns:
-
-```text
-Date
-Type
-Description
-Debit
-Credit
-Balance
-Source
-Created By
-```
-
-Use this convention unless project already defines another:
-
-```text
-credit = amount facility owes supplier
-debit = amount paid/reduced
-```
-
-Examples:
-
-Goods received worth 5,000:
-
-```text
-credit = 5000
-```
-
-Supplier payment of 2,000:
-
-```text
-debit = 2000
-```
-
-Return to supplier worth 500:
-
-```text
-debit = 500
-```
-
-Outstanding supplier balance:
-
-```text
-credits - debits
-```
-
----
-
-# 12. Pharmacy UI Changes
-
-Pharmacy must use products, not a drugs table.
-
-## Drug Catalogue
-
-Load:
-
-```text
-products linked to Pharmacy department
-AND product_type = DRUG
-```
-
-Pharmacy users should not see Create Product button unless they have Store/Admin permission.
-
-## Dispensing Page
-
-When dispensing, show stock from Pharmacy stock location only:
-
-```text
-Drug: Paracetamol
-Available in Pharmacy: 50
-Quantity to dispense: 10
-```
-
-Rules:
-
-* If Pharmacy has 0 but Main Store has 100, pharmacy cannot dispense.
-* Stock must be transferred to Pharmacy first.
-* Dispensing creates `PHARMACY_DISPENSED` OUT movement from Pharmacy stock location.
-* Prescribing does not affect stock.
-* Payment does not affect stock.
-
----
-
-# 13. Investigation Result Entry UI
-
-When entering results, add a Consumables Used section.
-
-Example:
-
-```text
-Consumables Used
-[✓] Malaria RDT Kit    Qty: 1
-[✓] Gloves             Qty: 1
-[✓] Lancet             Qty: 1
-[+] Add Consumable
-```
-
-Rules:
-
-* Preload default consumables from the investigation service.
-* Consumable list must load products linked to that investigation department.
-* Saving result should also save actual consumable usage.
-* Actual usage creates `INVESTIGATION_CONSUMED` OUT movements.
-* Deduct from the investigation department stock location.
-* Do not deduct from Main Store.
-
-If stock is insufficient:
-
-* block save unless authorized override exists
-* show clear error message
-
----
-
-# 14. Procedure / Theatre UI Changes
-
-On procedure workflow pages, add a Consumables Used section.
-
-Example:
-
-```text
-Procedure Consumables Used
-[✓] Surgical Gloves    Qty: 4
-[✓] Sutures            Qty: 2
-[✓] Gauze              Qty: 10
-[+] Add Consumable
-```
-
-Rules:
-
-* Preload default consumables from the procedure service.
-* Consumables list must load products linked to procedure/theatre department.
-* Saving usage creates `PROCEDURE_CONSUMED` OUT movements.
-* Deduct from procedure/theatre stock location.
-* Do not deduct from Pharmacy or Main Store unless configured as that department’s stock location.
-
----
-
-# 15. Investigation Catalogue UI
-
-Investigation Catalogue should show:
-
-```text
-Investigation Services
-```
-
-It must load:
-
-```text
-services where department.type = investigation
-```
-
-When a service is selected, show sections:
-
-```text
-Service Details
-Headers / Categories
-Criteria
-Default Consumables
-Preview
-```
-
-Default Consumables must load products linked to the selected service’s department.
-
-Do not create detached tests.
-
----
-
-# 16. Procedure Catalogue UI
-
-Procedure Catalogue should mirror Investigation Catalogue.
-
-First page:
-
-```text
-Procedure Services
-```
-
-It must load:
-
-```text
-services where department.type = procedure
-```
-
-or:
-
-```text
-services where department.type = theatre
-```
-
-depending on the existing department type naming.
-
-When selected, show sections:
-
-```text
-Service Details
-Templates
-Template Sections
-Template Fields
-Default Consumables
-Preview Report
-```
-
-Default Consumables must load products linked to the selected service’s department.
-
-Do not create detached procedure items.
-
----
-
-# 17. Billing UI Changes
-
-Billing must clearly distinguish service billing and product billing.
-
-Invoice item source may include:
-
-```text
-consultation_service
-investigation_service
-procedure_service
-pharmacy_product
-ward_consumable
-```
-
-Invoice item descriptions should be clear:
-
-```text
-General Consultation
-Full Blood Count
-Appendectomy
-Paracetamol 500mg
-Surgical Gloves
-```
-
-Rules:
-
-* Services are billed as services.
-* Dispensed products can create invoice items when billable.
-* Consumables may or may not be billable depending on configuration.
-* Backend must know source type and source ID.
-* Billing must still use the visit’s single invoice.
-
----
-
-# 18. Permissions
-
-Add or verify permissions:
-
-```text
-product.create
-product.edit
-product.link_department
-product.view
-
-stock.location.manage
-stock.transfer
-stock.adjust
-stock.receive
-stock.return
-stock.view_balance
-
-supplier.manage
-supplier.ledger.view
-supplier.payment.create
-supplier.return.create
-
-consumable.use
-
-procedure.catalogue.manage
-investigation.catalogue.manage
-```
-
-Permission rules:
-
-* Store/Admin can create products.
-* Store/Admin can link products to departments.
-* Pharmacy can view pharmacy products and dispense.
-* Lab can view linked consumables and consume during results.
-* Theatre can view linked consumables and consume during procedures.
-* Departments cannot create products unless explicitly authorized.
-
----
-
-# 19. Dashboard Changes
-
-## Store Dashboard
-
-Show:
-
-```text
-Total products
-Low stock items
-Pending purchase orders
-Recent stock movements
-Supplier balances
-Pending transfers
-```
-
-## Pharmacy Dashboard
-
-Show:
-
-```text
-Pending prescriptions
-Low pharmacy stock
-Dispensed today
-Pharmacy stock value
-```
-
-## Lab / Investigation Dashboard
-
-Show:
-
-```text
-Pending investigations
-Results pending
-Low consumables
-Consumables used today
-```
-
-## Theatre Dashboard
-
-Show:
-
-```text
-Pending procedures
-Scheduled procedures
-Low theatre supplies
-Procedures completed today
-```
-
----
-
-# 20. Validation Rules
-
-Enforce these validations:
-
-## Product
-
-* product name required
-* product type required
-* unit required
-* only Store/Admin can create product
-
-## Product Department Link
-
-* product required
-* department required
-* duplicate active links should be prevented
-
-## Department Usage
-
-* product must be linked to the user/service department
-* department must have active stock location
-* cannot consume more than available stock unless override enabled
-
-## Transfer
-
-* source required
-* destination required
-* source and destination must be different
-* transfer must involve Main Store unless inter-department transfer is enabled
-* quantity must be greater than zero
-* source must have enough stock
-
-## Service Consumables
-
-* product must be linked to the service department
-* default quantity must be greater than zero
-* required consumables must be confirmed before finalization if configured
-
-## Purchase Receiving
-
-* purchase order required
-* receiving location required
-* received quantity must be greater than zero
-* received quantity must not exceed remaining ordered quantity unless over-receiving is allowed
-
-## Supplier Ledger
-
-* supplier required
-* entry type required
-* debit/credit must be valid
-* source should be linked where possible
-
----
-
-# 21. Backend Services to Use
-
-Create or update these services:
-
-```text
-ProductService
-ProductDepartmentService
-StockLocationService
-StockMovementService
-StockBalanceService
-StockTransferService
-StockAdjustmentService
-StockReturnService
-ConsumableUsageService
-ServiceConsumableService
-InvestigationCatalogueService
-ProcedureCatalogueService
-ProcedureTemplateService
-SupplierService
-SupplierLedgerService
-PurchaseOrderService
+Billing / Invoices
+Receive Payments
+Claims & Insurance
+Accounts & Finance
+HR & Payroll
+Payroll
+System Settings
+Modules
+Pharmacy Dispensing
+Drug Catalogue management
+Investigation Result Entry
+Investigation Catalogue management
+Theatre Management
+Ward Management
+Bed Management
 ```
 
 Important:
 
-* Product creation must go through `ProductService`.
-* Product-department linking must go through `ProductDepartmentService`.
-* Stock usage must go through `StockMovementService`.
-* Current stock must use `StockBalanceService`.
-* Consumable usage must go through `ConsumableUsageService`.
-* Supplier events must go through `SupplierLedgerService`.
+* A doctor may request investigations, but should not manage investigation result entry or investigation catalogue.
+* A doctor may request procedures, but should not manage theatre workflow unless also a theatre user.
+* A doctor may view reports/results, but should not manage billing, stock, HR, or system settings.
 
 ---
 
-# 22. Required Service Behavior
+# 5. Final Consultation-Type Menu Structure
 
-## StockLocationService
+Build the consultation-type menu with these sections.
 
-Must resolve the correct stock location for a department:
+## Main Menu
+
+```text
+Main Menu
+└── Consultation Dashboard
+```
+
+## Consultation Queue
+
+```text
+Consultation Queue
+├── Waiting Queue
+├── Currently Consulting
+├── Referred Patients
+└── My Department Queue
+```
+
+## Clinical Work
+
+```text
+Clinical Work
+├── My Consultations
+├── My Recent Patients
+├── Patient Search
+├── Follow-ups / Appointments
+└── Previous Visits
+```
+
+## Requests & Results
+
+```text
+Requests & Results
+├── Investigation Results
+├── Procedure Reports
+├── Prescription History
+└── Pending Results
+```
+
+## Clinical Tools
+
+```text
+Clinical Tools
+├── Medical Patterns
+├── ICD-10 Codes
+├── Diagnosis Templates
+└── Prescription Templates
+```
+
+## Reports
+
+```text
+Reports
+└── Clinical Reports
+```
+
+## Notifications
+
+```text
+Notifications
+└── Notifications
+```
+
+## Profile
+
+```text
+Profile
+├── My Profile
+└── Change Password
+```
+
+Only include an item if the route exists and the user has permission.
+
+---
+
+# 6. Suggested Menu Array
+
+Implement a consultation menu similar to this, adapting route names to the existing project.
 
 ```php
-getDefaultLocationForDepartment(Department $department): StockLocation
+protected function buildConsultationMenu(User $user, string $currentRouteName, int $unreadNotifications = 0): array
+{
+    $sections = [
+        [
+            'title' => 'Main Menu',
+            'items' => [
+                [
+                    'label' => 'Consultation Dashboard',
+                    'icon' => 'ti ti-layout-dashboard',
+                    'route' => 'consultation.dashboard',
+                    'active_patterns' => ['consultation.dashboard', 'doctor.dashboard'],
+                    'permission' => 'consultation.dashboard.view',
+                ],
+            ],
+        ],
+        [
+            'title' => 'Consultation Queue',
+            'items' => [
+                [
+                    'label' => 'Waiting Queue',
+                    'icon' => 'ti ti-list-numbers',
+                    'route' => 'consultation.queue',
+                    'route_params' => ['status' => 'waiting'],
+                    'active_patterns' => ['consultation.queue'],
+                    'permission' => 'consultation.queue.view',
+                ],
+                [
+                    'label' => 'Currently Consulting',
+                    'icon' => 'ti ti-stethoscope',
+                    'route' => 'consultation.queue',
+                    'route_params' => ['status' => 'consulting'],
+                    'active_patterns' => ['consultation.queue'],
+                    'permission' => 'consultation.queue.view',
+                ],
+                [
+                    'label' => 'Referred Patients',
+                    'icon' => 'ti ti-arrow-forward-up',
+                    'route' => 'consultation.referred',
+                    'active_patterns' => ['consultation.referred'],
+                    'permission' => 'consultation.queue.view',
+                ],
+                [
+                    'label' => 'My Department Queue',
+                    'icon' => 'ti ti-building-hospital',
+                    'route' => 'consultation.department-queue',
+                    'active_patterns' => ['consultation.department-queue'],
+                    'permission' => 'consultation.queue.view',
+                ],
+            ],
+        ],
+        [
+            'title' => 'Clinical Work',
+            'items' => [
+                [
+                    'label' => 'My Consultations',
+                    'icon' => 'ti ti-notes',
+                    'route' => 'consultation.my-consultations',
+                    'active_patterns' => ['consultation.my-consultations'],
+                    'permission' => 'consultations.view',
+                ],
+                [
+                    'label' => 'My Recent Patients',
+                    'icon' => 'ti ti-user-heart',
+                    'route' => 'consultation.recent-patients',
+                    'active_patterns' => ['consultation.recent-patients'],
+                    'permission' => 'consultation.previous_visits.view',
+                ],
+                [
+                    'label' => 'Patient Search',
+                    'icon' => 'ti ti-user-search',
+                    'route' => 'consultation.patients.search',
+                    'active_patterns' => ['consultation.patients.*'],
+                    'permission' => 'consultation.patient_search',
+                ],
+                [
+                    'label' => 'Follow-ups / Appointments',
+                    'icon' => 'ti ti-calendar-event',
+                    'route' => 'consultation.followups',
+                    'active_patterns' => ['consultation.followups.*'],
+                    'permission' => 'consultation.appointments.view',
+                    'module' => 'appointments',
+                ],
+                [
+                    'label' => 'Previous Visits',
+                    'icon' => 'ti ti-history',
+                    'route' => 'consultation.previous-visits',
+                    'active_patterns' => ['consultation.previous-visits.*'],
+                    'permission' => 'consultation.previous_visits.view',
+                ],
+            ],
+        ],
+        [
+            'title' => 'Requests & Results',
+            'items' => [
+                [
+                    'label' => 'Investigation Results',
+                    'icon' => 'ti ti-report-medical',
+                    'route' => 'consultation.investigation-results',
+                    'active_patterns' => ['consultation.investigation-results.*'],
+                    'permission' => 'consultation.results.view',
+                    'module' => 'investigations',
+                ],
+                [
+                    'label' => 'Procedure Reports',
+                    'icon' => 'ti ti-file-description',
+                    'route' => 'consultation.procedure-reports',
+                    'active_patterns' => ['consultation.procedure-reports.*'],
+                    'permission' => 'consultation.procedure_reports.view',
+                    'module' => 'procedures',
+                ],
+                [
+                    'label' => 'Prescription History',
+                    'icon' => 'ti ti-prescription',
+                    'route' => 'consultation.prescription-history',
+                    'active_patterns' => ['consultation.prescription-history.*'],
+                    'permission' => 'prescriptions.view',
+                    'module' => 'pharmacy',
+                ],
+                [
+                    'label' => 'Pending Results',
+                    'icon' => 'ti ti-clock-question',
+                    'route' => 'consultation.pending-results',
+                    'active_patterns' => ['consultation.pending-results.*'],
+                    'permission' => 'consultation.results.view',
+                    'module' => 'investigations',
+                ],
+            ],
+        ],
+        [
+            'title' => 'Clinical Tools',
+            'items' => [
+                [
+                    'label' => 'Medical Patterns',
+                    'icon' => 'ti ti-template',
+                    'route' => 'consultation.patterns.index',
+                    'active_patterns' => ['consultation.patterns.*'],
+                    'permission' => 'consultations.view',
+                    'module' => 'medical-patterns',
+                ],
+                [
+                    'label' => 'ICD-10 Codes',
+                    'icon' => 'ti ti-medical-cross',
+                    'route' => 'consultation.icd-codes.index',
+                    'active_patterns' => ['consultation.icd-codes.*'],
+                    'permission' => 'icd.view',
+                ],
+                [
+                    'label' => 'Diagnosis Templates',
+                    'icon' => 'ti ti-clipboard-text',
+                    'route' => 'consultation.diagnosis-templates.index',
+                    'active_patterns' => ['consultation.diagnosis-templates.*'],
+                    'permission' => 'consultations.view',
+                ],
+                [
+                    'label' => 'Prescription Templates',
+                    'icon' => 'ti ti-prescription',
+                    'route' => 'consultation.prescription-templates.index',
+                    'active_patterns' => ['consultation.prescription-templates.*'],
+                    'permission' => 'prescriptions.view',
+                    'module' => 'pharmacy',
+                ],
+            ],
+        ],
+        [
+            'title' => 'Reports',
+            'items' => [
+                [
+                    'label' => 'Clinical Reports',
+                    'icon' => 'ti ti-report',
+                    'route' => 'consultation.reports.index',
+                    'active_patterns' => ['consultation.reports.*'],
+                    'permission' => 'consultation.reports.view',
+                    'module' => 'reports',
+                ],
+            ],
+        ],
+        [
+            'title' => null,
+            'items' => [
+                [
+                    'label' => 'Notifications',
+                    'icon' => 'ti ti-bell',
+                    'route' => 'admin.notifications.index',
+                    'active_patterns' => ['admin.notifications.*'],
+                    'permission' => 'notifications.view',
+                    'module' => 'notifications',
+                    'badge' => $unreadNotifications > 0 ? $unreadNotifications : null,
+                    'badge_class' => 'badge bg-danger rounded-pill ms-auto',
+                ],
+            ],
+        ],
+        [
+            'title' => 'Profile',
+            'items' => [
+                [
+                    'label' => 'My Profile',
+                    'icon' => 'ti ti-user',
+                    'route' => 'profile.edit',
+                    'active_patterns' => ['profile.*'],
+                ],
+                [
+                    'label' => 'Change Password',
+                    'icon' => 'ti ti-lock',
+                    'route' => 'profile.password',
+                    'active_patterns' => ['profile.password'],
+                ],
+            ],
+        ],
+    ];
+
+    return array_values(array_filter(array_map(
+        fn (array $section) => $this->filterSection($section, $user, $currentRouteName),
+        $sections,
+    )));
+}
 ```
 
-## ConsumableUsageService
+If some route names do not exist, either:
 
-Must record actual consumable use:
+1. map them to existing routes, or
+2. create the missing routes/controllers/pages, or
+3. temporarily omit the menu item until the feature exists.
+
+Do not leave broken menu links.
+
+---
+
+# 7. Dashboard Requirements
+
+Create/update consultation dashboard route and page.
+
+Suggested route:
 
 ```php
-recordUsageForSource(
-    Visit $visit,
-    Service $service,
-    string $sourceType,
-    int $sourceId,
-    array $items,
-    User $user
-): void
+Route::get('/consultation-dashboard', [ConsultationDashboardController::class, 'index'])
+    ->name('consultation.dashboard');
 ```
 
-This method must:
+Dashboard should include cards:
 
-* validate department access
-* validate product availability
-* validate stock location
-* validate quantity
-* create consumable usage records
-* create stock OUT movements
-* update stock balances
+```text
+Waiting Consultation
+Currently Consulting
+Referred Patients
+My Consultations Today
+Completed Today
+Pending Investigation Results
+Pending Procedure Reports
+Follow-ups Today
+```
 
-## SupplierLedgerService
+Dashboard main list should show consultation queue.
 
-Must record supplier events:
+Queue row should include:
+
+```text
+Patient Name
+Age / Gender
+Visit Number
+Triage Score
+Priority / Emergency Status
+Department / Service
+Assigned Doctor
+Insurance / Cash and Carry
+Waiting Time
+Status
+Action
+```
+
+Action button logic:
+
+```text
+WAITING_CONSULTATION → Start Consultation
+CONSULTING → Continue Consultation
+```
+
+---
+
+# 8. Queue Rules
+
+Consultation queue must only load visits with statuses:
+
+```text
+WAITING_CONSULTATION
+CONSULTING
+```
+
+Do not show:
+
+```text
+TRIAGE
+COMPLETED
+CANCELLED
+DISCHARGED
+BILLING
+PHARMACY_ONLY
+INVESTIGATION_ONLY
+```
+
+Queue filters:
+
+```text
+All
+Waiting
+Consulting
+Emergency
+Referred
+My Patients
+Department Patients
+Today
+Date Range
+Search
+```
+
+Search should support:
+
+```text
+patient name
+visit number
+phone number
+OPD number / patient number
+```
+
+---
+
+# 9. Start / Continue Consultation
+
+When `Start Consultation` is clicked:
+
+* validate visit status is `WAITING_CONSULTATION`
+* assign current doctor if not already assigned
+* change status to `CONSULTING`
+* log the status transition
+* open consultation page
+
+When `Continue Consultation` is clicked:
+
+* open consultation page
+* keep status as `CONSULTING`
+
+Use:
 
 ```php
-recordEntry(
-    Supplier $supplier,
-    string $entryType,
-    float $debit,
-    float $credit,
-    string $description,
-    ?string $sourceType = null,
-    ?int $sourceId = null,
-    ?User $user = null
-): SupplierLedgerEntry
+VisitWorkflowService::startConsultation(...)
+```
+
+Do not update visit status directly in Vue or controller.
+
+---
+
+# 10. Clinical Search and Previous Visits
+
+Consultation users should be able to search patients clinically.
+
+They may view:
+
+```text
+patient demographics
+previous visits
+diagnosis history
+consultation notes
+prescriptions
+investigation results
+procedure reports
+follow-ups
+```
+
+They should not edit administrative patient details unless permitted.
+
+---
+
+# 11. Requests and Results
+
+Consultation users need doctor-side access to results/reports.
+
+They should be able to:
+
+* view investigation results for their patients
+* view procedure reports for their patients
+* view prescription history
+* view pending requested results
+* request investigations from consultation page
+* request procedures from consultation page
+
+They should not manage:
+
+```text
+investigation result entry
+investigation catalogue
+theatre dashboard
+procedure catalogue
+pharmacy dispensing
+```
+
+unless they have those specific permissions.
+
+---
+
+# 12. Clinical Reports
+
+Create doctor-relevant clinical reports only.
+
+Recommended reports:
+
+```text
+My Consultations
+Diagnosis Summary
+Investigation Requests
+Procedure Requests
+Prescriptions Given
+Completed Visits
+Follow-up Appointments
+```
+
+Do not show:
+
+```text
+financial reports
+billing reports
+stock reports
+supplier reports
+claims reports
+payroll reports
+HR reports
+daily collection
+pharmacy sales
 ```
 
 ---
 
-# 23. Frontend / Inertia Pages
+# 13. Permissions
 
-Create or update these page groups.
-
-## Store / Products
+Add or verify consultation permissions:
 
 ```text
-Products/Index.vue
-Products/Create.vue
-Products/Edit.vue
-Products/Show.vue
-Products/DepartmentLinks.vue
+consultation.access
+consultation.dashboard.view
+consultation.queue.view
+consultation.start
+consultation.continue
+consultation.patient_search
+consultation.previous_visits.view
+consultation.appointments.view
+consultation.results.view
+consultation.procedure_reports.view
+consultation.reports.view
+consultation.referred.view
 ```
 
-## Stock
+Existing useful permissions may include:
 
 ```text
-StockLocations/Index.vue
-StockMovements/Index.vue
-StockBalances/Index.vue
-StockTransfers/Index.vue
-StockAdjustments/Index.vue
-StockReturns/Index.vue
-GoodsReceiving/Index.vue
+consultations.view
+prescriptions.view
+notifications.view
+icd.view
 ```
 
-## Supplier Ledger
+Consultation-only users should not automatically get:
 
 ```text
-Suppliers/Index.vue
-Suppliers/Show.vue
-Suppliers/Ledger.vue
-Suppliers/Payments.vue
-Suppliers/Returns.vue
-```
-
-## Pharmacy
-
-```text
-Pharmacy/DrugCatalogue.vue
-Pharmacy/Dispensing.vue
-Pharmacy/StockBalance.vue
-```
-
-## Investigations
-
-```text
-Investigations/Consumables.vue
-Investigations/ResultEntry.vue
-InvestigationCatalogue/Index.vue
-InvestigationCatalogue/Show.vue
-```
-
-## Procedures
-
-```text
-Procedures/Consumables.vue
-ProcedureCatalogue/Index.vue
-ProcedureCatalogue/Show.vue
-ProcedureCatalogue/Templates.vue
-ProcedureCatalogue/Consumables.vue
+billing.manage
+payments.create
+stock.manage
+product.create
+pharmacy.dispensing.view
+lab.results.entry
+procedure_catalogue.manage
+theatre.manage
+hr.manage
+settings.manage
+modules.manage
+users.view
 ```
 
 ---
 
-# 24. Data Integrity Rules
+# 14. Backend Services
 
-* Product is the only source for physical items.
-* Services are the only source for billable hospital activities.
-* Product-department links control product availability.
-* Stock locations control physical quantity by department.
-* Department consumption must use department stock location.
-* Stock movements are the source of truth.
-* Stock balances are cache only.
-* Default consumables do not deduct stock.
-* Actual usage deducts stock.
-* Purchase order creation does not increase stock.
-* Goods receiving increases stock.
-* Supplier ledger tracks supplier events.
-* Investigation Catalogue must be service-based.
-* Procedure Catalogue must be service-based.
-* Do not create detached tests/procedure items.
+Create/update:
+
+```text
+ConsultationDashboardService
+ConsultationQueueService
+ConsultationMenuService
+```
+
+## ConsultationDashboardService
+
+Should return:
+
+* dashboard counts
+* queue summary
+* pending result counts
+* today’s consultation counts
+* follow-up counts
+
+## ConsultationQueueService
+
+Should return filtered queue list with eager-loaded data.
+
+Load relationships:
+
+```text
+patient
+department
+service
+assignedDoctor
+latestVitals
+triageScore
+activeInsurance
+```
+
+Avoid loading full patient history on dashboard.
+
+## ConsultationMenuService
+
+Optional, but recommended if the menu logic becomes large.
+
+Should build focused menu for consultation-type users.
 
 ---
 
-# 25. Performance Rules
+# 15. Frontend / Inertia Pages
 
-* Use `stock_balances` for current stock display.
-* Do not calculate stock from all movements on every page.
-* Eager-load product departments where needed.
-* Load consumables only for selected service.
-* Paginate product, movement, supplier, and ledger lists.
-* Avoid N+1 queries in catalogues and stock pages.
-* Cache product availability per department where safe.
+Create or update:
+
+```text
+resources/js/Pages/Dashboard/Consultation.vue
+resources/js/Pages/Consultation/Queue.vue
+resources/js/Pages/Consultation/MyConsultations.vue
+resources/js/Pages/Consultation/Referred.vue
+resources/js/Pages/Consultation/PatientSearch.vue
+resources/js/Pages/Consultation/Reports/Index.vue
+resources/js/Components/Consultation/ConsultationDashboardCards.vue
+resources/js/Components/Consultation/ConsultationQueueTable.vue
+resources/js/Components/Consultation/PatientClinicalSummary.vue
+```
+
+Use existing page names if already present.
 
 ---
 
-# 26. Testing / Verification
+# 16. SPA Behavior
+
+Consultation dashboard and queue should behave like SPA pages.
+
+Requirements:
+
+* no unnecessary full page reloads
+* filters update smoothly
+* search preserves page state
+* Start Consultation shows loading state
+* validation errors display clearly
+* active filters are preserved
+* queue updates after action
+
+Use Inertia partial reloads or Vue state where appropriate.
+
+---
+
+# 17. Performance Rules
+
+* Paginate consultation queue.
+* Eager-load required relationships.
+* Do not load full patient history on dashboard.
+* Load clinical summary only when opened.
+* Cache menu for user if safe.
+* Avoid N+1 queries.
+* Add/use indexes where needed:
+
+  * visits.status
+  * visits.current_department_id
+  * visits.assigned_doctor_id
+  * visits.created_at
+  * patients.name
+  * patients.patient_number / opd_number
+
+---
+
+# 18. Data Integrity Rules
+
+* Consultation users should only act on consultation workflow patients.
+* Do not show triage patients before triage completion.
+* Do not show completed/cancelled/discharged visits in active queue.
+* Start Consultation must go through `VisitWorkflowService`.
+* Do not expose admin/store/billing/HR menus to consultation-only users.
+* Do not allow unrelated department queue access unless permission allows it.
+* Do not show broken menu routes.
+
+---
+
+# 19. Testing / Verification
 
 Add or update tests for:
 
-1. Store/Admin can create product.
-2. Pharmacy cannot create product.
-3. Lab cannot create product.
-4. Theatre cannot create product.
-5. Product can be linked to departments.
-6. Department sees only linked products.
-7. Pharmacy Drug Catalogue loads products linked to Pharmacy with type DRUG.
-8. Investigation consumables load products linked to investigation department.
-9. Procedure consumables load products linked to procedure department.
-10. Stock location belongs to department.
-11. Pharmacy dispensing deducts from Pharmacy stock location.
-12. Investigation result consumables deduct from investigation department stock location.
-13. Procedure consumables deduct from procedure department stock location.
-14. Main Store can transfer to department.
-15. Department can return stock to Main Store.
-16. Purchase receiving creates stock IN movement.
-17. Goods received creates supplier ledger credit.
-18. Supplier payment creates supplier ledger debit.
-19. Return to supplier creates stock OUT and supplier ledger entry.
-20. Investigation Catalogue loads services from investigation departments.
-21. Procedure Catalogue loads services from procedure/theatre departments.
-22. Default consumables only load linked products.
-23. Actual consumable usage creates stock movement.
-24. Stock balance updates correctly after usage.
+1. Consultation user receives focused consultation menu.
+2. Super-admin still receives full menu.
+3. Consultation user does not see Store/Billing/HR/Admin/Settings menus.
+4. Consultation dashboard loads.
+5. Queue only shows `WAITING_CONSULTATION` and `CONSULTING`.
+6. Waiting patient shows `Start Consultation`.
+7. Consulting patient shows `Continue Consultation`.
+8. Start Consultation changes status through `VisitWorkflowService`.
+9. Patient search respects permissions.
+10. Clinical reports exclude finance/stock/HR reports.
+11. Menu hides disabled modules.
+12. No menu item points to missing routes.
 
 ---
 
-# 27. Deliverables
+# 20. Deliverables
 
 Provide:
 
-1. Gap analysis of current implementation.
-2. Updated menus/navigation.
-3. Updated labels.
-4. New/updated migrations.
-5. Updated models and relationships.
+1. Gap analysis of current menu/dashboard.
+2. Updated `SidebarMenuBuilder` or new `ConsultationSidebarMenuBuilder`.
+3. User consultation helper logic.
+4. Updated routes.
+5. Updated controllers.
 6. Updated services.
-7. Updated permissions.
-8. Updated Vue/Inertia pages.
-9. Updated validation requests.
-10. Updated Store/Product UI.
-11. Updated Pharmacy product catalogue.
-12. Updated Investigation consumable flow.
-13. Updated Procedure consumable flow.
-14. Updated Investigation Catalogue.
-15. Updated Procedure Catalogue.
-16. Updated Supplier Ledger.
-17. Tests or verification notes.
-18. List of modified files.
-19. Remaining TODOs if any.
+7. Updated Inertia/Vue pages.
+8. Updated permissions/seeders.
+9. Updated tests or verification notes.
+10. Confirmation that consultation staff menu is focused and complete.
+11. Confirmation that super-admin full menu still works.
+12. Files modified.
+13. Remaining TODOs if any.
 
 ---
 
-# 28. Important Rules
+# 21. Important Rules
 
-Do not create a drugs table.
+Do not give consultation users the super-admin menu.
 
-Do not create lab_items table.
+Do not remove super-admin menu.
 
-Do not create procedure_items table.
+Do not hardcode only `doctor`.
 
-Do not create standalone consumables table.
+Do not show unrelated modules to consultation-only users.
 
-Do not allow Pharmacy/Lab/Theatre to create products.
+Do not show broken menu links.
 
-Do not use product quantity as current stock.
+Do not bypass module/permission checks.
 
-Do not deduct stock from Main Store when department stock should be used.
+Do not update visit status outside `VisitWorkflowService`.
 
-Do not allow direct department-to-department transfer unless explicitly enabled.
+Do not load full patient history by default.
 
-Do not create Investigation Catalogue tests detached from services.
+Do not refactor unrelated modules.
 
-Do not create Procedure Catalogue items detached from services.
-
-Do not deduct default consumables until actual usage is saved.
-
-Do not bypass StockMovementService.
-
-Do not bypass StockBalanceService.
-
-Do not bypass SupplierLedgerService.
-
-Do not break existing billing, pharmacy, investigation, and procedure workflows.
-
-Now inspect the current UHMS implementation and apply these changes carefully, module by module.
-
-Make all the relevace changes
+Now inspect the existing `SidebarMenuBuilder`, routes, permissions, and consultation pages, then implement a focused, useful dashboard and menu for consultation-type staff.

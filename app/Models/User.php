@@ -108,4 +108,54 @@ class User extends Authenticatable
     {
         return $query->role($role);
     }
+
+    /* ── Role helpers ─────────────────────────────────── */
+
+    /**
+     * Roles that are treated as "consultation-type" clinicians.
+     * Stored as a constant so seeders / policies stay in sync.
+     */
+    public const CONSULTATION_ROLES = [
+        'Doctor',
+        'Consultant',
+        'Specialist',
+        'Physician Assistant',
+    ];
+
+    public function isAdminUser(): bool
+    {
+        return $this->hasAnyRole(['Super Admin', 'Admin']);
+    }
+
+    public function isDoctor(): bool
+    {
+        return $this->hasRole('Doctor');
+    }
+
+    /**
+     * A consultation-type user works the clinical consultation workflow.
+     * Identified by clinical role, department type, or explicit permission.
+     * Never hardcoded to a single role.
+     */
+    public function isConsultationUser(): bool
+    {
+        if ($this->hasAnyRole(self::CONSULTATION_ROLES)) {
+            return true;
+        }
+
+        $departmentType = optional($this->department)->type;
+        if ($departmentType instanceof \BackedEnum) {
+            if ($departmentType->value === 'consultation') {
+                return true;
+            }
+        } elseif (is_string($departmentType) && $departmentType === 'consultation') {
+            return true;
+        }
+
+        try {
+            return $this->can('consultation.access');
+        } catch (\Throwable $e) {
+            return false;
+        }
+    }
 }
