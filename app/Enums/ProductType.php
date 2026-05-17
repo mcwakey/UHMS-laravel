@@ -29,6 +29,10 @@ enum ProductType: string
 
     public static function options(): array
     {
-        return array_map(fn ($c) => ['value' => $c->value, 'label' => $c->label()], self::cases());
+        $result = [];
+        foreach (self::cases() as $c) {
+            $result[$c->value] = $c->label();
+        }
+        return $result;
     }
 }

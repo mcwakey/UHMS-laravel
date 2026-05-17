@@ -1,1114 +1,613 @@
 You are a senior Laravel + Inertia/Vue architect working on **UHMS — Ultimate Hospital Management System**.
 
-We need to make broad system and UI changes so UHMS properly supports the new **Product-as-single-source** architecture, department stock locations, service-based Investigation/Procedure catalogues, consumable usage, and supplier ledger.
+We need to implement **Product Pricing** using the same insurance-aware pricing logic already used for Services.
 
-Focus on aligning UI, workflows, permissions, validation, and backend logic with this architecture.
+Focus only on product pricing, insurance-aware billing, product price configuration UI, and integration with BillingService.
 
 Do not refactor unrelated modules.
 
 ---
 
-# 1. Core Architecture Rule
+# 1. Main Objective
 
-Apply this rule everywhere:
+Products must support pricing the same way Services support pricing.
 
-```text
-Products = physical items
-Services = billable hospital activities
-```
-
-## Products
-
-A product is anything physically stocked, purchased, transferred, dispensed, consumed, returned, damaged, or expired.
-
-Examples:
+Products are physical items such as:
 
 ```text
 Paracetamol
 Ceftriaxone
 Gloves
-EDTA Tube
+Syringe
 Malaria RDT Kit
 Sutures
 Gauze
-Syringe
 X-ray Film
-Oxygen Mask
 ```
 
-## Services
+Some products can be billable, especially:
 
-A service is a billable hospital activity.
+* pharmacy drugs
+* billable consumables
+* procedure consumables
+* ward consumables
+* investigation consumables if configured as billable
 
-Examples:
-
-```text
-General Consultation
-Full Blood Count
-Malaria Test
-Appendectomy
-Chest X-Ray
-Caesarean Section
-Wound Dressing
-```
-
-Important:
-
-* Do not create `drugs`, `lab_items`, `procedure_items`, or standalone `consumables` tables.
-* Products must handle all physical items.
-* Services must handle all billable hospital activities.
-* Investigation Catalogue is service-based.
-* Procedure Catalogue is service-based.
+When a product is billed, its price must be selected based on the patient’s insurance/payment type.
 
 ---
 
-# 2. Main Objective
+# 2. Core Rule
 
-Update the system so that:
+Product pricing should follow this priority:
 
-1. Store/Procurement is the only place that creates products.
-2. Products can be linked to one or more departments.
-3. Department users can only see/use products linked to their department.
-4. Stock locations are linked to departments.
-5. Departments consume stock from their own stock location only.
-6. Pharmacy catalogue loads drugs from `products`.
-7. Investigation consumables load from `products`.
-8. Procedure consumables load from `products`.
-9. Investigation Catalogue loads services from investigation-type departments.
-10. Procedure Catalogue loads services from procedure/theatre-type departments.
-11. Default consumables are configured per service using products.
-12. Actual consumable usage creates stock movements.
-13. Supplier ledger tracks supplier-related purchases, payments, returns, and balances.
-14. UI menus and labels must reflect this new architecture clearly.
+```text
+Insurance provider-specific product price
+    ↓
+General insurance type product price
+    ↓
+Base price / Cash and Carry price
+```
+
+This is the same idea as service pricing.
 
 ---
 
-# 3. Menu and UI Restructure
+# 3. Product Base Price
 
-## Store / Procurement Menu
+Every product should have a base price.
 
-Update Store/Procurement menu to be the master place for products and stock:
-
-```text
-Store / Procurement
-├── Dashboard
-├── Products
-│   ├── All Products
-│   ├── Create Product
-│   ├── Product Types / Categories
-│   └── Department Availability
-│
-├── Stock Locations
-├── Stock Balances
-├── Stock Movements
-├── Purchase Orders
-├── Goods Receiving
-├── Stock Transfers
-├── Stock Adjustments
-├── Stock Returns
-├── Damaged / Expired Stock
-├── Suppliers
-└── Supplier Ledger
-```
-
-## Pharmacy Menu
-
-Pharmacy must not create drugs.
-
-Recommended Pharmacy menu:
-
-```text
-Pharmacy
-├── Dashboard
-├── Drug Catalogue
-├── Pending Prescriptions
-├── Dispensing
-├── Dispensing History
-└── Stock Balance
-```
-
-`Drug Catalogue` must read from:
-
-```text
-products linked to Pharmacy department
-AND product_type = DRUG
-```
-
-## Investigation Menu
-
-Recommended Investigation menu:
-
-```text
-Investigations
-├── Dashboard
-├── Requests
-├── Result Entry
-├── Results
-├── Investigation Catalogue
-├── Department Consumables
-└── Stock Balance
-```
-
-`Department Consumables` must read from products linked to the investigation department.
-
-`Investigation Catalogue` must read from services under investigation-type departments.
-
-## Theatre / Procedure Menu
-
-Recommended Theatre/Procedure menu:
-
-```text
-Theatre / Procedures
-├── Dashboard
-├── Procedure Requests
-├── Theatre Schedule
-├── In Theatre
-├── Procedure Catalogue
-├── Procedure Consumables
-├── Theatre Rooms
-├── Completed Procedures
-└── Stock Balance
-```
-
-`Procedure Consumables` must read from products linked to the procedure/theatre department.
-
-`Procedure Catalogue` must read from services under procedure/theatre-type departments.
-
----
-
-# 4. Rename Confusing Labels
-
-Update UI labels to avoid confusion.
-
-| Old / Confusing Label | New Label                                |
-| --------------------- | ---------------------------------------- |
-| Add Drug              | Add Product                              |
-| Drugs Table           | Pharmacy Drug Catalogue                  |
-| Lab Items             | Investigation Consumables                |
-| Procedure Items       | Procedure Consumables                    |
-| Theatre Items         | Procedure Consumables                    |
-| Test Catalogue        | Investigation Catalogue                  |
-| Lab Test Catalogue    | Investigation Catalogue                  |
-| Quantity              | Stock Balance / Quantity on Hand         |
-| Product Quantity      | Current Stock by Location                |
-| Add Lab Item          | Link Product to Investigation Department |
-| Add Procedure Item    | Link Product to Procedure Department     |
-
-Important:
-
-* Product creation must only appear under Store/Procurement.
-* Department catalogues should be read-only views of products assigned to that department unless the user has Store/Admin permission.
-
----
-
-# 5. Product Form Requirements
-
-Under Store/Procurement, Product form should include:
-
-```text
-Product Name
-Product Code
-Product Type
-Unit
-Description
-Reorder Level
-Status
-Departments where product is available
-Opening Stock optional
-Opening Stock Location
-Supplier optional
-```
-
-Product type options:
-
-```text
-DRUG
-CONSUMABLE
-REAGENT
-SURGICAL_SUPPLY
-MEDICAL_SUPPLY
-EQUIPMENT
-GENERAL_ITEM
-```
-
-Rules:
-
-* If opening stock is entered, create an `OPENING_STOCK` stock movement.
-* Do not save opening stock as current stock.
-* Do not use product quantity as current stock.
-* Current stock must come from `stock_balances`.
-
----
-
-# 6. Product Department Availability UI
-
-Create a clear UI for linking products to departments.
-
-On Product Details page, show:
-
-```text
-Available Departments
-[✓] Pharmacy
-[✓] Laboratory
-[ ] Theatre
-[✓] Ward
-[ ] X-ray
-```
-
-Or provide a Department Availability page:
-
-```text
-Products Available to Laboratory
-- Gloves
-- Malaria RDT Kit
-- EDTA Tube
-```
-
-Rules:
-
-* Store/Admin can link products to departments.
-* Department users cannot create/link products unless authorized.
-* Department screens must only load linked products.
-
----
-
-# 7. Stock Location UI
-
-Each stock location must show:
-
-```text
-Name
-Department
-Is Main Store?
-Is Active?
-Current products/balances
-```
-
-Rules:
-
-* Main Store must be linked to Store department.
-* Only one Main Store should exist unless system settings allow multiple.
-* Department users should not change stock locations.
-* Store/Admin manages stock locations.
-
----
-
-# 8. Stock Balance UI
-
-Stock balance must be shown by product and location.
+The base price is also the Cash and Carry price.
 
 Example:
 
 ```text
-Product       Location       Quantity on Hand
-Gloves        Main Store     1000
-Gloves        Pharmacy       50
-Gloves        Lab            120
-Gloves        Theatre        300
+Product: Paracetamol 500mg
+
+Base / Cash and Carry price = 5
+NHIS price = 3
+Private price = 6
+Corporate price = 4
+Provider-specific price for ABC Insurance = 2.5
 ```
 
-Do not display old product quantity as current stock.
-
-Current stock must come from:
+If patient is Cash and Carry:
 
 ```text
-stock_balances.quantity_on_hand
+selected_price = base_price
 ```
 
-or:
+If patient has NHIS:
 
-```php
-StockBalanceService::getCurrentStock(...)
+```text
+selected_price = NHIS product price
+```
+
+If patient has ABC Insurance and ABC has a specific product price:
+
+```text
+selected_price = ABC provider-specific product price
 ```
 
 ---
 
-# 9. Stock Transfer UI
+# 4. Product Price Types
 
-Transfer page must enforce source and destination rules.
-
-Allowed initially:
+Create product pricing support for:
 
 ```text
-Main Store → Department Location
-Department Location → Main Store
+cash / base price
+nhis price
+private insurance price
+corporate insurance price
+other insurance type price
+insurance provider-specific price
 ```
 
-Blocked initially:
+Do not hardcode NHIS only.
 
-```text
-Pharmacy → Lab
-Lab → Theatre
-Ward → Pharmacy
-Department → Department
-```
-
-unless inter-department transfer is explicitly enabled.
-
-Transfer form should include:
-
-```text
-Source Location
-Destination Location
-Product
-Available Quantity
-Transfer Quantity
-Notes
-```
-
-When source location and product are selected, display current stock.
-
-Transfer must create:
-
-```text
-TRANSFER_OUT from source
-TRANSFER_IN into destination
-```
-
-Both movements must link to the same transfer record.
+NHIS is only one insurance type.
 
 ---
 
-# 10. Purchase Order and Receiving UI
+# 5. Suggested Database Design
 
-Creating a purchase order must not automatically increase stock.
+Use existing tables if available. Otherwise create clean tables.
 
-Flow:
+## products
 
-```text
-Purchase Order Created
-↓
-Pending
-↓
-Goods Receiving
-↓
-Stock Movement Created
-↓
-Stock Balance Updated
-↓
-Supplier Ledger Updated
-```
-
-## Purchase Order Form
-
-Show:
+Add or confirm field:
 
 ```text
-Supplier
-Order Date
-Items
-Expected Quantity
-Unit Cost
-Status
+base_price nullable
 ```
 
-## Goods Receiving Form
+This is the Cash and Carry price.
 
-Show:
-
-```text
-Purchase Order
-Items Ordered
-Quantity Already Received
-Quantity to Receive
-Receiving Location, usually Main Store
-Batch Number
-Expiry Date
-Unit Cost
-```
-
-When received:
-
-* create `PURCHASE_RECEIVED` movement
-* update stock balance
-* create supplier ledger entry
-* update purchase order status
+If the system already has `selling_price`, decide whether to rename/use it as `base_price`.
 
 ---
 
-# 11. Supplier Ledger UI
+## product_insurance_prices
 
-Create/update supplier pages:
+Create a table for general insurance type product prices:
 
 ```text
-Suppliers
-Supplier Details
-Supplier Ledger
-Supplier Payments
-Supplier Returns
+id
+product_id
+insurance_type
+price
+is_active
+created_at
+updated_at
 ```
 
-Supplier detail page should show:
+Example records:
 
 ```text
-Supplier Profile
-Purchase Orders
-Goods Received
-Payments
-Returns
-Outstanding Balance
-Ledger
-```
+product_id = 1
+insurance_type = nhis
+price = 3
 
-Ledger columns:
+product_id = 1
+insurance_type = private
+price = 6
 
-```text
-Date
-Type
-Description
-Debit
-Credit
-Balance
-Source
-Created By
-```
-
-Use this convention unless project already defines another:
-
-```text
-credit = amount facility owes supplier
-debit = amount paid/reduced
-```
-
-Examples:
-
-Goods received worth 5,000:
-
-```text
-credit = 5000
-```
-
-Supplier payment of 2,000:
-
-```text
-debit = 2000
-```
-
-Return to supplier worth 500:
-
-```text
-debit = 500
-```
-
-Outstanding supplier balance:
-
-```text
-credits - debits
+product_id = 1
+insurance_type = corporate
+price = 4
 ```
 
 ---
 
-# 12. Pharmacy UI Changes
+## product_provider_prices
 
-Pharmacy must use products, not a drugs table.
-
-## Drug Catalogue
-
-Load:
+Create a table for provider-specific product prices:
 
 ```text
-products linked to Pharmacy department
-AND product_type = DRUG
+id
+product_id
+insurance_provider_id
+price
+is_active
+created_at
+updated_at
 ```
-
-Pharmacy users should not see Create Product button unless they have Store/Admin permission.
-
-## Dispensing Page
-
-When dispensing, show stock from Pharmacy stock location only:
-
-```text
-Drug: Paracetamol
-Available in Pharmacy: 50
-Quantity to dispense: 10
-```
-
-Rules:
-
-* If Pharmacy has 0 but Main Store has 100, pharmacy cannot dispense.
-* Stock must be transferred to Pharmacy first.
-* Dispensing creates `PHARMACY_DISPENSED` OUT movement from Pharmacy stock location.
-* Prescribing does not affect stock.
-* Payment does not affect stock.
-
----
-
-# 13. Investigation Result Entry UI
-
-When entering results, add a Consumables Used section.
 
 Example:
 
 ```text
-Consumables Used
-[✓] Malaria RDT Kit    Qty: 1
-[✓] Gloves             Qty: 1
-[✓] Lancet             Qty: 1
-[+] Add Consumable
+product_id = 1
+insurance_provider_id = ABC Insurance
+price = 2.5
 ```
 
-Rules:
-
-* Preload default consumables from the investigation service.
-* Consumable list must load products linked to that investigation department.
-* Saving result should also save actual consumable usage.
-* Actual usage creates `INVESTIGATION_CONSUMED` OUT movements.
-* Deduct from the investigation department stock location.
-* Do not deduct from Main Store.
-
-If stock is insufficient:
-
-* block save unless authorized override exists
-* show clear error message
+Provider-specific prices must override general insurance type prices.
 
 ---
 
-# 14. Procedure / Theatre UI Changes
+# 6. Pricing Resolution Logic
 
-On procedure workflow pages, add a Consumables Used section.
-
-Example:
+Create or update:
 
 ```text
-Procedure Consumables Used
-[✓] Surgical Gloves    Qty: 4
-[✓] Sutures            Qty: 2
-[✓] Gauze              Qty: 10
-[+] Add Consumable
+ProductPricingService
 ```
 
-Rules:
-
-* Preload default consumables from the procedure service.
-* Consumables list must load products linked to procedure/theatre department.
-* Saving usage creates `PROCEDURE_CONSUMED` OUT movements.
-* Deduct from procedure/theatre stock location.
-* Do not deduct from Pharmacy or Main Store unless configured as that department’s stock location.
-
----
-
-# 15. Investigation Catalogue UI
-
-Investigation Catalogue should show:
-
-```text
-Investigation Services
-```
-
-It must load:
-
-```text
-services where department.type = investigation
-```
-
-When a service is selected, show sections:
-
-```text
-Service Details
-Headers / Categories
-Criteria
-Default Consumables
-Preview
-```
-
-Default Consumables must load products linked to the selected service’s department.
-
-Do not create detached tests.
-
----
-
-# 16. Procedure Catalogue UI
-
-Procedure Catalogue should mirror Investigation Catalogue.
-
-First page:
-
-```text
-Procedure Services
-```
-
-It must load:
-
-```text
-services where department.type = procedure
-```
-
-or:
-
-```text
-services where department.type = theatre
-```
-
-depending on the existing department type naming.
-
-When selected, show sections:
-
-```text
-Service Details
-Templates
-Template Sections
-Template Fields
-Default Consumables
-Preview Report
-```
-
-Default Consumables must load products linked to the selected service’s department.
-
-Do not create detached procedure items.
-
----
-
-# 17. Billing UI Changes
-
-Billing must clearly distinguish service billing and product billing.
-
-Invoice item source may include:
-
-```text
-consultation_service
-investigation_service
-procedure_service
-pharmacy_product
-ward_consumable
-```
-
-Invoice item descriptions should be clear:
-
-```text
-General Consultation
-Full Blood Count
-Appendectomy
-Paracetamol 500mg
-Surgical Gloves
-```
-
-Rules:
-
-* Services are billed as services.
-* Dispensed products can create invoice items when billable.
-* Consumables may or may not be billable depending on configuration.
-* Backend must know source type and source ID.
-* Billing must still use the visit’s single invoice.
-
----
-
-# 18. Permissions
-
-Add or verify permissions:
-
-```text
-product.create
-product.edit
-product.link_department
-product.view
-
-stock.location.manage
-stock.transfer
-stock.adjust
-stock.receive
-stock.return
-stock.view_balance
-
-supplier.manage
-supplier.ledger.view
-supplier.payment.create
-supplier.return.create
-
-consumable.use
-
-procedure.catalogue.manage
-investigation.catalogue.manage
-```
-
-Permission rules:
-
-* Store/Admin can create products.
-* Store/Admin can link products to departments.
-* Pharmacy can view pharmacy products and dispense.
-* Lab can view linked consumables and consume during results.
-* Theatre can view linked consumables and consume during procedures.
-* Departments cannot create products unless explicitly authorized.
-
----
-
-# 19. Dashboard Changes
-
-## Store Dashboard
-
-Show:
-
-```text
-Total products
-Low stock items
-Pending purchase orders
-Recent stock movements
-Supplier balances
-Pending transfers
-```
-
-## Pharmacy Dashboard
-
-Show:
-
-```text
-Pending prescriptions
-Low pharmacy stock
-Dispensed today
-Pharmacy stock value
-```
-
-## Lab / Investigation Dashboard
-
-Show:
-
-```text
-Pending investigations
-Results pending
-Low consumables
-Consumables used today
-```
-
-## Theatre Dashboard
-
-Show:
-
-```text
-Pending procedures
-Scheduled procedures
-Low theatre supplies
-Procedures completed today
-```
-
----
-
-# 20. Validation Rules
-
-Enforce these validations:
-
-## Product
-
-* product name required
-* product type required
-* unit required
-* only Store/Admin can create product
-
-## Product Department Link
-
-* product required
-* department required
-* duplicate active links should be prevented
-
-## Department Usage
-
-* product must be linked to the user/service department
-* department must have active stock location
-* cannot consume more than available stock unless override enabled
-
-## Transfer
-
-* source required
-* destination required
-* source and destination must be different
-* transfer must involve Main Store unless inter-department transfer is enabled
-* quantity must be greater than zero
-* source must have enough stock
-
-## Service Consumables
-
-* product must be linked to the service department
-* default quantity must be greater than zero
-* required consumables must be confirmed before finalization if configured
-
-## Purchase Receiving
-
-* purchase order required
-* receiving location required
-* received quantity must be greater than zero
-* received quantity must not exceed remaining ordered quantity unless over-receiving is allowed
-
-## Supplier Ledger
-
-* supplier required
-* entry type required
-* debit/credit must be valid
-* source should be linked where possible
-
----
-
-# 21. Backend Services to Use
-
-Create or update these services:
-
-```text
-ProductService
-ProductDepartmentService
-StockLocationService
-StockMovementService
-StockBalanceService
-StockTransferService
-StockAdjustmentService
-StockReturnService
-ConsumableUsageService
-ServiceConsumableService
-InvestigationCatalogueService
-ProcedureCatalogueService
-ProcedureTemplateService
-SupplierService
-SupplierLedgerService
-PurchaseOrderService
-```
-
-Important:
-
-* Product creation must go through `ProductService`.
-* Product-department linking must go through `ProductDepartmentService`.
-* Stock usage must go through `StockMovementService`.
-* Current stock must use `StockBalanceService`.
-* Consumable usage must go through `ConsumableUsageService`.
-* Supplier events must go through `SupplierLedgerService`.
-
----
-
-# 22. Required Service Behavior
-
-## StockLocationService
-
-Must resolve the correct stock location for a department:
+Required method:
 
 ```php
-getDefaultLocationForDepartment(Department $department): StockLocation
+resolvePriceForProduct(
+    Product $product,
+    ?PatientInsurance $patientInsurance = null,
+    int|float $quantity = 1
+): array
 ```
 
-## ConsumableUsageService
-
-Must record actual consumable use:
+Return:
 
 ```php
-recordUsageForSource(
+[
+    'cash_price' => 5,
+    'insurance_price' => 3,
+    'selected_price' => 3,
+    'quantity' => 2,
+    'total_price' => 6,
+    'patient_payable' => 6,
+    'pricing_source' => 'provider_specific | insurance_type | cash_and_carry | base_price',
+    'insurance_type' => 'cash | nhis | private | corporate | other',
+    'insurance_provider_id' => null,
+]
+```
+
+Rules:
+
+## Cash and Carry
+
+```text
+cash_price = product base price
+insurance_price = null
+selected_price = cash_price
+total_price = selected_price * quantity
+patient_payable = total_price
+pricing_source = cash_and_carry
+```
+
+## Insurance
+
+```text
+cash_price = product base price
+insurance_price = resolved insurance product price
+selected_price = insurance_price
+total_price = selected_price * quantity
+patient_payable = total_price
+pricing_source = provider_specific or insurance_type
+```
+
+## Fallback
+
+If no insurance price exists:
+
+```text
+selected_price = cash_price
+pricing_source = base_price
+```
+
+---
+
+# 7. BillingService Integration
+
+Update `BillingService` so it can bill both services and products.
+
+Current billing likely supports:
+
+```php
+BillingService::addItemToVisitInvoice(Visit $visit, Service $service, ...)
+```
+
+Add support for products, for example:
+
+```php
+BillingService::addProductToVisitInvoice(
     Visit $visit,
-    Service $service,
+    Product $product,
     string $sourceType,
-    int $sourceId,
-    array $items,
-    User $user
-): void
+    ?int $sourceId = null,
+    int|float $quantity = 1,
+    ?Department $department = null,
+    ?User $createdBy = null
+): InvoiceItem
 ```
 
 This method must:
 
-* validate department access
-* validate product availability
-* validate stock location
-* validate quantity
-* create consumable usage records
-* create stock OUT movements
-* update stock balances
+1. Get or create the visit invoice.
+2. Resolve patient insurance from the visit.
+3. Call `ProductPricingService`.
+4. Create invoice item.
+5. Save pricing snapshot.
+6. Prevent duplicate billing by `source_type + source_id` where applicable.
+7. Recalculate invoice totals.
 
-## SupplierLedgerService
+---
 
-Must record supplier events:
+# 8. Invoice Item Fields for Product Billing
 
-```php
-recordEntry(
-    Supplier $supplier,
-    string $entryType,
-    float $debit,
-    float $credit,
-    string $description,
-    ?string $sourceType = null,
-    ?int $sourceId = null,
-    ?User $user = null
-): SupplierLedgerEntry
+When a product is billed, save the same invoice item fields:
+
+```text
+invoice_id
+visit_id
+patient_id
+department_id nullable
+service_id nullable
+product_id nullable
+source_type
+source_id nullable
+description
+quantity
+cash_price
+insurance_price
+selected_price
+insurance_covered
+discount_amount
+patient_payable
+paid_amount
+balance
+payment_status
+patient_insurance_id nullable
+pricing_source
+insurance_type nullable
+created_by nullable
+```
+
+Important:
+
+* Product bill lines should use `product_id`.
+* Service bill lines should use `service_id`.
+* An invoice item can be service-based or product-based.
+* Do not force every invoice item to have `service_id`.
+
+---
+
+# 9. Calculation Rules
+
+Use the same billing formulas everywhere.
+
+```text
+insurance_covered = cash_price - insurance_price
+```
+
+If no insurance applies:
+
+```text
+insurance_covered = 0
+```
+
+```text
+patient_payable = (selected_price * quantity) - discount_amount
+```
+
+```text
+balance = patient_payable - paid_amount
+```
+
+Important:
+
+* insurance_covered is not payment
+* discount is manual
+* paid_amount only comes from real payments
+* product pricing must not use coverage percentage
+
+---
+
+# 10. Product Pricing UI
+
+Under Store / Procurement → Products, add a pricing configuration section.
+
+On Product Details page, include tabs:
+
+```text
+Details
+Department Availability
+Stock Balances
+Pricing
+Supplier History
+```
+
+## Pricing Tab
+
+Show:
+
+```text
+Base / Cash and Carry Price
+Insurance Type Prices
+Provider-Specific Prices
+```
+
+### Base Price
+
+Allow Store/Admin to set:
+
+```text
+base_price
+```
+
+### Insurance Type Prices
+
+Allow setting prices by insurance type:
+
+```text
+NHIS
+Private
+Corporate
+Other configured insurance types
+```
+
+### Provider-Specific Prices
+
+Allow setting prices for a specific insurance provider:
+
+```text
+Insurance Provider
+Price
+Status
+```
+
+Provider-specific price overrides general insurance type price.
+
+---
+
+# 11. Pharmacy Dispensing Integration
+
+When pharmacy dispenses a drug:
+
+1. Confirm stock from Pharmacy stock location.
+2. Create stock movement OUT.
+3. Add dispensed product to visit invoice through `BillingService::addProductToVisitInvoice`.
+4. Resolve product price based on patient insurance.
+5. Save product invoice item with pricing snapshot.
+
+Important:
+
+* Pharmacy must not manually decide product price.
+* Price must come from `ProductPricingService`.
+* Cash and Carry uses product base price.
+* Insurance uses product insurance price.
+* Provider-specific insurance price overrides type price.
+
+---
+
+# 12. Consumable Billing Rule
+
+Some consumables may be stock-only, while others may be billable.
+
+Add or confirm product field:
+
+```text
+is_billable
+```
+
+Rules:
+
+* If `is_billable = false`, product consumption only affects stock.
+* If `is_billable = true`, product consumption can create an invoice item.
+* Billing must still go through `BillingService`.
+* Pricing must go through `ProductPricingService`.
+
+Examples:
+
+```text
+Gloves used internally may be non-billable.
+Sutures used in theatre may be billable.
+Medication dispensed by pharmacy is billable.
 ```
 
 ---
 
-# 23. Frontend / Inertia Pages
+# 13. Investigation Consumable Billing
 
-Create or update these page groups.
+When investigation result entry consumes products:
 
-## Store / Products
-
-```text
-Products/Index.vue
-Products/Create.vue
-Products/Edit.vue
-Products/Show.vue
-Products/DepartmentLinks.vue
-```
-
-## Stock
-
-```text
-StockLocations/Index.vue
-StockMovements/Index.vue
-StockBalances/Index.vue
-StockTransfers/Index.vue
-StockAdjustments/Index.vue
-StockReturns/Index.vue
-GoodsReceiving/Index.vue
-```
-
-## Supplier Ledger
-
-```text
-Suppliers/Index.vue
-Suppliers/Show.vue
-Suppliers/Ledger.vue
-Suppliers/Payments.vue
-Suppliers/Returns.vue
-```
-
-## Pharmacy
-
-```text
-Pharmacy/DrugCatalogue.vue
-Pharmacy/Dispensing.vue
-Pharmacy/StockBalance.vue
-```
-
-## Investigations
-
-```text
-Investigations/Consumables.vue
-Investigations/ResultEntry.vue
-InvestigationCatalogue/Index.vue
-InvestigationCatalogue/Show.vue
-```
-
-## Procedures
-
-```text
-Procedures/Consumables.vue
-ProcedureCatalogue/Index.vue
-ProcedureCatalogue/Show.vue
-ProcedureCatalogue/Templates.vue
-ProcedureCatalogue/Consumables.vue
-```
+* deduct stock from investigation department stock location
+* if consumed product is billable, add product invoice item
+* price product according to patient insurance
+* do not bill non-billable consumables
 
 ---
 
-# 24. Data Integrity Rules
+# 14. Procedure Consumable Billing
 
-* Product is the only source for physical items.
-* Services are the only source for billable hospital activities.
-* Product-department links control product availability.
-* Stock locations control physical quantity by department.
-* Department consumption must use department stock location.
-* Stock movements are the source of truth.
-* Stock balances are cache only.
-* Default consumables do not deduct stock.
-* Actual usage deducts stock.
-* Purchase order creation does not increase stock.
-* Goods receiving increases stock.
-* Supplier ledger tracks supplier events.
-* Investigation Catalogue must be service-based.
-* Procedure Catalogue must be service-based.
-* Do not create detached tests/procedure items.
+When procedure/theatre consumes products:
+
+* deduct stock from procedure/theatre stock location
+* if consumed product is billable, add product invoice item
+* price product according to patient insurance
+* do not bill non-billable consumables
 
 ---
 
-# 25. Performance Rules
+# 15. Validation Rules
 
-* Use `stock_balances` for current stock display.
-* Do not calculate stock from all movements on every page.
-* Eager-load product departments where needed.
-* Load consumables only for selected service.
-* Paginate product, movement, supplier, and ledger lists.
-* Avoid N+1 queries in catalogues and stock pages.
-* Cache product availability per department where safe.
+## Product Pricing
+
+* base_price must be nullable or numeric >= 0
+* insurance price must be numeric >= 0
+* product_id required
+* insurance_type required for type price
+* insurance_provider_id required for provider price
+* prevent duplicate active price for same product + insurance_type
+* prevent duplicate active price for same product + insurance_provider_id
+
+## Product Billing
+
+* product must exist
+* product must be active
+* product must be billable if creating invoice item
+* quantity must be greater than zero
+* patient/visit must exist
+* pricing must resolve successfully
+* selected_price must be >= 0
 
 ---
 
-# 26. Testing / Verification
+# 16. Permissions
+
+Add or verify permissions:
+
+```text
+product.pricing.view
+product.pricing.manage
+product.provider-pricing.manage
+product.insurance-pricing.manage
+```
+
+Only Store/Admin or authorized billing/product managers should set product prices.
+
+Pharmacy can view prices where needed but should not manage global product pricing unless permitted.
+
+---
+
+# 17. Data Integrity Rules
+
+* Product base price is Cash and Carry price.
+* Product insurance type price overrides base price.
+* Product provider-specific price overrides insurance type price.
+* Product invoice item must store pricing snapshot.
+* Do not recalculate old invoice items when product price changes.
+* Do not hardcode NHIS.
+* Do not use coverage percentage.
+* Do not treat insurance_covered as payment.
+* Do not allow pharmacy/lab/theatre to bypass pricing service.
+* Do not create product invoice items manually from controllers.
+
+---
+
+# 18. Performance Rules
+
+* Eager-load product insurance prices where needed.
+* Avoid N+1 queries during dispensing.
+* Cache insurance price lookup where safe.
+* Do not load all provider-specific prices unless required.
+* Product pricing lookup should be fast during billing.
+
+---
+
+# 19. Tests / Verification
 
 Add or update tests for:
 
-1. Store/Admin can create product.
-2. Pharmacy cannot create product.
-3. Lab cannot create product.
-4. Theatre cannot create product.
-5. Product can be linked to departments.
-6. Department sees only linked products.
-7. Pharmacy Drug Catalogue loads products linked to Pharmacy with type DRUG.
-8. Investigation consumables load products linked to investigation department.
-9. Procedure consumables load products linked to procedure department.
-10. Stock location belongs to department.
-11. Pharmacy dispensing deducts from Pharmacy stock location.
-12. Investigation result consumables deduct from investigation department stock location.
-13. Procedure consumables deduct from procedure department stock location.
-14. Main Store can transfer to department.
-15. Department can return stock to Main Store.
-16. Purchase receiving creates stock IN movement.
-17. Goods received creates supplier ledger credit.
-18. Supplier payment creates supplier ledger debit.
-19. Return to supplier creates stock OUT and supplier ledger entry.
-20. Investigation Catalogue loads services from investigation departments.
-21. Procedure Catalogue loads services from procedure/theatre departments.
-22. Default consumables only load linked products.
-23. Actual consumable usage creates stock movement.
-24. Stock balance updates correctly after usage.
+1. Product base price is used for Cash and Carry.
+2. Product insurance type price is used for matching insurance type.
+3. Provider-specific product price overrides insurance type price.
+4. Product falls back to base price if no insurance price exists.
+5. Pharmacy dispensing bills product with correct insurance-aware price.
+6. Billable consumable creates invoice item.
+7. Non-billable consumable does not create invoice item.
+8. Product invoice item stores pricing snapshot.
+9. Changing product price does not change old invoice items.
+10. Duplicate active insurance price is prevented.
+11. Duplicate active provider price is prevented.
 
 ---
 
-# 27. Deliverables
+# 20. Deliverables
 
 Provide:
 
-1. Gap analysis of current implementation.
-2. Updated menus/navigation.
-3. Updated labels.
-4. New/updated migrations.
-5. Updated models and relationships.
-6. Updated services.
-7. Updated permissions.
-8. Updated Vue/Inertia pages.
-9. Updated validation requests.
-10. Updated Store/Product UI.
-11. Updated Pharmacy product catalogue.
-12. Updated Investigation consumable flow.
-13. Updated Procedure consumable flow.
-14. Updated Investigation Catalogue.
-15. Updated Procedure Catalogue.
-16. Updated Supplier Ledger.
-17. Tests or verification notes.
-18. List of modified files.
-19. Remaining TODOs if any.
+1. New/updated migrations.
+2. Updated Product model.
+3. Updated InvoiceItem model if needed.
+4. ProductPricingService implementation.
+5. Updated BillingService product billing method.
+6. Product pricing UI.
+7. Product insurance type pricing.
+8. Product provider-specific pricing.
+9. Pharmacy dispensing integration.
+10. Investigation/procedure consumable billing integration where applicable.
+11. Permissions added.
+12. Tests or verification notes.
+13. Files modified.
+14. Remaining TODOs if any.
 
 ---
 
-# 28. Important Rules
+# 21. Important Rules
 
-Do not create a drugs table.
+Do not hardcode NHIS only.
 
-Do not create lab_items table.
+Do not use coverage percentage.
 
-Do not create procedure_items table.
+Do not bypass ProductPricingService.
 
-Do not create standalone consumables table.
+Do not bypass BillingService.
 
-Do not allow Pharmacy/Lab/Theatre to create products.
+Do not let old invoice items recalculate from new product prices.
 
-Do not use product quantity as current stock.
+Do not force product invoice items to have service_id.
 
-Do not deduct stock from Main Store when department stock should be used.
+Do not bill non-billable consumables.
 
-Do not allow direct department-to-department transfer unless explicitly enabled.
+Do not allow unauthorized users to manage product prices.
 
-Do not create Investigation Catalogue tests detached from services.
-
-Do not create Procedure Catalogue items detached from services.
-
-Do not deduct default consumables until actual usage is saved.
-
-Do not bypass StockMovementService.
-
-Do not bypass StockBalanceService.
-
-Do not bypass SupplierLedgerService.
-
-Do not break existing billing, pharmacy, investigation, and procedure workflows.
-
-Now inspect the current UHMS implementation and apply these changes carefully, module by module.
-
-Make all the relevace changes
+Now inspect the current UHMS implementation and add insurance-aware Product Pricing similar to Service Pricing.
