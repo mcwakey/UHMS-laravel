@@ -78,6 +78,10 @@ function shouldIgnoreAnchor(anchor) {
 }
 
 function handleClick(event) {
+    // If a legacy handler (jQuery, Bootstrap, inline onclick) already cancelled
+    // this event, do NOT re-fire it through Inertia — that's how we get double
+    // submissions / double navigations.
+    if (event.defaultPrevented) return;
     if (!isPlainLeftClick(event)) return;
     const anchor = event.target.closest('a');
     if (!anchor) return;
@@ -106,9 +110,21 @@ function formHasFiles(form) {
 }
 
 function handleSubmit(event) {
+    // Critical: skip if a legacy jQuery / inline / Bootstrap submit handler
+    // already called preventDefault. Otherwise we'd POST twice (once via
+    // their $.ajax call, once via Inertia router.visit).
+    if (event.defaultPrevented) return;
+
     const form = event.target.closest('form');
     if (!form) return;
     if (form.hasAttribute('data-no-inertia')) return;
+
+    // FORM SUBMISSIONS ARE OPT-IN: legacy Blade forms are written for the
+    // classic Laravel POST/redirect/GET cycle and many have their own jQuery
+    // handlers. Only intercept when the form explicitly opts in via
+    // `data-inertia` (any value). Everything else submits natively.
+    if (!form.hasAttribute('data-inertia')) return;
+
     if (form.target && form.target !== '' && form.target !== '_self') return;
     const action = form.action || window.location.href;
     if (!isSameOrigin(action)) return;
