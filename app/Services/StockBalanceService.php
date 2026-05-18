@@ -3,12 +3,32 @@
 namespace App\Services;
 
 use App\Enums\StockMovementDirection;
+use App\Models\Product;
+use App\Models\ProductStockBalance;
 use App\Models\StockBalance;
+use App\Models\StockLocation;
 use App\Models\StockMovement;
 use Illuminate\Support\Facades\DB;
 
 class StockBalanceService
 {
+    /**
+     * Unified-inventory accessor: returns the on-hand quantity for a given
+     * Product at a given StockLocation from the canonical balance ledger.
+     *
+     * This is the only read path department/admin code should use for
+     * "how much of X is currently sitting at location Y?".
+     */
+    public function getQuantityForProductAtLocation(Product $product, StockLocation $location): float
+    {
+        $balance = ProductStockBalance::query()
+            ->where('product_id', $product->id)
+            ->where('stock_location_id', $location->id)
+            ->first();
+
+        return (float) ($balance?->quantity_on_hand ?? 0);
+    }
+
     /**
      * Get current stock for a drug at a location (creating a row if needed).
      */

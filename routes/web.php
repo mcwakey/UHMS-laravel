@@ -750,6 +750,9 @@ Route::middleware('auth')->group(function () {
             // Dashboard + detail
             Route::middleware('can:procedure.view')->group(function () {
                 Route::get('/', [\App\Http\Controllers\Theatre\TheatreController::class, 'index'])->name('index');
+                // Procedure Consumables — read-only filtered product catalogue.
+                Route::get('consumables', [\App\Http\Controllers\Admin\ProcedureConsumablesController::class, 'index'])
+                    ->name('consumables.index');
                 Route::get('procedures/{procedure}', [\App\Http\Controllers\Theatre\TheatreController::class, 'show'])->name('show');
                 Route::get('procedures/{procedure}/report', [\App\Http\Controllers\Theatre\TheatreController::class, 'fullReport'])
                     ->name('report')->middleware('can:procedure.view_report');

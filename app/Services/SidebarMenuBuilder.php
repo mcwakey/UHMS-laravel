@@ -173,6 +173,12 @@ class SidebarMenuBuilder
                                 'active_patterns' => ['admin.procedure-catalogue.*'],
                                 'permission' => 'procedure_catalogue.view',
                             ],
+                            [
+                                'label' => 'Procedure Consumables',
+                                'route' => 'admin.theatre.consumables.index',
+                                'active_patterns' => ['admin.theatre.consumables.*'],
+                                'permission' => 'procedure.view',
+                            ],
                             // [
                             //     'label' => 'Scheduled Procedures',
                             //     'route' => 'admin.procedures.schedule',

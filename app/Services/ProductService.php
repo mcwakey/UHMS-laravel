@@ -11,6 +11,30 @@ use InvalidArgumentException;
 
 class ProductService
 {
+    /**
+     * Return active products linked to the given department, optionally
+     * filtered by one or more product types. Departments only ever
+     * **view** products linked to them — they never create new ones.
+     *
+     * @param  Department  $department
+     * @param  array<int, ProductType|string>|null  $types
+     */
+    public function getProductsForDepartment(Department $department, ?array $types = null)
+    {
+        $typeValues = collect($types ?? [])
+            ->map(fn ($t) => $t instanceof ProductType ? $t->value : (string) $t)
+            ->filter()
+            ->all();
+
+        return Product::query()
+            ->with(['departments:id,name,type'])
+            ->where('is_active', true)
+            ->forDepartment($department->id)
+            ->when(! empty($typeValues), fn ($q) => $q->whereIn('product_type', $typeValues))
+            ->orderBy('name')
+            ->get();
+    }
+
     public function listProducts(array $filters = [])
     {
         return Product::query()
