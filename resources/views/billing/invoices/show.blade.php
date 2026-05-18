@@ -40,7 +40,7 @@
                 @endif
             @endcan
         @endif
-        <a href="{{ route('admin.billing.invoices.print', $invoice) }}" target="_blank" class="btn btn-dark btn-md">
+        <a data-no-inertia href="{{ route('admin.billing.invoices.print', $invoice) }}" target="_blank" class="btn btn-dark btn-md">
             <i class="ti ti-printer me-1"></i>Print
         </a>
     </div>
@@ -461,7 +461,7 @@
                         @endif
                     @endcan
                 @endif
-                <a href="{{ route('admin.billing.invoices.print', $invoice) }}" target="_blank" class="btn btn-outline-dark">
+                <a data-no-inertia href="{{ route('admin.billing.invoices.print', $invoice) }}" target="_blank" class="btn btn-outline-dark">
                     <i class="ti ti-printer me-1"></i>Print Invoice
                 </a>
                 @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::PAID, \App\Enums\InvoiceStatus::CANCELLED]))

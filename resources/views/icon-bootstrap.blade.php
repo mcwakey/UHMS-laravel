@@ -37,7 +37,7 @@
                             <div class="card-title">Bootstrap Icons</div>
                         </div> 
                         <div class="card-body">
-                            <p class="mb-2"><code>&lt;i class="bi bi-ICON_NAME"&gt;&lt;/i&gt;</code>. For more information <a href="https://icons.getbootstrap.com/" target="_blank" class="text-primary">click here</a>.</p>
+                            <p class="mb-2"><code>&lt;i class="bi bi-ICON_NAME"&gt;&lt;/i&gt;</code>. For more information <a data-no-inertia href="https://icons.getbootstrap.com/" target="_blank" class="text-primary">click here</a>.</p>
                             
                             <div class="icons-list">
                                 <div class="icons-list-item">

@@ -36,7 +36,7 @@
         <small class="text-muted">{{ now()->format('l, d F Y — h:i A') }}</small>
     </div>
     <div class="d-flex gap-2">
-        <button class="btn btn-outline-secondary btn-sm" onclick="location.reload()">
+        <button class="btn btn-outline-secondary btn-sm" type="button" onclick="(window.UhmsInertia ? window.UhmsInertia.reload({ preserveScroll: true }) : location.reload())">
             <i class="ti ti-refresh me-1"></i>Refresh
         </button>
         @can('queue.manage')
@@ -118,7 +118,13 @@
 
 @push('scripts')
 <script>
-// Auto-refresh every 30 seconds
-setTimeout(function() { location.reload(); }, 30000);
+// Auto-refresh every 30 seconds via Inertia (preserves scroll/state when possible)
+setTimeout(function () {
+    if (window.UhmsInertia) {
+        window.UhmsInertia.reload({ preserveScroll: true });
+    } else {
+        location.reload();
+    }
+}, 30000);
 </script>
 @endpush

@@ -1020,7 +1020,7 @@
 
                         <div class="card-body">
                             <p class="text-muted">Have a bunch of buttons that all trigger the same modal with slightly different contents? Use
-                                <code>event.relatedTarget</code> and <a href="https://developer.mozilla.org/en-US/docs/Learn/HTML/Howto/Use_data_attributes" target="_blank">HTML <code>data-bs-*</code>
+                                <code>event.relatedTarget</code> and <a data-no-inertia href="https://developer.mozilla.org/en-US/docs/Learn/HTML/Howto/Use_data_attributes" target="_blank">HTML <code>data-bs-*</code>
                                     attributes</a> to vary the contents of the modal depending on which button was clicked.
                             </p>
                             <div class="hstack gap-2 flex-wrap">

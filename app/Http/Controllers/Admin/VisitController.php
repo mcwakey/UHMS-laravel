@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\VisitStatus;
+use App\Enums\VisitType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreVisitRequest;
 use App\Http\Requests\UpdateVisitRequest;
@@ -19,6 +20,7 @@ use App\Enums\BillingType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
 
 class VisitController extends Controller
 {
@@ -43,7 +45,90 @@ class VisitController extends Controller
         $stats = $this->visitService->todayStats();
         $doctors = User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get();
 
-        return view('visits.index', compact('visits', 'stats', 'doctors', 'filters'));
+        // True-Inertia migration (Phase B / B4): serialize for Vue page.
+        $user = $request->user();
+
+        $visitTypeColor = static fn (VisitType $t): string => match ($t) {
+            VisitType::EMERGENCY => 'danger',
+            VisitType::INPATIENT => 'info',
+            default              => 'light text-dark',
+        };
+
+        $visitsPayload = $visits->through(function (Visit $visit) use ($visitTypeColor) {
+            return [
+                'id'             => $visit->id,
+                'visit_number'   => $visit->visit_number,
+                'visit_date_display' => optional($visit->visit_date)->format('d M Y'),
+                'duration'       => $visit->duration,
+                'age_display'    => $visit->patient_age ?? optional($visit->patient)->age,
+                'assigned_doctor_name' => optional($visit->assignedDoctor)->full_name,
+                'patient' => $visit->patient ? [
+                    'id'             => $visit->patient->id,
+                    'full_name'      => $visit->patient->full_name,
+                    'patient_number' => $visit->patient->patient_number,
+                ] : null,
+                'visit_type' => $visit->visit_type ? [
+                    'value' => $visit->visit_type->value,
+                    'label' => $visit->visit_type->label(),
+                    'color' => $visitTypeColor($visit->visit_type),
+                ] : null,
+                'priority' => $visit->priority ? [
+                    'value' => $visit->priority->value,
+                    'label' => $visit->priority->label(),
+                    'color' => $visit->priority->color(),
+                ] : null,
+                'triage_score' => $visit->triage_score ? [
+                    'value' => $visit->triage_score->value,
+                    'label' => $visit->triage_score->label(),
+                    'color' => $visit->triage_score->color(),
+                ] : null,
+                'status' => $visit->status ? [
+                    'value' => $visit->status->value,
+                    'label' => $visit->status->label(),
+                    'color' => $visit->status->color(),
+                ] : null,
+                'allowed_transitions' => collect($visit->status?->allowedTransitions() ?? [])
+                    ->map(fn (VisitStatus $s) => [
+                        'value' => $s->value,
+                        'label' => $s->label(),
+                    ])->values()->all(),
+                'urls' => [
+                    'show'    => route('admin.visits.show', $visit),
+                    'edit'    => route('admin.visits.edit', $visit),
+                    'patient' => $visit->patient ? route('admin.patients.show', $visit->patient) : null,
+                ],
+            ];
+        });
+
+        return Inertia::render('Visits/Index', [
+            'visits'  => $visitsPayload,
+            'stats'   => $stats,
+            'doctors' => $doctors->map(fn ($d) => [
+                'id'        => $d->id,
+                'full_name' => $d->full_name,
+            ])->values(),
+            'filters' => $filters,
+            'statusOptions' => collect(VisitStatus::cases())->map(fn ($c) => [
+                'value' => $c->value,
+                'label' => $c->label(),
+            ])->values(),
+            'visitTypeOptions' => collect(VisitType::cases())->map(fn ($c) => [
+                'value' => $c->value,
+                'label' => $c->label(),
+            ])->values(),
+            'routes' => [
+                'index'      => route('admin.visits.index'),
+                'create'     => route('admin.visits.create'),
+                'queueBoard' => route('admin.queue.board'),
+                // {visit} placeholder swapped client-side per row.
+                'transition' => route('admin.visits.transition', ['visit' => '__ID__']),
+            ],
+            'can' => [
+                'create'    => $user?->can('visits.create') ?? false,
+                'edit'      => $user?->can('visits.edit') ?? false,
+                'queueView' => $user?->can('queue.view') ?? false,
+            ],
+        ]);
     }
 
     public function create(Request $request)

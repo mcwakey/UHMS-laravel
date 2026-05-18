@@ -272,7 +272,12 @@ $(function() {
 
     $('#visitSelect').on('change', function() {
         if (this.value) {
-            window.location.href = '{{ route("admin.billing.invoices.create") }}?visit_id=' + encodeURIComponent(this.value);
+            var url = '{{ route("admin.billing.invoices.create") }}?visit_id=' + encodeURIComponent(this.value);
+            if (window.UhmsInertia) {
+                window.UhmsInertia.visit(url, { preserveScroll: true });
+            } else {
+                window.location.href = url;
+            }
         }
     });
 

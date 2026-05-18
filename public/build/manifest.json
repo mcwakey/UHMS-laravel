@@ -9,7 +9,7 @@
     "src": "resources/img/auth/auth-bg.jpg"
   },
   "resources/js/Pages/Legacy/BladePage.vue": {
-    "file": "js/BladePage.DxmSU4IW.js",
+    "file": "js/BladePage.hp7y2zgr.js",
     "name": "BladePage",
     "src": "resources/js/Pages/Legacy/BladePage.vue",
     "isDynamicEntry": true,
@@ -20,13 +20,23 @@
       "css/BladePage.min.css"
     ]
   },
+  "resources/js/Pages/Visits/Index.vue": {
+    "file": "js/Index.CW9SjC5l.js",
+    "name": "Index",
+    "src": "resources/js/Pages/Visits/Index.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/inertia.js"
+    ]
+  },
   "resources/js/inertia.js": {
-    "file": "js/inertia.DY2CzX9s.bundle.js",
+    "file": "js/inertia.Dv1mwPfp.bundle.js",
     "name": "inertia",
     "src": "resources/js/inertia.js",
     "isEntry": true,
     "dynamicImports": [
-      "resources/js/Pages/Legacy/BladePage.vue"
+      "resources/js/Pages/Legacy/BladePage.vue",
+      "resources/js/Pages/Visits/Index.vue"
     ]
   },
   "resources/js/script.js": {

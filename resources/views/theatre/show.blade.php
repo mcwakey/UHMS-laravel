@@ -32,7 +32,7 @@
                 {{ $status->label() }}
             </span>
             @if ($status === ProcedureStatus::COMPLETED)
-                <a class="btn btn-outline-secondary btn-sm ms-2" href="{{ route('admin.theatre.report', $procedure) }}" target="_blank">View Full Report</a>
+                <a data-no-inertia class="btn btn-outline-secondary btn-sm ms-2" href="{{ route('admin.theatre.report', $procedure) }}" target="_blank">View Full Report</a>
             @endif
             <a class="btn btn-outline-primary btn-sm ms-1" href="{{ route('admin.consultations.show', $procedure->visit_id) }}">Back to Visit</a>
         </div>

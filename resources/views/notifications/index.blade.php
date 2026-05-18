@@ -124,7 +124,11 @@ $(document).ready(function() {
             method: 'POST',
             data: { _token: '{{ csrf_token() }}' },
             success: function() {
-                location.reload();
+                if (window.UhmsInertia) {
+                    window.UhmsInertia.reload({ preserveScroll: true });
+                } else {
+                    location.reload();
+                }
             }
         });
     });

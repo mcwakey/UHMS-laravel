@@ -569,7 +569,7 @@
                                                         title="View Result"><i class="ti ti-eye"></i></button>
                                                 @endif
                                                 @if($item->result?->is_verified)
-                                                <a href="{{ route('admin.lab.results.print', $item) }}" target="_blank" class="btn btn-xs btn-outline-secondary" title="Print"><i class="ti ti-printer"></i></a>
+                                                <a data-no-inertia href="{{ route('admin.lab.results.print', $item) }}" target="_blank" class="btn btn-xs btn-outline-secondary" title="Print"><i class="ti ti-printer"></i></a>
                                                 @endif
                                                 @can('consultations.create')
                                                 @if($item->isDeletable() && $canEdit)
@@ -910,7 +910,7 @@
                                             <i class="ti ti-eye me-1"></i>Open
                                         </a>
                                         @if($pr->status === \App\Enums\ProcedureStatus::COMPLETED)
-                                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.theatre.report', $pr) }}" target="_blank">Report</a>
+                                            <a data-no-inertia class="btn btn-sm btn-outline-secondary" href="{{ route('admin.theatre.report', $pr) }}" target="_blank">Report</a>
                                         @endif
                                     </div>
                                 </div>
@@ -2341,7 +2341,14 @@ function bindApplyButtons() {
             })
             .then(function (r) { return r.json(); })
             .then(function (d) {
-                if (d.success) { saveTabBeforeSubmit('patterns-section'); window.location.reload(); }
+                if (d.success) {
+                    saveTabBeforeSubmit('patterns-section');
+                    if (window.UhmsInertia) {
+                        window.UhmsInertia.reload({ preserveScroll: true, preserveState: true });
+                    } else {
+                        window.location.reload();
+                    }
+                }
                 else { alert('Failed to apply pattern.'); self.disabled = false; self.innerHTML = '<i class="ti ti-check me-1"></i>Apply'; }
             })
             .catch(function () { alert('Failed.'); self.disabled = false; self.innerHTML = '<i class="ti ti-check me-1"></i>Apply'; });

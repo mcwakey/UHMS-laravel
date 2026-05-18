@@ -114,7 +114,7 @@
 
 @if($result->is_verified)
 <div class="mt-3 text-end">
-    <a href="{{ route('admin.lab.results.print', $item) }}" target="_blank" class="btn btn-sm btn-primary">
+    <a data-no-inertia href="{{ route('admin.lab.results.print', $item) }}" target="_blank" class="btn btn-sm btn-primary">
         <i class="ti ti-printer me-1"></i>Print Report
     </a>
 </div>

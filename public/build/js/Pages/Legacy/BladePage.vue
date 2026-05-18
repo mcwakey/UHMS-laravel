@@ -60,6 +60,27 @@ function isSameOrigin(url) {
     }
 }
 
+function showToastFallback(message, variant = 'warning') {
+    if (window.UhmsInertia && typeof window.UhmsInertia.toast === 'function') {
+        window.UhmsInertia.toast(message, variant);
+    }
+}
+
+// Heuristic: actions that almost certainly return a binary download (PDF/CSV/
+// XLSX/print) should NOT be intercepted by Inertia — visit() would choke on
+// the non-JSON body and we'd fall back to native anyway. Faster + cleaner to
+// skip up-front.
+const DOWNLOAD_ACTION_RE = /(?:\.pdf|\.csv|\.xlsx?|\.docx?|\/(?:export|download|print|pdf)(?:[\/?#]|$))/i;
+function actionLooksLikeDownload(action) {
+    if (!action) return false;
+    try {
+        const u = new URL(action, window.location.href);
+        return DOWNLOAD_ACTION_RE.test(u.pathname + u.search);
+    } catch (_) {
+        return DOWNLOAD_ACTION_RE.test(action);
+    }
+}
+
 function shouldIgnoreAnchor(anchor) {
     if (!anchor || !anchor.getAttribute) return true;
     const href = anchor.getAttribute('href');
@@ -94,11 +115,16 @@ function handleClick(event) {
         router.visit(url, {
             preserveScroll: false,
             preserveState: false,
-            onError: () => {
+            onError: (errors) => {
+                // eslint-disable-next-line no-console
+                console.warn('[bridge] anchor visit onError', { url, errors });
+                showToastFallback('Could not load that page. Falling back…');
                 window.location.href = url;
             },
         });
-    } catch (_) {
+    } catch (err) {
+        // eslint-disable-next-line no-console
+        console.warn('[bridge] fell back to native nav', { url, reason: 'anchor-visit-throw', err });
         window.location.href = url;
     }
 }
@@ -109,6 +135,18 @@ function formHasFiles(form) {
     );
 }
 
+function shouldIgnoreForm(form, action) {
+    if (!form) return true;
+    if (form.hasAttribute('data-no-inertia')) return true;
+    // Forms whose handlers already invoked preventDefault are skipped at the
+    // call site via event.defaultPrevented (jQuery $.ajax, etc.).
+    if (form.target && form.target !== '' && form.target !== '_self') return true;
+    if (!isSameOrigin(action)) return true;
+    // Skip likely binary-download actions (export PDF, print, CSV).
+    if (actionLooksLikeDownload(action)) return true;
+    return false;
+}
+
 function handleSubmit(event) {
     // Critical: skip if a legacy jQuery / inline / Bootstrap submit handler
     // already called preventDefault. Otherwise we'd POST twice (once via
@@ -117,23 +155,24 @@ function handleSubmit(event) {
 
     const form = event.target.closest('form');
     if (!form) return;
-    if (form.hasAttribute('data-no-inertia')) return;
 
-    // FORM SUBMISSIONS ARE OPT-IN: legacy Blade forms are written for the
-    // classic Laravel POST/redirect/GET cycle and many have their own jQuery
-    // handlers. Only intercept when the form explicitly opts in via
-    // `data-inertia` (any value). Everything else submits natively.
-    if (!form.hasAttribute('data-inertia')) return;
-
-    if (form.target && form.target !== '' && form.target !== '_self') return;
     const action = form.action || window.location.href;
-    if (!isSameOrigin(action)) return;
+
+    // FORM SUBMISSIONS ARE DEFAULT-ON:
+    // - data-no-inertia → skip (jQuery handlers without preventDefault,
+    //   binary endpoints, etc.).
+    // - target=_blank → skip (new tab).
+    // - Cross-origin → skip.
+    // - Likely-download actions (export/print/pdf/csv) → skip.
+    if (shouldIgnoreForm(form, action)) return;
 
     const method = (form.getAttribute('method') || 'get').toLowerCase();
     event.preventDefault();
 
-    const submitNative = () => {
-        // Remove our handler effect; submit through the form natively.
+    const submitNative = (reason) => {
+        // eslint-disable-next-line no-console
+        console.warn('[bridge] fell back to native nav', { url: action, reason: reason || 'form-submit-fallback' });
+        showToastFallback('Action failed via SPA; submitting natively.');
         form.submit();
     };
 
@@ -150,10 +189,19 @@ function handleSubmit(event) {
             forceFormData,
             preserveScroll: false,
             preserveState: false,
-            onError: submitNative,
+            onError: (errors) => {
+                // 422 validation errors are normal Inertia flow — the server
+                // returns a redirect-back response with errors flashed; the
+                // current Blade page just re-renders. Do NOT fall back to
+                // native submit (that would re-POST the same bad data and
+                // full-reload). Only surface a toast for non-validation hints.
+                // eslint-disable-next-line no-console
+                console.warn('[bridge] form submit onError (validation or otherwise)', { action, errors });
+                // Intentionally no native fallback here.
+            },
         });
     } catch (_) {
-        submitNative();
+        submitNative('form-submit-throw');
     }
 }
 

@@ -780,10 +780,10 @@
                 <li>
                     <ul>
                         <li>
-                            <a href="https://preclinic.dreamstechnologies.com/documentation/laravel.html" target="_blank"><i class="ti ti-file-dots"></i><span>Documentation</span></a>
+                            <a data-no-inertia href="https://preclinic.dreamstechnologies.com/documentation/laravel.html" target="_blank"><i class="ti ti-file-dots"></i><span>Documentation</span></a>
                         </li>
                         <li>
-                            <a href="https://preclinic.dreamstechnologies.com/documentation/changelog.html" target="_blank"><i class="ti ti-status-change"></i><span>Changelog</span></a>
+                            <a data-no-inertia href="https://preclinic.dreamstechnologies.com/documentation/changelog.html" target="_blank"><i class="ti ti-status-change"></i><span>Changelog</span></a>
                         </li>
                         <li class="submenu">
                             <a href="javascript:void(0);">

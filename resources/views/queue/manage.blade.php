@@ -8,7 +8,7 @@
         <h4 class="fw-bold mb-0">Queue Management</h4>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ route('admin.queue.board') }}" class="btn btn-outline-info btn-md" target="_blank">
+        <a data-no-inertia href="{{ route('admin.queue.board') }}" class="btn btn-outline-info btn-md" target="_blank">
             <i class="ti ti-external-link me-1"></i>Queue Board
         </a>
         @can('visits.create')

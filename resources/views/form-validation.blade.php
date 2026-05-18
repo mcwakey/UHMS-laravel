@@ -36,7 +36,7 @@
                             <h5 class="card-title">Custom Bootstrap Form Validation</h5>
                         </div><!-- end card-header -->
                         <div class="card-body">
-                            <p>For custom Bootstrap form validation messages, you’ll need to add the <code>novalidate</code> boolean attribute to your form. For server side validation <a href="https://getbootstrap.com/docs/4.1/components/forms/#server-side" target="_blank" class="text-primary">read full documentation</a>.</p>
+                            <p>For custom Bootstrap form validation messages, you’ll need to add the <code>novalidate</code> boolean attribute to your form. For server side validation <a data-no-inertia href="https://getbootstrap.com/docs/4.1/components/forms/#server-side" target="_blank" class="text-primary">read full documentation</a>.</p>
                             
                             <!-- start row -->
                             <div class="row">

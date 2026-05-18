@@ -35,7 +35,7 @@
                             <h5 class="card-title">Collapse</h5>
                         </div><!-- end card header -->
                         <div class="card-body">
-                            <p class="text-muted mb-3">Bootstrap's collapse provides the way to toggle the visibility of any content or element. Please read the official <a href="https://getbootstrap.com/docs/5.2/components/collapse/" target="_blank">Bootstrap</a> documentation for a full list of options.</p>
+                            <p class="text-muted mb-3">Bootstrap's collapse provides the way to toggle the visibility of any content or element. Please read the official <a data-no-inertia href="https://getbootstrap.com/docs/5.2/components/collapse/" target="_blank">Bootstrap</a> documentation for a full list of options.</p>
                             <p>
                                 <a class="btn btn-primary" data-bs-toggle="collapse" href="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
                                     Link with href

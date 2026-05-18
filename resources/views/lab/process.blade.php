@@ -114,7 +114,12 @@
                 btn.disabled = false; btn.innerHTML = '<i class="ti ti-check me-1"></i>Accept Selected &amp; Generate Invoice';
                 return;
             }
-            window.location.href = data.redirect || window.location.href;
+            const target = data.redirect || window.location.href;
+            if (window.UhmsInertia && data.redirect) {
+                window.UhmsInertia.visit(target, { preserveScroll: true });
+            } else {
+                window.location.href = target;
+            }
         } catch (err) {
             errs.textContent = err.message;
             errs.classList.remove('d-none');
@@ -331,7 +336,7 @@
                             @endcan
                             @endif
                             @if($item->result && $item->result->is_verified)
-                            <a href="{{ route('admin.lab.results.print', $item) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Print"><i class="ti ti-printer"></i></a>
+                            <a data-no-inertia href="{{ route('admin.lab.results.print', $item) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Print"><i class="ti ti-printer"></i></a>
                             @endif
                             @if(in_array($request->status, ['processing']) && in_array($item->status, ['accepted','processing']) && !$item->result)
                             @can('lab.results.create')

@@ -38,7 +38,7 @@
                         </div> 
                         
                         <div class="card-body">
-                            <p class="mb-2"><code>&lt;i class="ti ti-ICON_NAME"&gt;&lt;/i&gt;</code>. For more information <a href="https://tabler-icons.io/" target="_blank" class="text-primary">click here</a>.</p>
+                            <p class="mb-2"><code>&lt;i class="ti ti-ICON_NAME"&gt;&lt;/i&gt;</code>. For more information <a data-no-inertia href="https://tabler-icons.io/" target="_blank" class="text-primary">click here</a>.</p>
                             
                             <div class="icons-list">
                                 <div class="icons-list-item">

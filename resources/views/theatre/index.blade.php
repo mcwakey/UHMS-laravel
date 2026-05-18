@@ -116,7 +116,7 @@
                             <td class="text-end">
                                 <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.theatre.show', $r) }}">Open</a>
                                 @if ($r->status === \App\Enums\ProcedureStatus::COMPLETED)
-                                    <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.theatre.report', $r) }}" target="_blank">Report</a>
+                                    <a data-no-inertia class="btn btn-sm btn-outline-secondary" href="{{ route('admin.theatre.report', $r) }}" target="_blank">Report</a>
                                 @endif
                             </td>
                         </tr>
