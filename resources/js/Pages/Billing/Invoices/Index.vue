@@ -12,6 +12,9 @@
 import { reactive, watch } from 'vue';
 import { Link, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '../../../Layouts/AppLayout.vue';
+import { useConfirm } from '../../../Composables/useConfirm';
+
+const { confirm } = useConfirm();
 
 const props = defineProps({
     invoices: { type: Object, required: true },
@@ -50,9 +53,17 @@ watch(() => form.search, () => {
     searchTimer = setTimeout(applyFilters, 350);
 });
 
-function cancelInvoice(invoice) {
+async function cancelInvoice(invoice) {
     if (!invoice.urls.cancel) return;
-    if (!window.confirm('Cancel this invoice?')) return;
+    const ok = await confirm({
+        title: 'Cancel invoice',
+        message: `Cancel invoice ${invoice.invoice_number ?? ''}?`,
+        details: 'This will void the invoice. The action cannot be undone.',
+        variant: 'danger',
+        confirmLabel: 'Cancel invoice',
+        cancelLabel: 'Keep invoice',
+    });
+    if (!ok) return;
     useForm({}).patch(invoice.urls.cancel, { preserveScroll: true });
 }
 
