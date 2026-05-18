@@ -194,7 +194,7 @@
                     <button type="button" class="btn btn-sm btn-outline-secondary add-provider-row"
                             data-target="providerPrices-{{ $product->id }}"
                             data-types='@json(collect($insuranceTypes)->map(fn($t)=>["value"=>$t->value,"label"=>$t->label()]))'
-                            data-providers='@json($insuranceProviders->map(fn($p)=>["id"=>$p->id,"name"=>$p->name]))'>
+                            data-providers='@json($insuranceProviders->map(fn($p)=>["id"=>$p->id,"name"=>$p->name,"type"=>$p->type]))'>
                         <i class="ti ti-plus me-1"></i>Add Provider Override
                     </button>
                 </div>
@@ -207,7 +207,7 @@
                             <div class="row g-2 align-items-end mb-2 provider-price-row">
                                 <div class="col-md-4">
                                     <label class="form-label small">Type</label>
-                                    <select name="provider_prices[{{ $idx }}][insurance_type]" class="form-select form-select-sm" required>
+                                    <select name="provider_prices[{{ $idx }}][insurance_type]" class="form-select form-select-sm type-select" required>
                                         @foreach($insuranceTypes as $type)
                                             <option value="{{ $type->value }}" {{ $pp->insurance_type === $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
                                         @endforeach
@@ -215,9 +215,9 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label small">Provider</label>
-                                    <select name="provider_prices[{{ $idx }}][insurance_provider_id]" class="form-select form-select-sm" required>
+                                    <select name="provider_prices[{{ $idx }}][insurance_provider_id]" class="form-select form-select-sm provider-select" required>
                                         @foreach($insuranceProviders as $prov)
-                                            <option value="{{ $prov->id }}" {{ $pp->insurance_provider_id == $prov->id ? 'selected' : '' }}>{{ $prov->name }}</option>
+                                            <option value="{{ $prov->id }}" data-type="{{ $prov->type }}" {{ $pp->insurance_provider_id == $prov->id ? 'selected' : '' }}>{{ $prov->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -299,18 +299,18 @@ document.addEventListener('DOMContentLoaded', function () {
             const idx       = rowCounter++;
 
             const typeOptions = types.map(t => `<option value="${escH(t.value)}">${escH(t.label)}</option>`).join('');
-            const provOptions = providers.map(p => `<option value="${p.id}">${escH(p.name)}</option>`).join('');
+            const provOptions = providers.map(p => `<option value="${p.id}" data-type="${escH(p.type || '')}">${escH(p.name)}</option>`).join('');
 
             const row = document.createElement('div');
             row.className = 'row g-2 align-items-end mb-2 provider-price-row';
             row.innerHTML = `
                 <div class="col-md-4">
                     <label class="form-label small">Type</label>
-                    <select name="provider_prices[${idx}][insurance_type]" class="form-select form-select-sm" required>${typeOptions}</select>
+                    <select name="provider_prices[${idx}][insurance_type]" class="form-select form-select-sm type-select" required>${typeOptions}</select>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label small">Provider</label>
-                    <select name="provider_prices[${idx}][insurance_provider_id]" class="form-select form-select-sm" required>${provOptions}</select>
+                    <select name="provider_prices[${idx}][insurance_provider_id]" class="form-select form-select-sm provider-select" required>${provOptions}</select>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label small">Price (&#8373;)</label>
@@ -324,8 +324,38 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>`;
             container.appendChild(row);
             row.querySelector('.remove-row').addEventListener('click', () => row.remove());
+            bindCascade(row);
+            filterProviders(row);
         });
     });
+
+    // ── Cascade: filter Provider options by selected Insurance Type ──
+    function bindCascade(row) {
+        const typeSel = row.querySelector('.type-select');
+        if (!typeSel || typeSel.dataset.cascadeBound) return;
+        typeSel.dataset.cascadeBound = '1';
+        typeSel.addEventListener('change', () => filterProviders(row));
+    }
+    function filterProviders(row) {
+        const typeSel = row.querySelector('.type-select');
+        const provSel = row.querySelector('.provider-select');
+        if (!typeSel || !provSel) return;
+        const t = typeSel.value;
+        let firstVisible = null;
+        let currentStillValid = false;
+        Array.from(provSel.options).forEach(opt => {
+            const optType = opt.dataset.type || '';
+            const match = (optType === '' || optType === t);
+            opt.hidden = !match;
+            opt.disabled = !match;
+            if (match && !firstVisible) firstVisible = opt;
+            if (match && opt.selected) currentStillValid = true;
+        });
+        if (!currentStillValid && firstVisible) {
+            provSel.value = firstVisible.value;
+        }
+    }
+    document.querySelectorAll('.provider-price-row').forEach(r => { bindCascade(r); filterProviders(r); });
 
     function escH(text) {
         const d = document.createElement('div');

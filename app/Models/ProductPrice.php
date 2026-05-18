@@ -6,6 +6,8 @@ use App\Enums\InsuranceType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * Insurance-type and provider-specific price overrides for a Product.
@@ -19,7 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class ProductPrice extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $table = 'product_prices';
 
@@ -37,6 +39,15 @@ class ProductPrice extends Model
             'price'     => 'decimal:2',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['product_id', 'insurance_type', 'insurance_provider_id', 'price', 'is_active'])
+            ->logOnlyDirty()
+            ->useLogName('product_prices')
+            ->dontSubmitEmptyLogs();
     }
 
     /* ── Relationships ────────────────────────────────── */

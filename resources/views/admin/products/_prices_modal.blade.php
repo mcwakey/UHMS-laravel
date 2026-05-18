@@ -94,7 +94,7 @@
                                 <div class="col-md-4">
                                     <label class="form-label small">Type</label>
                                     <select name="provider_prices[{{ $idx }}][insurance_type]"
-                                            class="form-select form-select-sm" required>
+                                            class="form-select form-select-sm type-select" required>
                                         @foreach($insuranceTypes as $type)
                                             <option value="{{ $type->value }}" {{ $pp->insurance_type === $type->value ? 'selected' : '' }}>
                                                 {{ $type->label() }}
@@ -105,9 +105,9 @@
                                 <div class="col-md-4">
                                     <label class="form-label small">Provider</label>
                                     <select name="provider_prices[{{ $idx }}][insurance_provider_id]"
-                                            class="form-select form-select-sm" required>
+                                            class="form-select form-select-sm provider-select" required>
                                         @foreach($insuranceProviders as $prov)
-                                            <option value="{{ $prov->id }}" {{ $pp->insurance_provider_id == $prov->id ? 'selected' : '' }}>
+                                            <option value="{{ $prov->id }}" data-type="{{ $prov->type }}" {{ $pp->insurance_provider_id == $prov->id ? 'selected' : '' }}>
                                                 {{ $prov->name }}
                                             </option>
                                         @endforeach
@@ -137,7 +137,7 @@
                     <button type="button" class="btn btn-sm btn-outline-secondary mt-1 add-provider-row"
                             data-target="productProviderPrices-{{ $product->id }}"
                             data-types='@json(collect($insuranceTypes)->map(fn($t)=>["value"=>$t->value,"label"=>$t->label()]))'
-                            data-providers='@json($insuranceProviders->map(fn($p)=>["id"=>$p->id,"name"=>$p->name]))'>
+                            data-providers='@json($insuranceProviders->map(fn($p)=>["id"=>$p->id,"name"=>$p->name,"type"=>$p->type]))'>
                         <i class="ti ti-plus me-1"></i>Add Provider Override
                     </button>
                 </div>

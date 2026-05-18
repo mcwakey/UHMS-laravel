@@ -14,6 +14,7 @@ use App\Models\Admission;
 use App\Models\Appointment;
 use App\Models\Bed;
 use App\Models\Claim;
+use App\Models\Department;
 use App\Models\DispensingRecord;
 use App\Models\DrugStock;
 use App\Models\InsuranceProvider;
@@ -650,17 +651,23 @@ class ReportService
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
+        if (!empty($filters['department_id'])) {
+            $query->whereHas('employee', fn ($q) => $q->where('department_id', $filters['department_id']));
+        }
 
         $leaves = $query->latest('start_date')->paginate(25)->withQueryString();
+
+        $departments = Department::orderBy('name')->get(['id', 'name']);
 
         $stats = [
             'total_requests' => $leaves->total(),
             'total_days' => LeaveRequest::sum('days'),
             'approved' => LeaveRequest::where('status', 'approved')->count(),
             'pending' => LeaveRequest::where('status', 'pending')->count(),
+            'rejected' => LeaveRequest::where('status', 'rejected')->count(),
         ];
 
-        return compact('leaves', 'stats');
+        return compact('leaves', 'stats', 'departments');
     }
 
     /**
@@ -676,24 +683,31 @@ class ReportService
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
+        if (!empty($filters['department_id'])) {
+            $query->whereHas('employee', fn ($q) => $q->where('department_id', $filters['department_id']));
+        }
 
         $records = $query->latest('pay_period')->paginate(25)->withQueryString();
 
         // Summary by department
-        $byDept = PayrollRecord::join('employees', 'payroll_records.employee_id', '=', 'employees.id')
+        $byDepartment = PayrollRecord::join('employees', 'payroll_records.employee_id', '=', 'employees.id')
             ->join('departments', 'employees.department_id', '=', 'departments.id');
 
         if (!empty($filters['pay_period'])) {
-            $byDept->where('payroll_records.pay_period', $filters['pay_period']);
+            $byDepartment->where('payroll_records.pay_period', $filters['pay_period']);
+        }
+        if (!empty($filters['department_id'])) {
+            $byDepartment->where('employees.department_id', $filters['department_id']);
         }
 
-        $byDept = $byDept->select(
+        $byDepartment = $byDepartment->select(
                 'departments.name',
-                DB::raw('COUNT(*) as employee_count'),
+                DB::raw('COUNT(*) as staff_count'),
                 DB::raw('SUM(payroll_records.gross_pay) as total_gross'),
+                DB::raw('SUM(payroll_records.tax + payroll_records.other_deductions + COALESCE(payroll_records.ssnit_employee, 0)) as total_deductions'),
                 DB::raw('SUM(payroll_records.net_pay) as total_net')
             )
-            ->groupBy('departments.name')
+            ->groupBy('departments.id', 'departments.name')
             ->orderBy('departments.name')
             ->get();
 
@@ -701,10 +715,14 @@ class ReportService
             'total_gross' => $records->sum('gross_pay'),
             'total_net' => $records->sum('net_pay'),
             'total_tax' => $records->sum('tax'),
+            'total_deductions' => $records->sum(fn ($r) => (float) $r->tax + (float) $r->other_deductions + (float) ($r->ssnit_employee ?? 0)),
             'employee_count' => $records->total(),
+            'total_records' => $records->total(),
         ];
 
-        return compact('records', 'byDept', 'stats');
+        $departments = Department::orderBy('name')->get(['id', 'name']);
+
+        return compact('records', 'byDepartment', 'stats', 'departments');
     }
 
     /**
@@ -773,6 +791,8 @@ class ReportService
         $stats = [
             'cost_value' => $totalValue->cost_value ?? 0,
             'sell_value' => $totalValue->sell_value ?? 0,
+            'total_cost_value' => $totalValue->cost_value ?? 0,
+            'total_sell_value' => $totalValue->sell_value ?? 0,
             'total_items' => DrugStock::where('quantity', '>', 0)->count(),
             'unique_drugs' => DrugStock::where('quantity', '>', 0)->distinct('drug_id')->count('drug_id'),
         ];
@@ -799,7 +819,10 @@ class ReportService
         $stats = [
             'expired_count' => DrugStock::expired()->where('quantity', '>', 0)->count(),
             'expiring_soon' => DrugStock::expiringSoon(90)->where('quantity', '>', 0)->count(),
+            'expiring_count' => DrugStock::expiringSoon(90)->where('quantity', '>', 0)->count(),
             'expired_value' => DrugStock::expired()->where('quantity', '>', 0)
+                ->selectRaw('SUM(quantity * unit_cost) as total')->value('total') ?? 0,
+            'expiring_value' => DrugStock::expiringSoon(90)->where('quantity', '>', 0)
                 ->selectRaw('SUM(quantity * unit_cost) as total')->value('total') ?? 0,
         ];
 

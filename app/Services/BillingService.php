@@ -60,6 +60,12 @@ class BillingService
             throw new \RuntimeException('Quantity must be at least 1.');
         }
 
+        // G6: respect is_billable flag on the service catalog (symmetric with products).
+        // Treat NULL as billable for backward compatibility with rows that pre-date the column.
+        if (array_key_exists('is_billable', $service->getAttributes()) && $service->is_billable === false) {
+            throw new \RuntimeException("Service '{$service->name}' is marked non-billable and cannot be added to an invoice.");
+        }
+
         return DB::transaction(function () use ($visit, $service, $sourceType, $sourceId, $quantity, $departmentId, $description) {
             $invoice = $this->invoiceService->getOrCreateVisitInvoice($visit);
 

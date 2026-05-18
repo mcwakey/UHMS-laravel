@@ -6,10 +6,12 @@ use App\Enums\DepartmentType;
 use App\Enums\InsuranceType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class ServiceCatalog extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
 
     protected $table = 'service_catalog';
 
@@ -20,6 +22,7 @@ class ServiceCatalog extends Model
         'category',
         'price',
         'is_active',
+        'is_billable',
         'department_id',
         'department_type',
     ];
@@ -29,8 +32,18 @@ class ServiceCatalog extends Model
         return [
             'price' => 'decimal:2',
             'is_active' => 'boolean',
+            'is_billable' => 'boolean',
             'department_type' => DepartmentType::class,
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'code', 'category', 'price', 'is_active', 'is_billable', 'department_id'])
+            ->logOnlyDirty()
+            ->useLogName('service_catalog')
+            ->dontSubmitEmptyLogs();
     }
 
     /*

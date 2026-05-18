@@ -6,10 +6,12 @@ use App\Enums\ProductType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 class Product extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'name',
@@ -35,6 +37,15 @@ class Product extends Model
             'is_billable'   => 'boolean',
             'is_active'     => 'boolean',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'code', 'product_type', 'unit', 'reorder_level', 'default_cost', 'base_price', 'is_billable', 'is_active'])
+            ->logOnlyDirty()
+            ->useLogName('products')
+            ->dontSubmitEmptyLogs();
     }
 
     public function departments()

@@ -135,18 +135,18 @@ document.addEventListener('DOMContentLoaded', function () {
             const idx       = rowCounter++;
 
             const typeOptions = types.map(t => `<option value="${escH(t.value)}">${escH(t.label)}</option>`).join('');
-            const provOptions = providers.map(p => `<option value="${p.id}">${escH(p.name)}</option>`).join('');
+            const provOptions = providers.map(p => `<option value="${p.id}" data-type="${escH(p.type || '')}">${escH(p.name)}</option>`).join('');
 
             const row = document.createElement('div');
             row.className = 'row g-2 align-items-end mb-2 provider-price-row';
             row.innerHTML = `
                 <div class="col-md-4">
                     <label class="form-label small">Type</label>
-                    <select name="provider_prices[${idx}][insurance_type]" class="form-select form-select-sm" required>${typeOptions}</select>
+                    <select name="provider_prices[${idx}][insurance_type]" class="form-select form-select-sm type-select" required>${typeOptions}</select>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label small">Provider</label>
-                    <select name="provider_prices[${idx}][insurance_provider_id]" class="form-select form-select-sm" required>${provOptions}</select>
+                    <select name="provider_prices[${idx}][insurance_provider_id]" class="form-select form-select-sm provider-select" required>${provOptions}</select>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label small">Price (&#8373;)</label>
@@ -160,8 +160,40 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>`;
             container.appendChild(row);
             row.querySelector('.remove-row').addEventListener('click', () => row.remove());
+            bindCascade(row);
+            filterProviders(row);
         });
     });
+
+    // ── Cascade: filter Provider options by selected Insurance Type ──
+    function bindCascade(row) {
+        const typeSel = row.querySelector('.type-select');
+        if (!typeSel || typeSel.dataset.cascadeBound) return;
+        typeSel.dataset.cascadeBound = '1';
+        typeSel.addEventListener('change', () => filterProviders(row));
+    }
+    function filterProviders(row) {
+        const typeSel = row.querySelector('.type-select');
+        const provSel = row.querySelector('.provider-select');
+        if (!typeSel || !provSel) return;
+        const t = typeSel.value;
+        let firstVisible = null;
+        let currentStillValid = false;
+        Array.from(provSel.options).forEach(opt => {
+            const optType = opt.dataset.type || '';
+            // Show providers whose type matches OR which have no type (legacy/global)
+            const match = (optType === '' || optType === t);
+            opt.hidden = !match;
+            opt.disabled = !match;
+            if (match && !firstVisible) firstVisible = opt;
+            if (match && opt.selected) currentStillValid = true;
+        });
+        if (!currentStillValid && firstVisible) {
+            provSel.value = firstVisible.value;
+        }
+    }
+    // Init for existing server-rendered rows
+    document.querySelectorAll('.provider-price-row').forEach(r => { bindCascade(r); filterProviders(r); });
 
     function escH(text) {
         const d = document.createElement('div');
