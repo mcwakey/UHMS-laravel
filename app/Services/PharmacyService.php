@@ -153,10 +153,65 @@ class PharmacyService
 
     public function addStock(array $data): DrugStock
     {
-        $data['received_by'] = Auth::id();
-        $data['received_date'] = $data['received_date'] ?? now()->toDateString();
+        return DB::transaction(function () use ($data) {
+            $data['received_by']   = Auth::id();
+            $data['received_date'] = $data['received_date'] ?? now()->toDateString();
 
-        return DrugStock::create($data);
+            $stock = DrugStock::create($data);
+
+            // Phase 3: post a PURCHASE_RECEIVED movement to both ledgers so the
+            // on-hand balance stays in sync with DrugStock. Skipped silently
+            // when the location string does not resolve to a StockLocation row.
+            $locationName = $data['location'] ?? null;
+            $location = $locationName
+                ? StockLocation::query()
+                    ->where('name', $locationName)
+                    ->orWhere('type', $locationName)
+                    ->orderBy('id')
+                    ->first()
+                : null;
+
+            if ($location) {
+                $shared = [
+                    'drug_id'           => $stock->drug_id,
+                    'stock_location_id' => $location->id,
+                    'movement_type'     => StockMovementType::PURCHASE_RECEIVED,
+                    'quantity'          => $stock->quantity,
+                    'unit_cost'         => $stock->unit_cost,
+                    'batch_no'          => $stock->batch_number,
+                    'expiry_date'       => $stock->expiry_date,
+                    'source_type'       => DrugStock::class,
+                    'source_id'         => $stock->id,
+                    'notes'             => 'Stock added manually via pharmacy.',
+                ];
+
+                try {
+                    app(StockMovementService::class)->createMovement($shared);
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('pharmacy.add_stock.drug_ledger_failed', [
+                        'drug_stock_id' => $stock->id,
+                        'error'         => $e->getMessage(),
+                    ]);
+                }
+
+                $linkedProductId = $stock->drug?->product_id;
+                if ($linkedProductId) {
+                    try {
+                        app(ProductStockMovementService::class)->createMovement(array_merge($shared, [
+                            'product_id' => $linkedProductId,
+                        ]));
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning('pharmacy.add_stock.product_ledger_failed', [
+                            'drug_stock_id' => $stock->id,
+                            'product_id'    => $linkedProductId,
+                            'error'         => $e->getMessage(),
+                        ]);
+                    }
+                }
+            }
+
+            return $stock;
+        });
     }
 
     public function updateStock(DrugStock $stock, array $data): DrugStock
@@ -301,6 +356,41 @@ class PharmacyService
                         'allow_negative'    => true, // legacy drug_stock is the SoT for now
                         'notes'             => 'Dispensed for prescription ' . ($prescription->prescription_number ?? $prescription->id),
                     ]);
+
+                    // Phase 2: also write the unified product ledger so the system
+                    // converges on a single source of truth. Skipped if the drug
+                    // has not been linked to a product yet (run inventory:link-drugs-to-products).
+                    if ($drug->product_id) {
+                        try {
+                            app(ProductStockMovementService::class)->createMovement([
+                                'product_id'        => $drug->product_id,
+                                'stock_location_id' => $pharmacyLocation->id,
+                                'movement_type'     => StockMovementType::PHARMACY_DISPENSED,
+                                'quantity'          => $deduct,
+                                'unit_cost'         => $stock->unit_cost ?? null,
+                                'batch_no'          => $stock->batch_number ?? null,
+                                'expiry_date'       => $stock->expiry_date ?? null,
+                                'source_type'       => PrescriptionItem::class,
+                                'source_id'         => $item->id,
+                                // Phase 3: opening balances seeded via
+                                // `inventory:seed-pharmacy-opening-stock`, so the
+                                // product ledger now enforces non-negative balances.
+                                'allow_negative'    => false,
+                                'notes'             => 'Dispensed for prescription ' . ($prescription->prescription_number ?? $prescription->id),
+                            ]);
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::warning('pharmacy.dispense.product_ledger_failed', [
+                                'drug_id'    => $drug->id,
+                                'product_id' => $drug->product_id,
+                                'error'      => $e->getMessage(),
+                            ]);
+                        }
+                    } else {
+                        \Illuminate\Support\Facades\Log::info('pharmacy.dispense.product_ledger_skipped', [
+                            'drug_id' => $drug->id,
+                            'reason'  => 'drugs.product_id is null — run `php artisan inventory:link-drugs-to-products`',
+                        ]);
+                    }
                 }
             }
 

@@ -5,10 +5,11 @@ namespace App\Services;
 use App\Enums\PurchaseOrderStatus;
 use App\Enums\StockMovementType;
 use App\Models\DrugStock;
+use App\Models\GoodsReceivedNote;
+use App\Models\GoodsReceivedNoteItem;
 use App\Models\InvestigationItemStock;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
-use App\Models\StockLocation;
 use App\Models\SupplierLedgerEntry;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -20,10 +21,12 @@ class ProcurementService
         private ?StockMovementService $stockMovements = null,
         private ?SupplierLedgerService $supplierLedger = null,
         private ?ProductStockMovementService $productStockMovements = null,
+        private ?StockLocationService $stockLocations = null,
     ) {
         $this->stockMovements ??= app(StockMovementService::class);
         $this->supplierLedger ??= app(SupplierLedgerService::class);
         $this->productStockMovements ??= app(ProductStockMovementService::class);
+        $this->stockLocations ??= app(StockLocationService::class);
     }
 
     /**
@@ -175,6 +178,19 @@ class ProcurementService
             $receivedValue = 0.0;
             $receivedQty   = 0;
 
+            // GRN: Per the unified inventory rule (prompt.md §10-11), every PO receive
+            // call produces a Goods Received Note that anchors the movements at Main Store.
+            $mainStore = $this->stockLocations->getMainStoreLocation();
+            $grn = GoodsReceivedNote::create([
+                'grn_number'        => GoodsReceivedNote::generateGrnNumber(),
+                'purchase_order_id' => $po->id,
+                'supplier_id'       => $po->supplier_id,
+                'received_date'     => now(),
+                'received_by'       => Auth::id(),
+                'notes'             => null,
+            ]);
+            $grnHasItems = false;
+
             foreach ($receivedItems as $itemData) {
                 $poItem = PurchaseOrderItem::findOrFail($itemData['item_id']);
 
@@ -201,19 +217,13 @@ class ProcurementService
                     'expiry_date'       => $itemData['expiry_date'] ?? $poItem->expiry_date,
                 ]);
 
+                $productMovementId = null;
+                $drugMovementId    = null;
+                $grnProductId      = null;
+
                 if ($poItem->item_type === 'product') {
                     // GP-1: receive a generic Product into the unified product stock ledger.
-                    $mainStore = StockLocation::query()
-                        ->where('name', 'Main Store')
-                        ->orWhere('type', 'store')
-                        ->orderBy('id')
-                        ->first();
-
-                    if (! $mainStore) {
-                        throw new \RuntimeException('Cannot receive product: no Main Store stock location is configured.');
-                    }
-
-                    $this->productStockMovements->createMovement([
+                    $movement = $this->productStockMovements->createMovement([
                         'product_id'        => $poItem->product_id,
                         'stock_location_id' => $mainStore->id,
                         'movement_type'     => StockMovementType::PURCHASE_RECEIVED,
@@ -223,8 +233,10 @@ class ProcurementService
                         'expiry_date'       => $itemData['expiry_date'] ?? null,
                         'source_type'       => PurchaseOrderItem::class,
                         'source_id'         => $poItem->id,
-                        'notes'             => 'Received against PO ' . $po->po_number,
+                        'notes'             => 'Received against PO ' . $po->po_number . ' (' . $grn->grn_number . ')',
                     ]);
+                    $productMovementId = $movement->id;
+                    $grnProductId      = $poItem->product_id;
                 } elseif ($poItem->item_type === 'investigation') {
                     // Create investigation item stock entry
                     InvestigationItemStock::create([
@@ -257,27 +269,68 @@ class ProcurementService
                     ]);
 
                     // Ledger: record a PURCHASE_RECEIVED IN movement at Main Store.
-                    $mainStore = StockLocation::query()
-                        ->where('name', 'Main Store')
-                        ->orWhere('type', 'store')
-                        ->orderBy('id')
-                        ->first();
+                    $drugMovement = $this->stockMovements->createMovement([
+                        'drug_id'           => $poItem->drug_id,
+                        'stock_location_id' => $mainStore->id,
+                        'movement_type'     => StockMovementType::PURCHASE_RECEIVED,
+                        'quantity'          => $qtyToReceive,
+                        'unit_cost'         => $poItem->unit_cost,
+                        'batch_no'          => $itemData['batch_number'] ?? null,
+                        'expiry_date'       => $itemData['expiry_date'] ?? null,
+                        'source_type'       => PurchaseOrderItem::class,
+                        'source_id'         => $poItem->id,
+                        'notes'             => 'Received against PO ' . $po->po_number . ' (' . $grn->grn_number . ')',
+                    ]);
+                    $drugMovementId = $drugMovement?->id;
 
-                    if ($mainStore) {
-                        $this->stockMovements->createMovement([
-                            'drug_id'           => $poItem->drug_id,
-                            'stock_location_id' => $mainStore->id,
-                            'movement_type'     => StockMovementType::PURCHASE_RECEIVED,
-                            'quantity'          => $qtyToReceive,
-                            'unit_cost'         => $poItem->unit_cost,
-                            'batch_no'          => $itemData['batch_number'] ?? null,
-                            'expiry_date'       => $itemData['expiry_date'] ?? null,
-                            'source_type'       => PurchaseOrderItem::class,
-                            'source_id'         => $poItem->id,
-                            'notes'             => 'Received against PO ' . $po->po_number,
-                        ]);
+                    // Phase 3: also write the unified product ledger when the drug is
+                    // linked to a product. Failure is logged but does not block receiving.
+                    $linkedProductId = $poItem->drug?->product_id;
+                    if ($linkedProductId) {
+                        try {
+                            $productMovement = $this->productStockMovements->createMovement([
+                                'product_id'        => $linkedProductId,
+                                'stock_location_id' => $mainStore->id,
+                                'movement_type'     => StockMovementType::PURCHASE_RECEIVED,
+                                'quantity'          => $qtyToReceive,
+                                'unit_cost'         => $poItem->unit_cost,
+                                'batch_no'          => $itemData['batch_number'] ?? null,
+                                'expiry_date'       => $itemData['expiry_date'] ?? null,
+                                'source_type'       => PurchaseOrderItem::class,
+                                'source_id'         => $poItem->id,
+                                'notes'             => 'Received against PO ' . $po->po_number . ' (' . $grn->grn_number . ')',
+                            ]);
+                            $productMovementId = $productMovement->id;
+                            $grnProductId      = $linkedProductId;
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::warning('procurement.receive.product_ledger_failed', [
+                                'po_item_id' => $poItem->id,
+                                'drug_id'    => $poItem->drug_id,
+                                'product_id' => $linkedProductId,
+                                'error'      => $e->getMessage(),
+                            ]);
+                        }
                     }
                 }
+
+                GoodsReceivedNoteItem::create([
+                    'goods_received_note_id'    => $grn->id,
+                    'purchase_order_item_id'    => $poItem->id,
+                    'product_id'                => $grnProductId,
+                    'stock_location_id'         => $mainStore->id,
+                    'quantity_received'         => $qtyToReceive,
+                    'unit_cost'                 => $poItem->unit_cost,
+                    'batch_no'                  => $itemData['batch_number'] ?? null,
+                    'expiry_date'               => $itemData['expiry_date'] ?? null,
+                    'product_stock_movement_id' => $productMovementId,
+                    'stock_movement_id'         => $drugMovementId,
+                ]);
+                $grnHasItems = true;
+            }
+
+            // If nothing was received, drop the empty GRN so the audit trail stays clean.
+            if (! $grnHasItems) {
+                $grn->delete();
             }
 
             // Determine new PO status

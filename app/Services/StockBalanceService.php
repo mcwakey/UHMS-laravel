@@ -44,10 +44,12 @@ class StockBalanceService
     protected function adjust(int $drugId, int $locationId, float $delta): StockBalance
     {
         return DB::transaction(function () use ($drugId, $locationId, $delta) {
+            $productId = \App\Models\Drug::query()->whereKey($drugId)->value('product_id');
+
             /** @var StockBalance $balance */
             $balance = StockBalance::firstOrCreate(
                 ['drug_id' => $drugId, 'stock_location_id' => $locationId],
-                ['quantity_on_hand' => 0]
+                ['quantity_on_hand' => 0, 'product_id' => $productId]
             );
 
             // Lock for update to avoid races
@@ -56,6 +58,9 @@ class StockBalanceService
                 ->lockForUpdate()
                 ->first();
 
+            if ($productId !== null && $balance->product_id === null) {
+                $balance->product_id = $productId;
+            }
             $balance->quantity_on_hand = (float) $balance->quantity_on_hand + $delta;
             $balance->last_movement_at = now();
             $balance->save();
@@ -90,6 +95,7 @@ class StockBalanceService
             return StockBalance::updateOrCreate(
                 ['drug_id' => $drugId, 'stock_location_id' => $locationId],
                 [
+                    'product_id'       => \App\Models\Drug::query()->whereKey($drugId)->value('product_id'),
                     'quantity_on_hand' => $in - $out,
                     'last_movement_at' => $lastMovementAt,
                 ]

@@ -85,8 +85,15 @@ class StockMovementService
                 }
             }
 
+            // Resolve product_id from drug (Phase 2 unified ledger). Cached per call.
+            $productId = $data['product_id'] ?? null;
+            if ($productId === null) {
+                $productId = \App\Models\Drug::query()->whereKey($drugId)->value('product_id');
+            }
+
             $movement = StockMovement::create([
                 'drug_id'           => $drugId,
+                'product_id'        => $productId,
                 'stock_location_id' => $locationId,
                 'movement_type'     => $type,
                 'direction'         => $direction,

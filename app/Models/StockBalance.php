@@ -12,6 +12,7 @@ class StockBalance extends Model
 
     protected $fillable = [
         'drug_id',
+        'product_id',
         'stock_location_id',
         'quantity_on_hand',
         'last_movement_at',
@@ -25,6 +26,11 @@ class StockBalance extends Model
     public function drug(): BelongsTo
     {
         return $this->belongsTo(Drug::class);
+    }
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
     }
 
     public function location(): BelongsTo

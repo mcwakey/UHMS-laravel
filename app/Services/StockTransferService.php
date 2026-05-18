@@ -188,6 +188,7 @@ class StockTransferService
         }
 
         $svc = app(StockMovementService::class);
+        $productSvc = app(ProductStockMovementService::class);
 
         foreach ($transfer->items as $item) {
             if ($item->item_type !== 'drug' || ! $item->drug_id) {
@@ -215,6 +216,39 @@ class StockTransferService
                 'stock_location_id' => $toLoc->id,
                 'movement_type'     => StockMovementType::TRANSFER_IN,
             ]));
+
+            // Phase 3: also write the unified product ledger when the drug is
+            // linked to a product. Failures are logged but do not block the transfer.
+            $linkedProductId = $item->drug?->product_id;
+            if ($linkedProductId) {
+                $productShared = [
+                    'product_id'  => $linkedProductId,
+                    'quantity'    => $item->quantity,
+                    'batch_no'    => $item->batch_number,
+                    'source_type' => StockTransfer::class,
+                    'source_id'   => $transfer->id,
+                    'notes'       => 'Stock transfer ' . $transfer->transfer_number,
+                ];
+
+                try {
+                    $productSvc->createMovement(array_merge($productShared, [
+                        'stock_location_id' => $fromLoc->id,
+                        'movement_type'     => StockMovementType::TRANSFER_OUT,
+                        'allow_negative'    => true,
+                    ]));
+                    $productSvc->createMovement(array_merge($productShared, [
+                        'stock_location_id' => $toLoc->id,
+                        'movement_type'     => StockMovementType::TRANSFER_IN,
+                    ]));
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('stock_transfer.product_ledger_failed', [
+                        'transfer_id' => $transfer->id,
+                        'drug_id'     => $item->drug_id,
+                        'product_id'  => $linkedProductId,
+                        'error'       => $e->getMessage(),
+                    ]);
+                }
+            }
         }
     }
 

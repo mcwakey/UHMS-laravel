@@ -99,4 +99,84 @@ class ProductStockMovementService
             return $balance;
         });
     }
+
+    /**
+     * Emit an opposite-direction movement that cancels an earlier one (e.g. when an invoice
+     * line that consumed stock is voided). Linked back to the original via source.
+     */
+    public function reverseMovement(ProductStockMovement $original, ?string $notes = null): ProductStockMovement
+    {
+        $reverseType = $original->direction === StockMovementDirection::IN
+            ? StockMovementType::REVERSAL_OUT
+            : StockMovementType::REVERSAL_IN;
+
+        return $this->createMovement([
+            'product_id'        => $original->product_id,
+            'stock_location_id' => $original->stock_location_id,
+            'movement_type'     => $reverseType,
+            'quantity'          => (float) $original->quantity,
+            'unit_cost'         => $original->unit_cost,
+            'batch_no'          => $original->batch_no,
+            'expiry_date'       => $original->expiry_date,
+            'source_type'       => $original->source_type,
+            'source_id'         => $original->source_id,
+            'notes'             => $notes ?? ('Reversal of movement #' . $original->id),
+            // Reversals must always succeed so the ledger stays consistent even if the
+            // current balance is below zero due to other concurrent activity.
+            'allow_negative'    => true,
+        ]);
+    }
+
+    /**
+     * Rebuild ProductStockBalance rows from the movement ledger.
+     * Optionally scope to a single product and/or location.
+     *
+     * @return int number of (product, location) pairs rebuilt
+     */
+    public function rebuildAllBalances(?int $productId = null, ?int $locationId = null): int
+    {
+        $pairs = ProductStockMovement::query()
+            ->select('product_id', 'stock_location_id')
+            ->when($productId, fn ($q) => $q->where('product_id', $productId))
+            ->when($locationId, fn ($q) => $q->where('stock_location_id', $locationId))
+            ->groupBy('product_id', 'stock_location_id')
+            ->get();
+
+        foreach ($pairs as $pair) {
+            $this->rebuildBalance((int) $pair->product_id, (int) $pair->stock_location_id);
+        }
+
+        return $pairs->count();
+    }
+
+    public function rebuildBalance(int $productId, int $locationId): ProductStockBalance
+    {
+        return DB::transaction(function () use ($productId, $locationId) {
+            $in = (float) ProductStockMovement::query()
+                ->where('product_id', $productId)
+                ->where('stock_location_id', $locationId)
+                ->where('direction', StockMovementDirection::IN->value)
+                ->sum('quantity');
+
+            $out = (float) ProductStockMovement::query()
+                ->where('product_id', $productId)
+                ->where('stock_location_id', $locationId)
+                ->where('direction', StockMovementDirection::OUT->value)
+                ->sum('quantity');
+
+            $lastMovementAt = ProductStockMovement::query()
+                ->where('product_id', $productId)
+                ->where('stock_location_id', $locationId)
+                ->latest('movement_date')
+                ->value('movement_date');
+
+            return ProductStockBalance::updateOrCreate(
+                ['product_id' => $productId, 'stock_location_id' => $locationId],
+                [
+                    'quantity_on_hand' => $in - $out,
+                    'last_movement_at' => $lastMovementAt,
+                ]
+            );
+        });
+    }
 }
