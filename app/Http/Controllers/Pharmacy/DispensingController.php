@@ -7,6 +7,7 @@ use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use App\Services\PharmacyService;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class DispensingController extends Controller
 {
@@ -25,7 +26,41 @@ class DispensingController extends Controller
 
         $stats = $this->pharmacyService->getPharmacyStats();
 
-        return view('pharmacy.dispensing', compact('prescriptions', 'stats'));
+        $prescriptionsPayload = $prescriptions->through(function (Prescription $rx) {
+            $items = $rx->items;
+            $dispensed = $items ? $items->where('is_dispensed', true)->count() : 0;
+            return [
+                'id'                  => $rx->id,
+                'prescription_number' => $rx->prescription_number,
+                'patient' => $rx->patient ? [
+                    'full_name'      => $rx->patient->full_name,
+                    'patient_number' => $rx->patient->patient_number,
+                ] : null,
+                'doctor_name' => optional($rx->doctor)->name,
+                'items_count' => $items ? $items->count() : 0,
+                'dispensed_count' => $dispensed,
+                'status' => $rx->status ? [
+                    'value' => $rx->status->value,
+                    'label' => $rx->status->label(),
+                    'color' => $rx->status->color(),
+                ] : null,
+                'created_at_date' => optional($rx->created_at)->format('d M Y'),
+                'created_at_time' => optional($rx->created_at)->format('H:i'),
+                'urls' => [
+                    'show' => route('admin.pharmacy.dispensing.show', $rx),
+                ],
+            ];
+        });
+
+        return Inertia::render('Pharmacy/Dispensing', [
+            'prescriptions' => $prescriptionsPayload,
+            'stats'         => $stats,
+            'filters'       => $request->only(['search']),
+            'routes' => [
+                'index'   => route('admin.pharmacy.dispensing.index'),
+                'history' => route('admin.pharmacy.history'),
+            ],
+        ]);
     }
 
     /**

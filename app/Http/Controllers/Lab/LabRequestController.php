@@ -8,6 +8,7 @@ use App\Services\InvestigationRequestService;
 use App\Services\LabService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class LabRequestController extends Controller
 {
@@ -31,7 +32,46 @@ class LabRequestController extends Controller
         $stats = $this->labService->getLabStats();
         $departments = $this->labService->getInvestigationDepartments();
 
-        return view('lab.requests', compact('requests', 'stats', 'departments'));
+        $requestsPayload = $requests->through(function (LabRequest $req) {
+            $resultType = $req->result_type;
+            return [
+                'id'             => $req->id,
+                'request_number' => $req->request_number,
+                'patient' => $req->patient ? [
+                    'full_name'      => $req->patient->full_name,
+                    'patient_number' => $req->patient->patient_number,
+                ] : null,
+                'target_department_name' => optional($req->targetDepartment)->name,
+                'result_type' => ($resultType && $resultType->value !== 'none') ? [
+                    'value' => $resultType->value,
+                    'label' => $resultType->label(),
+                    'color' => $resultType->color(),
+                    'icon'  => $resultType->icon(),
+                ] : null,
+                'urgency'       => $req->urgency,
+                'urgency_label' => ucfirst((string) $req->urgency),
+                'urgency_color' => $req->urgency_color,
+                'status'        => $req->status,
+                'status_label'  => $req->status_label,
+                'status_color'  => $req->status_color,
+                'completion_percentage' => $req->completion_percentage,
+                'created_at_date' => optional($req->created_at)->format('d M Y'),
+                'created_at_time' => optional($req->created_at)->format('H:i'),
+                'urls' => [
+                    'show' => route('admin.lab.requests.show', $req),
+                ],
+            ];
+        });
+
+        return Inertia::render('Lab/Requests/Index', [
+            'requests'    => $requestsPayload,
+            'stats'       => $stats,
+            'departments' => $departments->map(fn ($d) => ['id' => $d->id, 'name' => $d->name])->values(),
+            'filters'     => $request->only(['status', 'urgency', 'search', 'date_from', 'date_to', 'department_id']),
+            'routes' => [
+                'index' => route('admin.lab.requests.index'),
+            ],
+        ]);
     }
 
     /**

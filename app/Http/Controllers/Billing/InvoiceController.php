@@ -12,6 +12,7 @@ use App\Models\ServiceCatalog;
 use App\Models\Visit;
 use App\Services\BillingService;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class InvoiceController extends Controller
 {
@@ -50,7 +51,79 @@ class InvoiceController extends Controller
         $invoices = $query->paginate(20)->withQueryString();
         $stats = $this->billingService->getStats();
 
-        return view('billing.invoices.index', compact('invoices', 'stats'));
+        $user = $request->user();
+        $canClaimsView   = $user?->can('claims.view')   ?? false;
+        $canClaimsCreate = $user?->can('claims.create') ?? false;
+        $canInvoicesEdit = $user?->can('invoices.edit') ?? false;
+
+        $invoicesPayload = $invoices->through(function (Invoice $invoice) use ($canClaimsView, $canClaimsCreate, $canInvoicesEdit) {
+            $claim = $invoice->claim;
+            $insuranceProviderId = $invoice->visit?->visitInsurance?->insurance_provider_id;
+            $canCreateInsuranceClaim = (float) $invoice->nhis_amount > 0 && ! $claim;
+            $cancellable = ! in_array($invoice->status, [InvoiceStatus::PAID, InvoiceStatus::CANCELLED], true);
+
+            return [
+                'id'             => $invoice->id,
+                'invoice_number' => $invoice->invoice_number,
+                'patient' => $invoice->patient ? [
+                    'full_name'      => $invoice->patient->full_name,
+                    'patient_number' => $invoice->patient->patient_number,
+                ] : null,
+                'billing_type' => $invoice->billing_type ? [
+                    'value' => $invoice->billing_type->value,
+                    'label' => $invoice->billing_type->label(),
+                    'color' => $invoice->billing_type->color(),
+                ] : null,
+                'status' => $invoice->status ? [
+                    'value' => $invoice->status->value,
+                    'label' => $invoice->status->label(),
+                    'color' => $invoice->status->color(),
+                ] : null,
+                'total_amount'  => (float) $invoice->total_amount,
+                'amount_paid'   => (float) $invoice->amount_paid,
+                'balance'       => (float) $invoice->balance,
+                'created_at_display' => optional($invoice->created_at)->format('d M Y'),
+                'urls' => [
+                    'show'           => route('admin.billing.invoices.show', $invoice),
+                    'cancel'         => $cancellable && $canInvoicesEdit ? route('admin.billing.invoices.cancel', $invoice) : null,
+                    'view_claim'     => $claim && $canClaimsView ? route('admin.claims.show', $claim) : null,
+                    'generate_claim' => $canCreateInsuranceClaim && $canClaimsCreate
+                        ? ($insuranceProviderId
+                            ? route('admin.claims.store-from-invoice')
+                            : route('admin.claims.create', ['invoice_id' => $invoice->id]))
+                        : null,
+                ],
+                'insurance_provider_id'    => $canCreateInsuranceClaim ? $insuranceProviderId : null,
+                'has_insurance_provider'   => $canCreateInsuranceClaim && (bool) $insuranceProviderId,
+                'can_create_claim'         => $canCreateInsuranceClaim && $canClaimsCreate,
+            ];
+        });
+
+        return Inertia::render('Billing/Invoices/Index', [
+            'invoices' => $invoicesPayload,
+            'stats'    => $stats,
+            'filters'  => $request->only(['search', 'status', 'billing_type']),
+            'statusOptions' => collect(InvoiceStatus::cases())->map(fn ($c) => [
+                'value' => $c->value,
+                'label' => $c->label(),
+            ])->values(),
+            'billingTypeOptions' => collect(BillingType::cases())->map(fn ($c) => [
+                'value' => $c->value,
+                'label' => $c->label(),
+            ])->values(),
+            'routes' => [
+                'index'  => route('admin.billing.invoices.index'),
+                'create' => route('admin.billing.invoices.create'),
+                'storeClaimFromInvoice' => route('admin.claims.store-from-invoice'),
+            ],
+            'can' => [
+                'create'       => $user?->can('invoices.create') ?? false,
+                'editInvoices' => $canInvoicesEdit,
+                'viewClaims'   => $canClaimsView,
+                'createClaims' => $canClaimsCreate,
+            ],
+            'csrf' => csrf_token(),
+        ]);
     }
 
     /**

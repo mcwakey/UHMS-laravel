@@ -16,6 +16,7 @@ use App\Services\VisitService;
 use App\Services\WardService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class AdmissionController extends Controller
 {
@@ -31,7 +32,58 @@ class AdmissionController extends Controller
         $wards = Ward::active()->orderBy('name')->get();
         $stats = $this->admissionService->getStats();
 
-        return view('admissions.index', compact('admissions', 'wards', 'stats'));
+        $user = $request->user();
+        $canDischarge = $user?->can('ward.discharge') ?? false;
+
+        $admissionsPayload = $admissions->through(function (Admission $admission) use ($canDischarge) {
+            $isAdmitted = $admission->status && $admission->status->value === 'admitted';
+            return [
+                'id'              => $admission->id,
+                'admission_number' => $admission->admission_number,
+                'patient' => $admission->patient ? [
+                    'id'             => $admission->patient->id,
+                    'full_name'      => $admission->patient->full_name,
+                    'patient_number' => $admission->patient->patient_number,
+                ] : null,
+                'bed' => $admission->bed ? [
+                    'bed_number' => $admission->bed->bed_number,
+                    'ward_name'  => optional($admission->bed->ward)->name,
+                ] : null,
+                'admission_date_display' => optional($admission->admission_date)->format('d M Y, H:i'),
+                'length_of_stay' => $admission->length_of_stay,
+                'admitted_by_name' => optional($admission->admittedBy)->name,
+                'status' => $admission->status ? [
+                    'value' => $admission->status->value,
+                    'label' => $admission->status->label(),
+                    'color' => $admission->status->color(),
+                ] : null,
+                'urls' => [
+                    'show'      => route('admin.admissions.show', $admission),
+                    'patient'   => $admission->patient ? route('admin.patients.show', $admission->patient) : null,
+                    'discharge' => $isAdmitted && $canDischarge ? route('admin.admissions.discharge', $admission) : null,
+                ],
+            ];
+        });
+
+        return Inertia::render('Admissions/Index', [
+            'admissions' => $admissionsPayload,
+            'total'      => $admissions->total(),
+            'stats'      => $stats,
+            'wards'      => $wards->map(fn ($w) => ['id' => $w->id, 'name' => $w->name])->values(),
+            'filters'    => $request->only(['search', 'status', 'ward_id']),
+            'statusOptions' => collect(\App\Enums\AdmissionStatus::cases())->map(fn ($c) => [
+                'value' => $c->value,
+                'label' => $c->label(),
+            ])->values(),
+            'routes' => [
+                'index'  => route('admin.admissions.index'),
+                'create' => route('admin.admissions.create'),
+            ],
+            'can' => [
+                'admit'     => $user?->can('ward.admit') ?? false,
+                'discharge' => $canDischarge,
+            ],
+        ]);
     }
 
     public function create(Request $request)
