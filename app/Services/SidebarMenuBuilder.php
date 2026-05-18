@@ -454,7 +454,7 @@ class SidebarMenuBuilder
                         'icon' => 'ti ti-building-warehouse',
                         'route' => 'admin.stock-locations.index',
                         'active_patterns' => ['admin.stock-locations.*'],
-                        'permission' => 'stock_location.manage',
+                        'permission' => 'stock.location.manage',
                         'module' => 'inventory',
                     ],
                     [

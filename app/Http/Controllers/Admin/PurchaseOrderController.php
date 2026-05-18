@@ -34,8 +34,9 @@ class PurchaseOrderController extends Controller
         $suppliers = Supplier::active()->orderBy('name')->get();
         $drugs = Drug::active()->orderBy('name')->get();
         $investigationItems = InvestigationItem::active()->orderBy('name')->get();
+        $products = \App\Models\Product::query()->orderBy('name')->get();
 
-        return view('store.purchase-orders.create', compact('suppliers', 'drugs', 'investigationItems'));
+        return view('store.purchase-orders.create', compact('suppliers', 'drugs', 'investigationItems', 'products'));
     }
 
     public function store(StorePurchaseOrderRequest $request)
@@ -64,7 +65,7 @@ class PurchaseOrderController extends Controller
     public function show(PurchaseOrder $purchaseOrder)
     {
         $purchaseOrder->load([
-            'supplier', 'items.drug', 'createdByUser', 'approvedByUser',
+            'supplier', 'items.drug', 'items.investigationItem', 'items.product', 'createdByUser', 'approvedByUser',
         ]);
 
         return view('store.purchase-orders.show', compact('purchaseOrder'));
@@ -121,16 +122,17 @@ class PurchaseOrderController extends Controller
     public function addItem(Request $request, PurchaseOrder $purchaseOrder)
     {
         $request->validate([
-            'item_type'             => ['required', 'in:drug,investigation'],
+            'item_type'             => ['required', 'in:drug,investigation,product'],
             'drug_id'               => ['nullable', 'exists:drugs,id', 'required_if:item_type,drug'],
             'investigation_item_id' => ['nullable', 'exists:investigation_items,id', 'required_if:item_type,investigation'],
+            'product_id'            => ['nullable', 'exists:products,id', 'required_if:item_type,product'],
             'quantity_ordered'      => ['required', 'integer', 'min:1'],
             'unit_cost'             => ['required', 'numeric', 'min:0'],
         ]);
 
         try {
             $this->procurementService->addItem($purchaseOrder, $request->only([
-                'item_type', 'drug_id', 'investigation_item_id', 'quantity_ordered', 'unit_cost',
+                'item_type', 'drug_id', 'investigation_item_id', 'product_id', 'quantity_ordered', 'unit_cost',
             ]));
         } catch (\Throwable $e) {
             if ($request->expectsJson() || $request->ajax()) {

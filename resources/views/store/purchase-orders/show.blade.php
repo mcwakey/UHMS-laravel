@@ -159,7 +159,8 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Drug</th>
+                                <th>Item</th>
+                                <th class="text-center">Type</th>
                                 <th class="text-center">Ordered</th>
                                 <th class="text-center">Received</th>
                                 <th class="text-end">Unit Cost</th>
@@ -172,7 +173,10 @@
                         <tbody>
                             @foreach($purchaseOrder->items as $item)
                             <tr>
-                                <td class="fw-medium">{{ $item->drug->name }}</td>
+                                <td class="fw-medium">{{ $item->item_name }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-light text-dark text-uppercase">{{ $item->item_type ?? 'drug' }}</span>
+                                </td>
                                 <td class="text-center">{{ $item->quantity_ordered }}</td>
                                 <td class="text-center">
                                     @if($item->quantity_received > 0)
@@ -200,7 +204,7 @@
                         </tbody>
                         <tfoot class="table-light">
                             <tr class="fw-bold">
-                                <td colspan="4" class="text-end">Total:</td>
+                                <td colspan="5" class="text-end">Total:</td>
                                 <td class="text-end">GH₵ {{ number_format($purchaseOrder->total_amount, 2) }}</td>
                                 @if($purchaseOrder->is_editable)
                                 <td></td>
@@ -239,7 +243,7 @@
                                 @foreach($purchaseOrder->items as $idx => $item)
                                 @if(!$item->is_fully_received)
                                 <tr>
-                                    <td class="fw-medium">{{ $item->drug->name }}</td>
+                                    <td class="fw-medium">{{ $item->item_name }}</td>
                                     <td class="text-center">{{ $item->quantity_ordered }}</td>
                                     <td class="text-center">{{ $item->quantity_received }}</td>
                                     <td class="text-center fw-medium">{{ $item->remaining_quantity }}</td>
@@ -283,11 +287,37 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
+                        <label class="form-label">Item Type <span class="text-danger">*</span></label>
+                        <select name="item_type" id="addItemType" class="form-select" required>
+                            <option value="drug">Pharmacy Drug</option>
+                            <option value="product">General Product / Consumable</option>
+                            <option value="investigation">Investigation Item</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 item-type-block" data-type="drug">
                         <label class="form-label">Drug <span class="text-danger">*</span></label>
-                        <select name="drug_id" class="form-select select2-modal" required>
+                        <select name="drug_id" class="form-select select2-modal">
                             <option value="">Select Drug...</option>
                             @foreach(\App\Models\Drug::active()->orderBy('name')->get() as $drug)
                                 <option value="{{ $drug->id }}">{{ $drug->name }} ({{ $drug->generic_name }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3 item-type-block d-none" data-type="product">
+                        <label class="form-label">Product <span class="text-danger">*</span></label>
+                        <select name="product_id" class="form-select select2-modal">
+                            <option value="">Select Product...</option>
+                            @foreach(\App\Models\Product::query()->orderBy('name')->get() as $product)
+                                <option value="{{ $product->id }}">{{ $product->name }}@if($product->sku) — {{ $product->sku }}@endif</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3 item-type-block d-none" data-type="investigation">
+                        <label class="form-label">Investigation Item <span class="text-danger">*</span></label>
+                        <select name="investigation_item_id" class="form-select select2-modal">
+                            <option value="">Select Investigation Item...</option>
+                            @foreach(\App\Models\InvestigationItem::active()->orderBy('name')->get() as $invItem)
+                                <option value="{{ $invItem->id }}">{{ $invItem->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -312,3 +342,31 @@
 </div>
 @endif
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    const $modal = document.getElementById('addItemModal');
+    if (!$modal) return;
+
+    const $type = document.getElementById('addItemType');
+    const $blocks = $modal.querySelectorAll('.item-type-block');
+
+    function refresh() {
+        const type = $type.value;
+        $blocks.forEach(block => {
+            const matches = block.dataset.type === type;
+            block.classList.toggle('d-none', !matches);
+            block.querySelectorAll('select').forEach(sel => {
+                sel.required = matches;
+                sel.disabled  = !matches;
+            });
+        });
+    }
+
+    $type.addEventListener('change', refresh);
+    $modal.addEventListener('shown.bs.modal', refresh);
+    refresh();
+})();
+</script>
+@endpush

@@ -5,6 +5,20 @@
 > quantities, ledger movements, supplier procurement, and goods receipt.
 > Audience: maintainers + auditors. Date: May 2026.
 
+> **Implementation status (Phase 1 — May 2026):**
+> - **GP-1** ✅ DONE — `purchase_order_items.product_id` added (migration `2026_05_18_000005`);
+>   `PurchaseOrderItem` model, `ProcurementService::create/addItem/receiveItems`,
+>   `PurchaseOrderController` validation, and the PO show view's Add-Item modal
+>   now support `item_type=product`. Receiving a product PO line writes a
+>   `PURCHASE_RECEIVED` movement through `ProductStockMovementService` so
+>   `product_stock_balances` is updated and the supplier ledger is credited.
+>   (Bulk PO create form still drug-only — track as GP-1b.)
+> - **GP-8** ✅ DONE — sidebar + `stock-locations` route both now use the canonical
+>   `stock.location.manage`; the legacy alias remains seeded for back-compat.
+> - **GP-2** (reversal on void) — deferred: no existing dispense/cancel path emits
+>   movements yet; the reversal helper will be added when the first such caller
+>   lands so it isn't dead code.
+
 ---
 
 ## 0. TL;DR (executive)

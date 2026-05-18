@@ -14,6 +14,7 @@ class PurchaseOrderItem extends Model
         'purchase_order_id',
         'drug_id',
         'investigation_item_id',
+        'product_id',
         'item_type',
         'quantity_ordered',
         'quantity_received',
@@ -44,6 +45,11 @@ class PurchaseOrderItem extends Model
         return $this->belongsTo(InvestigationItem::class);
     }
 
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
     /**
      * Returns the resolved item name regardless of type.
      */
@@ -51,6 +57,9 @@ class PurchaseOrderItem extends Model
     {
         if ($this->item_type === 'investigation') {
             return $this->investigationItem?->name ?? '—';
+        }
+        if ($this->item_type === 'product') {
+            return $this->product?->name ?? '—';
         }
         return $this->drug?->brand_name ?? $this->drug?->generic_name ?? '—';
     }

@@ -861,7 +861,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // ── Admin: Stock Locations (Main Store + department stores) ──
-        Route::prefix('stock-locations')->name('stock-locations.')->middleware('can:stock_location.manage')->group(function () {
+        Route::prefix('stock-locations')->name('stock-locations.')->middleware('can:stock.location.manage')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\StockLocationController::class, 'index'])->name('index');
             Route::post('/', [\App\Http\Controllers\Admin\StockLocationController::class, 'store'])->name('store');
             Route::put('{stockLocation}', [\App\Http\Controllers\Admin\StockLocationController::class, 'update'])->name('update');

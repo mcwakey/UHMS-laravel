@@ -19,9 +19,28 @@ class ProcurementService
     public function __construct(
         private ?StockMovementService $stockMovements = null,
         private ?SupplierLedgerService $supplierLedger = null,
+        private ?ProductStockMovementService $productStockMovements = null,
     ) {
         $this->stockMovements ??= app(StockMovementService::class);
         $this->supplierLedger ??= app(SupplierLedgerService::class);
+        $this->productStockMovements ??= app(ProductStockMovementService::class);
+    }
+
+    /**
+     * Resolve the item_type for a row of PO data.
+     */
+    private function resolveItemType(array $item): string
+    {
+        if (! empty($item['item_type'])) {
+            return $item['item_type'];
+        }
+        if (! empty($item['investigation_item_id'])) {
+            return 'investigation';
+        }
+        if (! empty($item['product_id'])) {
+            return 'product';
+        }
+        return 'drug';
     }
 
     /**
@@ -60,10 +79,11 @@ class ProcurementService
             if (! empty($data['items'])) {
                 foreach ($data['items'] as $item) {
                     $totalCost = $item['quantity_ordered'] * $item['unit_cost'];
-                    $itemType  = isset($item['investigation_item_id']) ? 'investigation' : 'drug';
+                    $itemType  = $this->resolveItemType($item);
                     $po->items()->create([
                         'drug_id'               => $item['drug_id'] ?? null,
                         'investigation_item_id' => $item['investigation_item_id'] ?? null,
+                        'product_id'            => $item['product_id'] ?? null,
                         'item_type'             => $itemType,
                         'quantity_ordered'      => $item['quantity_ordered'],
                         'unit_cost'             => $item['unit_cost'],
@@ -84,11 +104,12 @@ class ProcurementService
     {
         $totalCost = $data['quantity_ordered'] * $data['unit_cost'];
 
-        $itemType = isset($data['investigation_item_id']) ? 'investigation' : 'drug';
+        $itemType = $this->resolveItemType($data);
 
         $item = $po->items()->create([
             'drug_id'               => $data['drug_id'] ?? null,
             'investigation_item_id' => $data['investigation_item_id'] ?? null,
+            'product_id'            => $data['product_id'] ?? null,
             'item_type'             => $itemType,
             'quantity_ordered'      => $data['quantity_ordered'],
             'unit_cost'             => $data['unit_cost'],
@@ -180,7 +201,31 @@ class ProcurementService
                     'expiry_date'       => $itemData['expiry_date'] ?? $poItem->expiry_date,
                 ]);
 
-                if ($poItem->item_type === 'investigation') {
+                if ($poItem->item_type === 'product') {
+                    // GP-1: receive a generic Product into the unified product stock ledger.
+                    $mainStore = StockLocation::query()
+                        ->where('name', 'Main Store')
+                        ->orWhere('type', 'store')
+                        ->orderBy('id')
+                        ->first();
+
+                    if (! $mainStore) {
+                        throw new \RuntimeException('Cannot receive product: no Main Store stock location is configured.');
+                    }
+
+                    $this->productStockMovements->createMovement([
+                        'product_id'        => $poItem->product_id,
+                        'stock_location_id' => $mainStore->id,
+                        'movement_type'     => StockMovementType::PURCHASE_RECEIVED,
+                        'quantity'          => $qtyToReceive,
+                        'unit_cost'         => $poItem->unit_cost,
+                        'batch_no'          => $itemData['batch_number'] ?? null,
+                        'expiry_date'       => $itemData['expiry_date'] ?? null,
+                        'source_type'       => PurchaseOrderItem::class,
+                        'source_id'         => $poItem->id,
+                        'notes'             => 'Received against PO ' . $po->po_number,
+                    ]);
+                } elseif ($poItem->item_type === 'investigation') {
                     // Create investigation item stock entry
                     InvestigationItemStock::create([
                         'investigation_item_id' => $poItem->investigation_item_id,
