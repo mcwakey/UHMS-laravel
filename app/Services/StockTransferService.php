@@ -173,6 +173,10 @@ class StockTransferService
      */
     public function emitTransferMovements(StockTransfer $transfer): void
     {
+        // Ensure nested drug/investigationItem are loaded so we can read the
+        // linked product_id without triggering N+1 lookups during the loop.
+        $transfer->load(['items.drug', 'items.investigationItem']);
+
         $fromKey = $transfer->from_location instanceof \BackedEnum
             ? $transfer->from_location->value
             : (string) $transfer->from_location;
@@ -191,12 +195,7 @@ class StockTransferService
         $productSvc = app(ProductStockMovementService::class);
 
         foreach ($transfer->items as $item) {
-            if ($item->item_type !== 'drug' || ! $item->drug_id) {
-                continue;
-            }
-
             $shared = [
-                'drug_id'     => $item->drug_id,
                 'quantity'    => $item->quantity,
                 'batch_no'    => $item->batch_number,
                 'source_type' => StockTransfer::class,
@@ -204,32 +203,57 @@ class StockTransferService
                 'notes'       => 'Stock transfer ' . $transfer->transfer_number,
             ];
 
-            $svc->createMovement(array_merge($shared, [
-                'stock_location_id' => $fromLoc->id,
-                'movement_type'     => StockMovementType::TRANSFER_OUT,
-                // Source-of-truth deduction (DrugStock) already validated above
-                // by deductStock(); the ledger is a mirror so allow_negative is safe here.
-                'allow_negative'    => true,
-            ]));
+            // ---- Drug item: legacy drug ledger + (mirror) product ledger ----
+            if ($item->item_type === 'drug' && $item->drug_id) {
+                $drugShared = array_merge($shared, ['drug_id' => $item->drug_id]);
 
-            $svc->createMovement(array_merge($shared, [
-                'stock_location_id' => $toLoc->id,
-                'movement_type'     => StockMovementType::TRANSFER_IN,
-            ]));
+                $svc->createMovement(array_merge($drugShared, [
+                    'stock_location_id' => $fromLoc->id,
+                    'movement_type'     => StockMovementType::TRANSFER_OUT,
+                    'allow_negative'    => true,
+                ]));
+                $svc->createMovement(array_merge($drugShared, [
+                    'stock_location_id' => $toLoc->id,
+                    'movement_type'     => StockMovementType::TRANSFER_IN,
+                ]));
 
-            // Phase 3: also write the unified product ledger when the drug is
-            // linked to a product. Failures are logged but do not block the transfer.
-            $linkedProductId = $item->drug?->product_id;
-            if ($linkedProductId) {
-                $productShared = [
-                    'product_id'  => $linkedProductId,
-                    'quantity'    => $item->quantity,
-                    'batch_no'    => $item->batch_number,
-                    'source_type' => StockTransfer::class,
-                    'source_id'   => $transfer->id,
-                    'notes'       => 'Stock transfer ' . $transfer->transfer_number,
-                ];
+                $linkedProductId = $item->drug?->product_id;
+                if ($linkedProductId) {
+                    $productShared = array_merge($shared, ['product_id' => $linkedProductId]);
+                    try {
+                        $productSvc->createMovement(array_merge($productShared, [
+                            'stock_location_id' => $fromLoc->id,
+                            'movement_type'     => StockMovementType::TRANSFER_OUT,
+                            'allow_negative'    => true,
+                        ]));
+                        $productSvc->createMovement(array_merge($productShared, [
+                            'stock_location_id' => $toLoc->id,
+                            'movement_type'     => StockMovementType::TRANSFER_IN,
+                        ]));
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning('stock_transfer.product_ledger_failed', [
+                            'transfer_id' => $transfer->id,
+                            'drug_id'     => $item->drug_id,
+                            'product_id'  => $linkedProductId,
+                            'error'       => $e->getMessage(),
+                        ]);
+                    }
+                }
+                continue;
+            }
 
+            // ---- Investigation item: write directly to product ledger ----
+            if ($item->item_type === 'investigation' && $item->investigation_item_id) {
+                $linkedProductId = $item->investigationItem?->product_id;
+                if (! $linkedProductId) {
+                    \Illuminate\Support\Facades\Log::warning('stock_transfer.investigation_item_unlinked', [
+                        'transfer_id'           => $transfer->id,
+                        'investigation_item_id' => $item->investigation_item_id,
+                        'hint'                  => 'Run inventory:link-investigation-items-to-products',
+                    ]);
+                    continue;
+                }
+                $productShared = array_merge($shared, ['product_id' => $linkedProductId]);
                 try {
                     $productSvc->createMovement(array_merge($productShared, [
                         'stock_location_id' => $fromLoc->id,
@@ -241,11 +265,11 @@ class StockTransferService
                         'movement_type'     => StockMovementType::TRANSFER_IN,
                     ]));
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning('stock_transfer.product_ledger_failed', [
-                        'transfer_id' => $transfer->id,
-                        'drug_id'     => $item->drug_id,
-                        'product_id'  => $linkedProductId,
-                        'error'       => $e->getMessage(),
+                    \Illuminate\Support\Facades\Log::warning('stock_transfer.investigation_product_ledger_failed', [
+                        'transfer_id'           => $transfer->id,
+                        'investigation_item_id' => $item->investigation_item_id,
+                        'product_id'            => $linkedProductId,
+                        'error'                 => $e->getMessage(),
                     ]);
                 }
             }

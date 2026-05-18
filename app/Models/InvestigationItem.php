@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\InvestigationItemCategory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
@@ -14,6 +15,7 @@ class InvestigationItem extends Model
     use SoftDeletes, LogsActivity;
 
     protected $fillable = [
+        'product_id',
         'name',
         'code',
         'category',
@@ -39,6 +41,11 @@ class InvestigationItem extends Model
     | Relationships
     |--------------------------------------------------------------------------
     */
+
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
 
     public function stocks(): HasMany
     {
@@ -102,6 +109,14 @@ class InvestigationItem extends Model
 
     public function getTotalStockAttribute(): int
     {
+        // Unified inventory: if the item is linked to a Product, read on-hand
+        // qty from the unified product_stock_balances ledger. Otherwise fall
+        // back to the legacy investigation_item_stock table.
+        if ($this->product_id) {
+            return (int) ProductStockBalance::query()
+                ->where('product_id', $this->product_id)
+                ->sum('quantity_on_hand');
+        }
         return $this->stocks()->where('quantity', '>', 0)->sum('quantity');
     }
 }

@@ -10,6 +10,7 @@ use App\Models\GoodsReceivedNoteItem;
 use App\Models\InvestigationItemStock;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Models\StockLocation;
 use App\Models\SupplierLedgerEntry;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -238,8 +239,16 @@ class ProcurementService
                     $productMovementId = $movement->id;
                     $grnProductId      = $poItem->product_id;
                 } elseif ($poItem->item_type === 'investigation') {
-                    // Create investigation item stock entry
-                    InvestigationItemStock::create([
+                    // Unified inventory: receive investigation items through the
+                    // product ledger when the catalog item is linked. We still
+                    // keep the legacy InvestigationItemStock row so batch/expiry
+                    // metadata stays addressable by the lab UI.
+                    $linkedProductId = $poItem->investigationItem?->product_id;
+                    $labStore = $mainStore;
+                    $byType = StockLocation::query()->where('type', 'lab')->where('is_active', true)->first();
+                    if ($byType) $labStore = $byType;
+
+                    $stockRow = InvestigationItemStock::create([
                         'investigation_item_id' => $poItem->investigation_item_id,
                         'location'              => 'laboratory',
                         'batch_number'          => $itemData['batch_number'] ?? 'N/A',
@@ -252,6 +261,38 @@ class ProcurementService
                         'received_by'           => Auth::id(),
                         'reorder_level'         => $poItem->investigationItem->reorder_level ?? 10,
                     ]);
+
+                    if ($linkedProductId) {
+                        try {
+                            $movement = $this->productStockMovements->createMovement([
+                                'product_id'        => $linkedProductId,
+                                'stock_location_id' => $labStore->id,
+                                'movement_type'     => StockMovementType::PURCHASE_RECEIVED,
+                                'quantity'          => $qtyToReceive,
+                                'unit_cost'         => $poItem->unit_cost,
+                                'batch_no'          => $itemData['batch_number'] ?? null,
+                                'expiry_date'       => $itemData['expiry_date'] ?? null,
+                                'source_type'       => PurchaseOrderItem::class,
+                                'source_id'         => $poItem->id,
+                                'notes'             => 'Received against PO ' . $po->po_number . ' (' . $grn->grn_number . ')',
+                            ]);
+                            $productMovementId = $movement->id;
+                            $grnProductId      = $linkedProductId;
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::warning('procurement.receive.investigation_product_ledger_failed', [
+                                'po_item_id'            => $poItem->id,
+                                'investigation_item_id' => $poItem->investigation_item_id,
+                                'product_id'            => $linkedProductId,
+                                'error'                 => $e->getMessage(),
+                            ]);
+                        }
+                    } else {
+                        \Illuminate\Support\Facades\Log::warning('procurement.receive.investigation_item_unlinked', [
+                            'po_item_id'            => $poItem->id,
+                            'investigation_item_id' => $poItem->investigation_item_id,
+                            'hint'                  => 'Run inventory:link-investigation-items-to-products',
+                        ]);
+                    }
                 } else {
                     // Create drug stock entry (received to store)
                     DrugStock::create([

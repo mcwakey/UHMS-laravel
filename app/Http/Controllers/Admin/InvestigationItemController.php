@@ -2,18 +2,32 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\DepartmentType;
 use App\Enums\InvestigationItemCategory;
+use App\Enums\ProductType;
 use App\Enums\StockLocation;
+use App\Enums\StockMovementType;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\InvestigationItem;
 use App\Models\InvestigationItemStock;
+use App\Models\Product;
+use App\Models\ProductStockBalance;
+use App\Models\StockLocation as StockLocationModel;
 use App\Models\Supplier;
+use App\Services\ProductStockMovementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class InvestigationItemController extends Controller
 {
+    public function __construct(private ProductStockMovementService $productMovements)
+    {
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Catalog
@@ -22,15 +36,30 @@ class InvestigationItemController extends Controller
 
     public function index(Request $request)
     {
-        $query = InvestigationItem::withTrashed(false)
-            ->withSum(['stocks as total_stock' => fn ($q) => $q->where('quantity', '>', 0)], 'quantity')
+        // Unified inventory: surface the on-hand quantity from the product
+        // ledger so totals stay in sync with what the rest of the app sees.
+        $items = InvestigationItem::query()
             ->when($request->search, fn ($q, $s) => $q->search($s))
             ->when($request->category, fn ($q, $c) => $q->where('category', $c))
             ->when($request->status === 'inactive', fn ($q) => $q->where('is_active', false))
             ->when($request->status === 'active', fn ($q) => $q->where('is_active', true))
-            ->orderBy('name');
+            ->orderBy('name')
+            ->paginate(20)
+            ->withQueryString();
 
-        $items = $query->paginate(20)->withQueryString();
+        $productIds = $items->getCollection()->pluck('product_id')->filter()->unique()->all();
+        $balances = ProductStockBalance::query()
+            ->whereIn('product_id', $productIds)
+            ->select('product_id', DB::raw('SUM(quantity_on_hand) as total'))
+            ->groupBy('product_id')
+            ->pluck('total', 'product_id');
+
+        $items->getCollection()->transform(function (InvestigationItem $item) use ($balances) {
+            $item->total_stock = $item->product_id
+                ? (int) ($balances[$item->product_id] ?? 0)
+                : (int) $item->stocks()->where('quantity', '>', 0)->sum('quantity');
+            return $item;
+        });
 
         $lowStockCount = InvestigationItem::active()
             ->whereHas('stocks', fn ($q) => $q->where('quantity', '>', 0)->whereColumn('quantity', '<=', 'reorder_level'))
@@ -52,9 +81,12 @@ class InvestigationItemController extends Controller
             'description'   => ['nullable', 'string'],
         ]);
 
-        InvestigationItem::create($data);
+        DB::transaction(function () use ($data) {
+            $item = InvestigationItem::create($data);
+            $this->ensureLinkedProduct($item);
+        });
 
-        return back()->with('success', 'Investigation item created.');
+        return back()->with('success', 'Investigation item created and linked to product catalog.');
     }
 
     public function update(Request $request, InvestigationItem $investigationItem)
@@ -68,7 +100,21 @@ class InvestigationItemController extends Controller
             'description'   => ['nullable', 'string'],
         ]);
 
-        $investigationItem->update($data);
+        DB::transaction(function () use ($investigationItem, $data) {
+            $investigationItem->update($data);
+            $product = $this->ensureLinkedProduct($investigationItem);
+            // Keep the mirror Product's identity in sync.
+            if ($product) {
+                $product->fill([
+                    'name'          => $investigationItem->name,
+                    'unit'          => $investigationItem->unit,
+                    'description'   => $investigationItem->description,
+                    'reorder_level' => $investigationItem->reorder_level,
+                    'is_active'     => (bool) $investigationItem->is_active,
+                    'product_type'  => $this->mapCategoryToProductType($investigationItem->category)->value,
+                ])->save();
+            }
+        });
 
         return back()->with('success', 'Investigation item updated.');
     }
@@ -76,6 +122,10 @@ class InvestigationItemController extends Controller
     public function toggle(InvestigationItem $investigationItem)
     {
         $investigationItem->update(['is_active' => !$investigationItem->is_active]);
+        if ($investigationItem->product_id) {
+            Product::where('id', $investigationItem->product_id)
+                ->update(['is_active' => (bool) $investigationItem->is_active]);
+        }
 
         return back()->with('success', 'Status updated.');
     }
@@ -125,19 +175,49 @@ class InvestigationItemController extends Controller
             'reorder_level'         => ['required', 'integer', 'min:0'],
         ]);
 
-        $supplier = null;
-        if (!empty($data['supplier_id'])) {
-            $supplier = Supplier::find($data['supplier_id'])?->name;
-        }
+        $supplier = !empty($data['supplier_id']) ? Supplier::find($data['supplier_id'])?->name : null;
+        $item     = InvestigationItem::findOrFail($data['investigation_item_id']);
 
-        InvestigationItemStock::create([
-            ...$data,
-            'supplier'      => $supplier,
-            'received_date' => now(),
-            'received_by'   => Auth::id(),
-        ]);
+        DB::transaction(function () use ($data, $item, $supplier) {
+            // Ensure mirror Product exists (covers items created before the
+            // unified-inventory backfill).
+            $product = $this->ensureLinkedProduct($item);
 
-        return back()->with('success', 'Stock added successfully.');
+            // Legacy batch row — kept for batch/expiry metadata (FEFO display,
+            // supplier lookup) but the source-of-truth on-hand quantity now
+            // lives in product_stock_balances.
+            $stockRow = InvestigationItemStock::create([
+                ...$data,
+                'supplier'      => $supplier,
+                'received_date' => now(),
+                'received_by'   => Auth::id(),
+            ]);
+
+            if ($product) {
+                $location = $this->resolveStockLocation($data['location']);
+                if ($location) {
+                    $this->productMovements->createMovement([
+                        'product_id'        => $product->id,
+                        'stock_location_id' => $location->id,
+                        'movement_type'     => StockMovementType::PURCHASE_RECEIVED,
+                        'quantity'          => (float) $data['quantity'],
+                        'unit_cost'         => $data['unit_cost'],
+                        'batch_no'          => $data['batch_number'] ?? null,
+                        'expiry_date'       => $data['expiry_date'] ?? null,
+                        'source_type'       => InvestigationItemStock::class,
+                        'source_id'         => $stockRow->id,
+                        'notes'             => 'Investigation stock received',
+                    ]);
+                } else {
+                    Log::warning('investigation_item.stock.no_location', [
+                        'item_id'  => $item->id,
+                        'location' => $data['location'],
+                    ]);
+                }
+            }
+        });
+
+        return back()->with('success', 'Stock added — unified ledger updated.');
     }
 
     public function updateStock(Request $request, InvestigationItemStock $stock)
@@ -149,9 +229,37 @@ class InvestigationItemController extends Controller
             'reorder_level' => ['required', 'integer', 'min:0'],
         ]);
 
-        $stock->update($data);
+        DB::transaction(function () use ($stock, $data) {
+            $oldQty = (int) $stock->quantity;
+            $stock->update($data);
 
-        return back()->with('success', 'Stock updated.');
+            // Reconcile the unified ledger with the new quantity using an
+            // ADJUSTMENT_IN / ADJUSTMENT_OUT movement.
+            $delta = (int) $data['quantity'] - $oldQty;
+            if ($delta === 0) return;
+
+            $product = $stock->item?->product_id ? Product::find($stock->item->product_id) : null;
+            if (! $product) return;
+
+            $location = $this->resolveStockLocation((string) $stock->location);
+            if (! $location) return;
+
+            $this->productMovements->createMovement([
+                'product_id'        => $product->id,
+                'stock_location_id' => $location->id,
+                'movement_type'     => $delta > 0 ? StockMovementType::ADJUSTMENT_IN : StockMovementType::ADJUSTMENT_OUT,
+                'quantity'          => (float) abs($delta),
+                'unit_cost'         => $data['unit_cost'],
+                'batch_no'          => $stock->batch_number,
+                'expiry_date'       => $data['expiry_date'] ?? null,
+                'source_type'       => InvestigationItemStock::class,
+                'source_id'         => $stock->id,
+                'notes'             => 'Investigation stock adjustment',
+                'allow_negative'    => true,
+            ]);
+        });
+
+        return back()->with('success', 'Stock updated — unified ledger reconciled.');
     }
 
     /*
@@ -177,11 +285,131 @@ class InvestigationItemController extends Controller
             'location' => ['required', 'string'],
         ]);
 
+        $item = InvestigationItem::find($request->item_id);
+
+        // Prefer the unified product ledger when the item is linked.
+        if ($item?->product_id) {
+            $location = $this->resolveStockLocation((string) $request->location);
+            if ($location) {
+                $total = (float) ProductStockBalance::query()
+                    ->where('product_id', $item->product_id)
+                    ->where('stock_location_id', $location->id)
+                    ->sum('quantity_on_hand');
+                return response()->json(['available' => (int) $total, 'source' => 'product_ledger']);
+            }
+        }
+
+        // Legacy fallback for items that have not yet been linked.
         $total = InvestigationItemStock::where('investigation_item_id', $request->item_id)
             ->atLocation($request->location)
             ->where('quantity', '>', 0)
             ->sum('quantity');
 
-        return response()->json(['available' => $total]);
+        return response()->json(['available' => (int) $total, 'source' => 'legacy_investigation_item_stock']);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Internal helpers — unified inventory
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Ensure the investigation item has a mirror row in `products`. Creates and
+     * links one if missing. Idempotent.
+     */
+    private function ensureLinkedProduct(InvestigationItem $item): ?Product
+    {
+        if ($item->product_id) {
+            return Product::find($item->product_id);
+        }
+
+        $code = $this->buildProductCode($item);
+        $type = $this->mapCategoryToProductType($item->category);
+
+        $product = Product::where('code', $code)->first();
+        if (! $product) {
+            $product = Product::create([
+                'name'          => $item->name,
+                'code'          => $code,
+                'product_type'  => $type->value,
+                'unit'          => $item->unit ?? 'unit',
+                'description'   => $item->description,
+                'reorder_level' => $item->reorder_level,
+                'default_cost'  => null,
+                'base_price'    => 0,
+                'is_billable'   => false,
+                'is_active'     => (bool) $item->is_active,
+            ]);
+        }
+
+        $item->updateQuietly(['product_id' => $product->id]);
+
+        // Attach to investigation / radiology departments.
+        $deptIds = Department::query()
+            ->whereIn('type', [DepartmentType::INVESTIGATION->value, DepartmentType::RADIOLOGY->value])
+            ->pluck('id')
+            ->all();
+        foreach ($deptIds as $deptId) {
+            DB::table('product_department')->updateOrInsert(
+                ['product_id' => $product->id, 'department_id' => $deptId],
+                ['is_active' => true, 'created_at' => now(), 'updated_at' => now()],
+            );
+        }
+
+        return $product;
+    }
+
+    private function buildProductCode(InvestigationItem $item): string
+    {
+        $candidate = $item->code
+            ? 'INV-' . strtoupper(Str::slug($item->code, '_'))
+            : 'INV-' . strtoupper(Str::slug($item->name ?? '', '_'));
+
+        if (strlen($candidate) > 56) {
+            $candidate = substr($candidate, 0, 56);
+        }
+        if (! Product::where('code', $candidate)->exists()) {
+            return $candidate;
+        }
+        return 'INV-' . $item->id;
+    }
+
+    private function mapCategoryToProductType(InvestigationItemCategory|string|null $category): ProductType
+    {
+        if ($category instanceof InvestigationItemCategory) {
+            $category = $category->value;
+        }
+        return match ($category) {
+            InvestigationItemCategory::REAGENT->value    => ProductType::REAGENT,
+            InvestigationItemCategory::TEST_KIT->value   => ProductType::REAGENT,
+            InvestigationItemCategory::CONSUMABLE->value => ProductType::CONSUMABLE,
+            InvestigationItemCategory::RADIOLOGY->value  => ProductType::MEDICAL_SUPPLY,
+            InvestigationItemCategory::IMAGING->value    => ProductType::MEDICAL_SUPPLY,
+            default                                      => ProductType::GENERAL_ITEM,
+        };
+    }
+
+    /**
+     * Map the legacy InvestigationItemStock.location enum string
+     * ('laboratory' / 'store' / 'pharmacy') to a row in `stock_locations`.
+     */
+    private function resolveStockLocation(string $key): ?StockLocationModel
+    {
+        $typeMap = [
+            'laboratory' => 'lab',
+            'lab'        => 'lab',
+            'store'      => 'store',
+            'pharmacy'   => 'pharmacy',
+        ];
+        $type = $typeMap[strtolower($key)] ?? $key;
+
+        return StockLocationModel::query()
+            ->where(function ($q) use ($key, $type) {
+                $q->where('type', $type)->orWhere('name', $key);
+            })
+            ->where('is_active', true)
+            ->orderBy('id')
+            ->first();
     }
 }
