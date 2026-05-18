@@ -19,6 +19,8 @@ class Product extends Model
         'description',
         'reorder_level',
         'default_cost',
+        'base_price',
+        'is_billable',
         'is_active',
         'created_by',
     ];
@@ -29,6 +31,8 @@ class Product extends Model
             'product_type'  => ProductType::class,
             'reorder_level' => 'decimal:4',
             'default_cost'  => 'decimal:2',
+            'base_price'    => 'decimal:2',
+            'is_billable'   => 'boolean',
             'is_active'     => 'boolean',
         ];
     }
@@ -55,6 +59,15 @@ class Product extends Model
         return $this->hasMany(ServiceConsumable::class);
     }
 
+    /**
+     * Insurance-type and provider-specific price overrides.
+     * Resolved by ProductPriceResolver in priority order.
+     */
+    public function prices()
+    {
+        return $this->hasMany(ProductPrice::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
@@ -65,5 +78,11 @@ class Product extends Model
         return $query->whereHas('departments', fn ($q) => $q
             ->where('departments.id', $departmentId)
             ->where('product_department.is_active', true));
+    }
+
+    /** Only products that appear on invoices. */
+    public function scopeBillable($query)
+    {
+        return $query->where('is_billable', true);
     }
 }

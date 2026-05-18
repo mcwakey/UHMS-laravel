@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\InsuranceType;
 use App\Enums\ProductType;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
+use App\Models\InsuranceProvider;
 use App\Models\Product;
 use App\Services\ProductService;
 use Illuminate\Http\Request;
@@ -21,9 +23,42 @@ class ProductController extends Controller
             unset($filters['is_active']);
         }
         $products    = $this->products->listProducts($filters);
+
+        // Pre-load prices so the per-row pricing modal can be rendered inline
+        // without N+1 queries (mirrors services index).
+        $products->getCollection()->load('prices.insuranceProvider');
+
         $types       = ProductType::cases();
         $departments = Department::orderBy('name')->get();
-        return view('admin.products.index', compact('products', 'types', 'departments', 'filters'));
+
+        $insuranceTypes     = InsuranceType::cases();
+        $insuranceProviders = InsuranceProvider::where('is_active', true)
+            ->where('is_default', false)
+            ->orderBy('name')
+            ->get(['id', 'name', 'short_name', 'type']);
+
+        return view('admin.products.index', compact(
+            'products', 'types', 'departments', 'filters', 'insuranceTypes', 'insuranceProviders'
+        ));
+    }
+
+    public function show(Product $product)
+    {
+        $product->load([
+            'prices.insuranceProvider',
+            'departments',
+            'stockBalances.stockLocation',
+        ]);
+
+        $insuranceTypes     = InsuranceType::cases();
+        $insuranceProviders = InsuranceProvider::where('is_active', true)
+            ->where('is_default', false)
+            ->orderBy('name')
+            ->get(['id', 'name', 'short_name', 'type']);
+
+        return view('admin.products.show', compact(
+            'product', 'insuranceTypes', 'insuranceProviders'
+        ));
     }
 
     public function store(Request $request)
@@ -82,6 +117,8 @@ class ProductController extends Controller
             'description'    => 'nullable|string',
             'reorder_level'  => 'nullable|numeric|min:0',
             'default_cost'   => 'nullable|numeric|min:0',
+            'base_price'     => 'nullable|numeric|min:0',
+            'is_billable'    => 'nullable|boolean',
             'is_active'      => 'nullable|boolean',
             'department_ids' => 'nullable|array',
             'department_ids.*' => 'integer|exists:departments,id',

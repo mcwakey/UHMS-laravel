@@ -831,6 +831,7 @@ Route::middleware('auth')->group(function () {
             Route::middleware('can:product.view')->group(function () {
                 Route::get('/', [\App\Http\Controllers\Admin\ProductController::class, 'index'])->name('index');
                 Route::get('for-department/{department}', [\App\Http\Controllers\Admin\ProductController::class, 'forDepartment'])->name('for-department');
+                Route::get('{product}', [\App\Http\Controllers\Admin\ProductController::class, 'show'])->name('show');
             });
             Route::middleware('can:product.create')->group(function () {
                 Route::post('/', [\App\Http\Controllers\Admin\ProductController::class, 'store'])->name('store');
@@ -838,6 +839,24 @@ Route::middleware('auth')->group(function () {
             Route::middleware('can:product.edit')->group(function () {
                 Route::put('{product}', [\App\Http\Controllers\Admin\ProductController::class, 'update'])->name('update');
                 Route::patch('{product}/toggle', [\App\Http\Controllers\Admin\ProductController::class, 'toggle'])->name('toggle');
+            });
+            // Pricing sub-routes — gated on product.pricing.manage
+            Route::middleware('can:product.pricing.manage')->prefix('{product}/pricing')->name('pricing.')->group(function () {
+                Route::patch('base', [\App\Http\Controllers\Admin\ProductPricingController::class, 'updateBasePrice'])->name('base.update');
+
+                // Bulk upsert (mirrors services.prices.store) + single-row delete
+                Route::post('/',                [\App\Http\Controllers\Admin\ProductPricingController::class, 'storePrices'])->name('store');
+                Route::delete('{price}/delete', [\App\Http\Controllers\Admin\ProductPricingController::class, 'deletePrice'])->name('delete');
+
+                // Insurance-type default prices (provider_id = NULL)
+                Route::post('type', [\App\Http\Controllers\Admin\ProductPricingController::class, 'storeTypePrice'])->name('type.store');
+                Route::put('type/{price}', [\App\Http\Controllers\Admin\ProductPricingController::class, 'updateTypePrice'])->name('type.update');
+                Route::delete('type/{price}', [\App\Http\Controllers\Admin\ProductPricingController::class, 'destroyTypePrice'])->name('type.destroy');
+
+                // Provider-specific prices
+                Route::post('provider', [\App\Http\Controllers\Admin\ProductPricingController::class, 'storeProviderPrice'])->name('provider.store');
+                Route::put('provider/{price}', [\App\Http\Controllers\Admin\ProductPricingController::class, 'updateProviderPrice'])->name('provider.update');
+                Route::delete('provider/{price}', [\App\Http\Controllers\Admin\ProductPricingController::class, 'destroyProviderPrice'])->name('provider.destroy');
             });
         });
 

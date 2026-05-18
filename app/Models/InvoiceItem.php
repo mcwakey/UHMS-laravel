@@ -35,6 +35,7 @@ class InvoiceItem extends Model
         'visit_id',
         'patient_id',
         'service_catalog_id',
+        'product_id',
         'department_id',
         'source_type',
         'source_id',
@@ -90,6 +91,11 @@ class InvoiceItem extends Model
     public function serviceCatalog()
     {
         return $this->belongsTo(ServiceCatalog::class);
+    }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
     }
 
     public function visit()

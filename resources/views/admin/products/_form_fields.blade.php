@@ -27,6 +27,22 @@
         <label class="form-label small">Default unit cost</label>
         <input type="number" step="0.01" min="0" name="default_cost" class="form-control form-control-sm" value="{{ old('default_cost', $product->default_cost ?? 0) }}">
     </div>
+    <div class="col-md-4">
+        <label class="form-label small">Base price (selling price)</label>
+        <input type="number" step="0.01" min="0" name="base_price" class="form-control form-control-sm"
+               placeholder="Cash & carry price"
+               value="{{ old('base_price', $product->base_price ?? '') }}">
+    </div>
+    <div class="col-12">
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" name="is_billable" value="1"
+                   id="is_billable_{{ $product->id ?? 'new' }}"
+                   @checked(old('is_billable', $product->is_billable ?? false))>
+            <label class="form-check-label small" for="is_billable_{{ $product->id ?? 'new' }}">
+                Is Billable <span class="text-muted">(can appear on patient invoices)</span>
+            </label>
+        </div>
+    </div>
     <div class="col-12">
         <label class="form-label small">Description</label>
         <textarea name="description" rows="2" class="form-control form-control-sm">{{ old('description', $product->description ?? '') }}</textarea>

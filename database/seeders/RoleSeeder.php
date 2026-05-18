@@ -124,6 +124,7 @@ class RoleSeeder extends Seeder
             'product.edit',
             'product.link_departments',
             'product.link_department',      // alias used by some routes
+            'product.pricing.manage',       // update base_price, is_billable, insurance prices
 
             // ── Stock Management ──────────────────────────────────────────
             'stock.location.manage',        // create/edit stock locations
@@ -518,6 +519,7 @@ class RoleSeeder extends Seeder
             'pharmacy.drugs.manage', 'pharmacy.stock.manage',
             'product.view', 'product.create', 'product.edit',
             'product.link_departments', 'product.link_department',
+            'product.pricing.manage',
             'stock.location.manage', 'stock_location.manage',
             'stock.view', 'stock.view_balance',
             'stock.transfer', 'stock.adjust', 'stock.receive', 'stock.return',

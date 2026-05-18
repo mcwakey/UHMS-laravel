@@ -39,6 +39,8 @@ class ProductService
                 'description'   => $data['description'] ?? null,
                 'reorder_level' => $data['reorder_level'] ?? null,
                 'default_cost'  => $data['default_cost'] ?? null,
+                'base_price'    => $data['base_price'] ?? null,
+                'is_billable'   => (bool) ($data['is_billable'] ?? false),
                 'is_active'     => (bool) ($data['is_active'] ?? true),
                 'created_by'    => Auth::id(),
             ]);
@@ -55,7 +57,7 @@ class ProductService
         return DB::transaction(function () use ($product, $data) {
             $product->fill(array_intersect_key($data, array_flip([
                 'name', 'code', 'product_type', 'unit', 'description',
-                'reorder_level', 'default_cost', 'is_active',
+                'reorder_level', 'default_cost', 'base_price', 'is_billable', 'is_active',
             ])))->save();
 
             $this->syncDepartments($product, (array) ($data['department_ids'] ?? []));

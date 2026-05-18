@@ -7,6 +7,7 @@ use App\Enums\VisitStatus;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
+use App\Models\Product;
 use App\Models\ServiceCatalog;
 use App\Models\Visit;
 use Illuminate\Support\Facades\Auth;
@@ -21,8 +22,10 @@ class BillingService
         protected VisitWorkflowService $visitWorkflowService,
         protected ServicePriceResolver $priceResolver,
         protected ?InvoiceService $invoiceService = null,
+        protected ?ProductPriceResolver $productPriceResolver = null,
     ) {
-        $this->invoiceService = $this->invoiceService ?: app(InvoiceService::class);
+        $this->invoiceService       = $this->invoiceService ?: app(InvoiceService::class);
+        $this->productPriceResolver = $this->productPriceResolver ?: app(ProductPriceResolver::class);
     }
 
     /**
@@ -202,6 +205,113 @@ class BillingService
             if ($invoice) {
                 $this->invoiceService->recalculateTotals($invoice);
             }
+
+            return $item->fresh();
+        });
+    }
+
+    /**
+     * Add a billable Product (pharmacy item, ward consumable, etc.) to the visit's invoice.
+     *
+     * Guards:
+     *   - product.is_billable must be true
+     *   - duplicate source_type + source_id prevented per invoice
+     *
+     * Pricing is resolved via ProductPriceResolver (same priority as services:
+     *   provider-specific → type-default → base_price cash fallback).
+     *
+     * @throws \RuntimeException when product is not billable or duplicate detected
+     */
+    public function addProductToVisitInvoice(
+        Visit $visit,
+        Product $product,
+        string $sourceType,
+        ?int $sourceId = null,
+        int|float $quantity = 1,
+        ?int $departmentId = null,
+        ?string $description = null,
+    ): InvoiceItem {
+        if (! $product->is_billable) {
+            throw new \RuntimeException(
+                "Product '{$product->name}' is not billable. Enable billing on the product first."
+            );
+        }
+
+        if ($quantity < 1) {
+            throw new \RuntimeException('Quantity must be at least 1.');
+        }
+
+        return DB::transaction(function () use ($visit, $product, $sourceType, $sourceId, $quantity, $departmentId, $description) {
+            $invoice = $this->invoiceService->getOrCreateVisitInvoice($visit);
+
+            // Duplicate guard: same source_type + source_id may only appear once per invoice.
+            if ($sourceId !== null) {
+                $dup = InvoiceItem::where('invoice_id', $invoice->id)
+                    ->where('source_type', $sourceType)
+                    ->where('source_id', $sourceId)
+                    ->exists();
+                if ($dup) {
+                    throw new \RuntimeException(
+                        "Duplicate billing prevented for {$sourceType}#{$sourceId} on invoice {$invoice->invoice_number}."
+                    );
+                }
+            }
+
+            // Resolve insurance-aware pricing snapshot.
+            $snap          = $this->productPriceResolver->resolveForVisit($product, $visit);
+            $cashPrice     = (float) ($snap['cash_price']     ?? $product->base_price ?? 0);
+            $selectedPrice = (float) ($snap['selected_price'] ?? $cashPrice);
+            $payerType     = $snap['payer_type']           ?? 'cash';
+            $providerId    = $snap['insurance_provider_id'] ?? null;
+            $insType       = $snap['insurance_type']        ?? null;
+            $pricingSrc    = $snap['pricing_source']        ?? 'cash_price';
+            $isInsurance   = $payerType === 'insurance';
+
+            $insurancePrice   = $isInsurance ? $selectedPrice : null;
+            $lineTotal        = round($selectedPrice * $quantity, 2);
+            $insuranceCovered = $isInsurance
+                ? max(0.0, round(($cashPrice - $selectedPrice) * $quantity, 2))
+                : 0.0;
+            $discountAmount   = 0.0;
+            $patientPayable   = max(0.0, round($lineTotal - $discountAmount, 2));
+            $balance          = $patientPayable;
+            $paymentStatus    = $patientPayable <= 0.0 ? 'paid' : 'unpaid';
+
+            $visit->loadMissing('visitInsurance.insuranceProvider');
+            $visitIns = $visit->visitInsurance;
+            $hasIns   = $visitIns && $visitIns->is_active && ! $visitIns->is_expired
+                && $visitIns->insuranceProvider && ! $visitIns->insuranceProvider->is_default;
+
+            $item = InvoiceItem::create([
+                'invoice_id'            => $invoice->id,
+                'visit_id'              => $visit->id,
+                'patient_id'            => $invoice->patient_id,
+                'service_catalog_id'    => null,
+                'product_id'            => $product->id,
+                'department_id'         => $departmentId,
+                'source_type'           => $sourceType,
+                'source_id'             => $sourceId,
+                'description'           => $description ?: $product->name,
+                'quantity'              => $quantity,
+                'cash_price'            => $cashPrice,
+                'insurance_price'       => $insurancePrice,
+                'selected_price'        => $selectedPrice,
+                'insurance_covered'     => $insuranceCovered,
+                'discount_amount'       => $discountAmount,
+                'patient_payable'       => $patientPayable,
+                'paid_amount'           => 0,
+                'balance'               => $balance,
+                'payment_status'        => $paymentStatus,
+                'total_price'           => $lineTotal,
+                'payer_type'            => $payerType,
+                'insurance_provider_id' => $providerId,
+                'patient_insurance_id'  => $hasIns ? $visitIns->id : null,
+                'insurance_type'        => $insType,
+                'pricing_source'        => $pricingSrc,
+                'created_by'            => Auth::id(),
+            ]);
+
+            $this->invoiceService->recalculateTotals($invoice->fresh('items'));
 
             return $item->fresh();
         });
