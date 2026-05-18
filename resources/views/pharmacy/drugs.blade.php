@@ -165,7 +165,7 @@
                                 <th>Strength</th>
                                 <th>Unit</th>
                                 <th>Price (GHS)</th>
-                                <th>Stock</th>
+                                <th>Available in Pharmacy</th>
                                 <th>Status</th>
                                 <th class="text-end">Actions</th>
                             </tr>

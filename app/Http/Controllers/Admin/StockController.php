@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\StockMovementType;
 use App\Http\Controllers\Controller;
 use App\Models\Drug;
-use App\Models\StockBalance;
+use App\Models\ProductStockBalance;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
 use App\Services\StockAdjustmentService;
 use App\Services\StockBalanceService;
 use App\Services\StockReturnService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class StockController extends Controller
@@ -23,25 +24,46 @@ class StockController extends Controller
     ) {}
 
     /**
-     * Current stock-on-hand grid (cached balances).
+     * Product Stock Balances — single source of truth for on-hand inventory.
+     *
+     * Reads exclusively from `product_stock_balances` joined to `products`
+     * and `stock_locations`. Every physical item in the hospital is a Product
+     * and lives in this one ledger; there are no parallel drug/investigation
+     * stock tables surfaced here.
      */
     public function balances(Request $request)
     {
-        $balances = StockBalance::query()
-            ->with(['drug:id,name,unit,reorder_level', 'location:id,name,type'])
+        $balances = ProductStockBalance::query()
+            ->with([
+                'product:id,name,code,product_type,unit,reorder_level,is_active',
+                'product.departments:id,name,type',
+                'stockLocation:id,name,type,department_id',
+                'stockLocation.department:id,name,type',
+            ])
             ->when($request->location_id, fn ($q, $id) => $q->where('stock_location_id', $id))
-            ->when($request->drug_id, fn ($q, $id) => $q->where('drug_id', $id))
-            ->when($request->low_only, function ($q) {
-                $q->whereColumn('quantity_on_hand', '<=',
-                    \DB::raw('COALESCE((SELECT reorder_level FROM drugs WHERE drugs.id = stock_balances.drug_id), 0)'));
+            ->when($request->product_id, fn ($q, $id) => $q->where('product_id', $id))
+            ->when($request->product_type, function ($q, $type) {
+                $q->whereHas('product', fn ($pq) => $pq->where('product_type', $type));
             })
-            ->orderBy('drug_id')
+            ->when($request->search, function ($q, $s) {
+                $q->whereHas('product', function ($pq) use ($s) {
+                    $pq->where('name', 'like', "%{$s}%")->orWhere('code', 'like', "%{$s}%");
+                });
+            })
+            ->when($request->low_only, function ($q) {
+                $q->whereHas('product', function ($pq) {
+                    $pq->whereColumn('reorder_level', '>=',
+                        DB::raw('(SELECT quantity_on_hand FROM product_stock_balances psb WHERE psb.product_id = products.id AND psb.stock_location_id = product_stock_balances.stock_location_id LIMIT 1)'));
+                });
+            })
+            ->orderBy('product_id')
             ->paginate(25)
             ->withQueryString();
 
-        $locations = StockLocation::active()->orderBy('name')->get();
+        $locations    = StockLocation::active()->orderBy('name')->get();
+        $productTypes = \App\Enums\ProductType::cases();
 
-        return view('store.stock.balances', compact('balances', 'locations'));
+        return view('store.stock.balances', compact('balances', 'locations', 'productTypes'));
     }
 
     /**

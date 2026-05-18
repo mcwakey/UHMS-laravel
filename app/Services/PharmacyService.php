@@ -59,8 +59,17 @@ class PharmacyService
 
     public function getDrugs(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = Drug::with('category')
-            ->withCount('activeStocks');
+        // Drugs are the Pharmacy-facing **filtered view** of products linked to
+        // the Pharmacy department with product_type=DRUG. We only surface drug
+        // catalogue rows that have a backing product on that pivot — anything
+        // else is legacy data that pre-dates the unified inventory.
+        $pharmacyDept = \App\Models\Department::where('type', 'pharmacy')->first();
+
+        $query = Drug::with(['category', 'product'])
+            ->whereNotNull('product_id')
+            ->when($pharmacyDept, function ($q) use ($pharmacyDept) {
+                $q->whereHas('product.departments', fn ($dq) => $dq->where('departments.id', $pharmacyDept->id));
+            });
 
         if (!empty($filters['search'])) {
             $query->search($filters['search']);

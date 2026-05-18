@@ -118,12 +118,35 @@ class Drug extends Model
     }
 
     /**
-     * Aggregate on-hand quantity across all stock locations.
-     * Reads from stock_balances (single source of truth).
+     * Quantity-on-hand available **at the Pharmacy** for this drug.
+     *
+     * Single source of truth = `product_stock_balances`. Drugs are surfaced
+     * as a filtered catalogue of products; the Pharmacy can only dispense
+     * what has been transferred into the Pharmacy stock location. Stock that
+     * still lives in Main Store is intentionally NOT counted here.
      */
     public function getTotalStockAttribute()
     {
-        return (float) $this->balances()->sum('quantity_on_hand');
+        if (! $this->product_id) {
+            return 0.0;
+        }
+
+        $pharmacyLocationIds = \App\Models\StockLocation::query()
+            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->where('type', 'pharmacy')
+                  ->orWhereHas('department', fn ($dq) => $dq->where('type', 'pharmacy'));
+            })
+            ->pluck('id');
+
+        if ($pharmacyLocationIds->isEmpty()) {
+            return 0.0;
+        }
+
+        return (float) \App\Models\ProductStockBalance::query()
+            ->where('product_id', $this->product_id)
+            ->whereIn('stock_location_id', $pharmacyLocationIds)
+            ->sum('quantity_on_hand');
     }
 
     public function getIsLowStockAttribute(): bool

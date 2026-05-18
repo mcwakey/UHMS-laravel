@@ -1,11 +1,11 @@
 @extends('layouts.app')
-@section('title', 'Stock On Hand')
+@section('title', 'Product Stock Balances')
 
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Stock On Hand</h4>
-        <small class="text-muted">Current cached balances (read from <code>stock_balances</code>).</small>
+        <h4 class="fw-bold mb-0">Product Stock Balances</h4>
+        <small class="text-muted">Unified on-hand inventory across the hospital. One ledger, one truth — read from <code>product_stock_balances</code>.</small>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('admin.store.stock.ledger') }}" class="btn btn-outline-primary"><i class="ti ti-list me-1"></i>View Ledger</a>
@@ -33,14 +33,19 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Drug ID</label>
-                <input type="number" name="drug_id" value="{{ request('drug_id') }}" class="form-control" placeholder="Optional drug filter">
+                <label class="form-label">Product Type</label>
+                <select name="product_type" class="form-select">
+                    <option value="">All Types</option>
+                    @foreach($productTypes as $pt)
+                    <option value="{{ $pt->value }}" {{ request('product_type') === $pt->value ? 'selected' : '' }}>
+                        {{ ucfirst(str_replace('_', ' ', strtolower($pt->value))) }}
+                    </option>
+                    @endforeach
+                </select>
             </div>
             <div class="col-md-3">
-                <div class="form-check mt-4">
-                    <input type="checkbox" class="form-check-input" id="lowOnly" name="low_only" value="1" {{ request('low_only') ? 'checked' : '' }}>
-                    <label for="lowOnly" class="form-check-label">Low stock only (≤ reorder level)</label>
-                </div>
+                <label class="form-label">Search</label>
+                <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Name or code…">
             </div>
             <div class="col-md-3 text-end">
                 <button type="submit" class="btn btn-primary"><i class="ti ti-filter me-1"></i>Filter</button>
@@ -56,27 +61,52 @@
             <table class="table table-bordered table-sm align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Drug</th>
+                        <th>Product</th>
+                        <th>Code</th>
+                        <th>Type</th>
                         <th>Unit</th>
                         <th>Location</th>
+                        <th>Department</th>
                         <th class="text-end">Quantity on Hand</th>
                         <th class="text-end">Reorder Level</th>
+                        <th>Status</th>
                         <th>Last Movement</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($balances as $b)
-                    @php $low = (float) $b->quantity_on_hand <= (float) ($b->drug->reorder_level ?? 0); @endphp
+                    @php
+                        $qty       = (float) $b->quantity_on_hand;
+                        $reorder   = (float) ($b->product->reorder_level ?? 0);
+                        $low       = $reorder > 0 && $qty <= $reorder;
+                        $type      = $b->product?->product_type;
+                        $typeLabel = $type instanceof \App\Enums\ProductType ? $type->value : ($type ?? '—');
+                        $deptName  = $b->stockLocation?->department?->name
+                                  ?? $b->product?->departments?->first()?->name
+                                  ?? '—';
+                    @endphp
                     <tr class="{{ $low ? 'table-warning' : '' }}">
-                        <td>{{ $b->drug?->name ?? '—' }}</td>
-                        <td>{{ $b->drug?->unit ?? '—' }}</td>
-                        <td>{{ $b->location?->name ?? '—' }}</td>
-                        <td class="text-end fw-semibold">{{ rtrim(rtrim(number_format((float)$b->quantity_on_hand, 4), '0'), '.') }}</td>
-                        <td class="text-end text-muted">{{ rtrim(rtrim(number_format((float)($b->drug->reorder_level ?? 0), 4), '0'), '.') }}</td>
-                        <td>{{ $b->last_movement_at?->format('d M Y H:i') ?? '—' }}</td>
+                        <td>{{ $b->product?->name ?? '—' }}</td>
+                        <td><code class="small">{{ $b->product?->code ?? '—' }}</code></td>
+                        <td><span class="badge bg-light text-dark">{{ ucfirst(str_replace('_', ' ', strtolower($typeLabel))) }}</span></td>
+                        <td>{{ $b->product?->unit ?? '—' }}</td>
+                        <td>{{ $b->stockLocation?->name ?? '—' }}</td>
+                        <td class="small text-muted">{{ $deptName }}</td>
+                        <td class="text-end fw-semibold">{{ rtrim(rtrim(number_format($qty, 4), '0'), '.') }}</td>
+                        <td class="text-end text-muted">{{ rtrim(rtrim(number_format($reorder, 4), '0'), '.') }}</td>
+                        <td>
+                            @if($qty <= 0)
+                                <span class="badge bg-danger">Out of stock</span>
+                            @elseif($low)
+                                <span class="badge bg-warning text-dark">Low</span>
+                            @else
+                                <span class="badge bg-success">OK</span>
+                            @endif
+                        </td>
+                        <td class="small">{{ $b->last_movement_at?->format('d M Y H:i') ?? '—' }}</td>
                     </tr>
                     @empty
-                    <tr><td colspan="6" class="text-center text-muted py-4">No stock balances yet. Create opening stock or receive a purchase order.</td></tr>
+                    <tr><td colspan="10" class="text-center text-muted py-4">No stock balances yet. Create opening stock or receive a purchase order.</td></tr>
                     @endforelse
                 </tbody>
             </table>

@@ -36,98 +36,94 @@ class InvestigationItemController extends Controller
 
     public function index(Request $request)
     {
-        // Unified inventory: surface the on-hand quantity from the product
-        // ledger so totals stay in sync with what the rest of the app sees.
-        $items = InvestigationItem::query()
-            ->when($request->search, fn ($q, $s) => $q->search($s))
-            ->when($request->category, fn ($q, $c) => $q->where('category', $c))
-            ->when($request->status === 'inactive', fn ($q) => $q->where('is_active', false))
-            ->when($request->status === 'active', fn ($q) => $q->where('is_active', true))
+        // Investigation Consumables is a **filtered product view** — every
+        // physical item in the hospital is a Product, and this page only
+        // surfaces products that have been linked to the Investigation /
+        // Laboratory / Radiology departments and whose type makes them a
+        // lab consumable (reagent, consumable, medical supply, general).
+        $departmentTypes = [
+            DepartmentType::INVESTIGATION->value,
+            DepartmentType::RADIOLOGY->value,
+        ];
+        $allowedProductTypes = [
+            ProductType::REAGENT->value,
+            ProductType::CONSUMABLE->value,
+            ProductType::MEDICAL_SUPPLY->value,
+            ProductType::SURGICAL_SUPPLY->value,
+            ProductType::GENERAL_ITEM->value,
+        ];
+
+        // Resolve the canonical Lab stock location(s) — quantity surfaced on
+        // this page must come from the department's own stock location, NOT
+        // from Main Store. If lab stock has not been transferred from the
+        // store yet the available qty intentionally shows as 0.
+        $labLocationIds = StockLocationModel::query()
+            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->whereIn('type', ['lab', 'laboratory', 'radiology'])
+                  ->orWhereHas('department', fn ($dq) => $dq->whereIn('type', ['investigation', 'radiology']));
+            })
+            ->pluck('id');
+
+        $products = Product::query()
+            ->with(['departments:id,name,type'])
+            ->where('is_active', true)
+            ->whereIn('product_type', $allowedProductTypes)
+            ->whereHas('departments', function ($dq) use ($departmentTypes) {
+                $dq->whereIn('departments.type', $departmentTypes)
+                   ->where('product_department.is_active', true);
+            })
+            ->when($request->search, function ($q, $s) {
+                $q->where(function ($qq) use ($s) {
+                    $qq->where('name', 'like', "%{$s}%")->orWhere('code', 'like', "%{$s}%");
+                });
+            })
+            ->when($request->product_type, fn ($q, $t) => $q->where('product_type', $t))
             ->orderBy('name')
             ->paginate(20)
             ->withQueryString();
 
-        $productIds = $items->getCollection()->pluck('product_id')->filter()->unique()->all();
+        // Pre-compute Lab-only on-hand for every product on this page.
+        $productIds = $products->getCollection()->pluck('id')->all();
         $balances = ProductStockBalance::query()
             ->whereIn('product_id', $productIds)
+            ->when($labLocationIds->isNotEmpty(), fn ($q) => $q->whereIn('stock_location_id', $labLocationIds))
             ->select('product_id', DB::raw('SUM(quantity_on_hand) as total'))
             ->groupBy('product_id')
             ->pluck('total', 'product_id');
 
-        $items->getCollection()->transform(function (InvestigationItem $item) use ($balances) {
-            $item->total_stock = $item->product_id
-                ? (int) ($balances[$item->product_id] ?? 0)
-                : (int) $item->stocks()->where('quantity', '>', 0)->sum('quantity');
-            return $item;
+        $products->getCollection()->transform(function (Product $p) use ($balances) {
+            $p->available_in_lab = (float) ($balances[$p->id] ?? 0);
+            return $p;
         });
 
-        $lowStockCount = InvestigationItem::active()
-            ->whereHas('stocks', fn ($q) => $q->where('quantity', '>', 0)->whereColumn('quantity', '<=', 'reorder_level'))
+        $lowStockCount = $products->getCollection()
+            ->filter(fn ($p) => ($p->reorder_level ?? 0) > 0 && $p->available_in_lab <= $p->reorder_level)
             ->count();
 
-        $categories = InvestigationItemCategory::cases();
+        $allowedTypes = $allowedProductTypes;
 
-        return view('investigations.items.index', compact('items', 'categories', 'lowStockCount'));
+        return view('investigations.items.index', compact('products', 'lowStockCount', 'allowedTypes'));
     }
 
+    /**
+     * Investigation departments do NOT create products. Items are created and
+     * linked to the Lab/Investigation department from the central Store →
+     * Products admin. We intentionally refuse writes to this controller.
+     */
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'name'          => ['required', 'string', 'max:200'],
-            'code'          => ['nullable', 'string', 'max:50', 'unique:investigation_items,code'],
-            'category'      => ['required', 'string'],
-            'unit'          => ['required', 'string', 'max:50'],
-            'reorder_level' => ['required', 'integer', 'min:0'],
-            'description'   => ['nullable', 'string'],
-        ]);
-
-        DB::transaction(function () use ($data) {
-            $item = InvestigationItem::create($data);
-            $this->ensureLinkedProduct($item);
-        });
-
-        return back()->with('success', 'Investigation item created and linked to product catalog.');
+        abort(403, 'Investigation items are not created here. Create the Product from the Store → Products admin, then link it to the Investigation/Laboratory department.');
     }
 
     public function update(Request $request, InvestigationItem $investigationItem)
     {
-        $data = $request->validate([
-            'name'          => ['required', 'string', 'max:200'],
-            'code'          => ['nullable', 'string', 'max:50', "unique:investigation_items,code,{$investigationItem->id}"],
-            'category'      => ['required', 'string'],
-            'unit'          => ['required', 'string', 'max:50'],
-            'reorder_level' => ['required', 'integer', 'min:0'],
-            'description'   => ['nullable', 'string'],
-        ]);
-
-        DB::transaction(function () use ($investigationItem, $data) {
-            $investigationItem->update($data);
-            $product = $this->ensureLinkedProduct($investigationItem);
-            // Keep the mirror Product's identity in sync.
-            if ($product) {
-                $product->fill([
-                    'name'          => $investigationItem->name,
-                    'unit'          => $investigationItem->unit,
-                    'description'   => $investigationItem->description,
-                    'reorder_level' => $investigationItem->reorder_level,
-                    'is_active'     => (bool) $investigationItem->is_active,
-                    'product_type'  => $this->mapCategoryToProductType($investigationItem->category)->value,
-                ])->save();
-            }
-        });
-
-        return back()->with('success', 'Investigation item updated.');
+        abort(403, 'Investigation items are not edited here. Manage the underlying Product from the Store → Products admin.');
     }
 
     public function toggle(InvestigationItem $investigationItem)
     {
-        $investigationItem->update(['is_active' => !$investigationItem->is_active]);
-        if ($investigationItem->product_id) {
-            Product::where('id', $investigationItem->product_id)
-                ->update(['is_active' => (bool) $investigationItem->is_active]);
-        }
-
-        return back()->with('success', 'Status updated.');
+        abort(403, 'Investigation items are not toggled here. Deactivate the underlying Product from the Store → Products admin.');
     }
 
     /*

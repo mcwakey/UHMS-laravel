@@ -315,7 +315,7 @@ class SidebarMenuBuilder
                         'module' => 'investigations',
                     ],
                     [
-                        'label' => 'Investigation Items',
+                        'label' => 'Investigation Consumables',
                         'icon' => 'ti ti-microscope',
                         'route' => 'admin.investigations.items.index',
                         'active_patterns' => ['admin.investigations.items.*'],

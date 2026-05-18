@@ -1,26 +1,69 @@
 You are a senior Laravel + Inertia/Vue architect working on **UHMS — Ultimate Hospital Management System**.
 
-We must eliminate the current two-parallel-inventory problem completely.
+The current stock implementation is still wrong and inconsistent.
 
-The project must have **one unified inventory system**, not separate drug stock and product stock systems.
+We already agreed on this rule:
 
-Focus only on inventory, stock locations, product purchase orders, receiving, transfers, department stock usage, pharmacy dispensing, investigation consumables, procedure consumables, stock movements, and stock balances.
+```text
+Every physical item in the hospital is a Product.
+There must be only one inventory system.
+```
 
-Do not refactor unrelated modules.
+But the system is still behaving like it has parallel inventory systems:
+
+```text
+Drug catalogue shows quantity
+Product Stock Balances does not show the same quantity
+
+Investigation Items page shows nothing
+Products linked to Investigation department already exist
+
+Investigation Items page still has Add New Item button
+Departments are still able to create items outside Products
+```
+
+This must be fixed completely.
+
+Focus only on fixing the unified product-based inventory system and department product catalogues. Do not refactor unrelated modules.
 
 ---
 
-# 1. Core Decision
+# 1. Non-Negotiable Rule
 
-UHMS must use **one inventory system only**.
+There must be only one inventory system.
 
-The single inventory source is:
+Use only:
 
 ```text
 products
+stock_movements
+stock_balances
+stock_locations
+product_department
 ```
 
-All physical items in the hospital must be products.
+Do not use active workflows based on:
+
+```text
+drugs
+drug_stock
+stock_movements.drug_id
+stock_balances.drug_id
+product_stock_movements
+product_stock_balances
+investigation_items
+procedure_items
+lab_items
+standalone consumables table
+```
+
+If these old tables or models still physically exist during development, stop using them in active workflows.
+
+---
+
+# 2. Product Is the Only Physical Item
+
+Every physical item must be stored in `products`.
 
 Examples:
 
@@ -28,81 +71,16 @@ Examples:
 Paracetamol
 Ceftriaxone
 Gloves
-Syringe
-EDTA Tube
 Malaria RDT Kit
+EDTA Tube
 Sutures
 Gauze
+Syringe
 X-ray Film
 Oxygen Mask
 ```
 
-Do not maintain separate active inventory systems for:
-
-```text
-drugs
-product_stock
-drug_stock
-lab_items
-procedure_items
-standalone consumables
-```
-
----
-
-# 2. Hard Rule
-
-There must not be two parallel ledgers.
-
-Remove or stop using parallel systems like:
-
-```text
-stock_movements for drugs
-product_stock_movements for products
-stock_balances for drugs
-product_stock_balances for products
-drug_stock legacy batch quantity
-```
-
-Replace them with one product-based stock system:
-
-```text
-stock_movements
-stock_balances
-```
-
-where each movement and balance references:
-
-```text
-product_id
-stock_location_id
-```
-
----
-
-# 3. Product Is the Only Inventory Item
-
-Products represent all physical stock items.
-
-Recommended `products` fields:
-
-```text
-id
-name
-code
-product_type
-unit
-description nullable
-reorder_level nullable
-base_price nullable
-is_billable
-is_active
-created_by nullable
-created_at
-updated_at
-```
-
-Recommended product types:
+Product types:
 
 ```text
 DRUG
@@ -116,764 +94,560 @@ GENERAL_ITEM
 
 Rules:
 
-* Pharmacy drugs are products.
-* Investigation/lab consumables are products.
-* Theatre/procedure consumables are products.
-* Ward consumables are products.
+* Pharmacy drugs are products with `product_type = DRUG`.
+* Lab/investigation consumables are products linked to investigation department.
+* Theatre/procedure consumables are products linked to procedure/theatre department.
+* Ward consumables are products linked to ward department.
 * Store/Admin creates products.
-* Departments use only products linked to their departments.
+* Departments only consume/view products linked to them.
 
 ---
 
-# 4. Main Store Receiving Rule
+# 3. Fix Product Stock Balances
 
-All product purchase orders, when received, must first enter the **Main Store**.
+Product Stock Balances must show all product quantities from the unified stock balance table.
 
-Purchase receiving must always create stock IN movements into:
-
-```text
-Main Store stock location
-```
-
-not directly into Pharmacy, Lab, Theatre, Ward, or any other department location.
-
-Correct flow:
+The page must read from:
 
 ```text
-Purchase Order
-↓
-Goods Received
-↓
-Stock IN to Main Store
-↓
-Transfer from Main Store to department stock location
-↓
-Department consumes from its own stock location
+stock_balances
 ```
 
-Do not allow purchase receiving directly into departmental stock locations unless a future explicit setting is added. For now, enforce Main Store only.
+joined with:
+
+```text
+products
+stock_locations
+departments
+```
+
+Each balance row must be based on:
+
+```text
+stock_balances.product_id
+stock_balances.stock_location_id
+stock_balances.quantity_on_hand
+```
+
+Do not read from:
+
+```text
+drug_stock
+product_stock_balances
+stock_balances.drug_id
+products.quantity
+drugs.quantity
+```
+
+The Product Stock Balances page must show:
+
+```text
+Product
+Product Type
+Location
+Department
+Quantity on Hand
+Reorder Level
+Status
+```
+
+Example expected result after PO receiving:
+
+```text
+Paracetamol    DRUG       Main Store    Store       100
+Gloves         CONSUMABLE Main Store    Store       500
+Malaria Kit    REAGENT    Main Store    Store       50
+```
 
 ---
 
-# 5. Department Stock Usage Rule
+# 4. Fix Purchase Order Receiving
 
-All departments must interact only with their own stock location.
+When a purchase order is received, the received product quantity must be posted into the unified inventory system.
 
-Examples:
+Receiving must:
 
-```text
-Pharmacy users consume from Pharmacy stock location only.
-Lab users consume from Lab stock location only.
-Theatre users consume from Theatre/Procedure stock location only.
-Ward users consume from Ward stock location only.
-```
+1. Resolve Main Store stock location.
+2. Create `PURCHASE_RECEIVED` movement in `stock_movements`.
+3. Use `product_id`.
+4. Use `stock_location_id = Main Store`.
+5. Update or create matching `stock_balances` row.
+6. Update purchase order received quantity.
+7. Update supplier ledger if supplier exists.
 
-Departments must not consume from Main Store.
-
-If Pharmacy needs stock:
-
-```text
-Main Store → Pharmacy Stock Location
-```
-
-If Lab needs stock:
+Correct movement:
 
 ```text
-Main Store → Laboratory Stock Location
+stock_movements.product_id = received product
+stock_movements.stock_location_id = Main Store location
+stock_movements.movement_type = PURCHASE_RECEIVED
+stock_movements.direction = IN
+stock_movements.quantity = received quantity
 ```
 
-If Theatre needs stock:
+Correct balance:
 
 ```text
-Main Store → Theatre Stock Location
+stock_balances.product_id = received product
+stock_balances.stock_location_id = Main Store location
+quantity_on_hand increases by received quantity
 ```
 
-Only after transfer can the department use the stock.
+Do not write received PO quantities only to drug stock.
+
+Do not write to product_stock_balances.
+
+Do not create stock movements using drug_id.
 
 ---
 
-# 6. Stock Locations
+# 5. Fix Drug Catalogue
 
-Use one `stock_locations` table:
+Pharmacy Drug Catalogue must be only a filtered product catalogue.
+
+It must load:
 
 ```text
-id
-name
-department_id
-is_main
-is_active
-created_at
-updated_at
+products
+WHERE product_type = DRUG
+AND product is linked to Pharmacy department
 ```
 
-Rules:
+It must not use:
 
-* There must be one Main Store stock location.
-* Main Store must be linked to the Store/Procurement department.
-* Department stock locations must be linked to their departments.
-* Department users should only see/use their department’s active stock location.
-* Store/Admin can manage locations.
-* Departments cannot use Main Store directly.
+```text
+drugs table
+drug_stock
+legacy drug quantity
+```
+
+The quantity shown in Drug Catalogue must come from:
+
+```text
+stock_balances.quantity_on_hand
+WHERE stock_balances.product_id = products.id
+AND stock_balances.stock_location_id = Pharmacy stock location
+```
+
+Important behavior:
+
+If a drug has been received into Main Store but not transferred to Pharmacy:
+
+```text
+Product Stock Balances:
+Paracetamol — Main Store — 100
+
+Pharmacy Drug Catalogue:
+Paracetamol — Pharmacy Available Qty — 0
+```
+
+After transfer:
+
+```text
+Main Store → Pharmacy Qty 20
+
+Product Stock Balances:
+Paracetamol — Main Store — 80
+Paracetamol — Pharmacy — 20
+
+Pharmacy Drug Catalogue:
+Paracetamol — Pharmacy Available Qty — 20
+```
+
+This must be consistent.
 
 ---
 
-# 7. Unified Stock Movements
+# 6. Fix Investigation Items Page
 
-Use one `stock_movements` table for all products.
+The current Investigation Items page is wrong.
 
-```text
-id
-product_id
-stock_location_id
-movement_type
-direction
-quantity
-unit_cost nullable
-batch_no nullable
-expiry_date nullable
-source_type nullable
-source_id nullable
-performed_by nullable
-movement_date
-notes nullable
-created_at
-updated_at
-```
+It must no longer be a creation page.
 
-Direction:
+Rename/rework it as:
 
 ```text
-IN
-OUT
+Investigation Consumables
 ```
 
-Movement types:
+It must load products from:
 
 ```text
-OPENING_STOCK
-PURCHASE_RECEIVED
-PHARMACY_DISPENSED
-INVESTIGATION_CONSUMED
-PROCEDURE_CONSUMED
-WARD_CONSUMED
-TRANSFER_IN
-TRANSFER_OUT
-RETURN_IN
-RETURN_OUT
-ADJUSTMENT_IN
-ADJUSTMENT_OUT
-DAMAGED
-EXPIRED
-REVERSAL_IN
-REVERSAL_OUT
+products
+WHERE product is linked to the current Investigation/Lab department
+AND product_type IN (CONSUMABLE, REAGENT, MEDICAL_SUPPLY, GENERAL_ITEM)
 ```
 
-Rules:
+Remove or hide:
 
-* Every stock change must create a stock movement.
-* Do not update balances directly without movement.
-* Do not use drug-specific movement tables.
-* Do not use product-specific parallel movement tables.
-* One movement table only.
+```text
+Add New Item
+Create Investigation Item
+Edit Investigation Item as separate entity
+```
+
+There should be no separate investigation item creation.
+
+If an investigation department needs an item:
+
+```text
+Store/Admin creates Product
+Store/Admin links Product to Investigation department
+Investigation Consumables page displays it
+```
 
 ---
 
-# 8. Unified Stock Balances
+# 7. Fix Procedure Consumables Page
 
-Use one `stock_balances` table:
+Procedure/Theatre consumables must also be a filtered product catalogue.
 
-```text
-id
-product_id
-stock_location_id
-quantity_on_hand
-last_movement_at
-created_at
-updated_at
-```
-
-Unique constraint:
+It must load:
 
 ```text
-product_id + stock_location_id
+products
+WHERE product is linked to Procedure/Theatre department
+AND product_type IN (CONSUMABLE, SURGICAL_SUPPLY, MEDICAL_SUPPLY, GENERAL_ITEM)
 ```
 
-Current stock formula:
+Do not create separate procedure items.
 
-```text
-quantity_on_hand = SUM(IN movements) - SUM(OUT movements)
-```
-
-Rules:
-
-* `stock_movements` is the source of truth.
-* `stock_balances` is a fast cache.
-* Do not use product quantity as stock.
-* Do not use drug_stock as stock.
-* Do not use product_stock_balances separately.
+Do not allow Theatre users to create products.
 
 ---
 
-# 9. Purchase Orders Must Use Products Only
+# 8. Fix Department Catalogue Rules
 
-Purchase order items must reference products.
-
-Use:
-
-```text
-purchase_order_items
-- id
-- purchase_order_id
-- product_id
-- quantity_ordered
-- quantity_received
-- unit_cost
-- created_at
-- updated_at
-```
-
-Rules:
-
-* Do not use `drug_id`.
-* Do not use `investigation_item_id`.
-* Do not use `procedure_item_id`.
-* Purchase orders are for products only.
-* Since the system is still in development, remove or stop using legacy item references.
-
----
-
-# 10. Goods Receiving / GRN
-
-Create proper Goods Received Notes.
-
-```text
-goods_received_notes
-- id
-- grn_number
-- purchase_order_id
-- supplier_id
-- received_date
-- supplier_delivery_no nullable
-- received_by
-- notes nullable
-- created_at
-- updated_at
-```
-
-```text
-goods_received_note_items
-- id
-- goods_received_note_id
-- purchase_order_item_id
-- product_id
-- stock_location_id
-- quantity_received
-- unit_cost
-- batch_no nullable
-- expiry_date nullable
-- stock_movement_id nullable
-- created_at
-- updated_at
-```
-
-Important:
-
-* `stock_location_id` for received goods must be Main Store.
-* A PO can have multiple GRNs.
-* Partial receipts must be supported.
-* Each GRN item must create one `PURCHASE_RECEIVED` IN movement.
-* Each GRN item must update Main Store stock balance.
-* PO item `quantity_received` must equal sum of its GRN item quantities.
-
----
-
-# 11. Receiving Workflow
-
-When Store receives a PO:
-
-1. Validate purchase order is approved/receivable.
-2. Resolve Main Store stock location.
-3. For each received product:
-
-   * validate product_id
-   * validate received quantity
-   * validate remaining quantity
-   * validate unit cost
-4. Create GRN.
-5. Create GRN items.
-6. Create `PURCHASE_RECEIVED` IN movement into Main Store.
-7. Update Main Store stock balance.
-8. Create supplier ledger credit entry.
-9. Update PO item quantity_received.
-10. Update PO status:
-
-    * pending
-    * partially_received
-    * received
-
-Do not receive PO stock into Pharmacy/Lab/Theatre/Ward.
-
----
-
-# 12. Transfers from Main Store to Departments
-
-Departments get stock only by transfer from Main Store.
-
-Transfer rules:
-
-Allowed:
-
-```text
-Main Store → Department Stock Location
-Department Stock Location → Main Store
-```
-
-Blocked:
-
-```text
-Pharmacy → Lab
-Lab → Theatre
-Ward → Pharmacy
-Department → Department
-```
-
-unless a future setting explicitly enables interdepartment transfers.
-
-Transfer must use location IDs:
-
-```text
-from_location_id
-to_location_id
-```
-
-not text location names.
-
-A completed transfer creates:
-
-```text
-TRANSFER_OUT from source location
-TRANSFER_IN into destination location
-```
-
-Both movements must link to the same transfer record.
-
----
-
-# 13. Department Consumption
+All department item/catalogue pages must become product views.
 
 ## Pharmacy
 
-Pharmacy dispensing must:
+```text
+Products linked to Pharmacy
+product_type = DRUG
+quantity from Pharmacy stock location
+```
 
-* use products linked to the pharmacy department
-* use only products linked to Pharmacy department
-* check Pharmacy stock balance only
-* deduct from Pharmacy stock location only
-* create `PHARMACY_DISPENSED` OUT movement
-* not touch Main Store stock directly
+## Investigation
 
-If Pharmacy stock is zero but Main Store has stock, dispensing must fail until transfer is done.
+```text
+Products linked to Investigation/Lab department
+product_type IN consumable/reagent/supply types
+quantity from Investigation department stock location
+```
 
-## Investigation / Lab
+## Theatre/Procedure
 
-Investigation result consumables must:
-
-* use products linked to the investigation department
-* deduct from that department’s stock location
-* create `INVESTIGATION_CONSUMED` OUT movement
-* not touch Main Store stock directly
-
-## Theatre / Procedure
-
-Procedure consumables must:
-
-* use products linked to Theatre/Procedure department
-* deduct from Theatre/Procedure stock location
-* create `PROCEDURE_CONSUMED` OUT movement
-* not touch Main Store stock directly
+```text
+Products linked to Theatre/Procedure department
+product_type IN surgical/consumable/supply types
+quantity from Theatre stock location
+```
 
 ## Ward
 
-Ward consumables must:
+```text
+Products linked to Ward department
+quantity from Ward stock location
+```
 
-* use products linked to Ward department
-* deduct from Ward stock location
-* create `WARD_CONSUMED` OUT movement
-* not touch Main Store stock directly
+Departments must not create products.
 
 ---
 
-# 14. Services to Update
+# 9. Fix Transfer Flow
 
-Create/update these services:
+Transfers must move stock from Main Store to department stock locations.
+
+When a product is transferred:
 
 ```text
-ProductService
-StockLocationService
-StockMovementService
-StockBalanceService
-ProcurementService
-GoodsReceivedNoteService
-StockTransferService
-StockAdjustmentService
-StockReturnService
-PharmacyService
-ConsumableUsageService
-SupplierLedgerService
-BillingService
+TRANSFER_OUT from Main Store
+TRANSFER_IN into department stock location
+```
+
+Update `stock_balances` for both locations.
+
+After transfer, the department catalogue must show the updated quantity.
+
+Example:
+
+```text
+Main Store → Lab
+Malaria RDT Kit Qty 10
+```
+
+Expected balances:
+
+```text
+Malaria RDT Kit — Main Store — reduced by 10
+Malaria RDT Kit — Lab — increased by 10
+```
+
+Expected Investigation Consumables:
+
+```text
+Malaria RDT Kit — Available in Lab — 10
+```
+
+---
+
+# 10. Department Consumption Rule
+
+Departments consume only from their own stock location.
+
+Pharmacy dispensing must deduct from Pharmacy location.
+
+Investigation result consumables must deduct from Investigation/Lab location.
+
+Procedure consumables must deduct from Theatre/Procedure location.
+
+Ward consumables must deduct from Ward location.
+
+Departments must never consume directly from Main Store.
+
+---
+
+# 11. Remove Add Buttons from Department Item Pages
+
+Remove or hide product creation buttons from:
+
+```text
+Pharmacy Drug Catalogue
+Investigation Consumables
+Procedure Consumables
+Ward Consumables
+```
+
+Only Store/Admin product pages may have:
+
+```text
+Add Product
+Create Product
+Edit Product
+Department Availability
+```
+
+If a department user lacks a product, they should not create it there.
+
+Optional future feature:
+
+```text
+Request Product from Store
+```
+
+But do not implement product creation in department catalogues.
+
+---
+
+# 12. UI Error and Consistency Fixes
+
+Fix any UI that still says:
+
+```text
+Add Drug
+Add Investigation Item
+Add Lab Item
+Add Procedure Item
+Drug Quantity
+Lab Item Quantity
+```
+
+Replace with:
+
+```text
+Product
+Department Product
+Investigation Consumable
+Procedure Consumable
+Stock Balance
+Quantity on Hand
+```
+
+---
+
+# 13. Backend Query Requirements
+
+Create reusable query methods.
+
+## ProductService
+
+```php
+getProductsForDepartment(Department $department, ?array $types = null)
+```
+
+Must return products linked to department and optionally filtered by product_type.
+
+## StockBalanceService
+
+```php
+getQuantityForProductAtLocation(Product $product, StockLocation $location): float
 ```
 
 ## StockLocationService
 
-Must provide:
-
 ```php
-getMainStoreLocation(): StockLocation
 getDefaultLocationForDepartment(Department $department): StockLocation
+getMainStoreLocation(): StockLocation
 ```
 
-Rules:
-
-* `getMainStoreLocation()` is used for PO receiving.
-* `getDefaultLocationForDepartment()` is used for department consumption.
-* They must not be mixed.
-
-## ProcurementService / GoodsReceivedNoteService
-
-Must receive all PO products into Main Store only.
-
-## PharmacyService
-
-Must dispense from Pharmacy stock location only.
-
-## ConsumableUsageService
-
-Must consume from the service department’s stock location only.
-
-## StockTransferService
-
-Must move stock between Main Store and department locations.
+Use these methods instead of duplicating queries in controllers.
 
 ---
 
-# 15. Product Pricing and Billing
+# 14. Required Verification Scenario
 
-If a product is billable:
+After fixing, this exact scenario must work:
 
-* use ProductPricingService to resolve price
-* use BillingService to add product to visit invoice
-* do not bypass BillingService
-* do not bill non-billable products
+## Scenario A — Pharmacy Drug
 
-Billing does not change stock.
+1. Store creates Product:
 
-Stock changes happen only when physical stock is dispensed or consumed.
+   * name = Paracetamol
+   * product_type = DRUG
+   * linked department = Pharmacy
 
----
+2. Store creates PO for Paracetamol Qty 100.
 
-# 16. Remove / Disable Legacy Parallel Inventory
+3. Store approves and receives PO.
 
-Find and remove/disable active use of:
+4. Product Stock Balances must show:
 
 ```text
-drugs as inventory item source
-drug_stock
-product_stock_movements
-product_stock_balances
-ProductStockMovementService
-ProductStockService
-drug-specific StockMovementService logic
-drug-specific StockBalanceService logic
-stock transfers using string location names
-purchase_order_items.drug_id
-purchase_order_items.investigation_item_id
+Paracetamol — Main Store — 100
 ```
 
-Since the project is still in development, prefer direct migration to product-only inventory instead of maintaining backward compatibility.
-
-If some old tables still physically exist temporarily, they must not be used by active workflows.
-
----
-
-# 17. UI Changes
-
-## Store / Procurement
-
-Menu should include:
+5. Pharmacy Drug Catalogue must show Paracetamol but quantity:
 
 ```text
-Products
-Purchase Orders
-Goods Receiving
-Stock Locations
-Stock Balances
-Stock Ledger
-Stock Transfers
-Stock Adjustments
-Stock Returns
-Suppliers
-Supplier Ledger
+Available in Pharmacy = 0
 ```
 
-## Purchase Order UI
+6. Store transfers Paracetamol Qty 20 to Pharmacy.
 
-* Select products only.
-* No drug selector.
-* No investigation item selector.
-* Receiving should automatically use Main Store location.
-* Show clear message:
+7. Product Stock Balances must show:
 
 ```text
-All received stock enters Main Store. Transfer stock to departments before they can use it.
+Paracetamol — Main Store — 80
+Paracetamol — Pharmacy — 20
 ```
 
-## Stock Balance UI
-
-Show unified product balances:
+8. Pharmacy Drug Catalogue must show:
 
 ```text
-Product
-Type
-Location
-Department
-Quantity on Hand
+Paracetamol — Available in Pharmacy = 20
 ```
 
-## Department Screens
+## Scenario B — Investigation Consumable
 
-Pharmacy, Lab, Theatre, Ward should show only their own stock location balances.
+1. Store creates Product:
 
----
+   * name = Malaria RDT Kit
+   * product_type = REAGENT
+   * linked department = Laboratory
 
-# 18. Supplier Ledger
+2. Store creates PO Qty 50.
 
-Receiving goods creates supplier ledger credit.
+3. Store receives PO.
 
-Supplier payment creates supplier ledger debit.
-
-Supplier return creates supplier ledger debit/credit note as appropriate.
-
-Supplier balance:
+4. Product Stock Balances must show:
 
 ```text
-credits - debits
+Malaria RDT Kit — Main Store — 50
 ```
 
-Supplier ledger must link entries to source records where possible:
+5. Investigation Consumables page must show Malaria RDT Kit but quantity:
 
 ```text
-source_type = goods_received_note
-source_id = goods_received_notes.id
+Available in Laboratory = 0
+```
+
+6. Store transfers Qty 10 to Laboratory.
+
+7. Product Stock Balances must show:
+
+```text
+Malaria RDT Kit — Main Store — 40
+Malaria RDT Kit — Laboratory — 10
+```
+
+8. Investigation Consumables must show:
+
+```text
+Malaria RDT Kit — Available in Laboratory = 10
 ```
 
 ---
 
-# 19. Reversal Rules
+# 15. Data Integrity Rules
 
-When a stock-affecting transaction is cancelled or voided:
-
-* do not delete original movement
-* create opposite reversal movement
-* update stock balance
-* link reversal to source record
-* record reason and user
-
-Examples:
-
-Dispensed product voided:
-
-```text
-REVERSAL_IN to Pharmacy stock location
-```
-
-Investigation consumable usage cancelled:
-
-```text
-REVERSAL_IN to Lab stock location
-```
-
-Procedure consumable usage cancelled:
-
-```text
-REVERSAL_IN to Theatre stock location
-```
+* One inventory system only.
+* Products are the only physical items.
+* Purchase receiving posts to Main Store.
+* Product Stock Balances must show received stock.
+* Department catalogues are filtered product views.
+* Department quantities come from department stock location.
+* Departments do not create products.
+* Departments do not consume from Main Store.
+* Stock balances update from stock movements.
+* No active workflow should write to old drug/investigation/procedure item stock systems.
 
 ---
 
-# 20. Validation Rules
+# 16. Tests Required
 
-## Receiving
+Add or update tests for:
 
-* PO must be approved/receivable.
-* Product is required.
-* Received quantity > 0.
-* Received quantity cannot exceed remaining ordered quantity unless over-receiving is enabled.
-* Receiving location must be Main Store.
-* Unit cost >= 0.
-
-## Department Consumption
-
-* Department must have active stock location.
-* Product must be linked to department.
-* Quantity > 0.
-* Stock must be available in department location.
-* Main Store stock must not be used for department consumption.
-
-## Transfer
-
-* Source and destination required.
-* Source and destination must be different.
-* Transfer must involve Main Store.
-* Source must have enough stock.
-* Product must exist.
-* Quantity > 0.
+1. PO receiving product creates Main Store stock balance.
+2. Product Stock Balances page shows received product.
+3. Pharmacy Drug Catalogue loads product linked to Pharmacy.
+4. Pharmacy Drug Catalogue quantity comes from Pharmacy stock location.
+5. Investigation Consumables loads product linked to Laboratory.
+6. Investigation Consumables quantity comes from Laboratory stock location.
+7. Department catalogue shows zero if product exists but has not been transferred to that department.
+8. Transfer Main Store to department updates both balances.
+9. Department catalogue shows updated quantity after transfer.
+10. Department item pages do not show Add New Item button.
+11. No active workflow writes to `drug_stock`.
+12. No active workflow writes to `product_stock_balances`.
+13. No active workflow reads old `investigation_items` as physical items.
 
 ---
 
-# 21. Data Integrity Invariants
-
-These must always be true:
-
-```text
-One active inventory item source = products
-```
-
-```text
-stock_balances.quantity_on_hand =
-SUM(IN stock_movements) - SUM(OUT stock_movements)
-for each product/location
-```
-
-```text
-All purchase receipts go to Main Store
-```
-
-```text
-Departments consume only from their department stock location
-```
-
-```text
-purchase_order_items.quantity_received =
-SUM(goods_received_note_items.quantity_received)
-```
-
-```text
-Every GRN item has a PURCHASE_RECEIVED stock movement
-```
-
-```text
-Every stock-affecting cancellation has a reversal movement
-```
-
----
-
-# 22. Artisan Commands
-
-Create/update:
-
-```bash
-php artisan stock:rebuild-balances
-php artisan stock:audit
-```
-
-## stock:rebuild-balances
-
-* rebuild all stock balances from stock movements
-* optionally rebuild one product/location
-* report summary
-
-## stock:audit
-
-Check:
-
-* movement totals vs balances
-* PO received quantities vs GRN totals
-* GRN items without stock movement
-* department consumption from Main Store
-* duplicate active ledgers
-* missing reversals for voided stock-affecting records
-
-Audit command should fail loudly if inconsistencies exist.
-
----
-
-# 23. Testing Requirements
-
-Add or update tests:
-
-1. Product PO receiving stores stock in Main Store.
-2. Receiving does not store directly in Pharmacy/Lab/Theatre.
-3. Product Stock Balances show received stock in Main Store.
-4. Pharmacy cannot dispense from Main Store.
-5. Pharmacy can dispense after Main Store → Pharmacy transfer.
-6. Lab cannot consume from Main Store.
-7. Lab can consume after Main Store → Lab transfer.
-8. Theatre cannot consume from Main Store.
-9. Theatre can consume after Main Store → Theatre transfer.
-10. Transfer creates paired OUT/IN movements.
-11. Stock balance equals signed stock movements.
-12. PO item quantity_received equals GRN totals.
-13. Voided dispensing creates reversal IN movement.
-14. No active workflow writes to drug_stock/product_stock_balances/product_stock_movements.
-15. Purchase order items use product_id only.
-
----
-
-# 24. Deliverables
+# 17. Deliverables
 
 Provide:
 
-1. Gap analysis of current inventory implementation.
-2. Migrations to unify inventory around products.
-3. Updated Product model.
-4. Updated PurchaseOrderItem model.
-5. Updated StockMovement model.
-6. Updated StockBalance model.
-7. Updated StockLocation model.
-8. Updated Procurement / GRN flow.
-9. Updated StockTransfer flow.
-10. Updated Pharmacy dispensing flow.
-11. Updated Investigation/Procedure/Ward consumable usage flow.
-12. Legacy inventory usage removed/disabled.
-13. Updated Store/Procurement UI.
-14. Updated Department stock usage UI.
-15. Supplier ledger integration.
-16. Stock audit/rebuild commands.
-17. Tests or verification notes.
-18. Files modified.
-19. Remaining TODOs if any.
+1. Root cause of inconsistent stock quantities.
+2. Files modified.
+3. Updated purchase receiving logic.
+4. Updated Product Stock Balances query.
+5. Updated Pharmacy Drug Catalogue query.
+6. Updated Investigation Consumables query.
+7. Updated Procedure Consumables query.
+8. Removed Add New Item buttons from department item pages.
+9. Updated transfer/balance update behavior.
+10. Tests or verification notes.
+11. Confirmation that the two scenarios above pass.
 
 ---
 
-# 25. Important Rules
+# 18. Important Rules
 
-Do not maintain two parallel inventory systems.
+Do not maintain two inventory systems.
 
-Do not use drugs as separate inventory source.
+Do not keep showing quantity from drug catalogue if Product Stock Balances does not match.
 
-Do not use product_stock_movements/product_stock_balances as a separate ledger.
+Do not let departments create items.
 
-Do not write to drug_stock.
+Do not let Investigation Items be separate from Products.
 
-Do not let purchase receiving go directly to departments.
+Do not read quantity from old drug tables.
 
-Do not let departments consume from Main Store.
+Do not write stock to old product_stock_balances.
 
-Do not use text location names for transfers.
+Do not receive directly into Pharmacy/Lab/Theatre.
 
-Do not update stock balance without stock movement.
+Do not let department catalogues use Main Store quantity as their available stock.
 
-Do not delete stock movements.
-
-Do not bypass StockMovementService.
-
-Do not bypass StockBalanceService.
-
-Do not bypass SupplierLedgerService.
-
-Do not break billing while fixing stock.
-
-Now inspect the current implementation and force the system into one unified product-based inventory architecture where all PO receipts enter Main Store first and all departments consume only from their own department stock locations.
-
-
-a lot of these can be automated though out the system. get me an .md analysis document to improve on this
+Fix this properly and aggressively.
