@@ -65,7 +65,7 @@
                 <table class="table table-bordered" id="itemsTable">
                     <thead class="table-light">
                         <tr>
-                            <th>Drug</th>
+                            <th>Product</th>
                             <th style="width: 120px;">Quantity</th>
                             <th style="width: 140px;">Unit Cost (GH₵)</th>
                             <th style="width: 140px;">Total</th>
@@ -75,10 +75,15 @@
                     <tbody id="itemsBody">
                         <tr class="item-row">
                             <td>
-                                <select name="items[0][drug_id]" class="form-select form-select-sm drug-select" required>
-                                    <option value="">Select Drug...</option>
-                                    @foreach($drugs as $drug)
-                                        <option value="{{ $drug->id }}">{{ $drug->name }} ({{ $drug->generic_name }})</option>
+                                <select name="items[0][product_id]" class="form-select form-select-sm product-select" required>
+                                    <option value="">Select Product...</option>
+                                    @foreach($products as $product)
+                                        @php $typeLabel = $product->product_type instanceof \App\Enums\ProductType ? $product->product_type->value : (string) $product->product_type; @endphp
+                                        <option value="{{ $product->id }}"
+                                            data-cost="{{ $product->default_cost ?? $product->base_price ?? '' }}"
+                                            data-type="{{ $typeLabel }}">
+                                            {{ $product->name }} @if($product->code) [{{ $product->code }}]@endif @if($typeLabel) — {{ ucfirst(str_replace('_', ' ', $typeLabel)) }} @endif
+                                        </option>
                                     @endforeach
                                 </select>
                             </td>
@@ -117,11 +122,13 @@
 $(document).ready(function() {
     let itemIndex = 1;
 
-    const drugOptions = `<option value="">Select Drug...</option>@foreach($drugs as $drug)<option value="{{ $drug->id }}">{{ $drug->name }} ({{ $drug->generic_name }})</option>@endforeach`;
+    // Snapshot the server-rendered <option> list so newly-added rows have the
+    // same product catalog as row 0.
+    const productOptionsHtml = $('#itemsBody .product-select').first().html();
 
-    function initDrugSelect($select) {
+    function initProductSelect($select) {
         if ($.fn.select2 && !$select.data('select2')) {
-            $select.select2({ width: '100%', placeholder: 'Select Drug...', allowClear: false });
+            $select.select2({ width: '100%', placeholder: 'Select Product...', allowClear: false });
         }
     }
 
@@ -134,10 +141,10 @@ $(document).ready(function() {
         itemIndex = $('.item-row').length;
     }
 
-    function syncDrugOptions() {
-        const selected = $('.drug-select').map(function() { return $(this).val(); }).get().filter(Boolean);
+    function syncProductOptions() {
+        const selected = $('.product-select').map(function() { return $(this).val(); }).get().filter(Boolean);
 
-        $('.drug-select').each(function() {
+        $('.product-select').each(function() {
             const current = $(this).val();
             $(this).find('option').each(function() {
                 const value = $(this).attr('value');
@@ -146,35 +153,42 @@ $(document).ready(function() {
         });
     }
 
-    $('.drug-select').each(function() { initDrugSelect($(this)); });
+    $('.product-select').each(function() { initProductSelect($(this)); });
 
     $('#addItemBtn').on('click', function() {
         const row = `<tr class="item-row">
-            <td><select name="items[${itemIndex}][drug_id]" class="form-select form-select-sm drug-select" required>${drugOptions}</select></td>
+            <td><select name="items[${itemIndex}][product_id]" class="form-select form-select-sm product-select" required>${productOptionsHtml}</select></td>
             <td><input type="number" name="items[${itemIndex}][quantity_ordered]" class="form-control form-control-sm qty-input" value="1" min="1" required></td>
             <td><input type="number" name="items[${itemIndex}][unit_cost]" class="form-control form-control-sm price-input" step="0.01" min="0" required></td>
             <td class="row-total text-end align-middle fw-medium">0.00</td>
             <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
         </tr>`;
         $('#itemsBody').append(row);
-        initDrugSelect($('#itemsBody .drug-select').last());
+        initProductSelect($('#itemsBody .product-select').last());
         itemIndex++;
-        syncDrugOptions();
+        syncProductOptions();
     });
 
     $(document).on('click', '.remove-row', function() {
         if ($('.item-row').length > 1) {
-            const $select = $(this).closest('tr').find('.drug-select');
+            const $select = $(this).closest('tr').find('.product-select');
             if ($.fn.select2 && $select.data('select2')) $select.select2('destroy');
             $(this).closest('tr').remove();
             renumberRows();
-            syncDrugOptions();
+            syncProductOptions();
             calculateTotal();
         }
     });
 
-    $(document).on('change', '.drug-select', function() {
-        syncDrugOptions();
+    $(document).on('change', '.product-select', function() {
+        syncProductOptions();
+        // Auto-fill unit cost from product default if the field is empty.
+        const $row = $(this).closest('tr');
+        const $cost = $row.find('.price-input');
+        if (!$cost.val()) {
+            const def = $(this).find('option:selected').data('cost');
+            if (def) { $cost.val(parseFloat(def).toFixed(2)); calculateTotal(); }
+        }
     });
 
     $(document).on('input', '.qty-input, .price-input', function() {
@@ -187,10 +201,10 @@ $(document).ready(function() {
         $('.item-row').each(function() {
             const $row = $(this);
             // Read value directly from native DOM to avoid any Select2 quirks.
-            const selectEl = $row.find('.drug-select')[0];
-            const drugVal  = selectEl ? selectEl.value : '';
+            const selectEl = $row.find('.product-select')[0];
+            const productVal = selectEl ? selectEl.value : '';
 
-            if (!drugVal) {
+            if (!productVal) {
                 // Disable inputs in empty rows — disabled fields are never submitted.
                 $row.find('input, select').prop('disabled', true);
             } else {
@@ -207,7 +221,7 @@ $(document).ready(function() {
             e.preventDefault();
             // Re-enable so the user can still interact with the form.
             $('.item-row').find('input, select').prop('disabled', false);
-            alert('Please select at least one drug before saving the purchase order.');
+            alert('Please select at least one product before saving the purchase order.');
             return false;
         }
     });
@@ -224,7 +238,7 @@ $(document).ready(function() {
         $('#grandTotal').text('GH₵ ' + grandTotal.toFixed(2));
     }
 
-    syncDrugOptions();
+    syncProductOptions();
 });
 </script>
 @endpush

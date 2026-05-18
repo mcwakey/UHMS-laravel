@@ -21,7 +21,7 @@ class StorePurchaseOrderRequest extends FormRequest
             'expected_date' => ['nullable', 'date', 'after_or_equal:order_date'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.drug_id' => ['required', 'exists:drugs,id', 'distinct'],
+            'items.*.product_id' => ['required', 'exists:products,id', 'distinct'],
             'items.*.quantity_ordered' => ['required', 'integer', 'min:1'],
             'items.*.unit_cost' => ['required', 'numeric', 'min:0'],
         ];
@@ -37,19 +37,30 @@ class StorePurchaseOrderRequest extends FormRequest
 
         $items = collect($rawItems)
             ->filter(function ($item) {
-                return is_array($item) && filled($item['drug_id'] ?? null);
+                // Accept legacy drug_id submissions too — they are translated below.
+                return is_array($item) && (filled($item['product_id'] ?? null) || filled($item['drug_id'] ?? null));
             })
             ->map(function ($item) {
+                $productId = $item['product_id'] ?? null;
+
+                // Translate legacy drug_id -> product_id via the linked Product
+                // so that old form posts keep working after the unification.
+                if (! $productId && ! empty($item['drug_id'])) {
+                    $productId = \App\Models\Drug::whereKey($item['drug_id'])->value('product_id');
+                }
+
                 return [
-                    'drug_id'          => $item['drug_id'],
+                    'product_id'       => $productId,
+                    'item_type'        => 'product',
                     'quantity_ordered' => $item['quantity_ordered'] ?? null,
                     'unit_cost'        => $item['unit_cost'] ?? null,
                 ];
             })
+            ->filter(fn ($item) => filled($item['product_id']))
             ->values()
             ->all();
 
-        // Stash the count of submitted rows that had no drug, so messages() can
+        // Stash the count of submitted rows that had no product, so messages() can
         // explain the real cause if everything was stripped.
         $this->droppedItemRows = count($rawItems) - count($items);
 
@@ -60,14 +71,14 @@ class StorePurchaseOrderRequest extends FormRequest
     {
         $base = 'At least one item is required.';
         if (($this->droppedItemRows ?? 0) > 0) {
-            $base .= ' (Submitted rows were missing a selected drug and were ignored.)';
+            $base .= ' (Submitted rows were missing a selected product and were ignored.)';
         }
         return [
             'items.required' => $base,
             'items.min' => $base,
-            'items.*.drug_id.required' => 'Please select a drug for each item.',
-            'items.*.drug_id.distinct' => 'Each drug can only be selected once on the purchase order.',
-            'items.*.drug_id.exists'  => 'Selected drug is invalid.',
+            'items.*.product_id.required' => 'Please select a product for each item.',
+            'items.*.product_id.distinct' => 'Each product can only be selected once on the purchase order.',
+            'items.*.product_id.exists'   => 'Selected product is invalid.',
             'items.*.quantity_ordered.required' => 'Please enter a quantity for each item.',
             'items.*.unit_cost.required'        => 'Please enter a unit cost for each item.',
         ];

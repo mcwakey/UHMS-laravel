@@ -5,8 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\PurchaseOrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePurchaseOrderRequest;
-use App\Models\Drug;
-use App\Models\InvestigationItem;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\Supplier;
@@ -32,11 +30,12 @@ class PurchaseOrderController extends Controller
     public function create()
     {
         $suppliers = Supplier::active()->orderBy('name')->get();
-        $drugs = Drug::active()->orderBy('name')->get();
-        $investigationItems = InvestigationItem::active()->orderBy('name')->get();
-        $products = \App\Models\Product::query()->orderBy('name')->get();
+        $products = \App\Models\Product::query()
+            ->active()
+            ->orderBy('name')
+            ->get(['id', 'name', 'code', 'product_type', 'unit', 'default_cost', 'base_price']);
 
-        return view('store.purchase-orders.create', compact('suppliers', 'drugs', 'investigationItems', 'products'));
+        return view('store.purchase-orders.create', compact('suppliers', 'products'));
     }
 
     public function store(StorePurchaseOrderRequest $request)
