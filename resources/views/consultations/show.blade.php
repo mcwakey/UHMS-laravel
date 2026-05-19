@@ -243,12 +243,33 @@
                         <form method="POST" action="{{ route('admin.consultations.transition', $visit) }}">
                             @csrf @method('PATCH')
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
-                            <button type="submit" class="btn btn-success btn-sm w-100"
+                            <button type="submit" class="btn btn-warning btn-sm w-100"
                                     onclick="return confirm('Mark patient for admission and go to the admission form?')">
                                 <i class="ti ti-bed me-1"></i>Admit Patient
                             </button>
                         </form>
-                        @else
+                        @elseif($nextStatus === \App\Enums\VisitStatus::COMPLETED)
+                        
+                        <form method="POST" action="{{ route('admin.consultations.transition', $visit) }}">
+                            @csrf @method('PATCH')
+                            <input type="hidden" name="status" value="{{ $nextStatus->value }}">
+                            <button type="submit" class="btn btn-success btn-sm w-100"
+                                    onclick="return confirm('Mark this consultation as completed?')">
+                                <i class="ti ti-check me-1"></i>Complete Consultation
+                            </button>
+                        </form>
+                        @elseif($nextStatus === \App\Enums\VisitStatus::CANCELLED)
+                        
+                        <form method="POST" action="{{ route('admin.consultations.transition', $visit) }}">
+                            @csrf @method('PATCH')
+                            <input type="hidden" name="status" value="{{ $nextStatus->value }}">
+                            <button type="submit" class="btn btn-danger btn-sm w-100"
+                                    onclick="return confirm('Cancel this consultation? This action cannot be undone.')">
+                                <i class="ti ti-trash me-1"></i>Cancel Consultation
+                            </button>
+                        </form>
+
+                        {{-- @else
                         <form method="POST" action="{{ route('admin.consultations.transition', $visit) }}">
                             @csrf @method('PATCH')
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
@@ -256,7 +277,7 @@
                                     onclick="return confirm('Move to {{ $nextStatus->label() }}?')">
                                 <i class="ti ti-arrow-right me-1"></i>{{ $nextStatus->label() }}
                             </button>
-                        </form>
+                        </form> --}}
                         @endif
                     @endforeach
                     @endif

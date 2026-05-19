@@ -352,6 +352,27 @@ function initialiseLegacyShell() {
     }
 }
 
+// Patch every <form> inside the legacy HTML so that programmatic
+// form.submit() calls (e.g. onchange="this.form.submit()") fire a real
+// submit event that bubbles up to the BladePage @submit handler.
+// Without this patch those calls bypass the event listener entirely and
+// trigger a full browser reload instead of an Inertia navigation.
+function patchFormSubmitMethods() {
+    if (!legacyRoot.value) return;
+    legacyRoot.value.querySelectorAll('form').forEach((form) => {
+        if (form.__uhmsSubmitPatched) return;
+        form.__uhmsSubmitPatched = true;
+        const nativeSubmit = HTMLFormElement.prototype.submit.bind(form);
+        form.submit = function patchedSubmit() {
+            const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+            const cancelled = !form.dispatchEvent(submitEvent);
+            if (!cancelled) {
+                nativeSubmit();
+            }
+        };
+    });
+}
+
 async function afterPageSwap() {
     // Dispose any open Bootstrap modals BEFORE Vue swaps the v-html DOM,
     // preventing backdrop leaks and orphaned Bootstrap instances.
@@ -360,6 +381,9 @@ async function afterPageSwap() {
     injectLegacyStyles();
     initialiseLegacyShell();
     executeLegacyScripts();
+    // Patch forms AFTER scripts run (scripts may add dynamic forms).
+    await nextTick();
+    patchFormSubmitMethods();
 }
 
 onMounted(afterPageSwap);

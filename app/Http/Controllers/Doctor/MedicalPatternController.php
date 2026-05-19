@@ -58,7 +58,7 @@ class MedicalPatternController extends Controller
             'items' => $request->items,
         ]);
 
-        if ($request->ajax()) {
+        if ($request->ajax() && ! $request->header('X-Inertia')) {
             return response()->json(['success' => true, 'pattern' => $pattern]);
         }
 
@@ -83,7 +83,7 @@ class MedicalPatternController extends Controller
             $request->scope === 'personal' ? Auth::id() : null,
         );
 
-        if ($request->ajax()) {
+        if ($request->ajax() && ! $request->header('X-Inertia')) {
             return response()->json(['success' => true, 'pattern' => $pattern->load('items')]);
         }
 
@@ -97,7 +97,7 @@ class MedicalPatternController extends Controller
     {
         $pattern->load(['items', 'doctor']);
 
-        if (request()->ajax()) {
+        if (request()->ajax() && ! request()->header('X-Inertia')) {
             return response()->json(['pattern' => $pattern]);
         }
 
@@ -118,7 +118,7 @@ class MedicalPatternController extends Controller
 
         $pattern = $this->patternService->update($pattern, $request->only('name', 'items'));
 
-        if ($request->ajax()) {
+        if ($request->ajax() && ! $request->header('X-Inertia')) {
             return response()->json(['success' => true, 'pattern' => $pattern]);
         }
 
@@ -132,7 +132,7 @@ class MedicalPatternController extends Controller
     {
         $pattern = $this->patternService->toggleActive($pattern);
 
-        if (request()->ajax()) {
+        if (request()->ajax() && ! request()->header('X-Inertia')) {
             return response()->json(['success' => true, 'is_active' => $pattern->is_active]);
         }
 

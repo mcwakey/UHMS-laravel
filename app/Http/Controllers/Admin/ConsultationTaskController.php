@@ -31,7 +31,7 @@ class ConsultationTaskController extends Controller
         $medicalRecord = $this->consultationService->getOrCreateRecord($visit);
         $task = $medicalRecord->tasks()->create($data);
 
-        if ($request->ajax()) {
+        if ($request->ajax() && ! $request->header('X-Inertia')) {
             return response()->json(['success' => true, 'task' => $task->load('assignedUser')]);
         }
 
@@ -55,7 +55,7 @@ class ConsultationTaskController extends Controller
 
         $task->update($data);
 
-        if ($request->ajax()) {
+        if ($request->ajax() && ! $request->header('X-Inertia')) {
             return response()->json(['success' => true, 'task' => $task->fresh('assignedUser')]);
         }
 
@@ -70,7 +70,7 @@ class ConsultationTaskController extends Controller
             $task->markCompleted();
         }
 
-        if (request()->ajax()) {
+        if (request()->ajax() && ! request()->header('X-Inertia')) {
             return response()->json(['success' => true, 'task' => $task->fresh()]);
         }
 
@@ -81,7 +81,7 @@ class ConsultationTaskController extends Controller
     {
         $task->delete();
 
-        if (request()->ajax()) {
+        if (request()->ajax() && ! request()->header('X-Inertia')) {
             return response()->json(['success' => true]);
         }
 

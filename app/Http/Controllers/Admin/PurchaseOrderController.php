@@ -43,13 +43,13 @@ class PurchaseOrderController extends Controller
         try {
             $po = $this->procurementService->create($request->validated());
         } catch (\Throwable $e) {
-            if ($request->expectsJson() || $request->ajax()) {
+            if (($request->expectsJson() || $request->ajax()) && ! $request->header('X-Inertia')) {
                 return response()->json(['error' => $e->getMessage()], 422);
             }
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        if ($request->expectsJson() || $request->ajax()) {
+        if (($request->expectsJson() || $request->ajax()) && ! $request->header('X-Inertia')) {
             return response()->json([
                 'success'  => 'Purchase order created successfully.',
                 'redirect' => route('admin.store.purchase-orders.show', $po),

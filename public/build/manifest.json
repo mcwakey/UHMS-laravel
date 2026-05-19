@@ -1,6 +1,6 @@
 {
-  "_AppLayout.HQAWvAeS.js": {
-    "file": "js/AppLayout.HQAWvAeS.js",
+  "_AppLayout.D-rYOv1_.js": {
+    "file": "js/AppLayout.D-rYOv1_.js",
     "name": "AppLayout",
     "imports": [
       "resources/js/inertia.js"
@@ -16,37 +16,37 @@
     "src": "resources/img/auth/auth-bg.jpg"
   },
   "resources/js/Pages/Admissions/Index.vue": {
-    "file": "js/Index.BS00ZByY.js",
+    "file": "js/Index.D9yYKyz8.js",
     "name": "Index",
     "src": "resources/js/Pages/Admissions/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.HQAWvAeS.js"
+      "_AppLayout.D-rYOv1_.js"
     ]
   },
   "resources/js/Pages/Billing/Invoices/Index.vue": {
-    "file": "js/Index.D8lpAQv1.js",
+    "file": "js/Index.BMMQVOCW.js",
     "name": "Index",
     "src": "resources/js/Pages/Billing/Invoices/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.HQAWvAeS.js"
+      "_AppLayout.D-rYOv1_.js"
     ]
   },
   "resources/js/Pages/Lab/Requests/Index.vue": {
-    "file": "js/Index.0Stw7_3O.js",
+    "file": "js/Index.fB3JgIwi.js",
     "name": "Index",
     "src": "resources/js/Pages/Lab/Requests/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.HQAWvAeS.js"
+      "_AppLayout.D-rYOv1_.js"
     ]
   },
   "resources/js/Pages/Legacy/BladePage.vue": {
-    "file": "js/BladePage.BGBPMKB-.js",
+    "file": "js/BladePage.4i6C1Oip.js",
     "name": "BladePage",
     "src": "resources/js/Pages/Legacy/BladePage.vue",
     "isDynamicEntry": true,
@@ -58,27 +58,27 @@
     ]
   },
   "resources/js/Pages/Pharmacy/Dispensing.vue": {
-    "file": "js/Dispensing.CzwHb5kr.js",
+    "file": "js/Dispensing.CrdKLZ6g.js",
     "name": "Dispensing",
     "src": "resources/js/Pages/Pharmacy/Dispensing.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.HQAWvAeS.js"
+      "_AppLayout.D-rYOv1_.js"
     ]
   },
   "resources/js/Pages/Visits/Index.vue": {
-    "file": "js/Index.ChSHEaPP.js",
+    "file": "js/Index.DgOCc_YX.js",
     "name": "Index",
     "src": "resources/js/Pages/Visits/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.HQAWvAeS.js"
+      "_AppLayout.D-rYOv1_.js"
     ]
   },
   "resources/js/inertia.js": {
-    "file": "js/inertia.B27LqPhM.bundle.js",
+    "file": "js/inertia.DvSvFTWA.bundle.js",
     "name": "inertia",
     "src": "resources/js/inertia.js",
     "isEntry": true,
