@@ -131,6 +131,16 @@ class User extends Authenticatable
         'Theatre Nurse',
     ];
 
+    /**
+     * Roles that operate inside the Emergency Unit.
+     */
+    public const EMERGENCY_ROLES = [
+        'Emergency Doctor',
+        'Emergency Nurse',
+        'Emergency Officer',
+        'Emergency Receptionist',
+    ];
+
     public function isAdminUser(): bool
     {
         return $this->hasAnyRole(['Super Admin', 'Admin']);
@@ -139,6 +149,30 @@ class User extends Authenticatable
     public function isDoctor(): bool
     {
         return $this->hasAnyRole(self::CONSULTATION_ROLES);
+    }
+
+    /**
+     * True when the user belongs to the Emergency Unit.
+     */
+    public function isEmergencyUser(): bool
+    {
+        if ($this->hasAnyRole(self::EMERGENCY_ROLES)) {
+            return true;
+        }
+
+        if ($this->relationLoaded('department') && $this->department) {
+            $type = $this->department->type;
+            $typeValue = ($type instanceof \BackedEnum) ? $type->value : (string) $type;
+            if ($typeValue === 'emergency') {
+                return true;
+            }
+        }
+
+        try {
+            return $this->can('emergency.access');
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     /**

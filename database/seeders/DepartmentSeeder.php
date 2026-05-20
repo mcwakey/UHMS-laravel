@@ -36,7 +36,7 @@ class DepartmentSeeder extends Seeder
             ['name' => 'ENT',                     'code' => 'ENT', 'type' => DepartmentType::CONSULTATION->value],
             ['name' => 'Dental',                  'code' => 'DEN', 'type' => DepartmentType::CONSULTATION->value],
             ['name' => 'Psychiatry',              'code' => 'PSY', 'type' => DepartmentType::CONSULTATION->value],
-            ['name' => 'Emergency / Casualty',    'code' => 'EMR', 'type' => DepartmentType::CONSULTATION->value],
+            ['name' => 'Emergency / Casualty',    'code' => 'EMR', 'type' => DepartmentType::EMERGENCY->value],
             ['name' => 'Antenatal / Postnatal',   'code' => 'ANC', 'type' => DepartmentType::CONSULTATION->value],
             ['name' => 'Family Planning',         'code' => 'FPL', 'type' => DepartmentType::CONSULTATION->value],
 

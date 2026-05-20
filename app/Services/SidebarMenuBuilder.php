@@ -265,6 +265,44 @@ class SidebarMenuBuilder
                 ],
             ],
             [
+                'title' => 'Emergency Unit',
+                'module' => 'emergency',
+                'items' => [
+                    [
+                        'label' => 'Dashboard',
+                        'icon' => 'ti ti-ambulance',
+                        'route' => 'admin.emergency.dashboard',
+                        'active_patterns' => ['admin.emergency.dashboard'],
+                        'permission' => 'emergency.dashboard.view',
+                        'module' => 'emergency',
+                    ],
+                    [
+                        'label' => 'ER Queue',
+                        'icon' => 'ti ti-urgent',
+                        'route' => 'admin.emergency.queue',
+                        'active_patterns' => ['admin.emergency.queue'],
+                        'permission' => 'emergency.queue.view',
+                        'module' => 'emergency',
+                    ],
+                    [
+                        'label' => 'New ER Case',
+                        'icon' => 'ti ti-plus',
+                        'route' => 'admin.emergency.cases.create',
+                        'active_patterns' => ['admin.emergency.cases.create'],
+                        'permission' => 'emergency.case.create',
+                        'module' => 'emergency',
+                    ],
+                    [
+                        'label' => 'All ER Cases',
+                        'icon' => 'ti ti-list-details',
+                        'route' => 'admin.emergency.cases.index',
+                        'active_patterns' => ['admin.emergency.cases.index', 'admin.emergency.cases.show'],
+                        'permission' => 'emergency.case.view',
+                        'module' => 'emergency',
+                    ],
+                ],
+            ],
+            [
                 'title' => 'Pharmacy',
                 'items' => [
                     [

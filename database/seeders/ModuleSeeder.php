@@ -34,6 +34,7 @@ class ModuleSeeder extends Seeder
             ['name' => 'Reports',          'slug' => 'reports',        'is_core' => false, 'icon' => 'ti-chart-bar',     'sort_order' => 28],
             ['name' => 'Medical Patterns', 'slug' => 'medical-patterns', 'is_core' => false, 'icon' => 'ti-template',    'sort_order' => 29],
             ['name' => 'Notifications',    'slug' => 'notifications',  'is_core' => false, 'icon' => 'ti-bell',          'sort_order' => 30],
+            ['name' => 'Emergency Unit',   'slug' => 'emergency',      'is_core' => false, 'depends_on' => 'visits',     'icon' => 'ti-ambulance',     'sort_order' => 31],
         ];
 
         foreach ($modules as $m) {

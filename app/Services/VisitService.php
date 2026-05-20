@@ -88,14 +88,25 @@ class VisitService
         $visitDate = Carbon::parse($data['visit_date']);
         $isScheduled = $visitDate->isAfter(today());
 
+        // Detect Emergency arrival up-front so we can branch both status and
+        // the one-visit-per-day guard.
+        $isEmergency = ($data['visit_type'] ?? null) === \App\Enums\VisitType::EMERGENCY->value
+            || ($data['visit_type'] ?? null) === \App\Enums\VisitType::EMERGENCY;
+
         if ($isScheduled) {
             $data['status'] = VisitStatus::SCHEDULED->value;
+        } elseif ($isEmergency) {
+            // Emergency arrivals enter the ER lifecycle immediately so they
+            // appear in the Emergency queue, not the OPD triage queue.
+            $data['status'] = VisitStatus::EMERGENCY->value;
         } else {
             $data['status'] = VisitStatus::TRIAGE->value;
         }
 
-        // One visit per day per patient check
-        if (Visit::patientHasVisitOnDate($data['patient_id'], $data['visit_date'])) {
+        // One visit per day per patient check — relaxed for Emergency arrivals,
+        // which must always be able to create a fresh case even if the patient
+        // already has an OPD/Outpatient visit today.
+        if (! $isEmergency && Visit::patientHasVisitOnDate($data['patient_id'], $data['visit_date'])) {
             throw new \InvalidArgumentException('Patient already has a visit on this date.');
         }
 

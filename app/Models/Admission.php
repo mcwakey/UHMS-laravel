@@ -26,6 +26,7 @@ class Admission extends Model
     protected $fillable = [
         'admission_number',
         'visit_id',
+        'emergency_case_id',
         'patient_id',
         'bed_id',
         'admitted_by',
@@ -61,6 +62,11 @@ class Admission extends Model
     public function visit()
     {
         return $this->belongsTo(Visit::class);
+    }
+
+    public function emergencyCase()
+    {
+        return $this->belongsTo(EmergencyCase::class);
     }
 
     public function patient()

@@ -148,6 +148,11 @@ class Visit extends Model
         return $this->hasOne(Admission::class);
     }
 
+    public function emergencyCase()
+    {
+        return $this->hasOne(EmergencyCase::class);
+    }
+
     public function visitInsurance()
     {
         return $this->belongsTo(PatientInsurance::class, 'visit_insurance_id');

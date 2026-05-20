@@ -227,6 +227,29 @@ class RoleSeeder extends Seeder
 
             // ── Modules ───────────────────────────────────────────────────
             'modules.manage',
+
+            // ── Emergency Unit ────────────────────────────────────────────
+            'emergency.access',
+            'emergency.dashboard.view',
+            'emergency.case.create',
+            'emergency.case.view',
+            'emergency.case.update',
+            'emergency.queue.view',
+            'emergency.queue.manage',
+            'emergency.triage.create',
+            'emergency.triage.update',
+            'emergency.treatment.record',
+            'emergency.orders.create',
+            'emergency.medication.administer',
+            'emergency.consumables.consume',
+            'emergency.observation.manage',
+            'emergency.disposition.set',
+            'emergency.discharge',
+            'emergency.admit',
+            'emergency.refer',
+            'emergency.death.record',
+            'emergency.report.view',
+            'emergency.stock.consume',
         ];
 
         // Create all permissions
@@ -538,6 +561,88 @@ class RoleSeeder extends Seeder
             'hr.payroll.view', 'hr.payroll.process',
             'hr.attendance.view', 'hr.attendance.manage',
             'reports.view',
+            'notifications.view',
+        ]);
+
+        // ── Emergency Doctor ──────────────────────────────────────────────
+        $emergencyDoctor = Role::firstOrCreate(['name' => 'Emergency Doctor']);
+        $emergencyDoctor->syncPermissions([
+            'patients.view', 'patients.create', 'patients.edit',
+            'visits.view', 'visits.create', 'visits.edit', 'visits.transition',
+            'queue.view',
+            'vitals.view', 'vitals.create',
+            'prescriptions.view', 'prescriptions.create',
+            'emergency.access',
+            'emergency.dashboard.view',
+            'emergency.case.create', 'emergency.case.view', 'emergency.case.update',
+            'emergency.queue.view', 'emergency.queue.manage',
+            'emergency.triage.create', 'emergency.triage.update',
+            'emergency.treatment.record',
+            'emergency.orders.create',
+            'emergency.medication.administer',
+            'emergency.consumables.consume',
+            'emergency.observation.manage',
+            'emergency.disposition.set',
+            'emergency.discharge', 'emergency.admit', 'emergency.refer',
+            'emergency.death.record',
+            'emergency.report.view',
+            'emergency.stock.consume',
+            'notifications.view',
+        ]);
+
+        // ── Emergency Nurse ───────────────────────────────────────────────
+        $emergencyNurse = Role::firstOrCreate(['name' => 'Emergency Nurse']);
+        $emergencyNurse->syncPermissions([
+            'patients.view', 'visits.view', 'queue.view',
+            'vitals.view', 'vitals.create',
+            'emergency.access',
+            'emergency.dashboard.view',
+            'emergency.case.view', 'emergency.case.update',
+            'emergency.queue.view', 'emergency.queue.manage',
+            'emergency.triage.create', 'emergency.triage.update',
+            'emergency.treatment.record',
+            'emergency.medication.administer',
+            'emergency.consumables.consume',
+            'emergency.observation.manage',
+            'emergency.stock.consume',
+            'notifications.view',
+        ]);
+
+        // ── Emergency Officer (Clinical Officer / MO on ER duty) ──────────
+        $emergencyOfficer = Role::firstOrCreate(['name' => 'Emergency Officer']);
+        $emergencyOfficer->syncPermissions([
+            'patients.view', 'patients.create',
+            'visits.view', 'visits.create', 'visits.transition',
+            'queue.view',
+            'vitals.view', 'vitals.create',
+            'prescriptions.view', 'prescriptions.create',
+            'emergency.access',
+            'emergency.dashboard.view',
+            'emergency.case.create', 'emergency.case.view', 'emergency.case.update',
+            'emergency.queue.view', 'emergency.queue.manage',
+            'emergency.triage.create', 'emergency.triage.update',
+            'emergency.treatment.record',
+            'emergency.orders.create',
+            'emergency.medication.administer',
+            'emergency.consumables.consume',
+            'emergency.observation.manage',
+            'emergency.disposition.set',
+            'emergency.discharge', 'emergency.refer',
+            'emergency.report.view',
+            'emergency.stock.consume',
+            'notifications.view',
+        ]);
+
+        // ── Emergency Receptionist ────────────────────────────────────────
+        $emergencyReceptionist = Role::firstOrCreate(['name' => 'Emergency Receptionist']);
+        $emergencyReceptionist->syncPermissions([
+            'patients.view', 'patients.create',
+            'visits.view', 'visits.create',
+            'queue.view',
+            'emergency.access',
+            'emergency.dashboard.view',
+            'emergency.case.create', 'emergency.case.view',
+            'emergency.queue.view',
             'notifications.view',
         ]);
     }

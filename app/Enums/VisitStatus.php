@@ -96,7 +96,7 @@ enum VisitStatus: string
             self::WAITING     => [self::TRIAGE, self::CANCELLED, self::RESCHEDULED],
             // Triage transitions are handled by TriageController (processTriage) — manual transitions disabled
             self::TRIAGE      => [self::CONSULTING, self::WAITING_CONSULTATION, self::EMERGENCY, self::INPATIENT, self::CANCELLED],
-            self::WAITING_CONSULTATION => [self::CONSULTING, self::CANCELLED],
+            self::WAITING_CONSULTATION => [self::CONSULTING, self::EMERGENCY, self::CANCELLED],
             self::CONSULTING  => [self::REFERRED_CONSULTATION, self::WAITING_INVESTIGATION, self::LAB, self::PHARMACY, self::BILLING, self::ADMITTING, self::ADMITTED, self::COMPLETED, self::CANCELLED],
             self::ADMITTING   => [self::ADMITTED, self::CONSULTING, self::CANCELLED],
             self::REFERRED_CONSULTATION => [self::CONSULTING, self::CANCELLED],
@@ -106,7 +106,7 @@ enum VisitStatus: string
             self::BILLING     => [self::COMPLETED, self::DISCHARGED, self::CANCELLED],
             self::ADMITTED    => [self::CONSULTING, self::LAB, self::PHARMACY, self::DISCHARGING],
             self::DISCHARGING => [self::BILLING, self::ADMITTED],
-            self::EMERGENCY   => [self::ADMITTED, self::CONSULTING, self::COMPLETED, self::CANCELLED],
+            self::EMERGENCY   => [self::ADMITTING, self::ADMITTED, self::CONSULTING, self::REFERRED_CONSULTATION, self::LAB, self::PHARMACY, self::BILLING, self::DISCHARGED, self::COMPLETED, self::CANCELLED],
             self::INPATIENT   => [self::ADMITTING, self::ADMITTED, self::CANCELLED],
             self::DISCHARGED  => [],
             self::COMPLETED   => [],

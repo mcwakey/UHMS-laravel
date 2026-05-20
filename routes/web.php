@@ -30,6 +30,7 @@ use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\WardController;
 use App\Http\Controllers\Admin\AdmissionController;
+use App\Http\Controllers\Admin\EmergencyCaseController;
 use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\InsuranceProviderController;
 use App\Http\Controllers\Admin\InsuranceVerificationController;
@@ -221,6 +222,28 @@ Route::middleware('auth')->group(function () {
             Route::post('admissions/{admission}/vitals', [AdmissionController::class, 'storeVital'])->name('admissions.vitals.store');
             Route::post('admissions/{admission}/services', [AdmissionController::class, 'storeService'])->name('admissions.services.store');
         });
+
+        // ──────────────────────────────────────────────────────────────
+        // Emergency Unit
+        // ──────────────────────────────────────────────────────────────
+        Route::prefix('emergency')->name('emergency.')
+            ->middleware('can:emergency.access')
+            ->group(function () {
+                Route::get('/',          [EmergencyCaseController::class, 'dashboard'])->name('dashboard');
+                Route::get('queue',      [EmergencyCaseController::class, 'queue'])->name('queue');
+
+                Route::prefix('cases')->name('cases.')->group(function () {
+                    Route::get('/',                       [EmergencyCaseController::class, 'index'])->name('index');
+                    Route::get('create',                  [EmergencyCaseController::class, 'create'])->name('create')->middleware('can:emergency.case.create');
+                    Route::post('/',                      [EmergencyCaseController::class, 'store'])->name('store')->middleware('can:emergency.case.create');
+                    Route::get('{emergencyCase}',         [EmergencyCaseController::class, 'show'])->name('show');
+                    Route::post('{emergencyCase}/triage',          [EmergencyCaseController::class, 'triage'])->name('triage')->middleware('can:emergency.triage.create');
+                    Route::post('{emergencyCase}/assign',          [EmergencyCaseController::class, 'assign'])->name('assign')->middleware('can:emergency.case.update');
+                    Route::post('{emergencyCase}/bill-service',    [EmergencyCaseController::class, 'billService'])->name('bill-service')->middleware('can:emergency.orders.create');
+                    Route::post('{emergencyCase}/consume-product', [EmergencyCaseController::class, 'consumeProduct'])->name('consume-product')->middleware('can:emergency.consumables.consume');
+                    Route::post('{emergencyCase}/disposition',     [EmergencyCaseController::class, 'disposition'])->name('disposition')->middleware('can:emergency.disposition.set');
+                });
+            });
 
         // Appointments
         Route::middleware('can:appointments.view')->group(function () {

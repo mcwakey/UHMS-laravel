@@ -27,6 +27,7 @@ class ConsumableUsageService
         'procedure_request'      => StockMovementType::PROCEDURE_CONSUMED,
         'investigation_result'   => StockMovementType::INVESTIGATION_CONSUMED,
         'ward_care'              => StockMovementType::WARD_CONSUMED,
+        'emergency_case'         => StockMovementType::EMERGENCY_CONSUMED,
     ];
 
     /**

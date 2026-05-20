@@ -32,6 +32,7 @@ class StockLocationResolver
                 DepartmentType::INVESTIGATION->value => 'lab',
                 DepartmentType::PROCEDURE->value     => 'theatre',
                 DepartmentType::TREATMENT->value     => 'ward',
+                DepartmentType::EMERGENCY->value     => 'emergency',
                 default                              => null,
             };
             if ($byType) {

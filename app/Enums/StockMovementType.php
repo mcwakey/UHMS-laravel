@@ -11,8 +11,7 @@ enum StockMovementType: string
     case PHARMACY_DISPENSED     = 'pharmacy_dispensed';
     case INVESTIGATION_CONSUMED = 'investigation_consumed';
     case PROCEDURE_CONSUMED     = 'procedure_consumed';
-    case WARD_CONSUMED          = 'ward_consumed';
-    case TRANSFER_IN            = 'transfer_in';
+    case WARD_CONSUMED          = 'ward_consumed';    case EMERGENCY_CONSUMED     = 'emergency_consumed';    case TRANSFER_IN            = 'transfer_in';
     case TRANSFER_OUT        = 'transfer_out';
     case RETURN_IN           = 'return_in';
     case RETURN_OUT          = 'return_out';
@@ -40,6 +39,7 @@ enum StockMovementType: string
             self::INVESTIGATION_CONSUMED,
             self::PROCEDURE_CONSUMED,
             self::WARD_CONSUMED,
+            self::EMERGENCY_CONSUMED,
             self::TRANSFER_OUT,
             self::RETURN_OUT,
             self::ADJUSTMENT_OUT,
@@ -58,6 +58,7 @@ enum StockMovementType: string
             self::INVESTIGATION_CONSUMED => 'Investigation Consumed',
             self::PROCEDURE_CONSUMED  => 'Procedure Consumed',
             self::WARD_CONSUMED       => 'Ward Consumed',
+            self::EMERGENCY_CONSUMED  => 'Emergency Consumed',
             self::TRANSFER_IN         => 'Transfer In',
             self::TRANSFER_OUT        => 'Transfer Out',
             self::RETURN_IN           => 'Return In',
