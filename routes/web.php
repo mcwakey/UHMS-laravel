@@ -308,25 +308,27 @@ Route::middleware('auth')->group(function () {
             });
 
             // Purchase Returns
-            Route::middleware('can:store.purchase.view')->group(function () {
+            Route::middleware('can:store.return.view')->group(function () {
                 Route::get('purchase-returns', [PurchaseReturnController::class, 'index'])->name('purchase-returns.index');
-                Route::get('purchase-returns/create', [PurchaseReturnController::class, 'create'])->name('purchase-returns.create')->middleware('can:store.purchase.create');
-                Route::post('purchase-returns', [PurchaseReturnController::class, 'store'])->name('purchase-returns.store')->middleware('can:store.purchase.create');
+                Route::get('purchase-returns/create', [PurchaseReturnController::class, 'create'])->name('purchase-returns.create')->middleware('can:store.return.create');
+                Route::post('purchase-returns', [PurchaseReturnController::class, 'store'])->name('purchase-returns.store')->middleware('can:store.return.create');
                 Route::get('purchase-returns/{purchaseReturn}', [PurchaseReturnController::class, 'show'])->name('purchase-returns.show');
-                Route::post('purchase-returns/{purchaseReturn}/approve', [PurchaseReturnController::class, 'approve'])->name('purchase-returns.approve')->middleware('can:store.purchase.approve');
-                Route::post('purchase-returns/{purchaseReturn}/post', [PurchaseReturnController::class, 'post'])->name('purchase-returns.post')->middleware('can:store.purchase.create');
-                Route::post('purchase-returns/{purchaseReturn}/cancel', [PurchaseReturnController::class, 'cancel'])->name('purchase-returns.cancel')->middleware('can:store.purchase.create');
+                Route::post('purchase-returns/{purchaseReturn}/approve', [PurchaseReturnController::class, 'approve'])->name('purchase-returns.approve')->middleware('can:store.return.approve');
+                Route::post('purchase-returns/{purchaseReturn}/post', [PurchaseReturnController::class, 'post'])->name('purchase-returns.post')->middleware('can:store.return.create');
+                Route::post('purchase-returns/{purchaseReturn}/cancel', [PurchaseReturnController::class, 'cancel'])->name('purchase-returns.cancel')->middleware('can:store.return.create');
             });
 
             // Department Stock Requisitions
-            Route::get('stock-requisitions', [StockRequisitionController::class, 'index'])->name('stock-requisitions.index');
-            Route::get('stock-requisitions/create', [StockRequisitionController::class, 'create'])->name('stock-requisitions.create');
-            Route::post('stock-requisitions', [StockRequisitionController::class, 'store'])->name('stock-requisitions.store');
-            Route::get('stock-requisitions/{stockRequisition}', [StockRequisitionController::class, 'show'])->name('stock-requisitions.show');
-            Route::post('stock-requisitions/{stockRequisition}/approve', [StockRequisitionController::class, 'approve'])->name('stock-requisitions.approve')->middleware('can:store.purchase.approve');
-            Route::post('stock-requisitions/{stockRequisition}/issue', [StockRequisitionController::class, 'issue'])->name('stock-requisitions.issue')->middleware('can:store.transfer.create');
-            Route::post('stock-requisitions/{stockRequisition}/acknowledge', [StockRequisitionController::class, 'acknowledge'])->name('stock-requisitions.acknowledge');
-            Route::post('stock-requisitions/{stockRequisition}/cancel', [StockRequisitionController::class, 'cancel'])->name('stock-requisitions.cancel');
+            Route::middleware('can:store.requisition.view')->group(function () {
+                Route::get('stock-requisitions', [StockRequisitionController::class, 'index'])->name('stock-requisitions.index');
+                Route::get('stock-requisitions/create', [StockRequisitionController::class, 'create'])->name('stock-requisitions.create')->middleware('can:store.requisition.create');
+                Route::post('stock-requisitions', [StockRequisitionController::class, 'store'])->name('stock-requisitions.store')->middleware('can:store.requisition.create');
+                Route::get('stock-requisitions/{stockRequisition}', [StockRequisitionController::class, 'show'])->name('stock-requisitions.show');
+                Route::post('stock-requisitions/{stockRequisition}/approve', [StockRequisitionController::class, 'approve'])->name('stock-requisitions.approve')->middleware('can:store.requisition.approve');
+                Route::post('stock-requisitions/{stockRequisition}/issue', [StockRequisitionController::class, 'issue'])->name('stock-requisitions.issue')->middleware('can:store.requisition.issue');
+                Route::post('stock-requisitions/{stockRequisition}/acknowledge', [StockRequisitionController::class, 'acknowledge'])->name('stock-requisitions.acknowledge')->middleware('can:store.requisition.acknowledge');
+                Route::post('stock-requisitions/{stockRequisition}/cancel', [StockRequisitionController::class, 'cancel'])->name('stock-requisitions.cancel')->middleware('can:store.requisition.create');
+            });
 
             // Stock Transfers
             Route::middleware('can:store.transfer.view')->group(function () {

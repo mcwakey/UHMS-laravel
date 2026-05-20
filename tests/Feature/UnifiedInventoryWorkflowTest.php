@@ -61,7 +61,17 @@ class UnifiedInventoryWorkflowTest extends TestCase
             'store.purchase.view',
             'store.purchase.create',
             'store.purchase.approve',
+            'store.purchase.receive',
+            'store.return.view',
+            'store.return.create',
+            'store.return.approve',
+            'store.transfer.view',
             'store.transfer.create',
+            'store.requisition.view',
+            'store.requisition.create',
+            'store.requisition.approve',
+            'store.requisition.issue',
+            'store.requisition.acknowledge',
         ] as $permission) {
             $role->givePermissionTo(Permission::findOrCreate($permission, 'web'));
         }

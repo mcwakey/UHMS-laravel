@@ -112,11 +112,24 @@ class RoleSeeder extends Seeder
             'claims.export',
 
             // ── Store & Procurement ───────────────────────────────────────
-            'store.purchase.view',
-            'store.purchase.create',
-            'store.purchase.approve',
-            'store.transfer.view',
-            'store.transfer.create',
+            'store.purchase.view',          // view suppliers, purchase orders
+            'store.purchase.create',        // create/edit purchase orders and supplier records
+            'store.purchase.approve',       // approve purchase orders
+            'store.purchase.receive',       // receive goods against a purchase order
+            'store.transfer.view',          // view stock transfers
+            'store.transfer.create',        // create / complete stock transfers
+
+            // ── Purchase Returns ──────────────────────────────────────────
+            'store.return.view',            // view purchase returns list and details
+            'store.return.create',          // create, edit, post and cancel purchase returns
+            'store.return.approve',         // approve purchase returns
+
+            // ── Stock Requisitions ────────────────────────────────────────
+            'store.requisition.view',       // view requisitions list and details
+            'store.requisition.create',     // create / submit / cancel a requisition
+            'store.requisition.approve',    // approve requisition and set approved quantities
+            'store.requisition.issue',      // issue stock from main store against a requisition
+            'store.requisition.acknowledge',// acknowledge receipt of issued items in department
 
             // ── Products (master catalogue — Store/Admin only creates) ─────
             'product.view',
@@ -129,19 +142,19 @@ class RoleSeeder extends Seeder
             // ── Stock Management ──────────────────────────────────────────
             'stock.location.manage',        // create/edit stock locations
             'stock_location.manage',        // legacy alias kept for old routes
-            'stock.view',
-            'stock.view_balance',
-            'stock.transfer',
-            'stock.adjust',
-            'stock.receive',
-            'stock.return',
+            'stock.view',                   // view stock balances and ledger
+            'stock.view_balance',           // view current stock balance summary
+            'stock.transfer',               // perform ad-hoc stock transfers
+            'stock.adjust',                 // record stock adjustments
+            'stock.receive',                // receive stock (direct, not via PO)
+            'stock.return',                 // record ad-hoc stock returns to supplier
             'stock.override_negative',      // allow dispensing below zero
 
             // ── Supplier Ledger ───────────────────────────────────────────
-            'supplier.manage',
-            'supplier.ledger.view',
-            'supplier.payment.create',
-            'supplier.return.create',
+            'supplier.manage',              // create/edit/deactivate suppliers
+            'supplier.ledger.view',         // view supplier ledger entries
+            'supplier.payment.create',      // record manual payments to suppliers
+            'supplier.return.create',       // record manual credit notes / returns
 
             // ── Accounts & Finance ────────────────────────────────────────
             'accounts.manage',
@@ -329,6 +342,8 @@ class RoleSeeder extends Seeder
             'procedure.catalogue.view', 'procedure_catalogue.view',
             'consumable_usage.record', 'consumable.use',
             'product.view', 'stock.view_balance',
+            // Requisitions: nurses can request stock and acknowledge receipt
+            'store.requisition.view', 'store.requisition.create', 'store.requisition.acknowledge',
         ]);
 
         // ── Ward Nurse ────────────────────────────────────────────────────
@@ -348,6 +363,8 @@ class RoleSeeder extends Seeder
             'procedure.catalogue.view', 'procedure_catalogue.view',
             'consumable_usage.record', 'consumable.use', 'ward.consumable.use',
             'product.view', 'stock.view_balance',
+            // Requisitions: ward nurses can request stock and acknowledge receipt
+            'store.requisition.view', 'store.requisition.create', 'store.requisition.acknowledge',
         ]);
 
         // ── Theatre Nurse ─────────────────────────────────────────────────
@@ -478,6 +495,8 @@ class RoleSeeder extends Seeder
             'product.view', 'stock.view', 'stock.view_balance', 'stock.return',
             'consumable_usage.record', 'consumable.use',
             'queue.view',
+            // Requisitions: pharmacists can view, create requests, and acknowledge receipt
+            'store.requisition.view', 'store.requisition.create', 'store.requisition.acknowledge',
             'notifications.view',
         ]);
 
@@ -514,16 +533,27 @@ class RoleSeeder extends Seeder
         $storeKeeper = Role::firstOrCreate(['name' => 'Store Keeper']);
         $storeKeeper->syncPermissions([
             'patients.view',
+            // Suppliers & Purchase Orders
             'store.purchase.view', 'store.purchase.create', 'store.purchase.approve',
+            'store.purchase.receive',
+            // Purchase Returns
+            'store.return.view', 'store.return.create', 'store.return.approve',
+            // Stock Transfers
             'store.transfer.view', 'store.transfer.create',
+            // Stock Requisitions (store keeper approves, issues, and views all)
+            'store.requisition.view', 'store.requisition.approve', 'store.requisition.issue',
+            // Pharmacy stock management
             'pharmacy.drugs.manage', 'pharmacy.stock.manage',
+            // Products
             'product.view', 'product.create', 'product.edit',
             'product.link_departments', 'product.link_department',
             'product.pricing.manage',
+            // Stock locations & balances
             'stock.location.manage', 'stock_location.manage',
             'stock.view', 'stock.view_balance',
             'stock.transfer', 'stock.adjust', 'stock.receive', 'stock.return',
             'stock.override_negative',
+            // Supplier ledger
             'supplier.manage', 'supplier.ledger.view',
             'supplier.payment.create', 'supplier.return.create',
             'reports.view',

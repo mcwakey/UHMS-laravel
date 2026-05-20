@@ -446,7 +446,7 @@ class SidebarMenuBuilder
                         'icon' => 'ti ti-file-minus',
                         'route' => 'admin.store.purchase-returns.index',
                         'active_patterns' => ['admin.store.purchase-returns.*'],
-                        'permission' => 'store.purchase.view',
+                        'permission' => 'store.return.view',
                         'module' => 'inventory',
                     ],
                     [
@@ -454,7 +454,7 @@ class SidebarMenuBuilder
                         'icon' => 'ti ti-clipboard-list',
                         'route' => 'admin.store.stock-requisitions.index',
                         'active_patterns' => ['admin.store.stock-requisitions.*'],
-                        'permission' => 'stock.view',
+                        'permission' => 'store.requisition.view',
                         'module' => 'inventory',
                     ],
                     [
