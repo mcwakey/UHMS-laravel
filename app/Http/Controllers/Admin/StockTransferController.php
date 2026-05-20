@@ -32,6 +32,8 @@ class StockTransferController extends Controller
 
     public function create()
     {
+        return redirect()->route('admin.product-stock.transfer.form');
+
         $drugs = Drug::active()
             ->whereHas('stocks', fn ($q) => $q->atLocation('store')->where('quantity', '>', 0))
             ->orderBy('name')
@@ -66,6 +68,8 @@ class StockTransferController extends Controller
 
     public function store(StoreStockTransferRequest $request)
     {
+        abort(410, 'Legacy drug/investigation stock transfers are disabled. Use Product Stock Transfer.');
+
         try {
             $transfer = $this->stockTransferService->create($request->validated());
 
@@ -96,6 +100,8 @@ class StockTransferController extends Controller
 
     public function complete(StockTransfer $transfer)
     {
+        abort(410, 'Legacy drug/investigation stock transfers are disabled. Use Product Stock Transfer.');
+
         try {
             $this->stockTransferService->complete($transfer);
             return back()->with('success', 'Transfer completed. Stock has been moved.');

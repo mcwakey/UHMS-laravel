@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Department;
 use App\Models\Drug;
 use App\Models\DrugCategory;
 use App\Models\DrugGenericName;
@@ -22,24 +21,11 @@ class DrugController extends Controller
      */
     public function index(Request $request)
     {
-        $categories = $this->pharmacyService->getCategories();
         $drugs = $this->pharmacyService->getDrugs([
             'search' => $request->search,
-            'category_id' => $request->category_id,
         ]);
 
-        // Products linked to the Pharmacy department, type=DRUG, that can back a drug entry.
-        $pharmacyDept = Department::where('type', 'pharmacy')->first();
-        $pharmacyProducts = Product::query()
-            ->where('is_active', true)
-            ->where('product_type', \App\Enums\ProductType::DRUG)
-            ->when($pharmacyDept, fn ($q) => $q->whereHas('departments', fn ($qq) => $qq->where('departments.id', $pharmacyDept->id)))
-            ->orderBy('name')
-            ->get(['id', 'name', 'code', 'unit']);
-
-        $generics = DrugGenericName::active()->orderBy('name')->get(['id', 'name', 'therapeutic_class']);
-
-        return view('pharmacy.drugs', compact('categories', 'drugs', 'pharmacyProducts', 'generics'));
+        return view('pharmacy.drugs', compact('drugs'));
     }
 
     /**
@@ -92,6 +78,8 @@ class DrugController extends Controller
      */
     public function store(Request $request)
     {
+        abort(410, 'Pharmacy drug rows are no longer created here. Create a Product and link it to Pharmacy from Product Management.');
+
         $validated = $request->validate([
             'product_id'      => 'required|integer|exists:products,id',
             'category_id'     => 'required|exists:drug_categories,id',
@@ -131,6 +119,8 @@ class DrugController extends Controller
      */
     public function update(Request $request, Drug $drug)
     {
+        abort(410, 'Pharmacy drug rows are no longer edited here. Edit the Product from Product Management.');
+
         $validated = $request->validate([
             'product_id'      => 'required|integer|exists:products,id',
             'category_id'     => 'required|exists:drug_categories,id',
@@ -170,6 +160,8 @@ class DrugController extends Controller
      */
     public function toggle(Drug $drug)
     {
+        abort(410, 'Pharmacy drug status is controlled by the linked Product.');
+
         $this->pharmacyService->toggleDrug($drug);
         return back()->with('success', 'Drug status toggled.');
     }

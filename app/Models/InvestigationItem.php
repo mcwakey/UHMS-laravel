@@ -109,14 +109,12 @@ class InvestigationItem extends Model
 
     public function getTotalStockAttribute(): int
     {
-        // Unified inventory: if the item is linked to a Product, read on-hand
-        // qty from the unified product_stock_balances ledger. Otherwise fall
-        // back to the legacy investigation_item_stock table.
         if ($this->product_id) {
-            return (int) ProductStockBalance::query()
+            return (int) StockBalance::query()
                 ->where('product_id', $this->product_id)
                 ->sum('quantity_on_hand');
         }
-        return $this->stocks()->where('quantity', '>', 0)->sum('quantity');
+
+        return 0;
     }
 }

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        $has = collect(DB::select("SHOW COLUMNS FROM drugs LIKE 'product_id'"))->isNotEmpty();
+        $has = $this->columnExists('drugs', 'product_id');
         if (! $has) {
             Schema::table('drugs', function (Blueprint $table) {
                 $table->unsignedBigInteger('product_id')->nullable()->after('id');
@@ -20,7 +20,7 @@ return new class extends Migration {
 
     public function down(): void
     {
-        $has = collect(DB::select("SHOW COLUMNS FROM drugs LIKE 'product_id'"))->isNotEmpty();
+        $has = $this->columnExists('drugs', 'product_id');
         if ($has) {
             Schema::table('drugs', function (Blueprint $table) {
                 try { $table->dropForeign(['product_id']); } catch (\Throwable $e) {}
@@ -28,5 +28,12 @@ return new class extends Migration {
                 $table->dropColumn('product_id');
             });
         }
+    }
+
+    private function columnExists(string $table, string $column): bool
+    {
+        return DB::getDriverName() === 'sqlite'
+            ? Schema::hasColumn($table, $column)
+            : collect(DB::select("SHOW COLUMNS FROM {$table} LIKE '{$column}'"))->isNotEmpty();
     }
 };

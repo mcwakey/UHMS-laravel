@@ -21,8 +21,7 @@ return new class extends Migration {
 
         // Add generic_name_id to drugs
         if (Schema::hasTable('drugs')) {
-            $exists = DB::select("SHOW COLUMNS FROM drugs LIKE 'generic_name_id'");
-            if (empty($exists)) {
+            if (! $this->columnExists('drugs', 'generic_name_id')) {
                 Schema::table('drugs', function (Blueprint $table) {
                     $table->unsignedBigInteger('generic_name_id')->nullable()->after('product_id');
                     $table->foreign('generic_name_id')->references('id')->on('drug_generic_names')->nullOnDelete();
@@ -32,8 +31,7 @@ return new class extends Migration {
 
         // Add generic_name_id to products (optional, useful for non-drug products too)
         if (Schema::hasTable('products')) {
-            $exists = DB::select("SHOW COLUMNS FROM products LIKE 'generic_name_id'");
-            if (empty($exists)) {
+            if (! $this->columnExists('products', 'generic_name_id')) {
                 Schema::table('products', function (Blueprint $table) {
                     $table->unsignedBigInteger('generic_name_id')->nullable()->after('id');
                     $table->foreign('generic_name_id')->references('id')->on('drug_generic_names')->nullOnDelete();
@@ -45,8 +43,7 @@ return new class extends Migration {
     public function down(): void
     {
         if (Schema::hasTable('drugs')) {
-            $exists = DB::select("SHOW COLUMNS FROM drugs LIKE 'generic_name_id'");
-            if (!empty($exists)) {
+            if ($this->columnExists('drugs', 'generic_name_id')) {
                 Schema::table('drugs', function (Blueprint $t) {
                     try { $t->dropForeign(['generic_name_id']); } catch (\Throwable $e) {}
                     $t->dropColumn('generic_name_id');
@@ -54,8 +51,7 @@ return new class extends Migration {
             }
         }
         if (Schema::hasTable('products')) {
-            $exists = DB::select("SHOW COLUMNS FROM products LIKE 'generic_name_id'");
-            if (!empty($exists)) {
+            if ($this->columnExists('products', 'generic_name_id')) {
                 Schema::table('products', function (Blueprint $t) {
                     try { $t->dropForeign(['generic_name_id']); } catch (\Throwable $e) {}
                     $t->dropColumn('generic_name_id');
@@ -63,5 +59,12 @@ return new class extends Migration {
             }
         }
         Schema::dropIfExists('drug_generic_names');
+    }
+
+    private function columnExists(string $table, string $column): bool
+    {
+        return DB::getDriverName() === 'sqlite'
+            ? Schema::hasColumn($table, $column)
+            : ! empty(DB::select("SHOW COLUMNS FROM {$table} LIKE '{$column}'"));
     }
 };

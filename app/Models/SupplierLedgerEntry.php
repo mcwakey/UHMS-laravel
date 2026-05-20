@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\PurchaseReturn;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -52,6 +53,39 @@ class SupplierLedgerEntry extends Model
             self::TYPE_DEBIT_NOTE,
             self::TYPE_ADJUSTMENT,
         ];
+    }
+
+    public static function manualTypes(): array
+    {
+        return [
+            self::TYPE_PAYMENT,
+            self::TYPE_CREDIT_NOTE,
+            self::TYPE_DEBIT_NOTE,
+        ];
+    }
+
+    public function sourceUrl(): ?string
+    {
+        if (! $this->source_type || ! $this->source_id) {
+            return null;
+        }
+
+        return match ($this->source_type) {
+            PurchaseOrder::class => route('admin.store.purchase-orders.show', $this->source_id),
+            GoodsReceivedNote::class => route('admin.store.purchase-orders.show', $this->source?->purchase_order_id ?? $this->source_id),
+            PurchaseReturn::class => route('admin.store.purchase-returns.show', $this->source_id),
+            default => null,
+        };
+    }
+
+    public function sourceLabel(): string
+    {
+        return match ($this->source_type) {
+            PurchaseOrder::class => 'View PO',
+            GoodsReceivedNote::class => 'View GRN',
+            PurchaseReturn::class => 'View Return',
+            default => 'View Source',
+        };
     }
 
     public function supplier(): BelongsTo

@@ -9,7 +9,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        $cols = collect(DB::select('SHOW COLUMNS FROM lab_request_items'))->pluck('Field')->all();
+        $cols = DB::getDriverName() === 'sqlite'
+            ? Schema::getColumnListing('lab_request_items')
+            : collect(DB::select('SHOW COLUMNS FROM lab_request_items'))->pluck('Field')->all();
 
         Schema::table('lab_request_items', function (Blueprint $table) use ($cols) {
             if (!in_array('service_id', $cols, true)) {

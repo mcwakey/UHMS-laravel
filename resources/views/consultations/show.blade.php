@@ -768,7 +768,7 @@
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center mt-2">
                                         <button type="button" class="btn btn-outline-secondary btn-sm" id="addItemBtn">
-                                            <i class="ti ti-plus me-1"></i>Add Drug
+                                            <i class="ti ti-plus me-1"></i>Add Medication
                                         </button>
                                         <div class="d-flex gap-2">
                                             <input type="text" name="notes" class="form-control form-control-sm" style="width:170px" placeholder="Rx Notes...">

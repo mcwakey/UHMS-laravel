@@ -50,7 +50,7 @@
                         <i class="ti ti-clock fs-4 text-info"></i>
                     </div>
                     <div>
-                        <h4 class="mb-0">{{ ($stats['submitted'] ?? 0) + ($stats['approved'] ?? 0) }}</h4>
+                        <h4 class="mb-0">{{ $stats['pending_pos'] ?? 0 }}</h4>
                         <small class="text-muted">Pending</small>
                     </div>
                 </div>
@@ -65,8 +65,8 @@
                         <i class="ti ti-check fs-4 text-success"></i>
                     </div>
                     <div>
-                        <h4 class="mb-0">{{ $stats['received'] ?? 0 }}</h4>
-                        <small class="text-muted">Received</small>
+                        <h4 class="mb-0">{{ $stats['partially_received_pos'] ?? 0 }}</h4>
+                        <small class="text-muted">Partially Received</small>
                     </div>
                 </div>
             </div>
@@ -80,8 +80,8 @@
                         <i class="ti ti-currency-dollar fs-4 text-primary"></i>
                     </div>
                     <div>
-                        <h4 class="mb-0">GH₵ {{ number_format($stats['total_value'] ?? 0, 2) }}</h4>
-                        <small class="text-muted">Total Value</small>
+                        <h4 class="mb-0">GH₵ {{ number_format($stats['outstanding_value'] ?? 0, 2) }}</h4>
+                        <small class="text-muted">Outstanding Value</small>
                     </div>
                 </div>
             </div>
@@ -91,6 +91,13 @@
 
 <!-- Filters -->
 <div class="card mb-3">
+    <div class="card-header py-2">
+        <div class="row g-2 text-center">
+            <div class="col-md-4"><small class="text-muted d-block">Total Ordered Value</small><strong>GH₵ {{ number_format($stats['total_ordered_value'] ?? 0, 2) }}</strong></div>
+            <div class="col-md-4"><small class="text-muted d-block">Total Received Value</small><strong>GH₵ {{ number_format($stats['total_received_value'] ?? 0, 2) }}</strong></div>
+            <div class="col-md-4"><small class="text-muted d-block">Outstanding Value</small><strong>GH₵ {{ number_format($stats['outstanding_value'] ?? 0, 2) }}</strong></div>
+        </div>
+    </div>
     <div class="card-body py-2">
         <form method="GET" action="{{ route('admin.store.purchase-orders.index') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
@@ -115,10 +122,21 @@
             <div class="col-md-2">
                 <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
             </div>
+            <div class="col-md-2">
+                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
+            </div>
+            <div class="col-md-2">
+                <select name="product_id" class="form-select">
+                    <option value="">All Products</option>
+                    @foreach($products as $product)
+                        <option value="{{ $product->id }}" @selected((string) request('product_id') === (string) $product->id)>{{ $product->name }}@if($product->code) ({{ $product->code }})@endif</option>
+                    @endforeach
+                </select>
+            </div>
             <div class="col-md-1">
                 <button type="submit" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button>
             </div>
-            @if(request()->hasAny(['search', 'status', 'supplier_id', 'date_from']))
+            @if(request()->hasAny(['search', 'status', 'supplier_id', 'date_from', 'date_to', 'product_id']))
             <div class="col-md-1">
                 <a href="{{ route('admin.store.purchase-orders.index') }}" class="btn btn-outline-secondary w-100"><i class="ti ti-x"></i></a>
             </div>

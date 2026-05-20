@@ -2,11 +2,16 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     private function cols(string $table): array
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return Schema::getColumnListing($table);
+        }
+
         return array_map(fn ($r) => $r->Field, DB::select("SHOW COLUMNS FROM `{$table}`"));
     }
 

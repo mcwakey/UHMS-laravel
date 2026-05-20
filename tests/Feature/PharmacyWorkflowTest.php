@@ -26,6 +26,7 @@ class PharmacyWorkflowTest extends TestCase
         foreach ([
             'pharmacy.dispensing.view', 'pharmacy.dispensing.create',
             'pharmacy.drugs.manage', 'pharmacy.stock.manage',
+            'stock.view',
             'patients.view', 'visits.view', 'prescriptions.view',
         ] as $p) {
             $perm = Permission::create(['name' => $p]);
@@ -36,19 +37,19 @@ class PharmacyWorkflowTest extends TestCase
 
     public function test_dispensing_index_loads(): void
     {
-        $response = $this->actingAs($this->user)->get(route('admin.dispensing.index'));
+        $response = $this->actingAs($this->user)->get(route('admin.pharmacy.dispensing.index'));
         $response->assertStatus(200);
     }
 
     public function test_drug_index_loads(): void
     {
-        $response = $this->actingAs($this->user)->get(route('admin.drugs.index'));
+        $response = $this->actingAs($this->user)->get(route('admin.pharmacy.drugs.index'));
         $response->assertStatus(200);
     }
 
     public function test_drug_stock_index_loads(): void
     {
-        $response = $this->actingAs($this->user)->get(route('admin.drug-stock.index'));
+        $response = $this->actingAs($this->user)->get(route('admin.product-stock.balances'));
         $response->assertStatus(200);
     }
 }

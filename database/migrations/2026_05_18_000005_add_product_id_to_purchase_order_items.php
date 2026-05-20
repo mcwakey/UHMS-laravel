@@ -35,6 +35,14 @@ return new class extends Migration
         // Make drug_id nullable so non-drug lines (product / investigation) can omit it.
         // Use a raw statement because doctrine/dbal may not be installed and the host
         // MariaDB chokes on Laravel 12's schema introspector.
+        if (DB::getDriverName() === 'sqlite') {
+            Schema::table('purchase_order_items', function (Blueprint $table) {
+                $table->unsignedBigInteger('drug_id')->nullable()->change();
+            });
+
+            return;
+        }
+
         try {
             DB::statement('ALTER TABLE purchase_order_items MODIFY drug_id BIGINT UNSIGNED NULL');
         } catch (\Throwable $e) {
@@ -60,6 +68,10 @@ return new class extends Migration
 
     private function columnExists(string $table, string $column): bool
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return Schema::hasColumn($table, $column);
+        }
+
         $db = DB::connection()->getDatabaseName();
         $row = DB::selectOne(
             'SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = ? AND table_name = ? AND column_name = ?',

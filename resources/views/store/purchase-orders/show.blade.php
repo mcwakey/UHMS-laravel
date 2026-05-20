@@ -230,7 +230,7 @@
                         <table class="table table-bordered table-sm">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Drug</th>
+                                    <th>Product</th>
                                     <th style="width:80px;">Ordered</th>
                                     <th style="width:80px;">Already</th>
                                     <th style="width:80px;">Remaining</th>
@@ -287,37 +287,11 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Item Type <span class="text-danger">*</span></label>
-                        <select name="item_type" id="addItemType" class="form-select" required>
-                            <option value="drug">Pharmacy Drug</option>
-                            <option value="product">General Product / Consumable</option>
-                            <option value="investigation">Investigation Item</option>
-                        </select>
-                    </div>
-                    <div class="mb-3 item-type-block" data-type="drug">
-                        <label class="form-label">Drug <span class="text-danger">*</span></label>
-                        <select name="drug_id" class="form-select select2-modal">
-                            <option value="">Select Drug...</option>
-                            @foreach(\App\Models\Drug::active()->orderBy('name')->get() as $drug)
-                                <option value="{{ $drug->id }}">{{ $drug->name }} ({{ $drug->generic_name }})</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3 item-type-block d-none" data-type="product">
                         <label class="form-label">Product <span class="text-danger">*</span></label>
-                        <select name="product_id" class="form-select select2-modal">
+                        <select name="product_id" class="form-select select2-modal" required>
                             <option value="">Select Product...</option>
-                            @foreach(\App\Models\Product::query()->orderBy('name')->get() as $product)
-                                <option value="{{ $product->id }}">{{ $product->name }}@if($product->sku) — {{ $product->sku }}@endif</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3 item-type-block d-none" data-type="investigation">
-                        <label class="form-label">Investigation Item <span class="text-danger">*</span></label>
-                        <select name="investigation_item_id" class="form-select select2-modal">
-                            <option value="">Select Investigation Item...</option>
-                            @foreach(\App\Models\InvestigationItem::active()->orderBy('name')->get() as $invItem)
-                                <option value="{{ $invItem->id }}">{{ $invItem->name }}</option>
+                            @foreach(\App\Models\Product::query()->active()->orderBy('name')->get() as $product)
+                                <option value="{{ $product->id }}">{{ $product->name }}@if($product->code) — {{ $product->code }}@endif</option>
                             @endforeach
                         </select>
                     </div>
@@ -343,30 +317,3 @@
 @endif
 @endsection
 
-@push('scripts')
-<script>
-(function () {
-    const $modal = document.getElementById('addItemModal');
-    if (!$modal) return;
-
-    const $type = document.getElementById('addItemType');
-    const $blocks = $modal.querySelectorAll('.item-type-block');
-
-    function refresh() {
-        const type = $type.value;
-        $blocks.forEach(block => {
-            const matches = block.dataset.type === type;
-            block.classList.toggle('d-none', !matches);
-            block.querySelectorAll('select').forEach(sel => {
-                sel.required = matches;
-                sel.disabled  = !matches;
-            });
-        });
-    }
-
-    $type.addEventListener('change', refresh);
-    $modal.addEventListener('shown.bs.modal', refresh);
-    refresh();
-})();
-</script>
-@endpush

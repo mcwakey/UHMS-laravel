@@ -57,12 +57,12 @@ class Product extends Model
 
     public function stockMovements()
     {
-        return $this->hasMany(ProductStockMovement::class);
+        return $this->hasMany(StockMovement::class);
     }
 
     public function stockBalances()
     {
-        return $this->hasMany(ProductStockBalance::class);
+        return $this->hasMany(StockBalance::class);
     }
 
     public function serviceConsumables()
@@ -77,6 +77,11 @@ class Product extends Model
     public function prices()
     {
         return $this->hasMany(ProductPrice::class);
+    }
+
+    public function purchaseOrderItems()
+    {
+        return $this->hasMany(PurchaseOrderItem::class);
     }
 
     public function scopeActive($query)

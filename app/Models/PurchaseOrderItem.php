@@ -55,6 +55,9 @@ class PurchaseOrderItem extends Model
      */
     public function getItemNameAttribute(): string
     {
+        if ($this->product_id) {
+            return $this->product?->name ?? '—';
+        }
         if ($this->item_type === 'investigation') {
             return $this->investigationItem?->name ?? '—';
         }

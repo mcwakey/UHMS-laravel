@@ -8,8 +8,10 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        // MariaDB lacks `generation_expression` in information_schema; avoid Schema::hasColumn (it queries that).
-        $hasIsMain = collect(DB::select("SHOW COLUMNS FROM stock_locations LIKE 'is_main'"))->isNotEmpty();
+        // MariaDB lacks `generation_expression` in information_schema; avoid Schema::hasColumn there.
+        $hasIsMain = DB::getDriverName() === 'sqlite'
+            ? Schema::hasColumn('stock_locations', 'is_main')
+            : collect(DB::select("SHOW COLUMNS FROM stock_locations LIKE 'is_main'"))->isNotEmpty();
         if (! $hasIsMain) {
             Schema::table('stock_locations', function (Blueprint $table) {
                 $table->boolean('is_main')->default(false)->after('is_active');
@@ -44,7 +46,9 @@ return new class extends Migration {
 
     public function down(): void
     {
-        $hasIsMain = collect(DB::select("SHOW COLUMNS FROM stock_locations LIKE 'is_main'"))->isNotEmpty();
+        $hasIsMain = DB::getDriverName() === 'sqlite'
+            ? Schema::hasColumn('stock_locations', 'is_main')
+            : collect(DB::select("SHOW COLUMNS FROM stock_locations LIKE 'is_main'"))->isNotEmpty();
         if ($hasIsMain) {
             Schema::table('stock_locations', function (Blueprint $table) {
                 $table->dropColumn('is_main');

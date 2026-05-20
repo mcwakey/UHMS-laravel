@@ -44,12 +44,12 @@ class StockLocation extends Model
 
     public function productMovements(): HasMany
     {
-        return $this->hasMany(ProductStockMovement::class);
+        return $this->hasMany(StockMovement::class);
     }
 
     public function productBalances(): HasMany
     {
-        return $this->hasMany(ProductStockBalance::class);
+        return $this->hasMany(StockBalance::class);
     }
 
     public function scopeMain($q)

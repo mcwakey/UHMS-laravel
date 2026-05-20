@@ -120,7 +120,7 @@ class Drug extends Model
     /**
      * Quantity-on-hand available **at the Pharmacy** for this drug.
      *
-     * Single source of truth = `product_stock_balances`. Drugs are surfaced
+    * Single source of truth = `stock_balances`. Drugs are surfaced
      * as a filtered catalogue of products; the Pharmacy can only dispense
      * what has been transferred into the Pharmacy stock location. Stock that
      * still lives in Main Store is intentionally NOT counted here.
@@ -143,7 +143,7 @@ class Drug extends Model
             return 0.0;
         }
 
-        return (float) \App\Models\ProductStockBalance::query()
+        return (float) \App\Models\StockBalance::query()
             ->where('product_id', $this->product_id)
             ->whereIn('stock_location_id', $pharmacyLocationIds)
             ->sum('quantity_on_hand');

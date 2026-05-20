@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 /**
  * Enforces "one active invoice per visit" via a generated column that is unique
@@ -20,6 +19,11 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('CREATE INDEX IF NOT EXISTS idx_invoices_visit_id ON invoices (visit_id)');
+            return;
+        }
+
         // First, deduplicate: keep the newest active invoice per visit, cancel others.
         DB::statement("
             UPDATE invoices i
@@ -57,6 +61,11 @@ return new class extends Migration {
 
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            DB::statement('DROP INDEX IF EXISTS idx_invoices_visit_id');
+            return;
+        }
+
         try { DB::statement("DROP INDEX uq_invoices_active_visit ON invoices"); } catch (\Throwable $e) {}
         try { DB::statement("ALTER TABLE invoices DROP COLUMN active_visit_id"); } catch (\Throwable $e) {}
     }

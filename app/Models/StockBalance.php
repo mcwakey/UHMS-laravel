@@ -37,4 +37,9 @@ class StockBalance extends Model
     {
         return $this->belongsTo(StockLocation::class, 'stock_location_id');
     }
+
+    public function stockLocation(): BelongsTo
+    {
+        return $this->belongsTo(StockLocation::class, 'stock_location_id');
+    }
 }

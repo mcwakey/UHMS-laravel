@@ -6,8 +6,9 @@ use App\Enums\DepartmentType;
 use App\Enums\ProductType;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
-use App\Models\ProductStockBalance;
+use App\Models\StockBalance;
 use App\Models\StockLocation;
+use App\Services\ProductService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -20,12 +21,16 @@ use Illuminate\Support\Facades\DB;
  * product types. Theatre staff cannot create products from this page; new
  * items are added by Store/Admin and linked to the Theatre department.
  *
- * On-hand quantity is sourced from `product_stock_balances` AT the Theatre
+ * On-hand quantity is sourced from `stock_balances` AT the Theatre
  * stock location only — stock still sitting in Main Store does NOT count
  * as available to the theatre.
  */
 class ProcedureConsumablesController extends Controller
 {
+    public function __construct(private ProductService $productService)
+    {
+    }
+
     public function index(Request $request)
     {
         $allowedProductTypes = [
@@ -43,14 +48,8 @@ class ProcedureConsumablesController extends Controller
             })
             ->pluck('id');
 
-        $products = Product::query()
-            ->with(['departments:id,name,type'])
-            ->where('is_active', true)
-            ->whereIn('product_type', $allowedProductTypes)
-            ->whereHas('departments', function ($dq) {
-                $dq->where('departments.type', DepartmentType::PROCEDURE->value)
-                   ->where('product_department.is_active', true);
-            })
+        $products = $this->productService
+            ->queryProductsForDepartmentTypes([DepartmentType::PROCEDURE], $allowedProductTypes)
             ->when($request->search, function ($q, $s) {
                 $q->where(function ($qq) use ($s) {
                     $qq->where('name', 'like', "%{$s}%")->orWhere('code', 'like', "%{$s}%");
@@ -62,7 +61,7 @@ class ProcedureConsumablesController extends Controller
             ->withQueryString();
 
         $productIds = $products->getCollection()->pluck('id')->all();
-        $balances = ProductStockBalance::query()
+        $balances = StockBalance::query()
             ->whereIn('product_id', $productIds)
             ->when($theatreLocationIds->isNotEmpty(), fn ($q) => $q->whereIn('stock_location_id', $theatreLocationIds))
             ->select('product_id', DB::raw('SUM(quantity_on_hand) as total'))

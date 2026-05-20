@@ -8,8 +8,9 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        $existing = collect(DB::select('SHOW COLUMNS FROM lab_request_items'))
-            ->pluck('Field')->all();
+        $existing = DB::getDriverName() === 'sqlite'
+            ? Schema::getColumnListing('lab_request_items')
+            : collect(DB::select('SHOW COLUMNS FROM lab_request_items'))->pluck('Field')->all();
 
         Schema::table('lab_request_items', function (Blueprint $table) use ($existing) {
             if (!in_array('accepted_at', $existing)) {

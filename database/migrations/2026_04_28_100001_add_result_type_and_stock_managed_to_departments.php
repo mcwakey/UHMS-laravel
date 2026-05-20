@@ -1,22 +1,38 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     private function cols(string $table): array
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return Schema::getColumnListing($table);
+        }
+
         return array_map(fn ($r) => $r->Field, DB::select("SHOW COLUMNS FROM `{$table}`"));
     }
 
     private function hasIndex(string $table, string $name): bool
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return collect(DB::select("PRAGMA index_list('{$table}')"))
+                ->contains(fn ($row) => ($row->name ?? null) === $name);
+        }
+
         return !empty(DB::select("SHOW INDEX FROM `{$table}` WHERE Key_name = '{$name}'"));
     }
 
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            $this->upSqlite();
+            return;
+        }
+
         // 1. departments — add result_type + is_stock_managed
         $depts = $this->cols('departments');
         $adds = [];
@@ -61,6 +77,11 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            $this->downSqlite();
+            return;
+        }
+
         // Drop result columns from lab_results
         $lrRes = $this->cols('lab_results');
         $toDrop = array_filter(['result_type','result_text','result_file','result_file_name'], fn ($c) => in_array($c, $lrRes));
@@ -78,5 +99,63 @@ return new class extends Migration
         $depts = $this->cols('departments');
         $dropDepts = array_filter(['result_type','is_stock_managed'], fn ($c) => in_array($c, $depts));
         if (!empty($dropDepts)) DB::statement('ALTER TABLE `departments` ' . implode(', ', array_map(fn ($c) => "DROP COLUMN `{$c}`", $dropDepts)));
+    }
+
+    private function upSqlite(): void
+    {
+        Schema::table('departments', function (Blueprint $table) {
+            if (! Schema::hasColumn('departments', 'result_type')) {
+                $table->string('result_type')->default('none');
+            }
+            if (! Schema::hasColumn('departments', 'is_stock_managed')) {
+                $table->boolean('is_stock_managed')->default(false);
+            }
+        });
+
+        if (! Schema::hasColumn('lab_requests', 'target_department_id')) {
+            Schema::table('lab_requests', function (Blueprint $table) {
+                $table->foreignId('target_department_id')->nullable()->constrained('departments')->nullOnDelete();
+            });
+        }
+
+        Schema::table('lab_results', function (Blueprint $table) {
+            if (! Schema::hasColumn('lab_results', 'result_type')) {
+                $table->string('result_type')->default('parameters');
+            }
+            if (! Schema::hasColumn('lab_results', 'result_text')) {
+                $table->longText('result_text')->nullable();
+            }
+            if (! Schema::hasColumn('lab_results', 'result_file')) {
+                $table->string('result_file')->nullable();
+            }
+            if (! Schema::hasColumn('lab_results', 'result_file_name')) {
+                $table->string('result_file_name')->nullable();
+            }
+        });
+    }
+
+    private function downSqlite(): void
+    {
+        Schema::table('lab_results', function (Blueprint $table) {
+            foreach (['result_type', 'result_text', 'result_file', 'result_file_name'] as $column) {
+                if (Schema::hasColumn('lab_results', $column)) {
+                    $table->dropColumn($column);
+                }
+            }
+        });
+
+        if (Schema::hasColumn('lab_requests', 'target_department_id')) {
+            Schema::table('lab_requests', function (Blueprint $table) {
+                $table->dropConstrainedForeignId('target_department_id');
+            });
+        }
+
+        Schema::table('departments', function (Blueprint $table) {
+            foreach (['result_type', 'is_stock_managed'] as $column) {
+                if (Schema::hasColumn('departments', $column)) {
+                    $table->dropColumn($column);
+                }
+            }
+        });
     }
 };

@@ -13,7 +13,7 @@
         </a>
         @can('store.purchase.create')
         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addLedgerEntryModal">
-            <i class="ti ti-plus me-1"></i>Record Entry
+            <i class="ti ti-plus me-1"></i>Manual Entry
         </button>
         @endcan
     </div>
@@ -39,14 +39,18 @@
         <form method="GET" class="card border-0 shadow-sm h-100">
             <div class="card-body py-3 row g-2 align-items-end">
                 <div class="col-md-3">
+                    <label class="form-label small mb-1">Search</label>
+                    <input name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Description">
+                </div>
+                <div class="col-md-2">
                     <label class="form-label small mb-1">From</label>
                     <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control form-control-sm">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label small mb-1">To</label>
                     <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control form-control-sm">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label small mb-1">Type</label>
                     <select name="entry_type" class="form-select form-select-sm">
                         <option value="">All types</option>
@@ -55,8 +59,28 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3 d-grid">
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Debit/Credit</label>
+                    <select name="debit_credit" class="form-select form-select-sm">
+                        <option value="">Both</option>
+                        <option value="debit" @selected(request('debit_credit') === 'debit')>Debit</option>
+                        <option value="credit" @selected(request('debit_credit') === 'credit')>Credit</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small mb-1">Source</label>
+                    <select name="source_type" class="form-select form-select-sm">
+                        <option value="">Any</option>
+                        @foreach($sourceTypes as $sourceType)
+                            <option value="{{ $sourceType }}" @selected(request('source_type') === $sourceType)>{{ class_basename($sourceType) }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid">
                     <button class="btn btn-primary btn-sm" type="submit"><i class="ti ti-filter me-1"></i>Filter</button>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <a href="{{ route('admin.store.suppliers.ledger', $supplier) }}" class="btn btn-outline-secondary btn-sm">Reset</a>
                 </div>
             </div>
         </form>
@@ -75,6 +99,7 @@
                         <th class="text-end">Debit</th>
                         <th class="text-end">Credit</th>
                         <th class="text-end">Balance</th>
+                        <th>Source</th>
                         <th>By</th>
                     </tr>
                 </thead>
@@ -87,10 +112,17 @@
                         <td class="text-end text-danger">{{ $entry->debit > 0 ? number_format($entry->debit, 2) : '' }}</td>
                         <td class="text-end text-success">{{ $entry->credit > 0 ? number_format($entry->credit, 2) : '' }}</td>
                         <td class="text-end fw-medium">{{ number_format((float) $entry->balance_after, 2) }}</td>
+                        <td>
+                            @if($url = $entry->sourceUrl())
+                                <a href="{{ $url }}" class="btn btn-sm btn-outline-primary">{{ $entry->sourceLabel() }}</a>
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
                         <td class="small text-muted">{{ optional($entry->creator)->name ?? '—' }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="text-center text-muted py-4">No ledger entries.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-4">No ledger entries.</td></tr>
                 @endforelse
                 </tbody>
             </table>
@@ -108,32 +140,27 @@
         <form class="modal-content" method="POST" action="{{ route('admin.store.suppliers.ledger.store', $supplier) }}">
             @csrf
             <div class="modal-header">
-                <h5 class="modal-title">Record Supplier Ledger Entry</h5>
+                <h5 class="modal-title">Record Manual Supplier Ledger Entry</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-2">
                     <label class="form-label small">Type *</label>
                     <select name="entry_type" class="form-select form-select-sm" required>
-                        @foreach($types as $t)
+                        @foreach($manualTypes as $t)
                             <option value="{{ $t }}">{{ str_replace('_', ' ', $t) }}</option>
                         @endforeach
                     </select>
-                    <small class="text-muted">Use <strong>Payment</strong> for debit, <strong>Supplier Invoice</strong> for credit.</small>
+                    <small class="text-muted">Goods received and supplier returns are created from their source workflows only.</small>
                 </div>
                 <div class="mb-2">
                     <label class="form-label small">Date</label>
                     <input type="date" name="entry_date" value="{{ now()->toDateString() }}" class="form-control form-control-sm">
                 </div>
-                <div class="row g-2">
-                    <div class="col-6">
-                        <label class="form-label small">Debit (paid / reduced)</label>
-                        <input type="number" step="0.01" min="0" name="debit" value="0" class="form-control form-control-sm">
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label small">Credit (we owe them)</label>
-                        <input type="number" step="0.01" min="0" name="credit" value="0" class="form-control form-control-sm">
-                    </div>
+                <div class="mb-2">
+                    <label class="form-label small">Amount *</label>
+                    <input type="number" step="0.01" min="0.01" name="amount" class="form-control form-control-sm" required>
+                    <small class="text-muted">Payment/Credit Note reduces balance; Debit Note increases balance.</small>
                 </div>
                 <div class="mt-2">
                     <label class="form-label small">Description *</label>

@@ -56,13 +56,24 @@ class SupplierController extends Controller
             ->when($request->date_from, fn ($q, $d) => $q->where('entry_date', '>=', $d))
             ->when($request->date_to,   fn ($q, $d) => $q->where('entry_date', '<=', $d))
             ->when($request->entry_type, fn ($q, $t) => $q->where('entry_type', $t))
+            ->when($request->search, fn ($q, $s) => $q->where('description', 'like', "%{$s}%"))
+            ->when($request->debit_credit === 'debit', fn ($q) => $q->where('debit', '>', 0))
+            ->when($request->debit_credit === 'credit', fn ($q) => $q->where('credit', '>', 0))
+            ->when($request->source_type, fn ($q, $s) => $q->where('source_type', $s))
             ->paginate(50)
             ->withQueryString();
 
         $balance = $ledger->balance($supplier);
         $types   = SupplierLedgerEntry::types();
+        $manualTypes = SupplierLedgerEntry::manualTypes();
+        $sourceTypes = SupplierLedgerEntry::query()
+            ->where('supplier_id', $supplier->id)
+            ->whereNotNull('source_type')
+            ->distinct()
+            ->pluck('source_type')
+            ->values();
 
-        return view('store.supplier-ledger', compact('supplier', 'entries', 'balance', 'types'));
+        return view('store.supplier-ledger', compact('supplier', 'entries', 'balance', 'types', 'manualTypes', 'sourceTypes'));
     }
 
     /**
@@ -71,22 +82,16 @@ class SupplierController extends Controller
     public function recordLedgerEntry(Request $request, Supplier $supplier, SupplierLedgerService $ledger)
     {
         $data = $request->validate([
-            'entry_type'  => 'required|string|in:' . implode(',', SupplierLedgerEntry::types()),
+            'entry_type'  => 'required|string|in:' . implode(',', SupplierLedgerEntry::manualTypes()),
             'entry_date'  => 'nullable|date',
+            'amount'      => 'nullable|numeric|min:0.01',
             'debit'       => 'nullable|numeric|min:0',
             'credit'      => 'nullable|numeric|min:0',
             'description' => 'required|string|max:500',
         ]);
 
         try {
-            $ledger->recordEntry(
-                supplier: $supplier,
-                entryType: $data['entry_type'],
-                debit: (float) ($data['debit'] ?? 0),
-                credit: (float) ($data['credit'] ?? 0),
-                description: $data['description'],
-                entryDate: isset($data['entry_date']) ? \Illuminate\Support\Carbon::parse($data['entry_date']) : null,
-            );
+            $ledger->recordManualEntry($supplier, $data);
         } catch (\Throwable $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }

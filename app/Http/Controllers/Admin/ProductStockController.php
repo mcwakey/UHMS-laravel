@@ -6,30 +6,35 @@ use App\Enums\ProductType;
 use App\Enums\StockMovementType;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
-use App\Models\ProductStockBalance;
-use App\Models\ProductStockMovement;
+use App\Models\StockBalance;
 use App\Models\StockLocation;
+use App\Models\StockMovement;
 use App\Services\ProductStockService;
+use App\Services\StockLocationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class ProductStockController extends Controller
 {
-    public function __construct(private ProductStockService $stock) {}
+    public function __construct(
+        private ProductStockService $stock,
+        private StockLocationService $stockLocations,
+    ) {}
 
     // ---------- Balances ----------
     public function balances(Request $request)
     {
         $locations = StockLocation::active()->orderByDesc('is_main')->orderBy('name')->get();
-        $locationId = (int) $request->get('location_id', $locations->first()?->id ?? 0);
+        $locationId = $request->filled('location_id') ? (int) $request->get('location_id') : null;
         $search     = trim((string) $request->get('search'));
         $type       = $request->get('type');
         $lowOnly    = (bool) $request->get('low_only');
 
-        $balances = ProductStockBalance::query()
-            ->with('product')
-            ->where('stock_location_id', $locationId)
+        $balances = StockBalance::query()
+            ->with(['product.departments:id,name,type', 'location.department:id,name,type'])
+            ->whereNotNull('product_id')
+            ->when($locationId, fn ($q) => $q->where('stock_location_id', $locationId))
             ->whereHas('product', function ($q) use ($search, $type) {
                 if ($search !== '') {
                     $q->where(function ($qq) use ($search) {
@@ -37,10 +42,11 @@ class ProductStockController extends Controller
                            ->orWhere('code', 'like', "%{$search}%");
                     });
                 }
-                if ($type) $q->where('type', $type);
+                if ($type) $q->where('product_type', $type);
             })
-            ->when($lowOnly, fn ($q) => $q->whereColumn('quantity_on_hand', '<=', DB::raw('(select reorder_level from products where products.id = product_stock_balances.product_id)')))
-            ->orderBy('quantity_on_hand')
+            ->when($lowOnly, fn ($q) => $q->whereRaw('quantity_on_hand <= COALESCE((select reorder_level from products where products.id = stock_balances.product_id), 0)'))
+            ->orderBy('product_id')
+            ->orderBy('stock_location_id')
             ->paginate(25)
             ->withQueryString();
 
@@ -52,13 +58,22 @@ class ProductStockController extends Controller
             'type'        => $type,
             'lowOnly'     => $lowOnly,
             'typeOptions' => ProductType::options(),
+            'mainStore'   => $this->stockLocations->getMainStoreLocation(),
+            'products'    => Product::where('is_active', true)->orderBy('name')->get(['id','name','code','unit']),
+            'adjustmentTypes' => [
+                StockMovementType::ADJUSTMENT_IN->value  => 'Adjustment In (+)',
+                StockMovementType::ADJUSTMENT_OUT->value => 'Adjustment Out (-)',
+                StockMovementType::DAMAGED->value        => 'Damaged (-)',
+                StockMovementType::EXPIRED->value        => 'Expired (-)',
+            ],
         ]);
     }
 
     // ---------- Ledger ----------
     public function ledger(Request $request)
     {
-        $movements = ProductStockMovement::with(['product', 'location', 'performer'])
+        $movements = StockMovement::with(['product', 'location', 'performedBy'])
+            ->whereNotNull('product_id')
             ->when($request->location_id, fn ($q, $v) => $q->where('stock_location_id', $v))
             ->when($request->product_id, fn ($q, $v) => $q->where('product_id', $v))
             ->when($request->movement_type, fn ($q, $v) => $q->where('movement_type', $v))
@@ -81,8 +96,10 @@ class ProductStockController extends Controller
     // ---------- Receive ----------
     public function receiveForm()
     {
+        $mainStore = $this->stockLocations->getMainStoreLocation();
+
         return view('admin.product-stock.receive', [
-            'locations' => StockLocation::active()->orderBy('name')->get(),
+            'mainStore' => $mainStore,
             'products'  => Product::where('is_active', true)->orderBy('name')->get(['id','name','code','unit']),
         ]);
     }
@@ -100,11 +117,13 @@ class ProductStockController extends Controller
             'notes'                => 'nullable|string|max:500',
         ]);
 
+        $mainStore = $this->stockLocations->getMainStoreLocation();
+
         try {
             foreach ($data['items'] as $item) {
                 $this->stock->receive([
                     'product_id'        => (int) $item['product_id'],
-                    'stock_location_id' => (int) $data['stock_location_id'],
+                    'stock_location_id' => $mainStore->id,
                     'quantity'          => (float) $item['quantity'],
                     'unit_cost'         => $item['unit_cost']   ?? null,
                     'batch_no'          => $item['batch_no']    ?? null,
@@ -116,7 +135,7 @@ class ProductStockController extends Controller
             return back()->withInput()->withErrors(['error' => $e->getMessage()]);
         }
 
-        return redirect()->route('admin.product-stock.balances', ['location_id' => $data['stock_location_id']])
+        return redirect()->route('admin.product-stock.balances', ['location_id' => $mainStore->id])
             ->with('success', 'Stock received.');
     }
 
@@ -194,7 +213,7 @@ class ProductStockController extends Controller
         } catch (Throwable $e) {
             return back()->withInput()->withErrors(['error' => $e->getMessage()]);
         }
-        return redirect()->route('admin.product-stock.ledger')->with('success', 'Transfer recorded.');
+        return redirect()->route('admin.product-stock.balances', ['location_id' => $data['from_location_id']])->with('success', 'Transfer recorded.');
     }
 
     // ---------- Return ----------
@@ -245,6 +264,6 @@ class ProductStockController extends Controller
             return back()->withInput()->withErrors(['error' => $e->getMessage()]);
         }
 
-        return redirect()->route('admin.product-stock.ledger')->with('success', 'Return recorded.');
+        return redirect()->route('admin.product-stock.balances', ['location_id' => $data['to_location_id']])->with('success', 'Return recorded.');
     }
 }

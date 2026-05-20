@@ -3,9 +3,12 @@
 namespace App\Services;
 
 
+use App\Enums\DepartmentType;
+use App\Enums\ProductType;
 use App\Enums\PrescriptionStatus;
 use App\Enums\StockMovementType;
 use App\Events\StockLow;
+use App\Models\Department;
 use App\Models\DispensingRecord;
 use App\Models\Drug;
 use App\Models\DrugCategory;
@@ -13,6 +16,7 @@ use App\Models\DrugStock;
 use App\Models\InvoiceItem;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
+use App\Models\Product;
 use App\Models\StockLocation;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -21,6 +25,16 @@ use Illuminate\Support\Facades\DB;
 
 class PharmacyService
 {
+    public function __construct(
+        private ?ProductService $products = null,
+        private ?StockBalanceService $stockBalances = null,
+        private ?StockLocationService $stockLocations = null,
+    ) {
+        $this->products ??= app(ProductService::class);
+        $this->stockBalances ??= app(StockBalanceService::class);
+        $this->stockLocations ??= app(StockLocationService::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Drug Catalog
@@ -59,31 +73,40 @@ class PharmacyService
 
     public function getDrugs(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        // Drugs are the Pharmacy-facing **filtered view** of products linked to
-        // the Pharmacy department with product_type=DRUG. We only surface drug
-        // catalogue rows that have a backing product on that pivot — anything
-        // else is legacy data that pre-dates the unified inventory.
-        $pharmacyDept = \App\Models\Department::where('type', 'pharmacy')->first();
+        $pharmacyDept = Department::query()
+            ->where('type', DepartmentType::PHARMACY->value)
+            ->first();
 
-        $query = Drug::with(['category', 'product'])
-            ->whereNotNull('product_id')
-            ->when($pharmacyDept, function ($q) use ($pharmacyDept) {
-                $q->whereHas('product.departments', fn ($dq) => $dq->where('departments.id', $pharmacyDept->id));
-            });
+        $query = $pharmacyDept
+            ? $this->products->queryProductsForDepartment($pharmacyDept, [ProductType::DRUG])
+            : Product::query()->whereRaw('1 = 0');
 
         if (!empty($filters['search'])) {
-            $query->search($filters['search']);
+            $term = $filters['search'];
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', "%{$term}%")
+                  ->orWhere('code', 'like', "%{$term}%");
+            });
         }
 
-        if (!empty($filters['category_id'])) {
-            $query->where('category_id', $filters['category_id']);
-        }
+        $drugs = $query->orderBy('name')->paginate($perPage)->withQueryString();
 
-        if (isset($filters['is_active'])) {
-            $query->where('is_active', $filters['is_active']);
-        }
+        $pharmacyLocation = $pharmacyDept
+            ? $this->stockLocations->getDefaultLocationForDepartment($pharmacyDept)
+            : null;
 
-        return $query->latest()->paginate($perPage)->withQueryString();
+        $drugs->getCollection()->transform(function (Product $product) use ($pharmacyLocation) {
+            $available = $pharmacyLocation
+                ? $this->stockBalances->getQuantityForProductAtLocation($product, $pharmacyLocation)
+                : 0.0;
+
+            $product->available_in_pharmacy = $available;
+            $product->is_low_stock = ($product->reorder_level ?? 0) > 0 && $available <= (float) $product->reorder_level;
+
+            return $product;
+        });
+
+        return $drugs;
     }
 
     public function storeDrug(array $data): Drug

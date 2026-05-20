@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePurchaseOrderRequest;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
+use App\Models\Product;
 use App\Models\Supplier;
 use App\Services\ProcurementService;
 use Illuminate\Http\Request;
@@ -22,9 +23,10 @@ class PurchaseOrderController extends Controller
         $stats = $this->procurementService->getStats();
         $purchaseOrders = $this->procurementService->list($request->all());
         $suppliers = Supplier::active()->orderBy('name')->get();
+        $products = Product::active()->orderBy('name')->get(['id', 'name', 'code']);
         $statuses = PurchaseOrderStatus::cases();
 
-        return view('store.purchase-orders.index', compact('purchaseOrders', 'stats', 'suppliers', 'statuses'));
+        return view('store.purchase-orders.index', compact('purchaseOrders', 'stats', 'suppliers', 'products', 'statuses'));
     }
 
     public function create()
@@ -64,7 +66,7 @@ class PurchaseOrderController extends Controller
     public function show(PurchaseOrder $purchaseOrder)
     {
         $purchaseOrder->load([
-            'supplier', 'items.drug', 'items.investigationItem', 'items.product', 'createdByUser', 'approvedByUser',
+            'supplier', 'items.product', 'createdByUser', 'approvedByUser',
         ]);
 
         return view('store.purchase-orders.show', compact('purchaseOrder'));
@@ -121,18 +123,16 @@ class PurchaseOrderController extends Controller
     public function addItem(Request $request, PurchaseOrder $purchaseOrder)
     {
         $request->validate([
-            'item_type'             => ['required', 'in:drug,investigation,product'],
-            'drug_id'               => ['nullable', 'exists:drugs,id', 'required_if:item_type,drug'],
-            'investigation_item_id' => ['nullable', 'exists:investigation_items,id', 'required_if:item_type,investigation'],
-            'product_id'            => ['nullable', 'exists:products,id', 'required_if:item_type,product'],
+            'product_id'            => ['required', 'exists:products,id'],
             'quantity_ordered'      => ['required', 'integer', 'min:1'],
             'unit_cost'             => ['required', 'numeric', 'min:0'],
         ]);
 
         try {
-            $this->procurementService->addItem($purchaseOrder, $request->only([
-                'item_type', 'drug_id', 'investigation_item_id', 'product_id', 'quantity_ordered', 'unit_cost',
-            ]));
+            $this->procurementService->addItem($purchaseOrder, array_merge(
+                $request->only(['product_id', 'quantity_ordered', 'unit_cost']),
+                ['item_type' => 'product']
+            ));
         } catch (\Throwable $e) {
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json(['error' => $e->getMessage()], 422);

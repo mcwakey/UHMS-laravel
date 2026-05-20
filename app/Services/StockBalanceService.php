@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\StockMovementDirection;
 use App\Models\Product;
-use App\Models\ProductStockBalance;
 use App\Models\StockBalance;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
@@ -21,12 +20,54 @@ class StockBalanceService
      */
     public function getQuantityForProductAtLocation(Product $product, StockLocation $location): float
     {
-        $balance = ProductStockBalance::query()
+        $balance = StockBalance::query()
             ->where('product_id', $product->id)
             ->where('stock_location_id', $location->id)
             ->first();
 
         return (float) ($balance?->quantity_on_hand ?? 0);
+    }
+
+    public function getCurrentProductStock(int $productId, int $locationId): float
+    {
+        $balance = StockBalance::query()
+            ->where('product_id', $productId)
+            ->where('stock_location_id', $locationId)
+            ->first();
+
+        return (float) ($balance?->quantity_on_hand ?? 0);
+    }
+
+    public function increaseProduct(int $productId, int $locationId, float $quantity): StockBalance
+    {
+        return $this->adjustProduct($productId, $locationId, abs($quantity));
+    }
+
+    public function decreaseProduct(int $productId, int $locationId, float $quantity): StockBalance
+    {
+        return $this->adjustProduct($productId, $locationId, -abs($quantity));
+    }
+
+    protected function adjustProduct(int $productId, int $locationId, float $delta): StockBalance
+    {
+        return DB::transaction(function () use ($productId, $locationId, $delta) {
+            /** @var StockBalance $balance */
+            $balance = StockBalance::firstOrCreate(
+                ['product_id' => $productId, 'stock_location_id' => $locationId],
+                ['drug_id' => null, 'quantity_on_hand' => 0]
+            );
+
+            $balance = StockBalance::query()
+                ->where('id', $balance->id)
+                ->lockForUpdate()
+                ->first();
+
+            $balance->quantity_on_hand = (float) $balance->quantity_on_hand + $delta;
+            $balance->last_movement_at = now();
+            $balance->save();
+
+            return $balance;
+        });
     }
 
     /**

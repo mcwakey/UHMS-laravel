@@ -23,16 +23,16 @@
 <div class="card mb-3">
     <div class="card-body py-2">
         <form method="GET" action="{{ route('admin.products.index') }}" class="row g-2 align-items-end">
-            <div class="col-md-4"><input type="text" name="search" class="form-control form-control-sm" placeholder="Search name or code" value="{{ $filters['search'] ?? '' }}"></div>
-            <div class="col-md-3">
-                <select name="type" class="form-select form-select-sm">
+            <div class="col-md-3"><input type="text" name="search" class="form-control form-control-sm" placeholder="Search name or code" value="{{ $filters['search'] ?? '' }}"></div>
+            <div class="col-md-2">
+                <select name="product_type" class="form-select form-select-sm">
                     <option value="">All types</option>
                     @foreach($types as $t)
-                        <option value="{{ $t->value }}" @selected(($filters['type'] ?? '') === $t->value)>{{ $t->label() }}</option>
+                        <option value="{{ $t->value }}" @selected(($filters['product_type'] ?? $filters['type'] ?? '') === $t->value)>{{ $t->label() }}</option>
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <select name="department_id" class="form-select form-select-sm">
                     <option value="">All departments</option>
                     @foreach($departments as $d)
@@ -40,7 +40,39 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2"><button class="btn btn-primary btn-sm w-100" type="submit">Filter</button></div>
+            <div class="col-md-2">
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">Any status</option>
+                    <option value="active" @selected(($filters['status'] ?? '') === 'active')>Active</option>
+                    <option value="inactive" @selected(($filters['status'] ?? '') === 'inactive')>Inactive</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="has_insurance_prices" class="form-select form-select-sm">
+                    <option value="">Any pricing</option>
+                    <option value="1" @selected(($filters['has_insurance_prices'] ?? '') === '1')>Has insurance prices</option>
+                    <option value="0" @selected(($filters['has_insurance_prices'] ?? '') === '0')>No insurance prices</option>
+                </select>
+            </div>
+            <div class="col-md-1"><button class="btn btn-primary btn-sm w-100" type="submit">Filter</button></div>
+            <div class="col-md-2">
+                <select name="is_billable" class="form-select form-select-sm">
+                    <option value="">Any billable state</option>
+                    <option value="1" @selected(($filters['is_billable'] ?? '') === '1')>Billable</option>
+                    <option value="0" @selected(($filters['is_billable'] ?? '') === '0')>Non-billable</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select name="supplier_id" class="form-select form-select-sm">
+                    <option value="">Any supplier history</option>
+                    @foreach($suppliers as $supplier)
+                        <option value="{{ $supplier->id }}" @selected((string)($filters['supplier_id'] ?? '') === (string) $supplier->id)>{{ $supplier->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary btn-sm w-100">Reset</a>
+            </div>
         </form>
     </div>
 </div>
@@ -50,7 +82,7 @@
         <div class="table-responsive">
             <table class="table table-hover mb-0 align-middle">
                 <thead class="table-light">
-                    <tr><th>Name</th><th>Code</th><th>Type</th><th>Unit</th><th>Departments</th><th>Status</th><th class="text-end">Actions</th></tr>
+                    <tr><th>Name</th><th>Code</th><th>Type</th><th>Unit</th><th>Departments</th><th>Insurance Prices</th><th>Status</th><th class="text-end">Actions</th></tr>
                 </thead>
                 <tbody>
                 @forelse($products as $product)
@@ -63,6 +95,24 @@
                             @foreach($product->departments as $d)
                                 <span class="badge bg-info-subtle text-info">{{ $d->name }}</span>
                             @endforeach
+                        </td>
+                        <td>
+                            @php
+                                $typeCount = (int) ($product->insurance_type_prices_count ?? $product->prices->whereNull('insurance_provider_id')->where('is_active', true)->count());
+                                $providerCount = (int) ($product->provider_prices_count ?? $product->prices->whereNotNull('insurance_provider_id')->where('is_active', true)->count());
+                            @endphp
+                            @if($product->base_price !== null)
+                                <span class="badge bg-light text-dark border">Base</span>
+                            @endif
+                            @if($typeCount > 0)
+                                <span class="badge bg-primary-subtle text-primary">{{ $typeCount }} type</span>
+                            @endif
+                            @if($providerCount > 0)
+                                <span class="badge bg-purple-subtle text-purple">{{ $providerCount }} provider</span>
+                            @endif
+                            @if($product->base_price === null && $typeCount === 0 && $providerCount === 0)
+                                <span class="text-muted">None</span>
+                            @endif
                         </td>
                         <td>
                             @if($product->is_active)<span class="badge bg-success-subtle text-success">Active</span>
@@ -82,13 +132,13 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="text-center text-muted py-4">No products found.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-4">No products found.</td></tr>
                 @endforelse
                 </tbody>
             </table>
         </div>
     </div>
-    <div class="card-footer">{{ $products->links() }}</div>
+    <div class="card-footer d-flex justify-content-end">{{ $products->links() }}</div>
 </div>
 
 {{-- Edit Modals --}}

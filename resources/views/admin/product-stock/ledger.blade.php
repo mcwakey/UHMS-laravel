@@ -80,7 +80,7 @@
                         </td>
                         <td><small>{{ $m->batch_no ?? '—' }}</small></td>
                         <td><small>{{ $m->expiry_date?->format('Y-m-d') ?? '—' }}</small></td>
-                        <td><small>{{ $m->performer->name ?? '—' }}</small></td>
+                        <td><small>{{ $m->performedBy->name ?? '—' }}</small></td>
                         <td><small class="text-muted">{{ \Illuminate\Support\Str::limit($m->notes, 50) }}</small></td>
                     </tr>
                 @empty

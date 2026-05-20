@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Phase 2 — unify drug ledger with product ledger by adding a product_id column
@@ -17,6 +19,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            $this->upSqlite();
+            return;
+        }
+
         $this->ensureColumn('stock_movements', 'product_id',
             'ALTER TABLE stock_movements ADD COLUMN product_id BIGINT UNSIGNED NULL AFTER drug_id'
         );
@@ -59,6 +66,18 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            foreach (['stock_movements', 'stock_balances'] as $table) {
+                if (Schema::hasColumn($table, 'product_id')) {
+                    Schema::table($table, function (Blueprint $blueprint) {
+                        $blueprint->dropConstrainedForeignId('product_id');
+                    });
+                }
+            }
+
+            return;
+        }
+
         foreach (['stock_movements', 'stock_balances'] as $table) {
             $fk = $table . '_product_id_foreign';
             $idx = $table . '_product_id_index';
@@ -76,6 +95,10 @@ return new class extends Migration
 
     private function columnExists(string $table, string $column): bool
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return Schema::hasColumn($table, $column);
+        }
+
         $row = DB::selectOne(
             'SELECT COUNT(*) AS c FROM information_schema.columns '
             . 'WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?',
@@ -86,6 +109,11 @@ return new class extends Migration
 
     private function indexExists(string $table, string $index): bool
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return collect(DB::select("PRAGMA index_list('{$table}')"))
+                ->contains(fn ($row) => ($row->name ?? null) === $index);
+        }
+
         $row = DB::selectOne(
             'SELECT COUNT(*) AS c FROM information_schema.statistics '
             . 'WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?',
@@ -96,6 +124,10 @@ return new class extends Migration
 
     private function foreignKeyExists(string $table, string $constraint): bool
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return false;
+        }
+
         $row = DB::selectOne(
             'SELECT COUNT(*) AS c FROM information_schema.table_constraints '
             . 'WHERE table_schema = DATABASE() AND table_name = ? AND constraint_name = ? '
@@ -123,6 +155,31 @@ return new class extends Migration
     {
         if (! $this->foreignKeyExists($table, $constraint)) {
             DB::statement($sql);
+        }
+    }
+
+    private function upSqlite(): void
+    {
+        foreach (['stock_movements', 'stock_balances'] as $table) {
+            if (! Schema::hasColumn($table, 'product_id')) {
+                Schema::table($table, function (Blueprint $blueprint) {
+                    $blueprint->foreignId('product_id')->nullable()->constrained('products')->nullOnDelete();
+                });
+            }
+        }
+
+        if (Schema::hasColumn('drugs', 'product_id')) {
+            DB::statement(
+                'UPDATE stock_movements SET product_id = '
+                . '(SELECT product_id FROM drugs WHERE drugs.id = stock_movements.drug_id) '
+                . 'WHERE product_id IS NULL AND drug_id IS NOT NULL'
+            );
+
+            DB::statement(
+                'UPDATE stock_balances SET product_id = '
+                . '(SELECT product_id FROM drugs WHERE drugs.id = stock_balances.drug_id) '
+                . 'WHERE product_id IS NULL AND drug_id IS NOT NULL'
+            );
         }
     }
 };

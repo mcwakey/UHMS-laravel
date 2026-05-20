@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Enums\StockMovementType;
-use App\Models\ProductStockBalance;
-use App\Models\ProductStockMovement;
+use App\Models\StockBalance;
+use App\Models\StockMovement;
 use App\Models\StockLocation;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -27,7 +27,7 @@ class ProductStockService
      * $data keys: product_id, stock_location_id, quantity,
      *             unit_cost?, batch_no?, expiry_date?, notes?, movement_type? (default PURCHASE_RECEIVED)
      */
-    public function receive(array $data): ProductStockMovement
+    public function receive(array $data): StockMovement
     {
         $type = $data['movement_type'] ?? StockMovementType::PURCHASE_RECEIVED;
         if (is_string($type)) {
@@ -54,7 +54,7 @@ class ProductStockService
      * $data keys: product_id, stock_location_id, quantity (signed delta),
      *             reason (notes), allow_negative?, type? (ADJUSTMENT_IN/OUT, DAMAGED, EXPIRED)
      */
-    public function adjust(array $data): ProductStockMovement
+    public function adjust(array $data): StockMovement
     {
         $delta = (float) ($data['quantity'] ?? 0);
         if ($delta == 0.0) {
@@ -90,7 +90,7 @@ class ProductStockService
      * $data keys: product_id, from_location_id, to_location_id, quantity,
      *             notes?, unit_cost?, batch_no?, expiry_date?
      *
-     * @return array{out: ProductStockMovement, in: ProductStockMovement}
+    * @return array{out: StockMovement, in: StockMovement}
      */
     public function transfer(array $data): array
     {
@@ -157,7 +157,8 @@ class ProductStockService
     public function balancesGroupedByLocation(): \Illuminate\Support\Collection
     {
         $locations = StockLocation::query()->where('is_active', true)->orderBy('name')->get();
-        $balances  = ProductStockBalance::with('product')
+        $balances  = StockBalance::with('product')
+            ->whereNotNull('product_id')
             ->whereIn('stock_location_id', $locations->pluck('id'))
             ->get()
             ->groupBy('stock_location_id');

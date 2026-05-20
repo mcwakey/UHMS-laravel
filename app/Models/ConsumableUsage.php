@@ -56,7 +56,7 @@ class ConsumableUsage extends Model
 
     public function movement()
     {
-        return $this->belongsTo(ProductStockMovement::class, 'stock_movement_id');
+        return $this->belongsTo(StockMovement::class, 'stock_movement_id');
     }
 
     public function user()

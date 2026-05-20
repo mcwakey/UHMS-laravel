@@ -40,6 +40,10 @@ return new class extends Migration
 
     private function columnExists(string $table, string $column): bool
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return Schema::hasColumn($table, $column);
+        }
+
         $db = DB::connection()->getDatabaseName();
         $row = DB::selectOne(
             'SELECT COUNT(*) AS c FROM information_schema.columns WHERE table_schema = ? AND table_name = ? AND column_name = ?',

@@ -5,7 +5,7 @@
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">Product Stock Balances</h4>
-        <small class="text-muted">Unified on-hand inventory across the hospital. One ledger, one truth — read from <code>product_stock_balances</code>.</small>
+        <small class="text-muted">Unified on-hand inventory across the hospital. One ledger, one truth — read from <code>stock_balances</code>.</small>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('admin.store.stock.ledger') }}" class="btn btn-outline-primary"><i class="ti ti-list me-1"></i>View Ledger</a>

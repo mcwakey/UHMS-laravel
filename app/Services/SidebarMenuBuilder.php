@@ -456,6 +456,22 @@ class SidebarMenuBuilder
                         'module' => 'inventory',
                     ],
                     [
+                        'label' => 'Purchase Returns',
+                        'icon' => 'ti ti-file-minus',
+                        'route' => 'admin.store.purchase-returns.index',
+                        'active_patterns' => ['admin.store.purchase-returns.*'],
+                        'permission' => 'store.purchase.view',
+                        'module' => 'inventory',
+                    ],
+                    [
+                        'label' => 'Stock Requisitions',
+                        'icon' => 'ti ti-clipboard-list',
+                        'route' => 'admin.store.stock-requisitions.index',
+                        'active_patterns' => ['admin.store.stock-requisitions.*'],
+                        'permission' => 'stock.view',
+                        'module' => 'inventory',
+                    ],
+                    [
                         'label' => 'Stock Locations',
                         'icon' => 'ti ti-building-warehouse',
                         'route' => 'admin.stock-locations.index',
@@ -490,9 +506,9 @@ class SidebarMenuBuilder
                     [
                         'label' => 'Stock Transfers',
                         'icon' => 'ti ti-transfer',
-                        'route' => 'admin.store.transfers.index',
+                        'route' => 'admin.product-stock.transfer.form',
                         'active_patterns' => ['admin.store.transfers.*', 'admin.product-stock.transfer*'],
-                        'permission' => 'store.transfer.view',
+                        'permission' => 'stock.transfer',
                         'module' => 'inventory',
                     ],
                     [

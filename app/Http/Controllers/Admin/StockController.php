@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\StockMovementType;
 use App\Http\Controllers\Controller;
 use App\Models\Drug;
-use App\Models\ProductStockBalance;
+use App\Models\StockBalance;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
 use App\Services\StockAdjustmentService;
@@ -26,14 +26,14 @@ class StockController extends Controller
     /**
      * Product Stock Balances — single source of truth for on-hand inventory.
      *
-     * Reads exclusively from `product_stock_balances` joined to `products`
+    * Reads exclusively from `stock_balances` joined to `products`
      * and `stock_locations`. Every physical item in the hospital is a Product
      * and lives in this one ledger; there are no parallel drug/investigation
      * stock tables surfaced here.
      */
     public function balances(Request $request)
     {
-        $balances = ProductStockBalance::query()
+        $balances = StockBalance::query()
             ->with([
                 'product:id,name,code,product_type,unit,reorder_level,is_active',
                 'product.departments:id,name,type',
@@ -51,11 +51,9 @@ class StockController extends Controller
                 });
             })
             ->when($request->low_only, function ($q) {
-                $q->whereHas('product', function ($pq) {
-                    $pq->whereColumn('reorder_level', '>=',
-                        DB::raw('(SELECT quantity_on_hand FROM product_stock_balances psb WHERE psb.product_id = products.id AND psb.stock_location_id = product_stock_balances.stock_location_id LIMIT 1)'));
-                });
+                $q->whereRaw('quantity_on_hand <= COALESCE((SELECT reorder_level FROM products WHERE products.id = stock_balances.product_id), 0)');
             })
+            ->whereNotNull('product_id')
             ->orderBy('product_id')
             ->paginate(25)
             ->withQueryString();

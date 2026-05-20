@@ -16,14 +16,8 @@
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label class="form-label">Stock Location *</label>
-                    <select name="stock_location_id" class="form-select" required>
-                        <option value="">— Select location —</option>
-                        @foreach($locations as $l)
-                            <option value="{{ $l->id }}" @selected(old('stock_location_id') == $l->id)>
-                                {{ $l->name }} @if($l->is_main) (Main) @endif
-                            </option>
-                        @endforeach
-                    </select>
+                    <input type="hidden" name="stock_location_id" value="{{ $mainStore->id }}">
+                    <input type="text" class="form-control" value="{{ $mainStore->name }} (Main Store)" disabled>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Notes</label>

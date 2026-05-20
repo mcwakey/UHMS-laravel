@@ -32,13 +32,9 @@
             <span class="form-check-label">Active</span>
         </label>
     </div>
+    <input type="hidden" name="is_main" value="0">
     <div class="col-md-6 mb-3">
-        <label class="form-check">
-            <input type="hidden" name="is_main" value="0">
-            <input type="checkbox" class="form-check-input" name="is_main" value="1"
-                   @checked(old('is_main', $loc?->is_main))>
-            <span class="form-check-label">Main Store (only one allowed)</span>
-        </label>
+        <div class="small text-muted">Main Store is managed automatically as a protected system location.</div>
     </div>
 </div>
 <div class="mb-3">

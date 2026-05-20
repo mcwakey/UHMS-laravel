@@ -4,16 +4,18 @@ namespace App\Services;
 
 use App\Enums\StockMovementDirection;
 use App\Enums\StockMovementType;
-use App\Models\ProductStockBalance;
-use App\Models\ProductStockMovement;
+use App\Models\StockBalance;
+use App\Models\StockMovement;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use RuntimeException;
 
 /**
- * Parallel of StockMovementService for the unified Product ledger.
- * Drug-based pharmacy stock continues to flow through StockMovementService.
+ * Product-native facade for the canonical stock ledger.
+ *
+ * The historical class name is retained for compatibility, but it writes only
+ * to stock_movements and stock_balances. It never writes product_stock_* rows.
  */
 class ProductStockMovementService
 {
@@ -25,7 +27,7 @@ class ProductStockMovementService
      *                source_type, source_id, performed_by, movement_date,
      *                notes, allow_negative
      */
-    public function createMovement(array $data): ProductStockMovement
+    public function createMovement(array $data): StockMovement
     {
         $productId  = (int) ($data['product_id'] ?? 0);
         $locationId = (int) ($data['stock_location_id'] ?? 0);
@@ -54,7 +56,8 @@ class ProductStockMovementService
                 }
             }
 
-            $movement = ProductStockMovement::create([
+            $movement = StockMovement::create([
+                'drug_id'           => $data['drug_id'] ?? null,
                 'product_id'        => $productId,
                 'stock_location_id' => $locationId,
                 'movement_type'     => $type,
@@ -78,21 +81,21 @@ class ProductStockMovementService
 
     public function getCurrentStock(int $productId, int $locationId): float
     {
-        $balance = ProductStockBalance::query()
+        $balance = StockBalance::query()
             ->where('product_id', $productId)
             ->where('stock_location_id', $locationId)
             ->first();
         return (float) ($balance?->quantity_on_hand ?? 0);
     }
 
-    protected function adjustBalance(int $productId, int $locationId, float $delta): ProductStockBalance
+    protected function adjustBalance(int $productId, int $locationId, float $delta): StockBalance
     {
         return DB::transaction(function () use ($productId, $locationId, $delta) {
-            $balance = ProductStockBalance::firstOrCreate(
+            $balance = StockBalance::firstOrCreate(
                 ['product_id' => $productId, 'stock_location_id' => $locationId],
-                ['quantity_on_hand' => 0],
+                ['drug_id' => null, 'quantity_on_hand' => 0],
             );
-            $balance = ProductStockBalance::query()->where('id', $balance->id)->lockForUpdate()->first();
+            $balance = StockBalance::query()->where('id', $balance->id)->lockForUpdate()->first();
             $balance->quantity_on_hand = (float) $balance->quantity_on_hand + $delta;
             $balance->last_movement_at = now();
             $balance->save();
@@ -104,7 +107,7 @@ class ProductStockMovementService
      * Emit an opposite-direction movement that cancels an earlier one (e.g. when an invoice
      * line that consumed stock is voided). Linked back to the original via source.
      */
-    public function reverseMovement(ProductStockMovement $original, ?string $notes = null): ProductStockMovement
+    public function reverseMovement(StockMovement $original, ?string $notes = null): StockMovement
     {
         $reverseType = $original->direction === StockMovementDirection::IN
             ? StockMovementType::REVERSAL_OUT
@@ -128,15 +131,16 @@ class ProductStockMovementService
     }
 
     /**
-     * Rebuild ProductStockBalance rows from the movement ledger.
+    * Rebuild StockBalance rows from the canonical movement ledger.
      * Optionally scope to a single product and/or location.
      *
      * @return int number of (product, location) pairs rebuilt
      */
     public function rebuildAllBalances(?int $productId = null, ?int $locationId = null): int
     {
-        $pairs = ProductStockMovement::query()
+        $pairs = StockMovement::query()
             ->select('product_id', 'stock_location_id')
+            ->whereNotNull('product_id')
             ->when($productId, fn ($q) => $q->where('product_id', $productId))
             ->when($locationId, fn ($q) => $q->where('stock_location_id', $locationId))
             ->groupBy('product_id', 'stock_location_id')
@@ -149,30 +153,31 @@ class ProductStockMovementService
         return $pairs->count();
     }
 
-    public function rebuildBalance(int $productId, int $locationId): ProductStockBalance
+    public function rebuildBalance(int $productId, int $locationId): StockBalance
     {
         return DB::transaction(function () use ($productId, $locationId) {
-            $in = (float) ProductStockMovement::query()
+            $in = (float) StockMovement::query()
                 ->where('product_id', $productId)
                 ->where('stock_location_id', $locationId)
                 ->where('direction', StockMovementDirection::IN->value)
                 ->sum('quantity');
 
-            $out = (float) ProductStockMovement::query()
+            $out = (float) StockMovement::query()
                 ->where('product_id', $productId)
                 ->where('stock_location_id', $locationId)
                 ->where('direction', StockMovementDirection::OUT->value)
                 ->sum('quantity');
 
-            $lastMovementAt = ProductStockMovement::query()
+            $lastMovementAt = StockMovement::query()
                 ->where('product_id', $productId)
                 ->where('stock_location_id', $locationId)
                 ->latest('movement_date')
                 ->value('movement_date');
 
-            return ProductStockBalance::updateOrCreate(
+            return StockBalance::updateOrCreate(
                 ['product_id' => $productId, 'stock_location_id' => $locationId],
                 [
+                    'drug_id'           => null,
                     'quantity_on_hand' => $in - $out,
                     'last_movement_at' => $lastMovementAt,
                 ]

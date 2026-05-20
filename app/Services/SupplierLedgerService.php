@@ -39,6 +39,9 @@ class SupplierLedgerService
         if (! in_array($entryType, SupplierLedgerEntry::types(), true)) {
             throw new \InvalidArgumentException("Unknown supplier ledger entry type: {$entryType}");
         }
+        if ($sourceType === null && ! in_array($entryType, SupplierLedgerEntry::manualTypes(), true)) {
+            throw new \InvalidArgumentException('This supplier ledger entry must be created by its source workflow.');
+        }
 
         return DB::transaction(function () use ($supplier, $entryType, $debit, $credit, $description, $sourceType, $sourceId, $entryDate, $userId) {
             $current = $this->balance($supplier);
@@ -76,8 +79,37 @@ class SupplierLedgerService
     public function entriesQuery(Supplier $supplier)
     {
         return SupplierLedgerEntry::query()
+            ->with('creator')
             ->where('supplier_id', $supplier->id)
             ->orderBy('entry_date')
             ->orderBy('id');
+    }
+
+    public function recordManualEntry(Supplier $supplier, array $data): SupplierLedgerEntry
+    {
+        $entryType = $data['entry_type'] ?? '';
+        if (! in_array($entryType, SupplierLedgerEntry::manualTypes(), true)) {
+            throw new \InvalidArgumentException('Manual supplier ledger entries can only be Payment, Credit Note, or Debit Note.');
+        }
+
+        $amount = (float) ($data['amount'] ?? 0);
+        if ($amount <= 0) {
+            $amount = max((float) ($data['debit'] ?? 0), (float) ($data['credit'] ?? 0));
+        }
+        if ($amount <= 0) {
+            throw new \InvalidArgumentException('Amount must be greater than zero.');
+        }
+
+        $debit = in_array($entryType, [SupplierLedgerEntry::TYPE_PAYMENT, SupplierLedgerEntry::TYPE_CREDIT_NOTE], true) ? $amount : 0.0;
+        $credit = $entryType === SupplierLedgerEntry::TYPE_DEBIT_NOTE ? $amount : 0.0;
+
+        return $this->recordEntry(
+            supplier: $supplier,
+            entryType: $entryType,
+            debit: $debit,
+            credit: $credit,
+            description: $data['description'],
+            entryDate: isset($data['entry_date']) ? Carbon::parse($data['entry_date']) : null,
+        );
     }
 }

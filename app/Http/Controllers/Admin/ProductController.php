@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\InsuranceProvider;
 use App\Models\Product;
+use App\Models\Supplier;
 use App\Services\ProductService;
 use Illuminate\Http\Request;
 use Throwable;
@@ -18,9 +19,14 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $request->only(['search', 'type', 'department_id', 'is_active']);
-        if (array_key_exists('is_active', $filters) && $filters['is_active'] === '') {
-            unset($filters['is_active']);
+        $filters = $request->only([
+            'search', 'product_type', 'type', 'department_id', 'status',
+            'is_active', 'is_billable', 'has_insurance_prices', 'supplier_id',
+        ]);
+        foreach (['is_active', 'is_billable', 'has_insurance_prices'] as $booleanFilter) {
+            if (array_key_exists($booleanFilter, $filters) && $filters[$booleanFilter] === '') {
+                unset($filters[$booleanFilter]);
+            }
         }
         $products    = $this->products->listProducts($filters);
 
@@ -30,6 +36,7 @@ class ProductController extends Controller
 
         $types       = ProductType::cases();
         $departments = Department::orderBy('name')->get();
+        $suppliers   = Supplier::active()->orderBy('name')->get(['id', 'name']);
 
         $insuranceTypes     = InsuranceType::cases();
         $insuranceProviders = InsuranceProvider::where('is_active', true)
@@ -38,7 +45,7 @@ class ProductController extends Controller
             ->get(['id', 'name', 'short_name', 'type']);
 
         return view('admin.products.index', compact(
-            'products', 'types', 'departments', 'filters', 'insuranceTypes', 'insuranceProviders'
+            'products', 'types', 'departments', 'suppliers', 'filters', 'insuranceTypes', 'insuranceProviders'
         ));
     }
 

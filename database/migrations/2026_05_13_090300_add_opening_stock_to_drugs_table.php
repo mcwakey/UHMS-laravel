@@ -39,6 +39,10 @@ return new class extends Migration {
 
     protected function columnExists(string $table, string $column): bool
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return Schema::hasColumn($table, $column);
+        }
+
         $rows = DB::select("SHOW COLUMNS FROM `{$table}` LIKE '{$column}'");
         return ! empty($rows);
     }

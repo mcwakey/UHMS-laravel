@@ -1,653 +1,1067 @@
 You are a senior Laravel + Inertia/Vue architect working on **UHMS — Ultimate Hospital Management System**.
 
-The current stock implementation is still wrong and inconsistent.
+We need to fix multiple small but important bugs in Store / Products / Stock / Supplier / Purchase Order workflows, and then add **Purchase Returns** and **Department Stock Requisition** without breaking existing workflows.
 
-We already agreed on this rule:
+Important: UHMS must use **one unified product-based stock system only**.
 
-```text
-Every physical item in the hospital is a Product.
-There must be only one inventory system.
-```
+Do not create any parallel stock system.
 
-But the system is still behaving like it has parallel inventory systems:
+Do not reintroduce `drug_id` stock logic.
 
-```text
-Drug catalogue shows quantity
-Product Stock Balances does not show the same quantity
-
-Investigation Items page shows nothing
-Products linked to Investigation department already exist
-
-Investigation Items page still has Add New Item button
-Departments are still able to create items outside Products
-```
-
-This must be fixed completely.
-
-Focus only on fixing the unified product-based inventory system and department product catalogues. Do not refactor unrelated modules.
+Do not break the already working workflow.
 
 ---
 
-# 1. Non-Negotiable Rule
+# 1. Non-Negotiable Architecture Rule
 
-There must be only one inventory system.
-
-Use only:
+The system must use one stock system:
 
 ```text
 products
+stock_locations
 stock_movements
 stock_balances
-stock_locations
-product_department
+purchase_orders
+purchase_order_items
+goods_received_notes
+supplier_ledger_entries
 ```
 
-Do not use active workflows based on:
+Every physical item is a product.
+
+Do not use or write active workflow data to:
 
 ```text
-drugs
+drugs as stock source
 drug_stock
 stock_movements.drug_id
 stock_balances.drug_id
 product_stock_movements
 product_stock_balances
-investigation_items
-procedure_items
-lab_items
+investigation_items as stock source
+procedure_items as stock source
 standalone consumables table
 ```
 
-If these old tables or models still physically exist during development, stop using them in active workflows.
+If old columns/tables still exist, active workflows must not use them.
 
 ---
 
-# 2. Product Is the Only Physical Item
+# 2. Current Bugs to Fix
 
-Every physical item must be stored in `products`.
+Fix these issues carefully:
+
+1. Product filters are not working.
+2. Product pagination appears on the left; it should align correctly to the right.
+3. Product list needs an insurance prices column, like Services.
+4. Supplier ledger page allows wrong manual entries.
+5. Supplier ledger filters are not working.
+6. Supplier ledger should link directly to related source document.
+7. Purchase order total value card is incorrect.
+8. Purchase order filters are not working.
+9. Stock location table HTML/layout is broken.
+10. Stock location notes column does not display properly.
+11. Main Store should exist by default and cannot be edited or deactivated.
+12. Stock Balance page Receive Stock throws SQL error:
+
+```text
+SQLSTATE integrity constraint violation: column drug_id cannot be null
+```
+
+13. Receive stock, stock transfer, stock adjustment, and stock return should be handled through modals.
+14. Add Purchase Returns.
+15. Add Department Stock Requisition workflow.
+16. Stock transfers to departments should be based on department requisitions.
+17. Receiving department must acknowledge receipt before stock is updated into their location.
+18. Do not break existing Store, Product, PO, Billing, Pharmacy, Investigation, Procedure, or Stock workflow.
+
+---
+
+# 3. Product Page Fixes
+
+## 3.1 Product Filters Not Working
+
+Inspect product index page, controller, route, request query, and frontend filter bindings.
+
+Filters may include:
+
+```text
+search
+product_type
+department_id
+status
+is_billable
+has_insurance_prices
+supplier_id
+```
+
+Fix:
+
+* query string binding
+* controller filtering
+* Inertia props
+* pagination preserving query
+* frontend filter submit/reset
+* debounce/search if used
+
+Pagination must preserve filters:
+
+```php
+->withQueryString()
+```
+
+or the project’s equivalent pattern.
+
+## 3.2 Product Pagination Alignment
+
+Pagination should not appear on the left if the design expects it on the right.
+
+Fix CSS/layout using the project’s existing style conventions.
+
+Expected:
+
+```text
+Pagination aligned right or consistently with other index pages.
+```
+
+Do not patch with ugly inline styles unless needed.
+
+## 3.3 Add Insurance Prices Column
+
+On Products index, add a column similar to Services:
+
+```text
+Insurance Prices
+```
+
+It should show whether product has insurance prices configured.
 
 Examples:
 
 ```text
-Paracetamol
-Ceftriaxone
-Gloves
-Malaria RDT Kit
-EDTA Tube
-Sutures
-Gauze
-Syringe
-X-ray Film
-Oxygen Mask
+None
+NHIS, Private
+Provider-specific
+NHIS + Provider-specific
 ```
 
-Product types:
+Or badges:
 
 ```text
-DRUG
-CONSUMABLE
-REAGENT
-SURGICAL_SUPPLY
-MEDICAL_SUPPLY
-EQUIPMENT
-GENERAL_ITEM
+Base
+NHIS
+Private
+Corporate
+Provider
 ```
 
-Rules:
+The column should be derived from:
 
-* Pharmacy drugs are products with `product_type = DRUG`.
-* Lab/investigation consumables are products linked to investigation department.
-* Theatre/procedure consumables are products linked to procedure/theatre department.
-* Ward consumables are products linked to ward department.
-* Store/Admin creates products.
-* Departments only consume/view products linked to them.
+```text
+product_insurance_prices
+product_provider_prices
+```
+
+or the existing product pricing tables.
+
+Avoid N+1 queries.
+
+Eager-load/count:
+
+```php
+withCount(['insurancePrices', 'providerPrices'])
+```
+
+or equivalent.
 
 ---
 
-# 3. Fix Product Stock Balances
+# 4. Supplier Ledger Fixes
 
-Product Stock Balances must show all product quantities from the unified stock balance table.
+## 4.1 Ledger Manual Entry Restrictions
 
-The page must read from:
-
-```text
-stock_balances
-```
-
-joined with:
+On the Supplier Ledger page, manual entry should only allow:
 
 ```text
-products
-stock_locations
-departments
+Payment
+Credit Note
+Debit Note
 ```
 
-Each balance row must be based on:
+The ledger page must not allow manually entering:
 
 ```text
-stock_balances.product_id
-stock_balances.stock_location_id
-stock_balances.quantity_on_hand
+Purchase Order
+Goods Received
+Return to Supplier
+Supplier Invoice
 ```
 
-Do not read from:
+These must be created automatically from their own workflows.
+
+## 4.2 Source of Ledger Entries
+
+Enforce this:
 
 ```text
-drug_stock
-product_stock_balances
-stock_balances.drug_id
-products.quantity
-drugs.quantity
+Purchase Orders / Goods Received entries come from PO / GRN receiving workflow.
+Return to Supplier entries come from Purchase Return / Supplier Return workflow.
+Payments come from Supplier Ledger payment form.
+Credit Notes come from Supplier Ledger credit note form.
+Debit Notes come from Supplier Ledger debit note form.
 ```
 
-The Product Stock Balances page must show:
+Do not let the user manually create a fake goods received or return record from the ledger page.
+
+## 4.3 Supplier Ledger Source Links
+
+On Supplier Ledger page, each entry with `source_type` and `source_id` should link to the concerned document.
+
+Examples:
 
 ```text
-Product
-Product Type
-Location
-Department
-Quantity on Hand
-Reorder Level
-Status
+GOODS_RECEIVED → link to GRN / Purchase Order receipt page
+PAYMENT → link to supplier payment detail if exists
+RETURN_TO_SUPPLIER → link to purchase return page
+CREDIT_NOTE → link to credit note detail or ledger entry
+DEBIT_NOTE → link to debit note detail or ledger entry
+PURCHASE_ORDER → link to purchase order page if used
 ```
 
-Example expected result after PO receiving:
+Display:
 
 ```text
-Paracetamol    DRUG       Main Store    Store       100
-Gloves         CONSUMABLE Main Store    Store       500
-Malaria Kit    REAGENT    Main Store    Store       50
+View Source
 ```
+
+or make the reference clickable.
+
+## 4.4 Supplier Ledger Filters Not Working
+
+Fix filters on ledger page.
+
+Filters may include:
+
+```text
+supplier_id
+entry_type
+date_from
+date_to
+search
+debit_credit
+source_type
+```
+
+Ensure:
+
+* backend applies filters
+* frontend sends query params correctly
+* pagination preserves filters
+* reset works
+* date filters use correct field, likely `entry_date`
 
 ---
 
-# 4. Fix Purchase Order Receiving
+# 5. Purchase Order Page Fixes
 
-When a purchase order is received, the received product quantity must be posted into the unified inventory system.
+## 5.1 Total Value Card Incorrect
 
-Receiving must:
+Fix the total value card.
 
-1. Resolve Main Store stock location.
-2. Create `PURCHASE_RECEIVED` movement in `stock_movements`.
-3. Use `product_id`.
-4. Use `stock_location_id = Main Store`.
-5. Update or create matching `stock_balances` row.
-6. Update purchase order received quantity.
-7. Update supplier ledger if supplier exists.
+Expected total should be based on the correct records and statuses.
 
-Correct movement:
+Clarify and implement one of these, preferably showing both if useful:
 
 ```text
-stock_movements.product_id = received product
-stock_movements.stock_location_id = Main Store location
-stock_movements.movement_type = PURCHASE_RECEIVED
-stock_movements.direction = IN
-stock_movements.quantity = received quantity
+Total Ordered Value = SUM(quantity_ordered * unit_cost)
+Total Received Value = SUM(quantity_received * unit_cost)
+Outstanding Value = Total Ordered Value - Total Received Value
 ```
 
-Correct balance:
+If the current card says “Total Value”, define it clearly.
+
+Recommended dashboard cards on Purchase Orders page:
 
 ```text
-stock_balances.product_id = received product
-stock_balances.stock_location_id = Main Store location
-quantity_on_hand increases by received quantity
+Total Ordered Value
+Total Received Value
+Outstanding Value
+Pending POs
+Partially Received POs
 ```
 
-Do not write received PO quantities only to drug stock.
+Use products-based PO items only.
 
-Do not write to product_stock_balances.
+Do not calculate from drug tables.
 
-Do not create stock movements using drug_id.
+## 5.2 Purchase Order Filters Not Working
+
+Fix PO filters:
+
+```text
+search
+supplier_id
+status
+date_from
+date_to
+product_id
+```
+
+Ensure:
+
+* backend query applies filters
+* frontend sends query params
+* pagination preserves filters
+* reset works
+* status filter matches actual enum/status values
 
 ---
 
-# 5. Fix Drug Catalogue
+# 6. Stock Location Page Fixes
 
-Pharmacy Drug Catalogue must be only a filtered product catalogue.
+## 6.1 Broken Table HTML/Layout
 
-It must load:
+Fix the stock location table display.
 
-```text
-products
-WHERE product_type = DRUG
-AND product is linked to Pharmacy department
-```
+Inspect Blade/Vue component.
 
-It must not use:
+Common issues to check:
 
-```text
-drugs table
-drug_stock
-legacy drug quantity
-```
+* unclosed `<td>`, `<tr>`, `<div>`
+* broken slot/template
+* notes column rendering raw HTML incorrectly
+* long notes breaking table width
+* actions column misaligned
 
-The quantity shown in Drug Catalogue must come from:
+The table should display cleanly.
 
-```text
-stock_balances.quantity_on_hand
-WHERE stock_balances.product_id = products.id
-AND stock_balances.stock_location_id = Pharmacy stock location
-```
+## 6.2 Notes Column
 
-Important behavior:
+Notes column should display properly:
 
-If a drug has been received into Main Store but not transferred to Pharmacy:
-
-```text
-Product Stock Balances:
-Paracetamol — Main Store — 100
-
-Pharmacy Drug Catalogue:
-Paracetamol — Pharmacy Available Qty — 0
-```
-
-After transfer:
-
-```text
-Main Store → Pharmacy Qty 20
-
-Product Stock Balances:
-Paracetamol — Main Store — 80
-Paracetamol — Pharmacy — 20
-
-Pharmacy Drug Catalogue:
-Paracetamol — Pharmacy Available Qty — 20
-```
-
-This must be consistent.
-
----
-
-# 6. Fix Investigation Items Page
-
-The current Investigation Items page is wrong.
-
-It must no longer be a creation page.
-
-Rename/rework it as:
-
-```text
-Investigation Consumables
-```
-
-It must load products from:
-
-```text
-products
-WHERE product is linked to the current Investigation/Lab department
-AND product_type IN (CONSUMABLE, REAGENT, MEDICAL_SUPPLY, GENERAL_ITEM)
-```
-
-Remove or hide:
-
-```text
-Add New Item
-Create Investigation Item
-Edit Investigation Item as separate entity
-```
-
-There should be no separate investigation item creation.
-
-If an investigation department needs an item:
-
-```text
-Store/Admin creates Product
-Store/Admin links Product to Investigation department
-Investigation Consumables page displays it
-```
-
----
-
-# 7. Fix Procedure Consumables Page
-
-Procedure/Theatre consumables must also be a filtered product catalogue.
-
-It must load:
-
-```text
-products
-WHERE product is linked to Procedure/Theatre department
-AND product_type IN (CONSUMABLE, SURGICAL_SUPPLY, MEDICAL_SUPPLY, GENERAL_ITEM)
-```
-
-Do not create separate procedure items.
-
-Do not allow Theatre users to create products.
-
----
-
-# 8. Fix Department Catalogue Rules
-
-All department item/catalogue pages must become product views.
-
-## Pharmacy
-
-```text
-Products linked to Pharmacy
-product_type = DRUG
-quantity from Pharmacy stock location
-```
-
-## Investigation
-
-```text
-Products linked to Investigation/Lab department
-product_type IN consumable/reagent/supply types
-quantity from Investigation department stock location
-```
-
-## Theatre/Procedure
-
-```text
-Products linked to Theatre/Procedure department
-product_type IN surgical/consumable/supply types
-quantity from Theatre stock location
-```
-
-## Ward
-
-```text
-Products linked to Ward department
-quantity from Ward stock location
-```
-
-Departments must not create products.
-
----
-
-# 9. Fix Transfer Flow
-
-Transfers must move stock from Main Store to department stock locations.
-
-When a product is transferred:
-
-```text
-TRANSFER_OUT from Main Store
-TRANSFER_IN into department stock location
-```
-
-Update `stock_balances` for both locations.
-
-After transfer, the department catalogue must show the updated quantity.
+* truncate long notes
+* show tooltip or modal for full note
+* do not break table layout
+* preserve safe escaping
+* do not render dangerous raw HTML
 
 Example:
 
 ```text
-Main Store → Lab
-Malaria RDT Kit Qty 10
+Short note visible, long note truncated with “View”.
 ```
 
-Expected balances:
+## 6.3 Main Store Protection
+
+Main Store should exist by default.
+
+Rules:
 
 ```text
-Malaria RDT Kit — Main Store — reduced by 10
-Malaria RDT Kit — Lab — increased by 10
+Main Store must be created/seeded by default.
+Main Store must be linked to Store / Procurement department.
+Main Store cannot be edited by normal UI.
+Main Store cannot be deactivated.
+Main Store cannot be deleted.
+Only Super Admin may rename it if absolutely necessary, but default behavior should protect it.
 ```
 
-Expected Investigation Consumables:
+In UI:
+
+* hide edit/deactivate/delete buttons for Main Store
+* show badge:
 
 ```text
-Malaria RDT Kit — Available in Lab — 10
+System Default
+```
+
+Backend must enforce too.
+
+Do not rely only on frontend hiding buttons.
+
+---
+
+# 7. Stock Balance Receive Stock SQL Error
+
+Current error:
+
+```text
+SQLSTATE integrity constraint violation: column drug_id cannot be null
+```
+
+This means some receive-stock path is still using old drug-based stock logic.
+
+Fix it completely.
+
+## Expected Behavior
+
+Receive stock must use:
+
+```text
+product_id
+stock_location_id
+movement_type = PURCHASE_RECEIVED or OPENING_STOCK depending context
+direction = IN
+quantity
+```
+
+It must write to:
+
+```text
+stock_movements.product_id
+stock_balances.product_id
+```
+
+It must not require:
+
+```text
+drug_id
+```
+
+## Required Fix
+
+Inspect:
+
+```text
+StockBalance page receive action
+Receive stock modal/form
+Controller receiving request
+StockMovementService
+StockBalanceService
+routes
+validation request
+migration/schema still requiring drug_id
+```
+
+Then fix:
+
+* request must send `product_id`
+* validation must require `product_id`
+* movement must save `product_id`
+* balance must update by `product_id`
+* remove any drug_id assumptions
+* update migration if unified stock table still has `drug_id NOT NULL`
+
+Since the project is in development, prefer product-only schema and remove old drug requirement.
+
+---
+
+# 8. Convert Stock Actions to Modals
+
+These stock actions should be performed in modals:
+
+```text
+Receive Stock
+Stock Transfer
+Stock Adjustment
+Stock Return
+```
+
+Requirements:
+
+* modal opens without page reload
+* validation errors show inside modal
+* modal does not leave dark backdrop stuck
+* modal closes only after successful response
+* data refreshes after success
+* use Inertia/Vue form handling properly
+
+Avoid the old issue where modal backdrop remains after submit.
+
+Use:
+
+```text
+onSuccess → close modal
+onError → keep modal open and show errors
+preserveScroll
+preserveState
 ```
 
 ---
 
-# 10. Department Consumption Rule
+# 9. Purchase Returns
 
-Departments consume only from their own stock location.
+Add Purchase Returns / Return to Supplier workflow.
 
-Pharmacy dispensing must deduct from Pharmacy location.
+## Purpose
 
-Investigation result consumables must deduct from Investigation/Lab location.
+When products are returned to supplier due to:
 
-Procedure consumables must deduct from Theatre/Procedure location.
+```text
+damaged goods
+expired goods
+wrong product
+excess supply
+quality issue
+recall
+```
 
-Ward consumables must deduct from Ward location.
+the system should:
 
-Departments must never consume directly from Main Store.
+1. Create a purchase return document.
+2. Create stock OUT movement from the selected stock location.
+3. Update stock balance.
+4. Create supplier ledger entry.
+5. Link return to supplier and optionally purchase order / GRN.
+6. Keep full audit trail.
+
+## Tables
+
+Create or update:
+
+```text
+purchase_returns
+- id
+- return_number
+- supplier_id
+- purchase_order_id nullable
+- goods_received_note_id nullable
+- return_date
+- status
+- reason
+- notes nullable
+- created_by
+- approved_by nullable
+- approved_at nullable
+- posted_by nullable
+- posted_at nullable
+- created_at
+- updated_at
+```
+
+```text
+purchase_return_items
+- id
+- purchase_return_id
+- product_id
+- stock_location_id
+- quantity
+- unit_cost
+- batch_no nullable
+- expiry_date nullable
+- stock_movement_id nullable
+- notes nullable
+- created_at
+- updated_at
+```
+
+## Statuses
+
+```text
+DRAFT
+APPROVED
+POSTED
+CANCELLED
+```
+
+## Posting Return
+
+When posted:
+
+* create `RETURN_OUT` stock movement
+* update stock balance
+* create supplier ledger entry:
+
+```text
+entry_type = RETURN_TO_SUPPLIER
+debit = value returned
+credit = 0
+```
+
+because return reduces what facility owes supplier.
+
+Do not manually enter supplier return from ledger page.
+
+It must come from Purchase Return workflow.
 
 ---
 
-# 11. Remove Add Buttons from Department Item Pages
+# 10. Department Stock Requisition
 
-Remove or hide product creation buttons from:
+Add stock requisition workflow.
 
-```text
-Pharmacy Drug Catalogue
-Investigation Consumables
-Procedure Consumables
-Ward Consumables
-```
+## Purpose
 
-Only Store/Admin product pages may have:
+Departments should not receive stock automatically by Store deciding alone.
+
+Correct workflow:
 
 ```text
-Add Product
-Create Product
-Edit Product
-Department Availability
+Department creates stock requisition
+↓
+Store reviews request
+↓
+Store approves quantities to supply
+↓
+Store issues stock from Main Store
+↓
+Receiving department acknowledges receipt
+↓
+Only after acknowledgement, stock is added to department stock location
 ```
 
-If a department user lacks a product, they should not create it there.
+This prevents stock from appearing in a department before the department confirms receipt.
 
-Optional future feature:
+## Important Rule
 
-```text
-Request Product from Store
-```
+Before stock is transferred to a department, the department should request it.
 
-But do not implement product creation in department catalogues.
+Store can then supply full or partial quantity.
 
 ---
 
-# 12. UI Error and Consistency Fixes
+# 11. Stock Requisition Tables
 
-Fix any UI that still says:
-
-```text
-Add Drug
-Add Investigation Item
-Add Lab Item
-Add Procedure Item
-Drug Quantity
-Lab Item Quantity
-```
-
-Replace with:
+Create:
 
 ```text
-Product
-Department Product
-Investigation Consumable
-Procedure Consumable
-Stock Balance
-Quantity on Hand
+stock_requisitions
+- id
+- requisition_number
+- requesting_department_id
+- requested_by
+- status
+- requested_at
+- reviewed_by nullable
+- reviewed_at nullable
+- issued_by nullable
+- issued_at nullable
+- acknowledged_by nullable
+- acknowledged_at nullable
+- notes nullable
+- created_at
+- updated_at
 ```
+
+Create:
+
+```text
+stock_requisition_items
+- id
+- stock_requisition_id
+- product_id
+- requested_quantity
+- approved_quantity nullable
+- issued_quantity nullable
+- acknowledged_quantity nullable
+- notes nullable
+- created_at
+- updated_at
+```
+
+Optional transfer link:
+
+```text
+stock_transfer_id nullable
+```
+
+or create separate transfer tables if already exist.
 
 ---
 
-# 13. Backend Query Requirements
+# 12. Stock Requisition Statuses
 
-Create reusable query methods.
-
-## ProductService
-
-```php
-getProductsForDepartment(Department $department, ?array $types = null)
-```
-
-Must return products linked to department and optionally filtered by product_type.
-
-## StockBalanceService
-
-```php
-getQuantityForProductAtLocation(Product $product, StockLocation $location): float
-```
-
-## StockLocationService
-
-```php
-getDefaultLocationForDepartment(Department $department): StockLocation
-getMainStoreLocation(): StockLocation
-```
-
-Use these methods instead of duplicating queries in controllers.
-
----
-
-# 14. Required Verification Scenario
-
-After fixing, this exact scenario must work:
-
-## Scenario A — Pharmacy Drug
-
-1. Store creates Product:
-
-   * name = Paracetamol
-   * product_type = DRUG
-   * linked department = Pharmacy
-
-2. Store creates PO for Paracetamol Qty 100.
-
-3. Store approves and receives PO.
-
-4. Product Stock Balances must show:
+Recommended statuses:
 
 ```text
-Paracetamol — Main Store — 100
+DRAFT
+SUBMITTED
+APPROVED
+PARTIALLY_APPROVED
+REJECTED
+ISSUED
+PARTIALLY_ISSUED
+AWAITING_ACKNOWLEDGEMENT
+ACKNOWLEDGED
+PARTIALLY_ACKNOWLEDGED
+COMPLETED
+CANCELLED
 ```
 
-5. Pharmacy Drug Catalogue must show Paracetamol but quantity:
+Keep it practical. If too many statuses already complicate UI, use:
 
 ```text
-Available in Pharmacy = 0
-```
-
-6. Store transfers Paracetamol Qty 20 to Pharmacy.
-
-7. Product Stock Balances must show:
-
-```text
-Paracetamol — Main Store — 80
-Paracetamol — Pharmacy — 20
-```
-
-8. Pharmacy Drug Catalogue must show:
-
-```text
-Paracetamol — Available in Pharmacy = 20
-```
-
-## Scenario B — Investigation Consumable
-
-1. Store creates Product:
-
-   * name = Malaria RDT Kit
-   * product_type = REAGENT
-   * linked department = Laboratory
-
-2. Store creates PO Qty 50.
-
-3. Store receives PO.
-
-4. Product Stock Balances must show:
-
-```text
-Malaria RDT Kit — Main Store — 50
-```
-
-5. Investigation Consumables page must show Malaria RDT Kit but quantity:
-
-```text
-Available in Laboratory = 0
-```
-
-6. Store transfers Qty 10 to Laboratory.
-
-7. Product Stock Balances must show:
-
-```text
-Malaria RDT Kit — Main Store — 40
-Malaria RDT Kit — Laboratory — 10
-```
-
-8. Investigation Consumables must show:
-
-```text
-Malaria RDT Kit — Available in Laboratory = 10
+DRAFT
+SUBMITTED
+APPROVED
+ISSUED
+AWAITING_ACKNOWLEDGEMENT
+COMPLETED
+REJECTED
+CANCELLED
 ```
 
 ---
 
-# 15. Data Integrity Rules
+# 13. Department Requisition Flow
 
-* One inventory system only.
-* Products are the only physical items.
-* Purchase receiving posts to Main Store.
-* Product Stock Balances must show received stock.
-* Department catalogues are filtered product views.
-* Department quantities come from department stock location.
-* Departments do not create products.
-* Departments do not consume from Main Store.
-* Stock balances update from stock movements.
-* No active workflow should write to old drug/investigation/procedure item stock systems.
+## Department Creates Request
+
+Department user selects products linked to their department.
+
+Fields:
+
+```text
+product
+requested_quantity
+notes
+```
+
+Rules:
+
+* product must be linked to requesting department
+* requested quantity > 0
+* department must have active stock location
+
+## Store Reviews
+
+Store sees submitted requisitions.
+
+Store can:
+
+```text
+approve full quantity
+approve partial quantity
+reject item
+reject request
+```
+
+Approved quantity cannot exceed requested quantity unless explicitly allowed.
+
+## Store Issues Stock
+
+Store issues approved products from Main Store.
+
+At issue time:
+
+* check Main Store stock
+* create `TRANSFER_OUT` movement from Main Store
+* do not yet create `TRANSFER_IN` into department stock if acknowledgement is required
+* or create pending transfer records without updating destination balance
+
+Recommended safe approach:
+
+```text
+On issue:
+- deduct from Main Store with TRANSFER_OUT
+- create pending transfer item
+- status = AWAITING_ACKNOWLEDGEMENT
+
+On department acknowledgement:
+- create TRANSFER_IN into department stock location
+- update department stock balance
+- mark requisition completed/partially acknowledged
+```
+
+This matches the user requirement: receiving department must acknowledge before stock is updated into their location.
+
+## Department Acknowledges
+
+Receiving department confirms received quantities.
+
+Rules:
+
+* acknowledged quantity cannot exceed issued quantity
+* on acknowledgement, create `TRANSFER_IN` into department stock location
+* update department stock balance
+* record acknowledged_by and acknowledged_at
 
 ---
 
-# 16. Tests Required
+# 14. Stock Transfer Compatibility
+
+Existing stock transfer workflow must not break.
+
+But if requisition workflow is enabled:
+
+* transfers to departments should preferably be created from approved requisitions
+* direct transfer can still exist for Store/Admin emergency correction if permitted
+* direct transfer must still involve Main Store
+* no department-to-department transfer unless system setting allows it
+
+Add setting:
+
+```text
+allow_direct_store_transfers = true/false
+```
+
+Default can be true during transition, but the intended workflow is requisition-based transfer.
+
+---
+
+# 15. Unified Movement Logic for Requisition Transfers
+
+Movements:
+
+## Store issues requisition
+
+```text
+movement_type = TRANSFER_OUT
+direction = OUT
+stock_location = Main Store
+source_type = stock_requisition_item or stock_transfer_item
+source_id = item id
+```
+
+## Department acknowledges
+
+```text
+movement_type = TRANSFER_IN
+direction = IN
+stock_location = Department Stock Location
+source_type = stock_requisition_item or stock_transfer_item
+source_id = item id
+```
+
+Never update balances without movement.
+
+---
+
+# 16. UI for Requisitions
+
+Add menu under Store / Procurement:
+
+```text
+Stock Requisitions
+```
+
+For department users:
+
+```text
+My Stock Requests
+```
+
+Pages:
+
+```text
+Requisitions Index
+Create Requisition
+Requisition Show
+Review Requisition
+Issue Requisition
+Acknowledge Receipt
+```
+
+Store dashboard should show:
+
+```text
+Pending Requisitions
+Awaiting Acknowledgement
+```
+
+Department dashboard should show:
+
+```text
+My Pending Stock Requests
+Stock Awaiting My Acknowledgement
+```
+
+---
+
+# 17. Supplier Ledger Restrictions
+
+Update Supplier Ledger UI.
+
+Manual actions allowed:
+
+```text
+Record Payment
+Create Credit Note
+Create Debit Note
+```
+
+Not allowed manually from ledger page:
+
+```text
+Goods Received
+Return to Supplier
+Purchase Order
+```
+
+These must come from their source workflows.
+
+On ledger entry row, show source link:
+
+```text
+View PO
+View GRN
+View Return
+View Payment
+```
+
+Filters must work.
+
+---
+
+# 18. Stock Location Main Store Rules
+
+Backend validation:
+
+* cannot deactivate Main Store
+* cannot delete Main Store
+* cannot change `is_main` to false for Main Store
+* cannot assign Main Store to non-Store department
+* cannot create second Main Store unless explicitly allowed
+
+Frontend:
+
+* disable edit/deactivate/delete actions for Main Store
+* show “System Default” badge
+
+---
+
+# 19. Services to Create or Update
+
+Update/create:
+
+```text
+ProductService
+ProductPricingService
+StockLocationService
+StockMovementService
+StockBalanceService
+StockTransferService
+StockAdjustmentService
+StockReturnService
+PurchaseOrderService
+ProcurementService
+GoodsReceivedNoteService
+PurchaseReturnService
+StockRequisitionService
+SupplierLedgerService
+```
+
+Important:
+
+* `StockMovementService` is the only stock movement writer.
+* `StockBalanceService` is the only stock balance updater.
+* `SupplierLedgerService` is the only supplier ledger writer.
+* PO receiving must not write to old drug stock.
+* Stock actions must use product_id.
+
+---
+
+# 20. Tests Required
 
 Add or update tests for:
 
-1. PO receiving product creates Main Store stock balance.
-2. Product Stock Balances page shows received product.
-3. Pharmacy Drug Catalogue loads product linked to Pharmacy.
-4. Pharmacy Drug Catalogue quantity comes from Pharmacy stock location.
-5. Investigation Consumables loads product linked to Laboratory.
-6. Investigation Consumables quantity comes from Laboratory stock location.
-7. Department catalogue shows zero if product exists but has not been transferred to that department.
-8. Transfer Main Store to department updates both balances.
-9. Department catalogue shows updated quantity after transfer.
-10. Department item pages do not show Add New Item button.
-11. No active workflow writes to `drug_stock`.
-12. No active workflow writes to `product_stock_balances`.
-13. No active workflow reads old `investigation_items` as physical items.
+## Products
+
+1. Product filters work.
+2. Product pagination preserves filters.
+3. Product insurance price badges/column shows correct state.
+
+## Supplier Ledger
+
+4. Ledger filters work.
+5. Ledger manual entry only allows payment, credit note, debit note.
+6. Goods received ledger entries come only from GRN workflow.
+7. Return to supplier ledger entries come only from purchase return workflow.
+8. Ledger row links to source document.
+
+## Purchase Orders
+
+9. PO filters work.
+10. Total Ordered Value is correct.
+11. Total Received Value is correct.
+12. Outstanding Value is correct.
+
+## Stock Locations
+
+13. Stock location table renders correctly.
+14. Notes column does not break layout.
+15. Main Store cannot be edited/deactivated/deleted.
+
+## Stock Balances / Receive Stock
+
+16. Receive stock uses product_id, not drug_id.
+17. Receive stock creates stock movement.
+18. Receive stock updates stock balance.
+19. Receive stock no longer throws `drug_id cannot be null`.
+
+## Modals
+
+20. Receive stock modal works.
+21. Transfer modal works.
+22. Adjustment modal works.
+23. Return modal works.
+24. Modals show validation errors and do not leave stuck backdrop.
+
+## Purchase Returns
+
+25. Purchase return can be created.
+26. Posting purchase return creates RETURN_OUT movement.
+27. Posting purchase return updates stock balance.
+28. Posting purchase return creates supplier ledger entry.
+29. Supplier return cannot be manually faked from ledger page.
+
+## Stock Requisitions
+
+30. Department can create requisition for products linked to department.
+31. Store can approve requisition.
+32. Store can partially approve requisition.
+33. Store issue creates TRANSFER_OUT from Main Store.
+34. Department acknowledgement creates TRANSFER_IN into department stock.
+35. Department stock balance updates only after acknowledgement.
+36. Acknowledged quantity cannot exceed issued quantity.
+37. Requisition status updates correctly.
+
+## Regression
+
+38. Existing PO workflow still works.
+39. Existing Product Stock Balance page still works.
+40. Existing Pharmacy workflow still works.
+41. Existing Investigation workflow still works.
+42. Existing Procedure workflow still works.
+43. No active workflow writes to legacy drug stock.
 
 ---
 
-# 17. Deliverables
+# 21. Deliverables
 
 Provide:
 
-1. Root cause of inconsistent stock quantities.
+1. Root cause analysis for each bug.
 2. Files modified.
-3. Updated purchase receiving logic.
-4. Updated Product Stock Balances query.
-5. Updated Pharmacy Drug Catalogue query.
-6. Updated Investigation Consumables query.
-7. Updated Procedure Consumables query.
-8. Removed Add New Item buttons from department item pages.
-9. Updated transfer/balance update behavior.
-10. Tests or verification notes.
-11. Confirmation that the two scenarios above pass.
+3. Product filters fixed.
+4. Product pagination fixed.
+5. Product insurance prices column added.
+6. Supplier ledger restrictions added.
+7. Supplier ledger source links added.
+8. Supplier ledger filters fixed.
+9. Purchase order totals fixed.
+10. Purchase order filters fixed.
+11. Stock location table fixed.
+12. Main Store protection implemented.
+13. Receive stock SQL error fixed.
+14. Stock action modals implemented.
+15. Purchase Returns implemented.
+16. Stock Requisitions implemented.
+17. Tests or verification notes.
+18. Remaining TODOs.
 
 ---
 
-# 18. Important Rules
+# 22. Important Rules
 
-Do not maintain two inventory systems.
+Do not create a parallel inventory system.
 
-Do not keep showing quantity from drug catalogue if Product Stock Balances does not match.
+Do not use drug_id for stock movement or balance.
 
-Do not let departments create items.
+Do not let PO receiving write to old drug stock.
 
-Do not let Investigation Items be separate from Products.
+Do not let departments create products from their catalogues.
 
-Do not read quantity from old drug tables.
+Do not allow supplier returns to be manually entered from supplier ledger.
 
-Do not write stock to old product_stock_balances.
+Do not allow purchase/goods received ledger entries to be manually created from supplier ledger.
 
-Do not receive directly into Pharmacy/Lab/Theatre.
+Do not update department stock before acknowledgement in requisition flow.
 
-Do not let department catalogues use Main Store quantity as their available stock.
+Do not deactivate or edit Main Store through normal UI.
 
-Fix this properly and aggressively.
+Do not break existing working workflows.
+
+Do not bypass service classes.
+
+Now inspect the current implementation and fix these bugs carefully while keeping the unified product-based inventory system intact.

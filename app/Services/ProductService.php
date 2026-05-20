@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Enums\ProductType;
+use App\Enums\DepartmentType;
 use App\Models\Department;
 use App\Models\Product;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -21,6 +23,11 @@ class ProductService
      */
     public function getProductsForDepartment(Department $department, ?array $types = null)
     {
+        return $this->queryProductsForDepartment($department, $types)->get();
+    }
+
+    public function queryProductsForDepartment(Department $department, ?array $types = null): Builder
+    {
         $typeValues = collect($types ?? [])
             ->map(fn ($t) => $t instanceof ProductType ? $t->value : (string) $t)
             ->filter()
@@ -31,20 +38,62 @@ class ProductService
             ->where('is_active', true)
             ->forDepartment($department->id)
             ->when(! empty($typeValues), fn ($q) => $q->whereIn('product_type', $typeValues))
-            ->orderBy('name')
-            ->get();
+            ->orderBy('name');
+    }
+
+    public function queryProductsForDepartmentTypes(array $departmentTypes, ?array $types = null): Builder
+    {
+        $departmentTypeValues = collect($departmentTypes)
+            ->map(fn ($t) => $t instanceof DepartmentType ? $t->value : (string) $t)
+            ->filter()
+            ->values()
+            ->all();
+
+        $typeValues = collect($types ?? [])
+            ->map(fn ($t) => $t instanceof ProductType ? $t->value : (string) $t)
+            ->filter()
+            ->values()
+            ->all();
+
+        return Product::query()
+            ->with(['departments:id,name,type'])
+            ->where('is_active', true)
+            ->whereHas('departments', function ($q) use ($departmentTypeValues) {
+                $q->whereIn('departments.type', $departmentTypeValues)
+                  ->where('product_department.is_active', true);
+            })
+            ->when(! empty($typeValues), fn ($q) => $q->whereIn('product_type', $typeValues))
+            ->orderBy('name');
     }
 
     public function listProducts(array $filters = [])
     {
+        $type = $filters['product_type'] ?? ($filters['type'] ?? null);
+        $status = $filters['status'] ?? null;
+
         return Product::query()
             ->with('departments')
+            ->withCount([
+                'prices as insurance_type_prices_count' => fn ($q) => $q->whereNull('insurance_provider_id')->where('is_active', true),
+                'prices as provider_prices_count' => fn ($q) => $q->whereNotNull('insurance_provider_id')->where('is_active', true),
+            ])
             ->when($filters['search'] ?? null, fn ($q, $s) => $q->where(fn ($qq) =>
                 $qq->where('name', 'like', "%{$s}%")
                    ->orWhere('code', 'like', "%{$s}%")))
-            ->when($filters['type'] ?? null, fn ($q, $t) => $q->where('product_type', $t))
+            ->when($type, fn ($q, $t) => $q->where('product_type', $t))
             ->when(($filters['department_id'] ?? null), fn ($q, $d) => $q->forDepartment((int) $d))
-            ->when(array_key_exists('is_active', $filters), fn ($q) => $q->where('is_active', (bool) $filters['is_active']))
+            ->when($status !== null && $status !== '', fn ($q) => $q->where('is_active', $status === 'active'))
+            ->when(array_key_exists('is_active', $filters) && $filters['is_active'] !== '', fn ($q) => $q->where('is_active', (bool) $filters['is_active']))
+            ->when(array_key_exists('is_billable', $filters) && $filters['is_billable'] !== '', fn ($q) => $q->where('is_billable', (bool) $filters['is_billable']))
+            ->when(($filters['has_insurance_prices'] ?? '') !== '', function ($q) use ($filters) {
+                $hasPrices = (bool) $filters['has_insurance_prices'];
+                $hasPrices
+                    ? $q->whereHas('prices', fn ($pq) => $pq->where('is_active', true))
+                    : $q->whereDoesntHave('prices', fn ($pq) => $pq->where('is_active', true));
+            })
+            ->when($filters['supplier_id'] ?? null, function ($q, $supplierId) {
+                $q->whereHas('purchaseOrderItems.purchaseOrder', fn ($pq) => $pq->where('supplier_id', $supplierId));
+            })
             ->orderBy('name')
             ->paginate(25)
             ->withQueryString();
