@@ -161,6 +161,7 @@ Route::middleware('auth')->group(function () {
             Route::get('patients/{patient}/edit', [PatientController::class, 'edit'])->name('patients.edit')->middleware('can:patients.edit');
             Route::put('patients/{patient}', [PatientController::class, 'update'])->name('patients.update')->middleware('can:patients.edit');
             Route::patch('patients/{patient}/toggle-status', [PatientController::class, 'toggleStatus'])->name('patients.toggle-status')->middleware('can:patients.edit');
+            Route::patch('patients/{patient}/mark-deceased', [PatientController::class, 'markDeceased'])->name('patients.mark-deceased')->middleware('can:patients.mark_deceased');
 
             // Patient Insurance Management
             Route::middleware('can:patients.edit')->group(function () {

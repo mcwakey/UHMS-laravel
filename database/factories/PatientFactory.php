@@ -72,7 +72,7 @@ class PatientFactory extends Factory
         $phone = fake()->randomElement($prefixes) . fake()->numerify('######');
 
         return [
-            'patient_number'  => Patient::generatePatientNumber(),
+            'patient_number'  => app(\App\Services\PatientIdGeneratorService::class)->generate(),
             'first_name'      => $firstName,
             'last_name'       => $lastName,
             'other_names'     => fake()->boolean(30) ? fake()->randomElement(self::$ghFirstNamesMale + self::$ghFirstNamesFemale) : null,

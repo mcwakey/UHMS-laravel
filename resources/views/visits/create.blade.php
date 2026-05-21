@@ -48,6 +48,16 @@
 
                     <!-- Selected Patient Info Card -->
                     <div id="patientInfo" class="{{ $selectedPatient ? '' : 'd-none' }}">
+                        @if($selectedPatient?->is_deceased)
+                        <div class="alert alert-danger d-flex align-items-center gap-2 mb-2">
+                            <i class="ti ti-skull fs-18 flex-shrink-0"></i>
+                            <span><strong>This patient is marked as deceased and cannot start a new visit.</strong></span>
+                        </div>
+                        @endif
+                        <div id="deceasedWarning" class="alert alert-danger d-flex align-items-center gap-2 mb-2 d-none">
+                            <i class="ti ti-skull fs-18 flex-shrink-0"></i>
+                            <span><strong>This patient is marked as deceased and cannot start a new visit.</strong></span>
+                        </div>
                         <div class="alert alert-light border d-flex align-items-center gap-3 mb-0">
                             <div class="avatar avatar-lg bg-primary rounded-circle text-white d-flex align-items-center justify-content-center">
                                 <span id="patientInitial">{{ $selectedPatient ? strtoupper(substr($selectedPatient->first_name, 0, 1)) : '' }}</span>
@@ -677,6 +687,14 @@ document.addEventListener('DOMContentLoaded', function() {
             lastVisitEl.classList.remove('d-none');
         } else {
             lastVisitEl.classList.add('d-none');
+        }
+
+        // Show deceased warning if applicable
+        const deceasedWarning = document.getElementById('deceasedWarning');
+        if (patient.is_deceased) {
+            deceasedWarning.classList.remove('d-none');
+        } else {
+            deceasedWarning.classList.add('d-none');
         }
 
         patientInfo.classList.remove('d-none');

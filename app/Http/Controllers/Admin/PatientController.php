@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\MarkPatientDeceasedRequest;
 use App\Http\Requests\StorePatientRequest;
 use App\Http\Requests\UpdatePatientRequest;
 use App\Models\InsuranceProvider;
@@ -22,7 +23,12 @@ class PatientController extends Controller
     {
         $patients = $this->patientService->list($request->all());
 
-        return view('patients.index', compact('patients'));
+        $insuranceProviders = InsuranceProvider::where('is_active', true)
+            ->where('is_default', false)
+            ->orderBy('name')
+            ->get();
+
+        return view('patients.index', compact('patients', 'insuranceProviders'));
     }
 
     public function create()
@@ -112,6 +118,7 @@ class PatientController extends Controller
             'insurances.insuranceProvider',
             'insurances.insuranceTier',
             'emergencyContacts',
+            'markedDeceasedBy',
         ]);
 
         $activityLogs = \Spatie\Activitylog\Models\Activity::where('subject_type', Patient::class)
@@ -151,8 +158,23 @@ class PatientController extends Controller
 
     public function toggleStatus(Patient $patient)
     {
+        if ($patient->status === 'deceased') {
+            return back()->with('error', 'Cannot change the status of a deceased patient.');
+        }
+
         $this->patientService->toggleStatus($patient);
 
         return back()->with('success', "Patient status changed to {$patient->status}.");
+    }
+
+    public function markDeceased(MarkPatientDeceasedRequest $request, Patient $patient)
+    {
+        if ($patient->is_deceased) {
+            return back()->with('error', 'Patient is already marked as deceased.');
+        }
+
+        $this->patientService->markDeceased($patient, $request->validated());
+
+        return back()->with('success', "{$patient->full_name} has been marked as deceased.");
     }
 }

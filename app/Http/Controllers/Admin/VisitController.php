@@ -156,6 +156,19 @@ class VisitController extends Controller
 
     public function store(StoreVisitRequest $request)
     {
+        // Block new visits for deceased patients (unless user has override permission)
+        $patientId = $request->input('patient_id');
+        if ($patientId) {
+            $patient = \App\Models\Patient::find($patientId);
+            if ($patient && $patient->is_deceased && !$request->user()->can('patients.deceased.override')) {
+                $error = "This patient is marked as deceased and cannot start a new visit.";
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => $error], 422);
+                }
+                return back()->withErrors(['patient_id' => $error])->withInput();
+            }
+        }
+
         try {
             $visit = DB::transaction(function () use ($request) {
                 $v = $this->visitService->create($request->validated());
@@ -332,19 +345,20 @@ class VisitController extends Controller
         }
 
         $patients = Patient::search($term)
-            ->active()
-            ->select('id', 'patient_number', 'first_name', 'last_name', 'other_names', 'phone')
+            ->whereIn('status', ['active', 'inactive', 'deceased'])
+            ->select('id', 'patient_number', 'first_name', 'last_name', 'other_names', 'phone', 'status', 'is_deceased')
             ->limit(10)
             ->get()
             ->map(function ($p) {
                 $lastVisit = $p->visits()->latest('visit_date')->value('visit_date');
                 return [
-                    'id' => $p->id,
-                    'text' => "{$p->patient_number} — {$p->full_name}",
-                    'patient_number' => $p->patient_number,
-                    'full_name' => $p->full_name,
-                    'phone' => $p->phone,
+                    'id'              => $p->id,
+                    'text'            => "{$p->patient_number} — {$p->full_name}",
+                    'patient_number'  => $p->patient_number,
+                    'full_name'       => $p->full_name,
+                    'phone'           => $p->phone,
                     'last_visit_date' => $lastVisit ? \Carbon\Carbon::parse($lastVisit)->format('d M Y') : null,
+                    'is_deceased'     => (bool) $p->is_deceased,
                 ];
             });
 

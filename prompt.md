@@ -1,1067 +1,545 @@
-You are a senior Laravel + Inertia/Vue architect working on **UHMS — Ultimate Hospital Management System**.
+You are a senior Laravel + Inertia/Vue developer working on **UHMS — Ultimate Hospital Management System**.
 
-We need to fix multiple small but important bugs in Store / Products / Stock / Supplier / Purchase Order workflows, and then add **Purchase Returns** and **Department Stock Requisition** without breaking existing workflows.
+We need to update the **Patient List / Patient Search page**.
 
-Important: UHMS must use **one unified product-based stock system only**.
-
-Do not create any parallel stock system.
-
-Do not reintroduce `drug_id` stock logic.
-
-Do not break the already working workflow.
+Focus only on patient listing, search, filters, patient status, and deceased marking. Do not refactor unrelated modules.
 
 ---
 
-# 1. Non-Negotiable Architecture Rule
+# 1. Objective
 
-The system must use one stock system:
+Update the Patient List page so hospital staff can search patients using practical real-life identifiers and filter patients by insurance and last visit date.
 
-```text
-products
-stock_locations
-stock_movements
-stock_balances
-purchase_orders
-purchase_order_items
-goods_received_notes
-supplier_ledger_entries
-```
-
-Every physical item is a product.
-
-Do not use or write active workflow data to:
-
-```text
-drugs as stock source
-drug_stock
-stock_movements.drug_id
-stock_balances.drug_id
-product_stock_movements
-product_stock_balances
-investigation_items as stock source
-procedure_items as stock source
-standalone consumables table
-```
-
-If old columns/tables still exist, active workflows must not use them.
+Also add a safe way to mark a patient as deceased.
 
 ---
 
-# 2. Current Bugs to Fix
+# 2. Search Requirements
 
-Fix these issues carefully:
-
-1. Product filters are not working.
-2. Product pagination appears on the left; it should align correctly to the right.
-3. Product list needs an insurance prices column, like Services.
-4. Supplier ledger page allows wrong manual entries.
-5. Supplier ledger filters are not working.
-6. Supplier ledger should link directly to related source document.
-7. Purchase order total value card is incorrect.
-8. Purchase order filters are not working.
-9. Stock location table HTML/layout is broken.
-10. Stock location notes column does not display properly.
-11. Main Store should exist by default and cannot be edited or deactivated.
-12. Stock Balance page Receive Stock throws SQL error:
+The patient list search must support searching by:
 
 ```text
-SQLSTATE integrity constraint violation: column drug_id cannot be null
+Patient name
+Patient phone number
+Patient Ghana Card number
+Patient insurance membership card number
+Emergency contact name
+Emergency contact phone number
 ```
 
-13. Receive stock, stock transfer, stock adjustment, and stock return should be handled through modals.
-14. Add Purchase Returns.
-15. Add Department Stock Requisition workflow.
-16. Stock transfers to departments should be based on department requisitions.
-17. Receiving department must acknowledge receipt before stock is updated into their location.
-18. Do not break existing Store, Product, PO, Billing, Pharmacy, Investigation, Procedure, or Stock workflow.
-
----
-
-# 3. Product Page Fixes
-
-## 3.1 Product Filters Not Working
-
-Inspect product index page, controller, route, request query, and frontend filter bindings.
-
-Filters may include:
-
-```text
-search
-product_type
-department_id
-status
-is_billable
-has_insurance_prices
-supplier_id
-```
-
-Fix:
-
-* query string binding
-* controller filtering
-* Inertia props
-* pagination preserving query
-* frontend filter submit/reset
-* debounce/search if used
-
-Pagination must preserve filters:
-
-```php
-->withQueryString()
-```
-
-or the project’s equivalent pattern.
-
-## 3.2 Product Pagination Alignment
-
-Pagination should not appear on the left if the design expects it on the right.
-
-Fix CSS/layout using the project’s existing style conventions.
-
-Expected:
-
-```text
-Pagination aligned right or consistently with other index pages.
-```
-
-Do not patch with ugly inline styles unless needed.
-
-## 3.3 Add Insurance Prices Column
-
-On Products index, add a column similar to Services:
-
-```text
-Insurance Prices
-```
-
-It should show whether product has insurance prices configured.
-
-Examples:
-
-```text
-None
-NHIS, Private
-Provider-specific
-NHIS + Provider-specific
-```
-
-Or badges:
-
-```text
-Base
-NHIS
-Private
-Corporate
-Provider
-```
-
-The column should be derived from:
-
-```text
-product_insurance_prices
-product_provider_prices
-```
-
-or the existing product pricing tables.
-
-Avoid N+1 queries.
-
-Eager-load/count:
-
-```php
-withCount(['insurancePrices', 'providerPrices'])
-```
-
-or equivalent.
-
----
-
-# 4. Supplier Ledger Fixes
-
-## 4.1 Ledger Manual Entry Restrictions
-
-On the Supplier Ledger page, manual entry should only allow:
-
-```text
-Payment
-Credit Note
-Debit Note
-```
-
-The ledger page must not allow manually entering:
-
-```text
-Purchase Order
-Goods Received
-Return to Supplier
-Supplier Invoice
-```
-
-These must be created automatically from their own workflows.
-
-## 4.2 Source of Ledger Entries
-
-Enforce this:
-
-```text
-Purchase Orders / Goods Received entries come from PO / GRN receiving workflow.
-Return to Supplier entries come from Purchase Return / Supplier Return workflow.
-Payments come from Supplier Ledger payment form.
-Credit Notes come from Supplier Ledger credit note form.
-Debit Notes come from Supplier Ledger debit note form.
-```
-
-Do not let the user manually create a fake goods received or return record from the ledger page.
-
-## 4.3 Supplier Ledger Source Links
-
-On Supplier Ledger page, each entry with `source_type` and `source_id` should link to the concerned document.
-
-Examples:
-
-```text
-GOODS_RECEIVED → link to GRN / Purchase Order receipt page
-PAYMENT → link to supplier payment detail if exists
-RETURN_TO_SUPPLIER → link to purchase return page
-CREDIT_NOTE → link to credit note detail or ledger entry
-DEBIT_NOTE → link to debit note detail or ledger entry
-PURCHASE_ORDER → link to purchase order page if used
-```
-
-Display:
-
-```text
-View Source
-```
-
-or make the reference clickable.
-
-## 4.4 Supplier Ledger Filters Not Working
-
-Fix filters on ledger page.
-
-Filters may include:
-
-```text
-supplier_id
-entry_type
-date_from
-date_to
-search
-debit_credit
-source_type
-```
-
-Ensure:
-
-* backend applies filters
-* frontend sends query params correctly
-* pagination preserves filters
-* reset works
-* date filters use correct field, likely `entry_date`
-
----
-
-# 5. Purchase Order Page Fixes
-
-## 5.1 Total Value Card Incorrect
-
-Fix the total value card.
-
-Expected total should be based on the correct records and statuses.
-
-Clarify and implement one of these, preferably showing both if useful:
-
-```text
-Total Ordered Value = SUM(quantity_ordered * unit_cost)
-Total Received Value = SUM(quantity_received * unit_cost)
-Outstanding Value = Total Ordered Value - Total Received Value
-```
-
-If the current card says “Total Value”, define it clearly.
-
-Recommended dashboard cards on Purchase Orders page:
-
-```text
-Total Ordered Value
-Total Received Value
-Outstanding Value
-Pending POs
-Partially Received POs
-```
-
-Use products-based PO items only.
-
-Do not calculate from drug tables.
-
-## 5.2 Purchase Order Filters Not Working
-
-Fix PO filters:
-
-```text
-search
-supplier_id
-status
-date_from
-date_to
-product_id
-```
-
-Ensure:
-
-* backend query applies filters
-* frontend sends query params
-* pagination preserves filters
-* reset works
-* status filter matches actual enum/status values
-
----
-
-# 6. Stock Location Page Fixes
-
-## 6.1 Broken Table HTML/Layout
-
-Fix the stock location table display.
-
-Inspect Blade/Vue component.
-
-Common issues to check:
-
-* unclosed `<td>`, `<tr>`, `<div>`
-* broken slot/template
-* notes column rendering raw HTML incorrectly
-* long notes breaking table width
-* actions column misaligned
-
-The table should display cleanly.
-
-## 6.2 Notes Column
-
-Notes column should display properly:
-
-* truncate long notes
-* show tooltip or modal for full note
-* do not break table layout
-* preserve safe escaping
-* do not render dangerous raw HTML
+The search input should be a single global search box.
 
 Example:
 
 ```text
-Short note visible, long note truncated with “View”.
-```
-
-## 6.3 Main Store Protection
-
-Main Store should exist by default.
-
-Rules:
-
-```text
-Main Store must be created/seeded by default.
-Main Store must be linked to Store / Procurement department.
-Main Store cannot be edited by normal UI.
-Main Store cannot be deactivated.
-Main Store cannot be deleted.
-Only Super Admin may rename it if absolutely necessary, but default behavior should protect it.
-```
-
-In UI:
-
-* hide edit/deactivate/delete buttons for Main Store
-* show badge:
-
-```text
-System Default
-```
-
-Backend must enforce too.
-
-Do not rely only on frontend hiding buttons.
-
----
-
-# 7. Stock Balance Receive Stock SQL Error
-
-Current error:
-
-```text
-SQLSTATE integrity constraint violation: column drug_id cannot be null
-```
-
-This means some receive-stock path is still using old drug-based stock logic.
-
-Fix it completely.
-
-## Expected Behavior
-
-Receive stock must use:
-
-```text
-product_id
-stock_location_id
-movement_type = PURCHASE_RECEIVED or OPENING_STOCK depending context
-direction = IN
-quantity
-```
-
-It must write to:
-
-```text
-stock_movements.product_id
-stock_balances.product_id
-```
-
-It must not require:
-
-```text
-drug_id
-```
-
-## Required Fix
-
-Inspect:
-
-```text
-StockBalance page receive action
-Receive stock modal/form
-Controller receiving request
-StockMovementService
-StockBalanceService
-routes
-validation request
-migration/schema still requiring drug_id
-```
-
-Then fix:
-
-* request must send `product_id`
-* validation must require `product_id`
-* movement must save `product_id`
-* balance must update by `product_id`
-* remove any drug_id assumptions
-* update migration if unified stock table still has `drug_id NOT NULL`
-
-Since the project is in development, prefer product-only schema and remove old drug requirement.
-
----
-
-# 8. Convert Stock Actions to Modals
-
-These stock actions should be performed in modals:
-
-```text
-Receive Stock
-Stock Transfer
-Stock Adjustment
-Stock Return
-```
-
-Requirements:
-
-* modal opens without page reload
-* validation errors show inside modal
-* modal does not leave dark backdrop stuck
-* modal closes only after successful response
-* data refreshes after success
-* use Inertia/Vue form handling properly
-
-Avoid the old issue where modal backdrop remains after submit.
-
-Use:
-
-```text
-onSuccess → close modal
-onError → keep modal open and show errors
-preserveScroll
-preserveState
+Search by name, phone, Ghana Card, insurance card, or emergency contact ...
 ```
 
 ---
 
-# 9. Purchase Returns
+# 3. Fields / Relationships to Inspect
 
-Add Purchase Returns / Return to Supplier workflow.
-
-## Purpose
-
-When products are returned to supplier due to:
+Inspect existing models and tables for:
 
 ```text
-damaged goods
-expired goods
-wrong product
-excess supply
-quality issue
-recall
+patients
+patient_insurances
+emergency_contacts
+visits
+insurance_providers
 ```
 
-the system should:
+Search should work whether next of kin and insurance are stored directly on `patients` or in related tables.
 
-1. Create a purchase return document.
-2. Create stock OUT movement from the selected stock location.
-3. Update stock balance.
-4. Create supplier ledger entry.
-5. Link return to supplier and optionally purchase order / GRN.
-6. Keep full audit trail.
+Use existing relationships where available.
 
-## Tables
+Recommended relationships:
 
-Create or update:
-
-```text
-purchase_returns
-- id
-- return_number
-- supplier_id
-- purchase_order_id nullable
-- goods_received_note_id nullable
-- return_date
-- status
-- reason
-- notes nullable
-- created_by
-- approved_by nullable
-- approved_at nullable
-- posted_by nullable
-- posted_at nullable
-- created_at
-- updated_at
+```php
+Patient::insurances()
+Patient::emergencyContacts()
+Patient::visits()
 ```
 
-```text
-purchase_return_items
-- id
-- purchase_return_id
-- product_id
-- stock_location_id
-- quantity
-- unit_cost
-- batch_no nullable
-- expiry_date nullable
-- stock_movement_id nullable
-- notes nullable
-- created_at
-- updated_at
-```
-
-## Statuses
-
-```text
-DRAFT
-APPROVED
-POSTED
-CANCELLED
-```
-
-## Posting Return
-
-When posted:
-
-* create `RETURN_OUT` stock movement
-* update stock balance
-* create supplier ledger entry:
-
-```text
-entry_type = RETURN_TO_SUPPLIER
-debit = value returned
-credit = 0
-```
-
-because return reduces what facility owes supplier.
-
-Do not manually enter supplier return from ledger page.
-
-It must come from Purchase Return workflow.
+If relationships are missing, add them properly.
 
 ---
 
-# 10. Department Stock Requisition
+# 4. Search Logic
 
-Add stock requisition workflow.
-
-## Purpose
-
-Departments should not receive stock automatically by Store deciding alone.
-
-Correct workflow:
+The search query should check:
 
 ```text
-Department creates stock requisition
-↓
-Store reviews request
-↓
-Store approves quantities to supply
-↓
-Store issues stock from Main Store
-↓
-Receiving department acknowledges receipt
-↓
-Only after acknowledgement, stock is added to department stock location
+patients.name
+patients.phone
+patients.ghana_card_number
+patient_insurances.membership_number
+emergency_contacts.name
+emergency_contacts.phone
 ```
 
-This prevents stock from appearing in a department before the department confirms receipt.
+Adapt column names to the actual database schema.
 
-## Important Rule
+Example backend logic:
 
-Before stock is transferred to a department, the department should request it.
+```php
+$query->when($search, function ($query) use ($search) {
+    $query->where(function ($q) use ($search) {
+        $q->where('name', 'like', "%{$search}%")
+          ->orWhere('phone', 'like', "%{$search}%")
+          ->orWhere('ghana_card_number', 'like', "%{$search}%")
+          ->orWhereHas('insurances', function ($insuranceQuery) use ($search) {
+              $insuranceQuery->where('membership_number', 'like', "%{$search}%");
+          })
+          ->orWhereHas('emergencyContacts', function ($emergencyContactsQuery) use ($search) {
+              $emergencyContactsQuery->where('name', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+          });
+    });
+});
+```
 
-Store can then supply full or partial quantity.
+Do not use raw unsafe SQL.
 
 ---
 
-# 11. Stock Requisition Tables
+# 5. Remove Existing Filters
 
-Create:
-
-```text
-stock_requisitions
-- id
-- requisition_number
-- requesting_department_id
-- requested_by
-- status
-- requested_at
-- reviewed_by nullable
-- reviewed_at nullable
-- issued_by nullable
-- issued_at nullable
-- acknowledged_by nullable
-- acknowledged_at nullable
-- notes nullable
-- created_at
-- updated_at
-```
-
-Create:
+Remove these filters from the Patient List page:
 
 ```text
-stock_requisition_items
-- id
-- stock_requisition_id
-- product_id
-- requested_quantity
-- approved_quantity nullable
-- issued_quantity nullable
-- acknowledged_quantity nullable
-- notes nullable
-- created_at
-- updated_at
+Blood group
+Gender
 ```
 
-Optional transfer link:
+This means:
 
-```text
-stock_transfer_id nullable
-```
+* remove them from the frontend filter UI
+* stop sending them in query parameters
+* remove backend filtering logic if it only exists for this patient list page
 
-or create separate transfer tables if already exist.
+Do not delete patient fields from the database.
+
+Only remove the filters from the list page.
 
 ---
 
-# 12. Stock Requisition Statuses
+# 6. Add Insurance Filter
 
-Recommended statuses:
+Add filter by insurance.
 
-```text
-DRAFT
-SUBMITTED
-APPROVED
-PARTIALLY_APPROVED
-REJECTED
-ISSUED
-PARTIALLY_ISSUED
-AWAITING_ACKNOWLEDGEMENT
-ACKNOWLEDGED
-PARTIALLY_ACKNOWLEDGED
-COMPLETED
-CANCELLED
-```
-
-Keep it practical. If too many statuses already complicate UI, use:
+The user should be able to filter patients by:
 
 ```text
-DRAFT
-SUBMITTED
-APPROVED
-ISSUED
-AWAITING_ACKNOWLEDGEMENT
-COMPLETED
-REJECTED
-CANCELLED
+Insurance provider
 ```
+
+Optional if already supported:
+
+```text
+Insurance type
+Insurance status: active / expired
+```
+
+Minimum required filter:
+
+```text
+Insurance Provider
+```
+
+The filter should load from existing insurance providers.
+
+Example:
+
+```text
+All Insurances
+NHIS
+Cash and Carry
+Private Insurance A
+Corporate Insurance B
+```
+
+If Cash and Carry is not stored as insurance provider, decide whether to include it as a special filter option.
 
 ---
 
-# 13. Department Requisition Flow
+# 7. Add Last Visit Date Range Filter
 
-## Department Creates Request
-
-Department user selects products linked to their department.
+Add date range filter based on the patient’s last visit date.
 
 Fields:
 
 ```text
-product
-requested_quantity
-notes
+Last Visit From
+Last Visit To
 ```
 
-Rules:
+The filter should return patients whose most recent visit falls within the selected range.
 
-* product must be linked to requesting department
-* requested quantity > 0
-* department must have active stock location
-
-## Store Reviews
-
-Store sees submitted requisitions.
-
-Store can:
+Example:
 
 ```text
-approve full quantity
-approve partial quantity
-reject item
-reject request
+last_visit_date >= from
+last_visit_date <= to
 ```
 
-Approved quantity cannot exceed requested quantity unless explicitly allowed.
+If using Eloquent, calculate last visit using:
 
-## Store Issues Stock
-
-Store issues approved products from Main Store.
-
-At issue time:
-
-* check Main Store stock
-* create `TRANSFER_OUT` movement from Main Store
-* do not yet create `TRANSFER_IN` into department stock if acknowledgement is required
-* or create pending transfer records without updating destination balance
-
-Recommended safe approach:
-
-```text
-On issue:
-- deduct from Main Store with TRANSFER_OUT
-- create pending transfer item
-- status = AWAITING_ACKNOWLEDGEMENT
-
-On department acknowledgement:
-- create TRANSFER_IN into department stock location
-- update department stock balance
-- mark requisition completed/partially acknowledged
+```php
+withMax('visits', 'visit_date')
 ```
 
-This matches the user requirement: receiving department must acknowledge before stock is updated into their location.
+or equivalent.
 
-## Department Acknowledges
-
-Receiving department confirms received quantities.
-
-Rules:
-
-* acknowledged quantity cannot exceed issued quantity
-* on acknowledgement, create `TRANSFER_IN` into department stock location
-* update department stock balance
-* record acknowledged_by and acknowledged_at
+Do not filter by any visit in the range if the requirement is specifically “last visit date”. It must use the latest visit per patient.
 
 ---
 
-# 14. Stock Transfer Compatibility
+# 8. Patient List Columns
 
-Existing stock transfer workflow must not break.
-
-But if requisition workflow is enabled:
-
-* transfers to departments should preferably be created from approved requisitions
-* direct transfer can still exist for Store/Admin emergency correction if permitted
-* direct transfer must still involve Main Store
-* no department-to-department transfer unless system setting allows it
-
-Add setting:
+Status should show:
 
 ```text
-allow_direct_store_transfers = true/false
+Active
+Deceased
+Inactive if already supported
 ```
 
-Default can be true during transition, but the intended workflow is requisition-based transfer.
+Use badges for status.
 
 ---
 
-# 15. Unified Movement Logic for Requisition Transfers
+# 9. Mark Patient as Deceased
 
-Movements:
+Add a safe way to mark a patient as deceased.
 
-## Store issues requisition
-
-```text
-movement_type = TRANSFER_OUT
-direction = OUT
-stock_location = Main Store
-source_type = stock_requisition_item or stock_transfer_item
-source_id = item id
-```
-
-## Department acknowledges
+This should be an action button on the patient detail page:
 
 ```text
-movement_type = TRANSFER_IN
-direction = IN
-stock_location = Department Stock Location
-source_type = stock_requisition_item or stock_transfer_item
-source_id = item id
+Mark as Deceased
 ```
 
-Never update balances without movement.
+When clicked, open a confirmation modal.
+
+The modal should ask for:
+
+```text
+Date of death
+Cause of death optional
+Notes optional
+```
+
+Require confirmation before saving.
 
 ---
 
-# 16. UI for Requisitions
+# 10. Database Fields for Deceased Status
 
-Add menu under Store / Procurement:
+If not already present, add fields to `patients` table:
 
 ```text
-Stock Requisitions
+is_deceased boolean default false
+deceased_at nullable datetime/date
+cause_of_death nullable string/text
+deceased_notes nullable text
+marked_deceased_by nullable foreign key to users
 ```
 
-For department users:
+If the project already has a patient status field, use it consistently.
+
+Recommended:
 
 ```text
-My Stock Requests
+status = active/deceased/inactive
 ```
 
-Pages:
+or:
 
 ```text
-Requisitions Index
-Create Requisition
-Requisition Show
-Review Requisition
-Issue Requisition
-Acknowledge Receipt
+is_deceased = true/false
 ```
 
-Store dashboard should show:
+Choose the approach that best fits the existing codebase.
+
+---
+
+# 11. Deceased Business Rules
+
+When a patient is marked deceased:
+
+* patient should remain searchable
+* patient should show clear `Deceased` badge
+* patient should not be selected for new OPD visits unless authorized override exists
+* patient should not be selected for new admission unless authorized override exists
+* patient history must remain accessible
+* old invoices, visits, investigations, prescriptions, and records must remain unchanged
+* do not delete the patient record
+
+If a new visit is attempted for a deceased patient, show clear warning:
 
 ```text
-Pending Requisitions
-Awaiting Acknowledgement
+This patient is marked as deceased and cannot start a new visit.
 ```
 
-Department dashboard should show:
+Optional override permission:
 
 ```text
-My Pending Stock Requests
-Stock Awaiting My Acknowledgement
+patients.deceased.override
 ```
 
 ---
 
-# 17. Supplier Ledger Restrictions
+# 12. Permissions
 
-Update Supplier Ledger UI.
-
-Manual actions allowed:
+Add or verify permission:
 
 ```text
-Record Payment
-Create Credit Note
-Create Debit Note
+patients.mark_deceased
 ```
 
-Not allowed manually from ledger page:
+Only authorized users should see or use the Mark as Deceased action.
+
+Suggested allowed roles:
 
 ```text
-Goods Received
-Return to Supplier
-Purchase Order
+Admin
+Super Admin
+Records Supervisor
+Doctor if permitted
 ```
 
-These must come from their source workflows.
-
-On ledger entry row, show source link:
-
-```text
-View PO
-View GRN
-View Return
-View Payment
-```
-
-Filters must work.
+Do not allow normal users to mark patients deceased unless assigned permission.
 
 ---
 
-# 18. Stock Location Main Store Rules
+# 13. Backend Requirements
 
-Backend validation:
-
-* cannot deactivate Main Store
-* cannot delete Main Store
-* cannot change `is_main` to false for Main Store
-* cannot assign Main Store to non-Store department
-* cannot create second Main Store unless explicitly allowed
-
-Frontend:
-
-* disable edit/deactivate/delete actions for Main Store
-* show “System Default” badge
-
----
-
-# 19. Services to Create or Update
-
-Update/create:
+Create or update:
 
 ```text
-ProductService
-ProductPricingService
-StockLocationService
-StockMovementService
-StockBalanceService
-StockTransferService
-StockAdjustmentService
-StockReturnService
-PurchaseOrderService
-ProcurementService
-GoodsReceivedNoteService
-PurchaseReturnService
-StockRequisitionService
-SupplierLedgerService
+PatientController@index
+PatientController@markDeceased
+PatientService
+PatientFilterService if available
+MarkPatientDeceasedRequest
 ```
 
-Important:
+Recommended route:
 
-* `StockMovementService` is the only stock movement writer.
-* `StockBalanceService` is the only stock balance updater.
-* `SupplierLedgerService` is the only supplier ledger writer.
-* PO receiving must not write to old drug stock.
-* Stock actions must use product_id.
+```php
+Route::patch('/patients/{patient}/mark-deceased', [PatientController::class, 'markDeceased'])
+    ->name('patients.mark-deceased')
+    ->middleware('can:patients.mark_deceased');
+```
+
+Use existing route prefixes/names if different.
 
 ---
 
-# 20. Tests Required
+# 14. Frontend Requirements
+
+On Patient List page:
+
+* update search placeholder
+* remove gender filter
+* remove blood group filter
+* add insurance filter
+* add last visit date range filters
+* preserve filters in URL/query string
+* reset filters button should work
+* pagination should preserve filters
+* add deceased badge
+* add Mark as Deceased action if user has permission
+* show confirmation modal
+* show validation errors in modal
+* modal should close only after successful save
+
+Use SPA behavior. No full page reloads.
+
+---
+
+# 15. Performance Requirements
+
+Avoid N+1 queries.
+
+Eager-load:
+
+```text
+insurances.provider
+nextOfKins
+latestVisit or visits max date
+```
+
+Use efficient last visit calculation.
+
+Add indexes if needed:
+
+```text
+patients.name
+patients.phone
+patients.ghana_card_number
+patient_insurances.membership_number
+next_of_kins.name
+next_of_kins.phone
+visits.patient_id
+visits.visit_date
+```
+
+Do not load all visits for every patient just to find last visit date.
+
+---
+
+# 16. Tests Required
 
 Add or update tests for:
 
-## Products
-
-1. Product filters work.
-2. Product pagination preserves filters.
-3. Product insurance price badges/column shows correct state.
-
-## Supplier Ledger
-
-4. Ledger filters work.
-5. Ledger manual entry only allows payment, credit note, debit note.
-6. Goods received ledger entries come only from GRN workflow.
-7. Return to supplier ledger entries come only from purchase return workflow.
-8. Ledger row links to source document.
-
-## Purchase Orders
-
-9. PO filters work.
-10. Total Ordered Value is correct.
-11. Total Received Value is correct.
-12. Outstanding Value is correct.
-
-## Stock Locations
-
-13. Stock location table renders correctly.
-14. Notes column does not break layout.
-15. Main Store cannot be edited/deactivated/deleted.
-
-## Stock Balances / Receive Stock
-
-16. Receive stock uses product_id, not drug_id.
-17. Receive stock creates stock movement.
-18. Receive stock updates stock balance.
-19. Receive stock no longer throws `drug_id cannot be null`.
-
-## Modals
-
-20. Receive stock modal works.
-21. Transfer modal works.
-22. Adjustment modal works.
-23. Return modal works.
-24. Modals show validation errors and do not leave stuck backdrop.
-
-## Purchase Returns
-
-25. Purchase return can be created.
-26. Posting purchase return creates RETURN_OUT movement.
-27. Posting purchase return updates stock balance.
-28. Posting purchase return creates supplier ledger entry.
-29. Supplier return cannot be manually faked from ledger page.
-
-## Stock Requisitions
-
-30. Department can create requisition for products linked to department.
-31. Store can approve requisition.
-32. Store can partially approve requisition.
-33. Store issue creates TRANSFER_OUT from Main Store.
-34. Department acknowledgement creates TRANSFER_IN into department stock.
-35. Department stock balance updates only after acknowledgement.
-36. Acknowledged quantity cannot exceed issued quantity.
-37. Requisition status updates correctly.
-
-## Regression
-
-38. Existing PO workflow still works.
-39. Existing Product Stock Balance page still works.
-40. Existing Pharmacy workflow still works.
-41. Existing Investigation workflow still works.
-42. Existing Procedure workflow still works.
-43. No active workflow writes to legacy drug stock.
+1. Search by patient name works.
+2. Search by patient phone works.
+3. Search by Ghana Card number works.
+4. Search by insurance membership card number works.
+5. Search by next of kin name works.
+6. Search by next of kin phone works.
+7. Gender filter is no longer shown.
+8. Blood group filter is no longer shown.
+9. Insurance filter works.
+10. Last visit date range filter works using latest visit date.
+11. Patient can be marked deceased by authorized user.
+12. Unauthorized user cannot mark patient deceased.
+13. Deceased patient shows deceased badge.
+14. Deceased patient cannot start new visit unless override is allowed.
+15. Pagination preserves filters.
 
 ---
 
-# 21. Deliverables
+# 17. Deliverables
 
 Provide:
 
-1. Root cause analysis for each bug.
-2. Files modified.
-3. Product filters fixed.
-4. Product pagination fixed.
-5. Product insurance prices column added.
-6. Supplier ledger restrictions added.
-7. Supplier ledger source links added.
-8. Supplier ledger filters fixed.
-9. Purchase order totals fixed.
-10. Purchase order filters fixed.
-11. Stock location table fixed.
-12. Main Store protection implemented.
-13. Receive stock SQL error fixed.
-14. Stock action modals implemented.
-15. Purchase Returns implemented.
-16. Stock Requisitions implemented.
-17. Tests or verification notes.
-18. Remaining TODOs.
+1. Updated Patient List search.
+2. Removed gender and blood group filters.
+3. Added insurance filter.
+4. Added last visit date range filter.
+5. Added deceased status support.
+6. Added Mark as Deceased action/modal.
+7. Updated backend filtering.
+8. Updated frontend filters.
+9. Updated routes/requests/controllers/services.
+10. Tests or verification notes.
+11. Files modified.
+12. Remaining TODOs if any.
 
 ---
 
-# 22. Important Rules
+# 18. Important Rules
 
-Do not create a parallel inventory system.
+Do not delete patient records.
 
-Do not use drug_id for stock movement or balance.
+Do not remove gender or blood group from patient profile/database.
 
-Do not let PO receiving write to old drug stock.
+Only remove gender and blood group filters from the patient list page.
 
-Do not let departments create products from their catalogues.
+Do not break patient registration.
 
-Do not allow supplier returns to be manually entered from supplier ledger.
+Do not break visit creation.
 
-Do not allow purchase/goods received ledger entries to be manually created from supplier ledger.
+Do not allow deceased patients to start new visits without clear authorization.
 
-Do not update department stock before acknowledgement in requisition flow.
+Do not use unsafe raw SQL.
 
-Do not deactivate or edit Main Store through normal UI.
+Do not load all visits just to calculate last visit date.
 
-Do not break existing working workflows.
+Now inspect the existing patient list implementation and apply these changes carefully.
 
-Do not bypass service classes.
 
-Now inspect the current implementation and fix these bugs carefully while keeping the unified product-based inventory system intact.
+# Patient ID Generation
+
+Implement configurable patient ID generation.
+
+The system must generate a unique permanent Patient ID when a patient is created.
+
+The Patient ID must not be manually typed by normal users.
+
+Default pattern:
+
+{PREFIX}-{YEAR}-{SEQUENCE}
+
+Default example:
+
+UHMS-2026-000001
+
+The pattern must be configurable from system settings.
+
+Supported placeholders:
+
+{PREFIX}
+{YEAR}
+{YY}
+{MONTH}
+{DAY}
+{SEQUENCE}
+
+Settings:
+
+patient_id_prefix
+patient_id_pattern
+patient_id_sequence_length
+patient_id_reset_period
+
+Supported reset periods:
+
+never
+yearly
+monthly
+daily
+
+Rules:
+
+- Patient ID must be unique.
+- Patient ID must be generated inside a database transaction.
+- Patient ID must be safe under concurrent patient registration.
+- Patient ID must never be reused.
+- Patient ID must remain unchanged after patient creation.
+- Only Super Admin can regenerate or manually edit a Patient ID, and that action must be audited.
+- Patient search must support searching by Patient ID.
+- Patient list must display Patient ID.
+- Visit creation must show Patient ID clearly.
+
+Create a PatientNumberService or PatientIdGeneratorService.
+
+Required method:
+
+generate(): string
+
+The generator must:
+1. load current settings
+2. determine reset period
+3. lock sequence row
+4. increment sequence
+5. format ID using pattern
+6. ensure uniqueness
+7. return generated patient ID
+
+Suggested table:
+
+patient_number_sequences
+- id
+- prefix
+- period_type
+- period_key
+- last_sequence
+- created_at
+- updated_at
+
+Example period_key:
+2026
+2026-05
+2026-05-21
+GLOBAL
+
+Use lockForUpdate() during generation to prevent duplicates.
+
+When creating a patient, assign:
+
+patients.patient_number = generated ID
+
+Do not use patient database ID as the visible Patient ID.

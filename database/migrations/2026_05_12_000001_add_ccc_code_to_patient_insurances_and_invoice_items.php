@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Add CCC code to patient_insurances. Also ensure invoice_items has the
@@ -21,7 +23,15 @@ return new class extends Migration {
 
     public function up(): void
     {
-        if (DB::getDriverName() === 'sqlite') return;
+        if (DB::getDriverName() === 'sqlite') {
+            // SQLite: add ccc_code column if missing (Blueprint, no AFTER support)
+            if (!Schema::hasColumn('patient_insurances', 'ccc_code')) {
+                Schema::table('patient_insurances', function (Blueprint $table) {
+                    $table->string('ccc_code', 64)->nullable();
+                });
+            }
+            return;
+        }
 
         // 1. patient_insurances.ccc_code
         if (! $this->hasColumn('patient_insurances', 'ccc_code')) {
@@ -48,7 +58,14 @@ return new class extends Migration {
 
     public function down(): void
     {
-        if (DB::getDriverName() === 'sqlite') return;
+        if (DB::getDriverName() === 'sqlite') {
+            if (Schema::hasColumn('patient_insurances', 'ccc_code')) {
+                Schema::table('patient_insurances', function (Blueprint $table) {
+                    $table->dropColumn('ccc_code');
+                });
+            }
+            return;
+        }
 
         if ($this->hasColumn('patient_insurances', 'ccc_code')) {
             try { DB::statement('DROP INDEX `patient_insurances_ccc_code_index` ON `patient_insurances`'); } catch (\Throwable $e) {}

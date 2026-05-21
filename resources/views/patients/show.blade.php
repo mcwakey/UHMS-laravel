@@ -53,16 +53,50 @@
                 </div>
                 <div class="d-flex gap-2 justify-content-lg-end flex-wrap">
                     @can('visits.create')
+                    @if($patient->is_deceased)
+                    <button type="button" class="btn btn-success btn-md" disabled title="Cannot start a new visit for a deceased patient">
+                        <i class="ti ti-plus me-1"></i>New Visit
+                    </button>
+                    @else
                     <a href="{{ route('admin.visits.create') }}?patient_id={{ $patient->id }}" class="btn btn-success btn-md"><i class="ti ti-plus me-1"></i>New Visit</a>
+                    @endif
                     @endcan
                     @can('patients.edit')
                     <a href="{{ route('admin.patients.edit', $patient) }}" class="btn btn-primary btn-md"><i class="ti ti-edit me-1"></i>Edit Patient</a>
+                    @endcan
+                    @can('patients.mark_deceased')
+                    @if(!$patient->is_deceased)
+                    <button type="button" class="btn btn-outline-danger btn-md" data-bs-toggle="modal" data-bs-target="#markDeceasedModal">
+                        <i class="ti ti-skull me-1"></i>Mark as Deceased
+                    </button>
+                    @endif
                     @endcan
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@if($patient->is_deceased)
+<div class="alert alert-danger d-flex align-items-start mb-3" role="alert">
+    <i class="ti ti-skull fs-20 me-3 flex-shrink-0 mt-1"></i>
+    <div>
+        <h6 class="fw-bold mb-1">This patient is deceased</h6>
+        <p class="mb-0">
+            Date of death: <strong>{{ $patient->deceased_at ? $patient->deceased_at->format('d M Y') : '—' }}</strong>
+            @if($patient->cause_of_death)
+                &nbsp;|&nbsp; Cause: <strong>{{ $patient->cause_of_death }}</strong>
+            @endif
+            @if($patient->deceased_notes)
+                <br><span class="text-muted">{{ $patient->deceased_notes }}</span>
+            @endif
+            @if($patient->markedDeceasedBy)
+                <br><small class="text-muted">Recorded by {{ $patient->markedDeceasedBy->name }}</small>
+            @endif
+        </p>
+    </div>
+</div>
+@endif
 
 <!-- Info Cards Row -->
 <div class="row">
@@ -1034,11 +1068,77 @@
     </div>
 </div>
 @endcan
+
+{{-- ── Mark as Deceased Modal ──────────────────────────────────────────────── --}}
+@can('patients.mark_deceased')
+@if(!$patient->is_deceased)
+<div class="modal fade" id="markDeceasedModal" tabindex="-1" aria-labelledby="markDeceasedModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="markDeceasedModalLabel"><i class="ti ti-skull me-2"></i>Mark Patient as Deceased</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ route('admin.patients.mark-deceased', $patient) }}" id="markDeceasedForm">
+                @csrf
+                @method('PATCH')
+                <div class="modal-body">
+                    <div class="alert alert-warning d-flex align-items-center mb-3">
+                        <i class="ti ti-alert-triangle me-2 fs-18"></i>
+                        <span>This action is <strong>permanent</strong>. The patient will be marked as deceased and cannot start new visits. Their history will remain unchanged.</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Date of Death <span class="text-danger">*</span></label>
+                        <input type="date" name="deceased_at" class="form-control @error('deceased_at') is-invalid @enderror"
+                            value="{{ old('deceased_at', date('Y-m-d')) }}" max="{{ date('Y-m-d') }}" required>
+                        @error('deceased_at')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Cause of Death <span class="text-muted fw-normal">(optional)</span></label>
+                        <input type="text" name="cause_of_death" class="form-control @error('cause_of_death') is-invalid @enderror"
+                            placeholder="e.g. Cardiac arrest" value="{{ old('cause_of_death') }}" maxlength="255">
+                        @error('cause_of_death')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Additional Notes <span class="text-muted fw-normal">(optional)</span></label>
+                        <textarea name="deceased_notes" class="form-control @error('deceased_notes') is-invalid @enderror"
+                            rows="3" placeholder="Any additional notes...">{{ old('deceased_notes') }}</textarea>
+                        @error('deceased_notes')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger"><i class="ti ti-check me-1"></i>Confirm — Mark as Deceased</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
+@endcan
+
 @endsection
 
 @section('scripts')
 <script>
 (function () {
+    // ── Auto-open Mark as Deceased modal on validation error ─────────────────
+    @if($errors->any() && old('deceased_at'))
+    var deceasedModal = document.getElementById('markDeceasedModal');
+    if (deceasedModal) {
+        new bootstrap.Modal(deceasedModal).show();
+    }
+    @endif
+
     // ── Edit Insurance Modal ──────────────────────────────────────────────────
     document.querySelectorAll('.edit-insurance-btn').forEach(btn => {
         btn.addEventListener('click', function() {

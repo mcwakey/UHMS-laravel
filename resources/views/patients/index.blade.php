@@ -20,29 +20,16 @@
         <form method="GET" action="{{ route('admin.patients.index') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
                 <label class="form-label small">Search</label>
-                <input type="text" name="search" class="form-control" placeholder="Search name, phone, ID, Ghana Card..." value="{{ request('search') }}">
+                <input type="text" name="search" class="form-control" placeholder="Search by name, phone, Ghana Card, insurance card, or emergency contact..." value="{{ request('search') }}">
             </div>
             <div class="col-md-2">
-                <label class="form-label small">Gender</label>
-                <select name="gender" class="form-select">
-                    <option value="">All Genders</option>
-                    @foreach(\App\Enums\Gender::cases() as $gender)
-                        <option value="{{ $gender->value }}" {{ request('gender') == $gender->value ? 'selected' : '' }}>{{ $gender->label() }}</option>
+                <label class="form-label small">Insurance Provider</label>
+                <select name="insurance_provider_id" class="form-select">
+                    <option value="">All Insurances</option>
+                    @foreach($insuranceProviders as $provider)
+                        <option value="{{ $provider->id }}" {{ request('insurance_provider_id') == $provider->id ? 'selected' : '' }}>{{ $provider->name }}</option>
                     @endforeach
                 </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">Blood Group</label>
-                <select name="blood_group" class="form-select">
-                    <option value="">All Blood Groups</option>
-                    @foreach(\App\Enums\BloodGroup::cases() as $bg)
-                        <option value="{{ $bg->value }}" {{ request('blood_group') == $bg->value ? 'selected' : '' }}>{{ $bg->label() }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">City</label>
-                <input type="text" name="city" class="form-control" placeholder="Filter by city..." value="{{ request('city') }}">
             </div>
             <div class="col-md-2">
                 <label class="form-label small">Status</label>
@@ -52,6 +39,14 @@
                     <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
                     <option value="deceased" {{ request('status') == 'deceased' ? 'selected' : '' }}>Deceased</option>
                 </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Last Visit From</label>
+                <input type="date" name="visit_from" class="form-control" value="{{ request('visit_from') }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Last Visit To</label>
+                <input type="date" name="visit_to" class="form-control" value="{{ request('visit_to') }}">
             </div>
             <div class="col-md-auto">
                 <button type="submit" class="btn btn-outline-primary btn-md"><i class="ti ti-filter me-1"></i>Filter</button>

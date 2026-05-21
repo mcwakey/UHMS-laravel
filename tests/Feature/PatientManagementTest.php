@@ -151,7 +151,9 @@ class PatientManagementTest extends TestCase
 
         $patient = Patient::where('first_name', 'Ama')->first();
         $this->assertNotNull($patient);
-        $this->assertStringStartsWith('PT', $patient->patient_number);
+        $this->assertNotEmpty($patient->patient_number);
+        // Patient number should follow the configured pattern (default: UHMS-YEAR-SEQUENCE)
+        $this->assertMatchesRegularExpression('/^[A-Z]+-\d{4}-\d+/', $patient->patient_number);
     }
 
     // ── Show ────────────────────────────────────
@@ -281,5 +283,291 @@ class PatientManagementTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertSee('Kwame');
+    }
+
+    public function test_search_by_phone_works(): void
+    {
+        Patient::factory()->create([
+            'first_name' => 'Yaw',
+            'last_name'  => 'Mensah',
+            'phone'      => '0201112222',
+            'registered_by' => $this->user->id,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('admin.patients.index', ['search' => '0201112222']));
+
+        $response->assertStatus(200);
+        $response->assertSee('Yaw');
+    }
+
+    public function test_search_by_ghana_card_number_works(): void
+    {
+        Patient::factory()->create([
+            'first_name'         => 'Abena',
+            'last_name'          => 'Boateng',
+            'ghana_card_number'  => 'GHA-123456789-0',
+            'registered_by'      => $this->user->id,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('admin.patients.index', ['search' => 'GHA-123456789-0']));
+
+        $response->assertStatus(200);
+        $response->assertSee('Abena');
+    }
+
+    public function test_search_by_insurance_membership_number_works(): void
+    {
+        $provider = InsuranceProvider::create([
+            'name'       => 'NHIA Test',
+            'short_name' => 'NHT',
+            'type'       => InsuranceType::NHIA,
+            'is_active'  => true,
+            'is_default' => false,
+        ]);
+        $tier = InsuranceTier::create([
+            'insurance_provider_id' => $provider->id,
+            'name'                  => 'Standard',
+            'code'                  => 'STD',
+            'is_default'            => true,
+            'is_active'             => true,
+        ]);
+
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+        $patient->insurances()->create([
+            'insurance_provider_id' => $provider->id,
+            'insurance_tier_id'     => $tier->id,
+            'membership_number'     => 'MEM-987654',
+            'is_primary'            => true,
+            'is_active'             => true,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('admin.patients.index', ['search' => 'MEM-987654']));
+
+        $response->assertStatus(200);
+        $response->assertSee($patient->first_name);
+    }
+
+    public function test_search_by_emergency_contact_name_works(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+        $patient->emergencyContacts()->create([
+            'name'       => 'Kofi Asem',
+            'phone'      => '0201234567',
+            'is_primary' => true,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('admin.patients.index', ['search' => 'Kofi Asem']));
+
+        $response->assertStatus(200);
+        $response->assertSee($patient->first_name);
+    }
+
+    public function test_search_by_emergency_contact_phone_works(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+        $patient->emergencyContacts()->create([
+            'name'       => 'Emergency Person',
+            'phone'      => '0249998877',
+            'is_primary' => true,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('admin.patients.index', ['search' => '0249998877']));
+
+        $response->assertStatus(200);
+        $response->assertSee($patient->first_name);
+    }
+
+    public function test_gender_filter_not_present_on_patient_list(): void
+    {
+        $response = $this->actingAs($this->user)->get(route('admin.patients.index'));
+        $response->assertStatus(200);
+        $response->assertDontSee('name="gender"', false);
+    }
+
+    public function test_blood_group_filter_not_present_on_patient_list(): void
+    {
+        $response = $this->actingAs($this->user)->get(route('admin.patients.index'));
+        $response->assertStatus(200);
+        $response->assertDontSee('name="blood_group"', false);
+    }
+
+    public function test_insurance_provider_filter_works(): void
+    {
+        $provider = InsuranceProvider::create([
+            'name'       => 'Priority Health',
+            'short_name' => 'PH',
+            'type'       => InsuranceType::PRIVATE,
+            'is_active'  => true,
+            'is_default' => false,
+        ]);
+        $tier = InsuranceTier::create([
+            'insurance_provider_id' => $provider->id,
+            'name'                  => 'Gold',
+            'code'                  => 'GOLD',
+            'is_default'            => true,
+            'is_active'             => true,
+        ]);
+
+        $matchingPatient = Patient::factory()->create(['first_name' => 'Insured', 'registered_by' => $this->user->id]);
+        $matchingPatient->insurances()->create([
+            'insurance_provider_id' => $provider->id,
+            'insurance_tier_id'     => $tier->id,
+            'is_primary'            => true,
+            'is_active'             => true,
+        ]);
+
+        $otherPatient = Patient::factory()->create(['first_name' => 'Uninsured', 'registered_by' => $this->user->id]);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('admin.patients.index', ['insurance_provider_id' => $provider->id]));
+
+        $response->assertStatus(200);
+        $response->assertSee('Insured');
+        $response->assertDontSee('Uninsured');
+    }
+
+    public function test_last_visit_date_range_filter_uses_latest_visit(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+
+        // Two visits; latest is 2025-03-15
+        \App\Models\Visit::factory()->create([
+            'patient_id' => $patient->id,
+            'visit_date' => '2024-11-01',
+            'created_by' => $this->user->id,
+        ]);
+        \App\Models\Visit::factory()->create([
+            'patient_id' => $patient->id,
+            'visit_date' => '2025-03-15',
+            'created_by' => $this->user->id,
+        ]);
+
+        // Should appear when filtering by a range covering 2025-03-15
+        $response = $this->actingAs($this->user)
+            ->get(route('admin.patients.index', [
+                'visit_from' => '2025-01-01',
+                'visit_to'   => '2025-12-31',
+            ]));
+
+        $response->assertStatus(200);
+        $response->assertSee($patient->first_name);
+
+        // Should NOT appear when filtering by range before the latest visit
+        $response2 = $this->actingAs($this->user)
+            ->get(route('admin.patients.index', [
+                'visit_from' => '2026-01-01',
+                'visit_to'   => '2026-12-31',
+            ]));
+
+        $response2->assertStatus(200);
+        $response2->assertDontSee($patient->first_name);
+    }
+
+    // ── Deceased ─────────────────────────────────────
+
+    public function test_authorized_user_can_mark_patient_deceased(): void
+    {
+        $perm = \Spatie\Permission\Models\Permission::create(['name' => 'patients.mark_deceased']);
+        $this->user->givePermissionTo($perm);
+
+        $patient = Patient::factory()->create([
+            'status'       => 'active',
+            'is_deceased'  => false,
+            'registered_by' => $this->user->id,
+        ]);
+
+        $response = $this->actingAs($this->user)
+            ->from(route('admin.patients.show', $patient))
+            ->patch(route('admin.patients.mark-deceased', $patient), [
+                'deceased_at'    => '2026-05-20',
+                'cause_of_death' => 'Cardiac arrest',
+            ]);
+
+        $response->assertRedirect();
+
+        $patient->refresh();
+        $this->assertEquals('deceased', $patient->status);
+        $this->assertTrue((bool) $patient->is_deceased);
+        $this->assertEquals('2026-05-20', $patient->deceased_at->toDateString());
+        $this->assertDatabaseHas('patients', [
+            'id'     => $patient->id,
+            'status' => 'deceased',
+        ]);
+    }
+
+    public function test_unauthorized_user_cannot_mark_patient_deceased(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+
+        // user does not have patients.mark_deceased permission
+        $response = $this->actingAs($this->user)
+            ->patch(route('admin.patients.mark-deceased', $patient), [
+                'deceased_at' => '2026-05-20',
+            ]);
+
+        $response->assertStatus(403);
+        $this->assertDatabaseHas('patients', ['id' => $patient->id, 'is_deceased' => false]);
+    }
+
+    public function test_deceased_patient_shows_deceased_badge(): void
+    {
+        $patient = Patient::factory()->create([
+            'status'      => 'deceased',
+            'is_deceased' => true,
+            'deceased_at' => '2026-05-01',
+            'registered_by' => $this->user->id,
+        ]);
+
+        $response = $this->actingAs($this->user)->get(route('admin.patients.index'));
+        $response->assertStatus(200);
+        $response->assertSee('Deceased');
+    }
+
+    public function test_deceased_patient_cannot_start_new_visit(): void
+    {
+        $deceased = Patient::factory()->create([
+            'status'      => 'deceased',
+            'is_deceased' => true,
+            'deceased_at' => '2026-05-01',
+            'registered_by' => $this->user->id,
+        ]);
+
+        // Give visit permissions
+        $viewPerm  = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'visits.view']);
+        $visitPerm = \Spatie\Permission\Models\Permission::firstOrCreate(['name' => 'visits.create']);
+        $this->user->givePermissionTo([$viewPerm, $visitPerm]);
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        $this->user = $this->user->fresh();
+
+        $dept = \App\Models\Department::factory()->create();
+
+        $response = $this->actingAs($this->user)
+            ->post(route('admin.visits.store'), [
+                'patient_id'      => $deceased->id,
+                'visit_type'      => 'outpatient',
+                'visit_date'      => now()->toDateString(),
+                'priority'        => 'normal',
+                'chief_complaint' => 'Test',
+                'department_id'   => $dept->id,
+            ]);
+
+        $response->assertStatus(302); // redirect back with error
+        $this->assertDatabaseMissing('visits', ['patient_id' => $deceased->id]);
+    }
+
+    public function test_pagination_preserves_filters(): void
+    {
+        Patient::factory()->count(20)->create(['registered_by' => $this->user->id]);
+
+        $response = $this->actingAs($this->user)
+            ->get(route('admin.patients.index', ['search' => '', 'status' => 'active', 'page' => 2]));
+
+        $response->assertStatus(200);
+        $response->assertSee('status=active', false);
     }
 }

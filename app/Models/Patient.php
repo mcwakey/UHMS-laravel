@@ -51,15 +51,23 @@ class Patient extends Model
         'chronic_conditions',
         'status',
         'registered_by',
+        // Deceased fields
+        'is_deceased',
+        'deceased_at',
+        'cause_of_death',
+        'deceased_notes',
+        'marked_deceased_by',
     ];
 
     protected function casts(): array
     {
         return [
             'date_of_birth' => 'date',
-            'gender' => Gender::class,
-            'blood_group' => BloodGroup::class,
-            'marital_status' => MaritalStatus::class,
+            'gender'        => Gender::class,
+            'blood_group'   => BloodGroup::class,
+            'marital_status'=> MaritalStatus::class,
+            'is_deceased'   => 'boolean',
+            'deceased_at'   => 'date',
         ];
     }
 
@@ -144,6 +152,16 @@ class Patient extends Model
         return $this->hasMany(Visit::class)->whereIn('status', ['scheduled', 'confirmed']);
     }
 
+    public function latestVisit()
+    {
+        return $this->hasOne(Visit::class)->latestOfMany('visit_date');
+    }
+
+    public function markedDeceasedBy()
+    {
+        return $this->belongsTo(User::class, 'marked_deceased_by');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Accessors
@@ -190,7 +208,14 @@ class Patient extends Model
               ->orWhere('patient_number', 'like', "%{$term}%")
               ->orWhere('phone', 'like', "%{$term}%")
               ->orWhere('email', 'like', "%{$term}%")
-              ->orWhere('ghana_card_number', 'like', "%{$term}%");
+              ->orWhere('ghana_card_number', 'like', "%{$term}%")
+              ->orWhereHas('insurances', function ($ins) use ($term) {
+                  $ins->where('membership_number', 'like', "%{$term}%");
+              })
+              ->orWhereHas('emergencyContacts', function ($ec) use ($term) {
+                  $ec->where('name', 'like', "%{$term}%")
+                     ->orWhere('phone', 'like', "%{$term}%");
+              });
         });
     }
 
