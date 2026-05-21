@@ -128,25 +128,25 @@
         </div>
         <div class="card-body">
             <div class="row">
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label class="form-label">Phone Number <span class="text-danger">*</span></label>
                     <input type="tel" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone', $patient->phone) }}" required>
                     @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label class="form-label">Secondary Phone</label>
                     <input type="tel" name="phone_secondary" class="form-control @error('phone_secondary') is-invalid @enderror" value="{{ old('phone_secondary', $patient->phone_secondary) }}">
                     @error('phone_secondary')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label class="form-label">Email Address</label>
                     <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email', $patient->email) }}">
                     @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label class="form-label">Ghana Card Number</label>
                     <input type="text" name="ghana_card_number" class="form-control @error('ghana_card_number') is-invalid @enderror" value="{{ old('ghana_card_number', $patient->ghana_card_number) }}" placeholder="GHA-XXXXXXXXX-X">
                     @error('ghana_card_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -168,19 +168,7 @@
                     @error('address')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">City</label>
-                    <input type="text" name="city" class="form-control @error('city') is-invalid @enderror" value="{{ old('city', $patient->city) }}">
-                    @error('city')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Town</label>
-                    <input type="text" name="town" class="form-control @error('town') is-invalid @enderror" value="{{ old('town', $patient->town) }}">
-                    @error('town')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label class="form-label">Region</label>
                     <select name="region" class="form-select @error('region') is-invalid @enderror">
                         <option value="">Select Region</option>
@@ -191,7 +179,19 @@
                     @error('region')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">City</label>
+                    <input type="text" name="city" class="form-control @error('city') is-invalid @enderror" value="{{ old('city', $patient->city) }}">
+                    @error('city')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Town</label>
+                    <input type="text" name="town" class="form-control @error('town') is-invalid @enderror" value="{{ old('town', $patient->town) }}">
+                    @error('town')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="col-md-3 mb-3">
                     <label class="form-label">Digital Address (GPS)</label>
                     <input type="text" name="digital_address" class="form-control @error('digital_address') is-invalid @enderror" value="{{ old('digital_address', $patient->digital_address) }}" placeholder="e.g. GA-123-4567">
                     @error('digital_address')<div class="invalid-feedback">{{ $message }}</div>@enderror

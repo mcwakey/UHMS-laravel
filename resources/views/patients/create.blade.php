@@ -124,25 +124,25 @@
         </div>
         <div class="card-body">
             <div class="row">
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label class="form-label">Phone Number <span class="text-danger">*</span></label>
                     <input type="tel" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone') }}" placeholder="e.g. 0241234567" required>
                     @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label class="form-label">Secondary Phone</label>
                     <input type="tel" name="phone_secondary" class="form-control @error('phone_secondary') is-invalid @enderror" value="{{ old('phone_secondary') }}">
                     @error('phone_secondary')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label class="form-label">Email Address</label>
                     <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email') }}">
                     @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label class="form-label">Ghana Card Number</label>
                     <input type="text" name="ghana_card_number" class="form-control @error('ghana_card_number') is-invalid @enderror" value="{{ old('ghana_card_number') }}" placeholder="GHA-XXXXXXXXX-X">
                     @error('ghana_card_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -164,19 +164,7 @@
                     @error('address')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">City</label>
-                    <input type="text" name="city" class="form-control @error('city') is-invalid @enderror" value="{{ old('city') }}">
-                    @error('city')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Town</label>
-                    <input type="text" name="town" class="form-control @error('town') is-invalid @enderror" value="{{ old('town') }}">
-                    @error('town')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                </div>
-
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                     <label class="form-label">Region</label>
                     <select name="region" class="form-select @error('region') is-invalid @enderror">
                         <option value="">Select Region</option>
@@ -187,7 +175,19 @@
                     @error('region')<div class="invalid-feedback">{{ $message }}</div>@enderror
                 </div>
 
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">City</label>
+                    <input type="text" name="city" class="form-control @error('city') is-invalid @enderror" value="{{ old('city') }}">
+                    @error('city')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label class="form-label">Town</label>
+                    <input type="text" name="town" class="form-control @error('town') is-invalid @enderror" value="{{ old('town') }}">
+                    @error('town')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                </div>
+
+                <div class="col-md-3 mb-3">
                     <label class="form-label">Digital Address (GPS)</label>
                     <input type="text" name="digital_address" class="form-control @error('digital_address') is-invalid @enderror" value="{{ old('digital_address') }}" placeholder="e.g. GA-123-4567">
                     @error('digital_address')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -201,7 +201,7 @@
         <div class="card-header d-flex align-items-center justify-content-between">
             <h5 class="fw-bold mb-0"><i class="ti ti-urgent me-1"></i>Emergency Contacts</h5>
             <button type="button" class="btn btn-sm btn-outline-primary" id="add-ec-btn">
-                <i class="ti ti-plus me-1"></i>Add Another
+                <i class="ti ti-plus me-1"></i>Add Another Emergency Contact
             </button>
         </div>
         <div class="card-body">
@@ -212,21 +212,21 @@
                         <button type="button" class="btn btn-sm btn-outline-danger remove-ec d-none"><i class="ti ti-trash"></i></button>
                     </div>
                     <div class="row g-2">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label form-label-sm">Name <span class="text-danger">*</span></label>
                             <input type="text" name="emergency_contacts[0][name]" class="form-control form-control-sm @error('emergency_contacts.0.name') is-invalid @enderror" value="{{ old('emergency_contacts.0.name') }}" placeholder="Full name">
                             @error('emergency_contacts.0.name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label form-label-sm">Phone <span class="text-danger">*</span></label>
                             <input type="tel" name="emergency_contacts[0][phone]" class="form-control form-control-sm @error('emergency_contacts.0.phone') is-invalid @enderror" value="{{ old('emergency_contacts.0.phone') }}" placeholder="e.g. 0241234567">
                             @error('emergency_contacts.0.phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label form-label-sm">Secondary Phone</label>
                             <input type="tel" name="emergency_contacts[0][phone_secondary]" class="form-control form-control-sm" value="{{ old('emergency_contacts.0.phone_secondary') }}" placeholder="Optional">
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label form-label-sm">Relationship</label>
                             <select name="emergency_contacts[0][relationship]" class="form-select form-select-sm">
                                 <option value="">Select</option>
@@ -252,8 +252,12 @@
             ->sortBy(fn ($type) => $type instanceof \BackedEnum ? $type->label() : ucfirst((string) $type));
     @endphp
     <div class="card">
-        <div class="card-header">
+        <div class="card-header d-flex align-items-center justify-content-between">
             <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Insurance</h5>
+            
+            <button type="button" class="btn btn-sm btn-outline-primary mt-1" id="add-ins-btn">
+                <i class="ti ti-plus me-1"></i>Add Another Insurance
+            </button>
         </div>
         <div class="card-body">
             <div class="alert alert-info small py-2 mb-3">
@@ -310,9 +314,6 @@
                     </div>
                 </div>
             </div>
-            <button type="button" class="btn btn-sm btn-outline-primary mt-1" id="add-ins-btn">
-                <i class="ti ti-plus me-1"></i>Add Another Insurance
-            </button>
         </div>
     </div>
 

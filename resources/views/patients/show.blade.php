@@ -23,11 +23,11 @@
                     @endif
                 </span>
                 <div>
-                    <p class="text-primary mb-1 fw-medium">{{ $patient->patient_number }} / {{ $patient->phone_secondary }}</p>
+                    <p class="text-primary mb-1 fw-medium">{{ $patient->patient_number }}</p>
                     <h5 class="mb-1"><span class="fw-bold">{{ $patient->full_name }}</span></h5>
                     <p class="mb-3">{{ $patient->address ? $patient->address . ', ' : '' }}{{ collect([$patient->city, $patient->town])->filter()->implode(', ') }}{{ $patient->region ? ', ' . $patient->region : '' }}</p>
                     <div class="d-flex align-items-center flex-wrap gap-3">
-                        <p class="mb-0 d-inline-flex align-items-center"><i class="ti ti-phone me-1 text-dark"></i>{{ $patient->phone }}</p>
+                        <p class="mb-0 d-inline-flex align-items-center"><i class="ti ti-phone me-1 text-dark"></i>{{ $patient->phone }} / {{ $patient->phone_secondary }}</p>
                         @if($patient->email)
                         <span class="text-light">|</span>
                         <p class="mb-0 d-inline-flex align-items-center"><i class="ti ti-mail me-1 text-dark"></i>{{ $patient->email }}</p>
@@ -128,7 +128,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-sm-6">
+                    {{-- <div class="col-sm-6">
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-circle bg-light text-dark flex-shrink-0 me-2"><i class="ti ti-map-pin fs-16"></i></span>
                             <div>
@@ -136,7 +136,7 @@
                                 <p class="mb-0">{{ $patient->region ?? '—' }}</p>
                             </div>
                         </div>
-                    </div>
+                    </div> --}}
                 </div>
             </div>
         </div>
@@ -159,15 +159,21 @@
                             </div>
                         </div>
                     </div>
+                    @if($patient->insurances->isNotEmpty())
                     <div class="col-sm-4">
                         <div class="d-flex align-items-center mb-3">
-                            <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-map-pin-code fs-16"></i></span>
+                            <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-shield-check fs-16"></i></span>
                             <div>
-                                <h6 class="fs-13 fw-bold mb-1">Digital Address</h6>
-                                <p class="mb-0">{{ $patient->digital_address ?? '—' }}</p>
+                                <h6 class="fs-13 fw-bold mb-1">Primary Insurance</h6>
+                                <p class="mb-0">{{ $patient->insurances->where('is_primary', true)->first()?->insuranceProvider?->name ?? 'Cash & Carry' }}</p>
+                                
+                                {{-- <h6 class="fs-13 fw-bold mb-1">{{ $patient->insurances->where('is_primary', true)->first()?->insuranceProvider?->name ?? 'Cash & Carry' }}</h6>
+                                <p class="mb-0">{{ $patient->insurances->where('is_primary', true)->first()?->membershipNumber ?? '—' }}</p> --}}
                             </div>
                         </div>
-                    </div>                    <div class="col-sm-4">
+                    </div>
+                    @endif                    
+                    <div class="col-sm-4">
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-building-community fs-16"></i></span>
                             <div>
@@ -178,13 +184,14 @@
                     </div>
                     <div class="col-sm-4">
                         <div class="d-flex align-items-center mb-3">
-                            <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-home fs-16"></i></span>
+                            <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-map-pin-code fs-16"></i></span>
                             <div>
-                                <h6 class="fs-13 fw-bold mb-1">Address</h6>
-                                <p class="mb-0">{{ $patient->address ?? '\u2014' }}</p>
+                                <h6 class="fs-13 fw-bold mb-1">Digital Address</h6>
+                                <p class="mb-0">{{ $patient->digital_address ?? '—' }}</p>
                             </div>
                         </div>
-                    </div>                    @php $primaryContact = $patient->emergencyContacts->where('is_primary', true)->first() ?? $patient->emergencyContacts->first(); @endphp
+                    </div>                   
+                    @php $primaryContact = $patient->emergencyContacts->where('is_primary', true)->first() ?? $patient->emergencyContacts->first(); @endphp
                     <div class="col-sm-4">
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-urgent fs-16"></i></span>
@@ -203,17 +210,15 @@
                             </div>
                         </div>
                     </div>
-                    @if($patient->insurances->isNotEmpty())
-                    <div class="col-sm-4">
+                    <div class="col-sm-8">
                         <div class="d-flex align-items-center mb-3">
-                            <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-shield-check fs-16"></i></span>
+                            <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-home fs-16"></i></span>
                             <div>
-                                <h6 class="fs-13 fw-bold mb-1">Primary Insurance</h6>
-                                <p class="mb-0">{{ $patient->insurances->where('is_primary', true)->first()?->insuranceProvider?->name ?? 'Cash & Carry' }}</p>
+                                <h6 class="fs-13 fw-bold mb-1">Address</h6>
+                                <p class="mb-0">{{ $patient->address ?? '—' }}</p>
                             </div>
                         </div>
-                    </div>
-                    @endif
+                    </div> 
                 </div>
             </div>
         </div>
@@ -680,10 +685,10 @@
         <div class="card">
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-4 mb-3">
+                    {{-- <div class="col-md-4 mb-3">
                         <h6 class="fw-bold fs-13">Patient Number</h6>
                         <p>{{ $patient->patient_number }}</p>
-                    </div>
+                    </div> --}}
                     <div class="col-md-4 mb-3">
                         <h6 class="fw-bold fs-13">Registered By</h6>
                         <p>{{ $patient->registeredBy?->full_name ?? 'System' }}</p>
@@ -696,14 +701,14 @@
                         <h6 class="fw-bold fs-13">Last Updated</h6>
                         <p>{{ $patient->updated_at->format('d M Y, h:i A') }}</p>
                     </div>
-                    <div class="col-md-4 mb-3">
+                    {{-- <div class="col-md-4 mb-3">
                         <h6 class="fw-bold fs-13">Secondary Phone</h6>
                         <p>{{ $patient->phone_secondary ?? '—' }}</p>
                     </div>
                     <div class="col-md-4 mb-3">
                         <h6 class="fw-bold fs-13">Digital Address</h6>
                         <p>{{ $patient->digital_address ?? '—' }}</p>
-                    </div>
+                    </div> --}}
                 </div>
             </div>
         </div>
