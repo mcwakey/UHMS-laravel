@@ -177,29 +177,53 @@ function handleSubmit(event) {
     };
 
     try {
-        const data = new FormData(form);
-        const visitMethod = method === 'get' ? 'get' : method;
         const hasFiles = formHasFiles(form);
         const enctype = (form.getAttribute('enctype') || '').toLowerCase();
         const forceFormData = hasFiles || enctype === 'multipart/form-data';
 
-        router.visit(action, {
-            method: visitMethod,
-            data,
-            forceFormData,
-            preserveScroll: false,
-            preserveState: false,
-            onError: (errors) => {
-                // 422 validation errors are normal Inertia flow — the server
-                // returns a redirect-back response with errors flashed; the
-                // current Blade page just re-renders. Do NOT fall back to
-                // native submit (that would re-POST the same bad data and
-                // full-reload). Only surface a toast for non-validation hints.
-                // eslint-disable-next-line no-console
-                console.warn('[bridge] form submit onError (validation or otherwise)', { action, errors });
-                // Intentionally no native fallback here.
-            },
-        });
+        if (method === 'get') {
+            // For GET forms (filter/search), manually convert FormData to a URL
+            // query string. Passing FormData directly to router.visit() for GET
+            // requests is unreliable in Inertia v2+ and may silently drop params,
+            // causing the server to receive an unfiltered request.
+            const params = new URLSearchParams();
+            new FormData(form).forEach((value, key) => {
+                params.append(key, value instanceof File ? '' : String(value));
+            });
+            const baseUrl = action.split('?')[0];
+            const qs = params.toString();
+            const visitUrl = qs ? `${baseUrl}?${qs}` : baseUrl;
+
+            router.visit(visitUrl, {
+                method: 'get',
+                preserveScroll: false,
+                preserveState: false,
+                onError: (errors) => {
+                    // eslint-disable-next-line no-console
+                    console.warn('[bridge] GET form visit error', { visitUrl, errors });
+                },
+            });
+        } else {
+            const data = new FormData(form);
+
+            router.visit(action, {
+                method,
+                data,
+                forceFormData,
+                preserveScroll: false,
+                preserveState: false,
+                onError: (errors) => {
+                    // 422 validation errors are normal Inertia flow — the server
+                    // returns a redirect-back response with errors flashed; the
+                    // current Blade page just re-renders. Do NOT fall back to
+                    // native submit (that would re-POST the same bad data and
+                    // full-reload). Only surface a toast for non-validation hints.
+                    // eslint-disable-next-line no-console
+                    console.warn('[bridge] form submit onError (validation or otherwise)', { action, errors });
+                    // Intentionally no native fallback here.
+                },
+            });
+        }
     } catch (_) {
         submitNative('form-submit-throw');
     }

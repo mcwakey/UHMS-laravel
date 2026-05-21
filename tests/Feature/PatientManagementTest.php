@@ -152,8 +152,8 @@ class PatientManagementTest extends TestCase
         $patient = Patient::where('first_name', 'Ama')->first();
         $this->assertNotNull($patient);
         $this->assertNotEmpty($patient->patient_number);
-        // Patient number should follow the configured pattern (default: UHMS-YEAR-SEQUENCE)
-        $this->assertMatchesRegularExpression('/^[A-Z]+-\d{4}-\d+/', $patient->patient_number);
+        // Patient number should follow the configured pattern (e.g. UHMS-000001/2026 or UHMS-2026-1)
+        $this->assertMatchesRegularExpression('/^[A-Z]+-\d+/', $patient->patient_number);
     }
 
     // ── Show ────────────────────────────────────

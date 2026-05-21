@@ -18,7 +18,7 @@ class PatientIdGeneratorService
     public function generate(): string
     {
         $prefix       = config('patient.id_prefix', 'UHMS');
-        $pattern      = config('patient.id_pattern', '{PREFIX}-{SEQUENCE}/{YEAR}');
+        $pattern      = config('patient.id_pattern', '{PREFIX}-{YEAR}-{SEQUENCE}');
         $seqLength    = max(1, (int) config('patient.id_sequence_length', 6));
         $resetPeriod  = config('patient.id_reset_period', 'yearly');
 

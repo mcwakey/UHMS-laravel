@@ -3,7 +3,7 @@
 
 @section('content')
 <!-- Page Header -->
-<div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
+<div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-2">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">Patients <span class="badge badge-soft-primary fw-medium border py-1 px-2 border-primary fs-13 ms-1">Total: {{ $patients->total() }}</span></h4>
     </div>
@@ -40,17 +40,21 @@
                     <option value="deceased" {{ request('status') == 'deceased' ? 'selected' : '' }}>Deceased</option>
                 </select>
             </div>
-            <div class="col-md-2">
-                <label class="form-label small">Last Visit From</label>
-                <input type="date" name="visit_from" class="form-control" value="{{ request('visit_from') }}">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">Last Visit To</label>
-                <input type="date" name="visit_to" class="form-control" value="{{ request('visit_to') }}">
-            </div>
-            <div class="col-md-auto">
+            {{-- <div class="d-flex align-items-center col-md-3"> --}}
+                <div class="col-md-2">
+                    <label class="form-label small">Last Visit From</label>
+                    <input type="date" name="visit_from" class="form-control" value="{{ request('visit_from') }}">
+                </div>
+                {{-- <div class="col-md-1">
+                </div> --}}
+                <div class="col-md-2">
+                    <label class="form-label small">Last Visit To</label>
+                    <input type="date" name="visit_to" class="form-control" value="{{ request('visit_to') }}">
+                </div>
+            {{-- </div> --}}
+            <div class="col-md-1">
                 <button type="submit" class="btn btn-outline-primary btn-md"><i class="ti ti-filter me-1"></i>Filter</button>
-                <a href="{{ route('admin.patients.index') }}" class="btn btn-outline-secondary btn-md ms-1"><i class="ti ti-x me-1"></i>Clear</a>
+                <a href="{{ route('admin.patients.index') }}" class="btn btn-outline-secondary btn-md ms-1"><i class="ti ti-x me-1"></i></a>
             </div>
         </form>
     </div>
