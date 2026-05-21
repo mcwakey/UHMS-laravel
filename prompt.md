@@ -1,545 +1,722 @@
-You are a senior Laravel + Inertia/Vue developer working on **UHMS — Ultimate Hospital Management System**.
+You are a senior Laravel developer working on **UHMS — Ultimate Hospital Management System**.
 
-We need to update the **Patient List / Patient Search page**.
+We need to create a reusable **Visit Preview** page/component using the design pattern from:
 
-Focus only on patient listing, search, filters, patient status, and deceased marking. Do not refactor unrelated modules.
+```text
+resources/views/activities.blade.php
+```
+
+The uploaded `activities.blade.php` page uses a clean timeline/card layout. Build the Visit Preview using the same visual style:
+
+```text
+page-wrapper
+content
+page header
+card
+card-body
+timeline rows
+timeline-date
+border-start
+border-circle
+chronological activity entries
+```
+
+The Visit Preview must automatically generate a full clinical and chronological summary when given a `Visit` as parameter.
+
+Do not break existing workflows.
 
 ---
 
-# 1. Objective
+# 1. Main Objective
 
-Update the Patient List page so hospital staff can search patients using practical real-life identifiers and filter patients by insurance and last visit date.
+Create a reusable Visit Preview feature.
 
-Also add a safe way to mark a patient as deceased.
+Whenever any page needs to display the full summary of a patient visit, the system should call this preview and pass the visit.
+
+Examples:
+
+```php
+@include('visits.partials.visit-preview', ['visit' => $visit])
+```
+
+or:
+
+```php
+<x-visit-preview :visit="$visit" />
+```
+
+or route/modal usage:
+
+```php
+route('visits.preview', $visit)
+```
+
+The preview must show the full visit story clinically and chronologically.
 
 ---
 
-# 2. Search Requirements
+# 2. Files to Create
 
-The patient list search must support searching by:
+Create these files, adapting naming to the current project structure:
+
+```text
+resources/views/visits/preview.blade.php
+resources/views/visits/partials/visit-preview-timeline.blade.php
+resources/views/visits/partials/visit-preview-summary.blade.php
+```
+
+Optional component approach:
+
+```text
+resources/views/components/visit-preview.blade.php
+app/View/Components/VisitPreview.php
+```
+
+Also create or update:
+
+```text
+app/Http/Controllers/VisitPreviewController.php
+app/Services/VisitPreviewService.php
+routes/web.php
+```
+
+---
+
+# 3. Route
+
+Add a route:
+
+```php
+Route::get('/visits/{visit}/preview', [VisitPreviewController::class, 'show'])
+    ->name('visits.preview')
+    ->middleware(['auth']);
+```
+
+Use existing route prefix and middleware conventions if different.
+
+If admin routes are used:
+
+```php
+Route::get('/admin/visits/{visit}/preview', [VisitPreviewController::class, 'show'])
+    ->name('admin.visits.preview')
+    ->middleware(['auth']);
+```
+
+---
+
+# 4. Controller
+
+Create:
+
+```php
+VisitPreviewController
+```
+
+Required method:
+
+```php
+public function show(Visit $visit, VisitPreviewService $service)
+{
+    $preview = $service->build($visit);
+
+    return view('visits.preview', [
+        'visit' => $visit,
+        'preview' => $preview,
+    ]);
+}
+```
+
+If the project uses Inertia/Vue for this page, create an Inertia page, but still keep a Blade partial/component available for modal reuse if current layout is Blade-based.
+
+---
+
+# 5. VisitPreviewService
+
+Create:
+
+```php
+app/Services/VisitPreviewService.php
+```
+
+Required method:
+
+```php
+public function build(Visit $visit): array
+```
+
+This service should collect all visit-related clinical and operational information and convert it into a clean timeline.
+
+Do not put complex data-building logic inside Blade.
+
+---
+
+# 6. Data to Include
+
+The Visit Preview must include as much as available from the existing database.
+
+## Patient Summary
+
+Show at the top:
 
 ```text
 Patient name
-Patient phone number
-Patient Ghana Card number
-Patient insurance membership card number
-Emergency contact name
-Emergency contact phone number
+Patient number / Patient ID
+Age / gender
+Phone number
+Ghana Card number if available
+Insurance used for the visit
+Visit number
+Visit type: OPD / Emergency / Inpatient
+Visit status
+Visit date
+Assigned doctor
+Department / service
 ```
 
-The search input should be a single global search box.
+## Visit Timeline
 
-Example:
+Show a chronological timeline of all major visit activities:
 
 ```text
-Search by name, phone, Ghana Card, insurance card, or emergency contact ...
+Visit created / checked in
+Triage / vitals recorded
+Consultation started
+Complaints recorded
+Diagnosis added
+Treatments / clinical notes recorded
+Prescriptions created
+Investigations requested
+Investigation items accepted / billed
+Investigation results entered
+Investigation results verified
+Procedures requested
+Procedure accepted / billed / scheduled
+Anaesthesia note
+Operative note
+Post-op note
+Pharmacy dispensing
+Products / consumables used
+Payments made
+Admission created if patient was admitted
+Ward notes if available
+Discharge / completion
+Referral / death / outcome if available
+```
+
+Each timeline item must show:
+
+```text
+date/time
+title
+description/details
+entered by / performed by user
+department if available
+status/badge if useful
+source module
 ```
 
 ---
 
-# 3. Fields / Relationships to Inspect
+# 7. Timeline Sorting
 
-Inspect existing models and tables for:
+Timeline entries must be sorted chronologically.
+
+Default:
 
 ```text
-patients
-patient_insurances
-emergency_contacts
-visits
-insurance_providers
+oldest first
 ```
 
-Search should work whether next of kin and insurance are stored directly on `patients` or in related tables.
+Add optional support later for newest first.
 
-Use existing relationships where available.
+Use exact timestamps where available.
 
-Recommended relationships:
+If only a date exists, still include it in the timeline.
+
+---
+
+# 8. Timeline Item Structure
+
+The service should normalize all events into a common structure:
 
 ```php
-Patient::insurances()
-Patient::emergencyContacts()
-Patient::visits()
+[
+    'datetime' => $timestamp,
+    'date_label' => '24 Sep 2026',
+    'time_label' => '09:30 AM',
+    'title' => 'Triage completed',
+    'description' => 'Vitals recorded and patient directed to consultation.',
+    'entered_by' => 'Nurse Ama Mensah',
+    'department' => 'Triage',
+    'badge' => 'TRIAGE',
+    'badge_class' => 'bg-info',
+    'details' => [],
+    'source_type' => 'triage',
+    'source_id' => $triage->id,
+]
 ```
 
-If relationships are missing, add them properly.
+The Blade should loop through these normalized items.
 
 ---
 
-# 4. Search Logic
+# 9. Design Requirements
 
-The search query should check:
+Use the uploaded `activities.blade.php` style.
+
+The Visit Preview page should have:
 
 ```text
-patients.name
-patients.phone
-patients.ghana_card_number
-patient_insurances.membership_number
-emergency_contacts.name
-emergency_contacts.phone
+Page header: Visit Preview
+Card container
+Timeline entries
+Date column on the left
+Vertical border line
+Clinical summary blocks
+Badges
+Readable details
 ```
 
-Adapt column names to the actual database schema.
+Timeline row structure should be similar to:
 
-Example backend logic:
+```blade
+<div class="d-flex align-items-start">
+    <p class="text-dark me-4 mb-0 timeline-date flex-shrink-0">
+        {{ $item['date_label'] }}
+        <small class="d-block text-muted">{{ $item['time_label'] }}</small>
+    </p>
+
+    <div class="border-start ps-4 py-4 border-circle position-relative">
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <p class="text-dark fw-semibold mb-0">{{ $item['title'] }}</p>
+
+            @if(!empty($item['badge']))
+                <span class="badge {{ $item['badge_class'] ?? 'bg-secondary' }}">
+                    {{ $item['badge'] }}
+                </span>
+            @endif
+        </div>
+
+        <p class="mb-1">{{ $item['description'] }}</p>
+
+        <small class="text-muted">
+            Entered by: {{ $item['entered_by'] ?? 'System' }}
+            @if(!empty($item['department']))
+                · Department: {{ $item['department'] }}
+            @endif
+        </small>
+    </div>
+</div>
+```
+
+Adapt class names to match the current template.
+
+---
+
+# 10. Empty State
+
+If no timeline data exists, show:
+
+```text
+No clinical activities recorded for this visit yet.
+```
+
+Do not crash if some relationships are missing.
+
+---
+
+# 11. Reusability
+
+The preview must be reusable in three ways:
+
+## Full Page
 
 ```php
-$query->when($search, function ($query) use ($search) {
-    $query->where(function ($q) use ($search) {
-        $q->where('name', 'like', "%{$search}%")
-          ->orWhere('phone', 'like', "%{$search}%")
-          ->orWhere('ghana_card_number', 'like', "%{$search}%")
-          ->orWhereHas('insurances', function ($insuranceQuery) use ($search) {
-              $insuranceQuery->where('membership_number', 'like', "%{$search}%");
-          })
-          ->orWhereHas('emergencyContacts', function ($emergencyContactsQuery) use ($search) {
-              $emergencyContactsQuery->where('name', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
-          });
-    });
-});
+route('visits.preview', $visit)
 ```
 
-Do not use raw unsafe SQL.
+## Blade Include
+
+```blade
+@include('visits.partials.visit-preview-timeline', ['preview' => $preview])
+```
+
+## Modal
+
+Any page should be able to open Visit Preview in a modal or link to the preview page.
+
+Examples of pages that may call it:
+
+```text
+Patient profile
+Previous visits list
+Consultation page
+Emergency case page
+Admission page
+Investigation page
+Billing page
+Reports
+```
 
 ---
 
-# 5. Remove Existing Filters
+# 12. Visit Preview Button
 
-Remove these filters from the Patient List page:
+Where visit lists are displayed, add an action button:
 
 ```text
-Blood group
-Gender
+Preview Visit
 ```
 
-This means:
+The button should open the preview page or modal.
 
-* remove them from the frontend filter UI
-* stop sending them in query parameters
-* remove backend filtering logic if it only exists for this patient list page
+Suggested icon:
 
-Do not delete patient fields from the database.
-
-Only remove the filters from the list page.
+```text
+eye / file-medical / timeline
+```
 
 ---
 
-# 6. Add Insurance Filter
+# 13. Data Loading / Relationships
 
-Add filter by insurance.
+Use eager loading to avoid N+1 queries.
 
-The user should be able to filter patients by:
-
-```text
-Insurance provider
-```
-
-Optional if already supported:
-
-```text
-Insurance type
-Insurance status: active / expired
-```
-
-Minimum required filter:
-
-```text
-Insurance Provider
-```
-
-The filter should load from existing insurance providers.
-
-Example:
-
-```text
-All Insurances
-NHIS
-Cash and Carry
-Private Insurance A
-Corporate Insurance B
-```
-
-If Cash and Carry is not stored as insurance provider, decide whether to include it as a special filter option.
-
----
-
-# 7. Add Last Visit Date Range Filter
-
-Add date range filter based on the patient’s last visit date.
-
-Fields:
-
-```text
-Last Visit From
-Last Visit To
-```
-
-The filter should return patients whose most recent visit falls within the selected range.
-
-Example:
-
-```text
-last_visit_date >= from
-last_visit_date <= to
-```
-
-If using Eloquent, calculate last visit using:
+Load relationships such as:
 
 ```php
-withMax('visits', 'visit_date')
+$visit->load([
+    'patient',
+    'department',
+    'assignedDoctor',
+    'triage.triagedBy',
+    'medicalRecord.doctor',
+    'medicalRecord.complaints.createdBy',
+    'medicalRecord.diagnoses.createdBy',
+    'medicalRecord.treatments.createdBy',
+    'medicalRecord.prescriptions.items',
+    'labRequests.items.results',
+    'procedureRequests.schedule',
+    'procedureRequests.anaesthesiaNote',
+    'procedureRequests.operativeNote',
+    'procedureRequests.postOpNote',
+    'invoice.items',
+    'invoice.payments',
+    'admission',
+    'vitals.recordedBy',
+    'statusLogs.user',
+]);
 ```
 
-or equivalent.
+Adapt relationships to the actual model names.
 
-Do not filter by any visit in the range if the requirement is specifically “last visit date”. It must use the latest visit per patient.
+Do not load huge unrelated data.
 
 ---
 
-# 8. Patient List Columns
+# 14. Clinical Sections to Summarize
 
-Status should show:
+Before the timeline, show quick summary cards:
 
 ```text
-Active
-Deceased
-Inactive if already supported
+Visit Information
+Patient Information
+Insurance / Billing Summary
+Clinical Summary
 ```
 
-Use badges for status.
+Clinical summary may include:
+
+```text
+Chief complaint
+Primary diagnosis
+Final diagnosis if available
+Prescriptions count
+Investigations count
+Procedures count
+Billing status
+Visit outcome
+```
 
 ---
 
-# 9. Mark Patient as Deceased
+# 15. Users Who Made Entries
 
-Add a safe way to mark a patient as deceased.
+Every timeline item should show who created/performed the entry when available.
 
-This should be an action button on the patient detail page:
+Examples:
 
 ```text
-Mark as Deceased
+Registered by
+Triaged by
+Consulted by
+Diagnosis entered by
+Investigation requested by
+Result entered by
+Result verified by
+Prescription created by
+Drug dispensed by
+Procedure accepted by
+Anaesthesia note by
+Operative note by
+Payment received by
+Discharged by
 ```
 
-When clicked, open a confirmation modal.
-
-The modal should ask for:
+If user is missing, show:
 
 ```text
-Date of death
-Cause of death optional
-Notes optional
-```
-
-Require confirmation before saving.
-
----
-
-# 10. Database Fields for Deceased Status
-
-If not already present, add fields to `patients` table:
-
-```text
-is_deceased boolean default false
-deceased_at nullable datetime/date
-cause_of_death nullable string/text
-deceased_notes nullable text
-marked_deceased_by nullable foreign key to users
-```
-
-If the project already has a patient status field, use it consistently.
-
-Recommended:
-
-```text
-status = active/deceased/inactive
+System
 ```
 
 or:
 
 ```text
-is_deceased = true/false
+Unknown user
 ```
 
-Choose the approach that best fits the existing codebase.
+Do not crash.
 
 ---
 
-# 11. Deceased Business Rules
+# 16. Status Logs
 
-When a patient is marked deceased:
+Include visit status changes in the timeline.
 
-* patient should remain searchable
-* patient should show clear `Deceased` badge
-* patient should not be selected for new OPD visits unless authorized override exists
-* patient should not be selected for new admission unless authorized override exists
-* patient history must remain accessible
-* old invoices, visits, investigations, prescriptions, and records must remain unchanged
-* do not delete the patient record
-
-If a new visit is attempted for a deceased patient, show clear warning:
+Example:
 
 ```text
-This patient is marked as deceased and cannot start a new visit.
+Visit status changed from TRIAGE to WAITING_CONSULTATION by Nurse Ama
+Visit status changed from WAITING_CONSULTATION to CONSULTING by Dr. Mensah
+Visit completed by Dr. Mensah
 ```
 
-Optional override permission:
+Use `visit_status_logs` if available.
+
+---
+
+# 17. Billing Timeline
+
+Include billing and payment events:
 
 ```text
-patients.deceased.override
+Invoice created
+Invoice item added
+Discount applied
+Payment received
+Invoice marked paid
+Invoice cancelled
+```
+
+Show financial amounts clearly but not too much detail.
+
+Example:
+
+```text
+Payment received: GHS 150.00 by Cashier John
 ```
 
 ---
 
-# 12. Permissions
+# 18. Investigation Timeline
+
+Include:
+
+```text
+Investigation requested
+Items accepted
+Items billed
+Result entered
+Result verified
+Result printed if tracked
+```
+
+Group or summarize if there are many items.
+
+Example:
+
+```text
+Lab request created for Full Blood Count, Malaria Test
+Result verified by Lab Technician
+```
+
+---
+
+# 19. Procedure Timeline
+
+Include:
+
+```text
+Procedure requested
+Accepted
+Billed
+Scheduled
+Pre-op recorded
+Anaesthesia note
+Operative note
+Post-op note
+Completed
+```
+
+This should align with the theatre/procedure workflow.
+
+---
+
+# 20. Pharmacy Timeline
+
+Include:
+
+```text
+Prescription created
+Prescription item dispensed
+Dispensed product billed
+```
+
+If stock/product movement exists, show product and quantity.
+
+---
+
+# 21. Emergency and Admission Compatibility
+
+The same Visit Preview must work for:
+
+```text
+OPD visits
+Emergency visits
+Inpatient/admission visits
+```
+
+Do not create separate preview pages for each workflow.
+
+If Emergency data exists, include it.
+
+If Admission data exists, include it.
+
+If not, omit those sections.
+
+---
+
+# 22. Print / Export Preparation
+
+Design the page so it can later be printed.
+
+Add a button:
+
+```text
+Print Visit Summary
+```
+
+For now, it can call:
+
+```js
+window.print()
+```
+
+Optional later: PDF export.
+
+Use print-friendly CSS where possible.
+
+---
+
+# 23. Permissions
 
 Add or verify permission:
 
 ```text
-patients.mark_deceased
+visits.preview
 ```
 
-Only authorized users should see or use the Mark as Deceased action.
+Only authorized users should view Visit Preview.
 
-Suggested allowed roles:
+Recommended roles:
 
 ```text
+Doctor
+Nurse
+Records
 Admin
 Super Admin
-Records Supervisor
-Doctor if permitted
+Emergency staff
+Claims officer if allowed
 ```
 
-Do not allow normal users to mark patients deceased unless assigned permission.
+Do not expose sensitive visit preview to unauthorized users.
 
 ---
 
-# 13. Backend Requirements
+# 24. Performance Rules
 
-Create or update:
-
-```text
-PatientController@index
-PatientController@markDeceased
-PatientService
-PatientFilterService if available
-MarkPatientDeceasedRequest
-```
-
-Recommended route:
-
-```php
-Route::patch('/patients/{patient}/mark-deceased', [PatientController::class, 'markDeceased'])
-    ->name('patients.mark-deceased')
-    ->middleware('can:patients.mark_deceased');
-```
-
-Use existing route prefixes/names if different.
+* Do not query inside Blade loops.
+* Build timeline in `VisitPreviewService`.
+* Eager-load relationships.
+* Paginate is not needed for one visit preview.
+* Keep large notes collapsed if needed.
+* Avoid loading unrelated visits.
 
 ---
 
-# 14. Frontend Requirements
+# 25. Error Handling
 
-On Patient List page:
+If visit does not exist, return 404.
 
-* update search placeholder
-* remove gender filter
-* remove blood group filter
-* add insurance filter
-* add last visit date range filters
-* preserve filters in URL/query string
-* reset filters button should work
-* pagination should preserve filters
-* add deceased badge
-* add Mark as Deceased action if user has permission
-* show confirmation modal
-* show validation errors in modal
-* modal should close only after successful save
+If user is unauthorized, return 403.
 
-Use SPA behavior. No full page reloads.
+If some relationships are missing, skip that timeline section gracefully.
 
 ---
 
-# 15. Performance Requirements
+# 26. Tests Required
 
-Avoid N+1 queries.
+Add or update tests:
 
-Eager-load:
-
-```text
-insurances.provider
-nextOfKins
-latestVisit or visits max date
-```
-
-Use efficient last visit calculation.
-
-Add indexes if needed:
-
-```text
-patients.name
-patients.phone
-patients.ghana_card_number
-patient_insurances.membership_number
-next_of_kins.name
-next_of_kins.phone
-visits.patient_id
-visits.visit_date
-```
-
-Do not load all visits for every patient just to find last visit date.
+1. Authorized user can open Visit Preview.
+2. Unauthorized user cannot open Visit Preview.
+3. Visit Preview page loads for OPD visit.
+4. Visit Preview page loads for Emergency visit.
+5. Visit Preview page loads for admitted visit.
+6. Timeline includes triage entry when triage exists.
+7. Timeline includes consultation entry when medical record exists.
+8. Timeline includes diagnosis entries.
+9. Timeline includes prescription entries.
+10. Timeline includes investigation requests/results.
+11. Timeline includes procedure events.
+12. Timeline includes billing/payment events.
+13. Timeline includes users who made entries.
+14. Missing optional relationships do not crash preview.
+15. Timeline is sorted chronologically.
 
 ---
 
-# 16. Tests Required
-
-Add or update tests for:
-
-1. Search by patient name works.
-2. Search by patient phone works.
-3. Search by Ghana Card number works.
-4. Search by insurance membership card number works.
-5. Search by next of kin name works.
-6. Search by next of kin phone works.
-7. Gender filter is no longer shown.
-8. Blood group filter is no longer shown.
-9. Insurance filter works.
-10. Last visit date range filter works using latest visit date.
-11. Patient can be marked deceased by authorized user.
-12. Unauthorized user cannot mark patient deceased.
-13. Deceased patient shows deceased badge.
-14. Deceased patient cannot start new visit unless override is allowed.
-15. Pagination preserves filters.
-
----
-
-# 17. Deliverables
+# 27. Deliverables
 
 Provide:
 
-1. Updated Patient List search.
-2. Removed gender and blood group filters.
-3. Added insurance filter.
-4. Added last visit date range filter.
-5. Added deceased status support.
-6. Added Mark as Deceased action/modal.
-7. Updated backend filtering.
-8. Updated frontend filters.
-9. Updated routes/requests/controllers/services.
-10. Tests or verification notes.
-11. Files modified.
-12. Remaining TODOs if any.
+1. `VisitPreviewService`.
+2. Visit preview route.
+3. Visit preview controller.
+4. Visit preview Blade page using `activities.blade.php` design.
+5. Reusable partial/component.
+6. Preview Visit button where appropriate.
+7. Permission check.
+8. Timeline generation logic.
+9. Tests or verification notes.
+10. Files modified.
+11. Remaining TODOs if any.
 
 ---
 
-# 18. Important Rules
+# 28. Important Rules
 
-Do not delete patient records.
+Do not duplicate visit data manually.
 
-Do not remove gender or blood group from patient profile/database.
+Do not create separate preview systems for OPD, Emergency, and Admission.
 
-Only remove gender and blood group filters from the patient list page.
+Do not query heavily inside Blade.
 
-Do not break patient registration.
+Do not break existing visit, consultation, billing, investigation, procedure, pharmacy, emergency, or admission workflows.
 
-Do not break visit creation.
+Do not expose preview to unauthorized users.
 
-Do not allow deceased patients to start new visits without clear authorization.
+Do not crash if some visit sections are missing.
 
-Do not use unsafe raw SQL.
-
-Do not load all visits just to calculate last visit date.
-
-Now inspect the existing patient list implementation and apply these changes carefully.
-
-
-# Patient ID Generation
-
-Implement configurable patient ID generation.
-
-The system must generate a unique permanent Patient ID when a patient is created.
-
-The Patient ID must not be manually typed by normal users.
-
-Default pattern:
-
-{PREFIX}-{YEAR}-{SEQUENCE}
-
-Default example:
-
-UHMS-2026-000001
-
-The pattern must be configurable from system settings.
-
-Supported placeholders:
-
-{PREFIX}
-{YEAR}
-{YY}
-{MONTH}
-{DAY}
-{SEQUENCE}
-
-Settings:
-
-patient_id_prefix
-patient_id_pattern
-patient_id_sequence_length
-patient_id_reset_period
-
-Supported reset periods:
-
-never
-yearly
-monthly
-daily
-
-Rules:
-
-- Patient ID must be unique.
-- Patient ID must be generated inside a database transaction.
-- Patient ID must be safe under concurrent patient registration.
-- Patient ID must never be reused.
-- Patient ID must remain unchanged after patient creation.
-- Only Super Admin can regenerate or manually edit a Patient ID, and that action must be audited.
-- Patient search must support searching by Patient ID.
-- Patient list must display Patient ID.
-- Visit creation must show Patient ID clearly.
-
-Create a PatientNumberService or PatientIdGeneratorService.
-
-Required method:
-
-generate(): string
-
-The generator must:
-1. load current settings
-2. determine reset period
-3. lock sequence row
-4. increment sequence
-5. format ID using pattern
-6. ensure uniqueness
-7. return generated patient ID
-
-Suggested table:
-
-patient_number_sequences
-- id
-- prefix
-- period_type
-- period_key
-- last_sequence
-- created_at
-- updated_at
-
-Example period_key:
-2026
-2026-05
-2026-05-21
-GLOBAL
-
-Use lockForUpdate() during generation to prevent duplicates.
-
-When creating a patient, assign:
-
-patients.patient_number = generated ID
-
-Do not use patient database ID as the visible Patient ID.
+Build one reusable Visit Preview that automatically generates a clinical chronological summary when given a Visit.

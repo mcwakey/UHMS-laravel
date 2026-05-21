@@ -7,6 +7,7 @@ use App\Enums\VisitType;
 use App\Enums\Priority;
 use App\Models\Visit;
 use App\Models\Patient;
+use App\Models\User;
 use App\Models\Department;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -24,6 +25,7 @@ class VisitFactory extends Factory
             'status' => VisitStatus::REGISTERED,
             'priority' => Priority::NORMAL,
             'chief_complaint' => fake()->sentence(),
+            'created_by' => User::factory(),
         ];
     }
 }

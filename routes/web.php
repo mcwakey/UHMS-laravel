@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\DesignationController;
 use App\Http\Controllers\Admin\PatientController;
 use App\Http\Controllers\Admin\VisitController;
+use App\Http\Controllers\Admin\VisitPreviewController;
 use App\Http\Controllers\Admin\QueueController;
 use App\Http\Controllers\Admin\VitalController;
 use App\Http\Controllers\Doctor\ConsultationController;
@@ -194,6 +195,7 @@ Route::middleware('auth')->group(function () {
             Route::get('visits/services-for-doctor', [VisitController::class, 'servicesForDoctor'])->name('visits.services-for-doctor');
             Route::get('visits/service-price', [VisitController::class, 'servicePrice'])->name('visits.service-price');
             Route::get('visits/{visit}', [VisitController::class, 'show'])->name('visits.show');
+            Route::get('visits/{visit}/preview', [VisitPreviewController::class, 'show'])->name('visits.preview')->middleware('can:visits.preview');
             Route::get('visits/{visit}/edit', [VisitController::class, 'edit'])->name('visits.edit')->middleware('can:visits.edit');
             Route::put('visits/{visit}', [VisitController::class, 'update'])->name('visits.update')->middleware('can:visits.edit');
             Route::patch('visits/{visit}/transition', [VisitController::class, 'transition'])->name('visits.transition')->middleware('can:visits.transition');

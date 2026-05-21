@@ -29,6 +29,7 @@ class RoleSeeder extends Seeder
             'visits.create',
             'visits.edit',
             'visits.transition',
+            'visits.preview',
 
             // ── Queue ─────────────────────────────────────────────────────
             'queue.view',
@@ -262,7 +263,7 @@ class RoleSeeder extends Seeder
         // Full clinical access including consultation workflow
         $doctorPerms = [
             'patients.view',
-            'visits.view', 'visits.transition',
+            'visits.view', 'visits.transition', 'visits.preview',
             'consultations.view', 'consultations.create', 'consultations.edit',
             'consultation.access', 'consultation.dashboard', 'consultation.queue',
             'consultation.history', 'consultation.create', 'consultation.complete',
@@ -289,7 +290,6 @@ class RoleSeeder extends Seeder
         ];
 
         $doctor = Role::firstOrCreate(['name' => 'Doctor']);
-        $doctor->syncPermissions($doctorPerms);
 
         // ── Consultant ────────────────────────────────────────────────────
         // Same clinical depth as Doctor; specialised outpatient consultant
@@ -305,8 +305,7 @@ class RoleSeeder extends Seeder
         $physicianAssistant = Role::firstOrCreate(['name' => 'Physician Assistant']);
         $physicianAssistant->syncPermissions([
             'patients.view',
-            'visits.view', 'visits.transition',
-            'consultations.view', 'consultations.create', 'consultations.edit',
+            'visits.view', 'visits.transition', 'visits.preview',
             'consultation.access', 'consultation.dashboard', 'consultation.queue',
             'consultation.history', 'consultation.create', 'consultation.complete',
             'consultation.refer', 'consultation.prescribe',
@@ -331,7 +330,7 @@ class RoleSeeder extends Seeder
         $nurse = Role::firstOrCreate(['name' => 'Nurse']);
         $nurse->syncPermissions([
             'patients.view',
-            'visits.view', 'visits.transition',
+            'visits.view', 'visits.transition', 'visits.preview',
             'vitals.view', 'vitals.create',
             'queue.view', 'queue.manage',
             'prescriptions.view',
@@ -351,7 +350,7 @@ class RoleSeeder extends Seeder
         $wardNurse = Role::firstOrCreate(['name' => 'Ward Nurse']);
         $wardNurse->syncPermissions([
             'patients.view',
-            'visits.view', 'visits.transition',
+            'visits.view', 'visits.transition', 'visits.preview',
             'vitals.view', 'vitals.create',
             'queue.view', 'queue.manage',
             'prescriptions.view',
@@ -408,7 +407,7 @@ class RoleSeeder extends Seeder
         $receptionist = Role::firstOrCreate(['name' => 'Receptionist']);
         $receptionist->syncPermissions([
             'patients.view', 'patients.create', 'patients.edit',
-            'visits.view', 'visits.create', 'visits.edit', 'visits.transition',
+            'visits.view', 'visits.create', 'visits.edit', 'visits.transition', 'visits.preview',
             'queue.view', 'queue.manage',
             'invoices.view',
             'appointments.view', 'appointments.create', 'appointments.edit',
@@ -420,7 +419,7 @@ class RoleSeeder extends Seeder
         $cashier = Role::firstOrCreate(['name' => 'Cashier']);
         $cashier->syncPermissions([
             'patients.view',
-            'visits.view',
+            'visits.view', 'visits.preview',
             'invoices.view',
             'payments.view', 'payments.create',
             'accounts.cashier',
@@ -521,7 +520,7 @@ class RoleSeeder extends Seeder
         $claimsOfficer = Role::firstOrCreate(['name' => 'Claims Officer']);
         $claimsOfficer->syncPermissions([
             'patients.view',
-            'visits.view',
+            'visits.view', 'visits.preview',
             'invoices.view',
             'claims.view', 'claims.create', 'claims.approve', 'claims.export',
             'reports.view',

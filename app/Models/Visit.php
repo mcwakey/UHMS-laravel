@@ -183,6 +183,11 @@ class Visit extends Model
         return $this->hasOne(Triage::class);
     }
 
+    public function procedureRequests()
+    {
+        return $this->hasMany(ProcedureRequest::class);
+    }
+
     public function departmentHistory()
     {
         return $this->hasMany(VisitDepartmentHistory::class)->orderBy('created_at');

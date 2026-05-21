@@ -12,6 +12,11 @@
         <a href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary btn-md">
             <i class="ti ti-arrow-left me-1"></i>Back to Visits
         </a>
+        @can('visits.preview')
+        <a href="{{ route('admin.visits.preview', $visit) }}" class="btn btn-outline-info btn-md">
+            <i class="ti ti-eye-search me-1"></i>Preview Visit
+        </a>
+        @endcan
         @can('visits.edit')
         <a href="{{ route('admin.visits.edit', $visit) }}" class="btn btn-outline-warning btn-md">
             <i class="ti ti-pencil me-1"></i>Edit Visit

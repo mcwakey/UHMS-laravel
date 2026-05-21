@@ -173,6 +173,9 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item" href="{{ route('admin.visits.show', $visit) }}"><i class="ti ti-eye me-2"></i>View Details</a></li>
+                                    @can('visits.preview')
+                                    <li><a class="dropdown-item" href="{{ route('admin.visits.preview', $visit) }}"><i class="ti ti-eye-search me-2"></i>Preview Visit</a></li>
+                                    @endcan
                                     @can('visits.edit')
                                     <li><a class="dropdown-item" href="{{ route('admin.visits.edit', $visit) }}"><i class="ti ti-pencil me-2"></i>Edit Visit</a></li>
                                     @endcan
