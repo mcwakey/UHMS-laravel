@@ -151,15 +151,59 @@ class VisitWorkflowService
     }
 
     /**
-     * Doctor explicitly starts a consultation. Kept for backward compatibility;
-     * triage now moves visits directly to CONSULTING so this is a no-op when
-     * the visit is already consulting.
+     * Doctor explicitly starts a consultation.
+     * Requires the visit to be in WAITING_CONSULTATION (post-triage / referral).
+     * Transitions to CONSULTING and activates a PENDING consultation route.
+     *
+     * @param int|null $routeId When the visit has multiple PENDING routes the
+     *                          caller MUST specify which route to activate.
      */
-    public function startConsultation(Visit $visit, ?\App\Models\User $doctor = null): Visit
-    {
+    public function startConsultation(
+        Visit $visit,
+        ?\App\Models\User $doctor = null,
+        ?int $routeId = null,
+    ): Visit {
         if ($visit->status === VisitStatus::CONSULTING) {
             return $visit;
         }
-        throw new \RuntimeException('Visit is not in a consultable state. Current: ' . $visit->status->label());
+        if ($visit->status !== VisitStatus::WAITING_CONSULTATION) {
+            throw new \RuntimeException(
+                'Visit is not in a consultable state. Current: ' . $visit->status->label()
+            );
+        }
+
+        // Resolve the consultation route to activate.
+        $pendingRoutes = $visit->consultationRoutes()
+            ->where('status', \App\Models\VisitConsultationRoute::STATUS_PENDING);
+
+        if ($routeId !== null) {
+            $route = (clone $pendingRoutes)->whereKey($routeId)->first();
+        } else {
+            $count = (clone $pendingRoutes)->count();
+            if ($count > 1) {
+                throw new \RuntimeException(
+                    'Visit has multiple pending consultation routes; specify which one to start.'
+                );
+            }
+            $route = (clone $pendingRoutes)->first();
+        }
+
+        if (! $route) {
+            throw new \RuntimeException(
+                'No pending consultation route found for this visit.'
+            );
+        }
+
+        $route->update([
+            'status'     => \App\Models\VisitConsultationRoute::STATUS_ACTIVE,
+            'doctor_id'  => $doctor?->id ?? $route->doctor_id,
+            'started_by' => Auth::id(),
+            'started_at' => now(),
+        ]);
+
+        // Doctor identification is recorded on the route, not on the visit
+        // itself, to support multi-department routing.
+
+        return $this->transition($visit, VisitStatus::CONSULTING, 'Consultation started');
     }
 }

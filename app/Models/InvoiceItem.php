@@ -41,6 +41,9 @@ class InvoiceItem extends Model
         'source_id',
         'description',
         'quantity',
+        // Legacy column kept for back-compat on older DB schemas where it is
+        // still NOT NULL; BillingService mirrors selected_price into it.
+        'unit_price',
         'cash_price',
         'insurance_price',
         'selected_price',

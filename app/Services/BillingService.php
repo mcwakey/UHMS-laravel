@@ -69,7 +69,7 @@ class BillingService
         return DB::transaction(function () use ($visit, $service, $sourceType, $sourceId, $quantity, $departmentId, $description) {
             $invoice = $this->invoiceService->getOrCreateVisitInvoice($visit);
 
-            // Duplicate guard: same source_type+source_id may only appear once per invoice.
+            // Duplicate guard #1: same source_type+source_id may only appear once per invoice.
             if ($sourceId !== null) {
                 $dup = InvoiceItem::where('invoice_id', $invoice->id)
                     ->where('source_type', $sourceType)
@@ -78,6 +78,26 @@ class BillingService
                 if ($dup) {
                     throw new \RuntimeException(
                         "Duplicate billing prevented for {$sourceType}#{$sourceId} on invoice {$invoice->invoice_number}."
+                    );
+                }
+            }
+
+            // Duplicate guard #2: the same visit-creation service may not be billed
+            // twice across different source_types. This prevents the historical bug
+            // where selected services were billed once as 'service_catalog' and again
+            // as 'visit_service' (different source_type bypassed guard #1).
+            //
+            // Source types that represent "this service was selected on the visit":
+            //   service_catalog, visit_service, visit_selected_service, visit_creation
+            $visitCreationSources = ['service_catalog', 'visit_service', 'visit_selected_service', 'visit_creation'];
+            if (in_array($sourceType, $visitCreationSources, true)) {
+                $dupService = InvoiceItem::where('invoice_id', $invoice->id)
+                    ->where('service_catalog_id', $service->id)
+                    ->whereIn('source_type', $visitCreationSources)
+                    ->exists();
+                if ($dupService) {
+                    throw new \RuntimeException(
+                        "Duplicate billing prevented: service '{$service->name}' is already billed on invoice {$invoice->invoice_number}."
                     );
                 }
             }
@@ -119,6 +139,9 @@ class BillingService
                 'source_id'             => $sourceId,
                 'description'           => $description ?: $service->name,
                 'quantity'              => $quantity,
+                // Legacy unit_price column is still NOT NULL on older schemas;
+                // mirror selected_price so existing reports remain consistent.
+                'unit_price'            => $selectedPrice,
                 'cash_price'            => $cashPrice,
                 'insurance_price'       => $insurancePrice,
                 'selected_price'        => $selectedPrice,

@@ -98,8 +98,20 @@ class ConsultationController extends Controller
 
         $query = Visit::with(['patient', 'assignedDoctor', 'medicalRecord', 'currentDepartment'])
             ->whereIn('status', [
+                VisitStatus::WAITING_CONSULTATION->value,
                 VisitStatus::CONSULTING->value,
-            ]);
+            ])
+            // Only show visits that have a PENDING or ACTIVE consultation route
+            // pointing at a consultation-type department. This keeps non-consultation
+            // visits (lab-only, pharmacy-only, etc.) out of the consultation queue.
+            ->whereHas('consultationRoutes', function ($r) {
+                $r->whereIn('status', [
+                    \App\Models\VisitConsultationRoute::STATUS_PENDING,
+                    \App\Models\VisitConsultationRoute::STATUS_ACTIVE,
+                ])->whereHas('department', function ($d) {
+                    $d->where('type', \App\Enums\DepartmentType::CONSULTATION->value);
+                });
+            });
 
         /** @var \App\Models\User|null $user */
         $user = Auth::user();

@@ -173,14 +173,15 @@ class VisitController extends Controller
             $visit = DB::transaction(function () use ($request) {
                 $v = $this->visitService->create($request->validated());
 
-                // Attach selected services inside the same transaction
+                // Attach selected services inside the same transaction.
+                // attachServices() is the SINGLE source of truth for visit-creation
+                // billing: it calls BillingService::addItemToVisitInvoice() once per
+                // service with source_type='service_catalog'. Do NOT re-bill from
+                // visit_services here — doing so causes duplicate invoice items
+                // (different source_type bypasses the duplicate guard).
                 $services = $request->validated()['services'] ?? [];
                 if (!empty($services)) {
                     $this->visitService->attachServices($v, $services);
-
-                    // Auto-create a single invoice covering all selected services so
-                    // billing is ready the moment the visit is saved.
-                    $this->autoCreateInvoiceForVisit($v->fresh(['visitServices.serviceCatalog', 'visitInsurance.insuranceProvider', 'patient']));
                 }
                 // No queue entry at waiting — it is created when pushed to Triage
 
@@ -483,35 +484,14 @@ class VisitController extends Controller
      * services. Triggered on visit submission so billing is ready immediately.
      * Failures are logged but do not abort the visit creation.
      */
+    /**
+     * @deprecated Removed in May 2026 — was a source of double billing.
+     * Selected services are billed exactly once by VisitService::attachServices()
+     * via BillingService::addItemToVisitInvoice(). Do not reintroduce.
+     */
     private function autoCreateInvoiceForVisit(Visit $visit): void
     {
-        try {
-            $visit->loadMissing(['visitServices.serviceCatalog', 'visitInsurance.insuranceProvider']);
-
-            $invoiceService = app(\App\Services\InvoiceService::class);
-            $invoice = $invoiceService->getOrCreateVisitInvoice($visit);
-
-            foreach ($visit->visitServices as $vs) {
-                if (! $vs->serviceCatalog) continue;
-                try {
-                    $this->billingService->addItemToVisitInvoice(
-                        $visit,
-                        $vs->serviceCatalog,
-                        'visit_service',
-                        $vs->id,
-                        (int) ($vs->quantity ?? 1),
-                        $vs->department_id ?? null,
-                    );
-                } catch (\RuntimeException $e) {
-                    // already billed for this visit_service → skip silently
-                    if (! str_contains($e->getMessage(), 'Duplicate')) {
-                        throw $e;
-                    }
-                }
-            }
-        } catch (\Throwable $e) {
-            Log::warning('Auto invoice creation failed for visit ' . $visit->id . ': ' . $e->getMessage());
-        }
+        // Intentionally a no-op. Kept only to avoid breaking any stray call sites.
     }
 
     private function resolveBillingType(Visit $visit): string

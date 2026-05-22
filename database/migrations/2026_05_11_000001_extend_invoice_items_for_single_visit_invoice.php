@@ -36,6 +36,55 @@ return new class extends Migration {
 
     public function up(): void
     {
+        // SQLite test path: use Schema::hasColumn + Blueprint (SHOW COLUMNS not supported).
+        if (DB::getDriverName() === 'sqlite') {
+            \Illuminate\Support\Facades\Schema::table('invoice_items', function (\Illuminate\Database\Schema\Blueprint $t) {
+                if (! \Illuminate\Support\Facades\Schema::hasColumn('invoice_items', 'visit_id')) {
+                    $t->unsignedBigInteger('visit_id')->nullable();
+                }
+                if (! \Illuminate\Support\Facades\Schema::hasColumn('invoice_items', 'patient_id')) {
+                    $t->unsignedBigInteger('patient_id')->nullable();
+                }
+                if (! \Illuminate\Support\Facades\Schema::hasColumn('invoice_items', 'department_id')) {
+                    $t->unsignedBigInteger('department_id')->nullable();
+                }
+                if (! \Illuminate\Support\Facades\Schema::hasColumn('invoice_items', 'source_type')) {
+                    $t->string('source_type', 64)->nullable();
+                }
+                if (! \Illuminate\Support\Facades\Schema::hasColumn('invoice_items', 'source_id')) {
+                    $t->unsignedBigInteger('source_id')->nullable();
+                }
+                if (! \Illuminate\Support\Facades\Schema::hasColumn('invoice_items', 'insurance_price')) {
+                    $t->decimal('insurance_price', 12, 2)->nullable();
+                }
+                if (! \Illuminate\Support\Facades\Schema::hasColumn('invoice_items', 'insurance_covered')) {
+                    $t->decimal('insurance_covered', 12, 2)->default(0);
+                }
+                if (! \Illuminate\Support\Facades\Schema::hasColumn('invoice_items', 'patient_payable')) {
+                    $t->decimal('patient_payable', 12, 2)->default(0);
+                }
+                if (! \Illuminate\Support\Facades\Schema::hasColumn('invoice_items', 'paid_amount')) {
+                    $t->decimal('paid_amount', 12, 2)->default(0);
+                }
+                if (! \Illuminate\Support\Facades\Schema::hasColumn('invoice_items', 'balance')) {
+                    $t->decimal('balance', 12, 2)->default(0);
+                }
+                if (! \Illuminate\Support\Facades\Schema::hasColumn('invoice_items', 'payment_status')) {
+                    $t->string('payment_status', 32)->default('unpaid');
+                }
+                if (! \Illuminate\Support\Facades\Schema::hasColumn('invoice_items', 'patient_insurance_id')) {
+                    $t->unsignedBigInteger('patient_insurance_id')->nullable();
+                }
+                if (! \Illuminate\Support\Facades\Schema::hasColumn('invoice_items', 'insurance_type')) {
+                    $t->string('insurance_type', 50)->nullable();
+                }
+                if (! \Illuminate\Support\Facades\Schema::hasColumn('invoice_items', 'created_by')) {
+                    $t->unsignedBigInteger('created_by')->nullable();
+                }
+            });
+            return;
+        }
+
         $cols = [
             'visit_id'             => "ALTER TABLE invoice_items ADD COLUMN visit_id BIGINT UNSIGNED NULL AFTER invoice_id",
             'patient_id'           => "ALTER TABLE invoice_items ADD COLUMN patient_id BIGINT UNSIGNED NULL AFTER visit_id",

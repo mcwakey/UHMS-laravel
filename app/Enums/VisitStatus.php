@@ -10,6 +10,7 @@ enum VisitStatus: string
     case WAITING = 'waiting';
     case TRIAGE = 'triage';
     // Post-triage workflow states
+    case WAITING_CONSULTATION = 'waiting_consultation';
     case CONSULTING = 'consulting';
     case REFERRED_CONSULTATION = 'referred_consultation';
     case WAITING_INVESTIGATION = 'waiting_investigation';
@@ -35,6 +36,7 @@ enum VisitStatus: string
             self::REGISTERED => 'Registered',
             self::WAITING => 'Waiting',
             self::TRIAGE => 'Triage',
+            self::WAITING_CONSULTATION => 'Waiting Consultation',
             self::CONSULTING => 'Consulting',
             self::REFERRED_CONSULTATION => 'Referred — Awaiting Consult',
             self::WAITING_INVESTIGATION => 'Waiting Investigation',
@@ -63,6 +65,7 @@ enum VisitStatus: string
             self::WAITING => 'warning',
             self::TRIAGE => 'info',
             self::CONSULTING => 'primary',
+            self::WAITING_CONSULTATION => 'indigo',
             self::REFERRED_CONSULTATION => 'indigo',
             self::WAITING_INVESTIGATION => 'purple',
             self::LAB => 'purple',
@@ -92,12 +95,13 @@ enum VisitStatus: string
             self::REGISTERED  => [self::WAITING, self::CANCELLED],
             self::WAITING     => [self::TRIAGE, self::CANCELLED, self::RESCHEDULED],
             // Triage transitions are handled by TriageController (processTriage) — manual transitions disabled
-            self::TRIAGE      => [self::CONSULTING, self::EMERGENCY, self::INPATIENT, self::CANCELLED],
-            self::CONSULTING  => [self::ADMITTING, self::COMPLETED],
+            self::TRIAGE      => [self::WAITING_CONSULTATION, self::CONSULTING, self::EMERGENCY, self::INPATIENT, self::CANCELLED],
+            self::WAITING_CONSULTATION => [self::CONSULTING, self::CANCELLED],
+            self::CONSULTING  => [self::ADMITTING, self::COMPLETED, self::WAITING_CONSULTATION],
             self::ADMITTING   => [self::ADMITTED, self::CONSULTING, self::CANCELLED],
             self::REFERRED_CONSULTATION => [self::CONSULTING, self::CANCELLED],
             self::WAITING_INVESTIGATION => [self::LAB, self::CANCELLED],
-            self::LAB         => [self::CONSULTING, self::PHARMACY, self::CANCELLED],
+            self::LAB         => [self::CONSULTING, self::WAITING_CONSULTATION, self::PHARMACY, self::CANCELLED],
             self::PHARMACY    => [self::BILLING, self::COMPLETED, self::CANCELLED],
             self::BILLING     => [self::COMPLETED, self::DISCHARGED, self::CANCELLED],
             self::ADMITTED    => [self::CONSULTING, self::LAB, self::PHARMACY, self::DISCHARGING],

@@ -179,6 +179,32 @@ class Visit extends Model
         return $this->hasMany(VisitServiceItem::class);
     }
 
+    /**
+     * All consultation routes for this visit (PENDING / ACTIVE / COMPLETED / CANCELLED).
+     */
+    public function consultationRoutes()
+    {
+        return $this->hasMany(VisitConsultationRoute::class);
+    }
+
+    /**
+     * The currently active consultation route (the one the patient is being seen for).
+     */
+    public function activeConsultationRoute()
+    {
+        return $this->hasOne(VisitConsultationRoute::class)
+            ->where('status', VisitConsultationRoute::STATUS_ACTIVE);
+    }
+
+    /**
+     * Routes that have been billed but not yet started.
+     */
+    public function pendingConsultationRoutes()
+    {
+        return $this->hasMany(VisitConsultationRoute::class)
+            ->where('status', VisitConsultationRoute::STATUS_PENDING);
+    }
+
     public function triage()
     {
         return $this->hasOne(Triage::class);

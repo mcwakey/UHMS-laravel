@@ -153,9 +153,57 @@ class VisitService
                     'assigned_staff_id' => $assignedStaffId,
                 ]
             );
+
+            // If the service belongs to a consultation-type department, create
+            // a PENDING consultation route so the patient appears in the right
+            // consultation queue after triage.
+            $this->ensurePendingConsultationRoute($visit, $catalog, $assignedStaffId);
         }
 
         return $visit->fresh(['invoices.items.serviceCatalog', 'invoices.items.department']);
+    }
+
+    /**
+     * Create a PENDING visit_consultation_routes row for the given service if:
+     *   - the service has a department,
+     *   - that department's type is CONSULTATION,
+     *   - and no route already exists for this (visit, service) pair.
+     */
+    private function ensurePendingConsultationRoute(
+        Visit $visit,
+        ServiceCatalog $catalog,
+        ?int $doctorId = null,
+    ): void {
+        if (! $catalog->department_id) {
+            return;
+        }
+
+        $department = $catalog->department ?? \App\Models\Department::find($catalog->department_id);
+        if (! $department) {
+            return;
+        }
+
+        $type = $department->type instanceof \App\Enums\DepartmentType
+            ? $department->type->value
+            : (string) $department->type;
+
+        if ($type !== \App\Enums\DepartmentType::CONSULTATION->value) {
+            return;
+        }
+
+        \App\Models\VisitConsultationRoute::firstOrCreate(
+            [
+                'visit_id'   => $visit->id,
+                'service_id' => $catalog->id,
+            ],
+            [
+                'patient_id'    => $visit->patient_id,
+                'department_id' => $department->id,
+                'doctor_id'     => $doctorId,
+                'status'        => \App\Models\VisitConsultationRoute::STATUS_PENDING,
+                'routed_by'     => Auth::id(),
+            ]
+        );
     }
 
     /**
@@ -408,10 +456,12 @@ class VisitService
         // Save score on the visit itself
         $visit->update(['triage_score' => $score->value]);
 
-        // Determine next visit status based on triage score
+        // Determine next visit status based on triage score.
+        // Non-emergency: WAITING_CONSULTATION (patient is queued for a doctor to
+        // start the consultation). Emergency: EMERGENCY.
         $nextStatus = match ($score) {
             TriageScore::EMERGENCY => VisitStatus::EMERGENCY,
-            default                => VisitStatus::CONSULTING,
+            default                => VisitStatus::WAITING_CONSULTATION,
         };
 
         // Assign consultation department if provided
@@ -445,6 +495,20 @@ class VisitService
 
         // Create a billing line for consultation if a consultation service exists for the dept
         $this->createConsultationBilling($visit, $departmentId);
+
+        // Ensure there is a PENDING consultation route for this department. If
+        // the visit was created with a consultation service for this dept it
+        // already exists; otherwise the billing call above generated one.
+        // Mark it as PENDING (do NOT activate yet) so the doctor explicitly
+        // starts the consultation from the queue.
+        \App\Models\VisitConsultationRoute::where('visit_id', $visit->id)
+            ->where('department_id', $departmentId)
+            ->where('status', \App\Models\VisitConsultationRoute::STATUS_PENDING)
+            ->limit(1)
+            ->update([
+                'routed_by'  => Auth::id(),
+                'updated_at' => now(),
+            ]);
 
         // Complete old queue entry, create new one for the dept
         $this->queueService->completeCurrentEntry($visit);
