@@ -111,11 +111,19 @@ class SidebarMenuBuilder
             [
                 'title' => 'Clinical',
                 'items' => [
+                    // [
+                    //     'label' => 'Vitals / Triage',
+                    //     'icon' => 'ti ti-heartbeat',
+                    //     'route' => 'admin.vitals.create',
+                    //     'active_patterns' => ['admin.vitals.*'],
+                    //     'permission' => 'vitals.view',
+                    //     'module' => 'triage',
+                    // ],
                     [
                         'label' => 'Vitals / Triage',
-                        'icon' => 'ti ti-heartbeat',
-                        'route' => 'admin.vitals.create',
-                        'active_patterns' => ['admin.vitals.*'],
+                        'icon' => 'ti ti-ambulance',
+                        'route' => 'admin.triage.index',
+                        'active_patterns' => ['admin.triage.*'],
                         'permission' => 'vitals.view',
                         'module' => 'triage',
                     ],
@@ -127,14 +135,6 @@ class SidebarMenuBuilder
                         'permission' => 'consultations.view',
                         'module' => 'consultation',
                     ],
-                    // [
-                    //     'label' => 'Triage',
-                    //     'icon' => 'ti ti-ambulance',
-                    //     'route' => 'admin.triage.index',
-                    //     'active_patterns' => ['admin.triage.*'],
-                    //     'permission' => 'vitals.view',
-                    //     'module' => 'triage',
-                    // ],
                     // [
                     //     'label' => 'Procedures',
                     //     'icon' => 'ti ti-surgery',

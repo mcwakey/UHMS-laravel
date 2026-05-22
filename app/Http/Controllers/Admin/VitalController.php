@@ -153,7 +153,7 @@ class VitalController extends Controller
         $this->visitService->assignDepartment(
             $visit,
             (int) $request->department_id,
-            VisitStatus::WAITING_CONSULTATION
+            VisitStatus::CONSULTING
         );
 
         return redirect()

@@ -27,6 +27,7 @@ class VisitServiceItem extends Model
         'patient_payable',
         'total_price',
         'notes',
+        'assigned_staff_id',
     ];
 
     protected function casts(): array
@@ -64,6 +65,11 @@ class VisitServiceItem extends Model
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function assignedStaff(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_staff_id');
     }
 
     /*

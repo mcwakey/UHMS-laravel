@@ -44,7 +44,7 @@ class ConsultationController extends Controller
     }
 
     /**
-     * Doctor explicitly starts the consultation (WAITING_CONSULTATION → CONSULTING).
+     * Doctor explicitly starts the consultation (now a no-op since triage moves directly to CONSULTING).
      */
     public function startConsultation(Request $request, Visit $visit, VisitWorkflowService $workflow)
     {
@@ -98,7 +98,6 @@ class ConsultationController extends Controller
 
         $query = Visit::with(['patient', 'assignedDoctor', 'medicalRecord', 'currentDepartment'])
             ->whereIn('status', [
-                VisitStatus::WAITING_CONSULTATION->value,
                 VisitStatus::CONSULTING->value,
             ]);
 

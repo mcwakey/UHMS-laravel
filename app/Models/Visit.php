@@ -48,6 +48,7 @@ class Visit extends Model
         'triage_score',
         'visit_insurance_id',
         'insurance_verification_id',
+        'verification_reference_code',
         'cancelled_by',
         'cancellation_reason',
         'rescheduled_from_id',

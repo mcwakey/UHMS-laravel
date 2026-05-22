@@ -15,19 +15,42 @@ class VisitWorkflowService
 
     /**
      * Record the initial visit state and create any immediate queue entries.
+     *
+     * Walk-in flow: REGISTERED → WAITING (two logs created automatically).
+     * Scheduled flow: SCHEDULED (single log, no queue entry).
      */
     public function initialize(Visit $visit, bool $isScheduled): Visit
     {
+        if ($isScheduled) {
+            $visit->statusLogs()->create([
+                'from_status' => null,
+                'to_status'   => $visit->status->value,
+                'changed_by'  => Auth::id(),
+                'notes'       => 'Visit scheduled',
+            ]);
+
+            return $visit->fresh();
+        }
+
+        // Walk-in: determine first visit vs returning patient
+        $isFirstVisit = ! $visit->patient->visits()
+            ->where('id', '!=', $visit->id)
+            ->exists();
+
+        $registrationNote = $isFirstVisit ? 'First visit — registered' : 'Returning patient — checked in';
+
+        // Log 1: NULL → REGISTERED
         $visit->statusLogs()->create([
             'from_status' => null,
-            'to_status' => $visit->status->value,
-            'changed_by' => Auth::id(),
-            'notes' => $isScheduled ? 'Visit scheduled' : 'Visit created',
+            'to_status'   => VisitStatus::REGISTERED->value,
+            'changed_by'  => Auth::id(),
+            'notes'       => $registrationNote,
         ]);
 
-        if (! $isScheduled && $visit->status === VisitStatus::TRIAGE) {
-            $this->queueService->addTriageEntry($visit->fresh());
-        }
+        // Log 2: REGISTERED → WAITING (auto-transition to triage queue)
+        $visit->transitionTo(VisitStatus::WAITING, 'Added to triage queue');
+
+        $this->queueService->addTriageEntry($visit->fresh());
 
         return $visit->fresh();
     }
@@ -111,7 +134,7 @@ class VisitWorkflowService
 
         $visit->transitionTo($newStatus, $notes);
 
-        if ($newStatus === VisitStatus::TRIAGE) {
+        if ($newStatus === VisitStatus::WAITING) {
             $this->queueService->addTriageEntry($visit->fresh());
         }
 
@@ -128,22 +151,15 @@ class VisitWorkflowService
     }
 
     /**
-     * Doctor explicitly starts a consultation. Transitions WAITING_CONSULTATION → CONSULTING.
+     * Doctor explicitly starts a consultation. Kept for backward compatibility;
+     * triage now moves visits directly to CONSULTING so this is a no-op when
+     * the visit is already consulting.
      */
     public function startConsultation(Visit $visit, ?\App\Models\User $doctor = null): Visit
     {
         if ($visit->status === VisitStatus::CONSULTING) {
             return $visit;
         }
-        if ($visit->status !== VisitStatus::WAITING_CONSULTATION) {
-            throw new \RuntimeException('Consultation can only be started from waiting status. Current: ' . $visit->status->label());
-        }
-
-        $doctor = $doctor ?: \Illuminate\Support\Facades\Auth::user();
-        if ($doctor && $visit->assigned_doctor_id === null) {
-            $visit->update(['assigned_doctor_id' => $doctor->id]);
-        }
-
-        return $this->transition($visit, VisitStatus::CONSULTING, 'Doctor started consultation');
+        throw new \RuntimeException('Visit is not in a consultable state. Current: ' . $visit->status->label());
     }
 }

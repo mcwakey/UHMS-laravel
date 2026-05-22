@@ -81,7 +81,7 @@
                         <td>{{ $visit->assignedDoctor ? 'Dr. ' . $visit->assignedDoctor->full_name : '—' }}</td>
                         <td><small>{{ Str::limit($visit->chief_complaint, 40) ?? '—' }}</small></td>
                         <td>
-                            @if($visit->status === \App\Enums\VisitStatus::WAITING_CONSULTATION)
+                            @if(false) {{-- start consultation button removed; triage now transitions directly to CONSULTING --}}
                                 @can('consultations.create')
                                 <form method="POST" action="{{ route('admin.consultations.start', $visit) }}" class="d-inline">
                                     @csrf

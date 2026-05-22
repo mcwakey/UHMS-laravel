@@ -124,7 +124,7 @@
 {{-- ============================================================ --}}
 @php
     $canEdit = $visit->status === \App\Enums\VisitStatus::CONSULTING;
-    $needsStart = $visit->status === \App\Enums\VisitStatus::WAITING_CONSULTATION;
+    $needsStart = false;
 @endphp
 @if($needsStart)
 <div class="card border-warning mb-3">

@@ -36,6 +36,7 @@ class StoreVisitRequest extends FormRequest
             'services' => ['nullable', 'array'],
             'services.*.service_catalog_id' => ['required_with:services', 'exists:service_catalog,id'],
             'services.*.quantity' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'services.*.assigned_staff_id' => ['nullable', 'exists:users,id'],
         ];
     }
 

@@ -267,6 +267,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Service</th>
+                                        <th style="width: 160px;">Assigned Staff</th>
                                         <th class="text-end" style="width: 120px;">Price</th>
                                         <th class="text-center" style="width: 50px;">Action</th>
                                     </tr>
@@ -274,7 +275,7 @@
                                 <tbody id="billingBody"></tbody>
                                 <tfoot>
                                     <tr class="table-light fw-bold">
-                                        <td class="text-end text-primary">Overall Total:</td>
+                                        <td colspan="2" class="text-end text-primary">Overall Total:</td>
                                         <td class="text-end text-primary" id="totalAmount">&#8373;0.00</td>
                                         <td></td>
                                     </tr>
@@ -434,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let patientInsurances = [];
     let selectedInsurance = null;
     let availableServices = [];
-    let selectedServices = []; // [{service_catalog_id, name, price, quantity}]
+    let selectedServices = []; // [{service_catalog_id, name, price, quantity, assigned_staff_id}]
     let allDoctors = @json($doctors->map(fn($d) => ['id' => $d->id, 'name' => 'Dr. ' . $d->full_name]));
 
     // ==========================================
@@ -758,8 +759,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += '</div>';
                     html += '<small class="text-muted">';
                     if (ins.membership_number) html += 'Member: ' + escapeHtml(ins.membership_number) + ' &bull; ';
-                    if (ins.expiry_date) html += 'Expires: ' + ins.expiry_date;
-                    else html += 'No expiry';
+                    if (ins.expiry_date) {
+                        const expiry = new Date(ins.expiry_date);
+                        const today = new Date(); today.setHours(0, 0, 0, 0);
+                        const daysLeft = Math.ceil((expiry - today) / 86400000);
+                        let daysText, badgeClass;
+                        if (daysLeft > 0) {
+                            daysText = daysLeft + ' day' + (daysLeft === 1 ? '' : 's') + ' left';
+                            badgeClass = daysLeft <= 30 ? 'bg-warning text-dark' : 'bg-light text-muted border';
+                        } else if (daysLeft === 0) {
+                            daysText = 'Expires today';
+                            badgeClass = 'bg-warning text-dark';
+                        } else {
+                            daysText = Math.abs(daysLeft) + ' day' + (Math.abs(daysLeft) === 1 ? '' : 's') + ' ago';
+                            badgeClass = 'bg-danger text-white';
+                        }
+                        html += 'Expires: ' + ins.expiry_date + ' <span class="badge ' + badgeClass + '">' + daysText + '</span>';
+                    } else html += 'No expiry';
                     html += '</small>';
                     html += '</div>';
                     html += '<div class="text-end">';
@@ -994,6 +1010,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 name: serviceName,
                 price: resolvedPrice,
                 quantity: 1,
+                assigned_staff_id: null,
                 originalService: svcObj,
             });
         }
@@ -1033,11 +1050,21 @@ document.addEventListener('DOMContentLoaded', function() {
             const qty = svc.quantity || 1;
             const lineTotal = svc.price * qty;
 
+            // Build staff dropdown
+            let staffSelect = '<select class="form-select form-select-sm svc-staff-select" data-index="' + idx + '">';
+            staffSelect += '<option value="">— No staff —</option>';
+            allDoctors.forEach(function(doc) {
+                staffSelect += '<option value="' + doc.id + '"' + (svc.assigned_staff_id == doc.id ? ' selected' : '') + '>' + escapeHtml(doc.name) + '</option>';
+            });
+            staffSelect += '</select>';
+
             html += '<tr>';
             html += '<td>' + escapeHtml(svc.name);
             html += '<input type="hidden" name="services[' + idx + '][service_catalog_id]" value="' + svc.service_catalog_id + '">';
             html += '<input type="hidden" name="services[' + idx + '][quantity]" value="' + qty + '">';
+            html += '<input type="hidden" class="svc-staff-hidden" name="services[' + idx + '][assigned_staff_id]" value="' + (svc.assigned_staff_id || '') + '">';
             html += '</td>';
+            html += '<td>' + staffSelect + '</td>';
             html += '<td class="text-end fw-medium">\u20B5' + formatNumber(lineTotal) + '</td>';
             html += '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="' + idx + '"><i class="ti ti-trash"></i></button></td>';
             html += '</tr>';
@@ -1048,6 +1075,17 @@ document.addEventListener('DOMContentLoaded', function() {
         tbody.querySelectorAll('.remove-service-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 removeServiceFromBilling(parseInt(this.dataset.index));
+            });
+        });
+
+        tbody.querySelectorAll('.svc-staff-select').forEach(function(sel) {
+            sel.addEventListener('change', function() {
+                const idx = parseInt(this.dataset.index);
+                selectedServices[idx].assigned_staff_id = this.value ? parseInt(this.value) : null;
+                // Keep hidden input in sync
+                const row = this.closest('tr');
+                const hidden = row.querySelector('.svc-staff-hidden');
+                if (hidden) hidden.value = this.value || '';
             });
         });
 

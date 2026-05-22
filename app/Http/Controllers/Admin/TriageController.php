@@ -23,10 +23,22 @@ class TriageController extends Controller
      */
     public function create(Visit $visit)
     {
-        if ($visit->status !== VisitStatus::TRIAGE) {
+        if (! in_array($visit->status, [VisitStatus::WAITING, VisitStatus::TRIAGE])) {
             return redirect()
                 ->route('admin.visits.show', $visit)
-                ->with('error', 'This visit is not in TRIAGE status.');
+                ->with('error', 'This visit is not awaiting triage.');
+        }
+
+        // Auto-transition WAITING → TRIAGE when nurse opens the form
+        if ($visit->status === VisitStatus::WAITING) {
+            $visit->update(['status' => VisitStatus::TRIAGE->value]);
+            $visit->statusLogs()->create([
+                'from_status' => VisitStatus::WAITING->value,
+                'to_status'   => VisitStatus::TRIAGE->value,
+                'changed_by'  => auth()->id(),
+                'notes'       => 'Triage assessment started',
+            ]);
+            $visit = $visit->fresh();
         }
 
         $visit->load(['patient', 'triage', 'currentDepartment', 'visitServices.department']);
@@ -124,24 +136,17 @@ class TriageController extends Controller
     }
 
     /**
-     * Queue listing of all visits currently in TRIAGE status.
+     * Queue listing of all visits currently waiting for triage.
      */
     public function index(Request $request)
     {
         $visits = Visit::with(['patient', 'triage', 'currentDepartment'])
-            ->where('status', VisitStatus::TRIAGE->value)
+            ->whereIn('status', [VisitStatus::WAITING->value, VisitStatus::TRIAGE->value])
             ->today()
             ->orderBy('checked_in_at')
             ->get();
 
-        // Also include waiting consultation (recently triaged, waiting for doctor)
-        $waitingConsultation = Visit::with(['patient', 'triage', 'currentDepartment'])
-            ->where('status', VisitStatus::WAITING_CONSULTATION->value)
-            ->today()
-            ->orderBy('updated_at')
-            ->get();
-
-        return view('triage.index', compact('visits', 'waitingConsultation'));
+        return view('triage.index', compact('visits'));
     }
 
     private function billableConsultationDepartmentsForVisit(Visit $visit): Collection

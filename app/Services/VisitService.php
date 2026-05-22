@@ -91,7 +91,7 @@ class VisitService
         if ($isScheduled) {
             $data['status'] = VisitStatus::SCHEDULED->value;
         } else {
-            $data['status'] = VisitStatus::TRIAGE->value;
+            $data['status'] = VisitStatus::REGISTERED->value;
         }
 
         // One visit per day per patient check
@@ -109,18 +109,17 @@ class VisitService
     /**
      * Attach services to a visit by creating invoice line items directly.
      *
-     * NOTE: This method no longer creates `visit_services` rows. Per the
-     * simplified billing model the visit's invoice (invoice_items) is the
-     * single source of truth for billable services. The legacy
-     * `VisitServiceItem` model/table is retained only for read-only history.
+     * NOTE: This method creates both invoice line items (billing source of truth)
+     * and visit_services rows (for tracking assigned staff per service).
      *
-     * @param array $services Array of ['service_catalog_id' => int, 'quantity' => int, 'notes' => ?string]
+     * @param array $services Array of ['service_catalog_id' => int, 'quantity' => int, 'assigned_staff_id' => ?int, 'notes' => ?string]
      */
     public function attachServices(Visit $visit, array $services): Visit
     {
         foreach ($services as $serviceData) {
             $catalog  = ServiceCatalog::findOrFail($serviceData['service_catalog_id']);
             $quantity = max(1, (int) ($serviceData['quantity'] ?? 1));
+            $assignedStaffId = $serviceData['assigned_staff_id'] ?? null;
 
             try {
                 $this->billingService->addItemToVisitInvoice(
@@ -138,6 +137,22 @@ class VisitService
                     throw $e;
                 }
             }
+
+            // Create / update visit_services row to track assigned staff
+            \App\Models\VisitServiceItem::updateOrCreate(
+                [
+                    'visit_id'           => $visit->id,
+                    'service_catalog_id' => $catalog->id,
+                ],
+                [
+                    'department_id'    => $catalog->department_id,
+                    'quantity'         => $quantity,
+                    'unit_price'       => $catalog->price ?? 0,
+                    'total_price'      => ($catalog->price ?? 0) * $quantity,
+                    'notes'            => $serviceData['notes'] ?? null,
+                    'assigned_staff_id' => $assignedStaffId,
+                ]
+            );
         }
 
         return $visit->fresh(['invoices.items.serviceCatalog', 'invoices.items.department']);
@@ -396,7 +411,7 @@ class VisitService
         // Determine next visit status based on triage score
         $nextStatus = match ($score) {
             TriageScore::EMERGENCY => VisitStatus::EMERGENCY,
-            default                => VisitStatus::WAITING_CONSULTATION,
+            default                => VisitStatus::CONSULTING,
         };
 
         // Assign consultation department if provided
