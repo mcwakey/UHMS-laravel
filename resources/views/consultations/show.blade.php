@@ -1284,18 +1284,56 @@
                         $currentDeptId  = $visit->current_department_id;
                         $referralDepts  = \App\Models\Department::active()
                             ->where('id', '!=', $currentDeptId)
-                            ->whereNotIn('id', $historyDeptIds)
+                            ->where('type', \App\Enums\DepartmentType::CONSULTATION->value)
                             ->orderBy('name')->get();
+                        // Pre-load consultation services per referral department so the
+                        // service picker can react to the department dropdown without
+                        // an extra HTTP call.
+                        $referralServicesByDept = \App\Models\ServiceCatalog::where('is_active', true)
+                            ->where('category', \App\Enums\ServiceType::CONSULTATION->value)
+                            ->whereIn('department_id', $referralDepts->pluck('id'))
+                            ->orderBy('name')
+                            ->get()
+                            ->groupBy('department_id');
                     @endphp
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Referral Department <span class="text-danger">*</span></label>
-                        <select name="department_id" class="form-select" required>
+                        <select name="department_id" class="form-select" required id="referralDeptSelect">
                             <option value="">— Select department —</option>
                             @foreach($referralDepts as $dept)
                                 <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                             @endforeach
                         </select>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Consultation Service <span class="text-danger">*</span></label>
+                        <select name="service_id" class="form-select" required id="referralServiceSelect" disabled>
+                            <option value="">— Select department first —</option>
+                        </select>
+                        <small class="text-muted">Choose the specific consultation type the patient is being referred for.</small>
+                    </div>
+                    <script>
+                        (function () {
+                            const servicesByDept = @json($referralServicesByDept->map(fn ($g) => $g->map(fn ($s) => ['id' => $s->id, 'name' => $s->name])));
+                            const deptSel = document.getElementById('referralDeptSelect');
+                            const svcSel  = document.getElementById('referralServiceSelect');
+                            if (!deptSel || !svcSel) return;
+                            deptSel.addEventListener('change', function () {
+                                const list = servicesByDept[this.value] || [];
+                                svcSel.innerHTML = '';
+                                if (!this.value || list.length === 0) {
+                                    svcSel.disabled = true;
+                                    svcSel.innerHTML = '<option value="">— No consultation services available —</option>';
+                                    return;
+                                }
+                                svcSel.disabled = false;
+                                svcSel.insertAdjacentHTML('beforeend', '<option value="">— Select service —</option>');
+                                list.forEach(function (s) {
+                                    svcSel.insertAdjacentHTML('beforeend', '<option value="' + s.id + '">' + s.name + '</option>');
+                                });
+                            });
+                        })();
+                    </script>
                     <div class="mb-3">
                         <label class="form-label">Reason / Notes</label>
                         <textarea name="notes" class="form-control" rows="3" placeholder="Referral reason..."></textarea>

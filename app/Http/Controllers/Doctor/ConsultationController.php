@@ -669,11 +669,17 @@ class ConsultationController extends Controller
     {
         $request->validate([
             'department_id' => ['required', 'exists:departments,id'],
+            'service_id'    => ['nullable', 'exists:service_catalog,id'],
             'notes'         => ['nullable', 'string', 'max:1000'],
         ]);
 
         try {
-            $this->visitService->referPatient($visit, (int) $request->department_id, $request->notes);
+            $this->visitService->referPatient(
+                $visit,
+                (int) $request->department_id,
+                $request->notes,
+                $request->filled('service_id') ? (int) $request->service_id : null,
+            );
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }

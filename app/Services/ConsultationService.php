@@ -18,16 +18,45 @@ class ConsultationService
 
     /**
      * Get or create a medical record for the visit.
+     *
+     * Populates service / department / consultation_route linkage from the
+     * currently active consultation route so the record is auditable back
+     * to the exact consultation that produced it. Existing records are
+     * back-filled with the linkage on the first read if it was previously
+     * missing.
      */
     public function getOrCreateRecord(Visit $visit): MedicalRecord
     {
-        return MedicalRecord::firstOrCreate(
+        $activeRoute = $visit->activeConsultationRoute()->first()
+            ?? $visit->pendingConsultationRoutes()->first();
+
+        $linkage = [
+            'service_id'            => $activeRoute?->service_id,
+            'department_id'         => $activeRoute?->department_id ?? $visit->current_department_id,
+            'consultation_route_id' => $activeRoute?->id,
+        ];
+
+        $record = MedicalRecord::firstOrCreate(
             ['visit_id' => $visit->id],
-            [
+            array_merge([
                 'patient_id' => $visit->patient_id,
-                'doctor_id' => Auth::id(),
-            ]
+                'doctor_id'  => Auth::id(),
+            ], $linkage)
         );
+
+        // Back-fill linkage on existing records if any field is still NULL
+        // and we now have a value to put there.
+        $updates = [];
+        foreach ($linkage as $col => $val) {
+            if ($val !== null && empty($record->{$col})) {
+                $updates[$col] = $val;
+            }
+        }
+        if ($updates) {
+            $record->forceFill($updates)->save();
+        }
+
+        return $record;
     }
 
     /**

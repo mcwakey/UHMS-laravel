@@ -14,10 +14,15 @@ class VisitWorkflowService
     ) {}
 
     /**
-     * Record the initial visit state and create any immediate queue entries.
+     * Record the initial visit state.
      *
-     * Walk-in flow: REGISTERED → WAITING (two logs created automatically).
-     * Scheduled flow: SCHEDULED (single log, no queue entry).
+     * Walk-in flow: logs NULL → REGISTERED only. The caller is responsible
+     * for moving the visit to WAITING / the triage queue (via
+     * {@see queueForTriage()}) ONLY when the visit has consultation
+     * services attached. Visits with no consultation service (lab-only,
+     * pharmacy-only, etc.) must not be queued for triage.
+     *
+     * Scheduled flow: SCHEDULED log only, no queue entry.
      */
     public function initialize(Visit $visit, bool $isScheduled): Visit
     {
@@ -39,7 +44,8 @@ class VisitWorkflowService
 
         $registrationNote = $isFirstVisit ? 'First visit — registered' : 'Returning patient — checked in';
 
-        // Log 1: NULL → REGISTERED
+        // Log NULL → REGISTERED. Status stays REGISTERED until the caller
+        // decides whether triage is needed.
         $visit->statusLogs()->create([
             'from_status' => null,
             'to_status'   => VisitStatus::REGISTERED->value,
@@ -47,9 +53,21 @@ class VisitWorkflowService
             'notes'       => $registrationNote,
         ]);
 
-        // Log 2: REGISTERED → WAITING (auto-transition to triage queue)
-        $visit->transitionTo(VisitStatus::WAITING, 'Added to triage queue');
+        return $visit->fresh();
+    }
 
+    /**
+     * Push a freshly-registered walk-in visit into the triage queue.
+     * Idempotent: if the visit is already past REGISTERED it is returned
+     * unchanged.
+     */
+    public function queueForTriage(Visit $visit): Visit
+    {
+        if ($visit->status !== VisitStatus::REGISTERED) {
+            return $visit;
+        }
+
+        $visit->transitionTo(VisitStatus::WAITING, 'Added to triage queue');
         $this->queueService->addTriageEntry($visit->fresh());
 
         return $visit->fresh();

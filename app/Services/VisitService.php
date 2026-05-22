@@ -523,12 +523,29 @@ class VisitService
     }
 
     /**
-     * Refer a visit to another consultation department.
+     * Refer a visit to another consultation department/service.
      *
-     * @throws \InvalidArgumentException if referral to same department or invalid status.
+     * Per the consultation routing rules the visit's status MUST remain
+     * CONSULTING throughout a consultation-to-consultation transition; only
+     * the current department, the active consultation route, and (optionally)
+     * billing change. If no consultation service is currently active or the
+     * target service has not yet been billed the appropriate billing is
+     * created — but only once, never duplicating an existing invoice item.
+     *
+     * @param int      $departmentId Target consultation department.
+     * @param int|null $serviceId    Specific consultation service catalog id
+     *                               within the target department. When NULL
+     *                               a sensible default service is chosen via
+     *                               {@see createConsultationBilling()}.
+     *
+     * @throws \InvalidArgumentException
      */
-    public function referPatient(Visit $visit, int $departmentId, ?string $notes = null): Visit
-    {
+    public function referPatient(
+        Visit $visit,
+        int $departmentId,
+        ?string $notes = null,
+        ?int $serviceId = null,
+    ): Visit {
         if ($visit->status !== VisitStatus::CONSULTING) {
             throw new \InvalidArgumentException('Can only refer from CONSULTING status.');
         }
@@ -537,40 +554,99 @@ class VisitService
             throw new \InvalidArgumentException('Cannot refer to the same department.');
         }
 
-        // Check if previously referred to this department (prevent loops — optional strictness)
-        $alreadyVisited = $visit->departmentHistory()
-            ->where('department_id', $departmentId)
-            ->whereIn('type', [VisitDepartmentHistory::TYPE_CONSULTATION, VisitDepartmentHistory::TYPE_REFERRAL])
-            ->exists();
-
-        if ($alreadyVisited) {
-            throw new \InvalidArgumentException('Patient was already referred to this department in this visit.');
-        }
-
         $department = \App\Models\Department::findOrFail($departmentId);
 
-        // Mark current dept history entry as completed
+        if (! ($department->type instanceof \App\Enums\DepartmentType
+            ? $department->type === \App\Enums\DepartmentType::CONSULTATION
+            : (string) $department->type === \App\Enums\DepartmentType::CONSULTATION->value)) {
+            throw new \InvalidArgumentException('Target department is not a consultation department.');
+        }
+
+        // Validate / resolve the target consultation service.
+        $service = null;
+        if ($serviceId) {
+            $service = ServiceCatalog::where('id', $serviceId)
+                ->where('department_id', $departmentId)
+                ->where('category', \App\Enums\ServiceType::CONSULTATION->value)
+                ->first();
+            if (! $service) {
+                throw new \InvalidArgumentException(
+                    'Selected service is not a consultation service of the target department.'
+                );
+            }
+        }
+
+        // Complete the currently active consultation route (if any) so the
+        // patient is moved out of that department's "active" slot.
+        $current = $visit->activeConsultationRoute()->first();
+        if ($current) {
+            $current->update([
+                'status'        => \App\Models\VisitConsultationRoute::STATUS_COMPLETED,
+                'completed_by'  => Auth::id(),
+                'completed_at'  => now(),
+            ]);
+        }
+
+        // Record department history (referral). We keep this for audit and
+        // for the UI's referral history, but the canonical "where is the
+        // patient now" lives on the active consultation route.
         $this->completeDepartmentHistory($visit);
-
-        // Update current department
         $visit->update(['current_department_id' => $departmentId]);
-
-        // Record referral history
         VisitDepartmentHistory::create([
-            'visit_id'     => $visit->id,
+            'visit_id'      => $visit->id,
             'department_id' => $departmentId,
-            'type'         => VisitDepartmentHistory::TYPE_REFERRAL,
-            'status'       => VisitDepartmentHistory::STATUS_WAITING,
-            'assigned_by'  => Auth::id(),
-            'notes'        => $notes,
+            'type'          => VisitDepartmentHistory::TYPE_REFERRAL,
+            'status'        => VisitDepartmentHistory::STATUS_IN_PROGRESS,
+            'assigned_by'   => Auth::id(),
+            'notes'         => $notes,
         ]);
 
-        // Billing line for the referral consultation
-        $this->createConsultationBilling($visit, $departmentId);
+        // Billing: only if the target service has not already been billed on
+        // this visit. createConsultationBilling() (which routes through
+        // attachServices → BillingService) is itself idempotent, but checking
+        // here avoids the round-trip when we already know the answer.
+        if ($service) {
+            $alreadyBilled = $visit->visitServices()
+                ->where('service_catalog_id', $service->id)
+                ->exists();
+            if (! $alreadyBilled) {
+                $this->attachServices($visit, [[
+                    'service_catalog_id' => $service->id,
+                    'quantity'           => 1,
+                ]]);
+            } else {
+                // attachServices() also creates the route; if we skipped
+                // it because billing already exists we still must guarantee
+                // the route exists.
+                $this->ensurePendingConsultationRoute($visit, $service);
+            }
+        } else {
+            $this->createConsultationBilling($visit, $departmentId);
+        }
 
-        // Queue transition
+        // Activate the target route so the patient is immediately "in" the
+        // new consultation. Status REMAINS CONSULTING — no transition.
+        $targetRouteQuery = \App\Models\VisitConsultationRoute::where('visit_id', $visit->id)
+            ->where('department_id', $departmentId);
+        if ($service) {
+            $targetRouteQuery->where('service_id', $service->id);
+        }
+        $targetRoute = $targetRouteQuery
+            ->orderByRaw("CASE status WHEN 'PENDING' THEN 0 WHEN 'ACTIVE' THEN 1 ELSE 2 END")
+            ->first();
+
+        if ($targetRoute) {
+            $targetRoute->update([
+                'status'     => \App\Models\VisitConsultationRoute::STATUS_ACTIVE,
+                'started_by' => $targetRoute->started_by ?? Auth::id(),
+                'started_at' => $targetRoute->started_at ?? now(),
+                'routed_by'  => Auth::id(),
+                'notes'      => $notes ?? $targetRoute->notes,
+            ]);
+        }
+
+        // Move the patient's queue entry but DO NOT change visit status.
         $this->queueService->completeCurrentEntry($visit);
-        $this->workflowService->transition($visit, VisitStatus::REFERRED_CONSULTATION, $notes ?? "Referred to {$department->name}");
         $this->queueService->addForDepartment($visit->fresh(), $departmentId);
 
         return $visit->fresh();

@@ -147,19 +147,33 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label class="form-label">Assign to Consultation Department <span class="text-muted small">(optional but recommended)</span></label>
-                        <select name="department_id" class="form-select @error('department_id') is-invalid @enderror">
-                            @php $selectedDepartmentId = old('department_id', $visit->triage?->department_id); @endphp
-                            <option value="">{{ $consultationDepts->isEmpty() ? 'No billed consultation departments available' : '— Select department —' }}</option>
-                            @foreach($consultationDepts as $dept)
-                                <option value="{{ $dept->id }}" {{ (string) $selectedDepartmentId === (string) $dept->id ? 'selected' : '' }}>
-                                    {{ $dept->name }}
-                                    @if($dept->type)  ({{ $dept->type->label() }})@endif
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        <div class="form-text">Only consultation departments from services already attached to this visit are listed.</div>
+                        <label class="form-label">Assign to Consultation Route <span class="text-muted small">(optional but recommended)</span></label>
+                        @if($pendingRoutes->isEmpty())
+                            <div class="alert alert-warning py-2 mb-2 small">
+                                No pending consultation routes for this visit. Triage will be recorded without assigning a destination.
+                            </div>
+                        @else
+                            @php $selectedRouteId = old('consultation_route_id'); @endphp
+                            <div class="list-group">
+                                @foreach($pendingRoutes as $route)
+                                    <label class="list-group-item d-flex gap-2 align-items-start">
+                                        <input class="form-check-input mt-1 flex-shrink-0"
+                                               type="radio"
+                                               name="consultation_route_id"
+                                               value="{{ $route->id }}"
+                                               {{ (string) $selectedRouteId === (string) $route->id ? 'checked' : '' }}>
+                                        <div>
+                                            <div class="fw-semibold">{{ $route->department?->name ?? '—' }}</div>
+                                            <div class="text-muted small">
+                                                <i class="ti ti-stethoscope me-1"></i>{{ $route->service?->name ?? 'Consultation' }}
+                                            </div>
+                                        </div>
+                                    </label>
+                                @endforeach
+                            </div>
+                            @error('consultation_route_id')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                            <div class="form-text">One radio per consultation service billed on this visit. The chosen route determines both the destination department and the specific consultation.</div>
+                        @endif
                     </div>
 
                     <div class="mb-3">

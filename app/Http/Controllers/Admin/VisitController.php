@@ -16,6 +16,7 @@ use App\Services\BillingService;
 use App\Services\InsuranceService;
 use App\Services\QueueService;
 use App\Services\VisitService;
+use App\Services\VisitWorkflowService;
 use App\Enums\BillingType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +30,7 @@ class VisitController extends Controller
         protected InsuranceService $insuranceService,
         protected QueueService $queueService,
         protected BillingService $billingService,
+        protected VisitWorkflowService $visitWorkflowService,
     ) {}
 
     public function index(Request $request)
@@ -183,7 +185,17 @@ class VisitController extends Controller
                 if (!empty($services)) {
                     $this->visitService->attachServices($v, $services);
                 }
-                // No queue entry at waiting — it is created when pushed to Triage
+
+                // Triage is only meaningful for patients who will see a doctor
+                // for a consultation. Visits that only contain lab, pharmacy,
+                // procedure or billing-only items skip triage entirely and stay
+                // at REGISTERED status (the relevant department picks them up
+                // from its own queue).
+                $v = $v->fresh();
+                if ($v->status !== \App\Enums\VisitStatus::SCHEDULED
+                    && $v->pendingConsultationRoutes()->exists()) {
+                    $v = $this->visitWorkflowService->queueForTriage($v);
+                }
 
                 return $v;
             });
@@ -210,9 +222,14 @@ class VisitController extends Controller
             return redirect()->back()->withInput()->with('error', 'Failed to create visit: ' . $e->getMessage());
         }
 
-        $message = $visit->status === VisitStatus::SCHEDULED
-            ? "Visit {$visit->visit_number} scheduled successfully."
-            : "Visit {$visit->visit_number} created and patient added to triage queue.";
+        $message = match (true) {
+            $visit->status === VisitStatus::SCHEDULED
+                => "Visit {$visit->visit_number} scheduled successfully.",
+            $visit->status === VisitStatus::WAITING
+                => "Visit {$visit->visit_number} created and patient added to triage queue.",
+            default
+                => "Visit {$visit->visit_number} created. No consultation service selected — triage skipped.",
+        };
 
         if ($request->expectsJson()) {
             return response()->json([

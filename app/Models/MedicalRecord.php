@@ -13,6 +13,9 @@ class MedicalRecord extends Model
         'visit_id',
         'patient_id',
         'doctor_id',
+        'service_id',
+        'department_id',
+        'consultation_route_id',
     ];
 
     /*
@@ -34,6 +37,21 @@ class MedicalRecord extends Model
     public function doctor()
     {
         return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    public function service()
+    {
+        return $this->belongsTo(ServiceCatalog::class, 'service_id');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
+    public function consultationRoute()
+    {
+        return $this->belongsTo(VisitConsultationRoute::class, 'consultation_route_id');
     }
 
     public function complaints()
