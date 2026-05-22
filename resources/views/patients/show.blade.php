@@ -380,7 +380,7 @@
                                 <td>{{ $visit->visit_type?->label() ?? '—' }}</td>
                                 <td>—</td>
                                 <td>{{ $visit->assignedDoctor?->full_name ?? '—' }}</td>
-                                <td><span class="badge" style="background-color: {{ $visit->status->color() }}">{{ $visit->status->label() }}</span></td>
+                                <td><span class="badge bg-{{ $visit->status->color() }}">{{ $visit->status->label() }}</span></td>
                                 <td><a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
                             </tr>
                             @endforeach
@@ -847,9 +847,9 @@
                             <select name="insurance_tier_id" id="addInsTier" class="form-select" disabled>
                                 <option value="">Select provider first</option>
                             </select>
-                            <div id="addInsTierInfo" class="small text-muted mt-1">If no tier is chosen, the provider's default tier will be used.</div>
+                            {{-- <div id="addInsTierInfo" class="small text-muted mt-1">If no tier is chosen, the provider's default tier will be used.</div> --}}
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Member Type <span class="text-danger">*</span></label>
                             <div class="d-flex gap-3 mt-1">
                                 <div class="form-check">
@@ -866,7 +866,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6 mb-3" id="addCardHolderRow" style="display:none;">
+                        {{-- <div class="col-md-4 mb-3" id="addCardHolderRow" style="display:none;">
                             <label class="form-label">Card Holder Insurance <span class="text-danger">*</span></label>
                             <select name="card_holder_insurance_id" id="addCardHolder" class="form-select">
                                 <option value="">Select card holder</option>
@@ -874,24 +874,24 @@
                                     <option value="{{ $holderIns->id }}">{{ $holderIns->insuranceProvider->name }} — {{ $holderIns->membership_number ?? 'no membership #' }}</option>
                                 @endforeach
                             </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
+                        </div> --}}
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Membership Number</label>
                             <input type="text" name="membership_number" class="form-control">
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Policy Number</label>
                             <input type="text" name="policy_number" class="form-control">
                         </div>
-                        <div class="col-md-6 mb-3">
+                        {{-- <div class="col-md-6 mb-3">
                             <label class="form-label">CCC Code <small class="text-muted">(optional)</small></label>
                             <input type="text" name="ccc_code" class="form-control" maxlength="64" placeholder="e.g. NHIS CCC reference">
-                        </div>
-                        <div class="col-md-6 mb-3">
+                        </div> --}}
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Expiry Date</label>
                             <input type="date" name="expiry_date" class="form-control">
                         </div>
-                        <div class="col-md-6 mb-3 d-flex align-items-end">
+                        <div class="col-md-4 mb-3 d-flex align-items-end">
                             <div class="form-check">
                                 <input type="checkbox" name="is_primary" value="1" class="form-check-input" id="addInsPrimary">
                                 <label class="form-check-label" for="addInsPrimary">Set as primary insurance</label>
@@ -943,19 +943,19 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Membership Number</label>
                             <input type="text" name="membership_number" class="form-control" id="editInsMembership">
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Policy Number</label>
                             <input type="text" name="policy_number" class="form-control" id="editInsPolicy">
                         </div>
-                        <div class="col-md-6 mb-3">
+                        {{-- <div class="col-md-6 mb-3">
                             <label class="form-label">CCC Code <small class="text-muted">(optional)</small></label>
                             <input type="text" name="ccc_code" class="form-control" id="editInsCccCode" maxlength="64">
-                        </div>
-                        <div class="col-md-6 mb-3">
+                        </div> --}}
+                        <div class="col-md-4 mb-3">
                             <label class="form-label">Expiry Date</label>
                             <input type="date" name="expiry_date" class="form-control" id="editInsExpiry">
                         </div>

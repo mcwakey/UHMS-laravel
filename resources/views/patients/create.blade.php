@@ -3,7 +3,7 @@
 
 @section('content')
 <!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
+<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">Register New Patient</h4>
     </div>

@@ -3,7 +3,7 @@
 
 @section('content')
 <!-- Page Header -->
-<div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
+<div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">Create New Visit</h4>
     </div>
@@ -63,7 +63,7 @@
                                 <span id="patientInitial">{{ $selectedPatient ? strtoupper(substr($selectedPatient->first_name, 0, 1)) : '' }}</span>
                             </div>
                             <div class="flex-grow-1">
-                                <h6 class="mb-0" id="patientName">{{ $selectedPatient?->full_name }}</h6>
+                                <h6 class="mb-0" id="patientName">{{ $selectedPatient?->full_name }} &bull; {{ $selectedPatient?->gender }}</h6>
                                 <small class="text-muted">
                                     <span id="patientNumber">{{ $selectedPatient?->patient_number }}</span>
                                     &bull; <span id="patientPhone">{{ $selectedPatient?->phone }}</span>
@@ -114,7 +114,7 @@
 
                         <div class="row g-2 align-items-end" id="verificationCodeRow" style="display:none;">
                             <div class="col-sm-8">
-                                <label class="form-label mb-1">Authorization / Reference Code</label>
+                                <label class="form-label mb-1">Authorization / Reference / CC Code</label>
                                 <input type="text" id="verificationReferenceInput" name="verification_reference_code"
                                        class="form-control" placeholder="Enter code issued by the provider"
                                        autocomplete="off">
@@ -195,17 +195,18 @@
                             @error('consultation_mode')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Chief Complaint</label>
+                            <textarea name="chief_complaint" class="form-control @error('chief_complaint') is-invalid @enderror" rows="3" placeholder="Primary reason for visit...">{{ old('chief_complaint') }}</textarea>
+                            @error('chief_complaint')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Chief Complaint</label>
-                        <textarea name="chief_complaint" class="form-control @error('chief_complaint') is-invalid @enderror" rows="3" placeholder="Primary reason for visit...">{{ old('chief_complaint') }}</textarea>
-                        @error('chief_complaint')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Notes</label>
-                        <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" rows="2" placeholder="Additional notes...">{{ old('notes') }}</textarea>
-                        @error('notes')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Notes</label>
+                            <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" rows="3" placeholder="Additional notes...">{{ old('notes') }}</textarea>
+                            @error('notes')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                        </div>
                     </div>
                 </div>
             </div>
@@ -273,8 +274,8 @@
                                 <tbody id="billingBody"></tbody>
                                 <tfoot>
                                     <tr class="table-light fw-bold">
-                                        <td class="text-end">Overall Total:</td>
-                                        <td class="text-end" id="totalAmount">&#8373;0.00</td>
+                                        <td class="text-end text-primary">Overall Total:</td>
+                                        <td class="text-end text-primary" id="totalAmount">&#8373;0.00</td>
                                         <td></td>
                                     </tr>
                                 </tfoot>

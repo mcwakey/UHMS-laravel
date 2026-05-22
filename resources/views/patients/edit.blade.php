@@ -3,7 +3,7 @@
 
 @section('content')
 <!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
+<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">Edit Patient <span class="text-muted fs-14 ms-1">{{ $patient->patient_number }}</span></h4>
     </div>
