@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\BillingType;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreVisitRequest;
 use App\Http\Requests\UpdateVisitRequest;
 use App\Models\Department;
+use App\Models\InsuranceProvider;
 use App\Models\Patient;
+use App\Models\PatientInsurance;
 use App\Models\ServiceCatalog;
 use App\Models\User;
 use App\Models\Visit;
@@ -17,7 +20,7 @@ use App\Services\InsuranceService;
 use App\Services\QueueService;
 use App\Services\VisitService;
 use App\Services\VisitWorkflowService;
-use App\Enums\BillingType;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -53,20 +56,20 @@ class VisitController extends Controller
         $visitTypeColor = static fn (VisitType $t): string => match ($t) {
             VisitType::EMERGENCY => 'danger',
             VisitType::INPATIENT => 'info',
-            default              => 'light text-dark',
+            default => 'light text-dark',
         };
 
         $visitsPayload = $visits->through(function (Visit $visit) use ($visitTypeColor) {
             return [
-                'id'             => $visit->id,
-                'visit_number'   => $visit->visit_number,
+                'id' => $visit->id,
+                'visit_number' => $visit->visit_number,
                 'visit_date_display' => optional($visit->visit_date)->format('d M Y'),
-                'duration'       => $visit->duration,
-                'age_display'    => $visit->patient_age ?? optional($visit->patient)->age,
+                'duration' => $visit->duration,
+                'age_display' => $visit->patient_age ?? optional($visit->patient)->age,
                 'assigned_doctor_name' => optional($visit->assignedDoctor)->full_name,
                 'patient' => $visit->patient ? [
-                    'id'             => $visit->patient->id,
-                    'full_name'      => $visit->patient->full_name,
+                    'id' => $visit->patient->id,
+                    'full_name' => $visit->patient->full_name,
                     'patient_number' => $visit->patient->patient_number,
                 ] : null,
                 'visit_type' => $visit->visit_type ? [
@@ -95,18 +98,18 @@ class VisitController extends Controller
                         'label' => $s->label(),
                     ])->values()->all(),
                 'urls' => [
-                    'show'    => route('admin.visits.show', $visit),
-                    'edit'    => route('admin.visits.edit', $visit),
+                    'show' => route('admin.visits.show', $visit),
+                    'edit' => route('admin.visits.edit', $visit),
                     'patient' => $visit->patient ? route('admin.patients.show', $visit->patient) : null,
                 ],
             ];
         });
 
         return Inertia::render('Visits/Index', [
-            'visits'  => $visitsPayload,
-            'stats'   => $stats,
+            'visits' => $visitsPayload,
+            'stats' => $stats,
             'doctors' => $doctors->map(fn ($d) => [
-                'id'        => $d->id,
+                'id' => $d->id,
                 'full_name' => $d->full_name,
             ])->values(),
             'filters' => $filters,
@@ -119,15 +122,15 @@ class VisitController extends Controller
                 'label' => $c->label(),
             ])->values(),
             'routes' => [
-                'index'      => route('admin.visits.index'),
-                'create'     => route('admin.visits.create'),
+                'index' => route('admin.visits.index'),
+                'create' => route('admin.visits.create'),
                 'queueBoard' => route('admin.queue.board'),
                 // {visit} placeholder swapped client-side per row.
                 'transition' => route('admin.visits.transition', ['visit' => '__ID__']),
             ],
             'can' => [
-                'create'    => $user?->can('visits.create') ?? false,
-                'edit'      => $user?->can('visits.edit') ?? false,
+                'create' => $user?->can('visits.create') ?? false,
+                'edit' => $user?->can('visits.edit') ?? false,
                 'queueView' => $user?->can('queue.view') ?? false,
             ],
         ]);
@@ -145,7 +148,7 @@ class VisitController extends Controller
 
         // Insurance providers (excluding the synthetic Cash & Carry default)
         // and their tiers, for the Add/Edit Insurance modal on this page.
-        $insuranceProviders = \App\Models\InsuranceProvider::where('is_active', true)
+        $insuranceProviders = InsuranceProvider::where('is_active', true)
             ->where(function ($q) {
                 $q->where('is_default', false)->orWhereNull('is_default');
             })
@@ -161,12 +164,13 @@ class VisitController extends Controller
         // Block new visits for deceased patients (unless user has override permission)
         $patientId = $request->input('patient_id');
         if ($patientId) {
-            $patient = \App\Models\Patient::find($patientId);
-            if ($patient && $patient->is_deceased && !$request->user()->can('patients.deceased.override')) {
-                $error = "This patient is marked as deceased and cannot start a new visit.";
+            $patient = Patient::find($patientId);
+            if ($patient && $patient->is_deceased && ! $request->user()->can('patients.deceased.override')) {
+                $error = 'This patient is marked as deceased and cannot start a new visit.';
                 if ($request->expectsJson()) {
                     return response()->json(['message' => $error], 422);
                 }
+
                 return back()->withErrors(['patient_id' => $error])->withInput();
             }
         }
@@ -182,7 +186,7 @@ class VisitController extends Controller
                 // visit_services here — doing so causes duplicate invoice items
                 // (different source_type bypasses the duplicate guard).
                 $services = $request->validated()['services'] ?? [];
-                if (!empty($services)) {
+                if (! empty($services)) {
                     $this->visitService->attachServices($v, $services);
                 }
 
@@ -192,7 +196,7 @@ class VisitController extends Controller
                 // at REGISTERED status (the relevant department picks them up
                 // from its own queue).
                 $v = $v->fresh();
-                if ($v->status !== \App\Enums\VisitStatus::SCHEDULED
+                if ($v->status !== VisitStatus::SCHEDULED
                     && $v->pendingConsultationRoutes()->exists()) {
                     $v = $this->visitWorkflowService->queueForTriage($v);
                 }
@@ -208,27 +212,23 @@ class VisitController extends Controller
 
             return redirect()->back()->withInput()->with('error', $e->getMessage());
         } catch (\Exception $e) {
-            Log::error('VisitController::store failed: ' . $e->getMessage(), [
+            Log::error('VisitController::store failed: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'request' => $request->except('_token'),
             ]);
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => 'Failed to create visit. Please try again.',
-                    'debug' => $e->getMessage(), // TODO: remove in production
                 ], 500);
             }
 
-            return redirect()->back()->withInput()->with('error', 'Failed to create visit: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Failed to create visit. Please try again.');
         }
 
         $message = match (true) {
-            $visit->status === VisitStatus::SCHEDULED
-                => "Visit {$visit->visit_number} scheduled successfully.",
-            $visit->status === VisitStatus::WAITING
-                => "Visit {$visit->visit_number} created and patient added to triage queue.",
-            default
-                => "Visit {$visit->visit_number} created. No consultation service selected — triage skipped.",
+            $visit->status === VisitStatus::SCHEDULED => "Visit {$visit->visit_number} scheduled successfully.",
+            $visit->status === VisitStatus::WAITING => "Visit {$visit->visit_number} created and patient added to triage queue.",
+            default => "Visit {$visit->visit_number} created. No consultation service selected — triage skipped.",
         };
 
         if ($request->expectsJson()) {
@@ -257,7 +257,7 @@ class VisitController extends Controller
         ]);
 
         $departments = Department::active()->orderBy('name')->get();
-        $doctors     = User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get();
+        $doctors = User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get();
 
         return view('visits.edit', compact('visit', 'departments', 'doctors'));
     }
@@ -266,7 +266,7 @@ class VisitController extends Controller
     {
         try {
             DB::transaction(function () use ($request, $visit) {
-                $data     = $request->validated();
+                $data = $request->validated();
                 $services = $data['services'] ?? null;
                 unset($data['services']);
 
@@ -275,20 +275,19 @@ class VisitController extends Controller
                 if ($services !== null) {
                     // Delete existing service items before re-attaching to avoid duplicates
                     $visit->visitServices()->delete();
-                    if (!empty($services)) {
+                    if (! empty($services)) {
                         $this->visitService->attachServices($visit, $services);
                     }
                 }
             });
         } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Failed to update visit: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Failed to update visit: '.$e->getMessage());
         }
 
         return redirect()
             ->route('admin.visits.show', $visit)
             ->with('success', "Visit {$visit->visit_number} updated.");
     }
-
 
     public function show(Visit $visit)
     {
@@ -330,7 +329,7 @@ class VisitController extends Controller
 
         $newStatus = VisitStatus::from($request->status);
 
-        if (!$visit->canTransitionTo($newStatus)) {
+        if (! $visit->canTransitionTo($newStatus)) {
             return back()->with('error', "Cannot transition from {$visit->status->label()} to {$newStatus->label()}.");
         }
 
@@ -343,7 +342,7 @@ class VisitController extends Controller
     {
         $request->validate([
             'department_id' => ['required', 'integer', 'exists:departments,id'],
-            'notes'         => ['nullable', 'string', 'max:500'],
+            'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
         try {
@@ -369,14 +368,15 @@ class VisitController extends Controller
             ->get()
             ->map(function ($p) {
                 $lastVisit = $p->visits()->latest('visit_date')->value('visit_date');
+
                 return [
-                    'id'              => $p->id,
-                    'text'            => "{$p->patient_number} — {$p->full_name}",
-                    'patient_number'  => $p->patient_number,
-                    'full_name'       => $p->full_name,
-                    'phone'           => $p->phone,
-                    'last_visit_date' => $lastVisit ? \Carbon\Carbon::parse($lastVisit)->format('d M Y') : null,
-                    'is_deceased'     => (bool) $p->is_deceased,
+                    'id' => $p->id,
+                    'text' => "{$p->patient_number} — {$p->full_name}",
+                    'patient_number' => $p->patient_number,
+                    'full_name' => $p->full_name,
+                    'phone' => $p->phone,
+                    'last_visit_date' => $lastVisit ? Carbon::parse($lastVisit)->format('d M Y') : null,
+                    'is_deceased' => (bool) $p->is_deceased,
                 ];
             });
 
@@ -419,7 +419,7 @@ class VisitController extends Controller
 
         return response()->json($doctors->map(fn ($d) => [
             'id' => $d->id,
-            'name' => 'Dr. ' . $d->full_name,
+            'name' => 'Dr. '.$d->full_name,
             'specialties' => $d->specialties->pluck('name')->toArray(),
         ]));
     }
@@ -440,17 +440,17 @@ class VisitController extends Controller
     public function servicePrice(Request $request)
     {
         $request->validate([
-            'service_id'    => ['required', 'exists:service_catalog,id'],
-            'insurance_id'  => ['nullable', 'exists:patient_insurances,id'],
+            'service_id' => ['required', 'exists:service_catalog,id'],
+            'insurance_id' => ['nullable', 'exists:patient_insurances,id'],
         ]);
 
-        $service = \App\Models\ServiceCatalog::with('prices')->findOrFail($request->service_id);
+        $service = ServiceCatalog::with('prices')->findOrFail($request->service_id);
 
         $insuranceType = null;
         $providerId = null;
 
         if ($request->insurance_id) {
-            $patientIns = \App\Models\PatientInsurance::with('insuranceProvider')
+            $patientIns = PatientInsurance::with('insuranceProvider')
                 ->find($request->insurance_id);
             if ($patientIns) {
                 $insuranceType = $patientIns->insuranceProvider?->type;
@@ -461,15 +461,15 @@ class VisitController extends Controller
         $price = $service->getPriceForInsurance($insuranceType, $providerId);
 
         return response()->json([
-            'price'           => $price,
-            'formatted_price' => '₵' . number_format($price, 2),
+            'price' => $price,
+            'formatted_price' => '₵'.number_format($price, 2),
         ]);
     }
 
     /**
      * Format a ServiceCatalog model for JSON (includes insurance pricing).
      */
-    private function formatServiceForJson(\App\Models\ServiceCatalog $s): array
+    private function formatServiceForJson(ServiceCatalog $s): array
     {
         // Build per-type default prices map
         $typePrices = [];
@@ -485,14 +485,14 @@ class VisitController extends Controller
         }
 
         return [
-            'id'               => $s->id,
-            'name'             => $s->name,
-            'code'             => $s->code,
-            'category'         => $s->category,
-            'price'            => (float) $s->price,
-            'formatted_price'  => $s->formatted_price,
-            'type_prices'      => $typePrices,
-            'provider_prices'  => $providerPrices,
+            'id' => $s->id,
+            'name' => $s->name,
+            'code' => $s->code,
+            'category' => $s->category,
+            'price' => (float) $s->price,
+            'formatted_price' => $s->formatted_price,
+            'type_prices' => $typePrices,
+            'provider_prices' => $providerPrices,
         ];
     }
 
@@ -514,9 +514,10 @@ class VisitController extends Controller
     private function resolveBillingType(Visit $visit): string
     {
         $provider = $visit->visitInsurance?->insuranceProvider;
-        if (!$provider || $provider->is_default) {
+        if (! $provider || $provider->is_default) {
             return BillingType::CASH->value;
         }
+
         return BillingType::INSURANCE->value;
     }
 }

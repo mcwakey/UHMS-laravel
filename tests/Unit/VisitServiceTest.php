@@ -17,7 +17,9 @@ class VisitServiceTest extends TestCase
     use RefreshDatabase;
 
     private VisitService $service;
+
     private User $user;
+
     private Department $department;
 
     protected function setUp(): void
@@ -50,7 +52,7 @@ class VisitServiceTest extends TestCase
         $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
         Visit::factory()->count(5)->create([
             'patient_id' => $patient->id,
-            'department_id' => $this->department->id,
+            'current_department_id' => $this->department->id,
             'created_by' => $this->user->id,
         ]);
 
@@ -65,7 +67,7 @@ class VisitServiceTest extends TestCase
         $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
         $visit = Visit::factory()->create([
             'patient_id' => $patient->id,
-            'department_id' => $this->department->id,
+            'current_department_id' => $this->department->id,
             'created_by' => $this->user->id,
             'status' => VisitStatus::REGISTERED,
         ]);
@@ -80,7 +82,7 @@ class VisitServiceTest extends TestCase
         $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
         Visit::factory()->create([
             'patient_id' => $patient->id,
-            'department_id' => $this->department->id,
+            'current_department_id' => $this->department->id,
             'created_by' => $this->user->id,
             'visit_date' => now(),
         ]);

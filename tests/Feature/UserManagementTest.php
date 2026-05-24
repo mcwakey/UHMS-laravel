@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
@@ -18,12 +19,12 @@ class UserManagementTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $this->admin = User::factory()->create();
-        $role = Role::create(['name' => 'Super Admin']);
+        $role = Role::findOrCreate('Super Admin', 'web');
         foreach (['users.view', 'users.create', 'users.edit', 'users.delete', 'roles.manage'] as $p) {
-            $perm = Permission::create(['name' => $p]);
+            $perm = Permission::findOrCreate($p, 'web');
             $role->givePermissionTo($perm);
         }
         $this->admin->assignRole($role);
@@ -44,15 +45,16 @@ class UserManagementTest extends TestCase
     public function test_user_can_be_created(): void
     {
         $dept = Department::factory()->create();
-        Role::create(['name' => 'Nurse']);
+        Role::findOrCreate('Nurse', 'web');
 
         $data = [
-            'name' => 'Test Nurse',
+            'first_name' => 'Test',
+            'last_name' => 'Nurse',
             'email' => 'nurse@test.com',
             'password' => 'SecurePass123!',
             'password_confirmation' => 'SecurePass123!',
             'department_id' => $dept->id,
-            'roles' => ['Nurse'],
+            'role' => 'Nurse',
         ];
 
         $response = $this->actingAs($this->admin)->post(route('admin.users.store'), $data);
@@ -80,14 +82,17 @@ class UserManagementTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($this->admin)->put(route('admin.users.update', $user), [
-            'name' => 'Updated Name',
+            'first_name' => 'Updated',
+            'last_name' => 'Name',
             'email' => $user->email,
+            'role' => 'Super Admin',
         ]);
 
         $response->assertRedirect();
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
-            'name' => 'Updated Name',
+            'first_name' => 'Updated',
+            'last_name' => 'Name',
         ]);
     }
 

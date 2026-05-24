@@ -31,6 +31,7 @@
     <link rel="stylesheet" href="{{ URL::asset('build/css/dataTables.bootstrap5.min.css') }}">
     <link rel="stylesheet" href="{{ URL::asset('build/plugins/select2/css/select2.min.css') }}">
     <link rel="stylesheet" href="{{ URL::asset('build/css/style.css') }}">
+    <link rel="stylesheet" href="{{ URL::asset('build/css/uhms-design-system.css') }}">
 
     <style>
         html.uhms-loading body { visibility: hidden; }
@@ -55,6 +56,7 @@
     <script src="{{ URL::asset('build/js/dataTables.bootstrap5.min.js') }}"></script>
     <script src="{{ URL::asset('build/plugins/select2/js/select2.min.js') }}"></script>
     <script src="{{ URL::asset('build/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
+    <script src="{{ URL::asset('build/plugins/chartjs/chart.min.js') }}"></script>
     <script src="{{ URL::asset('build/js/script.js') }}"></script>
 
     @vite(['resources/js/inertia.js'])
@@ -91,6 +93,20 @@
             }
 
             document.addEventListener('inertia:before', cleanupBootstrapModals);
+        }());
+    </script>
+
+    <script>
+        (function () {
+            function reveal() {
+                document.documentElement.classList.remove('uhms-loading');
+            }
+
+            window.addEventListener('load', reveal);
+            document.addEventListener('inertia:finish', reveal);
+            document.addEventListener('inertia:navigate', reveal);
+
+            setTimeout(reveal, 1500);
         }());
     </script>
 

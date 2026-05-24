@@ -10,6 +10,7 @@ use App\Models\Ward;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class WardAdmissionTest extends TestCase
@@ -17,23 +18,26 @@ class WardAdmissionTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Patient $patient;
+
     private Visit $visit;
+
     private Ward $ward;
 
     protected function setUp(): void
     {
         parent::setUp();
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $dept = Department::factory()->create();
         $this->user = User::factory()->create(['department_id' => $dept->id]);
-        $role = Role::create(['name' => 'Admin']);
+        $role = Role::findOrCreate('Admin', 'web');
         foreach ([
             'ward.view', 'ward.manage', 'ward.admit', 'ward.discharge',
             'beds.view', 'beds.manage', 'patients.view', 'visits.view',
         ] as $p) {
-            $perm = Permission::create(['name' => $p]);
+            $perm = Permission::findOrCreate($p, 'web');
             $role->givePermissionTo($perm);
         }
         $this->user->assignRole($role);
@@ -41,7 +45,7 @@ class WardAdmissionTest extends TestCase
         $this->patient = Patient::factory()->create(['registered_by' => $this->user->id]);
         $this->visit = Visit::factory()->create([
             'patient_id' => $this->patient->id,
-            'department_id' => $dept->id,
+            'current_department_id' => $dept->id,
             'created_by' => $this->user->id,
         ]);
         $this->ward = Ward::create([
@@ -86,9 +90,10 @@ class WardAdmissionTest extends TestCase
             'ward_id' => $this->ward->id,
             'bed_number' => 'B001',
             'bed_type' => 'standard',
+            'daily_rate' => 100,
         ];
 
-        $response = $this->actingAs($this->user)->post(route('admin.beds.store'), $data);
+        $response = $this->actingAs($this->user)->post(route('admin.wards.beds.store'), $data);
         $response->assertRedirect();
         $this->assertDatabaseHas('beds', ['bed_number' => 'B001']);
     }

@@ -268,7 +268,60 @@ function injectLegacyStyles() {
     });
 }
 
-function executeLegacyScripts() {
+function waitForLegacyGlobals(timeout = 1500) {
+    if (window.jQuery) {
+        return Promise.resolve();
+    }
+
+    const startedAt = Date.now();
+
+    return new Promise((resolve) => {
+        const tick = () => {
+            if (window.jQuery || Date.now() - startedAt >= timeout) {
+                resolve();
+                return;
+            }
+
+            window.setTimeout(tick, 25);
+        };
+
+        tick();
+    });
+}
+
+function executeScriptNode(sourceScript, runId, index) {
+    return new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.dataset.uhmsLegacyScript = `${runId}-${index}`;
+
+        Array.from(sourceScript.attributes).forEach((attribute) => {
+            if (attribute.name !== 'data-uhms-legacy-script') {
+                script.setAttribute(attribute.name, attribute.value);
+            }
+        });
+
+        script.async = false;
+
+        if (sourceScript.src) {
+            script.onload = () => resolve();
+            script.onerror = () => {
+                // eslint-disable-next-line no-console
+                console.warn('[bridge] legacy script failed to load', sourceScript.src);
+                resolve();
+            };
+        } else {
+            script.textContent = sourceScript.textContent;
+        }
+
+        document.body.appendChild(script);
+
+        if (!sourceScript.src) {
+            resolve();
+        }
+    });
+}
+
+async function executeLegacyScripts() {
     document.querySelectorAll('script[data-uhms-legacy-script]').forEach((script) => script.remove());
 
     if (!props.scripts) {
@@ -303,22 +356,10 @@ function executeLegacyScripts() {
     };
 
     try {
-        scripts.forEach((sourceScript, index) => {
-            const script = document.createElement('script');
-            script.dataset.uhmsLegacyScript = `${scriptRunId}-${index}`;
-
-            Array.from(sourceScript.attributes).forEach((attribute) => {
-                if (attribute.name !== 'data-uhms-legacy-script') {
-                    script.setAttribute(attribute.name, attribute.value);
-                }
-            });
-
-            if (!sourceScript.src) {
-                script.textContent = sourceScript.textContent;
-            }
-
-            document.body.appendChild(script);
-        });
+        for (const [index, sourceScript] of scripts.entries()) {
+            // eslint-disable-next-line no-await-in-loop
+            await executeScriptNode(sourceScript, scriptRunId, index);
+        }
     } finally {
         document.addEventListener = originalAddEventListener;
     }
@@ -403,8 +444,9 @@ async function afterPageSwap() {
     cleanupBootstrapModals();
     await nextTick();
     injectLegacyStyles();
+    await waitForLegacyGlobals();
     initialiseLegacyShell();
-    executeLegacyScripts();
+    await executeLegacyScripts();
     // Patch forms AFTER scripts run (scripts may add dynamic forms).
     await nextTick();
     patchFormSubmitMethods();

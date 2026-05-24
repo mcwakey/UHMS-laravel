@@ -8,6 +8,7 @@ use App\Enums\ServiceType;
 use App\Models\Claim;
 use App\Models\ClaimItem;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -81,7 +82,8 @@ class ClaimService
 
             foreach ($claimableItems as $item) {
                 $quantity = max(1, (int) ($item->quantity ?? 1));
-                $claimAmount = min((float) $item->nhis_approved_amount, (float) $item->total_price);
+                $lineTotal = (float) ($item->total_price ?: ((float) $item->selected_price * $quantity));
+                $claimAmount = min($this->insuranceCoveredAmount($item), $lineTotal);
 
                 ClaimItem::create([
                     'claim_id' => $claim->id,
@@ -241,6 +243,7 @@ class ClaimService
     public function markPaid(Claim $claim): Claim
     {
         $claim->update(['status' => ClaimStatus::PAID]);
+
         return $claim;
     }
 
@@ -315,12 +318,22 @@ class ClaimService
     }
 
     /**
-     * @return Collection<int, \App\Models\InvoiceItem>
+     * @return Collection<int, InvoiceItem>
      */
     private function claimableInvoiceItems(Invoice $invoice): Collection
     {
         return $invoice->items
-            ->filter(fn ($item) => $item->is_nhis_covered && (float) $item->nhis_approved_amount > 0)
+            ->filter(fn ($item) => $this->insuranceCoveredAmount($item) > 0)
             ->values();
+    }
+
+    private function insuranceCoveredAmount($item): float
+    {
+        $legacyAmount = (float) ($item->nhis_approved_amount ?? 0);
+        if ($legacyAmount > 0 && (bool) $item->is_nhis_covered) {
+            return $legacyAmount;
+        }
+
+        return (float) ($item->insurance_covered ?? 0);
     }
 }

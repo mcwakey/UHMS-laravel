@@ -23,13 +23,17 @@ use App\Exports\PharmacySalesSummaryExport;
 use App\Exports\StockValuationExport;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
+use App\Models\LabRequest;
+use App\Models\MedicalRecord;
 use App\Models\Patient;
+use App\Models\Prescription;
 use App\Models\User;
 use App\Services\ReportService;
 use App\Services\StatementService;
-use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
+use Spatie\Permission\Models\Role;
 
 class ReportController extends Controller
 {
@@ -49,6 +53,7 @@ class ReportController extends Controller
 
         if ($request->has('export') && $request->export === 'pdf') {
             $pdf = Pdf::loadView('reports.income-pdf', $data);
+
             return $pdf->download('income-report.pdf');
         }
 
@@ -65,6 +70,7 @@ class ReportController extends Controller
 
         if ($request->has('export') && $request->export === 'pdf') {
             $pdf = Pdf::loadView('reports.patients-pdf', $data);
+
             return $pdf->download('patient-report.pdf');
         }
 
@@ -83,6 +89,7 @@ class ReportController extends Controller
 
         if ($request->has('export') && $request->export === 'pdf') {
             $pdf = Pdf::loadView('reports.visits-pdf', $data);
+
             return $pdf->download('visit-report.pdf');
         }
 
@@ -90,7 +97,7 @@ class ReportController extends Controller
     }
 
     /**
-    * Insurance claims report.
+     * Insurance claims report.
      */
     public function insuranceClaims(Request $request)
     {
@@ -100,6 +107,7 @@ class ReportController extends Controller
 
         if ($request->has('export') && $request->export === 'pdf') {
             $pdf = Pdf::loadView('reports.nhis-pdf', $data);
+
             return $pdf->download('insurance-claims-report.pdf');
         }
 
@@ -126,10 +134,11 @@ class ReportController extends Controller
         $data = $this->reportService->pharmacySalesReport($filters);
 
         if ($request->export === 'excel') {
-            return Excel::download(new PharmacySalesExport($filters), 'pharmacy-sales-' . now()->format('Y-m-d') . '.xlsx');
+            return Excel::download(new PharmacySalesExport($filters), 'pharmacy-sales-'.now()->format('Y-m-d').'.xlsx');
         }
         if ($request->export === 'pdf') {
             $pdf = Pdf::loadView('reports.pharmacy-sales-pdf', $data);
+
             return $pdf->download('pharmacy-sales.pdf');
         }
 
@@ -145,7 +154,7 @@ class ReportController extends Controller
         $data = $this->reportService->pharmacySalesSummaryReport($filters);
 
         if ($request->export === 'excel') {
-            return Excel::download(new PharmacySalesSummaryExport($filters), 'pharmacy-summary-' . now()->format('Y-m-d') . '.xlsx');
+            return Excel::download(new PharmacySalesSummaryExport($filters), 'pharmacy-summary-'.now()->format('Y-m-d').'.xlsx');
         }
 
         return view('reports.pharmacy-sales-summary', array_merge($data, compact('filters')));
@@ -161,7 +170,7 @@ class ReportController extends Controller
         $departments = Department::where('status', 'active')->orderBy('name')->get();
 
         if ($request->export === 'excel') {
-            return Excel::download(new InvestigationRevenueExport($filters), 'investigation-revenue-' . now()->format('Y-m-d') . '.xlsx');
+            return Excel::download(new InvestigationRevenueExport($filters), 'investigation-revenue-'.now()->format('Y-m-d').'.xlsx');
         }
 
         return view('reports.investigation-revenue', array_merge($data, compact('departments', 'filters')));
@@ -174,10 +183,12 @@ class ReportController extends Controller
     {
         $filters = $request->only(['date_from', 'date_to', 'doctor_id']);
         $data = $this->reportService->consultationStatsReport($filters);
-        $doctors = User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get();
+        $doctors = Role::where('name', 'Doctor')->where('guard_name', 'web')->exists()
+            ? User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get()
+            : collect();
 
         if ($request->export === 'excel') {
-            return Excel::download(new ConsultationStatsExport($filters), 'consultation-stats-' . now()->format('Y-m-d') . '.xlsx');
+            return Excel::download(new ConsultationStatsExport($filters), 'consultation-stats-'.now()->format('Y-m-d').'.xlsx');
         }
 
         return view('reports.consultation-stats', array_merge($data, compact('doctors', 'filters')));
@@ -198,7 +209,8 @@ class ReportController extends Controller
 
         if ($request->export === 'pdf') {
             $pdf = Pdf::loadView('reports.daily-collection-pdf', array_merge($data, compact('filters')));
-            return $pdf->download('daily-collection-' . ($filters['date'] ?? today()->format('Y-m-d')) . '.pdf');
+
+            return $pdf->download('daily-collection-'.($filters['date'] ?? today()->format('Y-m-d')).'.pdf');
         }
 
         unset($filters['export']);
@@ -216,7 +228,8 @@ class ReportController extends Controller
 
         if ($request->export === 'pdf') {
             $pdf = Pdf::loadView('reports.patient-statement-pdf', $data);
-            return $pdf->download('statement-' . $patient->patient_number . '.pdf');
+
+            return $pdf->download('statement-'.$patient->patient_number.'.pdf');
         }
 
         return view('reports.patient-statement', array_merge($data, compact('filters')));
@@ -232,8 +245,8 @@ class ReportController extends Controller
             $search = $request->search;
             $patients = Patient::where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('patient_number', 'like', "%{$search}%");
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('patient_number', 'like', "%{$search}%");
             })->limit(20)->get();
         }
 
@@ -250,7 +263,7 @@ class ReportController extends Controller
         $admissionStatuses = AdmissionStatus::cases();
 
         if ($request->export === 'excel') {
-            return Excel::download(new AdmissionsExport($filters), 'admissions-' . now()->format('Y-m-d') . '.xlsx');
+            return Excel::download(new AdmissionsExport($filters), 'admissions-'.now()->format('Y-m-d').'.xlsx');
         }
 
         return view('reports.admissions', array_merge($data, compact('admissionStatuses', 'filters')));
@@ -261,11 +274,11 @@ class ReportController extends Controller
      */
     public function discharges(Request $request)
     {
-        $filters = $request->only(['date_from', 'date_to']);
+        $filters = $request->only(['date_from', 'date_to', 'ward_id']);
         $data = $this->reportService->dischargesReport($filters);
 
         if ($request->export === 'excel') {
-            return Excel::download(new DischargesExport($filters), 'discharges-' . now()->format('Y-m-d') . '.xlsx');
+            return Excel::download(new DischargesExport($filters), 'discharges-'.now()->format('Y-m-d').'.xlsx');
         }
 
         return view('reports.discharges', array_merge($data, compact('filters')));
@@ -282,7 +295,7 @@ class ReportController extends Controller
         $leaveStatuses = LeaveStatus::cases();
 
         if ($request->export === 'excel') {
-            return Excel::download(new LeaveExport($filters), 'leave-report-' . now()->format('Y-m-d') . '.xlsx');
+            return Excel::download(new LeaveExport($filters), 'leave-report-'.now()->format('Y-m-d').'.xlsx');
         }
 
         return view('reports.leave', array_merge($data, compact('leaveTypes', 'leaveStatuses', 'filters')));
@@ -298,10 +311,11 @@ class ReportController extends Controller
         $payrollStatuses = PayrollStatus::cases();
 
         if ($request->export === 'excel') {
-            return Excel::download(new PayrollExport($filters), 'payroll-' . now()->format('Y-m-d') . '.xlsx');
+            return Excel::download(new PayrollExport($filters), 'payroll-'.now()->format('Y-m-d').'.xlsx');
         }
         if ($request->export === 'pdf') {
             $pdf = Pdf::loadView('reports.payroll-pdf', $data);
+
             return $pdf->download('payroll-summary.pdf');
         }
 
@@ -318,7 +332,7 @@ class ReportController extends Controller
         $claimStatuses = ClaimStatus::cases();
 
         if ($request->export === 'excel') {
-            return Excel::download(new ClaimsExport($filters), 'claims-' . now()->format('Y-m-d') . '.xlsx');
+            return Excel::download(new ClaimsExport($filters), 'claims-'.now()->format('Y-m-d').'.xlsx');
         }
 
         return view('reports.claims', array_merge($data, compact('claimStatuses', 'filters')));
@@ -333,7 +347,7 @@ class ReportController extends Controller
         $data = $this->reportService->stockValuationReport($filters);
 
         if ($request->export === 'excel') {
-            return Excel::download(new StockValuationExport($filters), 'stock-valuation-' . now()->format('Y-m-d') . '.xlsx');
+            return Excel::download(new StockValuationExport($filters), 'stock-valuation-'.now()->format('Y-m-d').'.xlsx');
         }
 
         return view('reports.stock-valuation', array_merge($data, compact('filters')));
@@ -348,7 +362,7 @@ class ReportController extends Controller
         $data = $this->reportService->expiredStockReport($filters);
 
         if ($request->export === 'excel') {
-            return Excel::download(new ExpiredStockExport($filters), 'expired-stock-' . now()->format('Y-m-d') . '.xlsx');
+            return Excel::download(new ExpiredStockExport($filters), 'expired-stock-'.now()->format('Y-m-d').'.xlsx');
         }
 
         return view('reports.expired-stock', array_merge($data, compact('filters')));
@@ -363,30 +377,33 @@ class ReportController extends Controller
     /**
      * Printable consultation note.
      */
-    public function printConsultation(\App\Models\MedicalRecord $record)
+    public function printConsultation(MedicalRecord $record)
     {
         $record->load(['patient', 'doctor', 'visit.department', 'complaints', 'diagnoses', 'investigations', 'treatments', 'prescriptions.items']);
         $pdf = Pdf::loadView('reports.print-consultation', compact('record'));
-        return $pdf->stream('consultation-' . $record->visit?->visit_number . '.pdf');
+
+        return $pdf->stream('consultation-'.$record->visit?->visit_number.'.pdf');
     }
 
     /**
      * Printable lab report.
      */
-    public function printLabReport(\App\Models\LabRequest $labRequest)
+    public function printLabReport(LabRequest $labRequest)
     {
         $labRequest->load(['patient', 'requestedBy', 'department', 'items.labTest', 'items.result.performedBy', 'items.result.verifiedBy']);
         $pdf = Pdf::loadView('reports.print-lab-report', compact('labRequest'));
-        return $pdf->stream('lab-report-' . $labRequest->request_number . '.pdf');
+
+        return $pdf->stream('lab-report-'.$labRequest->request_number.'.pdf');
     }
 
     /**
      * Printable prescription.
      */
-    public function printPrescription(\App\Models\Prescription $prescription)
+    public function printPrescription(Prescription $prescription)
     {
         $prescription->load(['patient', 'doctor', 'visit', 'items.drug']);
         $pdf = Pdf::loadView('reports.print-prescription', compact('prescription'));
-        return $pdf->stream('prescription-' . $prescription->id . '.pdf');
+
+        return $pdf->stream('prescription-'.$prescription->id.'.pdf');
     }
 }

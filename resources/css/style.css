@@ -11694,7 +11694,7 @@ Author URL: https://themeforest.net/user/dreamstechnologies
 }
 .card-bg::before {
   content: "";
-  background-image: url(../img/bg/card-bg-02.png);
+  background-image: url(../img/bg/generate-bg-02.png);
   width: 100%;
   height: 100%;
   position: absolute;

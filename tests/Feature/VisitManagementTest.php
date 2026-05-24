@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\Priority;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Models\Department;
@@ -11,6 +12,7 @@ use App\Models\Visit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class VisitManagementTest extends TestCase
@@ -18,18 +20,20 @@ class VisitManagementTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Department $department;
 
     protected function setUp(): void
     {
         parent::setUp();
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $this->department = Department::factory()->create();
         $this->user = User::factory()->create(['department_id' => $this->department->id]);
-        $role = Role::create(['name' => 'Admin']);
+        Role::findOrCreate('Doctor', 'web');
+        $role = Role::findOrCreate('Admin', 'web');
         foreach (['visits.view', 'visits.create', 'visits.edit', 'visits.transition', 'patients.view'] as $p) {
-            $perm = Permission::create(['name' => $p]);
+            $perm = Permission::findOrCreate($p, 'web');
             $role->givePermissionTo($perm);
         }
         $this->user->assignRole($role);
@@ -52,7 +56,7 @@ class VisitManagementTest extends TestCase
         $data = [
             'patient_id' => $patient->id,
             'visit_type' => VisitType::OUTPATIENT->value,
-            'department_id' => $this->department->id,
+            'priority' => Priority::NORMAL->value,
             'chief_complaint' => 'Headache and fever',
         ];
 
@@ -72,7 +76,7 @@ class VisitManagementTest extends TestCase
         $this->actingAs($this->user)->post(route('admin.visits.store'), [
             'patient_id' => $patient->id,
             'visit_type' => VisitType::OUTPATIENT->value,
-            'department_id' => $this->department->id,
+            'priority' => Priority::NORMAL->value,
             'chief_complaint' => 'Test visit',
         ]);
 
@@ -88,7 +92,7 @@ class VisitManagementTest extends TestCase
         $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
         $visit = Visit::factory()->create([
             'patient_id' => $patient->id,
-            'department_id' => $this->department->id,
+            'current_department_id' => $this->department->id,
             'created_by' => $this->user->id,
         ]);
 
@@ -103,7 +107,7 @@ class VisitManagementTest extends TestCase
         $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
         $visit = Visit::factory()->create([
             'patient_id' => $patient->id,
-            'department_id' => $this->department->id,
+            'current_department_id' => $this->department->id,
             'created_by' => $this->user->id,
             'status' => VisitStatus::REGISTERED,
         ]);
@@ -125,7 +129,7 @@ class VisitManagementTest extends TestCase
         $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
         Visit::factory()->create([
             'patient_id' => $patient->id,
-            'department_id' => $this->department->id,
+            'current_department_id' => $this->department->id,
             'created_by' => $this->user->id,
             'visit_date' => now(),
         ]);

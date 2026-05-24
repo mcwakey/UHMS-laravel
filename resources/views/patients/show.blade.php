@@ -3,10 +3,18 @@
 
 @section('content')
 <!-- Page Header -->
-<div class="mb-4">
+<div class="d-flex mb-3">
     <h6 class="fw-bold mb-0 d-flex align-items-center">
         <a href="{{ route('admin.patients.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>Patients</a>
     </h6>
+    
+    @can('patients.mark_deceased')
+    @if(!$patient->is_deceased)
+    <button type="button" class="btn btn-outline-danger btn-md ms-auto" data-bs-toggle="modal" data-bs-target="#markDeceasedModal">
+        <i class="ti ti-skull me-1"></i>Mark as Deceased
+    </button>
+    @endif
+    @endcan
 </div>
 
 <!-- Patient Header Card -->
@@ -63,13 +71,6 @@
                     @endcan
                     @can('patients.edit')
                     <a href="{{ route('admin.patients.edit', $patient) }}" class="btn btn-primary btn-md"><i class="ti ti-edit me-1"></i>Edit Patient</a>
-                    @endcan
-                    @can('patients.mark_deceased')
-                    @if(!$patient->is_deceased)
-                    <button type="button" class="btn btn-outline-danger btn-md" data-bs-toggle="modal" data-bs-target="#markDeceasedModal">
-                        <i class="ti ti-skull me-1"></i>Mark as Deceased
-                    </button>
-                    @endif
                     @endcan
                 </div>
             </div>

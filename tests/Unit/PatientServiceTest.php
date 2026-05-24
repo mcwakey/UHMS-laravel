@@ -2,14 +2,9 @@
 
 namespace Tests\Unit;
 
-use App\Enums\VisitStatus;
-use App\Enums\VisitType;
-use App\Models\Department;
 use App\Models\Patient;
 use App\Models\User;
-use App\Models\Visit;
 use App\Services\PatientService;
-use App\Services\VisitService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -18,6 +13,7 @@ class PatientServiceTest extends TestCase
     use RefreshDatabase;
 
     private PatientService $service;
+
     private User $user;
 
     protected function setUp(): void
@@ -41,7 +37,7 @@ class PatientServiceTest extends TestCase
 
         $this->assertInstanceOf(Patient::class, $patient);
         $this->assertEquals('Kofi', $patient->first_name);
-        $this->assertStringStartsWith('PT', $patient->patient_number);
+        $this->assertStringStartsWith(config('patient.id_prefix', 'UHMS'), $patient->patient_number);
     }
 
     public function test_list_patients_with_pagination(): void

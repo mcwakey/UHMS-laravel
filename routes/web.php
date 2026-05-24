@@ -1,63 +1,78 @@
-﻿<?php
+<?php
 
-use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\Admin\AccountCategoryController;
+use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\AdmissionController;
+use App\Http\Controllers\Admin\AnalyzerController;
+use App\Http\Controllers\Admin\AppointmentController;
+use App\Http\Controllers\Admin\AttendanceController;
+use App\Http\Controllers\Admin\CashierShiftController;
+use App\Http\Controllers\Admin\ClaimController;
+use App\Http\Controllers\Admin\ConsultationTaskController;
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DepartmentController;
+use App\Http\Controllers\Admin\DesignationController;
+use App\Http\Controllers\Admin\DrugController;
+use App\Http\Controllers\Admin\EmergencyContactController;
+use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\FinancialEntryController;
+use App\Http\Controllers\Admin\IcdCodeController;
+use App\Http\Controllers\Admin\InsuranceProviderController;
+use App\Http\Controllers\Admin\InsuranceTierController;
+use App\Http\Controllers\Admin\InsuranceVerificationController;
+use App\Http\Controllers\Admin\InvestigationCatalogueController;
+use App\Http\Controllers\Admin\InvestigationItemController;
+use App\Http\Controllers\Admin\LabTestController;
+use App\Http\Controllers\Admin\LeaveController;
+use App\Http\Controllers\Admin\ModuleController;
+use App\Http\Controllers\Admin\NotificationController;
+use App\Http\Controllers\Admin\PatientController;
+use App\Http\Controllers\Admin\PatientInsuranceController;
+use App\Http\Controllers\Admin\PayrollController;
+use App\Http\Controllers\Admin\ProcedureCatalogueController;
+use App\Http\Controllers\Admin\ProcedureConsumablesController;
+use App\Http\Controllers\Admin\ProcedureController;
+use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\ProductPricingController;
+use App\Http\Controllers\Admin\ProductStockController;
+use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\PurchaseOrderController;
+use App\Http\Controllers\Admin\PurchaseReturnController;
+use App\Http\Controllers\Admin\QueueController;
+use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\ServiceCatalogController;
+use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\SpecialtyController;
+use App\Http\Controllers\Admin\StockController;
+use App\Http\Controllers\Admin\StockLocationController;
+use App\Http\Controllers\Admin\StockRequisitionController;
+use App\Http\Controllers\Admin\StockTransferController;
+use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\Admin\TriageController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\VisitController;
+use App\Http\Controllers\Admin\VisitPreviewController;
+use App\Http\Controllers\Admin\VitalController;
+use App\Http\Controllers\Admin\WardController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
-use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\RoleController;
-use App\Http\Controllers\Admin\DepartmentController;
-use App\Http\Controllers\Admin\DesignationController;
-use App\Http\Controllers\Admin\PatientController;
-use App\Http\Controllers\Admin\VisitController;
-use App\Http\Controllers\Admin\VisitPreviewController;
-use App\Http\Controllers\Admin\QueueController;
-use App\Http\Controllers\Admin\VitalController;
+use App\Http\Controllers\Billing\InvoiceController;
+use App\Http\Controllers\Billing\PaymentController;
 use App\Http\Controllers\Doctor\ConsultationController;
+use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use App\Http\Controllers\Doctor\MedicalPatternController;
 use App\Http\Controllers\Doctor\PrescriptionController;
 use App\Http\Controllers\Lab\LabRequestController;
 use App\Http\Controllers\Lab\LabResultController;
-use App\Http\Controllers\Admin\LabTestController;
-use App\Http\Controllers\Admin\DrugController;
-use App\Http\Controllers\Admin\ServiceCatalogController;
-use App\Http\Controllers\Billing\InvoiceController;
-use App\Http\Controllers\Billing\PaymentController;
 use App\Http\Controllers\Pharmacy\DispensingController;
-use App\Http\Controllers\Admin\ReportController;
-use App\Http\Controllers\Admin\SettingsController;
-use App\Http\Controllers\Admin\ProfileController;
-use App\Http\Controllers\Admin\ActivityLogController;
-use App\Http\Controllers\Admin\WardController;
-use App\Http\Controllers\Admin\AdmissionController;
-use App\Http\Controllers\Admin\AppointmentController;
-use App\Http\Controllers\Admin\InsuranceProviderController;
-use App\Http\Controllers\Admin\InsuranceVerificationController;
-use App\Http\Controllers\Admin\InsuranceTierController;
-use App\Http\Controllers\Admin\PatientInsuranceController;
-use App\Http\Controllers\Admin\EmergencyContactController;
-use App\Http\Controllers\Admin\ConsultationTaskController;
-use App\Http\Controllers\Admin\ClaimController;
-use App\Http\Controllers\Admin\SupplierController;
-use App\Http\Controllers\Admin\PurchaseOrderController;
-use App\Http\Controllers\Admin\PurchaseReturnController;
-use App\Http\Controllers\Admin\StockRequisitionController;
-use App\Http\Controllers\Admin\StockTransferController;
-use App\Http\Controllers\Admin\StockController;
-use App\Http\Controllers\Admin\AccountCategoryController;
-use App\Http\Controllers\Admin\FinancialEntryController;
-use App\Http\Controllers\Admin\CashierShiftController;
-use App\Http\Controllers\Admin\EmployeeController;
-use App\Http\Controllers\Admin\AttendanceController;
-use App\Http\Controllers\Admin\LeaveController;
-use App\Http\Controllers\Admin\PayrollController;
-use App\Http\Controllers\Admin\NotificationController;
-use App\Http\Controllers\Admin\IcdCodeController;
-use App\Http\Controllers\Admin\ProcedureController;
-use App\Http\Controllers\Admin\AnalyzerController;
-use App\Http\Controllers\Admin\InvestigationItemController;
-use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
+use App\Http\Controllers\StaffDashboardController;
+use App\Http\Controllers\Theatre\TheatreController;
+use App\Models\Department;
+use App\Models\User;
+use App\Services\ProcedureRequestService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -99,7 +114,7 @@ Route::middleware('auth')->group(function () {
 
     // Generic dashboard redirect (resolves based on role)
     Route::get('dashboard', function () {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
 
         if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
@@ -120,7 +135,7 @@ Route::middleware('auth')->group(function () {
     })->name('dashboard');
 
     // Shared staff dashboard — role-aware content
-    Route::get('staff/dashboard', [\App\Http\Controllers\StaffDashboardController::class, 'index'])
+    Route::get('staff/dashboard', [StaffDashboardController::class, 'index'])
         ->name('staff.dashboard');
 
     /*
@@ -165,7 +180,7 @@ Route::middleware('auth')->group(function () {
             Route::patch('patients/{patient}/mark-deceased', [PatientController::class, 'markDeceased'])->name('patients.mark-deceased')->middleware('can:patients.mark_deceased');
 
             // Patient Insurance Management
-            Route::middleware('can:patients.edit')->group(function () {
+            Route::middleware(['module:insurance', 'can:patients.edit'])->group(function () {
                 Route::post('patients/{patient}/insurances', [PatientInsuranceController::class, 'store'])->name('patients.insurances.store');
                 Route::put('patients/{patient}/insurances/{insurance}', [PatientInsuranceController::class, 'update'])->name('patients.insurances.update');
                 Route::delete('patients/{patient}/insurances/{insurance}', [PatientInsuranceController::class, 'destroy'])->name('patients.insurances.destroy');
@@ -181,7 +196,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Insurance Providers AJAX
-        Route::get('insurance-providers/by-type', [PatientInsuranceController::class, 'providersByType'])->name('insurance-providers.by-type');
+        Route::get('insurance-providers/by-type', [PatientInsuranceController::class, 'providersByType'])->name('insurance-providers.by-type')->middleware('module:insurance');
 
         // Visits
         Route::middleware('can:visits.view')->group(function () {
@@ -189,7 +204,7 @@ Route::middleware('auth')->group(function () {
             Route::get('visits/create', [VisitController::class, 'create'])->name('visits.create')->middleware('can:visits.create');
             Route::post('visits', [VisitController::class, 'store'])->name('visits.store')->middleware('can:visits.create');
             Route::get('visits/patient-search', [VisitController::class, 'patientSearch'])->name('visits.patient-search');
-            Route::get('visits/patient-insurances', [VisitController::class, 'patientInsurances'])->name('visits.patient-insurances');
+            Route::get('visits/patient-insurances', [VisitController::class, 'patientInsurances'])->name('visits.patient-insurances')->middleware('module:insurance');
             Route::get('visits/department-services', [VisitController::class, 'departmentServices'])->name('visits.department-services');
             Route::get('visits/doctors-for-services', [VisitController::class, 'doctorsForServices'])->name('visits.doctors-for-services');
             Route::get('visits/services-for-doctor', [VisitController::class, 'servicesForDoctor'])->name('visits.services-for-doctor');
@@ -243,7 +258,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Insurance Providers & Tiers
-        Route::middleware('can:claims.view')->group(function () {
+        Route::middleware(['module:insurance', 'can:claims.view'])->group(function () {
             Route::get('insurance-providers', [InsuranceProviderController::class, 'index'])->name('insurance-providers.index');
             Route::post('insurance-providers', [InsuranceProviderController::class, 'store'])->name('insurance-providers.store')->middleware('can:claims.create');
             Route::put('insurance-providers/{provider}', [InsuranceProviderController::class, 'update'])->name('insurance-providers.update')->middleware('can:claims.create');
@@ -265,7 +280,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Claims
-        Route::middleware('can:claims.view')->group(function () {
+        Route::middleware(['module:insurance', 'module:claims', 'can:claims.view'])->group(function () {
             Route::get('claims', [ClaimController::class, 'index'])->name('claims.index');
             Route::get('claims/create', [ClaimController::class, 'create'])->name('claims.create')->middleware('can:claims.create');
             Route::post('claims', [ClaimController::class, 'store'])->name('claims.store')->middleware('can:claims.create');
@@ -283,7 +298,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Store & Procurement
-        Route::prefix('store')->name('store.')->group(function () {
+        Route::prefix('store')->name('store.')->middleware('module:inventory')->group(function () {
             // Suppliers
             Route::middleware('can:store.purchase.view')->group(function () {
                 Route::get('suppliers', [SupplierController::class, 'index'])->name('suppliers.index');
@@ -349,20 +364,20 @@ Route::middleware('auth')->group(function () {
             // Stock Movement Ledger / Balances / Adjustments / Returns / Locations
             Route::middleware('can:store.purchase.view')->group(function () {
                 Route::get('stock/balances', [StockController::class, 'balances'])->name('stock.balances');
-                Route::get('stock/ledger',   [StockController::class, 'ledger'])->name('stock.ledger');
+                Route::get('stock/ledger', [StockController::class, 'ledger'])->name('stock.ledger');
 
-                Route::get('stock/locations',  [StockController::class, 'locations'])->name('stock.locations.index');
+                Route::get('stock/locations', [StockController::class, 'locations'])->name('stock.locations.index');
                 Route::post('stock/locations', [StockController::class, 'storeLocation'])
                     ->name('stock.locations.store')->middleware('can:store.purchase.create');
                 Route::put('stock/locations/{location}', [StockController::class, 'updateLocation'])
                     ->name('stock.locations.update')->middleware('can:store.purchase.create');
 
                 Route::middleware('can:store.purchase.create')->group(function () {
-                    Route::get('stock/adjustments/create',  [StockController::class, 'adjustmentForm'])->name('stock.adjustments.create');
-                    Route::post('stock/adjustments',        [StockController::class, 'storeAdjustment'])->name('stock.adjustments.store');
+                    Route::get('stock/adjustments/create', [StockController::class, 'adjustmentForm'])->name('stock.adjustments.create');
+                    Route::post('stock/adjustments', [StockController::class, 'storeAdjustment'])->name('stock.adjustments.store');
 
-                    Route::get('stock/returns/create',      [StockController::class, 'returnForm'])->name('stock.returns.create');
-                    Route::post('stock/returns',            [StockController::class, 'storeReturn'])->name('stock.returns.store');
+                    Route::get('stock/returns/create', [StockController::class, 'returnForm'])->name('stock.returns.create');
+                    Route::post('stock/returns', [StockController::class, 'storeReturn'])->name('stock.returns.store');
                 });
             });
         });
@@ -410,7 +425,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // HR & Payroll
-        Route::prefix('hr')->name('hr.')->group(function () {
+        Route::prefix('hr')->name('hr.')->middleware('module:hr')->group(function () {
             // Employees
             Route::middleware('can:hr.employees.view')->group(function () {
                 Route::get('employees', [EmployeeController::class, 'index'])->name('employees.index');
@@ -438,7 +453,7 @@ Route::middleware('auth')->group(function () {
             });
 
             // Payroll
-            Route::middleware('can:hr.payroll.view')->group(function () {
+            Route::middleware(['module:payroll', 'can:hr.payroll.view'])->group(function () {
                 Route::get('payroll', [PayrollController::class, 'index'])->name('payroll.index');
                 Route::post('payroll/process', [PayrollController::class, 'process'])->name('payroll.process')->middleware('can:hr.payroll.process');
                 Route::post('payroll/approve', [PayrollController::class, 'approve'])->name('payroll.approve')->middleware('can:hr.payroll.process');
@@ -474,7 +489,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Consultations (Doctor EHR)
-        Route::middleware('can:consultations.view')->group(function () {
+        Route::middleware(['module:consultation', 'can:consultations.view'])->group(function () {
             Route::get('consultations', [ConsultationController::class, 'index'])->name('consultations.index');
             Route::get('consultations/{visit}', [ConsultationController::class, 'show'])->name('consultations.show');
             Route::get('consultations/{visit}/history', [ConsultationController::class, 'history'])->name('consultations.history');
@@ -528,10 +543,10 @@ Route::middleware('auth')->group(function () {
 
         // Triage Workflow
         Route::middleware('can:vitals.view')->group(function () {
-            Route::get('triage', [\App\Http\Controllers\Admin\TriageController::class, 'index'])->name('triage.index');
-            Route::get('triage/{visit}', [\App\Http\Controllers\Admin\TriageController::class, 'show'])->name('triage.show');
-            Route::get('triage/{visit}/assess', [\App\Http\Controllers\Admin\TriageController::class, 'create'])->name('triage.create')->middleware('can:vitals.create');
-            Route::post('triage/{visit}', [\App\Http\Controllers\Admin\TriageController::class, 'store'])->name('triage.store')->middleware('can:vitals.create');
+            Route::get('triage', [TriageController::class, 'index'])->name('triage.index');
+            Route::get('triage/{visit}', [TriageController::class, 'show'])->name('triage.show');
+            Route::get('triage/{visit}/assess', [TriageController::class, 'create'])->name('triage.create')->middleware('can:vitals.create');
+            Route::post('triage/{visit}', [TriageController::class, 'store'])->name('triage.store')->middleware('can:vitals.create');
         });
 
         // Vitals (Nurse Triage)
@@ -551,7 +566,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Medical Patterns
-        Route::middleware('can:consultations.view')->group(function () {
+        Route::middleware(['module:medical-patterns', 'can:consultations.view'])->group(function () {
             Route::get('patterns', [MedicalPatternController::class, 'index'])->name('patterns.index');
             Route::get('patterns/create', [MedicalPatternController::class, 'create'])->name('patterns.create')->middleware('can:consultations.create');
             Route::post('patterns', [MedicalPatternController::class, 'store'])->name('patterns.store')->middleware('can:consultations.create');
@@ -565,7 +580,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Laboratory
-        Route::prefix('lab')->name('lab.')->group(function () {
+        Route::prefix('lab')->name('lab.')->middleware('module:investigations')->group(function () {
             // Lab Requests
             Route::middleware('can:lab.requests.view')->group(function () {
                 Route::get('requests', [LabRequestController::class, 'index'])->name('requests.index');
@@ -600,27 +615,27 @@ Route::middleware('auth')->group(function () {
         });
 
         // Investigation Catalogue (services from investigation-type departments + per-service headers/criteria)
-        Route::prefix('investigation-catalogue')->name('investigation-catalogue.')->middleware('can:lab.tests.manage')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'index'])->name('index');
-            Route::get('/{service}', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'show'])->name('show');
+        Route::prefix('investigation-catalogue')->name('investigation-catalogue.')->middleware(['module:investigations', 'can:lab.tests.manage'])->group(function () {
+            Route::get('/', [InvestigationCatalogueController::class, 'index'])->name('index');
+            Route::get('/{service}', [InvestigationCatalogueController::class, 'show'])->name('show');
 
-            Route::post('/{service}/headers', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'storeHeader'])->name('headers.store');
-            Route::put('/headers/{header}', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'updateHeader'])->name('headers.update');
-            Route::delete('/headers/{header}', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'destroyHeader'])->name('headers.destroy');
+            Route::post('/{service}/headers', [InvestigationCatalogueController::class, 'storeHeader'])->name('headers.store');
+            Route::put('/headers/{header}', [InvestigationCatalogueController::class, 'updateHeader'])->name('headers.update');
+            Route::delete('/headers/{header}', [InvestigationCatalogueController::class, 'destroyHeader'])->name('headers.destroy');
 
-            Route::post('/{service}/criteria', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'storeCriterion'])->name('criteria.store');
-            Route::put('/criteria/{criterion}', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'updateCriterion'])->name('criteria.update');
-            Route::delete('/criteria/{criterion}', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'destroyCriterion'])->name('criteria.destroy');
+            Route::post('/{service}/criteria', [InvestigationCatalogueController::class, 'storeCriterion'])->name('criteria.store');
+            Route::put('/criteria/{criterion}', [InvestigationCatalogueController::class, 'updateCriterion'])->name('criteria.update');
+            Route::delete('/criteria/{criterion}', [InvestigationCatalogueController::class, 'destroyCriterion'])->name('criteria.destroy');
 
             // Default consumables
-            Route::post('/{service}/consumables', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'storeConsumable'])
+            Route::post('/{service}/consumables', [InvestigationCatalogueController::class, 'storeConsumable'])
                 ->name('consumables.store')->middleware('can:service_consumable.manage');
-            Route::delete('/{service}/consumables/{product}', [\App\Http\Controllers\Admin\InvestigationCatalogueController::class, 'destroyConsumable'])
+            Route::delete('/{service}/consumables/{product}', [InvestigationCatalogueController::class, 'destroyConsumable'])
                 ->name('consumables.destroy')->middleware('can:service_consumable.manage');
         });
 
         // Pharmacy
-        Route::prefix('pharmacy')->name('pharmacy.')->group(function () {
+        Route::prefix('pharmacy')->name('pharmacy.')->middleware('module:pharmacy')->group(function () {
             // Dispensing
             Route::middleware('can:pharmacy.dispensing.view')->group(function () {
                 Route::get('dispensing', [DispensingController::class, 'index'])->name('dispensing.index');
@@ -651,7 +666,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Billing
-        Route::prefix('billing')->name('billing.')->group(function () {
+        Route::prefix('billing')->name('billing.')->middleware('module:billing')->group(function () {
             // Invoices
             Route::middleware('can:invoices.view')->group(function () {
                 Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
@@ -686,14 +701,14 @@ Route::middleware('auth')->group(function () {
 
         // Specialties
         Route::middleware('can:services.manage')->group(function () {
-            Route::get('specialties', [\App\Http\Controllers\Admin\SpecialtyController::class, 'index'])->name('specialties.index');
-            Route::post('specialties', [\App\Http\Controllers\Admin\SpecialtyController::class, 'store'])->name('specialties.store');
-            Route::put('specialties/{specialty}', [\App\Http\Controllers\Admin\SpecialtyController::class, 'update'])->name('specialties.update');
-            Route::patch('specialties/{specialty}/toggle', [\App\Http\Controllers\Admin\SpecialtyController::class, 'toggle'])->name('specialties.toggle');
+            Route::get('specialties', [SpecialtyController::class, 'index'])->name('specialties.index');
+            Route::post('specialties', [SpecialtyController::class, 'store'])->name('specialties.store');
+            Route::put('specialties/{specialty}', [SpecialtyController::class, 'update'])->name('specialties.update');
+            Route::patch('specialties/{specialty}/toggle', [SpecialtyController::class, 'toggle'])->name('specialties.toggle');
         });
 
         // Reports
-        Route::middleware('can:reports.view')->prefix('reports')->name('reports.')->group(function () {
+        Route::middleware(['module:reports', 'can:reports.view'])->prefix('reports')->name('reports.')->group(function () {
             Route::get('income', [ReportController::class, 'income'])->name('income');
             Route::get('patients', [ReportController::class, 'patients'])->name('patients');
             Route::get('visits', [ReportController::class, 'visits'])->name('visits');
@@ -743,9 +758,9 @@ Route::middleware('auth')->group(function () {
 
         // Modules Management (Admin)
         Route::middleware('can:modules.manage')->prefix('modules')->name('modules.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Admin\ModuleController::class, 'index'])->name('index');
-            Route::post('{module}/toggle', [\App\Http\Controllers\Admin\ModuleController::class, 'toggle'])->name('toggle');
-            Route::post('flush', [\App\Http\Controllers\Admin\ModuleController::class, 'flushCache'])->name('flush');
+            Route::get('/', [ModuleController::class, 'index'])->name('index');
+            Route::post('{module}/toggle', [ModuleController::class, 'toggle'])->name('toggle');
+            Route::post('flush', [ModuleController::class, 'flushCache'])->name('flush');
         });
 
         // ICD-10 Code Database
@@ -777,61 +792,61 @@ Route::middleware('auth')->group(function () {
         Route::prefix('theatre')->name('theatre.')->group(function () {
             // Dashboard + detail
             Route::middleware('can:procedure.view')->group(function () {
-                Route::get('/', [\App\Http\Controllers\Theatre\TheatreController::class, 'index'])->name('index');
+                Route::get('/', [TheatreController::class, 'index'])->name('index');
                 // Procedure Consumables — read-only filtered product catalogue.
-                Route::get('consumables', [\App\Http\Controllers\Admin\ProcedureConsumablesController::class, 'index'])
+                Route::get('consumables', [ProcedureConsumablesController::class, 'index'])
                     ->name('consumables.index');
-                Route::get('procedures/{procedure}', [\App\Http\Controllers\Theatre\TheatreController::class, 'show'])->name('show');
-                Route::get('procedures/{procedure}/report', [\App\Http\Controllers\Theatre\TheatreController::class, 'fullReport'])
+                Route::get('procedures/{procedure}', [TheatreController::class, 'show'])->name('show');
+                Route::get('procedures/{procedure}/report', [TheatreController::class, 'fullReport'])
                     ->name('report')->middleware('can:procedure.view_report');
             });
 
             // Workflow actions
             Route::middleware('can:procedure.accept')->group(function () {
-                Route::post('procedures/{procedure}/accept', [\App\Http\Controllers\Theatre\TheatreController::class, 'accept'])->name('accept');
+                Route::post('procedures/{procedure}/accept', [TheatreController::class, 'accept'])->name('accept');
             });
             Route::middleware('can:procedure.reject')->group(function () {
-                Route::post('procedures/{procedure}/reject', [\App\Http\Controllers\Theatre\TheatreController::class, 'reject'])->name('reject');
+                Route::post('procedures/{procedure}/reject', [TheatreController::class, 'reject'])->name('reject');
             });
             Route::middleware('can:procedure.bill')->group(function () {
-                Route::post('procedures/{procedure}/bill', [\App\Http\Controllers\Theatre\TheatreController::class, 'generateBilling'])->name('bill');
+                Route::post('procedures/{procedure}/bill', [TheatreController::class, 'generateBilling'])->name('bill');
             });
             Route::middleware('can:procedure.schedule')->group(function () {
-                Route::post('procedures/{procedure}/schedule', [\App\Http\Controllers\Theatre\TheatreController::class, 'schedule'])->name('schedule');
+                Route::post('procedures/{procedure}/schedule', [TheatreController::class, 'schedule'])->name('schedule');
             });
             Route::middleware('can:procedure.reschedule')->group(function () {
-                Route::post('procedures/{procedure}/reschedule', [\App\Http\Controllers\Theatre\TheatreController::class, 'reschedule'])->name('reschedule');
+                Route::post('procedures/{procedure}/reschedule', [TheatreController::class, 'reschedule'])->name('reschedule');
             });
             Route::middleware('can:procedure.record_preop')->group(function () {
-                Route::post('procedures/{procedure}/preop', [\App\Http\Controllers\Theatre\TheatreController::class, 'preop'])->name('preop');
+                Route::post('procedures/{procedure}/preop', [TheatreController::class, 'preop'])->name('preop');
             });
             Route::middleware('can:procedure.record_anaesthesia')->group(function () {
-                Route::post('procedures/{procedure}/anaesthesia', [\App\Http\Controllers\Theatre\TheatreController::class, 'anaesthesia'])->name('anaesthesia');
+                Route::post('procedures/{procedure}/anaesthesia', [TheatreController::class, 'anaesthesia'])->name('anaesthesia');
             });
             Route::middleware('can:procedure.record_surgery')->group(function () {
-                Route::post('procedures/{procedure}/start-surgery', [\App\Http\Controllers\Theatre\TheatreController::class, 'startSurgery'])->name('start-surgery');
-                Route::post('procedures/{procedure}/operative-note', [\App\Http\Controllers\Theatre\TheatreController::class, 'operativeNote'])->name('operative-note');
-                Route::post('procedures/{procedure}/complete-surgery', [\App\Http\Controllers\Theatre\TheatreController::class, 'completeSurgery'])->name('complete-surgery');
+                Route::post('procedures/{procedure}/start-surgery', [TheatreController::class, 'startSurgery'])->name('start-surgery');
+                Route::post('procedures/{procedure}/operative-note', [TheatreController::class, 'operativeNote'])->name('operative-note');
+                Route::post('procedures/{procedure}/complete-surgery', [TheatreController::class, 'completeSurgery'])->name('complete-surgery');
             });
             Route::middleware('can:procedure.record_postop')->group(function () {
-                Route::post('procedures/{procedure}/postop', [\App\Http\Controllers\Theatre\TheatreController::class, 'postop'])->name('postop');
+                Route::post('procedures/{procedure}/postop', [TheatreController::class, 'postop'])->name('postop');
             });
             Route::middleware('can:procedure.complete')->group(function () {
-                Route::post('procedures/{procedure}/complete', [\App\Http\Controllers\Theatre\TheatreController::class, 'complete'])->name('complete');
+                Route::post('procedures/{procedure}/complete', [TheatreController::class, 'complete'])->name('complete');
             });
             Route::middleware('can:procedure.cancel')->group(function () {
-                Route::post('procedures/{procedure}/cancel', [\App\Http\Controllers\Theatre\TheatreController::class, 'cancel'])->name('cancel');
+                Route::post('procedures/{procedure}/cancel', [TheatreController::class, 'cancel'])->name('cancel');
             });
 
             // Doctor: request procedure from consultation page
             Route::middleware('can:procedure.request')->group(function () {
-                Route::post('visits/{visit}/request', [\App\Http\Controllers\Theatre\TheatreController::class, 'requestStore'])->name('request');
+                Route::post('visits/{visit}/request', [TheatreController::class, 'requestStore'])->name('request');
                 // Lookups for the consultation form
                 Route::get('departments', function () {
-                    return response()->json(app(\App\Services\ProcedureRequestService::class)->procedureDepartments());
+                    return response()->json(app(ProcedureRequestService::class)->procedureDepartments());
                 })->name('departments');
-                Route::get('departments/{department}/services', function (\App\Models\Department $department) {
-                    return response()->json(app(\App\Services\ProcedureRequestService::class)->servicesForDepartment($department->id));
+                Route::get('departments/{department}/services', function (Department $department) {
+                    return response()->json(app(ProcedureRequestService::class)->servicesForDepartment($department->id));
                 })->name('department-services');
             });
         });
@@ -839,90 +854,90 @@ Route::middleware('auth')->group(function () {
         // ── Admin: Procedure Catalogue (templates + default consumables per procedure service) ──
         Route::prefix('procedure-catalogue')->name('procedure-catalogue.')->group(function () {
             Route::middleware('can:procedure_catalogue.view')->group(function () {
-                Route::get('/', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'index'])->name('index');
-                Route::get('{service}', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'show'])->name('show');
+                Route::get('/', [ProcedureCatalogueController::class, 'index'])->name('index');
+                Route::get('{service}', [ProcedureCatalogueController::class, 'show'])->name('show');
             });
             Route::middleware('can:procedure_catalogue.manage')->group(function () {
                 // Sections
-                Route::post('{service}/sections', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'storeSection'])->name('sections.store');
-                Route::put('sections/{section}', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'updateSection'])->name('sections.update');
-                Route::delete('sections/{section}', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'destroySection'])->name('sections.destroy');
+                Route::post('{service}/sections', [ProcedureCatalogueController::class, 'storeSection'])->name('sections.store');
+                Route::put('sections/{section}', [ProcedureCatalogueController::class, 'updateSection'])->name('sections.update');
+                Route::delete('sections/{section}', [ProcedureCatalogueController::class, 'destroySection'])->name('sections.destroy');
                 // Fields
-                Route::post('{service}/fields', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'storeField'])->name('fields.store');
-                Route::put('fields/{field}', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'updateField'])->name('fields.update');
-                Route::delete('fields/{field}', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'destroyField'])->name('fields.destroy');
+                Route::post('{service}/fields', [ProcedureCatalogueController::class, 'storeField'])->name('fields.store');
+                Route::put('fields/{field}', [ProcedureCatalogueController::class, 'updateField'])->name('fields.update');
+                Route::delete('fields/{field}', [ProcedureCatalogueController::class, 'destroyField'])->name('fields.destroy');
                 // Default Consumables
-                Route::post('{service}/consumables', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'storeConsumable'])->name('consumables.store');
-                Route::delete('{service}/consumables/{product}', [\App\Http\Controllers\Admin\ProcedureCatalogueController::class, 'destroyConsumable'])->name('consumables.destroy');
+                Route::post('{service}/consumables', [ProcedureCatalogueController::class, 'storeConsumable'])->name('consumables.store');
+                Route::delete('{service}/consumables/{product}', [ProcedureCatalogueController::class, 'destroyConsumable'])->name('consumables.destroy');
             });
         });
 
         // ── Admin: Products (parallel store catalogue for consumables/reagents/supplies) ──
-        Route::prefix('products')->name('products.')->group(function () {
+        Route::prefix('products')->name('products.')->middleware('module:inventory')->group(function () {
             Route::middleware('can:product.view')->group(function () {
-                Route::get('/', [\App\Http\Controllers\Admin\ProductController::class, 'index'])->name('index');
-                Route::get('for-department/{department}', [\App\Http\Controllers\Admin\ProductController::class, 'forDepartment'])->name('for-department');
-                Route::get('{product}', [\App\Http\Controllers\Admin\ProductController::class, 'show'])->name('show');
+                Route::get('/', [ProductController::class, 'index'])->name('index');
+                Route::get('for-department/{department}', [ProductController::class, 'forDepartment'])->name('for-department');
+                Route::get('{product}', [ProductController::class, 'show'])->name('show');
             });
             Route::middleware('can:product.create')->group(function () {
-                Route::post('/', [\App\Http\Controllers\Admin\ProductController::class, 'store'])->name('store');
+                Route::post('/', [ProductController::class, 'store'])->name('store');
             });
             Route::middleware('can:product.edit')->group(function () {
-                Route::put('{product}', [\App\Http\Controllers\Admin\ProductController::class, 'update'])->name('update');
-                Route::patch('{product}/toggle', [\App\Http\Controllers\Admin\ProductController::class, 'toggle'])->name('toggle');
+                Route::put('{product}', [ProductController::class, 'update'])->name('update');
+                Route::patch('{product}/toggle', [ProductController::class, 'toggle'])->name('toggle');
             });
             // Pricing sub-routes — gated on product.pricing.manage
             Route::middleware('can:product.pricing.manage')->prefix('{product}/pricing')->name('pricing.')->group(function () {
-                Route::patch('base', [\App\Http\Controllers\Admin\ProductPricingController::class, 'updateBasePrice'])->name('base.update');
+                Route::patch('base', [ProductPricingController::class, 'updateBasePrice'])->name('base.update');
 
                 // Bulk upsert (mirrors services.prices.store) + single-row delete
-                Route::post('/',                [\App\Http\Controllers\Admin\ProductPricingController::class, 'storePrices'])->name('store');
-                Route::delete('{price}/delete', [\App\Http\Controllers\Admin\ProductPricingController::class, 'deletePrice'])->name('delete');
+                Route::post('/', [ProductPricingController::class, 'storePrices'])->name('store');
+                Route::delete('{price}/delete', [ProductPricingController::class, 'deletePrice'])->name('delete');
 
                 // Insurance-type default prices (provider_id = NULL)
-                Route::post('type', [\App\Http\Controllers\Admin\ProductPricingController::class, 'storeTypePrice'])->name('type.store');
-                Route::put('type/{price}', [\App\Http\Controllers\Admin\ProductPricingController::class, 'updateTypePrice'])->name('type.update');
-                Route::delete('type/{price}', [\App\Http\Controllers\Admin\ProductPricingController::class, 'destroyTypePrice'])->name('type.destroy');
+                Route::post('type', [ProductPricingController::class, 'storeTypePrice'])->name('type.store');
+                Route::put('type/{price}', [ProductPricingController::class, 'updateTypePrice'])->name('type.update');
+                Route::delete('type/{price}', [ProductPricingController::class, 'destroyTypePrice'])->name('type.destroy');
 
                 // Provider-specific prices
-                Route::post('provider', [\App\Http\Controllers\Admin\ProductPricingController::class, 'storeProviderPrice'])->name('provider.store');
-                Route::put('provider/{price}', [\App\Http\Controllers\Admin\ProductPricingController::class, 'updateProviderPrice'])->name('provider.update');
-                Route::delete('provider/{price}', [\App\Http\Controllers\Admin\ProductPricingController::class, 'destroyProviderPrice'])->name('provider.destroy');
+                Route::post('provider', [ProductPricingController::class, 'storeProviderPrice'])->name('provider.store');
+                Route::put('provider/{price}', [ProductPricingController::class, 'updateProviderPrice'])->name('provider.update');
+                Route::delete('provider/{price}', [ProductPricingController::class, 'destroyProviderPrice'])->name('provider.destroy');
             });
         });
 
         // ── Admin: Stock Locations (Main Store + department stores) ──
-        Route::prefix('stock-locations')->name('stock-locations.')->middleware('can:stock.location.manage')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Admin\StockLocationController::class, 'index'])->name('index');
-            Route::post('/', [\App\Http\Controllers\Admin\StockLocationController::class, 'store'])->name('store');
-            Route::put('{stockLocation}', [\App\Http\Controllers\Admin\StockLocationController::class, 'update'])->name('update');
-            Route::patch('{stockLocation}/toggle', [\App\Http\Controllers\Admin\StockLocationController::class, 'toggle'])->name('toggle');
+        Route::prefix('stock-locations')->name('stock-locations.')->middleware(['module:inventory', 'can:stock.location.manage'])->group(function () {
+            Route::get('/', [StockLocationController::class, 'index'])->name('index');
+            Route::post('/', [StockLocationController::class, 'store'])->name('store');
+            Route::put('{stockLocation}', [StockLocationController::class, 'update'])->name('update');
+            Route::patch('{stockLocation}/toggle', [StockLocationController::class, 'toggle'])->name('toggle');
         });
 
         // ── Admin: Product Stock (balances, ledger, receive, transfer, adjust, return) ──
-        Route::prefix('product-stock')->name('product-stock.')->group(function () {
+        Route::prefix('product-stock')->name('product-stock.')->middleware('module:inventory')->group(function () {
             Route::middleware('can:stock.view')->group(function () {
-                Route::get('balances',  [\App\Http\Controllers\Admin\ProductStockController::class, 'balances'])->name('balances');
-                Route::get('ledger',    [\App\Http\Controllers\Admin\ProductStockController::class, 'ledger'])->name('ledger');
+                Route::get('balances', [ProductStockController::class, 'balances'])->name('balances');
+                Route::get('ledger', [ProductStockController::class, 'ledger'])->name('ledger');
             });
             Route::middleware('can:stock.adjust')->group(function () {
-                Route::get('receive',   [\App\Http\Controllers\Admin\ProductStockController::class, 'receiveForm'])->name('receive.form');
-                Route::post('receive',  [\App\Http\Controllers\Admin\ProductStockController::class, 'receive'])->name('receive');
-                Route::get('adjust',    [\App\Http\Controllers\Admin\ProductStockController::class, 'adjustForm'])->name('adjust.form');
-                Route::post('adjust',   [\App\Http\Controllers\Admin\ProductStockController::class, 'adjust'])->name('adjust');
+                Route::get('receive', [ProductStockController::class, 'receiveForm'])->name('receive.form');
+                Route::post('receive', [ProductStockController::class, 'receive'])->name('receive');
+                Route::get('adjust', [ProductStockController::class, 'adjustForm'])->name('adjust.form');
+                Route::post('adjust', [ProductStockController::class, 'adjust'])->name('adjust');
             });
             Route::middleware('can:stock.transfer')->group(function () {
-                Route::get('transfer',  [\App\Http\Controllers\Admin\ProductStockController::class, 'transferForm'])->name('transfer.form');
-                Route::post('transfer', [\App\Http\Controllers\Admin\ProductStockController::class, 'transfer'])->name('transfer');
+                Route::get('transfer', [ProductStockController::class, 'transferForm'])->name('transfer.form');
+                Route::post('transfer', [ProductStockController::class, 'transfer'])->name('transfer');
             });
             Route::middleware('can:stock.return')->group(function () {
-                Route::get('return',    [\App\Http\Controllers\Admin\ProductStockController::class, 'returnForm'])->name('return.form');
-                Route::post('return',   [\App\Http\Controllers\Admin\ProductStockController::class, 'returnStock'])->name('return');
+                Route::get('return', [ProductStockController::class, 'returnForm'])->name('return.form');
+                Route::post('return', [ProductStockController::class, 'returnStock'])->name('return');
             });
         });
 
         // Investigation Items (Catalog + Stock for Lab/Radiology/Investigation departments)
-        Route::prefix('investigations')->name('investigations.')->group(function () {
+        Route::prefix('investigations')->name('investigations.')->middleware('module:investigations')->group(function () {
             // Item Catalog
             Route::middleware('can:lab.tests.manage')->group(function () {
                 Route::get('items', [InvestigationItemController::class, 'index'])->name('items.index');
@@ -942,7 +957,8 @@ Route::middleware('auth')->group(function () {
         });
 
         // Analyzer Integration (Lab Instruments)
-        Route::middleware('can:analyzer.manage')->prefix('analyzers')->name('analyzers.')->group(function () {            Route::get('/', [AnalyzerController::class, 'index'])->name('index');
+        Route::middleware(['module:analyzer', 'can:analyzer.manage'])->prefix('analyzers')->name('analyzers.')->group(function () {
+            Route::get('/', [AnalyzerController::class, 'index'])->name('index');
             Route::post('/', [AnalyzerController::class, 'store'])->name('store');
             Route::get('/diagnostics', [AnalyzerController::class, 'diagnostics'])->name('diagnostics');
             Route::get('/{analyzer}', [AnalyzerController::class, 'show'])->name('show');
@@ -956,7 +972,7 @@ Route::middleware('auth')->group(function () {
         });
 
         // Notifications
-        Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::prefix('notifications')->name('notifications.')->middleware('module:notifications')->group(function () {
             Route::get('/', [NotificationController::class, 'index'])->name('index');
             Route::get('/recent', [NotificationController::class, 'recent'])->name('recent');
             Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('mark-read');

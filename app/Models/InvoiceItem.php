@@ -14,9 +14,13 @@ class InvoiceItem extends Model
      * Stored as plain strings; helpers ensure consistent usage across services.
      */
     public const SOURCE_CONSULTATION_SERVICE = 'consultation_service';
+
     public const SOURCE_INVESTIGATION_SERVICE = 'investigation_service';
+
     public const SOURCE_PROCEDURE_SERVICE = 'procedure_service';
+
     public const SOURCE_PHARMACY_PRODUCT = 'pharmacy_product';
+
     public const SOURCE_WARD_CONSUMABLE = 'ward_consumable';
 
     public static function sourceTypes(): array
@@ -48,6 +52,8 @@ class InvoiceItem extends Model
         'insurance_price',
         'selected_price',
         'insurance_covered',
+        'is_nhis_covered',
+        'nhis_approved_amount',
         'discount_amount',
         'patient_payable',
         'paid_amount',
@@ -67,16 +73,18 @@ class InvoiceItem extends Model
     protected function casts(): array
     {
         return [
-            'quantity'          => 'integer',
-            'cash_price'        => 'decimal:2',
-            'insurance_price'   => 'decimal:2',
-            'selected_price'    => 'decimal:2',
+            'quantity' => 'integer',
+            'cash_price' => 'decimal:2',
+            'insurance_price' => 'decimal:2',
+            'selected_price' => 'decimal:2',
             'insurance_covered' => 'decimal:2',
-            'discount_amount'   => 'decimal:2',
-            'patient_payable'   => 'decimal:2',
-            'paid_amount'       => 'decimal:2',
-            'balance'           => 'decimal:2',
-            'total_price'       => 'decimal:2',
+            'is_nhis_covered' => 'boolean',
+            'nhis_approved_amount' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'patient_payable' => 'decimal:2',
+            'paid_amount' => 'decimal:2',
+            'balance' => 'decimal:2',
+            'total_price' => 'decimal:2',
         ];
     }
 
@@ -168,9 +176,9 @@ class InvoiceItem extends Model
 
     public function refreshPaymentStatus(): self
     {
-        $paid     = (float) $this->paid_amount;
-        $payable  = (float) $this->patient_payable;
-        $balance  = max(0.0, round($payable - $paid, 2));
+        $paid = (float) $this->paid_amount;
+        $payable = (float) $this->patient_payable;
+        $balance = max(0.0, round($payable - $paid, 2));
 
         $status = 'unpaid';
         if ($payable <= 0.0) {
@@ -182,7 +190,7 @@ class InvoiceItem extends Model
         }
 
         $this->forceFill([
-            'balance'        => $balance,
+            'balance' => $balance,
             'payment_status' => $status,
         ])->save();
 
@@ -192,12 +200,12 @@ class InvoiceItem extends Model
     public function getStatusColorAttribute(): string
     {
         return match ($this->payment_status) {
-            'paid'           => 'success',
+            'paid' => 'success',
             'partially_paid' => 'warning',
-            'waived'         => 'info',
+            'waived' => 'info',
             'cancelled',
-            'voided'         => 'secondary',
-            default          => 'danger',
+            'voided' => 'secondary',
+            default => 'danger',
         };
     }
 
@@ -209,6 +217,6 @@ class InvoiceItem extends Model
 
     public function getFormattedTotalAttribute(): string
     {
-        return '₵' . number_format($this->total_price, 2);
+        return '₵'.number_format($this->total_price, 2);
     }
 }

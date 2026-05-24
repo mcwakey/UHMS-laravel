@@ -52,23 +52,24 @@ class InvoiceService
             }
 
             $billingType = $this->resolveBillingType($visit);
+            $actorId = Auth::id() ?? $visit->created_by;
 
             return Invoice::create([
-                'invoice_number'  => Invoice::generateNumber('INV', 'invoices', 'invoice_number'),
-                'visit_id'        => $visit->id,
-                'patient_id'      => $visit->patient_id,
-                'billing_type'    => $billingType,
-                'subtotal'        => 0,
-                'tax_amount'      => 0,
+                'invoice_number' => Invoice::generateNumber('INV', 'invoices', 'invoice_number'),
+                'visit_id' => $visit->id,
+                'patient_id' => $visit->patient_id,
+                'billing_type' => $billingType,
+                'subtotal' => 0,
+                'tax_amount' => 0,
                 'discount_amount' => 0,
-                'nhis_amount'     => 0,
-                'total_amount'    => 0,
-                'amount_paid'     => 0,
-                'balance'         => 0,
-                'status'          => InvoiceStatus::DRAFT->value,
-                'due_date'        => now()->addDays(30),
-                'notes'           => null,
-                'created_by'      => Auth::id(),
+                'nhis_amount' => 0,
+                'total_amount' => 0,
+                'amount_paid' => 0,
+                'balance' => 0,
+                'status' => InvoiceStatus::DRAFT->value,
+                'due_date' => now()->addDays(30),
+                'notes' => null,
+                'created_by' => $actorId,
             ]);
         });
     }
@@ -91,20 +92,20 @@ class InvoiceService
     {
         $invoice->loadMissing('items');
 
-        $subtotal         = (float) $invoice->items->sum(fn ($i) => (float) $i->selected_price * (int) $i->quantity);
-        $totalDiscount    = (float) $invoice->items->sum('discount_amount');
+        $subtotal = (float) $invoice->items->sum(fn ($i) => (float) $i->selected_price * (int) $i->quantity);
+        $totalDiscount = (float) $invoice->items->sum('discount_amount');
         $insuranceCovered = (float) $invoice->items->sum('insurance_covered');
-        $patientTotal     = (float) $invoice->items->sum('patient_payable');
-        $paidAmount       = (float) $invoice->items->sum('paid_amount');
-        $balance          = max(0.0, (float) $invoice->items->sum('balance'));
+        $patientTotal = (float) $invoice->items->sum('patient_payable');
+        $paidAmount = (float) $invoice->items->sum('paid_amount');
+        $balance = max(0.0, (float) $invoice->items->sum('balance'));
 
         $invoice->forceFill([
-            'subtotal'        => round($subtotal, 2),
+            'subtotal' => round($subtotal, 2),
             'discount_amount' => round($totalDiscount, 2),
-            'nhis_amount'     => round($insuranceCovered, 2), // info only, retained for compat
-            'total_amount'    => round($patientTotal, 2),
-            'amount_paid'     => round($paidAmount, 2),
-            'balance'         => round($balance, 2),
+            'nhis_amount' => round($insuranceCovered, 2), // info only, retained for compat
+            'total_amount' => round($patientTotal, 2),
+            'amount_paid' => round($paidAmount, 2),
+            'balance' => round($balance, 2),
         ])->save();
 
         return $this->updateStatus($invoice);
@@ -125,16 +126,16 @@ class InvoiceService
 
         $invoice->loadMissing('items');
         $hasItems = $invoice->items->isNotEmpty();
-        $balance  = (float) $invoice->balance;
-        $paid     = (float) $invoice->amount_paid;
-        $total    = (float) $invoice->total_amount;
+        $balance = (float) $invoice->balance;
+        $paid = (float) $invoice->amount_paid;
+        $total = (float) $invoice->total_amount;
 
         $newStatus = match (true) {
-            ! $hasItems         => InvoiceStatus::DRAFT,
-            $total <= 0         => InvoiceStatus::DRAFT,
-            $balance <= 0.0     => InvoiceStatus::PAID,
-            $paid > 0.0         => InvoiceStatus::PARTIALLY_PAID,
-            default             => InvoiceStatus::PENDING,
+            ! $hasItems => InvoiceStatus::DRAFT,
+            $total <= 0 => InvoiceStatus::DRAFT,
+            $balance <= 0.0 => InvoiceStatus::PAID,
+            $paid > 0.0 => InvoiceStatus::PARTIALLY_PAID,
+            default => InvoiceStatus::PENDING,
         };
 
         if (($invoice->status?->value ?? $invoice->status) !== $newStatus->value) {
@@ -154,6 +155,7 @@ class InvoiceService
         if ($ins && $ins->is_active && ! $ins->is_expired && $ins->insuranceProvider && ! $ins->insuranceProvider->is_default) {
             return BillingType::INSURANCE->value;
         }
+
         return BillingType::CASH->value;
     }
 }

@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Visit;
+use App\Enums\VisitStatus;
 use App\Models\Appointment;
-use App\Models\StockBalance;
 use App\Models\DrugStock;
+use App\Models\Invoice;
 use App\Models\LabRequest;
 use App\Models\Prescription;
-use App\Models\Invoice;
+use App\Models\StockBalance;
+use App\Models\User;
+use App\Models\Visit;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -21,7 +23,7 @@ class StaffDashboardController extends Controller
      */
     public function index()
     {
-        /** @var \App\Models\User $user */
+        /** @var User $user */
         $user = Auth::user();
         $role = $user->getRoleNames()->first() ?? 'Staff';
 
@@ -29,33 +31,33 @@ class StaffDashboardController extends Controller
         $lists = [];
 
         if ($user->hasRole('Receptionist')) {
-            $stats['todayVisits']       = Visit::today()->count();
+            $stats['todayVisits'] = Visit::today()->count();
             $stats['todayAppointments'] = Appointment::today()->count();
-            $stats['waitingQueue']      = Visit::today()->where('status', 'waiting')->count();
-            $lists['recentVisits']      = Visit::with(['patient', 'department'])->today()->latest()->take(8)->get();
+            $stats['waitingQueue'] = Visit::today()->where('status', VisitStatus::WAITING->value)->count();
+            $lists['recentVisits'] = Visit::with(['patient', 'department'])->today()->latest()->take(8)->get();
         }
 
         if ($user->hasRole('Nurse')) {
-            $stats['triageQueue']  = Visit::today()->where('status', 'triage')->count();
-            $stats['inConsultation'] = Visit::today()->where('status', 'in_consultation')->count();
+            $stats['triageQueue'] = Visit::today()->where('status', VisitStatus::TRIAGE->value)->count();
+            $stats['inConsultation'] = Visit::today()->where('status', VisitStatus::CONSULTING->value)->count();
             $lists['triagePatients'] = Visit::with(['patient', 'department'])
-                ->today()->where('status', 'triage')->latest()->take(10)->get();
+                ->today()->where('status', VisitStatus::TRIAGE->value)->latest()->take(10)->get();
         }
 
         if ($user->hasRole('Pharmacist')) {
-            $stats['pendingRx']  = Prescription::where('status', 'pending')->count();
+            $stats['pendingRx'] = Prescription::where('status', 'pending')->count();
             // Low stock from new stock_balances + drugs.reorder_level (SoT).
-            $stats['lowStock']   = StockBalance::query()
+            $stats['lowStock'] = StockBalance::query()
                 ->where('quantity_on_hand', '>', 0)
                 ->whereColumn('quantity_on_hand', '<=', DB::raw('COALESCE((SELECT reorder_level FROM drugs WHERE drugs.id = stock_balances.drug_id), 0)'))
                 ->count();
             // Expired stock still tracked at batch level via DrugStock (internal).
-            $stats['expired']    = DrugStock::whereDate('expiry_date', '<', today())->where('quantity', '>', 0)->count();
-            $lists['recentRx']   = Prescription::with(['patient'])->latest()->take(8)->get();
+            $stats['expired'] = DrugStock::whereDate('expiry_date', '<', today())->where('quantity', '>', 0)->count();
+            $lists['recentRx'] = Prescription::with(['patient'])->latest()->take(8)->get();
         }
 
         if ($user->hasRole('Lab Technician')) {
-            $stats['pendingLab']   = LabRequest::where('status', 'pending')->count();
+            $stats['pendingLab'] = LabRequest::where('status', 'pending')->count();
             $stats['inProgressLab'] = LabRequest::where('status', 'in_progress')->count();
             $stats['completedToday'] = LabRequest::whereDate('updated_at', today())->where('status', 'completed')->count();
             $lists['pendingRequests'] = LabRequest::with(['visit.patient'])->where('status', 'pending')->latest()->take(10)->get();
@@ -63,7 +65,7 @@ class StaffDashboardController extends Controller
 
         if ($user->hasAnyRole(['Accountant', 'Cashier'])) {
             $stats['unpaidInvoices'] = Invoice::where('status', 'unpaid')->count();
-            $stats['todayInvoices']  = Invoice::whereDate('created_at', today())->count();
+            $stats['todayInvoices'] = Invoice::whereDate('created_at', today())->count();
             $lists['recentInvoices'] = Invoice::with(['patient'])->latest()->take(10)->get();
         }
 

@@ -3,13 +3,13 @@
 namespace App\Services;
 
 use App\Enums\AdmissionStatus;
+use App\Enums\BedStatus;
 use App\Enums\BillingType;
 use App\Enums\ClaimStatus;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentMethod;
-use App\Enums\VisitStatus;
-use App\Enums\BedStatus;
 use App\Enums\PrescriptionStatus;
+use App\Enums\VisitStatus;
 use App\Models\Admission;
 use App\Models\Appointment;
 use App\Models\Bed;
@@ -19,13 +19,15 @@ use App\Models\DispensingRecord;
 use App\Models\DrugStock;
 use App\Models\InsuranceProvider;
 use App\Models\Invoice;
-use App\Models\Prescription;
 use App\Models\LabRequest;
 use App\Models\LeaveRequest;
 use App\Models\MedicalRecord;
 use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\PayrollRecord;
+use App\Models\Prescription;
+use App\Models\StockBalance;
+use App\Models\User;
 use App\Models\Visit;
 use App\Models\Ward;
 use Illuminate\Support\Facades\DB;
@@ -39,13 +41,13 @@ class ReportService
     {
         $query = Payment::query();
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('paid_at', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('paid_at', '<=', $filters['date_to']);
         }
-        if (!empty($filters['payment_method'])) {
+        if (! empty($filters['payment_method'])) {
             $query->where('payment_method', $filters['payment_method']);
         }
 
@@ -59,10 +61,10 @@ class ReportService
             ->leftJoin('service_catalog', 'invoice_items.service_catalog_id', '=', 'service_catalog.id')
             ->whereIn('invoices.status', [InvoiceStatus::PAID->value, InvoiceStatus::PARTIALLY_PAID->value]);
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $categoryBreakdown->whereDate('invoices.created_at', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $categoryBreakdown->whereDate('invoices.created_at', '<=', $filters['date_to']);
         }
 
@@ -74,10 +76,10 @@ class ReportService
 
         // Summary stats
         $totalQuery = Payment::query();
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $totalQuery->whereDate('paid_at', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $totalQuery->whereDate('paid_at', '<=', $filters['date_to']);
         }
 
@@ -99,7 +101,7 @@ class ReportService
     {
         $query = Patient::withCount(['visits', 'invoices']);
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
@@ -108,14 +110,14 @@ class ReportService
             });
         }
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('created_at', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('created_at', '<=', $filters['date_to']);
         }
 
-        if (!empty($filters['gender'])) {
+        if (! empty($filters['gender'])) {
             $query->where('gender', $filters['gender']);
         }
 
@@ -132,9 +134,9 @@ class ReportService
 
         // Monthly registration trend (last 6 months)
         $registrationTrend = Patient::select(
-                DB::raw("DATE_FORMAT(created_at, '%Y-%m') as month"),
-                DB::raw('COUNT(*) as count')
-            )
+            DB::raw($this->dateBucketExpression('created_at', '%Y-%m').' as month'),
+            DB::raw('COUNT(*) as count')
+        )
             ->where('created_at', '>=', now()->subMonths(6))
             ->groupBy('month')
             ->orderBy('month')
@@ -151,13 +153,13 @@ class ReportService
     {
         $query = Visit::with(['patient', 'assignedDoctor']);
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('visit_date', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('visit_date', '<=', $filters['date_to']);
         }
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
@@ -165,10 +167,10 @@ class ReportService
 
         // Stats
         $baseQuery = Visit::query();
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $baseQuery->whereDate('visit_date', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $baseQuery->whereDate('visit_date', '<=', $filters['date_to']);
         }
 
@@ -185,9 +187,9 @@ class ReportService
 
         // Daily trend (last 30 days)
         $dailyTrend = Visit::select(
-                DB::raw("DATE_FORMAT(visit_date, '%Y-%m-%d') as day"),
-                DB::raw('COUNT(*) as count')
-            )
+            DB::raw($this->dateBucketExpression('visit_date', '%Y-%m-%d').' as day'),
+            DB::raw('COUNT(*) as count')
+        )
             ->where('visit_date', '>=', now()->subDays(30))
             ->groupBy('day')
             ->orderBy('day')
@@ -212,13 +214,13 @@ class ReportService
         $query = Invoice::with(['patient', 'items'])
             ->whereIn('billing_type', $insuranceBillingTypes);
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('created_at', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('created_at', '<=', $filters['date_to']);
         }
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
@@ -226,10 +228,10 @@ class ReportService
 
         // Stats
         $baseQuery = Invoice::whereIn('billing_type', $insuranceBillingTypes);
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $baseQuery->whereDate('created_at', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $baseQuery->whereDate('created_at', '<=', $filters['date_to']);
         }
 
@@ -259,30 +261,30 @@ class ReportService
     public function adminDashboardStats(): array
     {
         return [
-            'total_patients'        => Patient::count(),
-            'today_visits'          => Visit::today()->count(),
-            'month_revenue'         => Payment::whereMonth('paid_at', now()->month)
-                                        ->whereYear('paid_at', now()->year)->sum('amount'),
-            'today_revenue'         => Payment::whereDate('paid_at', today())->sum('amount'),
-            'outstanding_balance'   => Invoice::unpaid()->sum('balance'),
-            'active_doctors'        => \App\Models\User::role('Doctor')
-                                        ->where('status', 'active')->count(),
-            'pending_lab'           => LabRequest::where('status', 'pending')->count(),
-            'low_stock_alerts'      => \App\Models\StockBalance::query()
-                                        ->where('quantity_on_hand', '>', 0)
-                                        ->whereColumn('quantity_on_hand', '<=', DB::raw('COALESCE((SELECT reorder_level FROM drugs WHERE drugs.id = stock_balances.drug_id), 0)'))
-                                        ->count(),
-            'today_appointments'    => Appointment::today()->count(),
-            'today_admissions'      => Admission::whereDate('created_at', today())->count(),
-            'active_admissions'     => Admission::where('status', AdmissionStatus::ADMITTED)->count(),
-            'occupied_beds'         => Bed::where('status', BedStatus::OCCUPIED)->count(),
+            'total_patients' => Patient::count(),
+            'today_visits' => Visit::today()->count(),
+            'month_revenue' => Payment::whereMonth('paid_at', now()->month)
+                ->whereYear('paid_at', now()->year)->sum('amount'),
+            'today_revenue' => Payment::whereDate('paid_at', today())->sum('amount'),
+            'outstanding_balance' => Invoice::unpaid()->sum('balance'),
+            'active_doctors' => User::role('Doctor')
+                ->where('status', 'active')->count(),
+            'pending_lab' => LabRequest::where('status', 'pending')->count(),
+            'low_stock_alerts' => StockBalance::query()
+                ->where('quantity_on_hand', '>', 0)
+                ->whereColumn('quantity_on_hand', '<=', DB::raw('COALESCE((SELECT reorder_level FROM drugs WHERE drugs.id = stock_balances.drug_id), 0)'))
+                ->count(),
+            'today_appointments' => Appointment::today()->count(),
+            'today_admissions' => Admission::whereDate('created_at', today())->count(),
+            'active_admissions' => Admission::where('status', AdmissionStatus::ADMITTED)->count(),
+            'occupied_beds' => Bed::where('status', BedStatus::OCCUPIED)->count(),
             'pending_prescriptions' => Prescription::where('status', PrescriptionStatus::PENDING)->count(),
-            'pending_claims'        => Claim::whereIn('status', [
-                                        ClaimStatus::SUBMITTED->value,
-                                        ClaimStatus::UNDER_REVIEW->value,
-                                       ])->count(),
-            'expired_stock_count'   => DrugStock::whereDate('expiry_date', '<', today())
-                                        ->where('quantity', '>', 0)->count(),
+            'pending_claims' => Claim::whereIn('status', [
+                ClaimStatus::SUBMITTED->value,
+                ClaimStatus::UNDER_REVIEW->value,
+            ])->count(),
+            'expired_stock_count' => DrugStock::whereDate('expiry_date', '<', today())
+                ->where('quantity', '>', 0)->count(),
         ];
     }
 
@@ -292,9 +294,9 @@ class ReportService
     public function revenueTrend(int $days = 7): array
     {
         return Payment::select(
-                DB::raw("DATE_FORMAT(paid_at, '%Y-%m-%d') as day"),
-                DB::raw('SUM(amount) as total')
-            )
+            DB::raw($this->dateBucketExpression('paid_at', '%Y-%m-%d').' as day'),
+            DB::raw('SUM(amount) as total')
+        )
             ->where('paid_at', '>=', now()->subDays($days))
             ->groupBy('day')
             ->orderBy('day')
@@ -308,9 +310,9 @@ class ReportService
     public function visitTrend(int $days = 7): array
     {
         return Visit::select(
-                DB::raw("DATE_FORMAT(visit_date, '%Y-%m-%d') as day"),
-                DB::raw('COUNT(*) as count')
-            )
+            DB::raw($this->dateBucketExpression('visit_date', '%Y-%m-%d').' as day'),
+            DB::raw('COUNT(*) as count')
+        )
             ->where('visit_date', '>=', now()->subDays($days))
             ->groupBy('day')
             ->orderBy('day')
@@ -339,10 +341,10 @@ class ReportService
     {
         $query = DispensingRecord::with(['prescriptionItem.drug', 'drugStock', 'patient', 'dispensedBy']);
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('dispensed_at', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('dispensed_at', '<=', $filters['date_to']);
         }
 
@@ -350,10 +352,10 @@ class ReportService
 
         // Stats
         $baseQuery = DispensingRecord::query();
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $baseQuery->whereDate('dispensed_at', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $baseQuery->whereDate('dispensed_at', '<=', $filters['date_to']);
         }
 
@@ -388,10 +390,10 @@ class ReportService
                 DB::raw('COUNT(DISTINCT dispensing_records.patient_id) as patient_count')
             );
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('dispensing_records.dispensed_at', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('dispensing_records.dispensed_at', '<=', $filters['date_to']);
         }
 
@@ -411,13 +413,13 @@ class ReportService
         $query = LabRequest::with(['patient', 'department', 'items.labTest'])
             ->where('status', 'completed');
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('created_at', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('created_at', '<=', $filters['date_to']);
         }
-        if (!empty($filters['department_id'])) {
+        if (! empty($filters['department_id'])) {
             $query->where('department_id', $filters['department_id']);
         }
 
@@ -429,10 +431,10 @@ class ReportService
             ->join('departments', 'lab_requests.department_id', '=', 'departments.id')
             ->where('lab_requests.status', 'completed');
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $departmentRevenue->whereDate('lab_requests.created_at', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $departmentRevenue->whereDate('lab_requests.created_at', '<=', $filters['date_to']);
         }
 
@@ -460,13 +462,13 @@ class ReportService
     {
         $query = MedicalRecord::with(['patient', 'doctor', 'visit', 'diagnoses']);
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('created_at', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('created_at', '<=', $filters['date_to']);
         }
-        if (!empty($filters['doctor_id'])) {
+        if (! empty($filters['doctor_id'])) {
             $query->where('doctor_id', $filters['doctor_id']);
         }
 
@@ -474,25 +476,31 @@ class ReportService
 
         // By doctor
         $byDoctor = MedicalRecord::join('users', 'medical_records.doctor_id', '=', 'users.id')
+            ->leftJoin('departments', 'medical_records.department_id', '=', 'departments.id')
             ->select(
                 'users.id',
-                DB::raw("CONCAT(users.first_name, ' ', users.last_name) as doctor_name"),
+                'medical_records.department_id',
+                DB::raw($this->concatExpression('users.first_name', 'users.last_name').' as name'),
+                DB::raw($this->concatExpression('users.first_name', 'users.last_name').' as doctor_name'),
+                DB::raw('departments.name as department_name'),
                 DB::raw('COUNT(*) as consultation_count')
             );
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $byDoctor->whereDate('medical_records.created_at', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $byDoctor->whereDate('medical_records.created_at', '<=', $filters['date_to']);
         }
 
-        $byDoctor = $byDoctor->groupBy('users.id', 'users.first_name', 'users.last_name')
+        $byDoctor = $byDoctor->groupBy('users.id', 'users.first_name', 'users.last_name', 'medical_records.department_id', 'departments.name')
             ->orderByDesc('consultation_count')
             ->get();
 
         $stats = [
             'total_consultations' => $byDoctor->sum('consultation_count'),
+            'doctors' => $byDoctor->count(),
+            'departments' => $byDoctor->pluck('department_id')->filter()->unique()->count(),
             'active_doctors' => $byDoctor->count(),
             'avg_per_doctor' => $byDoctor->count() > 0 ? round($byDoctor->sum('consultation_count') / $byDoctor->count()) : 0,
         ];
@@ -510,7 +518,7 @@ class ReportService
 
         $baseQuery = Payment::query()->whereDate('paid_at', $date);
 
-        if (!empty($paymentMethod)) {
+        if (! empty($paymentMethod)) {
             $baseQuery->where('payment_method', $paymentMethod);
         }
 
@@ -518,7 +526,7 @@ class ReportService
             ->with(['invoice.patient', 'receivedBy'])
             ->latest('paid_at');
 
-        $payments = !empty($filters['export'])
+        $payments = ! empty($filters['export'])
             ? $paymentsQuery->get()
             : $paymentsQuery->paginate(25)->withQueryString();
 
@@ -565,16 +573,16 @@ class ReportService
     {
         $query = Admission::with(['patient', 'bed.ward', 'admittedBy']);
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('admission_date', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('admission_date', '<=', $filters['date_to']);
         }
-        if (!empty($filters['ward_id'])) {
+        if (! empty($filters['ward_id'])) {
             $query->whereHas('bed', fn ($q) => $q->where('ward_id', $filters['ward_id']));
         }
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
@@ -582,17 +590,20 @@ class ReportService
 
         // Stats
         $baseQ = Admission::query();
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $baseQ->whereDate('admission_date', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $baseQ->whereDate('admission_date', '<=', $filters['date_to']);
         }
 
         $stats = [
+            'total_admissions' => (clone $baseQ)->count(),
+            'currently_admitted' => (clone $baseQ)->where('status', AdmissionStatus::ADMITTED)->count(),
             'total' => (clone $baseQ)->count(),
             'active' => (clone $baseQ)->where('status', AdmissionStatus::ADMITTED)->count(),
             'discharged' => (clone $baseQ)->where('status', AdmissionStatus::DISCHARGED)->count(),
+            'wards' => Ward::count(),
         ];
 
         $wards = Ward::orderBy('name')->get();
@@ -609,11 +620,14 @@ class ReportService
             ->where('status', AdmissionStatus::DISCHARGED)
             ->whereNotNull('actual_discharge_date');
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('actual_discharge_date', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('actual_discharge_date', '<=', $filters['date_to']);
+        }
+        if (! empty($filters['ward_id'])) {
+            $query->whereHas('bed', fn ($q) => $q->where('ward_id', $filters['ward_id']));
         }
 
         $discharges = $query->latest('actual_discharge_date')->paginate(25)->withQueryString();
@@ -621,15 +635,20 @@ class ReportService
         // Average length of stay
         $avgLos = Admission::where('status', AdmissionStatus::DISCHARGED)
             ->whereNotNull('actual_discharge_date')
-            ->selectRaw('AVG(DATEDIFF(actual_discharge_date, admission_date)) as avg_days')
+            ->selectRaw($this->averageLengthOfStayExpression().' as avg_days')
             ->value('avg_days');
 
         $stats = [
+            'total_discharges' => $discharges->total(),
+            'avg_los' => round($avgLos ?? 0, 1),
+            'wards' => Ward::count(),
             'total_discharged' => $discharges->total(),
             'avg_length_of_stay' => round($avgLos ?? 0, 1),
         ];
 
-        return compact('discharges', 'stats');
+        $wards = Ward::orderBy('name')->get();
+
+        return compact('discharges', 'stats', 'wards');
     }
 
     /**
@@ -639,19 +658,19 @@ class ReportService
     {
         $query = LeaveRequest::with(['employee.user', 'employee.department', 'approvedByUser']);
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('start_date', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('start_date', '<=', $filters['date_to']);
         }
-        if (!empty($filters['leave_type'])) {
+        if (! empty($filters['leave_type'])) {
             $query->where('leave_type', $filters['leave_type']);
         }
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
-        if (!empty($filters['department_id'])) {
+        if (! empty($filters['department_id'])) {
             $query->whereHas('employee', fn ($q) => $q->where('department_id', $filters['department_id']));
         }
 
@@ -670,6 +689,35 @@ class ReportService
         return compact('leaves', 'stats', 'departments');
     }
 
+    private function dateBucketExpression(string $column, string $format): string
+    {
+        if (DB::getDriverName() === 'sqlite') {
+            $sqliteFormat = str_replace(['%i', '%s'], ['%M', '%S'], $format);
+
+            return "strftime('{$sqliteFormat}', {$column})";
+        }
+
+        return "DATE_FORMAT({$column}, '{$format}')";
+    }
+
+    private function concatExpression(string ...$columns): string
+    {
+        if (DB::getDriverName() === 'sqlite') {
+            return implode(" || ' ' || ", $columns);
+        }
+
+        return 'CONCAT('.implode(", ' ', ", $columns).')';
+    }
+
+    private function averageLengthOfStayExpression(): string
+    {
+        if (DB::getDriverName() === 'sqlite') {
+            return 'AVG(julianday(actual_discharge_date) - julianday(admission_date))';
+        }
+
+        return 'AVG(DATEDIFF(actual_discharge_date, admission_date))';
+    }
+
     /**
      * Payroll summary report.
      */
@@ -677,13 +725,13 @@ class ReportService
     {
         $query = PayrollRecord::with(['employee.user', 'employee.department']);
 
-        if (!empty($filters['pay_period'])) {
+        if (! empty($filters['pay_period'])) {
             $query->where('pay_period', $filters['pay_period']);
         }
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
-        if (!empty($filters['department_id'])) {
+        if (! empty($filters['department_id'])) {
             $query->whereHas('employee', fn ($q) => $q->where('department_id', $filters['department_id']));
         }
 
@@ -693,20 +741,20 @@ class ReportService
         $byDepartment = PayrollRecord::join('employees', 'payroll_records.employee_id', '=', 'employees.id')
             ->join('departments', 'employees.department_id', '=', 'departments.id');
 
-        if (!empty($filters['pay_period'])) {
+        if (! empty($filters['pay_period'])) {
             $byDepartment->where('payroll_records.pay_period', $filters['pay_period']);
         }
-        if (!empty($filters['department_id'])) {
+        if (! empty($filters['department_id'])) {
             $byDepartment->where('employees.department_id', $filters['department_id']);
         }
 
         $byDepartment = $byDepartment->select(
-                'departments.name',
-                DB::raw('COUNT(*) as staff_count'),
-                DB::raw('SUM(payroll_records.gross_pay) as total_gross'),
-                DB::raw('SUM(payroll_records.tax + payroll_records.other_deductions + COALESCE(payroll_records.ssnit_employee, 0)) as total_deductions'),
-                DB::raw('SUM(payroll_records.net_pay) as total_net')
-            )
+            'departments.name',
+            DB::raw('COUNT(*) as staff_count'),
+            DB::raw('SUM(payroll_records.gross_pay) as total_gross'),
+            DB::raw('SUM(payroll_records.tax + payroll_records.other_deductions + COALESCE(payroll_records.ssnit_employee, 0)) as total_deductions'),
+            DB::raw('SUM(payroll_records.net_pay) as total_net')
+        )
             ->groupBy('departments.id', 'departments.name')
             ->orderBy('departments.name')
             ->get();
@@ -732,16 +780,16 @@ class ReportService
     {
         $query = Claim::with(['insuranceProvider', 'patient', 'invoice']);
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('claim_date', '>=', $filters['date_from']);
         }
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('claim_date', '<=', $filters['date_to']);
         }
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
-        if (!empty($filters['provider_id'])) {
+        if (! empty($filters['provider_id'])) {
             $query->where('insurance_provider_id', $filters['provider_id']);
         }
 
@@ -778,7 +826,7 @@ class ReportService
         $query = DrugStock::with(['drug'])
             ->where('quantity', '>', 0);
 
-        if (!empty($filters['location'])) {
+        if (! empty($filters['location'])) {
             $query->where('location', $filters['location']);
         }
 

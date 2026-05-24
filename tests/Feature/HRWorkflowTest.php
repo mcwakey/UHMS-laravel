@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class HRWorkflowTest extends TestCase
@@ -18,7 +19,7 @@ class HRWorkflowTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $dept = Department::factory()->create();
         $this->user = User::factory()->create(['department_id' => $dept->id]);
@@ -37,25 +38,25 @@ class HRWorkflowTest extends TestCase
 
     public function test_employee_index_loads(): void
     {
-        $response = $this->actingAs($this->user)->get(route('admin.employees.index'));
+        $response = $this->actingAs($this->user)->get(route('admin.hr.employees.index'));
         $response->assertStatus(200);
     }
 
     public function test_leave_index_loads(): void
     {
-        $response = $this->actingAs($this->user)->get(route('admin.leave.index'));
+        $response = $this->actingAs($this->user)->get(route('admin.hr.leave.index'));
         $response->assertStatus(200);
     }
 
     public function test_payroll_index_loads(): void
     {
-        $response = $this->actingAs($this->user)->get(route('admin.payroll.index'));
+        $response = $this->actingAs($this->user)->get(route('admin.hr.payroll.index'));
         $response->assertStatus(200);
     }
 
     public function test_attendance_index_loads(): void
     {
-        $response = $this->actingAs($this->user)->get(route('admin.attendance.index'));
+        $response = $this->actingAs($this->user)->get(route('admin.hr.attendance.index'));
         $response->assertStatus(200);
     }
 }

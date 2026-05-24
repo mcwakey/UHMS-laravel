@@ -180,7 +180,10 @@ if (document.readyState === 'loading') {
 // Re-run the legacy upgrader after every Inertia navigation in case a Blade
 // page is injected via the legacy bridge.
 router.on('finish', () => {
-    queueMicrotask(() => upgradeLegacyConfirms(document));
+    queueMicrotask(() => {
+        document.documentElement.classList.remove('uhms-loading');
+        upgradeLegacyConfirms(document);
+    });
 });
 
 // ─── Delegated `data-confirm` handler for legacy Blade ────────────────────

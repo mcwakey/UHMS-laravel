@@ -136,6 +136,9 @@
     <!-- SweetAlert2 -->
     <script src="{{ URL::asset('build/plugins/sweetalert2/sweetalert2.min.js') }}"></script>
 
+    <!-- Chart.js -->
+    <script src="{{ URL::asset('build/plugins/chartjs/chart.min.js') }}"></script>
+
     <!-- Template Script -->
     <script src="{{ URL::asset('build/js/script.js') }}"></script>
 

@@ -14,6 +14,7 @@ use App\Models\Appointment;
 use App\Models\CashierShift;
 use App\Models\Department;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\Patient;
 use App\Models\ServiceCatalog;
 use App\Models\User;
@@ -22,6 +23,7 @@ use App\Services\VisitService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class WorkflowJsonResponsesTest extends TestCase
@@ -29,13 +31,37 @@ class WorkflowJsonResponsesTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Department $department;
+
+    private function addPayableItem(Invoice $invoice, float $amount = 100.00): InvoiceItem
+    {
+        return InvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'visit_id' => $invoice->visit_id,
+            'patient_id' => $invoice->patient_id,
+            'description' => 'Consultation',
+            'quantity' => 1,
+            'unit_price' => $amount,
+            'cash_price' => $amount,
+            'selected_price' => $amount,
+            'insurance_covered' => 0,
+            'discount_amount' => 0,
+            'patient_payable' => $amount,
+            'paid_amount' => 0,
+            'balance' => $amount,
+            'payment_status' => 'unpaid',
+            'total_price' => $amount,
+            'payer_type' => 'cash',
+            'created_by' => $this->user->id,
+        ]);
+    }
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $this->department = Department::factory()->create([
             'name' => 'General Consulting',
@@ -121,10 +147,10 @@ class WorkflowJsonResponsesTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('visit_id', $visit->id)
-            ->assertJsonPath('status', VisitStatus::CONSULTING->value)
+            ->assertJsonPath('status', VisitStatus::WAITING_CONSULTATION->value)
             ->assertJsonPath('redirect_url', route('admin.visits.show', $visit));
 
-        $this->assertSame(VisitStatus::CONSULTING, $visit->status);
+        $this->assertSame(VisitStatus::WAITING_CONSULTATION, $visit->status);
         $this->assertDatabaseHas('vitals', [
             'visit_id' => $visit->id,
             'patient_id' => $patient->id,
@@ -282,6 +308,8 @@ class WorkflowJsonResponsesTest extends TestCase
             'status' => InvoiceStatus::PENDING,
             'created_by' => $this->user->id,
         ]);
+        $this->addPayableItem($invoice, 100.00);
+        $invoice->load('items');
 
         CashierShift::create([
             'user_id' => $this->user->id,

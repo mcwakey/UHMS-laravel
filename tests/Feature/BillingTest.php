@@ -2,17 +2,19 @@
 
 namespace Tests\Feature;
 
-use App\Enums\InvoiceStatus;
 use App\Enums\BillingType;
+use App\Enums\InvoiceStatus;
 use App\Enums\PaymentMethod;
 use App\Models\Department;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\Patient;
 use App\Models\User;
 use App\Models\Visit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class BillingTest extends TestCase
@@ -20,14 +22,40 @@ class BillingTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Patient $patient;
+
     private Visit $visit;
+
     private Invoice $invoice;
+
+    private function addPayableItem(Invoice $invoice, float $amount = 100.00): InvoiceItem
+    {
+        return InvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'visit_id' => $this->visit->id,
+            'patient_id' => $this->patient->id,
+            'description' => 'Consultation',
+            'quantity' => 1,
+            'unit_price' => $amount,
+            'cash_price' => $amount,
+            'selected_price' => $amount,
+            'insurance_covered' => 0,
+            'discount_amount' => 0,
+            'patient_payable' => $amount,
+            'paid_amount' => 0,
+            'balance' => $amount,
+            'payment_status' => 'unpaid',
+            'total_price' => $amount,
+            'payer_type' => 'cash',
+            'created_by' => $this->user->id,
+        ]);
+    }
 
     protected function setUp(): void
     {
         parent::setUp();
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $dept = Department::factory()->create();
         $this->user = User::factory()->create(['department_id' => $dept->id]);
@@ -98,6 +126,8 @@ class BillingTest extends TestCase
             'status' => InvoiceStatus::PENDING,
             'created_by' => $this->user->id,
         ]);
+        $this->addPayableItem($invoice, 100.00);
+        $invoice->load('items');
 
         $data = [
             'amount' => 100.00,
