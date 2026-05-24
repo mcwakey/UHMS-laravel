@@ -242,7 +242,6 @@ class LegacyInertiaBridgeTest extends TestCase
 
         return Visit::factory()->create([
             'patient_id' => $patient->id,
-            'assigned_doctor_id' => $this->user->id,
             'created_by' => $this->user->id,
         ]);
     }

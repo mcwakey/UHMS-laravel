@@ -133,7 +133,6 @@ class AppointmentService
                 'visit_date'         => now(),
                 'status'             => VisitStatus::REGISTERED,
                 'priority'           => $appointment->priority ?? 'normal',
-                'assigned_doctor_id' => $appointment->doctor_id,
                 'chief_complaint'    => $appointment->chief_complaint ?? $appointment->reason,
                 'notes'              => $appointment->notes,
                 'consultation_mode'  => $appointment->consultation_mode ?? 'in_person',
@@ -147,6 +146,7 @@ class AppointmentService
                 $this->visitService->attachServices($visit, $appointment->services->map(fn ($svc) => [
                     'service_catalog_id' => $svc->id,
                     'quantity'           => $svc->pivot->quantity,
+                    'doctor_id'          => $appointment->doctor_id,
                 ])->all());
             }
 

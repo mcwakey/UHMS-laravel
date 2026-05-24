@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\BillingType;
+use App\Enums\DepartmentType;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Http\Controllers\Controller;
@@ -48,7 +49,10 @@ class VisitController extends Controller
 
         $visits = $this->visitService->list($filters);
         $stats = $this->visitService->todayStats();
-        $doctors = User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get();
+        $doctors = User::whereHas('roles', fn ($query) => $query->whereIn('name', User::CONSULTATION_ROLES))
+            ->where('status', 'active')
+            ->orderBy('first_name')
+            ->get();
 
         // True-Inertia migration (Phase B / B4): serialize for Vue page.
         $user = $request->user();
@@ -66,7 +70,7 @@ class VisitController extends Controller
                 'visit_date_display' => optional($visit->visit_date)->format('d M Y'),
                 'duration' => $visit->duration,
                 'age_display' => $visit->patient_age ?? optional($visit->patient)->age,
-                'assigned_doctor_name' => optional($visit->assignedDoctor)->full_name,
+                'route_doctor_name' => optional($visit->currentConsultationDoctor())->full_name,
                 'patient' => $visit->patient ? [
                     'id' => $visit->patient->id,
                     'full_name' => $visit->patient->full_name,
@@ -139,7 +143,6 @@ class VisitController extends Controller
     public function create(Request $request)
     {
         $departments = Department::active()->orderBy('name')->get();
-        $doctors = User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get();
         $selectedPatient = null;
 
         if ($request->has('patient_id')) {
@@ -156,7 +159,7 @@ class VisitController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('visits.create', compact('departments', 'doctors', 'selectedPatient', 'insuranceProviders'));
+        return view('visits.create', compact('departments', 'selectedPatient', 'insuranceProviders'));
     }
 
     public function store(StoreVisitRequest $request)
@@ -253,7 +256,8 @@ class VisitController extends Controller
             'patient',
             'visitInsurance.insuranceProvider',
             'visitServices.serviceCatalog',
-            'assignedDoctor',
+            'activeConsultationRoute.doctor',
+            'pendingConsultationRoutes.doctor',
         ]);
 
         $departments = Department::active()->orderBy('name')->get();
@@ -293,8 +297,9 @@ class VisitController extends Controller
     {
         $visit->load([
             'patient',
-            'assignedDoctor',
             'createdBy',
+            'activeConsultationRoute.doctor',
+            'pendingConsultationRoutes.doctor',
             'statusLogs.changedBy',
             'queueEntries.department',
             'visitInsurance.insuranceProvider',
@@ -484,6 +489,8 @@ class VisitController extends Controller
             }
         }
 
+        $departmentType = $s->department?->type ?? $s->department_type;
+
         return [
             'id' => $s->id,
             'name' => $s->name,
@@ -491,6 +498,9 @@ class VisitController extends Controller
             'category' => $s->category,
             'price' => (float) $s->price,
             'formatted_price' => $s->formatted_price,
+            'base_price' => (float) $s->price,
+            'department_id' => $s->department_id,
+            'department_type' => $departmentType instanceof DepartmentType ? $departmentType->value : (string) $departmentType,
             'type_prices' => $typePrices,
             'provider_prices' => $providerPrices,
         ];

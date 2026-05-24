@@ -214,7 +214,7 @@ class VisitWorkflowService
 
         $route->update([
             'status'     => \App\Models\VisitConsultationRoute::STATUS_ACTIVE,
-            'doctor_id'  => $doctor?->id ?? $route->doctor_id,
+            'doctor_id'  => $route->doctor_id ?? $doctor?->id,
             'started_by' => Auth::id(),
             'started_at' => now(),
         ]);

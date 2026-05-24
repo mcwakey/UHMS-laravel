@@ -62,7 +62,7 @@
     <div class="vr d-none d-sm-block"></div>
     <div>
         <span class="text-muted small">Doctor</span><br>
-        <strong>{{ $visit->assignedDoctor?->full_name ?? '—' }}</strong>
+        <strong>{{ $visit->currentConsultationDoctor()?->full_name ?? '—' }}</strong>
     </div>
     <div class="vr d-none d-sm-block"></div>
     <div>

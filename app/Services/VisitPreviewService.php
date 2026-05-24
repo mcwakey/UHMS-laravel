@@ -52,7 +52,8 @@ class VisitPreviewService
     {
         $visit->loadMissing([
             'patient',
-            'assignedDoctor',
+            'activeConsultationRoute.doctor',
+            'pendingConsultationRoutes.doctor',
             'createdBy',
             'currentDepartment',
             'visitInsurance.insuranceProvider',

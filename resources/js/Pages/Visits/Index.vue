@@ -260,7 +260,7 @@ function transitionVisit(visitId, nextStatusValue) {
                                         :class="`badge bg-${visit.triage_score.color} ms-1`"
                                     >{{ visit.triage_score.label }}</span>
                                 </td>
-                                <td>{{ visit.assigned_doctor_name || '—' }}</td>
+                                <td>{{ visit.route_doctor_name || '—' }}</td>
                                 <td>
                                     <span :class="`badge bg-${visit.status.color}`">{{ visit.status.label }}</span>
                                 </td>

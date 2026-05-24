@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('status')->default('registered'); // VisitStatus enum
             $table->string('priority')->default('normal');   // Priority enum
             $table->foreignId('department_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('assigned_doctor_id')->nullable()->constrained('users')->nullOnDelete();
             $table->text('chief_complaint')->nullable();
             $table->text('notes')->nullable();
             $table->timestamp('checked_in_at')->nullable();

@@ -22,7 +22,7 @@ class Visit extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['status', 'visit_type', 'priority', 'assigned_doctor_id'])
+            ->logOnly(['status', 'visit_type', 'priority'])
             ->logOnlyDirty()
             ->useLogName('visits')
             ->dontSubmitEmptyLogs();
@@ -38,7 +38,6 @@ class Visit extends Model
         'end_time',
         'status',
         'priority',
-        'assigned_doctor_id',
         'chief_complaint',
         'notes',
         'checked_in_at',
@@ -82,11 +81,6 @@ class Visit extends Model
     public function patient()
     {
         return $this->belongsTo(Patient::class);
-    }
-
-    public function assignedDoctor()
-    {
-        return $this->belongsTo(User::class, 'assigned_doctor_id');
     }
 
     public function createdBy()
@@ -203,6 +197,48 @@ class Visit extends Model
     {
         return $this->hasMany(VisitConsultationRoute::class)
             ->where('status', VisitConsultationRoute::STATUS_PENDING);
+    }
+
+    public function currentConsultationRoute(): ?VisitConsultationRoute
+    {
+        if ($this->relationLoaded('activeConsultationRoute') && $this->activeConsultationRoute) {
+            return $this->activeConsultationRoute;
+        }
+
+        if ($this->relationLoaded('pendingConsultationRoutes') && $this->pendingConsultationRoutes->isNotEmpty()) {
+            return $this->pendingConsultationRoutes->first();
+        }
+
+        if ($this->relationLoaded('consultationRoutes') && $this->consultationRoutes->isNotEmpty()) {
+            return $this->consultationRoutes
+                ->first(fn (VisitConsultationRoute $route) => in_array($route->status, [
+                    VisitConsultationRoute::STATUS_ACTIVE,
+                    VisitConsultationRoute::STATUS_PENDING,
+                ], true));
+        }
+
+        return $this->consultationRoutes()
+            ->whereIn('status', [
+                VisitConsultationRoute::STATUS_ACTIVE,
+                VisitConsultationRoute::STATUS_PENDING,
+            ])
+            ->orderByRaw("CASE WHEN status = 'ACTIVE' THEN 0 ELSE 1 END")
+            ->first();
+    }
+
+    public function currentConsultationDoctor(): ?User
+    {
+        $route = $this->currentConsultationRoute();
+
+        if (! $route) {
+            return null;
+        }
+
+        if ($route->relationLoaded('doctor')) {
+            return $route->doctor;
+        }
+
+        return $route->doctor()->first();
     }
 
     public function triage()
@@ -358,9 +394,11 @@ class Visit extends Model
      */
     public function hasConflict(): bool
     {
-        if (!$this->assigned_doctor_id || !$this->start_time) return false;
+        $doctorId = $this->currentConsultationRoute()?->doctor_id;
 
-        return self::where('assigned_doctor_id', $this->assigned_doctor_id)
+        if (!$doctorId || !$this->start_time) return false;
+
+        return self::whereHas('consultationRoutes', fn ($q) => $q->where('doctor_id', $doctorId))
             ->where('visit_date', $this->visit_date)
             ->where('id', '!=', $this->id ?? 0)
             ->whereNotIn('status', [

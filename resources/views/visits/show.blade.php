@@ -322,7 +322,7 @@
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="text-muted small mb-1">Assigned Doctor</label>
-                        <div class="fw-medium">{{ $visit->assignedDoctor ? 'Dr. ' . $visit->assignedDoctor->full_name : '—' }}</div>
+                        <div class="fw-medium">{{ $visit->currentConsultationDoctor() ? 'Dr. ' . $visit->currentConsultationDoctor()->full_name : '—' }}</div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="text-muted small mb-1">Duration</label>

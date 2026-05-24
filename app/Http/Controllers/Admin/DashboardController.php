@@ -25,7 +25,7 @@ class DashboardController extends Controller
         $recentPatients = Patient::with('registeredBy')->latest()->take(5)->get();
 
         $visitStats  = $visitService->todayStats();
-        $recentVisits = Visit::with(['patient', 'department', 'assignedDoctor'])
+        $recentVisits = Visit::with(['patient', 'department', 'activeConsultationRoute.doctor', 'pendingConsultationRoutes.doctor'])
             ->today()
             ->latest()
             ->take(8)

@@ -1,6 +1,6 @@
 {
-  "_AppLayout.BazTY9xI.js": {
-    "file": "js/AppLayout.BazTY9xI.js",
+  "_AppLayout.Dhh59X5j.js": {
+    "file": "js/AppLayout.Dhh59X5j.js",
     "name": "AppLayout",
     "imports": [
       "resources/js/inertia.js"
@@ -20,37 +20,37 @@
     "src": "resources/img/bg/generate-bg-02.png"
   },
   "resources/js/Pages/Admissions/Index.vue": {
-    "file": "js/Index.QVCNLO3O.js",
+    "file": "js/Index.CiKTLJ4k.js",
     "name": "Index",
     "src": "resources/js/Pages/Admissions/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.BazTY9xI.js"
+      "_AppLayout.Dhh59X5j.js"
     ]
   },
   "resources/js/Pages/Billing/Invoices/Index.vue": {
-    "file": "js/Index.--uiL139.js",
+    "file": "js/Index.DcT2R5j_.js",
     "name": "Index",
     "src": "resources/js/Pages/Billing/Invoices/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.BazTY9xI.js"
+      "_AppLayout.Dhh59X5j.js"
     ]
   },
   "resources/js/Pages/Lab/Requests/Index.vue": {
-    "file": "js/Index.DQ45im6b.js",
+    "file": "js/Index.D3w4Cd5e.js",
     "name": "Index",
     "src": "resources/js/Pages/Lab/Requests/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.BazTY9xI.js"
+      "_AppLayout.Dhh59X5j.js"
     ]
   },
   "resources/js/Pages/Legacy/BladePage.vue": {
-    "file": "js/BladePage.CZCrU_KJ.js",
+    "file": "js/BladePage.Cp-uLDBB.js",
     "name": "BladePage",
     "src": "resources/js/Pages/Legacy/BladePage.vue",
     "isDynamicEntry": true,
@@ -62,27 +62,27 @@
     ]
   },
   "resources/js/Pages/Pharmacy/Dispensing.vue": {
-    "file": "js/Dispensing.a0TY1e9O.js",
+    "file": "js/Dispensing.BZZfWE3X.js",
     "name": "Dispensing",
     "src": "resources/js/Pages/Pharmacy/Dispensing.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.BazTY9xI.js"
+      "_AppLayout.Dhh59X5j.js"
     ]
   },
   "resources/js/Pages/Visits/Index.vue": {
-    "file": "js/Index.DKuGjjaE.js",
+    "file": "js/Index.BGBC6piO.js",
     "name": "Index",
     "src": "resources/js/Pages/Visits/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.BazTY9xI.js"
+      "_AppLayout.Dhh59X5j.js"
     ]
   },
   "resources/js/inertia.js": {
-    "file": "js/inertia.lsYg5Lsz.bundle.js",
+    "file": "js/inertia.C7ZyKu7S.bundle.js",
     "name": "inertia",
     "src": "resources/js/inertia.js",
     "isEntry": true,

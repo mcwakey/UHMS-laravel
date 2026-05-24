@@ -17,6 +17,7 @@ use App\Models\Procedure;
 use App\Models\ServiceCatalog;
 use App\Models\Treatment;
 use App\Models\Visit;
+use App\Models\VisitConsultationRoute;
 use App\Services\ClinicalService;
 use App\Services\ConsultationService;
 use App\Services\LabService;
@@ -96,7 +97,13 @@ class ConsultationController extends Controller
             $filters['date_to'] = $filters['date_to'] ?? today()->toDateString();
         }
 
-        $query = Visit::with(['patient', 'assignedDoctor', 'medicalRecord', 'currentDepartment'])
+        $query = Visit::with([
+            'patient',
+            'medicalRecord',
+            'currentDepartment',
+            'activeConsultationRoute.doctor',
+            'pendingConsultationRoutes.doctor',
+        ])
             ->whereIn('status', [
                 VisitStatus::WAITING_CONSULTATION->value,
                 VisitStatus::CONSULTING->value,
@@ -106,8 +113,8 @@ class ConsultationController extends Controller
             // visits (lab-only, pharmacy-only, etc.) out of the consultation queue.
             ->whereHas('consultationRoutes', function ($r) {
                 $r->whereIn('status', [
-                    \App\Models\VisitConsultationRoute::STATUS_PENDING,
-                    \App\Models\VisitConsultationRoute::STATUS_ACTIVE,
+                    VisitConsultationRoute::STATUS_PENDING,
+                    VisitConsultationRoute::STATUS_ACTIVE,
                 ])->whereHas('department', function ($d) {
                     $d->where('type', \App\Enums\DepartmentType::CONSULTATION->value);
                 });
@@ -116,7 +123,13 @@ class ConsultationController extends Controller
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
         if ($user && ! $user->hasAnyRole(['Super Admin', 'Admin']) && $user->department_id) {
-            $query->where('current_department_id', $user->department_id);
+            $query->whereHas('consultationRoutes', function ($route) use ($user) {
+                $route->where('department_id', $user->department_id)
+                    ->whereIn('status', [
+                        VisitConsultationRoute::STATUS_PENDING,
+                        VisitConsultationRoute::STATUS_ACTIVE,
+                    ]);
+            });
         }
 
         if (!empty($filters['search'])) {
@@ -136,7 +149,13 @@ class ConsultationController extends Controller
         }
 
         if ($request->boolean('my_patients')) {
-            $query->where('assigned_doctor_id', Auth::id());
+            $query->whereHas('consultationRoutes', function ($route) {
+                $route->where('doctor_id', Auth::id())
+                    ->whereIn('status', [
+                        VisitConsultationRoute::STATUS_PENDING,
+                        VisitConsultationRoute::STATUS_ACTIVE,
+                    ]);
+            });
         }
 
         $visits = $query->latest()->paginate(15);

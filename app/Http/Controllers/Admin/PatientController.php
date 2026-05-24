@@ -130,7 +130,14 @@ class PatientController extends Controller
 
         // Load visits separately to avoid window-function queries on older MariaDB
         $visits = \App\Models\Visit::where('patient_id', $patient->id)
-            ->with(['currentDepartment', 'assignedDoctor', 'invoices.items', 'visitServices.serviceCatalog', 'visitServices.department'])
+            ->with([
+                'currentDepartment',
+                'activeConsultationRoute.doctor',
+                'pendingConsultationRoutes.doctor',
+                'invoices.items',
+                'visitServices.serviceCatalog',
+                'visitServices.department',
+            ])
             ->latest('visit_date')
             ->take(20)
             ->get();

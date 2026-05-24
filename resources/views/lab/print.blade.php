@@ -67,7 +67,7 @@
         <span class="value">{{ $visit?->visit_number ?? '—' }}</span><br>
         <span style="font-size:11px;color:#555;">
             {{ $visit?->visit_date?->format('d M Y') ?? '' }}
-            @if($visit?->assignedDoctor) &middot; Dr. {{ $visit->assignedDoctor->full_name ?? $visit->assignedDoctor->name }} @endif
+            @if($visit?->currentConsultationDoctor()) &middot; Dr. {{ $visit->currentConsultationDoctor()->full_name ?? $visit->currentConsultationDoctor()->name }} @endif
         </span>
     </div>
     <div>

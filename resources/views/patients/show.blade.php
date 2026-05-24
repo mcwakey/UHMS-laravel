@@ -339,7 +339,7 @@
                                 <td>{{ $uv->visit_date->format('d M Y') }}</td>
                                 <td>{{ $uv->start_time ? \Carbon\Carbon::parse($uv->start_time)->format('h:i A') : '—' }}</td>
                                 <td>{{ $uv->currentDepartment?->name ?? '—' }}</td>
-                                <td>{{ $uv->assignedDoctor?->full_name ?? '—' }}</td>
+                                <td>{{ $uv->currentConsultationDoctor()?->full_name ?? '—' }}</td>
                                 <td><span class="badge" style="background-color: {{ $uv->status->color() }}">{{ $uv->status->label() }}</span></td>
                             </tr>
                             @endforeach
@@ -380,7 +380,7 @@
                                 <td>{{ $visit->visit_date->format('d M Y') }}</td>
                                 <td>{{ $visit->visit_type?->label() ?? '—' }}</td>
                                 <td>—</td>
-                                <td>{{ $visit->assignedDoctor?->full_name ?? '—' }}</td>
+                                <td>{{ $visit->currentConsultationDoctor()?->full_name ?? '—' }}</td>
                                 <td><span class="badge bg-{{ $visit->status->color() }}">{{ $visit->status->label() }}</span></td>
                                 <td><a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
                             </tr>

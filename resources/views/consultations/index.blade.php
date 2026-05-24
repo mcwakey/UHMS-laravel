@@ -78,7 +78,7 @@
                                 <span class="badge bg-{{ $visit->triage_score->color() }} ms-1">{{ $visit->triage_score->label() }}</span>
                             @endif
                         </td>
-                        <td>{{ $visit->assignedDoctor ? 'Dr. ' . $visit->assignedDoctor->full_name : '—' }}</td>
+                        <td>{{ $visit->currentConsultationDoctor() ? 'Dr. ' . $visit->currentConsultationDoctor()->full_name : '—' }}</td>
                         <td><small>{{ Str::limit($visit->chief_complaint, 40) ?? '—' }}</small></td>
                         <td>
                             @if(false) {{-- start consultation button removed; triage now transitions directly to CONSULTING --}}

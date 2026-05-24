@@ -49,7 +49,12 @@ class QueueService
 
     public function getDepartmentQueue(int $departmentId): Collection
     {
-        return QueueEntry::with(['visit.patient', 'visit.assignedDoctor', 'servedBy'])
+        return QueueEntry::with([
+            'visit.patient',
+            'visit.activeConsultationRoute.doctor',
+            'visit.pendingConsultationRoutes.doctor',
+            'servedBy',
+        ])
             ->forDepartment($departmentId)
             ->today()
             ->waiting()

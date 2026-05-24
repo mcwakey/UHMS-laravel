@@ -40,7 +40,7 @@ class ConsultationService
             ['visit_id' => $visit->id],
             array_merge([
                 'patient_id' => $visit->patient_id,
-                'doctor_id'  => Auth::id(),
+                'doctor_id'  => $activeRoute?->doctor_id ?? Auth::id(),
             ], $linkage)
         );
 
@@ -67,7 +67,7 @@ class ConsultationService
         $record = $visit->medicalRecord;
 
         return [
-            'visit' => $visit->load(['patient', 'assignedDoctor', 'latestVitals']),
+            'visit' => $visit->load(['patient', 'activeConsultationRoute.doctor', 'pendingConsultationRoutes.doctor', 'latestVitals']),
             'record' => $record?->load(['complaints', 'diagnoses', 'investigations', 'treatments', 'prescriptions.items']),
             'vitals' => $visit->vitals()->with('recordedBy')->latest()->get(),
             'history' => $this->getPatientHistory($visit->patient_id, $visit->id),
@@ -80,7 +80,8 @@ class ConsultationService
     public function getPatientHistory(int $patientId, ?int $excludeVisitId = null): array
     {
         $query = MedicalRecord::with([
-            'visit.assignedDoctor',
+            'visit.activeConsultationRoute.doctor',
+            'visit.pendingConsultationRoutes.doctor',
             'complaints',
             'diagnoses',
             'investigations',

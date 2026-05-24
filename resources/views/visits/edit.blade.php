@@ -191,14 +191,11 @@
                             @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Assign Doctor</label>
-                            <select name="assigned_doctor_id" id="doctorSelect" class="form-select @error('assigned_doctor_id') is-invalid @enderror">
-                                <option value="">Select Doctor (optional)</option>
-                                @foreach($doctors as $doctor)
-                                    <option value="{{ $doctor->id }}" {{ old('assigned_doctor_id', $visit->assigned_doctor_id) == $doctor->id ? 'selected' : '' }}>Dr. {{ $doctor->full_name }}</option>
-                                @endforeach
+                            <label class="form-label">Route Doctor</label>
+                            <select id="doctorSelect" class="form-select">
+                                <option value="">Select a department to load route doctors</option>
                             </select>
-                            @error('assigned_doctor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <div class="form-text">Doctor assignment is stored on consultation routes.</div>
                         </div>
                     </div>
 

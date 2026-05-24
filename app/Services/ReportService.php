@@ -151,7 +151,7 @@ class ReportService
      */
     public function visitReport(array $filters = []): array
     {
-        $query = Visit::with(['patient', 'assignedDoctor']);
+        $query = Visit::with(['patient', 'activeConsultationRoute.doctor', 'pendingConsultationRoutes.doctor']);
 
         if (! empty($filters['date_from'])) {
             $query->whereDate('visit_date', '>=', $filters['date_from']);

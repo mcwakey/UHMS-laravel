@@ -231,14 +231,11 @@
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Assign Doctor</label>
-                            <select name="assigned_doctor_id" id="doctorSelect" class="form-select @error('assigned_doctor_id') is-invalid @enderror">
-                                <option value="">Select Doctor (optional)</option>
-                                @foreach($doctors as $doctor)
-                                    <option value="{{ $doctor->id }}" {{ old('assigned_doctor_id') == $doctor->id ? 'selected' : '' }}>Dr. {{ $doctor->full_name }}</option>
-                                @endforeach
+                            <label class="form-label">Assign Doctor/Staff <small class="text-muted">(optional)</small></label>
+                            <select id="doctorSelect" class="form-select" disabled>
+                                <option value="">Select department first</option>
                             </select>
-                            @error('assigned_doctor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            <div id="doctorSelectHelp" class="form-text">Doctors load from specialties linked to the selected department.</div>
                         </div>
                     </div>
 
@@ -247,7 +244,7 @@
                         <label class="form-label">Available Services</label>
                         <div id="servicesList" class="border rounded p-3 bg-light">
                             <div class="text-muted text-center py-3" id="servicesPlaceholder">
-                                <i class="ti ti-list-search me-1"></i>Select a department or doctor to load available services
+                                <i class="ti ti-list-search me-1"></i>Select a department to load services and route doctors
                             </div>
                             <div id="servicesContent" class="d-none">
                                 <div class="input-group mb-2">
@@ -262,12 +259,13 @@
                     <!-- Selected Services (Billing Lines) -->
                     <div id="selectedServicesCard" class="d-none">
                         <label class="form-label fw-bold"><i class="ti ti-receipt me-1"></i>Selected Services</label>
+                        <div id="routeDoctorSummary" class="small text-muted mb-2"></div>
                         <div class="table-responsive">
                             <table class="table table-sm table-hover table-bordered mb-0" id="billingTable">
                                 <thead class="table-light">
                                     <tr>
+                                        <th style="width: 140px;">Department</th>
                                         <th>Service</th>
-                                        <th style="width: 160px;">Assigned Staff</th>
                                         <th class="text-end" style="width: 120px;">Price</th>
                                         <th class="text-center" style="width: 50px;">Action</th>
                                     </tr>
@@ -426,17 +424,19 @@ document.addEventListener('DOMContentLoaded', function() {
     const formFeedback = document.getElementById('visitFormFeedback');
     const departmentSelect = document.getElementById('departmentSelect');
     const doctorSelect = document.getElementById('doctorSelect');
+    const doctorSelectHelp = document.getElementById('doctorSelectHelp');
     const insuranceCard = document.getElementById('insuranceCard');
     const selectedServicesCard = document.getElementById('selectedServicesCard');
     const serviceFilterInput = document.getElementById('serviceFilter');
     const defaultVisitDate = new Date().toISOString().split('T')[0];
+    const visitOptionsUrlTemplate = @json(route('admin.departments.visit-options', ['department' => '__DEPARTMENT__']));
 
     let debounceTimer;
     let patientInsurances = [];
     let selectedInsurance = null;
     let availableServices = [];
-    let selectedServices = []; // [{service_catalog_id, name, price, quantity, assigned_staff_id}]
-    let allDoctors = @json($doctors->map(fn($d) => ['id' => $d->id, 'name' => 'Dr. ' . $d->full_name]));
+    let availableDoctors = [];
+    let selectedServices = []; // [{service_catalog_id, department_id, doctor_id, name, price, quantity}]
 
     // ==========================================
     // Scheduling toggle based on date
@@ -563,7 +563,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('visitInsuranceId').value = '';
 
         departmentSelect.value = '';
-        repopulateDoctorSelect(allDoctors);
+        availableDoctors = [];
+        repopulateDoctorSelect([]);
         showServicesPlaceholder();
         renderBillingTable();
 
@@ -880,52 +881,33 @@ document.addEventListener('DOMContentLoaded', function() {
     departmentSelect.addEventListener('change', function() {
         const deptId = this.value;
         if (!deptId) {
+            availableServices = [];
+            availableDoctors = [];
+            repopulateDoctorSelect([]);
             showServicesPlaceholder();
             return;
         }
-        loadServicesForDepartment(deptId);
+        loadVisitOptionsForDepartment(deptId);
     });
 
-    function loadServicesForDepartment(deptId) {
-        showServicesLoading();
+    function loadVisitOptionsForDepartment(deptId) {
+        showVisitOptionsLoading();
+        repopulateDoctorSelect([]);
 
-        fetch('{{ route("admin.visits.department-services") }}?department_id=' + deptId, {
+        fetch(visitOptionsUrlTemplate.replace('__DEPARTMENT__', encodeURIComponent(deptId)), {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(r => r.json())
         .then(data => {
-            availableServices = data;
+            availableServices = data.services || [];
+            availableDoctors = data.doctors || [];
+            repopulateDoctorSelect(availableDoctors);
             renderServicesList();
-            updateDoctorsForSelectedServices();
         })
         .catch(() => {
-            document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-alert-circle me-1 text-danger"></i>Failed to load services';
+            document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-alert-circle me-1 text-danger"></i>Failed to load department options';
             document.getElementById('servicesPlaceholder').classList.remove('d-none');
-        });
-    }
-
-    // ==========================================
-    // Doctor â†’ Services loading
-    // ==========================================
-    doctorSelect.addEventListener('change', function() {
-        const doctorId = this.value;
-        if (!doctorId) return;
-
-        if (!departmentSelect.value) {
-            loadServicesForDoctor(doctorId);
-        }
-    });
-
-    function loadServicesForDoctor(doctorId) {
-        showServicesLoading();
-
-        fetch('{{ route("admin.visits.services-for-doctor") }}?doctor_id=' + doctorId, {
-            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(r => r.json())
-        .then(data => {
-            availableServices = data;
-            renderServicesList();
+            repopulateDoctorSelect([]);
         });
     }
 
@@ -934,7 +916,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ==========================================
     function renderServicesList() {
         if (availableServices.length === 0) {
-            document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-info-circle me-1 text-muted"></i>No services found for this selection';
+            document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-info-circle me-1 text-muted"></i>No services are available for this department';
             document.getElementById('servicesPlaceholder').classList.remove('d-none');
             document.getElementById('servicesContent').classList.add('d-none');
             return;
@@ -984,13 +966,13 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function showServicesPlaceholder() {
-        document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-list-search me-1"></i>Select a department or doctor to load available services';
+        document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-list-search me-1"></i>Select a department to load services and route doctors';
         document.getElementById('servicesPlaceholder').classList.remove('d-none');
         document.getElementById('servicesContent').classList.add('d-none');
     }
 
-    function showServicesLoading() {
-        document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-loader me-1"></i>Loading services...';
+    function showVisitOptionsLoading() {
+        document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-loader me-1"></i>Loading services and route doctors...';
         document.getElementById('servicesPlaceholder').classList.remove('d-none');
         document.getElementById('servicesContent').classList.add('d-none');
     }
@@ -1005,24 +987,32 @@ document.addEventListener('DOMContentLoaded', function() {
             existing.quantity++;
             existing.price = resolvedPrice; // refresh price in case insurance changed
         } else {
+            const isConsultation = (svcObj?.department_type || '').toString() === 'consultation';
+            const selectedDoctor = isConsultation && doctorSelect.value
+                ? availableDoctors.find(doc => String(doc.id) === String(doctorSelect.value))
+                : null;
+            const selectedDeptOption = departmentSelect.options[departmentSelect.selectedIndex];
+
             selectedServices.push({
                 service_catalog_id: serviceId,
+                department_id: svcObj?.department_id || departmentSelect.value || null,
+                department_name: selectedDeptOption ? selectedDeptOption.textContent : '',
+                department_type: svcObj?.department_type || null,
+                doctor_id: selectedDoctor ? selectedDoctor.id : null,
+                doctor_name: selectedDoctor ? selectedDoctor.name : null,
                 name: serviceName,
                 price: resolvedPrice,
                 quantity: 1,
-                assigned_staff_id: null,
                 originalService: svcObj,
             });
         }
 
         renderBillingTable();
-        updateDoctorsForSelectedServices();
     }
 
     function removeServiceFromBilling(index) {
         selectedServices.splice(index, 1);
         renderBillingTable();
-        updateDoctorsForSelectedServices();
     }
 
     function updateServiceQuantity(index, newQty) {
@@ -1050,21 +1040,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const qty = svc.quantity || 1;
             const lineTotal = svc.price * qty;
 
-            // Build staff dropdown
-            let staffSelect = '<select class="form-select form-select-sm svc-staff-select" data-index="' + idx + '">';
-            staffSelect += '<option value="">— No staff —</option>';
-            allDoctors.forEach(function(doc) {
-                staffSelect += '<option value="' + doc.id + '"' + (svc.assigned_staff_id == doc.id ? ' selected' : '') + '>' + escapeHtml(doc.name) + '</option>';
-            });
-            staffSelect += '</select>';
-
             html += '<tr>';
+            html += '<td>' + escapeHtml(svc.department_name || '—') + '</td>';
             html += '<td>' + escapeHtml(svc.name);
+            if (svc.department_type === 'consultation' && svc.doctor_name) {
+                html += '<div class="small text-muted">Route doctor: ' + escapeHtml(svc.doctor_name) + '</div>';
+            }
             html += '<input type="hidden" name="services[' + idx + '][service_catalog_id]" value="' + svc.service_catalog_id + '">';
+            html += '<input type="hidden" name="services[' + idx + '][department_id]" value="' + (svc.department_id || '') + '">';
             html += '<input type="hidden" name="services[' + idx + '][quantity]" value="' + qty + '">';
-            html += '<input type="hidden" class="svc-staff-hidden" name="services[' + idx + '][assigned_staff_id]" value="' + (svc.assigned_staff_id || '') + '">';
+            html += '<input type="hidden" name="services[' + idx + '][doctor_id]" value="' + (svc.doctor_id || '') + '">';
             html += '</td>';
-            html += '<td>' + staffSelect + '</td>';
             html += '<td class="text-end fw-medium">\u20B5' + formatNumber(lineTotal) + '</td>';
             html += '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="' + idx + '"><i class="ti ti-trash"></i></button></td>';
             html += '</tr>';
@@ -1078,17 +1064,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        tbody.querySelectorAll('.svc-staff-select').forEach(function(sel) {
-            sel.addEventListener('change', function() {
-                const idx = parseInt(this.dataset.index);
-                selectedServices[idx].assigned_staff_id = this.value ? parseInt(this.value) : null;
-                // Keep hidden input in sync
-                const row = this.closest('tr');
-                const hidden = row.querySelector('.svc-staff-hidden');
-                if (hidden) hidden.value = this.value || '';
-            });
-        });
-
+        updateRouteDoctorSummary();
         recalculateBilling();
     }
 
@@ -1110,27 +1086,33 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('totalAmount').textContent = '\u20B5' + formatNumber(totalAmount);
     }
 
-    // ==========================================
-    // Dynamic doctor filtering based on selected services
-    // ==========================================
-    function updateDoctorsForSelectedServices() {
-        const serviceIds = selectedServices.map(s => s.service_catalog_id);
-        if (serviceIds.length === 0) {
-            repopulateDoctorSelect(allDoctors);
-            return;
-        }
+    function updateRouteDoctorSummary() {
+        const summary = document.getElementById('routeDoctorSummary');
+        if (!summary) return;
 
-        const params = serviceIds.map(id => 'service_ids[]=' + id).join('&');
-        fetch('{{ route("admin.visits.doctors-for-services") }}?' + params, {
-            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(r => r.json())
-        .then(data => { repopulateDoctorSelect(data); });
+        const doctors = selectedServices
+            .filter(svc => svc.department_type === 'consultation' && svc.doctor_name)
+            .map(svc => svc.doctor_name)
+            .filter((name, index, arr) => arr.indexOf(name) === index);
+
+        summary.textContent = doctors.length
+            ? 'Consultation route doctor: ' + doctors.join(', ')
+            : 'Consultation route doctor is optional and captured when each consultation service is added.';
     }
 
     function repopulateDoctorSelect(doctors) {
         const currentVal = doctorSelect.value;
-        doctorSelect.innerHTML = '<option value="">Select Doctor (optional)</option>';
+        doctorSelect.innerHTML = '';
+
+        if (!departmentSelect.value) {
+            doctorSelect.disabled = true;
+            doctorSelect.innerHTML = '<option value="">Select department first</option>';
+            doctorSelectHelp.textContent = 'Doctors load from specialties linked to the selected department.';
+            return;
+        }
+
+        doctorSelect.disabled = false;
+        doctorSelect.innerHTML = '<option value="">Assign Doctor/Staff optional</option>';
         doctors.forEach(function(doc) {
             const opt = document.createElement('option');
             opt.value = doc.id;
@@ -1141,6 +1123,10 @@ document.addEventListener('DOMContentLoaded', function() {
             if (doc.id == currentVal) opt.selected = true;
             doctorSelect.appendChild(opt);
         });
+
+        doctorSelectHelp.textContent = doctors.length
+            ? 'Doctor is stored on the consultation route when you add a consultation service.'
+            : 'No doctor linked to this department through specialty.';
     }
 
     // ==========================================

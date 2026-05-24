@@ -41,7 +41,7 @@
                 <td>{{ $visit->visit_type->label() }}</td>
                 <td>{{ $visit->priority->label() }}</td>
                 <td>—</td>
-                <td>{{ $visit->assignedDoctor?->full_name ?? '—' }}</td>
+                <td>{{ $visit->currentConsultationDoctor()?->full_name ?? '—' }}</td>
                 <td>{{ $visit->status->label() }}</td>
                 <td>{{ $visit->visit_date->format('d M Y') }}</td>
             </tr>

@@ -1120,8 +1120,8 @@
                             <div>
                                 <div class="fw-bold small">{{ $pastRecord->visit?->visit_number ?? 'N/A' }}</div>
                                 <small class="text-muted d-block">{{ $pastRecord->created_at->format('d M Y') }}</small>
-                                @if($pastRecord->visit?->assignedDoctor)
-                                    <small class="text-muted d-block">Dr. {{ Str::limit($pastRecord->visit->assignedDoctor->full_name, 18) }}</small>
+                                @if($pastRecord->visit?->currentConsultationDoctor())
+                                    <small class="text-muted d-block">Dr. {{ Str::limit($pastRecord->visit->currentConsultationDoctor()->full_name, 18) }}</small>
                                 @endif
                                 <small class="text-muted d-block">
                                     {{ $pastRecord->complaints->count() }} complaint(s) &middot; {{ $pastRecord->diagnoses->count() }} dx
@@ -1484,7 +1484,7 @@ $visitHistoryJson = $history['records']->map(function($r) {
     return [
         'visit_number'   => $r->visit?->visit_number ?? 'N/A',
         'date'           => $r->created_at->format('d M Y'),
-        'doctor'         => $r->visit?->assignedDoctor?->full_name ?? null,
+        'doctor'         => $r->visit?->currentConsultationDoctor()?->full_name ?? null,
         'complaints'     => $r->complaints->map(function($c) { return $c->description; })->values()->all(),
         'diagnoses'      => $r->diagnoses->map(function($d) {
             return [

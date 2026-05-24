@@ -52,6 +52,7 @@ use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\TriageController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VisitController;
+use App\Http\Controllers\Admin\VisitDepartmentOptionsController;
 use App\Http\Controllers\Admin\VisitPreviewController;
 use App\Http\Controllers\Admin\VitalController;
 use App\Http\Controllers\Admin\WardController;
@@ -206,6 +207,7 @@ Route::middleware('auth')->group(function () {
             Route::get('visits/patient-search', [VisitController::class, 'patientSearch'])->name('visits.patient-search');
             Route::get('visits/patient-insurances', [VisitController::class, 'patientInsurances'])->name('visits.patient-insurances')->middleware('module:insurance');
             Route::get('visits/department-services', [VisitController::class, 'departmentServices'])->name('visits.department-services');
+            Route::get('departments/{department}/visit-options', [VisitDepartmentOptionsController::class, 'show'])->name('departments.visit-options');
             Route::get('visits/doctors-for-services', [VisitController::class, 'doctorsForServices'])->name('visits.doctors-for-services');
             Route::get('visits/services-for-doctor', [VisitController::class, 'servicesForDoctor'])->name('visits.services-for-doctor');
             Route::get('visits/service-price', [VisitController::class, 'servicePrice'])->name('visits.service-price');

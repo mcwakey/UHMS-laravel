@@ -160,7 +160,7 @@
                                 <span class="badge bg-{{ $visit->triage_score->color() }} ms-1">{{ $visit->triage_score->label() }}</span>
                             @endif
                         </td>
-                        <td>{{ $visit->assignedDoctor?->full_name ?? '—' }}</td>
+                        <td>{{ $visit->currentConsultationDoctor()?->full_name ?? '—' }}</td>
                         <td>
                             <span class="badge bg-{{ $visit->status->color() }}">{{ $visit->status->label() }}</span>
                         </td>

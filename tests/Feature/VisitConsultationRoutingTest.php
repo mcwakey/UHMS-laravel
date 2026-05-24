@@ -1,0 +1,274 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Enums\DepartmentType;
+use App\Enums\Priority;
+use App\Enums\ServiceType;
+use App\Enums\VisitStatus;
+use App\Enums\VisitType;
+use App\Models\Department;
+use App\Models\InvoiceItem;
+use App\Models\Patient;
+use App\Models\ServiceCatalog;
+use App\Models\Specialty;
+use App\Models\User;
+use App\Models\Visit;
+use App\Models\VisitConsultationRoute;
+use App\Services\VisitWorkflowService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
+use Tests\TestCase;
+
+class VisitConsultationRoutingTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private User $admin;
+
+    private User $doctor;
+
+    private User $otherDoctor;
+
+    private Department $department;
+
+    private Specialty $specialty;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        $this->department = Department::factory()->create([
+            'name' => 'General Medicine',
+            'type' => DepartmentType::CONSULTATION->value,
+        ]);
+
+        $this->specialty = Specialty::create([
+            'name' => 'Internal Medicine',
+            'department_id' => $this->department->id,
+            'is_active' => true,
+        ]);
+
+        $adminRole = Role::findOrCreate('Admin', 'web');
+        foreach (['visits.view', 'visits.create', 'consultations.view', 'consultations.create'] as $permission) {
+            $adminRole->givePermissionTo(Permission::findOrCreate($permission, 'web'));
+        }
+
+        $doctorRole = Role::findOrCreate('Doctor', 'web');
+
+        $this->admin = User::factory()->create(['department_id' => $this->department->id]);
+        $this->admin->assignRole($adminRole);
+
+        $this->doctor = User::factory()->create([
+            'first_name' => 'Ama',
+            'last_name' => 'Mensah',
+            'department_id' => $this->department->id,
+        ]);
+        $this->doctor->assignRole($doctorRole);
+        $this->doctor->specialties()->attach($this->specialty->id);
+
+        $otherDepartment = Department::factory()->create([
+            'name' => 'Surgery',
+            'type' => DepartmentType::CONSULTATION->value,
+        ]);
+        $otherSpecialty = Specialty::create([
+            'name' => 'Surgery',
+            'department_id' => $otherDepartment->id,
+            'is_active' => true,
+        ]);
+
+        $this->otherDoctor = User::factory()->create([
+            'first_name' => 'Kojo',
+            'last_name' => 'Owusu',
+            'department_id' => $otherDepartment->id,
+        ]);
+        $this->otherDoctor->assignRole($doctorRole);
+        $this->otherDoctor->specialties()->attach($otherSpecialty->id);
+    }
+
+    public function test_department_visit_options_load_services_and_specialty_linked_doctors(): void
+    {
+        $service = $this->makeService($this->department);
+
+        $response = $this->actingAs($this->admin)
+            ->getJson(route('admin.departments.visit-options', $this->department));
+
+        $response->assertOk()
+            ->assertJsonPath('services.0.id', $service->id)
+            ->assertJsonPath('services.0.base_price', 50)
+            ->assertJsonPath('services.0.department_id', $this->department->id)
+            ->assertJsonPath('services.0.department_type', DepartmentType::CONSULTATION->value)
+            ->assertJsonFragment(['id' => $this->doctor->id]);
+
+        $this->assertNotContains(
+            $this->otherDoctor->id,
+            collect($response->json('doctors'))->pluck('id')->all()
+        );
+    }
+
+    public function test_create_visit_saves_selected_doctor_on_consultation_route_not_visit(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->admin->id]);
+        $service = $this->makeService($this->department);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.visits.store'), $this->visitPayload($patient, [[
+                'service_catalog_id' => $service->id,
+                'department_id' => $this->department->id,
+                'doctor_id' => $this->doctor->id,
+                'quantity' => 1,
+            ]]))
+            ->assertRedirect();
+
+        $visit = Visit::where('patient_id', $patient->id)->firstOrFail();
+        $route = VisitConsultationRoute::where('visit_id', $visit->id)->firstOrFail();
+
+        $this->assertFalse(Schema::hasColumn('visits', 'assigned_doctor_id'));
+        $this->assertSame($this->doctor->id, $route->doctor_id);
+        $this->assertSame(VisitConsultationRoute::STATUS_PENDING, $route->status);
+        $this->assertSame(1, InvoiceItem::where('visit_id', $visit->id)->where('service_catalog_id', $service->id)->count());
+    }
+
+    public function test_non_consultation_services_do_not_create_consultation_routes(): void
+    {
+        $labDepartment = Department::factory()->create([
+            'name' => 'Laboratory',
+            'type' => DepartmentType::INVESTIGATION->value,
+        ]);
+        $service = $this->makeService($labDepartment, DepartmentType::INVESTIGATION);
+        $patient = Patient::factory()->create(['registered_by' => $this->admin->id]);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.visits.store'), $this->visitPayload($patient, [[
+                'service_catalog_id' => $service->id,
+                'department_id' => $labDepartment->id,
+                'doctor_id' => $this->doctor->id,
+                'quantity' => 1,
+            ]]))
+            ->assertRedirect();
+
+        $visit = Visit::where('patient_id', $patient->id)->firstOrFail();
+
+        $this->assertSame(0, VisitConsultationRoute::where('visit_id', $visit->id)->count());
+        $this->assertSame(1, InvoiceItem::where('visit_id', $visit->id)->where('service_catalog_id', $service->id)->count());
+    }
+
+    public function test_doctor_not_linked_to_department_specialty_cannot_be_assigned(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->admin->id]);
+        $service = $this->makeService($this->department);
+
+        $this->actingAs($this->admin)
+            ->postJson(route('admin.visits.store'), $this->visitPayload($patient, [[
+                'service_catalog_id' => $service->id,
+                'department_id' => $this->department->id,
+                'doctor_id' => $this->otherDoctor->id,
+                'quantity' => 1,
+            ]]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['services.0.doctor_id']);
+    }
+
+    public function test_create_visit_page_selected_services_table_has_no_assigned_staff_column(): void
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.visits.create'));
+        $content = $response->getContent();
+
+        $response->assertOk();
+        $this->assertStringContainsString('Assign Doctor\\/Staff', $content);
+        $this->assertStringNotContainsString('Assigned Staff', $content);
+        $this->assertStringNotContainsString('assigned_staff_id', $content);
+    }
+
+    public function test_consultation_queue_displays_route_doctor(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->admin->id]);
+        $service = $this->makeService($this->department);
+        $visit = Visit::factory()->create([
+            'patient_id' => $patient->id,
+            'created_by' => $this->admin->id,
+            'visit_type' => VisitType::OUTPATIENT,
+            'status' => VisitStatus::WAITING_CONSULTATION,
+            'current_department_id' => $this->department->id,
+        ]);
+
+        VisitConsultationRoute::create([
+            'visit_id' => $visit->id,
+            'patient_id' => $patient->id,
+            'department_id' => $this->department->id,
+            'service_id' => $service->id,
+            'doctor_id' => $this->doctor->id,
+            'status' => VisitConsultationRoute::STATUS_PENDING,
+            'routed_by' => $this->admin->id,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.consultations.index'))
+            ->assertOk()
+            ->assertSee($visit->visit_number)
+            ->assertSee('Dr. '.$this->doctor->full_name);
+    }
+
+    public function test_start_consultation_keeps_existing_route_doctor(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->admin->id]);
+        $service = $this->makeService($this->department);
+        $visit = Visit::factory()->create([
+            'patient_id' => $patient->id,
+            'created_by' => $this->admin->id,
+            'visit_type' => VisitType::OUTPATIENT,
+            'status' => VisitStatus::WAITING_CONSULTATION,
+            'current_department_id' => $this->department->id,
+        ]);
+
+        $route = VisitConsultationRoute::create([
+            'visit_id' => $visit->id,
+            'patient_id' => $patient->id,
+            'department_id' => $this->department->id,
+            'service_id' => $service->id,
+            'doctor_id' => $this->doctor->id,
+            'status' => VisitConsultationRoute::STATUS_PENDING,
+            'routed_by' => $this->admin->id,
+        ]);
+
+        $this->actingAs($this->admin);
+        app(VisitWorkflowService::class)->startConsultation($visit, $this->admin);
+
+        $route->refresh();
+        $this->assertSame($this->doctor->id, $route->doctor_id);
+        $this->assertSame(VisitConsultationRoute::STATUS_ACTIVE, $route->status);
+        $this->assertSame(VisitStatus::CONSULTING, $visit->fresh()->status);
+    }
+
+    private function makeService(Department $department, DepartmentType $type = DepartmentType::CONSULTATION): ServiceCatalog
+    {
+        return ServiceCatalog::create([
+            'name' => $department->name.' Service',
+            'code' => 'SVC'.random_int(1000, 9999),
+            'category' => $type === DepartmentType::CONSULTATION
+                ? ServiceType::CONSULTATION->value
+                : ServiceType::INVESTIGATION->value,
+            'department_id' => $department->id,
+            'department_type' => $type->value,
+            'price' => 50,
+            'is_active' => true,
+            'is_billable' => true,
+        ]);
+    }
+
+    private function visitPayload(Patient $patient, array $services): array
+    {
+        return [
+            'patient_id' => $patient->id,
+            'visit_type' => VisitType::OUTPATIENT->value,
+            'priority' => Priority::NORMAL->value,
+            'chief_complaint' => 'Routing regression',
+            'services' => $services,
+        ];
+    }
+}
