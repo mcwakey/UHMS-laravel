@@ -72,7 +72,8 @@ class ClaimController extends Controller
             })
             ->whereHas('invoices.items', function ($query) {
                 $query->where(function ($q) {
-                    $q->where('insurance_covered', '>', 0)
+                    $q->where('payer_type', 'insurance')
+                        ->orWhere('insurance_covered', '>', 0)
                         ->orWhere(function ($legacy) {
                             $legacy->where('is_nhis_covered', true)
                                 ->where('nhis_approved_amount', '>', 0);

@@ -623,6 +623,9 @@ class BillingService
         $visit->loadMissing('labRequests.items.labTest');
         foreach ($visit->labRequests as $labRequest) {
             foreach ($labRequest->items as $item) {
+                if (! $item->labTest) {
+                    continue;
+                }
                 $labService = ServiceCatalog::where('category', 'lab')
                     ->where('code', 'LAB-'.$item->labTest->code)
                     ->where('is_active', true)
