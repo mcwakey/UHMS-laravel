@@ -404,6 +404,22 @@ class SidebarMenuBuilder
                         'permission' => 'claims.view',
                         'module' => 'claims',
                     ],
+                    [
+                        'label' => 'Eligible Visits',
+                        'icon' => 'ti ti-user-check',
+                        'route' => 'admin.claims.eligible-visits',
+                        'active_patterns' => ['admin.claims.eligible-visits'],
+                        'permission' => 'claims.view',
+                        'module' => 'claims',
+                    ],
+                    [
+                        'label' => 'NHIA Claims',
+                        'icon' => 'ti ti-shield-check',
+                        'route' => 'admin.claims.nhia.index',
+                        'active_patterns' => ['admin.claims.nhia.*'],
+                        'permission' => 'claims.nhia.view',
+                        'module' => 'claims',
+                    ],
                     // [
                     //     'label' => 'New Claim',
                     //     'icon' => 'ti ti-file-plus',

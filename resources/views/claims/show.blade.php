@@ -11,16 +11,37 @@
         </h4>
     </div>
     <div class="d-flex gap-2">
-        @if($claim->is_editable)
+        @if($claim->is_editable || $claim->status === \App\Enums\ClaimStatus::READY)
             @can('claims.create')
+            @if($claim->is_editable)
+            <form method="POST" action="{{ route('admin.claims.validate', $claim) }}" class="d-inline">
+                @csrf
+                <button type="submit" class="btn btn-outline-info btn-md fs-13">
+                    <i class="ti ti-shield-check me-1"></i>Validate Claim
+                </button>
+            </form>
+            <form method="POST" action="{{ route('admin.claims.mark-ready', $claim) }}" class="d-inline">
+                @csrf
+                <button type="submit" class="btn btn-outline-primary btn-md fs-13">
+                    <i class="ti ti-circle-check me-1"></i>Mark Ready
+                </button>
+            </form>
+            @endif
             <form method="POST" action="{{ route('admin.claims.submit', $claim) }}" class="d-inline">
                 @csrf
-                <button type="submit" class="btn btn-primary btn-md fs-13" onclick="return confirm('Submit this claim for review?')">
-                    <i class="ti ti-send me-1"></i>Submit for Review
+                <input type="hidden" name="submission_mode" value="{{ $claim->claim_workflow_code === 'NHIA' ? 'EXPORT' : 'MANUAL' }}">
+                <button type="submit" class="btn btn-primary btn-md fs-13" onclick="return confirm('Submit this claim?')">
+                    <i class="ti ti-send me-1"></i>Mark Submitted
                 </button>
             </form>
             @endcan
         @endif
+
+        @can('claims.export')
+        <a href="{{ route('admin.claims.export-one', $claim) }}" class="btn btn-outline-success btn-md fs-13">
+            <i class="ti ti-file-spreadsheet me-1"></i>Export
+        </a>
+        @endcan
 
         @if($claim->is_reviewable)
             @can('claims.approve')
@@ -64,6 +85,20 @@
 @if(session('error'))
 <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
 @endif
+@if(($validation ?? null) && (!$validation->valid || $validation->warnings))
+<div class="alert {{ $validation->valid ? 'alert-warning' : 'alert-danger' }}">
+    <div class="fw-semibold mb-1">
+        <i class="ti ti-shield-check me-1"></i>
+        Validation {{ $validation->valid ? 'passed with warnings' : 'requires attention' }}
+    </div>
+    @foreach($validation->errors as $error)
+        <div>{{ $error }}</div>
+    @endforeach
+    @foreach($validation->warnings as $warning)
+        <div class="text-muted">{{ $warning }}</div>
+    @endforeach
+</div>
+@endif
 
 <div class="row">
     <!-- Claim Info -->
@@ -81,6 +116,13 @@
                     <tr>
                         <td class="text-muted">Status</td>
                         <td><span class="badge bg-{{ $claim->status->color() }}">{{ $claim->status->label() }}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="text-muted">Claim Type</td>
+                        <td>
+                            <span class="badge bg-primary-subtle text-primary">{{ $claim->claim_type_code ?: $claim->insuranceType?->code ?: 'GENERIC' }}</span>
+                            <small class="text-muted d-block">{{ $claim->claim_workflow_code ?: $claim->insuranceProvider?->claimWorkflowCode() }}</small>
+                        </td>
                     </tr>
                     <tr>
                         <td class="text-muted">Claim Date</td>
@@ -124,6 +166,12 @@
                         <td class="text-muted">Created By</td>
                         <td>{{ $claim->createdByUser->name ?? 'N/A' }}</td>
                     </tr>
+                    @if($claim->preparedBy)
+                    <tr>
+                        <td class="text-muted">Prepared By</td>
+                        <td>{{ $claim->preparedBy->name }}</td>
+                    </tr>
+                    @endif
                     <tr>
                         <td class="text-muted">Created</td>
                         <td>{{ $claim->created_at->format('d M Y H:i') }}</td>
@@ -140,6 +188,10 @@
             <div class="card-body">
                 <h6 class="mb-1">{{ $claim->insuranceProvider->name }}</h6>
                 <span class="badge bg-{{ $claim->insuranceProvider->type->color() }} mb-2">{{ $claim->insuranceProvider->type->label() }}</span>
+                @if($claim->insuranceProvider->insuranceType)
+                    <span class="badge bg-primary-subtle text-primary mb-2">{{ $claim->insuranceProvider->insuranceType->code }}</span>
+                    <div><small class="text-muted">Workflow: {{ $claim->insuranceProvider->insuranceType->claim_workflow ?: 'GENERIC' }}</small></div>
+                @endif
                 @if($claim->insuranceProvider->contact_phone)
                     <div><small class="text-muted"><i class="ti ti-phone me-1"></i>{{ $claim->insuranceProvider->contact_phone }}</small></div>
                 @endif
@@ -194,6 +246,28 @@
                 @endif
             </div>
         </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Membership & Verification</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-2">
+                    <small class="text-muted d-block">Membership Number</small>
+                    <span class="fw-semibold">{{ $claim->membership_number ?: 'N/A' }}</span>
+                </div>
+                <form method="POST" action="{{ route('admin.claims.verification-code', $claim) }}">
+                    @csrf
+                    <label class="form-label">{{ $claim->insuranceProvider?->verificationCodeLabel() ?? 'Verification Code' }}</label>
+                    <div class="input-group">
+                        <input type="text" name="verification_code" class="form-control" value="{{ old('verification_code', $claim->verification_code) }}">
+                        @can('claims.create')
+                        <button type="submit" class="btn btn-outline-primary">Update</button>
+                        @endcan
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <!-- Claim Items -->
@@ -215,6 +289,7 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Service</th>
+                                <th>Department</th>
                                 <th>Type</th>
                                 <th class="text-center">Qty</th>
                                 <th class="text-end">Unit Price</th>
@@ -229,7 +304,8 @@
                         <tbody>
                             @foreach($claim->items as $item)
                             <tr>
-                                <td class="fw-medium">{{ $item->service_name }}</td>
+                                <td class="fw-medium">{{ $item->description ?: $item->service_name }}</td>
+                                <td>{{ $item->department?->name ?? '-' }}</td>
                                 <td><span class="badge bg-light text-dark">{{ $item->service_type->label() }}</span></td>
                                 <td class="text-center">{{ $item->quantity }}</td>
                                 <td class="text-end">GH₵ {{ number_format($item->unit_price, 2) }}</td>
@@ -255,7 +331,7 @@
                             </tr>
                             @if($item->rejection_reason)
                             <tr>
-                                <td colspan="{{ $claim->is_editable ? 8 : 7 }}" class="py-1 ps-4">
+                                <td colspan="{{ $claim->is_editable ? 9 : 8 }}" class="py-1 ps-4">
                                     <small class="text-danger"><i class="ti ti-alert-circle me-1"></i>{{ $item->rejection_reason }}</small>
                                 </td>
                             </tr>
@@ -264,7 +340,7 @@
                         </tbody>
                         <tfoot class="table-light">
                             <tr class="fw-bold">
-                                <td colspan="4" class="text-end">Total:</td>
+                                <td colspan="5" class="text-end">Total:</td>
                                 <td class="text-end">GH₵ {{ number_format($claim->total_amount, 2) }}</td>
                                 <td class="text-end">
                                     @if($claim->approved_amount !== null)
@@ -293,6 +369,57 @@
             </div>
         </div>
         @endif
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Claim Payments</h5>
+            </div>
+            <div class="card-body">
+                @if($claim->payments->isNotEmpty())
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Reference</th>
+                                    <th>Method</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($claim->payments as $payment)
+                                <tr>
+                                    <td>{{ $payment->payment_date?->format('d M Y') }}</td>
+                                    <td>{{ $payment->payment_reference ?: '-' }}</td>
+                                    <td>{{ $payment->payment_method ?: '-' }}</td>
+                                    <td class="text-end">GHS {{ number_format($payment->amount, 2) }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @else
+                    <p class="text-muted mb-3">No insurer payments recorded.</p>
+                @endif
+                @can('claims.approve')
+                <form method="POST" action="{{ route('admin.claims.payments.store', $claim) }}" class="row g-2">
+                    @csrf
+                    <div class="col-md-3">
+                        <input type="date" name="payment_date" class="form-control" value="{{ now()->toDateString() }}" required>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="number" name="amount" class="form-control" min="0.01" step="0.01" placeholder="Amount" required>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="text" name="payment_reference" class="form-control" placeholder="Reference">
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-outline-success w-100">Record Payment</button>
+                    </div>
+                </form>
+                @endcan
+            </div>
+        </div>
     </div>
 </div>
 

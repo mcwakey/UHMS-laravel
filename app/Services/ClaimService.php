@@ -7,8 +7,13 @@ use App\Enums\ClaimStatus;
 use App\Enums\ServiceType;
 use App\Models\Claim;
 use App\Models\ClaimItem;
+use App\Models\InsuranceProvider;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\User;
+use App\Services\Claims\ClaimStatusService;
+use App\Services\Claims\ClaimValidationResult;
+use App\Services\Claims\ClaimWorkflowManager;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -16,16 +21,23 @@ use Illuminate\Support\Facades\DB;
 
 class ClaimService
 {
+    public function __construct(
+        private ClaimWorkflowManager $workflowManager,
+        private ClaimStatusService $statusService,
+    ) {}
+
     /**
      * List claims with filters.
      */
     public function list(array $filters = []): LengthAwarePaginator
     {
-        return Claim::with(['insuranceProvider', 'patient', 'visit', 'invoice', 'assignedDoctor'])
+        return Claim::with(['insuranceType', 'insuranceProvider.insuranceType', 'patient', 'visit', 'invoice', 'assignedDoctor'])
             ->withCount('items')
             ->when($filters['search'] ?? null, fn ($q, $s) => $q->search($s))
             ->when($filters['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
             ->when($filters['provider_id'] ?? null, fn ($q, $p) => $q->byProvider($p))
+            ->when($filters['insurance_type_id'] ?? null, fn ($q, $p) => $q->where('insurance_type_id', $p))
+            ->when($filters['workflow'] ?? null, fn ($q, $p) => $q->where('claim_workflow_code', strtoupper($p)))
             ->when($filters['date_from'] ?? null, fn ($q, $d) => $q->where('claim_date', '>=', $d))
             ->when($filters['date_to'] ?? null, fn ($q, $d) => $q->where('claim_date', '<=', $d))
             ->latest('claim_date')
@@ -37,69 +49,25 @@ class ClaimService
      */
     public function createFromInvoice(Invoice $invoice, ?int $providerId = null, ?int $doctorId = null): Claim
     {
-        return DB::transaction(function () use ($invoice, $providerId, $doctorId) {
-            $invoice->load(['items.serviceCatalog', 'visit.visitInsurance.insuranceProvider', 'visit.insuranceVerification', 'patient']);
+        $invoice->loadMissing(['items.serviceCatalog', 'visit.visitInsurance.insuranceProvider.insuranceType', 'patient']);
+        $providerId ??= $invoice->visit?->visitInsurance?->insurance_provider_id;
 
-            $existingClaim = Claim::where('invoice_id', $invoice->id)->first();
-            if ($existingClaim) {
-                return $existingClaim->fresh(['items', 'insuranceProvider', 'patient', 'invoice']);
-            }
+        if (! $providerId) {
+            throw new \InvalidArgumentException('Select an insurance provider before creating this claim.');
+        }
 
-            $providerId ??= $invoice->visit?->visitInsurance?->insurance_provider_id;
+        $provider = InsuranceProvider::with('insuranceType')->findOrFail($providerId);
+        $user = Auth::user()
+            ?: User::find($invoice->created_by)
+            ?: User::query()->first();
 
-            if (! $providerId) {
-                throw new \InvalidArgumentException('Select an insurance provider before creating this claim.');
-            }
+        if (! $user) {
+            throw new \InvalidArgumentException('A user is required to prepare an insurance claim.');
+        }
 
-            $claimableItems = $this->claimableInvoiceItems($invoice);
-
-            if ($claimableItems->isEmpty()) {
-                throw new \InvalidArgumentException('This invoice has no insurance-covered items to claim.');
-            }
-
-            $periodDate = $invoice->visit?->visit_date?->toDateString()
-                ?? $invoice->created_at?->toDateString()
-                ?? now()->toDateString();
-
-            $verification = $invoice->visit?->insuranceVerification;
-
-            $claim = Claim::create([
-                'claim_number' => Claim::generateClaimNumber(),
-                'insurance_provider_id' => $providerId,
-                'patient_id' => $invoice->patient_id,
-                'visit_id' => $invoice->visit_id,
-                'invoice_id' => $invoice->id,
-                'insurance_verification_id' => $verification?->id,
-                'verification_reference' => $verification?->reference_code,
-                'claim_date' => now()->toDateString(),
-                'period_from' => $periodDate,
-                'period_to' => $periodDate,
-                'total_amount' => 0,
-                'status' => ClaimStatus::DRAFT,
-                'assigned_doctor_id' => $doctorId,
-                'created_by' => Auth::id(),
-            ]);
-
-            foreach ($claimableItems as $item) {
-                $quantity = max(1, (int) ($item->quantity ?? 1));
-                $lineTotal = (float) ($item->total_price ?: ((float) $item->selected_price * $quantity));
-                $claimAmount = min($this->insuranceCoveredAmount($item), $lineTotal);
-
-                ClaimItem::create([
-                    'claim_id' => $claim->id,
-                    'service_name' => $item->description ?? $item->service_name ?? 'Service',
-                    'service_type' => $this->mapServiceType($item),
-                    'quantity' => $quantity,
-                    'unit_price' => round($claimAmount / $quantity, 2),
-                    'total_price' => $claimAmount,
-                    'status' => ClaimItemStatus::PENDING,
-                ]);
-            }
-
-            $claim->recalculateTotal();
-
-            return $claim->fresh(['items', 'insuranceProvider', 'patient']);
-        });
+        return $this->workflowManager
+            ->forProvider($provider)
+            ->prepareFromInvoice($invoice, $provider, $user, $doctorId);
     }
 
     /**
@@ -160,18 +128,32 @@ class ClaimService
      */
     public function submit(Claim $claim): Claim
     {
-        if (! $claim->status->canTransitionTo(ClaimStatus::SUBMITTED)) {
-            throw new \InvalidArgumentException('Cannot submit claim from current status.');
+        $user = Auth::user();
+        if (! $user) {
+            throw new \InvalidArgumentException('A user is required to submit this claim.');
         }
 
-        if ($claim->items()->count() === 0) {
-            throw new \InvalidArgumentException('Cannot submit claim with no items.');
+        return $this->workflowManager->forClaim($claim)->submit($claim, $user);
+    }
+
+    public function validateClaim(Claim $claim): ClaimValidationResult
+    {
+        return $this->workflowManager->forClaim($claim)->validateClaim($claim);
+    }
+
+    public function markReady(Claim $claim): Claim
+    {
+        $user = Auth::user();
+        if (! $user) {
+            throw new \InvalidArgumentException('A user is required to mark this claim ready.');
         }
 
-        $claim->update([
-            'status' => ClaimStatus::SUBMITTED,
-            'submitted_at' => now(),
-        ]);
+        return $this->workflowManager->forClaim($claim)->markReady($claim, $user);
+    }
+
+    public function updateVerificationCode(Claim $claim, ?string $verificationCode): Claim
+    {
+        $claim->update(['verification_code' => $verificationCode]);
 
         return $claim->fresh();
     }
@@ -185,9 +167,9 @@ class ClaimService
             throw new \InvalidArgumentException('Cannot start review from current status.');
         }
 
-        $claim->update(['status' => ClaimStatus::UNDER_REVIEW]);
+        $this->statusService->transition($claim, ClaimStatus::UNDER_REVIEW, Auth::user(), 'Claim review started.');
 
-        return $claim;
+        return $claim->fresh();
     }
 
     /**
@@ -228,9 +210,10 @@ class ClaimService
         };
 
         $claim->recalculateApproved();
-        $claim->update([
-            'status' => $newStatus,
+        $this->statusService->transition($claim, $newStatus, Auth::user(), $notes, [
             'reviewed_at' => now(),
+            'reviewed_by' => Auth::id(),
+            'approved_by' => $newStatus === ClaimStatus::REJECTED ? null : Auth::id(),
             'reviewer_notes' => $notes,
         ]);
 
@@ -242,9 +225,11 @@ class ClaimService
      */
     public function markPaid(Claim $claim): Claim
     {
-        $claim->update(['status' => ClaimStatus::PAID]);
+        $this->statusService->transition($claim, ClaimStatus::PAID, Auth::user(), 'Claim marked paid manually.', [
+            'paid_amount' => $claim->approved_amount ?: $claim->total_claim_amount ?: $claim->total_amount,
+        ]);
 
-        return $claim;
+        return $claim->fresh();
     }
 
     /**
@@ -256,9 +241,9 @@ class ClaimService
             throw new \InvalidArgumentException('Cannot appeal claim from current status.');
         }
 
-        $claim->update(['status' => ClaimStatus::APPEALED]);
+        $this->statusService->transition($claim, ClaimStatus::APPEALED, Auth::user(), 'Claim appealed.');
 
-        // Reset item statuses for re-review
+        // Reset item statuses for re-review.
         $claim->items()->update([
             'status' => ClaimItemStatus::PENDING,
             'approved_amount' => null,

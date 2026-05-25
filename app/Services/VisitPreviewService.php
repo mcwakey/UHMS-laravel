@@ -250,10 +250,11 @@ class VisitPreviewService
             $sessionService = optional($mr->service ?? $mr->consultationRoute?->service)->name;
             $serviceList = $routeServices->isNotEmpty() ? $routeServices->implode(', ') : $sessionService;
             $sessionLabel = $sessionDepartment ?: 'Consultation Department';
+            $sessionTitle = $sessionDepartment ? "{$sessionLabel} Session Started" : 'Consultation Started';
 
             $items[] = $this->item(
                 $mr->created_at,
-                "{$sessionLabel} Session Started",
+                $sessionTitle,
                 ($sessionLabel ? "{$sessionLabel}: " : '').'Medical record opened by '.(optional($mr->doctor)->full_name ?: 'physician').'.',
                 optional($mr->doctor)->full_name,
                 $sessionDepartment,

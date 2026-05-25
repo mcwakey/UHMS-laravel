@@ -10,6 +10,12 @@
         </h4>
     </div>
     <div class="text-end d-flex gap-2">
+        <a href="{{ route('admin.claims.eligible-visits') }}" class="btn btn-outline-primary btn-md fs-13">
+            <i class="ti ti-user-check me-1"></i>Eligible Visits
+        </a>
+        <a href="{{ route('admin.claims.nhia.index') }}" class="btn btn-outline-info btn-md fs-13">
+            <i class="ti ti-shield-check me-1"></i>NHIA Claims
+        </a>
         @can('claims.export')
         <a href="{{ route('admin.claims.export', request()->all()) }}" class="btn btn-outline-success btn-md fs-13">
             <i class="ti ti-file-spreadsheet me-1"></i>Export CSV
@@ -118,6 +124,14 @@
                 </select>
             </div>
             <div class="col-md-2">
+                <select name="insurance_type_id" class="form-select">
+                    <option value="">All Claim Types</option>
+                    @foreach($insuranceTypes as $type)
+                        <option value="{{ $type->id }}" {{ request('insurance_type_id') == $type->id ? 'selected' : '' }}>{{ $type->code }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
                 <input type="date" name="date_from" class="form-control" placeholder="From" value="{{ request('date_from') }}">
             </div>
             <div class="col-md-1">
@@ -142,6 +156,7 @@
                         <th>Claim #</th>
                         <th>Patient</th>
                         <th>Provider</th>
+                        <th>Claim Type</th>
                         <th>Claim Date</th>
                         <th class="text-end">Total</th>
                         <th class="text-end">Approved</th>
@@ -160,6 +175,10 @@
                         </td>
                         <td>{{ $claim->patient->first_name }} {{ $claim->patient->last_name }}</td>
                         <td><span class="badge bg-{{ $claim->insuranceProvider->type->color() }}">{{ $claim->insuranceProvider->short_name ?? $claim->insuranceProvider->name }}</span></td>
+                        <td>
+                            <span class="badge bg-primary-subtle text-primary">{{ $claim->claim_type_code ?: $claim->insuranceType?->code ?: 'GENERIC' }}</span>
+                            <small class="text-muted d-block">{{ $claim->claim_workflow_code ?: $claim->insuranceProvider?->claimWorkflowCode() }}</small>
+                        </td>
                         <td>{{ $claim->claim_date->format('d M Y') }}</td>
                         <td class="text-end fw-medium">GH₵ {{ number_format($claim->total_amount, 2) }}</td>
                         <td class="text-end">
@@ -207,7 +226,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center text-muted py-4">
+                        <td colspan="10" class="text-center text-muted py-4">
                             <i class="ti ti-file-off fs-2 d-block mb-2"></i>
                             No claims found
                         </td>

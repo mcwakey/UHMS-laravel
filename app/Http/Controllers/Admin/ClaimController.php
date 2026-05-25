@@ -10,10 +10,13 @@ use App\Http\Requests\StoreClaimRequest;
 use App\Models\Claim;
 use App\Models\ClaimItem;
 use App\Models\InsuranceProvider;
+use App\Models\InsuranceType as InsuranceTypeModel;
 use App\Models\Invoice;
 use App\Models\Patient;
 use App\Models\User;
 use App\Models\Visit;
+use App\Services\Claims\ClaimPaymentService;
+use App\Services\Claims\ClaimWorkflowManager;
 use App\Services\ClaimService;
 use Illuminate\Http\Request;
 
@@ -21,6 +24,8 @@ class ClaimController extends Controller
 {
     public function __construct(
         private ClaimService $claimService,
+        private ClaimWorkflowManager $workflowManager,
+        private ClaimPaymentService $claimPaymentService,
     ) {}
 
     /**
@@ -30,10 +35,65 @@ class ClaimController extends Controller
     {
         $stats = $this->claimService->getStats();
         $claims = $this->claimService->list($request->all());
-        $providers = InsuranceProvider::active()->orderBy('name')->get();
+        $providers = InsuranceProvider::with('insuranceType')->active()->orderBy('name')->get();
+        $insuranceTypes = InsuranceTypeModel::active()->orderBy('name')->get();
         $statuses = ClaimStatus::cases();
 
-        return view('claims.index', compact('claims', 'stats', 'providers', 'statuses'));
+        return view('claims.index', compact('claims', 'stats', 'providers', 'insuranceTypes', 'statuses'));
+    }
+
+    public function nhiaIndex(Request $request)
+    {
+        $request->merge(['workflow' => 'NHIA']);
+
+        return $this->index($request);
+    }
+
+    public function eligibleVisits(Request $request)
+    {
+        $insuranceTypes = InsuranceTypeModel::active()
+            ->whereNotNull('claim_workflow')
+            ->orderBy('name')
+            ->get();
+
+        $selectedTypeCode = strtoupper((string) ($request->input('type') ?: $request->input('workflow') ?: ''));
+
+        $visits = Visit::query()
+            ->with([
+                'patient',
+                'visitInsurance.insuranceProvider.insuranceType',
+                'latestInvoice.items',
+            ])
+            ->whereHas('visitInsurance.insuranceProvider.insuranceType', function ($query) use ($selectedTypeCode) {
+                $query->where('requires_claim_submission', true);
+                if ($selectedTypeCode !== '') {
+                    $query->where('code', $selectedTypeCode);
+                }
+            })
+            ->whereHas('invoices.items', function ($query) {
+                $query->where(function ($q) {
+                    $q->where('insurance_covered', '>', 0)
+                        ->orWhere(function ($legacy) {
+                            $legacy->where('is_nhis_covered', true)
+                                ->where('nhis_approved_amount', '>', 0);
+                        });
+                });
+            })
+            ->whereDoesntHave('invoices.claim', function ($query) {
+                $query->whereNotIn('status', [ClaimStatus::CANCELLED->value, ClaimStatus::REJECTED->value]);
+            })
+            ->latest('visit_date')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('claims.eligible-visits', compact('visits', 'insuranceTypes', 'selectedTypeCode'));
+    }
+
+    public function nhiaEligibleVisits(Request $request)
+    {
+        $request->merge(['type' => 'NHIA']);
+
+        return $this->eligibleVisits($request);
     }
 
     /**
@@ -90,6 +150,29 @@ class ClaimController extends Controller
             ->with('success', 'Insurance claim is ready for review.');
     }
 
+    public function prepareFromVisit(Request $request, Visit $visit)
+    {
+        $visit->loadMissing(['latestInvoice.items', 'visitInsurance.insuranceProvider.insuranceType']);
+
+        if (! $visit->latestInvoice) {
+            return back()->with('error', 'This visit has no invoice to prepare a claim from.');
+        }
+
+        try {
+            $claim = $this->claimService->createFromInvoice(
+                $visit->latestInvoice,
+                $visit->visitInsurance?->insurance_provider_id,
+                $request->integer('assigned_doctor_id') ?: null,
+            );
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('admin.claims.show', $claim)
+            ->with('success', 'Insurance claim prepared from visit.');
+    }
+
     /**
      * Store a new claim manually.
      */
@@ -108,26 +191,82 @@ class ClaimController extends Controller
     public function show(Claim $claim)
     {
         $claim->load([
-            'insuranceProvider.tiers', 'patient', 'visit.visitInsurance.insuranceTier', 'invoice',
-            'items', 'assignedDoctor', 'createdByUser',
+            'insuranceType', 'insuranceProvider.insuranceType', 'insuranceProvider.tiers',
+            'patient', 'visit.visitInsurance.insuranceTier', 'invoice',
+            'items.invoiceItem', 'items.department', 'items.service', 'items.product',
+            'assignedDoctor', 'createdByUser', 'preparedBy', 'submittedBy', 'statusLogs.performer', 'payments.receiver',
         ]);
+        $validation = $this->claimService->validateClaim($claim);
 
-        return view('claims.show', compact('claim'));
+        return view('claims.show', compact('claim', 'validation'));
     }
 
     /**
      * Submit claim for review.
      */
-    public function submit(Claim $claim)
+    public function updateVerificationCode(Request $request, Claim $claim)
+    {
+        $label = $claim->insuranceProvider?->verificationCodeLabel() ?: 'Verification Code';
+        $request->validate([
+            'verification_code' => ['nullable', 'string', 'max:120'],
+        ], [], [
+            'verification_code' => $label,
+        ]);
+
+        $this->claimService->updateVerificationCode($claim, $request->input('verification_code'));
+
+        return back()->with('success', "{$label} updated.");
+    }
+
+    public function validateClaim(Claim $claim)
+    {
+        $result = $this->claimService->validateClaim($claim);
+
+        if ($result->valid) {
+            return back()->with('success', 'Claim validation passed.');
+        }
+
+        return back()
+            ->with('error', 'Claim validation has required issues.')
+            ->with('claim_validation', $result->toArray());
+    }
+
+    public function markReady(Claim $claim)
     {
         try {
-            $this->claimService->submit($claim);
-            return redirect()
-                ->route('admin.claims.show', $claim)
-                ->with('success', 'Claim submitted for review.');
+            $this->claimService->markReady($claim);
+
+            return back()->with('success', 'Claim marked ready for submission.');
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
+    }
+
+    public function submit(Request $request, Claim $claim)
+    {
+        $request->validate([
+            'submission_mode' => ['nullable', 'string', 'max:40'],
+            'submission_reference' => ['nullable', 'string', 'max:120'],
+        ]);
+
+        try {
+            $this->workflowManager->forClaim($claim)->submit($claim, $request->user(), $request->only([
+                'submission_mode', 'submission_reference',
+            ]));
+
+            return redirect()
+                ->route('admin.claims.show', $claim)
+                ->with('success', 'Claim submitted.');
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    public function exportClaim(Request $request, Claim $claim)
+    {
+        return $this->workflowManager
+            ->forClaim($claim)
+            ->export($claim, $request->input('format'));
     }
 
     /**
@@ -135,7 +274,7 @@ class ClaimController extends Controller
      */
     public function review(Claim $claim)
     {
-        $claim->load(['insuranceProvider', 'patient', 'visit', 'items', 'assignedDoctor']);
+        $claim->load(['insuranceType', 'insuranceProvider.insuranceType', 'patient', 'visit', 'items.invoiceItem', 'items.department', 'assignedDoctor']);
 
         if (! $claim->is_reviewable) {
             return redirect()
@@ -149,7 +288,9 @@ class ClaimController extends Controller
             $claim->refresh();
         }
 
-        return view('claims.review', compact('claim'));
+        $validation = $this->claimService->validateClaim($claim);
+
+        return view('claims.review', compact('claim', 'validation'));
     }
 
     /**
@@ -207,6 +348,21 @@ class ClaimController extends Controller
         return back()->with('success', 'Claim marked as paid.');
     }
 
+    public function recordPayment(Request $request, Claim $claim)
+    {
+        $data = $request->validate([
+            'payment_date' => ['required', 'date'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
+            'payment_reference' => ['nullable', 'string', 'max:120'],
+            'payment_method' => ['nullable', 'string', 'max:80'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $this->claimPaymentService->record($claim, $data, $request->user());
+
+        return back()->with('success', 'Claim payment recorded separately from patient invoice payments.');
+    }
+
     /**
      * Appeal a rejected claim.
      */
@@ -214,6 +370,7 @@ class ClaimController extends Controller
     {
         try {
             $this->claimService->appeal($claim);
+
             return back()->with('success', 'Claim has been appealed and sent for re-review.');
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
@@ -267,7 +424,7 @@ class ClaimController extends Controller
             'status' => ['nullable', 'string'],
         ]);
 
-        $claims = Claim::with(['insuranceProvider', 'patient', 'items'])
+        $claims = Claim::with(['insuranceType', 'insuranceProvider', 'patient', 'visit', 'items'])
             ->when($request->provider_id, fn ($q, $p) => $q->byProvider($p))
             ->when($request->date_from, fn ($q, $d) => $q->where('claim_date', '>=', $d))
             ->when($request->date_to, fn ($q, $d) => $q->where('claim_date', '<=', $d))
@@ -276,7 +433,7 @@ class ClaimController extends Controller
             ->get();
 
         // Build CSV export
-        $filename = 'claims_export_' . now()->format('Ymd_His') . '.csv';
+        $filename = 'claims_export_'.now()->format('Ymd_His').'.csv';
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => "attachment; filename=\"{$filename}\"",
@@ -295,7 +452,7 @@ class ClaimController extends Controller
                 fputcsv($file, [
                     $claim->claim_number,
                     $claim->insuranceProvider->name,
-                    $claim->patient->first_name . ' ' . $claim->patient->last_name,
+                    $claim->patient->first_name.' '.$claim->patient->last_name,
                     $claim->visit->visit_date?->format('Y-m-d') ?? '',
                     $claim->claim_date->format('Y-m-d'),
                     $claim->total_amount,

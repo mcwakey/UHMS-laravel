@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreInsuranceProviderRequest;
 use App\Models\InsuranceProvider;
 use App\Models\InsuranceTier;
+use App\Models\InsuranceType as InsuranceTypeModel;
 use Illuminate\Http\Request;
 
 class InsuranceProviderController extends Controller
@@ -14,6 +15,7 @@ class InsuranceProviderController extends Controller
     public function index(Request $request)
     {
         $providers = InsuranceProvider::query()
+            ->with('insuranceType')
             ->withCount('claims')
             ->when($request->search, fn ($q, $s) => $q->search($s))
             ->when($request->type, fn ($q, $t) => $q->where('type', $t))
@@ -21,8 +23,9 @@ class InsuranceProviderController extends Controller
             ->paginate(15);
 
         $types = InsuranceType::cases();
+        $claimTypes = InsuranceTypeModel::active()->orderBy('name')->get();
 
-        return view('insurance.index', compact('providers', 'types'));
+        return view('insurance.index', compact('providers', 'types', 'claimTypes'));
     }
 
     public function store(StoreInsuranceProviderRequest $request)
@@ -32,11 +35,11 @@ class InsuranceProviderController extends Controller
         // Auto-create a Standard tier so the provider is immediately usable
         InsuranceTier::create([
             'insurance_provider_id' => $provider->id,
-            'name'                  => 'Standard',
-            'code'                  => 'STD',
-            'is_default'            => true,
-            'is_active'             => true,
-            'coverage_percentage'   => 100,
+            'name' => 'Standard',
+            'code' => 'STD',
+            'is_default' => true,
+            'is_active' => true,
+            'coverage_percentage' => 100,
         ]);
 
         return redirect()

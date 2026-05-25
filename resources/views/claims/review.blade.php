@@ -27,6 +27,17 @@
 @if(session('error'))
 <div class="alert alert-danger alert-dismissible fade show">{{ session('error') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
 @endif
+@if(($validation ?? null) && (!$validation->valid || $validation->warnings))
+<div class="alert {{ $validation->valid ? 'alert-warning' : 'alert-danger' }}">
+    <div class="fw-semibold mb-1">Claim Validation</div>
+    @foreach($validation->errors as $error)
+        <div>{{ $error }}</div>
+    @endforeach
+    @foreach($validation->warnings as $warning)
+        <div class="text-muted">{{ $warning }}</div>
+    @endforeach
+</div>
+@endif
 
 <!-- Review Summary -->
 @php
@@ -66,6 +77,38 @@
             <div class="card-body py-2">
                 <small class="text-muted">Claim Total</small>
                 <h5 class="mb-0">GH₵ {{ number_format($claim->total_amount, 2) }}</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">
+        <h5 class="card-title mb-0">Claim Identity</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <small class="text-muted d-block">Claim Type</small>
+                <span class="badge bg-primary-subtle text-primary">{{ $claim->claim_type_code ?: $claim->insuranceType?->code ?: 'GENERIC' }}</span>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted d-block">Provider</small>
+                <span class="fw-semibold">{{ $claim->insuranceProvider?->name }}</span>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted d-block">Membership Number</small>
+                <span class="fw-semibold">{{ $claim->membership_number ?: 'N/A' }}</span>
+            </div>
+            <div class="col-md-3">
+                <form method="POST" action="{{ route('admin.claims.verification-code', $claim) }}">
+                    @csrf
+                    <label class="form-label mb-1">{{ $claim->insuranceProvider?->verificationCodeLabel() ?? 'Verification Code' }}</label>
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="verification_code" class="form-control" value="{{ old('verification_code', $claim->verification_code) }}">
+                        <button type="submit" class="btn btn-outline-primary">Update</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

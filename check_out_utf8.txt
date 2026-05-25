@@ -1,0 +1,9 @@
+﻿Migration in migrations table: NO
+insurance_providers.insurance_type_id: MISSING
+insurance_providers.code: MISSING
+claims.claim_type_code: MISSING
+claims.insurance_type_id: MISSING
+claims.total_claim_amount: MISSING
+claim_items.claim_amount: MISSING
+claim_items.invoice_item_id: MISSING
+insurance_types table: EXISTS

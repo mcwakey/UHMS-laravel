@@ -1,0 +1,18 @@
+﻿
+   ParseError 
+
+  Unclosed '{' on line 9
+
+  at database\migrations\2026_05_25_100000_add_insurance_type_claim_workflows.php:408
+    404Γûò         if (! $this->foreignKeyExists($table, $constraint)) {
+    405Γûò             DB::statement($sql);
+    406Γûò         }
+    407Γûò     }
+  Γ₧£ 408Γûò
+
+  1   vendor\laravel\framework\src\Illuminate\Filesystem\Filesystem.php:149
+      Illuminate\Filesystem\Filesystem::Illuminate\Filesystem\{closure}()
+
+  2   vendor\laravel\framework\src\Illuminate\Database\Migrations\Migrator.php:598
+      Illuminate\Filesystem\Filesystem::requireOnce("C:\xampp\htdocs\laravel\laravel\database\migrations/2026_05_25_100000_add_insurance_type_claim_workflows.php")
+

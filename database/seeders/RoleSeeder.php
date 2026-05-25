@@ -5,13 +5,14 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RoleSeeder extends Seeder
 {
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // ------------------------------------------------------------------
         // PERMISSION DEFINITIONS
@@ -118,6 +119,18 @@ class RoleSeeder extends Seeder
             'claims.create',
             'claims.approve',
             'claims.export',
+            'claims.dashboard.view',
+            'claims.eligible.view',
+            'claims.prepare',
+            'claims.validate',
+            'claims.submit',
+            'claims.payment.record',
+            'claims.cancel',
+            'claims.report.view',
+            'claims.nhia.view',
+            'claims.nhia.prepare',
+            'claims.nhia.submit',
+            'claims.nhia.export',
 
             // ── Store & Procurement ───────────────────────────────────────
             'store.purchase.view',          // view suppliers, purchase orders
@@ -137,7 +150,7 @@ class RoleSeeder extends Seeder
             'store.requisition.create',     // create / submit / cancel a requisition
             'store.requisition.approve',    // approve requisition and set approved quantities
             'store.requisition.issue',      // issue stock from main store against a requisition
-            'store.requisition.acknowledge',// acknowledge receipt of issued items in department
+            'store.requisition.acknowledge', // acknowledge receipt of issued items in department
 
             // ── Products (master catalogue — Store/Admin only creates) ─────
             'product.view',
@@ -530,6 +543,9 @@ class RoleSeeder extends Seeder
             'visits.view', 'visits.preview',
             'invoices.view',
             'claims.view', 'claims.create', 'claims.approve', 'claims.export',
+            'claims.eligible.view', 'claims.prepare', 'claims.validate', 'claims.submit',
+            'claims.payment.record', 'claims.nhia.view', 'claims.nhia.prepare',
+            'claims.nhia.submit', 'claims.nhia.export',
             'reports.view',
             'notifications.view',
         ]);

@@ -284,16 +284,26 @@ Route::middleware('auth')->group(function () {
         // Claims
         Route::middleware(['module:insurance', 'module:claims', 'can:claims.view'])->group(function () {
             Route::get('claims', [ClaimController::class, 'index'])->name('claims.index');
+            Route::get('claims/eligible-visits', [ClaimController::class, 'eligibleVisits'])->name('claims.eligible-visits');
+            Route::post('claims/visits/{visit}/prepare', [ClaimController::class, 'prepareFromVisit'])->name('claims.prepare-from-visit')->middleware('can:claims.create');
+            Route::get('claims/nhia', [ClaimController::class, 'nhiaIndex'])->name('claims.nhia.index');
+            Route::get('claims/nhia/eligible-visits', [ClaimController::class, 'nhiaEligibleVisits'])->name('claims.nhia.eligible-visits');
+            Route::post('claims/nhia/visits/{visit}/prepare', [ClaimController::class, 'prepareFromVisit'])->name('claims.nhia.prepare-from-visit')->middleware('can:claims.create');
             Route::get('claims/create', [ClaimController::class, 'create'])->name('claims.create')->middleware('can:claims.create');
             Route::post('claims', [ClaimController::class, 'store'])->name('claims.store')->middleware('can:claims.create');
             Route::post('claims/from-invoice', [ClaimController::class, 'storeFromInvoice'])->name('claims.store-from-invoice')->middleware('can:claims.create');
             Route::get('claims/export', [ClaimController::class, 'export'])->name('claims.export')->middleware('can:claims.export');
             Route::get('claims/{claim}', [ClaimController::class, 'show'])->name('claims.show');
+            Route::post('claims/{claim}/verification-code', [ClaimController::class, 'updateVerificationCode'])->name('claims.verification-code')->middleware('can:claims.create');
+            Route::post('claims/{claim}/validate', [ClaimController::class, 'validateClaim'])->name('claims.validate')->middleware('can:claims.create');
+            Route::post('claims/{claim}/mark-ready', [ClaimController::class, 'markReady'])->name('claims.mark-ready')->middleware('can:claims.create');
             Route::post('claims/{claim}/submit', [ClaimController::class, 'submit'])->name('claims.submit')->middleware('can:claims.create');
+            Route::get('claims/{claim}/export', [ClaimController::class, 'exportClaim'])->name('claims.export-one')->middleware('can:claims.export');
             Route::get('claims/{claim}/review', [ClaimController::class, 'review'])->name('claims.review')->middleware('can:claims.approve');
             Route::post('claims/{claim}/review-item/{item}', [ClaimController::class, 'reviewItem'])->name('claims.review-item')->middleware('can:claims.approve');
             Route::post('claims/{claim}/complete-review', [ClaimController::class, 'completeReview'])->name('claims.complete-review')->middleware('can:claims.approve');
             Route::post('claims/{claim}/mark-paid', [ClaimController::class, 'markPaid'])->name('claims.mark-paid')->middleware('can:claims.approve');
+            Route::post('claims/{claim}/payments', [ClaimController::class, 'recordPayment'])->name('claims.payments.store')->middleware('can:claims.approve');
             Route::post('claims/{claim}/appeal', [ClaimController::class, 'appeal'])->name('claims.appeal')->middleware('can:claims.create');
             Route::post('claims/{claim}/add-item', [ClaimController::class, 'addItem'])->name('claims.add-item')->middleware('can:claims.create');
             Route::delete('claims/remove-item/{item}', [ClaimController::class, 'removeItem'])->name('claims.remove-item')->middleware('can:claims.create');

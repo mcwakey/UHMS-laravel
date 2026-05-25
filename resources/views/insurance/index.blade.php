@@ -62,6 +62,7 @@
                         <th>Name</th>
                         <th>Short Name</th>
                         <th>Type</th>
+                        <th>Claim Type</th>
                         <th>Phone</th>
                         <th>Email</th>
                         <th>Contract #</th>
@@ -77,6 +78,14 @@
                         <td class="fw-medium">{{ $provider->name }}</td>
                         <td><span class="badge bg-light text-dark">{{ $provider->short_name ?? '-' }}</span></td>
                         <td><span class="badge bg-{{ $provider->type->color() }}">{{ $provider->type->label() }}</span></td>
+                        <td>
+                            @if($provider->insuranceType)
+                                <span class="badge bg-primary-subtle text-primary">{{ $provider->insuranceType->code }}</span>
+                                <small class="text-muted d-block">{{ $provider->insuranceType->claim_workflow ?: 'GENERIC' }}</small>
+                            @else
+                                <span class="badge bg-light text-dark">Not set</span>
+                            @endif
+                        </td>
                         <td>{{ $provider->contact_phone ?? '-' }}</td>
                         <td>{{ $provider->contact_email ?? '-' }}</td>
                         <td>{{ $provider->contract_number ?? '-' }}</td>
@@ -128,7 +137,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="10" class="text-center text-muted py-4">No insurance providers found</td>
+                        <td colspan="11" class="text-center text-muted py-4">No insurance providers found</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -157,22 +166,39 @@
                 </div>
                 <div class="modal-body">
                     <div class="row mb-3">
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <label class="form-label">Name <span class="text-danger">*</span></label>
                             <input type="text" name="name" class="form-control" value="{{ $provider->name }}" required>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label">Short Name</label>
                             <input type="text" name="short_name" class="form-control" value="{{ $provider->short_name }}" maxlength="20">
                         </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Code</label>
+                            <input type="text" name="code" class="form-control" value="{{ $provider->code }}" maxlength="60">
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Type <span class="text-danger">*</span></label>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                        <label class="form-label">Pricing Type <span class="text-danger">*</span></label>
                         <select name="type" class="form-select" required>
                             @foreach(\App\Enums\InsuranceType::cases() as $type)
                                 <option value="{{ $type->value }}" {{ $provider->type === $type ? 'selected' : '' }}>{{ $type->label() }}</option>
                             @endforeach
                         </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Claim Workflow Type</label>
+                            <select name="insurance_type_id" class="form-select">
+                                <option value="">Use pricing type default</option>
+                                @foreach($claimTypes as $claimType)
+                                    <option value="{{ $claimType->id }}" {{ $provider->insurance_type_id == $claimType->id ? 'selected' : '' }}>
+                                        {{ $claimType->name }} ({{ $claimType->code }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -226,22 +252,37 @@
                 </div>
                 <div class="modal-body">
                     <div class="row mb-3">
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <label class="form-label">Name <span class="text-danger">*</span></label>
                             <input type="text" name="name" class="form-control" placeholder="e.g. Acme Health Plan" required>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label">Short Name</label>
                             <input type="text" name="short_name" class="form-control" placeholder="e.g. ACME" maxlength="20">
                         </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Code</label>
+                            <input type="text" name="code" class="form-control" placeholder="e.g. NHIS" maxlength="60">
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Type <span class="text-danger">*</span></label>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                        <label class="form-label">Pricing Type <span class="text-danger">*</span></label>
                         <select name="type" class="form-select" required>
                             @foreach(\App\Enums\InsuranceType::cases() as $type)
                                 <option value="{{ $type->value }}">{{ $type->label() }}</option>
                             @endforeach
                         </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Claim Workflow Type</label>
+                            <select name="insurance_type_id" class="form-select">
+                                <option value="">Use pricing type default</option>
+                                @foreach($claimTypes as $claimType)
+                                    <option value="{{ $claimType->id }}">{{ $claimType->name }} ({{ $claimType->code }})</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">

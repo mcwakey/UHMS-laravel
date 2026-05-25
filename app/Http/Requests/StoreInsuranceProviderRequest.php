@@ -18,6 +18,7 @@ class StoreInsuranceProviderRequest extends FormRequest
     {
         $merged = [
             'short_name' => $this->filled('short_name') ? $this->short_name : '',
+            'code' => $this->filled('code') ? strtoupper((string) $this->code) : ($this->filled('short_name') ? strtoupper((string) $this->short_name) : null),
         ];
 
         // Normalize empty verification strings to null so the column stays NULL,
@@ -51,22 +52,30 @@ class StoreInsuranceProviderRequest extends FormRequest
         $drivers = array_keys((array) config('insurance_verification.drivers', []));
 
         return [
-            'name'            => ['required', 'string', 'max:255'],
-            'short_name'      => ['nullable', 'string', 'max:50'],
-            'type'            => ['required', Rule::enum(InsuranceType::class)],
-            'contact_phone'   => ['nullable', 'string', 'max:50'],
-            'contact_email'   => ['nullable', 'email', 'max:255'],
-            'address'         => ['nullable', 'string', 'max:2000'],
+            'name' => ['required', 'string', 'max:255'],
+            'short_name' => ['nullable', 'string', 'max:50'],
+            'code' => ['nullable', 'string', 'max:60'],
+            'type' => ['required', Rule::enum(InsuranceType::class)],
+            'insurance_type_id' => ['nullable', 'exists:insurance_types,id'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'contact_phone' => ['nullable', 'string', 'max:50'],
+            'contact_email' => ['nullable', 'email', 'max:255'],
+            'address' => ['nullable', 'string', 'max:2000'],
             'contract_number' => ['nullable', 'string', 'max:100'],
-            'is_default'      => ['nullable', 'boolean'],
-            'is_active'       => ['boolean'],
+            'is_default' => ['nullable', 'boolean'],
+            'is_active' => ['boolean'],
+            'requires_claim_submission' => ['nullable', 'boolean'],
+            'requires_verification_code' => ['nullable', 'boolean'],
+            'verification_code_label' => ['nullable', 'string', 'max:80'],
+            'claim_workflow_override' => ['nullable', 'string', 'max:40'],
+            'claim_export_format_override' => ['nullable', 'string', 'max:20'],
 
             // Verification (generic / provider-agnostic)
-            'verification_driver'         => ['nullable', 'string', Rule::in($drivers)],
-            'verification_method'         => ['nullable', 'string', 'max:60'],
-            'verification_channel'        => ['nullable', 'string', 'max:60'],
+            'verification_driver' => ['nullable', 'string', Rule::in($drivers)],
+            'verification_method' => ['nullable', 'string', 'max:60'],
+            'verification_channel' => ['nullable', 'string', 'max:60'],
             'verification_credentials_key' => ['nullable', 'string', 'max:60', 'regex:/^[a-z0-9_\-]+$/i'],
-            'verification_config'         => ['nullable', 'array'],
+            'verification_config' => ['nullable', 'array'],
         ];
     }
 
