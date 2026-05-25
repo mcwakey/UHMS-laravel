@@ -14,9 +14,12 @@ use App\Models\ServiceCatalog;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
+use App\Models\VisitConsultationRouteService;
+use App\Services\BillingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 /**
@@ -34,12 +37,13 @@ class VisitBillingTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private Department $department;
 
     protected function setUp(): void
     {
         parent::setUp();
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $this->department = Department::factory()->create([
             'type' => DepartmentType::CONSULTATION->value,
@@ -55,23 +59,23 @@ class VisitBillingTest extends TestCase
     private function makeService(float $price = 50.0): ServiceCatalog
     {
         return ServiceCatalog::create([
-            'name'          => 'General Consultation',
-            'code'          => 'GC' . random_int(1000, 9999),
-            'category'      => ServiceType::CONSULTATION->value,
+            'name' => 'General Consultation',
+            'code' => 'GC'.random_int(1000, 9999),
+            'category' => ServiceType::CONSULTATION->value,
             'department_id' => $this->department->id,
-            'price'         => $price,
-            'is_active'     => true,
+            'price' => $price,
+            'is_active' => true,
         ]);
     }
 
     private function storePayload(int $patientId, array $services = []): array
     {
         return [
-            'patient_id'      => $patientId,
-            'visit_type'      => VisitType::OUTPATIENT->value,
-            'priority'        => Priority::NORMAL->value,
+            'patient_id' => $patientId,
+            'visit_type' => VisitType::OUTPATIENT->value,
+            'priority' => Priority::NORMAL->value,
             'chief_complaint' => 'Test visit',
-            'services'        => $services,
+            'services' => $services,
         ];
     }
 
@@ -139,12 +143,15 @@ class VisitBillingTest extends TestCase
         $visit = Visit::where('patient_id', $patient->id)->firstOrFail();
 
         $route = VisitConsultationRoute::where('visit_id', $visit->id)
-            ->where('service_id', $service->id)
+            ->where('department_id', $this->department->id)
             ->first();
 
-        $this->assertNotNull($route, 'A consultation route should be created for the selected consultation service.');
+        $this->assertNotNull($route, 'A consultation route should be created for the selected consultation department.');
         $this->assertSame(VisitConsultationRoute::STATUS_PENDING, $route->status);
         $this->assertSame($this->department->id, $route->department_id);
+        $this->assertSame(1, VisitConsultationRouteService::where('visit_consultation_route_id', $route->id)
+            ->where('service_id', $service->id)
+            ->count());
     }
 
     public function test_billing_service_blocks_cross_source_type_duplicates(): void
@@ -157,10 +164,10 @@ class VisitBillingTest extends TestCase
         $visit = Visit::factory()->create([
             'patient_id' => $patient->id,
             'created_by' => $this->user->id,
-            'status'     => VisitStatus::REGISTERED,
+            'status' => VisitStatus::REGISTERED,
         ]);
 
-        $billing = app(\App\Services\BillingService::class);
+        $billing = app(BillingService::class);
 
         // First bill: source_type='service_catalog'
         $billing->addItemToVisitInvoice($visit, $service, 'service_catalog', $service->id);

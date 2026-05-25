@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Doctor;
 
+use App\Enums\DepartmentType;
+use App\Enums\ResultType;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
-use App\Enums\DepartmentType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePrescriptionRequest;
 use App\Models\Complaint;
@@ -13,10 +14,14 @@ use App\Models\Diagnosis;
 use App\Models\Drug;
 use App\Models\Investigation;
 use App\Models\LabRequestItem;
+use App\Models\LabTest;
+use App\Models\MedicalPattern;
 use App\Models\PatientProcedure;
+use App\Models\Prescription;
 use App\Models\Procedure;
 use App\Models\ServiceCatalog;
 use App\Models\Treatment;
+use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
 use App\Services\ClinicalService;
@@ -26,10 +31,11 @@ use App\Services\ConsultationSessionService;
 use App\Services\LabService;
 use App\Services\MedicalPatternService;
 use App\Services\PrescriptionService;
+use App\Services\ProcedureRequestService;
 use App\Services\VisitService;
 use App\Services\VisitWorkflowService;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ConsultationController extends Controller
 {
@@ -71,11 +77,13 @@ class ConsultationController extends Controller
             if ($this->shouldReturnJson($request)) {
                 return response()->json(['error' => $e->getMessage()], 422);
             }
+
             return back()->with('error', $e->getMessage());
         }
 
         if ($this->shouldReturnJson($request)) {
             $activeRoute = $visit->fresh()->activeConsultationRoute()->first();
+
             return response()->json([
                 'success' => 'Consultation started.',
                 'redirect' => $activeRoute
@@ -98,17 +106,19 @@ class ConsultationController extends Controller
      */
     public function destroyInvestigationItem(Request $request, LabRequestItem $item)
     {
-        if (!$item->isDeletable()) {
+        if (! $item->isDeletable()) {
             $msg = 'Cannot delete this investigation: a result has already been entered.';
             if ($this->shouldReturnJson($request)) {
                 return response()->json(['error' => $msg], 422);
             }
+
             return back()->with('error', $msg);
         }
         $item->update(['status' => 'cancelled']);
         if ($this->shouldReturnJson($request)) {
             return response()->json(['success' => 'Investigation removed.']);
         }
+
         return back()->with('success', 'Investigation removed.');
     }
 
@@ -120,7 +130,7 @@ class ConsultationController extends Controller
         $filters = $request->all();
 
         // Default: outpatient visits for today
-        if (!$request->hasAny(['search', 'visit_type', 'date_from'])) {
+        if (! $request->hasAny(['search', 'visit_type', 'date_from'])) {
             $filters['visit_type'] = $filters['visit_type'] ?? VisitType::OUTPATIENT->value;
             $filters['date_from'] = $filters['date_from'] ?? today()->toDateString();
             $filters['date_to'] = $filters['date_to'] ?? today()->toDateString();
@@ -132,11 +142,14 @@ class ConsultationController extends Controller
                 'visit.medicalRecord',
                 'department',
                 'service',
+                'routeServices.service',
+                'services',
                 'doctor',
             ])
             ->whereIn('status', [
                 VisitConsultationRoute::STATUS_PENDING,
                 VisitConsultationRoute::STATUS_ACTIVE,
+                VisitConsultationRoute::STATUS_PAUSED,
             ])
             ->whereHas('department', function ($d) {
                 $d->where('type', DepartmentType::CONSULTATION->value);
@@ -148,25 +161,25 @@ class ConsultationController extends Controller
                 ]);
             });
 
-        /** @var \App\Models\User|null $user */
+        /** @var User|null $user */
         $user = Auth::user();
         if ($user && ! $user->hasAnyRole(['Super Admin', 'Admin']) && $user->department_id) {
             $query->where('department_id', $user->department_id);
         }
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->whereHas('visit', fn ($visitQuery) => $visitQuery->search($filters['search']));
         }
 
-        if (!empty($filters['visit_type'])) {
+        if (! empty($filters['visit_type'])) {
             $query->whereHas('visit', fn ($visitQuery) => $visitQuery->where('visit_type', $filters['visit_type']));
         }
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereHas('visit', fn ($visitQuery) => $visitQuery->whereDate('visit_date', '>=', $filters['date_from']));
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereHas('visit', fn ($visitQuery) => $visitQuery->whereDate('visit_date', '<=', $filters['date_to']));
         }
 
@@ -209,7 +222,7 @@ class ConsultationController extends Controller
         }
 
         // Get recent/popular patterns for the doctor
-        $patterns = \App\Models\MedicalPattern::active()
+        $patterns = MedicalPattern::active()
             ->forDoctor(Auth::id())
             ->with('items')
             ->orderByDesc('usage_count')
@@ -224,7 +237,7 @@ class ConsultationController extends Controller
         $investigationDepts = $this->labService->getInvestigationDepartments();
 
         // Doctors for task assignment
-        $doctors = \App\Models\User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get();
+        $doctors = User::role('Doctor')->where('status', 'active')->orderBy('first_name')->get();
 
         // Drugs for prescription dropdown
         $drugs = Drug::where('is_active', true)->orderBy('name')->get(['id', 'name', 'generic_name', 'strength', 'dosage_form', 'unit']);
@@ -236,7 +249,7 @@ class ConsultationController extends Controller
             ->get();
 
         // Theatre / new procedure workflow
-        $procedureRequestService = app(\App\Services\ProcedureRequestService::class);
+        $procedureRequestService = app(ProcedureRequestService::class);
         $procedureRequests = $procedureRequestService->forVisit($visit->id);
         $procedureDepartments = $procedureRequestService->procedureDepartments();
         $consultationDepartments = Department::active()
@@ -281,18 +294,28 @@ class ConsultationController extends Controller
     {
         $data = $request->validate([
             'department_id' => ['required', 'exists:departments,id'],
-            'service_id' => ['required', 'exists:service_catalog,id'],
+            'service_id' => ['nullable', 'exists:service_catalog,id'],
+            'service_ids' => ['nullable', 'array'],
+            'service_ids.*' => ['exists:service_catalog,id'],
             'doctor_id' => ['nullable', 'exists:users,id'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'activate_now' => ['nullable', 'boolean'],
         ]);
 
         try {
+            $serviceIds = collect($data['service_ids'] ?? [])
+                ->when(! empty($data['service_id']), fn ($ids) => $ids->push($data['service_id']))
+                ->filter()
+                ->unique()
+                ->values();
+
             $route = $this->consultationRouteService->sendToAnotherConsultation(
                 visit: $visit,
                 department: Department::findOrFail($data['department_id']),
-                service: ServiceCatalog::findOrFail($data['service_id']),
-                doctor: ! empty($data['doctor_id']) ? \App\Models\User::findOrFail($data['doctor_id']) : null,
+                service: $serviceIds->isNotEmpty()
+                    ? ServiceCatalog::whereIn('id', $serviceIds)->get()
+                    : null,
+                doctor: ! empty($data['doctor_id']) ? User::findOrFail($data['doctor_id']) : null,
                 routedBy: Auth::user(),
                 notes: $data['notes'] ?? null,
                 activateNow: (bool) ($data['activate_now'] ?? false),
@@ -495,17 +518,17 @@ class ConsultationController extends Controller
      */
     public function getDepartmentInvestigationInfo(Department $department)
     {
-        $resultType = $department->result_type ?? \App\Enums\ResultType::NONE;
+        $resultType = $department->result_type ?? ResultType::NONE;
 
         $data = [
-            'result_type'  => $resultType->value,
+            'result_type' => $resultType->value,
             'uses_catalog' => $resultType->usesTestCatalog(),
-            'label'        => $resultType->label(),
-            'lab_tests'    => [],
+            'label' => $resultType->label(),
+            'lab_tests' => [],
         ];
 
         if ($resultType->usesTestCatalog()) {
-            $data['lab_tests'] = \App\Models\LabTest::with('criteria')
+            $data['lab_tests'] = LabTest::with('criteria')
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get(['id', 'name', 'code', 'unit', 'normal_range', 'price'])
@@ -524,13 +547,13 @@ class ConsultationController extends Controller
     public function storeInvestigation(Request $request, Visit $visit)
     {
         $request->validate([
-            'department_id'    => ['nullable', 'exists:departments,id'],
-            'service_ids'      => ['nullable', 'array'],
-            'service_ids.*'    => ['exists:service_catalog,id'],
+            'department_id' => ['nullable', 'exists:departments,id'],
+            'service_ids' => ['nullable', 'array'],
+            'service_ids.*' => ['exists:service_catalog,id'],
             'investigation_type' => ['nullable', 'string', 'max:191'],
-            'description'      => ['nullable', 'string', 'max:2000'],
-            'urgency'          => ['nullable', 'in:routine,urgent,emergency'],
-            'notes'            => ['nullable', 'string', 'max:2000'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'urgency' => ['nullable', 'in:routine,urgent,emergency'],
+            'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $record = $this->consultationService->getOrCreateRecord(
@@ -540,58 +563,58 @@ class ConsultationController extends Controller
         $created = [];
         $labRequest = null;
 
-        if (!empty($request->service_ids)) {
+        if (! empty($request->service_ids)) {
             $services = ServiceCatalog::whereIn('id', $request->service_ids)->get();
 
             foreach ($services as $service) {
                 $created[] = $this->consultationService->addInvestigation($record, [
                     'investigation_type' => $service->name,
-                    'description'        => $service->description ?? $service->name,
-                    'urgency'            => $request->urgency ?? 'routine',
-                    'notes'              => $request->notes,
+                    'description' => $service->description ?? $service->name,
+                    'urgency' => $request->urgency ?? 'routine',
+                    'notes' => $request->notes,
                 ]);
             }
 
             // ALSO create a LabRequest so the investigation department sees it on their queue.
             $items = $services->map(fn ($s) => [
                 'service_id' => $s->id,
-                'name'       => $s->name,
-                'status'     => 'pending',
+                'name' => $s->name,
+                'status' => 'pending',
             ])->all();
 
-            if (!empty($items)) {
+            if (! empty($items)) {
                 $labRequest = $this->labService->createRequest($visit, $items, [
                     'target_department_id' => $request->department_id,
-                    'clinical_info'        => $request->notes,
-                    'urgency'              => $request->urgency ?? 'routine',
+                    'clinical_info' => $request->notes,
+                    'urgency' => $request->urgency ?? 'routine',
                 ]);
             }
-        } elseif (!empty($request->investigation_type)) {
+        } elseif (! empty($request->investigation_type)) {
             $created[] = $this->consultationService->addInvestigation($record, [
                 'investigation_type' => $request->investigation_type,
-                'description'        => $request->description ?? $request->investigation_type,
-                'urgency'            => $request->urgency ?? 'routine',
-                'notes'              => $request->notes,
+                'description' => $request->description ?? $request->investigation_type,
+                'urgency' => $request->urgency ?? 'routine',
+                'notes' => $request->notes,
             ]);
 
             // Create a free-text LabRequest for non-catalogue requests
             $labRequest = $this->labService->createRequest($visit, [$request->investigation_type], [
                 'target_department_id' => $request->department_id,
-                'clinical_info'        => $request->description ?? $request->notes,
-                'urgency'              => $request->urgency ?? 'routine',
+                'clinical_info' => $request->description ?? $request->notes,
+                'urgency' => $request->urgency ?? 'routine',
             ]);
         }
 
         if ($this->shouldReturnJson($request)) {
             return response()->json([
-                'success'        => true,
+                'success' => true,
                 'investigations' => $created,
-                'count'          => count($created),
-                'lab_request'    => $labRequest?->only(['id', 'request_number', 'status']),
+                'count' => count($created),
+                'lab_request' => $labRequest?->only(['id', 'request_number', 'status']),
             ]);
         }
 
-        $msg = count($created) . ' investigation(s) added';
+        $msg = count($created).' investigation(s) added';
         if ($labRequest) {
             $msg .= " — request {$labRequest->request_number} sent to investigation department.";
         } else {
@@ -673,14 +696,15 @@ class ConsultationController extends Controller
             ->with('success', "Prescription {$prescription->prescription_number} created and sent to pharmacy.");
     }
 
-    public function destroyPrescription(\App\Models\Prescription $prescription)
+    public function destroyPrescription(Prescription $prescription)
     {
         // Only allow deletion of pending/active prescriptions
         $allowedStatuses = ['pending', 'active'];
-        if (!in_array($prescription->status->value, $allowedStatuses)) {
+        if (! in_array($prescription->status->value, $allowedStatuses)) {
             if ($this->shouldReturnJson(request())) {
                 return response()->json(['success' => false, 'message' => 'Cannot delete a dispensed or cancelled prescription.'], 422);
             }
+
             return back()->with('error', 'Cannot delete a dispensed or cancelled prescription.');
         }
 
@@ -697,30 +721,31 @@ class ConsultationController extends Controller
     public function storeProcedureRequest(Request $request, Visit $visit)
     {
         $data = $request->validate([
-            'department_id'      => ['required', 'exists:departments,id'],
+            'department_id' => ['required', 'exists:departments,id'],
             'service_catalog_id' => ['required', 'exists:service_catalog,id'],
-            'procedure_id'       => ['nullable', 'exists:procedures,id'],
-            'priority'           => ['required', 'in:routine,urgent,emergency'],
-            'indication'         => ['required', 'string', 'max:2000'],
-            'notes'              => ['nullable', 'string', 'max:2000'],
+            'procedure_id' => ['nullable', 'exists:procedures,id'],
+            'priority' => ['required', 'in:routine,urgent,emergency'],
+            'indication' => ['required', 'string', 'max:2000'],
+            'notes' => ['nullable', 'string', 'max:2000'],
             'preferred_datetime' => ['nullable', 'date'],
         ]);
         $data['visit_id'] = $visit->id;
 
         try {
-            $procedureRequest = app(\App\Services\ProcedureRequestService::class)
-                ->requestProcedure($data, \Illuminate\Support\Facades\Auth::user());
+            $procedureRequest = app(ProcedureRequestService::class)
+                ->requestProcedure($data, Auth::user());
         } catch (\Throwable $e) {
             if ($this->shouldReturnJson($request)) {
                 return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
             }
+
             return back()->withInput()->with('error', $e->getMessage());
         }
 
         if ($this->shouldReturnJson($request)) {
             return response()->json([
-                'success'   => true,
-                'message'   => 'Procedure request submitted (' . $procedureRequest->request_number . ').',
+                'success' => true,
+                'message' => 'Procedure request submitted ('.$procedureRequest->request_number.').',
                 'procedure' => $procedureRequest->only(['id', 'request_number', 'status', 'priority']),
             ]);
         }
@@ -728,7 +753,7 @@ class ConsultationController extends Controller
         return redirect()
             ->route('admin.consultations.show', $visit)
             ->withFragment('procedures-section')
-            ->with('success', 'Procedure request submitted (' . $procedureRequest->request_number . ').');
+            ->with('success', 'Procedure request submitted ('.$procedureRequest->request_number.').');
     }
 
     /**
@@ -737,9 +762,11 @@ class ConsultationController extends Controller
     public function suggestComplaints(Request $request)
     {
         $q = trim($request->input('q', ''));
-        if (strlen($q) < 2) return response()->json([]);
+        if (strlen($q) < 2) {
+            return response()->json([]);
+        }
 
-        $suggestions = \App\Models\Complaint::where('description', 'like', '%' . $q . '%')
+        $suggestions = Complaint::where('description', 'like', '%'.$q.'%')
             ->distinct()
             ->orderByRaw('COUNT(*) DESC')
             ->groupBy('description')
@@ -755,9 +782,11 @@ class ConsultationController extends Controller
     public function suggestDiagnoses(Request $request)
     {
         $q = trim($request->input('q', ''));
-        if (strlen($q) < 2) return response()->json([]);
+        if (strlen($q) < 2) {
+            return response()->json([]);
+        }
 
-        $suggestions = \App\Models\Diagnosis::where('description', 'like', '%' . $q . '%')
+        $suggestions = Diagnosis::where('description', 'like', '%'.$q.'%')
             ->distinct()
             ->orderByRaw('COUNT(*) DESC')
             ->groupBy('description')
@@ -777,10 +806,10 @@ class ConsultationController extends Controller
     {
         $request->validate([
             'target_department_id' => ['required', 'exists:departments,id'],
-            'items'                => ['required', 'array', 'min:1'],
+            'items' => ['required', 'array', 'min:1'],
             // items can be test IDs (int) or free-text names (string)
-            'urgency'              => ['nullable', 'in:routine,urgent,emergency'],
-            'clinical_info'        => ['nullable', 'string', 'max:2000'],
+            'urgency' => ['nullable', 'in:routine,urgent,emergency'],
+            'clinical_info' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $labRequest = $this->labService->createRequest(
@@ -811,7 +840,7 @@ class ConsultationController extends Controller
 
         $newStatus = VisitStatus::from($request->status);
 
-        if (!$visit->canTransitionTo($newStatus)) {
+        if (! $visit->canTransitionTo($newStatus)) {
             return back()->with('error', "Cannot transition from {$visit->status->label()} to {$newStatus->label()}.");
         }
 
@@ -832,18 +861,28 @@ class ConsultationController extends Controller
     {
         $request->validate([
             'department_id' => ['required', 'exists:departments,id'],
-            'service_id'    => ['required', 'exists:service_catalog,id'],
-            'doctor_id'     => ['nullable', 'exists:users,id'],
-            'notes'         => ['nullable', 'string', 'max:1000'],
-            'activate_now'  => ['nullable', 'boolean'],
+            'service_id' => ['nullable', 'exists:service_catalog,id'],
+            'service_ids' => ['nullable', 'array'],
+            'service_ids.*' => ['exists:service_catalog,id'],
+            'doctor_id' => ['nullable', 'exists:users,id'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+            'activate_now' => ['nullable', 'boolean'],
         ]);
 
         try {
+            $serviceIds = collect($request->input('service_ids', []))
+                ->when($request->filled('service_id'), fn ($ids) => $ids->push((int) $request->service_id))
+                ->filter()
+                ->unique()
+                ->values();
+
             $route = $this->consultationRouteService->sendToAnotherConsultation(
                 visit: $visit,
                 department: Department::findOrFail((int) $request->department_id),
-                service: ServiceCatalog::findOrFail((int) $request->service_id),
-                doctor: $request->filled('doctor_id') ? \App\Models\User::findOrFail((int) $request->doctor_id) : null,
+                service: $serviceIds->isNotEmpty()
+                    ? ServiceCatalog::whereIn('id', $serviceIds)->get()
+                    : null,
+                doctor: $request->filled('doctor_id') ? User::findOrFail((int) $request->doctor_id) : null,
                 routedBy: Auth::user(),
                 notes: $request->notes,
                 activateNow: $request->boolean('activate_now'),
@@ -852,7 +891,7 @@ class ConsultationController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        $dept = \App\Models\Department::find($request->department_id);
+        $dept = Department::find($request->department_id);
 
         return redirect()
             ->route('admin.consultations.routes.show', [$visit, $route])
@@ -871,7 +910,7 @@ class ConsultationController extends Controller
     {
         $request->validate([
             'department_id' => ['required', 'exists:departments,id'],
-            'notes'         => ['nullable', 'string', 'max:1000'],
+            'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
         try {
@@ -887,7 +926,7 @@ class ConsultationController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        $dept = \App\Models\Department::find($request->department_id);
+        $dept = Department::find($request->department_id);
 
         if ($request->expectsJson()) {
             return response()->json([

@@ -39,7 +39,7 @@ class VisitPreviewService
         $this->eagerLoad($visit);
 
         $timeline = $this->buildTimeline($visit);
-        $summary  = $this->buildSummary($visit);
+        $summary = $this->buildSummary($visit);
 
         return compact('visit', 'timeline', 'summary');
     }
@@ -71,12 +71,14 @@ class VisitPreviewService
             'medicalRecords.service',
             'medicalRecords.consultationRoute.department',
             'medicalRecords.consultationRoute.service',
+            'medicalRecords.consultationRoute.routeServices.service',
             'medicalRecords.complaints',
             'medicalRecords.diagnoses',
             'medicalRecords.treatments',
             'medicalRecords.prescriptions.items',
             'consultationRoutes.department',
             'consultationRoutes.service',
+            'consultationRoutes.routeServices.service',
             'consultationRoutes.doctor',
             'consultationRoutes.routedBy',
             'consultationRoutes.logs.performedBy',
@@ -122,8 +124,8 @@ class VisitPreviewService
             'CHECK-IN', 'bg-primary',
             'visit', $visit->id,
             [
-                'Visit Number'  => $visit->visit_number,
-                'Visit Type'    => $visit->visit_type?->label() ?? '—',
+                'Visit Number' => $visit->visit_number,
+                'Visit Type' => $visit->visit_type?->label() ?? '—',
                 'Chief Complaint' => $visit->chief_complaint ?: '—',
             ]
         );
@@ -132,8 +134,8 @@ class VisitPreviewService
         foreach ($visit->statusLogs ?? [] as $log) {
             $items[] = $this->item(
                 $log->timestamp,
-                'Status changed to ' . $this->formatStatus($log->to_status),
-                $log->notes ?: ('Status changed from ' . $this->formatStatus($log->from_status) . ' to ' . $this->formatStatus($log->to_status)),
+                'Status changed to '.$this->formatStatus($log->to_status),
+                $log->notes ?: ('Status changed from '.$this->formatStatus($log->from_status).' to '.$this->formatStatus($log->to_status)),
                 optional($log->changedBy)->full_name,
                 null,
                 strtoupper($this->formatStatus($log->to_status)), 'bg-secondary',
@@ -145,12 +147,12 @@ class VisitPreviewService
         if ($visit->triage) {
             $t = $visit->triage;
             $vitalsDesc = collect([
-                'BP'    => ($t->blood_pressure_systolic && $t->blood_pressure_diastolic)
+                'BP' => ($t->blood_pressure_systolic && $t->blood_pressure_diastolic)
                     ? "{$t->blood_pressure_systolic}/{$t->blood_pressure_diastolic} mmHg" : null,
                 'Pulse' => $t->heart_rate ? "{$t->heart_rate} bpm" : null,
-                'Temp'  => $t->temperature ? "{$t->temperature} °C" : null,
-                'SPO₂'  => $t->spo2 ? "{$t->spo2}%" : null,
-                'RR'    => $t->respiratory_rate ? "{$t->respiratory_rate} /min" : null,
+                'Temp' => $t->temperature ? "{$t->temperature} °C" : null,
+                'SPO₂' => $t->spo2 ? "{$t->spo2}%" : null,
+                'RR' => $t->respiratory_rate ? "{$t->respiratory_rate} /min" : null,
                 'Weight' => $t->weight ? "{$t->weight} kg" : null,
             ])->filter()->map(fn ($v, $k) => "$k: $v")->values()->implode(' · ');
 
@@ -163,8 +165,8 @@ class VisitPreviewService
                 'TRIAGE', 'bg-info',
                 'triage', $t->id,
                 array_filter([
-                    'Score'   => $t->triage_score?->label() ?? null,
-                    'Notes'   => $t->notes ?: null,
+                    'Score' => $t->triage_score?->label() ?? null,
+                    'Notes' => $t->notes ?: null,
                 ])
             );
         }
@@ -172,12 +174,12 @@ class VisitPreviewService
         // 4. Vitals (additional readings beyond triage)
         foreach ($visit->vitals ?? [] as $vital) {
             $vDesc = collect([
-                'BP'    => ($vital->blood_pressure_systolic && $vital->blood_pressure_diastolic)
+                'BP' => ($vital->blood_pressure_systolic && $vital->blood_pressure_diastolic)
                     ? "{$vital->blood_pressure_systolic}/{$vital->blood_pressure_diastolic} mmHg" : null,
                 'Pulse' => $vital->heart_rate ? "{$vital->heart_rate} bpm" : null,
-                'Temp'  => $vital->temperature ? "{$vital->temperature} °C" : null,
-                'SPO₂'  => $vital->spo2 ? "{$vital->spo2}%" : null,
-                'RR'    => $vital->respiratory_rate ? "{$vital->respiratory_rate} /min" : null,
+                'Temp' => $vital->temperature ? "{$vital->temperature} °C" : null,
+                'SPO₂' => $vital->spo2 ? "{$vital->spo2}%" : null,
+                'RR' => $vital->respiratory_rate ? "{$vital->respiratory_rate} /min" : null,
             ])->filter()->map(fn ($v, $k) => "$k: $v")->values()->implode(' · ');
 
             $items[] = $this->item(
@@ -194,12 +196,19 @@ class VisitPreviewService
         // 5. Consultation route status timeline
         foreach ($visit->consultationRoutes ?? [] as $route) {
             $deptName = optional($route->department)->name;
-            $serviceName = optional($route->service)->name ?? 'Consultation';
+            $serviceNames = $route->routeServices
+                ? $route->routeServices->map(fn ($routeService) => $routeService->service?->name)->filter()->values()
+                : collect();
+            if ($serviceNames->isEmpty() && $route->service) {
+                $serviceNames = collect([$route->service->name]);
+            }
+            $serviceList = $serviceNames->implode(', ');
+            $sessionName = $deptName ? "{$deptName} Department Session" : 'Consultation Department Session';
 
             $items[] = $this->item(
                 $route->created_at,
-                "{$serviceName} Routed",
-                trim("{$serviceName}" . ($deptName ? " - {$deptName}" : '') . ' routed for consultation.'),
+                "{$sessionName} Routed",
+                trim(($deptName ?: 'Department').' routed for consultation.'.($serviceList ? " Services: {$serviceList}." : '')),
                 optional($route->routedBy)->full_name,
                 $deptName,
                 'SESSION', 'bg-primary',
@@ -207,13 +216,14 @@ class VisitPreviewService
                 array_filter([
                     'Status' => $route->status,
                     'Doctor' => optional($route->doctor)->full_name,
+                    'Linked Services' => $serviceList,
                 ])
             );
 
             foreach ($route->logs ?? [] as $log) {
                 $items[] = $this->item(
                     $log->created_at,
-                    "{$serviceName} " . ucfirst(str_replace('_', ' ', $log->action)),
+                    "{$sessionName} ".ucfirst(str_replace('_', ' ', $log->action)),
                     $log->notes ?: "Consultation session moved to {$log->to_status}.",
                     optional($log->performedBy)->full_name,
                     $deptName,
@@ -234,21 +244,25 @@ class VisitPreviewService
 
         foreach ($records as $mr) {
             $sessionDepartment = optional($mr->department ?? $mr->consultationRoute?->department)->name;
+            $routeServices = $mr->consultationRoute?->routeServices
+                ? $mr->consultationRoute->routeServices->map(fn ($routeService) => $routeService->service?->name)->filter()->values()
+                : collect();
             $sessionService = optional($mr->service ?? $mr->consultationRoute?->service)->name;
-            $sessionLabel = trim(collect([$sessionService, $sessionDepartment])->filter()->implode(' - '));
+            $serviceList = $routeServices->isNotEmpty() ? $routeServices->implode(', ') : $sessionService;
+            $sessionLabel = $sessionDepartment ?: 'Consultation Department';
 
             $items[] = $this->item(
                 $mr->created_at,
-                $sessionService ? "{$sessionService} Started" : 'Consultation Started',
-                ($sessionLabel ? "{$sessionLabel}: " : '') . 'Medical record opened by ' . (optional($mr->doctor)->full_name ?: 'physician') . '.',
+                "{$sessionLabel} Session Started",
+                ($sessionLabel ? "{$sessionLabel}: " : '').'Medical record opened by '.(optional($mr->doctor)->full_name ?: 'physician').'.',
                 optional($mr->doctor)->full_name,
                 $sessionDepartment,
                 'CONSULTATION', 'bg-success',
                 'medical_record', $mr->id,
                 array_filter([
                     'Department' => $sessionDepartment,
-                    'Service' => $sessionService,
-                    'Medical Record' => 'MR-' . str_pad((string) $mr->id, 5, '0', STR_PAD_LEFT),
+                    'Linked Services' => $serviceList,
+                    'Medical Record' => 'MR-'.str_pad((string) $mr->id, 5, '0', STR_PAD_LEFT),
                 ])
             );
 
@@ -262,7 +276,7 @@ class VisitPreviewService
                     $sessionDepartment,
                     'COMPLAINT', 'bg-warning text-dark',
                     'complaint', $complaint->id,
-                    array_filter(['Service' => $sessionService])
+                    array_filter(['Linked Services' => $serviceList])
                 );
             }
 
@@ -271,7 +285,7 @@ class VisitPreviewService
                 $badge = $diag->is_primary ? 'PRIMARY DX' : 'DIAGNOSIS';
                 $badgeCls = $diag->is_primary ? 'bg-danger' : 'bg-secondary';
                 $title = $diag->is_primary ? 'Primary Diagnosis Recorded' : 'Diagnosis Recorded';
-                $desc = trim(($diag->icd_code ? "[{$diag->icd_code}] " : '') . ($diag->description ?? ''));
+                $desc = trim(($diag->icd_code ? "[{$diag->icd_code}] " : '').($diag->description ?? ''));
                 $items[] = $this->item(
                     $diag->created_at,
                     $title,
@@ -280,7 +294,7 @@ class VisitPreviewService
                     $sessionDepartment,
                     $badge, $badgeCls,
                     'diagnosis', $diag->id,
-                    array_filter(['Service' => $sessionService, 'Type' => $diag->type ?: null, 'Notes' => $diag->notes ?: null])
+                    array_filter(['Linked Services' => $serviceList, 'Type' => $diag->type ?: null, 'Notes' => $diag->notes ?: null])
                 );
             }
 
@@ -294,7 +308,7 @@ class VisitPreviewService
                     $sessionDepartment,
                     'TREATMENT', 'bg-success',
                     'treatment', $treatment->id,
-                    array_filter(['Service' => $sessionService, 'Type' => $treatment->type ?: null])
+                    array_filter(['Linked Services' => $serviceList, 'Type' => $treatment->type ?: null])
                 );
             }
         }
@@ -315,7 +329,7 @@ class VisitPreviewService
                 'LAB', 'bg-info',
                 'lab_request', $lr->id,
                 array_filter([
-                    'Urgency'       => $lr->urgency ? strtoupper($lr->urgency) : null,
+                    'Urgency' => $lr->urgency ? strtoupper($lr->urgency) : null,
                     'Clinical Info' => $lr->clinical_info ?: null,
                 ])
             );
@@ -357,7 +371,7 @@ class VisitPreviewService
                 $items[] = $this->item(
                     $dr->dispensed_at ?? $dr->created_at,
                     'Drug Dispensed',
-                    'Dispensed ' . ($dr->quantity_dispensed ?? '?') . ' unit(s).',
+                    'Dispensed '.($dr->quantity_dispensed ?? '?').' unit(s).',
                     optional($dr->dispensedBy)->full_name,
                     null,
                     'PHARMACY', 'bg-success',
@@ -398,7 +412,7 @@ class VisitPreviewService
                 $items[] = $this->item(
                     $an->start_time ?? $an->created_at,
                     'Anaesthesia Note',
-                    'Anaesthesia note recorded for ' . $svcName . '.',
+                    'Anaesthesia note recorded for '.$svcName.'.',
                     optional($an->anaesthetist)->full_name,
                     null,
                     'ANAESTHESIA', 'bg-danger',
@@ -412,7 +426,7 @@ class VisitPreviewService
                 $items[] = $this->item(
                     $on->created_at,
                     'Operative Note',
-                    'Operative note recorded for ' . $svcName . '.',
+                    'Operative note recorded for '.$svcName.'.',
                     null,
                     null,
                     'OPERATIVE', 'bg-dark',
@@ -425,7 +439,7 @@ class VisitPreviewService
                 $items[] = $this->item(
                     $pon->created_at,
                     'Post-Op Note',
-                    'Post-operative note recorded for ' . $svcName . '.',
+                    'Post-operative note recorded for '.$svcName.'.',
                     null,
                     null,
                     'POST-OP', 'bg-secondary',
@@ -457,8 +471,8 @@ class VisitPreviewService
                 'BILLING', 'bg-warning text-dark',
                 'invoice', $invoice->id,
                 array_filter([
-                    'Total'   => $invoice->total_amount ? '₵' . number_format((float) $invoice->total_amount, 2) : null,
-                    'Status'  => $invoice->status?->label() ?? null,
+                    'Total' => $invoice->total_amount ? '₵'.number_format((float) $invoice->total_amount, 2) : null,
+                    'Status' => $invoice->status?->label() ?? null,
                 ])
             );
 
@@ -467,7 +481,7 @@ class VisitPreviewService
                 $items[] = $this->item(
                     $payment->paid_at ?? $payment->created_at,
                     'Payment Received',
-                    '₵' . number_format((float) $payment->amount, 2) . ($method ? " via {$method}" : '') . '.',
+                    '₵'.number_format((float) $payment->amount, 2).($method ? " via {$method}" : '').'.',
                     optional($payment->receivedBy)->full_name,
                     null,
                     'PAYMENT', 'bg-success',
@@ -482,15 +496,15 @@ class VisitPreviewService
             $items[] = $this->item(
                 $admission->admission_date ?? $admission->created_at,
                 'Patient Admitted',
-                'Patient admitted' . ($admission->bed?->ward ? ' to ward ' . $admission->bed->ward->name : '') . '.',
+                'Patient admitted'.($admission->bed?->ward ? ' to ward '.$admission->bed->ward->name : '').'.',
                 optional($admission->admittedByUser ?? null)->full_name ?? null,
                 $admission->bed?->ward?->name,
                 'ADMITTED', 'bg-primary',
                 'admission', $admission->id,
                 array_filter([
                     'Admission No.' => $admission->admission_number ?: null,
-                    'Diagnosis'     => $admission->admitting_diagnosis ?: null,
-                    'Bed'           => $admission->bed?->name ?? null,
+                    'Diagnosis' => $admission->admitting_diagnosis ?: null,
+                    'Bed' => $admission->bed?->name ?? null,
                 ])
             );
 
@@ -524,6 +538,7 @@ class VisitPreviewService
         usort($items, function ($a, $b) {
             $ta = $a['datetime'] instanceof Carbon ? $a['datetime']->timestamp : (int) strtotime((string) $a['datetime']);
             $tb = $b['datetime'] instanceof Carbon ? $b['datetime']->timestamp : (int) strtotime((string) $b['datetime']);
+
             return $ta <=> $tb;
         });
 
@@ -548,20 +563,20 @@ class VisitPreviewService
             ?: $complaints->first()?->description;
 
         return [
-            'chief_complaint'       => $chiefComplaint ?: '—',
-            'primary_diagnosis'     => $primaryDx
-                ? (($primaryDx->icd_code ? "[{$primaryDx->icd_code}] " : '') . ($primaryDx->description ?? ''))
+            'chief_complaint' => $chiefComplaint ?: '—',
+            'primary_diagnosis' => $primaryDx
+                ? (($primaryDx->icd_code ? "[{$primaryDx->icd_code}] " : '').($primaryDx->description ?? ''))
                 : '—',
-            'diagnoses_count'       => $diagnoses->count(),
-            'prescriptions_count'   => $visit->prescriptions->count(),
-            'investigations_count'  => $visit->labRequests->count(),
-            'procedures_count'      => $visit->procedureRequests->count(),
-            'has_admission'         => $visit->admission !== null,
-            'billing_status'        => $visit->invoices->isEmpty()
+            'diagnoses_count' => $diagnoses->count(),
+            'prescriptions_count' => $visit->prescriptions->count(),
+            'investigations_count' => $visit->labRequests->count(),
+            'procedures_count' => $visit->procedureRequests->count(),
+            'has_admission' => $visit->admission !== null,
+            'billing_status' => $visit->invoices->isEmpty()
                 ? 'No invoice'
                 : ($visit->invoices->last()?->status?->label() ?? 'Unknown'),
-            'total_billed'          => $visit->invoices->sum('total_amount'),
-            'total_paid'            => $visit->invoices->sum('amount_paid'),
+            'total_billed' => $visit->invoices->sum('total_amount'),
+            'total_paid' => $visit->invoices->sum('amount_paid'),
         ];
     }
 
@@ -585,29 +600,37 @@ class VisitPreviewService
         if ($datetime instanceof Carbon) {
             $dt = $datetime;
         } elseif ($datetime) {
-            try { $dt = Carbon::parse($datetime); } catch (\Throwable) {}
+            try {
+                $dt = Carbon::parse($datetime);
+            } catch (\Throwable) {
+            }
         }
 
         return [
-            'datetime'    => $dt,
-            'date_label'  => $dt?->format('d M Y') ?? '—',
-            'time_label'  => $dt?->format('h:i A') ?? '',
-            'title'       => $title,
+            'datetime' => $dt,
+            'date_label' => $dt?->format('d M Y') ?? '—',
+            'time_label' => $dt?->format('h:i A') ?? '',
+            'title' => $title,
             'description' => $description,
-            'entered_by'  => $enteredBy ?: 'System',
-            'department'  => $department,
-            'badge'       => $badge,
+            'entered_by' => $enteredBy ?: 'System',
+            'department' => $department,
+            'badge' => $badge,
             'badge_class' => $badgeClass,
-            'details'     => $details,
+            'details' => $details,
             'source_type' => $sourceType,
-            'source_id'   => $sourceId,
+            'source_id' => $sourceId,
         ];
     }
 
     private function formatStatus($status): string
     {
-        if ($status === null) return '—';
-        if (is_object($status) && method_exists($status, 'label')) return $status->label();
+        if ($status === null) {
+            return '—';
+        }
+        if (is_object($status) && method_exists($status, 'label')) {
+            return $status->label();
+        }
+
         return ucwords(str_replace(['_', '-'], ' ', (string) $status));
     }
 }

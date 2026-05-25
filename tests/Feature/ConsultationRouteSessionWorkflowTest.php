@@ -14,6 +14,7 @@ use App\Models\Specialty;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
+use App\Models\VisitConsultationRouteService;
 use App\Services\ConsultationSessionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
@@ -165,6 +166,58 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
         ]);
     }
 
+    public function test_service_based_routes_migrate_to_one_department_route_with_linked_services(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->admin->id]);
+        $visit = Visit::factory()->create([
+            'patient_id' => $patient->id,
+            'created_by' => $this->admin->id,
+            'visit_type' => VisitType::OUTPATIENT,
+            'status' => VisitStatus::CONSULTING,
+            'current_department_id' => $this->dentalDepartment->id,
+        ]);
+
+        $secondDentalService = $this->makeService($this->dentalDepartment, 'Tooth Extraction Review');
+
+        $firstRoute = VisitConsultationRoute::create([
+            'visit_id' => $visit->id,
+            'patient_id' => $patient->id,
+            'department_id' => $this->dentalDepartment->id,
+            'service_id' => $this->dentalService->id,
+            'doctor_id' => $this->doctor->id,
+            'status' => VisitConsultationRoute::STATUS_PENDING,
+            'routed_by' => $this->admin->id,
+        ]);
+        $secondRoute = VisitConsultationRoute::create([
+            'visit_id' => $visit->id,
+            'patient_id' => $patient->id,
+            'department_id' => $this->dentalDepartment->id,
+            'service_id' => $secondDentalService->id,
+            'doctor_id' => $this->doctor->id,
+            'status' => VisitConsultationRoute::STATUS_ACTIVE,
+            'routed_by' => $this->admin->id,
+        ]);
+
+        $this->artisan('consultation:migrate-service-routes-to-departments')
+            ->assertExitCode(0);
+
+        $this->assertSame(1, VisitConsultationRoute::where('visit_id', $visit->id)
+            ->where('department_id', $this->dentalDepartment->id)
+            ->count());
+
+        $survivingRoute = VisitConsultationRoute::where('visit_id', $visit->id)
+            ->where('department_id', $this->dentalDepartment->id)
+            ->firstOrFail();
+
+        $this->assertContains($survivingRoute->id, [$firstRoute->id, $secondRoute->id]);
+        $this->assertEqualsCanonicalizing(
+            [$this->dentalService->id, $secondDentalService->id],
+            VisitConsultationRouteService::where('visit_consultation_route_id', $survivingRoute->id)
+                ->pluck('service_id')
+                ->all()
+        );
+    }
+
     public function test_visit_page_transition_section_shows_routes_and_queue_form(): void
     {
         [$visit] = $this->makeConsultingVisit();
@@ -173,10 +226,10 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
             ->get(route('admin.visits.show', $visit))
             ->assertOk()
             ->assertSee('Current Consultation Routing')
-            ->assertSee('Available Consultation Services')
+            ->assertSee('Available Consultation Department Sessions')
             ->assertSee($this->generalService->name)
             ->assertSee('Consultation Department')
-            ->assertSee('Consultation Service');
+            ->assertSee('Services to add');
     }
 
     public function test_completing_current_session_does_not_close_visit_when_other_routes_remain(): void
@@ -214,7 +267,7 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
 
         $payload = [
             'department_id' => $this->dentalDepartment->id,
-            'service_id' => $this->dentalService->id,
+            'service_ids' => [$this->dentalService->id],
             'doctor_id' => $this->doctor->id,
             'notes' => 'Dental review requested',
         ];
@@ -228,8 +281,15 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
             ->assertRedirect();
 
         $this->assertSame(1, VisitConsultationRoute::where('visit_id', $visit->id)
-            ->where('service_id', $this->dentalService->id)
+            ->where('department_id', $this->dentalDepartment->id)
             ->whereIn('status', [VisitConsultationRoute::STATUS_PENDING, VisitConsultationRoute::STATUS_ACTIVE])
+            ->count());
+        $route = VisitConsultationRoute::where('visit_id', $visit->id)
+            ->where('department_id', $this->dentalDepartment->id)
+            ->firstOrFail();
+
+        $this->assertSame(1, VisitConsultationRouteService::where('visit_consultation_route_id', $route->id)
+            ->where('service_id', $this->dentalService->id)
             ->count());
 
         $this->assertSame(1, InvoiceItem::where('visit_id', $visit->id)
@@ -244,7 +304,7 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
         $this->actingAs($this->admin)
             ->post(route('admin.consultations.routes.store', $visit), [
                 'department_id' => $this->dentalDepartment->id,
-                'service_id' => $this->dentalService->id,
+                'service_ids' => [$this->dentalService->id],
                 'doctor_id' => $this->otherDoctor->id,
             ])
             ->assertSessionHas('error', 'Selected doctor is not linked to this consultation department.');
@@ -310,6 +370,11 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
             'started_by' => $this->otherDoctor->id,
             'started_at' => now(),
             'activated_at' => now(),
+        ]);
+        VisitConsultationRouteService::create([
+            'visit_consultation_route_id' => $route->id,
+            'visit_id' => $visit->id,
+            'service_id' => $this->generalService->id,
         ]);
 
         return [$visit, $route];

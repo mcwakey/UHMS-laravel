@@ -57,6 +57,23 @@
     ];
     $routeBadge = fn (?string $status) => $routeBadgeClasses[$status ?? ''] ?? 'light text-dark';
     $insuranceLabel = $visit->visitInsurance?->insuranceProvider?->name ?? 'Cash & Carry';
+    $routeServiceNames = function ($route) {
+        if (! $route) {
+            return collect();
+        }
+
+        $names = $route->routeServices
+            ->map(fn ($routeService) => $routeService->service?->name)
+            ->filter()
+            ->values();
+
+        if ($names->isEmpty() && $route->service) {
+            $names = collect([$route->service->name]);
+        }
+
+        return $names;
+    };
+    $selectedRouteServiceNames = $routeServiceNames($selectedRoute);
 @endphp
 
 {{-- ============================================================ --}}
@@ -73,8 +90,8 @@
                 <div class="fw-semibold">{{ $selectedRoute?->department?->name ?? 'No active session' }}</div>
             </div>
             <div class="session-summary-item">
-                <div class="text-muted small">Service</div>
-                <div class="fw-semibold">{{ $selectedRoute?->service?->name ?? '-' }}</div>
+                <div class="text-muted small">Linked Services</div>
+                <div class="fw-semibold">{{ $selectedRouteServiceNames->implode(', ') ?: '-' }}</div>
             </div>
 
         <div class="d-flex flex-wrap gap-2">
@@ -1294,7 +1311,7 @@
 <div id="sessionsDrawer" class="is-collapsed">
     <div id="sessionsDrawerHandle" role="button" aria-expanded="false" aria-controls="sessionsDrawerBody" onclick="toggleSessionsDrawer()">
         <i class="ti ti-route fs-5"></i>
-        <span class="fw-semibold small">Consultation Sessions</span>
+        <span class="fw-semibold small">Consultation Sessions for This Visit</span>
         <span class="badge bg-white text-primary rounded-pill ms-1">{{ $sessions->count() }}</span>
         <i class="ti ti-chevron-up ms-auto fs-5"></i>
     </div>
@@ -1304,7 +1321,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>Department</th>
-                        <th>Service</th>
+                        <th>Linked Services</th>
                         <th>Doctor</th>
                         <th>Status</th>
                         <th>Started</th>
@@ -1317,11 +1334,12 @@
                         $rowClass = $selectedRoute && $selectedRoute->id === $session->id ? 'is-current' : '';
                         $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_COMPLETED ? ' is-completed' : '';
                         $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_CANCELLED ? ' is-cancelled' : '';
+                        $sessionServiceNames = $routeServiceNames($session);
                     @endphp
                     <tr class="session-route-row {{ trim($rowClass) }}">
                         <td class="fw-medium">{{ $session->department?->name ?? '-' }}</td>
                         <td>
-                            {{ $session->service?->name ?? '-' }}
+                            {{ $sessionServiceNames->implode(', ') ?: '-' }}
                             @if($selectedRoute && $selectedRoute->id === $session->id)
                                 <span class="badge bg-primary ms-1">Current</span>
                             @endif
@@ -1529,11 +1547,11 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Consultation Service <span class="text-danger">*</span></label>
-                        <select name="service_id" class="form-select" required id="sendSessionServiceSelect" disabled>
-                            <option value="">— Select department first —</option>
+                        <label class="form-label fw-semibold">Services to add / bill <small class="text-muted">(optional)</small></label>
+                        <select name="service_ids[]" class="form-select" id="sendSessionServiceSelect" disabled multiple size="4">
+                            <option value="" disabled>Select department first</option>
                         </select>
-                        <small class="text-muted">Choose the specific consultation type the patient is being referred for.</small>
+                        <small class="text-muted">Services are linked under the target department session and billed once.</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Doctor optional</label>
@@ -1863,7 +1881,7 @@ function initSendSessionPicker() {
             const doctors = payload.doctors || [];
             svcSel.disabled = false;
             doctorSel.disabled = false;
-            setOptions(svcSel, services.length ? 'Select service' : 'No consultation services available', services, function (s) { return s.name; });
+            setOptions(svcSel, services.length ? 'Optional services to link/bill' : 'No consultation services available', services, function (s) { return s.name; });
             setOptions(doctorSel, doctors.length ? 'Optional doctor' : 'No doctor linked through specialty', doctors, function (d) { return d.name; });
         } catch (error) {
             svcSel.disabled = true;

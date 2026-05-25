@@ -19,7 +19,7 @@ use Illuminate\Support\Carbon;
  * @property int $visit_id
  * @property int $patient_id
  * @property int $department_id
- * @property int $service_id references service_catalog.id
+ * @property ?int $service_id legacy primary/first service reference
  * @property ?int $doctor_id
  * @property string $status
  * @property ?int $routed_by
@@ -91,6 +91,18 @@ class VisitConsultationRoute extends Model
         return $this->belongsTo(ServiceCatalog::class, 'service_id');
     }
 
+    public function routeServices(): HasMany
+    {
+        return $this->hasMany(VisitConsultationRouteService::class, 'visit_consultation_route_id');
+    }
+
+    public function services()
+    {
+        return $this->belongsToMany(ServiceCatalog::class, 'visit_consultation_route_services', 'visit_consultation_route_id', 'service_id')
+            ->withPivot('invoice_item_id')
+            ->withTimestamps();
+    }
+
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'doctor_id');
@@ -119,6 +131,11 @@ class VisitConsultationRoute extends Model
     public function medicalRecord(): HasOne
     {
         return $this->hasOne(MedicalRecord::class, 'consultation_route_id');
+    }
+
+    public function medicalRecords(): HasMany
+    {
+        return $this->hasMany(MedicalRecord::class, 'consultation_route_id');
     }
 
     public function logs(): HasMany

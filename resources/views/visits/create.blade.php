@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 @section('title', 'Create Visit')
 
 @section('content')
@@ -256,7 +256,7 @@
                         </div>
                     </div>
 
-                    <!-- Selected Services (Billing Lines) -->
+                    <!-- Selected Services (Department Sessions + Billing Lines) -->
                     <div id="selectedServicesCard" class="d-none">
                         <label class="form-label fw-bold"><i class="ti ti-receipt me-1"></i>Selected Services</label>
                         <div id="routeDoctorSummary" class="small text-muted mb-2"></div>
@@ -264,7 +264,7 @@
                             <table class="table table-sm table-hover table-bordered mb-0" id="billingTable">
                                 <thead class="table-light">
                                     <tr>
-                                        <th style="width: 140px;">Department</th>
+                                        <th style="width: 140px;">Department Session</th>
                                         <th>Service</th>
                                         <th class="text-end" style="width: 120px;">Price</th>
                                         <th class="text-center" style="width: 50px;">Action</th>
@@ -987,19 +987,23 @@ document.addEventListener('DOMContentLoaded', function() {
             existing.quantity++;
             existing.price = resolvedPrice; // refresh price in case insurance changed
         } else {
+            const selectedDeptOption = departmentSelect.options[departmentSelect.selectedIndex];
             const isConsultation = (svcObj?.department_type || '').toString() === 'consultation';
-            const selectedDoctor = isConsultation && doctorSelect.value
+            const departmentId = svcObj?.department_id || departmentSelect.value || null;
+            const existingDepartmentRoute = isConsultation
+                ? selectedServices.find(s => String(s.department_id) === String(departmentId) && s.department_type === 'consultation')
+                : null;
+            const selectedDoctor = isConsultation && !existingDepartmentRoute && doctorSelect.value
                 ? availableDoctors.find(doc => String(doc.id) === String(doctorSelect.value))
                 : null;
-            const selectedDeptOption = departmentSelect.options[departmentSelect.selectedIndex];
 
             selectedServices.push({
                 service_catalog_id: serviceId,
-                department_id: svcObj?.department_id || departmentSelect.value || null,
+                department_id: departmentId,
                 department_name: selectedDeptOption ? selectedDeptOption.textContent : '',
                 department_type: svcObj?.department_type || null,
-                doctor_id: selectedDoctor ? selectedDoctor.id : null,
-                doctor_name: selectedDoctor ? selectedDoctor.name : null,
+                doctor_id: existingDepartmentRoute ? existingDepartmentRoute.doctor_id : (selectedDoctor ? selectedDoctor.id : null),
+                doctor_name: existingDepartmentRoute ? existingDepartmentRoute.doctor_name : (selectedDoctor ? selectedDoctor.name : null),
                 name: serviceName,
                 price: resolvedPrice,
                 quantity: 1,
@@ -1034,18 +1038,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
         card.classList.remove('d-none');
         let html = '';
+        const groupsByKey = {};
+        groupSelectedServicesByDepartment().forEach(function(group) {
+            groupsByKey[group.key] = group;
+        });
+        const renderedDepartments = {};
 
         selectedServices.forEach(function(svc, idx) {
+            const groupKey = String(svc.department_id || 'none');
+            const group = groupsByKey[groupKey];
+            if (group && !renderedDepartments[groupKey]) {
+                const groupTotal = group.services.reduce(function(sum, item) {
+                    return sum + (item.service.price * (item.service.quantity || 1));
+                }, 0);
+
+                html += '<tr class="table-light">';
+                html += '<td colspan="4">';
+                html += '<div class="d-flex flex-wrap justify-content-between gap-2">';
+                html += '<span class="fw-semibold">' + escapeHtml(group.departmentName || 'Department') + ' Department Session</span>';
+                html += '<span class="text-muted small">';
+                html += group.doctorName ? 'Doctor: ' + escapeHtml(group.doctorName) : 'Doctor: Unassigned';
+                html += ' &middot; Department total: \\u20B5' + formatNumber(groupTotal);
+                html += '</span></div></td></tr>';
+                renderedDepartments[groupKey] = true;
+            }
+
             // Quantity is always 1 — UI no longer exposes a quantity selector.
             const qty = svc.quantity || 1;
             const lineTotal = svc.price * qty;
 
             html += '<tr>';
-            html += '<td>' + escapeHtml(svc.department_name || '—') + '</td>';
+            html += '<td class="text-muted small">Linked service</td>';
             html += '<td>' + escapeHtml(svc.name);
-            if (svc.department_type === 'consultation' && svc.doctor_name) {
-                html += '<div class="small text-muted">Route doctor: ' + escapeHtml(svc.doctor_name) + '</div>';
-            }
             html += '<input type="hidden" name="services[' + idx + '][service_catalog_id]" value="' + svc.service_catalog_id + '">';
             html += '<input type="hidden" name="services[' + idx + '][department_id]" value="' + (svc.department_id || '') + '">';
             html += '<input type="hidden" name="services[' + idx + '][quantity]" value="' + qty + '">';
@@ -1090,14 +1114,38 @@ document.addEventListener('DOMContentLoaded', function() {
         const summary = document.getElementById('routeDoctorSummary');
         if (!summary) return;
 
-        const doctors = selectedServices
-            .filter(svc => svc.department_type === 'consultation' && svc.doctor_name)
-            .map(svc => svc.doctor_name)
-            .filter((name, index, arr) => arr.indexOf(name) === index);
+        const consultationGroups = groupSelectedServicesByDepartment()
+            .filter(group => group.departmentType === 'consultation');
 
-        summary.textContent = doctors.length
-            ? 'Consultation route doctor: ' + doctors.join(', ')
-            : 'Consultation route doctor is optional and captured when each consultation service is added.';
+        if (consultationGroups.length === 0) {
+            summary.textContent = 'Consultation department sessions will be created only for consultation-type departments.';
+            return;
+        }
+
+        summary.textContent = consultationGroups.map(function(group) {
+            return (group.departmentName || 'Department') + ': ' + (group.doctorName || 'Unassigned doctor');
+        }).join(' | ');
+    }
+
+    function groupSelectedServicesByDepartment() {
+        const groups = [];
+        selectedServices.forEach(function(svc, index) {
+            const key = String(svc.department_id || 'none');
+            let group = groups.find(item => item.key === key);
+            if (!group) {
+                group = {
+                    key,
+                    departmentName: svc.department_name || '',
+                    departmentType: svc.department_type || '',
+                    doctorId: svc.doctor_id || null,
+                    doctorName: svc.doctor_name || null,
+                    services: [],
+                };
+                groups.push(group);
+            }
+            group.services.push({ service: svc, index });
+        });
+        return groups;
     }
 
     function repopulateDoctorSelect(doctors) {
@@ -1125,7 +1173,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         doctorSelectHelp.textContent = doctors.length
-            ? 'Doctor is stored on the consultation route when you add a consultation service.'
+            ? 'Doctor is stored on the department consultation session when you add a consultation service.'
             : 'No doctor linked to this department through specialty.';
     }
 

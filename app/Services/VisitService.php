@@ -2,23 +2,28 @@
 
 namespace App\Services;
 
+use App\Enums\DepartmentType;
+use App\Enums\ServiceType;
 use App\Enums\TriageScore;
+use App\Enums\UserStatus;
 use App\Enums\VisitStatus;
+use App\Models\Department;
+use App\Models\InvoiceItem;
 use App\Models\Patient;
-use App\Models\User;
+use App\Models\ServiceCatalog;
 use App\Models\Triage;
-use App\Models\Vital;
-use App\Models\VisitDepartmentHistory;
+use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
-use App\Models\ServiceCatalog;
-use App\Enums\DepartmentType;
-use App\Enums\UserStatus;
+use App\Models\VisitConsultationRouteService;
+use App\Models\VisitDepartmentHistory;
+use App\Models\VisitServiceItem;
+use App\Models\Vital;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Services\VisitWorkflowService;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class VisitService
 {
@@ -39,31 +44,31 @@ class VisitService
             'pendingConsultationRoutes.doctor',
         ]);
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $query->search($filters['search']);
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['visit_type'])) {
+        if (! empty($filters['visit_type'])) {
             $query->where('visit_type', $filters['visit_type']);
         }
 
-        if (!empty($filters['priority'])) {
+        if (! empty($filters['priority'])) {
             $query->where('priority', $filters['priority']);
         }
 
-        if (!empty($filters['doctor_id'])) {
+        if (! empty($filters['doctor_id'])) {
             $query->whereHas('consultationRoutes', fn ($q) => $q->where('doctor_id', $filters['doctor_id']));
         }
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('visit_date', '>=', $filters['date_from']);
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('visit_date', '<=', $filters['date_to']);
         }
 
@@ -72,7 +77,7 @@ class VisitService
         }
 
         // Include scheduled visits in listing
-        if (!empty($filters['include_scheduled'])) {
+        if (! empty($filters['include_scheduled'])) {
             $query->orWhere(function ($q) {
                 $q->whereIn('status', [VisitStatus::SCHEDULED, VisitStatus::CONFIRMED]);
             });
@@ -121,19 +126,20 @@ class VisitService
      * NOTE: This method creates both invoice line items (billing source of truth)
      * and visit_services rows (an operational service-assignment snapshot).
      *
-     * @param array $services Array of ['service_catalog_id' => int, 'quantity' => int, 'doctor_id' => ?int, 'notes' => ?string]
+     * @param  array  $services  Array of ['service_catalog_id' => int, 'quantity' => int, 'doctor_id' => ?int, 'notes' => ?string]
      */
     public function attachServices(Visit $visit, array $services): Visit
     {
         foreach ($services as $serviceData) {
-            $catalog  = ServiceCatalog::findOrFail($serviceData['service_catalog_id']);
+            $catalog = ServiceCatalog::findOrFail($serviceData['service_catalog_id']);
             $quantity = max(1, (int) ($serviceData['quantity'] ?? 1));
             $doctorId = $this->isConsultationService($catalog)
                 ? ($serviceData['doctor_id'] ?? null)
                 : null;
 
+            $invoiceItem = null;
             try {
-                $this->billingService->addItemToVisitInvoice(
+                $invoiceItem = $this->billingService->addItemToVisitInvoice(
                     visit: $visit,
                     service: $catalog,
                     sourceType: 'service_catalog',
@@ -147,51 +153,69 @@ class VisitService
                 if (! str_contains($e->getMessage(), 'Duplicate billing prevented')) {
                     throw $e;
                 }
+
+                $invoiceItem = InvoiceItem::where('visit_id', $visit->id)
+                    ->where('service_catalog_id', $catalog->id)
+                    ->orderBy('id')
+                    ->first();
             }
 
             // Create / update visit_services row as an audit snapshot.
             // Doctor assignment belongs to visit_consultation_routes.
-            \App\Models\VisitServiceItem::updateOrCreate(
+            VisitServiceItem::updateOrCreate(
                 [
-                    'visit_id'           => $visit->id,
+                    'visit_id' => $visit->id,
                     'service_catalog_id' => $catalog->id,
                 ],
                 [
-                    'department_id'    => $catalog->department_id,
-                    'quantity'         => $quantity,
-                    'unit_price'       => $catalog->price ?? 0,
-                    'total_price'      => ($catalog->price ?? 0) * $quantity,
-                    'notes'            => $serviceData['notes'] ?? null,
+                    'department_id' => $catalog->department_id,
+                    'quantity' => $quantity,
+                    'unit_price' => $catalog->price ?? 0,
+                    'total_price' => ($catalog->price ?? 0) * $quantity,
+                    'notes' => $serviceData['notes'] ?? null,
                 ]
             );
 
             // If the service belongs to a consultation-type department, create
             // a PENDING consultation route so the patient appears in the right
             // consultation queue after triage.
-            $this->ensurePendingConsultationRoute($visit, $catalog, $doctorId);
+            $route = $this->ensurePendingConsultationRoute($visit, $catalog, $doctorId);
+            if ($route) {
+                VisitConsultationRouteService::updateOrCreate(
+                    [
+                        'visit_consultation_route_id' => $route->id,
+                        'service_id' => $catalog->id,
+                    ],
+                    [
+                        'visit_id' => $visit->id,
+                        'invoice_item_id' => $invoiceItem?->id,
+                    ]
+                );
+            }
         }
 
         return $visit->fresh(['invoices.items.serviceCatalog', 'invoices.items.department']);
     }
 
     /**
-     * Create a PENDING visit_consultation_routes row for the given service if:
+     * Create a PENDING department-level visit_consultation_routes row for the
+     * given service if:
      *   - the service has a department,
      *   - that department's type is CONSULTATION,
-     *   - and no route already exists for this (visit, service) pair.
+     *   - and no non-cancelled route already exists for this (visit, department) pair.
      */
     private function ensurePendingConsultationRoute(
         Visit $visit,
         ServiceCatalog $catalog,
         ?int $doctorId = null,
-    ): void {
+    ): ?VisitConsultationRoute {
         if (! $catalog->department_id) {
-            return;
+            return null;
         }
 
-        $department = $catalog->department ?? \App\Models\Department::find($catalog->department_id);
+        $department = $catalog->department ?? Department::find($catalog->department_id);
         if (! $department) {
-            return;
+            return null;
         }
 
         $type = $department->type instanceof DepartmentType
@@ -199,28 +223,35 @@ class VisitService
             : (string) $department->type;
 
         if ($type !== DepartmentType::CONSULTATION->value) {
-            return;
+            return null;
         }
 
-        $route = VisitConsultationRoute::firstOrNew([
-            'visit_id'   => $visit->id,
-            'service_id' => $catalog->id,
-        ]);
+        $route = VisitConsultationRoute::where('visit_id', $visit->id)
+            ->where('department_id', $department->id)
+            ->where('status', '!=', VisitConsultationRoute::STATUS_CANCELLED)
+            ->oldest('id')
+            ->first() ?? new VisitConsultationRoute([
+                'visit_id' => $visit->id,
+                'department_id' => $department->id,
+            ]);
 
         if (! $route->exists || $route->status === VisitConsultationRoute::STATUS_PENDING) {
             $route->fill([
-                'patient_id'    => $visit->patient_id,
+                'patient_id' => $visit->patient_id,
                 'department_id' => $department->id,
-                'doctor_id'     => $doctorId,
-                'status'        => VisitConsultationRoute::STATUS_PENDING,
-                'routed_by'     => $route->routed_by ?? Auth::id(),
+                'service_id' => $route->service_id ?: $catalog->id,
+                'doctor_id' => $route->doctor_id ?: $doctorId,
+                'status' => VisitConsultationRoute::STATUS_PENDING,
+                'routed_by' => $route->routed_by ?? Auth::id(),
             ])->save();
         }
+
+        return $route;
     }
 
     public function isConsultationService(ServiceCatalog $catalog): bool
     {
-        $department = $catalog->department ?? \App\Models\Department::find($catalog->department_id);
+        $department = $catalog->department ?? Department::find($catalog->department_id);
         $type = $department?->type ?? $catalog->department_type;
         $typeValue = $type instanceof DepartmentType ? $type->value : (string) $type;
 
@@ -232,19 +263,19 @@ class VisitService
      * Includes services whose primary department_id matches, OR whose
      * specialties are linked to the department.
      */
-    public function getServicesForDepartment(int $departmentId): \Illuminate\Database\Eloquent\Collection
+    public function getServicesForDepartment(int $departmentId): Collection
     {
         return ServiceCatalog::where('is_active', true)
             ->where(function ($q) use ($departmentId) {
                 $q->where('department_id', $departmentId)
-                  ->orWhereHas('specialties', fn ($sq) => $sq->where('department_id', $departmentId));
+                    ->orWhereHas('specialties', fn ($sq) => $sq->where('department_id', $departmentId));
             })
             ->with('prices.insuranceProvider')
             ->orderBy('name')
             ->get();
     }
 
-    public function getDoctorsForDepartment(int $departmentId): \Illuminate\Database\Eloquent\Collection
+    public function getDoctorsForDepartment(int $departmentId): Collection
     {
         return User::query()
             ->whereHas('specialties', fn ($q) => $q->where('specialties.department_id', $departmentId))
@@ -259,7 +290,7 @@ class VisitService
     /**
      * Get doctors available for specific services (via specialties).
      */
-    public function getDoctorsForServices(array $serviceIds): \Illuminate\Database\Eloquent\Collection
+    public function getDoctorsForServices(array $serviceIds): Collection
     {
         $specialtyIds = DB::table('service_specialty')
             ->whereIn('service_catalog_id', $serviceIds)
@@ -286,7 +317,7 @@ class VisitService
     /**
      * Get services available for a doctor (via specialties).
      */
-    public function getServicesForDoctor(int $doctorId): \Illuminate\Database\Eloquent\Collection
+    public function getServicesForDoctor(int $doctorId): Collection
     {
         $specialtyIds = DB::table('doctor_specialty')
             ->where('user_id', $doctorId)
@@ -310,7 +341,7 @@ class VisitService
     {
         $data['visit_date'] = $data['visit_date'] ?? $data['appointment_date'] ?? null;
 
-        if (!$data['visit_date'] || !Carbon::parse($data['visit_date'])->isAfter(today())) {
+        if (! $data['visit_date'] || ! Carbon::parse($data['visit_date'])->isAfter(today())) {
             throw new \InvalidArgumentException('Scheduled visits must be for a future date.');
         }
 
@@ -330,7 +361,7 @@ class VisitService
      */
     public function checkIn(Visit $visit): Visit
     {
-        if (!in_array($visit->status, [VisitStatus::SCHEDULED, VisitStatus::CONFIRMED])) {
+        if (! in_array($visit->status, [VisitStatus::SCHEDULED, VisitStatus::CONFIRMED])) {
             throw new \InvalidArgumentException('Only scheduled or confirmed visits can be checked in.');
         }
 
@@ -351,7 +382,7 @@ class VisitService
      */
     public function reschedule(Visit $visit, array $data): Visit
     {
-        if (!in_array($visit->status, [VisitStatus::SCHEDULED, VisitStatus::CONFIRMED])) {
+        if (! in_array($visit->status, [VisitStatus::SCHEDULED, VisitStatus::CONFIRMED])) {
             throw new \InvalidArgumentException('Only scheduled or confirmed visits can be rescheduled.');
         }
 
@@ -405,13 +436,13 @@ class VisitService
             VisitStatus::BILLING,
         ];
 
-        if (!in_array($visit->status, $serviceStatuses)) {
+        if (! in_array($visit->status, $serviceStatuses)) {
             throw new \InvalidArgumentException(
                 "Cannot send to department from status: {$visit->status->label()}"
             );
         }
 
-        $department = \App\Models\Department::findOrFail($departmentId);
+        $department = Department::findOrFail($departmentId);
 
         // Map department type to visit status
         $newStatus = $department->type
@@ -433,6 +464,7 @@ class VisitService
     public function update(Visit $visit, array $data): Visit
     {
         $visit->update($data);
+
         return $visit->fresh();
     }
 
@@ -443,11 +475,11 @@ class VisitService
     /**
      * Process triage: record vitals, compute score, select dept, transition visit.
      *
-     * @param array $data {
-     *   blood_pressure_systolic, blood_pressure_diastolic, heart_rate,
-     *   temperature, respiratory_rate, spo2, weight?, height?,
-     *   department_id (consultation dept), notes?
-     * }
+     * @param  array  $data  {
+     *                       blood_pressure_systolic, blood_pressure_diastolic, heart_rate,
+     *                       temperature, respiratory_rate, spo2, weight?, height?,
+     *                       department_id (consultation dept), notes?
+     *                       }
      */
     public function processTriage(Visit $visit, array $data): Visit
     {
@@ -479,11 +511,11 @@ class VisitService
         // start the consultation). Emergency: EMERGENCY.
         $nextStatus = match ($score) {
             TriageScore::EMERGENCY => VisitStatus::EMERGENCY,
-            default                => VisitStatus::WAITING_CONSULTATION,
+            default => VisitStatus::WAITING_CONSULTATION,
         };
 
         // Assign consultation department if provided
-        if (!empty($data['department_id'])) {
+        if (! empty($data['department_id'])) {
             $this->assignDepartment($visit, (int) $data['department_id'], $nextStatus);
         } else {
             $this->workflowService->transition($visit, $nextStatus, "Triage complete — score: {$score->label()}");
@@ -497,17 +529,17 @@ class VisitService
      */
     public function assignDepartment(Visit $visit, int $departmentId, VisitStatus $newStatus): Visit
     {
-        $department = \App\Models\Department::findOrFail($departmentId);
+        $department = Department::findOrFail($departmentId);
 
         // Update current department on visit
         $visit->update(['current_department_id' => $departmentId]);
 
         // Record dept history
         VisitDepartmentHistory::create([
-            'visit_id'    => $visit->id,
+            'visit_id' => $visit->id,
             'department_id' => $departmentId,
-            'type'        => VisitDepartmentHistory::TYPE_CONSULTATION,
-            'status'      => VisitDepartmentHistory::STATUS_WAITING,
+            'type' => VisitDepartmentHistory::TYPE_CONSULTATION,
+            'status' => VisitDepartmentHistory::STATUS_WAITING,
             'assigned_by' => Auth::id(),
         ]);
 
@@ -519,12 +551,12 @@ class VisitService
         // already exists; otherwise the billing call above generated one.
         // Mark it as PENDING (do NOT activate yet) so the doctor explicitly
         // starts the consultation from the queue.
-        \App\Models\VisitConsultationRoute::where('visit_id', $visit->id)
+        VisitConsultationRoute::where('visit_id', $visit->id)
             ->where('department_id', $departmentId)
-            ->where('status', \App\Models\VisitConsultationRoute::STATUS_PENDING)
+            ->where('status', VisitConsultationRoute::STATUS_PENDING)
             ->limit(1)
             ->update([
-                'routed_by'  => Auth::id(),
+                'routed_by' => Auth::id(),
                 'updated_at' => now(),
             ]);
 
@@ -550,8 +582,8 @@ class VisitService
      * target service has not yet been billed the appropriate billing is
      * created — but only once, never duplicating an existing invoice item.
      *
-     * @param int      $departmentId Target consultation department.
-     * @param int|null $serviceId    Specific consultation service catalog id
+     * @param  int  $departmentId  Target consultation department.
+     * @param  int|null  $serviceId  Specific consultation service catalog id
      *                               within the target department. When NULL
      *                               a sensible default service is chosen via
      *                               {@see createConsultationBilling()}.
@@ -572,11 +604,11 @@ class VisitService
             throw new \InvalidArgumentException('Cannot refer to the same department.');
         }
 
-        $department = \App\Models\Department::findOrFail($departmentId);
+        $department = Department::findOrFail($departmentId);
 
-        if (! ($department->type instanceof \App\Enums\DepartmentType
-            ? $department->type === \App\Enums\DepartmentType::CONSULTATION
-            : (string) $department->type === \App\Enums\DepartmentType::CONSULTATION->value)) {
+        if (! ($department->type instanceof DepartmentType
+            ? $department->type === DepartmentType::CONSULTATION
+            : (string) $department->type === DepartmentType::CONSULTATION->value)) {
             throw new \InvalidArgumentException('Target department is not a consultation department.');
         }
 
@@ -585,7 +617,7 @@ class VisitService
         if ($serviceId) {
             $service = ServiceCatalog::where('id', $serviceId)
                 ->where('department_id', $departmentId)
-                ->where('category', \App\Enums\ServiceType::CONSULTATION->value)
+                ->where('category', ServiceType::CONSULTATION->value)
                 ->first();
             if (! $service) {
                 throw new \InvalidArgumentException(
@@ -594,14 +626,13 @@ class VisitService
             }
         }
 
-        // Complete the currently active consultation route (if any) so the
-        // patient is moved out of that department's "active" slot.
+        // Pause the currently active consultation route (if any). A session
+        // is completed only when the user explicitly completes it.
         $current = $visit->activeConsultationRoute()->first();
         if ($current) {
             $current->update([
-                'status'        => \App\Models\VisitConsultationRoute::STATUS_COMPLETED,
-                'completed_by'  => Auth::id(),
-                'completed_at'  => now(),
+                'status' => VisitConsultationRoute::STATUS_PAUSED,
+                'paused_at' => now(),
             ]);
         }
 
@@ -611,12 +642,12 @@ class VisitService
         $this->completeDepartmentHistory($visit);
         $visit->update(['current_department_id' => $departmentId]);
         VisitDepartmentHistory::create([
-            'visit_id'      => $visit->id,
+            'visit_id' => $visit->id,
             'department_id' => $departmentId,
-            'type'          => VisitDepartmentHistory::TYPE_REFERRAL,
-            'status'        => VisitDepartmentHistory::STATUS_IN_PROGRESS,
-            'assigned_by'   => Auth::id(),
-            'notes'         => $notes,
+            'type' => VisitDepartmentHistory::TYPE_REFERRAL,
+            'status' => VisitDepartmentHistory::STATUS_IN_PROGRESS,
+            'assigned_by' => Auth::id(),
+            'notes' => $notes,
         ]);
 
         // Billing: only if the target service has not already been billed on
@@ -630,7 +661,7 @@ class VisitService
             if (! $alreadyBilled) {
                 $this->attachServices($visit, [[
                     'service_catalog_id' => $service->id,
-                    'quantity'           => 1,
+                    'quantity' => 1,
                 ]]);
             } else {
                 // attachServices() also creates the route; if we skipped
@@ -644,22 +675,19 @@ class VisitService
 
         // Activate the target route so the patient is immediately "in" the
         // new consultation. Status REMAINS CONSULTING — no transition.
-        $targetRouteQuery = \App\Models\VisitConsultationRoute::where('visit_id', $visit->id)
+        $targetRouteQuery = VisitConsultationRoute::where('visit_id', $visit->id)
             ->where('department_id', $departmentId);
-        if ($service) {
-            $targetRouteQuery->where('service_id', $service->id);
-        }
         $targetRoute = $targetRouteQuery
             ->orderByRaw("CASE status WHEN 'PENDING' THEN 0 WHEN 'ACTIVE' THEN 1 ELSE 2 END")
             ->first();
 
         if ($targetRoute) {
             $targetRoute->update([
-                'status'     => \App\Models\VisitConsultationRoute::STATUS_ACTIVE,
+                'status' => VisitConsultationRoute::STATUS_ACTIVE,
                 'started_by' => $targetRoute->started_by ?? Auth::id(),
                 'started_at' => $targetRoute->started_at ?? now(),
-                'routed_by'  => Auth::id(),
-                'notes'      => $notes ?? $targetRoute->notes,
+                'routed_by' => Auth::id(),
+                'notes' => $notes ?? $targetRoute->notes,
             ]);
         }
 
@@ -679,19 +707,19 @@ class VisitService
             throw new \InvalidArgumentException('Can only send to investigation from CONSULTING status.');
         }
 
-        $department = \App\Models\Department::findOrFail($departmentId);
+        $department = Department::findOrFail($departmentId);
 
         // Mark current dept history entry as in-progress (consultation still ongoing)
         // Investigation is additional, not replacing the consultation dept
 
         // Record investigation history
         VisitDepartmentHistory::create([
-            'visit_id'     => $visit->id,
+            'visit_id' => $visit->id,
             'department_id' => $departmentId,
-            'type'         => VisitDepartmentHistory::TYPE_INVESTIGATION,
-            'status'       => VisitDepartmentHistory::STATUS_WAITING,
-            'assigned_by'  => Auth::id(),
-            'notes'        => $notes,
+            'type' => VisitDepartmentHistory::TYPE_INVESTIGATION,
+            'status' => VisitDepartmentHistory::STATUS_WAITING,
+            'assigned_by' => Auth::id(),
+            'notes' => $notes,
         ]);
 
         // Billing line for investigation
@@ -719,7 +747,7 @@ class VisitService
 
         if ($active) {
             $active->update([
-                'status'       => VisitDepartmentHistory::STATUS_COMPLETED,
+                'status' => VisitDepartmentHistory::STATUS_COMPLETED,
                 'completed_at' => now(),
             ]);
         }
@@ -760,13 +788,13 @@ class VisitService
     private function createConsultationBilling(Visit $visit, int $departmentId): void
     {
         $service = ServiceCatalog::where('department_id', $departmentId)
-            ->where('category', \App\Enums\ServiceType::CONSULTATION->value)
+            ->where('category', ServiceType::CONSULTATION->value)
             ->where('is_active', true)
             ->first();
 
         // Fallback: any active consultation service in the catalog
-        if (!$service) {
-            $service = ServiceCatalog::where('category', \App\Enums\ServiceType::CONSULTATION->value)
+        if (! $service) {
+            $service = ServiceCatalog::where('category', ServiceType::CONSULTATION->value)
                 ->where('is_active', true)
                 ->first();
         }
@@ -777,7 +805,7 @@ class VisitService
                 ->where('service_catalog_id', $service->id)
                 ->exists();
 
-            if (!$alreadyBilled) {
+            if (! $alreadyBilled) {
                 $this->attachServices($visit, [[
                     'service_catalog_id' => $service->id,
                     'quantity' => 1,
@@ -792,7 +820,7 @@ class VisitService
     private function createInvestigationBilling(Visit $visit, int $departmentId): void
     {
         $service = ServiceCatalog::where('department_id', $departmentId)
-            ->where('service_type', \App\Enums\ServiceType::INVESTIGATION->value)
+            ->where('service_type', ServiceType::INVESTIGATION->value)
             ->where('is_active', true)
             ->first();
 
@@ -821,7 +849,7 @@ class VisitService
     /**
      * Get upcoming scheduled visits for a patient.
      */
-    public function upcomingForPatient(int $patientId): \Illuminate\Database\Eloquent\Collection
+    public function upcomingForPatient(int $patientId): Collection
     {
         return Visit::where('patient_id', $patientId)
             ->whereIn('status', [VisitStatus::SCHEDULED, VisitStatus::CONFIRMED])
@@ -842,25 +870,25 @@ class VisitService
             VisitStatus::CONFIRMED,
         ]);
 
-        if (!empty($filters['doctor_id'])) {
+        if (! empty($filters['doctor_id'])) {
             $query->whereHas('consultationRoutes', fn ($q) => $q->where('doctor_id', $filters['doctor_id']));
         }
 
-        if (!empty($filters['start'])) {
+        if (! empty($filters['start'])) {
             $query->whereDate('visit_date', '>=', $filters['start']);
         }
 
-        if (!empty($filters['end'])) {
+        if (! empty($filters['end'])) {
             $query->whereDate('visit_date', '<=', $filters['end']);
         }
 
         return $query->with(['patient', 'activeConsultationRoute.doctor', 'pendingConsultationRoutes.doctor'])
             ->get()
-            ->map(fn(Visit $v) => [
+            ->map(fn (Visit $v) => [
                 'id' => $v->id,
                 'title' => $v->patient->full_name,
-                'start' => $v->visit_date->format('Y-m-d') . ($v->start_time ? 'T' . $v->start_time : ''),
-                'end' => $v->visit_date->format('Y-m-d') . ($v->end_time ? 'T' . $v->end_time : ''),
+                'start' => $v->visit_date->format('Y-m-d').($v->start_time ? 'T'.$v->start_time : ''),
+                'end' => $v->visit_date->format('Y-m-d').($v->end_time ? 'T'.$v->end_time : ''),
                 'color' => $v->status->color(),
                 'extendedProps' => [
                     'visit_id' => $v->id,

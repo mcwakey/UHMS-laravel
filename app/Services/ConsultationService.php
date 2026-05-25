@@ -34,8 +34,8 @@ class ConsultationService
         }
 
         $linkage = [
-            'service_id'            => null,
-            'department_id'         => $visit->current_department_id,
+            'service_id' => null,
+            'department_id' => $visit->current_department_id,
             'consultation_route_id' => null,
         ];
 
@@ -43,7 +43,7 @@ class ConsultationService
             ['visit_id' => $visit->id],
             array_merge([
                 'patient_id' => $visit->patient_id,
-                'doctor_id'  => Auth::id(),
+                'doctor_id' => Auth::id(),
             ], $linkage)
         );
 
@@ -77,10 +77,14 @@ class ConsultationService
                 'visitInsurance.insuranceProvider',
                 'consultationRoutes.department',
                 'consultationRoutes.service',
+                'consultationRoutes.services',
+                'consultationRoutes.routeServices.service',
                 'consultationRoutes.doctor',
                 'consultationRoutes.medicalRecord',
                 'activeConsultationRoute.doctor',
+                'activeConsultationRoute.routeServices.service',
                 'pendingConsultationRoutes.doctor',
+                'pendingConsultationRoutes.routeServices.service',
                 'latestVitals',
             ]),
             'record' => $record?->load(['complaints', 'diagnoses', 'investigations', 'treatments', 'prescriptions.items']),
@@ -135,6 +139,7 @@ class ConsultationService
     public function updateComplaint(Complaint $complaint, array $data): Complaint
     {
         $complaint->update($data);
+
         return $complaint;
     }
 
@@ -152,7 +157,7 @@ class ConsultationService
      */
     public function addDiagnosis(MedicalRecord $record, array $data): Diagnosis
     {
-        if (!isset($data['is_primary']) && !$record->diagnoses()->where('is_primary', true)->exists()) {
+        if (! isset($data['is_primary']) && ! $record->diagnoses()->where('is_primary', true)->exists()) {
             $data['is_primary'] = true;
         }
 
@@ -177,6 +182,7 @@ class ConsultationService
     public function updateDiagnosis(Diagnosis $diagnosis, array $data): Diagnosis
     {
         $diagnosis->update($data);
+
         return $diagnosis;
     }
 
@@ -202,6 +208,7 @@ class ConsultationService
     public function updateInvestigation(Investigation $investigation, array $data): Investigation
     {
         $investigation->update($data);
+
         return $investigation;
     }
 
@@ -227,6 +234,7 @@ class ConsultationService
     public function updateTreatment(Treatment $treatment, array $data): Treatment
     {
         $treatment->update($data);
+
         return $treatment;
     }
 

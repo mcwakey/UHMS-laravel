@@ -15,6 +15,7 @@ use App\Models\Specialty;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
+use App\Models\VisitConsultationRouteService;
 use App\Services\VisitWorkflowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -131,7 +132,54 @@ class VisitConsultationRoutingTest extends TestCase
         $this->assertFalse(Schema::hasColumn('visits', 'assigned_doctor_id'));
         $this->assertSame($this->doctor->id, $route->doctor_id);
         $this->assertSame(VisitConsultationRoute::STATUS_PENDING, $route->status);
+        $this->assertSame($this->department->id, $route->department_id);
+        $this->assertDatabaseHas('visit_consultation_route_services', [
+            'visit_consultation_route_id' => $route->id,
+            'visit_id' => $visit->id,
+            'service_id' => $service->id,
+        ]);
         $this->assertSame(1, InvoiceItem::where('visit_id', $visit->id)->where('service_catalog_id', $service->id)->count());
+    }
+
+    public function test_multiple_consultation_services_in_same_department_create_one_department_route(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->admin->id]);
+        $firstService = $this->makeService($this->department);
+        $secondService = $this->makeService($this->department);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.visits.store'), $this->visitPayload($patient, [
+                [
+                    'service_catalog_id' => $firstService->id,
+                    'department_id' => $this->department->id,
+                    'doctor_id' => $this->doctor->id,
+                    'quantity' => 1,
+                ],
+                [
+                    'service_catalog_id' => $secondService->id,
+                    'department_id' => $this->department->id,
+                    'doctor_id' => $this->doctor->id,
+                    'quantity' => 1,
+                ],
+            ]))
+            ->assertRedirect();
+
+        $visit = Visit::where('patient_id', $patient->id)->firstOrFail();
+
+        $this->assertSame(1, VisitConsultationRoute::where('visit_id', $visit->id)
+            ->where('department_id', $this->department->id)
+            ->count());
+
+        $route = VisitConsultationRoute::where('visit_id', $visit->id)
+            ->where('department_id', $this->department->id)
+            ->firstOrFail();
+
+        $this->assertEqualsCanonicalizing(
+            [$firstService->id, $secondService->id],
+            VisitConsultationRouteService::where('visit_consultation_route_id', $route->id)
+                ->pluck('service_id')
+                ->all()
+        );
     }
 
     public function test_non_consultation_services_do_not_create_consultation_routes(): void

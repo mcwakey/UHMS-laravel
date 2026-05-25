@@ -156,6 +156,15 @@
                             @php $selectedRouteId = old('consultation_route_id'); @endphp
                             <div class="list-group">
                                 @foreach($pendingRoutes as $route)
+                                    @php
+                                        $serviceNames = $route->routeServices
+                                            ->map(fn ($routeService) => $routeService->service?->name)
+                                            ->filter()
+                                            ->values();
+                                        if ($serviceNames->isEmpty() && $route->service) {
+                                            $serviceNames = collect([$route->service->name]);
+                                        }
+                                    @endphp
                                     <label class="list-group-item d-flex gap-2 align-items-start">
                                         <input class="form-check-input mt-1 flex-shrink-0"
                                                type="radio"
@@ -165,14 +174,14 @@
                                         <div>
                                             <div class="fw-semibold">{{ $route->department?->name ?? '—' }}</div>
                                             <div class="text-muted small">
-                                                <i class="ti ti-stethoscope me-1"></i>{{ $route->service?->name ?? 'Consultation' }}
+                                                <i class="ti ti-stethoscope me-1"></i>{{ $serviceNames->implode(', ') ?: 'Consultation services pending' }}
                                             </div>
                                         </div>
                                     </label>
                                 @endforeach
                             </div>
                             @error('consultation_route_id')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                            <div class="form-text">One radio per consultation service billed on this visit. The chosen route determines both the destination department and the specific consultation.</div>
+                            <div class="form-text">One radio per consultation department session. Linked services stay attached for billing and reporting.</div>
                         @endif
                     </div>
 

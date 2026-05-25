@@ -14,7 +14,7 @@ class ConsultationSessionService
     public function getCurrentSession(Visit $visit): ?VisitConsultationRoute
     {
         return $visit->consultationRoutes()
-            ->with(['department', 'service', 'doctor', 'medicalRecord'])
+            ->with(['department', 'service', 'services', 'routeServices.service', 'doctor', 'medicalRecord'])
             ->orderByRaw("CASE status WHEN 'ACTIVE' THEN 0 WHEN 'PENDING' THEN 1 WHEN 'PAUSED' THEN 2 WHEN 'COMPLETED' THEN 3 ELSE 4 END")
             ->oldest()
             ->first();
@@ -23,7 +23,7 @@ class ConsultationSessionService
     public function getAllSessionsForVisit(Visit $visit): Collection
     {
         return $visit->consultationRoutes()
-            ->with(['department', 'service', 'doctor', 'medicalRecord.doctor', 'logs.performedBy'])
+            ->with(['department', 'service', 'services', 'routeServices.service', 'doctor', 'medicalRecord.doctor', 'logs.performedBy'])
             ->orderByRaw("CASE status WHEN 'ACTIVE' THEN 0 WHEN 'PENDING' THEN 1 WHEN 'PAUSED' THEN 2 WHEN 'COMPLETED' THEN 3 ELSE 4 END")
             ->oldest()
             ->get();
@@ -56,7 +56,7 @@ class ConsultationSessionService
                 'patient_id' => $route->patient_id,
                 'doctor_id' => $route->doctor_id ?: $user->id,
                 'department_id' => $route->department_id,
-                'service_id' => $route->service_id,
+                'service_id' => $this->primaryServiceId($route),
                 'consultation_route_id' => $route->id,
             ]);
         });
@@ -65,7 +65,7 @@ class ConsultationSessionService
     public function resolveRouteForVisit(Visit $visit, ?int $routeId = null): ?VisitConsultationRoute
     {
         $query = $visit->consultationRoutes()
-            ->with(['department', 'service', 'doctor', 'medicalRecord']);
+            ->with(['department', 'service', 'services', 'routeServices.service', 'doctor', 'medicalRecord']);
 
         if ($routeId) {
             return $query->whereKey($routeId)->first();
@@ -82,10 +82,19 @@ class ConsultationSessionService
         $record->forceFill([
             'doctor_id' => $record->doctor_id ?: ($route->doctor_id ?: $user->id),
             'department_id' => $route->department_id,
-            'service_id' => $route->service_id,
+            'service_id' => $this->primaryServiceId($route),
             'consultation_route_id' => $route->id,
         ])->save();
 
         return $record->fresh(['doctor', 'department', 'service', 'consultationRoute']);
+    }
+
+    private function primaryServiceId(VisitConsultationRoute $route): ?int
+    {
+        if ($route->relationLoaded('routeServices') && $route->routeServices->isNotEmpty()) {
+            return $route->routeServices->sortBy('id')->first()?->service_id;
+        }
+
+        return $route->routeServices()->orderBy('id')->value('service_id') ?: $route->service_id;
     }
 }

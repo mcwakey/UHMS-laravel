@@ -126,6 +126,23 @@
                 \App\Models\VisitConsultationRoute::STATUS_CANCELLED => 'danger',
             ];
             $routeBadge = fn (?string $status) => $routeBadgeClasses[$status ?? ''] ?? 'light text-dark';
+            $routeServiceNames = function ($route) {
+                if (! $route) {
+                    return collect();
+                }
+
+                $names = $route->routeServices
+                    ->map(fn ($routeService) => $routeService->service?->name)
+                    ->filter()
+                    ->values();
+
+                if ($names->isEmpty() && $route->service) {
+                    $names = collect([$route->service->name]);
+                }
+
+                return $names;
+            };
+            $activeConsultationServiceNames = $routeServiceNames($activeConsultationRoute);
         @endphp
 
         @if($isWaiting || $isTriage || $visit->status->allowedTransitions())
@@ -146,12 +163,12 @@
                     @if($activeConsultationRoute)
                     <div class="row g-2 small">
                         <div class="col-md-3">
-                            <span class="text-muted d-block">Active Session</span>
-                            <span class="fw-semibold">{{ $activeConsultationRoute->service?->name ?? '-' }}</span>
+                            <span class="text-muted d-block">Active Department Session</span>
+                            <span class="fw-semibold">{{ $activeConsultationRoute->department?->name ?? '-' }}</span>
                         </div>
                         <div class="col-md-3">
-                            <span class="text-muted d-block">Department</span>
-                            <span class="fw-semibold">{{ $activeConsultationRoute->department?->name ?? '-' }}</span>
+                            <span class="text-muted d-block">Linked Services</span>
+                            <span class="fw-semibold">{{ $activeConsultationServiceNames->implode(', ') ?: '-' }}</span>
                         </div>
                         <div class="col-md-2">
                             <span class="text-muted d-block">Doctor</span>
@@ -167,13 +184,13 @@
                         </div>
                     </div>
                     @else
-                        <p class="text-muted small mb-0">No active consultation session. Use an existing route below or queue another consultation service.</p>
+                        <p class="text-muted small mb-0">No active consultation session. Use an existing route below or queue another consultation department.</p>
                     @endif
                 </div>
 
                 <div class="border rounded p-3 mb-3">
                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                        <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-primary"></i>Available Consultation Services</h6>
+                        <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-primary"></i>Available Consultation Department Sessions</h6>
                         <span class="badge bg-light text-dark">{{ $consultationRoutes->count() }} existing route{{ $consultationRoutes->count() === 1 ? '' : 's' }}</span>
                     </div>
                     @if($consultationRoutes->isNotEmpty())
@@ -182,7 +199,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Department</th>
-                                    <th>Service</th>
+                                    <th>Linked Services</th>
                                     <th>Doctor</th>
                                     <th>Status</th>
                                     <th>Actions</th>
@@ -190,9 +207,12 @@
                             </thead>
                             <tbody>
                                 @foreach($consultationRoutes as $route)
+                                @php
+                                    $serviceNames = $routeServiceNames($route);
+                                @endphp
                                 <tr>
                                     <td>{{ $route->department?->name ?? '-' }}</td>
-                                    <td>{{ $route->service?->name ?? '-' }}</td>
+                                    <td>{{ $serviceNames->implode(', ') ?: '-' }}</td>
                                     <td>{{ $route->doctor ? 'Dr. ' . $route->doctor->full_name : 'Unassigned' }}</td>
                                     <td><span class="badge bg-{{ $routeBadge($route->status) }}">{{ $route->status }}</span></td>
                                     <td>
@@ -230,7 +250,7 @@
                     @can('consultations.create')
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <i class="ti ti-plus text-primary"></i>
-                        <h6 class="fw-bold mb-0">Add / Queue Another Consultation Service</h6>
+                        <h6 class="fw-bold mb-0">Queue Another Consultation Department</h6>
                     </div>
                     <form method="POST" action="{{ route('admin.consultations.routes.store', $visit) }}" class="row g-2 align-items-end">
                         @csrf
@@ -244,8 +264,8 @@
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small">Consultation Service</label>
-                            <select name="service_id" id="visitRouteServiceSelect" class="form-select form-select-sm" disabled required>
+                            <label class="form-label small">Services to add/bill</label>
+                            <select name="service_ids[]" id="visitRouteServiceSelect" class="form-select form-select-sm" disabled multiple size="3">
                                 <option value="">Select department first</option>
                             </select>
                         </div>
@@ -351,7 +371,9 @@
 
         {{-- Triage Summary Card (shown once triage exists) --}}
         @if($visit->triage)
-        @php $triage = $visit->triage; @endphp
+        @php
+            $triage = $visit->triage;
+        @endphp
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-info"></i>Triage Assessment</h6>
@@ -927,7 +949,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         serviceSelect.disabled = false;
         doctorSelect.disabled = false;
-        optionList(serviceSelect, services.length ? 'Select service' : 'No consultation services available', services, row => row.name);
+        optionList(serviceSelect, services.length ? 'Optional services to link/bill' : 'No consultation services available', services, row => row.name);
         optionList(doctorSelect, doctors.length ? 'Optional doctor' : 'No doctor linked through specialty', doctors, row => row.name);
     });
 });

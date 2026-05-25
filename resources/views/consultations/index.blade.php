@@ -52,7 +52,7 @@
                         <th>Patient</th>
                         <th>Visit #</th>
                         <th>Route Department</th>
-                        <th>Route Service</th>
+                        <th>Linked Services</th>
                         <th>Priority</th>
                         <th>Doctor</th>
                         <th>Status</th>
@@ -66,6 +66,13 @@
                         $visit = $route->visit;
                         $isActive = $route->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE;
                         $isPending = $route->status === \App\Models\VisitConsultationRoute::STATUS_PENDING;
+                        $serviceNames = $route->routeServices
+                            ->map(fn ($routeService) => $routeService->service?->name)
+                            ->filter()
+                            ->values();
+                        if ($serviceNames->isEmpty() && $route->service) {
+                            $serviceNames = collect([$route->service->name]);
+                        }
                     @endphp
                     <tr>
                         <td>
@@ -86,7 +93,7 @@
                         </td>
                         <td><span class="badge bg-light text-dark">{{ $route->department?->name ?? '-' }}</span></td>
                         <td>
-                            <div class="fw-medium small">{{ $route->service?->name ?? '-' }}</div>
+                            <div class="fw-medium small">{{ $serviceNames->implode(', ') ?: '-' }}</div>
                             <small class="text-muted">{{ Str::limit($visit->chief_complaint, 36) ?? '-' }}</small>
                         </td>
                         <td>
