@@ -9,6 +9,7 @@ use App\Models\Visit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class LegacyInertiaBridgeTest extends TestCase
@@ -21,7 +22,7 @@ class LegacyInertiaBridgeTest extends TestCase
     {
         parent::setUp();
 
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $department = Department::factory()->create();
         $this->user = User::factory()->create(['department_id' => $department->id]);
@@ -69,6 +70,15 @@ class LegacyInertiaBridgeTest extends TestCase
             ->assertSee('id="app"', false)
             ->assertSee('data-page', false)
             ->assertSee('Legacy\/BladePage', false);
+
+        preg_match('/<script data-page="app" type="application\/json">(.*?)<\/script>/s', $response->getContent(), $matches);
+
+        $this->assertNotEmpty($matches[1] ?? null);
+        $page = json_decode($matches[1], true);
+
+        $this->assertIsArray($page);
+        $this->assertSame('', $page['props']['scripts']);
+        $this->assertNotEmpty($page['props']['scriptsEncoded']);
     }
 
     public function test_inertia_request_to_calendar_page_returns_legacy_component(): void

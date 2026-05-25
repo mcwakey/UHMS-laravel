@@ -7,13 +7,14 @@ use App\Models\Diagnosis;
 use App\Models\Investigation;
 use App\Models\MedicalRecord;
 use App\Models\Treatment;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Visit;
+use Illuminate\Support\Facades\Auth;
 
 class ConsultationService
 {
     public function __construct(
         protected PrescriptionService $prescriptionService,
+        protected ConsultationSessionService $sessionService,
     ) {}
 
     /**
@@ -25,22 +26,24 @@ class ConsultationService
      * back-filled with the linkage on the first read if it was previously
      * missing.
      */
-    public function getOrCreateRecord(Visit $visit): MedicalRecord
+    public function getOrCreateRecord(Visit $visit, ?int $consultationRouteId = null): MedicalRecord
     {
-        $activeRoute = $visit->activeConsultationRoute()->first()
-            ?? $visit->pendingConsultationRoutes()->first();
+        $activeRoute = $this->sessionService->resolveRouteForVisit($visit, $consultationRouteId);
+        if ($activeRoute) {
+            return $this->sessionService->getOrCreateMedicalRecordForRoute($activeRoute, Auth::user());
+        }
 
         $linkage = [
-            'service_id'            => $activeRoute?->service_id,
-            'department_id'         => $activeRoute?->department_id ?? $visit->current_department_id,
-            'consultation_route_id' => $activeRoute?->id,
+            'service_id'            => null,
+            'department_id'         => $visit->current_department_id,
+            'consultation_route_id' => null,
         ];
 
         $record = MedicalRecord::firstOrCreate(
             ['visit_id' => $visit->id],
             array_merge([
                 'patient_id' => $visit->patient_id,
-                'doctor_id'  => $activeRoute?->doctor_id ?? Auth::id(),
+                'doctor_id'  => Auth::id(),
             ], $linkage)
         );
 
@@ -62,12 +65,24 @@ class ConsultationService
     /**
      * Get the full consultation data for a visit.
      */
-    public function getConsultationData(Visit $visit): array
+    public function getConsultationData(Visit $visit, ?MedicalRecord $record = null, bool $useLegacyFallback = true): array
     {
-        $record = $visit->medicalRecord;
+        if (! $record && $useLegacyFallback) {
+            $record = $visit->medicalRecord;
+        }
 
         return [
-            'visit' => $visit->load(['patient', 'activeConsultationRoute.doctor', 'pendingConsultationRoutes.doctor', 'latestVitals']),
+            'visit' => $visit->load([
+                'patient',
+                'visitInsurance.insuranceProvider',
+                'consultationRoutes.department',
+                'consultationRoutes.service',
+                'consultationRoutes.doctor',
+                'consultationRoutes.medicalRecord',
+                'activeConsultationRoute.doctor',
+                'pendingConsultationRoutes.doctor',
+                'latestVitals',
+            ]),
             'record' => $record?->load(['complaints', 'diagnoses', 'investigations', 'treatments', 'prescriptions.items']),
             'vitals' => $visit->vitals()->with('recordedBy')->latest()->get(),
             'history' => $this->getPatientHistory($visit->patient_id, $visit->id),

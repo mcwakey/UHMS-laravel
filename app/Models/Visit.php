@@ -108,6 +108,11 @@ class Visit extends Model
         return $this->hasOne(MedicalRecord::class);
     }
 
+    public function medicalRecords()
+    {
+        return $this->hasMany(MedicalRecord::class);
+    }
+
     public function vitals()
     {
         return $this->hasMany(Vital::class);
@@ -214,6 +219,7 @@ class Visit extends Model
                 ->first(fn (VisitConsultationRoute $route) => in_array($route->status, [
                     VisitConsultationRoute::STATUS_ACTIVE,
                     VisitConsultationRoute::STATUS_PENDING,
+                    VisitConsultationRoute::STATUS_PAUSED,
                 ], true));
         }
 
@@ -221,8 +227,9 @@ class Visit extends Model
             ->whereIn('status', [
                 VisitConsultationRoute::STATUS_ACTIVE,
                 VisitConsultationRoute::STATUS_PENDING,
+                VisitConsultationRoute::STATUS_PAUSED,
             ])
-            ->orderByRaw("CASE WHEN status = 'ACTIVE' THEN 0 ELSE 1 END")
+            ->orderByRaw("CASE status WHEN 'ACTIVE' THEN 0 WHEN 'PENDING' THEN 1 WHEN 'PAUSED' THEN 2 ELSE 3 END")
             ->first();
     }
 

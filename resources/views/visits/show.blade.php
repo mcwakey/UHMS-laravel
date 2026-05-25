@@ -1,6 +1,12 @@
 @extends('layouts.app')
 @section('title', 'Visit ' . $visit->visit_number)
 
+@push('styles')
+<style>
+    .btn-xs { padding: 0.15rem 0.35rem; font-size: 0.72rem; line-height: 1.4; }
+</style>
+@endpush
+
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
@@ -104,6 +110,22 @@
                 \App\Enums\VisitStatus::PHARMACY,
                 \App\Enums\VisitStatus::BILLING,
             ]);
+            $consultationRoutes = $visit->consultationRoutes->sortBy(fn ($route) => match ($route->status) {
+                \App\Models\VisitConsultationRoute::STATUS_ACTIVE => 0,
+                \App\Models\VisitConsultationRoute::STATUS_PENDING => 1,
+                \App\Models\VisitConsultationRoute::STATUS_PAUSED => 2,
+                \App\Models\VisitConsultationRoute::STATUS_COMPLETED => 3,
+                default => 4,
+            });
+            $activeConsultationRoute = $consultationRoutes->firstWhere('status', \App\Models\VisitConsultationRoute::STATUS_ACTIVE);
+            $routeBadgeClasses = [
+                \App\Models\VisitConsultationRoute::STATUS_ACTIVE => 'success',
+                \App\Models\VisitConsultationRoute::STATUS_PENDING => 'warning',
+                \App\Models\VisitConsultationRoute::STATUS_PAUSED => 'info',
+                \App\Models\VisitConsultationRoute::STATUS_COMPLETED => 'secondary',
+                \App\Models\VisitConsultationRoute::STATUS_CANCELLED => 'danger',
+            ];
+            $routeBadge = fn (?string $status) => $routeBadgeClasses[$status ?? ''] ?? 'light text-dark';
         @endphp
 
         @if($isWaiting || $isTriage || $visit->status->allowedTransitions())
@@ -112,6 +134,141 @@
                 <h6 class="fw-bold mb-0"><i class="ti ti-switch-horizontal me-1"></i>Transition Visit</h6>
             </div>
             <div class="card-body">
+                <div class="border rounded p-3 mb-3">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                        <h6 class="fw-bold mb-0"><i class="ti ti-route me-1 text-primary"></i>Current Consultation Routing</h6>
+                        @if($activeConsultationRoute)
+                            <a href="{{ route('admin.consultations.routes.show', [$visit, $activeConsultationRoute]) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="ti ti-external-link me-1"></i>Open Active Session
+                            </a>
+                        @endif
+                    </div>
+                    @if($activeConsultationRoute)
+                    <div class="row g-2 small">
+                        <div class="col-md-3">
+                            <span class="text-muted d-block">Active Session</span>
+                            <span class="fw-semibold">{{ $activeConsultationRoute->service?->name ?? '-' }}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted d-block">Department</span>
+                            <span class="fw-semibold">{{ $activeConsultationRoute->department?->name ?? '-' }}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <span class="text-muted d-block">Doctor</span>
+                            <span class="fw-semibold">{{ $activeConsultationRoute->doctor ? 'Dr. ' . $activeConsultationRoute->doctor->full_name : 'Unassigned' }}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <span class="text-muted d-block">Route Status</span>
+                            <span class="badge bg-{{ $routeBadge($activeConsultationRoute->status) }}">{{ $activeConsultationRoute->status }}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <span class="text-muted d-block">Started At</span>
+                            <span class="fw-semibold">{{ $activeConsultationRoute->started_at?->format('d M, h:i A') ?? '-' }}</span>
+                        </div>
+                    </div>
+                    @else
+                        <p class="text-muted small mb-0">No active consultation session. Use an existing route below or queue another consultation service.</p>
+                    @endif
+                </div>
+
+                <div class="border rounded p-3 mb-3">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                        <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-primary"></i>Available Consultation Services</h6>
+                        <span class="badge bg-light text-dark">{{ $consultationRoutes->count() }} existing route{{ $consultationRoutes->count() === 1 ? '' : 's' }}</span>
+                    </div>
+                    @if($consultationRoutes->isNotEmpty())
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Department</th>
+                                    <th>Service</th>
+                                    <th>Doctor</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($consultationRoutes as $route)
+                                <tr>
+                                    <td>{{ $route->department?->name ?? '-' }}</td>
+                                    <td>{{ $route->service?->name ?? '-' }}</td>
+                                    <td>{{ $route->doctor ? 'Dr. ' . $route->doctor->full_name : 'Unassigned' }}</td>
+                                    <td><span class="badge bg-{{ $routeBadge($route->status) }}">{{ $route->status }}</span></td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-1">
+                                            <a href="{{ route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-xs btn-outline-primary">Open</a>
+                                            @can('consultations.create')
+                                            @if(in_array($route->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
+                                            <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $route]) }}">
+                                                @csrf
+                                                <button type="submit" class="btn btn-xs btn-primary">Activate</button>
+                                            </form>
+                                            @endif
+                                            @if($route->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
+                                            <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $route]) }}">
+                                                @csrf
+                                                <button type="submit" class="btn btn-xs btn-success" onclick="return confirm('Complete this consultation session?')">Complete</button>
+                                            </form>
+                                            @endif
+                                            @if(in_array($route->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
+                                            <form method="POST" action="{{ route('admin.consultations.routes.cancel', [$visit, $route]) }}">
+                                                @csrf
+                                                <button type="submit" class="btn btn-xs btn-outline-danger" onclick="return confirm('Cancel this consultation route?')">Cancel</button>
+                                            </form>
+                                            @endif
+                                            @endcan
+                                        </div>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    @endif
+
+                    @can('consultations.create')
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="ti ti-plus text-primary"></i>
+                        <h6 class="fw-bold mb-0">Add / Queue Another Consultation Service</h6>
+                    </div>
+                    <form method="POST" action="{{ route('admin.consultations.routes.store', $visit) }}" class="row g-2 align-items-end">
+                        @csrf
+                        <div class="col-md-3">
+                            <label class="form-label small">Consultation Department</label>
+                            <select name="department_id" id="visitRouteDeptSelect" class="form-select form-select-sm" required>
+                                <option value="">Select department</option>
+                                @foreach($consultationDepartments as $department)
+                                    <option value="{{ $department->id }}">{{ $department->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Consultation Service</label>
+                            <select name="service_id" id="visitRouteServiceSelect" class="form-select form-select-sm" disabled required>
+                                <option value="">Select department first</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Doctor (optional)</label>
+                            <select name="doctor_id" id="visitRouteDoctorSelect" class="form-select form-select-sm" disabled>
+                                <option value="">Select department first</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Notes</label>
+                            <input type="text" name="notes" class="form-control form-control-sm" placeholder="Reason">
+                        </div>
+                        <div class="col-md-1">
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" name="activate_now" value="1" id="visitRouteActivateNow">
+                                <label class="form-check-label small" for="visitRouteActivateNow">Activate</label>
+                            </div>
+                            <button type="submit" class="btn btn-sm btn-primary w-100">Queue</button>
+                        </div>
+                    </form>
+                    @endcan
+                </div>
 
                 {{-- WAITING: Triage / Cancelled / Reschedule only --}}
                 @if($isWaiting)
@@ -321,7 +478,7 @@
                         <div class="fw-medium">{{ $visit->visit_date->format('d M Y') }}</div>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label class="text-muted small mb-1">Assigned Doctor</label>
+                        <label class="text-muted small mb-1">Current Route Doctor</label>
                         <div class="fw-medium">{{ $visit->currentConsultationDoctor() ? 'Dr. ' . $visit->currentConsultationDoctor()->full_name : '—' }}</div>
                     </div>
                     <div class="col-md-4 mb-3">
@@ -731,4 +888,49 @@
         </div>
     </div>
 </div>
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const deptSelect = document.getElementById('visitRouteDeptSelect');
+    const serviceSelect = document.getElementById('visitRouteServiceSelect');
+    const doctorSelect = document.getElementById('visitRouteDoctorSelect');
+    if (!deptSelect || !serviceSelect || !doctorSelect) return;
+
+    const endpointTemplate = @json(route('admin.departments.visit-options', ['department' => '__ID__']));
+
+    function optionList(select, placeholder, rows, labelFn) {
+        select.innerHTML = '';
+        select.insertAdjacentHTML('beforeend', '<option value="">' + placeholder + '</option>');
+        rows.forEach(row => {
+            select.insertAdjacentHTML('beforeend', '<option value="' + row.id + '">' + labelFn(row) + '</option>');
+        });
+    }
+
+    deptSelect.addEventListener('change', async () => {
+        serviceSelect.disabled = true;
+        doctorSelect.disabled = true;
+        serviceSelect.innerHTML = '<option value="">Loading services...</option>';
+        doctorSelect.innerHTML = '<option value="">Loading doctors...</option>';
+
+        if (!deptSelect.value) {
+            serviceSelect.innerHTML = '<option value="">Select department first</option>';
+            doctorSelect.innerHTML = '<option value="">Select department first</option>';
+            return;
+        }
+
+        const response = await fetch(endpointTemplate.replace('__ID__', deptSelect.value), {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const payload = await response.json();
+        const services = payload.services || [];
+        const doctors = payload.doctors || [];
+
+        serviceSelect.disabled = false;
+        doctorSelect.disabled = false;
+        optionList(serviceSelect, services.length ? 'Select service' : 'No consultation services available', services, row => row.name);
+        optionList(doctorSelect, doctors.length ? 'Optional doctor' : 'No doctor linked through specialty', doctors, row => row.name);
+    });
+});
+</script>
+@endpush
 @endsection

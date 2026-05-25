@@ -23,10 +23,13 @@ class ConvertBladeViewsToInertia
             return $response;
         }
 
+        $scripts = $this->extractBetween($html, '<!--UHMS_LEGACY_SCRIPTS_START-->', '<!--UHMS_LEGACY_SCRIPTS_END-->') ?: '';
+
         return Inertia::render('Legacy/BladePage', [
             'html' => $this->extractBetween($html, '<!--UHMS_LEGACY_BODY_START-->', '<!--UHMS_LEGACY_BODY_END-->') ?: '',
             'styles' => $this->extractBetween($html, '<!--UHMS_LEGACY_STYLES_START-->', '<!--UHMS_LEGACY_STYLES_END-->') ?: '',
-            'scripts' => $this->extractBetween($html, '<!--UHMS_LEGACY_SCRIPTS_START-->', '<!--UHMS_LEGACY_SCRIPTS_END-->') ?: '',
+            'scripts' => $request->headers->has('X-Inertia') ? $scripts : '',
+            'scriptsEncoded' => base64_encode($scripts),
             'title' => $this->extractTitle($html),
             'url' => $request->fullUrl(),
         ])->toResponse($request);

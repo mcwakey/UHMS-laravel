@@ -21,6 +21,14 @@
     .vitals-val { font-size: 1.05rem; font-weight: 700; }
     .vitals-label { font-size: 0.68rem; color: #6c757d; }
     .diagnosis-primary-badge { font-size: 0.6rem; vertical-align: middle; }
+    .session-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0.75rem; }
+    .session-summary-item { border: 1px solid #e9ecef; border-radius: 0.5rem; padding: 0.7rem; background: #fff; }
+    .session-route-row { border-left: 4px solid #dee2e6; }
+    .session-route-row.is-current { border-left-color: #0d6efd; background: #f8fbff; }
+    .session-route-row.is-completed { border-left-color: #198754; }
+    .session-route-row.is-cancelled { border-left-color: #dc3545; opacity: 0.82; }
+    .session-timeline { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .session-timeline .badge { font-size: 0.66rem; font-weight: 500; }
 </style>
 @endpush
 
@@ -30,6 +38,186 @@
 {{-- PATIENT HEADER BAR --}}
 {{-- ============================================================ --}}
 @include('partials.patient-visit-header', ['visit' => $visit, 'showAlerts' => true])
+
+@php
+    $routeBadgeClasses = [
+        \App\Models\VisitConsultationRoute::STATUS_ACTIVE => 'success',
+        \App\Models\VisitConsultationRoute::STATUS_PENDING => 'warning',
+        \App\Models\VisitConsultationRoute::STATUS_PAUSED => 'info',
+        \App\Models\VisitConsultationRoute::STATUS_COMPLETED => 'secondary',
+        \App\Models\VisitConsultationRoute::STATUS_CANCELLED => 'danger',
+    ];
+    $routeBadge = fn (?string $status) => $routeBadgeClasses[$status ?? ''] ?? 'light text-dark';
+    $insuranceLabel = $visit->visitInsurance?->insuranceProvider?->name ?? 'Cash & Carry';
+@endphp
+
+{{-- ============================================================ --}}
+{{-- CURRENT SESSION HEADER --}}
+{{-- ============================================================ --}}
+<div class="card mb-3">
+    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-primary"></i>Current Session</h6>
+            <small class="text-muted">Visit {{ $visit->visit_number }} · {{ $visit->patient->full_name }}</small>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <span class="badge bg-{{ $visit->status->color() }}">{{ $visit->status->label() }}</span>
+            @if($selectedRoute)
+                <span class="badge bg-{{ $routeBadge($selectedRoute->status) }}">{{ $selectedRoute->status }}</span>
+            @endif
+        </div>
+    </div>
+    <div class="card-body">
+        @if($routeSelectorRequired)
+            <div class="alert alert-warning py-2 mb-3">
+                <strong>Select a consultation session.</strong>
+                This visit has multiple consultation routes and none is active yet.
+            </div>
+        @endif
+        <div class="session-summary-grid">
+            <div class="session-summary-item">
+                <div class="text-muted small">Department</div>
+                <div class="fw-semibold">{{ $selectedRoute?->department?->name ?? 'No active session' }}</div>
+            </div>
+            <div class="session-summary-item">
+                <div class="text-muted small">Service</div>
+                <div class="fw-semibold">{{ $selectedRoute?->service?->name ?? '-' }}</div>
+            </div>
+            <div class="session-summary-item">
+                <div class="text-muted small">Doctor</div>
+                <div class="fw-semibold">{{ $selectedRoute?->doctor ? 'Dr. ' . $selectedRoute->doctor->full_name : 'Unassigned' }}</div>
+            </div>
+            <div class="session-summary-item">
+                <div class="text-muted small">Medical Record</div>
+                <div class="fw-semibold">{{ $record ? 'MR-' . str_pad((string) $record->id, 5, '0', STR_PAD_LEFT) : '-' }}</div>
+            </div>
+            <div class="session-summary-item">
+                <div class="text-muted small">Visit Type</div>
+                <div class="fw-semibold">{{ $visit->visit_type?->label() ?? '-' }}</div>
+            </div>
+            <div class="session-summary-item">
+                <div class="text-muted small">Insurance</div>
+                <div class="fw-semibold">{{ $insuranceLabel }}</div>
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            @if($selectedRoute)
+                @if(in_array($selectedRoute->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
+                    @can('consultations.create')
+                    <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $selectedRoute]) }}">
+                        @csrf
+                        <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-player-play me-1"></i>Start Session</button>
+                    </form>
+                    @endcan
+                @endif
+                @if($selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
+                    @can('consultations.create')
+                    <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $selectedRoute]) }}">
+                        @csrf
+                        <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Complete this consultation session?')">
+                            <i class="ti ti-check me-1"></i>Complete Current Session
+                        </button>
+                    </form>
+                    @endcan
+                @endif
+            @endif
+            @can('consultations.create')
+            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#sendSessionModal">
+                <i class="ti ti-transfer me-1"></i>Send to Another Session
+            </button>
+            @endcan
+        </div>
+    </div>
+</div>
+
+{{-- ============================================================ --}}
+{{-- CONSULTATION SESSIONS PANEL --}}
+{{-- ============================================================ --}}
+<div class="card mb-3">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <h6 class="fw-bold mb-0"><i class="ti ti-route me-1 text-primary"></i>Consultation Sessions for This Visit</h6>
+        <span class="badge bg-light text-dark">{{ $sessions->count() }} session{{ $sessions->count() === 1 ? '' : 's' }}</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Department</th>
+                        <th>Service</th>
+                        <th>Doctor</th>
+                        <th>Status</th>
+                        <th>Started</th>
+                        <th>Completed</th>
+                        <th>Timeline</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($sessions as $session)
+                    @php
+                        $rowClass = $selectedRoute && $selectedRoute->id === $session->id ? 'is-current' : '';
+                        $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_COMPLETED ? ' is-completed' : '';
+                        $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_CANCELLED ? ' is-cancelled' : '';
+                    @endphp
+                    <tr class="session-route-row {{ trim($rowClass) }}">
+                        <td class="fw-medium">{{ $session->department?->name ?? '-' }}</td>
+                        <td>
+                            {{ $session->service?->name ?? '-' }}
+                            @if($selectedRoute && $selectedRoute->id === $session->id)
+                                <span class="badge bg-primary ms-1">Current</span>
+                            @endif
+                        </td>
+                        <td>{{ $session->doctor ? 'Dr. ' . $session->doctor->full_name : 'Unassigned' }}</td>
+                        <td><span class="badge bg-{{ $routeBadge($session->status) }}">{{ $session->status }}</span></td>
+                        <td><small>{{ $session->started_at?->format('d M, h:i A') ?? '-' }}</small></td>
+                        <td><small>{{ $session->completed_at?->format('d M, h:i A') ?? '-' }}</small></td>
+                        <td>
+                            <div class="session-timeline">
+                                <span class="badge bg-light text-dark">Routed</span>
+                                @foreach($session->logs->take(4)->reverse() as $log)
+                                    <span class="badge bg-light text-dark">{{ ucfirst(str_replace('_', ' ', $log->action)) }}</span>
+                                @endforeach
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                <a href="{{ route('admin.consultations.routes.show', [$visit, $session]) }}" class="btn btn-xs btn-outline-primary">
+                                    <i class="ti ti-eye"></i> Open
+                                </a>
+                                @can('consultations.create')
+                                @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
+                                    <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $session]) }}">
+                                        @csrf
+                                        <button class="btn btn-xs btn-primary" type="submit">Start</button>
+                                    </form>
+                                @endif
+                                @if($session->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
+                                    <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $session]) }}">
+                                        @csrf
+                                        <button class="btn btn-xs btn-success" type="submit" onclick="return confirm('Complete this session?')">Complete</button>
+                                    </form>
+                                @endif
+                                @if(in_array($session->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
+                                    <form method="POST" action="{{ route('admin.consultations.routes.cancel', [$visit, $session]) }}">
+                                        @csrf
+                                        <button class="btn btn-xs btn-outline-danger" type="submit" onclick="return confirm('Cancel this queued session?')">Cancel</button>
+                                    </form>
+                                @endif
+                                @endcan
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-3">No consultation sessions are routed for this visit.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
 {{-- ============================================================ --}}
 {{-- VITALS — STATIC SECTION (always visible) --}}
@@ -123,8 +311,14 @@
 {{-- CONSULTATION GATING — Start Consultation banner --}}
 {{-- ============================================================ --}}
 @php
-    $canEdit = $visit->status === \App\Enums\VisitStatus::CONSULTING;
-    $needsStart = false;
+    $canEdit = $visit->status === \App\Enums\VisitStatus::CONSULTING
+        && $selectedRoute
+        && $selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE;
+    $needsStart = $selectedRoute
+        && in_array($selectedRoute->status, [
+            \App\Models\VisitConsultationRoute::STATUS_PENDING,
+            \App\Models\VisitConsultationRoute::STATUS_PAUSED,
+        ], true);
 @endphp
 @if($needsStart)
 <div class="card border-warning mb-3">
@@ -134,7 +328,7 @@
             <small class="text-muted">Click <strong>Start Consultation</strong> to begin entering clinical information.</small>
         </div>
         @can('consultations.create')
-        <form method="POST" action="{{ route('admin.consultations.start', $visit) }}">
+        <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $selectedRoute]) }}">
             @csrf
             <button type="submit" class="btn btn-warning"><i class="ti ti-player-play me-1"></i>Start Consultation</button>
         </form>
@@ -283,9 +477,9 @@
                     @endif
                     @if($visit->status === \App\Enums\VisitStatus::CONSULTING)
                     <hr class="my-1">
-                    <small class="text-muted fw-bold px-1">Referral</small>
-                    <button type="button" class="btn btn-outline-indigo btn-sm w-100 mb-1" data-bs-toggle="modal" data-bs-target="#referralModal">
-                        <i class="ti ti-transfer me-1"></i>Refer to Dept.
+                    <small class="text-muted fw-bold px-1">Session Routing</small>
+                    <button type="button" class="btn btn-outline-indigo btn-sm w-100 mb-1" data-bs-toggle="modal" data-bs-target="#sendSessionModal">
+                        <i class="ti ti-transfer me-1"></i>Send Session
                     </button>
                     <button type="button" class="btn btn-outline-purple btn-sm w-100" data-bs-toggle="modal" data-bs-target="#investigationModal">
                         <i class="ti ti-test-pipe me-1"></i>Send to Invest.
@@ -1238,6 +1432,9 @@
         <div class="modal-content">
             <form method="POST" action="{{ route('admin.patterns.from-record', $visit) }}">
                 @csrf
+                @if($selectedRoute)
+                    <input type="hidden" name="consultation_route_id" value="{{ $selectedRoute->id }}">
+                @endif
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="ti ti-template me-2"></i>Save as Pattern</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -1266,16 +1463,16 @@
 @endcan
 
 {{-- ============================================================ --}}
-{{-- REFERRAL MODAL --}}
+{{-- SEND TO ANOTHER CONSULTATION SESSION MODAL --}}
 {{-- ============================================================ --}}
 @if($visit->status === \App\Enums\VisitStatus::CONSULTING)
-<div class="modal fade" id="referralModal" tabindex="-1">
+<div class="modal fade" id="sendSessionModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <form method="POST" action="{{ route('admin.consultations.refer', $visit) }}">
                 @csrf
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="ti ti-transfer me-2"></i>Refer to Department</h5>
+                    <h5 class="modal-title"><i class="ti ti-transfer me-2"></i>Send to Another Consultation Session</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -1297,8 +1494,8 @@
                             ->groupBy('department_id');
                     @endphp
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Referral Department <span class="text-danger">*</span></label>
-                        <select name="department_id" class="form-select" required id="referralDeptSelect">
+                        <label class="form-label fw-semibold">Target Consultation Department <span class="text-danger">*</span></label>
+                        <select name="department_id" class="form-select" required id="sendSessionDeptSelect">
                             <option value="">— Select department —</option>
                             @foreach($referralDepts as $dept)
                                 <option value="{{ $dept->id }}">{{ $dept->name }}</option>
@@ -1307,36 +1504,25 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Consultation Service <span class="text-danger">*</span></label>
-                        <select name="service_id" class="form-select" required id="referralServiceSelect" disabled>
+                        <select name="service_id" class="form-select" required id="sendSessionServiceSelect" disabled>
                             <option value="">— Select department first —</option>
                         </select>
                         <small class="text-muted">Choose the specific consultation type the patient is being referred for.</small>
                     </div>
-                    <script>
-                        (function () {
-                            const servicesByDept = @json($referralServicesByDept->map(fn ($g) => $g->map(fn ($s) => ['id' => $s->id, 'name' => $s->name])));
-                            const deptSel = document.getElementById('referralDeptSelect');
-                            const svcSel  = document.getElementById('referralServiceSelect');
-                            if (!deptSel || !svcSel) return;
-                            deptSel.addEventListener('change', function () {
-                                const list = servicesByDept[this.value] || [];
-                                svcSel.innerHTML = '';
-                                if (!this.value || list.length === 0) {
-                                    svcSel.disabled = true;
-                                    svcSel.innerHTML = '<option value="">— No consultation services available —</option>';
-                                    return;
-                                }
-                                svcSel.disabled = false;
-                                svcSel.insertAdjacentHTML('beforeend', '<option value="">— Select service —</option>');
-                                list.forEach(function (s) {
-                                    svcSel.insertAdjacentHTML('beforeend', '<option value="' + s.id + '">' + s.name + '</option>');
-                                });
-                            });
-                        })();
-                    </script>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Doctor optional</label>
+                        <select name="doctor_id" class="form-select" id="sendSessionDoctorSelect" disabled>
+                            <option value="">Select department first</option>
+                        </select>
+                        <small class="text-muted">Doctors are loaded from specialties linked to the selected department.</small>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label">Reason / Notes</label>
-                        <textarea name="notes" class="form-control" rows="3" placeholder="Referral reason..."></textarea>
+                        <textarea name="notes" class="form-control" rows="3" placeholder="Reason for this consultation session..."></textarea>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" name="activate_now" value="1" id="activateNewSessionNow">
+                        <label class="form-check-label" for="activateNewSessionNow">Create and activate now</label>
                     </div>
                     @if($visit->departmentHistory->isNotEmpty())
                         <div class="alert alert-info py-2 small">
@@ -1352,7 +1538,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" {{ $referralDepts->isEmpty() ? 'disabled' : '' }}>
-                        <i class="ti ti-transfer me-1"></i>Refer Patient
+                        <i class="ti ti-transfer me-1"></i>Create Session
                     </button>
                 </div>
             </form>
@@ -1553,6 +1739,116 @@ window.deptServicesBase  = '{{ url("admin/departments") }}';
 window.procedureDeptServicesBase = '{{ url("admin/theatre/departments") }}';
 window.prescriptionDestroyBase = '{{ url("admin/consultations/prescriptions") }}';
 window.canEditConsultation = @json($canEdit);
+window.currentConsultationRouteId = @json($selectedRoute?->id);
+
+function openSendSessionModalFallback() {
+    if (window.bootstrap && window.bootstrap.Modal) return false;
+    const modal = document.getElementById('sendSessionModal');
+    if (!modal) return false;
+    modal.style.display = 'block';
+    modal.removeAttribute('aria-hidden');
+    modal.setAttribute('aria-modal', 'true');
+    modal.classList.add('show');
+    document.body.classList.add('modal-open');
+    if (!document.querySelector('.uhms-session-modal-backdrop')) {
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show uhms-session-modal-backdrop';
+        document.body.appendChild(backdrop);
+    }
+    return true;
+}
+
+function closeSendSessionModalFallback() {
+    const modal = document.getElementById('sendSessionModal');
+    if (!modal) return;
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+    modal.removeAttribute('aria-modal');
+    document.body.classList.remove('modal-open');
+    document.querySelectorAll('.uhms-session-modal-backdrop').forEach(el => el.remove());
+}
+
+function initSendSessionPicker() {
+    const endpointTemplate = @json(route('admin.departments.visit-options', ['department' => '__ID__']));
+    const deptSel = document.getElementById('sendSessionDeptSelect');
+    const svcSel = document.getElementById('sendSessionServiceSelect');
+    const doctorSel = document.getElementById('sendSessionDoctorSelect');
+    if (!deptSel || !svcSel || !doctorSel || deptSel.dataset.uhmsBound === '1') return;
+    deptSel.dataset.uhmsBound = '1';
+
+    function setOptions(select, placeholder, list, labelFn) {
+        select.innerHTML = '';
+        select.insertAdjacentHTML('beforeend', '<option value="">' + placeholder + '</option>');
+        list.forEach(function (item) {
+            select.insertAdjacentHTML('beforeend', '<option value="' + item.id + '">' + labelFn(item) + '</option>');
+        });
+    }
+
+    deptSel.addEventListener('change', async function () {
+        svcSel.innerHTML = '';
+        doctorSel.innerHTML = '';
+        if (!this.value) {
+            svcSel.disabled = true;
+            doctorSel.disabled = true;
+            svcSel.innerHTML = '<option value="">Select department first</option>';
+            doctorSel.innerHTML = '<option value="">Select department first</option>';
+            return;
+        }
+        svcSel.disabled = true;
+        doctorSel.disabled = true;
+        svcSel.innerHTML = '<option value="">Loading services...</option>';
+        doctorSel.innerHTML = '<option value="">Loading doctors...</option>';
+        try {
+            const res = await fetch(endpointTemplate.replace('__ID__', this.value), {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const payload = await res.json();
+            const services = payload.services || [];
+            const doctors = payload.doctors || [];
+            svcSel.disabled = false;
+            doctorSel.disabled = false;
+            setOptions(svcSel, services.length ? 'Select service' : 'No consultation services available', services, function (s) { return s.name; });
+            setOptions(doctorSel, doctors.length ? 'Optional doctor' : 'No doctor linked through specialty', doctors, function (d) { return d.name; });
+        } catch (error) {
+            svcSel.disabled = true;
+            doctorSel.disabled = true;
+            svcSel.innerHTML = '<option value="">Unable to load services</option>';
+            doctorSel.innerHTML = '<option value="">Unable to load doctors</option>';
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initSendSessionPicker);
+
+document.addEventListener('DOMContentLoaded', () => {
+    const routeId = window.currentConsultationRouteId;
+    if (!routeId) return;
+    document.querySelectorAll('form[action*="/consultations/{{ $visit->id }}"]').forEach(form => {
+        if (form.querySelector('input[name="consultation_route_id"]')) return;
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'consultation_route_id';
+        input.value = routeId;
+        form.appendChild(input);
+    });
+});
+
+document.addEventListener('click', (e) => {
+    const openBtn = e.target.closest('[data-bs-target="#sendSessionModal"]');
+    if (openBtn && openSendSessionModalFallback()) {
+        e.preventDefault();
+        initSendSessionPicker();
+        return;
+    }
+
+    if (e.target.closest('#sendSessionModal [data-bs-dismiss="modal"]') || e.target.matches('#sendSessionModal')) {
+        if (!(window.bootstrap && window.bootstrap.Modal)) {
+            e.preventDefault();
+            closeSendSessionModalFallback();
+        }
+    }
+});
 @if(!$canEdit)
 document.addEventListener('DOMContentLoaded', () => {
     // Disable all clinical entry forms until consultation is started
@@ -1561,7 +1857,7 @@ document.addEventListener('DOMContentLoaded', () => {
         form.classList.add('opacity-50');
     });
     // Disable Add toggles (buttons that open clinical-entry collapses/modals)
-    document.querySelectorAll('button[data-bs-target^="#add"], button[data-bs-target="#investigationModal"], button[data-bs-target="#referralModal"], button[data-bs-target="#savePatternModal"]').forEach(b => {
+    document.querySelectorAll('button[data-bs-target^="#add"], button[data-bs-target="#investigationModal"], button[data-bs-target="#sendSessionModal"], button[data-bs-target="#savePatternModal"]').forEach(b => {
         b.disabled = true; b.classList.add('disabled');
     });
 });

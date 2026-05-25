@@ -494,9 +494,14 @@ Route::middleware('auth')->group(function () {
         Route::middleware(['module:consultation', 'can:consultations.view'])->group(function () {
             Route::get('consultations', [ConsultationController::class, 'index'])->name('consultations.index');
             Route::get('consultations/{visit}', [ConsultationController::class, 'show'])->name('consultations.show');
+            Route::get('consultations/{visit}/routes/{route}', [ConsultationController::class, 'show'])->name('consultations.routes.show');
             Route::get('consultations/{visit}/history', [ConsultationController::class, 'history'])->name('consultations.history');
             Route::patch('consultations/{visit}/transition', [ConsultationController::class, 'transitionVisit'])->name('consultations.transition')->middleware('can:visits.transition');
             Route::post('consultations/{visit}/start', [ConsultationController::class, 'startConsultation'])->name('consultations.start')->middleware('can:consultations.create');
+            Route::post('consultations/{visit}/routes', [ConsultationController::class, 'storeRoute'])->name('consultations.routes.store')->middleware('can:consultations.create');
+            Route::post('consultations/{visit}/routes/{route}/activate', [ConsultationController::class, 'activateRoute'])->name('consultations.routes.activate')->middleware('can:consultations.create');
+            Route::post('consultations/{visit}/routes/{route}/complete', [ConsultationController::class, 'completeRoute'])->name('consultations.routes.complete')->middleware('can:consultations.create');
+            Route::post('consultations/{visit}/routes/{route}/cancel', [ConsultationController::class, 'cancelRoute'])->name('consultations.routes.cancel')->middleware('can:consultations.create');
 
             // Referral to another department
             Route::post('consultations/{visit}/refer', [ConsultationController::class, 'refer'])->name('consultations.refer')->middleware('can:consultations.create');

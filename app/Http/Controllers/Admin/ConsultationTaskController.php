@@ -28,7 +28,10 @@ class ConsultationTaskController extends Controller
         $data['created_by'] = Auth::id();
         $data['status'] = 'pending';
 
-        $medicalRecord = $this->consultationService->getOrCreateRecord($visit);
+        $medicalRecord = $this->consultationService->getOrCreateRecord(
+            $visit,
+            $request->integer('consultation_route_id') ?: null,
+        );
         $task = $medicalRecord->tasks()->create($data);
 
         if ($request->ajax() && ! $request->header('X-Inertia')) {

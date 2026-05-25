@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class AppointmentIndexActionsTest extends TestCase
@@ -18,14 +19,16 @@ class AppointmentIndexActionsTest extends TestCase
     use RefreshDatabase;
 
     private User $user;
+
     private User $doctor;
+
     private Department $department;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         $this->department = Department::factory()->create();
         $this->user = User::factory()->create(['department_id' => $this->department->id]);
@@ -59,14 +62,14 @@ class AppointmentIndexActionsTest extends TestCase
         $response = $this->actingAs($this->user)->get(route('admin.appointments.index'));
         $page = $this->inertiaPage($response->getContent());
         $html = $page['props']['html'];
-        $scripts = $page['props']['scripts'];
+        $scripts = $this->legacyScripts($page);
 
         $response->assertOk()
             ->assertSee('Legacy\\/BladePage', false);
 
         $this->assertStringContainsString('appointmentIndexActionFeedback', $html);
-        $this->assertStringContainsString("action=\"".route('admin.appointments.transition', $scheduledAppointment)."\" class=\"js-appointment-action-form\" data-follow-up=\"appointment\"", $html);
-        $this->assertStringContainsString("action=\"".route('admin.appointments.check-in', $confirmedAppointment)."\" class=\"js-appointment-action-form\" data-follow-up=\"visit\"", $html);
+        $this->assertStringContainsString('action="'.route('admin.appointments.transition', $scheduledAppointment).'" class="js-appointment-action-form" data-follow-up="appointment"', $html);
+        $this->assertStringContainsString('action="'.route('admin.appointments.check-in', $confirmedAppointment).'" class="js-appointment-action-form" data-follow-up="visit"', $html);
         $this->assertStringContainsString("const feedback = document.getElementById('appointmentIndexActionFeedback');", $scripts);
         $this->assertStringNotContainsString('window.location.assign(followUp);', $scripts);
         $this->assertStringNotContainsString(route('admin.appointments.check-in', $scheduledAppointment), $html);
@@ -129,5 +132,14 @@ class AppointmentIndexActionsTest extends TestCase
         preg_match('/<script data-page="app" type="application\/json">(.*?)<\/script>/s', $content, $matches);
 
         return json_decode($matches[1] ?? '{}', true, flags: JSON_THROW_ON_ERROR);
+    }
+
+    private function legacyScripts(array $page): string
+    {
+        if (! empty($page['props']['scripts'])) {
+            return $page['props']['scripts'];
+        }
+
+        return base64_decode($page['props']['scriptsEncoded'] ?? '', true) ?: '';
     }
 }

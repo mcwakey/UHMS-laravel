@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Doctor;
 
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
+use App\Enums\DepartmentType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePrescriptionRequest;
 use App\Models\Complaint;
@@ -19,7 +20,9 @@ use App\Models\Treatment;
 use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
 use App\Services\ClinicalService;
+use App\Services\ConsultationRouteService;
 use App\Services\ConsultationService;
+use App\Services\ConsultationSessionService;
 use App\Services\LabService;
 use App\Services\MedicalPatternService;
 use App\Services\PrescriptionService;
@@ -32,6 +35,8 @@ class ConsultationController extends Controller
 {
     public function __construct(
         protected ConsultationService $consultationService,
+        protected ConsultationRouteService $consultationRouteService,
+        protected ConsultationSessionService $consultationSessionService,
         protected PrescriptionService $prescriptionService,
         protected VisitService $visitService,
         protected MedicalPatternService $patternService,
@@ -44,13 +49,24 @@ class ConsultationController extends Controller
         return $request->ajax() && ! $request->headers->has('X-Inertia');
     }
 
+    private function abortIfRouteMismatch(Visit $visit, VisitConsultationRoute $route): void
+    {
+        if ((int) $route->visit_id !== (int) $visit->id) {
+            abort(404);
+        }
+    }
+
     /**
      * Doctor explicitly starts the consultation (now a no-op since triage moves directly to CONSULTING).
      */
     public function startConsultation(Request $request, Visit $visit, VisitWorkflowService $workflow)
     {
         try {
-            $workflow->startConsultation($visit, Auth::user());
+            $workflow->startConsultation(
+                $visit,
+                Auth::user(),
+                $request->integer('consultation_route_id') ?: null,
+            );
         } catch (\Throwable $e) {
             if ($this->shouldReturnJson($request)) {
                 return response()->json(['error' => $e->getMessage()], 422);
@@ -59,9 +75,22 @@ class ConsultationController extends Controller
         }
 
         if ($this->shouldReturnJson($request)) {
-            return response()->json(['success' => 'Consultation started.', 'redirect' => route('admin.consultations.show', $visit)]);
+            $activeRoute = $visit->fresh()->activeConsultationRoute()->first();
+            return response()->json([
+                'success' => 'Consultation started.',
+                'redirect' => $activeRoute
+                    ? route('admin.consultations.routes.show', [$visit, $activeRoute])
+                    : route('admin.consultations.show', $visit),
+            ]);
         }
-        return redirect()->route('admin.consultations.show', $visit)->with('success', 'Consultation started.');
+
+        $activeRoute = $visit->fresh()->activeConsultationRoute()->first();
+
+        return redirect()
+            ->to($activeRoute
+                ? route('admin.consultations.routes.show', [$visit, $activeRoute])
+                : route('admin.consultations.show', $visit))
+            ->with('success', 'Consultation started.');
     }
 
     /**
@@ -97,80 +126,82 @@ class ConsultationController extends Controller
             $filters['date_to'] = $filters['date_to'] ?? today()->toDateString();
         }
 
-        $query = Visit::with([
-            'patient',
-            'medicalRecord',
-            'currentDepartment',
-            'activeConsultationRoute.doctor',
-            'pendingConsultationRoutes.doctor',
-        ])
-            ->whereIn('status', [
-                VisitStatus::WAITING_CONSULTATION->value,
-                VisitStatus::CONSULTING->value,
+        $query = VisitConsultationRoute::query()
+            ->with([
+                'visit.patient',
+                'visit.medicalRecord',
+                'department',
+                'service',
+                'doctor',
             ])
-            // Only show visits that have a PENDING or ACTIVE consultation route
-            // pointing at a consultation-type department. This keeps non-consultation
-            // visits (lab-only, pharmacy-only, etc.) out of the consultation queue.
-            ->whereHas('consultationRoutes', function ($r) {
-                $r->whereIn('status', [
-                    VisitConsultationRoute::STATUS_PENDING,
-                    VisitConsultationRoute::STATUS_ACTIVE,
-                ])->whereHas('department', function ($d) {
-                    $d->where('type', \App\Enums\DepartmentType::CONSULTATION->value);
-                });
+            ->whereIn('status', [
+                VisitConsultationRoute::STATUS_PENDING,
+                VisitConsultationRoute::STATUS_ACTIVE,
+            ])
+            ->whereHas('department', function ($d) {
+                $d->where('type', DepartmentType::CONSULTATION->value);
+            })
+            ->whereHas('visit', function ($visitQuery) {
+                $visitQuery->whereIn('status', [
+                    VisitStatus::WAITING_CONSULTATION->value,
+                    VisitStatus::CONSULTING->value,
+                ]);
             });
 
         /** @var \App\Models\User|null $user */
         $user = Auth::user();
         if ($user && ! $user->hasAnyRole(['Super Admin', 'Admin']) && $user->department_id) {
-            $query->whereHas('consultationRoutes', function ($route) use ($user) {
-                $route->where('department_id', $user->department_id)
-                    ->whereIn('status', [
-                        VisitConsultationRoute::STATUS_PENDING,
-                        VisitConsultationRoute::STATUS_ACTIVE,
-                    ]);
-            });
+            $query->where('department_id', $user->department_id);
         }
 
         if (!empty($filters['search'])) {
-            $query->search($filters['search']);
+            $query->whereHas('visit', fn ($visitQuery) => $visitQuery->search($filters['search']));
         }
 
         if (!empty($filters['visit_type'])) {
-            $query->where('visit_type', $filters['visit_type']);
+            $query->whereHas('visit', fn ($visitQuery) => $visitQuery->where('visit_type', $filters['visit_type']));
         }
 
         if (!empty($filters['date_from'])) {
-            $query->whereDate('visit_date', '>=', $filters['date_from']);
+            $query->whereHas('visit', fn ($visitQuery) => $visitQuery->whereDate('visit_date', '>=', $filters['date_from']));
         }
 
         if (!empty($filters['date_to'])) {
-            $query->whereDate('visit_date', '<=', $filters['date_to']);
+            $query->whereHas('visit', fn ($visitQuery) => $visitQuery->whereDate('visit_date', '<=', $filters['date_to']));
         }
 
         if ($request->boolean('my_patients')) {
-            $query->whereHas('consultationRoutes', function ($route) {
-                $route->where('doctor_id', Auth::id())
-                    ->whereIn('status', [
-                        VisitConsultationRoute::STATUS_PENDING,
-                        VisitConsultationRoute::STATUS_ACTIVE,
-                    ]);
-            });
+            $query->where('doctor_id', Auth::id());
         }
 
-        $visits = $query->latest()->paginate(15);
+        $routes = $query
+            ->latest()
+            ->paginate(15);
 
-        return view('consultations.index', compact('visits', 'filters'));
+        return view('consultations.index', compact('routes', 'filters'));
     }
 
     /**
      * Show the consultation interface for a visit.
      */
-    public function show(Visit $visit)
+    public function show(Request $request, Visit $visit, ?VisitConsultationRoute $route = null)
     {
-        // Auto-create the medical record if needed
-        $record = $this->consultationService->getOrCreateRecord($visit);
-        $data = $this->consultationService->getConsultationData($visit);
+        if ($route && (int) $route->visit_id !== (int) $visit->id) {
+            abort(404);
+        }
+
+        $sessions = $this->consultationSessionService->getAllSessionsForVisit($visit);
+        $activeRoute = $sessions->firstWhere('status', VisitConsultationRoute::STATUS_ACTIVE);
+        $selectedRoute = $route
+            ?? $activeRoute
+            ?? ($sessions->count() === 1 ? $sessions->first() : null);
+
+        $routeSelectorRequired = ! $selectedRoute && $sessions->count() > 1;
+        $record = $selectedRoute
+            ? $this->consultationSessionService->getOrCreateMedicalRecordForRoute($selectedRoute, Auth::user())
+            : null;
+
+        $data = $this->consultationService->getConsultationData($visit, $record, ! $routeSelectorRequired);
 
         // Load tasks on the record
         if ($data['record']) {
@@ -208,10 +239,17 @@ class ConsultationController extends Controller
         $procedureRequestService = app(\App\Services\ProcedureRequestService::class);
         $procedureRequests = $procedureRequestService->forVisit($visit->id);
         $procedureDepartments = $procedureRequestService->procedureDepartments();
+        $consultationDepartments = Department::active()
+            ->where('type', DepartmentType::CONSULTATION->value)
+            ->orderBy('name')
+            ->get(['id', 'name', 'type']);
 
         return view('consultations.show', [
             'visit' => $data['visit'],
             'record' => $data['record'],
+            'sessions' => $sessions,
+            'selectedRoute' => $selectedRoute,
+            'routeSelectorRequired' => $routeSelectorRequired,
             'vitals' => $data['vitals'],
             'history' => $data['history'],
             'patterns' => $patterns,
@@ -224,6 +262,7 @@ class ConsultationController extends Controller
             'patientProcedures' => $patientProcedures,
             'procedureRequests' => $procedureRequests,
             'procedureDepartments' => $procedureDepartments,
+            'consultationDepartments' => $consultationDepartments,
         ]);
     }
 
@@ -236,6 +275,96 @@ class ConsultationController extends Controller
         $visit->load('patient');
 
         return view('consultations.history', compact('visit', 'history'));
+    }
+
+    public function storeRoute(Request $request, Visit $visit)
+    {
+        $data = $request->validate([
+            'department_id' => ['required', 'exists:departments,id'],
+            'service_id' => ['required', 'exists:service_catalog,id'],
+            'doctor_id' => ['nullable', 'exists:users,id'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+            'activate_now' => ['nullable', 'boolean'],
+        ]);
+
+        try {
+            $route = $this->consultationRouteService->sendToAnotherConsultation(
+                visit: $visit,
+                department: Department::findOrFail($data['department_id']),
+                service: ServiceCatalog::findOrFail($data['service_id']),
+                doctor: ! empty($data['doctor_id']) ? \App\Models\User::findOrFail($data['doctor_id']) : null,
+                routedBy: Auth::user(),
+                notes: $data['notes'] ?? null,
+                activateNow: (bool) ($data['activate_now'] ?? false),
+            );
+        } catch (\Throwable $e) {
+            if ($this->shouldReturnJson($request)) {
+                return response()->json(['error' => $e->getMessage()], 422);
+            }
+
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        $message = ($data['activate_now'] ?? false)
+            ? 'Consultation session activated.'
+            : 'Consultation session queued.';
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json([
+                'success' => $message,
+                'route_id' => $route->id,
+                'redirect' => route('admin.consultations.routes.show', [$visit, $route]),
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.consultations.routes.show', [$visit, $route])
+            ->with('success', $message);
+    }
+
+    public function activateRoute(Request $request, Visit $visit, VisitConsultationRoute $route)
+    {
+        $this->abortIfRouteMismatch($visit, $route);
+
+        try {
+            $route = $this->consultationRouteService->activateRoute($route, Auth::user());
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('admin.consultations.routes.show', [$visit, $route])
+            ->with('success', 'Consultation session activated.');
+    }
+
+    public function completeRoute(Request $request, Visit $visit, VisitConsultationRoute $route)
+    {
+        $this->abortIfRouteMismatch($visit, $route);
+
+        $data = $request->validate([
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $route = $this->consultationRouteService->completeRoute($route, Auth::user(), $data['notes'] ?? null);
+
+        return redirect()
+            ->route('admin.consultations.routes.show', [$visit, $route])
+            ->with('success', 'Consultation session completed.');
+    }
+
+    public function cancelRoute(Request $request, Visit $visit, VisitConsultationRoute $route)
+    {
+        $this->abortIfRouteMismatch($visit, $route);
+
+        $data = $request->validate([
+            'reason' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $route = $this->consultationRouteService->cancelRoute($route, Auth::user(), $data['reason'] ?? null);
+
+        return redirect()
+            ->route('admin.consultations.routes.show', [$visit, $route])
+            ->with('success', 'Consultation session cancelled.');
     }
 
     /*
@@ -252,7 +381,10 @@ class ConsultationController extends Controller
             'severity' => ['nullable', 'in:mild,moderate,severe'],
         ]);
 
-        $record = $this->consultationService->getOrCreateRecord($visit);
+        $record = $this->consultationService->getOrCreateRecord(
+            $visit,
+            $request->integer('consultation_route_id') ?: null,
+        );
         $complaint = $this->consultationService->addComplaint($record, $request->only('description', 'duration', 'severity'));
 
         if ($this->shouldReturnJson($request)) {
@@ -289,7 +421,10 @@ class ConsultationController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $record = $this->consultationService->getOrCreateRecord($visit);
+        $record = $this->consultationService->getOrCreateRecord(
+            $visit,
+            $request->integer('consultation_route_id') ?: null,
+        );
         $diagnosis = $this->consultationService->addDiagnosis($record, $request->only('description', 'icd_code', 'icd_code_id', 'type', 'notes'));
 
         if ($this->shouldReturnJson($request)) {
@@ -398,7 +533,10 @@ class ConsultationController extends Controller
             'notes'            => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $record = $this->consultationService->getOrCreateRecord($visit);
+        $record = $this->consultationService->getOrCreateRecord(
+            $visit,
+            $request->integer('consultation_route_id') ?: null,
+        );
         $created = [];
         $labRequest = null;
 
@@ -487,7 +625,10 @@ class ConsultationController extends Controller
             'description' => ['required', 'string', 'max:2000'],
         ]);
 
-        $record = $this->consultationService->getOrCreateRecord($visit);
+        $record = $this->consultationService->getOrCreateRecord(
+            $visit,
+            $request->integer('consultation_route_id') ?: null,
+        );
         $treatment = $this->consultationService->addTreatment($record, $request->only('type', 'description'));
 
         if ($this->shouldReturnJson($request)) {
@@ -516,7 +657,10 @@ class ConsultationController extends Controller
 
     public function storePrescription(StorePrescriptionRequest $request, Visit $visit)
     {
-        $record = $this->consultationService->getOrCreateRecord($visit);
+        $record = $this->consultationService->getOrCreateRecord(
+            $visit,
+            $request->integer('consultation_route_id') ?: null,
+        );
         $prescription = $this->prescriptionService->create($record, $request->validated());
 
         if ($this->shouldReturnJson($request)) {
@@ -688,26 +832,33 @@ class ConsultationController extends Controller
     {
         $request->validate([
             'department_id' => ['required', 'exists:departments,id'],
-            'service_id'    => ['nullable', 'exists:service_catalog,id'],
+            'service_id'    => ['required', 'exists:service_catalog,id'],
+            'doctor_id'     => ['nullable', 'exists:users,id'],
             'notes'         => ['nullable', 'string', 'max:1000'],
+            'activate_now'  => ['nullable', 'boolean'],
         ]);
 
         try {
-            $this->visitService->referPatient(
-                $visit,
-                (int) $request->department_id,
-                $request->notes,
-                $request->filled('service_id') ? (int) $request->service_id : null,
+            $route = $this->consultationRouteService->sendToAnotherConsultation(
+                visit: $visit,
+                department: Department::findOrFail((int) $request->department_id),
+                service: ServiceCatalog::findOrFail((int) $request->service_id),
+                doctor: $request->filled('doctor_id') ? \App\Models\User::findOrFail((int) $request->doctor_id) : null,
+                routedBy: Auth::user(),
+                notes: $request->notes,
+                activateNow: $request->boolean('activate_now'),
             );
-        } catch (\InvalidArgumentException $e) {
+        } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
 
         $dept = \App\Models\Department::find($request->department_id);
 
         return redirect()
-            ->route('admin.consultations.index')
-            ->with('success', "Patient referred to {$dept?->name}.");
+            ->route('admin.consultations.routes.show', [$visit, $route])
+            ->with('success', $request->boolean('activate_now')
+                ? "Patient sent to {$dept?->name} and session activated."
+                : "Patient queued for {$dept?->name}.");
     }
 
     /*

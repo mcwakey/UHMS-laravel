@@ -23,6 +23,10 @@ const props = defineProps({
         type: String,
         default: '',
     },
+    scriptsEncoded: {
+        type: String,
+        default: '',
+    },
     styles: {
         type: String,
         default: '',
@@ -40,6 +44,20 @@ const props = defineProps({
 let scriptRunId = 0;
 let styleRunId = 0;
 const legacyRoot = ref(null);
+
+function decodedLegacyScripts() {
+    if (!props.scriptsEncoded) {
+        return props.scripts;
+    }
+
+    try {
+        const binary = window.atob(props.scriptsEncoded);
+        const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+        return new TextDecoder().decode(bytes);
+    } catch (_) {
+        return props.scripts;
+    }
+}
 
 function isPlainLeftClick(event) {
     return (
@@ -324,12 +342,14 @@ function executeScriptNode(sourceScript, runId, index) {
 async function executeLegacyScripts() {
     document.querySelectorAll('script[data-uhms-legacy-script]').forEach((script) => script.remove());
 
-    if (!props.scripts) {
+    const scriptsHtml = decodedLegacyScripts();
+
+    if (!scriptsHtml) {
         return;
     }
 
     const template = document.createElement('template');
-    template.innerHTML = props.scripts;
+    template.innerHTML = scriptsHtml;
     const scripts = Array.from(template.content.querySelectorAll('script'));
 
     if (!scripts.length) {
@@ -461,7 +481,7 @@ onUnmounted(() => {
 });
 
 watch(
-    () => [props.html, props.scripts, props.styles, props.url],
+    () => [props.html, props.scripts, props.scriptsEncoded, props.styles, props.url],
     afterPageSwap,
 );
 </script>

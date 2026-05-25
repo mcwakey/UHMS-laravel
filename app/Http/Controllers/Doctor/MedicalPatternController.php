@@ -75,7 +75,10 @@ class MedicalPatternController extends Controller
             'scope' => ['required', 'in:personal,system'],
         ]);
 
-        $record = $this->consultationService->getOrCreateRecord($visit);
+        $record = $this->consultationService->getOrCreateRecord(
+            $visit,
+            $request->integer('consultation_route_id') ?: null,
+        );
 
         $pattern = $this->patternService->createFromRecord(
             $record,

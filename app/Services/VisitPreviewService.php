@@ -66,6 +66,20 @@ class VisitPreviewService
             'medicalRecord.diagnoses',
             'medicalRecord.treatments',
             'medicalRecord.prescriptions.items',
+            'medicalRecords.doctor',
+            'medicalRecords.department',
+            'medicalRecords.service',
+            'medicalRecords.consultationRoute.department',
+            'medicalRecords.consultationRoute.service',
+            'medicalRecords.complaints',
+            'medicalRecords.diagnoses',
+            'medicalRecords.treatments',
+            'medicalRecords.prescriptions.items',
+            'consultationRoutes.department',
+            'consultationRoutes.service',
+            'consultationRoutes.doctor',
+            'consultationRoutes.routedBy',
+            'consultationRoutes.logs.performedBy',
             'labRequests.requestedBy',
             'labRequests.department',
             'labRequests.items',
@@ -177,16 +191,65 @@ class VisitPreviewService
             );
         }
 
-        // 5. Medical record / consultation
-        if ($mr = $visit->medicalRecord) {
+        // 5. Consultation route status timeline
+        foreach ($visit->consultationRoutes ?? [] as $route) {
+            $deptName = optional($route->department)->name;
+            $serviceName = optional($route->service)->name ?? 'Consultation';
+
+            $items[] = $this->item(
+                $route->created_at,
+                "{$serviceName} Routed",
+                trim("{$serviceName}" . ($deptName ? " - {$deptName}" : '') . ' routed for consultation.'),
+                optional($route->routedBy)->full_name,
+                $deptName,
+                'SESSION', 'bg-primary',
+                'consultation_route', $route->id,
+                array_filter([
+                    'Status' => $route->status,
+                    'Doctor' => optional($route->doctor)->full_name,
+                ])
+            );
+
+            foreach ($route->logs ?? [] as $log) {
+                $items[] = $this->item(
+                    $log->created_at,
+                    "{$serviceName} " . ucfirst(str_replace('_', ' ', $log->action)),
+                    $log->notes ?: "Consultation session moved to {$log->to_status}.",
+                    optional($log->performedBy)->full_name,
+                    $deptName,
+                    'SESSION', 'bg-primary',
+                    'consultation_route_log', $log->id,
+                    array_filter([
+                        'From' => $log->from_status,
+                        'To' => $log->to_status,
+                    ])
+                );
+            }
+        }
+
+        // 6. Medical records / consultation sessions
+        $records = $visit->medicalRecords && $visit->medicalRecords->isNotEmpty()
+            ? $visit->medicalRecords
+            : collect($visit->medicalRecord ? [$visit->medicalRecord] : []);
+
+        foreach ($records as $mr) {
+            $sessionDepartment = optional($mr->department ?? $mr->consultationRoute?->department)->name;
+            $sessionService = optional($mr->service ?? $mr->consultationRoute?->service)->name;
+            $sessionLabel = trim(collect([$sessionService, $sessionDepartment])->filter()->implode(' - '));
+
             $items[] = $this->item(
                 $mr->created_at,
-                'Consultation Started',
-                'Medical record opened by ' . (optional($mr->doctor)->full_name ?: 'physician') . '.',
+                $sessionService ? "{$sessionService} Started" : 'Consultation Started',
+                ($sessionLabel ? "{$sessionLabel}: " : '') . 'Medical record opened by ' . (optional($mr->doctor)->full_name ?: 'physician') . '.',
                 optional($mr->doctor)->full_name,
-                null,
+                $sessionDepartment,
                 'CONSULTATION', 'bg-success',
-                'medical_record', $mr->id
+                'medical_record', $mr->id,
+                array_filter([
+                    'Department' => $sessionDepartment,
+                    'Service' => $sessionService,
+                    'Medical Record' => 'MR-' . str_pad((string) $mr->id, 5, '0', STR_PAD_LEFT),
+                ])
             );
 
             // Complaints
@@ -196,9 +259,10 @@ class VisitPreviewService
                     'Complaint Recorded',
                     $complaint->complaint ?? $complaint->description ?? 'Complaint noted.',
                     optional($complaint->createdBy ?? null)->full_name ?? null,
-                    null,
+                    $sessionDepartment,
                     'COMPLAINT', 'bg-warning text-dark',
-                    'complaint', $complaint->id
+                    'complaint', $complaint->id,
+                    array_filter(['Service' => $sessionService])
                 );
             }
 
@@ -213,10 +277,10 @@ class VisitPreviewService
                     $title,
                     $desc ?: 'Diagnosis noted.',
                     null,
-                    null,
+                    $sessionDepartment,
                     $badge, $badgeCls,
                     'diagnosis', $diag->id,
-                    array_filter(['Type' => $diag->type ?: null, 'Notes' => $diag->notes ?: null])
+                    array_filter(['Service' => $sessionService, 'Type' => $diag->type ?: null, 'Notes' => $diag->notes ?: null])
                 );
             }
 
@@ -227,15 +291,15 @@ class VisitPreviewService
                     'Clinical Note / Treatment',
                     $treatment->description ?? 'Treatment note recorded.',
                     null,
-                    null,
+                    $sessionDepartment,
                     'TREATMENT', 'bg-success',
                     'treatment', $treatment->id,
-                    array_filter(['Type' => $treatment->type ?: null])
+                    array_filter(['Service' => $sessionService, 'Type' => $treatment->type ?: null])
                 );
             }
         }
 
-        // 6. Lab requests & results
+        // 7. Lab requests & results
         foreach ($visit->labRequests ?? [] as $lr) {
             $testNames = $lr->items
                 ->map(fn ($i) => $i->display_name ?? $i->name)
@@ -472,19 +536,23 @@ class VisitPreviewService
 
     private function buildSummary(Visit $visit): array
     {
-        $mr = $visit->medicalRecord;
+        $records = $visit->medicalRecords && $visit->medicalRecords->isNotEmpty()
+            ? $visit->medicalRecords
+            : collect($visit->medicalRecord ? [$visit->medicalRecord] : []);
 
-        $primaryDx = $mr?->diagnoses->firstWhere('is_primary', true);
+        $diagnoses = $records->flatMap(fn ($record) => $record->diagnoses ?? collect());
+        $complaints = $records->flatMap(fn ($record) => $record->complaints ?? collect());
+        $primaryDx = $diagnoses->firstWhere('is_primary', true);
         $chiefComplaint = $visit->chief_complaint
-            ?: $mr?->complaints->first()?->complaint
-            ?: $mr?->complaints->first()?->description;
+            ?: $complaints->first()?->complaint
+            ?: $complaints->first()?->description;
 
         return [
             'chief_complaint'       => $chiefComplaint ?: '—',
             'primary_diagnosis'     => $primaryDx
                 ? (($primaryDx->icd_code ? "[{$primaryDx->icd_code}] " : '') . ($primaryDx->description ?? ''))
                 : '—',
-            'diagnoses_count'       => $mr?->diagnoses->count() ?? 0,
+            'diagnoses_count'       => $diagnoses->count(),
             'prescriptions_count'   => $visit->prescriptions->count(),
             'investigations_count'  => $visit->labRequests->count(),
             'procedures_count'      => $visit->procedureRequests->count(),

@@ -217,6 +217,16 @@ class VisitWorkflowService
             'doctor_id'  => $route->doctor_id ?? $doctor?->id,
             'started_by' => Auth::id(),
             'started_at' => now(),
+            'activated_at' => now(),
+        ]);
+
+        \App\Models\VisitConsultationRouteLog::create([
+            'visit_consultation_route_id' => $route->id,
+            'visit_id' => $visit->id,
+            'from_status' => \App\Models\VisitConsultationRoute::STATUS_PENDING,
+            'to_status' => \App\Models\VisitConsultationRoute::STATUS_ACTIVE,
+            'action' => 'activated',
+            'performed_by' => Auth::id(),
         ]);
 
         // Doctor identification is recorded on the route, not on the visit

@@ -298,6 +298,11 @@ class VisitController extends Controller
         $visit->load([
             'patient',
             'createdBy',
+            'consultationRoutes.department',
+            'consultationRoutes.service',
+            'consultationRoutes.doctor',
+            'consultationRoutes.medicalRecord',
+            'consultationRoutes.logs.performedBy',
             'activeConsultationRoute.doctor',
             'pendingConsultationRoutes.doctor',
             'statusLogs.changedBy',
@@ -322,7 +327,12 @@ class VisitController extends Controller
             $insuranceInfo['insurance'] = $visit->visitInsurance;
         }
 
-        return view('visits.show', compact('visit', 'insuranceInfo'));
+        $consultationDepartments = Department::active()
+            ->where('type', DepartmentType::CONSULTATION->value)
+            ->orderBy('name')
+            ->get(['id', 'name', 'type']);
+
+        return view('visits.show', compact('visit', 'insuranceInfo', 'consultationDepartments'));
     }
 
     public function transition(Request $request, Visit $visit)

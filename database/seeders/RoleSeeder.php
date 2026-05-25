@@ -39,6 +39,13 @@ class RoleSeeder extends Seeder
             'consultations.view',
             'consultations.create',
             'consultations.edit',
+            'consultation.routes.view',
+            'consultation.routes.create',
+            'consultation.routes.activate',
+            'consultation.routes.complete',
+            'consultation.routes.cancel',
+            'consultation.sessions.switch',
+            'consultation.sessions.view_all',
             // Consultation workflow (for Doctors, Consultants, etc.)
             'consultation.access',          // can enter consultation area
             'consultation.dashboard',       // consultation summary dashboard
