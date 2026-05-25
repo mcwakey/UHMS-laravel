@@ -29,8 +29,7 @@
     .session-route-row.is-cancelled { border-left-color: #dc3545; opacity: 0.82; }
     .session-timeline { display: flex; flex-wrap: wrap; gap: 0.35rem; }
     .session-timeline .badge { font-size: 0.66rem; font-weight: 500; }
-    /* ── Fixed-bottom sessions drawer ─────────────────────────────── */
-    /* left/width are set at runtime by positionSessionsDrawer() to match the col-lg-10 column. */
+    /* ── Fixed-bottom sessions drawer (left/width matched to col-lg-10 by JS) ── */
     #sessionsDrawer { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1040; background: #fff; border-top: 2px solid #0d6efd; box-shadow: 0 -4px 18px rgba(0,0,0,.12); max-height: 60vh; display: flex; flex-direction: column; transition: transform .25s ease; }
     #sessionsDrawer.is-collapsed { transform: translateY(calc(100% - 42px)); }
     #sessionsDrawerHandle { cursor: pointer; user-select: none; padding: .45rem 1rem; background: #0d6efd; color: #fff; display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
@@ -1288,10 +1287,9 @@
         </div>
     </div>
 </div>
-</div>{{-- end main row --}}
 
 {{-- ============================================================ --}}
-{{-- CONSULTATION SESSIONS — FIXED-BOTTOM DRAWER --}}
+{{-- CONSULTATION SESSIONS — STICKY-BOTTOM DRAWER --}}
 {{-- ============================================================ --}}
 <div id="sessionsDrawer" class="is-collapsed">
     <div id="sessionsDrawerHandle" role="button" aria-expanded="false" aria-controls="sessionsDrawerBody" onclick="toggleSessionsDrawer()">
@@ -1372,6 +1370,8 @@
         </div>
     </div>
 </div>
+
+</div>{{-- end main row --}}
 
 {{-- ============================================================ --}}
 {{-- VISIT PREVIEW MODAL --}}
@@ -1767,14 +1767,12 @@ window.prescriptionDestroyBase = '{{ url("admin/consultations/prescriptions") }}
 window.canEditConsultation = @json($canEdit);
 window.currentConsultationRouteId = @json($selectedRoute?->id);
 
-/* ── Sessions drawer toggle & positioning ─────────────────────── */
+/* ── Sessions drawer: always-visible, anchored to col-lg-10 ──── */
 function positionSessionsDrawer() {
-    // Anchor to the col-lg-10 that wraps the consultation tab content so the
-    // drawer width and left offset always match that column exactly.
-    const anchor = document.getElementById('consultationTabContent')?.closest('.col-lg-10');
+    const col = document.querySelector('.col-lg-10');
     const drawer = document.getElementById('sessionsDrawer');
-    if (!anchor || !drawer) return;
-    const r = anchor.getBoundingClientRect();
+    if (!col || !drawer) return;
+    const r = col.getBoundingClientRect();
     drawer.style.left  = r.left + 'px';
     drawer.style.right = 'auto';
     drawer.style.width = r.width + 'px';
