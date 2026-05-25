@@ -54,7 +54,7 @@
                                                         {{ $item->department->name }}
                                                     @endif
                                                     @if(isset($item->status))
-                                                        &middot; {{ ucfirst(str_replace('_', ' ', $item->status)) }}
+                                                        &middot; {{ ucfirst(str_replace('_', ' ', $item->status instanceof \BackedEnum ? $item->status->value : (string) $item->status)) }}
                                                     @endif
                                                 </div>
                                             </td>
