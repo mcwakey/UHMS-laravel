@@ -29,6 +29,15 @@
     .session-route-row.is-cancelled { border-left-color: #dc3545; opacity: 0.82; }
     .session-timeline { display: flex; flex-wrap: wrap; gap: 0.35rem; }
     .session-timeline .badge { font-size: 0.66rem; font-weight: 500; }
+    /* ── Fixed-bottom sessions drawer ─────────────────────────────── */
+    /* left/width are set at runtime by positionSessionsDrawer() to match the col-lg-10 column. */
+    #sessionsDrawer { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1040; background: #fff; border-top: 2px solid #0d6efd; box-shadow: 0 -4px 18px rgba(0,0,0,.12); max-height: 60vh; display: flex; flex-direction: column; transition: transform .25s ease; }
+    #sessionsDrawer.is-collapsed { transform: translateY(calc(100% - 42px)); }
+    #sessionsDrawerHandle { cursor: pointer; user-select: none; padding: .45rem 1rem; background: #0d6efd; color: #fff; display: flex; align-items: center; gap: .5rem; flex-shrink: 0; }
+    #sessionsDrawerHandle .ti-chevron-up { transition: transform .25s; }
+    #sessionsDrawer.is-collapsed #sessionsDrawerHandle .ti-chevron-up { transform: rotate(180deg); }
+    #sessionsDrawerBody { overflow-y: auto; flex: 1; }
+    body.has-sessions-drawer { padding-bottom: 46px; }
 </style>
 @endpush
 
@@ -1279,17 +1288,19 @@
         </div>
     </div>
 </div>
-    <div class="row g-3">
-<div class="col-lg-12">
+</div>{{-- end main row --}}
+
 {{-- ============================================================ --}}
-{{-- CONSULTATION SESSIONS PANEL --}}
+{{-- CONSULTATION SESSIONS — FIXED-BOTTOM DRAWER --}}
 {{-- ============================================================ --}}
-<div class="card mb-3">
-    <div class="card-header d-flex align-items-center justify-content-between">
-        <h6 class="fw-bold mb-0"><i class="ti ti-route me-1 text-primary"></i>Consultation Sessions for This Visit</h6>
-        <span class="badge bg-light text-dark">{{ $sessions->count() }} session{{ $sessions->count() === 1 ? '' : 's' }}</span>
+<div id="sessionsDrawer" class="is-collapsed">
+    <div id="sessionsDrawerHandle" role="button" aria-expanded="false" aria-controls="sessionsDrawerBody" onclick="toggleSessionsDrawer()">
+        <i class="ti ti-route fs-5"></i>
+        <span class="fw-semibold small">Consultation Sessions</span>
+        <span class="badge bg-white text-primary rounded-pill ms-1">{{ $sessions->count() }}</span>
+        <i class="ti ti-chevron-up ms-auto fs-5"></i>
     </div>
-    <div class="card-body p-0">
+    <div id="sessionsDrawerBody">
         <div class="table-responsive">
             <table class="table table-sm mb-0 align-middle">
                 <thead class="table-light">
@@ -1299,8 +1310,6 @@
                         <th>Doctor</th>
                         <th>Status</th>
                         <th>Started</th>
-                        {{-- <th>Completed</th> --}}
-                        {{-- <th>Timeline</th> --}}
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -1321,16 +1330,10 @@
                         </td>
                         <td>{{ $session->doctor ? 'Dr. ' . $session->doctor->full_name : 'Unassigned' }}</td>
                         <td><span class="badge bg-{{ $routeBadge($session->status) }}">{{ $session->status }}</span></td>
-                        <td><small>{{ $session->started_at?->format('d M, h:i A') ?? '-' }}</small><small>{{ $session->completed_at?->format('d M, h:i A') ?? '-' }}</small><span></span></td>
-                        <td></td>
-                        {{-- <td>
-                            <div class="session-timeline">
-                                <span class="badge bg-light text-dark">Routed</span>
-                                @foreach($session->logs->take(4)->reverse() as $log)
-                                    <span class="badge bg-light text-dark">{{ ucfirst(str_replace('_', ' ', $log->action)) }}</span>
-                                @endforeach
-                            </div>
-                        </td> --}}
+                        <td>
+                            <div class="small">{{ $session->started_at?->format('d M, h:i A') ?? '—' }}</div>
+                            @if($session->completed_at)<div class="small text-muted">{{ $session->completed_at->format('d M, h:i A') }}</div>@endif
+                        </td>
                         <td>
                             <div class="d-flex flex-wrap gap-1">
                                 <a href="{{ route('admin.consultations.routes.show', [$visit, $session]) }}" class="btn btn-xs btn-outline-primary">
@@ -1361,7 +1364,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center text-muted py-3">No consultation sessions are routed for this visit.</td>
+                        <td colspan="6" class="text-center text-muted py-3">No consultation sessions routed for this visit.</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -1369,10 +1372,6 @@
         </div>
     </div>
 </div>
-</div>
-</div>
-
-</div>{{-- end main row --}}
 
 {{-- ============================================================ --}}
 {{-- VISIT PREVIEW MODAL --}}
@@ -1767,6 +1766,37 @@ window.procedureDeptServicesBase = '{{ url("admin/theatre/departments") }}';
 window.prescriptionDestroyBase = '{{ url("admin/consultations/prescriptions") }}';
 window.canEditConsultation = @json($canEdit);
 window.currentConsultationRouteId = @json($selectedRoute?->id);
+
+/* ── Sessions drawer toggle & positioning ─────────────────────── */
+function positionSessionsDrawer() {
+    // Anchor to the col-lg-10 that wraps the consultation tab content so the
+    // drawer width and left offset always match that column exactly.
+    const anchor = document.getElementById('consultationTabContent')?.closest('.col-lg-10');
+    const drawer = document.getElementById('sessionsDrawer');
+    if (!anchor || !drawer) return;
+    const r = anchor.getBoundingClientRect();
+    drawer.style.left  = r.left + 'px';
+    drawer.style.right = 'auto';
+    drawer.style.width = r.width + 'px';
+}
+function toggleSessionsDrawer() {
+    const drawer = document.getElementById('sessionsDrawer');
+    const handle = document.getElementById('sessionsDrawerHandle');
+    if (!drawer) return;
+    const collapsed = drawer.classList.toggle('is-collapsed');
+    if (handle) handle.setAttribute('aria-expanded', String(!collapsed));
+}
+window.toggleSessionsDrawer = toggleSessionsDrawer;
+document.addEventListener('DOMContentLoaded', function () {
+    document.body.classList.add('has-sessions-drawer');
+    positionSessionsDrawer();
+    if (window.ResizeObserver) {
+        new ResizeObserver(positionSessionsDrawer).observe(document.documentElement);
+    } else {
+        window.addEventListener('resize', positionSessionsDrawer);
+    }
+});
+/* ────────────────────────────────────────────────────────────── */
 
 function openSendSessionModalFallback() {
     if (window.bootstrap && window.bootstrap.Modal) return false;
