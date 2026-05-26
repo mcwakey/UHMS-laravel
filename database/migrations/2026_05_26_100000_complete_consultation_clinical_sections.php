@@ -44,8 +44,8 @@ return new class extends Migration
             $table->foreignId('source_pattern_id')->nullable()->constrained('medical_patterns')->nullOnDelete();
             $table->timestamps();
 
-            $table->index(['medical_record_id', 'created_at']);
-            $table->index(['consultation_route_id', 'created_at']);
+            $table->index(['medical_record_id', 'created_at'], 'hopc_medical_record_created_at_idx');
+            $table->index(['consultation_route_id', 'created_at'], 'hopc_consult_route_created_at_idx');
         });
 
         if (! Schema::hasTable('physical_examinations')) Schema::create('physical_examinations', function (Blueprint $table) {
@@ -72,8 +72,8 @@ return new class extends Migration
             $table->foreignId('source_pattern_id')->nullable()->constrained('medical_patterns')->nullOnDelete();
             $table->timestamps();
 
-            $table->index(['medical_record_id', 'created_at']);
-            $table->index(['consultation_route_id', 'created_at']);
+            $table->index(['medical_record_id', 'created_at'], 'phys_exam_medical_record_created_at_idx');
+            $table->index(['consultation_route_id', 'created_at'], 'phys_exam_consult_route_created_at_idx');
         });
 
         if (! Schema::hasTable('consultation_session_contributors')) Schema::create('consultation_session_contributors', function (Blueprint $table) {

@@ -128,9 +128,9 @@ class SettingsController extends Controller
     public function updateWard(Request $request)
     {
         $validated = $request->validate([
-            'admission_fee_service_id'  => 'nullable|integer|exists:service_catalogs,id',
-            'detention_fee_service_id'  => 'nullable|integer|exists:service_catalogs,id',
-            'consumable_fee_service_id' => 'nullable|integer|exists:service_catalogs,id',
+            'admission_fee_service_id'  => 'nullable|integer|exists:service_catalog,id',
+            'detention_fee_service_id'  => 'nullable|integer|exists:service_catalog,id',
+            'consumable_fee_service_id' => 'nullable|integer|exists:service_catalog,id',
         ]);
 
         Setting::setValue('ward', 'admission_fee_service_id',  $validated['admission_fee_service_id']  ?? '', 'integer');
