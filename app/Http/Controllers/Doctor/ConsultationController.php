@@ -324,52 +324,115 @@ class ConsultationController extends Controller
     }
 
     /**
-     * Show patient's full medical history.
+     * Show the visit's full clinical consultation summary as a document.
      */
     public function history(Visit $visit)
     {
-        $visit->load(['patient', 'vitals' => fn ($q) => $q->with('recordedBy')->latest()]);
+        $visit->load([
+            'patient',
+            'department',
+            'visitInsurance.insuranceProvider',
+            'vitals' => fn ($q) => $q->with('recordedBy')->latest(),
+        ]);
 
         $sessions = $visit->consultationRoutes()
             ->with([
                 'department',
                 'doctor',
-                'medicalRecord' => fn ($q) => $q->with([
-                    'complaints.creator',
-                    'historiesOfPresentingComplaint.creator',
-                    'physicalExaminations.creator',
-                    'diagnoses.creator',
-                    'investigations.creator',
-                    'treatments.creator',
-                    'prescriptions.items',
-                    'tasks.creator',
-                ]),
             ])
             ->orderByRaw("CASE status WHEN 'ACTIVE' THEN 0 WHEN 'PENDING' THEN 1 WHEN 'PAUSED' THEN 2 WHEN 'COMPLETED' THEN 3 ELSE 4 END")
             ->oldest()
             ->get();
 
-        // Single record for single-session or legacy (no routes) visits
-        $record = match (true) {
-            $sessions->count() === 1 => $sessions->first()->medicalRecord,
-            $sessions->isEmpty() => $visit->medicalRecord?->load([
-                'complaints.creator',
-                'historiesOfPresentingComplaint.creator',
-                'physicalExaminations.creator',
-                'diagnoses.creator',
-                'investigations.creator',
-                'treatments.creator',
-                'prescriptions.items',
-                'tasks.creator',
-            ]),
-            default => null, // multiple sessions — handled per-session in blade
-        };
+        // Build a normalized summary per session (or per legacy record).
+        $sessionSummaries = collect();
+
+        if ($sessions->isNotEmpty()) {
+            foreach ($sessions as $session) {
+                $record = $session->medicalRecord;
+                $sessionSummaries->push([
+                    'session' => $session,
+                    'record' => $record,
+                    'summary' => $this->summaryService->forRecord($record),
+                ]);
+            }
+        } else {
+            $sessionSummaries->push([
+                'session' => null,
+                'record' => $visit->medicalRecord,
+                'summary' => $this->summaryService->forRecord($visit->medicalRecord),
+            ]);
+        }
 
         $labRequests = $this->labService->getVisitLabRequests($visit);
-
         $procedureRequests = app(ProcedureRequestService::class)->forVisit($visit->id);
 
-        return view('consultations.history', compact('visit', 'sessions', 'record', 'labRequests', 'procedureRequests'));
+        // Visit-wide contributor roll-up across all sessions + lab/procedure owners.
+        $contributors = $this->buildVisitContributors($sessionSummaries, $sessions, $labRequests, $procedureRequests);
+
+        return view('consultations.history', [
+            'visit' => $visit,
+            'sessions' => $sessions,
+            'sessionSummaries' => $sessionSummaries,
+            'labRequests' => $labRequests,
+            'procedureRequests' => $procedureRequests,
+            'contributors' => $contributors,
+            'generatedAt' => now(),
+        ]);
+    }
+
+    /**
+     * Aggregate every doctor/user who contributed to the visit, with their entry counts.
+     *
+     * @return array<int, array{user_id: int|null, name: string, role_label: string, entries: int}>
+     */
+    private function buildVisitContributors($sessionSummaries, $sessions, $labRequests, $procedureRequests): array
+    {
+        $mainDoctorIds = $sessions->pluck('doctor.id')->filter()->unique()->all();
+        $tally = [];
+
+        $bump = function (?int $id, ?string $name, bool $isMain) use (&$tally): void {
+            if (! $name) {
+                return;
+            }
+            $key = $id ? 'u-'.$id : 'n-'.$name;
+            if (! isset($tally[$key])) {
+                $tally[$key] = [
+                    'user_id' => $id,
+                    'name' => $name,
+                    'role_label' => $isMain ? 'Main Doctor' : 'Contributor',
+                    'entries' => 0,
+                ];
+            } elseif ($isMain) {
+                $tally[$key]['role_label'] = 'Main Doctor';
+            }
+            $tally[$key]['entries']++;
+        };
+
+        foreach ($sessionSummaries as $bundle) {
+            foreach ($bundle['summary']['sections'] ?? [] as $entries) {
+                foreach ($entries as $entry) {
+                    $id = $entry['owner_id'] ?? null;
+                    $name = $entry['entered_by'] ?? null;
+                    if ($name === 'Unknown user') {
+                        continue;
+                    }
+                    $bump($id, $name, $id && in_array($id, $mainDoctorIds, true));
+                }
+            }
+        }
+
+        foreach ($labRequests as $req) {
+            $owner = $req->requestedBy ?? null;
+            $bump($owner?->id, $owner?->full_name, $owner && in_array($owner->id, $mainDoctorIds, true));
+        }
+
+        foreach ($procedureRequests as $pr) {
+            $owner = $pr->requestingDoctor ?? $pr->requestedBy ?? null;
+            $bump($owner?->id, $owner?->full_name, $owner && in_array($owner->id, $mainDoctorIds, true));
+        }
+
+        return array_values($tally);
     }
 
     public function summaryFragment(Request $request, Visit $visit)

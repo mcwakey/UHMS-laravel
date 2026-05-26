@@ -1,1092 +1,868 @@
-You are a senior Laravel + Inertia/Vue developer working on UHMS — Ultimate Hospital Management System.
+````text
+You are a senior Laravel + Inertia/Vue developer and UI/UX designer working on UHMS — Ultimate Hospital Management System.
 
-We have already implemented consultation record ownership correctly. Every consultation record now has its correct creator/owner.
+The previous consultation UI ownership/grouping prompt has already been implemented.
 
-Now we need to improve the Consultation UI and related record behavior so ownership is displayed more cleanly, investigation/procedure records show owners properly, Notes / Consultation Summary updates immediately, and all consultation records have edit actions where permitted.
+Now update the **Consultation Summary page** so it fully accommodates those changes.
 
-Focus only on:
+The Consultation Summary page must now feel like a clean, modern, stylish, readable **clinical document**, not just a basic list/table. It must show all available consultation information clearly, without hiding important information behind collapsed sections, tabs, hover-only content, or modals.
 
-- Consultation page UI grouping
-- Record owner display
-- Investigation section grouping
-- Procedure owner display
-- Notes / Consultation Summary live refresh
-- Unknown user issue after saving
-- Edit actions for consultation records
-- Backend response/eager-loading needed to support the UI
-
-Do not change the already working ownership logic unless needed for UI data loading.
+Focus only on the Consultation Summary page/view and the data needed to render it properly.
 
 Do not break:
-
-- consultation
-- visits
+- consultation records
+- record ownership
 - medical records
+- visit preview
 - investigations
 - procedures
 - prescriptions
-- treatments
 - billing
-- visit preview
 - claims mirror
+- visit workflow
 
 ---
 
-# 1. Current Problems to Fix
+# 1. Main Objective
 
-Fix the following issues:
+Update the Consultation Summary page into a full clinical document-style page.
 
-1. Consultation records currently repeat the doctor/user name on every record.
-2. Instead, group records by user/doctor on the UI.
-3. Under the Investigation section on the Consultation page:
-   - group requests by department
-   - make sure record owners are displayed clearly
-4. Under the Procedures section:
-   - requested procedures do not display record owners
-5. Under Notes / Consultation Summary:
-   - new additions do not update immediately after saving
-   - some newly added records show “Unknown user” until the page is reloaded
-6. Consultation records currently do not have visible edit actions/buttons.
-7. After editing or adding records, the UI should update without full page reload.
-8. The current tab/section should remain active after create/update.
+The page should clearly display:
 
----
+- patient information
+- visit information
+- consultation session information
+- main doctor
+- contributing doctors
+- complaints
+- history of presenting complaint
+- examination
+- diagnoses
+- investigations
+- treatments
+- prescriptions
+- procedures
+- tasks/follow-up/instructions
+- clinical notes
+- record owners/authors
+- dates/times
+- source pattern information if available
+- edit/locked status where applicable
 
-# 2. Preserve Existing Ownership Logic
-
-The ownership logic is already working.
-
-Do not rewrite the whole ownership system.
-
-Do not change database ownership fields unless a relationship/eager-loading issue requires it.
-
-Current entry ownership should remain based on existing fields like:
-
-created_by
-doctor_id
-updated_by
-user_id
-
-or the project’s equivalent fields.
-
-The goal is to improve how ownership is displayed, grouped, refreshed, and edited in the frontend.
+The page must reflect the ownership/grouping changes already implemented.
 
 ---
 
-# 3. Group Consultation Records by User on UI
+# 2. Document Feel Requirement
 
-Instead of displaying this repeatedly:
+The page should look and read like a proper medical consultation document.
 
-Complaint A — Entered by Dr. Kofi
-Complaint B — Entered by Dr. Kofi
-Complaint C — Entered by Dr. Kofi
-Diagnosis X — Entered by Dr. Ama
-Diagnosis Y — Entered by Dr. Ama
+Style goal:
 
-Display grouped by user/doctor:
+Modern, clean, professional, stylish, readable, printable.
 
-Dr. Kofi Mensah
-    Complaint A
-    Complaint B
-    Complaint C
+It should feel like:
 
-Dr. Ama Boateng
-    Diagnosis X
-    Diagnosis Y
+```text
+Clinical Consultation Summary
+Patient Medical Record Document
+Visit Consultation Report
+````
 
-Apply grouping to consultation sections where multiple records are listed:
+Not like:
 
-Complaints
-History of Presenting Complaint
-Examination
-Diagnosis
-Treatments
-Prescriptions
-Investigations
-Procedures
-Tasks
-Notes
+```text
+Random admin table
+Raw database dump
+Crowded dashboard widget
+```
+
+Use a clear document layout with:
+
+* page header
+* patient/visit information block
+* consultation session block
+* section headings
+* grouped clinical content
+* author attribution
+* clean spacing
+* readable typography
+* subtle borders
+* cards or paper-like container
+* print-friendly layout
+
+---
+
+# 3. No Hidden Information
+
+Very important:
+
+Do not hide important information.
+
+Avoid:
+
+* collapsed accordions for clinical sections
+* tabs that hide sections
+* hover-only details
+* modals for viewing main content
+* “view more” hiding key clinical data
+* summary-only cards that omit details
+
+The Consultation Summary page should show all available clinical information directly on the page.
+
+It is okay to use visual grouping, but not hidden sections.
+
+If content is long, let the page scroll.
+
+---
+
+# 4. Page Layout
+
+Recommended document layout:
+
+```text
 Consultation Summary
 
-If grouping per section makes more sense, group inside each section.
+Patient & Visit Header
+Consultation Session Details
+Clinical Summary Sections
+Author / Contributor Summary
+Timeline / Audit Metadata if useful
+Print / Export Actions
+```
 
-Example:
+Use a document-like centered container:
 
-Complaints
-
-Dr. Kofi Mensah
-    Fever
-    Headache
-
-Dr. Ama Boateng
-    Chest pain review note
-
-Do not remove ownership visibility.
-
-The doctor/user name should still be visible, but as a group heading instead of repeated on every item.
-
----
-
-# 4. Recommended Grouping Data Structure
-
-Backend or frontend may normalize records into this structure:
-
-[
-  {
-    user_id: 5,
-    user_name: "Dr. Kofi Mensah",
-    user_role: "Doctor",
-    entries: [...]
-  },
-  {
-    user_id: 8,
-    user_name: "Dr. Ama Boateng",
-    user_role: "Specialist",
-    entries: [...]
-  }
-]
-
-If done in Vue, create a helper:
-
-groupByOwner(records)
-
-Owner resolution should use existing relationship names, such as:
-
-record.creator
-record.createdBy
-record.doctor
-record.user
-record.requestedBy
-record.enteredBy
-
-depending on the model.
-
-Fallback:
-
-Unknown user
-
-But this fallback should only happen when no creator relationship exists.
-
-Do not show Unknown user if the record has a valid created_by, doctor_id, or ownership relationship.
+```text
+max-width: readable document width
+white / soft background
+border or shadow
+rounded corners if consistent with UI
+good spacing
+print-friendly
+```
 
 ---
 
-# 5. Owner Group UI Design
+# 5. Header Section
 
-For each user group, display:
+At the top, show:
 
-Doctor/User name
-Role if available
-Total records count
-Optional badge: Main Doctor / Contributor
-
-Example:
-
-Dr. Kofi Mensah
-Main Doctor · 4 entries
-
-- Fever
-- Headache
-- Malaria diagnosis
-- Paracetamol prescription
-
-For contributors:
-
-Dr. Ama Boateng
-Contributor · 2 entries
-
-- Specialist review note
-- ECG advised
-
-If the group owner is the main session doctor, show a small badge:
-
+```text
+Consultation Summary
+Visit Number
+Patient Name
+Patient Number
+Visit Date
+Visit Type
+Visit Status
+Department Session
 Main Doctor
-
-If the group owner is not the main doctor, show:
-
-Contributor
-
-Do not overwrite or change the main session doctor.
-
----
-
-# 6. Fix Unknown User After Adding New Records
-
-Current issue:
-
-After adding a record, it sometimes shows Unknown user until page reload.
-
-This usually means the frontend response after save does not include the full creator/user relationship.
-
-Fix this properly.
-
-When a new consultation record is created, the response must include:
-
-record id
-record content/details
-created_at
-updated_at
-created_by
-creator/user object
-doctor object if used
-updated_by if applicable
-
-Example response:
-
-{
-  "id": 10,
-  "content": "Patient complains of headache",
-  "created_at": "2026-05-26T10:30:00Z",
-  "creator": {
-    "id": 3,
-    "name": "Dr. Kofi Mensah"
-  }
-}
-
-Do not make the frontend wait for a full reload before it can display the owner name.
-
-If using Inertia:
-
-- return updated props through partial reload, or
-- update local state with the created record and creator object, or
-- attach current user data to the optimistic/local record
-
-The created/updated record must be rendered immediately with the correct user name.
-
----
-
-# 7. Notes / Consultation Summary Must Update Immediately
-
-Current issue:
-
-Under Notes / Consultation Summary, new additions do not update immediately unless the page is reloaded.
-
-Fix this.
-
-After adding any new consultation record, the Notes / Consultation Summary section should update immediately.
-
-Possible fixes:
-
-emit an event after successful save
-update local state
-refresh summary prop using Inertia partial reload
-call summary reload endpoint
-recompute summary client-side from updated section data
-
-Recommended Inertia-style approach:
-
-router.reload({
-  only: ['consultationSummary', 'sections', 'medicalRecord'],
-  preserveScroll: true,
-  preserveState: true,
-})
-
-or the project’s equivalent pattern.
-
-If using local Vue state:
-
-1. push the returned created record into the right section
-2. regroup by owner
-3. recompute summary
-4. update the UI immediately
-
-Do not reload the entire page.
-
-Do not reset the user to the first tab.
-
-Do not lose form state unnecessarily.
-
----
-
-# 8. Notes / Consultation Summary Grouping
-
-In Notes / Consultation Summary, group records by owner/user where practical.
-
-Recommended summary layout:
-
-Consultation Summary
-
-Dr. Kofi Mensah
-    Complaints
-        Fever
-        Headache
-
-    History of Presenting Complaint
-        Fever started 3 days ago...
-
-    Diagnosis
-        Malaria
-
-    Prescriptions
-        Paracetamol
-        Artemether/Lumefantrine
-
-Dr. Ama Boateng
-    Additional Note
-        ECG advised.
-
-    Diagnosis
-        Rule out cardiac condition.
-
-Alternative acceptable layout:
-
-Complaints
-    Dr. Kofi Mensah
-        Fever
-        Headache
-
-Diagnosis
-    Dr. Kofi Mensah
-        Malaria
-
-    Dr. Ama Boateng
-        Rule out cardiac condition
-
-Use whichever fits the current design better.
-
-Main rule:
-
-Do not repeat the doctor/user name unnecessarily on every row.
-Do not hide who created the entry.
-Do not attribute all entries to the main doctor.
-
----
-
-# 9. Investigation Section — Group Requests by Department
-
-Under Consultation → Investigations, group requested investigations by department.
-
-Instead of one flat list:
-
-Full Blood Count
-Malaria Test
-Chest X-ray
-Ultrasound
-
-Display:
-
-Laboratory
-    Full Blood Count
-    Malaria Test
-
-X-Ray
-    Chest X-ray
-
-Scan / Ultrasound
-    Abdominal Ultrasound
-
-Each department group should show:
-
-Department name
-Request count
-Status summary if useful
-
-Each request/item should show:
-
-investigation service/item
-status
-requested by / owner
-requested at
-result status
-actions
-
----
-
-# 10. Investigation Section — Display Record Owners
-
-Each investigation request must show who requested it.
-
-Preferred grouping:
-
-Department first, then owner
+Contributors
+Generated Date/Time
+```
 
 Example:
 
-Laboratory
+```text
+CONSULTATION SUMMARY
 
-Dr. Kofi Mensah
-    Full Blood Count
-    Malaria Test
-
-Dr. Ama Boateng
-    Blood Culture
-
-Alternative acceptable display:
-
-Laboratory
-    Full Blood Count — Requested by Dr. Kofi Mensah
-    Malaria Test — Requested by Dr. Kofi Mensah
-
-Preferred final UI:
-
-Department → Doctor/User → Requests
-
-Do not display Unknown user if the request owner relationship exists.
-
-Eager-load appropriate relationships such as:
-
-requestedBy
-createdBy
-doctor
-department
-items
-results
-
-Adapt to actual model relationship names.
+Patient: Ama Mensah
+Patient No: PAT-2026-000012
+Visit No: VST-2026-000045
+Visit Type: OPD
+Visit Date: 26 May 2026
+Department Session: OPD Consultation
+Main Doctor: Dr. Kofi Mensah
+Contributors: Dr. Ama Boateng, Dr. Yao Mensah
+Status: CONSULTING
+```
 
 ---
 
-# 11. Investigation Grouping Data Structure
+# 6. Patient Information Block
 
-Recommended normalized structure:
+Show:
 
-[
-  {
-    department_id: 1,
-    department_name: "Laboratory",
-    owner_groups: [
-      {
-        user_id: 3,
-        user_name: "Dr. Kofi Mensah",
-        requests: [...]
-      },
-      {
-        user_id: 7,
-        user_name: "Dr. Ama Boateng",
-        requests: [...]
-      }
-    ]
-  },
-  {
-    department_id: 2,
-    department_name: "X-Ray",
-    owner_groups: [...]
-  }
-]
+```text
+Patient name
+Patient number
+Age
+Gender
+Phone number
+Ghana Card number if available
+Insurance provider used for visit
+Membership number if available
+Occupation if available
+Marital status if available
+Religion if available
+Next of kin if available
+```
 
-The backend may return this structure directly, or the frontend may build it from loaded relationships.
+Do not hide these details if they exist.
 
-Avoid querying users/departments inside Vue/Blade loops.
+Use a clean two-column or three-column document grid.
 
 ---
 
-# 12. Procedures Section — Display Record Owners
+# 7. Visit Information Block
 
-Requested procedures currently do not display owners.
+Show:
 
-Fix this.
+```text
+Visit number
+Visit type
+Visit date/time
+Visit status
+Department/session
+Services linked to this session
+Main doctor
+Contributors
+Triage score if available
+Latest vitals if available
+```
 
-Each procedure request must show:
-
-requested by / created by doctor
-department/session
-requested at
-procedure service
-status
-actions
-
-Preferred grouping:
-
-Procedure department first, then owner
+If the visit has multiple consultation sessions, show the current session being summarized and list other sessions briefly.
 
 Example:
 
-Theatre
-
-Dr. Kofi Mensah
-    Appendectomy request
-
-Minor Procedure Room
-
-Dr. Ama Boateng
-    Wound dressing
-
-Alternative acceptable layout:
-
-Procedures
-
-Dr. Kofi Mensah
-    Wound Dressing
-    Suturing
-
-Dr. Ama Boateng
-    Theatre Review
-
-Use department-first grouping if procedure departments are available.
-
-Do not show Unknown user if the procedure request has a creator/requested-by relationship.
+```text
+Other Consultation Sessions:
+- Dental Department — Completed
+- ENT Department — Pending
+```
 
 ---
 
-# 13. Procedure Section Data Loading
+# 8. Ownership / Contributor Summary
 
-Ensure procedure records eager-load ownership and department/service relationships.
-
-Examples:
-
-with([
-    'department',
-    'requestedBy',
-    'createdBy',
-    'doctor',
-    'service',
-    'procedureService',
-])
-
-Adapt names to current implementation.
-
-The UI must have enough data to display:
-
-Procedure department
-Procedure service
-Requested by
-Requested at
-Status
-
----
-
-# 14. Add Edit Actions for Consultation Records
-
-All consultation record sections should have an edit point/action where permitted.
-
-Add edit action/buttons for:
-
-Complaints
-History of Presenting Complaint
-Examination
-Diagnosis
-Treatments
-Prescriptions
-Investigation requests where still editable
-Procedure requests where still editable
-Tasks
-Notes
-
-Button examples:
-
-Edit
-Update
-Correct
-
-Only show the edit button if the current user can edit the entry.
-
-Use existing ownership permission rules:
-
-creator can edit own entry while session is active
-other doctors cannot edit unless consultation.entries.edit_any
-completed session entries are locked unless consultation.entries.correct_completed
-
-Do not add edit buttons that lead to 403 for normal expected users. Hide disabled actions unless needed to explain locked state.
-
----
-
-# 15. Edit Modal / Inline Edit
-
-Implement editing using modal or inline form depending on the existing UI pattern.
-
-Recommended:
-
-Edit modal
-
-Requirements:
-
-- open without full page reload
-- prefill existing record
-- save with validation
-- show validation errors inside modal
-- close only after successful update
-- update UI immediately after save
-- do not leave modal backdrop stuck
-- do not reset active tab
-- do not lose scroll position unnecessarily
-
-After successful update:
-
-update local record
-or Inertia partial reload current section + summary
-
-The updated record response must include:
-
-creator
-updated_by
-updated_at
-
-so the UI can display author and edit metadata immediately.
-
----
-
-# 16. Backend Authorization for Editing
-
-Frontend hiding the button is not enough.
-
-Every update endpoint must enforce permission.
-
-Every update endpoint must check:
-
-user owns record
-OR user has consultation.entries.edit_any
-OR user has consultation.entries.correct_completed for completed sessions
-
-If unauthorized:
-
-return 403
-
-Do not allow users to modify another doctor’s entries accidentally.
-
----
-
-# 17. Edit Permissions by Record Type
-
-Apply edit permission rules to all relevant record types.
-
-## Complaints
-
-Owner can edit if session active.
-
-## History of Presenting Complaint
-
-Owner can edit if session active.
-
-## Examination
-
-Owner can edit if session active.
-
-## Diagnosis
-
-Owner can edit if session active.
-
-Be careful with final diagnosis / primary diagnosis changes.
-
-If another user changes primary diagnosis, require correct permission.
-
-## Treatments / Prescriptions
-
-Owner can edit if not dispensed / not locked by pharmacy workflow.
-
-Do not allow editing already-dispensed prescription items unless existing workflow supports correction.
-
-## Investigation Requests
-
-Owner can edit only before investigation is accepted/processed.
-
-If investigation has been accepted, billed, resulted, or verified, lock editing.
-
-## Procedure Requests
-
-Owner can edit only before procedure is accepted/scheduled/billed/completed.
-
-If procedure has already entered theatre workflow, lock editing.
-
-## Tasks
-
-Owner can edit task while active.
-
-Assigned user may update status if allowed.
-
-## Notes
-
-Owner can edit own note while session active.
-
----
-
-# 18. Locked Record UI
-
-If a record cannot be edited because it is already processed, show a clear locked state if useful.
-
-Examples:
-
-Locked: Investigation already accepted
-Locked: Procedure already scheduled
-Locked: Prescription already dispensed
-Locked: Session completed
-
-Do not silently hide everything if the user needs to understand why editing is unavailable.
-
----
-
-# 19. Add Audit Trail for Edits
-
-If existing audit logging exists, use it.
-
-If not, add or reuse a generic medical record entry log.
-
-For each edit, track:
-
-entry type
-entry id
-old value
-new value
-updated by
-updated at
-reason if override/correction
-
-For override edits, require reason.
-
-Suggested actions:
-
-UPDATED
-CORRECTED
-OVERRIDE_UPDATED
-
-Do not lose history of clinical changes.
-
----
-
-# 20. Backend Data Loading
-
-Ensure all consultation sections eager-load ownership relationships.
-
-Examples:
-
-with([
-    'creator',
-    'createdBy',
-    'doctor',
-    'updatedBy',
-])
-
-Adapt to actual relationship names.
-
-For investigations:
-
-with([
-    'department',
-    'requestedBy',
-    'createdBy',
-    'doctor',
-    'items',
-    'items.service',
-    'results',
-])
-
-For procedures:
-
-with([
-    'department',
-    'requestedBy',
-    'createdBy',
-    'doctor',
-    'service',
-    'procedureService',
-])
-
-Avoid N+1 queries.
-
-Do not query users inside Vue/Blade loops.
-
----
-
-# 21. API / Controller Response Fix
-
-For all create/update endpoints, return the saved record with owner relationships loaded.
-
-Example Laravel pattern:
-
-$record->load(['creator', 'updatedBy']);
-
-return response()->json([
-    'record' => $record,
-]);
-
-If using Inertia redirects:
-
-- preserve active tab
-- partial reload only relevant props
-- include owner relationship in returned props
-
-Important:
-
-After create/update, frontend must receive enough data to render owner name immediately.
-
----
-
-# 22. Frontend State Fix
-
-When a record is created:
-
-1. receive created record with creator object
-2. insert it into the correct local section list
-3. regroup by owner
-4. refresh or recompute consultation summary
-5. keep current tab active
-
-When a record is updated:
-
-1. receive updated record with creator and updated_by object
-2. replace the old record in local state
-3. regroup by owner
-4. refresh or recompute consultation summary
-5. keep current tab active
-
-Do not require manual page reload.
-
-Do not reset to first tab.
-
----
-
-# 23. Active Tab / Section Preservation
-
-When creating or editing any consultation record, preserve the active tab/section.
-
-This applies to:
-
-Complaints
-History of Presenting Complaint
-Examination
-Diagnosis
-Investigations
-Treatments / Prescriptions
-Procedures
-Tasks
-Notes / Summary
-
-If using URL query, local state, or hash for active section, preserve it.
+Because records are now grouped by owner, show a contributor summary near the top.
 
 Example:
 
-activeSection=diagnosis
+```text
+Contributors
 
-After save, remain on Diagnosis.
+Dr. Kofi Mensah — Main Doctor — 8 entries
+Dr. Ama Boateng — Contributor — 2 entries
+Dr. Yao Mensah — Contributor — 1 entry
+```
 
----
-
-# 24. UI / UX Requirements
-
-- Do not repeat doctor name on every record when grouped by doctor.
-- Show doctor group heading once.
-- Show entry timestamps under each item.
-- Show “Edited by” only if edited.
-- Show source pattern if available.
-- Show locked status if record can no longer be edited.
-- Keep UI compact and readable.
-- Preserve active tab/section after save.
-- No full page reload.
-- No modal backdrop stuck.
-- No Unknown user after save if creator exists.
-- Show edit buttons only where allowed.
-- Group investigation requests by department.
-- Display investigation owners.
-- Display procedure owners.
-- Summary must update immediately.
+This should help the reader understand who contributed to the document.
 
 ---
 
-# 25. Suggested UI Example — Generic Section
+# 9. Clinical Section Order
 
-Example for Complaints:
+The Consultation Summary page must show sections in this order:
 
+```text
+1. Complaints
+2. History of Presenting Complaint
+3. Examination / Physical Examination
+4. Diagnosis
+5. Investigations
+6. Treatments / Prescriptions
+7. Procedures
+8. Tasks / Follow-up / Instructions
+9. Notes / Clinical Summary
+```
+
+If a section has no records, show a soft empty state:
+
+```text
+No examination findings recorded.
+```
+
+Do not completely omit important clinical sections unless the project’s UI convention prefers hiding empty sections. Preferred: show section title with empty state.
+
+---
+
+# 10. Group Records by Owner Inside Sections
+
+Within each clinical section, group entries by doctor/user.
+
+Example:
+
+```text
 Complaints
 
 Dr. Kofi Mensah
 Main Doctor · 2 entries
 
-[Edit] Fever
-Created: 26 May 2026, 10:30 AM
+- Fever
+  Created: 26 May 2026, 10:30 AM
 
-[Edit] Headache
-Created: 26 May 2026, 10:32 AM
+- Headache
+  Created: 26 May 2026, 10:32 AM
 
 
 Dr. Ama Boateng
 Contributor · 1 entry
 
-[Edit if owner] Chest pain review
-Created: 26 May 2026, 11:02 AM
+- Chest discomfort
+  Created: 26 May 2026, 11:02 AM
+```
+
+Do not repeat:
+
+```text
+Entered by Dr. Kofi
+Entered by Dr. Kofi
+Entered by Dr. Kofi
+```
+
+on every row if the entries are already under Dr. Kofi’s group.
+
+But each entry should still show enough metadata:
+
+```text
+created time
+updated time if edited
+source pattern if available
+locked/edit status if useful
+```
 
 ---
 
-# 26. Suggested UI Example — Investigations
+# 11. Section: Complaints
 
+Display all complaints grouped by owner.
+
+Each complaint should show:
+
+```text
+complaint text
+severity if available
+duration if available
+created at
+updated at if edited
+source pattern if available
+edit action if permitted
+```
+
+---
+
+# 12. Section: History of Presenting Complaint
+
+Display HOPC entries grouped by owner.
+
+Each entry should show:
+
+```text
+full narrative/content
+onset if available
+duration if available
+location if available
+character if available
+radiation if available
+associated symptoms if available
+aggravating factors if available
+relieving factors if available
+severity if available
+timing if available
+notes if available
+created at
+updated at if edited
+source pattern if available
+edit action if permitted
+```
+
+This section must not be summarized so aggressively that clinical meaning is lost.
+
+---
+
+# 13. Section: Examination / Physical Examination
+
+Display examination findings grouped by owner.
+
+Show:
+
+```text
+general examination
+systemic examination
+local examination
+specialty-specific examination
+findings
+notes
+created at
+updated at if edited
+source pattern if available
+edit action if permitted
+```
+
+If examination data is structured, display it neatly with labels.
+
+If free-text, show readable paragraph formatting.
+
+---
+
+# 14. Section: Diagnosis
+
+Display diagnosis entries grouped by owner.
+
+Each diagnosis should show:
+
+```text
+diagnosis name
+ICD-10 code if available
+provisional/final
+primary diagnosis badge if applicable
+created at
+updated at if edited
+source pattern if available
+edit action if permitted
+```
+
+Example:
+
+```text
+Malaria
+ICD-10: B54
+Final Diagnosis · Primary
+Created: 26 May 2026, 10:45 AM
+```
+
+---
+
+# 15. Section: Investigations
+
+Investigations should be grouped by department, then by owner.
+
+Example:
+
+```text
 Investigations
 
 Laboratory
-2 requests
 
 Dr. Kofi Mensah
-    Full Blood Count
-    Status: Pending
-    Requested: 26 May 2026, 10:45 AM
-    [Edit if still editable]
+- Full Blood Count
+  Status: Result Verified
+  Requested: 26 May 2026, 10:45 AM
+  Result: [summary if available]
 
-    Malaria RDT
-    Status: Result Verified
-    Requested: 26 May 2026, 10:45 AM
-    Locked: Result already verified
+- Malaria RDT
+  Status: Pending
+  Requested: 26 May 2026, 10:45 AM
 
 X-Ray
-1 request
 
 Dr. Ama Boateng
-    Chest X-Ray
-    Status: Accepted
-    Requested: 26 May 2026, 11:15 AM
-    Locked: Request already accepted
+- Chest X-Ray
+  Status: Accepted
+  Requested: 26 May 2026, 11:15 AM
+```
+
+Each investigation should show:
+
+```text
+department
+requested service/item
+requested by
+requested at
+status
+accepted/billed/result status if available
+result summary if available
+verified by if available
+edit/locked action where applicable
+```
+
+Do not hide result summaries if available.
 
 ---
 
-# 27. Suggested UI Example — Procedures
+# 16. Section: Treatments / Prescriptions
 
-Procedures
+Show treatments and prescriptions grouped by owner.
 
-Theatre
-1 request
+For treatment plans:
 
-Dr. Kofi Mensah
-    Appendectomy
-    Status: Scheduled
-    Requested: 26 May 2026, 12:05 PM
-    Locked: Procedure already scheduled
+```text
+treatment description
+instructions
+created at
+created by
+```
 
-Minor Procedure Room
-1 request
+For prescriptions:
 
-Dr. Ama Boateng
-    Wound Dressing
-    Status: Pending
-    Requested: 26 May 2026, 12:30 PM
-    [Edit]
+```text
+product/drug
+dosage
+frequency
+duration
+quantity
+instructions
+prescription status
+dispensing status if available
+created at
+created by
+```
 
----
+If pharmacy has dispensed, show dispensing status clearly.
 
-# 28. Suggested UI Example — Summary
-
-Consultation Summary
-
-Dr. Kofi Mensah
-Main Doctor
-
-Complaints
-    Fever
-    Headache
-
-History of Presenting Complaint
-    Fever started 3 days ago...
-
-Diagnosis
-    Malaria
-
-Investigations
-    Full Blood Count
-    Malaria RDT
-
-Prescriptions
-    Paracetamol
-
-
-Dr. Ama Boateng
-Contributor
-
-Additional Notes
-    Patient reviewed and ECG advised.
-
-Diagnosis
-    Rule out cardiac condition.
+Do not imply prescribing reduced stock.
 
 ---
 
-# 29. Tests Required
+# 17. Section: Procedures
 
-Add or update tests.
+Procedures should be grouped by department, then by owner where possible.
 
-## Grouping
+Each procedure should show:
 
-1. Consultation records are grouped by creator in UI data.
-2. Complaints group by doctor/user.
-3. HOPC entries group by doctor/user.
-4. Examination entries group by doctor/user.
-5. Diagnosis entries group by doctor/user.
-6. Treatments/prescriptions group by doctor/user where applicable.
-7. Notes/Summary groups records by doctor/user.
-8. Main doctor and contributor labels are correct.
+```text
+procedure department
+procedure service
+requested by
+requested at
+status
+scheduled date if available
+surgeon note if available
+anaesthesia note if available
+post-op note if available
+completed status if available
+edit/locked state where applicable
+```
 
-## Investigations
+Requested procedures must display owners.
 
-9. Investigation requests are grouped by department.
-10. Investigation requests display owner/requested by.
-11. Investigation requests can be grouped by department then owner.
-12. Investigation requests do not show Unknown user when owner exists.
-13. Investigation edit button appears only before request is processed.
-14. Processed/verified investigation request is locked.
-
-## Procedures
-
-15. Procedures display owner/requested by.
-16. Procedures group by department and owner where possible.
-17. Procedures do not show Unknown user when owner exists.
-18. Procedure edit button appears only before procedure is processed.
-19. Scheduled/completed procedure is locked.
-
-## Summary Refresh
-
-20. Newly added note appears in summary immediately.
-21. Newly added complaint appears in summary immediately.
-22. Newly added HOPC appears in summary immediately.
-23. Newly added diagnosis appears in summary immediately.
-24. Newly added record does not show Unknown user after save.
-25. Created record response includes creator.
-26. Updated record response includes creator/updated_by.
-
-## Edit Actions
-
-27. Edit button appears for record owner.
-28. Edit button does not appear for unauthorized user.
-29. Unauthorized user cannot update another doctor’s record.
-30. Authorized edit_any user can update with audit trail if required.
-31. Locked processed records cannot be edited.
-32. Edit modal preloads record data.
-33. Edit modal closes after successful update.
-34. Modal does not leave backdrop stuck.
-
-## UX
-
-35. Active tab remains active after create.
-36. Active tab remains active after update.
-37. Page does not fully reload after create/update.
-38. Grouped records are refreshed after create/update.
+Do not show Unknown user if owner exists.
 
 ---
 
-# 30. Deliverables
+# 18. Section: Tasks / Follow-up / Instructions
+
+Show tasks grouped by owner or assigned person if more useful.
+
+Each task should show:
+
+```text
+title
+description
+priority
+status
+assigned to
+due date
+created by
+completed by if completed
+completed at if completed
+source pattern if available
+edit action if permitted
+```
+
+Follow-up instructions should be visible directly.
+
+---
+
+# 19. Section: Notes / Clinical Summary
+
+Show notes grouped by owner.
+
+The Notes / Clinical Summary section should include:
+
+```text
+general clinical notes
+additional doctor inputs
+summary notes
+assessment notes
+follow-up notes
+```
+
+Each note should show:
+
+```text
+content
+created by
+created at
+updated by if edited
+updated at if edited
+source pattern if available
+```
+
+This section must update immediately after new additions without requiring page reload.
+
+---
+
+
+
+# 22. Unknown User Fix
+
+If any record appears as Unknown user until reload, fix the response/eager-loading.
+
+All records rendered in Consultation Summary must include owner relationship immediately.
+
+For each record type, eager-load:
+
+```text
+creator
+createdBy
+doctor
+requestedBy
+enteredBy
+updatedBy
+```
+
+depending on the actual relationship names.
+
+For create/update responses, return the record with owner relationships loaded.
+
+Do not query users inside Vue/Blade loops.
+
+---
+
+# 23. Print-Friendly Design
+
+The Consultation Summary page should be print-friendly.
+
+Add a button:
+
+```text
+Print Summary
+```
+
+It may call:
+
+```js
+window.print()
+```
+
+For print:
+
+* hide navigation/sidebar/buttons
+* keep document content readable
+* show patient/visit header
+* show all clinical sections
+* show author/contributor information
+* avoid dark backgrounds
+* avoid tiny text
+
+Optional future button:
+
+```text
+Export PDF
+```
+
+but do not implement PDF unless the project already has PDF infrastructure.
+
+---
+
+# 24. Visual Style
+
+Make it modern but readable.
+
+Use:
+
+```text
+clear headings
+subheadings
+soft borders
+paper-like background
+section dividers
+badges for status
+small metadata text
+good spacing
+readable font sizes
+print-friendly colors
+```
+
+Avoid:
+
+```text
+overly dense tables
+hidden accordions
+too many loud colors
+small unreadable text
+excessive icons
+repeating doctor names on every row
+```
+
+Suggested style:
+
+```text
+Document container
+Section cards or section blocks
+Owner group blocks
+Clean badges
+Muted metadata
+```
+
+---
+
+# 25. Data Loading Requirements
+
+The backend should provide all data needed to render the summary without N+1 queries.
+
+Load:
+
+```text
+patient
+visit
+insurance
+consultation route/session
+main doctor
+contributors
+complaints with owners
+HOPC with owners
+examinations with owners
+diagnoses with owners
+investigations with department + owners + results
+treatments with owners
+prescriptions with owners + dispensing status
+procedures with department + owners
+tasks with owners/assigned users
+notes with owners
+source patterns where available
+updated_by users where available
+```
+
+Use a dedicated service if needed:
+
+```text
+ConsultationSummaryService
+```
+
+This service should normalize the data for display.
+
+---
+
+# 26. Recommended Normalized Structure
+
+The Consultation Summary page can receive data like:
+
+```js
+{
+  patient: {},
+  visit: {},
+  session: {},
+  contributors: [],
+  sections: [
+    {
+      key: "complaints",
+      title: "Complaints",
+      owner_groups: [
+        {
+          user_id: 1,
+          user_name: "Dr. Kofi Mensah",
+          role_label: "Main Doctor",
+          entries: [...]
+        }
+      ]
+    },
+    {
+      key: "investigations",
+      title: "Investigations",
+      department_groups: [
+        {
+          department_id: 2,
+          department_name: "Laboratory",
+          owner_groups: [...]
+        }
+      ]
+    }
+  ]
+}
+```
+
+Use this or a similar structure that keeps the frontend simple and avoids repeated grouping logic everywhere.
+
+---
+
+# 27. Authorization
+
+The summary page must respect record-level edit permissions.
+
+Backend must enforce permissions on update endpoints.
+
+Frontend should only show edit buttons when the user can edit.
+
+Permission rules remain:
+
+```text
+creator can edit own entry while session active
+other users cannot edit unless edit_any
+completed session entries locked unless correction permission
+processed investigations/procedures/prescriptions locked according to workflow
+```
+
+---
+
+# 28. Tests Required
+
+Add or update tests:
+
+1. Consultation Summary page loads successfully.
+2. Summary page has document-style sections.
+3. Summary page shows patient header.
+4. Summary page shows visit/session header.
+5. Summary page shows contributors.
+6. Summary sections appear in correct order.
+7. Complaints are grouped by owner.
+8. HOPC entries are grouped by owner.
+9. Examination entries are grouped by owner.
+10. Diagnoses are grouped by owner.
+11. Investigations are grouped by department then owner.
+12. Procedures are grouped by department then owner where available.
+13. Prescriptions show owner and dispensing status.
+14. Tasks show owner/assigned user.
+15. Notes show owner.
+16. Summary does not repeat owner name unnecessarily on every row.
+17. Summary does not falsely attribute all records to main doctor.
+18. Records do not show Unknown user when owner exists.
+19. New additions appear immediately without full reload.
+20. Updated records appear immediately without full reload.
+21. Edit button appears for owner.
+22. Edit button does not appear for unauthorized user.
+23. Locked processed records show locked state.
+24. Print button exists.
+25. Print layout hides unnecessary navigation/actions.
+
+---
+
+# 29. Deliverables
 
 Provide:
 
-1. Gap analysis of current consultation UI ownership display.
-2. Grouped-by-user UI for consultation records.
-3. Investigation section grouped by department.
-4. Investigation owner display fixed.
-5. Procedure owner display fixed.
-6. Notes/Summary live update fixed.
-7. Unknown user after save fixed.
-8. Edit actions added where permitted.
-9. Edit modals/inline edit implemented.
-10. Backend authorization enforced.
-11. Eager loading added.
-12. Create/update responses include owner relationships.
-13. Active tab preservation implemented.
-14. Tests or verification notes.
-15. Files modified.
-16. Remaining TODOs.
+1. Gap analysis of current Consultation Summary page.
+2. Updated document-style Consultation Summary page.
+3. Patient/visit/session header.
+4. Contributor summary.
+5. Clinical sections in correct order.
+6. Grouped-by-owner display.
+7. Investigation grouping by department then owner.
+8. Procedure owner display/grouping.
+9. No hidden clinical information.
+10. Live update behavior.
+11. Unknown user fix.
+12. Edit actions where permitted.
+13. Print-friendly layout.
+14. Eager loading / summary service updates.
+15. Tests or verification notes.
+16. Files modified.
+17. Remaining TODOs.
 
 ---
 
-# 31. Important Rules
+# 30. Important Rules
 
-Do not rewrite the ownership logic that already works.
+Do not hide important clinical information behind collapsed UI.
 
-Do not remove author attribution.
+Do not repeat doctor names unnecessarily.
 
-Do not repeat doctor names unnecessarily if grouping can show it once.
+Do not show all entries as if they belong to the main doctor.
 
-Do not show Unknown user after save when creator exists.
+Do not show Unknown user when creator exists.
 
-Do not require full page reload to update Notes/Summary.
+Do not require a full reload for new or edited records to appear.
 
-Do not allow doctors to edit other doctors’ entries unless authorized.
+Do not break existing consultation ownership logic.
 
-Do not let frontend-only permission checks replace backend authorization.
+Do not break edit permissions.
 
-Do not edit processed investigations/procedures if their workflow state should lock them.
+Do not break investigations, procedures, prescriptions, tasks, visit preview, or claims mirror.
 
-Do not break consultation sections, medical record ownership, visit preview, claims mirror, investigations, procedures, billing, or visits.
+Now inspect the current Consultation Summary page and update it into a modern, stylish, readable, document-like clinical summary page that displays all information clearly and supports the new grouped ownership UI.
 
-Now inspect the current consultation page implementation and improve the UI grouping, investigation/procedure owner display, live summary updates, Unknown user issue, and edit actions as described.
+```
+```

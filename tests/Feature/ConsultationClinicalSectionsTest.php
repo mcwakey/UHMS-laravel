@@ -252,6 +252,49 @@ class ConsultationClinicalSectionsTest extends TestCase
         ]);
     }
 
+    public function test_history_summary_page_renders_as_document_with_print_button(): void
+    {
+        [$visit, $route] = $this->makeConsultingVisit();
+
+        // Main doctor records a complaint
+        $this->actingAs($this->mainDoctor)
+            ->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
+            ->post(route('admin.consultations.complaints.store', $visit), [
+                'consultation_route_id' => $route->id,
+                'description' => 'Severe headache for 3 days',
+                'severity' => 'moderate',
+            ])
+            ->assertOk();
+
+        // Additional doctor records a HOPC entry
+        $this->actingAs($this->additionalDoctor)
+            ->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
+            ->post(route('admin.consultations.hopc.store', $visit), [
+                'consultation_route_id' => $route->id,
+                'content' => 'No fever, no photophobia.',
+            ])
+            ->assertOk();
+
+        $response = $this->actingAs($this->mainDoctor)->get(route('admin.consultations.history', $visit));
+
+        $response->assertOk();
+        $response->assertSee('CONSULTATION SUMMARY', false);
+        $response->assertSee('Patient Information', false);
+        $response->assertSee('Visit Information', false);
+        $response->assertSee('Care Team', false);
+        $response->assertSee('Print Summary', false);
+        $response->assertSee('window.print()', false);
+        $response->assertSee('Complaints', false);
+        $response->assertSee('History of Presenting Complaint', false);
+        $response->assertSee('Investigations', false);
+        $response->assertSee('Procedures', false);
+        $response->assertSee('Dr. Kofi Mensah', false);
+        $response->assertSee('Dr. Ama Boateng', false);
+        $response->assertSee('Main Doctor', false);
+        $response->assertSee('Contributor', false);
+        $response->assertDontSee('Unknown user', false);
+    }
+
     private function makeConsultingVisit(): array
     {
         $patient = Patient::factory()->create(['registered_by' => $this->mainDoctor->id]);
