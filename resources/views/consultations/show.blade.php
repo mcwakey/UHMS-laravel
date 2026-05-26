@@ -74,6 +74,22 @@
         return $names;
     };
     $selectedRouteServiceNames = $routeServiceNames($selectedRoute);
+    $entryAuthor = function ($entry) {
+        $user = $entry?->creator ?? $entry?->createdBy ?? $entry?->doctor ?? null;
+        return $user?->full_name ? 'Dr. '.$user->full_name : 'Unknown user';
+    };
+    $entryMeta = function ($entry) use ($entryAuthor) {
+        $bits = ['Entered by: '.$entryAuthor($entry)];
+        if ($entry?->created_at) {
+            $bits[] = 'Created: '.$entry->created_at->format('d M Y, h:i A');
+        }
+        if ($entry?->sourcePattern) {
+            $bits[] = 'Source Pattern: '.$entry->sourcePattern->name;
+        }
+        return implode(' · ', $bits);
+    };
+    $canDeleteEntry = fn ($entry) => auth()->user() && $entryPermissions->canDelete(auth()->user(), $entry);
+    $contributors = $selectedRoute?->contributors?->map(fn ($contributor) => $contributor->user?->full_name)->filter()->unique()->values() ?? collect();
 @endphp
 
 {{-- ============================================================ --}}
@@ -92,6 +108,11 @@
             <div class="session-summary-item">
                 <div class="text-muted small">Linked Services</div>
                 <div class="fw-semibold">{{ $selectedRouteServiceNames->implode(', ') ?: '-' }}</div>
+            </div>
+            <div class="session-summary-item">
+                <div class="text-muted small">Main Doctor / Contributors</div>
+                <div class="fw-semibold">{{ $selectedRoute?->doctor ? 'Dr. '.$selectedRoute->doctor->full_name : 'Unassigned' }}</div>
+                <div class="small text-muted">{{ $contributors->isNotEmpty() ? 'Contributors: '.$contributors->implode(', ') : 'No contributors yet' }}</div>
             </div>
 
         <div class="d-flex flex-wrap gap-2">
@@ -316,6 +337,18 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link" id="tab-hopc" href="#hopc-section" data-bs-toggle="pill" role="tab">
+                                <i class="ti ti-file-description me-1"></i>HOPC
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-hopc">{{ $record?->historiesOfPresentingComplaint?->count() ?? 0 }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="tab-examination" href="#examination-section" data-bs-toggle="pill" role="tab">
+                                <i class="ti ti-zoom-check me-1"></i>Examination
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-examination">{{ $record?->physicalExaminations?->count() ?? 0 }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" id="tab-diagnoses" href="#diagnoses-section" data-bs-toggle="pill" role="tab">
                                 <i class="ti ti-report-medical me-1"></i>Diagnoses
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-diagnoses">{{ $record?->diagnoses?->count() ?? 0 }}</span>
@@ -349,6 +382,11 @@
                             <a class="nav-link" id="tab-tasks" href="#tasks-section" data-bs-toggle="pill" role="tab">
                                 <i class="ti ti-checklist me-1"></i>Tasks
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-tasks">{{ $record?->tasks?->count() ?? 0 }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="tab-summary" href="#summary-section" data-bs-toggle="pill" role="tab">
+                                <i class="ti ti-notes me-1"></i>Notes / Summary
                             </a>
                         </li>
                         <li class="nav-item">
@@ -505,8 +543,9 @@
                                                 Severity: <span class="badge bg-{{ $complaint->severity === 'severe' ? 'danger' : ($complaint->severity === 'moderate' ? 'warning' : 'info') }}">{{ ucfirst($complaint->severity) }}</span>
                                             @endif
                                         </small>
+                                        <small class="text-muted d-block">{{ $entryMeta($complaint) }}</small>
                                     </div>
-                                    @can('consultations.create')
+                                    @if($canDeleteEntry($complaint))
                                     <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
                                             data-url="{{ route('admin.consultations.complaints.destroy', $complaint) }}"
                                             data-target="#complaint-{{ $complaint->id }}"
@@ -514,12 +553,161 @@
                                             data-confirm="Remove this complaint?">
                                         <i class="ti ti-trash"></i>
                                     </button>
-                                    @endcan
+                                    @endif
                                 </div>
                             </div>
                             @empty
                             <div class="text-center text-muted py-4" id="complaints-empty">
                                 <i class="ti ti-message-report fs-1 d-block mb-2"></i>No complaints recorded yet.
+                            </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ========================= HISTORY OF PRESENTING COMPLAINT ========================= --}}
+            <div class="tab-pane fade" id="hopc-section" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold mb-0"><i class="ti ti-file-description me-1"></i>History of Presenting Complaint</h6>
+                        @can('consultations.create')
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addHopcForm">
+                            <i class="ti ti-plus me-1"></i>Add
+                        </button>
+                        @endcan
+                    </div>
+                    <div class="card-body">
+                        @can('consultations.create')
+                        <div class="collapse mb-3" id="addHopcForm">
+                            <div class="card card-body bg-light">
+                                <form data-ajax-form="hopc" action="{{ route('admin.consultations.hopc.store', $visit) }}" method="POST" onsubmit="saveTabBeforeSubmit('hopc-section')">
+                                    @csrf
+                                    <div class="row g-2">
+                                        <div class="col-12">
+                                            <label class="form-label small">Link to Complaint <small class="text-muted">(optional)</small></label>
+                                            <select name="complaint_id" class="form-select form-select-sm">
+                                                <option value="">General narrative</option>
+                                                @foreach($record?->complaints ?? [] as $complaint)
+                                                    <option value="{{ $complaint->id }}">{{ Str::limit($complaint->description, 80) }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small">Narrative <span class="text-danger">*</span></label>
+                                            <textarea name="content" class="form-control" rows="4" placeholder="Detailed story behind the complaints..." required></textarea>
+                                        </div>
+                                        <div class="col-md-3"><input name="onset" class="form-control form-control-sm" placeholder="Onset"></div>
+                                        <div class="col-md-3"><input name="duration" class="form-control form-control-sm" placeholder="Duration"></div>
+                                        <div class="col-md-3"><input name="location" class="form-control form-control-sm" placeholder="Location"></div>
+                                        <div class="col-md-3"><input name="severity" class="form-control form-control-sm" placeholder="Severity"></div>
+                                        <div class="col-md-6"><input name="aggravating_factors" class="form-control form-control-sm" placeholder="Aggravating factors"></div>
+                                        <div class="col-md-6"><input name="relieving_factors" class="form-control form-control-sm" placeholder="Relieving factors"></div>
+                                        <div class="col-12"><input name="associated_symptoms" class="form-control form-control-sm" placeholder="Associated symptoms"></div>
+                                    </div>
+                                    <div class="mt-2 d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-check me-1"></i>Save</button>
+                                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#addHopcForm">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        @endcan
+
+                        <div id="hopc-list">
+                            @forelse($record?->historiesOfPresentingComplaint ?? [] as $hopc)
+                            <div class="ehr-item" id="hopc-{{ $hopc->id }}">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <div>
+                                        <p class="mb-1">{{ $hopc->content }}</p>
+                                        @if($hopc->complaint)
+                                            <small class="text-muted d-block">Complaint: {{ $hopc->complaint->description }}</small>
+                                        @endif
+                                        <small class="text-muted">{{ $entryMeta($hopc) }}</small>
+                                    </div>
+                                    @if($canDeleteEntry($hopc))
+                                    <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                            data-url="{{ route('admin.consultations.hopc.destroy', $hopc) }}"
+                                            data-target="#hopc-{{ $hopc->id }}"
+                                            data-badge="badge-hopc"
+                                            data-confirm="Remove this history entry?">
+                                        <i class="ti ti-trash"></i>
+                                    </button>
+                                    @endif
+                                </div>
+                            </div>
+                            @empty
+                            <div class="text-center text-muted py-4" id="hopc-empty">
+                                <i class="ti ti-file-description fs-1 d-block mb-2"></i>No history of presenting complaint recorded yet.
+                            </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ========================= EXAMINATION ========================= --}}
+            <div class="tab-pane fade" id="examination-section" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold mb-0"><i class="ti ti-zoom-check me-1"></i>Examination / Physical Examination</h6>
+                        @can('consultations.create')
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addExaminationForm">
+                            <i class="ti ti-plus me-1"></i>Add
+                        </button>
+                        @endcan
+                    </div>
+                    <div class="card-body">
+                        @can('consultations.create')
+                        <div class="collapse mb-3" id="addExaminationForm">
+                            <div class="card card-body bg-light">
+                                <form data-ajax-form="examination" action="{{ route('admin.consultations.examinations.store', $visit) }}" method="POST" onsubmit="saveTabBeforeSubmit('examination-section')">
+                                    @csrf
+                                    <div class="row g-2">
+                                        <div class="col-12">
+                                            <label class="form-label small">Findings <span class="text-danger">*</span></label>
+                                            <textarea name="findings" class="form-control" rows="3" required placeholder="Overall examination findings..."></textarea>
+                                        </div>
+                                        <div class="col-md-6"><textarea name="general_examination" class="form-control form-control-sm" rows="2" placeholder="General examination"></textarea></div>
+                                        <div class="col-md-6"><textarea name="systemic_examination" class="form-control form-control-sm" rows="2" placeholder="Systemic examination"></textarea></div>
+                                        <div class="col-md-6"><textarea name="cardiovascular" class="form-control form-control-sm" rows="2" placeholder="Cardiovascular"></textarea></div>
+                                        <div class="col-md-6"><textarea name="respiratory" class="form-control form-control-sm" rows="2" placeholder="Respiratory"></textarea></div>
+                                        <div class="col-md-6"><textarea name="gastrointestinal" class="form-control form-control-sm" rows="2" placeholder="Gastrointestinal"></textarea></div>
+                                        <div class="col-md-6"><textarea name="central_nervous_system" class="form-control form-control-sm" rows="2" placeholder="Central nervous system"></textarea></div>
+                                        <div class="col-md-6"><textarea name="specialty_examination" class="form-control form-control-sm" rows="2" placeholder="ENT / eye / dental / specialty"></textarea></div>
+                                        <div class="col-md-6"><textarea name="local_examination" class="form-control form-control-sm" rows="2" placeholder="Local examination"></textarea></div>
+                                    </div>
+                                    <div class="mt-2 d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-check me-1"></i>Save</button>
+                                        <button type="button" class="btn btn-light btn-sm" data-bs-toggle="collapse" data-bs-target="#addExaminationForm">Cancel</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        @endcan
+
+                        <div id="examination-list">
+                            @forelse($record?->physicalExaminations ?? [] as $exam)
+                            <div class="ehr-item" id="examination-{{ $exam->id }}">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <div>
+                                        <p class="mb-1">{{ $exam->findings }}</p>
+                                        <small class="text-muted">{{ $entryMeta($exam) }}</small>
+                                    </div>
+                                    @if($canDeleteEntry($exam))
+                                    <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                            data-url="{{ route('admin.consultations.examinations.destroy', $exam) }}"
+                                            data-target="#examination-{{ $exam->id }}"
+                                            data-badge="badge-examination"
+                                            data-confirm="Remove this examination entry?">
+                                        <i class="ti ti-trash"></i>
+                                    </button>
+                                    @endif
+                                </div>
+                            </div>
+                            @empty
+                            <div class="text-center text-muted py-4" id="examination-empty">
+                                <i class="ti ti-zoom-check fs-1 d-block mb-2"></i>No examination findings recorded yet.
                             </div>
                             @endforelse
                         </div>
@@ -599,8 +787,9 @@
                                             @elseif($diagnosis->icd_code) ICD-10: <code>{{ $diagnosis->icd_code }}</code> &middot; @endif
                                             @if($diagnosis->notes) {{ $diagnosis->notes }} @endif
                                         </small>
+                                        <small class="text-muted d-block">{{ $entryMeta($diagnosis) }}</small>
                                     </div>
-                                    @can('consultations.create')
+                                    @if(auth()->user() && $entryPermissions->canEdit(auth()->user(), $diagnosis))
                                     <div class="d-flex gap-1 ms-2 flex-shrink-0">
                                         <button type="button" class="btn btn-xs btn-outline-secondary toggle-type-btn"
                                                 title="Mark as {{ $diagnosis->type === 'provisional' ? 'Final' : 'Provisional' }}"
@@ -624,7 +813,7 @@
                                             <i class="ti ti-trash"></i>
                                         </button>
                                     </div>
-                                    @endcan
+                                    @endif
                                 </div>
                             </div>
                             @empty
@@ -816,8 +1005,9 @@
                                             <span class="badge bg-{{ $treatment->type === 'medication' ? 'primary' : ($treatment->type === 'procedure' ? 'info' : ($treatment->type === 'referral' ? 'warning' : 'secondary')) }}">{{ ucfirst($treatment->type) }}</span>
                                             {{ $treatment->description }}
                                         </p>
+                                        <small class="text-muted">{{ $entryMeta($treatment) }}</small>
                                     </div>
-                                    @can('consultations.create')
+                                    @if($canDeleteEntry($treatment))
                                     <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
                                             data-url="{{ route('admin.consultations.treatments.destroy', $treatment) }}"
                                             data-target="#treatment-{{ $treatment->id }}"
@@ -825,7 +1015,7 @@
                                             data-confirm="Remove this treatment?">
                                         <i class="ti ti-trash"></i>
                                     </button>
-                                    @endcan
+                                    @endif
                                 </div>
                             </div>
                             @empty
@@ -936,11 +1126,11 @@
                                     <div>
                                         <span class="fw-bold">{{ $prescription->prescription_number }}</span>
                                         <span class="badge bg-{{ $prescription->status->color() }} ms-2">{{ $prescription->status->label() }}</span>
+                                        <small class="text-muted d-block">{{ $entryMeta($prescription) }}</small>
                                     </div>
                                     <div class="d-flex align-items-center gap-2">
                                         <small class="text-muted">{{ $prescription->created_at->format('d M Y, h:i A') }}</small>
-                                        @can('prescriptions.create')
-                                        @if(in_array($prescription->status->value, ['pending', 'active']))
+                                        @if($canDeleteEntry($prescription) && in_array($prescription->status->value, ['pending', 'active']))
                                         <form method="POST" action="{{ route('admin.consultations.prescriptions.destroy', $prescription) }}"
                                               onsubmit="return confirm('Cancel &amp; delete this prescription?') &amp;&amp; saveTabBeforeSubmit('prescriptions-section')">
                                             @csrf @method('DELETE')
@@ -949,7 +1139,6 @@
                                             </button>
                                         </form>
                                         @endif
-                                        @endcan
                                     </div>
                                 </div>
                                 <div class="table-responsive">
@@ -1178,7 +1367,8 @@
                                     </div>
                                     @can('consultations.create')
                                     <button type="button" class="btn btn-sm btn-success apply-pattern-btn"
-                                            data-pattern-id="{{ $pattern->id }}" data-pattern-name="{{ $pattern->name }}">
+                                            data-pattern-id="{{ $pattern->id }}" data-pattern-name="{{ $pattern->name }}"
+                                            data-pattern-types="{{ $pattern->items->pluck('type')->unique()->implode(',') }}">
                                         <i class="ti ti-check me-1"></i>Apply
                                     </button>
                                     @endcan
@@ -1210,30 +1400,32 @@
                         @if($record && $record->tasks && $record->tasks->count() > 0)
                             @foreach($record->tasks->sortBy(fn($t) => $t->completed_at ? 1 : 0) as $task)
                             <div class="d-flex align-items-start gap-2 mb-3 p-2 border rounded {{ $task->completed_at ? 'bg-light' : '' }}">
-                                @can('consultations.create')
+                                @if(auth()->user() && $entryPermissions->canEdit(auth()->user(), $task))
                                 <form method="POST" action="{{ route('admin.consultations.tasks.toggle', $task) }}" onsubmit="saveTabBeforeSubmit('tasks-section')">
                                     @csrf @method('PATCH')
                                     <button type="submit" class="btn btn-sm {{ $task->completed_at ? 'btn-success' : 'btn-outline-secondary' }} rounded-circle p-1" style="width:28px;height:28px;" title="{{ $task->completed_at ? 'Mark incomplete' : 'Mark complete' }}">
                                         <i class="ti ti-check fs-14"></i>
                                     </button>
                                 </form>
-                                @endcan
+                                @endif
                                 <div class="flex-grow-1">
                                     <div class="d-flex justify-content-between">
                                         <span class="fw-medium {{ $task->completed_at ? 'text-decoration-line-through text-muted' : '' }}">{{ $task->title }}</span>
-                                        @can('consultations.create')
+                                        @if($canDeleteEntry($task))
                                         <form method="POST" action="{{ route('admin.consultations.tasks.destroy', $task) }}" class="d-inline" onsubmit="return confirm('Delete this task?') && saveTabBeforeSubmit('tasks-section')">
                                             @csrf @method('DELETE')
                                             <button type="submit" class="btn btn-xs btn-outline-danger"><i class="ti ti-x"></i></button>
                                         </form>
-                                        @endcan
+                                        @endif
                                     </div>
                                     @if($task->description) <small class="text-muted">{{ $task->description }}</small> @endif
                                     <div class="mt-1">
                                         <small class="text-muted">
+                                            Created by: {{ $task->creator?->full_name ?? 'Unknown user' }}
                                             @if($task->assignedUser) Assigned: {{ $task->assignedUser->full_name }} @endif
                                             @if($task->due_date) &middot; Due: {{ $task->due_date->format('d M Y') }} @endif
                                             @if($task->completed_at) &middot; Done: {{ $task->completed_at->format('d M Y H:i') }} @endif
+                                            @if($task->completedBy) &middot; Completed by: {{ $task->completedBy->full_name }} @endif
                                         </small>
                                     </div>
                                 </div>
@@ -1244,6 +1436,64 @@
                                 <i class="ti ti-checklist fs-1 d-block mb-2"></i>No tasks for this consultation yet.
                             </div>
                         @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- ========================= NOTES / SUMMARY ========================= --}}
+            <div class="tab-pane fade" id="summary-section" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="fw-bold mb-0"><i class="ti ti-notes me-1"></i>Notes / Consultation Summary</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="border rounded p-3 mb-3 bg-light">
+                            <div class="row g-2 small">
+                                <div class="col-md-4"><strong>Department Session:</strong> {{ $consultationSummary['department'] ?? '-' }}</div>
+                                <div class="col-md-4"><strong>Main Doctor:</strong> {{ $consultationSummary['main_doctor'] ? 'Dr. '.$consultationSummary['main_doctor'] : 'Unassigned' }}</div>
+                                <div class="col-md-4"><strong>Contributors:</strong> {{ collect($consultationSummary['contributors'] ?? [])->implode(', ') ?: '-' }}</div>
+                                <div class="col-12"><strong>Services:</strong> {{ collect($consultationSummary['services'] ?? [])->implode(', ') ?: '-' }}</div>
+                            </div>
+                        </div>
+
+                        @php
+                            $summaryLabels = [
+                                'complaints' => 'Complaints',
+                                'history_of_presenting_complaint' => 'History of Presenting Complaint',
+                                'examination' => 'Examination',
+                                'diagnoses' => 'Diagnosis',
+                                'investigations' => 'Investigations',
+                                'treatments' => 'Treatments',
+                                'prescriptions' => 'Prescriptions',
+                                'procedures' => 'Procedures',
+                                'tasks' => 'Tasks / Follow-up / Instructions',
+                                'notes' => 'Notes',
+                            ];
+                        @endphp
+                        @foreach($summaryLabels as $key => $label)
+                            <div class="mb-3">
+                                <h6 class="small fw-bold text-muted border-bottom pb-1">{{ $label }}</h6>
+                                @forelse(($consultationSummary['sections'][$key] ?? []) as $entry)
+                                    <div class="ehr-item">
+                                        <div class="fw-medium">{{ $entry['content'] }}</div>
+                                        <small class="text-muted">
+                                            Entered by: {{ $entry['entered_by'] }}
+                                            @if($entry['created_at']) · {{ $entry['created_at']->format('d M Y, h:i A') }} @endif
+                                            @if($entry['source_pattern']) · Source Pattern: {{ $entry['source_pattern'] }} @endif
+                                        </small>
+                                        @if(!empty($entry['details']))
+                                            <div class="small mt-1">
+                                                @foreach($entry['details'] as $name => $value)
+                                                    <span class="badge bg-light text-dark me-1">{{ $name }}: {{ $value }}</span>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    </div>
+                                @empty
+                                    <p class="text-muted small mb-2">None recorded.</p>
+                                @endforelse
+                            </div>
+                        @endforeach
                     </div>
                 </div>
             </div>
@@ -1768,6 +2018,8 @@ window.csrfToken      = '{{ csrf_token() }}';
 window.tabStorageKey  = 'consult_tab_{{ $visit->id }}';
 window.destroyUrls    = {
     complaint:     '{{ url("admin/consultations/complaints") }}',
+    hopc:          '{{ url("admin/consultations/history-of-presenting-complaints") }}',
+    examination:   '{{ url("admin/consultations/examinations") }}',
     diagnosis:     '{{ url("admin/consultations/diagnoses") }}',
     investigation: '{{ url("admin/consultations/investigations") }}',
     treatment:     '{{ url("admin/consultations/treatments") }}',
@@ -2112,6 +2364,26 @@ function onFormSuccess(section, data, form) {
         html += '<div><p class="mb-1">' + escapeHtml(c.description) + '</p>';
         html += '<small class="text-muted">' + (c.duration ? 'Duration: ' + escapeHtml(c.duration) + ' &middot; ' : '') + (c.severity ? 'Severity: ' + sevBadge : '') + '</small></div>';
         html += '<button type="button" class="btn btn-xs btn-outline-danger ajax-delete" data-url="' + destroyUrls.complaint + '/' + c.id + '" data-target="#complaint-' + c.id + '" data-badge="badge-complaints" data-confirm="Remove this complaint?"><i class="ti ti-trash"></i></button>';
+        html += '</div></div>';
+        count = 1;
+
+    } else if (section === 'hopc' && data.hopc) {
+        var h = data.hopc;
+        html = '<div class="ehr-item" id="hopc-' + h.id + '">';
+        html += '<div class="d-flex justify-content-between gap-2">';
+        html += '<div><p class="mb-1">' + escapeHtml(h.content || '') + '</p>';
+        html += '<small class="text-muted">Entered by: ' + escapeHtml(h.creator?.full_name || h.doctor?.full_name || 'Unknown user') + '</small></div>';
+        html += '<button type="button" class="btn btn-xs btn-outline-danger ajax-delete" data-url="' + destroyUrls.hopc + '/' + h.id + '" data-target="#hopc-' + h.id + '" data-badge="badge-hopc" data-confirm="Remove this history entry?"><i class="ti ti-trash"></i></button>';
+        html += '</div></div>';
+        count = 1;
+
+    } else if (section === 'examination' && data.examination) {
+        var ex = data.examination;
+        html = '<div class="ehr-item" id="examination-' + ex.id + '">';
+        html += '<div class="d-flex justify-content-between gap-2">';
+        html += '<div><p class="mb-1">' + escapeHtml(ex.findings || '') + '</p>';
+        html += '<small class="text-muted">Entered by: ' + escapeHtml(ex.creator?.full_name || ex.doctor?.full_name || 'Unknown user') + '</small></div>';
+        html += '<button type="button" class="btn btn-xs btn-outline-danger ajax-delete" data-url="' + destroyUrls.examination + '/' + ex.id + '" data-target="#examination-' + ex.id + '" data-badge="badge-examination" data-confirm="Remove this examination entry?"><i class="ti ti-trash"></i></button>';
         html += '</div></div>';
         count = 1;
 
@@ -2749,8 +3021,12 @@ function bindApplyButtons() {
         btn.addEventListener('click', function () {
             var pid  = this.dataset.patternId;
             var pnm  = this.dataset.patternName;
+            var available = (this.dataset.patternTypes || '').split(',').filter(Boolean);
             var self = this;
             if (!confirm('Apply pattern "' + pnm + '"?')) return;
+            var sectionInput = prompt('Sections to apply (comma separated). Leave as-is to apply all shown sections.', available.join(','));
+            if (sectionInput === null) return;
+            var selectedSections = sectionInput.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
             self.disabled = true; self.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 
             fetch('{{ url("admin/patterns") }}/' + pid + '/apply', {
@@ -2759,7 +3035,11 @@ function bindApplyButtons() {
                     'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json',
                     'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken
                 },
-                body: JSON.stringify({ visit_id: {{ $visit->id }} })
+                body: JSON.stringify({
+                    visit_id: {{ $visit->id }},
+                    consultation_route_id: window.currentConsultationRouteId,
+                    sections: selectedSections
+                })
             })
             .then(function (r) { return r.json(); })
             .then(function (d) {
@@ -2798,7 +3078,8 @@ if (psBtn) {
                 d.patterns.forEach(function (p) {
                     h += '<div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-center">';
                     h += '<div><strong>' + escapeHtml(p.name) + '</strong> <small class="text-muted">(' + p.items.length + ' items)</small></div>';
-                    h += '<button type="button" class="btn btn-sm btn-success apply-pattern-btn" data-pattern-id="' + p.id + '" data-pattern-name="' + escapeHtml(p.name) + '"><i class="ti ti-check me-1"></i>Apply</button>';
+                    var patternTypes = (p.items || []).map(function (it) { return it.type; }).filter(function (value, index, arr) { return arr.indexOf(value) === index; }).join(',');
+                    h += '<button type="button" class="btn btn-sm btn-success apply-pattern-btn" data-pattern-id="' + p.id + '" data-pattern-name="' + escapeHtml(p.name) + '" data-pattern-types="' + escapeHtml(patternTypes) + '"><i class="ti ti-check me-1"></i>Apply</button>';
                     h += '</div>';
                 });
                 psRes.innerHTML = h;

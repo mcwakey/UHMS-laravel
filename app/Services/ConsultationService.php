@@ -15,6 +15,8 @@ class ConsultationService
     public function __construct(
         protected PrescriptionService $prescriptionService,
         protected ConsultationSessionService $sessionService,
+        protected ConsultationContributorService $contributors,
+        protected MedicalRecordEntryLogService $entryLogs,
     ) {}
 
     /**
@@ -87,7 +89,17 @@ class ConsultationService
                 'pendingConsultationRoutes.routeServices.service',
                 'latestVitals',
             ]),
-            'record' => $record?->load(['complaints', 'diagnoses', 'investigations', 'treatments', 'prescriptions.items']),
+            'record' => $record?->load([
+                'consultationRoute.contributors.user',
+                'complaints.creator', 'complaints.sourcePattern',
+                'historiesOfPresentingComplaint.creator', 'historiesOfPresentingComplaint.complaint', 'historiesOfPresentingComplaint.sourcePattern',
+                'physicalExaminations.creator', 'physicalExaminations.sourcePattern',
+                'diagnoses.creator', 'diagnoses.icdCodeEntry', 'diagnoses.sourcePattern',
+                'investigations.creator', 'investigations.sourcePattern',
+                'treatments.creator', 'treatments.sourcePattern',
+                'prescriptions.creator', 'prescriptions.doctor', 'prescriptions.items', 'prescriptions.sourcePattern',
+                'tasks.creator', 'tasks.assignedUser', 'tasks.completedBy', 'tasks.sourcePattern',
+            ]),
             'vitals' => $visit->vitals()->with('recordedBy')->latest()->get(),
             'history' => $this->getPatientHistory($visit->patient_id, $visit->id),
         ];
@@ -101,11 +113,15 @@ class ConsultationService
         $query = MedicalRecord::with([
             'visit.activeConsultationRoute.doctor',
             'visit.pendingConsultationRoutes.doctor',
-            'complaints',
-            'diagnoses',
-            'investigations',
-            'treatments',
+            'complaints.creator',
+            'historiesOfPresentingComplaint.creator',
+            'physicalExaminations.creator',
+            'diagnoses.creator',
+            'investigations.creator',
+            'treatments.creator',
+            'prescriptions.creator',
             'prescriptions.items',
+            'tasks.creator',
         ])
             ->where('patient_id', $patientId)
             ->latest();
@@ -130,7 +146,10 @@ class ConsultationService
      */
     public function addComplaint(MedicalRecord $record, array $data): Complaint
     {
-        return $record->complaints()->create($data);
+        $complaint = $record->complaints()->create(array_merge($this->entryContext($record), $data));
+        $this->afterEntryCreated($record, $complaint, 'Complaint');
+
+        return $complaint->load(['creator', 'sourcePattern']);
     }
 
     /**
@@ -138,7 +157,9 @@ class ConsultationService
      */
     public function updateComplaint(Complaint $complaint, array $data): Complaint
     {
-        $complaint->update($data);
+        $old = $complaint->getOriginal();
+        $complaint->update(array_merge($data, ['updated_by' => Auth::id()]));
+        $this->entryLogs->updated($complaint, $old, Auth::user());
 
         return $complaint;
     }
@@ -148,6 +169,7 @@ class ConsultationService
      */
     public function deleteComplaint(Complaint $complaint): void
     {
+        $this->entryLogs->deleted($complaint, Auth::user());
         $complaint->delete();
     }
 
@@ -161,7 +183,10 @@ class ConsultationService
             $data['is_primary'] = true;
         }
 
-        return $record->diagnoses()->create($data);
+        $diagnosis = $record->diagnoses()->create(array_merge($this->entryContext($record), $data));
+        $this->afterEntryCreated($record, $diagnosis, 'Diagnosis');
+
+        return $diagnosis->load(['creator', 'icdCodeEntry', 'sourcePattern']);
     }
 
     /**
@@ -171,7 +196,7 @@ class ConsultationService
     {
         // Unset all primaries for this record first
         $diagnosis->medicalRecord->diagnoses()->update(['is_primary' => false]);
-        $diagnosis->update(['is_primary' => true]);
+        $diagnosis->update(['is_primary' => true, 'updated_by' => Auth::id()]);
 
         return $diagnosis->fresh();
     }
@@ -181,7 +206,9 @@ class ConsultationService
      */
     public function updateDiagnosis(Diagnosis $diagnosis, array $data): Diagnosis
     {
-        $diagnosis->update($data);
+        $old = $diagnosis->getOriginal();
+        $diagnosis->update(array_merge($data, ['updated_by' => Auth::id()]));
+        $this->entryLogs->updated($diagnosis, $old, Auth::user());
 
         return $diagnosis;
     }
@@ -191,6 +218,7 @@ class ConsultationService
      */
     public function deleteDiagnosis(Diagnosis $diagnosis): void
     {
+        $this->entryLogs->deleted($diagnosis, Auth::user());
         $diagnosis->delete();
     }
 
@@ -199,7 +227,10 @@ class ConsultationService
      */
     public function addInvestigation(MedicalRecord $record, array $data): Investigation
     {
-        return $record->investigations()->create($data);
+        $investigation = $record->investigations()->create(array_merge($this->entryContext($record), $data));
+        $this->afterEntryCreated($record, $investigation, 'Investigation');
+
+        return $investigation->load(['creator', 'sourcePattern']);
     }
 
     /**
@@ -207,7 +238,9 @@ class ConsultationService
      */
     public function updateInvestigation(Investigation $investigation, array $data): Investigation
     {
-        $investigation->update($data);
+        $old = $investigation->getOriginal();
+        $investigation->update(array_merge($data, ['updated_by' => Auth::id()]));
+        $this->entryLogs->updated($investigation, $old, Auth::user());
 
         return $investigation;
     }
@@ -217,6 +250,7 @@ class ConsultationService
      */
     public function deleteInvestigation(Investigation $investigation): void
     {
+        $this->entryLogs->deleted($investigation, Auth::user());
         $investigation->delete();
     }
 
@@ -225,7 +259,10 @@ class ConsultationService
      */
     public function addTreatment(MedicalRecord $record, array $data): Treatment
     {
-        return $record->treatments()->create($data);
+        $treatment = $record->treatments()->create(array_merge($this->entryContext($record), $data));
+        $this->afterEntryCreated($record, $treatment, 'Treatment');
+
+        return $treatment->load(['creator', 'sourcePattern']);
     }
 
     /**
@@ -233,7 +270,9 @@ class ConsultationService
      */
     public function updateTreatment(Treatment $treatment, array $data): Treatment
     {
-        $treatment->update($data);
+        $old = $treatment->getOriginal();
+        $treatment->update(array_merge($data, ['updated_by' => Auth::id()]));
+        $this->entryLogs->updated($treatment, $old, Auth::user());
 
         return $treatment;
     }
@@ -243,6 +282,27 @@ class ConsultationService
      */
     public function deleteTreatment(Treatment $treatment): void
     {
+        $this->entryLogs->deleted($treatment, Auth::user());
         $treatment->delete();
+    }
+
+    public function entryContext(MedicalRecord $record): array
+    {
+        return [
+            'consultation_route_id' => $record->consultation_route_id,
+            'visit_id' => $record->visit_id,
+            'patient_id' => $record->patient_id,
+            'department_id' => $record->department_id,
+            'doctor_id' => Auth::id(),
+            'created_by' => Auth::id(),
+        ];
+    }
+
+    private function afterEntryCreated(MedicalRecord $record, object $entry, string $role): void
+    {
+        if ($user = Auth::user()) {
+            $this->contributors->recordContribution($record, $user, $role);
+            $this->entryLogs->created($entry, $user);
+        }
     }
 }

@@ -62,20 +62,36 @@ class VisitPreviewService
             'triage.department',
             'vitals.recordedBy',
             'medicalRecord.doctor',
-            'medicalRecord.complaints',
-            'medicalRecord.diagnoses',
-            'medicalRecord.treatments',
+            'medicalRecord.complaints.creator',
+            'medicalRecord.historiesOfPresentingComplaint.creator',
+            'medicalRecord.physicalExaminations.creator',
+            'medicalRecord.diagnoses.creator',
+            'medicalRecord.treatments.creator',
+            'medicalRecord.prescriptions.creator',
             'medicalRecord.prescriptions.items',
+            'medicalRecord.tasks.creator',
             'medicalRecords.doctor',
             'medicalRecords.department',
             'medicalRecords.service',
             'medicalRecords.consultationRoute.department',
             'medicalRecords.consultationRoute.service',
             'medicalRecords.consultationRoute.routeServices.service',
-            'medicalRecords.complaints',
-            'medicalRecords.diagnoses',
-            'medicalRecords.treatments',
+            'medicalRecords.complaints.creator',
+            'medicalRecords.complaints.sourcePattern',
+            'medicalRecords.historiesOfPresentingComplaint.creator',
+            'medicalRecords.historiesOfPresentingComplaint.sourcePattern',
+            'medicalRecords.physicalExaminations.creator',
+            'medicalRecords.physicalExaminations.sourcePattern',
+            'medicalRecords.diagnoses.creator',
+            'medicalRecords.diagnoses.sourcePattern',
+            'medicalRecords.treatments.creator',
+            'medicalRecords.treatments.sourcePattern',
+            'medicalRecords.prescriptions.creator',
             'medicalRecords.prescriptions.items',
+            'medicalRecords.prescriptions.sourcePattern',
+            'medicalRecords.tasks.creator',
+            'medicalRecords.tasks.assignedUser',
+            'medicalRecords.tasks.sourcePattern',
             'consultationRoutes.department',
             'consultationRoutes.service',
             'consultationRoutes.routeServices.service',
@@ -273,11 +289,44 @@ class VisitPreviewService
                     $complaint->created_at,
                     'Complaint Recorded',
                     $complaint->complaint ?? $complaint->description ?? 'Complaint noted.',
-                    optional($complaint->createdBy ?? null)->full_name ?? null,
+                    optional($complaint->creator ?? $complaint->createdBy ?? null)->full_name ?? null,
                     $sessionDepartment,
                     'COMPLAINT', 'bg-warning text-dark',
                     'complaint', $complaint->id,
-                    array_filter(['Linked Services' => $serviceList])
+                    array_filter(['Linked Services' => $serviceList, 'Source Pattern' => $complaint->sourcePattern?->name])
+                );
+            }
+
+            foreach ($mr->historiesOfPresentingComplaint ?? [] as $hopc) {
+                $items[] = $this->item(
+                    $hopc->created_at,
+                    'History of Presenting Complaint Recorded',
+                    $hopc->content ?: 'History of presenting complaint recorded.',
+                    optional($hopc->creator ?? null)->full_name,
+                    $sessionDepartment,
+                    'HOPC', 'bg-warning text-dark',
+                    'history_of_presenting_complaint', $hopc->id,
+                    array_filter([
+                        'Linked Services' => $serviceList,
+                        'Source Pattern' => $hopc->sourcePattern?->name,
+                        'Severity' => $hopc->severity,
+                    ])
+                );
+            }
+
+            foreach ($mr->physicalExaminations ?? [] as $exam) {
+                $items[] = $this->item(
+                    $exam->created_at,
+                    'Examination Recorded',
+                    $exam->findings ?: 'Physical examination findings recorded.',
+                    optional($exam->creator ?? null)->full_name,
+                    $sessionDepartment,
+                    'EXAM', 'bg-secondary',
+                    'physical_examination', $exam->id,
+                    array_filter([
+                        'Linked Services' => $serviceList,
+                        'Source Pattern' => $exam->sourcePattern?->name,
+                    ])
                 );
             }
 
@@ -291,11 +340,11 @@ class VisitPreviewService
                     $diag->created_at,
                     $title,
                     $desc ?: 'Diagnosis noted.',
-                    null,
+                    optional($diag->creator ?? null)->full_name,
                     $sessionDepartment,
                     $badge, $badgeCls,
                     'diagnosis', $diag->id,
-                    array_filter(['Linked Services' => $serviceList, 'Type' => $diag->type ?: null, 'Notes' => $diag->notes ?: null])
+                    array_filter(['Linked Services' => $serviceList, 'Type' => $diag->type ?: null, 'Notes' => $diag->notes ?: null, 'Source Pattern' => $diag->sourcePattern?->name])
                 );
             }
 
@@ -305,11 +354,28 @@ class VisitPreviewService
                     $treatment->created_at,
                     'Clinical Note / Treatment',
                     $treatment->description ?? 'Treatment note recorded.',
-                    null,
+                    optional($treatment->creator ?? null)->full_name,
                     $sessionDepartment,
                     'TREATMENT', 'bg-success',
                     'treatment', $treatment->id,
-                    array_filter(['Linked Services' => $serviceList, 'Type' => $treatment->type ?: null])
+                    array_filter(['Linked Services' => $serviceList, 'Type' => $treatment->type ?: null, 'Source Pattern' => $treatment->sourcePattern?->name])
+                );
+            }
+
+            foreach ($mr->tasks ?? [] as $task) {
+                $items[] = $this->item(
+                    $task->created_at,
+                    'Task / Follow-up Added',
+                    $task->title.($task->description ? ': '.$task->description : ''),
+                    optional($task->creator ?? null)->full_name,
+                    $sessionDepartment,
+                    'TASK', 'bg-dark',
+                    'consultation_task', $task->id,
+                    array_filter([
+                        'Assigned To' => $task->assignedUser?->full_name,
+                        'Status' => $task->status,
+                        'Source Pattern' => $task->sourcePattern?->name,
+                    ])
                 );
             }
         }

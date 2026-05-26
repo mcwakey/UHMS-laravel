@@ -6,9 +6,14 @@
     .pattern-item { border: 1px solid #dee2e6; border-radius: 0.5rem; padding: 1rem; margin-bottom: 0.75rem; position: relative; }
     .pattern-item .remove-item { position: absolute; top: 0.5rem; right: 0.5rem; }
     .type-complaint { border-left: 3px solid #ffc107; }
+    .type-history_of_presenting_complaint { border-left: 3px solid #fd7e14; }
+    .type-examination { border-left: 3px solid #6c757d; }
     .type-diagnosis { border-left: 3px solid #0dcaf0; }
+    .type-investigation { border-left: 3px solid #0dcaf0; }
     .type-treatment { border-left: 3px solid #198754; }
     .type-prescription_item { border-left: 3px solid #0d6efd; }
+    .type-procedure { border-left: 3px solid #dc3545; }
+    .type-task, .type-follow_up, .type-note { border-left: 3px solid #212529; }
 </style>
 @endpush
 
@@ -52,14 +57,32 @@
                         <button type="button" class="btn btn-outline-warning btn-sm add-item-btn" data-type="complaint">
                             <i class="ti ti-plus me-1"></i>Complaint
                         </button>
+                        <button type="button" class="btn btn-outline-warning btn-sm add-item-btn" data-type="history_of_presenting_complaint">
+                            <i class="ti ti-plus me-1"></i>HOPC
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm add-item-btn" data-type="examination">
+                            <i class="ti ti-plus me-1"></i>Examination
+                        </button>
                         <button type="button" class="btn btn-outline-info btn-sm add-item-btn" data-type="diagnosis">
                             <i class="ti ti-plus me-1"></i>Diagnosis
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm add-item-btn" data-type="investigation">
+                            <i class="ti ti-plus me-1"></i>Investigation
                         </button>
                         <button type="button" class="btn btn-outline-success btn-sm add-item-btn" data-type="treatment">
                             <i class="ti ti-plus me-1"></i>Treatment
                         </button>
                         <button type="button" class="btn btn-outline-primary btn-sm add-item-btn" data-type="prescription_item">
                             <i class="ti ti-plus me-1"></i>Prescription Item
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm add-item-btn" data-type="procedure">
+                            <i class="ti ti-plus me-1"></i>Procedure
+                        </button>
+                        <button type="button" class="btn btn-outline-dark btn-sm add-item-btn" data-type="task">
+                            <i class="ti ti-plus me-1"></i>Task
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm add-item-btn" data-type="note">
+                            <i class="ti ti-plus me-1"></i>Note
                         </button>
                     </div>
 
@@ -135,6 +158,31 @@ var templates = {
                 '<option value="">-- Select --</option><option value="mild">Mild</option><option value="moderate">Moderate</option><option value="severe">Severe</option></select></div>' +
             '</div></div>';
     },
+    history_of_presenting_complaint: function(idx) {
+        return '<div class="pattern-item type-history_of_presenting_complaint" data-index="' + idx + '">' +
+            '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
+            '<input type="hidden" name="items[' + idx + '][type]" value="history_of_presenting_complaint">' +
+            '<div class="d-flex align-items-center mb-2"><span class="badge bg-warning me-2">HOPC</span></div>' +
+            '<div class="row g-2">' +
+                '<div class="col-12"><label class="form-label small">Narrative <span class="text-danger">*</span></label>' +
+                '<textarea name="items[' + idx + '][data][content]" class="form-control form-control-sm" rows="3" required placeholder="History of presenting complaint..."></textarea></div>' +
+                '<div class="col-md-4"><input type="text" name="items[' + idx + '][data][onset]" class="form-control form-control-sm" placeholder="Onset"></div>' +
+                '<div class="col-md-4"><input type="text" name="items[' + idx + '][data][duration]" class="form-control form-control-sm" placeholder="Duration"></div>' +
+                '<div class="col-md-4"><input type="text" name="items[' + idx + '][data][severity]" class="form-control form-control-sm" placeholder="Severity"></div>' +
+            '</div></div>';
+    },
+    examination: function(idx) {
+        return '<div class="pattern-item type-examination" data-index="' + idx + '">' +
+            '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
+            '<input type="hidden" name="items[' + idx + '][type]" value="examination">' +
+            '<div class="d-flex align-items-center mb-2"><span class="badge bg-secondary me-2">Examination</span></div>' +
+            '<div class="row g-2">' +
+                '<div class="col-12"><label class="form-label small">Findings <span class="text-danger">*</span></label>' +
+                '<textarea name="items[' + idx + '][data][findings]" class="form-control form-control-sm" rows="3" required placeholder="Physical examination findings..."></textarea></div>' +
+                '<div class="col-md-6"><textarea name="items[' + idx + '][data][general_examination]" class="form-control form-control-sm" rows="2" placeholder="General examination"></textarea></div>' +
+                '<div class="col-md-6"><textarea name="items[' + idx + '][data][systemic_examination]" class="form-control form-control-sm" rows="2" placeholder="Systemic examination"></textarea></div>' +
+            '</div></div>';
+    },
     diagnosis: function(idx) {
         return '<div class="pattern-item type-diagnosis" data-index="' + idx + '">' +
             '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
@@ -165,6 +213,17 @@ var templates = {
                 '<textarea name="items[' + idx + '][data][description]" class="form-control form-control-sm" rows="2" required placeholder="Treatment description..."></textarea></div>' +
             '</div></div>';
     },
+    investigation: function(idx) {
+        return '<div class="pattern-item type-investigation" data-index="' + idx + '">' +
+            '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
+            '<input type="hidden" name="items[' + idx + '][type]" value="investigation">' +
+            '<div class="d-flex align-items-center mb-2"><span class="badge bg-info me-2">Investigation Suggestion</span></div>' +
+            '<div class="row g-2">' +
+                '<div class="col-md-5"><input type="text" name="items[' + idx + '][data][investigation_type]" class="form-control form-control-sm" required placeholder="Investigation"></div>' +
+                '<div class="col-md-5"><input type="text" name="items[' + idx + '][data][description]" class="form-control form-control-sm" placeholder="Clinical reason"></div>' +
+                '<div class="col-md-2"><select name="items[' + idx + '][data][urgency]" class="form-select form-select-sm"><option value="routine">Routine</option><option value="urgent">Urgent</option><option value="emergency">Emergency</option></select></div>' +
+            '</div></div>';
+    },
     prescription_item: function(idx) {
         return '<div class="pattern-item type-prescription_item" data-index="' + idx + '">' +
             '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
@@ -189,7 +248,30 @@ var templates = {
                 '<div class="col-md-9"><label class="form-label small">Instructions</label>' +
                 '<input type="text" name="items[' + idx + '][data][instructions]" class="form-control form-control-sm" placeholder="Special instructions..."></div>' +
             '</div></div>';
-    }
+    },
+    procedure: function(idx) {
+        return '<div class="pattern-item type-procedure" data-index="' + idx + '">' +
+            '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
+            '<input type="hidden" name="items[' + idx + '][type]" value="procedure">' +
+            '<div class="d-flex align-items-center mb-2"><span class="badge bg-danger me-2">Procedure Suggestion</span></div>' +
+            '<textarea name="items[' + idx + '][data][description]" class="form-control form-control-sm" rows="2" required placeholder="Procedure / reason..."></textarea></div>';
+    },
+    task: function(idx) {
+        return '<div class="pattern-item type-task" data-index="' + idx + '">' +
+            '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
+            '<input type="hidden" name="items[' + idx + '][type]" value="task">' +
+            '<div class="d-flex align-items-center mb-2"><span class="badge bg-dark me-2">Task / Follow-up</span></div>' +
+            '<input type="text" name="items[' + idx + '][data][title]" class="form-control form-control-sm mb-2" required placeholder="Task title">' +
+            '<textarea name="items[' + idx + '][data][description]" class="form-control form-control-sm" rows="2" placeholder="Instructions"></textarea></div>';
+    },
+    note: function(idx) {
+        return '<div class="pattern-item type-note" data-index="' + idx + '">' +
+            '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
+            '<input type="hidden" name="items[' + idx + '][type]" value="note">' +
+            '<div class="d-flex align-items-center mb-2"><span class="badge bg-secondary me-2">Clinical Note</span></div>' +
+            '<textarea name="items[' + idx + '][data][content]" class="form-control form-control-sm" rows="2" required placeholder="Note / summary text..."></textarea></div>';
+    },
+    follow_up: function(idx) { return this.task(idx).replace('value="task"', 'value="follow_up"'); }
 };
 
 function updateSubmitBtn() {

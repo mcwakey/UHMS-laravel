@@ -4,9 +4,10 @@ namespace App\Services;
 
 use App\Models\MedicalPattern;
 use App\Models\MedicalRecord;
-use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 
 class MedicalPatternService
 {
@@ -17,8 +18,8 @@ class MedicalPatternService
     {
         $query = MedicalPattern::with(['doctor', 'items']);
 
-        if (!empty($filters['search'])) {
-            $query->where('name', 'LIKE', '%' . $filters['search'] . '%');
+        if (! empty($filters['search'])) {
+            $query->where('name', 'LIKE', '%'.$filters['search'].'%');
         }
 
         if (isset($filters['scope'])) {
@@ -47,7 +48,7 @@ class MedicalPatternService
             'is_active' => true,
         ]);
 
-        if (!empty($data['items'])) {
+        if (! empty($data['items'])) {
             $sortOrder = 0;
             foreach ($data['items'] as $item) {
                 $pattern->items()->create([
@@ -66,7 +67,16 @@ class MedicalPatternService
      */
     public function createFromRecord(MedicalRecord $record, string $name, ?int $doctorId = null): MedicalPattern
     {
-        $record->load(['complaints', 'diagnoses', 'treatments', 'prescriptions.items']);
+        $record->load([
+            'complaints',
+            'historiesOfPresentingComplaint',
+            'physicalExaminations',
+            'diagnoses',
+            'investigations',
+            'treatments',
+            'prescriptions.items',
+            'tasks',
+        ]);
 
         $items = [];
         $sortOrder = 0;
@@ -78,6 +88,34 @@ class MedicalPatternService
                     'description' => $complaint->description,
                     'duration' => $complaint->duration,
                     'severity' => $complaint->severity,
+                ],
+                'sort_order' => $sortOrder++,
+            ];
+        }
+
+        foreach ($record->historiesOfPresentingComplaint as $hopc) {
+            $items[] = [
+                'type' => 'history_of_presenting_complaint',
+                'data' => [
+                    'content' => $hopc->content,
+                    'onset' => $hopc->onset,
+                    'duration' => $hopc->duration,
+                    'location' => $hopc->location,
+                    'character' => $hopc->character,
+                    'severity' => $hopc->severity,
+                ],
+                'sort_order' => $sortOrder++,
+            ];
+        }
+
+        foreach ($record->physicalExaminations as $exam) {
+            $items[] = [
+                'type' => 'examination',
+                'data' => [
+                    'findings' => $exam->findings,
+                    'general_examination' => $exam->general_examination,
+                    'systemic_examination' => $exam->systemic_examination,
+                    'specialty_examination' => $exam->specialty_examination,
                 ],
                 'sort_order' => $sortOrder++,
             ];
@@ -102,6 +140,32 @@ class MedicalPatternService
                 'data' => [
                     'type' => $treatment->type,
                     'description' => $treatment->description,
+                ],
+                'sort_order' => $sortOrder++,
+            ];
+        }
+
+        foreach ($record->investigations as $investigation) {
+            $items[] = [
+                'type' => 'investigation',
+                'data' => [
+                    'investigation_type' => $investigation->investigation_type,
+                    'description' => $investigation->description,
+                    'urgency' => $investigation->urgency,
+                    'notes' => $investigation->notes,
+                ],
+                'sort_order' => $sortOrder++,
+            ];
+        }
+
+        foreach ($record->tasks as $task) {
+            $items[] = [
+                'type' => 'task',
+                'data' => [
+                    'title' => $task->title,
+                    'description' => $task->description,
+                    'priority' => $task->priority,
+                    'due_date' => optional($task->due_date)->toDateString(),
                 ],
                 'sort_order' => $sortOrder++,
             ];
@@ -181,7 +245,7 @@ class MedicalPatternService
                 $q->where('type', 'complaint');
                 foreach ($keywords as $keyword) {
                     if (strlen($keyword) >= 3) {
-                        $q->where('data', 'LIKE', '%' . $keyword . '%');
+                        $q->where('data', 'LIKE', '%'.$keyword.'%');
                     }
                 }
             })
@@ -195,7 +259,7 @@ class MedicalPatternService
             ->where(function ($q) use ($keywords) {
                 foreach ($keywords as $keyword) {
                     if (strlen($keyword) >= 3) {
-                        $q->where('name', 'LIKE', '%' . $keyword . '%');
+                        $q->where('name', 'LIKE', '%'.$keyword.'%');
                     }
                 }
             })
@@ -212,29 +276,73 @@ class MedicalPatternService
     /**
      * Apply a pattern to a medical record (creates the items).
      */
-    public function applyPattern(MedicalPattern $pattern, MedicalRecord $record): array
+    public function applyPattern(MedicalPattern $pattern, MedicalRecord $record, ?array $sections = null, ?User $user = null): array
     {
+        $user ??= Auth::user();
+        $sections = collect($sections ?? $pattern->items->pluck('type')->unique()->all())
+            ->map(fn ($section) => strtolower((string) $section))
+            ->all();
+
         $applied = [
             'complaints' => [],
+            'history_of_presenting_complaint' => [],
+            'examinations' => [],
             'diagnoses' => [],
+            'investigations' => [],
             'treatments' => [],
             'prescription_items' => [],
+            'procedures' => [],
+            'tasks' => [],
+            'notes' => [],
         ];
 
         foreach ($pattern->items as $item) {
+            if (! in_array(strtolower($item->type), $sections, true)) {
+                continue;
+            }
+
             $data = $item->data;
+            $context = $this->entryContext($record, $user?->id, $pattern->id);
 
             switch ($item->type) {
                 case 'complaint':
                     $applied['complaints'][] = $record->complaints()->create([
+                        ...$context,
                         'description' => $data['description'] ?? '',
                         'duration' => $data['duration'] ?? null,
                         'severity' => $data['severity'] ?? null,
                     ]);
                     break;
 
+                case 'history_of_presenting_complaint':
+                case 'hopc':
+                    $applied['history_of_presenting_complaint'][] = $record->historiesOfPresentingComplaint()->create([
+                        ...$context,
+                        'content' => $data['content'] ?? $data['description'] ?? '',
+                        'onset' => $data['onset'] ?? null,
+                        'duration' => $data['duration'] ?? null,
+                        'location' => $data['location'] ?? null,
+                        'character' => $data['character'] ?? null,
+                        'severity' => $data['severity'] ?? null,
+                        'notes' => $data['notes'] ?? null,
+                    ]);
+                    break;
+
+                case 'examination':
+                case 'physical_examination':
+                    $applied['examinations'][] = $record->physicalExaminations()->create([
+                        ...$context,
+                        'findings' => $data['findings'] ?? $data['content'] ?? '',
+                        'general_examination' => $data['general_examination'] ?? null,
+                        'systemic_examination' => $data['systemic_examination'] ?? null,
+                        'specialty_examination' => $data['specialty_examination'] ?? null,
+                        'notes' => $data['notes'] ?? null,
+                    ]);
+                    break;
+
                 case 'diagnosis':
                     $applied['diagnoses'][] = $record->diagnoses()->create([
+                        ...$context,
                         'icd_code' => $data['icd_code'] ?? null,
                         'description' => $data['description'] ?? '',
                         'type' => $data['type'] ?? 'provisional',
@@ -242,15 +350,62 @@ class MedicalPatternService
                     ]);
                     break;
 
+                case 'investigation':
+                    $applied['investigations'][] = $record->investigations()->create([
+                        ...$context,
+                        'investigation_type' => $data['investigation_type'] ?? $data['description'] ?? 'Investigation suggestion',
+                        'description' => $data['description'] ?? $data['investigation_type'] ?? 'Investigation suggested by pattern.',
+                        'urgency' => $data['urgency'] ?? 'routine',
+                        'status' => 'suggested',
+                        'notes' => $data['notes'] ?? 'Pattern suggestion; confirm through investigation workflow before billing/requesting.',
+                    ]);
+                    break;
+
                 case 'treatment':
                     $applied['treatments'][] = $record->treatments()->create([
+                        ...$context,
                         'type' => $data['type'] ?? 'medication',
                         'description' => $data['description'] ?? '',
                     ]);
                     break;
 
                 case 'prescription_item':
+                case 'prescription':
                     $applied['prescription_items'][] = $data;
+                    break;
+
+                case 'procedure':
+                    $applied['procedures'][] = $record->treatments()->create([
+                        ...$context,
+                        'type' => 'procedure',
+                        'description' => $data['description'] ?? $data['indication'] ?? 'Procedure suggested by pattern.',
+                    ]);
+                    break;
+
+                case 'task':
+                case 'follow_up':
+                    $applied['tasks'][] = $record->tasks()->create([
+                        'medical_record_id' => $record->id,
+                        'consultation_route_id' => $record->consultation_route_id,
+                        'visit_id' => $record->visit_id,
+                        'patient_id' => $record->patient_id,
+                        'department_id' => $record->department_id,
+                        'title' => $data['title'] ?? $data['description'] ?? 'Follow-up instruction',
+                        'description' => $data['description'] ?? null,
+                        'priority' => $data['priority'] ?? 'medium',
+                        'status' => 'pending',
+                        'due_date' => $data['due_date'] ?? null,
+                        'created_by' => $user?->id,
+                        'source_pattern_id' => $pattern->id,
+                    ]);
+                    break;
+
+                case 'note':
+                    $applied['notes'][] = $record->treatments()->create([
+                        ...$context,
+                        'type' => 'advice',
+                        'description' => $data['content'] ?? $data['description'] ?? '',
+                    ]);
                     break;
             }
         }
@@ -260,12 +415,26 @@ class MedicalPatternService
         return $applied;
     }
 
+    private function entryContext(MedicalRecord $record, ?int $userId, int $patternId): array
+    {
+        return [
+            'consultation_route_id' => $record->consultation_route_id,
+            'visit_id' => $record->visit_id,
+            'patient_id' => $record->patient_id,
+            'department_id' => $record->department_id,
+            'doctor_id' => $userId,
+            'created_by' => $userId,
+            'source_pattern_id' => $patternId,
+        ];
+    }
+
     /**
      * Toggle pattern active status.
      */
     public function toggleActive(MedicalPattern $pattern): MedicalPattern
     {
-        $pattern->update(['is_active' => !$pattern->is_active]);
+        $pattern->update(['is_active' => ! $pattern->is_active]);
+
         return $pattern;
     }
 

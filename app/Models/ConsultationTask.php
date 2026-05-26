@@ -12,6 +12,10 @@ class ConsultationTask extends Model
 
     protected $fillable = [
         'medical_record_id',
+        'consultation_route_id',
+        'visit_id',
+        'patient_id',
+        'department_id',
         'title',
         'description',
         'priority',
@@ -19,7 +23,9 @@ class ConsultationTask extends Model
         'assigned_to',
         'due_date',
         'completed_at',
+        'completed_by',
         'created_by',
+        'source_pattern_id',
     ];
 
     protected function casts(): array
@@ -37,6 +43,26 @@ class ConsultationTask extends Model
         return $this->belongsTo(MedicalRecord::class);
     }
 
+    public function consultationRoute(): BelongsTo
+    {
+        return $this->belongsTo(VisitConsultationRoute::class, 'consultation_route_id');
+    }
+
+    public function visit(): BelongsTo
+    {
+        return $this->belongsTo(Visit::class);
+    }
+
+    public function patient(): BelongsTo
+    {
+        return $this->belongsTo(Patient::class);
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+
     public function assignedUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
@@ -45,6 +71,21 @@ class ConsultationTask extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->creator();
+    }
+
+    public function completedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'completed_by');
+    }
+
+    public function sourcePattern(): BelongsTo
+    {
+        return $this->belongsTo(MedicalPattern::class, 'source_pattern_id');
     }
 
     // ── Scopes ───────────────────────────────────────
@@ -61,11 +102,12 @@ class ConsultationTask extends Model
 
     // ── Helpers ──────────────────────────────────────
 
-    public function markCompleted(): void
+    public function markCompleted(?int $userId = null): void
     {
         $this->update([
             'status' => 'completed',
             'completed_at' => now(),
+            'completed_by' => $userId,
         ]);
     }
 

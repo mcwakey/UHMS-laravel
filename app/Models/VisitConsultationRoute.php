@@ -138,6 +138,11 @@ class VisitConsultationRoute extends Model
         return $this->hasMany(MedicalRecord::class, 'consultation_route_id');
     }
 
+    public function contributors(): HasMany
+    {
+        return $this->hasMany(ConsultationSessionContributor::class, 'consultation_route_id');
+    }
+
     public function logs(): HasMany
     {
         return $this->hasMany(VisitConsultationRouteLog::class, 'visit_consultation_route_id')

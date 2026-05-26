@@ -12,6 +12,14 @@ class Diagnosis extends Model
 
     protected $fillable = [
         'medical_record_id',
+        'consultation_route_id',
+        'visit_id',
+        'patient_id',
+        'department_id',
+        'doctor_id',
+        'created_by',
+        'updated_by',
+        'source_pattern_id',
         'icd_code',
         'icd_code_id',
         'description',
@@ -38,8 +46,53 @@ class Diagnosis extends Model
         return $this->belongsTo(MedicalRecord::class);
     }
 
+    public function consultationRoute(): BelongsTo
+    {
+        return $this->belongsTo(VisitConsultationRoute::class, 'consultation_route_id');
+    }
+
+    public function visit(): BelongsTo
+    {
+        return $this->belongsTo(Visit::class);
+    }
+
+    public function patient(): BelongsTo
+    {
+        return $this->belongsTo(Patient::class);
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function doctor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->creator();
+    }
+
+    public function updater(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
     public function icdCodeEntry(): BelongsTo
     {
         return $this->belongsTo(IcdCode::class, 'icd_code_id');
+    }
+
+    public function sourcePattern(): BelongsTo
+    {
+        return $this->belongsTo(MedicalPattern::class, 'source_pattern_id');
     }
 }

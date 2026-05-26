@@ -12,11 +12,13 @@ use App\Models\Complaint;
 use App\Models\Department;
 use App\Models\Diagnosis;
 use App\Models\Drug;
+use App\Models\HistoryOfPresentingComplaint;
 use App\Models\Investigation;
 use App\Models\LabRequestItem;
 use App\Models\LabTest;
 use App\Models\MedicalPattern;
 use App\Models\PatientProcedure;
+use App\Models\PhysicalExamination;
 use App\Models\Prescription;
 use App\Models\Procedure;
 use App\Models\ServiceCatalog;
@@ -28,8 +30,13 @@ use App\Services\ClinicalService;
 use App\Services\ConsultationRouteService;
 use App\Services\ConsultationService;
 use App\Services\ConsultationSessionService;
+use App\Services\ConsultationSummaryService;
+use App\Services\HistoryOfPresentingComplaintService;
 use App\Services\LabService;
 use App\Services\MedicalPatternService;
+use App\Services\MedicalRecordEntryLogService;
+use App\Services\MedicalRecordEntryPermissionService;
+use App\Services\PhysicalExaminationService;
 use App\Services\PrescriptionService;
 use App\Services\ProcedureRequestService;
 use App\Services\VisitService;
@@ -48,6 +55,10 @@ class ConsultationController extends Controller
         protected MedicalPatternService $patternService,
         protected LabService $labService,
         protected ClinicalService $clinicalService,
+        protected HistoryOfPresentingComplaintService $hopcService,
+        protected PhysicalExaminationService $examinationService,
+        protected MedicalRecordEntryPermissionService $entryPermissions,
+        protected ConsultationSummaryService $summaryService,
     ) {}
 
     private function shouldReturnJson(Request $request): bool
@@ -218,8 +229,15 @@ class ConsultationController extends Controller
 
         // Load tasks on the record
         if ($data['record']) {
-            $data['record']->load(['tasks.assignedUser', 'tasks.creator']);
+            $data['record']->load([
+                'tasks.assignedUser', 'tasks.creator', 'tasks.completedBy',
+                'historiesOfPresentingComplaint.creator',
+                'physicalExaminations.creator',
+                'consultationRoute.contributors.user',
+            ]);
         }
+
+        $consultationSummary = $this->summaryService->forRecord($data['record']);
 
         // Get recent/popular patterns for the doctor
         $patterns = MedicalPattern::active()
@@ -276,6 +294,8 @@ class ConsultationController extends Controller
             'procedureRequests' => $procedureRequests,
             'procedureDepartments' => $procedureDepartments,
             'consultationDepartments' => $consultationDepartments,
+            'consultationSummary' => $consultationSummary,
+            'entryPermissions' => $this->entryPermissions,
         ]);
     }
 
@@ -291,8 +311,14 @@ class ConsultationController extends Controller
                 'department',
                 'doctor',
                 'medicalRecord' => fn ($q) => $q->with([
-                    'complaints', 'diagnoses', 'investigations',
-                    'treatments', 'prescriptions.items', 'tasks',
+                    'complaints.creator',
+                    'historiesOfPresentingComplaint.creator',
+                    'physicalExaminations.creator',
+                    'diagnoses.creator',
+                    'investigations.creator',
+                    'treatments.creator',
+                    'prescriptions.items',
+                    'tasks.creator',
                 ]),
             ])
             ->orderByRaw("CASE status WHEN 'ACTIVE' THEN 0 WHEN 'PENDING' THEN 1 WHEN 'PAUSED' THEN 2 WHEN 'COMPLETED' THEN 3 ELSE 4 END")
@@ -302,9 +328,15 @@ class ConsultationController extends Controller
         // Single record for single-session or legacy (no routes) visits
         $record = match (true) {
             $sessions->count() === 1 => $sessions->first()->medicalRecord,
-            $sessions->isEmpty()     => $visit->medicalRecord?->load([
-                'complaints', 'diagnoses', 'investigations',
-                'treatments', 'prescriptions.items', 'tasks',
+            $sessions->isEmpty() => $visit->medicalRecord?->load([
+                'complaints.creator',
+                'historiesOfPresentingComplaint.creator',
+                'physicalExaminations.creator',
+                'diagnoses.creator',
+                'investigations.creator',
+                'treatments.creator',
+                'prescriptions.items',
+                'tasks.creator',
             ]),
             default => null, // multiple sessions — handled per-session in blade
         };
@@ -445,6 +477,8 @@ class ConsultationController extends Controller
 
     public function destroyComplaint(Complaint $complaint)
     {
+        abort_unless(Auth::user() && $this->entryPermissions->canDelete(Auth::user(), $complaint), 403);
+
         $this->consultationService->deleteComplaint($complaint);
 
         if ($this->shouldReturnJson(request())) {
@@ -452,6 +486,108 @@ class ConsultationController extends Controller
         }
 
         return back()->with('success', 'Complaint removed.');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | History of Presenting Complaint CRUD (AJAX)
+    |--------------------------------------------------------------------------
+    */
+
+    public function storeHistoryOfPresentingComplaint(Request $request, Visit $visit)
+    {
+        $data = $request->validate([
+            'complaint_id' => ['nullable', 'exists:complaints,id'],
+            'content' => ['required_without_all:onset,duration,location,character,radiation,associated_symptoms,aggravating_factors,relieving_factors,severity,timing,notes', 'nullable', 'string', 'max:8000'],
+            'onset' => ['nullable', 'string', 'max:191'],
+            'duration' => ['nullable', 'string', 'max:191'],
+            'location' => ['nullable', 'string', 'max:191'],
+            'character' => ['nullable', 'string', 'max:191'],
+            'radiation' => ['nullable', 'string', 'max:191'],
+            'associated_symptoms' => ['nullable', 'string', 'max:2000'],
+            'aggravating_factors' => ['nullable', 'string', 'max:2000'],
+            'relieving_factors' => ['nullable', 'string', 'max:2000'],
+            'severity' => ['nullable', 'string', 'max:191'],
+            'timing' => ['nullable', 'string', 'max:191'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $record = $this->consultationService->getOrCreateRecord(
+            $visit,
+            $request->integer('consultation_route_id') ?: null,
+        );
+
+        $entry = $this->hopcService->create($record, $data, Auth::user());
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json(['success' => true, 'hopc' => $entry]);
+        }
+
+        return back()->withFragment('hopc-section')->with('success', 'History of presenting complaint added.');
+    }
+
+    public function destroyHistoryOfPresentingComplaint(HistoryOfPresentingComplaint $hopc)
+    {
+        abort_unless(Auth::user() && $this->entryPermissions->canDelete(Auth::user(), $hopc), 403);
+
+        app(MedicalRecordEntryLogService::class)->deleted($hopc, Auth::user());
+        $hopc->delete();
+
+        if ($this->shouldReturnJson(request())) {
+            return response()->json(['success' => true]);
+        }
+
+        return back()->withFragment('hopc-section')->with('success', 'History of presenting complaint removed.');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Examination CRUD (AJAX)
+    |--------------------------------------------------------------------------
+    */
+
+    public function storeExamination(Request $request, Visit $visit)
+    {
+        $data = $request->validate([
+            'findings' => ['required_without_all:general_examination,systemic_examination,cardiovascular,respiratory,gastrointestinal,central_nervous_system,musculoskeletal,specialty_examination,local_examination,notes', 'nullable', 'string', 'max:8000'],
+            'general_examination' => ['nullable', 'string', 'max:2000'],
+            'systemic_examination' => ['nullable', 'string', 'max:2000'],
+            'cardiovascular' => ['nullable', 'string', 'max:2000'],
+            'respiratory' => ['nullable', 'string', 'max:2000'],
+            'gastrointestinal' => ['nullable', 'string', 'max:2000'],
+            'central_nervous_system' => ['nullable', 'string', 'max:2000'],
+            'musculoskeletal' => ['nullable', 'string', 'max:2000'],
+            'specialty_examination' => ['nullable', 'string', 'max:2000'],
+            'local_examination' => ['nullable', 'string', 'max:2000'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $record = $this->consultationService->getOrCreateRecord(
+            $visit,
+            $request->integer('consultation_route_id') ?: null,
+        );
+
+        $entry = $this->examinationService->create($record, $data, Auth::user());
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json(['success' => true, 'examination' => $entry]);
+        }
+
+        return back()->withFragment('examination-section')->with('success', 'Examination findings added.');
+    }
+
+    public function destroyExamination(PhysicalExamination $examination)
+    {
+        abort_unless(Auth::user() && $this->entryPermissions->canDelete(Auth::user(), $examination), 403);
+
+        app(MedicalRecordEntryLogService::class)->deleted($examination, Auth::user());
+        $examination->delete();
+
+        if ($this->shouldReturnJson(request())) {
+            return response()->json(['success' => true]);
+        }
+
+        return back()->withFragment('examination-section')->with('success', 'Examination findings removed.');
     }
 
     /*
@@ -485,6 +621,8 @@ class ConsultationController extends Controller
 
     public function destroyDiagnosis(Diagnosis $diagnosis)
     {
+        abort_unless(Auth::user() && $this->entryPermissions->canDelete(Auth::user(), $diagnosis), 403);
+
         $this->consultationService->deleteDiagnosis($diagnosis);
 
         if ($this->shouldReturnJson(request())) {
@@ -499,6 +637,8 @@ class ConsultationController extends Controller
      */
     public function updateDiagnosis(Request $request, Diagnosis $diagnosis)
     {
+        abort_unless(Auth::user() && $this->entryPermissions->canEdit(Auth::user(), $diagnosis), 403);
+
         $request->validate([
             'type' => ['required', 'in:provisional,final'],
         ]);
@@ -517,6 +657,8 @@ class ConsultationController extends Controller
      */
     public function setPrimaryDiagnosis(Diagnosis $diagnosis)
     {
+        abort_unless(Auth::user() && $this->entryPermissions->canEdit(Auth::user(), $diagnosis), 403);
+
         $this->consultationService->setPrimaryDiagnosis($diagnosis);
 
         if ($this->shouldReturnJson(request())) {
@@ -652,6 +794,8 @@ class ConsultationController extends Controller
 
     public function destroyInvestigation(Investigation $investigation)
     {
+        abort_unless(Auth::user() && $this->entryPermissions->canDelete(Auth::user(), $investigation), 403);
+
         $this->consultationService->deleteInvestigation($investigation);
 
         if ($this->shouldReturnJson(request())) {
@@ -689,6 +833,8 @@ class ConsultationController extends Controller
 
     public function destroyTreatment(Treatment $treatment)
     {
+        abort_unless(Auth::user() && $this->entryPermissions->canDelete(Auth::user(), $treatment), 403);
+
         $this->consultationService->deleteTreatment($treatment);
 
         if ($this->shouldReturnJson(request())) {
@@ -724,6 +870,8 @@ class ConsultationController extends Controller
 
     public function destroyPrescription(Prescription $prescription)
     {
+        abort_unless(Auth::user() && $this->entryPermissions->canDelete(Auth::user(), $prescription), 403);
+
         // Only allow deletion of pending/active prescriptions
         $allowedStatuses = ['pending', 'active'];
         if (! in_array($prescription->status->value, $allowedStatuses)) {

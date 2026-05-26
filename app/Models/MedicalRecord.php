@@ -59,6 +59,21 @@ class MedicalRecord extends Model
         return $this->hasMany(Complaint::class);
     }
 
+    public function historiesOfPresentingComplaint()
+    {
+        return $this->hasMany(HistoryOfPresentingComplaint::class);
+    }
+
+    public function historyOfPresentingComplaints()
+    {
+        return $this->historiesOfPresentingComplaint();
+    }
+
+    public function physicalExaminations()
+    {
+        return $this->hasMany(PhysicalExamination::class);
+    }
+
     public function diagnoses()
     {
         return $this->hasMany(Diagnosis::class);

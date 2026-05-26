@@ -15,6 +15,7 @@ use App\Models\Invoice;
 use App\Models\Patient;
 use App\Models\User;
 use App\Models\Visit;
+use App\Services\ClaimPreparationMirrorService;
 use App\Services\Claims\ClaimPaymentService;
 use App\Services\Claims\ClaimWorkflowManager;
 use App\Services\ClaimService;
@@ -26,6 +27,7 @@ class ClaimController extends Controller
         private ClaimService $claimService,
         private ClaimWorkflowManager $workflowManager,
         private ClaimPaymentService $claimPaymentService,
+        private ClaimPreparationMirrorService $claimPreparationMirrorService,
     ) {}
 
     /**
@@ -198,8 +200,9 @@ class ClaimController extends Controller
             'assignedDoctor', 'createdByUser', 'preparedBy', 'submittedBy', 'statusLogs.performer', 'payments.receiver',
         ]);
         $validation = $this->claimService->validateClaim($claim);
+        $clinicalMirror = $this->claimPreparationMirrorService->forClaim($claim);
 
-        return view('claims.show', compact('claim', 'validation'));
+        return view('claims.show', compact('claim', 'validation', 'clinicalMirror'));
     }
 
     /**
@@ -290,8 +293,9 @@ class ClaimController extends Controller
         }
 
         $validation = $this->claimService->validateClaim($claim);
+        $clinicalMirror = $this->claimPreparationMirrorService->forClaim($claim);
 
-        return view('claims.review', compact('claim', 'validation'));
+        return view('claims.review', compact('claim', 'validation', 'clinicalMirror'));
     }
 
     /**

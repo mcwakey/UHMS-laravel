@@ -524,6 +524,12 @@ Route::middleware('auth')->group(function () {
                 Route::post('consultations/{visit}/complaints', [ConsultationController::class, 'storeComplaint'])->name('consultations.complaints.store');
                 Route::delete('consultations/complaints/{complaint}', [ConsultationController::class, 'destroyComplaint'])->name('consultations.complaints.destroy');
 
+                Route::post('consultations/{visit}/history-of-presenting-complaints', [ConsultationController::class, 'storeHistoryOfPresentingComplaint'])->name('consultations.hopc.store');
+                Route::delete('consultations/history-of-presenting-complaints/{hopc}', [ConsultationController::class, 'destroyHistoryOfPresentingComplaint'])->name('consultations.hopc.destroy');
+
+                Route::post('consultations/{visit}/examinations', [ConsultationController::class, 'storeExamination'])->name('consultations.examinations.store');
+                Route::delete('consultations/examinations/{examination}', [ConsultationController::class, 'destroyExamination'])->name('consultations.examinations.destroy');
+
                 Route::post('consultations/{visit}/diagnoses', [ConsultationController::class, 'storeDiagnosis'])->name('consultations.diagnoses.store');
                 Route::patch('consultations/diagnoses/{diagnosis}', [ConsultationController::class, 'updateDiagnosis'])->name('consultations.diagnoses.update');
                 Route::patch('consultations/diagnoses/{diagnosis}/primary', [ConsultationController::class, 'setPrimaryDiagnosis'])->name('consultations.diagnoses.primary');

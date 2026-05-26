@@ -11,7 +11,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Prescription extends Model
 {
-    use HasFactory, GeneratesNumbers, LogsActivity;
+    use GeneratesNumbers, HasFactory, LogsActivity;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -24,9 +24,14 @@ class Prescription extends Model
 
     protected $fillable = [
         'medical_record_id',
+        'consultation_route_id',
         'visit_id',
         'patient_id',
+        'department_id',
         'doctor_id',
+        'created_by',
+        'updated_by',
+        'source_pattern_id',
         'prescription_number',
         'status',
         'notes',
@@ -50,6 +55,11 @@ class Prescription extends Model
         return $this->belongsTo(MedicalRecord::class);
     }
 
+    public function consultationRoute()
+    {
+        return $this->belongsTo(VisitConsultationRoute::class, 'consultation_route_id');
+    }
+
     public function visit()
     {
         return $this->belongsTo(Visit::class);
@@ -60,9 +70,34 @@ class Prescription extends Model
         return $this->belongsTo(Patient::class);
     }
 
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
     public function doctor()
     {
         return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function createdBy()
+    {
+        return $this->creator();
+    }
+
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function sourcePattern()
+    {
+        return $this->belongsTo(MedicalPattern::class, 'source_pattern_id');
     }
 
     public function items()

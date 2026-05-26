@@ -40,9 +40,16 @@ class MedicalPatternItem extends Model
     {
         return match ($this->type) {
             'complaint' => 'Complaint',
+            'history_of_presenting_complaint', 'hopc' => 'History of Presenting Complaint',
+            'examination', 'physical_examination' => 'Examination',
             'diagnosis' => 'Diagnosis',
+            'investigation' => 'Investigation',
             'treatment' => 'Treatment',
-            'prescription_item' => 'Prescription Item',
+            'prescription_item', 'prescription' => 'Prescription Item',
+            'procedure' => 'Procedure',
+            'task' => 'Task',
+            'follow_up' => 'Follow-up',
+            'note' => 'Note',
             default => ucfirst($this->type),
         };
     }
@@ -51,9 +58,15 @@ class MedicalPatternItem extends Model
     {
         return match ($this->type) {
             'complaint' => 'warning',
+            'history_of_presenting_complaint', 'hopc' => 'warning',
+            'examination', 'physical_examination' => 'secondary',
             'diagnosis' => 'info',
+            'investigation' => 'info',
             'treatment' => 'success',
-            'prescription_item' => 'primary',
+            'prescription_item', 'prescription' => 'primary',
+            'procedure' => 'danger',
+            'task', 'follow_up' => 'dark',
+            'note' => 'secondary',
             default => 'secondary',
         };
     }

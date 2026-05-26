@@ -34,7 +34,7 @@ return new class extends Migration
             'ALTER TABLE insurance_providers ADD COLUMN insurance_type_id BIGINT UNSIGNED NULL');
         $this->ensureForeignKey('insurance_providers', 'insurance_providers_insurance_type_id_foreign',
             'ALTER TABLE insurance_providers ADD CONSTRAINT insurance_providers_insurance_type_id_foreign '
-            . 'FOREIGN KEY (insurance_type_id) REFERENCES insurance_types(id) ON DELETE SET NULL');
+            .'FOREIGN KEY (insurance_type_id) REFERENCES insurance_types(id) ON DELETE SET NULL');
         $this->ensureColumn('insurance_providers', 'code',
             'ALTER TABLE insurance_providers ADD COLUMN code VARCHAR(60) NULL');
         $this->ensureIndex('insurance_providers', 'insurance_providers_code_index',
@@ -67,12 +67,12 @@ return new class extends Migration
             'ALTER TABLE claims ADD COLUMN insurance_type_id BIGINT UNSIGNED NULL');
         $this->ensureForeignKey('claims', 'claims_insurance_type_id_foreign',
             'ALTER TABLE claims ADD CONSTRAINT claims_insurance_type_id_foreign '
-            . 'FOREIGN KEY (insurance_type_id) REFERENCES insurance_types(id) ON DELETE SET NULL');
+            .'FOREIGN KEY (insurance_type_id) REFERENCES insurance_types(id) ON DELETE SET NULL');
         $this->ensureColumn('claims', 'patient_insurance_id',
             'ALTER TABLE claims ADD COLUMN patient_insurance_id BIGINT UNSIGNED NULL');
         $this->ensureForeignKey('claims', 'claims_patient_insurance_id_foreign',
             'ALTER TABLE claims ADD CONSTRAINT claims_patient_insurance_id_foreign '
-            . 'FOREIGN KEY (patient_insurance_id) REFERENCES patient_insurances(id) ON DELETE SET NULL');
+            .'FOREIGN KEY (patient_insurance_id) REFERENCES patient_insurances(id) ON DELETE SET NULL');
         $this->ensureColumn('claims', 'membership_number',
             'ALTER TABLE claims ADD COLUMN membership_number VARCHAR(120) NULL');
         $this->ensureColumn('claims', 'verification_code',
@@ -87,22 +87,22 @@ return new class extends Migration
             'ALTER TABLE claims ADD COLUMN submitted_by BIGINT UNSIGNED NULL');
         $this->ensureForeignKey('claims', 'claims_submitted_by_foreign',
             'ALTER TABLE claims ADD CONSTRAINT claims_submitted_by_foreign '
-            . 'FOREIGN KEY (submitted_by) REFERENCES users(id) ON DELETE SET NULL');
+            .'FOREIGN KEY (submitted_by) REFERENCES users(id) ON DELETE SET NULL');
         $this->ensureColumn('claims', 'prepared_by',
             'ALTER TABLE claims ADD COLUMN prepared_by BIGINT UNSIGNED NULL');
         $this->ensureForeignKey('claims', 'claims_prepared_by_foreign',
             'ALTER TABLE claims ADD CONSTRAINT claims_prepared_by_foreign '
-            . 'FOREIGN KEY (prepared_by) REFERENCES users(id) ON DELETE SET NULL');
+            .'FOREIGN KEY (prepared_by) REFERENCES users(id) ON DELETE SET NULL');
         $this->ensureColumn('claims', 'reviewed_by',
             'ALTER TABLE claims ADD COLUMN reviewed_by BIGINT UNSIGNED NULL');
         $this->ensureForeignKey('claims', 'claims_reviewed_by_foreign',
             'ALTER TABLE claims ADD CONSTRAINT claims_reviewed_by_foreign '
-            . 'FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL');
+            .'FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL');
         $this->ensureColumn('claims', 'approved_by',
             'ALTER TABLE claims ADD COLUMN approved_by BIGINT UNSIGNED NULL');
         $this->ensureForeignKey('claims', 'claims_approved_by_foreign',
             'ALTER TABLE claims ADD CONSTRAINT claims_approved_by_foreign '
-            . 'FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL');
+            .'FOREIGN KEY (approved_by) REFERENCES users(id) ON DELETE SET NULL');
         $this->ensureColumn('claims', 'submission_mode',
             'ALTER TABLE claims ADD COLUMN submission_mode VARCHAR(40) NULL');
         $this->ensureColumn('claims', 'submission_reference',
@@ -125,32 +125,32 @@ return new class extends Migration
             'ALTER TABLE claim_items ADD COLUMN invoice_item_id BIGINT UNSIGNED NULL');
         $this->ensureForeignKey('claim_items', 'claim_items_invoice_item_id_foreign',
             'ALTER TABLE claim_items ADD CONSTRAINT claim_items_invoice_item_id_foreign '
-            . 'FOREIGN KEY (invoice_item_id) REFERENCES invoice_items(id) ON DELETE SET NULL');
+            .'FOREIGN KEY (invoice_item_id) REFERENCES invoice_items(id) ON DELETE SET NULL');
         $this->ensureColumn('claim_items', 'visit_id',
             'ALTER TABLE claim_items ADD COLUMN visit_id BIGINT UNSIGNED NULL');
         $this->ensureForeignKey('claim_items', 'claim_items_visit_id_foreign',
             'ALTER TABLE claim_items ADD CONSTRAINT claim_items_visit_id_foreign '
-            . 'FOREIGN KEY (visit_id) REFERENCES visits(id) ON DELETE SET NULL');
+            .'FOREIGN KEY (visit_id) REFERENCES visits(id) ON DELETE SET NULL');
         $this->ensureColumn('claim_items', 'patient_id',
             'ALTER TABLE claim_items ADD COLUMN patient_id BIGINT UNSIGNED NULL');
         $this->ensureForeignKey('claim_items', 'claim_items_patient_id_foreign',
             'ALTER TABLE claim_items ADD CONSTRAINT claim_items_patient_id_foreign '
-            . 'FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE SET NULL');
+            .'FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE SET NULL');
         $this->ensureColumn('claim_items', 'service_id',
             'ALTER TABLE claim_items ADD COLUMN service_id BIGINT UNSIGNED NULL');
         $this->ensureForeignKey('claim_items', 'claim_items_service_id_foreign',
             'ALTER TABLE claim_items ADD CONSTRAINT claim_items_service_id_foreign '
-            . 'FOREIGN KEY (service_id) REFERENCES service_catalog(id) ON DELETE SET NULL');
+            .'FOREIGN KEY (service_id) REFERENCES service_catalog(id) ON DELETE SET NULL');
         $this->ensureColumn('claim_items', 'product_id',
             'ALTER TABLE claim_items ADD COLUMN product_id BIGINT UNSIGNED NULL');
         $this->ensureForeignKey('claim_items', 'claim_items_product_id_foreign',
             'ALTER TABLE claim_items ADD CONSTRAINT claim_items_product_id_foreign '
-            . 'FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL');
+            .'FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL');
         $this->ensureColumn('claim_items', 'department_id',
             'ALTER TABLE claim_items ADD COLUMN department_id BIGINT UNSIGNED NULL');
         $this->ensureForeignKey('claim_items', 'claim_items_department_id_foreign',
             'ALTER TABLE claim_items ADD CONSTRAINT claim_items_department_id_foreign '
-            . 'FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL');
+            .'FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL');
         $this->ensureColumn('claim_items', 'description',
             'ALTER TABLE claim_items ADD COLUMN description VARCHAR(255) NULL');
         $this->ensureColumn('claim_items', 'item_type',
@@ -356,32 +356,47 @@ return new class extends Migration
 
     private function columnExists(string $table, string $column): bool
     {
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return Schema::hasColumn($table, $column);
+        }
+
         $row = DB::selectOne(
             'SELECT COUNT(*) AS c FROM information_schema.columns '
-            . 'WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?',
+            .'WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?',
             [$table, $column]
         );
+
         return (int) ($row->c ?? 0) > 0;
     }
 
     private function indexExists(string $table, string $index): bool
     {
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return collect(Schema::getIndexes($table))->contains(fn ($item) => ($item['name'] ?? null) === $index);
+        }
+
         $row = DB::selectOne(
             'SELECT COUNT(*) AS c FROM information_schema.statistics '
-            . 'WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?',
+            .'WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?',
             [$table, $index]
         );
+
         return (int) ($row->c ?? 0) > 0;
     }
 
     private function foreignKeyExists(string $table, string $constraint): bool
     {
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return false;
+        }
+
         $row = DB::selectOne(
             'SELECT COUNT(*) AS c FROM information_schema.table_constraints '
-            . 'WHERE table_schema = DATABASE() AND table_name = ? AND constraint_name = ? '
-            . 'AND constraint_type = "FOREIGN KEY"',
+            .'WHERE table_schema = DATABASE() AND table_name = ? AND constraint_name = ? '
+            .'AND constraint_type = "FOREIGN KEY"',
             [$table, $constraint]
         );
+
         return (int) ($row->c ?? 0) > 0;
     }
 
@@ -401,6 +416,10 @@ return new class extends Migration
 
     private function ensureForeignKey(string $table, string $constraint, string $sql): void
     {
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         if (! $this->foreignKeyExists($table, $constraint)) {
             DB::statement($sql);
         }

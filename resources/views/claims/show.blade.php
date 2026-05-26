@@ -100,6 +100,8 @@
 </div>
 @endif
 
+@include('claims.partials.clinical-mirror', ['clinicalMirror' => $clinicalMirror ?? ['records' => []]])
+
 <div class="row">
     <!-- Claim Info -->
     <div class="col-lg-4">

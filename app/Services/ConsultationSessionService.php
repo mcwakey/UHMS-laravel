@@ -23,7 +23,7 @@ class ConsultationSessionService
     public function getAllSessionsForVisit(Visit $visit): Collection
     {
         return $visit->consultationRoutes()
-            ->with(['department', 'service', 'services', 'routeServices.service', 'doctor', 'medicalRecord.doctor', 'logs.performedBy'])
+            ->with(['department', 'service', 'services', 'routeServices.service', 'doctor', 'contributors.user', 'medicalRecord.doctor', 'logs.performedBy'])
             ->orderByRaw("CASE status WHEN 'ACTIVE' THEN 0 WHEN 'PENDING' THEN 1 WHEN 'PAUSED' THEN 2 WHEN 'COMPLETED' THEN 3 ELSE 4 END")
             ->oldest()
             ->get();

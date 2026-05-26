@@ -39,6 +39,8 @@
 </div>
 @endif
 
+@include('claims.partials.clinical-mirror', ['clinicalMirror' => $clinicalMirror ?? ['records' => []]])
+
 <!-- Review Summary -->
 @php
     $pendingCount = $claim->items->where('status', \App\Enums\ClaimItemStatus::PENDING)->count();

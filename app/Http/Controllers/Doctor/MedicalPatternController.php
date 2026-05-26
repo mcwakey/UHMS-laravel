@@ -48,7 +48,7 @@ class MedicalPatternController extends Controller
             'name' => ['required', 'string', 'max:191'],
             'scope' => ['required', 'in:personal,system'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.type' => ['required', 'in:complaint,diagnosis,treatment,prescription_item'],
+            'items.*.type' => ['required', 'in:complaint,history_of_presenting_complaint,hopc,examination,physical_examination,diagnosis,investigation,treatment,prescription_item,prescription,procedure,task,follow_up,note'],
             'items.*.data' => ['required', 'array'],
         ]);
 
@@ -115,7 +115,7 @@ class MedicalPatternController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:191'],
             'items' => ['nullable', 'array'],
-            'items.*.type' => ['required_with:items', 'in:complaint,diagnosis,treatment,prescription_item'],
+            'items.*.type' => ['required_with:items', 'in:complaint,history_of_presenting_complaint,hopc,examination,physical_examination,diagnosis,investigation,treatment,prescription_item,prescription,procedure,task,follow_up,note'],
             'items.*.data' => ['required_with:items', 'array'],
         ]);
 
@@ -182,12 +182,18 @@ class MedicalPatternController extends Controller
     {
         $request->validate([
             'visit_id' => ['required', 'exists:visits,id'],
+            'consultation_route_id' => ['nullable', 'exists:visit_consultation_routes,id'],
+            'sections' => ['nullable', 'array'],
+            'sections.*' => ['string'],
         ]);
 
         $visit = Visit::findOrFail($request->visit_id);
-        $record = $this->consultationService->getOrCreateRecord($visit);
+        $record = $this->consultationService->getOrCreateRecord(
+            $visit,
+            $request->integer('consultation_route_id') ?: null,
+        );
 
-        $applied = $this->patternService->applyPattern($pattern, $record);
+        $applied = $this->patternService->applyPattern($pattern, $record, $request->input('sections'), Auth::user());
 
         return response()->json([
             'success' => true,
