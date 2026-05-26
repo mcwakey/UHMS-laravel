@@ -161,7 +161,7 @@
                                         data-ward-name="{{ $bed->ward->name }}"
                                         data-bed-number="{{ $bed->bed_number }}"
                                         data-bed-type="{{ $bed->bed_type->label() }}"
-                                        {{ old('bed_id') == $bed->id ? 'selected' : '' }}>
+                                        {{ (old('bed_id', $preselectedBedId ?? '') == $bed->id) ? 'selected' : '' }}>
                                     {{ $bed->ward->name }} — {{ $bed->bed_number }} ({{ $bed->bed_type->label() }}) — GH₵{{ number_format($bed->daily_rate, 2) }}/day
                                 </option>
                             @endforeach

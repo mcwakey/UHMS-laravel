@@ -224,15 +224,15 @@ class SidebarMenuBuilder
                     [
                         'label' => 'Admissions Requests',
                         'icon' => 'ti ti-bed',
-                        'route' => 'admin.admissions.index',
-                        'active_patterns' => ['admin.admissions.*'],
+                        'route' => 'admin.admissions.requests',
+                        'active_patterns' => ['admin.admissions.requests'],
                         'permission' => 'ward.view',
                     ],
                     [
                         'label' => 'Admissions Board',
                         'icon' => 'ti ti-bed',
                         'route' => 'admin.admissions.index',
-                        'active_patterns' => ['admin.admissions.*'],
+                        'active_patterns' => ['admin.admissions.index'],
                         'permission' => 'ward.view',
                     ],
                     // [

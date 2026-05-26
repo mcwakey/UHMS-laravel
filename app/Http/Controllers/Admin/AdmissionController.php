@@ -26,6 +26,27 @@ class AdmissionController extends Controller
         private VisitService $visitService
     ) {}
 
+    public function admissionRequests(Request $request)
+    {
+        $query = Visit::with([
+            'patient',
+            'department',
+            'activeConsultationRoute.doctor',
+        ])->where('status', VisitStatus::ADMITTING->value);
+
+        if ($request->filled('search')) {
+            $query->search($request->search);
+        }
+
+        $visits = $query->latest('updated_at')->paginate(20)->withQueryString();
+
+        return view('admissions.requests', [
+            'visits'       => $visits,
+            'searchQuery'  => $request->input('search', ''),
+            'totalPending' => Visit::where('status', VisitStatus::ADMITTING->value)->count(),
+        ]);
+    }
+
     public function index(Request $request)
     {
         $admissions = $this->admissionService->list($request->all());
@@ -89,6 +110,7 @@ class AdmissionController extends Controller
     public function create(Request $request)
     {
         $visitId = $request->query('visit_id');
+        $preselectedBedId = (int) $request->query('bed_id', 0) ?: null;
         $preselectedVisit = null;
 
         if ($visitId) {
@@ -120,7 +142,7 @@ class AdmissionController extends Controller
         $services = ServiceCatalog::where('is_active', true)->orderBy('name')->get();
 
         return view('admissions.create', compact(
-            'preselectedVisit', 'admittingVisits', 'availableBeds', 'wards', 'services'
+            'preselectedVisit', 'preselectedBedId', 'admittingVisits', 'availableBeds', 'wards', 'services'
         ));
     }
 

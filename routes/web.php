@@ -233,6 +233,7 @@ Route::middleware('auth')->group(function () {
 
         // Admissions
         Route::middleware('can:ward.view')->group(function () {
+            Route::get('admissions/requests', [AdmissionController::class, 'admissionRequests'])->name('admissions.requests');
             Route::get('admissions', [AdmissionController::class, 'index'])->name('admissions.index');
             Route::get('admissions/create', [AdmissionController::class, 'create'])->name('admissions.create')->middleware('can:ward.admit');
             Route::post('admissions', [AdmissionController::class, 'store'])->name('admissions.store')->middleware('can:ward.admit');
