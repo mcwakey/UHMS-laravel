@@ -97,7 +97,7 @@ enum VisitStatus: string
             // Triage transitions are handled by TriageController (processTriage) — manual transitions disabled
             self::TRIAGE => [self::WAITING_CONSULTATION, self::CONSULTING, self::EMERGENCY, self::INPATIENT, self::CANCELLED],
             self::WAITING_CONSULTATION => [self::CONSULTING, self::CANCELLED],
-            self::CONSULTING => [self::ADMITTING, self::COMPLETED, self::WAITING_CONSULTATION],
+            self::CONSULTING => [self::ADMITTING, self::COMPLETED],
             self::ADMITTING => [self::ADMITTED, self::CONSULTING, self::CANCELLED],
             self::REFERRED_CONSULTATION => [self::CONSULTING, self::CANCELLED],
             self::WAITING_INVESTIGATION => [self::LAB, self::CANCELLED],

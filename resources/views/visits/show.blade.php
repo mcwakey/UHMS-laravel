@@ -145,6 +145,128 @@
             $activeConsultationServiceNames = $routeServiceNames($activeConsultationRoute);
         @endphp
 
+        <!-- Visit Details Card -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>Visit Details</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <label class="text-muted small mb-1">Visit Type</label>
+                        <div>
+                            <span class="badge bg-{{ $visit->visit_type === \App\Enums\VisitType::EMERGENCY ? 'danger' : ($visit->visit_type === \App\Enums\VisitType::INPATIENT ? 'info' : 'light text-dark') }}">
+                                {{ $visit->visit_type->label() }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="text-muted small mb-1">Priority</label>
+                        <div><span class="badge bg-{{ $visit->priority->color() }}">{{ $visit->priority->label() }}</span></div>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="text-muted small mb-1">Visit Date</label>
+                        <div class="fw-medium">{{ $visit->visit_date->format('d M Y') }}</div>
+                    </div>
+                    {{-- <div class="col-md-4 mb-3">
+                        <label class="text-muted small mb-1">Current Route Doctor</label>
+                        <div class="fw-medium">{{ $visit->currentConsultationDoctor() ? 'Dr. ' . $visit->currentConsultationDoctor()->full_name : '—' }}</div>
+                    </div> --}}
+                    <div class="col-md-3 mb-2">
+                        <label class="text-muted small mb-1">Duration</label>
+                        <div class="fw-medium">{{ $visit->duration ?? '—' }}</div>
+                    </div>
+                </div>
+                @if($visit->chief_complaint)
+                <div class="mb-2">
+                    <label class="text-muted small mb-1">Chief Complaint</label>
+                    <div class="bg-light rounded p-2">{{ $visit->chief_complaint }}</div>
+                </div>
+                @endif
+                @if($visit->notes)
+                <div class="mb-2">
+                    <label class="text-muted small mb-1">Notes</label>
+                    <div class="bg-light rounded p-2">{{ $visit->notes }}</div>
+                </div>
+                @endif
+            </div>
+        </div>
+
+        {{-- Triage Summary Card (shown once triage exists) --}}
+        @if($visit->triage)
+        @php
+            $triage = $visit->triage;
+        @endphp
+        <div class="card mb-3">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-info"></i>Triage Assessment</h6>
+                {{-- @if($triage->triage_score)
+                    <span class="badge bg-{{ $triage->triage_score->color() }}">{{ $triage->triage_score->label() }}</span>
+                @endif --}}
+                
+                <div>
+                    <a href="{{ route('admin.triage.show', $visit) }}" class="btn btn-outline-info btn-sm">
+                        <i class="ti ti-eye me-1"></i>Full Triage Report
+                    </a>
+                    @if($visit->status === \App\Enums\VisitStatus::TRIAGE)
+                        <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-info btn-sm">
+                            <i class="ti ti-pencil me-1"></i>Re-assess
+                        </a>
+                    @endif
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    @if($triage->blood_pressure)
+                        <div class="col-6 col-md-3 text-center">
+                            <div class="text-muted" style="font-size:0.72rem">BP</div>
+                            <div class="fw-semibold small">{{ $triage->blood_pressure }} mmHg</div>
+                        </div>
+                    @endif
+                    @if($triage->heart_rate)
+                        <div class="col-6 col-md-3 text-center">
+                            <div class="text-muted" style="font-size:0.72rem">Heart Rate</div>
+                            <div class="fw-semibold small">{{ $triage->heart_rate }} bpm</div>
+                        </div>
+                    @endif
+                    @if($triage->temperature)
+                        <div class="col-6 col-md-3 text-center">
+                            <div class="text-muted" style="font-size:0.72rem">Temp</div>
+                            <div class="fw-semibold small">{{ $triage->temperature }} °C</div>
+                        </div>
+                    @endif
+                    @if($triage->spo2)
+                        <div class="col-6 col-md-3 text-center">
+                            <div class="text-muted" style="font-size:0.72rem">SpO₂</div>
+                            <div class="fw-semibold small">{{ $triage->spo2 }}%</div>
+                        </div>
+                    @endif
+                    @if($triage->respiratory_rate)
+                        <div class="col-6 col-md-3 text-center">
+                            <div class="text-muted" style="font-size:0.72rem">Resp. Rate</div>
+                            <div class="fw-semibold small">{{ $triage->respiratory_rate }}/min</div>
+                        </div>
+                    @endif
+                    @if($triage->bmi)
+                        <div class="col-6 col-md-3 text-center">
+                            @php
+                                $bmiCat = $triage->bmi < 18.5 ? ['Underweight', 'warning'] : ($triage->bmi < 25 ? ['Normal', 'success'] : ($triage->bmi < 30 ? ['Overweight', 'warning'] : ['Obese', 'danger']));
+                            @endphp
+                            <div class="text-muted" style="font-size:0.72rem">BMI</div>
+                            <div class="fw-semibold small">{{ $triage->bmi }} kg/m²</div>
+                            <span class="badge bg-{{ $bmiCat[1] }}" style="font-size:0.65rem">{{ $bmiCat[0] }}</span>
+                        </div>
+                    @endif
+                </div>
+                @if($triage->department)
+                    <div class="mt-2 small text-muted">
+                        <i class="ti ti-building-hospital me-1"></i>Assigned to: <strong>{{ $triage->department->name }}</strong>
+                    </div>
+                @endif
+            </div>
+        </div>
+        @endif
+
         @if($isWaiting || $isTriage || $visit->status->allowedTransitions())
         <div class="card mb-3">
             <div class="card-header">
@@ -265,7 +387,7 @@
                         </div>
                         <div class="col-md-3">
                             <label class="form-label small">Services to add/bill</label>
-                            <select name="service_ids[]" id="visitRouteServiceSelect" class="form-select form-select-sm" disabled multiple size="3">
+                            <select name="service_ids[]" id="visitRouteServiceSelect" class="form-select form-select-sm" disabled multiple size="2">
                                 <option value="">Select department first</option>
                             </select>
                         </div>
@@ -333,7 +455,7 @@
 
                 {{-- All other statuses: standard transition buttons --}}
                 @elseif($visit->status->allowedTransitions())
-                @if($canSendToDept && $serviceDepts->isNotEmpty())
+                {{-- @if($canSendToDept && $serviceDepts->isNotEmpty())
                     <p class="text-muted small mb-2">Send to another department:</p>
                     <div class="d-flex flex-wrap gap-2 mb-3">
                         @foreach($serviceDepts as $dept)
@@ -349,7 +471,7 @@
                             </form>
                         @endforeach
                     </div>
-                @endif
+                @endif --}}
                 <div class="d-flex flex-wrap gap-2">
                     @foreach($visit->status->allowedTransitions() as $nextStatus)
                         <form method="POST" action="{{ route('admin.visits.transition', $visit) }}" class="d-inline">
@@ -369,82 +491,8 @@
         </div>
         @endif
 
-        {{-- Triage Summary Card (shown once triage exists) --}}
-        @if($visit->triage)
-        @php
-            $triage = $visit->triage;
-        @endphp
-        <div class="card mb-3">
-            <div class="card-header d-flex align-items-center justify-content-between">
-                <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-info"></i>Triage Assessment</h6>
-                @if($triage->triage_score)
-                    <span class="badge bg-{{ $triage->triage_score->color() }}">{{ $triage->triage_score->label() }}</span>
-                @endif
-            </div>
-            <div class="card-body">
-                <div class="row g-2">
-                    @if($triage->blood_pressure)
-                        <div class="col-6 col-md-3 text-center">
-                            <div class="text-muted" style="font-size:0.72rem">BP</div>
-                            <div class="fw-semibold small">{{ $triage->blood_pressure }} mmHg</div>
-                        </div>
-                    @endif
-                    @if($triage->heart_rate)
-                        <div class="col-6 col-md-3 text-center">
-                            <div class="text-muted" style="font-size:0.72rem">Heart Rate</div>
-                            <div class="fw-semibold small">{{ $triage->heart_rate }} bpm</div>
-                        </div>
-                    @endif
-                    @if($triage->temperature)
-                        <div class="col-6 col-md-3 text-center">
-                            <div class="text-muted" style="font-size:0.72rem">Temp</div>
-                            <div class="fw-semibold small">{{ $triage->temperature }} °C</div>
-                        </div>
-                    @endif
-                    @if($triage->spo2)
-                        <div class="col-6 col-md-3 text-center">
-                            <div class="text-muted" style="font-size:0.72rem">SpO₂</div>
-                            <div class="fw-semibold small">{{ $triage->spo2 }}%</div>
-                        </div>
-                    @endif
-                    @if($triage->respiratory_rate)
-                        <div class="col-6 col-md-3 text-center">
-                            <div class="text-muted" style="font-size:0.72rem">Resp. Rate</div>
-                            <div class="fw-semibold small">{{ $triage->respiratory_rate }}/min</div>
-                        </div>
-                    @endif
-                    @if($triage->bmi)
-                        <div class="col-6 col-md-3 text-center">
-                            @php
-                                $bmiCat = $triage->bmi < 18.5 ? ['Underweight', 'warning'] : ($triage->bmi < 25 ? ['Normal', 'success'] : ($triage->bmi < 30 ? ['Overweight', 'warning'] : ['Obese', 'danger']));
-                            @endphp
-                            <div class="text-muted" style="font-size:0.72rem">BMI</div>
-                            <div class="fw-semibold small">{{ $triage->bmi }} kg/m²</div>
-                            <span class="badge bg-{{ $bmiCat[1] }}" style="font-size:0.65rem">{{ $bmiCat[0] }}</span>
-                        </div>
-                    @endif
-                </div>
-                @if($triage->department)
-                    <div class="mt-2 small text-muted">
-                        <i class="ti ti-building-hospital me-1"></i>Assigned to: <strong>{{ $triage->department->name }}</strong>
-                    </div>
-                @endif
-                <div class="mt-2 d-flex gap-2">
-                    <a href="{{ route('admin.triage.show', $visit) }}" class="btn btn-outline-info btn-sm">
-                        <i class="ti ti-eye me-1"></i>Full Triage Report
-                    </a>
-                    @if($visit->status === \App\Enums\VisitStatus::TRIAGE)
-                        <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-info btn-sm">
-                            <i class="ti ti-pencil me-1"></i>Re-assess
-                        </a>
-                    @endif
-                </div>
-            </div>
-        </div>
-        @endif
-
         {{-- Department History Card (shown after triage assigns dept) --}}
-        @if($visit->departmentHistory->isNotEmpty())
+        {{-- @if($visit->departmentHistory->isNotEmpty())
         <div class="card mb-3">
             <div class="card-header">
                 <h6 class="fw-bold mb-0"><i class="ti ti-list-details me-1"></i>Department Journey</h6>
@@ -474,54 +522,7 @@
                 </div>
             </div>
         </div>
-        @endif
-
-        <!-- Visit Details Card -->
-        <div class="card mb-3">
-            <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>Visit Details</h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <label class="text-muted small mb-1">Visit Type</label>
-                        <div>
-                            <span class="badge bg-{{ $visit->visit_type === \App\Enums\VisitType::EMERGENCY ? 'danger' : ($visit->visit_type === \App\Enums\VisitType::INPATIENT ? 'info' : 'light text-dark') }}">
-                                {{ $visit->visit_type->label() }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="text-muted small mb-1">Priority</label>
-                        <div><span class="badge bg-{{ $visit->priority->color() }}">{{ $visit->priority->label() }}</span></div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="text-muted small mb-1">Visit Date</label>
-                        <div class="fw-medium">{{ $visit->visit_date->format('d M Y') }}</div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="text-muted small mb-1">Current Route Doctor</label>
-                        <div class="fw-medium">{{ $visit->currentConsultationDoctor() ? 'Dr. ' . $visit->currentConsultationDoctor()->full_name : '—' }}</div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="text-muted small mb-1">Duration</label>
-                        <div class="fw-medium">{{ $visit->duration ?? '—' }}</div>
-                    </div>
-                </div>
-                @if($visit->chief_complaint)
-                <div class="mb-3">
-                    <label class="text-muted small mb-1">Chief Complaint</label>
-                    <div class="bg-light rounded p-3">{{ $visit->chief_complaint }}</div>
-                </div>
-                @endif
-                @if($visit->notes)
-                <div>
-                    <label class="text-muted small mb-1">Notes</label>
-                    <div class="bg-light rounded p-3">{{ $visit->notes }}</div>
-                </div>
-                @endif
-            </div>
-        </div>
+        @endif --}}
 
         <!-- Visit Invoice (replaces legacy visit_services display) -->
         @php

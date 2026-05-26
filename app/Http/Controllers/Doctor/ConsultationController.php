@@ -284,10 +284,36 @@ class ConsultationController extends Controller
      */
     public function history(Visit $visit)
     {
-        $history = $this->consultationService->getPatientHistory($visit->patient_id);
-        $visit->load('patient');
+        $visit->load(['patient', 'vitals' => fn ($q) => $q->with('recordedBy')->latest()]);
 
-        return view('consultations.history', compact('visit', 'history'));
+        $sessions = $visit->consultationRoutes()
+            ->with([
+                'department',
+                'doctor',
+                'medicalRecord' => fn ($q) => $q->with([
+                    'complaints', 'diagnoses', 'investigations',
+                    'treatments', 'prescriptions.items', 'tasks',
+                ]),
+            ])
+            ->orderByRaw("CASE status WHEN 'ACTIVE' THEN 0 WHEN 'PENDING' THEN 1 WHEN 'PAUSED' THEN 2 WHEN 'COMPLETED' THEN 3 ELSE 4 END")
+            ->oldest()
+            ->get();
+
+        // Single record for single-session or legacy (no routes) visits
+        $record = match (true) {
+            $sessions->count() === 1 => $sessions->first()->medicalRecord,
+            $sessions->isEmpty()     => $visit->medicalRecord?->load([
+                'complaints', 'diagnoses', 'investigations',
+                'treatments', 'prescriptions.items', 'tasks',
+            ]),
+            default => null, // multiple sessions — handled per-session in blade
+        };
+
+        $labRequests = $this->labService->getVisitLabRequests($visit);
+
+        $procedureRequests = app(ProcedureRequestService::class)->forVisit($visit->id);
+
+        return view('consultations.history', compact('visit', 'sessions', 'record', 'labRequests', 'procedureRequests'));
     }
 
     public function storeRoute(Request $request, Visit $visit)

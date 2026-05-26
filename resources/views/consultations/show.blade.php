@@ -342,25 +342,19 @@
                         <li class="nav-item">
                             <a class="nav-link" id="tab-procedures" href="#procedures-section" data-bs-toggle="pill" role="tab">
                                 <i class="ti ti-activity-heartbeat me-1"></i>Procedures
-                                <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-procedures">{{ $patientProcedures->count() }}</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="tab-history" href="#history-section" data-bs-toggle="pill" role="tab">
-                                <i class="ti ti-history me-1"></i>History
-                                <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $history['total'] ?? 0 }}</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="tab-patterns" href="#patterns-section" data-bs-toggle="pill" role="tab">
-                                <i class="ti ti-template me-1"></i>Patterns
-                                <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $patterns->count() }}</span>
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-procedures">{{ $procedureRequests->count() }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="tab-tasks" href="#tasks-section" data-bs-toggle="pill" role="tab">
                                 <i class="ti ti-checklist me-1"></i>Tasks
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-tasks">{{ $record?->tasks?->count() ?? 0 }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="tab-patterns" href="#patterns-section" data-bs-toggle="pill" role="tab">
+                                <i class="ti ti-template me-1"></i>Patterns
+                                <span class="badge bg-secondary-subtle text-secondary ms-auto">{{ $patterns->count() }}</span>
                             </a>
                         </li>
                     </ul>
@@ -374,11 +368,11 @@
             </div>
             <div class="card-body p-2">
                 <div class="d-grid gap-2">
+                    <a href="{{ route('admin.consultations.history', $visit) }}" class="btn btn-outline-info btn-sm">
+                        <i class="ti ti-history me-1"></i>Preview
+                    </a>
                     <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
                         <i class="ti ti-eye me-1"></i>View Visit
-                    </a>
-                    <a href="{{ route('admin.consultations.history', $visit) }}" class="btn btn-outline-info btn-sm">
-                        <i class="ti ti-history me-1"></i>Full History
                     </a>
                     @can('consultations.create')
                     <button type="button" class="btn btn-outline-purple btn-sm" data-bs-toggle="modal" data-bs-target="#savePatternModal">
@@ -436,11 +430,11 @@
                     <hr class="my-1">
                     <small class="text-muted fw-bold px-1">Session Routing</small>
                     <button type="button" class="btn btn-outline-indigo btn-sm w-100 mb-1" data-bs-toggle="modal" data-bs-target="#sendSessionModal">
-                        <i class="ti ti-transfer me-1"></i>Send Session
+                        <i class="ti ti-transfer me-1"></i>Transfer Consultation Session
                     </button>
-                    <button type="button" class="btn btn-outline-purple btn-sm w-100" data-bs-toggle="modal" data-bs-target="#investigationModal">
+                    {{-- <button type="button" class="btn btn-outline-purple btn-sm w-100" data-bs-toggle="modal" data-bs-target="#investigationModal">
                         <i class="ti ti-test-pipe me-1"></i>Send to Invest.
-                    </button>
+                    </button> --}}
                     @endif
                 </div>
             </div>
@@ -1100,7 +1094,7 @@
             </div>
 
             {{-- ========================= HISTORY ========================= --}}
-            <div class="tab-pane fade" id="history-section" role="tabpanel">
+            {{-- <div class="tab-pane fade" id="history-section" role="tabpanel">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="fw-bold mb-0"><i class="ti ti-history me-1"></i>Medical History</h6>
@@ -1146,7 +1140,7 @@
                         @endif
                     </div>
                 </div>
-            </div>
+            </div> --}}
 
             {{-- ========================= PATTERNS ========================= --}}
             <div class="tab-pane fade" id="patterns-section" role="tabpanel">
@@ -1281,7 +1275,7 @@
                                 </small>
                             </div>
                             <button type="button" class="btn btn-xs btn-outline-primary flex-shrink-0"
-                                    onclick="previewVisit({{ $index }})">
+                                    onclick="window.location='{{ route('admin.consultations.history', $pastRecord->visit) }}'">
                                 <i class="ti ti-eye"></i>
                             </button>
                         </div>
