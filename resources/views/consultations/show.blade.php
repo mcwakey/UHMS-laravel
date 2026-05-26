@@ -29,6 +29,9 @@
     .session-route-row.is-cancelled { border-left-color: #dc3545; opacity: 0.82; }
     .session-timeline { display: flex; flex-wrap: wrap; gap: 0.35rem; }
     .session-timeline .badge { font-size: 0.66rem; font-weight: 500; }
+    .owner-group-header { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 0.45rem; padding: 0.45rem 0.65rem; margin-bottom: 0.55rem; }
+    .owner-group .ehr-item { margin-left: 0.45rem; }
+    .entry-actions { min-width: max-content; }
     /* ── Fixed-bottom sessions drawer (left/width matched to col-lg-10 by JS) ── */
     #sessionsDrawer { position: fixed; bottom: 0; left: 0; right: 0; z-index: 1040; background: #fff; border-top: 2px solid #0d6efd; box-shadow: 0 -4px 18px rgba(0,0,0,.12); max-height: 60vh; display: flex; flex-direction: column; transition: transform .25s ease; }
     #sessionsDrawer.is-collapsed { transform: translateY(calc(100% - 42px)); }
@@ -74,14 +77,21 @@
         return $names;
     };
     $selectedRouteServiceNames = $routeServiceNames($selectedRoute);
-    $entryAuthor = function ($entry) {
-        $user = $entry?->creator ?? $entry?->createdBy ?? $entry?->doctor ?? null;
-        return $user?->full_name ? 'Dr. '.$user->full_name : 'Unknown user';
-    };
-    $entryMeta = function ($entry) use ($entryAuthor) {
-        $bits = ['Entered by: '.$entryAuthor($entry)];
+    $ownerOf = fn ($entry) => $entry?->creator ?? $entry?->createdBy ?? $entry?->doctor ?? $entry?->requestedBy ?? $entry?->requestingDoctor ?? null;
+    $ownerKey = fn ($entry) => ($ownerOf($entry)?->id) ? 'user-'.$ownerOf($entry)->id : 'unknown';
+    $ownerName = fn ($entry) => $ownerOf($entry)?->full_name ?? 'Unknown user';
+    $ownerDisplayName = fn ($entry) => $ownerName($entry) === 'Unknown user' ? 'Unknown user' : 'Dr. '.$ownerName($entry);
+    $isMainOwner = fn ($entry) => $selectedRoute?->doctor_id && $ownerOf($entry)?->id && (int) $selectedRoute->doctor_id === (int) $ownerOf($entry)->id;
+    $ownerRoleLabel = fn ($entry) => $isMainOwner($entry) ? 'Main Doctor' : 'Contributor';
+    $ownerRoleClass = fn ($entry) => $isMainOwner($entry) ? 'primary' : 'secondary';
+    $ownerGroups = fn ($entries) => collect($entries ?? [])->groupBy(fn ($entry) => $ownerKey($entry));
+    $entryFooter = function ($entry) {
+        $bits = [];
         if ($entry?->created_at) {
             $bits[] = 'Created: '.$entry->created_at->format('d M Y, h:i A');
+        }
+        if (($entry?->updater?->full_name ?? null) && $entry?->updated_at && $entry?->created_at && $entry->updated_at->gt($entry->created_at)) {
+            $bits[] = 'Edited by: '.$entry->updater->full_name.' '.$entry->updated_at->format('d M Y, h:i A');
         }
         if ($entry?->sourcePattern) {
             $bits[] = 'Source Pattern: '.$entry->sourcePattern->name;
@@ -89,6 +99,7 @@
         return implode(' · ', $bits);
     };
     $canDeleteEntry = fn ($entry) => auth()->user() && $entryPermissions->canDelete(auth()->user(), $entry);
+    $canEditEntry = fn ($entry) => auth()->user() && $entryPermissions->canEdit(auth()->user(), $entry);
     $contributors = $selectedRoute?->contributors?->map(fn ($contributor) => $contributor->user?->full_name)->filter()->unique()->values() ?? collect();
 @endphp
 
@@ -339,7 +350,7 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="tab-hopc" href="#hopc-section" data-bs-toggle="pill" role="tab">
-                                <i class="ti ti-file-description me-1"></i>History Of Presenting Complaints
+                                <i class="ti ti-file-description me-1"></i>HOPC
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-hopc">{{ $record?->historiesOfPresentingComplaint?->count() ?? 0 }}</span>
                             </a>
                         </li>
@@ -533,29 +544,56 @@
                         @endcan
 
                         <div id="complaints-list">
-                            @forelse($record?->complaints ?? [] as $complaint)
-                            <div class="ehr-item severity-{{ $complaint->severity ?? 'mild' }}" id="complaint-{{ $complaint->id }}">
-                                <div class="d-flex justify-content-between">
+                            @forelse($ownerGroups($record?->complaints ?? []) as $group)
+                            @php
+                                $firstEntry = $group->first();
+                            @endphp
+                            <div class="owner-group mb-3" data-owner-key="{{ $ownerKey($firstEntry) }}">
+                                <div class="owner-group-header d-flex justify-content-between align-items-center">
                                     <div>
-                                        <p class="mb-1">{{ $complaint->description }}</p>
-                                        <small class="text-muted">
-                                            @if($complaint->duration) Duration: {{ $complaint->duration }} &middot; @endif
-                                            @if($complaint->severity)
-                                                Severity: <span class="badge bg-{{ $complaint->severity === 'severe' ? 'danger' : ($complaint->severity === 'moderate' ? 'warning' : 'info') }}">{{ ucfirst($complaint->severity) }}</span>
-                                            @endif
-                                        </small>
-                                        <small class="text-muted d-block">{{ $entryMeta($complaint) }}</small>
+                                        <span class="fw-semibold">{{ $ownerDisplayName($firstEntry) }}</span>
+                                        <span class="badge bg-{{ $ownerRoleClass($firstEntry) }}-subtle text-{{ $ownerRoleClass($firstEntry) }} ms-1">{{ $ownerRoleLabel($firstEntry) }}</span>
                                     </div>
-                                    @if($canDeleteEntry($complaint))
-                                    <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
-                                            data-url="{{ route('admin.consultations.complaints.destroy', $complaint) }}"
-                                            data-target="#complaint-{{ $complaint->id }}"
-                                            data-badge="badge-complaints"
-                                            data-confirm="Remove this complaint?">
-                                        <i class="ti ti-trash"></i>
-                                    </button>
-                                    @endif
+                                    <small class="text-muted">{{ $group->count() }} {{ Str::plural('entry', $group->count()) }}</small>
                                 </div>
+                                @foreach($group as $complaint)
+                                <div class="ehr-item severity-{{ $complaint->severity ?? 'mild' }}" id="complaint-{{ $complaint->id }}" data-owner-key="{{ $ownerKey($complaint) }}">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <p class="mb-1">{{ $complaint->description }}</p>
+                                            <small class="text-muted">
+                                                @if($complaint->duration) Duration: {{ $complaint->duration }} &middot; @endif
+                                                @if($complaint->severity)
+                                                    Severity: <span class="badge bg-{{ $complaint->severity === 'severe' ? 'danger' : ($complaint->severity === 'moderate' ? 'warning' : 'info') }}">{{ ucfirst($complaint->severity) }}</span>
+                                                @endif
+                                            </small>
+                                            @if($entryFooter($complaint))<small class="text-muted d-block">{{ $entryFooter($complaint) }}</small>@endif
+                                        </div>
+                                        <div class="entry-actions d-flex gap-1">
+                                            @if($canEditEntry($complaint))
+                                            @php
+                                                $editEntryPayload = ['description' => $complaint->description, 'duration' => $complaint->duration, 'severity' => $complaint->severity];
+                                            @endphp
+                                            <button type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                    data-entry-type="complaint"
+                                                    data-url="{{ route('admin.consultations.complaints.update', $complaint) }}"
+                                                    data-entry='@json($editEntryPayload)'>
+                                                <i class="ti ti-edit"></i>
+                                            </button>
+                                            @endif
+                                            @if($canDeleteEntry($complaint))
+                                            <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                                    data-url="{{ route('admin.consultations.complaints.destroy', $complaint) }}"
+                                                    data-target="#complaint-{{ $complaint->id }}"
+                                                    data-badge="badge-complaints"
+                                                    data-confirm="Remove this complaint?">
+                                                <i class="ti ti-trash"></i>
+                                            </button>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                @endforeach
                             </div>
                             @empty
                             <div class="text-center text-muted py-4" id="complaints-empty">
@@ -616,26 +654,53 @@
                         @endcan
 
                         <div id="hopc-list">
-                            @forelse($record?->historiesOfPresentingComplaint ?? [] as $hopc)
-                            <div class="ehr-item" id="hopc-{{ $hopc->id }}">
-                                <div class="d-flex justify-content-between gap-2">
+                            @forelse($ownerGroups($record?->historiesOfPresentingComplaint ?? []) as $group)
+                            @php
+                                $firstEntry = $group->first();
+                            @endphp
+                            <div class="owner-group mb-3" data-owner-key="{{ $ownerKey($firstEntry) }}">
+                                <div class="owner-group-header d-flex justify-content-between align-items-center">
                                     <div>
-                                        <p class="mb-1">{{ $hopc->content }}</p>
-                                        @if($hopc->complaint)
-                                            <small class="text-muted d-block">Complaint: {{ $hopc->complaint->description }}</small>
-                                        @endif
-                                        <small class="text-muted">{{ $entryMeta($hopc) }}</small>
+                                        <span class="fw-semibold">{{ $ownerDisplayName($firstEntry) }}</span>
+                                        <span class="badge bg-{{ $ownerRoleClass($firstEntry) }}-subtle text-{{ $ownerRoleClass($firstEntry) }} ms-1">{{ $ownerRoleLabel($firstEntry) }}</span>
                                     </div>
-                                    @if($canDeleteEntry($hopc))
-                                    <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
-                                            data-url="{{ route('admin.consultations.hopc.destroy', $hopc) }}"
-                                            data-target="#hopc-{{ $hopc->id }}"
-                                            data-badge="badge-hopc"
-                                            data-confirm="Remove this history entry?">
-                                        <i class="ti ti-trash"></i>
-                                    </button>
-                                    @endif
+                                    <small class="text-muted">{{ $group->count() }} {{ Str::plural('entry', $group->count()) }}</small>
                                 </div>
+                                @foreach($group as $hopc)
+                                <div class="ehr-item" id="hopc-{{ $hopc->id }}" data-owner-key="{{ $ownerKey($hopc) }}">
+                                    <div class="d-flex justify-content-between gap-2">
+                                        <div>
+                                            <p class="mb-1">{{ $hopc->content }}</p>
+                                            @if($hopc->complaint)
+                                                <small class="text-muted d-block">Complaint: {{ $hopc->complaint->description }}</small>
+                                            @endif
+                                            @if($entryFooter($hopc))<small class="text-muted">{{ $entryFooter($hopc) }}</small>@endif
+                                        </div>
+                                        <div class="entry-actions d-flex gap-1">
+                                            @if($canEditEntry($hopc))
+                                            @php
+                                                $editEntryPayload = ['content' => $hopc->content, 'complaint_id' => $hopc->complaint_id, 'onset' => $hopc->onset, 'duration' => $hopc->duration, 'location' => $hopc->location, 'severity' => $hopc->severity, 'aggravating_factors' => $hopc->aggravating_factors, 'relieving_factors' => $hopc->relieving_factors, 'associated_symptoms' => $hopc->associated_symptoms];
+                                            @endphp
+                                            <button type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                    data-entry-type="hopc"
+                                                    data-url="{{ route('admin.consultations.hopc.update', $hopc) }}"
+                                                    data-entry='@json($editEntryPayload)'>
+                                                <i class="ti ti-edit"></i>
+                                            </button>
+                                            @endif
+                                            @if($canDeleteEntry($hopc))
+                                            <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                                    data-url="{{ route('admin.consultations.hopc.destroy', $hopc) }}"
+                                                    data-target="#hopc-{{ $hopc->id }}"
+                                                    data-badge="badge-hopc"
+                                                    data-confirm="Remove this history entry?">
+                                                <i class="ti ti-trash"></i>
+                                            </button>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                @endforeach
                             </div>
                             @empty
                             <div class="text-center text-muted py-4" id="hopc-empty">
@@ -688,23 +753,50 @@
                         @endcan
 
                         <div id="examination-list">
-                            @forelse($record?->physicalExaminations ?? [] as $exam)
-                            <div class="ehr-item" id="examination-{{ $exam->id }}">
-                                <div class="d-flex justify-content-between gap-2">
+                            @forelse($ownerGroups($record?->physicalExaminations ?? []) as $group)
+                            @php
+                                $firstEntry = $group->first();
+                            @endphp
+                            <div class="owner-group mb-3" data-owner-key="{{ $ownerKey($firstEntry) }}">
+                                <div class="owner-group-header d-flex justify-content-between align-items-center">
                                     <div>
-                                        <p class="mb-1">{{ $exam->findings }}</p>
-                                        <small class="text-muted">{{ $entryMeta($exam) }}</small>
+                                        <span class="fw-semibold">{{ $ownerDisplayName($firstEntry) }}</span>
+                                        <span class="badge bg-{{ $ownerRoleClass($firstEntry) }}-subtle text-{{ $ownerRoleClass($firstEntry) }} ms-1">{{ $ownerRoleLabel($firstEntry) }}</span>
                                     </div>
-                                    @if($canDeleteEntry($exam))
-                                    <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
-                                            data-url="{{ route('admin.consultations.examinations.destroy', $exam) }}"
-                                            data-target="#examination-{{ $exam->id }}"
-                                            data-badge="badge-examination"
-                                            data-confirm="Remove this examination entry?">
-                                        <i class="ti ti-trash"></i>
-                                    </button>
-                                    @endif
+                                    <small class="text-muted">{{ $group->count() }} {{ Str::plural('entry', $group->count()) }}</small>
                                 </div>
+                                @foreach($group as $exam)
+                                <div class="ehr-item" id="examination-{{ $exam->id }}" data-owner-key="{{ $ownerKey($exam) }}">
+                                    <div class="d-flex justify-content-between gap-2">
+                                        <div>
+                                            <p class="mb-1">{{ $exam->findings }}</p>
+                                            @if($entryFooter($exam))<small class="text-muted">{{ $entryFooter($exam) }}</small>@endif
+                                        </div>
+                                        <div class="entry-actions d-flex gap-1">
+                                            @if($canEditEntry($exam))
+                                            @php
+                                                $editEntryPayload = ['findings' => $exam->findings, 'general_examination' => $exam->general_examination, 'systemic_examination' => $exam->systemic_examination, 'cardiovascular' => $exam->cardiovascular, 'respiratory' => $exam->respiratory, 'gastrointestinal' => $exam->gastrointestinal, 'central_nervous_system' => $exam->central_nervous_system, 'specialty_examination' => $exam->specialty_examination, 'local_examination' => $exam->local_examination, 'notes' => $exam->notes];
+                                            @endphp
+                                            <button type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                    data-entry-type="examination"
+                                                    data-url="{{ route('admin.consultations.examinations.update', $exam) }}"
+                                                    data-entry='@json($editEntryPayload)'>
+                                                <i class="ti ti-edit"></i>
+                                            </button>
+                                            @endif
+                                            @if($canDeleteEntry($exam))
+                                            <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                                    data-url="{{ route('admin.consultations.examinations.destroy', $exam) }}"
+                                                    data-target="#examination-{{ $exam->id }}"
+                                                    data-badge="badge-examination"
+                                                    data-confirm="Remove this examination entry?">
+                                                <i class="ti ti-trash"></i>
+                                            </button>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                @endforeach
                             </div>
                             @empty
                             <div class="text-center text-muted py-4" id="examination-empty">
@@ -772,50 +864,75 @@
                         @endcan
 
                         <div id="diagnoses-list">
-                            @forelse($record?->diagnoses ?? [] as $diagnosis)
-                            <div class="ehr-item {{ $diagnosis->is_primary ? 'is-primary' : '' }}" id="diagnosis-{{ $diagnosis->id }}">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div class="flex-grow-1">
-                                        <p class="mb-1">
-                                            {{ $diagnosis->description }}
-                                            <span class="badge bg-{{ $diagnosis->type === 'final' ? 'success' : 'warning' }} ms-1 diagnosis-type-badge" id="type-badge-{{ $diagnosis->id }}">{{ ucfirst($diagnosis->type) }}</span>
-                                            <span class="badge bg-warning text-dark ms-1 diagnosis-primary-badge primary-indicator {{ $diagnosis->is_primary ? '' : 'd-none' }}" id="primary-badge-{{ $diagnosis->id }}">
-                                                <i class="ti ti-star-filled me-1"></i>Primary
-                                            </span>
-                                        </p>
-                                        <small class="text-muted">
-                                            @if($diagnosis->icdCodeEntry) ICD-10: <code>{{ $diagnosis->icdCodeEntry->code }}</code> &middot;
-                                            @elseif($diagnosis->icd_code) ICD-10: <code>{{ $diagnosis->icd_code }}</code> &middot; @endif
-                                            @if($diagnosis->notes) {{ $diagnosis->notes }} @endif
-                                        </small>
-                                        <small class="text-muted d-block">{{ $entryMeta($diagnosis) }}</small>
+                            @forelse($ownerGroups($record?->diagnoses ?? []) as $group)
+                            @php
+                                $firstEntry = $group->first();
+                            @endphp
+                            <div class="owner-group mb-3" data-owner-key="{{ $ownerKey($firstEntry) }}">
+                                <div class="owner-group-header d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="fw-semibold">{{ $ownerDisplayName($firstEntry) }}</span>
+                                        <span class="badge bg-{{ $ownerRoleClass($firstEntry) }}-subtle text-{{ $ownerRoleClass($firstEntry) }} ms-1">{{ $ownerRoleLabel($firstEntry) }}</span>
                                     </div>
-                                    @if(auth()->user() && $entryPermissions->canEdit(auth()->user(), $diagnosis))
-                                    <div class="d-flex gap-1 ms-2 flex-shrink-0">
-                                        <button type="button" class="btn btn-xs btn-outline-secondary toggle-type-btn"
-                                                title="Mark as {{ $diagnosis->type === 'provisional' ? 'Final' : 'Provisional' }}"
-                                                data-id="{{ $diagnosis->id }}"
-                                                data-current="{{ $diagnosis->type }}"
-                                                data-url="{{ route('admin.consultations.diagnoses.update', $diagnosis) }}">
-                                            <i class="ti ti-switch-2 me-1"></i><span class="toggle-type-label">{{ $diagnosis->type === 'provisional' ? 'Final' : 'Provisional' }}</span>
-                                        </button>
-                                        <button type="button" class="btn btn-xs btn-outline-warning set-primary-btn {{ $diagnosis->is_primary ? 'd-none' : '' }}"
-                                                title="Set as Primary diagnosis"
-                                                id="set-primary-{{ $diagnosis->id }}"
-                                                data-id="{{ $diagnosis->id }}"
-                                                data-url="{{ route('admin.consultations.diagnoses.primary', $diagnosis) }}">
-                                            <i class="ti ti-star"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
-                                                data-url="{{ route('admin.consultations.diagnoses.destroy', $diagnosis) }}"
-                                                data-target="#diagnosis-{{ $diagnosis->id }}"
-                                                data-badge="badge-diagnoses"
-                                                data-confirm="Remove this diagnosis?">
-                                            <i class="ti ti-trash"></i>
-                                        </button>
-                                    </div>
-                                    @endif
+                                    <small class="text-muted">{{ $group->count() }} {{ Str::plural('entry', $group->count()) }}</small>
                                 </div>
+                                @foreach($group as $diagnosis)
+                                <div class="ehr-item {{ $diagnosis->is_primary ? 'is-primary' : '' }}" id="diagnosis-{{ $diagnosis->id }}" data-owner-key="{{ $ownerKey($diagnosis) }}">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <p class="mb-1">
+                                                {{ $diagnosis->description }}
+                                                <span class="badge bg-{{ $diagnosis->type === 'final' ? 'success' : 'warning' }} ms-1 diagnosis-type-badge" id="type-badge-{{ $diagnosis->id }}">{{ ucfirst($diagnosis->type) }}</span>
+                                                <span class="badge bg-warning text-dark ms-1 diagnosis-primary-badge primary-indicator {{ $diagnosis->is_primary ? '' : 'd-none' }}" id="primary-badge-{{ $diagnosis->id }}">
+                                                    <i class="ti ti-star-filled me-1"></i>Primary
+                                                </span>
+                                            </p>
+                                            <small class="text-muted">
+                                                @if($diagnosis->icdCodeEntry) ICD-10: <code>{{ $diagnosis->icdCodeEntry->code }}</code> &middot;
+                                                @elseif($diagnosis->icd_code) ICD-10: <code>{{ $diagnosis->icd_code }}</code> &middot; @endif
+                                                @if($diagnosis->notes) {{ $diagnosis->notes }} @endif
+                                            </small>
+                                            @if($entryFooter($diagnosis))<small class="text-muted d-block">{{ $entryFooter($diagnosis) }}</small>@endif
+                                        </div>
+                                        @if($canEditEntry($diagnosis))
+                                        <div class="d-flex gap-1 ms-2 flex-shrink-0 entry-actions">
+                                            @php
+                                                $editEntryPayload = ['description' => $diagnosis->description, 'icd_code' => $diagnosis->icd_code, 'icd_code_id' => $diagnosis->icd_code_id, 'type' => $diagnosis->type, 'notes' => $diagnosis->notes];
+                                            @endphp
+                                            <button type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                    data-entry-type="diagnosis"
+                                                    data-url="{{ route('admin.consultations.diagnoses.update', $diagnosis) }}"
+                                                    data-entry='@json($editEntryPayload)'>
+                                                <i class="ti ti-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-xs btn-outline-secondary toggle-type-btn"
+                                                    title="Mark as {{ $diagnosis->type === 'provisional' ? 'Final' : 'Provisional' }}"
+                                                    data-id="{{ $diagnosis->id }}"
+                                                    data-current="{{ $diagnosis->type }}"
+                                                    data-url="{{ route('admin.consultations.diagnoses.update', $diagnosis) }}">
+                                                <i class="ti ti-switch-2 me-1"></i><span class="toggle-type-label">{{ $diagnosis->type === 'provisional' ? 'Final' : 'Provisional' }}</span>
+                                            </button>
+                                            <button type="button" class="btn btn-xs btn-outline-warning set-primary-btn {{ $diagnosis->is_primary ? 'd-none' : '' }}"
+                                                    title="Set as Primary diagnosis"
+                                                    id="set-primary-{{ $diagnosis->id }}"
+                                                    data-id="{{ $diagnosis->id }}"
+                                                    data-url="{{ route('admin.consultations.diagnoses.primary', $diagnosis) }}">
+                                                <i class="ti ti-star"></i>
+                                            </button>
+                                            @if($canDeleteEntry($diagnosis))
+                                            <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                                    data-url="{{ route('admin.consultations.diagnoses.destroy', $diagnosis) }}"
+                                                    data-target="#diagnosis-{{ $diagnosis->id }}"
+                                                    data-badge="badge-diagnoses"
+                                                    data-confirm="Remove this diagnosis?">
+                                                <i class="ti ti-trash"></i>
+                                            </button>
+                                            @endif
+                                        </div>
+                                        @endif
+                                    </div>
+                                </div>
+                                @endforeach
                             </div>
                             @empty
                             <div class="text-center text-muted py-4" id="diagnoses-empty">
@@ -892,7 +1009,6 @@
 
                         <div id="investigations-list">
                             @php
-                                $allItems = collect($labRequests ?? [])->flatMap(fn($r) => $r->items ?? collect())->filter();
                                 $grouped  = collect($labRequests ?? [])->groupBy(fn($r) => $r->targetDepartment->name ?? 'Other');
                             @endphp
                             @if($grouped->isNotEmpty())
@@ -900,48 +1016,93 @@
                                 <div class="mb-3">
                                     <h6 class="small fw-bold border-bottom pb-1 mb-2 text-uppercase text-muted">
                                         <i class="ti ti-building-hospital me-1"></i>{{ $deptName }}
-                                        <span class="badge bg-light text-dark ms-1">{{ collect($reqs)->sum(fn($r) => $r->items?->count() ?? 0) }}</span>
+                                        <span class="badge bg-light text-dark ms-1">{{ collect($reqs)->count() }} {{ Str::plural('request', collect($reqs)->count()) }}</span>
                                     </h6>
-                                    @foreach($reqs as $req)
-                                        @foreach($req->items ?? [] as $item)
-                                        <div class="ehr-item d-flex justify-content-between align-items-start" id="lab-item-{{ $item->id }}">
-                                            <div class="flex-grow-1">
-                                                <p class="mb-1">
-                                                    <strong>{{ $item->display_name ?? $item->name }}</strong>
-                                                    <span class="badge bg-{{ $item->status_color }} ms-1">{{ ucfirst($item->status) }}</span>
-                                                    @if($item->result?->is_verified)
-                                                        <span class="badge bg-success ms-1"><i class="ti ti-check"></i> Verified</span>
-                                                    @elseif($item->result)
-                                                        <span class="badge bg-warning ms-1">Unverified</span>
-                                                    @endif
-                                                </p>
-                                                <small class="text-muted">
-                                                    Req #{{ $req->request_number }} &middot; {{ $req->created_at?->format('d M H:i') }}
-                                                    @if($item->accepted_at) &middot; Accepted {{ $item->accepted_at->format('d M H:i') }} @endif
-                                                </small>
+                                    @foreach(collect($reqs)->groupBy(fn($r) => $ownerKey($r)) as $ownerReqs)
+                                        @php
+                                            $firstReq = $ownerReqs->first();
+                                        @endphp
+                                        <div class="owner-group mb-3" data-owner-key="{{ $ownerKey($firstReq) }}">
+                                            <div class="owner-group-header d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <span class="fw-semibold">{{ $ownerDisplayName($firstReq) }}</span>
+                                                    <span class="badge bg-{{ $ownerRoleClass($firstReq) }}-subtle text-{{ $ownerRoleClass($firstReq) }} ms-1">{{ $ownerRoleLabel($firstReq) }}</span>
+                                                </div>
+                                                <small class="text-muted">{{ $ownerReqs->sum(fn($r) => $r->items?->count() ?? 0) }} {{ Str::plural('item', $ownerReqs->sum(fn($r) => $r->items?->count() ?? 0)) }}</small>
                                             </div>
-                                            <div class="d-flex gap-1">
-                                                @if($item->result)
-                                                <button type="button" class="btn btn-xs btn-outline-info viewResultBtn"
-                                                        data-url="{{ route('admin.lab.results.view', $item) }}"
-                                                        title="View Result"><i class="ti ti-eye"></i></button>
-                                                @endif
-                                                @if($item->result?->is_verified)
-                                                <a data-no-inertia href="{{ route('admin.lab.results.print', $item) }}" target="_blank" class="btn btn-xs btn-outline-secondary" title="Print"><i class="ti ti-printer"></i></a>
-                                                @endif
-                                                @can('consultations.create')
-                                                @if($item->isDeletable() && $canEdit)
-                                                <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
-                                                        data-url="{{ route('admin.consultations.investigation-items.destroy', $item) }}"
-                                                        data-method="DELETE"
-                                                        data-target="#lab-item-{{ $item->id }}"
-                                                        data-confirm="Remove this investigation item?"
-                                                        title="Delete"><i class="ti ti-trash"></i></button>
-                                                @endif
-                                                @endcan
-                                            </div>
+                                            @foreach($ownerReqs as $req)
+                                                @php
+                                                    $hasProcessedItem = collect($req->items ?? [])->contains(fn($item) => $item->isAccepted() || $item->result);
+                                                    $requestEditable = $canEdit && auth()->user() && ($req->status === 'pending') && ! $hasProcessedItem && (auth()->user()->hasAnyRole(['Super Admin', 'Admin']) || (int) $req->requested_by === (int) auth()->id() || auth()->user()->can('consultation.entries.edit_any'));
+                                                @endphp
+                                                <div class="border rounded p-2 mb-2" id="lab-request-{{ $req->id }}">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <div>
+                                                            <span class="fw-semibold">{{ $req->request_number }}</span>
+                                                            <span class="badge bg-{{ $req->urgency_color }} ms-1">{{ ucfirst($req->urgency ?? 'routine') }}</span>
+                                                            <span class="badge bg-{{ $req->status_color }} ms-1">{{ $req->status_label }}</span>
+                                                            <small class="text-muted d-block">Requested {{ $req->created_at?->format('d M Y, h:i A') }}</small>
+                                                            @if($req->clinical_info)
+                                                                <small class="text-muted d-block">Notes: {{ $req->clinical_info }}</small>
+                                                            @endif
+                                                        </div>
+                                                        <div class="entry-actions d-flex gap-1 align-items-center">
+                                                            @if($requestEditable)
+                                                            @php
+                                                                $editEntryPayload = ['urgency' => $req->urgency, 'clinical_info' => $req->clinical_info];
+                                                            @endphp
+                                                            <button type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                                    data-entry-type="lab-request"
+                                                                    data-url="{{ route('admin.consultations.lab-request.update', $req) }}"
+                                                                    data-entry='@json($editEntryPayload)'>
+                                                                <i class="ti ti-edit"></i>
+                                                            </button>
+                                                            @elseif($hasProcessedItem || $req->status !== 'pending')
+                                                                <small class="text-muted"><i class="ti ti-lock me-1"></i>Locked: request already processed</small>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                    @foreach($req->items ?? [] as $item)
+                                                    <div class="ehr-item d-flex justify-content-between align-items-start" id="lab-item-{{ $item->id }}">
+                                                        <div class="flex-grow-1">
+                                                            <p class="mb-1">
+                                                                <strong>{{ $item->display_name ?? $item->name }}</strong>
+                                                                <span class="badge bg-{{ $item->status_color }} ms-1">{{ ucfirst($item->status) }}</span>
+                                                                @if($item->result?->is_verified)
+                                                                    <span class="badge bg-success ms-1"><i class="ti ti-check"></i> Verified</span>
+                                                                @elseif($item->result)
+                                                                    <span class="badge bg-warning ms-1">Unverified</span>
+                                                                @endif
+                                                            </p>
+                                                            <small class="text-muted">
+                                                                @if($item->accepted_at) Accepted {{ $item->accepted_at->format('d M H:i') }} @endif
+                                                            </small>
+                                                        </div>
+                                                        <div class="d-flex gap-1">
+                                                            @if($item->result)
+                                                            <button type="button" class="btn btn-xs btn-outline-info viewResultBtn"
+                                                                    data-url="{{ route('admin.lab.results.view', $item) }}"
+                                                                    title="View Result"><i class="ti ti-eye"></i></button>
+                                                            @endif
+                                                            @if($item->result?->is_verified)
+                                                            <a data-no-inertia href="{{ route('admin.lab.results.print', $item) }}" target="_blank" class="btn btn-xs btn-outline-secondary" title="Print"><i class="ti ti-printer"></i></a>
+                                                            @endif
+                                                            @can('consultations.create')
+                                                            @if($item->isDeletable() && $canEdit)
+                                                            <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                                                    data-url="{{ route('admin.consultations.investigation-items.destroy', $item) }}"
+                                                                    data-method="DELETE"
+                                                                    data-target="#lab-item-{{ $item->id }}"
+                                                                    data-confirm="Remove this investigation item?"
+                                                                    title="Delete"><i class="ti ti-trash"></i></button>
+                                                            @endif
+                                                            @endcan
+                                                        </div>
+                                                    </div>
+                                                    @endforeach
+                                                </div>
+                                            @endforeach
                                         </div>
-                                        @endforeach
                                     @endforeach
                                 </div>
                                 @endforeach
@@ -998,26 +1159,53 @@
                         @endcan
 
                         <div id="treatments-list">
-                            @forelse($record?->treatments ?? [] as $treatment)
-                            <div class="ehr-item" id="treatment-{{ $treatment->id }}">
-                                <div class="d-flex justify-content-between">
+                            @forelse($ownerGroups($record?->treatments ?? []) as $group)
+                            @php
+                                $firstEntry = $group->first();
+                            @endphp
+                            <div class="owner-group mb-3" data-owner-key="{{ $ownerKey($firstEntry) }}">
+                                <div class="owner-group-header d-flex justify-content-between align-items-center">
                                     <div>
-                                        <p class="mb-1">
-                                            <span class="badge bg-{{ $treatment->type === 'medication' ? 'primary' : ($treatment->type === 'procedure' ? 'info' : ($treatment->type === 'referral' ? 'warning' : 'secondary')) }}">{{ ucfirst($treatment->type) }}</span>
-                                            {{ $treatment->description }}
-                                        </p>
-                                        <small class="text-muted">{{ $entryMeta($treatment) }}</small>
+                                        <span class="fw-semibold">{{ $ownerDisplayName($firstEntry) }}</span>
+                                        <span class="badge bg-{{ $ownerRoleClass($firstEntry) }}-subtle text-{{ $ownerRoleClass($firstEntry) }} ms-1">{{ $ownerRoleLabel($firstEntry) }}</span>
                                     </div>
-                                    @if($canDeleteEntry($treatment))
-                                    <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
-                                            data-url="{{ route('admin.consultations.treatments.destroy', $treatment) }}"
-                                            data-target="#treatment-{{ $treatment->id }}"
-                                            data-badge="badge-treatments"
-                                            data-confirm="Remove this treatment?">
-                                        <i class="ti ti-trash"></i>
-                                    </button>
-                                    @endif
+                                    <small class="text-muted">{{ $group->count() }} {{ Str::plural('entry', $group->count()) }}</small>
                                 </div>
+                                @foreach($group as $treatment)
+                                <div class="ehr-item" id="treatment-{{ $treatment->id }}" data-owner-key="{{ $ownerKey($treatment) }}">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <p class="mb-1">
+                                                <span class="badge bg-{{ $treatment->type === 'medication' ? 'primary' : ($treatment->type === 'procedure' ? 'info' : ($treatment->type === 'referral' ? 'warning' : 'secondary')) }}">{{ ucfirst($treatment->type) }}</span>
+                                                {{ $treatment->description }}
+                                            </p>
+                                            @if($entryFooter($treatment))<small class="text-muted">{{ $entryFooter($treatment) }}</small>@endif
+                                        </div>
+                                        <div class="entry-actions d-flex gap-1">
+                                            @if($canEditEntry($treatment))
+                                            @php
+                                                $editEntryPayload = ['type' => $treatment->type, 'description' => $treatment->description];
+                                            @endphp
+                                            <button type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                    data-entry-type="treatment"
+                                                    data-url="{{ route('admin.consultations.treatments.update', $treatment) }}"
+                                                    data-entry='@json($editEntryPayload)'>
+                                                <i class="ti ti-edit"></i>
+                                            </button>
+                                            @endif
+                                            @if($canDeleteEntry($treatment))
+                                            <button type="button" class="btn btn-xs btn-outline-danger ajax-delete"
+                                                    data-url="{{ route('admin.consultations.treatments.destroy', $treatment) }}"
+                                                    data-target="#treatment-{{ $treatment->id }}"
+                                                    data-badge="badge-treatments"
+                                                    data-confirm="Remove this treatment?">
+                                                <i class="ti ti-trash"></i>
+                                            </button>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                @endforeach
                             </div>
                             @empty
                             <div class="text-center text-muted py-4" id="treatments-empty">
@@ -1121,45 +1309,71 @@
                         @endcan
 
                         <div id="prescriptions-list">
-                            @forelse($record?->prescriptions ?? [] as $prescription)
-                            <div class="border rounded p-3 mb-3" id="prescription-{{ $prescription->id }}">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
+                            @forelse($ownerGroups($record?->prescriptions ?? []) as $group)
+                            @php
+                                $firstEntry = $group->first();
+                            @endphp
+                            <div class="owner-group mb-3" data-owner-key="{{ $ownerKey($firstEntry) }}">
+                                <div class="owner-group-header d-flex justify-content-between align-items-center">
                                     <div>
-                                        <span class="fw-bold">{{ $prescription->prescription_number }}</span>
-                                        <span class="badge bg-{{ $prescription->status->color() }} ms-2">{{ $prescription->status->label() }}</span>
-                                        <small class="text-muted d-block">{{ $entryMeta($prescription) }}</small>
+                                        <span class="fw-semibold">{{ $ownerDisplayName($firstEntry) }}</span>
+                                        <span class="badge bg-{{ $ownerRoleClass($firstEntry) }}-subtle text-{{ $ownerRoleClass($firstEntry) }} ms-1">{{ $ownerRoleLabel($firstEntry) }}</span>
                                     </div>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <small class="text-muted">{{ $prescription->created_at->format('d M Y, h:i A') }}</small>
-                                        @if($canDeleteEntry($prescription) && in_array($prescription->status->value, ['pending', 'active']))
-                                        <form method="POST" action="{{ route('admin.consultations.prescriptions.destroy', $prescription) }}"
-                                              onsubmit="return confirm('Cancel &amp; delete this prescription?') &amp;&amp; saveTabBeforeSubmit('prescriptions-section')">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="btn btn-xs btn-outline-danger" title="Delete prescription">
-                                                <i class="ti ti-trash"></i>
+                                    <small class="text-muted">{{ $group->count() }} {{ Str::plural('prescription', $group->count()) }}</small>
+                                </div>
+                                @foreach($group as $prescription)
+                                <div class="border rounded p-3 mb-3" id="prescription-{{ $prescription->id }}" data-owner-key="{{ $ownerKey($prescription) }}">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div>
+                                            <span class="fw-bold">{{ $prescription->prescription_number }}</span>
+                                            <span class="badge bg-{{ $prescription->status->color() }} ms-2">{{ $prescription->status->label() }}</span>
+                                            @if($entryFooter($prescription))<small class="text-muted d-block">{{ $entryFooter($prescription) }}</small>@endif
+                                        </div>
+                                        <div class="d-flex align-items-center gap-1 entry-actions">
+                                            @if($canEditEntry($prescription) && in_array($prescription->status->value, ['pending', 'active']))
+                                            @php
+                                                $editEntryPayload = ['notes' => $prescription->notes];
+                                            @endphp
+                                            <button type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                    data-entry-type="prescription"
+                                                    data-url="{{ route('admin.consultations.prescriptions.update', $prescription) }}"
+                                                    data-entry='@json($editEntryPayload)'>
+                                                <i class="ti ti-edit"></i>
                                             </button>
-                                        </form>
-                                        @endif
+                                            @elseif(! in_array($prescription->status->value, ['pending', 'active']))
+                                                <small class="text-muted"><i class="ti ti-lock me-1"></i>Locked</small>
+                                            @endif
+                                            @if($canDeleteEntry($prescription) && in_array($prescription->status->value, ['pending', 'active']))
+                                            <form method="POST" action="{{ route('admin.consultations.prescriptions.destroy', $prescription) }}"
+                                                  onsubmit="return confirm('Cancel &amp; delete this prescription?') &amp;&amp; saveTabBeforeSubmit('prescriptions-section')">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="btn btn-xs btn-outline-danger" title="Delete prescription">
+                                                    <i class="ti ti-trash"></i>
+                                                </button>
+                                            </form>
+                                            @endif
+                                        </div>
                                     </div>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-borderless mb-0">
+                                            <thead><tr class="text-muted small"><th>Drug</th><th>Dosage</th><th>Freq</th><th>Duration</th><th>Qty</th><th>Route</th></tr></thead>
+                                            <tbody>
+                                                @foreach($prescription->items as $item)
+                                                <tr>
+                                                    <td class="fw-medium">{{ $item->drug_name }}</td>
+                                                    <td>{{ $item->dosage }}</td>
+                                                    <td>{{ $item->frequency }}</td>
+                                                    <td>{{ $item->duration }}</td>
+                                                    <td>{{ $item->quantity }}</td>
+                                                    <td>{{ $item->route }}</td>
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    @if($prescription->notes) <small class="text-muted">Notes: {{ $prescription->notes }}</small> @endif
                                 </div>
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-borderless mb-0">
-                                        <thead><tr class="text-muted small"><th>Drug</th><th>Dosage</th><th>Freq</th><th>Duration</th><th>Qty</th><th>Route</th></tr></thead>
-                                        <tbody>
-                                            @foreach($prescription->items as $item)
-                                            <tr>
-                                                <td class="fw-medium">{{ $item->drug_name }}</td>
-                                                <td>{{ $item->dosage }}</td>
-                                                <td>{{ $item->frequency }}</td>
-                                                <td>{{ $item->duration }}</td>
-                                                <td>{{ $item->quantity }}</td>
-                                                <td>{{ $item->route }}</td>
-                                            </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
-                                @if($prescription->notes) <small class="text-muted">Notes: {{ $prescription->notes }}</small> @endif
+                                @endforeach
                             </div>
                             @empty
                             <div class="text-center text-muted py-4" id="prescriptions-empty">
@@ -1186,7 +1400,7 @@
                         @can('procedure.request')
                         <div class="collapse mb-3" id="addProcedureForm">
                             <div class="card card-body bg-light">
-                                <form method="POST" action="{{ route('admin.consultations.procedures.store', $visit) }}" onsubmit="return saveTabBeforeSubmit('procedures-section')">
+                                <form data-ajax-form="procedures" method="POST" action="{{ route('admin.consultations.procedures.store', $visit) }}" onsubmit="return saveTabBeforeSubmit('procedures-section')">
                                     @csrf
                                     <div class="row g-2">
                                         <div class="col-md-6">
@@ -1235,43 +1449,87 @@
                         @endcan
 
                         <div id="procedures-list">
-                            @forelse($procedureRequests as $pr)
-                            <div class="ehr-item">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <p class="mb-1">
-                                            <span class="badge" style="background-color: {{ $pr->status->color() }}; color:#fff;">{{ $pr->status->label() }}</span>
-                                            <span class="fw-medium">{{ $pr->service?->name ?? 'Procedure' }}</span>
-                                            <small class="text-muted">· {{ $pr->request_number }}</small>
-                                        </p>
-                                        <small class="text-muted">
-                                            {{ ucfirst($pr->priority) }} ·
-                                            {{ $pr->department?->name }} ·
-                                            Requested {{ optional($pr->requested_at)->format('d M Y H:i') }}
-                                            @if($pr->schedule)
-                                                · Scheduled {{ optional($pr->schedule->scheduled_start)->format('d M Y H:i') }}
-                                                @if($pr->schedule->theatreRoom) ({{ $pr->schedule->theatreRoom->name }}) @endif
-                                            @endif
-                                        </small>
-                                        @if($pr->indication)
-                                            <div><small><strong>Indication:</strong> {{ $pr->indication }}</small></div>
-                                        @endif
-                                        @if($pr->rejection_reason)
-                                            <div><small class="text-danger"><strong>Rejected:</strong> {{ $pr->rejection_reason }}</small></div>
-                                        @endif
-                                        @if($pr->cancellation_reason)
-                                            <div><small class="text-warning"><strong>Cancelled:</strong> {{ $pr->cancellation_reason }}</small></div>
-                                        @endif
+                            @php
+                                $procedureDeptGroups = collect($procedureRequests ?? [])->groupBy(fn($pr) => $pr->department?->name ?? 'Other');
+                            @endphp
+                            @forelse($procedureDeptGroups as $deptName => $deptProcedures)
+                            <div class="mb-3">
+                                <h6 class="small fw-bold border-bottom pb-1 mb-2 text-uppercase text-muted">
+                                    <i class="ti ti-building-hospital me-1"></i>{{ $deptName }}
+                                    <span class="badge bg-light text-dark ms-1">{{ $deptProcedures->count() }} {{ Str::plural('request', $deptProcedures->count()) }}</span>
+                                </h6>
+                                @foreach($deptProcedures->groupBy(fn($pr) => $ownerKey($pr)) as $ownerProcedures)
+                                    @php
+                                        $firstPr = $ownerProcedures->first();
+                                    @endphp
+                                    <div class="owner-group mb-3" data-owner-key="{{ $ownerKey($firstPr) }}">
+                                        <div class="owner-group-header d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <span class="fw-semibold">{{ $ownerDisplayName($firstPr) }}</span>
+                                                <span class="badge bg-{{ $ownerRoleClass($firstPr) }}-subtle text-{{ $ownerRoleClass($firstPr) }} ms-1">{{ $ownerRoleLabel($firstPr) }}</span>
+                                            </div>
+                                            <small class="text-muted">{{ $ownerProcedures->count() }} {{ Str::plural('request', $ownerProcedures->count()) }}</small>
+                                        </div>
+                                        @foreach($ownerProcedures as $pr)
+                                        @php
+                                            $procedureEditable = $canEdit && auth()->user() && $pr->status === \App\Enums\ProcedureStatus::REQUESTED && (auth()->user()->hasAnyRole(['Super Admin', 'Admin']) || (int) $pr->requested_by === (int) auth()->id() || auth()->user()->can('consultation.entries.edit_any'));
+                                        @endphp
+                                        <div class="ehr-item" id="procedure-{{ $pr->id }}" data-owner-key="{{ $ownerKey($pr) }}">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <p class="mb-1">
+                                                        <span class="badge" style="background-color: {{ $pr->status->color() }}; color:#fff;">{{ $pr->status->label() }}</span>
+                                                        <span class="fw-medium">{{ $pr->service?->name ?? 'Procedure' }}</span>
+                                                        <small class="text-muted">· {{ $pr->request_number }}</small>
+                                                    </p>
+                                                    <small class="text-muted">
+                                                        {{ ucfirst($pr->priority) }} ·
+                                                        Requested {{ optional($pr->requested_at)->format('d M Y H:i') }}
+                                                        @if($pr->preferred_datetime) · Preferred {{ optional($pr->preferred_datetime)->format('d M Y H:i') }} @endif
+                                                        @if($pr->schedule)
+                                                            · Scheduled {{ optional($pr->schedule->scheduled_start)->format('d M Y H:i') }}
+                                                            @if($pr->schedule->theatreRoom) ({{ $pr->schedule->theatreRoom->name }}) @endif
+                                                        @endif
+                                                    </small>
+                                                    @if($pr->indication)
+                                                        <div><small><strong>Indication:</strong> {{ $pr->indication }}</small></div>
+                                                    @endif
+                                                    @if($pr->notes)
+                                                        <div><small class="text-muted"><strong>Notes:</strong> {{ $pr->notes }}</small></div>
+                                                    @endif
+                                                    @if($pr->rejection_reason)
+                                                        <div><small class="text-danger"><strong>Rejected:</strong> {{ $pr->rejection_reason }}</small></div>
+                                                    @endif
+                                                    @if($pr->cancellation_reason)
+                                                        <div><small class="text-warning"><strong>Cancelled:</strong> {{ $pr->cancellation_reason }}</small></div>
+                                                    @endif
+                                                </div>
+                                                <div class="text-end entry-actions d-flex gap-1 align-items-start">
+                                                    @if($procedureEditable)
+                                                    @php
+                                                        $editEntryPayload = ['priority' => $pr->priority, 'indication' => $pr->indication, 'notes' => $pr->notes, 'preferred_datetime' => optional($pr->preferred_datetime)->format('Y-m-d\TH:i')];
+                                                    @endphp
+                                                    <button type="button" class="btn btn-sm btn-outline-primary edit-entry-btn"
+                                                            data-entry-type="procedure"
+                                                            data-url="{{ route('admin.consultations.procedures.update', $pr) }}"
+                                                            data-entry='@json($editEntryPayload)'>
+                                                        <i class="ti ti-edit"></i>
+                                                    </button>
+                                                    @elseif($pr->status !== \App\Enums\ProcedureStatus::REQUESTED)
+                                                        <small class="text-muted mt-1"><i class="ti ti-lock me-1"></i>Locked: request already processed</small>
+                                                    @endif
+                                                    <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.theatre.show', $pr) }}">
+                                                        <i class="ti ti-eye me-1"></i>Open
+                                                    </a>
+                                                    @if($pr->status === \App\Enums\ProcedureStatus::COMPLETED)
+                                                        <a data-no-inertia class="btn btn-sm btn-outline-secondary" href="{{ route('admin.theatre.report', $pr) }}" target="_blank">Report</a>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @endforeach
                                     </div>
-                                    <div class="text-end">
-                                        <a class="btn btn-sm btn-outline-primary" href="{{ route('admin.theatre.show', $pr) }}">
-                                            <i class="ti ti-eye me-1"></i>Open
-                                        </a>
-                                        @if($pr->status === \App\Enums\ProcedureStatus::COMPLETED)
-                                            <a data-no-inertia class="btn btn-sm btn-outline-secondary" href="{{ route('admin.theatre.report', $pr) }}" target="_blank">Report</a>
-                                        @endif
-                                    </div>
-                                </div>
+                                @endforeach
                             </div>
                             @empty
                             <div class="text-center text-muted py-4" id="procedures-empty">
@@ -1398,38 +1656,66 @@
                         @endcan
                     </div>
                     <div class="card-body">
+                        <div id="tasks-list">
                         @if($record && $record->tasks && $record->tasks->count() > 0)
-                            @foreach($record->tasks->sortBy(fn($t) => $t->completed_at ? 1 : 0) as $task)
-                            <div class="d-flex align-items-start gap-2 mb-3 p-2 border rounded {{ $task->completed_at ? 'bg-light' : '' }}">
-                                @if(auth()->user() && $entryPermissions->canEdit(auth()->user(), $task))
-                                <form method="POST" action="{{ route('admin.consultations.tasks.toggle', $task) }}" onsubmit="saveTabBeforeSubmit('tasks-section')">
-                                    @csrf @method('PATCH')
-                                    <button type="submit" class="btn btn-sm {{ $task->completed_at ? 'btn-success' : 'btn-outline-secondary' }} rounded-circle p-1" style="width:28px;height:28px;" title="{{ $task->completed_at ? 'Mark incomplete' : 'Mark complete' }}">
-                                        <i class="ti ti-check fs-14"></i>
-                                    </button>
-                                </form>
-                                @endif
-                                <div class="flex-grow-1">
-                                    <div class="d-flex justify-content-between">
-                                        <span class="fw-medium {{ $task->completed_at ? 'text-decoration-line-through text-muted' : '' }}">{{ $task->title }}</span>
-                                        @if($canDeleteEntry($task))
-                                        <form method="POST" action="{{ route('admin.consultations.tasks.destroy', $task) }}" class="d-inline" onsubmit="return confirm('Delete this task?') && saveTabBeforeSubmit('tasks-section')">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="btn btn-xs btn-outline-danger"><i class="ti ti-x"></i></button>
-                                        </form>
-                                        @endif
+                            @foreach($ownerGroups($record->tasks->sortBy(fn($t) => $t->completed_at ? 1 : 0)) as $group)
+                            @php
+                                $firstEntry = $group->first();
+                            @endphp
+                            <div class="owner-group mb-3" data-owner-key="{{ $ownerKey($firstEntry) }}">
+                                <div class="owner-group-header d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="fw-semibold">{{ $ownerDisplayName($firstEntry) }}</span>
+                                        <span class="badge bg-{{ $ownerRoleClass($firstEntry) }}-subtle text-{{ $ownerRoleClass($firstEntry) }} ms-1">{{ $ownerRoleLabel($firstEntry) }}</span>
                                     </div>
-                                    @if($task->description) <small class="text-muted">{{ $task->description }}</small> @endif
-                                    <div class="mt-1">
-                                        <small class="text-muted">
-                                            Created by: {{ $task->creator?->full_name ?? 'Unknown user' }}
-                                            @if($task->assignedUser) Assigned: {{ $task->assignedUser->full_name }} @endif
-                                            @if($task->due_date) &middot; Due: {{ $task->due_date->format('d M Y') }} @endif
-                                            @if($task->completed_at) &middot; Done: {{ $task->completed_at->format('d M Y H:i') }} @endif
-                                            @if($task->completedBy) &middot; Completed by: {{ $task->completedBy->full_name }} @endif
-                                        </small>
+                                    <small class="text-muted">{{ $group->count() }} {{ Str::plural('task', $group->count()) }}</small>
+                                </div>
+                                @foreach($group as $task)
+                                <div class="d-flex align-items-start gap-2 mb-3 p-2 border rounded {{ $task->completed_at ? 'bg-light' : '' }}" id="task-{{ $task->id }}" data-owner-key="{{ $ownerKey($task) }}">
+                                    @if($canEditEntry($task))
+                                    <form method="POST" action="{{ route('admin.consultations.tasks.toggle', $task) }}" onsubmit="saveTabBeforeSubmit('tasks-section')">
+                                        @csrf @method('PATCH')
+                                        <button type="submit" class="btn btn-sm {{ $task->completed_at ? 'btn-success' : 'btn-outline-secondary' }} rounded-circle p-1" style="width:28px;height:28px;" title="{{ $task->completed_at ? 'Mark incomplete' : 'Mark complete' }}">
+                                            <i class="ti ti-check fs-14"></i>
+                                        </button>
+                                    </form>
+                                    @endif
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-medium {{ $task->completed_at ? 'text-decoration-line-through text-muted' : '' }}">{{ $task->title }}</span>
+                                            <div class="entry-actions d-flex gap-1">
+                                                @if($canEditEntry($task))
+                                                @php
+                                                    $editEntryPayload = ['title' => $task->title, 'description' => $task->description, 'priority' => $task->priority, 'status' => $task->status, 'assigned_to' => $task->assigned_to, 'due_date' => optional($task->due_date)->format('Y-m-d')];
+                                                @endphp
+                                                <button type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                        data-entry-type="task"
+                                                        data-url="{{ route('admin.consultations.tasks.update', $task) }}"
+                                                        data-entry='@json($editEntryPayload)'>
+                                                    <i class="ti ti-edit"></i>
+                                                </button>
+                                                @endif
+                                                @if($canDeleteEntry($task))
+                                                <form method="POST" action="{{ route('admin.consultations.tasks.destroy', $task) }}" class="d-inline" onsubmit="return confirm('Delete this task?') && saveTabBeforeSubmit('tasks-section')">
+                                                    @csrf @method('DELETE')
+                                                    <button type="submit" class="btn btn-xs btn-outline-danger"><i class="ti ti-x"></i></button>
+                                                </form>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        @if($task->description) <small class="text-muted">{{ $task->description }}</small> @endif
+                                        <div class="mt-1">
+                                            <small class="text-muted">
+                                                Created: {{ $task->created_at?->format('d M Y, h:i A') }}
+                                                @if($task->assignedUser) &middot; Assigned: {{ $task->assignedUser->full_name }} @endif
+                                                @if($task->due_date) &middot; Due: {{ $task->due_date->format('d M Y') }} @endif
+                                                @if($task->completed_at) &middot; Done: {{ $task->completed_at->format('d M Y H:i') }} @endif
+                                                @if($task->completedBy) &middot; Completed by: {{ $task->completedBy->full_name }} @endif
+                                            </small>
+                                        </div>
                                     </div>
                                 </div>
+                                @endforeach
                             </div>
                             @endforeach
                         @else
@@ -1437,6 +1723,7 @@
                                 <i class="ti ti-checklist fs-1 d-block mb-2"></i>No tasks for this consultation yet.
                             </div>
                         @endif
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1447,54 +1734,8 @@
                     <div class="card-header">
                         <h6 class="fw-bold mb-0"><i class="ti ti-notes me-1"></i>Notes / Consultation Summary</h6>
                     </div>
-                    <div class="card-body">
-                        <div class="border rounded p-3 mb-3 bg-light">
-                            <div class="row g-2 small">
-                                <div class="col-md-4"><strong>Department Session:</strong> {{ $consultationSummary['department'] ?? '-' }}</div>
-                                <div class="col-md-4"><strong>Main Doctor:</strong> {{ $consultationSummary['main_doctor'] ? 'Dr. '.$consultationSummary['main_doctor'] : 'Unassigned' }}</div>
-                                <div class="col-md-4"><strong>Contributors:</strong> {{ collect($consultationSummary['contributors'] ?? [])->implode(', ') ?: '-' }}</div>
-                                <div class="col-12"><strong>Services:</strong> {{ collect($consultationSummary['services'] ?? [])->implode(', ') ?: '-' }}</div>
-                            </div>
-                        </div>
-
-                        @php
-                            $summaryLabels = [
-                                'complaints' => 'Complaints',
-                                'history_of_presenting_complaint' => 'History of Presenting Complaint',
-                                'examination' => 'Examination',
-                                'diagnoses' => 'Diagnosis',
-                                'investigations' => 'Investigations',
-                                'treatments' => 'Treatments',
-                                'prescriptions' => 'Prescriptions',
-                                'procedures' => 'Procedures',
-                                'tasks' => 'Tasks / Follow-up / Instructions',
-                                'notes' => 'Notes',
-                            ];
-                        @endphp
-                        @foreach($summaryLabels as $key => $label)
-                            <div class="mb-3">
-                                <h6 class="small fw-bold text-muted border-bottom pb-1">{{ $label }}</h6>
-                                @forelse(($consultationSummary['sections'][$key] ?? []) as $entry)
-                                    <div class="ehr-item">
-                                        <div class="fw-medium">{{ $entry['content'] }}</div>
-                                        <small class="text-muted">
-                                            Entered by: {{ $entry['entered_by'] }}
-                                            @if($entry['created_at']) · {{ $entry['created_at']->format('d M Y, h:i A') }} @endif
-                                            @if($entry['source_pattern']) · Source Pattern: {{ $entry['source_pattern'] }} @endif
-                                        </small>
-                                        @if(!empty($entry['details']))
-                                            <div class="small mt-1">
-                                                @foreach($entry['details'] as $name => $value)
-                                                    <span class="badge bg-light text-dark me-1">{{ $name }}: {{ $value }}</span>
-                                                @endforeach
-                                            </div>
-                                        @endif
-                                    </div>
-                                @empty
-                                    <p class="text-muted small mb-2">None recorded.</p>
-                                @endforelse
-                            </div>
-                        @endforeach
+                    <div class="card-body" id="consultation-summary-body">
+                        @include('consultations.partials.summary-sections', ['consultationSummary' => $consultationSummary])
                     </div>
                 </div>
             </div>
@@ -1661,7 +1902,7 @@
 <div class="modal fade" id="addTaskModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="POST" action="{{ route('admin.consultations.tasks.store', $visit) }}" onsubmit="saveTabBeforeSubmit('tasks-section')">
+            <form data-ajax-form="tasks" method="POST" action="{{ route('admin.consultations.tasks.store', $visit) }}" onsubmit="saveTabBeforeSubmit('tasks-section')">
                 @csrf
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="ti ti-checklist me-2"></i>Add Task</h5>
@@ -1705,6 +1946,34 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>Add Task</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endcan
+
+{{-- ============================================================ --}}
+{{-- EDIT CONSULTATION ENTRY MODAL --}}
+{{-- ============================================================ --}}
+@can('consultations.create')
+<div class="modal fade" id="editEntryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form id="editEntryForm" method="POST">
+                @csrf
+                @method('PATCH')
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="ti ti-edit me-2"></i><span id="editEntryTitle">Edit Entry</span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="editEntryErrors" class="alert alert-danger d-none small py-2"></div>
+                    <div id="editEntryFields"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>Update</button>
                 </div>
             </form>
         </div>
@@ -2029,8 +2298,14 @@ window.diagnosisBaseUrl  = '{{ url("admin/consultations/diagnoses") }}';
 window.deptServicesBase  = '{{ url("admin/departments") }}';
 window.procedureDeptServicesBase = '{{ url("admin/theatre/departments") }}';
 window.prescriptionDestroyBase = '{{ url("admin/consultations/prescriptions") }}';
+window.procedureRequestBase = '{{ url("admin/consultations/procedures") }}';
+window.labRequestBase = '{{ url("admin/consultations/lab-requests") }}';
+window.taskBase = '{{ url("admin/consultations/tasks") }}';
 window.canEditConsultation = @json($canEdit);
 window.currentConsultationRouteId = @json($selectedRoute?->id);
+window.currentUser = @json(auth()->user() ? ['id' => auth()->id(), 'full_name' => auth()->user()->full_name, 'roles' => auth()->user()->getRoleNames()->values()] : null);
+window.summaryFragmentUrl = '{{ route('admin.consultations.summary-fragment', $visit) }}';
+window.taskAssignableUsers = @json($doctors->map(fn($doctor) => ['id' => $doctor->id, 'name' => 'Dr. '.$doctor->full_name])->values());
 
 /* ── Sessions drawer: always-visible, anchored to col-lg-10 ──── */
 function positionSessionsDrawer() {
@@ -2209,6 +2484,10 @@ var diagnosisBaseUrl = window.diagnosisBaseUrl;
 var deptServicesBase = window.deptServicesBase;
 var procedureDeptServicesBase = window.procedureDeptServicesBase;
 var prescriptionDestroyBase = window.prescriptionDestroyBase;
+var procedureRequestBase = window.procedureRequestBase;
+var labRequestBase = window.labRequestBase;
+var taskBase = window.taskBase;
+var summaryFragmentUrl = window.summaryFragmentUrl;
 
 /* ================================================================
    TAB PERSISTENCE
@@ -2260,6 +2539,238 @@ function showToast(msg, type) {
     setTimeout(function () { t.remove(); }, 3000);
 }
 
+function currentPageUrl() {
+    var url = new URL(window.location.href);
+    if (window.currentConsultationRouteId) {
+        url.searchParams.set('consultation_route_id', window.currentConsultationRouteId);
+    }
+    return url.toString();
+}
+
+function refreshConsultationSection(section) {
+    var target = document.getElementById(section + '-list');
+    if (!target) return Promise.resolve();
+
+    return fetch(currentPageUrl(), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
+    })
+    .then(function (r) { return r.text(); })
+    .then(function (html) {
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        var fresh = doc.getElementById(section + '-list');
+        if (fresh) target.innerHTML = fresh.innerHTML;
+
+        var badge = document.getElementById('badge-' + section);
+        var freshBadge = doc.getElementById('badge-' + section);
+        if (badge && freshBadge) badge.textContent = freshBadge.textContent;
+
+        bindDeleteButtons();
+        bindDiagnosisButtons();
+        bindEditEntryButtons();
+    });
+}
+
+function refreshConsultationSummary() {
+    var target = document.getElementById('consultation-summary-body');
+    if (!target || !summaryFragmentUrl) return Promise.resolve();
+
+    var url = new URL(summaryFragmentUrl, window.location.origin);
+    if (window.currentConsultationRouteId) {
+        url.searchParams.set('consultation_route_id', window.currentConsultationRouteId);
+    }
+
+    return fetch(url.toString(), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
+    })
+    .then(function (r) { return r.text(); })
+    .then(function (html) { target.innerHTML = html; });
+}
+
+function resetAjaxForm(form, section) {
+    form.reset();
+    var col = form.closest('.collapse');
+    if (col) {
+        var bs = bootstrap.Collapse.getInstance(col) || bootstrap.Collapse.getOrCreateInstance(col, { toggle: false });
+        if (bs) bs.hide();
+    }
+    if (section === 'tasks') {
+        var modal = bootstrap.Modal.getInstance(document.getElementById('addTaskModal'));
+        if (modal) modal.hide();
+    }
+
+    var ds = document.getElementById('investigationDeptSelect');
+    if (ds) {
+        ds.value = '';
+        var sc = document.getElementById('investigationServicesContainer');
+        if (sc) sc.innerHTML = '<span class="text-muted small">Select a department first to load services</span>';
+    }
+}
+
+function editField(name, label, value, type, attrs) {
+    attrs = attrs || '';
+    type = type || 'text';
+    return '<div class="mb-3"><label class="form-label small">' + escapeHtml(label) + '</label>' +
+        '<input type="' + type + '" name="' + escapeHtml(name) + '" class="form-control" value="' + escapeHtml(value || '') + '" ' + attrs + '></div>';
+}
+
+function editTextarea(name, label, value, rows, attrs) {
+    return '<div class="mb-3"><label class="form-label small">' + escapeHtml(label) + '</label>' +
+        '<textarea name="' + escapeHtml(name) + '" class="form-control" rows="' + (rows || 3) + '" ' + (attrs || '') + '>' + escapeHtml(value || '') + '</textarea></div>';
+}
+
+function editSelect(name, label, value, options, attrs) {
+    var html = '<div class="mb-3"><label class="form-label small">' + escapeHtml(label) + '</label><select name="' + escapeHtml(name) + '" class="form-select" ' + (attrs || '') + '>';
+    options.forEach(function (opt) {
+        var selected = String(opt.value ?? '') === String(value ?? '') ? ' selected' : '';
+        html += '<option value="' + escapeHtml(opt.value) + '"' + selected + '>' + escapeHtml(opt.label) + '</option>';
+    });
+    return html + '</select></div>';
+}
+
+function buildEditFields(type, entry) {
+    entry = entry || {};
+    if (type === 'complaint') {
+        return editField('description', 'Description', entry.description, 'text', 'required') +
+            '<div class="row"><div class="col-md-6">' + editField('duration', 'Duration', entry.duration) + '</div><div class="col-md-6">' +
+            editSelect('severity', 'Severity', entry.severity, [
+                { value: '', label: '-- Select --' }, { value: 'mild', label: 'Mild' }, { value: 'moderate', label: 'Moderate' }, { value: 'severe', label: 'Severe' }
+            ]) + '</div></div>';
+    }
+    if (type === 'hopc') {
+        return editTextarea('content', 'Narrative', entry.content, 4, 'required') +
+            '<div class="row"><div class="col-md-3">' + editField('onset', 'Onset', entry.onset) + '</div><div class="col-md-3">' + editField('duration', 'Duration', entry.duration) + '</div><div class="col-md-3">' + editField('location', 'Location', entry.location) + '</div><div class="col-md-3">' + editField('severity', 'Severity', entry.severity) + '</div></div>' +
+            editField('associated_symptoms', 'Associated Symptoms', entry.associated_symptoms) +
+            '<div class="row"><div class="col-md-6">' + editField('aggravating_factors', 'Aggravating Factors', entry.aggravating_factors) + '</div><div class="col-md-6">' + editField('relieving_factors', 'Relieving Factors', entry.relieving_factors) + '</div></div>';
+    }
+    if (type === 'examination') {
+        return editTextarea('findings', 'Findings', entry.findings, 3, 'required') +
+            '<div class="row"><div class="col-md-6">' + editTextarea('general_examination', 'General Examination', entry.general_examination, 2) + '</div><div class="col-md-6">' + editTextarea('systemic_examination', 'Systemic Examination', entry.systemic_examination, 2) + '</div></div>' +
+            '<div class="row"><div class="col-md-6">' + editTextarea('cardiovascular', 'Cardiovascular', entry.cardiovascular, 2) + '</div><div class="col-md-6">' + editTextarea('respiratory', 'Respiratory', entry.respiratory, 2) + '</div></div>' +
+            '<div class="row"><div class="col-md-6">' + editTextarea('gastrointestinal', 'Gastrointestinal', entry.gastrointestinal, 2) + '</div><div class="col-md-6">' + editTextarea('central_nervous_system', 'Central Nervous System', entry.central_nervous_system, 2) + '</div></div>' +
+            '<div class="row"><div class="col-md-6">' + editTextarea('specialty_examination', 'Specialty Examination', entry.specialty_examination, 2) + '</div><div class="col-md-6">' + editTextarea('local_examination', 'Local Examination', entry.local_examination, 2) + '</div></div>' +
+            editTextarea('notes', 'Notes', entry.notes, 2);
+    }
+    if (type === 'diagnosis') {
+        return editField('description', 'Description', entry.description, 'text', 'required') +
+            '<div class="row"><div class="col-md-6">' + editField('icd_code', 'ICD-10 Code', entry.icd_code) + '</div><div class="col-md-6">' +
+            editSelect('type', 'Type', entry.type, [{ value: 'provisional', label: 'Provisional' }, { value: 'final', label: 'Final' }]) + '</div></div>' +
+            editField('notes', 'Notes', entry.notes);
+    }
+    if (type === 'treatment') {
+        return editSelect('type', 'Type', entry.type, [
+            { value: 'medication', label: 'Medication' }, { value: 'procedure', label: 'Procedure' }, { value: 'referral', label: 'Referral' }, { value: 'advice', label: 'Advice' }
+        ], 'required') + editTextarea('description', 'Description', entry.description, 3, 'required');
+    }
+    if (type === 'prescription') {
+        return editTextarea('notes', 'Prescription Notes', entry.notes, 3);
+    }
+    if (type === 'lab-request') {
+        return editSelect('urgency', 'Urgency', entry.urgency, [
+            { value: 'routine', label: 'Routine' }, { value: 'urgent', label: 'Urgent' }, { value: 'emergency', label: 'Emergency' }
+        ]) + editTextarea('clinical_info', 'Clinical Notes', entry.clinical_info, 3);
+    }
+    if (type === 'procedure') {
+        return editSelect('priority', 'Priority', entry.priority, [
+            { value: 'routine', label: 'Routine' }, { value: 'urgent', label: 'Urgent' }, { value: 'emergency', label: 'Emergency' }
+        ], 'required') + editField('preferred_datetime', 'Preferred Date/Time', entry.preferred_datetime, 'datetime-local') +
+            editTextarea('indication', 'Indication / Reason', entry.indication, 3, 'required') + editTextarea('notes', 'Notes', entry.notes, 2);
+    }
+    if (type === 'task') {
+        var userOptions = [{ value: '', label: 'Unassigned' }].concat((window.taskAssignableUsers || []).map(function (u) { return { value: u.id, label: u.name }; }));
+        return editField('title', 'Task Title', entry.title, 'text', 'required') + editTextarea('description', 'Description', entry.description, 2) +
+            '<div class="row"><div class="col-md-4">' + editSelect('priority', 'Priority', entry.priority, [{ value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' }]) + '</div><div class="col-md-4">' +
+            editSelect('status', 'Status', entry.status, [{ value: 'pending', label: 'Pending' }, { value: 'in_progress', label: 'In Progress' }, { value: 'completed', label: 'Completed' }, { value: 'cancelled', label: 'Cancelled' }]) + '</div><div class="col-md-4">' + editField('due_date', 'Due Date', entry.due_date, 'date') + '</div></div>' +
+            editSelect('assigned_to', 'Assign To', entry.assigned_to, userOptions);
+    }
+    return '<p class="text-muted mb-0">This entry type cannot be edited here.</p>';
+}
+
+function sectionForEntryType(type) {
+    return {
+        complaint: 'complaints',
+        hopc: 'hopc',
+        examination: 'examination',
+        diagnosis: 'diagnoses',
+        treatment: 'treatments',
+        prescription: 'prescriptions',
+        'lab-request': 'investigations',
+        procedure: 'procedures',
+        task: 'tasks'
+    }[type] || type;
+}
+
+function bindEditEntryButtons() {
+    document.querySelectorAll('.edit-entry-btn:not([data-bound])').forEach(function (btn) {
+        btn.setAttribute('data-bound', '1');
+        btn.addEventListener('click', function () {
+            var modalEl = document.getElementById('editEntryModal');
+            var form = document.getElementById('editEntryForm');
+            var fields = document.getElementById('editEntryFields');
+            var title = document.getElementById('editEntryTitle');
+            var errors = document.getElementById('editEntryErrors');
+            if (!modalEl || !form || !fields) return;
+
+            var type = this.dataset.entryType;
+            var entry = {};
+            try { entry = JSON.parse(this.dataset.entry || '{}'); } catch (e) { entry = {}; }
+            form.action = this.dataset.url;
+            form.dataset.entryType = type;
+            title.textContent = 'Edit ' + type.replace('-', ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+            fields.innerHTML = buildEditFields(type, entry);
+            errors.classList.add('d-none');
+            errors.innerHTML = '';
+
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        });
+    });
+}
+
+var editEntryForm = document.getElementById('editEntryForm');
+if (editEntryForm) {
+    editEntryForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var form = this;
+        var section = sectionForEntryType(form.dataset.entryType);
+        var btn = form.querySelector('[type="submit"]');
+        var origHtml = btn ? btn.innerHTML : '';
+        var errors = document.getElementById('editEntryErrors');
+        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>'; }
+        if (errors) { errors.classList.add('d-none'); errors.innerHTML = ''; }
+
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+        })
+        .then(function (r) {
+            if (!r.ok) return r.json().then(function (e) { throw e; });
+            return r.json();
+        })
+        .then(function (data) {
+            if (!data.success) throw data;
+            var modal = bootstrap.Modal.getInstance(document.getElementById('editEntryModal'));
+            if (modal) modal.hide();
+            Promise.all([refreshConsultationSection(section), refreshConsultationSummary()]).then(function () {
+                activateConsultationTab('#' + section + '-section');
+                showToast('Updated successfully.');
+            });
+        })
+        .catch(function (err) {
+            var msg = 'Update failed.';
+            if (err && err.errors) msg = Object.values(err.errors).flat().join('\n');
+            else if (err && err.message) msg = err.message;
+            if (errors) {
+                errors.classList.remove('d-none');
+                errors.innerHTML = escapeHtml(msg).replace(/\n/g, '<br>');
+            } else {
+                alert(msg);
+            }
+        })
+        .finally(function () { if (btn) { btn.disabled = false; btn.innerHTML = origHtml; } });
+    });
+}
+bindEditEntryButtons();
+
 /* ================================================================
    AJAX DELETE
    ================================================================ */
@@ -2292,6 +2803,8 @@ function bindDeleteButtons() {
                         var b = document.getElementById(badge);
                         if (b) b.textContent = Math.max(0, parseInt(b.textContent || 0) - 1);
                     }
+                    if (badge) refreshConsultationSection(badge.replace('badge-', ''));
+                    refreshConsultationSummary();
                 }
             })
             .catch(function () { alert('Delete failed. Please try again.'); self.disabled = false; });
@@ -2348,136 +2861,13 @@ document.querySelectorAll('[data-ajax-form]').forEach(function (form) {
 });
 
 function onFormSuccess(section, data, form) {
-    var listEl  = document.getElementById(section + '-list');
-    var emptyEl = document.getElementById(section + '-empty');
-    var badge   = document.getElementById('badge-' + section);
-    var html    = '';
-    var count   = 0;
-
-    if (section === 'complaints' && data.complaint) {
-        var c   = data.complaint;
-        var sev = c.severity || 'mild';
-        var sevBadge = c.severity
-            ? '<span class="badge bg-' + (sev === 'severe' ? 'danger' : sev === 'moderate' ? 'warning' : 'info') + '">' + capFirst(sev) + '</span>'
-            : '';
-        html  = '<div class="ehr-item severity-' + escapeHtml(sev) + '" id="complaint-' + c.id + '">';
-        html += '<div class="d-flex justify-content-between">';
-        html += '<div><p class="mb-1">' + escapeHtml(c.description) + '</p>';
-        html += '<small class="text-muted">' + (c.duration ? 'Duration: ' + escapeHtml(c.duration) + ' &middot; ' : '') + (c.severity ? 'Severity: ' + sevBadge : '') + '</small></div>';
-        html += '<button type="button" class="btn btn-xs btn-outline-danger ajax-delete" data-url="' + destroyUrls.complaint + '/' + c.id + '" data-target="#complaint-' + c.id + '" data-badge="badge-complaints" data-confirm="Remove this complaint?"><i class="ti ti-trash"></i></button>';
-        html += '</div></div>';
-        count = 1;
-
-    } else if (section === 'hopc' && data.hopc) {
-        var h = data.hopc;
-        html = '<div class="ehr-item" id="hopc-' + h.id + '">';
-        html += '<div class="d-flex justify-content-between gap-2">';
-        html += '<div><p class="mb-1">' + escapeHtml(h.content || '') + '</p>';
-        html += '<small class="text-muted">Entered by: ' + escapeHtml(h.creator?.full_name || h.doctor?.full_name || 'Unknown user') + '</small></div>';
-        html += '<button type="button" class="btn btn-xs btn-outline-danger ajax-delete" data-url="' + destroyUrls.hopc + '/' + h.id + '" data-target="#hopc-' + h.id + '" data-badge="badge-hopc" data-confirm="Remove this history entry?"><i class="ti ti-trash"></i></button>';
-        html += '</div></div>';
-        count = 1;
-
-    } else if (section === 'examination' && data.examination) {
-        var ex = data.examination;
-        html = '<div class="ehr-item" id="examination-' + ex.id + '">';
-        html += '<div class="d-flex justify-content-between gap-2">';
-        html += '<div><p class="mb-1">' + escapeHtml(ex.findings || '') + '</p>';
-        html += '<small class="text-muted">Entered by: ' + escapeHtml(ex.creator?.full_name || ex.doctor?.full_name || 'Unknown user') + '</small></div>';
-        html += '<button type="button" class="btn btn-xs btn-outline-danger ajax-delete" data-url="' + destroyUrls.examination + '/' + ex.id + '" data-target="#examination-' + ex.id + '" data-badge="badge-examination" data-confirm="Remove this examination entry?"><i class="ti ti-trash"></i></button>';
-        html += '</div></div>';
-        count = 1;
-
-    } else if (section === 'diagnoses' && data.diagnosis) {
-        var d       = data.diagnosis;
-        var typeBg  = d.type === 'final' ? 'success' : 'warning';
-        var pClass  = d.is_primary ? '' : ' d-none';
-        html  = '<div class="ehr-item' + (d.is_primary ? ' is-primary' : '') + '" id="diagnosis-' + d.id + '">';
-        html += '<div class="d-flex justify-content-between align-items-start">';
-        html += '<div class="flex-grow-1"><p class="mb-1">' + escapeHtml(d.description);
-        html += ' <span class="badge bg-' + typeBg + ' ms-1 diagnosis-type-badge" id="type-badge-' + d.id + '">' + capFirst(d.type) + '</span>';
-        html += ' <span class="badge bg-warning text-dark ms-1 diagnosis-primary-badge primary-indicator' + pClass + '" id="primary-badge-' + d.id + '"><i class="ti ti-star-filled me-1"></i>Primary</span>';
-        html += '</p></div>';
-        html += '<div class="d-flex gap-1 ms-2 flex-shrink-0">';
-        html += '<button type="button" class="btn btn-xs btn-outline-secondary toggle-type-btn" title="Mark as ' + (d.type === 'provisional' ? 'Final' : 'Provisional') + '" data-id="' + d.id + '" data-current="' + escapeHtml(d.type) + '" data-url="' + diagnosisBaseUrl + '/' + d.id + '"><i class="ti ti-switch-2 me-1"></i><span class="toggle-type-label">' + (d.type === 'provisional' ? 'Final' : 'Provisional') + '</span></button>';
-        if (!d.is_primary) {
-            html += '<button type="button" class="btn btn-xs btn-outline-warning set-primary-btn" title="Set as Primary" id="set-primary-' + d.id + '" data-id="' + d.id + '" data-url="' + diagnosisBaseUrl + '/' + d.id + '/primary"><i class="ti ti-star"></i></button>';
-        }
-        html += '<button type="button" class="btn btn-xs btn-outline-danger ajax-delete" data-url="' + destroyUrls.diagnosis + '/' + d.id + '" data-target="#diagnosis-' + d.id + '" data-badge="badge-diagnoses" data-confirm="Remove this diagnosis?"><i class="ti ti-trash"></i></button>';
-        html += '</div></div></div>';
-        count = 1;
-
-    } else if (section === 'investigations') {
-        var invs = data.investigations || (data.investigation ? [data.investigation] : []);
-        invs.forEach(function (inv) {
-            var uc = inv.urgency === 'emergency' ? 'danger' : inv.urgency === 'urgent' ? 'warning' : 'secondary';
-            html += '<div class="ehr-item" id="investigation-' + inv.id + '">';
-            html += '<div class="d-flex justify-content-between">';
-            html += '<div><p class="mb-1"><span class="badge bg-dark">' + escapeHtml(inv.investigation_type) + '</span>';
-            if (inv.description && inv.description !== inv.investigation_type) html += ' ' + escapeHtml(inv.description);
-            html += '</p><small class="text-muted">Urgency: <span class="badge bg-' + uc + '">' + capFirst(inv.urgency || 'routine') + '</span></small></div>';
-            html += '<button type="button" class="btn btn-xs btn-outline-danger ajax-delete" data-url="' + destroyUrls.investigation + '/' + inv.id + '" data-target="#investigation-' + inv.id + '" data-badge="badge-investigations" data-confirm="Remove this investigation?"><i class="ti ti-trash"></i></button>';
-            html += '</div></div>';
-        });
-        count = invs.length;
-
-    } else if (section === 'treatments' && data.treatment) {
-        var t  = data.treatment;
-        var tc = t.type === 'medication' ? 'primary' : t.type === 'procedure' ? 'info' : t.type === 'referral' ? 'warning' : 'secondary';
-        html  = '<div class="ehr-item" id="treatment-' + t.id + '">';
-        html += '<div class="d-flex justify-content-between">';
-        html += '<div><p class="mb-1"><span class="badge bg-' + tc + '">' + capFirst(t.type) + '</span> ' + escapeHtml(t.description) + '</p></div>';
-        html += '<button type="button" class="btn btn-xs btn-outline-danger ajax-delete" data-url="' + destroyUrls.treatment + '/' + t.id + '" data-target="#treatment-' + t.id + '" data-badge="badge-treatments" data-confirm="Remove this treatment?"><i class="ti ti-trash"></i></button>';
-        html += '</div></div>';
-        count = 1;
-    } else if (section === 'prescriptions' && data.prescription) {
-        var rx = data.prescription;
-        var statusColor = rx.status === 'pending' ? 'warning' : (rx.status === 'active' ? 'info' : (rx.status === 'dispensed' ? 'success' : 'secondary'));
-        var statusLabel = capFirst(String(rx.status || 'pending').replace('_', ' '));
-        html  = '<div class="border rounded p-3 mb-3" id="prescription-' + rx.id + '">';
-        html += '<div class="d-flex justify-content-between align-items-center mb-2">';
-        html += '<div><span class="fw-bold">' + escapeHtml(rx.prescription_number) + '</span>';
-        html += ' <span class="badge bg-' + statusColor + ' ms-2">' + statusLabel + '</span></div>';
-        html += '<small class="text-muted">just now</small></div>';
-        html += '<div class="table-responsive"><table class="table table-sm table-borderless mb-0">';
-        html += '<thead><tr class="text-muted small"><th>Drug</th><th>Dosage</th><th>Freq</th><th>Duration</th><th>Qty</th><th>Route</th></tr></thead><tbody>';
-        (rx.items || []).forEach(function (it) {
-            html += '<tr><td class="fw-medium">' + escapeHtml(it.drug_name) + '</td>';
-            html += '<td>' + escapeHtml(it.dosage || '') + '</td>';
-            html += '<td>' + escapeHtml(it.frequency || '') + '</td>';
-            html += '<td>' + escapeHtml(it.duration || '') + '</td>';
-            html += '<td>' + escapeHtml(String(it.quantity ?? '')) + '</td>';
-            html += '<td>' + escapeHtml(it.route || '') + '</td></tr>';
-        });
-        html += '</tbody></table></div>';
-        if (rx.notes) html += '<small class="text-muted">Notes: ' + escapeHtml(rx.notes) + '</small>';
-        html += '</div>';
-        // Hide form errors box on success
-        var errBox = document.getElementById('prescriptionFormErrors');
-        if (errBox) { errBox.classList.add('d-none'); errBox.innerHTML = ''; }
-        count = 1;
-    }
-
-    if (html && listEl) {
-        listEl.insertAdjacentHTML('beforeend', html);
-        if (emptyEl) emptyEl.style.display = 'none';
-        if (badge) badge.textContent = parseInt(badge.textContent || 0) + count;
-        bindDeleteButtons();
-        bindDiagnosisButtons();
-    }
-
-    // Reset form
-    form.reset();
-    var col = form.closest('.collapse');
-    if (col) { var bs = bootstrap.Collapse.getInstance(col); if (bs) bs.hide(); }
-
-    // Reset investigation dept/services
-    var ds = document.getElementById('investigationDeptSelect');
-    if (ds) {
-        ds.value = '';
-        var sc = document.getElementById('investigationServicesContainer');
-        if (sc) sc.innerHTML = '<span class="text-muted small">Select a department first to load services</span>';
-    }
+    resetAjaxForm(form, section);
+    Promise.all([
+        refreshConsultationSection(section),
+        refreshConsultationSummary()
+    ]).then(function () {
+        activateConsultationTab('#' + section + '-section');
+    });
 }
 
 /* ================================================================
@@ -2513,6 +2903,7 @@ function bindDiagnosisButtons() {
                     self.title = 'Mark as ' + (newType === 'provisional' ? 'Final' : 'Provisional');
                     var label = self.querySelector('.toggle-type-label');
                     if (label) label.textContent = newType === 'provisional' ? 'Final' : 'Provisional';
+                    refreshConsultationSummary();
                     showToast('Type set to ' + capFirst(newType) + '.');
                 }
             })
@@ -2549,6 +2940,7 @@ function bindDiagnosisButtons() {
                     if (sp) sp.classList.add('d-none');
                     var de = document.getElementById('diagnosis-' + id);
                     if (de) de.classList.add('is-primary');
+                    refreshConsultationSummary();
                     showToast('Primary diagnosis updated.');
                 }
             })

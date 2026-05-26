@@ -80,7 +80,7 @@ class ConsultationTaskController extends Controller
         $this->entryLogs->updated($task, $old, Auth::user());
 
         if ($request->ajax() && ! $request->header('X-Inertia')) {
-            return response()->json(['success' => true, 'task' => $task->fresh('assignedUser')]);
+            return response()->json(['success' => true, 'task' => $task->fresh(['assignedUser', 'creator', 'completedBy'])]);
         }
 
         return back()->with('success', 'Task updated.');
@@ -99,7 +99,7 @@ class ConsultationTaskController extends Controller
         $this->entryLogs->updated($task, $old, Auth::user());
 
         if (request()->ajax() && ! request()->header('X-Inertia')) {
-            return response()->json(['success' => true, 'task' => $task->fresh()]);
+            return response()->json(['success' => true, 'task' => $task->fresh(['assignedUser', 'creator', 'completedBy'])]);
         }
 
         return back()->with('success', 'Task status toggled.');

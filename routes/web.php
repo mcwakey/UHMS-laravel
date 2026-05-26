@@ -522,12 +522,15 @@ Route::middleware('auth')->group(function () {
             // Consultation sub-resources (complaints, diagnoses, investigations, treatments, prescriptions)
             Route::middleware('can:consultations.create')->group(function () {
                 Route::post('consultations/{visit}/complaints', [ConsultationController::class, 'storeComplaint'])->name('consultations.complaints.store');
+                Route::patch('consultations/complaints/{complaint}', [ConsultationController::class, 'updateComplaint'])->name('consultations.complaints.update');
                 Route::delete('consultations/complaints/{complaint}', [ConsultationController::class, 'destroyComplaint'])->name('consultations.complaints.destroy');
 
                 Route::post('consultations/{visit}/history-of-presenting-complaints', [ConsultationController::class, 'storeHistoryOfPresentingComplaint'])->name('consultations.hopc.store');
+                Route::patch('consultations/history-of-presenting-complaints/{hopc}', [ConsultationController::class, 'updateHistoryOfPresentingComplaint'])->name('consultations.hopc.update');
                 Route::delete('consultations/history-of-presenting-complaints/{hopc}', [ConsultationController::class, 'destroyHistoryOfPresentingComplaint'])->name('consultations.hopc.destroy');
 
                 Route::post('consultations/{visit}/examinations', [ConsultationController::class, 'storeExamination'])->name('consultations.examinations.store');
+                Route::patch('consultations/examinations/{examination}', [ConsultationController::class, 'updateExamination'])->name('consultations.examinations.update');
                 Route::delete('consultations/examinations/{examination}', [ConsultationController::class, 'destroyExamination'])->name('consultations.examinations.destroy');
 
                 Route::post('consultations/{visit}/diagnoses', [ConsultationController::class, 'storeDiagnosis'])->name('consultations.diagnoses.store');
@@ -536,20 +539,27 @@ Route::middleware('auth')->group(function () {
                 Route::delete('consultations/diagnoses/{diagnosis}', [ConsultationController::class, 'destroyDiagnosis'])->name('consultations.diagnoses.destroy');
 
                 Route::post('consultations/{visit}/investigations', [ConsultationController::class, 'storeInvestigation'])->name('consultations.investigations.store');
+                Route::patch('consultations/investigations/{investigation}', [ConsultationController::class, 'updateInvestigation'])->name('consultations.investigations.update');
                 Route::delete('consultations/investigations/{investigation}', [ConsultationController::class, 'destroyInvestigation'])->name('consultations.investigations.destroy');
                 Route::delete('consultations/investigation-items/{item}', [ConsultationController::class, 'destroyInvestigationItem'])->name('consultations.investigation-items.destroy');
 
                 Route::post('consultations/{visit}/treatments', [ConsultationController::class, 'storeTreatment'])->name('consultations.treatments.store');
+                Route::patch('consultations/treatments/{treatment}', [ConsultationController::class, 'updateTreatment'])->name('consultations.treatments.update');
                 Route::delete('consultations/treatments/{treatment}', [ConsultationController::class, 'destroyTreatment'])->name('consultations.treatments.destroy');
             });
+
+            Route::get('consultations/{visit}/summary-fragment', [ConsultationController::class, 'summaryFragment'])->name('consultations.summary-fragment');
 
             Route::get('departments/{department}/investigation-services', [ConsultationController::class, 'getDepartmentServices'])->name('departments.investigation-services');
             Route::get('departments/{department}/investigation-info', [ConsultationController::class, 'getDepartmentInvestigationInfo'])->name('departments.investigation-info');
 
             Route::post('consultations/{visit}/prescriptions', [ConsultationController::class, 'storePrescription'])->name('consultations.prescriptions.store')->middleware('can:prescriptions.create');
+            Route::patch('consultations/prescriptions/{prescription}', [ConsultationController::class, 'updatePrescription'])->name('consultations.prescriptions.update')->middleware('can:prescriptions.create');
             Route::delete('consultations/prescriptions/{prescription}', [ConsultationController::class, 'destroyPrescription'])->name('consultations.prescriptions.destroy')->middleware('can:prescriptions.create');
             Route::post('consultations/{visit}/procedures', [ConsultationController::class, 'storeProcedureRequest'])->name('consultations.procedures.store')->middleware('can:procedure.request');
+            Route::patch('consultations/procedures/{procedureRequest}', [ConsultationController::class, 'updateProcedureRequest'])->name('consultations.procedures.update')->middleware('can:procedure.request');
             Route::post('consultations/{visit}/lab-request', [ConsultationController::class, 'storeLabRequest'])->name('consultations.lab-request.store')->middleware('can:lab.requests.create');
+            Route::patch('consultations/lab-requests/{labRequest}', [ConsultationController::class, 'updateLabRequest'])->name('consultations.lab-request.update')->middleware('can:lab.requests.create');
 
             // Suggestion endpoints
             Route::get('consultations/suggest/complaints', [ConsultationController::class, 'suggestComplaints'])->name('consultations.suggest.complaints');

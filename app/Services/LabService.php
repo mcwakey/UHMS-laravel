@@ -417,7 +417,7 @@ class LabService
     public function getVisitLabRequests(Visit $visit): Collection
     {
         return $visit->labRequests()
-            ->with(['items.labTest', 'items.result', 'requestedBy'])
+            ->with(['targetDepartment', 'department', 'requestedBy', 'items.labTest', 'items.service', 'items.result'])
             ->latest()
             ->get();
     }

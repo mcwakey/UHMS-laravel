@@ -1,692 +1,1092 @@
-You are a senior Laravel + Inertia/Vue architect working on **UHMS — Ultimate Hospital Management System**.
+You are a senior Laravel + Inertia/Vue developer working on UHMS — Ultimate Hospital Management System.
 
-We need to fix **double billing during visit creation** and redesign the **consultation queue / consultation routing logic**.
+We have already implemented consultation record ownership correctly. Every consultation record now has its correct creator/owner.
 
-Focus only on visit creation billing, consultation queue eligibility, consultation start logic, and consultation department routing.
+Now we need to improve the Consultation UI and related record behavior so ownership is displayed more cleanly, investigation/procedure records show owners properly, Notes / Consultation Summary updates immediately, and all consultation records have edit actions where permitted.
 
-Do not refactor unrelated modules.
+Focus only on:
 
----
+- Consultation page UI grouping
+- Record owner display
+- Investigation section grouping
+- Procedure owner display
+- Notes / Consultation Summary live refresh
+- Unknown user issue after saving
+- Edit actions for consultation records
+- Backend response/eager-loading needed to support the UI
 
-# 1. Current Problems
+Do not change the already working ownership logic unless needed for UI data loading.
 
-## Problem A — Double Billing on Visit Creation
+Do not break:
 
-When creating a visit, the patient is being billed twice.
-
-This must be fixed.
-
-Investigate all places where visit creation adds invoice items, especially:
-
-```text
-VisitController
-VisitService
-VisitWorkflowService
-BillingService
-InvoiceService
-VisitServiceItem
-visit_services if still present
-invoice_items
-selected services handling
-```
-
-Find the exact duplicate billing source.
-
-Possible causes:
-
-```text
-Visit creation adds selected services to invoice
-AND another workflow also generates invoice items from visit services
-
-BillingService::addItemToVisitInvoice called twice
-
-VisitServiceItem created then later converted immediately again
-
-Frontend submits selected services twice
-
-Controller and service both add billing lines
-
-Duplicate guard missing or using wrong source_type/source_id
-
-Old visit_services logic still active alongside invoice_items
-```
+- consultation
+- visits
+- medical records
+- investigations
+- procedures
+- prescriptions
+- treatments
+- billing
+- visit preview
+- claims mirror
 
 ---
 
-# 2. Required Billing Rule
+# 1. Current Problems to Fix
 
-When a visit is created:
+Fix the following issues:
 
-* selected services should be billed **once only**
-* all billable services must go to the visit’s single invoice
-* invoice item must have a unique source reference
-* old duplicate paths must be removed or disabled
-
-Use only:
-
-```text
-BillingService
-InvoiceService
-invoice_items
-```
-
-Do not use `visit_services` as a billing source if the system has already moved to one visit invoice.
-
----
-
-# 3. Duplicate Protection
-
-`BillingService::addItemToVisitInvoice()` must prevent duplicates.
-
-For each invoice item, use a stable unique identity such as:
-
-```text
-invoice_id
-source_type
-source_id
-service_id
-product_id
-```
-
-Recommended for visit creation selected services:
-
-```text
-source_type = visit_selected_service
-source_id = selected visit service item id
-```
-
-or, if there is no staging table:
-
-```text
-source_type = visit_creation
-source_id = visit.id + service.id
-```
-
-Better approach:
-
-Create a unique key or duplicate check:
-
-```php
-InvoiceItem::where('invoice_id', $invoice->id)
-    ->where('source_type', $sourceType)
-    ->where('source_id', $sourceId)
-    ->exists();
-```
-
-If the same selected service can appear once per visit, also prevent:
-
-```php
-InvoiceItem::where('invoice_id', $invoice->id)
-    ->where('service_id', $service->id)
-    ->where('source_type', 'visit_creation')
-    ->exists();
-```
-
-Adapt to existing schema.
-
-Do not silently create duplicate invoice lines.
+1. Consultation records currently repeat the doctor/user name on every record.
+2. Instead, group records by user/doctor on the UI.
+3. Under the Investigation section on the Consultation page:
+   - group requests by department
+   - make sure record owners are displayed clearly
+4. Under the Procedures section:
+   - requested procedures do not display record owners
+5. Under Notes / Consultation Summary:
+   - new additions do not update immediately after saving
+   - some newly added records show “Unknown user” until the page is reloaded
+6. Consultation records currently do not have visible edit actions/buttons.
+7. After editing or adding records, the UI should update without full page reload.
+8. The current tab/section should remain active after create/update.
 
 ---
 
-# 4. Consultation Queue Rule
+# 2. Preserve Existing Ownership Logic
 
-Only queue visits that have at least one selected/billed service from a **consultation-type department**.
+The ownership logic is already working.
 
-A visit should appear in the triage/consultation queue only if:
+Do not rewrite the whole ownership system.
 
-```text
-visit has invoice item / selected service
-AND service.department.type = consultation
-AND visit status is WAITING_CONSULTATION or CONSULTING
-```
+Do not change database ownership fields unless a relationship/eager-loading issue requires it.
 
-Do not queue visits for triage/consultation if they only have:
+Current entry ownership should remain based on existing fields like:
 
-```text
-lab service
-pharmacy product
-procedure service
-ward service
-emergency-only consumable
-billing-only item
-```
+created_by
+doctor_id
+updated_by
+user_id
+
+or the project’s equivalent fields.
+
+The goal is to improve how ownership is displayed, grouped, refreshed, and edited in the frontend.
 
 ---
 
-# 5. Consultation Service Link Rule
+# 3. Group Consultation Records by User on UI
 
-When starting a consultation, the consultation session must be linked to one specific consultation service selected for that patient.
+Instead of displaying this repeatedly:
+
+Complaint A — Entered by Dr. Kofi
+Complaint B — Entered by Dr. Kofi
+Complaint C — Entered by Dr. Kofi
+Diagnosis X — Entered by Dr. Ama
+Diagnosis Y — Entered by Dr. Ama
+
+Display grouped by user/doctor:
+
+Dr. Kofi Mensah
+    Complaint A
+    Complaint B
+    Complaint C
+
+Dr. Ama Boateng
+    Diagnosis X
+    Diagnosis Y
+
+Apply grouping to consultation sections where multiple records are listed:
+
+Complaints
+History of Presenting Complaint
+Examination
+Diagnosis
+Treatments
+Prescriptions
+Investigations
+Procedures
+Tasks
+Notes
+Consultation Summary
+
+If grouping per section makes more sense, group inside each section.
 
 Example:
 
-A patient visit has selected services:
+Complaints
 
-```text
-General Consultation — OPD Department
-Dental Consultation — Dental Department
-Lab Malaria Test — Lab Department
-```
+Dr. Kofi Mensah
+    Fever
+    Headache
 
-The consultation queue should only care about:
+Dr. Ama Boateng
+    Chest pain review note
 
-```text
-General Consultation
-Dental Consultation
-```
+Do not remove ownership visibility.
 
-When the doctor starts consultation, they must start it for one of those consultation services.
+The doctor/user name should still be visible, but as a group heading instead of repeated on every item.
 
 ---
 
-# 6. One Consultation Department at a Time
+# 4. Recommended Grouping Data Structure
 
-A patient can be directed to one consultation department at a time.
+Backend or frontend may normalize records into this structure:
 
-When transitioning/directing a patient to a consultation department:
+[
+  {
+    user_id: 5,
+    user_name: "Dr. Kofi Mensah",
+    user_role: "Doctor",
+    entries: [...]
+  },
+  {
+    user_id: 8,
+    user_name: "Dr. Ama Boateng",
+    user_role: "Specialist",
+    entries: [...]
+  }
+]
 
-* select one consultation department
-* select one consultation service under that department
-* assign doctor optionally
-* update current consultation target
-* keep visit status as `CONSULTING`
+If done in Vue, create a helper:
+
+groupByOwner(records)
+
+Owner resolution should use existing relationship names, such as:
+
+record.creator
+record.createdBy
+record.doctor
+record.user
+record.requestedBy
+record.enteredBy
+
+depending on the model.
+
+Fallback:
+
+Unknown user
+
+But this fallback should only happen when no creator relationship exists.
+
+Do not show Unknown user if the record has a valid created_by, doctor_id, or ownership relationship.
+
+---
+
+# 5. Owner Group UI Design
+
+For each user group, display:
+
+Doctor/User name
+Role if available
+Total records count
+Optional badge: Main Doctor / Contributor
+
+Example:
+
+Dr. Kofi Mensah
+Main Doctor · 4 entries
+
+- Fever
+- Headache
+- Malaria diagnosis
+- Paracetamol prescription
+
+For contributors:
+
+Dr. Ama Boateng
+Contributor · 2 entries
+
+- Specialist review note
+- ECG advised
+
+If the group owner is the main session doctor, show a small badge:
+
+Main Doctor
+
+If the group owner is not the main doctor, show:
+
+Contributor
+
+Do not overwrite or change the main session doctor.
+
+---
+
+# 6. Fix Unknown User After Adding New Records
+
+Current issue:
+
+After adding a record, it sometimes shows Unknown user until page reload.
+
+This usually means the frontend response after save does not include the full creator/user relationship.
+
+Fix this properly.
+
+When a new consultation record is created, the response must include:
+
+record id
+record content/details
+created_at
+updated_at
+created_by
+creator/user object
+doctor object if used
+updated_by if applicable
+
+Example response:
+
+{
+  "id": 10,
+  "content": "Patient complains of headache",
+  "created_at": "2026-05-26T10:30:00Z",
+  "creator": {
+    "id": 3,
+    "name": "Dr. Kofi Mensah"
+  }
+}
+
+Do not make the frontend wait for a full reload before it can display the owner name.
+
+If using Inertia:
+
+- return updated props through partial reload, or
+- update local state with the created record and creator object, or
+- attach current user data to the optimistic/local record
+
+The created/updated record must be rendered immediately with the correct user name.
+
+---
+
+# 7. Notes / Consultation Summary Must Update Immediately
+
+Current issue:
+
+Under Notes / Consultation Summary, new additions do not update immediately unless the page is reloaded.
+
+Fix this.
+
+After adding any new consultation record, the Notes / Consultation Summary section should update immediately.
+
+Possible fixes:
+
+emit an event after successful save
+update local state
+refresh summary prop using Inertia partial reload
+call summary reload endpoint
+recompute summary client-side from updated section data
+
+Recommended Inertia-style approach:
+
+router.reload({
+  only: ['consultationSummary', 'sections', 'medicalRecord'],
+  preserveScroll: true,
+  preserveState: true,
+})
+
+or the project’s equivalent pattern.
+
+If using local Vue state:
+
+1. push the returned created record into the right section
+2. regroup by owner
+3. recompute summary
+4. update the UI immediately
+
+Do not reload the entire page.
+
+Do not reset the user to the first tab.
+
+Do not lose form state unnecessarily.
+
+---
+
+# 8. Notes / Consultation Summary Grouping
+
+In Notes / Consultation Summary, group records by owner/user where practical.
+
+Recommended summary layout:
+
+Consultation Summary
+
+Dr. Kofi Mensah
+    Complaints
+        Fever
+        Headache
+
+    History of Presenting Complaint
+        Fever started 3 days ago...
+
+    Diagnosis
+        Malaria
+
+    Prescriptions
+        Paracetamol
+        Artemether/Lumefantrine
+
+Dr. Ama Boateng
+    Additional Note
+        ECG advised.
+
+    Diagnosis
+        Rule out cardiac condition.
+
+Alternative acceptable layout:
+
+Complaints
+    Dr. Kofi Mensah
+        Fever
+        Headache
+
+Diagnosis
+    Dr. Kofi Mensah
+        Malaria
+
+    Dr. Ama Boateng
+        Rule out cardiac condition
+
+Use whichever fits the current design better.
+
+Main rule:
+
+Do not repeat the doctor/user name unnecessarily on every row.
+Do not hide who created the entry.
+Do not attribute all entries to the main doctor.
+
+---
+
+# 9. Investigation Section — Group Requests by Department
+
+Under Consultation → Investigations, group requested investigations by department.
+
+Instead of one flat list:
+
+Full Blood Count
+Malaria Test
+Chest X-ray
+Ultrasound
+
+Display:
+
+Laboratory
+    Full Blood Count
+    Malaria Test
+
+X-Ray
+    Chest X-ray
+
+Scan / Ultrasound
+    Abdominal Ultrasound
+
+Each department group should show:
+
+Department name
+Request count
+Status summary if useful
+
+Each request/item should show:
+
+investigation service/item
+status
+requested by / owner
+requested at
+result status
+actions
+
+---
+
+# 10. Investigation Section — Display Record Owners
+
+Each investigation request must show who requested it.
+
+Preferred grouping:
+
+Department first, then owner
+
+Example:
+
+Laboratory
+
+Dr. Kofi Mensah
+    Full Blood Count
+    Malaria Test
+
+Dr. Ama Boateng
+    Blood Culture
+
+Alternative acceptable display:
+
+Laboratory
+    Full Blood Count — Requested by Dr. Kofi Mensah
+    Malaria Test — Requested by Dr. Kofi Mensah
+
+Preferred final UI:
+
+Department → Doctor/User → Requests
+
+Do not display Unknown user if the request owner relationship exists.
+
+Eager-load appropriate relationships such as:
+
+requestedBy
+createdBy
+doctor
+department
+items
+results
+
+Adapt to actual model relationship names.
+
+---
+
+# 11. Investigation Grouping Data Structure
+
+Recommended normalized structure:
+
+[
+  {
+    department_id: 1,
+    department_name: "Laboratory",
+    owner_groups: [
+      {
+        user_id: 3,
+        user_name: "Dr. Kofi Mensah",
+        requests: [...]
+      },
+      {
+        user_id: 7,
+        user_name: "Dr. Ama Boateng",
+        requests: [...]
+      }
+    ]
+  },
+  {
+    department_id: 2,
+    department_name: "X-Ray",
+    owner_groups: [...]
+  }
+]
+
+The backend may return this structure directly, or the frontend may build it from loaded relationships.
+
+Avoid querying users/departments inside Vue/Blade loops.
+
+---
+
+# 12. Procedures Section — Display Record Owners
+
+Requested procedures currently do not display owners.
+
+Fix this.
+
+Each procedure request must show:
+
+requested by / created by doctor
+department/session
+requested at
+procedure service
+status
+actions
+
+Preferred grouping:
+
+Procedure department first, then owner
+
+Example:
+
+Theatre
+
+Dr. Kofi Mensah
+    Appendectomy request
+
+Minor Procedure Room
+
+Dr. Ama Boateng
+    Wound dressing
+
+Alternative acceptable layout:
+
+Procedures
+
+Dr. Kofi Mensah
+    Wound Dressing
+    Suturing
+
+Dr. Ama Boateng
+    Theatre Review
+
+Use department-first grouping if procedure departments are available.
+
+Do not show Unknown user if the procedure request has a creator/requested-by relationship.
+
+---
+
+# 13. Procedure Section Data Loading
+
+Ensure procedure records eager-load ownership and department/service relationships.
+
+Examples:
+
+with([
+    'department',
+    'requestedBy',
+    'createdBy',
+    'doctor',
+    'service',
+    'procedureService',
+])
+
+Adapt names to current implementation.
+
+The UI must have enough data to display:
+
+Procedure department
+Procedure service
+Requested by
+Requested at
+Status
+
+---
+
+# 14. Add Edit Actions for Consultation Records
+
+All consultation record sections should have an edit point/action where permitted.
+
+Add edit action/buttons for:
+
+Complaints
+History of Presenting Complaint
+Examination
+Diagnosis
+Treatments
+Prescriptions
+Investigation requests where still editable
+Procedure requests where still editable
+Tasks
+Notes
+
+Button examples:
+
+Edit
+Update
+Correct
+
+Only show the edit button if the current user can edit the entry.
+
+Use existing ownership permission rules:
+
+creator can edit own entry while session is active
+other doctors cannot edit unless consultation.entries.edit_any
+completed session entries are locked unless consultation.entries.correct_completed
+
+Do not add edit buttons that lead to 403 for normal expected users. Hide disabled actions unless needed to explain locked state.
+
+---
+
+# 15. Edit Modal / Inline Edit
+
+Implement editing using modal or inline form depending on the existing UI pattern.
+
+Recommended:
+
+Edit modal
+
+Requirements:
+
+- open without full page reload
+- prefill existing record
+- save with validation
+- show validation errors inside modal
+- close only after successful update
+- update UI immediately after save
+- do not leave modal backdrop stuck
+- do not reset active tab
+- do not lose scroll position unnecessarily
+
+After successful update:
+
+update local record
+or Inertia partial reload current section + summary
+
+The updated record response must include:
+
+creator
+updated_by
+updated_at
+
+so the UI can display author and edit metadata immediately.
+
+---
+
+# 16. Backend Authorization for Editing
+
+Frontend hiding the button is not enough.
+
+Every update endpoint must enforce permission.
+
+Every update endpoint must check:
+
+user owns record
+OR user has consultation.entries.edit_any
+OR user has consultation.entries.correct_completed for completed sessions
+
+If unauthorized:
+
+return 403
+
+Do not allow users to modify another doctor’s entries accidentally.
+
+---
+
+# 17. Edit Permissions by Record Type
+
+Apply edit permission rules to all relevant record types.
+
+## Complaints
+
+Owner can edit if session active.
+
+## History of Presenting Complaint
+
+Owner can edit if session active.
+
+## Examination
+
+Owner can edit if session active.
+
+## Diagnosis
+
+Owner can edit if session active.
+
+Be careful with final diagnosis / primary diagnosis changes.
+
+If another user changes primary diagnosis, require correct permission.
+
+## Treatments / Prescriptions
+
+Owner can edit if not dispensed / not locked by pharmacy workflow.
+
+Do not allow editing already-dispensed prescription items unless existing workflow supports correction.
+
+## Investigation Requests
+
+Owner can edit only before investigation is accepted/processed.
+
+If investigation has been accepted, billed, resulted, or verified, lock editing.
+
+## Procedure Requests
+
+Owner can edit only before procedure is accepted/scheduled/billed/completed.
+
+If procedure has already entered theatre workflow, lock editing.
+
+## Tasks
+
+Owner can edit task while active.
+
+Assigned user may update status if allowed.
+
+## Notes
+
+Owner can edit own note while session active.
+
+---
+
+# 18. Locked Record UI
+
+If a record cannot be edited because it is already processed, show a clear locked state if useful.
+
+Examples:
+
+Locked: Investigation already accepted
+Locked: Procedure already scheduled
+Locked: Prescription already dispensed
+Locked: Session completed
+
+Do not silently hide everything if the user needs to understand why editing is unavailable.
+
+---
+
+# 19. Add Audit Trail for Edits
+
+If existing audit logging exists, use it.
+
+If not, add or reuse a generic medical record entry log.
+
+For each edit, track:
+
+entry type
+entry id
+old value
+new value
+updated by
+updated at
+reason if override/correction
+
+For override edits, require reason.
+
+Suggested actions:
+
+UPDATED
+CORRECTED
+OVERRIDE_UPDATED
+
+Do not lose history of clinical changes.
+
+---
+
+# 20. Backend Data Loading
+
+Ensure all consultation sections eager-load ownership relationships.
+
+Examples:
+
+with([
+    'creator',
+    'createdBy',
+    'doctor',
+    'updatedBy',
+])
+
+Adapt to actual relationship names.
+
+For investigations:
+
+with([
+    'department',
+    'requestedBy',
+    'createdBy',
+    'doctor',
+    'items',
+    'items.service',
+    'results',
+])
+
+For procedures:
+
+with([
+    'department',
+    'requestedBy',
+    'createdBy',
+    'doctor',
+    'service',
+    'procedureService',
+])
+
+Avoid N+1 queries.
+
+Do not query users inside Vue/Blade loops.
+
+---
+
+# 21. API / Controller Response Fix
+
+For all create/update endpoints, return the saved record with owner relationships loaded.
+
+Example Laravel pattern:
+
+$record->load(['creator', 'updatedBy']);
+
+return response()->json([
+    'record' => $record,
+]);
+
+If using Inertia redirects:
+
+- preserve active tab
+- partial reload only relevant props
+- include owner relationship in returned props
 
 Important:
 
-```text
-Changing consultation department should not change visit status away from CONSULTING.
-```
-
-The visit remains clinically active while moving between consultation departments.
+After create/update, frontend must receive enough data to render owner name immediately.
 
 ---
 
-# 7. Visit Status Rule During Department Transition
+# 22. Frontend State Fix
 
-When a patient is already in consultation and is referred/transitioned to another consultation department:
+When a record is created:
 
-```text
-visit.status = CONSULTING
-```
+1. receive created record with creator object
+2. insert it into the correct local section list
+3. regroup by owner
+4. refresh or recompute consultation summary
+5. keep current tab active
 
-must remain unchanged.
+When a record is updated:
 
-Only these fields should change:
+1. receive updated record with creator and updated_by object
+2. replace the old record in local state
+3. regroup by owner
+4. refresh or recompute consultation summary
+5. keep current tab active
 
-```text
-current_department_id
-current_consultation_service_id or equivalent
-assigned_doctor_id if selected
-consultation routing/status record
-```
+Do not require manual page reload.
 
-Do not set status to:
-
-```text
-WAITING_CONSULTATION
-REFERRED_CONSULTATION
-LAB
-PHARMACY
-BILLING
-```
-
-when moving between consultation departments unless there is a clear separate workflow requirement.
-
-For consultation-to-consultation routing, status remains:
-
-```text
-CONSULTING
-```
+Do not reset to first tab.
 
 ---
 
-# 8. Required Data Model Review
-
-Inspect current models/tables and decide the cleanest implementation.
-
-Possible existing/needed structures:
-
-```text
-visits.current_department_id
-visits.assigned_doctor_id
-visits.current_consultation_service_id nullable
-medical_records.service_id nullable
-consultation_sessions
-consultation_tasks
-invoice_items.service_id
-service_catalog.department_id
-departments.type
-```
-
-If `current_consultation_service_id` does not exist and there is no equivalent field, add it:
-
-```text
-visits.current_consultation_service_id nullable foreign key to services/service_catalog
-```
-
-or create a better table:
-
-```text
-visit_consultation_routes
-- id
-- visit_id
-- department_id
-- service_id
-- doctor_id nullable
-- status
-- started_at nullable
-- completed_at nullable
-- routed_by
-- notes nullable
-```
-
-Recommended if multiple consultation departments can happen during one visit:
-
-```text
-visit_consultation_routes
-```
-
-This avoids overloading `visits`.
-
----
-
-# 9. Recommended Consultation Route Table
-
-Create if missing:
-
-```text
-visit_consultation_routes
-- id
-- visit_id
-- patient_id
-- department_id
-- service_id
-- doctor_id nullable
-- status
-- routed_by nullable
-- started_by nullable
-- started_at nullable
-- completed_by nullable
-- completed_at nullable
-- notes nullable
-- created_at
-- updated_at
-```
-
-Statuses:
-
-```text
-PENDING
-ACTIVE
-COMPLETED
-CANCELLED
-```
-
-Rules:
-
-* a visit can have many consultation routes
-* only one route can be ACTIVE at a time
-* the currently active route determines the current consultation department/service
-* starting consultation activates one route
-* switching/referring to another consultation department completes or suspends the current route and creates/activates another route
-* visit status remains `CONSULTING`
-
-If current system already has a similar table, use it instead of creating a duplicate.
-
----
-
-# 10. Visit Creation Consultation Route
-
-When creating a visit with selected services:
-
-1. Create visit.
-2. Create/get invoice.
-3. Bill selected services once.
-4. Identify selected services whose department type is `consultation`.
-5. Create pending consultation route records for those consultation services.
-6. If only one consultation service exists:
-
-   * set it as first/current route if appropriate.
-7. If multiple consultation services exist:
-
-   * user must choose initial consultation service/department after triage.
-
-Do not queue visit for triage or consultation unless at least one pending consultation route exists.
-
----
-
-# 11. Triage to Consultation Rule
-
-After triage is completed:
-
-* triage personnel must direct patient to one consultation department/service
-* the selected department/service must come from the patient’s selected consultation services
-* activate that consultation route
-* set:
-
-```text
-visit.status = WAITING_CONSULTATION
-visit.current_department_id = selected consultation department
-visit.current_consultation_service_id = selected consultation service
-```
-
-When doctor starts consultation:
-
-```text
-WAITING_CONSULTATION → CONSULTING
-```
-
-through `VisitWorkflowService`.
-
----
-
-# 12. Start Consultation Logic
-
-When doctor clicks Start Consultation:
-
-1. Validate visit has status `WAITING_CONSULTATION`.
-2. Validate visit has current consultation service selected.
-3. Validate service belongs to consultation-type department.
-4. Validate current department matches service department.
-5. Assign current doctor if selected/allowed.
-6. Link medical record / consultation session to the selected consultation service.
-7. Transition visit:
-
-```text
-WAITING_CONSULTATION → CONSULTING
-```
-
-8. Mark consultation route as `ACTIVE`.
-9. Open consultation page.
-
-Do not start consultation without a consultation service.
-
----
-
-# 13. Continue Consultation Logic
-
-When continuing consultation:
-
-1. Validate visit status is `CONSULTING`.
-2. Load active consultation route.
-3. Load service and department linked to the route.
-4. Load or create medical record tied to visit and consultation route/service.
-5. Open consultation page.
-
----
-
-# 14. Medical Record / Consultation Link
-
-Clinical entries should be traceable to the consultation service/department where they were made.
-
-If possible, link medical records or consultation sections to:
-
-```text
-visit_id
-consultation_route_id
-service_id
-department_id
-doctor_id
-```
-
-At minimum:
-
-```text
-medical_records.visit_id
-medical_records.doctor_id
-medical_records.service_id
-medical_records.department_id
-```
-
-This helps visit preview show:
-
-```text
-Dental consultation by Dr. X
-General consultation by Dr. Y
-```
-
----
-
-# 15. Consultation-to-Consultation Referral
-
-When a doctor sends patient to another consultation department:
-
-1. Select target consultation department.
-2. Load consultation services under that department.
-3. Select one service.
-4. Optionally select doctor.
-5. Validate selected service belongs to consultation-type department.
-6. Create or activate target consultation route.
-7. Keep visit status as:
-
-```text
-CONSULTING
-```
-
-8. Update current department/service.
-9. Log the route transition.
-10. Do not create duplicate billing unless the selected service has not already been billed.
-
-If the new consultation service is billable and not already billed:
-
-* add invoice item once through `BillingService`
-* use insurance pricing
-* avoid duplicate invoice item
-
----
-
-# 16. Consultation Queue Query
-
-Update consultation queue query.
-
-It should load visits where:
-
-```text
-visit.status IN (WAITING_CONSULTATION, CONSULTING)
-AND visit has pending/active consultation route
-AND route.department.type = consultation
-```
-
-Or if no route table exists:
-
-```text
-visit.status IN (WAITING_CONSULTATION, CONSULTING)
-AND visit.current_department_id is consultation-type
-AND visit.current_consultation_service_id is not null
-```
-
-Do not show visits with no consultation service.
-
----
-
-# 17. UI Requirements
-
-## Visit Creation Page
-
-* selected services should clearly show department type
-* consultation services should be identifiable
-* avoid duplicate service submission
-* avoid duplicate billing
-* if no consultation service is selected, do not send patient to consultation queue
-* if selected service is not consultation type, do not queue consultation
-
-## Triage Page
-
-After vitals, user must choose one consultation destination from the patient’s selected consultation services.
-
-Show:
-
-```text
-Available consultation services for this visit
-```
+# 23. Active Tab / Section Preservation
+
+When creating or editing any consultation record, preserve the active tab/section.
+
+This applies to:
+
+Complaints
+History of Presenting Complaint
+Examination
+Diagnosis
+Investigations
+Treatments / Prescriptions
+Procedures
+Tasks
+Notes / Summary
+
+If using URL query, local state, or hash for active section, preserve it.
 
 Example:
 
-```text
-General Consultation — OPD
-Dental Consultation — Dental
-ENT Consultation — ENT
-```
+activeSection=diagnosis
 
-## Consultation Queue
-
-Show:
-
-```text
-Patient
-Visit Number
-Current Consultation Department
-Current Consultation Service
-Assigned Doctor
-Status
-Action
-```
-
-Action:
-
-```text
-WAITING_CONSULTATION → Start Consultation
-CONSULTING → Continue Consultation
-```
-
-## Consultation Page Header
-
-Show:
-
-```text
-Current Department
-Current Consultation Service
-Doctor
-Visit Status
-```
-
-## Refer / Transition to Another Consultation Department
-
-Add modal:
-
-```text
-Select Consultation Department
-Select Consultation Service
-Select Doctor optional
-Notes
-```
-
-When submitted:
-
-* visit remains `CONSULTING`
-* route changes
-* current department/service changes
-* billing happens only if needed and once
+After save, remain on Diagnosis.
 
 ---
 
-# 18. Fix Double Billing Specifically
+# 24. UI / UX Requirements
 
-Add debug/logging temporarily if needed.
-
-Check these areas:
-
-```text
-VisitController@store
-VisitService::create
-BillingService::addItemToVisitInvoice
-InvoiceService::getOrCreateVisitInvoice
-generateItemsFromVisit
-VisitServiceItem
-frontend selected services array
-```
-
-Find whether both of these happen:
-
-```text
-selected services billed during create
-selected services billed again after visit creation
-```
-
-Then remove one path.
-
-Final rule:
-
-```text
-One selected service = one invoice item only.
-```
-
-Add tests to prove it.
+- Do not repeat doctor name on every record when grouped by doctor.
+- Show doctor group heading once.
+- Show entry timestamps under each item.
+- Show “Edited by” only if edited.
+- Show source pattern if available.
+- Show locked status if record can no longer be edited.
+- Keep UI compact and readable.
+- Preserve active tab/section after save.
+- No full page reload.
+- No modal backdrop stuck.
+- No Unknown user after save if creator exists.
+- Show edit buttons only where allowed.
+- Group investigation requests by department.
+- Display investigation owners.
+- Display procedure owners.
+- Summary must update immediately.
 
 ---
 
-# 19. Tests Required
+# 25. Suggested UI Example — Generic Section
 
-Add or update tests:
+Example for Complaints:
 
-## Double Billing
+Complaints
 
-1. Creating visit with one selected service creates exactly one invoice item.
-2. Creating visit with two selected services creates exactly two invoice items.
-3. Refreshing/retrying visit creation does not duplicate invoice items.
-4. BillingService prevents duplicate source billing.
-5. Old visit_services logic does not create duplicate invoice items.
+Dr. Kofi Mensah
+Main Doctor · 2 entries
 
-## Consultation Queue
+[Edit] Fever
+Created: 26 May 2026, 10:30 AM
 
-6. Visit with no consultation service does not appear in consultation queue.
-7. Visit with consultation service appears in consultation queue after triage directs it.
-8. Visit with only lab service does not appear in consultation queue.
-9. Visit with only procedure service does not appear in consultation queue.
-10. Visit with consultation + lab service appears only for consultation service.
+[Edit] Headache
+Created: 26 May 2026, 10:32 AM
 
-## Start Consultation
 
-11. Cannot start consultation without selected consultation service.
-12. Start consultation links consultation to selected service.
-13. Start consultation changes status to `CONSULTING`.
-14. Active consultation route is created/updated.
+Dr. Ama Boateng
+Contributor · 1 entry
 
-## Department Transition
-
-15. Transition to another consultation department keeps visit status `CONSULTING`.
-16. Transition updates current department.
-17. Transition updates current consultation service.
-18. Transition does not duplicate billing if service already billed.
-19. Transition bills new consultation service once if not yet billed.
-20. Consultation queue shows current department/service correctly.
+[Edit if owner] Chest pain review
+Created: 26 May 2026, 11:02 AM
 
 ---
 
-# 20. Deliverables
+# 26. Suggested UI Example — Investigations
+
+Investigations
+
+Laboratory
+2 requests
+
+Dr. Kofi Mensah
+    Full Blood Count
+    Status: Pending
+    Requested: 26 May 2026, 10:45 AM
+    [Edit if still editable]
+
+    Malaria RDT
+    Status: Result Verified
+    Requested: 26 May 2026, 10:45 AM
+    Locked: Result already verified
+
+X-Ray
+1 request
+
+Dr. Ama Boateng
+    Chest X-Ray
+    Status: Accepted
+    Requested: 26 May 2026, 11:15 AM
+    Locked: Request already accepted
+
+---
+
+# 27. Suggested UI Example — Procedures
+
+Procedures
+
+Theatre
+1 request
+
+Dr. Kofi Mensah
+    Appendectomy
+    Status: Scheduled
+    Requested: 26 May 2026, 12:05 PM
+    Locked: Procedure already scheduled
+
+Minor Procedure Room
+1 request
+
+Dr. Ama Boateng
+    Wound Dressing
+    Status: Pending
+    Requested: 26 May 2026, 12:30 PM
+    [Edit]
+
+---
+
+# 28. Suggested UI Example — Summary
+
+Consultation Summary
+
+Dr. Kofi Mensah
+Main Doctor
+
+Complaints
+    Fever
+    Headache
+
+History of Presenting Complaint
+    Fever started 3 days ago...
+
+Diagnosis
+    Malaria
+
+Investigations
+    Full Blood Count
+    Malaria RDT
+
+Prescriptions
+    Paracetamol
+
+
+Dr. Ama Boateng
+Contributor
+
+Additional Notes
+    Patient reviewed and ECG advised.
+
+Diagnosis
+    Rule out cardiac condition.
+
+---
+
+# 29. Tests Required
+
+Add or update tests.
+
+## Grouping
+
+1. Consultation records are grouped by creator in UI data.
+2. Complaints group by doctor/user.
+3. HOPC entries group by doctor/user.
+4. Examination entries group by doctor/user.
+5. Diagnosis entries group by doctor/user.
+6. Treatments/prescriptions group by doctor/user where applicable.
+7. Notes/Summary groups records by doctor/user.
+8. Main doctor and contributor labels are correct.
+
+## Investigations
+
+9. Investigation requests are grouped by department.
+10. Investigation requests display owner/requested by.
+11. Investigation requests can be grouped by department then owner.
+12. Investigation requests do not show Unknown user when owner exists.
+13. Investigation edit button appears only before request is processed.
+14. Processed/verified investigation request is locked.
+
+## Procedures
+
+15. Procedures display owner/requested by.
+16. Procedures group by department and owner where possible.
+17. Procedures do not show Unknown user when owner exists.
+18. Procedure edit button appears only before procedure is processed.
+19. Scheduled/completed procedure is locked.
+
+## Summary Refresh
+
+20. Newly added note appears in summary immediately.
+21. Newly added complaint appears in summary immediately.
+22. Newly added HOPC appears in summary immediately.
+23. Newly added diagnosis appears in summary immediately.
+24. Newly added record does not show Unknown user after save.
+25. Created record response includes creator.
+26. Updated record response includes creator/updated_by.
+
+## Edit Actions
+
+27. Edit button appears for record owner.
+28. Edit button does not appear for unauthorized user.
+29. Unauthorized user cannot update another doctor’s record.
+30. Authorized edit_any user can update with audit trail if required.
+31. Locked processed records cannot be edited.
+32. Edit modal preloads record data.
+33. Edit modal closes after successful update.
+34. Modal does not leave backdrop stuck.
+
+## UX
+
+35. Active tab remains active after create.
+36. Active tab remains active after update.
+37. Page does not fully reload after create/update.
+38. Grouped records are refreshed after create/update.
+
+---
+
+# 30. Deliverables
 
 Provide:
 
-1. Root cause of double billing.
-2. Files modified.
-3. Billing duplication fix.
-4. Duplicate guard in BillingService.
-5. Consultation queue eligibility fix.
-6. Consultation route/service linking implementation.
-7. Triage-to-consultation destination logic.
-8. Start consultation service link.
-9. Consultation department transition logic.
-10. UI updates.
-11. Tests or verification notes.
-12. Remaining TODOs.
+1. Gap analysis of current consultation UI ownership display.
+2. Grouped-by-user UI for consultation records.
+3. Investigation section grouped by department.
+4. Investigation owner display fixed.
+5. Procedure owner display fixed.
+6. Notes/Summary live update fixed.
+7. Unknown user after save fixed.
+8. Edit actions added where permitted.
+9. Edit modals/inline edit implemented.
+10. Backend authorization enforced.
+11. Eager loading added.
+12. Create/update responses include owner relationships.
+13. Active tab preservation implemented.
+14. Tests or verification notes.
+15. Files modified.
+16. Remaining TODOs.
 
 ---
 
-# 21. Important Rules
+# 31. Important Rules
 
-Do not create duplicate invoice items.
+Do not rewrite the ownership logic that already works.
 
-Do not queue visits without consultation service.
+Do not remove author attribution.
 
-Do not start consultation without selected consultation service.
+Do not repeat doctor names unnecessarily if grouping can show it once.
 
-Do not transition patient to multiple consultation departments at once.
+Do not show Unknown user after save when creator exists.
 
-Do not change visit status away from `CONSULTING` when moving between consultation departments.
+Do not require full page reload to update Notes/Summary.
 
-Do not bypass `VisitWorkflowService`.
+Do not allow doctors to edit other doctors’ entries unless authorized.
 
-Do not bypass `BillingService`.
+Do not let frontend-only permission checks replace backend authorization.
 
-Do not break OPD, Emergency, Admission, Investigation, Pharmacy, Procedure, or Billing workflows.
+Do not edit processed investigations/procedures if their workflow state should lock them.
 
-Now inspect the current implementation and fix the double billing plus consultation routing logic carefully.
+Do not break consultation sections, medical record ownership, visit preview, claims mirror, investigations, procedures, billing, or visits.
+
+Now inspect the current consultation page implementation and improve the UI grouping, investigation/procedure owner display, live summary updates, Unknown user issue, and edit actions as described.

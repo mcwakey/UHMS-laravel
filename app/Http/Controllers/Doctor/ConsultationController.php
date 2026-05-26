@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Doctor;
 
 use App\Enums\DepartmentType;
+use App\Enums\ProcedureStatus;
 use App\Enums\ResultType;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
@@ -14,6 +15,7 @@ use App\Models\Diagnosis;
 use App\Models\Drug;
 use App\Models\HistoryOfPresentingComplaint;
 use App\Models\Investigation;
+use App\Models\LabRequest;
 use App\Models\LabRequestItem;
 use App\Models\LabTest;
 use App\Models\MedicalPattern;
@@ -21,6 +23,7 @@ use App\Models\PatientProcedure;
 use App\Models\PhysicalExamination;
 use App\Models\Prescription;
 use App\Models\Procedure;
+use App\Models\ProcedureRequest;
 use App\Models\ServiceCatalog;
 use App\Models\Treatment;
 use App\Models\User;
@@ -43,6 +46,7 @@ use App\Services\VisitService;
 use App\Services\VisitWorkflowService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class ConsultationController extends Controller
 {
@@ -66,11 +70,31 @@ class ConsultationController extends Controller
         return $request->ajax() && ! $request->headers->has('X-Inertia');
     }
 
+    private function entryPayload($entry, array $relations = [])
+    {
+        return $entry->fresh(array_values(array_unique(array_merge([
+            'creator',
+            'doctor',
+            'updater',
+            'sourcePattern',
+        ], $relations))));
+    }
+
     private function abortIfRouteMismatch(Visit $visit, VisitConsultationRoute $route): void
     {
         if ((int) $route->visit_id !== (int) $visit->id) {
             abort(404);
         }
+    }
+
+    private function userHasAnyRole(User $user, array $roles): bool
+    {
+        return is_callable([$user, 'hasAnyRole']) && (bool) call_user_func([$user, 'hasAnyRole'], $roles);
+    }
+
+    private function userCan(User $user, string $ability): bool
+    {
+        return Gate::forUser($user)->allows($ability);
     }
 
     /**
@@ -348,6 +372,19 @@ class ConsultationController extends Controller
         return view('consultations.history', compact('visit', 'sessions', 'record', 'labRequests', 'procedureRequests'));
     }
 
+    public function summaryFragment(Request $request, Visit $visit)
+    {
+        $route = $this->consultationSessionService->resolveRouteForVisit(
+            $visit,
+            $request->integer('consultation_route_id') ?: null,
+        );
+
+        $record = $route ? $route->medicalRecord : $visit->medicalRecord;
+        $consultationSummary = $this->summaryService->forRecord($record);
+
+        return view('consultations.partials.summary-sections', compact('consultationSummary'));
+    }
+
     public function storeRoute(Request $request, Visit $visit)
     {
         $data = $request->validate([
@@ -469,10 +506,29 @@ class ConsultationController extends Controller
         $complaint = $this->consultationService->addComplaint($record, $request->only('description', 'duration', 'severity'));
 
         if ($this->shouldReturnJson($request)) {
-            return response()->json(['success' => true, 'complaint' => $complaint]);
+            return response()->json(['success' => true, 'complaint' => $this->entryPayload($complaint)]);
         }
 
         return back()->with('success', 'Complaint added.');
+    }
+
+    public function updateComplaint(Request $request, Complaint $complaint)
+    {
+        abort_unless(Auth::user() && $this->entryPermissions->canEdit(Auth::user(), $complaint), 403);
+
+        $data = $request->validate([
+            'description' => ['required', 'string', 'max:2000'],
+            'duration' => ['nullable', 'string', 'max:191'],
+            'severity' => ['nullable', 'in:mild,moderate,severe'],
+        ]);
+
+        $complaint = $this->consultationService->updateComplaint($complaint, $data);
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json(['success' => true, 'complaint' => $this->entryPayload($complaint)]);
+        }
+
+        return back()->withFragment('complaints-section')->with('success', 'Complaint updated.');
     }
 
     public function destroyComplaint(Complaint $complaint)
@@ -520,10 +576,41 @@ class ConsultationController extends Controller
         $entry = $this->hopcService->create($record, $data, Auth::user());
 
         if ($this->shouldReturnJson($request)) {
-            return response()->json(['success' => true, 'hopc' => $entry]);
+            return response()->json(['success' => true, 'hopc' => $this->entryPayload($entry, ['complaint'])]);
         }
 
         return back()->withFragment('hopc-section')->with('success', 'History of presenting complaint added.');
+    }
+
+    public function updateHistoryOfPresentingComplaint(Request $request, HistoryOfPresentingComplaint $hopc)
+    {
+        abort_unless(Auth::user() && $this->entryPermissions->canEdit(Auth::user(), $hopc), 403);
+
+        $data = $request->validate([
+            'complaint_id' => ['nullable', 'exists:complaints,id'],
+            'content' => ['required_without_all:onset,duration,location,character,radiation,associated_symptoms,aggravating_factors,relieving_factors,severity,timing,notes', 'nullable', 'string', 'max:8000'],
+            'onset' => ['nullable', 'string', 'max:191'],
+            'duration' => ['nullable', 'string', 'max:191'],
+            'location' => ['nullable', 'string', 'max:191'],
+            'character' => ['nullable', 'string', 'max:191'],
+            'radiation' => ['nullable', 'string', 'max:191'],
+            'associated_symptoms' => ['nullable', 'string', 'max:2000'],
+            'aggravating_factors' => ['nullable', 'string', 'max:2000'],
+            'relieving_factors' => ['nullable', 'string', 'max:2000'],
+            'severity' => ['nullable', 'string', 'max:191'],
+            'timing' => ['nullable', 'string', 'max:191'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $old = $hopc->getOriginal();
+        $hopc->update(array_merge($data, ['updated_by' => Auth::id()]));
+        app(MedicalRecordEntryLogService::class)->updated($hopc, $old, Auth::user());
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json(['success' => true, 'hopc' => $this->entryPayload($hopc, ['complaint'])]);
+        }
+
+        return back()->withFragment('hopc-section')->with('success', 'History of presenting complaint updated.');
     }
 
     public function destroyHistoryOfPresentingComplaint(HistoryOfPresentingComplaint $hopc)
@@ -570,10 +657,39 @@ class ConsultationController extends Controller
         $entry = $this->examinationService->create($record, $data, Auth::user());
 
         if ($this->shouldReturnJson($request)) {
-            return response()->json(['success' => true, 'examination' => $entry]);
+            return response()->json(['success' => true, 'examination' => $this->entryPayload($entry)]);
         }
 
         return back()->withFragment('examination-section')->with('success', 'Examination findings added.');
+    }
+
+    public function updateExamination(Request $request, PhysicalExamination $examination)
+    {
+        abort_unless(Auth::user() && $this->entryPermissions->canEdit(Auth::user(), $examination), 403);
+
+        $data = $request->validate([
+            'findings' => ['required_without_all:general_examination,systemic_examination,cardiovascular,respiratory,gastrointestinal,central_nervous_system,musculoskeletal,specialty_examination,local_examination,notes', 'nullable', 'string', 'max:8000'],
+            'general_examination' => ['nullable', 'string', 'max:2000'],
+            'systemic_examination' => ['nullable', 'string', 'max:2000'],
+            'cardiovascular' => ['nullable', 'string', 'max:2000'],
+            'respiratory' => ['nullable', 'string', 'max:2000'],
+            'gastrointestinal' => ['nullable', 'string', 'max:2000'],
+            'central_nervous_system' => ['nullable', 'string', 'max:2000'],
+            'musculoskeletal' => ['nullable', 'string', 'max:2000'],
+            'specialty_examination' => ['nullable', 'string', 'max:2000'],
+            'local_examination' => ['nullable', 'string', 'max:2000'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $old = $examination->getOriginal();
+        $examination->update(array_merge($data, ['updated_by' => Auth::id()]));
+        app(MedicalRecordEntryLogService::class)->updated($examination, $old, Auth::user());
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json(['success' => true, 'examination' => $this->entryPayload($examination)]);
+        }
+
+        return back()->withFragment('examination-section')->with('success', 'Examination findings updated.');
     }
 
     public function destroyExamination(PhysicalExamination $examination)
@@ -613,7 +729,7 @@ class ConsultationController extends Controller
         $diagnosis = $this->consultationService->addDiagnosis($record, $request->only('description', 'icd_code', 'icd_code_id', 'type', 'notes'));
 
         if ($this->shouldReturnJson($request)) {
-            return response()->json(['success' => true, 'diagnosis' => $diagnosis]);
+            return response()->json(['success' => true, 'diagnosis' => $this->entryPayload($diagnosis, ['icdCodeEntry'])]);
         }
 
         return back()->with('success', 'Diagnosis added.');
@@ -639,14 +755,22 @@ class ConsultationController extends Controller
     {
         abort_unless(Auth::user() && $this->entryPermissions->canEdit(Auth::user(), $diagnosis), 403);
 
-        $request->validate([
-            'type' => ['required', 'in:provisional,final'],
+        $data = $request->validate([
+            'description' => ['sometimes', 'required', 'string', 'max:2000'],
+            'icd_code' => ['nullable', 'string', 'max:20'],
+            'icd_code_id' => ['nullable', 'exists:icd_codes,id'],
+            'type' => ['sometimes', 'required', 'in:provisional,final'],
+            'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $this->consultationService->updateDiagnosis($diagnosis, $request->only('type'));
+        $diagnosis = $this->consultationService->updateDiagnosis($diagnosis, $data);
 
         if ($this->shouldReturnJson($request)) {
-            return response()->json(['success' => true, 'type' => $diagnosis->fresh()->type]);
+            return response()->json([
+                'success' => true,
+                'type' => $diagnosis->fresh()->type,
+                'diagnosis' => $this->entryPayload($diagnosis, ['icdCodeEntry']),
+            ]);
         }
 
         return back()->with('success', 'Diagnosis updated.');
@@ -776,9 +900,9 @@ class ConsultationController extends Controller
         if ($this->shouldReturnJson($request)) {
             return response()->json([
                 'success' => true,
-                'investigations' => $created,
+                'investigations' => collect($created)->map(fn ($entry) => $this->entryPayload($entry))->values(),
                 'count' => count($created),
-                'lab_request' => $labRequest?->only(['id', 'request_number', 'status']),
+                'lab_request' => $labRequest?->fresh(['targetDepartment', 'requestedBy', 'items.labTest', 'items.service', 'items.result']),
             ]);
         }
 
@@ -790,6 +914,26 @@ class ConsultationController extends Controller
         }
 
         return back()->with('success', $msg);
+    }
+
+    public function updateInvestigation(Request $request, Investigation $investigation)
+    {
+        abort_unless(Auth::user() && $this->entryPermissions->canEdit(Auth::user(), $investigation), 403);
+
+        $data = $request->validate([
+            'investigation_type' => ['required', 'string', 'max:191'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'urgency' => ['nullable', 'in:routine,urgent,emergency'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $investigation = $this->consultationService->updateInvestigation($investigation, $data);
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json(['success' => true, 'investigation' => $this->entryPayload($investigation)]);
+        }
+
+        return back()->withFragment('investigations-section')->with('success', 'Investigation updated.');
     }
 
     public function destroyInvestigation(Investigation $investigation)
@@ -825,10 +969,28 @@ class ConsultationController extends Controller
         $treatment = $this->consultationService->addTreatment($record, $request->only('type', 'description'));
 
         if ($this->shouldReturnJson($request)) {
-            return response()->json(['success' => true, 'treatment' => $treatment]);
+            return response()->json(['success' => true, 'treatment' => $this->entryPayload($treatment)]);
         }
 
         return back()->with('success', 'Treatment added.');
+    }
+
+    public function updateTreatment(Request $request, Treatment $treatment)
+    {
+        abort_unless(Auth::user() && $this->entryPermissions->canEdit(Auth::user(), $treatment), 403);
+
+        $data = $request->validate([
+            'type' => ['required', 'in:medication,procedure,referral,advice'],
+            'description' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $treatment = $this->consultationService->updateTreatment($treatment, $data);
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json(['success' => true, 'treatment' => $this->entryPayload($treatment)]);
+        }
+
+        return back()->withFragment('treatments-section')->with('success', 'Treatment updated.');
     }
 
     public function destroyTreatment(Treatment $treatment)
@@ -859,13 +1021,41 @@ class ConsultationController extends Controller
         $prescription = $this->prescriptionService->create($record, $request->validated());
 
         if ($this->shouldReturnJson($request)) {
-            return response()->json(['success' => true, 'prescription' => $prescription->load('items')]);
+            return response()->json(['success' => true, 'prescription' => $prescription->load(['items', 'creator', 'doctor', 'updater', 'sourcePattern'])]);
         }
 
         return redirect()
             ->route('admin.consultations.show', $visit)
             ->withFragment('prescriptions-section')
             ->with('success', "Prescription {$prescription->prescription_number} created and sent to pharmacy.");
+    }
+
+    public function updatePrescription(Request $request, Prescription $prescription)
+    {
+        abort_unless(Auth::user() && $this->entryPermissions->canEdit(Auth::user(), $prescription), 403);
+
+        if (! in_array($prescription->status->value, ['pending', 'active'], true)) {
+            $message = 'Cannot edit a prescription that has already been dispensed or cancelled.';
+            if ($this->shouldReturnJson($request)) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
+
+            return back()->with('error', $message);
+        }
+
+        $data = $request->validate([
+            'notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $old = $prescription->getOriginal();
+        $prescription->update(array_merge($data, ['updated_by' => Auth::id()]));
+        app(MedicalRecordEntryLogService::class)->updated($prescription, $old, Auth::user());
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json(['success' => true, 'prescription' => $prescription->fresh(['items', 'creator', 'doctor', 'updater', 'sourcePattern'])]);
+        }
+
+        return back()->withFragment('prescriptions-section')->with('success', 'Prescription updated.');
     }
 
     public function destroyPrescription(Prescription $prescription)
@@ -920,7 +1110,7 @@ class ConsultationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Procedure request submitted ('.$procedureRequest->request_number.').',
-                'procedure' => $procedureRequest->only(['id', 'request_number', 'status', 'priority']),
+                'procedure' => $procedureRequest->fresh(['service', 'department', 'requestingDoctor', 'schedule.theatreRoom']),
             ]);
         }
 
@@ -928,6 +1118,42 @@ class ConsultationController extends Controller
             ->route('admin.consultations.show', $visit)
             ->withFragment('procedures-section')
             ->with('success', 'Procedure request submitted ('.$procedureRequest->request_number.').');
+    }
+
+    public function updateProcedureRequest(Request $request, ProcedureRequest $procedureRequest)
+    {
+        $user = Auth::user();
+        abort_unless($user && (
+            $this->userHasAnyRole($user, ['Super Admin', 'Admin'])
+            || (int) $procedureRequest->requested_by === (int) $user->id
+            || $this->userCan($user, 'consultation.entries.edit_any')
+        ), 403);
+
+        if ($procedureRequest->status !== ProcedureStatus::REQUESTED) {
+            $message = 'Cannot edit this procedure request after it has entered the procedure workflow.';
+            if ($this->shouldReturnJson($request)) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
+
+            return back()->with('error', $message);
+        }
+
+        $data = $request->validate([
+            'priority' => ['required', 'in:routine,urgent,emergency'],
+            'indication' => ['required', 'string', 'max:2000'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+            'preferred_datetime' => ['nullable', 'date'],
+        ]);
+
+        $old = $procedureRequest->getOriginal();
+        $procedureRequest->update($data);
+        app(MedicalRecordEntryLogService::class)->updated($procedureRequest, $old, $user);
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json(['success' => true, 'procedure' => $procedureRequest->fresh(['service', 'department', 'requestingDoctor', 'schedule.theatreRoom'])]);
+        }
+
+        return back()->withFragment('procedures-section')->with('success', 'Procedure request updated.');
     }
 
     /**
@@ -993,10 +1219,46 @@ class ConsultationController extends Controller
         );
 
         if ($this->shouldReturnJson($request)) {
-            return response()->json(['success' => true, 'labRequest' => $labRequest]);
+            return response()->json(['success' => true, 'labRequest' => $labRequest->fresh(['targetDepartment', 'requestedBy', 'items.labTest', 'items.service', 'items.result'])]);
         }
 
         return back()->with('success', "Investigation request {$labRequest->request_number} sent to {$labRequest->targetDepartment?->name}.");
+    }
+
+    public function updateLabRequest(Request $request, LabRequest $labRequest)
+    {
+        $user = Auth::user();
+        abort_unless($user && (
+            $this->userHasAnyRole($user, ['Super Admin', 'Admin'])
+            || (int) $labRequest->requested_by === (int) $user->id
+            || $this->userCan($user, 'consultation.entries.edit_any')
+        ), 403);
+
+        $labRequest->loadMissing(['items.result']);
+        $hasProcessedItem = $labRequest->items->contains(fn ($item) => $item->isAccepted() || $item->result);
+        if ($labRequest->status !== 'pending' || $hasProcessedItem) {
+            $message = 'Cannot edit this investigation request after it has been accepted, billed, or resulted.';
+            if ($this->shouldReturnJson($request)) {
+                return response()->json(['success' => false, 'message' => $message], 422);
+            }
+
+            return back()->with('error', $message);
+        }
+
+        $data = $request->validate([
+            'urgency' => ['nullable', 'in:routine,urgent,emergency'],
+            'clinical_info' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $old = $labRequest->getOriginal();
+        $labRequest->update($data);
+        app(MedicalRecordEntryLogService::class)->updated($labRequest, $old, $user);
+
+        if ($this->shouldReturnJson($request)) {
+            return response()->json(['success' => true, 'labRequest' => $labRequest->fresh(['targetDepartment', 'requestedBy', 'items.labTest', 'items.service', 'items.result'])]);
+        }
+
+        return back()->withFragment('investigations-section')->with('success', 'Investigation request updated.');
     }
 
     /*
