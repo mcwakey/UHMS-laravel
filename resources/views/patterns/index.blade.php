@@ -95,6 +95,9 @@
                                     <i class="ti ti-eye"></i>
                                 </button>
                                 @can('consultations.create')
+                                <a href="{{ route('admin.patterns.edit', $pattern) }}" class="btn btn-sm btn-outline-primary" title="Edit">
+                                    <i class="ti ti-edit"></i>
+                                </a>
                                 <form method="POST" action="{{ route('admin.patterns.toggle', $pattern) }}" class="d-inline">
                                     @csrf
                                     @method('PATCH')

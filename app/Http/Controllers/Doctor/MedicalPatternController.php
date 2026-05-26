@@ -108,6 +108,16 @@ class MedicalPatternController extends Controller
     }
 
     /**
+     * Show pattern edit form.
+     */
+    public function edit(MedicalPattern $pattern)
+    {
+        $pattern->load('items');
+
+        return view('patterns.edit', compact('pattern'));
+    }
+
+    /**
      * Update a pattern.
      */
     public function update(Request $request, MedicalPattern $pattern)

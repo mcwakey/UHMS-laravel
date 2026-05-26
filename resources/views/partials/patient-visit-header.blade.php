@@ -61,9 +61,10 @@
                 @if(isset($visit->priority) && $visit->priority)
                     <span class="badge bg-{{ $visit->priority->color() }} px-2 py-2 ms-1">{{ $visit->priority->label() }}</span>
                 @endif
-                <span class="text-muted ms-2 small">{{ $visit->visit_number }}</span>
                 @if($visit->currentConsultationDoctor())
-                    <div class="text-muted small mt-1"><i class="ti ti-user-md me-1"></i>Dr. {{ $visit->currentConsultationDoctor()->full_name }}</div>
+                    <div class="text-muted small mt-1">
+                    <span class="text-muted ms-2 small">{{ $visit->visit_number }}</span>
+                    <i class="ti ti-user-md me-1"></i> | Dr. {{ $visit->currentConsultationDoctor()->full_name }}</div>
                 @endif
             </div>
         </div>

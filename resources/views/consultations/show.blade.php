@@ -96,23 +96,24 @@
 {{-- CURRENT SESSION HEADER --}}
 {{-- ============================================================ --}}
 <div class="card mb-3">
-    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div class="card-header d-flex align-items-center justify-content-between flex-wrap">
         <div>
             <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-primary"></i>Current Session</h6>
-            <small class="text-muted">Visit {{ $visit->visit_number }} · {{ $visit->patient->full_name }}</small>
+            {{-- <small class="text-muted">Visit {{ $visit->visit_number }} · {{ $visit->patient->full_name }}</small> --}}
+            <div class="fw-semibold ms-2">{{ $selectedRoute?->department?->name ?? 'No active session' }}</div>
         </div>
-            <div class="session-summary-item">
+            {{-- <div class="session-summary-item">
                 <div class="text-muted small">Department</div>
                 <div class="fw-semibold">{{ $selectedRoute?->department?->name ?? 'No active session' }}</div>
-            </div>
-            <div class="session-summary-item">
+            </div> --}}
+            <div>
                 <div class="text-muted small">Linked Services</div>
                 <div class="fw-semibold">{{ $selectedRouteServiceNames->implode(', ') ?: '-' }}</div>
             </div>
-            <div class="session-summary-item">
-                <div class="text-muted small">Main Doctor / Contributors</div>
-                <div class="fw-semibold">{{ $selectedRoute?->doctor ? 'Dr. '.$selectedRoute->doctor->full_name : 'Unassigned' }}</div>
-                <div class="small text-muted">{{ $contributors->isNotEmpty() ? 'Contributors: '.$contributors->implode(', ') : 'No contributors yet' }}</div>
+            <div>
+                <div class="text-muted small">Contributors</div>
+                {{-- <div class="fw-semibold">{{ $selectedRoute?->doctor ? 'Dr. '.$selectedRoute->doctor->full_name : 'Unassigned' }}</div> --}}
+                <div class="small text-muted">{{ $contributors->isNotEmpty() ? $contributors->implode(', ') : 'No contributors yet' }}</div>
             </div>
 
         <div class="d-flex flex-wrap gap-2">
@@ -332,13 +333,13 @@
                     <ul class="nav flex-column gap-1" id="consultationTabs" role="tablist">
                         <li class="nav-item">
                             <a class="nav-link active" id="tab-complaints" href="#complaints-section" data-bs-toggle="pill" role="tab">
-                                <i class="ti ti-message-report me-1"></i>Complaints
+                                <i class="ti ti-message-report me-1"></i>Presenting Complaints
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-complaints">{{ $record?->complaints?->count() ?? 0 }}</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="tab-hopc" href="#hopc-section" data-bs-toggle="pill" role="tab">
-                                <i class="ti ti-file-description me-1"></i>HOPC
+                                <i class="ti ti-file-description me-1"></i>History Of Presenting Complaints
                                 <span class="badge bg-secondary-subtle text-secondary ms-auto" id="badge-hopc">{{ $record?->historiesOfPresentingComplaint?->count() ?? 0 }}</span>
                             </a>
                         </li>

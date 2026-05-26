@@ -595,6 +595,7 @@ Route::middleware('auth')->group(function () {
             Route::post('patterns', [MedicalPatternController::class, 'store'])->name('patterns.store')->middleware('can:consultations.create');
             Route::get('patterns/suggest', [MedicalPatternController::class, 'suggest'])->name('patterns.suggest');
             Route::get('patterns/{pattern}', [MedicalPatternController::class, 'show'])->name('patterns.show');
+            Route::get('patterns/{pattern}/edit', [MedicalPatternController::class, 'edit'])->name('patterns.edit')->middleware('can:consultations.create');
             Route::put('patterns/{pattern}', [MedicalPatternController::class, 'update'])->name('patterns.update')->middleware('can:consultations.create');
             Route::patch('patterns/{pattern}/toggle', [MedicalPatternController::class, 'toggleActive'])->name('patterns.toggle')->middleware('can:consultations.create');
             Route::delete('patterns/{pattern}', [MedicalPatternController::class, 'destroy'])->name('patterns.destroy')->middleware('can:consultations.create');
