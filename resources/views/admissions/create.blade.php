@@ -71,6 +71,7 @@
                                             data-patient-gender="{{ $v->patient->gender->label() ?? '' }}"
                                             data-patient-phone="{{ $v->patient->phone ?? '' }}"
                                             data-patient-allergies="{{ $v->patient->allergies ?? '' }}"
+                                            data-patient-chronic="{{ $v->patient->chronic_conditions ?? '' }}"
                                             data-ins-has="{{ $vHasReal ? '1' : '0' }}"
                                             data-ins-provider="{{ $vHasReal ? e($vProvider->name) : 'Cash & Carry' }}"
                                             data-ins-tier="{{ $vHasReal ? e($vTier?->name ?? '') : '' }}"
@@ -248,9 +249,16 @@
     {{-- ========== RIGHT COLUMN ========== --}}
     <div class="col-lg-4">
 
+        {{-- Ensure patient-card styles are always injected (even when @include below is skipped) --}}
+        @include('partials.patient-card', ['patient' => null])
+
         {{-- PATIENT INFO --}}
         @if($preselectedVisit)
-        <div class="card mb-3">
+        @include('partials.patient-card', [
+            'patient' => $preselectedVisit->patient,
+            'visit'   => $preselectedVisit,
+        ])
+        {{-- <div class="card mb-3">
             <div class="card-header py-2 bg-light">
                 <h6 class="card-title mb-0 fw-semibold">Patient Details</h6>
             </div>
@@ -265,22 +273,48 @@
                     @endif
                 </table>
             </div>
-        </div>
+        </div> --}}
         @else
-        <div class="card mb-3 d-none" id="patientInfoCard">
-            <div class="card-header py-2 bg-light">
-                <h6 class="card-title mb-0 fw-semibold">Patient Details</h6>
+        {{-- Dynamic patient card skeleton (same look as the reusable patient-card partial) --}}
+        <div class="card patient-card shadow-sm border-0 mb-3 d-none" id="patientInfoCard">
+            <div class="patient-card__header">
+                <div class="patient-card__avatar">
+                    <span id="infoInitials">?</span>
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span class="patient-card__name" id="infoName">—</span>
+                        <span class="badge badge-soft-secondary fs-11 fw-medium" id="infoNumber"></span>
+                    </div>
+                    <div class="patient-card__meta">
+                        <span><i class="ti ti-user fs-12"></i> <span id="infoAge">—</span></span>
+                        <span><i class="ti ti-phone fs-12"></i> <span id="infoPhone">—</span></span>
+                    </div>
+                </div>
+                <a href="#" class="btn btn-sm btn-outline-primary patient-card__profile-btn d-none" id="infoProfileLink" target="_blank" title="View patient profile">
+                    <i class="ti ti-external-link"></i>
+                </a>
             </div>
-            <div class="card-body p-0">
-                <table class="table table-sm table-borderless mb-0">
-                    <tr><td class="text-muted ps-3">Name</td><td id="infoName" class="fw-medium">—</td></tr>
-                    <tr><td class="text-muted ps-3">Age / Gender</td><td id="infoAge">—</td></tr>
-                    <tr><td class="text-muted ps-3">Phone</td><td id="infoPhone">—</td></tr>
-                    <tr id="allergyRow" class="d-none">
-                        <td class="text-muted ps-3">Allergies</td>
-                        <td id="infoAllergies" class="text-danger fw-semibold">—</td>
-                    </tr>
-                </table>
+            <div class="patient-card__alerts" id="infoAlertsSection" style="display:none!important">
+                <div class="patient-card__alert patient-card__alert--danger d-none" id="allergyRow">
+                    <i class="ti ti-alert-triangle"></i>
+                    <div>
+                        <small class="fw-semibold d-block">Allergies</small>
+                        <span class="fs-13" id="infoAllergies"></span>
+                    </div>
+                </div>
+                <div class="patient-card__alert patient-card__alert--warning d-none" id="chronicRow">
+                    <i class="ti ti-heart-rate-monitor"></i>
+                    <div>
+                        <small class="fw-semibold d-block">Chronic Conditions</small>
+                        <span class="fs-13" id="infoChronic"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="patient-card__insurance d-none" id="patientCardInsurance">
+                <div class="patient-card__insurance-row" id="patientCardInsuranceRow">
+                    {{-- Populated by updateInsurancePanel() JS --}}
+                </div>
             </div>
         </div>
         @endif
@@ -295,7 +329,7 @@
             $memberType = $ins?->member_type?->value ?? 'holder';
             $insConstraints = $insTier?->effectiveConstraints($memberType);
         @endphp
-        <div class="card mb-3 {{ $hasRealIns ? ($ins->is_valid ? 'border-info' : 'border-danger') : 'border-secondary' }}">
+        {{-- <div class="card mb-3 {{ $hasRealIns ? ($ins->is_valid ? 'border-info' : 'border-danger') : 'border-secondary' }}">
             <div class="card-header py-2 {{ $hasRealIns ? ($ins->is_valid ? 'bg-info text-white' : 'bg-danger text-white') : 'bg-light' }}">
                 <h6 class="card-title mb-0 fw-semibold"><i class="ti ti-shield-half me-2"></i>Insurance Coverage</h6>
             </div>
@@ -357,17 +391,9 @@
                     </div>
                 @endif
             </div>
-        </div>
+        </div> --}}
         @else
-        {{-- Dynamic insurance panel for dropdown selection --}}
-        <div class="card mb-3 d-none" id="insuranceCard">
-            <div class="card-header py-2 bg-info text-white" id="insCardHeader">
-                <h6 class="card-title mb-0 fw-semibold"><i class="ti ti-shield-half me-2"></i>Insurance Coverage</h6>
-            </div>
-            <div class="card-body" id="insCardBody">
-                {{-- Populated by JS --}}
-            </div>
-        </div>
+        {{-- (insurance now rendered inline inside #patientInfoCard above) --}}
         @endif
 
         {{-- BILLING SUMMARY --}}
@@ -578,11 +604,16 @@
 
     // ─── Insurance Panel (dynamic) ────────────────────────────────────────
     function updateInsurancePanel(opt) {
+        var insSec = document.getElementById('patientCardInsurance');
+        var insRow = document.getElementById('patientCardInsuranceRow');
+        // Fallback for legacy separate card (no longer rendered in the dropdown branch, but kept safe)
         var card = document.getElementById('insuranceCard');
-        if (!card) return; // preselected case — static panel
+
+        if (!insSec) return; // preselected case — static panel
 
         if (!opt || !opt.value) {
-            card.classList.add('d-none');
+            insSec.classList.add('d-none');
+            if (card) card.classList.add('d-none');
             hasInsurance = false;
             insuranceCovPct = 0;
             refreshBilling();
@@ -602,41 +633,40 @@
         hasInsurance    = has && valid;
         insuranceCovPct = hasInsurance ? coverage : 0;
 
-        var header = document.getElementById('insCardHeader');
-        var body   = document.getElementById('insCardBody');
+        insSec.classList.remove('d-none');
 
         if (has) {
-            card.classList.remove('d-none');
-            card.className = 'card mb-3 ' + (valid ? 'border-info' : 'border-danger');
-            header.className = 'card-header py-2 ' + (valid ? 'bg-info text-white' : 'bg-danger text-white');
+            var iconCls  = valid ? 'bg-success bg-opacity-10 text-success' : 'bg-danger bg-opacity-10 text-danger';
+            var iconName = valid ? 'ti-shield-check' : 'ti-shield-off';
+            var badgeHtml = expired
+                ? '<span class="badge bg-danger fs-11">Expired</span>'
+                : (valid ? '<span class="badge bg-success fs-11">Active</span>' : '<span class="badge bg-secondary fs-11">Inactive</span>');
+            var meta = [];
+            if (tier) meta.push(tier);
+            if (has && valid && coverage) meta.push(coverage + '% coverage');
+            if (membership) meta.push('#' + membership);
 
-            var html = '';
-            if (!valid) {
-                html += '<div class="alert alert-danger py-1 mb-2 small"><i class="ti ti-alert-triangle me-1"></i>Insurance is <strong>' + (expired ? 'expired' : 'inactive') + '</strong> — billing will be CASH</div>';
-            }
-            html += '<table class="table table-sm table-borderless mb-2">';
-            html += '<tr><td class="text-muted">Provider</td><td class="fw-semibold">' + provider + '</td></tr>';
-            if (tier) html += '<tr><td class="text-muted">Tier</td><td>' + tier + '</td></tr>';
-            if (membership) html += '<tr><td class="text-muted">Member ID</td><td>' + membership + '</td></tr>';
-            if (has && valid) html += '<tr><td class="text-muted">Coverage</td><td><strong class="text-success">' + coverage + '%</strong></td></tr>';
-            if (annual !== '') {
-                var annualNum = parseFloat(annual);
-                html += '<tr><td class="text-muted">Annual Remaining</td><td class="' + (annualNum <= 0 ? 'text-danger' : '') + '">GH₵ ' + annualNum.toFixed(2) + (annualNum <= 0 ? ' <span class=\'badge bg-danger ms-1\'>Exhausted</span>' : '') + '</td></tr>';
-            }
-            if (monthly !== '') {
-                var monthlyNum = parseFloat(monthly);
-                html += '<tr><td class="text-muted">Monthly Remaining</td><td class="' + (monthlyNum <= 0 ? 'text-danger' : '') + '">GH₵ ' + monthlyNum.toFixed(2) + (monthlyNum <= 0 ? ' <span class=\'badge bg-danger ms-1\'>Exhausted</span>' : '') + '</td></tr>';
-            }
-            html += '</table>';
-            if (valid && (parseFloat(annual || 1) <= 0 || parseFloat(monthly || 1) <= 0)) {
-                html += '<div class="alert alert-warning py-1 small mb-0"><i class="ti ti-alert-circle me-1"></i>Limit exhausted — billing will be CASH</div>';
-            }
-            body.innerHTML = html;
+            insRow.innerHTML =
+                '<div class="patient-card__insurance-icon ' + iconCls + '">' +
+                    '<i class="ti ' + iconName + '"></i>' +
+                '</div>' +
+                '<div class="flex-grow-1 min-w-0">' +
+                    '<div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">' +
+                        '<span class="fw-semibold text-truncate">' + provider + '</span>' +
+                        badgeHtml +
+                    '</div>' +
+                    '<small class="text-muted d-block">' + (meta.join(' · ') || 'No coverage details') + '</small>' +
+                    ((!valid && annual !== '' && parseFloat(annual) <= 0) ? '<small class="text-danger d-block"><i class="ti ti-alert-circle me-1"></i>Limit exhausted — billed as CASH</small>' : '') +
+                '</div>';
         } else {
-            card.classList.remove('d-none');
-            card.className = 'card mb-3 border-secondary';
-            header.className = 'card-header py-2 bg-light';
-            body.innerHTML = '<div class="text-center text-muted py-2"><i class="ti ti-cash fs-2 d-block mb-1"></i><strong>Cash & Carry</strong><br><small>No active insurance for this visit</small></div>';
+            insRow.innerHTML =
+                '<div class="patient-card__insurance-icon bg-secondary bg-opacity-10 text-secondary">' +
+                    '<i class="ti ti-cash"></i>' +
+                '</div>' +
+                '<div>' +
+                    '<span class="fw-semibold">Cash &amp; Carry</span>' +
+                    '<small class="text-muted d-block">No active insurance for this visit</small>' +
+                '</div>';
         }
 
         refreshBilling();
@@ -723,16 +753,34 @@
             if (opt.value) {
                 document.getElementById('patientId').value       = opt.dataset.patientId;
                 document.getElementById('patientDisplay').value  = opt.dataset.patientName + ' (' + opt.dataset.patientNumber + ')';
-                document.getElementById('infoName').textContent  = opt.dataset.patientName;
-                document.getElementById('infoAge').textContent   = (opt.dataset.patientAge || 'N/A') + ' / ' + (opt.dataset.patientGender || '');
-                document.getElementById('infoPhone').textContent = opt.dataset.patientPhone || 'N/A';
+                // Populate patient-card skeleton
+                var name    = opt.dataset.patientName   || '';
+                var number  = opt.dataset.patientNumber || '';
+                var parts   = name.split(' ');
+                var initials = ((parts[0] || '').charAt(0) + (parts[parts.length - 1] || '').charAt(0)).toUpperCase();
+                document.getElementById('infoInitials').textContent = initials || '?';
+                document.getElementById('infoName').textContent   = name;
+                document.getElementById('infoNumber').textContent  = number;
+                document.getElementById('infoAge').textContent    = (opt.dataset.patientAge || 'N/A') + ' yrs · ' + (opt.dataset.patientGender || '');
+                document.getElementById('infoPhone').textContent  = opt.dataset.patientPhone || 'N/A';
+                var alertsSection = document.getElementById('infoAlertsSection');
                 var allergyRow = document.getElementById('allergyRow');
+                var chronicRow = document.getElementById('chronicRow');
                 if (opt.dataset.patientAllergies) {
                     allergyRow.classList.remove('d-none');
                     document.getElementById('infoAllergies').textContent = opt.dataset.patientAllergies;
                 } else {
                     allergyRow.classList.add('d-none');
                 }
+                if (opt.dataset.patientChronic) {
+                    chronicRow.classList.remove('d-none');
+                    document.getElementById('infoChronic').textContent = opt.dataset.patientChronic;
+                } else {
+                    chronicRow.classList.add('d-none');
+                }
+                var hasAlerts = opt.dataset.patientAllergies || opt.dataset.patientChronic;
+                alertsSection.style.removeProperty('display');
+                if (!hasAlerts) alertsSection.style.setProperty('display', 'none', 'important');
                 document.getElementById('patientInfoCard').classList.remove('d-none');
                 updateInsurancePanel(opt);
             } else {

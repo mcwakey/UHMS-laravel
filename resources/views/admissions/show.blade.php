@@ -216,31 +216,10 @@
 <div class="row">
     <!-- LEFT COLUMN -->
     <div class="col-lg-4">
-        <div class="card mb-3">
-            <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-user-heart me-1"></i>Patient</h5></div>
-            <div class="card-body">
-                <div class="d-flex align-items-center mb-3">
-                    <div class="avatar avatar-md bg-primary bg-opacity-10 rounded-circle me-3 d-flex align-items-center justify-content-center">
-                        <span class="fw-bold text-primary">{{ strtoupper(substr($admission->patient->first_name,0,1).substr($admission->patient->last_name,0,1)) }}</span>
-                    </div>
-                    <div>
-                        <h6 class="mb-0"><a href="{{ route('admin.patients.show', $admission->patient) }}" class="text-decoration-none">{{ $admission->patient->full_name }}</a></h6>
-                        <small class="text-muted">{{ $admission->patient->patient_number }}</small>
-                    </div>
-                </div>
-                <table class="table table-sm table-borderless mb-0">
-                    <tr><td class="text-muted" style="width:40%">Age / Gender</td><td>{{ $admission->patient->age }} / {{ $admission->patient->gender->label() }}</td></tr>
-                    <tr><td class="text-muted">Blood Group</td><td>{{ $admission->patient->blood_group?->value ?? '—' }}</td></tr>
-                    <tr><td class="text-muted">Phone</td><td>{{ $admission->patient->phone }}</td></tr>
-                    @if($admission->patient->allergies)
-                    <tr><td class="text-muted">Allergies</td><td class="text-danger fw-medium">{{ $admission->patient->allergies }}</td></tr>
-                    @endif
-                    @if($admission->patient->chronic_conditions)
-                    <tr><td class="text-muted">Chronic</td><td class="text-warning fw-medium">{{ $admission->patient->chronic_conditions }}</td></tr>
-                    @endif
-                </table>
-            </div>
-        </div>
+        @include('partials.patient-card', [
+            'patient' => $admission->patient,
+            'visit'   => $admission->visit,
+        ])
 
         <div class="card mb-3">
             <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-clipboard me-1"></i>Admission Details</h5></div>
@@ -314,10 +293,8 @@
     <!-- RIGHT COLUMN — Tabbed -->
     <div class="col-lg-8">
         <ul class="nav nav-tabs mb-3" id="admTabs" role="tablist">
-            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-rounds" type="button"><i class="ti ti-notes me-1"></i>Ward Rounds <span class="badge bg-secondary ms-1">{{ $admission->wardRounds->count() }}</span></button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-vitals" type="button"><i class="ti ti-heartbeat me-1"></i>Vitals <span class="badge bg-secondary ms-1">{{ $admission->visit->vitals->count() }}</span></button></li>
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-consult" type="button"><i class="ti ti-stethoscope me-1"></i>Consultation</button></li>
             @if($medicalRecord)
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-consult" type="button"><i class="ti ti-stethoscope me-1"></i>Consultation</button></li>
             <li class="nav-item">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tasks" type="button">
                     <i class="ti ti-clipboard-list me-1"></i>Tasks
@@ -327,13 +304,15 @@
                 </button>
             </li>
             @endif
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-rounds" type="button"><i class="ti ti-notes me-1"></i>Ward Rounds <span class="badge bg-secondary ms-1">{{ $admission->wardRounds->count() }}</span></button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-vitals" type="button"><i class="ti ti-heartbeat me-1"></i>Vitals <span class="badge bg-secondary ms-1">{{ $admission->visit->vitals->count() }}</span></button></li>
             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-billing" type="button"><i class="ti ti-file-invoice me-1"></i>Billing <span class="badge bg-secondary ms-1">{{ $admission->visit->visitServices->count() }}</span></button></li>
         </ul>
 
         <div class="tab-content">
 
             <!-- TAB: WARD ROUNDS -->
-            <div class="tab-pane fade show active" id="tab-rounds" role="tabpanel">
+            <div class="tab-pane fade" id="tab-rounds" role="tabpanel">
                 @if($admission->status->value === 'admitted')
                 <div class="card mb-3">
                     <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-plus me-1"></i>Record Ward Round</h5></div>
@@ -480,8 +459,7 @@
             </div>
 
             <!-- TAB: CONSULTATION RECORDS (read-only) -->
-            @if($medicalRecord)
-            <div class="tab-pane fade" id="tab-consult" role="tabpanel">
+            <div class="tab-pane fade show active" id="tab-consult" role="tabpanel">
                 <div class="alert alert-info py-2 mb-3">
                     <i class="ti ti-user-md me-1"></i>
                     Consultation by <strong>{{ $medicalRecord->doctor->name ?? 'N/A' }}</strong>
@@ -490,7 +468,19 @@
                         <i class="ti ti-external-link me-1"></i>Open Full Consultation
                     </a>
                 </div>
-                <div class="row g-3">
+                @if($medicalRecord)
+                    <div class="row" id="summary-section">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="fw-bold mb-0"><i class="ti ti-notes me-1"></i>Notes / Consultation Summary</h6>
+                            </div>
+                            <div class="card-body" id="consultation-summary-body">
+                                @include('consultations.partials.summary-sections', ['consultationSummary' => $consultationSummary])
+                            </div>
+                        </div>
+                    </div>
+
+                {{-- <div class="row g-3">
                     @if($medicalRecord->complaints->count() > 0)
                     <div class="col-md-6">
                         <div class="card h-100">
@@ -552,12 +542,12 @@
                         </div>
                     </div>
                     @endif
-                </div>
-                @if($medicalRecord->complaints->count()===0 && $medicalRecord->diagnoses->count()===0 && $medicalRecord->treatments->count()===0 && $medicalRecord->prescriptions->count()===0)
-                <div class="text-center py-4 text-muted"><i class="ti ti-notes-off fs-1 d-block mb-2"></i>No consultation data recorded yet.</div>
+                </div> --}}
+                    @if($medicalRecord->complaints->count()===0 && $medicalRecord->diagnoses->count()===0 && $medicalRecord->treatments->count()===0 && $medicalRecord->prescriptions->count()===0)
+                        <div class="text-center py-4 text-muted"><i class="ti ti-notes-off fs-1 d-block mb-2"></i>No consultation data recorded yet.</div>
+                    @endif
                 @endif
             </div>
-            @endif
 
             <!-- TAB: TASKS -->
             @if($medicalRecord)

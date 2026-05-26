@@ -659,47 +659,16 @@
         {{-- Legacy visit_services block intentionally removed.
              Visit billing is now represented by the visit invoice above. --}}
 
-        <!-- Status Timeline -->
-        <div class="card">
-            <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-timeline me-1"></i>Status History</h6>
-            </div>
-            <div class="card-body">
-                <div class="timeline">
-                    @foreach($visit->statusLogs as $log)
-                    <div class="d-flex mb-3">
-                        <div class="flex-shrink-0 me-3">
-                            <div class="avatar avatar-sm rounded-circle bg-{{ \App\Enums\VisitStatus::from($log->to_status)->color() }} text-white d-flex align-items-center justify-content-center">
-                                <i class="ti ti-arrow-right fs-12"></i>
-                            </div>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex align-items-center justify-content-between">
-                                <div>
-                                    @if($log->from_status)
-                                        <span class="badge bg-light text-dark">{{ \App\Enums\VisitStatus::from($log->from_status)->label() }}</span>
-                                        <i class="ti ti-arrow-right text-muted mx-1"></i>
-                                    @endif
-                                    <span class="badge bg-{{ \App\Enums\VisitStatus::from($log->to_status)->color() }}">{{ \App\Enums\VisitStatus::from($log->to_status)->label() }}</span>
-                                </div>
-                                <small class="text-muted">{{ $log->timestamp->format('h:i A') }}</small>
-                            </div>
-                            <small class="text-muted">by {{ $log->changedBy?->full_name ?? 'System' }}</small>
-                            @if($log->notes)
-                                <div class="text-muted small mt-1">{{ $log->notes }}</div>
-                            @endif
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Right Column — Patient Card -->
     <div class="col-lg-4">
         <!-- Patient Card -->
-        <div class="card mb-3">
+        @include('partials.patient-card', [
+            'patient' => $visit->patient,
+            'visit'   => $visit,
+        ])
+        {{-- <div class="card mb-3">
             <div class="card-header">
                 <h6 class="fw-bold mb-0"><i class="ti ti-user me-1"></i>Patient</h6>
             </div>
@@ -751,10 +720,10 @@
                     <i class="ti ti-external-link me-1"></i>View Full Profile
                 </a>
             </div>
-        </div>
+        </div> --}}
 
         <!-- Insurance -->
-        <div class="card mb-3">
+        {{-- <div class="card mb-3">
             <div class="card-header">
                 <h6 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Insurance</h6>
             </div>
@@ -812,7 +781,7 @@
                 </div>
             @endif
             </div>
-        </div>
+        </div> --}}
 
         <!-- Queue Info -->
         @if($visit->queueEntries->isNotEmpty())
@@ -906,6 +875,42 @@
                 <div class="d-flex justify-content-between py-2">
                     <span class="text-muted">Checked Out</span>
                     <span class="small">{{ $visit->checked_out_at?->format('h:i A') ?? '—' }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Status Timeline -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="fw-bold mb-0"><i class="ti ti-timeline me-1"></i>Status History</h6>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    @foreach($visit->statusLogs as $log)
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0 me-3">
+                            <div class="avatar avatar-sm rounded-circle bg-{{ \App\Enums\VisitStatus::from($log->to_status)->color() }} text-white d-flex align-items-center justify-content-center">
+                                <i class="ti ti-arrow-right fs-12"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    @if($log->from_status)
+                                        <span class="badge bg-light text-dark">{{ \App\Enums\VisitStatus::from($log->from_status)->label() }}</span>
+                                        <i class="ti ti-arrow-right text-muted mx-1"></i>
+                                    @endif
+                                    <span class="badge bg-{{ \App\Enums\VisitStatus::from($log->to_status)->color() }}">{{ \App\Enums\VisitStatus::from($log->to_status)->label() }}</span>
+                                </div>
+                                <small class="text-muted">{{ $log->timestamp->format('h:i A') }}</small>
+                            </div>
+                            <small class="text-muted">by {{ $log->changedBy?->full_name ?? 'System' }}</small>
+                            @if($log->notes)
+                                <div class="text-muted small mt-1">{{ $log->notes }}</div>
+                            @endif
+                        </div>
+                    </div>
+                    @endforeach
                 </div>
             </div>
         </div>

@@ -13,6 +13,7 @@ use App\Models\Visit;
 use App\Models\Vital;
 use App\Models\Ward;
 use App\Services\AdmissionService;
+use App\Services\ConsultationSummaryService;
 use App\Services\VisitService;
 use App\Services\WardService;
 use Illuminate\Support\Facades\Auth;
@@ -24,7 +25,8 @@ class AdmissionController extends Controller
     public function __construct(
         private AdmissionService $admissionService,
         private WardService $wardService,
-        private VisitService $visitService
+        private VisitService $visitService,
+        private ConsultationSummaryService $summaryService
     ) {}
 
     public function admissionRequests(Request $request)
@@ -170,6 +172,8 @@ class AdmissionController extends Controller
             'admittedBy',
             'dischargedBy',
             'visit.visitServices.serviceCatalog',
+            'visit.visitInsurance.insuranceProvider',
+            'visit.visitInsurance.insuranceTier',
             'visit.vitals.recordedBy',
             'visit.latestInvoice.items',
             'visit.medicalRecord.complaints',
@@ -183,7 +187,10 @@ class AdmissionController extends Controller
 
         $services = ServiceCatalog::where('is_active', true)->orderBy('name')->get();
 
-        return view('admissions.show', compact('admission', 'services'));
+        $medicalRecord       = $admission->visit->medicalRecord;
+        $consultationSummary = $this->summaryService->forRecord($medicalRecord);
+
+        return view('admissions.show', compact('admission', 'services', 'medicalRecord', 'consultationSummary'));
     }
 
     public function discharge(Admission $admission)
