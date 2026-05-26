@@ -26,7 +26,6 @@ use App\Models\Patient;
 use App\Models\Payment;
 use App\Models\PayrollRecord;
 use App\Models\Prescription;
-use App\Models\StockBalance;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\Ward;
@@ -270,10 +269,14 @@ class ReportService
             'active_doctors' => User::role('Doctor')
                 ->where('status', 'active')->count(),
             'pending_lab' => LabRequest::where('status', 'pending')->count(),
-            'low_stock_alerts' => StockBalance::query()
-                ->where('quantity_on_hand', '>', 0)
-                ->whereColumn('quantity_on_hand', '<=', DB::raw('COALESCE((SELECT reorder_level FROM drugs WHERE drugs.id = stock_balances.drug_id), 0)'))
-                ->count(),
+            'low_stock_alerts' => DB::table('products as p')
+                ->join('product_stock_balances as psb', 'p.id', '=', 'psb.product_id')
+                ->whereNull('p.deleted_at')
+                ->select('p.id', 'p.reorder_level', DB::raw('SUM(psb.quantity_on_hand) as total_qty'))
+                ->groupBy('p.id', 'p.reorder_level')
+                ->havingRaw('SUM(psb.quantity_on_hand) > 0')
+                ->havingRaw('SUM(psb.quantity_on_hand) <= p.reorder_level')
+                ->get()->count(),
             'today_appointments' => Appointment::today()->count(),
             'today_admissions' => Admission::whereDate('created_at', today())->count(),
             'active_admissions' => Admission::where('status', AdmissionStatus::ADMITTED)->count(),
@@ -283,8 +286,13 @@ class ReportService
                 ClaimStatus::SUBMITTED->value,
                 ClaimStatus::UNDER_REVIEW->value,
             ])->count(),
-            'expired_stock_count' => DrugStock::whereDate('expiry_date', '<', today())
-                ->where('quantity', '>', 0)->count(),
+            'expired_stock_count' => DB::table('stock_movements')
+                ->whereNotNull('expiry_date')
+                ->whereDate('expiry_date', '<', today())
+                ->where('direction', 'in')
+                ->where('quantity', '>', 0)
+                ->whereNotNull('product_id')
+                ->count(),
         ];
     }
 

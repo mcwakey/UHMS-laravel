@@ -218,37 +218,37 @@
             <div class="card-body">
                 <div class="row g-2">
                     @if($triage->blood_pressure)
-                        <div class="col-6 col-md-3 text-center">
+                        <div class="col-6 col-md-2 text-center">
                             <div class="text-muted" style="font-size:0.72rem">BP</div>
                             <div class="fw-semibold small">{{ $triage->blood_pressure }} mmHg</div>
                         </div>
                     @endif
                     @if($triage->heart_rate)
-                        <div class="col-6 col-md-3 text-center">
+                        <div class="col-6 col-md-2 text-center">
                             <div class="text-muted" style="font-size:0.72rem">Heart Rate</div>
                             <div class="fw-semibold small">{{ $triage->heart_rate }} bpm</div>
                         </div>
                     @endif
                     @if($triage->temperature)
-                        <div class="col-6 col-md-3 text-center">
+                        <div class="col-6 col-md-2 text-center">
                             <div class="text-muted" style="font-size:0.72rem">Temp</div>
                             <div class="fw-semibold small">{{ $triage->temperature }} °C</div>
                         </div>
                     @endif
                     @if($triage->spo2)
-                        <div class="col-6 col-md-3 text-center">
+                        <div class="col-6 col-md-2 text-center">
                             <div class="text-muted" style="font-size:0.72rem">SpO₂</div>
                             <div class="fw-semibold small">{{ $triage->spo2 }}%</div>
                         </div>
                     @endif
                     @if($triage->respiratory_rate)
-                        <div class="col-6 col-md-3 text-center">
+                        <div class="col-6 col-md-2 text-center">
                             <div class="text-muted" style="font-size:0.72rem">Resp. Rate</div>
                             <div class="fw-semibold small">{{ $triage->respiratory_rate }}/min</div>
                         </div>
                     @endif
                     @if($triage->bmi)
-                        <div class="col-6 col-md-3 text-center">
+                        <div class="col-6 col-md-2 text-center">
                             @php
                                 $bmiCat = $triage->bmi < 18.5 ? ['Underweight', 'warning'] : ($triage->bmi < 25 ? ['Normal', 'success'] : ($triage->bmi < 30 ? ['Overweight', 'warning'] : ['Obese', 'danger']));
                             @endphp

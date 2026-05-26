@@ -190,9 +190,9 @@
                         <tbody>
                             @forelse($lowStockItems ?? [] as $stock)
                             <tr>
-                                <td class="small">{{ $stock->drug->brand_name ?? $stock->drug->generic_name }}</td>
-                                <td class="text-center"><span class="badge bg-danger">{{ $stock->quantity }}</span></td>
-                                <td class="text-center text-muted small">{{ $stock->reorder_level }}</td>
+                                <td class="small">{{ $stock->name }}</td>
+                                <td class="text-center"><span class="badge bg-danger">{{ number_format($stock->total_qty, 0) }}</span></td>
+                                <td class="text-center text-muted small">{{ number_format($stock->reorder_level, 0) }}</td>
                             </tr>
                             @empty
                             <tr><td colspan="3" class="text-center text-muted py-3 small">No low stock items</td></tr>
@@ -218,8 +218,8 @@
                         <tbody>
                             @forelse($expiredStockItems ?? [] as $stock)
                             <tr>
-                                <td class="small">{{ $stock->drug->brand_name ?? $stock->drug->generic_name }}</td>
-                                <td class="text-center"><span class="badge bg-secondary">{{ $stock->quantity }}</span></td>
+                                <td class="small">{{ $stock->name }}</td>
+                                <td class="text-center"><span class="badge bg-secondary">{{ number_format($stock->quantity, 0) }}</span></td>
                                 <td class="small text-danger">{{ $stock->expiry_date?->format('M d, Y') }}</td>
                             </tr>
                             @empty
