@@ -23,7 +23,7 @@
         color: #0f172a;
     }
     .consult-doc .doc-meta { font-size: .78rem; color: #6b7280; }
-    .consult-doc .doc-section { margin-bottom: 26px; }
+    .consult-doc .doc-section { margin-bottom: 18px; }
     .consult-doc .doc-section h2 {
         font-size: 1rem;
         font-weight: 700;
@@ -35,10 +35,10 @@
         margin-bottom: 10px;
     }
     .consult-doc .doc-section h3 {
-        font-size: .92rem;
+        font-size: .88rem;
         font-weight: 600;
         color: #334155;
-        margin: 12px 0 6px;
+        margin: 7px 0 3px;
     }
     .consult-doc .info-grid {
         display: grid;
@@ -49,24 +49,24 @@
     .consult-doc .info-grid .lbl { color: #6b7280; font-weight: 500; }
     .consult-doc .owner-block {
         border-left: 3px solid #0d6efd;
-        padding: 6px 12px;
-        margin-bottom: 12px;
+        padding: 3px 10px;
+        margin-bottom: 6px;
         background: #f8fafc;
         border-radius: 0 4px 4px 0;
     }
     .consult-doc .owner-block.owner-contrib { border-left-color: #6366f1; }
     .consult-doc .owner-head {
         display: flex; justify-content: space-between; align-items: center;
-        font-size: .82rem; margin-bottom: 4px;
+        font-size: .78rem; margin-bottom: 2px;
     }
     .consult-doc .entry {
-        padding: 4px 0;
+        padding: 1px 0 2px;
         border-top: 1px dashed #e5e7eb;
     }
     .consult-doc .entry:first-of-type { border-top: 0; }
-    .consult-doc .entry .content { font-weight: 500; }
-    .consult-doc .entry .meta { font-size: .72rem; color: #6b7280; }
-    .consult-doc .entry .details { font-size: .78rem; margin-top: 2px; }
+    .consult-doc .entry .entry-text { font-weight: 500; line-height: 1.3; margin-bottom: 0; }
+    .consult-doc .entry .meta { font-size: .7rem; color: #6b7280; line-height: 1.25; }
+    .consult-doc .entry .details { font-size: .75rem; margin-top: 1px; line-height: 1.25; }
     .consult-doc .entry .details .b {
         background: #eef2ff; color: #3730a3;
         padding: 1px 6px; border-radius: 4px; margin-right: 4px;
@@ -82,13 +82,13 @@
     .consult-doc .session-card {
         border: 1px solid #e5e7eb;
         border-radius: 6px;
-        padding: 14px 16px;
-        margin-bottom: 18px;
+        padding: 10px 14px;
+        margin-bottom: 12px;
     }
     .consult-doc .session-card .session-head {
         display: flex; justify-content: space-between; align-items: center;
         border-bottom: 1px solid #e5e7eb;
-        padding-bottom: 6px; margin-bottom: 10px;
+        padding-bottom: 5px; margin-bottom: 8px;
     }
     .consult-doc .session-head h3 { margin: 0; font-size: .95rem; }
     .consult-doc .dept-group {
@@ -272,12 +272,19 @@
                 <div class="doc-meta mb-2"><span class="lbl">Session Contributors:</span> {{ implode(', ', $summary['contributors']) }}</div>
             @endif
 
+            @php
+                $hasAnySectionEntry = collect($sectionLabels)->keys()->some(fn($k) => !empty($summary['sections'][$k]));
+            @endphp
+            @if(!$hasAnySectionEntry)
+                <div class="empty-state">No clinical entries recorded for this session.</div>
+            @else
             @foreach($sectionLabels as $key => $label)
                 @php
                     $entries = collect($summary['sections'][$key] ?? []);
                     $groups = $entries->groupBy(fn ($e) => $e['owner_key'] ?? 'unknown');
                 @endphp
-                <div class="doc-subsection mb-3">
+                @if($entries->isEmpty()) @continue @endif
+                <div class="doc-subsection mb-2">
                     <h3>{{ $label }} <span class="text-muted small">({{ $entries->count() }})</span></h3>
                     @if($groups->isEmpty())
                         <div class="empty-state">None recorded.</div>
@@ -301,7 +308,7 @@
 
                                 @foreach($groupEntries as $entry)
                                     <div class="entry">
-                                        <div class="content">{{ $entry['content'] }}</div>
+                                        <div class="entry-text">{{ $entry['content'] }}</div>
                                         @if(!empty($entry['details']))
                                             <div class="details">
                                                 @foreach($entry['details'] as $name => $value)
@@ -325,6 +332,7 @@
                     @endif
                 </div>
             @endforeach
+            @endif
         </div>
     @endforeach
 
@@ -362,7 +370,7 @@
                             @foreach($ownerReqs as $req)
                                 @foreach($req->items ?? [] as $item)
                                     <div class="entry">
-                                        <div class="content">
+                                        <div class="entry-text">
                                             {{ $item->display_name ?? $item->name ?? ($item->labTest?->name ?? 'Test') }}
                                             <span class="badge bg-{{ $item->status_color ?? 'secondary' }} ms-1">{{ ucfirst($item->status ?? '') }}</span>
                                             @if($item->result?->is_verified)
@@ -423,7 +431,7 @@
                             </div>
                             @foreach($ownerProcs as $pr)
                                 <div class="entry">
-                                    <div class="content">
+                                    <div class="entry-text">
                                         {{ $pr->service?->name ?? 'Procedure' }}
                                         <span class="badge ms-1" style="background-color:{{ $pr->status->color() }};color:#fff">{{ $pr->status->label() }}</span>
                                         @if($pr->priority)<span class="badge bg-light text-dark ms-1">{{ ucfirst($pr->priority) }}</span>@endif
