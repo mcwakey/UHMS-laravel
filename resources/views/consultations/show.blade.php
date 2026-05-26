@@ -1009,7 +1009,12 @@
 
                         <div id="investigations-list">
                             @php
-                                $grouped  = collect($labRequests ?? [])->groupBy(fn($r) => $r->targetDepartment->name ?? 'Other');
+                                $grouped = collect($labRequests ?? [])->groupBy(function($r) {
+                                    if ($r->targetDepartment?->name) return $r->targetDepartment->name;
+                                    if ($r->department?->name) return $r->department->name;
+                                    $firstItem = $r->items->first();
+                                    return $firstItem?->service?->department?->name ?? 'Other';
+                                });
                             @endphp
                             @if($grouped->isNotEmpty())
                                 @foreach($grouped as $deptName => $reqs)

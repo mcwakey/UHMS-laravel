@@ -120,7 +120,7 @@ class LabRequest extends Model
 
     public static function generateRequestNumber(): string
     {
-        return static::generateNumber('LAB', 'lab_requests', 'request_number');
+        return static::generateNumber('INV', 'lab_requests', 'request_number');
     }
 
     public function getStatusColorAttribute(): string

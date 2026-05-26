@@ -357,7 +357,13 @@
     <div class="doc-section">
         <h2>Investigations</h2>
         @php
-            $labGrouped = $labRequests->groupBy(fn($r) => $r->targetDepartment?->name ?? ($r->department?->name ?? 'Other'));
+            $labGrouped = $labRequests->groupBy(function($r) {
+            if ($r->targetDepartment?->name) return $r->targetDepartment->name;
+            if ($r->department?->name) return $r->department->name;
+            // Fall back to first item's service department
+            $firstItem = $r->items->first();
+            return $firstItem?->service?->department?->name ?? 'Other';
+        });
         @endphp
         @if($labGrouped->isEmpty())
             <div class="empty-state">No investigations requested for this visit.</div>
