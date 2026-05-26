@@ -788,6 +788,8 @@ Route::middleware('auth')->group(function () {
             Route::put('invoice', [SettingsController::class, 'updateInvoice'])->name('invoice.update');
             Route::get('payment-methods', [SettingsController::class, 'paymentMethods'])->name('payment-methods');
             Route::put('payment-methods', [SettingsController::class, 'updatePaymentMethods'])->name('payment-methods.update');
+            Route::get('ward', [SettingsController::class, 'ward'])->name('ward');
+            Route::put('ward', [SettingsController::class, 'updateWard'])->name('ward.update');
             Route::get('activity-log', [ActivityLogController::class, 'index'])->name('activity-log');
         });
 

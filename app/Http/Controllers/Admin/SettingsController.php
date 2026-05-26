@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ServiceCatalog;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 
@@ -111,5 +112,31 @@ class SettingsController extends Controller
         }
 
         return back()->with('success', 'Payment method settings updated successfully.');
+    }
+
+    /**
+     * Ward & Admissions settings.
+     */
+    public function ward()
+    {
+        $settings = Setting::getGroup('ward');
+        $services = ServiceCatalog::where('is_active', true)->orderBy('name')->get();
+
+        return view('settings.ward', compact('settings', 'services'));
+    }
+
+    public function updateWard(Request $request)
+    {
+        $validated = $request->validate([
+            'admission_fee_service_id'  => 'nullable|integer|exists:service_catalogs,id',
+            'detention_fee_service_id'  => 'nullable|integer|exists:service_catalogs,id',
+            'consumable_fee_service_id' => 'nullable|integer|exists:service_catalogs,id',
+        ]);
+
+        Setting::setValue('ward', 'admission_fee_service_id',  $validated['admission_fee_service_id']  ?? '', 'integer');
+        Setting::setValue('ward', 'detention_fee_service_id',  $validated['detention_fee_service_id']  ?? '', 'integer');
+        Setting::setValue('ward', 'consumable_fee_service_id', $validated['consumable_fee_service_id'] ?? '', 'integer');
+
+        return back()->with('success', 'Ward & Admissions settings updated successfully.');
     }
 }

@@ -19,6 +19,10 @@
        class="list-group-item list-group-item-action {{ request()->routeIs('admin.settings.payment-methods') ? 'active' : '' }}">
         <i class="ti ti-credit-card me-2"></i>Payment Methods
     </a>
+    <a href="{{ route('admin.settings.ward') }}"
+       class="list-group-item list-group-item-action {{ request()->routeIs('admin.settings.ward') ? 'active' : '' }}">
+        <i class="ti ti-bed me-2"></i>Ward & Admissions
+    </a>
 
     <div class="list-group-item bg-light fw-bold text-muted small text-uppercase mt-2">System</div>
     <a href="{{ route('admin.settings.activity-log') }}"

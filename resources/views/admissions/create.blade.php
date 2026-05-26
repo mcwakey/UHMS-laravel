@@ -212,12 +212,14 @@
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Admission/Detention Fee Service</label>
-                        <select name="admission_fee_service_id" id="admissionFeeService" class="form-select">
+                        <label class="form-label fw-semibold" id="admFeeServiceLabel">Admission Fee Service</label>
+                        <select name="admission_fee_service_id" id="admissionFeeService" class="form-select"
+                                data-default-admission="{{ $defaultAdmissionFeeServiceId ?? '' }}"
+                                data-default-detention="{{ $defaultDetentionFeeServiceId ?? '' }}">
                             <option value="">— None / Manual —</option>
                             @foreach($services as $svc)
                                 <option value="{{ $svc->id }}" data-price="{{ $svc->price }}"
-                                        {{ old('admission_fee_service_id') == $svc->id ? 'selected' : '' }}>
+                                        {{ old('admission_fee_service_id', $defaultAdmissionFeeServiceId) == $svc->id ? 'selected' : '' }}>
                                     {{ $svc->name }} — GH₵{{ number_format($svc->price, 2) }}
                                 </option>
                             @endforeach
@@ -230,7 +232,7 @@
                             <option value="">— None / Manual —</option>
                             @foreach($services as $svc)
                                 <option value="{{ $svc->id }}" data-price="{{ $svc->price }}"
-                                        {{ old('consumable_fee_service_id') == $svc->id ? 'selected' : '' }}>
+                                        {{ old('consumable_fee_service_id', $defaultConsumableFeeServiceId) == $svc->id ? 'selected' : '' }}>
                                     {{ $svc->name }} — GH₵{{ number_format($svc->price, 2) }}
                                 </option>
                             @endforeach
@@ -640,12 +642,28 @@
         refreshBilling();
     }
 
-    // ─── Admission Type Labels ────────────────────────────────────────────
+    // ─── Admission Type Labels + Fee Service Swap ────────────────────────
     function updateTypeLabel() {
         var t = document.querySelector('input[name="admission_type"]:checked');
-        var label = t ? (t.value === 'detention' ? 'Detention Fee' : 'Admission Fee') : 'Admission Fee';
+        var isDetention = t && t.value === 'detention';
+        var label = isDetention ? 'Detention Fee' : 'Admission Fee';
         document.getElementById('admFeeLabel').textContent = label;
+
+        // Swap the fee-service label
+        var serviceLabel = document.getElementById('admFeeServiceLabel');
+        if (serviceLabel) serviceLabel.textContent = isDetention ? 'Detention Fee Service' : 'Admission Fee Service';
+
+        // Swap pre-selected default only when the user hasn't already made a choice
+        var sel = document.getElementById('admissionFeeService');
+        if (sel && !sel.dataset.userPicked) {
+            var defaultId = isDetention ? sel.dataset.defaultDetention : sel.dataset.defaultAdmission;
+            if (defaultId) sel.value = defaultId;
+        }
     }
+
+    document.getElementById('admissionFeeService').addEventListener('change', function() {
+        this.dataset.userPicked = '1';
+    });
 
     document.querySelectorAll('input[name="admission_type"]').forEach(function(el) {
         el.addEventListener('change', updateTypeLabel);

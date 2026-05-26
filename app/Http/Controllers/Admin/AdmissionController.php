@@ -8,6 +8,7 @@ use App\Http\Requests\DischargeRequest;
 use App\Http\Requests\StoreAdmissionRequest;
 use App\Models\Admission;
 use App\Models\ServiceCatalog;
+use App\Models\Setting;
 use App\Models\Visit;
 use App\Models\Vital;
 use App\Models\Ward;
@@ -141,8 +142,14 @@ class AdmissionController extends Controller
         // Services for admission/consumable fee mapping
         $services = ServiceCatalog::where('is_active', true)->orderBy('name')->get();
 
+        // Load saved defaults from settings (can be overridden by ?bed_id param but not service defaults)
+        $defaultAdmissionFeeServiceId  = (int) Setting::getValue('ward', 'admission_fee_service_id',  0) ?: null;
+        $defaultDetentionFeeServiceId  = (int) Setting::getValue('ward', 'detention_fee_service_id',  0) ?: null;
+        $defaultConsumableFeeServiceId = (int) Setting::getValue('ward', 'consumable_fee_service_id', 0) ?: null;
+
         return view('admissions.create', compact(
-            'preselectedVisit', 'preselectedBedId', 'admittingVisits', 'availableBeds', 'wards', 'services'
+            'preselectedVisit', 'preselectedBedId', 'admittingVisits', 'availableBeds', 'wards', 'services',
+            'defaultAdmissionFeeServiceId', 'defaultDetentionFeeServiceId', 'defaultConsumableFeeServiceId'
         ));
     }
 
