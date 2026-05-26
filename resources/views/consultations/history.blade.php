@@ -73,6 +73,23 @@
         font-size: .72rem;
     }
     .consult-doc .empty-state { color: #9ca3af; font-style: italic; font-size: .82rem; }
+    /* Per-section accent colours */
+    .section-complaints .owner-block              { border-left-color: #ef4444; }
+    .section-complaints h3                        { color: #6b7280; }
+    .section-history_of_presenting_complaint .owner-block { border-left-color: #f97316; }
+    .section-history_of_presenting_complaint h3   { color: #6b7280; }
+    .section-examination .owner-block             { border-left-color: #14b8a6; }
+    .section-examination h3                       { color: #6b7280; }
+    .section-diagnoses .owner-block               { border-left-color: #8b5cf6; }
+    .section-diagnoses h3                         { color: #6b7280; }
+    .section-treatments .owner-block              { border-left-color: #22c55e; }
+    .section-treatments h3                        { color: #6b7280; }
+    .section-prescriptions .owner-block           { border-left-color: #0ea5e9; }
+    .section-prescriptions h3                     { color: #6b7280; }
+    .section-tasks .owner-block                   { border-left-color: #f59e0b; }
+    .section-tasks h3                             { color: #6b7280; }
+    .section-notes .owner-block                   { border-left-color: #6b7280; }
+    .section-notes h3                             { color: #6b7280; }
     .consult-doc .contributor-pill {
         display: inline-flex; align-items: center; gap: 4px;
         background: #f1f5f9; padding: 4px 10px; border-radius: 999px;
@@ -284,7 +301,7 @@
                     $groups = $entries->groupBy(fn ($e) => $e['owner_key'] ?? 'unknown');
                 @endphp
                 @if($entries->isEmpty()) @continue @endif
-                <div class="doc-subsection mb-2">
+                <div class="doc-subsection mb-2 section-{{ $key }}">
                     <h3>{{ $label }} <span class="text-muted small">({{ $entries->count() }})</span></h3>
                     @if($groups->isEmpty())
                         <div class="empty-state">None recorded.</div>
