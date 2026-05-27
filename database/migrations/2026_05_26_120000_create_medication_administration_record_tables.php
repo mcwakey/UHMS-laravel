@@ -115,8 +115,12 @@ return new class extends Migration
 
             $table->unique(['medication_order_id', 'sequence_number'], 'med_admin_sched_order_sequence_unique');
             $table->index(['scheduled_at', 'status']);
-            $table->index(['admission_id', 'status', 'scheduled_at']);
-            $table->index(['emergency_case_id', 'status', 'scheduled_at']);
+            // $table->index(['admission_id', 'status', 'scheduled_at']);
+            // $table->index(['emergency_case_id', 'status', 'scheduled_at']);
+            // $table->index(['scheduled_at', 'status']);
+            $table->index(['admission_id', 'status', 'scheduled_at'], 'mas_admission_status_scheduled_idx');
+            $table->index(['emergency_case_id', 'status', 'scheduled_at'], 'mas_emergency_status_scheduled_idx');
+
         });
 
         if (! Schema::hasTable('medication_administrations')) Schema::create('medication_administrations', function (Blueprint $table) {
