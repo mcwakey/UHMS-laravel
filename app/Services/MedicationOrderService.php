@@ -22,7 +22,7 @@ class MedicationOrderService
 
     public function createOrdersForPrescription(Prescription $prescription): void
     {
-        $prescription->loadMissing(['visit.admission', 'items.drug.product', 'medicalRecord', 'consultationRoute']);
+        $prescription->loadMissing(['visit.admission', 'visit.emergencyCase', 'items.drug.product', 'medicalRecord', 'consultationRoute']);
 
         if (! $this->shouldTrackPrescription($prescription)) {
             return;
@@ -35,7 +35,7 @@ class MedicationOrderService
 
     public function ensureOrderForPrescriptionItem(PrescriptionItem $item): ?MedicationOrder
     {
-        $item->loadMissing(['prescription.visit.admission', 'prescription.medicalRecord', 'prescription.consultationRoute', 'drug.product']);
+        $item->loadMissing(['prescription.visit.admission', 'prescription.visit.emergencyCase', 'prescription.medicalRecord', 'prescription.consultationRoute', 'drug.product']);
         $prescription = $item->prescription;
 
         if (! $prescription || ! $this->shouldTrackPrescription($prescription)) {
@@ -53,6 +53,7 @@ class MedicationOrderService
 
             $visit = $prescription->visit;
             $admission = $visit?->admission;
+            $emergencyCase = $visit?->emergencyCase;
             $frequency = $this->frequencies->resolve($item->frequency);
             [$durationValue, $durationUnit] = $this->frequencies->parseDuration($item->duration);
             [$dose, $doseUnit] = $this->frequencies->splitDose($item->dosage);
@@ -63,7 +64,7 @@ class MedicationOrderService
             $order = MedicationOrder::create([
                 'visit_id' => $prescription->visit_id,
                 'admission_id' => $admission?->id,
-                'emergency_case_id' => null,
+                'emergency_case_id' => $emergencyCase?->id,
                 'patient_id' => $prescription->patient_id,
                 'medical_record_id' => $prescription->medical_record_id,
                 'consultation_route_id' => $prescription->consultation_route_id,

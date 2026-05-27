@@ -92,6 +92,11 @@ class ClinicalTask extends Model
         return $this->belongsTo(Admission::class);
     }
 
+    public function emergencyCase()
+    {
+        return $this->belongsTo(EmergencyCase::class);
+    }
+
     public function patient()
     {
         return $this->belongsTo(Patient::class);

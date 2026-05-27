@@ -17,23 +17,31 @@ class EmergencyMedicationBoardService
 
     public function board(): array
     {
-        $this->reminders->syncMedicationTaskStatuses(ClinicalTask::query()->whereNull('admission_id'));
+        $this->reminders->syncMedicationTaskStatuses(
+            ClinicalTask::query()->whereNull('admission_id')->whereNotNull('emergency_case_id')
+        );
 
         $orders = MedicationOrder::query()
-            ->with(['visit.patient', 'patient', 'frequency', 'prescriber', 'schedules.clinicalTask', 'schedules.administration.administeredBy'])
+            ->with(['emergencyCase.bay', 'visit.patient', 'patient', 'frequency', 'prescriber', 'schedules.clinicalTask', 'schedules.administration.administeredBy'])
             ->whereNull('admission_id')
-            ->whereHas('visit', fn ($q) => $q
-                ->where('status', VisitStatus::EMERGENCY->value)
-                ->orWhere('visit_type', VisitType::EMERGENCY->value))
+            ->where(function ($q) {
+                $q->whereNotNull('emergency_case_id')
+                    ->orWhereHas('visit', fn ($visit) => $visit
+                        ->where('status', VisitStatus::EMERGENCY->value)
+                        ->orWhere('visit_type', VisitType::EMERGENCY->value));
+            })
             ->latest()
             ->get();
 
         $schedules = MedicationAdministrationSchedule::query()
-            ->with(['medicationOrder.visit.patient', 'medicationOrder.frequency', 'medicationOrder.prescriber', 'clinicalTask', 'administration.administeredBy'])
+            ->with(['emergencyCase.bay', 'medicationOrder.emergencyCase.bay', 'medicationOrder.visit.patient', 'medicationOrder.frequency', 'medicationOrder.prescriber', 'clinicalTask', 'administration.administeredBy'])
             ->whereNull('admission_id')
-            ->whereHas('medicationOrder.visit', fn ($q) => $q
-                ->where('status', VisitStatus::EMERGENCY->value)
-                ->orWhere('visit_type', VisitType::EMERGENCY->value))
+            ->where(function ($q) {
+                $q->whereNotNull('emergency_case_id')
+                    ->orWhereHas('medicationOrder.visit', fn ($visit) => $visit
+                        ->where('status', VisitStatus::EMERGENCY->value)
+                        ->orWhere('visit_type', VisitType::EMERGENCY->value));
+            })
             ->whereDate('scheduled_at', '<=', today()->addDay())
             ->orderBy('scheduled_at')
             ->get();

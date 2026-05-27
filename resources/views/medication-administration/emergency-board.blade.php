@@ -41,7 +41,12 @@
                     <tr class="{{ $schedule->medicationOrder->frequency?->is_stat ? 'table-danger' : '' }}">
                         <td>
                             <div class="fw-semibold">{{ $order->patient->full_name ?? $order->visit->patient->full_name ?? 'Patient' }}</div>
-                            <small class="text-muted">{{ $order->visit->visit_number ?? 'Emergency visit' }}</small>
+                            <small class="text-muted">
+                                {{ $order->emergencyCase->emergency_number ?? $order->visit->visit_number ?? 'Emergency visit' }}
+                                @if($order->emergencyCase?->bay)
+                                    - {{ $order->emergencyCase->bay->name }}
+                                @endif
+                            </small>
                         </td>
                         <td>{{ $order->display_name }} @if($order->frequency?->is_stat)<span class="badge bg-danger ms-1">STAT</span>@endif</td>
                         <td>{{ trim(($schedule->dose ?? $order->dose).' '.($schedule->dose_unit ?? $order->dose_unit)) }} {{ $schedule->route ? '· '.strtoupper($schedule->route) : '' }}</td>

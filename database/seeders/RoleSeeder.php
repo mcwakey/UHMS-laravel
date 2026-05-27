@@ -230,6 +230,28 @@ class RoleSeeder extends Seeder
             'clinical_tasks.view_overdue',
             'admission.medication_board.view',
             'emergency.medication_board.view',
+            'emergency.board.view',
+            'emergency.case.create',
+            'emergency.case.view',
+            'emergency.case.update',
+            'emergency.case.cancel',
+            'emergency.triage.perform',
+            'emergency.bay.assign',
+            'emergency.notes.create',
+            'emergency.notes.edit_own',
+            'emergency.notes.edit_any',
+            'emergency.vitals.record',
+            'emergency.medication.administer',
+            'emergency.investigation.request',
+            'emergency.procedure.request',
+            'emergency.disposition.manage',
+            'emergency.transfer.admit',
+            'emergency.transfer.opd',
+            'emergency.transfer.theatre',
+            'emergency.refer',
+            'emergency.death.record',
+            'emergency.reports.view',
+            'emergency.settings.manage',
             'beds.view',
             'beds.manage',
 
@@ -344,6 +366,11 @@ class RoleSeeder extends Seeder
             'admission.mar_chart.view', 'emergency.mar_chart.view',
             'clinical_tasks.view', 'clinical_tasks.view_overdue',
             'admission.medication_board.view', 'emergency.medication_board.view',
+            'emergency.board.view', 'emergency.case.create', 'emergency.case.view', 'emergency.case.update',
+            'emergency.notes.create', 'emergency.vitals.record', 'emergency.medication.administer',
+            'emergency.investigation.request', 'emergency.procedure.request', 'emergency.disposition.manage',
+            'emergency.transfer.admit', 'emergency.transfer.opd', 'emergency.transfer.theatre',
+            'emergency.refer', 'emergency.death.record', 'emergency.reports.view',
             'lab.requests.view', 'lab.requests.create',
             'lab.results.view',
             'queue.view',
@@ -414,6 +441,9 @@ class RoleSeeder extends Seeder
             'admission.mar_chart.view', 'emergency.mar_chart.view',
             'clinical_tasks.view', 'clinical_tasks.complete', 'clinical_tasks.view_overdue',
             'admission.medication_board.view', 'emergency.medication_board.view',
+            'emergency.board.view', 'emergency.case.view', 'emergency.triage.perform',
+            'emergency.bay.assign', 'emergency.notes.create', 'emergency.vitals.record',
+            'emergency.medication.administer', 'emergency.reports.view',
             'notifications.view',
             'procedures.view',
             'procedure.view', 'procedure.record_preop', 'procedure.record_postop',
@@ -443,6 +473,9 @@ class RoleSeeder extends Seeder
             'admission.mar_chart.view', 'emergency.mar_chart.view',
             'clinical_tasks.view', 'clinical_tasks.complete', 'clinical_tasks.escalate', 'clinical_tasks.view_overdue',
             'admission.medication_board.view', 'emergency.medication_board.view',
+            'emergency.board.view', 'emergency.case.create', 'emergency.case.view', 'emergency.case.update',
+            'emergency.triage.perform', 'emergency.bay.assign', 'emergency.notes.create',
+            'emergency.vitals.record', 'emergency.medication.administer', 'emergency.reports.view',
             'notifications.view',
             'procedures.view',
             'procedure.view', 'procedure.record_preop', 'procedure.record_postop',
@@ -455,6 +488,44 @@ class RoleSeeder extends Seeder
 
         // ── Theatre Nurse ─────────────────────────────────────────────────
         // Scrub/circulating nurse: full procedure workflow + consumable recording
+        $emergencyDoctor = Role::firstOrCreate(['name' => 'Emergency Doctor']);
+        $emergencyDoctor->syncPermissions(array_values(array_unique(array_merge($doctorPerms, [
+            'emergency.board.view', 'emergency.case.create', 'emergency.case.view', 'emergency.case.update',
+            'emergency.notes.create', 'emergency.vitals.record', 'emergency.medication.administer',
+            'emergency.investigation.request', 'emergency.procedure.request', 'emergency.disposition.manage',
+            'emergency.transfer.admit', 'emergency.transfer.opd', 'emergency.transfer.theatre',
+            'emergency.refer', 'emergency.death.record', 'emergency.reports.view',
+        ]))));
+
+        $emergencyNurse = Role::firstOrCreate(['name' => 'Emergency Nurse']);
+        $emergencyNurse->syncPermissions([
+            'patients.view',
+            'visits.view', 'visits.preview',
+            'vitals.view', 'vitals.create',
+            'medication_orders.view',
+            'medication_administration.view', 'medication_administration.administer',
+            'medication_administration.hold', 'medication_administration.mark_missed',
+            'mar_chart.view', 'mar_chart.print', 'emergency.mar_chart.view',
+            'clinical_tasks.view', 'clinical_tasks.complete', 'clinical_tasks.escalate', 'clinical_tasks.view_overdue',
+            'emergency.medication_board.view',
+            'emergency.board.view', 'emergency.case.create', 'emergency.case.view', 'emergency.case.update',
+            'emergency.triage.perform', 'emergency.bay.assign', 'emergency.notes.create',
+            'emergency.vitals.record', 'emergency.medication.administer', 'emergency.reports.view',
+            'notifications.view',
+            'product.view', 'stock.view_balance',
+        ]);
+
+        $triageNurse = Role::firstOrCreate(['name' => 'Triage Nurse']);
+        $triageNurse->syncPermissions([
+            'patients.view',
+            'visits.view', 'visits.preview',
+            'vitals.view', 'vitals.create',
+            'queue.view',
+            'emergency.board.view', 'emergency.case.create', 'emergency.case.view',
+            'emergency.triage.perform', 'emergency.notes.create', 'emergency.vitals.record',
+            'notifications.view',
+        ]);
+
         $theatreNurse = Role::firstOrCreate(['name' => 'Theatre Nurse']);
         $theatreNurse->syncPermissions([
             'patients.view',

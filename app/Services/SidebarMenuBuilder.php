@@ -111,6 +111,44 @@ class SidebarMenuBuilder
             [
                 'title' => 'Clinical',
                 'items' => [
+                    [
+                        'label' => 'Emergency',
+                        'icon' => 'ti ti-ambulance',
+                        'permission' => 'emergency.board.view',
+                        'active_patterns' => ['admin.emergency.*'],
+                        'children' => [
+                            [
+                                'label' => 'Emergency Board',
+                                'route' => 'admin.emergency.board',
+                                'active_patterns' => ['admin.emergency.board'],
+                                'permission' => 'emergency.board.view',
+                            ],
+                            [
+                                'label' => 'New Emergency Case',
+                                'route' => 'admin.emergency.cases.create',
+                                'active_patterns' => ['admin.emergency.cases.create'],
+                                'permission' => 'emergency.case.create',
+                            ],
+                            [
+                                'label' => 'Emergency MAR',
+                                'route' => 'admin.emergency.medication-board',
+                                'active_patterns' => ['admin.emergency.medication-board', 'admin.emergency.mar-chart'],
+                                'permission' => 'emergency.medication_board.view',
+                            ],
+                            [
+                                'label' => 'Emergency Bays',
+                                'route' => 'admin.emergency.bays.index',
+                                'active_patterns' => ['admin.emergency.bays.*'],
+                                'permission' => 'emergency.settings.manage',
+                            ],
+                            [
+                                'label' => 'Reports',
+                                'route' => 'admin.emergency.reports.index',
+                                'active_patterns' => ['admin.emergency.reports.*'],
+                                'permission' => 'emergency.reports.view',
+                            ],
+                        ],
+                    ],
                     // [
                     //     'label' => 'Vitals / Triage',
                     //     'icon' => 'ti ti-heartbeat',

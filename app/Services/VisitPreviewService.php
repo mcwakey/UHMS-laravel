@@ -58,6 +58,15 @@ class VisitPreviewService
             'currentDepartment',
             'visitInsurance.insuranceProvider',
             'statusLogs.changedBy',
+            'emergencyCase.patient',
+            'emergencyCase.bay',
+            'emergencyCase.assignedDoctor',
+            'emergencyCase.assignedNurse',
+            'emergencyCase.createdBy',
+            'emergencyCase.triagedBy',
+            'emergencyCase.disposedBy',
+            'emergencyCase.logs.performedBy',
+            'emergencyCase.notes.creator',
             'triage.triagedBy',
             'triage.department',
             'vitals.recordedBy',
@@ -161,6 +170,77 @@ class VisitPreviewService
                 strtoupper($this->formatStatus($log->to_status)), 'bg-secondary',
                 'status_log', $log->id
             );
+        }
+
+        if ($case = $visit->emergencyCase) {
+            $items[] = $this->item(
+                $case->arrival_time ?? $case->created_at,
+                'Emergency Case Opened',
+                trim(($case->chief_complaint ? "Chief complaint: {$case->chief_complaint}. " : '').($case->initial_condition ?: 'Emergency encounter started.')),
+                optional($case->createdBy)->full_name,
+                'Emergency',
+                'EMERGENCY', 'bg-danger',
+                'emergency_case', $case->id,
+                array_filter([
+                    'Emergency Number' => $case->emergency_number,
+                    'Arrival Mode' => str_replace('_', ' ', (string) $case->arrival_mode),
+                    'Bay' => $case->bay?->name,
+                    'Doctor' => $case->assignedDoctor?->full_name,
+                    'Nurse' => $case->assignedNurse?->full_name,
+                ])
+            );
+
+            if ($case->triaged_at) {
+                $items[] = $this->item(
+                    $case->triaged_at,
+                    'Emergency Triage Completed',
+                    $case->triage_notes ?: 'Emergency triage recorded.',
+                    optional($case->triagedBy)->full_name,
+                    'Emergency',
+                    $case->triage_category ?: 'TRIAGE', 'bg-danger',
+                    'emergency_case', $case->id,
+                    array_filter([
+                        'Category' => $case->triage_category,
+                        'Score' => $case->triage_score,
+                    ])
+                );
+            }
+
+            foreach ($case->notes ?? [] as $note) {
+                $items[] = $this->item(
+                    $note->created_at,
+                    'Emergency '.ucwords(strtolower(str_replace('_', ' ', $note->note_type))),
+                    $note->content,
+                    optional($note->creator)->full_name,
+                    'Emergency',
+                    'ER NOTE', 'bg-danger',
+                    'emergency_note', $note->id
+                );
+            }
+
+            foreach ($case->logs ?? [] as $log) {
+                $items[] = $this->item(
+                    $log->created_at,
+                    $log->title,
+                    $log->description ?: str_replace('_', ' ', $log->action),
+                    optional($log->performedBy)->full_name,
+                    'Emergency',
+                    'ER LOG', 'bg-danger',
+                    'emergency_case_log', $log->id
+                );
+            }
+
+            if ($case->disposition) {
+                $items[] = $this->item(
+                    $case->disposition_time ?? $case->updated_at,
+                    'Emergency Disposition: '.str_replace('_', ' ', $case->disposition),
+                    $case->disposition_notes ?: 'Emergency disposition recorded.',
+                    optional($case->disposedBy)->full_name,
+                    'Emergency',
+                    'DISPOSITION', 'bg-dark',
+                    'emergency_case', $case->id
+                );
+            }
         }
 
         // 3. Triage
@@ -703,6 +783,9 @@ class VisitPreviewService
             'investigations_count' => $visit->labRequests->count(),
             'procedures_count' => $visit->procedureRequests->count(),
             'has_admission' => $visit->admission !== null,
+            'has_emergency_case' => $visit->emergencyCase !== null,
+            'emergency_number' => $visit->emergencyCase?->emergency_number,
+            'emergency_disposition' => $visit->emergencyCase?->disposition,
             'billing_status' => $visit->invoices->isEmpty()
                 ? 'No invoice'
                 : ($visit->invoices->last()?->status?->label() ?? 'Unknown'),

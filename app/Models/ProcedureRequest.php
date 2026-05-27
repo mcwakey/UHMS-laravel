@@ -16,15 +16,15 @@ class ProcedureRequest extends Model
 
     protected $fillable = [
         'request_number',
-        'visit_id', 'patient_id', 'requested_by', 'department_id',
+        'visit_id', 'emergency_case_id', 'patient_id', 'requested_by', 'department_id',
         'service_catalog_id', 'procedure_id',
-        'priority', 'indication', 'notes', 'preferred_datetime',
+        'priority', 'is_emergency', 'indication', 'notes', 'preferred_datetime',
         'status',
         'billing_item_id', 'billed_at', 'billed_by',
         'accepted_by', 'accepted_at', 'acceptance_notes',
         'rejected_by', 'rejected_at', 'rejection_reason',
         'cancelled_by', 'cancelled_at', 'cancellation_reason',
-        'completed_by', 'completed_at',
+        'completed_by', 'completed_at', 'performed_at', 'performed_by',
         'requested_at',
     ];
 
@@ -37,6 +37,8 @@ class ProcedureRequest extends Model
         'cancelled_at'       => 'datetime',
         'completed_at'       => 'datetime',
         'billed_at'          => 'datetime',
+        'performed_at'       => 'datetime',
+        'is_emergency'       => 'boolean',
     ];
 
     /* ── Relationships ─────────────────────────────────────────── */
@@ -44,6 +46,11 @@ class ProcedureRequest extends Model
     public function visit(): BelongsTo
     {
         return $this->belongsTo(Visit::class);
+    }
+
+    public function emergencyCase(): BelongsTo
+    {
+        return $this->belongsTo(EmergencyCase::class);
     }
 
     public function patient(): BelongsTo
@@ -94,6 +101,11 @@ class ProcedureRequest extends Model
     public function completedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'completed_by');
+    }
+
+    public function performedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'performed_by');
     }
 
     public function schedules(): HasMany

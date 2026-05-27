@@ -17,6 +17,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         // Drop the existing NOT-NULL FK constraint first
         DB::statement('ALTER TABLE dispensing_records DROP FOREIGN KEY dispensing_records_drug_stock_id_foreign');
 
@@ -29,6 +33,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::connection()->getDriverName() === 'sqlite') {
+            return;
+        }
+
         // Drop the nullable FK
         DB::statement('ALTER TABLE dispensing_records DROP FOREIGN KEY dispensing_records_drug_stock_id_foreign');
 

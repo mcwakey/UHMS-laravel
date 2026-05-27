@@ -220,11 +220,15 @@ class MedicationAdministrationService
             throw ValidationException::withMessages(['medication_order_id' => 'This medication is not linked to a product stock item.']);
         }
 
+        $movementType = $sourceStockType === MedicationAdministration::SOURCE_EMERGENCY_STOCK
+            ? StockMovementType::EMERGENCY_ADMINISTRATION_OUT
+            : StockMovementType::WARD_CONSUMED;
+
         $movement = $this->stockMovements->createMovement([
             'product_id' => $order->product_id,
             'drug_id' => $order->drug_id,
             'stock_location_id' => $locationId,
-            'movement_type' => StockMovementType::WARD_CONSUMED,
+            'movement_type' => $movementType,
             'quantity' => 1,
             'source_type' => MedicationOrder::class,
             'source_id' => $order->id,

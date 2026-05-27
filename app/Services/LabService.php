@@ -182,12 +182,14 @@ class LabService
             $request = LabRequest::create([
                 'request_number'       => LabRequest::generateRequestNumber(),
                 'visit_id'             => $visit->id,
+                'emergency_case_id'    => $data['emergency_case_id'] ?? null,
                 'patient_id'           => $visit->patient_id,
                 'requested_by'         => Auth::id(),
                 'department_id'        => $visit->department_id,
                 'target_department_id' => $data['target_department_id'] ?? null,
                 'clinical_info'        => $data['clinical_info'] ?? null,
                 'urgency'              => $data['urgency'] ?? 'routine',
+                'is_emergency'         => (bool) ($data['is_emergency'] ?? (($data['urgency'] ?? null) === 'emergency')),
                 'status'               => 'pending',
             ]);
 

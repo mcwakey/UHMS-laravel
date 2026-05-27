@@ -8,6 +8,29 @@ use App\Models\User;
 
 class ClinicalTaskService
 {
+    public function createTask(array $data): ClinicalTask
+    {
+        return ClinicalTask::create([
+            'visit_id' => $data['visit_id'] ?? null,
+            'admission_id' => $data['admission_id'] ?? null,
+            'emergency_case_id' => $data['emergency_case_id'] ?? null,
+            'patient_id' => $data['patient_id'] ?? null,
+            'task_type' => $data['task_type'] ?? ClinicalTask::TYPE_OTHER,
+            'title' => $data['title'],
+            'description' => $data['description'] ?? null,
+            'scheduled_at' => $data['scheduled_at'] ?? $data['due_at'] ?? null,
+            'due_at' => $data['due_at'] ?? null,
+            'status' => $data['status'] ?? ClinicalTask::STATUS_SCHEDULED,
+            'priority' => $data['priority'] ?? 'normal',
+            'assigned_to' => $data['assigned_to'] ?? null,
+            'assigned_role' => $data['assigned_role'] ?? null,
+            'assigned_department_id' => $data['assigned_department_id'] ?? null,
+            'source_type' => $data['source_type'] ?? null,
+            'source_id' => $data['source_id'] ?? null,
+            'notes' => $data['notes'] ?? null,
+        ]);
+    }
+
     public function createMedicationTaskForSchedule(MedicationAdministrationSchedule $schedule): ClinicalTask
     {
         $order = $schedule->medicationOrder()->with(['prescriber', 'admission.bed.ward'])->first();

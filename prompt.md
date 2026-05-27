@@ -1,218 +1,622 @@
 ````text
 You are a senior Laravel + Inertia/Vue architect working on UHMS — Ultimate Hospital Management System.
 
-We need to implement a proper Medication Administration + Clinical Task/Reminder system for Admission and Emergency patients.
+We need to implement a full Emergency Case Management module as the third patient pathway in UHMS.
 
-This system must help nurses track, receive alerts, and record medication dosages that must be administered to admitted or emergency patients.
+UHMS already has:
 
-This is not just a reminder system. It must be a clinical, auditable Medication Administration Record system supported by scheduled clinical tasks.
+- OPD / Outpatient visit workflow
+- Admission / Inpatient workflow
+- Billing / invoices
+- Patient records
+- Consultation
+- Investigations
+- Procedures
+- Pharmacy / products / stock
+- Medication Administration / MAR planning
+- Visit Preview
+- Insurance pricing / claims foundations
 
-Focus on:
+Now we need to build the Emergency workflow.
 
-- Admission Board medication tracking
-- Emergency medication tracking
-- Medication administration schedules
-- Clinical tasks/reminders for nurses
-- Due / overdue medication alerts
-- Nurse administration recording
-- Medication progress tracking
-- Avoiding double stock deduction
-- Audit trail
-- Reusable clinical task engine
+Emergency must be integrated seamlessly into the existing UHMS architecture without disturbing OPD, Admission, Billing, Pharmacy, Investigation, Procedure, Consultation, MAR, Stock, or Visit Preview workflows.
 
-Do not break existing:
+Do not copy OPD blindly.
 
-- consultation
-- prescriptions
-- pharmacy dispensing
-- admission
-- emergency
-- billing
-- product stock
-- stock movements
-- nursing/vitals
-- visit workflow
+Emergency is a fast-response clinical pathway and must support urgent care before full administrative completion where necessary.
 
 ---
 
 # 1. Core Concept
 
-The system must clearly separate these three concepts:
+UHMS should now support three main patient pathways:
 
 ```text
-Prescription = what the doctor ordered
-Dispensing = what pharmacy supplied
-Administration = what nurse actually gave to the patient
+OPD / Visit = Outpatient care
+Admission = Inpatient care
+Emergency = Urgent / critical emergency care
 ````
 
-Do not treat prescription, dispensing, and administration as the same thing.
+Emergency must be its own workflow, but still connected to the same patient, visit, invoice, billing, stock, medication, investigation, procedure, and visit preview systems.
 
-Correct workflow:
+Recommended structure:
 
 ```text
-Doctor Prescription
+Patient
     ↓
-Pharmacy Dispensing
+Visit
     ↓
-Medication Administration Schedule
-    ↓
-Clinical Task / Nurse Reminder
-    ↓
-Nurse Administration Record
-    ↓
-Progress / Audit / Reports
+Emergency Case
+```
+
+The `visit` remains the global encounter.
+
+The `emergency_case` stores emergency-specific data.
+
+---
+
+# 2. Main Objectives
+
+Implement Emergency Case Management with:
+
+1. Emergency case creation.
+2. Known patient and unknown patient support.
+3. Emergency number generation.
+4. Arrival details.
+5. Emergency triage.
+6. Emergency triage category/color.
+7. Emergency board.
+8. Emergency bay/location assignment.
+9. Emergency clinical notes/timeline.
+10. Emergency vitals and monitoring.
+11. Emergency medications and MAR integration.
+12. Emergency investigations.
+13. Emergency procedures.
+14. Emergency billing through the existing invoice system.
+15. Emergency stock usage through the unified product stock system.
+16. Emergency disposition.
+17. Visit Preview integration.
+18. Emergency reports foundation.
+19. Permissions and role control.
+
+---
+
+# 3. Important Rules
+
+Do not rebuild existing OPD or Admission workflows.
+
+Do not create a parallel billing system.
+
+Do not create a parallel pharmacy/drug stock system.
+
+Do not create a parallel patient system.
+
+Do not bypass BillingService.
+
+Do not bypass Product Stock Movement system.
+
+Do not bypass existing Investigation workflow.
+
+Do not bypass existing Procedure workflow.
+
+Do not bypass Medication Administration / MAR workflow.
+
+Emergency care must not be blocked by unpaid invoices.
+
+Emergency services/products/procedures/investigations should still be added to the visit invoice using existing billing rules.
+
+---
+
+# 4. Emergency Case Model
+
+Create or update:
+
+```text
+emergency_cases
+```
+
+Recommended fields:
+
+```text
+id
+emergency_number
+visit_id
+patient_id
+admission_id nullable
+emergency_bay_id nullable
+arrival_mode
+arrival_time
+brought_by nullable
+source nullable
+referral_facility nullable
+chief_complaint nullable
+initial_condition nullable
+triage_category nullable
+triage_score nullable
+triage_notes nullable
+emergency_status
+assigned_doctor_id nullable
+assigned_nurse_id nullable
+created_by
+triaged_by nullable
+triaged_at nullable
+disposition nullable
+disposition_notes nullable
+disposition_time nullable
+disposed_by nullable
+created_at
+updated_at
+```
+
+Possible emergency statuses:
+
+```text
+ARRIVED
+WAITING_TRIAGE
+TRIAGED
+UNDER_EMERGENCY_CARE
+OBSERVATION
+READY_FOR_DISPOSITION
+DISPOSED
+CANCELLED
+```
+
+Possible dispositions:
+
+```text
+ADMITTED
+DISCHARGED
+TRANSFERRED_TO_OPD
+TRANSFERRED_TO_THEATRE
+REFERRED_OUT
+LEFT_AGAINST_MEDICAL_ADVICE
+ABSCONDED
+DIED
+DEAD_ON_ARRIVAL
 ```
 
 ---
 
-# 2. Main Objective
+# 5. Emergency Number Generation
 
-When a doctor prescribes a medication for an admitted or emergency patient, the system should be able to generate administration schedules and nursing tasks.
+Generate unique emergency numbers.
 
 Example:
 
 ```text
-Drug: Ceftriaxone
-Dose: 1g
-Route: IV
-Frequency: BD
-Duration: 5 days
-Quantity: 10 doses
+ER-2026-000001
 ```
 
-The system should generate scheduled dose tasks:
+Rules:
+
+* emergency number must be unique
+* generated inside transaction
+* must not be reused
+* should be configurable if number generation service exists
+* use existing number generation system if available
+
+---
+
+# 6. Emergency Arrival Modes
+
+Emergency case creation should capture arrival mode.
+
+Supported options:
 
 ```text
-Dose 1/10 — Day 1 — 08:00
-Dose 2/10 — Day 1 — 20:00
-Dose 3/10 — Day 2 — 08:00
-Dose 4/10 — Day 2 — 20:00
-...
-Dose 10/10 — Day 5 — 20:00
+WALK_IN
+AMBULANCE
+POLICE
+FAMILY_BROUGHT
+REFERRAL
+TRANSFER_FROM_OPD
+TRANSFER_FROM_WARD
+UNKNOWN
 ```
 
-Nurses should then be able to record each dose as:
+Display user-friendly labels:
 
 ```text
-Given
-Missed
-Held
-Skipped
-Refused
-Cancelled
-Not given
-```
-
-The system must track progress:
-
-```text
-Ceftriaxone 1g IV BD — 4/10 doses given
-Next dose: Today 20:00
-Status: Active
+Walk-in
+Ambulance
+Police
+Family brought
+Referral from another facility
+Transfer from OPD
+Transfer from ward
+Unknown / unconscious patient
 ```
 
 ---
 
-# 3. Build It as Clinical Tasks / Reminders
+# 7. Unknown Patient Support
 
-Medication administration should be implemented using a reusable clinical task/reminder engine.
+Emergency must support unknown or unidentified patients.
 
-Create a general concept:
-
-```text
-Clinical Tasks / Care Tasks / Nursing Tasks
-```
-
-Medication administration is one type of clinical task.
-
-Future task types can include:
+Examples:
 
 ```text
-Medication Administration
-Vitals Monitoring
-Wound Dressing
-IV Fluid Check
-Blood Sugar Check
-Doctor Review
-Follow-up Instruction
-Investigation Follow-up
-Procedure Preparation
-Nursing Observation
+Unknown Male Adult
+Unknown Female Child
+Accident Victim
+Unconscious Patient
 ```
 
-This allows the same task/reminder engine to later support many hospital workflows.
+If patient identity is unknown:
+
+* create temporary patient record
+* generate temporary patient number
+* allow emergency case to proceed
+* allow identity update later
+* allow merging/linking to an existing patient later if safe
+
+Suggested temporary patient number:
+
+```text
+TEMP-ER-2026-000012
+```
+
+Temporary patient fields:
+
+```text
+is_temporary boolean
+temporary_reason nullable
+identity_confirmed_at nullable
+identity_confirmed_by nullable
+merged_to_patient_id nullable
+```
+
+If patient table already supports temporary patients, use existing structure.
+
+Do not block emergency care because patient identity is incomplete.
 
 ---
 
-# 4. Medication Administration Is Not Just a Reminder
+# 8. Emergency Triage
 
-A normal reminder says:
+Emergency triage is separate from normal OPD triage.
+
+Emergency triage should capture:
 
 ```text
-Remember to give Ceftriaxone
+vitals
+chief complaint
+triage category
+triage score
+pain score if available
+level of consciousness if available
+danger signs
+triage notes
+triaged_by
+triaged_at
 ```
 
-UHMS needs a clinical task with proof:
+Emergency triage categories:
 
 ```text
-Scheduled dose
-Due time
-Actual administration time
-Administered by nurse
-Dose given
-Route
+RED
+ORANGE
+YELLOW
+GREEN
+BLACK
+```
+
+Meanings:
+
+```text
+RED = Immediate / Resuscitation
+ORANGE = Very urgent
+YELLOW = Urgent
+GREEN = Less urgent
+BLACK = Dead on arrival / expectant
+```
+
+Target times:
+
+```text
+RED = immediately
+ORANGE = within 10 minutes
+YELLOW = within 30 minutes
+GREEN = within 60 minutes
+BLACK = special handling
+```
+
+Emergency Board must highlight triage colors clearly.
+
+---
+
+# 9. Emergency Vitals
+
+Emergency vitals should support repeated monitoring.
+
+Unlike OPD triage, emergency vitals may be recorded many times.
+
+Support:
+
+```text
+initial vitals
+repeat vitals
+monitoring interval
+critical value alerts
+recorded_by
+recorded_at
+```
+
+If the Clinical Task / Reminder engine exists, use it to create monitoring tasks.
+
+Examples:
+
+```text
+RED cases: record vitals every 15 minutes
+ORANGE cases: record vitals every 30 minutes
+YELLOW cases: record vitals every 60 minutes
+```
+
+Do not duplicate the existing vitals system if it already supports visit/admission/emergency context. Extend it.
+
+---
+
+# 10. Emergency Bays / Locations
+
+Create or update:
+
+```text
+emergency_bays
+```
+
+Recommended fields:
+
+```text
+id
+name
+code
+bay_type
+department_id nullable
+status
+notes nullable
+is_active
+created_at
+updated_at
+```
+
+Bay types:
+
+```text
+RESUSCITATION
+OBSERVATION
+TREATMENT
+MINOR_PROCEDURE
+ISOLATION
+WAITING_AREA
+EMERGENCY_WARD
+```
+
+Bay statuses:
+
+```text
+AVAILABLE
+OCCUPIED
+CLEANING
+OUT_OF_SERVICE
+RESERVED
+```
+
+Emergency case can be assigned to a bay.
+
+When emergency case is active in a bay:
+
+```text
+bay.status = OCCUPIED
+```
+
+When patient leaves bay:
+
+```text
+bay.status = AVAILABLE or CLEANING
+```
+
+Do not break existing bed management. Emergency bays are short-term emergency locations, not full admission beds.
+
+---
+
+# 11. Emergency Board
+
+Create an Emergency Board.
+
+This should be a live operational dashboard.
+
+Columns:
+
+```text
+Emergency Number
+Patient
+Triage Category
+Arrival Time
+Waiting Time
+Bay / Location
+Chief Complaint
+Assigned Doctor
+Assigned Nurse
 Status
-Reason if not given
-Patient reaction
-Witness if needed
-Audit trail
+Alerts
+Actions
 ```
 
-So every medication task must result in a proper administration record or a documented reason why it was not administered.
+Views/filters:
+
+```text
+All Active Emergency Cases
+Waiting Triage
+Red / Critical Cases
+Under Emergency Care
+Observation
+Ready for Disposition
+Overdue Reviews
+By Bay
+By Doctor
+By Nurse
+```
+
+Actions:
+
+```text
+View Case
+Triage
+Assign Bay
+Start Emergency Care
+Record Vitals
+Add Note
+Request Investigation
+Request Procedure
+Administer Medication
+Open MAR
+Disposition
+```
+
+The board should auto-refresh/poll periodically if the project supports it.
+
+Suggested refresh:
+
+```text
+every 30-60 seconds
+```
 
 ---
 
-# 5. Required Workflow for Admission
+# 12. Emergency Case Detail Page
 
-For admitted patients:
+Create an Emergency Case Detail page.
+
+It should show:
 
 ```text
-Doctor prescribes medication
-    ↓
-Pharmacy dispenses medication to patient/admission
-    ↓
-System creates or activates medication administration schedule
-    ↓
-System creates clinical tasks/reminders for scheduled doses
-    ↓
-Admission Board shows due/upcoming/overdue medications
-    ↓
-Nurse records each dose administration
-    ↓
-Task is completed or marked missed/held/refused
-    ↓
-Medication order progress updates automatically
+patient summary
+emergency number
+visit number
+arrival details
+triage category
+bay/location
+current status
+assigned team
+vitals
+emergency timeline
+medications
+investigations
+procedures
+tasks
+billing/invoice summary
+disposition section
+```
+
+This page should feel like an emergency control sheet.
+
+---
+
+# 13. Emergency Timeline
+
+Emergency care is time-based.
+
+Create or use an emergency timeline.
+
+Timeline entries may include:
+
+```text
+Arrival
+Triage
+Bay assigned
+Vitals recorded
+Doctor assessment
+Nursing note
+Medication ordered
+Medication administered
+Investigation requested
+Investigation result received
+Procedure requested
+Procedure performed
+Task created
+Task completed
+Disposition decision
+Referral
+Admission
+Discharge
+Death / DOA
+```
+
+Each timeline entry must show:
+
+```text
+time
+user
+role
+department
+action
+details
+```
+
+Use existing activity log if available.
+
+If not, create:
+
+```text
+emergency_case_logs
+- id
+- emergency_case_id
+- visit_id
+- patient_id
+- action
+- title
+- description nullable
+- source_type nullable
+- source_id nullable
+- performed_by
+- created_at
 ```
 
 ---
 
-# 6. Required Workflow for Emergency
+# 14. Emergency Clinical Notes
 
-For Emergency patients:
+Emergency notes should support rapid repeated updates.
+
+Create or reuse clinical notes with emergency context.
+
+Fields:
 
 ```text
-Doctor orders emergency medication
-    ↓
-Medication may be administered immediately or scheduled
-    ↓
-If from Emergency stock, stock is deducted once
-    ↓
-System records administration
-    ↓
-Emergency Board shows STAT/due/overdue meds
+emergency_case_id
+visit_id
+patient_id
+note_type
+content
+created_by
+created_at
+updated_by nullable
+updated_at
 ```
 
-Emergency must support:
+Note types:
+
+```text
+DOCTOR_ASSESSMENT
+NURSING_NOTE
+RESUSCITATION_NOTE
+OBSERVATION_NOTE
+GENERAL_NOTE
+```
+
+Every note must show the user who made it.
+
+Do not overwrite notes from other users.
+
+Use the existing record ownership rules if already implemented.
+
+---
+
+# 15. Emergency Medication / MAR Integration
+
+Emergency must use the Medication Administration + Clinical Tasks/MAR system.
+
+Emergency should support:
 
 ```text
 STAT medication
@@ -220,1492 +624,1068 @@ Immediate administration
 PRN/SOS medication
 Scheduled observation medication
 Emergency stock source
+Emergency MAR chart
+```
+
+Examples:
+
+```text
+Hydrocortisone 200mg IV STAT
+Diazepam 10mg IV STAT
+Adrenaline 1mg IV STAT
+Ceftriaxone 1g IV BD for 2 days
+```
+
+Emergency medications must create:
+
+```text
+medication_order
+medication_administration_schedule where applicable
+clinical_task/reminder
+medication_administration record when nurse gives dose
+```
+
+Emergency MAR must be accessible from:
+
+```text
+Emergency Board
+Emergency Case Detail page
+Visit Preview medication section
+```
+
+If administered from emergency stock:
+
+```text
+create stock OUT movement from Emergency stock location
+```
+
+If dispensed by pharmacy to patient:
+
+```text
+do not deduct stock again during administration
 ```
 
 ---
 
-# 7. Admission Board Requirements
+# 16. Emergency Investigations
 
-The Admission Board must show medication tracking per admitted patient.
+Emergency must allow urgent investigation requests.
 
-Patient row should show:
+Departments may include:
 
 ```text
-Patient
-Bed / Ward
-Active medication orders
-Due now count
-Overdue count
-Upcoming count
-Completed count
-Missed dose warning
+Lab
+X-Ray
+Scan
+CT Scan
+ECG
+Bedside Tests
 ```
 
-Example:
+Rules:
+
+* use existing Investigation workflow
+* mark requests as emergency/urgent
+* do not create separate parallel investigation system
+* result should be visible on Emergency Case Detail and Visit Preview
+* investigation departments should see priority clearly
+
+Emergency investigation fields should include:
 
 ```text
-Ama Mensah | Ward A Bed 4 | 3 Active Meds | 1 Due Now | 0 Overdue
+is_emergency boolean
+priority = EMERGENCY / URGENT / ROUTINE
+emergency_case_id nullable
 ```
 
-Clicking should open a medication administration panel/modal/page.
+If fields already exist, use them.
 
-Medication panel should show:
-
-```text
-Active Medications
-Due Now
-Overdue
-Upcoming
-Completed
-PRN/SOS
-Held/Stopped
-```
-
-Example:
+Workflow:
 
 ```text
-Active Medications:
-1. Ceftriaxone 1g IV BD — 6/10 doses given
-2. Paracetamol 1g PO TDS — 3/9 doses given
-3. Omeprazole 20mg PO OD — 1/5 doses given
-```
-
----
-
-# 8. Emergency Board Requirements
-
-The Emergency Board should show:
-
-```text
-STAT medications due
-Emergency medications administered
-Observation medications
-Overdue critical medications
-PRN/SOS medications
-```
-
-Emergency medication board columns:
-
-```text
-Patient
-Emergency Number
-Location / Bay
-Medication
-Dose
-Route
-Scheduled Time
-Status
-Prescribed By
-Administered By
-Action
+Emergency doctor requests urgent test
+↓
+Investigation department receives priority request
+↓
+Result entered / verified
+↓
+Emergency doctor sees result immediately
 ```
 
 ---
 
-# 9. Clinical Task Statuses
+# 17. Emergency Procedures
 
-Clinical tasks should support statuses:
+Emergency should support emergency procedures.
+
+Examples:
 
 ```text
-SCHEDULED
-DUE
-OVERDUE
-IN_PROGRESS
-COMPLETED
-MISSED
-HELD
-REFUSED
-SKIPPED
-CANCELLED
+CPR
+Intubation
+Wound suturing
+Catheterization
+Nebulization
+Dressing
+Splinting
+Minor surgery
+Resuscitation procedure
 ```
 
-The system can calculate `DUE` and `OVERDUE` dynamically from `due_at`, but it is also acceptable to persist status if the project already uses persisted task statuses.
+Two types:
+
+```text
+Emergency bedside procedure
+Theatre transfer procedure
+```
+
+Rules:
+
+* use existing Procedure workflow where applicable
+* allow emergency bedside procedure records if needed
+* do not bypass theatre workflow for theatre procedures
+* bill procedures through BillingService
+* show procedure status on emergency case detail
+
+Emergency procedure fields should include:
+
+```text
+emergency_case_id nullable
+is_emergency boolean
+priority
+performed_at nullable
+performed_by nullable
+```
+
+Use existing procedure tables if possible.
 
 ---
 
-# 10. Medication Order Statuses
+# 18. Emergency Billing
 
-Medication orders should support statuses:
+Emergency care must not be blocked by payment.
+
+Billing rule:
 
 ```text
-PENDING_DISPENSING
-PARTIALLY_DISPENSED
-DISPENSED
-ACTIVE_ADMINISTRATION
-COMPLETED
-HELD
-STOPPED
-CANCELLED
-EXPIRED
+Emergency services/products/procedures/investigations are added to the visit invoice as they happen.
+Payment may be collected later.
+```
+
+Use existing invoice system:
+
+```text
+One visit = one invoice
+Emergency invoice items are attached to the visit invoice
+Insurance pricing still applies
+Cash and Carry fallback still applies
 ```
 
 Important:
 
+* do not create separate emergency invoice system
+* do not require payment before emergency care
+* do not duplicate invoice items
+* use BillingService for billable emergency services/products/procedures/investigations
+* use source_type/source_id to prevent duplicate billing
+
+Possible source types:
+
 ```text
-A medication is not completed just because it was dispensed.
-It is completed when all required doses are administered, cancelled, stopped, or otherwise clinically closed.
+emergency_case
+emergency_medication
+emergency_procedure
+emergency_investigation
+emergency_service
 ```
 
 ---
 
-# 11. Medication Dose / Schedule Statuses
+# 19. Emergency Stock
 
-Each scheduled dose should support:
+Emergency uses the unified Product stock system.
 
-```text
-SCHEDULED
-DUE
-OVERDUE
-GIVEN
-PARTIALLY_GIVEN
-MISSED
-SKIPPED
-REFUSED
-HELD
-CANCELLED
-VOIDED
-CORRECTED
-```
-
----
-
-# 12. Frequency System
-
-Implement or reuse a medication frequency system.
-
-Create or update:
+Emergency should have its own stock location:
 
 ```text
-medication_frequencies
-- id
-- code
-- name
-- times_per_day nullable
-- interval_hours nullable
-- default_times json nullable
-- requires_schedule boolean default true
-- is_prn boolean default false
-- is_stat boolean default false
-- is_active boolean default true
-- created_at
-- updated_at
+Emergency Stock Location
 ```
 
-Seed common frequencies:
-
-```text
-OD   = once daily, default 08:00
-BD   = twice daily, default 08:00 and 20:00
-TDS  = three times daily, default 08:00, 14:00, 20:00
-QID  = four times daily, default 06:00, 12:00, 18:00, 22:00
-Q6H  = every 6 hours
-Q8H  = every 8 hours
-Q12H = every 12 hours
-STAT = immediately once
-PRN  = as needed
-SOS  = as needed / emergency
-```
-
-Do not hardcode frequency logic only in frontend.
-
----
-
-# 13. Quantity / Duration Logic
-
-The system should calculate expected doses from frequency and duration.
-
-Example:
-
-```text
-BD for 5 days = 10 doses
-TDS for 3 days = 9 doses
-OD for 7 days = 7 doses
-```
-
-When doctor enters:
-
-```text
-Frequency = BD
-Duration = 5 days
-```
-
-System calculates:
-
-```text
-Expected doses = 10
-```
-
-If quantity is entered manually and does not match expected doses, show warning:
-
-```text
-BD for 5 days usually requires 10 doses. You entered 8.
-```
-
-Do not block unless hospital policy requires blocking.
-
----
-
-# 14. Medication Orders
-
-Use the existing prescription model if it already contains enough information.
-
-If not, create a medication order layer linked to prescriptions.
-
-Recommended table:
-
-```text
-medication_orders
-- id
-- visit_id
-- admission_id nullable
-- emergency_case_id nullable
-- patient_id
-- medical_record_id nullable
-- consultation_route_id nullable
-- prescription_id nullable
-- prescription_item_id nullable
-- prescribed_by
-- product_id
-- dose
-- dose_unit
-- route
-- frequency_id
-- duration_value nullable
-- duration_unit nullable
-- total_doses
-- quantity_ordered
-- quantity_dispensed default 0
-- start_at
-- end_at nullable
-- instructions nullable
-- status
-- source_type nullable
-- source_id nullable
-- created_at
-- updated_at
-```
+Emergency staff may use products/medications from that stock.
 
 Rules:
 
-* Do not duplicate prescription data unnecessarily.
-* If prescriptions already work, create medication_orders from prescription items.
-* Medication orders must be linked to visit, patient, and admission/emergency when applicable.
+* do not create separate drug stock table
+* product is the source of all physical items
+* emergency stock movement must use existing StockMovementService
+* emergency stock must not consume directly from Main Store
+* resolve emergency stock location by department/location mapping
+
+Stock movement types may include:
+
+```text
+EMERGENCY_ADMINISTRATION_OUT
+EMERGENCY_CONSUMABLE_OUT
+EMERGENCY_RETURN
+EMERGENCY_ADJUSTMENT
+```
+
+Use existing movement naming if already defined.
 
 ---
 
-# 15. Medication Administration Schedules
+# 20. Emergency Clinical Tasks / Reminders
 
-Create scheduled dose records.
+Emergency should use the Clinical Task system.
 
-Recommended table:
+Task types:
 
 ```text
-medication_administration_schedules
-- id
-- medication_order_id
-- visit_id
-- admission_id nullable
-- emergency_case_id nullable
-- patient_id
-- scheduled_at
-- dose
-- dose_unit
-- route
-- status
-- sequence_number
-- clinical_task_id nullable
-- created_at
-- updated_at
+Medication Administration
+Vitals Monitoring
+Doctor Review
+Nursing Observation
+Investigation Follow-up
+Procedure Preparation
+Disposition Review
+Transfer Preparation
 ```
+
+Emergency board should show:
+
+```text
+due tasks
+overdue tasks
+critical reminders
+```
+
+Emergency RED/ORANGE cases may automatically create monitoring tasks.
 
 Example:
 
 ```text
-Medication: Ceftriaxone 1g IV BD
-Dose 1/10 — scheduled_at = 2026-05-26 08:00
-Dose 2/10 — scheduled_at = 2026-05-26 20:00
+RED case → vitals every 15 minutes
+ORANGE case → vitals every 30 minutes
 ```
 
-Each scheduled dose should have a matching clinical task/reminder.
+Do not duplicate the Clinical Task engine.
 
----
-
-# 16. Medication Administration Records
-
-Create actual nurse administration records.
-
-Recommended table:
+Extend it with emergency context:
 
 ```text
-medication_administrations
-- id
-- medication_order_id
-- schedule_id nullable
-- clinical_task_id nullable
-- visit_id
-- admission_id nullable
-- emergency_case_id nullable
-- patient_id
-- administered_by
-- administered_at
-- scheduled_at nullable
-- dose_given
-- dose_unit
-- route
-- status
-- reason_not_given nullable
-- notes nullable
-- reaction nullable
-- source_stock_type nullable
-- stock_location_id nullable
-- stock_movement_id nullable
-- witnessed_by nullable
-- corrected_by nullable
-- corrected_at nullable
-- correction_reason nullable
-- created_at
-- updated_at
-```
-
-Do not delete administration records. If correction is needed, void/correct with audit trail.
-
----
-
-# 17. Clinical Tasks Table
-
-Create or update reusable clinical task table.
-
-Recommended table:
-
-```text
-clinical_tasks
-- id
-- visit_id
-- admission_id nullable
-- emergency_case_id nullable
-- patient_id
-- task_type
-- title
-- description nullable
-- scheduled_at nullable
-- due_at
-- status
-- priority
-- assigned_to nullable
-- assigned_role nullable
-- assigned_department_id nullable
-- source_type nullable
-- source_id nullable
-- completed_by nullable
-- completed_at nullable
-- notes nullable
-- escalation_level default 0
-- last_reminded_at nullable
-- created_at
-- updated_at
-```
-
-For medication administration:
-
-```text
-task_type = MEDICATION_ADMINISTRATION
-source_type = medication_administration_schedule
-source_id = schedule.id
+emergency_case_id nullable
 ```
 
 ---
 
-# 18. Clinical Task Types
+# 21. Emergency Disposition
 
-Support at least:
+Emergency case must end with a disposition.
 
-```text
-MEDICATION_ADMINISTRATION
-VITALS_MONITORING
-WOUND_DRESSING
-IV_FLUID_CHECK
-BLOOD_SUGAR_CHECK
-DOCTOR_REVIEW
-FOLLOW_UP
-INVESTIGATION_FOLLOW_UP
-PROCEDURE_PREPARATION
-NURSING_OBSERVATION
-OTHER
-```
-
-Only medication administration must be fully implemented now.
-
-Other task types can be prepared structurally for later.
-
----
-
-# 19. Schedule Generation Service
-
-Create service:
+Supported dispositions:
 
 ```text
-MedicationScheduleService
+ADMITTED
+DISCHARGED
+TRANSFERRED_TO_OPD
+TRANSFERRED_TO_THEATRE
+REFERRED_OUT
+LEFT_AGAINST_MEDICAL_ADVICE
+ABSCONDED
+DIED
+DEAD_ON_ARRIVAL
 ```
 
-Required methods:
+Disposition workflow:
 
-```php
-generateForOrder(MedicationOrder $order): Collection
-
-regenerateFutureSchedules(MedicationOrder $order, User $user, ?string $reason = null): Collection
-
-cancelFutureSchedules(MedicationOrder $order, User $user, ?string $reason = null): void
-```
-
-Generation rules:
-
-* Use frequency default times or interval hours.
-* Use start_at as schedule anchor.
-* Generate total_doses.
-* Create one schedule per dose.
-* Create one clinical task per schedule.
-* Do not duplicate schedules if they already exist.
-* If order is stopped, cancel future schedules only.
-* Past given doses must remain unchanged.
-
----
-
-# 20. Clinical Task Reminder Service
-
-Create service:
+## Admit patient
 
 ```text
-ClinicalTaskReminderService
+Emergency Case → Admission
+Emergency case status = DISPOSED
+Disposition = ADMITTED
+Visit continues as inpatient/admission
 ```
 
-Responsibilities:
+Create admission using existing Admission workflow.
+
+Do not create duplicate admission logic.
+
+## Discharge home
 
 ```text
-Find due medication tasks
-Find overdue medication tasks
-Update task status where needed
-Return dashboard counts
-Trigger in-app notifications if notification system exists
-Escalate overdue tasks if configured
+Emergency Case → Discharged
+Visit may be completed
+Invoice remains for payment/claims
 ```
 
-Reminder windows:
+## Transfer to OPD
 
 ```text
-Upcoming = due within next 30 minutes
-Due Now = due within configured due window
-Overdue = due time passed and not completed
+Emergency Case → OPD/Consultation route
+Visit continues as outpatient consultation
 ```
 
-Make reminder windows configurable.
+Use existing consultation route/session system.
 
-Suggested settings:
+## Transfer to Theatre
 
 ```text
-medication_task_upcoming_minutes = 30
-medication_task_overdue_after_minutes = 15
-medication_task_escalate_after_minutes = 30
-medication_task_second_escalation_after_minutes = 60
+Emergency Case → Procedure/Theatre workflow
 ```
 
----
+Use existing procedure workflow.
 
-# 21. Nurse Alerts / Keeping Nurses Awake
+## Refer out
 
-The system should actively alert nurses.
-
-First implementation should include:
-
-```text
-Admission Board due/overdue badges
-Emergency Board due/overdue badges
-Medication Task Board
-In-app notifications if existing notification system supports it
-Auto-refresh or polling for due/overdue tasks
-Escalation list for supervisors
-```
-
-Optional later:
-
-```text
-sound alert
-browser push notification
-SMS
-WhatsApp
-email
-```
-
-For now, implement in-app alerting and board badges.
-
----
-
-# 22. Escalation Rules
-
-If a medication task is overdue:
-
-```text
-Overdue by 15 minutes → show red overdue badge
-Overdue by 30 minutes → notify ward supervisor / charge nurse
-Overdue by 60 minutes → escalate to matron / doctor if configured
-```
-
-Escalation should not spam repeatedly.
-
-Track:
-
-```text
-last_reminded_at
-escalation_level
-```
-
-Use existing notification system if available.
-
-If not available, create dashboard-level escalation list first.
-
----
-
-# 23. Nurse Administration Workflow
-
-Nurse opens Admission Board or Emergency Board.
-
-For each due medication task, nurse can:
-
-```text
-Administer
-Hold
-Skip
-Mark Refused
-Mark Missed
-Record Reaction
-```
-
-Administration modal fields:
-
-```text
-Medication
-Scheduled time
-Dose
-Route
-Actual administration time
-Dose given
-Status
-Reason if not given
-Notes
-Patient reaction
-Witness optional
-```
-
-When nurse saves:
-
-* create medication_administration record
-* update schedule status
-* update clinical task status
-* update medication order progress
-* do not reload whole page
-* update board counts immediately
-
----
-
-# 24. Administration Status Behavior
-
-If nurse marks `GIVEN`:
-
-```text
-schedule.status = GIVEN
-task.status = COMPLETED
-administration.status = GIVEN
-```
-
-If nurse marks `REFUSED`:
-
-```text
-schedule.status = REFUSED
-task.status = COMPLETED or REFUSED depending existing task model
-reason_not_given required
-```
-
-If nurse marks `HELD`:
-
-```text
-schedule.status = HELD
-reason_not_given required
-doctor/nurse note required if configured
-```
-
-If nurse marks `MISSED`:
-
-```text
-schedule.status = MISSED
-reason_not_given required
-```
-
-If nurse marks `SKIPPED`:
-
-```text
-schedule.status = SKIPPED
-reason_not_given required
-```
-
-Do not leave due tasks open after nurse has documented an acceptable non-given reason.
-
----
-
-# 25. Pharmacy Dispensing Integration
-
-When pharmacy dispenses medication for an admitted or emergency patient:
-
-* update quantity_dispensed on medication order if applicable
-* activate or generate administration schedule if not already generated
-* show available quantity for administration
-* do not mark medication as administered
-* do not mark medication as completed
-
-If pharmacy dispenses less than ordered:
-
-Example:
-
-```text
-Ordered: 10 doses
-Dispensed: 6 doses
-```
-
-Admission Board should show:
-
-```text
-10 scheduled doses
-6 available doses
-4 pending supply
-```
-
-Nurse should not administer more doses than available patient-dispensed stock unless using ward/emergency stock.
-
----
-
-# 26. Stock Deduction Rule
-
-Very important:
-
-Do not reduce stock twice.
-
-Normal admission flow:
-
-```text
-Pharmacy dispensing reduces pharmacy stock.
-Nurse administration does not reduce stock again.
-```
-
-Emergency or ward stock flow:
-
-```text
-If medication is administered directly from Emergency/Ward stock:
-    administration creates stock OUT movement from that department stock location.
-```
-
-Each administration should know source:
-
-```text
-PATIENT_DISPENSED_STOCK
-WARD_STOCK
-EMERGENCY_STOCK
-OTHER_DEPARTMENT_STOCK
-```
-
-If source is `PATIENT_DISPENSED_STOCK`:
-
-```text
-do not create stock movement
-```
-
-If source is department stock:
-
-```text
-create stock movement OUT once
-link stock_movement_id to medication_administrations
-```
-
-Use existing Product Stock Movement system.
-
-Do not reintroduce drug stock parallel system.
-
----
-
-# 27. Department Stock Location
-
-For ward/emergency stock administration:
-
-* resolve stock location from department
-* Emergency uses Emergency stock location
-* Ward uses Ward stock location if available
-* do not consume directly from Main Store
-* if no stock location exists, show clear error
-
-Use existing:
-
-```text
-StockLocationResolver
-StockMovementService
-StockBalanceService
-```
-
-or project equivalents.
-
----
-
-# 28. PRN / SOS Medication
-
-PRN/SOS medications do not generate fixed recurring schedules.
-
-They should appear under:
-
-```text
-PRN / SOS Available Medications
-```
-
-Nurse can administer when needed.
-
-PRN administration must require:
-
-```text
-reason / symptom
-dose
-time
-response
-notes
-```
-
-Optional safety rule:
-
-```text
-respect maximum daily dose if configured
-```
-
-If maximum daily dose is not implemented, leave TODO but structure data for it.
-
----
-
-# 29. STAT Medication
-
-STAT medication should create one immediate task.
-
-Rules:
-
-```text
-scheduled_at = now
-due_at = now
-status = DUE
-```
-
-Once given:
-
-```text
-schedule.status = GIVEN
-task.status = COMPLETED
-medication_order.status = COMPLETED
-```
-
-If not given:
-
-```text
-record reason
-close/cancel appropriately based on clinical decision
-```
-
----
-
-# 30. Holding, Stopping, and Changing Medication
-
-Doctors may hold, stop, or change medications.
-
-If medication is held:
-
-```text
-future tasks may be HELD or paused
-reason required
-```
-
-If medication is stopped:
-
-```text
-future scheduled doses = CANCELLED
-future clinical tasks = CANCELLED
-medication_order.status = STOPPED
-past given doses remain unchanged
-```
-
-If medication is changed:
-
-Recommended safe behavior:
-
-```text
-stop old medication order
-create new medication order
-generate new schedule
-```
-
-Do not overwrite the old order history.
-
----
-
-# 31. Corrections / Audit Trail
-
-Do not delete administration records.
-
-If an administration was recorded wrongly:
-
-* allow correction only with permission
-* require correction reason
-* keep old values in audit log
-* mark old record corrected/voided if needed
-
-Create or reuse:
-
-```text
-medication_administration_logs
-- id
-- medication_administration_id nullable
-- medication_order_id nullable
-- schedule_id nullable
-- action
-- old_value json nullable
-- new_value json nullable
-- reason nullable
-- performed_by
-- created_at
-```
-
-Actions:
-
-```text
-GIVEN
-HELD
-MISSED
-REFUSED
-SKIPPED
-CORRECTED
-VOIDED
-ORDER_STOPPED
-ORDER_HELD
-SCHEDULE_GENERATED
-TASK_CREATED
-TASK_ESCALATED
-```
-
----
-
-# 32. Admission Medication Board UI
-
-Create or update Admission Board medication area.
-
-Views:
-
-```text
-By Patient
-Due Now
-Overdue
-Upcoming
-Completed Today
-Missed / Held / Refused
-PRN / SOS
-```
-
-Columns:
-
-```text
-Patient
-Ward / Bed
-Medication
-Dose
-Route
-Frequency
-Scheduled Time
-Status
-Prescribed By
-Administered By
-Action
-```
-
-Color coding:
-
-```text
-Upcoming = gray
-Due Now = blue
-Overdue = red
-Given = green
-Held = orange
-Missed = red/dark
-Refused = warning
-Cancelled = muted
-```
-
----
-
-# 33. Emergency Medication Board UI
-
-Create or update Emergency Board medication area.
-
-Views:
-
-```text
-STAT Due
-Due Now
-Overdue
-Observation Medications
-Administered Today
-PRN / SOS
-```
-
-Columns:
-
-```text
-Patient
-Emergency Number
-Bay / Location
-Medication
-Dose
-Route
-Scheduled Time
-Status
-Prescribed By
-Administered By
-Action
-```
-
-Emergency should highlight STAT meds strongly.
-
----
-
-# 34. Medication Administration Modal
-
-Create reusable modal/component:
-
-```text
-MedicationAdministrationModal
-```
+Create referral note.
 
 Fields:
 
 ```text
-Patient
-Medication
-Scheduled Time
-Dose Ordered
-Route
-Frequency
-Dose Given
-Actual Administration Time
-Administration Status
-Reason Not Given
-Patient Reaction
-Notes
-Witness
-Source Stock Type
-Stock Location if applicable
+referral_facility
+reason
+condition_at_referral
+referred_by
+referral_time
+notes
 ```
 
-Rules:
+## Death / Dead on Arrival
 
-* actual administration time defaults to now
-* dose_given defaults to scheduled dose
-* reason required for non-given statuses
-* source stock required if not patient-dispensed
-* witness optional for now
-* modal closes only after successful save
-* validation errors show inside modal
-* no backdrop stuck
+Integrate with patient deceased feature.
+
+If patient dies:
+
+* create death/disposition record
+* mark patient deceased if appropriate and authorized
+* capture date/time of death
+* cause of death if known
+* certified_by if available
+
+If dead on arrival:
+
+```text
+Disposition = DEAD_ON_ARRIVAL
+Triage category = BLACK
+```
 
 ---
 
-# 35. Medication Order Progress
+# 22. Emergency Transfer to Admission
 
-For each medication order, calculate:
+When disposition is ADMITTED:
 
-```text
-total_doses
-given_doses
-remaining_doses
-missed_doses
-held_doses
-refused_doses
-cancelled_doses
-next_due_at
-progress_percentage
-```
+* open admission creation flow
+* pass patient, visit, emergency case
+* preserve emergency timeline
+* preserve medication/orders/investigations/procedures
+* continue invoice
+* emergency case marked disposed/admitted
+* admission board now handles inpatient care
 
-Show:
+Do not create a new unrelated visit unless business rules require it.
+
+Preferred:
 
 ```text
-Ceftriaxone 1g IV BD — 4/10 doses given
-Next dose: Today 20:00
-Status: Active
+same visit continues into admission
 ```
-
-Medication order should become completed when:
-
-```text
-all scheduled doses are GIVEN, CANCELLED, MISSED, REFUSED, or otherwise clinically closed
-```
-
-Prefer:
-
-```text
-COMPLETED only when all required doses are given
-```
-
-and use another status like `CLOSED` if non-given statuses complete the schedule. If existing statuses do not include CLOSED, document the chosen approach.
 
 ---
 
-# 36. Reports
+# 23. Emergency Transfer to OPD / Consultation
 
-Prepare or implement basic reports:
+When disposition is TRANSFERRED_TO_OPD:
+
+* create or activate consultation route
+* select consultation department
+* assign doctor optional
+* visit continues as OPD/consultation
+* emergency case marked disposed/transferred
+* invoice remains same
+* Visit Preview should show emergency then OPD continuation
+
+---
+
+# 24. Emergency Transfer to Theatre
+
+When disposition is TRANSFERRED_TO_THEATRE:
+
+* create procedure request or activate existing emergency procedure request
+* link to emergency_case_id
+* use procedure/theatre workflow
+* emergency case may remain active until accepted/transferred
+* invoice remains same
+
+---
+
+# 25. Emergency Reports
+
+Prepare report foundation.
+
+Reports:
 
 ```text
-Medication Administration Report
-Due Medication Report
-Overdue Medication Report
-Missed Dose Report
-Held / Refused Dose Report
-Nurse Administration Report
-Drug Utilization Report
-Adverse Reaction Report
-Admission Medication Progress Report
+Emergency Attendance Report
+Emergency Cases by Triage Category
+Emergency Waiting Time Report
+Emergency Bay Utilization Report
 Emergency Medication Report
-```
-
-At minimum, implement:
-
-```text
-Medication Administration Report
-Overdue Medication Report
-Missed Dose Report
-Nurse Administration Report
+Emergency Investigation Report
+Emergency Procedure Report
+Emergency Disposition Report
+Emergency Referral Report
+Emergency Mortality Report
+Emergency Staff Activity Report
 ```
 
 Filters:
 
 ```text
 date range
-ward
-emergency unit
-patient
-medication/product
-nurse
+triage category
 status
-doctor/prescriber
+disposition
+doctor
+nurse
+bay
+arrival mode
+patient
 ```
+
+At minimum implement basic emergency attendance and disposition report if reporting infrastructure exists.
 
 ---
 
-# 37. Permissions
+# 26. Emergency Menu
+
+Add Emergency module menu.
+
+Suggested menu:
+
+```text
+Emergency
+├── Emergency Board
+├── New Emergency Case
+├── Active Cases
+├── Waiting Triage
+├── Under Care
+├── Observation
+├── Ready for Disposition
+├── Emergency Bays
+├── Emergency MAR
+├── Reports
+└── Settings
+```
+
+Menu should be visible based on permissions.
+
+---
+
+# 27. Permissions
 
 Add or verify permissions:
 
 ```text
-medication_orders.view
-medication_orders.manage
-medication_orders.stop
-medication_orders.hold
-
-medication_administration.view
-medication_administration.administer
-medication_administration.hold
-medication_administration.mark_missed
-medication_administration.correct
-medication_administration.view_reports
-
-clinical_tasks.view
-clinical_tasks.manage
-clinical_tasks.complete
-clinical_tasks.escalate
-clinical_tasks.view_overdue
-
-admission.medication_board.view
-emergency.medication_board.view
+emergency.board.view
+emergency.case.create
+emergency.case.view
+emergency.case.update
+emergency.case.cancel
+emergency.triage.perform
+emergency.bay.assign
+emergency.notes.create
+emergency.notes.edit_own
+emergency.notes.edit_any
+emergency.vitals.record
+emergency.medication.administer
+emergency.investigation.request
+emergency.procedure.request
+emergency.disposition.manage
+emergency.transfer.admit
+emergency.transfer.opd
+emergency.transfer.theatre
+emergency.refer
+emergency.death.record
+emergency.reports.view
+emergency.settings.manage
 ```
 
-Roles likely involved:
+Roles:
 
 ```text
-Nurse
-Ward Nurse
 Emergency Nurse
-Doctor
-Pharmacist
+Emergency Doctor
+Triage Nurse
+Emergency Officer
 Ward Supervisor
 Matron
+Pharmacist
+Lab
+Radiology
+Cashier
 Admin
 Super Admin
 ```
 
 ---
 
-# 38. Routes / Controllers
+# 28. Routes / Controllers
 
 Use existing route conventions.
 
-Possible controllers:
+Suggested controllers:
 
 ```text
-MedicationOrderController
-MedicationScheduleController
-MedicationAdministrationController
-MedicationAdministrationBoardController
-ClinicalTaskController
-ClinicalTaskReminderController
-AdmissionMedicationBoardController
-EmergencyMedicationBoardController
-MedicationAdministrationReportController
+EmergencyBoardController
+EmergencyCaseController
+EmergencyTriageController
+EmergencyBayController
+EmergencyVitalsController
+EmergencyNoteController
+EmergencyMedicationController
+EmergencyInvestigationController
+EmergencyProcedureController
+EmergencyDispositionController
+EmergencyTransferController
+EmergencyReportController
 ```
 
-Keep controllers thin.
+Suggested routes under admin prefix if used:
 
-Business logic belongs in services.
+```php
+Route::prefix('admin/emergency')
+    ->name('admin.emergency.')
+    ->middleware(['auth'])
+    ->group(function () {
+        Route::get('/board', [EmergencyBoardController::class, 'index'])->name('board');
+        Route::get('/cases/create', [EmergencyCaseController::class, 'create'])->name('cases.create');
+        Route::post('/cases', [EmergencyCaseController::class, 'store'])->name('cases.store');
+        Route::get('/cases/{emergencyCase}', [EmergencyCaseController::class, 'show'])->name('cases.show');
+        Route::patch('/cases/{emergencyCase}', [EmergencyCaseController::class, 'update'])->name('cases.update');
+
+        Route::post('/cases/{emergencyCase}/triage', [EmergencyTriageController::class, 'store'])->name('triage.store');
+        Route::post('/cases/{emergencyCase}/assign-bay', [EmergencyBayController::class, 'assign'])->name('bay.assign');
+        Route::post('/cases/{emergencyCase}/vitals', [EmergencyVitalsController::class, 'store'])->name('vitals.store');
+        Route::post('/cases/{emergencyCase}/notes', [EmergencyNoteController::class, 'store'])->name('notes.store');
+
+        Route::post('/cases/{emergencyCase}/investigations', [EmergencyInvestigationController::class, 'store'])->name('investigations.store');
+        Route::post('/cases/{emergencyCase}/procedures', [EmergencyProcedureController::class, 'store'])->name('procedures.store');
+        Route::post('/cases/{emergencyCase}/disposition', [EmergencyDispositionController::class, 'store'])->name('disposition.store');
+
+        Route::post('/cases/{emergencyCase}/transfer/admission', [EmergencyTransferController::class, 'admit'])->name('transfer.admission');
+        Route::post('/cases/{emergencyCase}/transfer/opd', [EmergencyTransferController::class, 'opd'])->name('transfer.opd');
+        Route::post('/cases/{emergencyCase}/transfer/theatre', [EmergencyTransferController::class, 'theatre'])->name('transfer.theatre');
+    });
+```
+
+Adapt route names to existing project.
 
 ---
 
-# 39. Services to Create / Update
+# 29. Services to Create / Update
 
 Create or update:
 
 ```text
-MedicationOrderService
-MedicationScheduleService
-MedicationAdministrationService
+EmergencyCaseService
+EmergencyNumberService
+EmergencyTriageService
+EmergencyBoardService
+EmergencyBayService
+EmergencyVitalsService
+EmergencyTimelineService
+EmergencyDispositionService
+EmergencyTransferService
+EmergencyBillingService
+EmergencyStockService
+EmergencyReportService
 ClinicalTaskService
-ClinicalTaskReminderService
-MedicationFrequencyService
-MedicationProgressService
-AdmissionMedicationBoardService
-EmergencyMedicationBoardService
-MedicationAdministrationReportService
-StockLocationResolver
+MedicationAdministrationService
+MarChartService
+VisitPreviewService
+BillingService
 StockMovementService
 ```
 
-Do not duplicate existing services if they already exist.
-
-Extend existing prescription/pharmacy services carefully.
+Do not duplicate existing services. Extend existing ones where possible.
 
 ---
 
-# 40. Integration with Existing Prescriptions
+# 30. Frontend Pages / Components
 
-Inspect existing prescription flow first.
-
-Determine:
+If using Inertia/Vue, create:
 
 ```text
-where doctor prescription is stored
-where prescription items are stored
-how pharmacy dispensing works
-how dispensed quantities are stored
-how admission/emergency prescriptions are identified
+resources/js/Pages/Emergency/Board.vue
+resources/js/Pages/Emergency/CreateCase.vue
+resources/js/Pages/Emergency/ShowCase.vue
+resources/js/Pages/Emergency/Bays.vue
+resources/js/Pages/Emergency/Reports.vue
 ```
 
-Then map prescription items into medication orders.
+Components:
 
-Do not rebuild prescription module.
+```text
+EmergencyBoardTable
+EmergencyCaseHeader
+EmergencyTriagePanel
+EmergencyVitalsPanel
+EmergencyTimeline
+EmergencyBaySelector
+EmergencyNotesPanel
+EmergencyMedicationPanel
+EmergencyInvestigationPanel
+EmergencyProcedurePanel
+EmergencyDispositionPanel
+EmergencyTransferModal
+UnknownPatientForm
+```
 
-Do not break pharmacy dispensing.
+If using Blade, create equivalent Blade views/partials.
+
+Follow existing UI design conventions.
 
 ---
 
-# 41. Integration with Visit Preview
+# 31. Emergency Case Creation UI
 
-Update Visit Preview to include medication administration timeline.
-
-Show:
+New Emergency Case page should support:
 
 ```text
-Medication ordered
-Medication dispensed
-Dose scheduled
-Dose given / missed / held / refused
-Administered by nurse
-Reaction/notes
+search existing patient
+create emergency case for existing patient
+create temporary unknown patient
+arrival mode
+arrival time
+brought by
+chief complaint
+initial condition
+source/referral facility
+assign bay optional
+triage immediately optional
 ```
 
-Example:
+Actions:
 
 ```text
-Ceftriaxone 1g IV — Dose 4/10 given by Nurse Ama at 08:05.
-Patient tolerated medication well.
+Create Emergency Case
+Create and Triage
+Create Unknown Patient Case
 ```
 
 ---
 
-# 42. Integration with Consultation Summary
+# 32. Emergency Board UI
 
-Consultation Summary may show medication orders/prescriptions, but administration details are more relevant to Admission/Emergency and Visit Preview.
+Emergency Board should be visual and operational.
 
-If shown in summary, display progress:
+Use triage color badges:
 
 ```text
-Paracetamol 1g TDS — 3/9 doses given
+RED
+ORANGE
+YELLOW
+GREEN
+BLACK
 ```
 
-Do not overcrowd consultation summary with every dose unless requested.
+Show waiting time.
+
+Highlight overdue triage/care.
+
+Rows should be easy to scan.
+
+Actions should be quick.
 
 ---
 
-# 43. Notifications
+# 33. Emergency Detail UI
+
+Emergency Case Detail should show document/timeline style.
+
+Sections:
+
+```text
+Header
+Arrival Details
+Triage
+Vitals
+Bay / Location
+Clinical Notes
+Medications / MAR
+Investigations
+Procedures
+Tasks
+Billing Summary
+Disposition
+Timeline
+```
+
+Do not hide critical emergency information behind excessive tabs.
+
+Tabs are okay if the page becomes too long, but critical status and triage information must always be visible.
+
+---
+
+# 34. Billing Integration Rules
+
+Emergency billing must use existing BillingService.
+
+When emergency service/product/procedure/investigation is added:
+
+```text
+create invoice item on visit invoice
+use insurance pricing rules
+use selected visit insurance
+fallback to Cash and Carry
+do not require immediate payment
+do not duplicate item
+```
+
+Every emergency invoice item must have a clear source:
+
+```text
+source_type
+source_id
+```
+
+---
+
+# 35. Visit Preview Integration
+
+Update Visit Preview to include Emergency timeline.
+
+Visit Preview should show:
+
+```text
+Emergency case created
+Arrival details
+Triage category
+Vitals
+Bay assignment
+Emergency notes
+Medications administered
+Investigations requested/results
+Procedures performed
+Clinical tasks
+Disposition
+Transfer/admission/discharge/referral/death
+```
+
+Every entry must show:
+
+```text
+time
+user
+role
+department
+details
+```
+
+If patient later moves to admission or OPD, Visit Preview should show the full story in chronological order.
+
+---
+
+# 36. Consultation / Admission Integration
+
+Emergency must integrate with consultation and admission.
+
+## Transfer to OPD
+
+Use existing consultation route system.
+
+## Transfer to Admission
+
+Use existing admission system.
+
+## Transfer to Theatre
+
+Use existing procedure/theatre system.
+
+Do not create new disconnected workflows.
+
+---
+
+# 37. Deceased Patient Integration
+
+For `DIED` or `DEAD_ON_ARRIVAL` disposition:
+
+* mark patient deceased only with proper permission
+* capture date/time
+* cause of death if available
+* notes
+* marked_by
+* prevent future visits unless authorized override exists
+* do not delete patient record
+
+Use existing deceased patient logic if already implemented.
+
+---
+
+# 38. Notifications / Alerts
 
 Use existing notification system if available.
 
-Create notifications for:
+Emergency alerts:
 
 ```text
-Medication due now
-Medication overdue
-Medication task escalated
-Medication held
-Medication missed
-Medication reaction recorded
+New RED emergency case
+Patient waiting triage
+Overdue triage
+Overdue vitals monitoring
+Urgent investigation result ready
+Emergency medication overdue
+Ready for disposition
 ```
 
 Recipients:
 
 ```text
-assigned nurse
-ward nurses
-emergency nurses
-ward supervisor
-doctor if escalated
+Emergency nurse
+Emergency doctor
+Triage nurse
+Supervisor
+Lab/Radiology for urgent investigations
 ```
 
-Do not send external SMS/WhatsApp yet unless existing infrastructure exists.
+Do not implement SMS/WhatsApp unless infrastructure exists.
 
 ---
 
-# 44. Auto-Refresh / Polling
+# 39. Performance Requirements
 
-Medication boards should stay current.
-
-Implement one of:
-
-```text
-Inertia partial reload polling
-Vue polling every configured interval
-WebSocket/event broadcasting if existing
-manual refresh button plus auto-refresh
-```
-
-Recommended initial approach:
-
-```text
-poll every 60 seconds for due/overdue counts
-```
-
-Make interval configurable.
-
----
-
-# 45. Validation Rules
-
-Administration validation:
-
-```text
-schedule_id required unless PRN/SOS
-medication_order_id required
-patient_id required
-status required
-administered_at required for GIVEN
-dose_given required for GIVEN
-reason_not_given required for HELD/MISSED/REFUSED/SKIPPED
-administered_by = current user
-source_stock_type required
-stock_location_id required if source_stock_type is WARD_STOCK or EMERGENCY_STOCK
-cannot administer cancelled/stopped order
-cannot administer already completed schedule unless correction flow
-cannot administer more doses than available patient-dispensed stock unless using ward/emergency stock
-```
-
-Schedule generation validation:
-
-```text
-frequency required
-dose required
-route required
-start_at required
-total_doses or duration required
-```
-
----
-
-# 46. Data Integrity Rules
-
-* Do not duplicate schedules for same order.
-* Do not create duplicate clinical tasks for same schedule.
-* Do not administer same schedule twice unless correction/repeat is explicitly allowed.
-* Do not reduce stock twice.
-* Do not delete administration history.
-* Do not edit completed administration without audit trail.
-* Do not continue future schedules after order is stopped.
-* Do not administer medication for discharged/completed visit unless authorized correction.
-
----
-
-# 47. Performance Rules
+Emergency Board must be fast.
 
 Avoid N+1 queries.
 
-Medication boards should eager-load:
+Eager-load:
 
 ```text
 patient
-admission
-emergency case
-bed/location
-medication order
-product
-frequency
-prescriber
-schedule
-clinical task
-administration
-administered_by
+visit
+bay
+assigned doctor
+assigned nurse
+latest vitals
+latest triage
+active tasks
+medication due counts
+pending investigations
+pending procedures
 ```
 
-Use indexed columns:
+Do not load entire timeline on board.
+
+Load detailed timeline only on Emergency Case Detail page.
+
+Index important fields:
 
 ```text
-clinical_tasks.due_at
-clinical_tasks.status
-clinical_tasks.task_type
-clinical_tasks.assigned_department_id
-medication_administration_schedules.scheduled_at
-medication_administration_schedules.status
-medication_orders.patient_id
-medication_orders.admission_id
-medication_orders.emergency_case_id
+emergency_cases.emergency_number
+emergency_cases.patient_id
+emergency_cases.visit_id
+emergency_cases.emergency_status
+emergency_cases.triage_category
+emergency_cases.arrival_time
+emergency_cases.emergency_bay_id
+emergency_case_logs.emergency_case_id
+emergency_case_logs.created_at
 ```
-
-Do not load all historical administrations on the board. Load active/due/current-day data.
 
 ---
 
-# 48. Tests Required
+# 40. Validation Rules
+
+Emergency case creation:
+
+```text
+patient_id required unless creating temporary patient
+arrival_mode required
+arrival_time required
+chief_complaint nullable but recommended
+created_by required
+```
+
+Unknown patient:
+
+```text
+temporary display name required
+gender nullable
+estimated age nullable
+temporary reason required
+```
+
+Triage:
+
+```text
+triage_category required
+triage_score nullable
+vitals required depending policy
+triaged_by current user
+triaged_at now
+```
+
+Bay assignment:
+
+```text
+bay must be active
+bay must be available unless override permission
+```
+
+Disposition:
+
+```text
+disposition required
+disposition_notes required for referral/LAMA/death/DOA
+disposition_time required
+disposed_by current user
+```
+
+---
+
+# 41. Tests Required
 
 Add or update tests:
 
-## Frequency / Scheduling
+## Emergency Case
 
-1. Frequency seed creates OD, BD, TDS, QID, STAT, PRN.
-2. BD for 5 days generates 10 schedules.
-3. TDS for 3 days generates 9 schedules.
-4. STAT generates one due task.
-5. PRN does not generate fixed schedule.
-6. Schedule generation does not duplicate schedules.
+1. User can create emergency case for existing patient.
+2. User can create emergency case for unknown temporary patient.
+3. Emergency number is generated uniquely.
+4. Emergency case is linked to visit.
+5. Emergency case appears on Emergency Board.
 
-## Clinical Tasks
+## Triage
 
-7. Each scheduled dose creates a clinical task.
-8. Due medication task appears on Admission Board.
-9. Overdue task appears as overdue.
-10. Completed task disappears from Due Now.
-11. Escalation level updates after configured delay.
+6. Emergency triage can be recorded.
+7. Triage category displays correctly.
+8. RED cases are highlighted.
+9. Triage updates emergency status.
 
-## Administration
+## Bays
 
-12. Nurse can mark dose GIVEN.
-13. GIVEN creates medication administration record.
-14. GIVEN updates schedule and task status.
-15. Nurse can mark dose HELD with reason.
-16. Nurse can mark dose REFUSED with reason.
-17. Nurse cannot mark non-given status without reason.
-18. Nurse cannot administer cancelled schedule.
-19. Nurse cannot administer stopped order.
-20. Duplicate administration is prevented.
+10. Emergency bay can be assigned.
+11. Occupied bay cannot be assigned without override.
+12. Bay status updates when assigned/released.
 
-## Admission Board
+## Board
 
-21. Admission Board shows active medication count.
-22. Admission Board shows due now count.
-23. Admission Board shows overdue count.
-24. Patient medication progress shows 4/10 doses given.
+13. Emergency Board shows active cases.
+14. Board filters by triage category.
+15. Board shows waiting time.
+16. Board shows assigned doctor/nurse.
+17. Board does not load full timeline.
 
-## Emergency Board
+## Notes / Timeline
 
-25. Emergency Board shows STAT medication.
-26. Emergency stock administration creates stock OUT movement.
-27. Patient-dispensed stock administration does not create stock movement.
+18. Emergency note can be added.
+19. Timeline records emergency events.
+20. Timeline shows user who performed action.
 
-## Stock
+## Medication / MAR
 
-28. Pharmacy dispensing reduces stock once.
-29. Nurse administration from patient-dispensed stock does not reduce stock again.
-30. Nurse administration from ward/emergency stock reduces correct department stock once.
-31. Main Store is not consumed directly.
+21. Emergency medication creates medication order/task.
+22. STAT emergency medication appears due immediately.
+23. Emergency MAR opens for case.
+24. Emergency stock administration creates stock OUT movement once.
+25. Patient-dispensed medication does not double deduct stock.
 
-## Corrections / Audit
+## Investigations
 
-32. Administration correction requires permission.
-33. Correction requires reason.
-34. Correction creates audit log.
-35. Administration records are not deleted.
+26. Emergency investigation request is created using existing workflow.
+27. Emergency investigation is marked urgent/emergency.
+28. Investigation result appears in emergency case detail.
 
-## Integration
+## Procedures
 
-36. Pharmacy dispensing activates/generates medication administration schedule.
-37. Stopping medication cancels future schedules.
-38. Past given doses remain unchanged after stop.
-39. Visit Preview shows medication administration timeline.
-40. Notifications/board badges appear for due/overdue medications.
+29. Emergency procedure request is created using existing workflow.
+30. Emergency bedside procedure can be recorded if implemented.
+31. Theatre transfer uses existing procedure workflow.
+
+## Billing
+
+32. Emergency service adds invoice item through BillingService.
+33. Emergency billing does not require payment before care.
+34. Duplicate emergency invoice items are prevented.
+
+## Disposition
+
+35. Emergency case can be admitted.
+36. Emergency case can be discharged.
+37. Emergency case can be transferred to OPD.
+38. Emergency case can be transferred to Theatre.
+39. Emergency case can be referred out.
+40. Emergency death/DOA integrates with deceased patient logic.
+
+## Visit Preview
+
+41. Visit Preview includes emergency timeline.
+42. Visit Preview shows emergency then admission/OPD continuation chronologically.
+
+## Permissions
+
+43. Unauthorized user cannot create emergency case.
+44. Unauthorized user cannot triage.
+45. Unauthorized user cannot dispose case.
 
 ---
 
-# 49. Deliverables
+# 42. Deliverables
 
 Provide:
 
-1. Gap analysis of existing prescription/pharmacy/admission/emergency medication flow.
-2. Medication frequency setup.
-3. Medication order mapping from prescriptions.
-4. Medication schedule generation.
-5. Clinical task/reminder engine support.
-6. Admission Medication Board.
-7. Emergency Medication Board.
-8. Medication administration modal.
-9. Nurse administration recording.
-10. Due/overdue alerts.
-11. Escalation handling.
-12. Stock deduction safety.
-13. PRN/SOS support.
-14. STAT support.
-15. Stop/hold medication support.
-16. Audit/correction support.
-17. Reports or report foundation.
-18. Permissions/seeders.
-19. Visit Preview integration.
+1. Gap analysis of existing visit/admission/emergency-related code.
+2. Emergency case model/migration.
+3. Emergency number generation.
+4. Unknown patient support.
+5. Emergency triage.
+6. Emergency bay/location management.
+7. Emergency Board.
+8. Emergency Case Detail page.
+9. Emergency notes/timeline.
+10. Emergency vitals integration.
+11. Emergency medication/MAR integration.
+12. Emergency investigation integration.
+13. Emergency procedure integration.
+14. Emergency billing integration.
+15. Emergency stock integration.
+16. Emergency disposition workflow.
+17. Admission/OPD/Theatre transfer integration.
+18. Visit Preview emergency timeline.
+19. Permissions/seeders/menu.
 20. Tests or verification notes.
 21. Files modified.
 22. Remaining TODOs.
 
 ---
 
-# 50. Important Rules
+# 43. Important Rules
 
-Do not treat prescription as proof of administration.
+Do not copy OPD blindly.
 
-Do not treat pharmacy dispensing as proof of administration.
+Do not block emergency care because of unpaid invoice.
+
+Do not create a parallel patient system.
+
+Do not create a parallel billing system.
+
+Do not create a parallel investigation/procedure system.
+
+Do not create a parallel drug/product stock system.
 
 Do not reduce stock twice.
 
-Do not create a parallel drug inventory system.
+Do not bypass existing BillingService.
 
-Do not bypass Product stock movement system.
+Do not bypass existing StockMovementService.
 
-Do not delete administration records.
+Do not bypass existing MAR/Medication Administration system.
 
-Do not allow medication administration without auditability.
+Do not break OPD, Admission, Billing, Pharmacy, Investigation, Procedure, Consultation, Visit Preview, or Claims workflows.
 
-Do not continue schedules after medication is stopped.
-
-Do not require nurses to remember doses manually; create tasks/reminders.
-
-Do not break existing consultation, prescription, pharmacy, admission, emergency, billing, stock, or visit workflows.
-
-Now inspect the current implementation and build a Medication Administration Record system powered by Clinical Tasks/Reminders, integrated into Admission Board and Emergency Board.
+Now inspect the current UHMS implementation and build Emergency Case Management as a separate but fully integrated emergency pathway under the existing visit/invoice/patient architecture.
 
 ```
 ```

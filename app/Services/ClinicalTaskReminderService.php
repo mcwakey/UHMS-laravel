@@ -74,9 +74,13 @@ class ClinicalTaskReminderService
 
     public function countsForEmergency(): array
     {
-        $this->syncMedicationTaskStatuses(ClinicalTask::query()->whereNull('admission_id'));
+        $scope = ClinicalTask::query()
+            ->whereNull('admission_id')
+            ->whereNotNull('emergency_case_id');
 
-        return $this->counts(ClinicalTask::query()->whereNull('admission_id'));
+        $this->syncMedicationTaskStatuses(clone $scope);
+
+        return $this->counts($scope);
     }
 
     public function counts(Builder $query): array

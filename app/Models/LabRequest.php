@@ -16,13 +16,19 @@ class LabRequest extends Model
         'request_number',
         'sample_id',
         'visit_id',
+        'emergency_case_id',
         'patient_id',
         'requested_by',
         'department_id',
         'target_department_id',
         'clinical_info',
         'urgency',
+        'is_emergency',
         'status',
+    ];
+
+    protected $casts = [
+        'is_emergency' => 'boolean',
     ];
 
     /*
@@ -34,6 +40,11 @@ class LabRequest extends Model
     public function visit(): BelongsTo
     {
         return $this->belongsTo(Visit::class);
+    }
+
+    public function emergencyCase(): BelongsTo
+    {
+        return $this->belongsTo(EmergencyCase::class);
     }
 
     public function patient(): BelongsTo

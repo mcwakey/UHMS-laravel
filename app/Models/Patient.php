@@ -50,6 +50,11 @@ class Patient extends Model
         'allergies',
         'chronic_conditions',
         'status',
+        'is_temporary',
+        'temporary_reason',
+        'identity_confirmed_at',
+        'identity_confirmed_by',
+        'merged_to_patient_id',
         'registered_by',
         // Deceased fields
         'is_deceased',
@@ -68,6 +73,8 @@ class Patient extends Model
             'marital_status'=> MaritalStatus::class,
             'is_deceased'   => 'boolean',
             'deceased_at'   => 'date',
+            'is_temporary'   => 'boolean',
+            'identity_confirmed_at' => 'datetime',
         ];
     }
 
@@ -85,6 +92,11 @@ class Patient extends Model
     public function visits()
     {
         return $this->hasMany(Visit::class);
+    }
+
+    public function emergencyCases()
+    {
+        return $this->hasMany(EmergencyCase::class);
     }
 
     public function activeVisit()
@@ -160,6 +172,16 @@ class Patient extends Model
     public function markedDeceasedBy()
     {
         return $this->belongsTo(User::class, 'marked_deceased_by');
+    }
+
+    public function identityConfirmedBy()
+    {
+        return $this->belongsTo(User::class, 'identity_confirmed_by');
+    }
+
+    public function mergedToPatient()
+    {
+        return $this->belongsTo(self::class, 'merged_to_patient_id');
     }
 
     /*
