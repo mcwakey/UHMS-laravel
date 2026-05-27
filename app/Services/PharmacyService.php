@@ -11,12 +11,11 @@ use App\Models\Department;
 use App\Models\DispensingRecord;
 use App\Models\Drug;
 use App\Models\DrugCategory;
-use App\Models\InvoiceItem;
+use App\Models\PharmacyBillingSelection;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use App\Models\Product;
 use App\Models\StockLocation;
-use App\Models\Visit;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -29,10 +28,12 @@ class PharmacyService
         private ?ProductService $products = null,
         private ?StockBalanceService $stockBalances = null,
         private ?StockLocationService $stockLocations = null,
+        private ?PharmacyBillingSelectionService $billingSelections = null,
     ) {
         $this->products ??= app(ProductService::class);
         $this->stockBalances ??= app(StockBalanceService::class);
         $this->stockLocations ??= app(StockLocationService::class);
+        $this->billingSelections ??= app(PharmacyBillingSelectionService::class);
     }
 
     /*
@@ -97,13 +98,30 @@ class PharmacyService
             ? $this->stockLocations->getDefaultLocationForDepartment($pharmacyDept)
             : null;
 
-        $drugs->getCollection()->transform(function (Product $product) use ($pharmacyLocation) {
-            $available = $pharmacyLocation
-                ? $this->stockBalances->getQuantityForProductAtLocation($product, $pharmacyLocation)
-                : 0.0;
+        $mainLocation = null;
+        try {
+            $mainLocation = $this->stockLocations->getMainStoreLocation();
+        } catch (\Throwable) {
+            $mainLocation = null;
+        }
+
+        $productIds = $drugs->getCollection()->pluck('id')->all();
+        $pharmacyQuantities = $pharmacyLocation
+            ? $this->stockBalances->getQuantitiesForProductsAtLocation($productIds, $pharmacyLocation)
+            : collect();
+        $mainQuantities = $mainLocation
+            ? $this->stockBalances->getQuantitiesForProductsAtLocation($productIds, $mainLocation)
+            : collect();
+
+        $drugs->getCollection()->transform(function (Product $product) use ($pharmacyQuantities, $mainQuantities) {
+            $available = (float) ($pharmacyQuantities[$product->id] ?? 0);
+            $mainStock = (float) ($mainQuantities[$product->id] ?? 0);
 
             $product->available_in_pharmacy = $available;
-            $product->is_low_stock = ($product->reorder_level ?? 0) > 0 && $available <= (float) $product->reorder_level;
+            $product->available_in_main_store = $mainStock;
+            $product->pharmacy_stock_status = $this->stockBalances->stockStatus($available, $product);
+            $product->main_stock_status = $this->stockBalances->stockStatus($mainStock, $product);
+            $product->is_low_stock = in_array($product->pharmacy_stock_status['label'], ['LOW', 'CRITICAL', 'OUT'], true);
 
             return $product;
         });
@@ -257,6 +275,9 @@ class PharmacyService
         $query = Prescription::with(['patient', 'doctor', 'visit', 'items.drug', 'items.dispensingRecords'])
             ->whereIn('status', [
                 PrescriptionStatus::PENDING->value,
+                PrescriptionStatus::PARTIALLY_SELECTED->value,
+                PrescriptionStatus::PARTIALLY_BILLED->value,
+                PrescriptionStatus::BILLED->value,
                 PrescriptionStatus::PARTIALLY_DISPENSED->value,
             ]);
 
@@ -281,8 +302,9 @@ class PharmacyService
             'patient',
             'doctor',
             'visit',
-            'items.drug',
+            'items.drug.product',
             'items.dispensingRecords.dispensedBy',
+            'items.billingSelections.invoiceItem',
         ]);
 
         // Auto-resolve drug_id for items that have drug_name but no drug_id (backward compat)
@@ -291,10 +313,57 @@ class PharmacyService
                 $drug = Drug::where('name', $item->drug_name)->first();
                 if ($drug) {
                     $item->updateQuietly(['drug_id' => $drug->id]);
-                    $item->setRelation('drug', $drug->load([]));
+                    $item->setRelation('drug', $drug->load('product'));
                 }
             }
         }
+
+        $pharmacyLocation = $this->billingSelections->pharmacyLocation();
+        $mainLocation = null;
+        try {
+            $mainLocation = $this->stockLocations->getMainStoreLocation();
+        } catch (\Throwable) {
+            $mainLocation = null;
+        }
+
+        $productIds = $prescription->items
+            ->map(fn (PrescriptionItem $item) => $item->drug?->product_id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        $pharmacyQuantities = $this->stockBalances->getQuantitiesForProductsAtLocation($productIds, $pharmacyLocation);
+        $mainQuantities = $mainLocation
+            ? $this->stockBalances->getQuantitiesForProductsAtLocation($productIds, $mainLocation)
+            : collect();
+
+        $prescription->items->each(function (PrescriptionItem $item) use ($pharmacyQuantities, $mainQuantities) {
+            $activeSelections = $item->billingSelections
+                ->where('status', '!=', PharmacyBillingSelection::STATUS_CANCELLED);
+            $billed = (float) $activeSelections->sum('billed_quantity');
+            $dispensed = (float) $activeSelections->sum('dispensed_quantity');
+            $prescribed = (float) ($item->quantity ?? 0);
+            $product = $item->drug?->product;
+            $productId = $product?->id;
+            $pharmacyQty = $productId ? (float) ($pharmacyQuantities[$productId] ?? 0) : 0.0;
+            $mainQty = $productId ? (float) ($mainQuantities[$productId] ?? 0) : 0.0;
+
+            $item->billed_quantity = $billed;
+            $item->dispensed_billed_quantity = $dispensed;
+            $item->remaining_billed_to_dispense = max(0.0, $billed - $dispensed);
+            $item->remaining_prescribed_to_bill = max(0.0, $prescribed - $billed);
+            $item->pharmacy_available_quantity = $pharmacyQty;
+            $item->main_store_quantity = $mainQty;
+            $item->pharmacy_stock_status = $this->stockBalances->stockStatus($pharmacyQty, $product);
+            $item->main_stock_status = $this->stockBalances->stockStatus($mainQty, $product);
+        });
+
+        $prescription->setRelation(
+            'dispensableItems',
+            $prescription->items
+                ->filter(fn (PrescriptionItem $item) => $item->remaining_billed_to_dispense > 0 && $item->drug?->product_id)
+                ->values(),
+        );
 
         return $prescription;
     }
@@ -318,6 +387,15 @@ class PharmacyService
 
             if (! $drug) {
                 throw new \RuntimeException('No drug linked to this prescription item. Please link a drug first.');
+            }
+
+            $remainingBilled = $this->billingSelections->remainingBilledQuantityForItem($item);
+            if ($remainingBilled <= 0) {
+                throw new \RuntimeException('This prescription item has not been billed or has already been fully dispensed.');
+            }
+
+            if ($quantity > $remainingBilled) {
+                throw new \RuntimeException("Cannot dispense {$quantity}; only {$remainingBilled} billed quantity remains.");
             }
 
             // ── Stock availability check (pharmacy locations only) ────────
@@ -384,6 +462,8 @@ class PharmacyService
                 'notes'                => $notes,
             ]);
 
+            $this->billingSelections->recordDispensed($item, $quantity, Auth::id());
+
             // Mark item as dispensed if fully dispensed
             $totalDispensed = $item->dispensingRecords()->sum('quantity_dispensed');
             if ($totalDispensed >= ($item->quantity ?? 0)) {
@@ -402,45 +482,6 @@ class PharmacyService
                     'error' => $e->getMessage(),
                 ]);
             }
-
-            // ── BILLING ──────────────────────────────────────────────────
-            // Add an invoice line on the visit's single invoice for the dispensed drugs
-            if ($prescription->visit_id && $drug->price > 0) {
-                $unitPrice = (float) $drug->price;
-                $lineTotal = round($unitPrice * $quantity, 2);
-
-                $visit = Visit::find($prescription->visit_id);
-                if ($visit) {
-                    $invoice = app(InvoiceService::class)->getOrCreateVisitInvoice($visit);
-
-                    InvoiceItem::create([
-                        'invoice_id' => $invoice->id,
-                        'visit_id' => $visit->id,
-                        'patient_id' => $prescription->patient_id,
-                        'department_id' => null,
-                        'source_type' => 'prescription_item',
-                        'source_id' => $item->id,
-                        'description' => $drug->display_name.' × '.$quantity.' '.($drug->unit ?? 'unit(s)'),
-                        'quantity' => $quantity,
-                        'cash_price' => $unitPrice,
-                        'insurance_price' => null,
-                        'selected_price' => $unitPrice,
-                        'insurance_covered' => 0,
-                        'discount_amount' => 0,
-                        'patient_payable' => $lineTotal,
-                        'paid_amount' => 0,
-                        'balance' => $lineTotal,
-                        'payment_status' => $lineTotal > 0 ? 'unpaid' : 'paid',
-                        'total_price' => $lineTotal,
-                        'payer_type' => 'cash',
-                        'pricing_source' => 'drug_price',
-                        'created_by' => Auth::id(),
-                    ]);
-
-                    app(InvoiceService::class)->recalculateTotals($invoice->fresh('items'));
-                }
-            }
-            // ─────────────────────────────────────────────────────────────
 
             // Check stock levels and fire alert if low
             $totalStock = (float) \App\Models\StockBalance::where('product_id', $drug->product_id)
@@ -520,22 +561,17 @@ class PharmacyService
 
     protected function updatePrescriptionStatus(Prescription $prescription): void
     {
-        $prescription->load('items');
-
-        $total = $prescription->items->count();
-        $dispensed = $prescription->items->where('is_dispensed', true)->count();
-
-        if ($total > 0 && $dispensed === $total) {
-            $prescription->update(['status' => PrescriptionStatus::DISPENSED->value]);
-        } elseif ($dispensed > 0) {
-            $prescription->update(['status' => PrescriptionStatus::PARTIALLY_DISPENSED->value]);
-        }
+        $this->billingSelections->updatePrescriptionStatus($prescription);
     }
 
     public function getPharmacyStats(): array
     {
         return [
             'pending_prescriptions' => Prescription::where('status', PrescriptionStatus::PENDING->value)->count(),
+            'billed_prescriptions' => Prescription::whereIn('status', [
+                PrescriptionStatus::BILLED->value,
+                PrescriptionStatus::PARTIALLY_BILLED->value,
+            ])->count(),
             'partially_dispensed' => Prescription::where('status', PrescriptionStatus::PARTIALLY_DISPENSED->value)->count(),
             'dispensed_today' => DispensingRecord::whereDate('dispensed_at', today())->count(),
             'low_stock_count' => (function () {

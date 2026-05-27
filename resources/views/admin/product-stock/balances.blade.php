@@ -44,13 +44,7 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <label class="form-check me-2">
-                    <input type="checkbox" class="form-check-input" name="low_only" value="1" @checked($lowOnly)>
-                    <span class="form-check-label">Low only</span>
-                </label>
-            </div>
-            <div class="col-md-1 d-flex align-items-end">
+            <div class="col-md-3 d-flex align-items-end">
                 <button class="btn btn-sm btn-primary w-100">Filter</button>
             </div>
         </div>
@@ -61,49 +55,47 @@
             <table class="table table-vcenter table-hover mb-0">
                 <thead>
                     <tr>
-                        <th>Product</th><th>Type</th><th>Location</th><th>Department</th>
-                        <th class="text-end">Quantity on Hand</th>
-                        <th class="text-end">Reorder Level</th>
+                        <th>Product</th>
+                        <th>Type</th>
+                        <th>Unit</th>
+                        @foreach($locations as $location)
+                            <th class="text-end text-nowrap">{{ $location->name }}</th>
+                        @endforeach
+                        <th class="text-end">Total</th>
                         <th>Status</th>
-                        <th>Last Movement</th>
                     </tr>
                 </thead>
                 <tbody>
-                @forelse($balances as $b)
+                @forelse($rows as $row)
                     @php
-                        $qty = (float) $b->quantity_on_hand;
-                        $reorder = (float) ($b->product?->reorder_level ?? 0);
-                        $low = $reorder > 0 && $qty <= $reorder;
-                        $type = $b->product?->product_type;
+                        $product = $row['product'];
+                        $type = $product?->product_type;
                         $typeLabel = $type instanceof \App\Enums\ProductType ? $type->label() : ucfirst(str_replace('_', ' ', (string) $type));
-                        $productDepartments = $b->product?->departments?->pluck('name')->filter()->join(', ');
-                        $department = $b->location?->department?->name ?? ($productDepartments ?: '—');
+                        $formatQty = fn ($qty) => rtrim(rtrim(number_format((float) $qty, 4, '.', ''), '0'), '.') ?: '0';
                     @endphp
-                    <tr class="{{ $low ? 'table-warning' : '' }}">
-                        <td>{{ $b->product->name ?? '—' }}<br><small class="text-muted"><code>{{ $b->product->code ?? '—' }}</code></small></td>
+                    <tr>
+                        <td>{{ $product->name ?? '—' }}<br><small class="text-muted"><code>{{ $product->code ?? '—' }}</code></small></td>
                         <td><span class="badge bg-secondary">{{ $typeLabel ?: '—' }}</span></td>
-                        <td>{{ $b->location->name ?? '—' }}</td>
-                        <td>{{ $department ?: '—' }}</td>
-                        <td class="text-end"><strong>{{ rtrim(rtrim(number_format($qty, 4, '.', ''), '0'), '.') }}</strong></td>
-                        <td class="text-end">{{ $reorder > 0 ? rtrim(rtrim(number_format($reorder, 4, '.', ''), '0'), '.') : '—' }}</td>
+                        <td>{{ $product->unit ?? 'unit' }}</td>
+                        @foreach($locations as $location)
+                            @php $cell = $row['cells'][$location->id]; @endphp
+                            <td class="text-end text-nowrap">
+                                <strong>{{ $formatQty($cell['quantity']) }}</strong>
+                                <span class="badge bg-{{ $cell['status']['class'] }} ms-1">{{ $cell['status']['label'] }}</span>
+                            </td>
+                        @endforeach
+                        <td class="text-end"><strong>{{ $formatQty($row['total']) }}</strong></td>
                         <td>
-                            @if($qty <= 0)
-                                <span class="badge bg-danger">Out of stock</span>
-                            @elseif($low)
-                                <span class="badge bg-warning text-dark">Low</span>
-                            @else
-                                <span class="badge bg-success">OK</span>
-                            @endif
+                            <span class="badge bg-{{ $row['summary_class'] }}">{{ $row['summary'] }}</span>
                         </td>
-                        <td>{{ optional($b->last_movement_at)->diffForHumans() }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="text-center text-muted py-4">No balances yet.</td></tr>
+                    <tr><td colspan="{{ 5 + $locations->count() }}" class="text-center text-muted py-4">No products found for the current filters.</td></tr>
                 @endforelse
                 </tbody>
             </table>
         </div>
-        <div class="card-footer d-flex justify-content-end">{{ $balances->links() }}</div>
+        <div class="card-footer d-flex justify-content-end">{{ $products->links() }}</div>
     </div>
 </div>
 
@@ -126,7 +118,7 @@
                         <label class="form-label">Product *</label>
                         <select name="items[0][product_id]" class="form-select" required>
                             <option value="">Select product</option>
-                            @foreach($products as $product)
+                            @foreach($stockProducts as $product)
                                 <option value="{{ $product->id }}">{{ $product->name }} @if($product->code) ({{ $product->code }}) @endif</option>
                             @endforeach
                         </select>
@@ -192,7 +184,7 @@
                     <label class="form-label">Product *</label>
                     <select name="product_id" class="form-select" required>
                         <option value="">Select product</option>
-                        @foreach($products as $product)
+                        @foreach($stockProducts as $product)
                             <option value="{{ $product->id }}">{{ $product->name }} @if($product->code) ({{ $product->code }}) @endif</option>
                         @endforeach
                     </select>
@@ -235,7 +227,7 @@
                     <label class="form-label">Product *</label>
                     <select name="product_id" class="form-select" required>
                         <option value="">Select product</option>
-                        @foreach($products as $product)
+                        @foreach($stockProducts as $product)
                             <option value="{{ $product->id }}">{{ $product->name }} @if($product->code) ({{ $product->code }}) @endif</option>
                         @endforeach
                     </select>
@@ -302,7 +294,7 @@
                     <label class="form-label">Product *</label>
                     <select name="product_id" class="form-select" required>
                         <option value="">Select product</option>
-                        @foreach($products as $product)
+                        @foreach($stockProducts as $product)
                             <option value="{{ $product->id }}">{{ $product->name }} @if($product->code) ({{ $product->code }}) @endif</option>
                         @endforeach
                     </select>

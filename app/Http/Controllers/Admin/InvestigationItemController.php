@@ -13,15 +13,19 @@ use App\Models\Product;
 use App\Models\StockBalance;
 use App\Models\StockLocation as StockLocationModel;
 use App\Services\ProductService;
+use App\Services\StockBalanceService;
+use App\Services\StockLocationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class InvestigationItemController extends Controller
 {
-    public function __construct(private ProductService $productService)
-    {
-    }
+    public function __construct(
+        private ProductService $productService,
+        private StockBalanceService $stockBalances,
+        private StockLocationService $stockLocations,
+    ) {}
 
     /*
     |--------------------------------------------------------------------------
@@ -81,8 +85,14 @@ class InvestigationItemController extends Controller
             ->groupBy('product_id')
             ->pluck('total', 'product_id');
 
-        $products->getCollection()->transform(function (Product $p) use ($balances) {
+        $mainStore = $this->stockLocations->getMainStoreLocation();
+        $mainBalances = $this->stockBalances->getQuantitiesForProductsAtLocation($productIds, $mainStore);
+
+        $products->getCollection()->transform(function (Product $p) use ($balances, $mainBalances) {
             $p->available_in_lab = (float) ($balances[$p->id] ?? 0);
+            $p->available_in_main_store = (float) ($mainBalances[$p->id] ?? 0);
+            $p->lab_stock_status = $this->stockBalances->stockStatus($p->available_in_lab, $p);
+            $p->main_stock_status = $this->stockBalances->stockStatus($p->available_in_main_store, $p);
             return $p;
         });
 

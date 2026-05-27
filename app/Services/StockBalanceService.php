@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\StockBalance;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class StockBalanceService
@@ -36,6 +37,76 @@ class StockBalanceService
             ->first();
 
         return (float) ($balance?->quantity_on_hand ?? 0);
+    }
+
+    /**
+     * @param  iterable<int>  $productIds
+     * @return Collection<int, float>
+     */
+    public function getQuantitiesForProductsAtLocation(iterable $productIds, StockLocation $location): Collection
+    {
+        $ids = collect($productIds)->filter()->unique()->values();
+
+        if ($ids->isEmpty()) {
+            return collect();
+        }
+
+        return StockBalance::query()
+            ->whereIn('product_id', $ids)
+            ->where('stock_location_id', $location->id)
+            ->select('product_id', DB::raw('SUM(quantity_on_hand) as total'))
+            ->groupBy('product_id')
+            ->pluck('total', 'product_id')
+            ->map(fn ($quantity) => (float) $quantity);
+    }
+
+    /**
+     * @param  iterable<int>  $productIds
+     * @param  iterable<int>  $locationIds
+     * @return Collection<string, float> keyed by "product_id:location_id"
+     */
+    public function getQuantityMatrix(iterable $productIds, iterable $locationIds): Collection
+    {
+        $products = collect($productIds)->filter()->unique()->values();
+        $locations = collect($locationIds)->filter()->unique()->values();
+
+        if ($products->isEmpty() || $locations->isEmpty()) {
+            return collect();
+        }
+
+        return StockBalance::query()
+            ->whereIn('product_id', $products)
+            ->whereIn('stock_location_id', $locations)
+            ->select('product_id', 'stock_location_id', DB::raw('SUM(quantity_on_hand) as total'))
+            ->groupBy('product_id', 'stock_location_id')
+            ->get()
+            ->mapWithKeys(fn ($row) => [
+                $row->product_id.':'.$row->stock_location_id => (float) $row->total,
+            ]);
+    }
+
+    public function stockStatus(float $quantity, ?Product $product = null, bool $stocked = true): array
+    {
+        if (! $stocked) {
+            return ['label' => 'NOT STOCKED', 'class' => 'secondary'];
+        }
+
+        $lowThreshold = (float) ($product?->reorder_level ?? 0);
+        $criticalThreshold = $lowThreshold > 0 ? max(1.0, $lowThreshold / 2) : 0.0;
+
+        if ($quantity <= 0) {
+            return ['label' => 'OUT', 'class' => 'danger'];
+        }
+
+        if ($criticalThreshold > 0 && $quantity <= $criticalThreshold) {
+            return ['label' => 'CRITICAL', 'class' => 'danger'];
+        }
+
+        if ($lowThreshold > 0 && $quantity <= $lowThreshold) {
+            return ['label' => 'LOW', 'class' => 'warning text-dark'];
+        }
+
+        return ['label' => 'OK', 'class' => 'success'];
     }
 
     public function increaseProduct(int $productId, int $locationId, float $quantity): StockBalance

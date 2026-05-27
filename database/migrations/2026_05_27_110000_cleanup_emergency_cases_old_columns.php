@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -16,7 +17,7 @@ return new class extends Migration
         ];
 
         foreach ($fksToDrop as $fkName => $column) {
-            if (! empty(DB::select("SHOW COLUMNS FROM `emergency_cases` LIKE '{$column}'"))) {
+            if ($this->columnExists('emergency_cases', $column)) {
                 DB::statement("ALTER TABLE `emergency_cases` DROP FOREIGN KEY `{$fkName}`");
                 DB::statement("ALTER TABLE `emergency_cases` DROP COLUMN `{$column}`");
             }
@@ -36,7 +37,7 @@ return new class extends Migration
         ];
 
         foreach ($columnsToDrop as $column) {
-            if (! empty(DB::select("SHOW COLUMNS FROM `emergency_cases` LIKE '{$column}'"))) {
+            if ($this->columnExists('emergency_cases', $column)) {
                 DB::statement("ALTER TABLE `emergency_cases` DROP COLUMN `{$column}`");
             }
         }
@@ -44,8 +45,20 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (empty(DB::select("SHOW COLUMNS FROM `emergency_cases` LIKE 'notes'"))) {
+        if (! $this->columnExists('emergency_cases', 'notes')) {
             DB::statement("ALTER TABLE `emergency_cases` ADD COLUMN `notes` TEXT NULL");
         }
+    }
+
+    private function columnExists(string $table, string $column): bool
+    {
+        if (DB::getDriverName() === 'sqlite') {
+            return Schema::hasColumn($table, $column);
+        }
+
+        $table = str_replace('`', '``', $table);
+        $column = str_replace("'", "''", $column);
+
+        return ! empty(DB::select("SHOW COLUMNS FROM `{$table}` LIKE '{$column}'"));
     }
 };

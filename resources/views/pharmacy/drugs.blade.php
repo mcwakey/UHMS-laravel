@@ -45,7 +45,8 @@
                         <th>Product</th>
                         <th>Product Type</th>
                         <th>Unit</th>
-                        <th class="text-end">Available in Pharmacy</th>
+                        <th class="text-end">Pharmacy Available Qty</th>
+                        <th class="text-end">Main Stock Qty</th>
                         <th class="text-end">Reorder Level</th>
                         <th>Status</th>
                     </tr>
@@ -54,12 +55,14 @@
                     @forelse($drugs as $product)
                         @php
                             $qty = (float) ($product->available_in_pharmacy ?? 0);
+                            $mainQty = (float) ($product->available_in_main_store ?? 0);
                             $reorder = (float) ($product->reorder_level ?? 0);
-                            $low = $reorder > 0 && $qty <= $reorder;
+                            $pharmacyStatus = $product->pharmacy_stock_status ?? ['label' => 'OUT', 'class' => 'danger'];
+                            $mainStatus = $product->main_stock_status ?? ['label' => 'OUT', 'class' => 'danger'];
                             $type = $product->product_type;
                             $typeLabel = $type instanceof \App\Enums\ProductType ? $type->label() : ucfirst(str_replace('_', ' ', (string) $type));
                         @endphp
-                        <tr class="{{ $low ? 'table-warning' : '' }}">
+                        <tr>
                             <td>
                                 <span class="fw-medium">{{ $product->name }}</span>
                                 @if($product->code)
@@ -68,21 +71,22 @@
                             </td>
                             <td><span class="badge bg-light text-dark">{{ $typeLabel }}</span></td>
                             <td>{{ $product->unit ?? 'unit' }}</td>
-                            <td class="text-end fw-semibold">{{ rtrim(rtrim(number_format($qty, 4, '.', ''), '0'), '.') }}</td>
+                            <td class="text-end fw-semibold">
+                                {{ rtrim(rtrim(number_format($qty, 4, '.', ''), '0'), '.') }}
+                                <span class="badge bg-{{ $pharmacyStatus['class'] }} ms-1">{{ $pharmacyStatus['label'] }}</span>
+                            </td>
+                            <td class="text-end fw-semibold">
+                                {{ rtrim(rtrim(number_format($mainQty, 4, '.', ''), '0'), '.') }}
+                                <span class="badge bg-{{ $mainStatus['class'] }} ms-1">{{ $mainStatus['label'] }}</span>
+                            </td>
                             <td class="text-end text-muted">{{ $reorder > 0 ? rtrim(rtrim(number_format($reorder, 4, '.', ''), '0'), '.') : '—' }}</td>
                             <td>
-                                @if($qty <= 0)
-                                    <span class="badge bg-danger">Out of stock</span>
-                                @elseif($low)
-                                    <span class="badge bg-warning text-dark">Low</span>
-                                @else
-                                    <span class="badge bg-success">OK</span>
-                                @endif
+                                <span class="badge bg-{{ $pharmacyStatus['class'] }}">{{ $pharmacyStatus['label'] }}</span>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-4">No pharmacy products found.</td>
+                            <td colspan="7" class="text-center text-muted py-4">No pharmacy products found.</td>
                         </tr>
                     @endforelse
                 </tbody>

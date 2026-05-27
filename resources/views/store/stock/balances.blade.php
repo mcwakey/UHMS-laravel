@@ -27,7 +27,7 @@
                 <label class="form-label">Location</label>
                 <select name="location_id" class="form-select">
                     <option value="">All Locations</option>
-                    @foreach($locations as $loc)
+                    @foreach($allLocations as $loc)
                     <option value="{{ $loc->id }}" {{ request('location_id') == $loc->id ? 'selected' : '' }}>{{ $loc->name }}</option>
                     @endforeach
                 </select>
@@ -65,55 +65,47 @@
                         <th>Code</th>
                         <th>Type</th>
                         <th>Unit</th>
-                        <th>Location</th>
-                        <th>Department</th>
-                        <th class="text-end">Quantity on Hand</th>
-                        <th class="text-end">Reorder Level</th>
+                        @foreach($locations as $location)
+                            <th class="text-end text-nowrap">{{ $location->name }}</th>
+                        @endforeach
+                        <th class="text-end">Total</th>
                         <th>Status</th>
-                        <th>Last Movement</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($balances as $b)
+                    @forelse($rows as $row)
                     @php
-                        $qty       = (float) $b->quantity_on_hand;
-                        $reorder   = (float) ($b->product->reorder_level ?? 0);
-                        $low       = $reorder > 0 && $qty <= $reorder;
-                        $type      = $b->product?->product_type;
+                        $product   = $row['product'];
+                        $type      = $product?->product_type;
                         $typeLabel = $type instanceof \App\Enums\ProductType ? $type->value : ($type ?? '—');
-                        $deptName  = $b->stockLocation?->department?->name
-                                  ?? $b->product?->departments?->first()?->name
-                                  ?? '—';
+                        $formatQty = fn ($qty) => rtrim(rtrim(number_format((float) $qty, 4), '0'), '.') ?: '0';
                     @endphp
-                    <tr class="{{ $low ? 'table-warning' : '' }}">
-                        <td>{{ $b->product?->name ?? '—' }}</td>
-                        <td><code class="small">{{ $b->product?->code ?? '—' }}</code></td>
+                    <tr>
+                        <td>{{ $product?->name ?? '—' }}</td>
+                        <td><code class="small">{{ $product?->code ?? '—' }}</code></td>
                         <td><span class="badge bg-light text-dark">{{ ucfirst(str_replace('_', ' ', strtolower($typeLabel))) }}</span></td>
-                        <td>{{ $b->product?->unit ?? '—' }}</td>
-                        <td>{{ $b->stockLocation?->name ?? '—' }}</td>
-                        <td class="small text-muted">{{ $deptName }}</td>
-                        <td class="text-end fw-semibold">{{ rtrim(rtrim(number_format($qty, 4), '0'), '.') }}</td>
-                        <td class="text-end text-muted">{{ rtrim(rtrim(number_format($reorder, 4), '0'), '.') }}</td>
+                        <td>{{ $product?->unit ?? '—' }}</td>
+                        @foreach($locations as $location)
+                            @php $cell = $row['cells'][$location->id]; @endphp
+                            <td class="text-end text-nowrap">
+                                <span class="fw-semibold">{{ $formatQty($cell['quantity']) }}</span>
+                                <span class="badge bg-{{ $cell['status']['class'] }} ms-1">{{ $cell['status']['label'] }}</span>
+                            </td>
+                        @endforeach
+                        <td class="text-end fw-bold">{{ $formatQty($row['total']) }}</td>
                         <td>
-                            @if($qty <= 0)
-                                <span class="badge bg-danger">Out of stock</span>
-                            @elseif($low)
-                                <span class="badge bg-warning text-dark">Low</span>
-                            @else
-                                <span class="badge bg-success">OK</span>
-                            @endif
+                            <span class="badge bg-{{ $row['summary_class'] }}">{{ $row['summary'] }}</span>
                         </td>
-                        <td class="small">{{ $b->last_movement_at?->format('d M Y H:i') ?? '—' }}</td>
                     </tr>
                     @empty
-                    <tr><td colspan="10" class="text-center text-muted py-4">No stock balances yet. Create opening stock or receive a purchase order.</td></tr>
+                    <tr><td colspan="{{ 6 + $locations->count() }}" class="text-center text-muted py-4">No products found for the current filters.</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
     </div>
-    @if($balances->hasPages())
-    <div class="card-footer">{{ $balances->links() }}</div>
+    @if($products->hasPages())
+    <div class="card-footer">{{ $products->links() }}</div>
     @endif
 </div>
 @endsection

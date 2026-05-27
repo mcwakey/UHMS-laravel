@@ -110,6 +110,11 @@ class Prescription extends Model
         return $this->hasMany(DispensingRecord::class);
     }
 
+    public function billingSelections()
+    {
+        return $this->hasMany(PharmacyBillingSelection::class);
+    }
+
     public function medicationOrders()
     {
         return $this->hasMany(MedicationOrder::class);

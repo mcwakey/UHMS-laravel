@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('prescription_id')->constrained('prescriptions')->cascadeOnDelete();
             $table->foreignId('prescription_item_id')->constrained('prescription_items')->cascadeOnDelete();
-            $table->foreignId('drug_stock_id')->constrained('drug_stock')->cascadeOnDelete();
+            $table->foreignId('drug_stock_id')->nullable()->constrained('drug_stock')->cascadeOnDelete();
             $table->foreignId('patient_id')->constrained('patients')->cascadeOnDelete();
             $table->foreignId('visit_id')->constrained('visits')->cascadeOnDelete();
             $table->integer('quantity_dispensed');

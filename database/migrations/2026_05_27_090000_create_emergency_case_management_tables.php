@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('patients', function (Blueprint $table) {
-            if (empty(DB::select("SHOW COLUMNS FROM `patients` LIKE 'is_temporary'"))) {
+            if (! $this->columnExists('patients', 'is_temporary')) {
                 $table->boolean('is_temporary')->default(false)->after('status');
                 $table->string('temporary_reason')->nullable()->after('is_temporary');
                 $table->timestamp('identity_confirmed_at')->nullable()->after('temporary_reason');
@@ -114,7 +114,7 @@ return new class extends Migration
         }
 
         Schema::table('vitals', function (Blueprint $table) {
-            if (empty(DB::select("SHOW COLUMNS FROM `vitals` LIKE 'emergency_case_id'"))) {
+            if (! $this->columnExists('vitals', 'emergency_case_id')) {
                 $table->foreignId('emergency_case_id')->nullable()->after('admission_id')->constrained('emergency_cases')->nullOnDelete();
                 $table->string('monitoring_context', 80)->nullable()->after('triage_id');
                 $table->index(['emergency_case_id', 'recorded_at'], 'vitals_emergency_recorded_idx');
@@ -122,7 +122,7 @@ return new class extends Migration
         });
 
         Schema::table('lab_requests', function (Blueprint $table) {
-            if (empty(DB::select("SHOW COLUMNS FROM `lab_requests` LIKE 'emergency_case_id'"))) {
+            if (! $this->columnExists('lab_requests', 'emergency_case_id')) {
                 $table->foreignId('emergency_case_id')->nullable()->after('visit_id')->constrained('emergency_cases')->nullOnDelete();
                 $table->boolean('is_emergency')->default(false)->after('urgency');
                 $table->index(['emergency_case_id', 'urgency'], 'lab_requests_emergency_urgency_idx');
@@ -130,7 +130,7 @@ return new class extends Migration
         });
 
         Schema::table('procedure_requests', function (Blueprint $table) {
-            if (empty(DB::select("SHOW COLUMNS FROM `procedure_requests` LIKE 'emergency_case_id'"))) {
+            if (! $this->columnExists('procedure_requests', 'emergency_case_id')) {
                 $table->foreignId('emergency_case_id')->nullable()->after('visit_id')->constrained('emergency_cases')->nullOnDelete();
                 $table->boolean('is_emergency')->default(false)->after('priority');
                 $table->dateTime('performed_at')->nullable()->after('completed_at');
@@ -143,7 +143,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('procedure_requests', function (Blueprint $table) {
-            if (! empty(DB::select("SHOW COLUMNS FROM `procedure_requests` LIKE 'emergency_case_id'"))) {
+            if ($this->columnExists('procedure_requests', 'emergency_case_id')) {
                 $table->dropIndex('procedure_requests_emergency_priority_idx');
                 $table->dropConstrainedForeignId('performed_by');
                 $table->dropConstrainedForeignId('emergency_case_id');
@@ -152,7 +152,7 @@ return new class extends Migration
         });
 
         Schema::table('lab_requests', function (Blueprint $table) {
-            if (! empty(DB::select("SHOW COLUMNS FROM `lab_requests` LIKE 'emergency_case_id'"))) {
+            if ($this->columnExists('lab_requests', 'emergency_case_id')) {
                 $table->dropIndex('lab_requests_emergency_urgency_idx');
                 $table->dropConstrainedForeignId('emergency_case_id');
                 $table->dropColumn('is_emergency');
@@ -160,7 +160,7 @@ return new class extends Migration
         });
 
         Schema::table('vitals', function (Blueprint $table) {
-            if (! empty(DB::select("SHOW COLUMNS FROM `vitals` LIKE 'emergency_case_id'"))) {
+            if ($this->columnExists('vitals', 'emergency_case_id')) {
                 $table->dropIndex('vitals_emergency_recorded_idx');
                 $table->dropConstrainedForeignId('emergency_case_id');
                 $table->dropColumn('monitoring_context');
@@ -173,11 +173,23 @@ return new class extends Migration
         Schema::dropIfExists('emergency_bays');
 
         Schema::table('patients', function (Blueprint $table) {
-            if (! empty(DB::select("SHOW COLUMNS FROM `patients` LIKE 'is_temporary'"))) {
+            if ($this->columnExists('patients', 'is_temporary')) {
                 $table->dropConstrainedForeignId('merged_to_patient_id');
                 $table->dropConstrainedForeignId('identity_confirmed_by');
                 $table->dropColumn(['is_temporary', 'temporary_reason', 'identity_confirmed_at']);
             }
         });
+    }
+
+    private function columnExists(string $table, string $column): bool
+    {
+        if (DB::getDriverName() === 'sqlite') {
+            return Schema::hasColumn($table, $column);
+        }
+
+        $table = str_replace('`', '``', $table);
+        $column = str_replace("'", "''", $column);
+
+        return ! empty(DB::select("SHOW COLUMNS FROM `{$table}` LIKE '{$column}'"));
     }
 };

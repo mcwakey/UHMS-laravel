@@ -730,6 +730,7 @@ Route::middleware('auth')->group(function () {
             Route::middleware('can:pharmacy.dispensing.view')->group(function () {
                 Route::get('dispensing', [DispensingController::class, 'index'])->name('dispensing.index');
                 Route::get('dispensing/{prescription}', [DispensingController::class, 'show'])->name('dispensing.show');
+                Route::post('dispensing/{prescription}/bill-selected', [DispensingController::class, 'billSelected'])->name('dispensing.bill-selected')->middleware('can:pharmacy.dispensing.create');
                 Route::post('dispensing/{item}/dispense', [DispensingController::class, 'dispenseItem'])->name('dispensing.dispense-item')->middleware('can:pharmacy.dispensing.create');
                 Route::post('dispensing/{prescription}/batch', [DispensingController::class, 'batchDispense'])->name('dispensing.batch')->middleware('can:pharmacy.dispensing.create');
                 Route::get('history', [DispensingController::class, 'history'])->name('history');

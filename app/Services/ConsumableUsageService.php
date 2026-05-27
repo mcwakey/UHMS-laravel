@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\StockMovementType;
 use App\Models\ConsumableUsage;
+use App\Models\InvoiceItem;
 use App\Models\Product;
 use App\Models\ServiceCatalog;
 use App\Models\ServiceConsumable;
@@ -18,6 +19,7 @@ class ConsumableUsageService
     public function __construct(
         private ProductStockMovementService $movements,
         private StockLocationResolver $locationResolver,
+        private BillingService $billing,
     ) {}
 
     /**
@@ -27,6 +29,7 @@ class ConsumableUsageService
         'procedure_request'      => StockMovementType::PROCEDURE_CONSUMED,
         'investigation_result'   => StockMovementType::INVESTIGATION_CONSUMED,
         'ward_care'              => StockMovementType::WARD_CONSUMED,
+        'emergency_care'         => StockMovementType::EMERGENCY_ADMINISTRATION_OUT,
     ];
 
     /**
@@ -111,11 +114,26 @@ class ConsumableUsageService
                     'product_id'        => $productId,
                     'stock_location_id' => $location->id,
                     'quantity_used'     => $qty,
+                    'is_billable'       => (bool) $product->is_billable,
                     'stock_movement_id' => $movement->id,
                     'used_by'           => $userId,
                     'used_at'           => now(),
                     'notes'             => $item['notes'] ?? null,
                 ]);
+
+                if ($product->is_billable) {
+                    $invoiceItem = $this->billing->addProductToVisitInvoice(
+                        $visit,
+                        $product,
+                        $this->invoiceSourceType($sourceType),
+                        $usage->id,
+                        $qty,
+                        $service?->department_id ?? $visit?->department_id,
+                        $product->name.' consumable usage',
+                    );
+
+                    $usage->forceFill(['invoice_item_id' => $invoiceItem->id])->save();
+                }
 
                 $created[] = $usage;
 
@@ -130,5 +148,16 @@ class ConsumableUsageService
         });
 
         return ['usages' => $created];
+    }
+
+    private function invoiceSourceType(string $sourceType): string
+    {
+        return match ($sourceType) {
+            'ward_care' => InvoiceItem::SOURCE_WARD_CONSUMABLE,
+            'emergency_care' => InvoiceItem::SOURCE_EMERGENCY_CONSUMABLE,
+            'investigation_result' => InvoiceItem::SOURCE_INVESTIGATION_CONSUMABLE,
+            'procedure_request' => InvoiceItem::SOURCE_PROCEDURE_CONSUMABLE,
+            default => 'department_consumable',
+        };
     }
 }

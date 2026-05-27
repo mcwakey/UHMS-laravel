@@ -21,7 +21,15 @@ class InvoiceItem extends Model
 
     public const SOURCE_PHARMACY_PRODUCT = 'pharmacy_product';
 
+    public const SOURCE_PHARMACY_BILLING_SELECTION = 'pharmacy_billing_selection';
+
     public const SOURCE_WARD_CONSUMABLE = 'ward_consumable';
+
+    public const SOURCE_EMERGENCY_CONSUMABLE = 'emergency_consumable';
+
+    public const SOURCE_INVESTIGATION_CONSUMABLE = 'investigation_consumable';
+
+    public const SOURCE_PROCEDURE_CONSUMABLE = 'procedure_consumable';
 
     public static function sourceTypes(): array
     {
@@ -30,7 +38,11 @@ class InvoiceItem extends Model
             self::SOURCE_INVESTIGATION_SERVICE,
             self::SOURCE_PROCEDURE_SERVICE,
             self::SOURCE_PHARMACY_PRODUCT,
+            self::SOURCE_PHARMACY_BILLING_SELECTION,
             self::SOURCE_WARD_CONSUMABLE,
+            self::SOURCE_EMERGENCY_CONSUMABLE,
+            self::SOURCE_INVESTIGATION_CONSUMABLE,
+            self::SOURCE_PROCEDURE_CONSUMABLE,
         ];
     }
 

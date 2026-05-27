@@ -5,14 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\StockMovementType;
 use App\Http\Controllers\Controller;
 use App\Models\Drug;
-use App\Models\StockBalance;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
 use App\Services\StockAdjustmentService;
 use App\Services\StockBalanceService;
+use App\Services\StockBalanceMatrixService;
 use App\Services\StockReturnService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class StockController extends Controller
@@ -21,6 +20,7 @@ class StockController extends Controller
         private StockBalanceService $balances,
         private StockAdjustmentService $adjustments,
         private StockReturnService $returns,
+        private StockBalanceMatrixService $matrix,
     ) {}
 
     /**
@@ -33,35 +33,9 @@ class StockController extends Controller
      */
     public function balances(Request $request)
     {
-        $balances = StockBalance::query()
-            ->with([
-                'product:id,name,code,product_type,unit,reorder_level,is_active',
-                'product.departments:id,name,type',
-                'stockLocation:id,name,type,department_id',
-                'stockLocation.department:id,name,type',
-            ])
-            ->when($request->location_id, fn ($q, $id) => $q->where('stock_location_id', $id))
-            ->when($request->product_id, fn ($q, $id) => $q->where('product_id', $id))
-            ->when($request->product_type, function ($q, $type) {
-                $q->whereHas('product', fn ($pq) => $pq->where('product_type', $type));
-            })
-            ->when($request->search, function ($q, $s) {
-                $q->whereHas('product', function ($pq) use ($s) {
-                    $pq->where('name', 'like', "%{$s}%")->orWhere('code', 'like', "%{$s}%");
-                });
-            })
-            ->when($request->low_only, function ($q) {
-                $q->whereRaw('quantity_on_hand <= COALESCE((SELECT reorder_level FROM products WHERE products.id = stock_balances.product_id), 0)');
-            })
-            ->whereNotNull('product_id')
-            ->orderBy('product_id')
-            ->paginate(25)
-            ->withQueryString();
+        $matrix = $this->matrix->build($request->only(['location_id', 'product_type', 'search']));
 
-        $locations    = StockLocation::active()->orderBy('name')->get();
-        $productTypes = \App\Enums\ProductType::cases();
-
-        return view('store.stock.balances', compact('balances', 'locations', 'productTypes'));
+        return view('store.stock.balances', $matrix);
     }
 
     /**

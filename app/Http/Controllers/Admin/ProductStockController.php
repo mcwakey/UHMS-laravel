@@ -6,10 +6,10 @@ use App\Enums\ProductType;
 use App\Enums\StockMovementType;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
-use App\Models\StockBalance;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
 use App\Services\ProductStockService;
+use App\Services\StockBalanceMatrixService;
 use App\Services\StockLocationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -20,46 +20,29 @@ class ProductStockController extends Controller
     public function __construct(
         private ProductStockService $stock,
         private StockLocationService $stockLocations,
+        private StockBalanceMatrixService $matrix,
     ) {}
 
     // ---------- Balances ----------
     public function balances(Request $request)
     {
-        $locations = StockLocation::active()->orderByDesc('is_main')->orderBy('name')->get();
         $locationId = $request->filled('location_id') ? (int) $request->get('location_id') : null;
         $search     = trim((string) $request->get('search'));
         $type       = $request->get('type');
-        $lowOnly    = (bool) $request->get('low_only');
 
-        $balances = StockBalance::query()
-            ->with(['product.departments:id,name,type', 'location.department:id,name,type'])
-            ->whereNotNull('product_id')
-            ->when($locationId, fn ($q) => $q->where('stock_location_id', $locationId))
-            ->whereHas('product', function ($q) use ($search, $type) {
-                if ($search !== '') {
-                    $q->where(function ($qq) use ($search) {
-                        $qq->where('name', 'like', "%{$search}%")
-                           ->orWhere('code', 'like', "%{$search}%");
-                    });
-                }
-                if ($type) $q->where('product_type', $type);
-            })
-            ->when($lowOnly, fn ($q) => $q->whereRaw('quantity_on_hand <= COALESCE((select reorder_level from products where products.id = stock_balances.product_id), 0)'))
-            ->orderBy('product_id')
-            ->orderBy('stock_location_id')
-            ->paginate(25)
-            ->withQueryString();
+        $matrix = $this->matrix->build([
+            'location_id' => $locationId,
+            'product_type' => $type,
+            'search' => $search,
+        ]);
 
-        return view('admin.product-stock.balances', [
-            'locations'   => $locations,
+        return view('admin.product-stock.balances', $matrix + [
             'locationId'  => $locationId,
-            'balances'    => $balances,
             'search'      => $search,
             'type'        => $type,
-            'lowOnly'     => $lowOnly,
             'typeOptions' => ProductType::options(),
             'mainStore'   => $this->stockLocations->getMainStoreLocation(),
-            'products'    => Product::where('is_active', true)->orderBy('name')->get(['id','name','code','unit']),
+            'stockProducts' => Product::where('is_active', true)->orderBy('name')->get(['id','name','code','unit']),
             'adjustmentTypes' => [
                 StockMovementType::ADJUSTMENT_IN->value  => 'Adjustment In (+)',
                 StockMovementType::ADJUSTMENT_OUT->value => 'Adjustment Out (-)',

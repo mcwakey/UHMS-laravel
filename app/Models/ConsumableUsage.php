@@ -15,6 +15,8 @@ class ConsumableUsage extends Model
         'product_id',
         'stock_location_id',
         'quantity_used',
+        'is_billable',
+        'invoice_item_id',
         'stock_movement_id',
         'used_by',
         'used_at',
@@ -25,6 +27,7 @@ class ConsumableUsage extends Model
     {
         return [
             'quantity_used' => 'decimal:4',
+            'is_billable'   => 'boolean',
             'used_at'       => 'datetime',
         ];
     }
@@ -57,6 +60,11 @@ class ConsumableUsage extends Model
     public function movement()
     {
         return $this->belongsTo(StockMovement::class, 'stock_movement_id');
+    }
+
+    public function invoiceItem()
+    {
+        return $this->belongsTo(InvoiceItem::class);
     }
 
     public function user()

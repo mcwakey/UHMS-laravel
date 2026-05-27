@@ -71,7 +71,8 @@
                         <th>Code</th>
                         <th>Type</th>
                         <th>Unit</th>
-                        <th class="text-center">Available in Lab</th>
+                        <th class="text-center">Department Available Qty</th>
+                        <th class="text-center">Main Stock Qty</th>
                         <th class="text-center">Reorder Level</th>
                         <th class="text-center">Status</th>
                     </tr>
@@ -80,10 +81,12 @@
                     @forelse($products as $product)
                         @php
                             $qty = (float) ($product->available_in_lab ?? 0);
+                            $mainQty = (float) ($product->available_in_main_store ?? 0);
                             $reorder = (float) ($product->reorder_level ?? 0);
                             $qtyDisplay = rtrim(rtrim(number_format($qty, 4), '0'), '.');
-                            $isOut = $qty <= 0;
-                            $isLow = !$isOut && $reorder > 0 && $qty <= $reorder;
+                            $mainQtyDisplay = rtrim(rtrim(number_format($mainQty, 4), '0'), '.');
+                            $labStatus = $product->lab_stock_status ?? ['label' => 'OUT', 'class' => 'danger'];
+                            $mainStatus = $product->main_stock_status ?? ['label' => 'OUT', 'class' => 'danger'];
                         @endphp
                         <tr>
                             <td>
@@ -100,24 +103,21 @@
                             </td>
                             <td>{{ $product->unit ?? 'unit' }}</td>
                             <td class="text-center">
-                                <span class="fw-bold {{ $isOut ? 'text-danger' : ($isLow ? 'text-warning' : 'text-success') }}">
-                                    {{ $qtyDisplay }}
-                                </span>
+                                <span class="fw-bold">{{ $qtyDisplay ?: '0' }}</span>
+                                <span class="badge bg-{{ $labStatus['class'] }} ms-1">{{ $labStatus['label'] }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="fw-bold">{{ $mainQtyDisplay ?: '0' }}</span>
+                                <span class="badge bg-{{ $mainStatus['class'] }} ms-1">{{ $mainStatus['label'] }}</span>
                             </td>
                             <td class="text-center text-muted">{{ rtrim(rtrim(number_format($reorder, 4), '0'), '.') }}</td>
                             <td class="text-center">
-                                @if($isOut)
-                                    <span class="badge bg-danger">Out of stock</span>
-                                @elseif($isLow)
-                                    <span class="badge bg-warning text-dark">Low</span>
-                                @else
-                                    <span class="badge bg-success">OK</span>
-                                @endif
+                                <span class="badge bg-{{ $labStatus['class'] }}">{{ $labStatus['label'] }}</span>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
+                            <td colspan="8" class="text-center text-muted py-4">
                                 No products are linked to the Investigation / Laboratory department yet.
                                 Link a product from <em>Store &rsaquo; Products</em> first.
                             </td>

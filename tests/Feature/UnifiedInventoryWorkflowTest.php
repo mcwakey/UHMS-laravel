@@ -6,19 +6,26 @@ use App\Enums\DepartmentType;
 use App\Enums\ProductType;
 use App\Enums\PurchaseOrderStatus;
 use App\Enums\StockMovementType;
+use App\Models\ConsumableUsage;
+use App\Models\InvoiceItem;
+use App\Models\Patient;
 use App\Models\ProductPrice;
 use App\Models\Department;
 use App\Models\DrugStock;
 use App\Models\Product;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseReturn;
+use App\Models\ServiceCatalog;
 use App\Models\StockBalance;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\SupplierLedgerEntry;
 use App\Models\User;
+use App\Models\Visit;
+use App\Services\ConsumableUsageService;
 use App\Services\ProcurementService;
+use App\Services\ProductStockMovementService;
 use App\Services\ProductStockService;
 use App\Services\ProductService;
 use App\Services\PurchaseReturnService;
@@ -302,6 +309,82 @@ class UnifiedInventoryWorkflowTest extends TestCase
             'product_id' => $product->id,
             'stock_location_id' => $departmentLocation->id,
             'movement_type' => StockMovementType::TRANSFER_IN->value,
+        ]);
+    }
+
+    public function test_consumable_usage_deducts_department_stock_and_bills_only_billable_products(): void
+    {
+        $this->actingAs($this->user);
+
+        $department = $this->department(DepartmentType::INVESTIGATION, 'Usage Lab', 'ULB');
+        $departmentLocation = $this->departmentLocation($department, 'Usage Lab Store', 'lab');
+        $billableProduct = $this->product('Billable Reagent', 'BILL-REAG', ProductType::REAGENT, $department);
+        $nonBillableProduct = $this->product('Control Swab', 'CTRL-SWAB', ProductType::CONSUMABLE, $department);
+        $nonBillableProduct->update(['is_billable' => false]);
+
+        app(ProductStockMovementService::class)->createMovement([
+            'product_id' => $billableProduct->id,
+            'stock_location_id' => $departmentLocation->id,
+            'movement_type' => StockMovementType::OPENING_STOCK,
+            'quantity' => 6,
+        ]);
+        app(ProductStockMovementService::class)->createMovement([
+            'product_id' => $nonBillableProduct->id,
+            'stock_location_id' => $departmentLocation->id,
+            'movement_type' => StockMovementType::OPENING_STOCK,
+            'quantity' => 4,
+        ]);
+
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+        $visit = Visit::factory()->create([
+            'patient_id' => $patient->id,
+            'created_by' => $this->user->id,
+            'current_department_id' => $department->id,
+        ]);
+        $service = ServiceCatalog::create([
+            'name' => 'Usage Test Service',
+            'code' => 'UTS-001',
+            'category' => 'lab',
+            'price' => 25,
+            'is_active' => true,
+            'is_billable' => true,
+            'department_id' => $department->id,
+            'department_type' => DepartmentType::INVESTIGATION->value,
+        ]);
+
+        $result = app(ConsumableUsageService::class)->recordUsageForSource(
+            $visit->fresh('department'),
+            $service,
+            'investigation_result',
+            123,
+            [
+                ['product_id' => $billableProduct->id, 'quantity' => 2],
+                ['product_id' => $nonBillableProduct->id, 'quantity' => 1],
+            ],
+            $this->user->id,
+        );
+
+        $this->assertCount(2, $result['usages']);
+        $this->assertSame(4.0, $this->quantityFor($billableProduct, $departmentLocation));
+        $this->assertSame(3.0, $this->quantityFor($nonBillableProduct, $departmentLocation));
+        $this->assertSame(1, InvoiceItem::where('source_type', InvoiceItem::SOURCE_INVESTIGATION_CONSUMABLE)->count());
+        $this->assertDatabaseHas('invoice_items', [
+            'product_id' => $billableProduct->id,
+            'source_type' => InvoiceItem::SOURCE_INVESTIGATION_CONSUMABLE,
+            'quantity' => 2,
+        ]);
+        $this->assertDatabaseHas('consumable_usages', [
+            'product_id' => $billableProduct->id,
+            'source_type' => 'investigation_result',
+            'source_id' => 123,
+            'is_billable' => true,
+        ]);
+        $this->assertNull(ConsumableUsage::where('product_id', $nonBillableProduct->id)->value('invoice_item_id'));
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $billableProduct->id,
+            'stock_location_id' => $departmentLocation->id,
+            'movement_type' => StockMovementType::INVESTIGATION_CONSUMED->value,
+            'quantity' => 2,
         ]);
     }
 

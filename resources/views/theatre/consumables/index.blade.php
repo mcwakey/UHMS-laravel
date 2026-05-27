@@ -7,7 +7,7 @@
         <h4 class="fw-bold mb-0">Procedure Consumables</h4>
         <p class="text-muted small mb-0">
             Filtered view of <strong>products</strong> linked to the Theatre / Procedure department.
-            Quantities reflect on-hand balance at the <strong>Theatre stock location</strong>.
+            Quantities show on-hand balance at the <strong>Theatre stock location</strong> and the <strong>Main Store</strong>.
             New products are added from <em>Store &rsaquo; Products</em>.
         </p>
     </div>
@@ -67,7 +67,8 @@
                         <th>Code</th>
                         <th>Type</th>
                         <th>Unit</th>
-                        <th class="text-center">Available in Theatre</th>
+                        <th class="text-center">Department Available Qty</th>
+                        <th class="text-center">Main Stock Qty</th>
                         <th class="text-center">Reorder Level</th>
                         <th class="text-center">Status</th>
                     </tr>
@@ -76,10 +77,12 @@
                     @forelse($products as $product)
                         @php
                             $qty = (float) ($product->available_in_theatre ?? 0);
+                            $mainQty = (float) ($product->available_in_main_store ?? 0);
                             $reorder = (float) ($product->reorder_level ?? 0);
                             $qtyDisplay = rtrim(rtrim(number_format($qty, 4), '0'), '.');
-                            $isOut = $qty <= 0;
-                            $isLow = !$isOut && $reorder > 0 && $qty <= $reorder;
+                            $mainQtyDisplay = rtrim(rtrim(number_format($mainQty, 4), '0'), '.');
+                            $theatreStatus = $product->theatre_stock_status ?? ['label' => 'OUT', 'class' => 'danger'];
+                            $mainStatus = $product->main_stock_status ?? ['label' => 'OUT', 'class' => 'danger'];
                             $type = is_string($product->product_type) ? $product->product_type : $product->product_type->value;
                         @endphp
                         <tr>
@@ -97,24 +100,21 @@
                             </td>
                             <td>{{ $product->unit ?? 'unit' }}</td>
                             <td class="text-center">
-                                <span class="fw-bold {{ $isOut ? 'text-danger' : ($isLow ? 'text-warning' : 'text-success') }}">
-                                    {{ $qtyDisplay }}
-                                </span>
+                                <span class="fw-bold">{{ $qtyDisplay ?: '0' }}</span>
+                                <span class="badge bg-{{ $theatreStatus['class'] }} ms-1">{{ $theatreStatus['label'] }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="fw-bold">{{ $mainQtyDisplay ?: '0' }}</span>
+                                <span class="badge bg-{{ $mainStatus['class'] }} ms-1">{{ $mainStatus['label'] }}</span>
                             </td>
                             <td class="text-center text-muted">{{ rtrim(rtrim(number_format($reorder, 4), '0'), '.') }}</td>
                             <td class="text-center">
-                                @if($isOut)
-                                    <span class="badge bg-danger">Out of stock</span>
-                                @elseif($isLow)
-                                    <span class="badge bg-warning text-dark">Low</span>
-                                @else
-                                    <span class="badge bg-success">OK</span>
-                                @endif
+                                <span class="badge bg-{{ $theatreStatus['class'] }}">{{ $theatreStatus['label'] }}</span>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
+                            <td colspan="8" class="text-center text-muted py-4">
                                 No products are linked to the Theatre / Procedure department yet.
                                 Link a product from <em>Store &rsaquo; Products</em> first.
                             </td>
