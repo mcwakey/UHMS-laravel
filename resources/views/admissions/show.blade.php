@@ -76,7 +76,12 @@
         <div class="card border-info">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="card-title mb-0"><i class="ti ti-pill me-1"></i>Medication Administration</h5>
-                <a href="{{ route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-outline-primary">Open MAR</a>
+                <div class="d-flex gap-2 flex-wrap">
+                    @can('admission.mar_chart.view')
+                    <a href="{{ route('admin.admissions.mar-chart', $admission) }}" class="btn btn-sm btn-primary">MAR Chart</a>
+                    @endcan
+                    <a href="{{ route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-outline-primary">Board</a>
+                </div>
             </div>
             <div class="card-body">
                 @php $medCounts = $medicationBoard['counts'] ?? []; @endphp
@@ -340,7 +345,12 @@
                 <div class="card">
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <h5 class="card-title mb-0"><i class="ti ti-pill me-1"></i>Medication Administration Record</h5>
-                        <a href="{{ route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-primary">Open Full MAR</a>
+                        <div class="d-flex gap-2 flex-wrap">
+                            @can('admission.mar_chart.view')
+                            <a href="{{ route('admin.admissions.mar-chart', $admission) }}" class="btn btn-sm btn-primary">MAR Chart</a>
+                            @endcan
+                            <a href="{{ route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-outline-primary">Dose Board</a>
+                        </div>
                     </div>
                     <div class="card-body">
                         @php $medCounts = $medicationBoard['counts'] ?? []; @endphp

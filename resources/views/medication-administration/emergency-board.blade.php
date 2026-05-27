@@ -50,13 +50,20 @@
                         <td>{{ $order->prescriber->name ?? '—' }}</td>
                         <td>{{ $schedule->administration->administeredBy->name ?? '—' }}</td>
                         <td class="text-end">
-                            @if(!$schedule->administration && !in_array($schedule->status, ['GIVEN','CANCELLED','VOIDED'], true))
-                                @can('medication_administration.administer')
-                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#{{ $modalId }}">Administer</button>
-                                @endcan
-                            @else
-                                <span class="text-muted small">Closed</span>
-                            @endif
+                            <div class="d-flex justify-content-end gap-1 flex-wrap">
+                                @if($order->visit)
+                                    @can('emergency.mar_chart.view')
+                                    <a href="{{ route('admin.emergency.mar-chart', $order->visit) }}" class="btn btn-sm btn-outline-primary">View MAR</a>
+                                    @endcan
+                                @endif
+                                @if(!$schedule->administration && !in_array($schedule->status, ['GIVEN','CANCELLED','VOIDED'], true))
+                                    @can('medication_administration.administer')
+                                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#{{ $modalId }}">Administer</button>
+                                    @endcan
+                                @else
+                                    <span class="text-muted small align-self-center">Closed</span>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                     @empty

@@ -28,6 +28,7 @@ use App\Http\Controllers\Admin\LabTestController;
 use App\Http\Controllers\Admin\LeaveController;
 use App\Http\Controllers\Admin\MedicationAdministrationController;
 use App\Http\Controllers\Admin\MedicationAdministrationReportController;
+use App\Http\Controllers\Admin\MarChartController;
 use App\Http\Controllers\Admin\ModuleController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\PatientController;
@@ -216,6 +217,7 @@ Route::middleware('auth')->group(function () {
             Route::get('visits/services-for-doctor', [VisitController::class, 'servicesForDoctor'])->name('visits.services-for-doctor');
             Route::get('visits/service-price', [VisitController::class, 'servicePrice'])->name('visits.service-price');
             Route::get('visits/{visit}', [VisitController::class, 'show'])->name('visits.show');
+            Route::get('visits/{visit}/mar-chart', [MarChartController::class, 'visit'])->name('visits.mar-chart')->middleware('can:mar_chart.view');
             Route::get('visits/{visit}/preview', [VisitPreviewController::class, 'show'])->name('visits.preview')->middleware('can:visits.preview');
             Route::get('visits/{visit}/edit', [VisitController::class, 'edit'])->name('visits.edit')->middleware('can:visits.edit');
             Route::put('visits/{visit}', [VisitController::class, 'update'])->name('visits.update')->middleware('can:visits.edit');
@@ -243,6 +245,7 @@ Route::middleware('auth')->group(function () {
             Route::get('admissions/create', [AdmissionController::class, 'create'])->name('admissions.create')->middleware('can:ward.admit');
             Route::post('admissions', [AdmissionController::class, 'store'])->name('admissions.store')->middleware('can:ward.admit');
             Route::get('admissions/{admission}/medications', [AdmissionMedicationBoardController::class, 'show'])->name('admissions.medications.show')->middleware('can:admission.medication_board.view');
+            Route::get('admissions/{admission}/mar-chart', [MarChartController::class, 'admission'])->name('admissions.mar-chart')->middleware('can:admission.mar_chart.view');
             Route::get('admissions/{admission}', [AdmissionController::class, 'show'])->name('admissions.show');
             Route::get('admissions/{admission}/discharge', [AdmissionController::class, 'discharge'])->name('admissions.discharge')->middleware('can:ward.discharge');
             Route::post('admissions/{admission}/discharge', [AdmissionController::class, 'processDischarge'])->name('admissions.process-discharge')->middleware('can:ward.discharge');
@@ -253,6 +256,7 @@ Route::middleware('auth')->group(function () {
 
         Route::middleware('can:medication_administration.view')->group(function () {
             Route::get('emergency/medication-board', [EmergencyMedicationBoardController::class, 'index'])->name('emergency.medication-board')->middleware('can:emergency.medication_board.view');
+            Route::get('emergency/{visit}/mar-chart', [MarChartController::class, 'emergency'])->name('emergency.mar-chart')->middleware('can:emergency.mar_chart.view');
             Route::get('medication-administration/reports', [MedicationAdministrationReportController::class, 'index'])->name('medication-administration.reports')->middleware('can:medication_administration.view_reports');
             Route::post('medication-administration/schedules/{schedule}/administer', [MedicationAdministrationController::class, 'administerSchedule'])->name('medication-administration.schedules.administer')->middleware('can:medication_administration.administer');
             Route::post('medication-administration/orders/{order}/prn', [MedicationAdministrationController::class, 'administerPrn'])->name('medication-administration.orders.prn')->middleware('can:medication_administration.administer');

@@ -19,6 +19,11 @@
         </small>
     </div>
     <div class="d-flex gap-2 flex-wrap">
+        @can('mar_chart.view')
+        <a href="{{ route('admin.visits.mar-chart', $visit) }}" class="btn btn-primary btn-sm">
+            <i class="ti ti-layout-grid me-1"></i>MAR Chart
+        </a>
+        @endcan
         <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
             <i class="ti ti-printer me-1"></i>Print Summary
         </button>

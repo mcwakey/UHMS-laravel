@@ -29,8 +29,10 @@ use App\Models\Ward;
 use App\Services\MedicationAdministrationService;
 use App\Services\MedicationOrderService;
 use App\Services\MedicationScheduleService;
+use App\Services\MarChartService;
 use Database\Seeders\MedicationFrequencySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -74,6 +76,10 @@ class MedicationAdministrationWorkflowTest extends TestCase
             'medication_administration.administer',
             'medication_administration.correct',
             'medication_administration.view_reports',
+            'mar_chart.view',
+            'mar_chart.print',
+            'admission.mar_chart.view',
+            'emergency.mar_chart.view',
             'medication_orders.hold',
             'medication_orders.stop',
         ] as $permission) {
@@ -358,6 +364,155 @@ class MedicationAdministrationWorkflowTest extends TestCase
         $this->assertDatabaseMissing('medication_administration_schedules', [
             'medication_order_id' => $order->id,
         ]);
+    }
+
+    public function test_admission_mar_chart_renders_daily_grid_with_due_cell_and_modal(): void
+    {
+        $order = $this->makeOrder('BD', 1, 2, ['quantity_dispensed' => 2]);
+        $schedule = app(MedicationScheduleService::class)->generateForOrder($order)->first();
+        $scheduledAt = now()->subMinute();
+        $schedule->update(['scheduled_at' => $scheduledAt]);
+        $schedule->clinicalTask->update([
+            'due_at' => $scheduledAt,
+            'scheduled_at' => $scheduledAt,
+            'status' => ClinicalTask::STATUS_DUE,
+        ]);
+
+        $response = $this->actingAs($this->user)->get(route('admin.admissions.mar-chart', [
+            'admission' => $this->admission,
+            'date' => today()->toDateString(),
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Medication Administration Record', false);
+        $response->assertSee('Ama Mensah', false);
+        $response->assertSee('Ceftriaxone', false);
+        $response->assertSee($scheduledAt->format('H:i'), false);
+        $response->assertSee('DUE', false);
+        $response->assertSee('data-bs-target="#mar-dose-'.$schedule->id.'"', false);
+        $response->assertSee('Print MAR', false);
+    }
+
+    public function test_admission_mar_chart_shows_given_details_with_nurse_name(): void
+    {
+        $this->user->update(['first_name' => 'Nurse', 'last_name' => 'Ama']);
+        $order = $this->makeOrder('BD', 1, 2, ['quantity_dispensed' => 2]);
+        $schedule = app(MedicationScheduleService::class)->generateForOrder($order)->first();
+
+        app(MedicationAdministrationService::class)->administerSchedule($schedule, [
+            'status' => 'GIVEN',
+            'dose_given' => '1g',
+            'source_stock_type' => MedicationAdministration::SOURCE_PATIENT_STOCK,
+            'notes' => 'Tolerated well',
+        ], $this->user);
+
+        $response = $this->actingAs($this->user)->get(route('admin.admissions.mar-chart', [
+            'admission' => $this->admission,
+            'date' => today()->toDateString(),
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('GIVEN', false);
+        $response->assertSee('Nurse Ama', false);
+        $response->assertSee('Tolerated well', false);
+        $response->assertSee('Medication Administration Details', false);
+    }
+
+    public function test_prn_medications_appear_in_separate_mar_section(): void
+    {
+        $this->makeOrder('PRN', null, 0, ['quantity_dispensed' => 5, 'instructions' => 'For severe pain.']);
+
+        $response = $this->actingAs($this->user)->get(route('admin.admissions.mar-chart', [
+            'admission' => $this->admission,
+            'date' => today()->toDateString(),
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('PRN / SOS Medications', false);
+        $response->assertSee('For severe pain.', false);
+        $response->assertSee('Administer PRN', false);
+    }
+
+    public function test_emergency_mar_chart_loads_for_emergency_visit(): void
+    {
+        $emergencyVisit = Visit::factory()->create([
+            'patient_id' => $this->patient->id,
+            'visit_type' => VisitType::EMERGENCY,
+            'status' => VisitStatus::EMERGENCY,
+            'current_department_id' => $this->department->id,
+            'created_by' => $this->user->id,
+        ]);
+
+        $frequency = MedicationFrequency::where('code', 'STAT')->firstOrFail();
+        $order = MedicationOrder::create([
+            'visit_id' => $emergencyVisit->id,
+            'patient_id' => $this->patient->id,
+            'prescribed_by' => $this->user->id,
+            'product_id' => $this->product->id,
+            'drug_id' => $this->drug->id,
+            'drug_name' => 'Ceftriaxone',
+            'dose' => '1g',
+            'route' => 'IV',
+            'frequency_id' => $frequency->id,
+            'frequency_code' => 'STAT',
+            'total_doses' => 1,
+            'quantity_ordered' => 1,
+            'quantity_dispensed' => 1,
+            'start_at' => now(),
+            'status' => MedicationOrder::STATUS_DISPENSED,
+        ]);
+        app(MedicationScheduleService::class)->generateForOrder($order);
+
+        $response = $this->actingAs($this->user)->get(route('admin.emergency.mar-chart', [
+            'visit' => $emergencyVisit,
+            'date' => today()->toDateString(),
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('MAR Chart', false);
+        $response->assertSee('Ceftriaxone', false);
+        $response->assertSee('STAT', false);
+    }
+
+    public function test_mar_chart_partial_refresh_returns_chart_content_only(): void
+    {
+        $this->makeOrder('BD', 1, 2, ['quantity_dispensed' => 2]);
+
+        $response = $this->actingAs($this->user)
+            ->withHeaders(['X-Mar-Partial' => 'chart'])
+            ->get(route('admin.admissions.mar-chart', [
+                'admission' => $this->admission,
+                'date' => today()->toDateString(),
+            ]));
+
+        $response->assertOk();
+        $response->assertSee('id="mar-chart-content"', false);
+        $response->assertDontSee('<html', false);
+    }
+
+    public function test_viewing_mar_chart_does_not_create_stock_movements(): void
+    {
+        $this->makeOrder('BD', 1, 2, ['quantity_dispensed' => 2]);
+        $before = DB::table('stock_movements')->count();
+
+        $this->actingAs($this->user)->get(route('admin.admissions.mar-chart', [
+            'admission' => $this->admission,
+            'date' => today()->toDateString(),
+        ]))->assertOk();
+
+        $this->assertSame($before, DB::table('stock_movements')->count());
+    }
+
+    public function test_mar_chart_service_returns_normalized_time_columns_and_rows(): void
+    {
+        $this->makeOrder('BD', 1, 2, ['quantity_dispensed' => 2]);
+
+        $payload = app(MarChartService::class)->buildForAdmission($this->admission, today());
+
+        $this->assertSame('Ama Mensah', $payload['header']['patient_name']);
+        $this->assertNotEmpty($payload['time_columns']);
+        $this->assertCount(1, $payload['medication_rows']);
+        $this->assertArrayHasKey('cells', $payload['medication_rows']->first());
     }
 
     private function makeOrder(string $frequencyCode, ?int $durationDays, int $totalDoses, array $overrides = []): MedicationOrder

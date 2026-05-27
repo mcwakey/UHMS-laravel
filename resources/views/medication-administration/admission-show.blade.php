@@ -11,6 +11,9 @@
         </p>
     </div>
     <div class="d-flex gap-2">
+        @can('admission.mar_chart.view')
+        <a href="{{ route('admin.admissions.mar-chart', $admission) }}" class="btn btn-primary btn-sm">MAR Chart</a>
+        @endcan
         <a href="{{ route('admin.admissions.medication-board') }}" class="btn btn-outline-secondary btn-sm">Board</a>
         <a href="{{ route('admin.admissions.show', $admission) }}" class="btn btn-outline-primary btn-sm">Admission</a>
     </div>

@@ -82,6 +82,13 @@
                         <span class="badge bg-dark">Admitted</span>
                     @endif
                 </div>
+                @can('mar_chart.view')
+                <div class="mt-2">
+                    <a href="{{ route('admin.visits.mar-chart', $visit) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="ti ti-layout-grid me-1"></i>Medication Chart
+                    </a>
+                </div>
+                @endcan
             </div>
         </div>
     </div>

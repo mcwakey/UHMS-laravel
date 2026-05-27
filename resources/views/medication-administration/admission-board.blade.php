@@ -52,9 +52,16 @@
                         <td class="text-center"><span class="badge bg-secondary">{{ $counts['upcoming'] }}</span></td>
                         <td class="text-center"><span class="badge bg-success">{{ $counts['completed_today'] }}</span></td>
                         <td class="text-end">
-                            <a href="{{ route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="ti ti-list-details me-1"></i>Open MAR
-                            </a>
+                            <div class="d-flex justify-content-end gap-1 flex-wrap">
+                                @can('admission.mar_chart.view')
+                                <a href="{{ route('admin.admissions.mar-chart', $admission) }}" class="btn btn-sm btn-primary">
+                                    <i class="ti ti-layout-grid me-1"></i>View MAR
+                                </a>
+                                @endcan
+                                <a href="{{ route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="ti ti-list-details me-1"></i>Board
+                                </a>
+                            </div>
                         </td>
                     </tr>
                     @empty
