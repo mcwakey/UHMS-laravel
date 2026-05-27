@@ -181,33 +181,52 @@ class DrugController extends Controller
      */
     public function history(Drug $drug)
     {
-        $drug->load([
-            'category',
-            'stocks.receivedBy',
-            'stocks.dispensingRecords',
-        ]);
+        $drug->load(['category']);
 
         // All dispensing records for this drug, most recent first
-        $dispensingRecords = \App\Models\DispensingRecord::whereHas('drugStock', fn($q) => $q->where('drug_id', $drug->id))
-            ->with(['patient', 'prescription', 'dispensedBy', 'drugStock'])
+        $dispensingRecords = \App\Models\DispensingRecord::query()
+            ->whereHas('prescriptionItem', fn($q) => $q->where('drug_id', $drug->id))
+            ->with(['patient', 'prescription', 'dispensedBy', 'prescriptionItem'])
             ->latest('dispensed_at')
             ->get();
 
+        // Current stock balances per location
+        $stockBalances = $drug->product_id
+            ? \App\Models\StockBalance::query()
+                ->where('product_id', $drug->product_id)
+                ->with('location')
+                ->orderByDesc('quantity_on_hand')
+                ->get()
+            : collect();
+
+        // Receipt / inbound stock movements
+        $stockReceipts = \App\Models\StockMovement::query()
+            ->where(function ($q) use ($drug) {
+                if ($drug->product_id) {
+                    $q->where('product_id', $drug->product_id);
+                } else {
+                    $q->where('drug_id', $drug->id);
+                }
+            })
+            ->whereIn('movement_type', ['purchase_received', 'opening_stock', 'adjustment_in', 'transfer_in'])
+            ->with(['location', 'performedBy'])
+            ->latest('movement_date')
+            ->limit(100)
+            ->get();
+
         // Summary stats
-        $totalReceived = $drug->stocks->sum(function ($s) {
-            return $s->quantity + $s->dispensingRecords->sum('quantity_dispensed');
-        });
-        $totalDispensed = $dispensingRecords->sum('quantity_dispensed');
-        $revenue = $dispensingRecords->sum(fn($r) => $r->quantity_dispensed * ($r->drugStock->selling_price ?? 0));
+        $totalDispensed  = $dispensingRecords->sum('quantity_dispensed');
+        $totalReceived   = $stockReceipts->sum(fn($m) => (float) $m->quantity);
+        $revenue         = $dispensingRecords->sum(fn($r) => $r->quantity_dispensed * ($r->prescriptionItem?->drug?->price ?? 0));
 
         $stats = [
-            'total_batches'   => $drug->stocks->count(),
+            'total_batches'   => $stockBalances->count(),
             'total_received'  => $totalReceived,
             'total_dispensed' => $totalDispensed,
             'current_stock'   => $drug->total_stock,
             'revenue'         => $revenue,
         ];
 
-        return view('pharmacy.drug-history', compact('drug', 'dispensingRecords', 'stats'));
+        return view('pharmacy.drug-history', compact('drug', 'dispensingRecords', 'stockBalances', 'stockReceipts', 'stats'));
     }
 }

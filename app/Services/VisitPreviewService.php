@@ -105,6 +105,10 @@ class VisitPreviewService
             'prescriptions.doctor',
             'prescriptions.dispensingRecords.dispensedBy',
             'prescriptions.items',
+            'medicationOrders.frequency',
+            'medicationOrders.prescriber',
+            'medicationOrders.schedules.clinicalTask',
+            'medicationOrders.administrations.administeredBy',
             'invoices.items',
             'invoices.payments.receivedBy',
             'admission.admittedByUser',
@@ -443,6 +447,66 @@ class VisitPreviewService
                     null,
                     'PHARMACY', 'bg-success',
                     'dispensing_record', $dr->id
+                );
+            }
+        }
+
+        // 7b. Medication administration record
+        foreach ($visit->medicationOrders ?? [] as $order) {
+            $items[] = $this->item(
+                $order->created_at,
+                'Medication Order Created',
+                trim(($order->display_name ?? 'Medication').' '.$order->dose.' '.$order->frequency_code),
+                optional($order->prescriber)->full_name,
+                null,
+                'MED ORDER', 'bg-primary',
+                'medication_order', $order->id,
+                array_filter([
+                    'Route' => $order->route ?: null,
+                    'Status' => $order->status ?: null,
+                    'Total Doses' => $order->total_doses ?: null,
+                    'Dispensed' => $order->quantity_dispensed ?: null,
+                ])
+            );
+
+            foreach ($order->schedules ?? [] as $schedule) {
+                $items[] = $this->item(
+                    $schedule->scheduled_at,
+                    'Medication Dose Scheduled',
+                    sprintf('Dose %d/%d scheduled for %s.', $schedule->sequence_number, max(1, (int) $order->total_doses), $order->display_name),
+                    null,
+                    null,
+                    $schedule->clinicalTask?->status ?? $schedule->status,
+                    'bg-secondary',
+                    'medication_schedule', $schedule->id,
+                    array_filter([
+                        'Dose' => trim(($schedule->dose ?: $order->dose).' '.($schedule->dose_unit ?: $order->dose_unit)),
+                        'Route' => $schedule->route ?: $order->route ?: null,
+                    ])
+                );
+            }
+
+            foreach ($order->administrations ?? [] as $administration) {
+                $items[] = $this->item(
+                    $administration->administered_at ?? $administration->created_at,
+                    'Medication Dose '.$administration->status,
+                    sprintf(
+                        '%s dose recorded for %s%s',
+                        ucfirst(strtolower(str_replace('_', ' ', $administration->status))),
+                        $order->display_name,
+                        $administration->reaction ? '. Reaction: '.$administration->reaction : '.'
+                    ),
+                    optional($administration->administeredBy)->full_name,
+                    null,
+                    'MAR', 'bg-success',
+                    'medication_administration', $administration->id,
+                    array_filter([
+                        'Scheduled' => optional($administration->scheduled_at)->format('d M Y H:i'),
+                        'Dose Given' => $administration->dose_given ?: null,
+                        'Route' => $administration->route ?: null,
+                        'Source Stock' => $administration->source_stock_type ?: null,
+                        'Reason' => $administration->reason_not_given ?: null,
+                    ])
                 );
             }
         }

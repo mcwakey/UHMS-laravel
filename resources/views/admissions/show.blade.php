@@ -70,6 +70,27 @@
         </div>
     </div>
 
+    {{-- Medication administration --}}
+    @can('admission.medication_board.view')
+    <div class="col-12">
+        <div class="card border-info">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="card-title mb-0"><i class="ti ti-pill me-1"></i>Medication Administration</h5>
+                <a href="{{ route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-outline-primary">Open MAR</a>
+            </div>
+            <div class="card-body">
+                @php $medCounts = $medicationBoard['counts'] ?? []; @endphp
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="badge bg-info">Due now: {{ $medCounts['due_now'] ?? 0 }}</span>
+                    <span class="badge bg-danger">Overdue: {{ $medCounts['overdue'] ?? 0 }}</span>
+                    <span class="badge bg-secondary">Upcoming: {{ $medCounts['upcoming'] ?? 0 }}</span>
+                    <span class="badge bg-success">Completed today: {{ $medCounts['completed_today'] ?? 0 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endcan
+
     {{-- Vitals recording --}}
     @can('vitals.create')
     <div class="col-12">
@@ -294,6 +315,9 @@
     <div class="col-lg-8">
         <ul class="nav nav-tabs mb-3" id="admTabs" role="tablist">
             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-consult" type="button"><i class="ti ti-stethoscope me-1"></i>Consultation</button></li>
+            @can('admission.medication_board.view')
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-medications" type="button"><i class="ti ti-pill me-1"></i>MAR @if(($medicationBoard['counts']['overdue'] ?? 0) > 0)<span class="badge bg-danger ms-1">{{ $medicationBoard['counts']['overdue'] }}</span>@elseif(($medicationBoard['counts']['due_now'] ?? 0) > 0)<span class="badge bg-info ms-1">{{ $medicationBoard['counts']['due_now'] }}</span>@endif</button></li>
+            @endcan
             @if($medicalRecord)
             <li class="nav-item">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tasks" type="button">
@@ -310,6 +334,46 @@
         </ul>
 
         <div class="tab-content">
+
+            @can('admission.medication_board.view')
+            <div class="tab-pane fade" id="tab-medications" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <h5 class="card-title mb-0"><i class="ti ti-pill me-1"></i>Medication Administration Record</h5>
+                        <a href="{{ route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-primary">Open Full MAR</a>
+                    </div>
+                    <div class="card-body">
+                        @php $medCounts = $medicationBoard['counts'] ?? []; @endphp
+                        <div class="row g-2 mb-3">
+                            <div class="col-6 col-md-3"><span class="badge bg-info w-100 py-2">Due now: {{ $medCounts['due_now'] ?? 0 }}</span></div>
+                            <div class="col-6 col-md-3"><span class="badge bg-danger w-100 py-2">Overdue: {{ $medCounts['overdue'] ?? 0 }}</span></div>
+                            <div class="col-6 col-md-3"><span class="badge bg-secondary w-100 py-2">Upcoming: {{ $medCounts['upcoming'] ?? 0 }}</span></div>
+                            <div class="col-6 col-md-3"><span class="badge bg-success w-100 py-2">Completed today: {{ $medCounts['completed_today'] ?? 0 }}</span></div>
+                        </div>
+                        @if(($medicationBoard['orders'] ?? collect())->isNotEmpty())
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle">
+                                    <thead class="bg-light"><tr><th>Medication</th><th>Progress</th><th>Next Due</th><th>Status</th></tr></thead>
+                                    <tbody>
+                                        @foreach($medicationBoard['orders'] as $entry)
+                                        @php $order = $entry['order']; $progress = $entry['progress']; @endphp
+                                        <tr>
+                                            <td><strong>{{ $order->display_name }}</strong><br><small class="text-muted">{{ $order->dose }} {{ $order->frequency_code ? '· '.$order->frequency_code : '' }}</small></td>
+                                            <td>{{ $progress['given_doses'] }}/{{ $progress['total_doses'] }} given</td>
+                                            <td>{{ $progress['next_due_at'] ? $progress['next_due_at']->format('d M H:i') : '—' }}</td>
+                                            <td><span class="badge badge-soft-secondary">{{ str_replace('_',' ', $order->status) }}</span></td>
+                                        </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <div class="text-center py-4 text-muted">No medication administration orders are linked to this admission yet.</div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+            @endcan
 
             <!-- TAB: WARD ROUNDS -->
             <div class="tab-pane fade" id="tab-rounds" role="tabpanel">

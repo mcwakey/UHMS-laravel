@@ -2,7 +2,6 @@
 
 namespace App\Exports;
 
-use App\Models\DrugStock;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\Exportable;
@@ -17,39 +16,43 @@ class StockValuationExport implements FromCollection, WithHeadings, WithTitle
 
     public function collection()
     {
-        $query = DrugStock::select(
-                'drug_stocks.drug_id',
-                'drug_stocks.location',
-                DB::raw("SUM(drug_stocks.quantity) as total_qty"),
-                DB::raw("SUM(drug_stocks.quantity * drug_stocks.unit_cost) as cost_value"),
-                DB::raw("SUM(drug_stocks.quantity * drug_stocks.selling_price) as retail_value")
+        $query = DB::table('stock_balances as sb')
+            ->join('products as p', 'p.id', '=', 'sb.product_id')
+            ->join('stock_locations as sl', 'sl.id', '=', 'sb.stock_location_id')
+            ->leftJoin('drugs as d', 'd.product_id', '=', 'p.id')
+            ->where('sb.quantity_on_hand', '>', 0)
+            ->whereNull('p.deleted_at')
+            ->select(
+                'p.name as product_name',
+                DB::raw('COALESCE(d.name, p.name) as drug_name'),
+                'sl.name as location',
+                DB::raw('SUM(sb.quantity_on_hand) as total_qty'),
+                DB::raw('SUM(sb.quantity_on_hand * COALESCE(p.cost_price, 0)) as cost_value'),
+                DB::raw('SUM(sb.quantity_on_hand * COALESCE(p.selling_price, p.price, 0)) as retail_value')
             )
-            ->join('drugs', 'drugs.id', '=', 'drug_stocks.drug_id')
-            ->where('drug_stocks.quantity', '>', 0)
-            ->groupBy('drug_stocks.drug_id', 'drug_stocks.location');
+            ->groupBy('p.id', 'p.name', 'd.name', 'sl.id', 'sl.name');
 
-        if (!empty($this->filters['location'])) {
-            $query->where('drug_stocks.location', $this->filters['location']);
+        if (! empty($this->filters['location'])) {
+            $query->where('sl.name', $this->filters['location']);
         }
 
-        $rows = $query->orderBy('drugs.name')->get();
-
-        return $rows->map(function ($row) {
-            $drug = $row->drug;
+        return $query->orderBy('p.name')->get()->map(function ($row) {
+            $cost   = (float) $row->cost_value;
+            $retail = (float) $row->retail_value;
             return [
-                'Drug'           => $drug?->name ?? '—',
-                'Location'       => ucfirst(str_replace('_', ' ', $row->location)),
-                'Total Qty'      => $row->total_qty,
-                'Cost Value (₵)' => number_format($row->cost_value, 2),
-                'Retail Value (₵)' => number_format($row->retail_value, 2),
-                'Margin (₵)'    => number_format($row->retail_value - $row->cost_value, 2),
+                'Drug/Product'      => $row->drug_name,
+                'Location'          => $row->location,
+                'Total Qty'         => $row->total_qty,
+                'Cost Value (₵)'    => number_format($cost, 2),
+                'Retail Value (₵)'  => number_format($retail, 2),
+                'Margin (₵)'        => number_format($retail - $cost, 2),
             ];
         });
     }
 
     public function headings(): array
     {
-        return ['Drug', 'Location', 'Total Qty', 'Cost Value (₵)', 'Retail Value (₵)', 'Margin (₵)'];
+        return ['Drug/Product', 'Location', 'Total Qty', 'Cost Value (₵)', 'Retail Value (₵)', 'Margin (₵)'];
     }
 
     public function title(): string

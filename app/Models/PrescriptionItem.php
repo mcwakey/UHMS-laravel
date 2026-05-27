@@ -50,6 +50,11 @@ class PrescriptionItem extends Model
         return $this->hasMany(DispensingRecord::class);
     }
 
+    public function medicationOrder()
+    {
+        return $this->hasOne(MedicationOrder::class);
+    }
+
     public function getTotalDispensedAttribute(): int
     {
         return $this->dispensingRecords()->sum('quantity_dispensed');

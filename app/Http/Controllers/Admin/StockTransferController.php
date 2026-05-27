@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreStockTransferRequest;
 use App\Models\Department;
 use App\Models\Drug;
-use App\Models\DrugStock;
 use App\Models\InvestigationItem;
 use App\Models\InvestigationItemStock;
 use App\Models\StockTransfer;

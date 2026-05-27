@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AccountCategoryController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\AdmissionController;
+use App\Http\Controllers\Admin\AdmissionMedicationBoardController;
 use App\Http\Controllers\Admin\AnalyzerController;
 use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\AttendanceController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\DesignationController;
 use App\Http\Controllers\Admin\DrugController;
 use App\Http\Controllers\Admin\EmergencyContactController;
+use App\Http\Controllers\Admin\EmergencyMedicationBoardController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\FinancialEntryController;
 use App\Http\Controllers\Admin\IcdCodeController;
@@ -24,6 +26,8 @@ use App\Http\Controllers\Admin\InvestigationCatalogueController;
 use App\Http\Controllers\Admin\InvestigationItemController;
 use App\Http\Controllers\Admin\LabTestController;
 use App\Http\Controllers\Admin\LeaveController;
+use App\Http\Controllers\Admin\MedicationAdministrationController;
+use App\Http\Controllers\Admin\MedicationAdministrationReportController;
 use App\Http\Controllers\Admin\ModuleController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\PatientController;
@@ -234,15 +238,27 @@ Route::middleware('auth')->group(function () {
         // Admissions
         Route::middleware('can:ward.view')->group(function () {
             Route::get('admissions/requests', [AdmissionController::class, 'admissionRequests'])->name('admissions.requests');
+            Route::get('admissions/medication-board', [AdmissionMedicationBoardController::class, 'index'])->name('admissions.medication-board')->middleware('can:admission.medication_board.view');
             Route::get('admissions', [AdmissionController::class, 'index'])->name('admissions.index');
             Route::get('admissions/create', [AdmissionController::class, 'create'])->name('admissions.create')->middleware('can:ward.admit');
             Route::post('admissions', [AdmissionController::class, 'store'])->name('admissions.store')->middleware('can:ward.admit');
+            Route::get('admissions/{admission}/medications', [AdmissionMedicationBoardController::class, 'show'])->name('admissions.medications.show')->middleware('can:admission.medication_board.view');
             Route::get('admissions/{admission}', [AdmissionController::class, 'show'])->name('admissions.show');
             Route::get('admissions/{admission}/discharge', [AdmissionController::class, 'discharge'])->name('admissions.discharge')->middleware('can:ward.discharge');
             Route::post('admissions/{admission}/discharge', [AdmissionController::class, 'processDischarge'])->name('admissions.process-discharge')->middleware('can:ward.discharge');
             Route::post('admissions/{admission}/rounds', [AdmissionController::class, 'storeRound'])->name('admissions.rounds.store');
             Route::post('admissions/{admission}/vitals', [AdmissionController::class, 'storeVital'])->name('admissions.vitals.store');
             Route::post('admissions/{admission}/services', [AdmissionController::class, 'storeService'])->name('admissions.services.store');
+        });
+
+        Route::middleware('can:medication_administration.view')->group(function () {
+            Route::get('emergency/medication-board', [EmergencyMedicationBoardController::class, 'index'])->name('emergency.medication-board')->middleware('can:emergency.medication_board.view');
+            Route::get('medication-administration/reports', [MedicationAdministrationReportController::class, 'index'])->name('medication-administration.reports')->middleware('can:medication_administration.view_reports');
+            Route::post('medication-administration/schedules/{schedule}/administer', [MedicationAdministrationController::class, 'administerSchedule'])->name('medication-administration.schedules.administer')->middleware('can:medication_administration.administer');
+            Route::post('medication-administration/orders/{order}/prn', [MedicationAdministrationController::class, 'administerPrn'])->name('medication-administration.orders.prn')->middleware('can:medication_administration.administer');
+            Route::post('medication-administration/orders/{order}/hold', [MedicationAdministrationController::class, 'holdOrder'])->name('medication-administration.orders.hold')->middleware('can:medication_orders.hold');
+            Route::post('medication-administration/orders/{order}/stop', [MedicationAdministrationController::class, 'stopOrder'])->name('medication-administration.orders.stop')->middleware('can:medication_orders.stop');
+            Route::patch('medication-administration/records/{administration}/correct', [MedicationAdministrationController::class, 'correct'])->name('medication-administration.records.correct')->middleware('can:medication_administration.correct');
         });
 
         // Appointments

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Enums\VisitStatus;
 use App\Models\Appointment;
-use App\Models\DrugStock;
 use App\Models\Invoice;
 use App\Models\LabRequest;
 use App\Models\Prescription;
@@ -51,8 +50,8 @@ class StaffDashboardController extends Controller
                 ->where('quantity_on_hand', '>', 0)
                 ->whereColumn('quantity_on_hand', '<=', DB::raw('COALESCE((SELECT reorder_level FROM drugs WHERE drugs.id = stock_balances.drug_id), 0)'))
                 ->count();
-            // Expired stock still tracked at batch level via DrugStock (internal).
-            $stats['expired'] = DrugStock::whereDate('expiry_date', '<', today())->where('quantity', '>', 0)->count();
+            // Expired batches tracked via stock_movements with expiry_date.
+            $stats['expired'] = \App\Models\StockMovement::whereNotNull('expiry_date')->where('expiry_date', '<', today())->where('quantity', '>', 0)->count();
             $lists['recentRx'] = Prescription::with(['patient'])->latest()->take(8)->get();
         }
 

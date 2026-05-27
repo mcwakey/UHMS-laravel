@@ -184,7 +184,7 @@
                                 <br>
                                 @foreach($item->dispensingRecords as $dr)
                                 <small class="text-muted d-block">
-                                    {{ $dr->quantity_dispensed }} × batch {{ $dr->drugStock->batch_number ?? '-' }}
+                                    {{ $dr->quantity_dispensed }} dispensed
                                     ({{ $dr->dispensed_at->format('d M H:i') }})
                                 </small>
                                 @endforeach

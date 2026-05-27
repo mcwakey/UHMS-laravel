@@ -16,7 +16,6 @@ use App\Models\Bed;
 use App\Models\Claim;
 use App\Models\Department;
 use App\Models\DispensingRecord;
-use App\Models\DrugStock;
 use App\Models\InsuranceProvider;
 use App\Models\Invoice;
 use App\Models\LabRequest;
@@ -347,7 +346,7 @@ class ReportService
      */
     public function pharmacySalesReport(array $filters = []): array
     {
-        $query = DispensingRecord::with(['prescriptionItem.drug', 'drugStock', 'patient', 'dispensedBy']);
+        $query = DispensingRecord::with(['prescriptionItem.drug', 'patient', 'dispensedBy']);
 
         if (! empty($filters['date_from'])) {
             $query->whereDate('dispensed_at', '>=', $filters['date_from']);
@@ -368,8 +367,9 @@ class ReportService
         }
 
         $totalRevenue = (clone $baseQuery)
-            ->join('drug_stock', 'dispensing_records.drug_stock_id', '=', 'drug_stock.id')
-            ->selectRaw('SUM(dispensing_records.quantity_dispensed * drug_stock.selling_price) as total')
+            ->join('prescription_items', 'dispensing_records.prescription_item_id', '=', 'prescription_items.id')
+            ->join('drugs', 'prescription_items.drug_id', '=', 'drugs.id')
+            ->selectRaw('SUM(dispensing_records.quantity_dispensed * COALESCE(drugs.price, 0)) as total')
             ->value('total') ?? 0;
 
         $stats = [
@@ -387,14 +387,14 @@ class ReportService
      */
     public function pharmacySalesSummaryReport(array $filters = []): array
     {
-        $query = DispensingRecord::join('drug_stock', 'dispensing_records.drug_stock_id', '=', 'drug_stock.id')
-            ->join('drugs', 'drug_stock.drug_id', '=', 'drugs.id')
+        $query = DispensingRecord::join('prescription_items', 'dispensing_records.prescription_item_id', '=', 'prescription_items.id')
+            ->join('drugs', 'prescription_items.drug_id', '=', 'drugs.id')
             ->select(
                 'drugs.id',
                 'drugs.name as drug_name',
                 'drugs.generic_name',
                 DB::raw('SUM(dispensing_records.quantity_dispensed) as total_quantity'),
-                DB::raw('SUM(dispensing_records.quantity_dispensed * drug_stock.selling_price) as total_revenue'),
+                DB::raw('SUM(dispensing_records.quantity_dispensed * COALESCE(drugs.price, 0)) as total_revenue'),
                 DB::raw('COUNT(DISTINCT dispensing_records.patient_id) as patient_count')
             );
 
@@ -831,26 +831,27 @@ class ReportService
      */
     public function stockValuationReport(array $filters = []): array
     {
-        $query = DrugStock::with(['drug'])
-            ->where('quantity', '>', 0);
+        $query = \App\Models\StockBalance::with(['product', 'location'])
+            ->where('quantity_on_hand', '>', 0);
 
         if (! empty($filters['location'])) {
-            $query->where('location', $filters['location']);
+            $query->whereHas('location', fn ($q) => $q->where('name', $filters['location']));
         }
 
-        $stocks = $query->orderBy('drug_id')->paginate(25)->withQueryString();
+        $stocks = $query->orderBy('product_id')->paginate(25)->withQueryString();
 
-        $totalValue = DrugStock::where('quantity', '>', 0)
-            ->selectRaw('SUM(quantity * unit_cost) as cost_value, SUM(quantity * selling_price) as sell_value')
+        $totals = \App\Models\StockBalance::where('quantity_on_hand', '>', 0)
+            ->join('products', 'products.id', '=', 'stock_balances.product_id')
+            ->selectRaw('SUM(stock_balances.quantity_on_hand * COALESCE(products.cost_price, 0)) as cost_value, SUM(stock_balances.quantity_on_hand * COALESCE(products.selling_price, products.price, 0)) as sell_value')
             ->first();
 
         $stats = [
-            'cost_value' => $totalValue->cost_value ?? 0,
-            'sell_value' => $totalValue->sell_value ?? 0,
-            'total_cost_value' => $totalValue->cost_value ?? 0,
-            'total_sell_value' => $totalValue->sell_value ?? 0,
-            'total_items' => DrugStock::where('quantity', '>', 0)->count(),
-            'unique_drugs' => DrugStock::where('quantity', '>', 0)->distinct('drug_id')->count('drug_id'),
+            'cost_value'       => $totals->cost_value ?? 0,
+            'sell_value'       => $totals->sell_value ?? 0,
+            'total_cost_value' => $totals->cost_value ?? 0,
+            'total_sell_value' => $totals->sell_value ?? 0,
+            'total_items'      => \App\Models\StockBalance::where('quantity_on_hand', '>', 0)->count(),
+            'unique_drugs'     => \App\Models\StockBalance::where('quantity_on_hand', '>', 0)->distinct('product_id')->count('product_id'),
         ];
 
         return compact('stocks', 'stats');
@@ -861,25 +862,28 @@ class ReportService
      */
     public function expiredStockReport(array $filters = []): array
     {
-        $query = DrugStock::with(['drug']);
+        $query = \App\Models\StockMovement::with(['product', 'stockLocation'])
+            ->whereNotNull('expiry_date')
+            ->where('quantity', '>', 0);
 
         $type = $filters['type'] ?? 'expired';
         if ($type === 'expiring') {
-            $query->expiringSoon(90)->where('quantity', '>', 0);
+            $query->where('expiry_date', '>', now())
+                  ->where('expiry_date', '<=', now()->addDays(90));
         } else {
-            $query->expired()->where('quantity', '>', 0);
+            $query->where('expiry_date', '<', now());
         }
 
         $stocks = $query->orderBy('expiry_date')->paginate(25)->withQueryString();
 
         $stats = [
-            'expired_count' => DrugStock::expired()->where('quantity', '>', 0)->count(),
-            'expiring_soon' => DrugStock::expiringSoon(90)->where('quantity', '>', 0)->count(),
-            'expiring_count' => DrugStock::expiringSoon(90)->where('quantity', '>', 0)->count(),
-            'expired_value' => DrugStock::expired()->where('quantity', '>', 0)
-                ->selectRaw('SUM(quantity * unit_cost) as total')->value('total') ?? 0,
-            'expiring_value' => DrugStock::expiringSoon(90)->where('quantity', '>', 0)
-                ->selectRaw('SUM(quantity * unit_cost) as total')->value('total') ?? 0,
+            'expired_count'  => \App\Models\StockMovement::whereNotNull('expiry_date')->where('expiry_date', '<', now())->where('quantity', '>', 0)->count(),
+            'expiring_soon'  => \App\Models\StockMovement::whereNotNull('expiry_date')->where('expiry_date', '>', now())->where('expiry_date', '<=', now()->addDays(90))->where('quantity', '>', 0)->count(),
+            'expiring_count' => \App\Models\StockMovement::whereNotNull('expiry_date')->where('expiry_date', '>', now())->where('expiry_date', '<=', now()->addDays(90))->where('quantity', '>', 0)->count(),
+            'expired_value'  => \App\Models\StockMovement::whereNotNull('expiry_date')->where('expiry_date', '<', now())->where('quantity', '>', 0)
+                ->selectRaw('SUM(quantity * COALESCE(unit_cost, 0)) as total')->value('total') ?? 0,
+            'expiring_value' => \App\Models\StockMovement::whereNotNull('expiry_date')->where('expiry_date', '>', now())->where('expiry_date', '<=', now()->addDays(90))->where('quantity', '>', 0)
+                ->selectRaw('SUM(quantity * COALESCE(unit_cost, 0)) as total')->value('total') ?? 0,
         ];
 
         return compact('stocks', 'stats', 'type');

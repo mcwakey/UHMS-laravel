@@ -235,6 +235,22 @@ class SidebarMenuBuilder
                         'active_patterns' => ['admin.admissions.index'],
                         'permission' => 'ward.view',
                     ],
+                    [
+                        'label' => 'Medication Board',
+                        'icon' => 'ti ti-pill',
+                        'route' => 'admin.admissions.medication-board',
+                        'active_patterns' => ['admin.admissions.medication-board', 'admin.admissions.medications.*'],
+                        'permission' => 'ward.view',
+                        // 'permission' => 'admission.medication_board.view',
+                    ],
+                    [
+                        'label' => 'Emergency Meds',
+                        'icon' => 'ti ti-ambulance',
+                        'route' => 'admin.emergency.medication-board',
+                        'active_patterns' => ['admin.emergency.medication-board'],
+                        'permission' => 'ward.view',
+                        // 'permission' => 'emergency.medication_board.view',
+                    ],
                     // [
                     //     'label' => 'Bed Map',
                     //     'icon' => 'ti ti-map',

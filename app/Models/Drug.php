@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Drug extends Model
@@ -75,19 +74,6 @@ class Drug extends Model
             : ($this->generic_name_id ? optional($this->genericName)->name : $this->generic_name);
     }
 
-    public function stocks(): HasMany
-    {
-        return $this->hasMany(DrugStock::class);
-    }
-
-    public function activeStocks(): HasMany
-    {
-        return $this->stocks()
-            ->where('quantity', '>', 0)
-            ->where('expiry_date', '>', now())
-            ->orderBy('expiry_date'); // FEFO: First Expiry, First Out
-    }
-
     /**
      * Stock balances (source of truth) — one row per (drug, stock_location).
      */
@@ -96,9 +82,9 @@ class Drug extends Model
         return $this->hasMany(\App\Models\StockBalance::class);
     }
 
-    public function dispensingRecords(): HasManyThrough
+    public function dispensingRecords(): HasMany
     {
-        return $this->hasManyThrough(DispensingRecord::class, DrugStock::class);
+        return $this->hasMany(DispensingRecord::class);
     }
 
     public function scopeActive($query)
@@ -118,12 +104,9 @@ class Drug extends Model
     }
 
     /**
-     * Quantity-on-hand available **at the Pharmacy** for this drug.
-     *
-    * Single source of truth = `stock_balances`. Drugs are surfaced
-     * as a filtered catalogue of products; the Pharmacy can only dispense
-     * what has been transferred into the Pharmacy stock location. Stock that
-     * still lives in Main Store is intentionally NOT counted here.
+     * Quantity-on-hand available at pharmacy locations for this drug.
+     * Only pharmacy-type stock locations are counted here. Use stock transfers
+     * to move goods from Main Store into Pharmacy before dispensing.
      */
     public function getTotalStockAttribute()
     {
@@ -131,21 +114,14 @@ class Drug extends Model
             return 0.0;
         }
 
-        $pharmacyLocationIds = \App\Models\StockLocation::query()
-            ->where('is_active', true)
-            ->where(function ($q) {
-                $q->where('type', 'pharmacy')
-                  ->orWhereHas('department', fn ($dq) => $dq->where('type', 'pharmacy'));
-            })
-            ->pluck('id');
-
-        if ($pharmacyLocationIds->isEmpty()) {
+        $pharmacyLocIds = \App\Models\StockLocation::where('type', 'pharmacy')->pluck('id');
+        if ($pharmacyLocIds->isEmpty()) {
             return 0.0;
         }
 
         return (float) \App\Models\StockBalance::query()
             ->where('product_id', $this->product_id)
-            ->whereIn('stock_location_id', $pharmacyLocationIds)
+            ->whereIn('stock_location_id', $pharmacyLocIds)
             ->sum('quantity_on_hand');
     }
 

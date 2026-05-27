@@ -2,26 +2,26 @@
 
 namespace App\Services;
 
-
 use App\Enums\DepartmentType;
-use App\Enums\ProductType;
 use App\Enums\PrescriptionStatus;
+use App\Enums\ProductType;
 use App\Enums\StockMovementType;
 use App\Events\StockLow;
 use App\Models\Department;
 use App\Models\DispensingRecord;
 use App\Models\Drug;
 use App\Models\DrugCategory;
-use App\Models\DrugStock;
 use App\Models\InvoiceItem;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use App\Models\Product;
 use App\Models\StockLocation;
+use App\Models\Visit;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PharmacyService
 {
@@ -59,6 +59,7 @@ class PharmacyService
     public function updateCategory(DrugCategory $category, array $data): DrugCategory
     {
         $category->update($data);
+
         return $category;
     }
 
@@ -68,6 +69,7 @@ class PharmacyService
             return false;
         }
         $category->delete();
+
         return true;
     }
 
@@ -81,11 +83,11 @@ class PharmacyService
             ? $this->products->queryProductsForDepartment($pharmacyDept, [ProductType::DRUG])
             : Product::query()->whereRaw('1 = 0');
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $term = $filters['search'];
             $query->where(function ($q) use ($term) {
                 $q->where('name', 'like', "%{$term}%")
-                  ->orWhere('code', 'like', "%{$term}%");
+                    ->orWhere('code', 'like', "%{$term}%");
             });
         }
 
@@ -124,12 +126,12 @@ class PharmacyService
 
                 if ($store) {
                     app(StockMovementService::class)->createMovement([
-                        'drug_id'           => $drug->id,
+                        'drug_id' => $drug->id,
                         'stock_location_id' => $store->id,
-                        'movement_type'     => StockMovementType::OPENING_STOCK,
-                        'quantity'          => $opening,
-                        'unit_cost'         => $drug->price ?? null,
-                        'notes'             => 'Opening stock when drug was created.',
+                        'movement_type' => StockMovementType::OPENING_STOCK,
+                        'quantity' => $opening,
+                        'unit_cost' => $drug->price ?? null,
+                        'notes' => 'Opening stock when drug was created.',
                     ]);
                 }
             }
@@ -141,12 +143,14 @@ class PharmacyService
     public function updateDrug(Drug $drug, array $data): Drug
     {
         $drug->update($data);
+
         return $drug;
     }
 
     public function toggleDrug(Drug $drug): Drug
     {
-        $drug->update(['is_active' => !$drug->is_active]);
+        $drug->update(['is_active' => ! $drug->is_active]);
+
         return $drug;
     }
 
@@ -158,107 +162,88 @@ class PharmacyService
 
     public function getStock(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
-        $query = DrugStock::with(['drug.category', 'receivedBy']);
+        // Pharmacy stock is tracked in stock_balances at pharmacy-type locations.
+        $pharmacyLocIds = StockLocation::where('type', 'pharmacy')->pluck('id');
 
-        if (!empty($filters['search'])) {
+        $query = \App\Models\StockBalance::with(['drug.category', 'product'])
+            ->whereIn('stock_location_id', $pharmacyLocIds)
+            ->where('quantity_on_hand', '>', 0);
+
+        if (! empty($filters['search'])) {
             $query->whereHas('drug', function ($q) use ($filters) {
                 $q->search($filters['search']);
             });
         }
 
-        if (!empty($filters['status'])) {
-            match ($filters['status']) {
-                'low' => $query->lowStock(),
-                'expiring' => $query->expiringSoon(),
-                'expired' => $query->expired(),
-                'available' => $query->available(),
-                default => null,
-            };
-        }
-
-        if (!empty($filters['drug_id'])) {
+        if (! empty($filters['drug_id'])) {
             $query->where('drug_id', $filters['drug_id']);
         }
 
-        return $query->latest()->paginate($perPage)->withQueryString();
+        return $query->latest('last_movement_at')->paginate($perPage)->withQueryString();
     }
 
-    public function addStock(array $data): DrugStock
+    /**
+     * Receive stock into a pharmacy location via ProductStockMovementService.
+     * Required keys: drug_id (or product_id), stock_location_id, quantity.
+     * Optional: unit_cost, batch_no, expiry_date, notes.
+     */
+    public function addStock(array $data): \App\Models\StockBalance
     {
         return DB::transaction(function () use ($data) {
-            $data['received_by']   = Auth::id();
-            $data['received_date'] = $data['received_date'] ?? now()->toDateString();
+            $drug       = isset($data['drug_id']) ? Drug::find($data['drug_id']) : null;
+            $productId  = $data['product_id'] ?? $drug?->product_id;
+            $locationId = $data['stock_location_id'] ?? null;
 
-            $stock = DrugStock::create($data);
-
-            // Phase 3: post a PURCHASE_RECEIVED movement to both ledgers so the
-            // on-hand balance stays in sync with DrugStock. Skipped silently
-            // when the location string does not resolve to a StockLocation row.
-            $locationName = $data['location'] ?? null;
-            $location = $locationName
-                ? StockLocation::query()
-                    ->where('name', $locationName)
-                    ->orWhere('type', $locationName)
-                    ->orderBy('id')
-                    ->first()
-                : null;
-
-            if ($location) {
-                $shared = [
-                    'drug_id'           => $stock->drug_id,
-                    'stock_location_id' => $location->id,
-                    'movement_type'     => StockMovementType::PURCHASE_RECEIVED,
-                    'quantity'          => $stock->quantity,
-                    'unit_cost'         => $stock->unit_cost,
-                    'batch_no'          => $stock->batch_number,
-                    'expiry_date'       => $stock->expiry_date,
-                    'source_type'       => DrugStock::class,
-                    'source_id'         => $stock->id,
-                    'notes'             => 'Stock added manually via pharmacy.',
-                ];
-
-                try {
-                    app(StockMovementService::class)->createMovement($shared);
-                } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning('pharmacy.add_stock.drug_ledger_failed', [
-                        'drug_stock_id' => $stock->id,
-                        'error'         => $e->getMessage(),
-                    ]);
-                }
-
-                $linkedProductId = $stock->drug?->product_id;
-                if ($linkedProductId) {
-                    try {
-                        app(ProductStockMovementService::class)->createMovement(array_merge($shared, [
-                            'product_id' => $linkedProductId,
-                        ]));
-                    } catch (\Throwable $e) {
-                        \Illuminate\Support\Facades\Log::warning('pharmacy.add_stock.product_ledger_failed', [
-                            'drug_stock_id' => $stock->id,
-                            'product_id'    => $linkedProductId,
-                            'error'         => $e->getMessage(),
-                        ]);
-                    }
-                }
+            if (! $productId || ! $locationId) {
+                throw new \InvalidArgumentException('product_id and stock_location_id are required to add stock.');
             }
 
-            return $stock;
-        });
-    }
+            app(ProductStockMovementService::class)->createMovement([
+                'drug_id'           => $drug?->id,
+                'product_id'        => $productId,
+                'stock_location_id' => $locationId,
+                'movement_type'     => StockMovementType::PURCHASE_RECEIVED,
+                'quantity'          => $data['quantity'],
+                'unit_cost'         => $data['unit_cost'] ?? null,
+                'batch_no'          => $data['batch_no'] ?? $data['batch_number'] ?? null,
+                'expiry_date'       => $data['expiry_date'] ?? null,
+                'notes'             => $data['notes'] ?? 'Stock received via pharmacy.',
+            ]);
 
-    public function updateStock(DrugStock $stock, array $data): DrugStock
-    {
-        $stock->update($data);
-        return $stock;
+            return \App\Models\StockBalance::firstOrNew(
+                ['product_id' => $productId, 'stock_location_id' => $locationId]
+            );
+        });
     }
 
     public function getStockAlerts(): array
     {
-        return [
-            'low_stock' => DrugStock::lowStock()->with('drug')->get(),
-            'expiring_soon' => DrugStock::expiringSoon()->with('drug')->get(),
-            'expired' => DrugStock::expired()->where('quantity', '>', 0)->with('drug')->get(),
-        ];
+        $pharmacyLocIds = StockLocation::where('type', 'pharmacy')->pluck('id');
+
+        $low_stock = \App\Models\StockBalance::with('drug')
+            ->whereIn('stock_location_id', $pharmacyLocIds)
+            ->where('quantity_on_hand', '>', 0)
+            ->whereHas('drug', fn ($q) => $q->whereColumn('stock_balances.quantity_on_hand', '<=', 'drugs.reorder_level'))
+            ->get();
+
+        $expiring_soon = \App\Models\StockMovement::with('drug')
+            ->whereIn('stock_location_id', $pharmacyLocIds)
+            ->whereNotNull('expiry_date')
+            ->whereDate('expiry_date', '<=', now()->addDays(30))
+            ->whereDate('expiry_date', '>', now())
+            ->where('direction', \App\Enums\StockMovementDirection::IN)
+            ->where('quantity', '>', 0)
+            ->get();
+
+        $expired = \App\Models\StockMovement::with('drug')
+            ->whereIn('stock_location_id', $pharmacyLocIds)
+            ->whereNotNull('expiry_date')
+            ->whereDate('expiry_date', '<', now())
+            ->where('direction', \App\Enums\StockMovementDirection::IN)
+            ->where('quantity', '>', 0)
+            ->get();
+
+        return compact('low_stock', 'expiring_soon', 'expired');
     }
 
     /*
@@ -275,15 +260,15 @@ class PharmacyService
                 PrescriptionStatus::PARTIALLY_DISPENSED->value,
             ]);
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $term = $filters['search'];
             $query->where(function ($q) use ($term) {
                 $q->where('prescription_number', 'like', "%{$term}%")
-                  ->orWhereHas('patient', function ($pq) use ($term) {
-                      $pq->where('first_name', 'like', "%{$term}%")
-                         ->orWhere('last_name', 'like', "%{$term}%")
-                         ->orWhere('patient_number', 'like', "%{$term}%");
-                  });
+                    ->orWhereHas('patient', function ($pq) use ($term) {
+                        $pq->where('first_name', 'like', "%{$term}%")
+                            ->orWhere('last_name', 'like', "%{$term}%")
+                            ->orWhere('patient_number', 'like', "%{$term}%");
+                    });
             });
         }
 
@@ -296,18 +281,17 @@ class PharmacyService
             'patient',
             'doctor',
             'visit',
-            'items.drug.activeStocks',
-            'items.dispensingRecords.drugStock',
+            'items.drug',
             'items.dispensingRecords.dispensedBy',
         ]);
 
         // Auto-resolve drug_id for items that have drug_name but no drug_id (backward compat)
         foreach ($prescription->items as $item) {
-            if (!$item->drug_id && $item->drug_name) {
+            if (! $item->drug_id && $item->drug_name) {
                 $drug = Drug::where('name', $item->drug_name)->first();
                 if ($drug) {
                     $item->updateQuietly(['drug_id' => $drug->id]);
-                    $item->setRelation('drug', $drug->load('activeStocks'));
+                    $item->setRelation('drug', $drug->load([]));
                 }
             }
         }
@@ -325,106 +309,80 @@ class PharmacyService
             // Find drug - try linked drug_id first, then fall back to drug_name lookup
             $drug = $item->drug_id ? Drug::find($item->drug_id) : null;
 
-            if (!$drug && $item->drug_name) {
+            if (! $drug && $item->drug_name) {
                 $drug = Drug::where('name', $item->drug_name)->first();
                 if ($drug) {
                     $item->updateQuietly(['drug_id' => $drug->id]);
                 }
             }
 
-            if (!$drug) {
-                throw new \RuntimeException("No drug linked to this prescription item. Please link a drug first.");
+            if (! $drug) {
+                throw new \RuntimeException('No drug linked to this prescription item. Please link a drug first.');
             }
 
-            // Get available stock batches (FEFO - First Expiry, First Out)
-            $stocks = $drug->activeStocks()->get();
+            // ── Stock availability check (pharmacy locations only) ────────
+            // Dispensing draws exclusively from stock_balances at pharmacy-type
+            // locations. Use stock transfers to move stock from Main Store first.
+            $pharmacyLocIds = StockLocation::where('type', 'pharmacy')->pluck('id');
 
-            if ($stocks->isEmpty()) {
+            $productBalances = ($drug->product_id && $pharmacyLocIds->isNotEmpty())
+                ? \App\Models\StockBalance::where('product_id', $drug->product_id)
+                    ->whereIn('stock_location_id', $pharmacyLocIds)
+                    ->where('quantity_on_hand', '>', 0)
+                    ->orderByDesc('quantity_on_hand')
+                    ->get()
+                : collect();
+
+            $totalAvailable = (float) $productBalances->sum('quantity_on_hand');
+
+            if ($totalAvailable <= 0) {
                 throw new \RuntimeException("No available stock for {$drug->display_name}.");
             }
 
-            $totalAvailable = $stocks->sum('quantity');
             if ($totalAvailable < $quantity) {
                 throw new \RuntimeException("Insufficient stock for {$drug->display_name}. Available: {$totalAvailable}, Requested: {$quantity}.");
             }
 
-            foreach ($stocks as $stock) {
-                if ($remaining <= 0) break;
-
-                $deduct = min($remaining, $stock->quantity);
-
-                $lastRecord = DispensingRecord::create([
-                    'prescription_id' => $prescription->id,
-                    'prescription_item_id' => $item->id,
-                    'drug_stock_id' => $stock->id,
-                    'patient_id' => $prescription->patient_id,
-                    'visit_id' => $prescription->visit_id,
-                    'quantity_dispensed' => $deduct,
-                    'dispensed_by' => Auth::id(),
-                    'dispensed_at' => now(),
-                    'notes' => $notes,
-                ]);
-
-                $stock->decrement('quantity', $deduct);
-                $remaining -= $deduct;
-
-                // Ledger: PHARMACY_DISPENSED OUT movement.
-                $pharmacyLocation = StockLocation::query()
-                    ->where('name', 'Pharmacy')
-                    ->orWhere('type', 'pharmacy')
-                    ->orderBy('id')
-                    ->first();
-                if ($pharmacyLocation) {
-                    app(StockMovementService::class)->createMovement([
-                        'drug_id'           => $drug->id,
-                        'stock_location_id' => $pharmacyLocation->id,
+            // Deduct from pharmacy stock_balances via the movement ledger.
+            // createMovement handles both the StockMovement record and balance update.
+            $leftToDeduct = $quantity;
+            foreach ($productBalances as $balance) {
+                if ($leftToDeduct <= 0) {
+                    break;
+                }
+                $deduct = min($leftToDeduct, (float) $balance->quantity_on_hand);
+                try {
+                    app(ProductStockMovementService::class)->createMovement([
+                        'product_id'        => $drug->product_id,
+                        'stock_location_id' => $balance->stock_location_id,
                         'movement_type'     => StockMovementType::PHARMACY_DISPENSED,
                         'quantity'          => $deduct,
-                        'unit_cost'         => $stock->unit_cost ?? null,
-                        'batch_no'          => $stock->batch_number ?? null,
-                        'expiry_date'       => $stock->expiry_date ?? null,
                         'source_type'       => PrescriptionItem::class,
                         'source_id'         => $item->id,
-                        'allow_negative'    => true, // legacy drug_stock is the SoT for now
-                        'notes'             => 'Dispensed for prescription ' . ($prescription->prescription_number ?? $prescription->id),
+                        'allow_negative'    => false,
+                        'notes'             => 'Dispensed for prescription '.($prescription->prescription_number ?? $prescription->id),
                     ]);
-
-                    // Phase 2: also write the unified product ledger so the system
-                    // converges on a single source of truth. Skipped if the drug
-                    // has not been linked to a product yet (run inventory:link-drugs-to-products).
-                    if ($drug->product_id) {
-                        try {
-                            app(ProductStockMovementService::class)->createMovement([
-                                'product_id'        => $drug->product_id,
-                                'stock_location_id' => $pharmacyLocation->id,
-                                'movement_type'     => StockMovementType::PHARMACY_DISPENSED,
-                                'quantity'          => $deduct,
-                                'unit_cost'         => $stock->unit_cost ?? null,
-                                'batch_no'          => $stock->batch_number ?? null,
-                                'expiry_date'       => $stock->expiry_date ?? null,
-                                'source_type'       => PrescriptionItem::class,
-                                'source_id'         => $item->id,
-                                // Phase 3: opening balances seeded via
-                                // `inventory:seed-pharmacy-opening-stock`, so the
-                                // product ledger now enforces non-negative balances.
-                                'allow_negative'    => false,
-                                'notes'             => 'Dispensed for prescription ' . ($prescription->prescription_number ?? $prescription->id),
-                            ]);
-                        } catch (\Throwable $e) {
-                            \Illuminate\Support\Facades\Log::warning('pharmacy.dispense.product_ledger_failed', [
-                                'drug_id'    => $drug->id,
-                                'product_id' => $drug->product_id,
-                                'error'      => $e->getMessage(),
-                            ]);
-                        }
-                    } else {
-                        \Illuminate\Support\Facades\Log::info('pharmacy.dispense.product_ledger_skipped', [
-                            'drug_id' => $drug->id,
-                            'reason'  => 'drugs.product_id is null — run `php artisan inventory:link-drugs-to-products`',
-                        ]);
-                    }
+                } catch (\Throwable $e) {
+                    Log::warning('pharmacy.dispense.product_ledger_failed', [
+                        'drug_id'    => $drug->id,
+                        'product_id' => $drug->product_id,
+                        'error'      => $e->getMessage(),
+                    ]);
+                    throw $e; // re-throw so the DB transaction rolls back
                 }
+                $leftToDeduct -= $deduct;
             }
+
+            $lastRecord = DispensingRecord::create([
+                'prescription_id'      => $prescription->id,
+                'prescription_item_id' => $item->id,
+                'patient_id'           => $prescription->patient_id,
+                'visit_id'             => $prescription->visit_id,
+                'quantity_dispensed'   => $quantity,
+                'dispensed_by'         => Auth::id(),
+                'dispensed_at'         => now(),
+                'notes'                => $notes,
+            ]);
 
             // Mark item as dispensed if fully dispensed
             $totalDispensed = $item->dispensingRecords()->sum('quantity_dispensed');
@@ -435,48 +393,60 @@ class PharmacyService
             // Update prescription status
             $this->updatePrescriptionStatus($prescription);
 
+            // Track dispensed quantity in the MAR system (non-critical — do not roll back dispense on failure)
+            try {
+                app(MedicationOrderService::class)->recordDispensedQuantity($item, $quantity);
+            } catch (\Throwable $e) {
+                Log::warning('pharmacy.dispense.mar_tracking_failed', [
+                    'prescription_item_id' => $item->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
             // ── BILLING ──────────────────────────────────────────────────
             // Add an invoice line on the visit's single invoice for the dispensed drugs
             if ($prescription->visit_id && $drug->price > 0) {
                 $unitPrice = (float) $drug->price;
                 $lineTotal = round($unitPrice * $quantity, 2);
 
-                $visit = \App\Models\Visit::find($prescription->visit_id);
+                $visit = Visit::find($prescription->visit_id);
                 if ($visit) {
-                    $invoice = app(\App\Services\InvoiceService::class)->getOrCreateVisitInvoice($visit);
+                    $invoice = app(InvoiceService::class)->getOrCreateVisitInvoice($visit);
 
                     InvoiceItem::create([
-                        'invoice_id'          => $invoice->id,
-                        'visit_id'            => $visit->id,
-                        'patient_id'          => $prescription->patient_id,
-                        'department_id'       => null,
-                        'source_type'         => 'prescription_item',
-                        'source_id'           => $item->id,
-                        'description'         => $drug->display_name . ' × ' . $quantity . ' ' . ($drug->unit ?? 'unit(s)'),
-                        'quantity'            => $quantity,
-                        'cash_price'          => $unitPrice,
-                        'insurance_price'     => null,
-                        'selected_price'      => $unitPrice,
-                        'insurance_covered'   => 0,
-                        'discount_amount'     => 0,
-                        'patient_payable'     => $lineTotal,
-                        'paid_amount'         => 0,
-                        'balance'             => $lineTotal,
-                        'payment_status'      => $lineTotal > 0 ? 'unpaid' : 'paid',
-                        'total_price'         => $lineTotal,
-                        'payer_type'          => 'cash',
-                        'pricing_source'      => 'drug_price',
-                        'created_by'          => Auth::id(),
+                        'invoice_id' => $invoice->id,
+                        'visit_id' => $visit->id,
+                        'patient_id' => $prescription->patient_id,
+                        'department_id' => null,
+                        'source_type' => 'prescription_item',
+                        'source_id' => $item->id,
+                        'description' => $drug->display_name.' × '.$quantity.' '.($drug->unit ?? 'unit(s)'),
+                        'quantity' => $quantity,
+                        'cash_price' => $unitPrice,
+                        'insurance_price' => null,
+                        'selected_price' => $unitPrice,
+                        'insurance_covered' => 0,
+                        'discount_amount' => 0,
+                        'patient_payable' => $lineTotal,
+                        'paid_amount' => 0,
+                        'balance' => $lineTotal,
+                        'payment_status' => $lineTotal > 0 ? 'unpaid' : 'paid',
+                        'total_price' => $lineTotal,
+                        'payer_type' => 'cash',
+                        'pricing_source' => 'drug_price',
+                        'created_by' => Auth::id(),
                     ]);
 
-                    app(\App\Services\InvoiceService::class)->recalculateTotals($invoice->fresh('items'));
+                    app(InvoiceService::class)->recalculateTotals($invoice->fresh('items'));
                 }
             }
             // ─────────────────────────────────────────────────────────────
 
             // Check stock levels and fire alert if low
-            $totalStock = $drug->activeStocks()->sum('quantity');
-            $reorderLevel = $drug->activeStocks()->max('reorder_level') ?? 10;
+            $totalStock = (float) \App\Models\StockBalance::where('product_id', $drug->product_id)
+                ->whereIn('stock_location_id', $pharmacyLocIds)
+                ->sum('quantity_on_hand');
+            $reorderLevel = (float) ($drug->reorder_level ?? 10);
             if ($totalStock <= $reorderLevel) {
                 StockLow::dispatch($drug->display_name, (int) $totalStock, (int) $reorderLevel);
             }
@@ -489,10 +459,14 @@ class PharmacyService
     {
         return DB::transaction(function () use ($prescription, $items) {
             foreach ($items as $itemId => $data) {
-                if (empty($data['quantity']) || $data['quantity'] <= 0) continue;
+                if (empty($data['quantity']) || $data['quantity'] <= 0) {
+                    continue;
+                }
 
                 $item = $prescription->items()->findOrFail($itemId);
-                if ($item->is_dispensed) continue;
+                if ($item->is_dispensed) {
+                    continue;
+                }
 
                 $this->dispenseItem($item, (int) $data['quantity'], $data['notes'] ?? null);
             }
@@ -508,31 +482,30 @@ class PharmacyService
     {
         $query = DispensingRecord::with([
             'prescription',
-            'prescriptionItem',
-            'drugStock.drug',
+            'prescriptionItem.drug',
             'patient',
             'dispensedBy',
         ])->latest('dispensed_at');
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $term = $filters['search'];
             $query->where(function ($q) use ($term) {
                 $q->whereHas('patient', function ($pq) use ($term) {
                     $pq->where('first_name', 'like', "%{$term}%")
-                       ->orWhere('last_name', 'like', "%{$term}%")
-                       ->orWhere('patient_number', 'like', "%{$term}%");
+                        ->orWhere('last_name', 'like', "%{$term}%")
+                        ->orWhere('patient_number', 'like', "%{$term}%");
                 })
-                ->orWhereHas('prescription', function ($pq) use ($term) {
-                    $pq->where('prescription_number', 'like', "%{$term}%");
-                });
+                    ->orWhereHas('prescription', function ($pq) use ($term) {
+                        $pq->where('prescription_number', 'like', "%{$term}%");
+                    });
             });
         }
 
-        if (!empty($filters['date_from'])) {
+        if (! empty($filters['date_from'])) {
             $query->whereDate('dispensed_at', '>=', $filters['date_from']);
         }
 
-        if (!empty($filters['date_to'])) {
+        if (! empty($filters['date_to'])) {
             $query->whereDate('dispensed_at', '<=', $filters['date_to']);
         }
 
@@ -565,15 +538,31 @@ class PharmacyService
             'pending_prescriptions' => Prescription::where('status', PrescriptionStatus::PENDING->value)->count(),
             'partially_dispensed' => Prescription::where('status', PrescriptionStatus::PARTIALLY_DISPENSED->value)->count(),
             'dispensed_today' => DispensingRecord::whereDate('dispensed_at', today())->count(),
-            'low_stock_count' => DrugStock::lowStock()->count(),
-            'expiring_soon_count' => DrugStock::expiringSoon()->count(),
+            'low_stock_count' => (function () {
+                $ids = StockLocation::where('type', 'pharmacy')->pluck('id');
+                return \App\Models\StockBalance::whereIn('stock_location_id', $ids)
+                    ->where('quantity_on_hand', '>', 0)
+                    ->whereHas('drug', fn ($q) => $q->whereColumn('stock_balances.quantity_on_hand', '<=', 'drugs.reorder_level'))
+                    ->count();
+            })(),
+            'expiring_soon_count' => (function () {
+                $ids = StockLocation::where('type', 'pharmacy')->pluck('id');
+                return \App\Models\StockMovement::whereIn('stock_location_id', $ids)
+                    ->whereNotNull('expiry_date')
+                    ->whereDate('expiry_date', '<=', now()->addDays(30))
+                    ->whereDate('expiry_date', '>', now())
+                    ->where('direction', \App\Enums\StockMovementDirection::IN)
+                    ->where('quantity', '>', 0)->count();
+            })(),
             'total_drugs' => Drug::active()->count(),
         ];
     }
 
     public function searchDrugs(?string $term): Collection
     {
-        if (!$term) return collect();
+        if (! $term) {
+            return collect();
+        }
 
         return Drug::active()
             ->search($term)

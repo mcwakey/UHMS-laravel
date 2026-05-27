@@ -8,16 +8,16 @@ use App\Enums\TriageScore;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Traits\GeneratesNumbers;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 class Visit extends Model
 {
-    use HasFactory, SoftDeletes, GeneratesNumbers, LogsActivity;
+    use GeneratesNumbers, HasFactory, LogsActivity, SoftDeletes;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -126,6 +126,21 @@ class Visit extends Model
     public function prescriptions()
     {
         return $this->hasMany(Prescription::class);
+    }
+
+    public function medicationOrders()
+    {
+        return $this->hasMany(MedicationOrder::class);
+    }
+
+    public function clinicalTasks()
+    {
+        return $this->hasMany(ClinicalTask::class);
+    }
+
+    public function medicationAdministrations()
+    {
+        return $this->hasMany(MedicationAdministration::class);
     }
 
     public function labRequests()
@@ -316,17 +331,19 @@ class Visit extends Model
 
     public function scopeSearch($query, ?string $term)
     {
-        if (!$term) return $query;
+        if (! $term) {
+            return $query;
+        }
 
         return $query->where(function ($q) use ($term) {
             $q->where('visit_number', 'like', "%{$term}%")
-              ->orWhere('chief_complaint', 'like', "%{$term}%")
-              ->orWhereHas('patient', function ($pq) use ($term) {
-                  $pq->where('first_name', 'like', "%{$term}%")
-                     ->orWhere('last_name', 'like', "%{$term}%")
-                     ->orWhere('patient_number', 'like', "%{$term}%")
-                     ->orWhere('phone', 'like', "%{$term}%");
-              });
+                ->orWhere('chief_complaint', 'like', "%{$term}%")
+                ->orWhereHas('patient', function ($pq) use ($term) {
+                    $pq->where('first_name', 'like', "%{$term}%")
+                        ->orWhere('last_name', 'like', "%{$term}%")
+                        ->orWhere('patient_number', 'like', "%{$term}%")
+                        ->orWhere('phone', 'like', "%{$term}%");
+                });
         });
     }
 
@@ -355,7 +372,7 @@ class Visit extends Model
         ]);
 
         // Auto-set timestamps
-        if ($target === VisitStatus::WAITING && !$this->checked_in_at) {
+        if ($target === VisitStatus::WAITING && ! $this->checked_in_at) {
             $this->update(['checked_in_at' => now()]);
         }
 
@@ -377,15 +394,18 @@ class Visit extends Model
 
     public function getDurationAttribute(): ?string
     {
-        if (!$this->checked_in_at) return null;
+        if (! $this->checked_in_at) {
+            return null;
+        }
 
         $end = $this->checked_out_at ?? now();
         $diff = $this->checked_in_at->diff($end);
 
         if ($diff->h > 0) {
-            return $diff->h . 'h ' . $diff->i . 'm';
+            return $diff->h.'h '.$diff->i.'m';
         }
-        return $diff->i . 'm';
+
+        return $diff->i.'m';
     }
 
     /**
@@ -403,7 +423,9 @@ class Visit extends Model
     {
         $doctorId = $this->currentConsultationRoute()?->doctor_id;
 
-        if (!$doctorId || !$this->start_time) return false;
+        if (! $doctorId || ! $this->start_time) {
+            return false;
+        }
 
         return self::whereHas('consultationRoutes', fn ($q) => $q->where('doctor_id', $doctorId))
             ->where('visit_date', $this->visit_date)
@@ -416,8 +438,8 @@ class Visit extends Model
             ->whereNotNull('start_time')
             ->where(function ($q) {
                 $q->where(function ($inner) {
-                    $inner->where('start_time', '<', $this->end_time ?? date('H:i', strtotime($this->start_time . ' +30 minutes')))
-                          ->where('end_time', '>', $this->start_time);
+                    $inner->where('start_time', '<', $this->end_time ?? date('H:i', strtotime($this->start_time.' +30 minutes')))
+                        ->where('end_time', '>', $this->start_time);
                 });
             })
             ->exists();

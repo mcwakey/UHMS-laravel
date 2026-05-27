@@ -96,12 +96,12 @@
             </thead>
             <tbody>
                 @forelse($records as $record)
-                @php $unitPrice = $record->drugStock->selling_price ?? 0; @endphp
+                @php $unitPrice = $record->prescriptionItem?->drug?->price ?? 0; @endphp
                 <tr>
                     <td>{{ $record->dispensed_at?->format('d/m/Y H:i') }}</td>
                     <td>{{ $record->patient?->full_name ?? '—' }}</td>
                     <td>{{ $record->prescriptionItem?->drug_name ?? '—' }}</td>
-                    <td><small>{{ $record->drugStock?->batch_number ?? '—' }}</small></td>
+                    <td><small>—</small></td>
                     <td class="text-end">{{ $record->quantity_dispensed }}</td>
                     <td class="text-end">₵{{ number_format($unitPrice, 2) }}</td>
                     <td class="text-end fw-semibold">₵{{ number_format($record->quantity_dispensed * $unitPrice, 2) }}</td>

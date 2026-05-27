@@ -12,7 +12,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class Admission extends Model
 {
-    use HasFactory, SoftDeletes, GeneratesNumbers, LogsActivity;
+    use GeneratesNumbers, HasFactory, LogsActivity, SoftDeletes;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -98,6 +98,26 @@ class Admission extends Model
         return $this->hasMany(Vital::class)->orderByDesc('recorded_at');
     }
 
+    public function medicationOrders()
+    {
+        return $this->hasMany(MedicationOrder::class);
+    }
+
+    public function medicationSchedules()
+    {
+        return $this->hasMany(MedicationAdministrationSchedule::class);
+    }
+
+    public function medicationAdministrations()
+    {
+        return $this->hasMany(MedicationAdministration::class);
+    }
+
+    public function clinicalTasks()
+    {
+        return $this->hasMany(ClinicalTask::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes
@@ -123,15 +143,17 @@ class Admission extends Model
 
     public function scopeSearch($query, ?string $term)
     {
-        if (!$term) return $query;
+        if (! $term) {
+            return $query;
+        }
 
         return $query->where(function ($q) use ($term) {
             $q->where('admission_number', 'like', "%{$term}%")
-              ->orWhereHas('patient', function ($pq) use ($term) {
-                  $pq->where('first_name', 'like', "%{$term}%")
-                     ->orWhere('last_name', 'like', "%{$term}%")
-                     ->orWhere('patient_number', 'like', "%{$term}%");
-              });
+                ->orWhereHas('patient', function ($pq) use ($term) {
+                    $pq->where('first_name', 'like', "%{$term}%")
+                        ->orWhere('last_name', 'like', "%{$term}%")
+                        ->orWhere('patient_number', 'like', "%{$term}%");
+                });
         });
     }
 
@@ -143,9 +165,12 @@ class Admission extends Model
 
     public function getLengthOfStayAttribute(): ?int
     {
-        if (!$this->admission_date) return null;
+        if (! $this->admission_date) {
+            return null;
+        }
 
         $end = $this->actual_discharge_date ?? now();
+
         return (int) $this->admission_date->diffInDays($end);
     }
 

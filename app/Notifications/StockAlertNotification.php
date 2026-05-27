@@ -29,7 +29,7 @@ class StockAlertNotification extends Notification
             'drug_name' => $this->drugName,
             'current_quantity' => $this->currentQuantity,
             'reorder_level' => $this->reorderLevel,
-            'url' => route('admin.drugs.index'),
+            'url' => route('admin.pharmacy.drugs.index'),
             'icon' => 'ti-alert-triangle',
             'color' => 'danger',
         ];

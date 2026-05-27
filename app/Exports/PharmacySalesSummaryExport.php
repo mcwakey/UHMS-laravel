@@ -17,13 +17,13 @@ class PharmacySalesSummaryExport implements FromCollection, WithHeadings, WithTi
 
     public function collection()
     {
-        $query = DispensingRecord::join('drug_stock', 'dispensing_records.drug_stock_id', '=', 'drug_stock.id')
-            ->join('prescription_items', 'dispensing_records.prescription_item_id', '=', 'prescription_items.id')
+        $query = DispensingRecord::join('prescription_items', 'dispensing_records.prescription_item_id', '=', 'prescription_items.id')
+            ->join('drugs', 'prescription_items.drug_id', '=', 'drugs.id')
             ->select(
                 'prescription_items.drug_name',
                 DB::raw('SUM(dispensing_records.quantity_dispensed) as total_qty'),
-                DB::raw('AVG(drug_stock.selling_price) as avg_price'),
-                DB::raw('SUM(dispensing_records.quantity_dispensed * drug_stock.selling_price) as total_revenue')
+                DB::raw('AVG(COALESCE(drugs.price, 0)) as avg_price'),
+                DB::raw('SUM(dispensing_records.quantity_dispensed * COALESCE(drugs.price, 0)) as total_revenue')
             );
 
         if (!empty($this->filters['date_from'])) {

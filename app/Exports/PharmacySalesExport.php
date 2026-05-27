@@ -17,7 +17,7 @@ class PharmacySalesExport implements FromQuery, WithHeadings, WithMapping, WithT
 
     public function query()
     {
-        $query = DispensingRecord::with(['prescriptionItem.drug', 'drugStock', 'patient', 'dispensedBy'])
+        $query = DispensingRecord::with(['prescriptionItem.drug', 'patient', 'dispensedBy'])
             ->latest('dispensed_at');
 
         if (!empty($this->filters['date_from'])) {
@@ -46,12 +46,12 @@ class PharmacySalesExport implements FromQuery, WithHeadings, WithMapping, WithT
 
     public function map($record): array
     {
-        $unitPrice = $record->drugStock->selling_price ?? 0;
+        $unitPrice = $record->prescriptionItem?->drug?->price ?? 0;
         return [
             $record->dispensed_at?->format('d/m/Y H:i'),
             $record->patient?->full_name ?? '—',
             $record->prescriptionItem?->drug_name ?? '—',
-            $record->drugStock?->batch_number ?? '—',
+            '—',
             $record->quantity_dispensed,
             number_format($unitPrice, 2),
             number_format($record->quantity_dispensed * $unitPrice, 2),

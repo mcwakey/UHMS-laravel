@@ -3,8 +3,6 @@
 namespace App\Services;
 
 use App\Enums\StockTransferStatus;
-use App\Enums\StockMovementType;
-use App\Models\DrugStock;
 use App\Models\InvestigationItemStock;
 use App\Models\StockLocation;
 use App\Models\StockTransfer;
@@ -117,33 +115,8 @@ class StockTransferService
                         'reorder_level'         => $sourceStock->reorder_level ?? $item->investigationItem->reorder_level ?? 10,
                     ]);
                 } else {
-                    // Deduct drug stock
-                    $this->deductStock(
-                        $item->drug_id,
-                        $transfer->from_location->value,
-                        $item->quantity,
-                        $item->batch_number,
-                    );
-
-                    // Add to destination location
-                    $sourceStock = DrugStock::where('drug_id', $item->drug_id)
-                        ->atLocation($transfer->from_location->value)
-                        ->when($item->batch_number, fn ($q, $b) => $q->where('batch_number', $b))
-                        ->first();
-
-                    DrugStock::create([
-                        'drug_id'       => $item->drug_id,
-                        'location'      => $transfer->to_location->value,
-                        'batch_number'  => $item->batch_number ?? ($sourceStock->batch_number ?? 'TRF'),
-                        'quantity'      => $item->quantity,
-                        'unit_cost'     => $sourceStock->unit_cost ?? 0,
-                        'selling_price' => $sourceStock->selling_price ?? ($item->drug->price ?? 0),
-                        'expiry_date'   => $sourceStock->expiry_date ?? now()->addYear(),
-                        'supplier'      => $sourceStock->supplier ?? 'Transfer',
-                        'supplier_id'   => $sourceStock->supplier_id,
-                        'received_date' => now(),
-                        'received_by'   => Auth::id(),
-                    ]);
+                    // Drug items: stock_balances are updated by emitTransferMovements below.
+                    // No direct DrugStock mutation needed.
                 }
             }
 
@@ -312,35 +285,6 @@ class StockTransferService
         if ($remaining > 0) {
             throw new \InvalidArgumentException(
                 "Insufficient investigation item stock ID {$itemId} at {$location}. Short by {$remaining} units."
-            );
-        }
-    }
-
-    /**
-     * Deduct drug stock from a location (FEFO — First Expiry First Out).
-     */
-    private function deductStock(int $drugId, string $location, int $quantity, ?string $batchNumber = null): void
-    {
-        $stocks = DrugStock::where('drug_id', $drugId)
-            ->atLocation($location)
-            ->where('quantity', '>', 0)
-            ->when($batchNumber, fn ($q, $b) => $q->where('batch_number', $b))
-            ->orderBy('expiry_date')
-            ->get();
-
-        $remaining = $quantity;
-
-        foreach ($stocks as $stock) {
-            if ($remaining <= 0) break;
-
-            $deduct = min($remaining, $stock->quantity);
-            $stock->update(['quantity' => $stock->quantity - $deduct]);
-            $remaining -= $deduct;
-        }
-
-        if ($remaining > 0) {
-            throw new \InvalidArgumentException(
-                "Insufficient stock for drug ID {$drugId} at {$location}. Short by {$remaining} units."
             );
         }
     }

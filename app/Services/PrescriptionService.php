@@ -97,6 +97,7 @@ class PrescriptionService
         }
 
         PrescriptionCreated::dispatch($prescription);
+        app(MedicationOrderService::class)->createOrdersForPrescription($prescription);
 
         return $prescription;
     }

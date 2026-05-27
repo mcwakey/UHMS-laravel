@@ -33,6 +33,13 @@ class SeedPharmacyOpeningStockCommand extends Command
 
     public function handle(ProductStockMovementService $productMovements): int
     {
+        $this->warn('This command is no longer functional — the legacy drug_stock table has been removed.');
+        $this->info('Opening stock is now managed via stock_movements (OPENING_STOCK type) on the canonical stock_balances ledger.');
+        return self::SUCCESS;
+    }
+
+    public function _legacyHandle(ProductStockMovementService $productMovements): int
+    {
         $dry = (bool) $this->option('dry-run');
         $onlyLocation = $this->option('location') ? (string) $this->option('location') : null;
 

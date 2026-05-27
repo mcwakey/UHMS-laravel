@@ -62,8 +62,8 @@
             <tr>
                 <td>{{ $rec->created_at->format('d/m/Y') }}</td>
                 <td>{{ $rec->prescription?->visit?->patient?->full_name ?? '—' }}</td>
-                <td>{{ $rec->drugStock?->drug?->name ?? '—' }}</td>
-                <td>{{ $rec->drugStock?->batch_number ?? '—' }}</td>
+                <td>{{ $rec->prescriptionItem?->drug?->name ?? '—' }}</td>
+                <td>—</td>
                 <td class="text-right">{{ $rec->quantity_dispensed }}</td>
                 <td class="text-right">₵{{ number_format($rec->unit_price ?? 0, 2) }}</td>
                 <td class="text-right text-success">₵{{ number_format(($rec->unit_price ?? 0) * $rec->quantity_dispensed, 2) }}</td>

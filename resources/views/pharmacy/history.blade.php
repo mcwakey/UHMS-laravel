@@ -65,14 +65,15 @@
                             <small class="text-muted">{{ $record->patient->patient_number ?? '' }}</small>
                         </td>
                         <td>
-                            @if($record->drugStock && $record->drugStock->drug)
-                                <span class="fw-medium">{{ $record->drugStock->drug->name }}</span>
-                                <br><small class="text-muted">{{ $record->drugStock->drug->dosage_form }} {{ $record->drugStock->drug->strength }}</small>
+                            @php $drug = $record->prescriptionItem?->drug; @endphp
+                            @if($drug)
+                                <span class="fw-medium">{{ $drug->name }}</span>
+                                <br><small class="text-muted">{{ $drug->dosage_form }} {{ $drug->strength }}</small>
                             @else
                                 <span class="text-muted">-</span>
                             @endif
                         </td>
-                        <td><code>{{ $record->drugStock->batch_number ?? '-' }}</code></td>
+                        <td><code>—</code></td>
                         <td><span class="badge bg-primary">{{ $record->quantity_dispensed }}</span></td>
                         <td>{{ $record->dispensedBy->name ?? '-' }}</td>
                         <td>

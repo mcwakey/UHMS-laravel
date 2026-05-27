@@ -131,11 +131,11 @@
     </div>
 </div>
 
-<!-- Stock Batches -->
+<!-- Current Stock by Location -->
 <div class="card mb-4">
     <div class="card-header d-flex align-items-center justify-content-between">
-        <h6 class="fw-bold mb-0"><i class="ti ti-packages me-1"></i>Stock Batches</h6>
-        <span class="badge bg-soft-primary">{{ $drug->stocks->count() }} batches</span>
+        <h6 class="fw-bold mb-0"><i class="ti ti-packages me-1"></i>Current Stock by Location</h6>
+        <span class="badge bg-soft-primary">{{ $stockBalances->count() }} location(s)</span>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -143,67 +143,35 @@
                 <thead class="table-light">
                     <tr>
                         <th>#</th>
-                        <th>Batch No.</th>
-                        <th>Supplier</th>
                         <th>Location</th>
-                        <th>Received Date</th>
-                        <th>Received By</th>
-                        <th>Unit Cost</th>
-                        <th>Sell Price</th>
-                        <th>Expiry</th>
-                        <th class="text-end">Received</th>
-                        <th class="text-end">Dispensed</th>
-                        <th class="text-end">Remaining</th>
+                        <th>Type</th>
+                        <th class="text-end">Qty on Hand</th>
+                        <th>Last Updated</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($drug->stocks->sortByDesc('received_date') as $index => $batch)
-                    @php
-                        $batchDispensed = $batch->dispensingRecords->sum('quantity_dispensed');
-                        $batchReceived  = $batch->quantity + $batchDispensed;
-                        $isExpired      = $batch->expiry_date && $batch->expiry_date->isPast();
-                        $isExpiringSoon = !$isExpired && $batch->expiry_date && $batch->expiry_date->diffInDays(now()) <= 90;
-                    @endphp
-                    <tr class="{{ $isExpired ? 'table-danger' : ($isExpiringSoon ? 'table-warning' : '') }}">
+                    @forelse($stockBalances as $index => $balance)
+                    <tr class="{{ $balance->quantity_on_hand <= 0 ? 'table-danger' : '' }}">
                         <td class="text-muted">{{ $index + 1 }}</td>
-                        <td><span class="badge bg-soft-secondary font-monospace">{{ $batch->batch_number ?? 'N/A' }}</span></td>
-                        <td>{{ $batch->supplier ?? '—' }}</td>
-                        <td>{{ $batch->location ?? '—' }}</td>
-                        <td>{{ $batch->received_date?->format('d M Y') ?? '—' }}</td>
-                        <td>{{ $batch->receivedBy?->full_name ?? '—' }}</td>
-                        <td>{{ $batch->unit_cost ? 'GHS '.number_format($batch->unit_cost, 2) : '—' }}</td>
-                        <td>{{ $batch->selling_price ? 'GHS '.number_format($batch->selling_price, 2) : '—' }}</td>
-                        <td>
-                            @if($batch->expiry_date)
-                                {{ $batch->expiry_date->format('d M Y') }}
-                                @if($isExpired)
-                                    <span class="badge bg-danger ms-1">Expired</span>
-                                @elseif($isExpiringSoon)
-                                    <span class="badge bg-warning ms-1">Soon</span>
-                                @endif
-                            @else
-                                —
-                            @endif
+                        <td class="fw-medium">{{ $balance->location?->name ?? '—' }}</td>
+                        <td><span class="badge bg-soft-secondary">{{ ucfirst($balance->location?->type ?? '—') }}</span></td>
+                        <td class="text-end fw-bold {{ $balance->quantity_on_hand <= 0 ? 'text-danger' : 'text-primary' }}">
+                            {{ number_format($balance->quantity_on_hand) }}
                         </td>
-                        <td class="text-end fw-medium text-success">{{ number_format($batchReceived) }}</td>
-                        <td class="text-end text-warning">{{ number_format($batchDispensed) }}</td>
-                        <td class="text-end fw-bold {{ $batch->quantity <= 0 ? 'text-danger' : 'text-primary' }}">
-                            {{ number_format($batch->quantity) }}
-                        </td>
+                        <td><small class="text-muted">{{ $balance->updated_at?->format('d M Y H:i') ?? '—' }}</small></td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="12" class="text-center text-muted py-4">No stock batches recorded yet.</td>
+                        <td colspan="5" class="text-center text-muted py-4">No stock recorded for this drug yet.</td>
                     </tr>
                     @endforelse
                 </tbody>
-                @if($drug->stocks->count() > 0)
+                @if($stockBalances->count() > 0)
                 <tfoot class="table-light fw-bold">
                     <tr>
-                        <td colspan="9" class="text-end">Totals</td>
-                        <td class="text-end text-success">{{ number_format($stats['total_received']) }}</td>
-                        <td class="text-end text-warning">{{ number_format($stats['total_dispensed']) }}</td>
+                        <td colspan="3" class="text-end">Total</td>
                         <td class="text-end text-primary">{{ number_format($stats['current_stock']) }}</td>
+                        <td></td>
                     </tr>
                 </tfoot>
                 @endif
@@ -212,7 +180,74 @@
     </div>
 </div>
 
-<!-- Dispensing History -->
+<!-- Stock Receipt History -->
+<div class="card mb-4">
+    <div class="card-header d-flex align-items-center justify-content-between">
+        <h6 class="fw-bold mb-0"><i class="ti ti-truck-delivery me-1"></i>Stock Receipt History</h6>
+        <span class="badge bg-soft-info">{{ $stockReceipts->count() }} record(s)</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" style="font-size:0.88rem">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Location</th>
+                        <th>Batch No.</th>
+                        <th>Expiry</th>
+                        <th>Unit Cost</th>
+                        <th class="text-end">Qty Received</th>
+                        <th>Received By</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($stockReceipts as $receipt)
+                    @php
+                        $isExpired      = $receipt->expiry_date && $receipt->expiry_date->isPast();
+                        $isExpiringSoon = !$isExpired && $receipt->expiry_date && $receipt->expiry_date->diffInDays(now()) <= 90;
+                    @endphp
+                    <tr class="{{ $isExpired ? 'table-danger' : ($isExpiringSoon ? 'table-warning' : '') }}">
+                        <td>{{ $receipt->movement_date?->format('d M Y') ?? $receipt->created_at->format('d M Y') }}</td>
+                        <td><span class="badge bg-soft-success">{{ str_replace('_', ' ', strtoupper($receipt->movement_type?->value ?? '—')) }}</span></td>
+                        <td>{{ $receipt->location?->name ?? '—' }}</td>
+                        <td><span class="font-monospace text-muted">{{ $receipt->batch_no ?? '—' }}</span></td>
+                        <td>
+                            @if($receipt->expiry_date)
+                                {{ $receipt->expiry_date->format('d M Y') }}
+                                @if($isExpired)
+                                    <span class="badge bg-danger ms-1">Expired</span>
+                                @elseif($isExpiringSoon)
+                                    <span class="badge bg-warning ms-1">Soon</span>
+                                @endif
+                            @else —
+                            @endif
+                        </td>
+                        <td>{{ $receipt->unit_cost ? 'GHS '.number_format($receipt->unit_cost, 2) : '—' }}</td>
+                        <td class="text-end fw-bold text-success">{{ number_format($receipt->quantity) }}</td>
+                        <td>{{ $receipt->performedBy?->full_name ?? '—' }}</td>
+                        <td><small class="text-muted">{{ $receipt->notes ?? '—' }}</small></td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">No stock receipt records found.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+                @if($stockReceipts->count() > 0)
+                <tfoot class="table-light fw-bold">
+                    <tr>
+                        <td colspan="6" class="text-end">Total Received</td>
+                        <td class="text-end text-success">{{ number_format($stats['total_received']) }}</td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tfoot>
+                @endif
+            </table>
+        </div>
+    </div>
+</div>
 <div class="card">
     <div class="card-header d-flex align-items-center justify-content-between">
         <h6 class="fw-bold mb-0"><i class="ti ti-history me-1"></i>Dispensing History</h6>
@@ -264,22 +299,15 @@
                             @endif
                         </td>
                         <td>
-                            @if($record->drugStock)
-                                <span class="badge bg-soft-secondary font-monospace">{{ $record->drugStock->batch_number ?? 'N/A' }}</span>
-                                @if($record->drugStock->expiry_date)
-                                    <br><small class="text-muted">Exp: {{ $record->drugStock->expiry_date->format('d M Y') }}</small>
-                                @endif
-                            @else
-                                <span class="text-muted">—</span>
-                            @endif
+                            <span class="text-muted">—</span>
                         </td>
                         <td class="text-end fw-bold">{{ number_format($record->quantity_dispensed) }}</td>
                         <td class="text-end">
-                            {{ $record->drugStock?->selling_price ? 'GHS '.number_format($record->drugStock->selling_price, 2) : '—' }}
+                            {{ $record->prescriptionItem?->drug?->price ? 'GHS '.number_format($record->prescriptionItem->drug->price, 2) : '—' }}
                         </td>
                         <td class="text-end text-success fw-medium">
-                            @if($record->drugStock?->selling_price)
-                                GHS {{ number_format($record->quantity_dispensed * $record->drugStock->selling_price, 2) }}
+                            @if($record->prescriptionItem?->drug?->price)
+                                GHS {{ number_format($record->quantity_dispensed * $record->prescriptionItem->drug->price, 2) }}
                             @else
                                 —
                             @endif

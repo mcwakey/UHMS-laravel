@@ -10,7 +10,6 @@ class DispensingRecord extends Model
     protected $fillable = [
         'prescription_id',
         'prescription_item_id',
-        'drug_stock_id',
         'patient_id',
         'visit_id',
         'quantity_dispensed',
@@ -33,11 +32,6 @@ class DispensingRecord extends Model
         return $this->belongsTo(PrescriptionItem::class);
     }
 
-    public function drugStock(): BelongsTo
-    {
-        return $this->belongsTo(DrugStock::class);
-    }
-
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
@@ -51,5 +45,10 @@ class DispensingRecord extends Model
     public function dispensedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'dispensed_by');
+    }
+
+    public function medicationOrder(): BelongsTo
+    {
+        return $this->belongsTo(MedicationOrder::class, 'prescription_item_id', 'prescription_item_id');
     }
 }

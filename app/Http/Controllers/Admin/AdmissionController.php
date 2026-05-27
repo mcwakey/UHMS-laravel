@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\AdmissionStatus;
 use App\Enums\VisitStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DischargeRequest;
@@ -12,12 +13,13 @@ use App\Models\Setting;
 use App\Models\Visit;
 use App\Models\Vital;
 use App\Models\Ward;
+use App\Services\AdmissionMedicationBoardService;
 use App\Services\AdmissionService;
 use App\Services\ConsultationSummaryService;
 use App\Services\VisitService;
 use App\Services\WardService;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class AdmissionController extends Controller
@@ -26,7 +28,8 @@ class AdmissionController extends Controller
         private AdmissionService $admissionService,
         private WardService $wardService,
         private VisitService $visitService,
-        private ConsultationSummaryService $summaryService
+        private ConsultationSummaryService $summaryService,
+        private AdmissionMedicationBoardService $medicationBoardService
     ) {}
 
     public function admissionRequests(Request $request)
@@ -44,8 +47,8 @@ class AdmissionController extends Controller
         $visits = $query->latest('updated_at')->paginate(20)->withQueryString();
 
         return view('admissions.requests', [
-            'visits'       => $visits,
-            'searchQuery'  => $request->input('search', ''),
+            'visits' => $visits,
+            'searchQuery' => $request->input('search', ''),
             'totalPending' => Visit::where('status', VisitStatus::ADMITTING->value)->count(),
         ]);
     }
@@ -61,17 +64,18 @@ class AdmissionController extends Controller
 
         $admissionsPayload = $admissions->through(function (Admission $admission) use ($canDischarge) {
             $isAdmitted = $admission->status && $admission->status->value === 'admitted';
+
             return [
-                'id'              => $admission->id,
+                'id' => $admission->id,
                 'admission_number' => $admission->admission_number,
                 'patient' => $admission->patient ? [
-                    'id'             => $admission->patient->id,
-                    'full_name'      => $admission->patient->full_name,
+                    'id' => $admission->patient->id,
+                    'full_name' => $admission->patient->full_name,
                     'patient_number' => $admission->patient->patient_number,
                 ] : null,
                 'bed' => $admission->bed ? [
                     'bed_number' => $admission->bed->bed_number,
-                    'ward_name'  => optional($admission->bed->ward)->name,
+                    'ward_name' => optional($admission->bed->ward)->name,
                 ] : null,
                 'admission_date_display' => optional($admission->admission_date)->format('d M Y, H:i'),
                 'length_of_stay' => $admission->length_of_stay,
@@ -82,8 +86,8 @@ class AdmissionController extends Controller
                     'color' => $admission->status->color(),
                 ] : null,
                 'urls' => [
-                    'show'      => route('admin.admissions.show', $admission),
-                    'patient'   => $admission->patient ? route('admin.patients.show', $admission->patient) : null,
+                    'show' => route('admin.admissions.show', $admission),
+                    'patient' => $admission->patient ? route('admin.patients.show', $admission->patient) : null,
                     'discharge' => $isAdmitted && $canDischarge ? route('admin.admissions.discharge', $admission) : null,
                 ],
             ];
@@ -91,20 +95,20 @@ class AdmissionController extends Controller
 
         return Inertia::render('Admissions/Index', [
             'admissions' => $admissionsPayload,
-            'total'      => $admissions->total(),
-            'stats'      => $stats,
-            'wards'      => $wards->map(fn ($w) => ['id' => $w->id, 'name' => $w->name])->values(),
-            'filters'    => $request->only(['search', 'status', 'ward_id']),
-            'statusOptions' => collect(\App\Enums\AdmissionStatus::cases())->map(fn ($c) => [
+            'total' => $admissions->total(),
+            'stats' => $stats,
+            'wards' => $wards->map(fn ($w) => ['id' => $w->id, 'name' => $w->name])->values(),
+            'filters' => $request->only(['search', 'status', 'ward_id']),
+            'statusOptions' => collect(AdmissionStatus::cases())->map(fn ($c) => [
                 'value' => $c->value,
                 'label' => $c->label(),
             ])->values(),
             'routes' => [
-                'index'  => route('admin.admissions.index'),
+                'index' => route('admin.admissions.index'),
                 'create' => route('admin.admissions.create'),
             ],
             'can' => [
-                'admit'     => $user?->can('ward.admit') ?? false,
+                'admit' => $user?->can('ward.admit') ?? false,
                 'discharge' => $canDischarge,
             ],
         ]);
@@ -145,8 +149,8 @@ class AdmissionController extends Controller
         $services = ServiceCatalog::where('is_active', true)->orderBy('name')->get();
 
         // Load saved defaults from settings (can be overridden by ?bed_id param but not service defaults)
-        $defaultAdmissionFeeServiceId  = (int) Setting::getValue('ward', 'admission_fee_service_id',  0) ?: null;
-        $defaultDetentionFeeServiceId  = (int) Setting::getValue('ward', 'detention_fee_service_id',  0) ?: null;
+        $defaultAdmissionFeeServiceId = (int) Setting::getValue('ward', 'admission_fee_service_id', 0) ?: null;
+        $defaultDetentionFeeServiceId = (int) Setting::getValue('ward', 'detention_fee_service_id', 0) ?: null;
         $defaultConsumableFeeServiceId = (int) Setting::getValue('ward', 'consumable_fee_service_id', 0) ?: null;
 
         return view('admissions.create', compact(
@@ -187,10 +191,11 @@ class AdmissionController extends Controller
 
         $services = ServiceCatalog::where('is_active', true)->orderBy('name')->get();
 
-        $medicalRecord       = $admission->visit->medicalRecord;
+        $medicalRecord = $admission->visit->medicalRecord;
         $consultationSummary = $this->summaryService->forRecord($medicalRecord);
+        $medicationBoard = $this->medicationBoardService->forAdmission($admission);
 
-        return view('admissions.show', compact('admission', 'services', 'medicalRecord', 'consultationSummary'));
+        return view('admissions.show', compact('admission', 'services', 'medicalRecord', 'consultationSummary', 'medicationBoard'));
     }
 
     public function discharge(Admission $admission)
@@ -227,16 +232,16 @@ class AdmissionController extends Controller
     public function storeVital(Request $request, Admission $admission)
     {
         $request->validate([
-            'blood_pressure_systolic'  => ['nullable', 'integer', 'min:0', 'max:300'],
+            'blood_pressure_systolic' => ['nullable', 'integer', 'min:0', 'max:300'],
             'blood_pressure_diastolic' => ['nullable', 'integer', 'min:0', 'max:200'],
-            'heart_rate'               => ['nullable', 'integer', 'min:0', 'max:300'],
-            'temperature'              => ['nullable', 'numeric', 'min:30', 'max:45'],
-            'respiratory_rate'         => ['nullable', 'integer', 'min:0', 'max:60'],
-            'spo2'                     => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'weight'                   => ['nullable', 'numeric', 'min:0', 'max:500'],
-            'blood_sugar'              => ['nullable', 'numeric', 'min:0'],
-            'notes'                    => ['nullable', 'string', 'max:1000'],
-            'recorded_at'              => ['nullable', 'date'],
+            'heart_rate' => ['nullable', 'integer', 'min:0', 'max:300'],
+            'temperature' => ['nullable', 'numeric', 'min:30', 'max:45'],
+            'respiratory_rate' => ['nullable', 'integer', 'min:0', 'max:60'],
+            'spo2' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'weight' => ['nullable', 'numeric', 'min:0', 'max:500'],
+            'blood_sugar' => ['nullable', 'numeric', 'min:0'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+            'recorded_at' => ['nullable', 'date'],
         ]);
 
         Vital::create(array_merge($request->only([
@@ -244,10 +249,10 @@ class AdmissionController extends Controller
             'temperature', 'respiratory_rate', 'spo2', 'weight', 'blood_sugar', 'notes',
         ]), [
             'admission_id' => $admission->id,
-            'visit_id'     => $admission->visit_id,
-            'patient_id'   => $admission->patient_id,
-            'recorded_by'  => Auth::id(),
-            'recorded_at'  => $request->recorded_at ?? now(),
+            'visit_id' => $admission->visit_id,
+            'patient_id' => $admission->patient_id,
+            'recorded_by' => Auth::id(),
+            'recorded_at' => $request->recorded_at ?? now(),
         ]));
 
         return redirect()
@@ -260,16 +265,16 @@ class AdmissionController extends Controller
     {
         $request->validate([
             'service_catalog_id' => ['required', 'exists:service_catalog,id'],
-            'quantity'           => ['nullable', 'integer', 'min:1', 'max:99'],
-            'notes'              => ['nullable', 'string', 'max:500'],
+            'quantity' => ['nullable', 'integer', 'min:1', 'max:99'],
+            'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
         $qty = $request->quantity ?? 1;
 
         $this->visitService->attachServices($admission->visit, [[
             'service_catalog_id' => $request->service_catalog_id,
-            'quantity'           => $qty,
-            'notes'              => $request->notes,
+            'quantity' => $qty,
+            'notes' => $request->notes,
         ]]);
 
         // VisitService::attachServices already creates the invoice line item via
