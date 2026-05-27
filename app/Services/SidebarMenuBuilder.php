@@ -111,44 +111,44 @@ class SidebarMenuBuilder
             [
                 'title' => 'Clinical',
                 'items' => [
-                    [
-                        'label' => 'Emergency',
-                        'icon' => 'ti ti-ambulance',
-                        'permission' => 'emergency.board.view',
-                        'active_patterns' => ['admin.emergency.*'],
-                        'children' => [
-                            [
-                                'label' => 'Emergency Board',
-                                'route' => 'admin.emergency.board',
-                                'active_patterns' => ['admin.emergency.board'],
-                                'permission' => 'emergency.board.view',
-                            ],
-                            [
-                                'label' => 'New Emergency Case',
-                                'route' => 'admin.emergency.cases.create',
-                                'active_patterns' => ['admin.emergency.cases.create'],
-                                'permission' => 'emergency.case.create',
-                            ],
-                            [
-                                'label' => 'Emergency MAR',
-                                'route' => 'admin.emergency.medication-board',
-                                'active_patterns' => ['admin.emergency.medication-board', 'admin.emergency.mar-chart'],
-                                'permission' => 'emergency.medication_board.view',
-                            ],
-                            [
-                                'label' => 'Emergency Bays',
-                                'route' => 'admin.emergency.bays.index',
-                                'active_patterns' => ['admin.emergency.bays.*'],
-                                'permission' => 'emergency.settings.manage',
-                            ],
-                            [
-                                'label' => 'Reports',
-                                'route' => 'admin.emergency.reports.index',
-                                'active_patterns' => ['admin.emergency.reports.*'],
-                                'permission' => 'emergency.reports.view',
-                            ],
-                        ],
-                    ],
+                    // [
+                    //     'label' => 'Emergency',
+                    //     'icon' => 'ti ti-ambulance',
+                    //     'permission' => 'emergency.board.view',
+                    //     'active_patterns' => ['admin.emergency.*'],
+                    //     'children' => [
+                    //         [
+                    //             'label' => 'Emergency Board',
+                    //             'route' => 'admin.emergency.board',
+                    //             'active_patterns' => ['admin.emergency.board'],
+                    //             'permission' => 'emergency.board.view',
+                    //         ],
+                    //         [
+                    //             'label' => 'New Emergency Case',
+                    //             'route' => 'admin.emergency.cases.create',
+                    //             'active_patterns' => ['admin.emergency.cases.create'],
+                    //             'permission' => 'emergency.case.create',
+                    //         ],
+                    //         [
+                    //             'label' => 'Emergency MAR',
+                    //             'route' => 'admin.emergency.medication-board',
+                    //             'active_patterns' => ['admin.emergency.medication-board', 'admin.emergency.mar-chart'],
+                    //             'permission' => 'emergency.medication_board.view',
+                    //         ],
+                    //         [
+                    //             'label' => 'Emergency Bays',
+                    //             'route' => 'admin.emergency.bays.index',
+                    //             'active_patterns' => ['admin.emergency.bays.*'],
+                    //             'permission' => 'emergency.settings.manage',
+                    //         ],
+                    //         [
+                    //             'label' => 'Reports',
+                    //             'route' => 'admin.emergency.reports.index',
+                    //             'active_patterns' => ['admin.emergency.reports.*'],
+                    //             'permission' => 'emergency.reports.view',
+                    //         ],
+                    //     ],
+                    // ],
                     // [
                     //     'label' => 'Vitals / Triage',
                     //     'icon' => 'ti ti-heartbeat',
@@ -257,6 +257,170 @@ class SidebarMenuBuilder
                 ],
             ],
             [
+                'title' => 'Ward / Emergency',
+                'items' => [
+                    // [
+                    //     'label' => 'Emergency',
+                    //     'icon' => 'ti ti-ambulance',
+                    //     'permission' => 'emergency.board.view',
+                    //     'active_patterns' => ['admin.emergency.*'],
+                    //     'children' => [
+                            
+                    //     ],
+                    // ],
+                    // [
+                    //     'label' => 'Vitals / Triage',
+                    //     'icon' => 'ti ti-heartbeat',
+                    //     'route' => 'admin.vitals.create',
+                    //     'active_patterns' => ['admin.vitals.*'],
+                    //     'permission' => 'vitals.view',
+                    //     'module' => 'triage',
+                    // ],
+
+                    [
+                        'label' => 'Emergency Board',
+                        'icon' => 'ti ti-bolt',
+                        'route' => 'admin.emergency.board',
+                        'active_patterns' => ['admin.emergency.board'],
+                        'permission' => 'emergency.board.view',
+                        'module' => 'emergency',
+                    ],
+                    // [
+                    //     'label' => 'New Emergency Case',
+                    //     'icon' => 'ti ti-ambulance',
+                    //     'route' => 'admin.emergency.cases.create',
+                    //     'active_patterns' => ['admin.emergency.cases.create'],
+                    //     'permission' => 'emergency.case.create',
+                    //     'module' => 'emergency',
+                    // ],
+                    [
+                        'label' => 'Emergency Medication Board',
+                        'icon' => 'ti ti-pill',
+                        'route' => 'admin.emergency.medication-board',
+                        'active_patterns' => ['admin.emergency.medication-board', 'admin.emergency.mar-chart'],
+                        'permission' => 'emergency.medication_board.view',
+                        'module' => 'emergency',
+                    ],
+                    [
+                        'label' => 'Emergency Bays',
+                        'icon' => 'ti ti-ambulance',
+                        'route' => 'admin.emergency.bays.index',
+                        'active_patterns' => ['admin.emergency.bays.*'],
+                        'permission' => 'emergency.settings.manage',
+                        'module' => 'emergency',
+                    ],
+
+                    // TODO: Re-add reports link when we have emergency reports ready
+                    // [
+                    //     'label' => 'Reports',
+                    //     'icon' => 'ti ti-ambulance',
+                    //     'route' => 'admin.emergency.reports.index',
+                    //     'active_patterns' => ['admin.emergency.reports.*'],
+                    //     'permission' => 'emergency.reports.view',
+                    //     'module' => 'emergency',
+                    // ],
+
+
+                    // [
+                    //     'label' => 'Vitals / Triage',
+                    //     'icon' => 'ti ti-ambulance',
+                    //     'route' => 'admin.triage.index',
+                    //     'active_patterns' => ['admin.triage.*'],
+                    //     'permission' => 'vitals.view',
+                    //     'module' => 'triage',
+                    // ],
+                    // [
+                    //     'label' => 'Consultations',
+                    //     'icon' => 'ti ti-stethoscope',
+                    //     'route' => 'admin.consultations.index',
+                    //     'active_patterns' => ['admin.consultations.*'],
+                    //     'permission' => 'consultations.view',
+                    //     'module' => 'consultation',
+                    // ],
+                    // [
+                    //     'label' => 'Procedures',
+                    //     'icon' => 'ti ti-surgery',
+                    //     'permission' => 'procedures.view',
+                    //     'active_patterns' => ['admin.procedures.*', 'admin.procedure-catalogue.*'],
+                    //     'children' => [
+                    //         [
+                    //             'label' => 'Procedure Catalog',
+                    //             'route' => 'admin.procedure-catalogue.index',
+                    //             'active_patterns' => ['admin.procedure-catalogue.*'],
+                    //             'permission' => 'procedure_catalogue.view',
+                    //         ],
+                    //         [
+                    //             'label' => 'Scheduled Procedures',
+                    //             'route' => 'admin.procedures.schedule',
+                    //             'active_patterns' => ['admin.procedures.schedule'],
+                    //             'permission' => 'procedures.view',
+                    //         ],
+                    //     ],
+                    // ],
+                    // [
+                    //     'label' => 'Theatre / Procedures',
+                    //     'icon' => 'ti ti-stethoscope',
+                    //     'permission' => 'procedure.view',
+                    //     'active_patterns' => ['admin.theatre.*'],
+                    //     'children' => [
+                    //         [
+                    //             'label' => 'Procedure Catalogue',
+                    //             'route' => 'admin.procedure-catalogue.index',
+                    //             'active_patterns' => ['admin.procedure-catalogue.*'],
+                    //             'permission' => 'procedure_catalogue.view',
+                    //         ],
+                    //         [
+                    //             'label' => 'Procedure Consumables',
+                    //             'route' => 'admin.theatre.consumables.index',
+                    //             'active_patterns' => ['admin.theatre.consumables.*'],
+                    //             'permission' => 'procedure.view',
+                    //         ],
+                    //         // [
+                    //         //     'label' => 'Scheduled Procedures',
+                    //         //     'route' => 'admin.procedures.schedule',
+                    //         //     'active_patterns' => ['admin.procedures.schedule'],
+                    //         //     'permission' => 'procedures.view',
+                    //         // ],
+                    //         [
+                    //             'label' => 'Scheduled Procedures',
+                    //             'route' => 'admin.theatre.index',
+                    //             'route_params' => ['tab' => 'pending'],
+                    //             'active_patterns' => ['admin.theatre.index'],
+                    //             'permission' => 'procedure.view',
+                    //         ],
+                    //         // [
+                    //         //     'label' => 'Scheduled',
+                    //         //     'route' => 'admin.theatre.index',
+                    //         //     'route_params' => ['tab' => 'scheduled'],
+                    //         //     'active_patterns' => ['admin.theatre.index'],
+                    //         //     'permission' => 'procedure.view',
+                    //         // ],
+                    //         // [
+                    //         //     'label' => 'In Theatre',
+                    //         //     'route' => 'admin.theatre.index',
+                    //         //     'route_params' => ['tab' => 'in_theatre'],
+                    //         //     'active_patterns' => ['admin.theatre.index'],
+                    //         //     'permission' => 'procedure.view',
+                    //         // ],
+                    //         // [
+                    //         //     'label' => 'Recovery',
+                    //         //     'route' => 'admin.theatre.index',
+                    //         //     'route_params' => ['tab' => 'recovery'],
+                    //         //     'active_patterns' => ['admin.theatre.index'],
+                    //         //     'permission' => 'procedure.view',
+                    //         // ],
+                    //         // [
+                    //         //     'label' => 'Completed',
+                    //         //     'route' => 'admin.theatre.index',
+                    //         //     'route_params' => ['tab' => 'completed'],
+                    //         //     'active_patterns' => ['admin.theatre.index'],
+                    //         //     'permission' => 'procedure.view',
+                    //         // ],
+                    //     ],
+                    // ],
+                ],
+            ],
+            [
                 'title' => 'Ward / Inpatient',
                 'items' => [
                     [
@@ -281,14 +445,14 @@ class SidebarMenuBuilder
                         'permission' => 'ward.view',
                         // 'permission' => 'admission.medication_board.view',
                     ],
-                    [
-                        'label' => 'Emergency Meds',
-                        'icon' => 'ti ti-ambulance',
-                        'route' => 'admin.emergency.medication-board',
-                        'active_patterns' => ['admin.emergency.medication-board'],
-                        'permission' => 'ward.view',
-                        // 'permission' => 'emergency.medication_board.view',
-                    ],
+                    // [
+                    //     'label' => 'Emergency Meds',
+                    //     'icon' => 'ti ti-ambulance',
+                    //     'route' => 'admin.emergency.medication-board',
+                    //     'active_patterns' => ['admin.emergency.medication-board'],
+                    //     'permission' => 'ward.view',
+                    //     // 'permission' => 'emergency.medication_board.view',
+                    // ],
                     // [
                     //     'label' => 'Bed Map',
                     //     'icon' => 'ti ti-map',
