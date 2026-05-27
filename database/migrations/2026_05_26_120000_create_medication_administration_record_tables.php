@@ -160,7 +160,8 @@ return new class extends Migration
 
         if (! Schema::hasTable('medication_administration_logs')) Schema::create('medication_administration_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('medication_administration_id')->nullable()->constrained('medication_administrations')->nullOnDelete();
+            // $table->foreignId('medication_administration_id')->nullable()->constrained('medication_administrations')->nullOnDelete();
+            $table->foreignId('medication_administration_id')->nullable()->constrained('medication_administrations', 'id', 'mal_med_admin_id_foreign')->nullOnDelete();
             $table->foreignId('medication_order_id')->nullable()->constrained('medication_orders')->nullOnDelete();
             $table->foreignId('schedule_id')->nullable()->constrained('medication_administration_schedules')->nullOnDelete();
             $table->string('action', 80);
