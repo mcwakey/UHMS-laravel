@@ -17,9 +17,16 @@
     <div class="alert alert-danger">{{ $errors->first() }}</div>
 @endif
 
+@php
+    $mainPatientNumber = request('main_patient_number');
+    $duplicatePatientNumber = request('duplicate_patient_number');
+@endphp
+
 <div class="card mb-3">
     <div class="card-body">
         <form method="GET" action="{{ route('admin.patients.merge.index') }}" class="row g-2 align-items-end">
+            <input type="hidden" name="main_patient_number" value="{{ $mainPatientNumber }}">
+            <input type="hidden" name="duplicate_patient_number" value="{{ $duplicatePatientNumber }}">
             <div class="col-md-9">
                 <label class="form-label">Patient Search</label>
                 <input type="text" name="search" class="form-control" value="{{ request('search') }}" placeholder="Search by name, patient number, old temporary number, phone, Ghana Card, or insurance number">
@@ -34,17 +41,35 @@
 
 <div class="card mb-3">
     <div class="card-header">
-        <h5 class="card-title mb-0">Compare Two Folders</h5>
+        <h5 class="card-title mb-0">Selected Folders</h5>
     </div>
     <div class="card-body">
         <form method="GET" action="{{ route('admin.patients.merge.compare') }}" class="row g-2 align-items-end">
             <div class="col-md-5">
-                <label class="form-label">Main Patient ID</label>
-                <input type="number" name="main_patient_id" class="form-control" value="{{ request('main_patient_id') }}" required>
+                <label class="form-label">Main Patient Number</label>
+                <input type="text" name="main_patient_number" class="form-control" value="{{ $mainPatientNumber }}" placeholder="PT..." required>
+                <div class="small text-muted mt-1">
+                    @if($selectedMainPatient)
+                        {{ $selectedMainPatient->full_name }} · {{ $selectedMainPatient->phone ?: 'No phone' }}
+                    @elseif($mainPatientNumber)
+                        No matching folder found yet.
+                    @else
+                        Select from search results or type the patient number.
+                    @endif
+                </div>
             </div>
             <div class="col-md-5">
-                <label class="form-label">Duplicate Patient ID</label>
-                <input type="number" name="duplicate_patient_id" class="form-control" value="{{ request('duplicate_patient_id') }}" required>
+                <label class="form-label">Duplicate Patient Number</label>
+                <input type="text" name="duplicate_patient_number" class="form-control" value="{{ $duplicatePatientNumber }}" placeholder="PT..." required>
+                <div class="small text-muted mt-1">
+                    @if($selectedDuplicatePatient)
+                        {{ $selectedDuplicatePatient->full_name }} · {{ $selectedDuplicatePatient->phone ?: 'No phone' }}
+                    @elseif($duplicatePatientNumber)
+                        No matching folder found yet.
+                    @else
+                        Select from search results or type the patient number.
+                    @endif
+                </div>
             </div>
             <div class="col-md-2">
                 <button class="btn btn-primary w-100" type="submit"><i class="ti ti-git-compare me-1"></i>Preview</button>
@@ -62,23 +87,39 @@
         <table class="table table-hover mb-0">
             <thead class="bg-light">
                 <tr>
-                    <th>ID</th>
+                    <th>Patient Number</th>
                     <th>Patient</th>
                     <th>Phone</th>
                     <th>Status</th>
                     <th>Aliases</th>
-                    <th class="text-end">Open</th>
+                    <th class="text-end">Select</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($patients as $patient)
+                    @php
+                        $baseSelectionQuery = array_filter([
+                            'search' => request('search'),
+                            'main_patient_number' => $mainPatientNumber,
+                            'duplicate_patient_number' => $duplicatePatientNumber,
+                        ], fn ($value) => filled($value));
+
+                        $asMainQuery = array_merge($baseSelectionQuery, ['main_patient_number' => $patient->patient_number]);
+                        if (($asMainQuery['duplicate_patient_number'] ?? null) === $patient->patient_number) {
+                            unset($asMainQuery['duplicate_patient_number']);
+                        }
+
+                        $asDuplicateQuery = array_merge($baseSelectionQuery, ['duplicate_patient_number' => $patient->patient_number]);
+                        if (($asDuplicateQuery['main_patient_number'] ?? null) === $patient->patient_number) {
+                            unset($asDuplicateQuery['main_patient_number']);
+                        }
+                    @endphp
                     <tr>
-                        <td>{{ $patient->id }}</td>
+                        <td><span class="fw-semibold">{{ $patient->patient_number }}</span></td>
                         <td>
                             <div class="fw-semibold">{{ $patient->full_name }}</div>
-                            <small class="text-muted">{{ $patient->patient_number }}</small>
                             @if($patient->is_temporary)
-                                <span class="badge bg-warning-subtle text-warning ms-1">Temporary</span>
+                                <span class="badge bg-warning-subtle text-warning mt-1">Temporary</span>
                             @endif
                         </td>
                         <td>{{ $patient->phone }}</td>
@@ -99,7 +140,10 @@
                             @endforelse
                         </td>
                         <td class="text-end">
-                            <a href="{{ route('admin.patients.show', $patient) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a>
+                            <div class="d-flex justify-content-end gap-1 flex-wrap">
+                                <a href="{{ route('admin.patients.merge.index', $asMainQuery) }}" class="btn btn-sm btn-outline-success" title="Select as main folder"><i class="ti ti-check me-1"></i>Main</a>
+                                <a href="{{ route('admin.patients.merge.index', $asDuplicateQuery) }}" class="btn btn-sm btn-outline-warning" title="Select as duplicate folder"><i class="ti ti-copy me-1"></i>Duplicate</a>
+                            </div>
                         </td>
                     </tr>
                 @endforeach

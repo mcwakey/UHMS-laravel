@@ -140,6 +140,38 @@ class PatientMergeTest extends TestCase
         $this->assertNotContains($duplicatePatient->id, $results);
     }
 
+    public function test_merge_ui_uses_patient_numbers_and_table_selection_actions(): void
+    {
+        [$mainPatient, $duplicatePatient] = $this->patients();
+
+        $indexResponse = $this->actingAs($this->user)->get(route('admin.patients.merge.index', [
+            'search' => $mainPatient->patient_number,
+        ]));
+        $escapedMainPatientNumber = str_replace('/', '\\/', $mainPatient->patient_number);
+        $escapedDuplicatePatientNumber = str_replace('/', '\\/', $duplicatePatient->patient_number);
+
+        $indexResponse->assertOk()
+            ->assertSee($escapedMainPatientNumber, false)
+            ->assertSee('Select as main folder', false)
+            ->assertSee('Select as duplicate folder', false)
+            ->assertDontSee('<th>ID</th>', false)
+            ->assertDontSee('main_patient_id', false)
+            ->assertDontSee('duplicate_patient_id', false);
+
+        $compareResponse = $this->actingAs($this->user)->get(route('admin.patients.merge.compare', [
+            'main_patient_number' => $mainPatient->patient_number,
+            'duplicate_patient_number' => $duplicatePatient->patient_number,
+        ]));
+
+        $compareResponse->assertOk()
+            ->assertSee($escapedMainPatientNumber, false)
+            ->assertSee($escapedDuplicatePatientNumber, false)
+            ->assertDontSee('Main Patient ID')
+            ->assertDontSee('Duplicate Patient ID')
+            ->assertDontSee('main_patient_id', false)
+            ->assertDontSee('duplicate_patient_id', false);
+    }
+
     public function test_cannot_merge_patient_into_themselves(): void
     {
         $patient = Patient::factory()->create(['registered_by' => $this->user->id, 'status' => 'active']);

@@ -9,6 +9,7 @@ use App\Models\PatientMergeRequest;
 use App\Services\PatientMergePreviewService;
 use App\Services\PatientMergeService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class PatientMergeController extends Controller
 {
@@ -20,6 +21,12 @@ class PatientMergeController extends Controller
     public function index(Request $request)
     {
         $patients = collect();
+        $selectedMainPatient = $request->filled('main_patient_number')
+            ? $this->findPatientByNumber($request->query('main_patient_number'))
+            : null;
+        $selectedDuplicatePatient = $request->filled('duplicate_patient_number')
+            ? $this->findPatientByNumber($request->query('duplicate_patient_number'))
+            : null;
 
         if ($request->filled('search')) {
             $patients = Patient::with(['aliases', 'mergedToPatient'])
@@ -34,18 +41,21 @@ class PatientMergeController extends Controller
             ->limit(15)
             ->get();
 
-        return view('patients.merge.index', compact('patients', 'recentRequests'));
+        return view('patients.merge.index', compact('patients', 'recentRequests', 'selectedMainPatient', 'selectedDuplicatePatient'));
     }
 
     public function compare(Request $request)
     {
         $data = $request->validate([
-            'main_patient_id' => ['required', 'exists:patients,id'],
-            'duplicate_patient_id' => ['required', 'exists:patients,id', 'different:main_patient_id'],
+            'main_patient_number' => ['required', 'string', 'max:191', 'different:duplicate_patient_number'],
+            'duplicate_patient_number' => ['required', 'string', 'max:191', 'different:main_patient_number'],
         ]);
 
-        $mainPatient = Patient::with(['insurances.insuranceProvider', 'emergencyContacts', 'aliases'])->findOrFail($data['main_patient_id'])->getFinalPatient();
-        $duplicatePatient = Patient::with(['insurances.insuranceProvider', 'emergencyContacts', 'aliases', 'mergedToPatient'])->findOrFail($data['duplicate_patient_id']);
+        $mainPatient = $this->resolvePatientByNumber($data['main_patient_number'], 'main_patient_number')
+            ->load(['insurances.insuranceProvider', 'emergencyContacts', 'aliases'])
+            ->getFinalPatient();
+        $duplicatePatient = $this->resolvePatientByNumber($data['duplicate_patient_number'], 'duplicate_patient_number')
+            ->load(['insurances.insuranceProvider', 'emergencyContacts', 'aliases', 'mergedToPatient']);
         $preview = $this->previewService->preview($mainPatient, $duplicatePatient);
         $fields = $this->previewService->demographicFields();
 
@@ -55,8 +65,8 @@ class PatientMergeController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'main_patient_id' => ['required', 'exists:patients,id'],
-            'duplicate_patient_id' => ['required', 'exists:patients,id', 'different:main_patient_id'],
+            'main_patient_number' => ['required', 'string', 'max:191', 'different:duplicate_patient_number'],
+            'duplicate_patient_number' => ['required', 'string', 'max:191', 'different:main_patient_number'],
             'reason' => ['nullable', 'string', 'max:2000'],
             'field_resolution' => ['nullable', 'array'],
             'confirmed' => ['accepted'],
@@ -64,8 +74,8 @@ class PatientMergeController extends Controller
         ]);
 
         try {
-            $mainPatient = Patient::findOrFail($data['main_patient_id']);
-            $duplicatePatient = Patient::findOrFail($data['duplicate_patient_id']);
+            $mainPatient = $this->resolvePatientByNumber($data['main_patient_number'], 'main_patient_number');
+            $duplicatePatient = $this->resolvePatientByNumber($data['duplicate_patient_number'], 'duplicate_patient_number');
             $approve = $request->user()->can('patients.merge.execute');
 
             $mergeRequest = $this->mergeService->createRequest(
@@ -89,7 +99,7 @@ class PatientMergeController extends Controller
                 ->route('admin.patients.merge.requests.show', $mergeRequest)
                 ->with('success', 'Patient merge request created.');
         } catch (\InvalidArgumentException $e) {
-            return back()->withInput()->withErrors(['duplicate_patient_id' => $e->getMessage()]);
+            return back()->withInput()->withErrors(['duplicate_patient_number' => $e->getMessage()]);
         }
     }
 
@@ -127,5 +137,29 @@ class PatientMergeController extends Controller
             ->paginate(50);
 
         return view('patients.merge.logs', compact('logs'));
+    }
+
+    private function findPatientByNumber(?string $patientNumber): ?Patient
+    {
+        if (blank($patientNumber)) {
+            return null;
+        }
+
+        return Patient::with(['aliases', 'mergedToPatient'])
+            ->where('patient_number', trim($patientNumber))
+            ->first();
+    }
+
+    private function resolvePatientByNumber(?string $patientNumber, string $field): Patient
+    {
+        $patient = $this->findPatientByNumber($patientNumber);
+
+        if (! $patient) {
+            throw ValidationException::withMessages([
+                $field => 'No patient folder was found for that patient number.',
+            ]);
+        }
+
+        return $patient;
     }
 }

@@ -24,7 +24,7 @@
             <div class="card-header bg-success-subtle text-success fw-semibold">Main Folder</div>
             <div class="card-body">
                 <div class="h5 mb-1">{{ $mainPatient->full_name }}</div>
-                <div class="text-muted">{{ $mainPatient->patient_number }} · ID {{ $mainPatient->id }}</div>
+                <div class="text-muted">{{ $mainPatient->patient_number }}</div>
                 <div class="small mt-2">{{ $mainPatient->phone ?: 'No phone' }} · {{ $mainPatient->ghana_card_number ?: 'No Ghana Card' }}</div>
             </div>
         </div>
@@ -34,7 +34,7 @@
             <div class="card-header bg-warning-subtle text-warning fw-semibold">Duplicate Folder</div>
             <div class="card-body">
                 <div class="h5 mb-1">{{ $duplicatePatient->full_name }}</div>
-                <div class="text-muted">{{ $duplicatePatient->patient_number }} · ID {{ $duplicatePatient->id }}</div>
+                <div class="text-muted">{{ $duplicatePatient->patient_number }}</div>
                 <div class="small mt-2">{{ $duplicatePatient->phone ?: 'No phone' }} · {{ $duplicatePatient->ghana_card_number ?: 'No Ghana Card' }}</div>
                 @if($duplicatePatient->is_temporary)
                     <span class="badge bg-warning-subtle text-warning mt-2">Temporary emergency folder</span>
@@ -67,8 +67,8 @@
 
 <form method="POST" action="{{ route('admin.patients.merge.requests.store') }}">
     @csrf
-    <input type="hidden" name="main_patient_id" value="{{ $mainPatient->id }}">
-    <input type="hidden" name="duplicate_patient_id" value="{{ $duplicatePatient->id }}">
+    <input type="hidden" name="main_patient_number" value="{{ $mainPatient->patient_number }}">
+    <input type="hidden" name="duplicate_patient_number" value="{{ $duplicatePatient->patient_number }}">
 
     <div class="card mb-3">
         <div class="card-header">
