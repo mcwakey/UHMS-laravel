@@ -67,12 +67,14 @@ class ProcedureConsumablesController extends Controller
             ->withQueryString();
 
         $productIds = $products->getCollection()->pluck('id')->all();
-        $balances = StockBalance::query()
-            ->whereIn('product_id', $productIds)
-            ->when($theatreLocationIds->isNotEmpty(), fn ($q) => $q->whereIn('stock_location_id', $theatreLocationIds))
-            ->select('product_id', DB::raw('SUM(quantity_on_hand) as total'))
-            ->groupBy('product_id')
-            ->pluck('total', 'product_id');
+        $balances = $theatreLocationIds->isEmpty()
+            ? collect()
+            : StockBalance::query()
+                ->whereIn('product_id', $productIds)
+                ->whereIn('stock_location_id', $theatreLocationIds)
+                ->select('product_id', DB::raw('SUM(quantity_on_hand) as total'))
+                ->groupBy('product_id')
+                ->pluck('total', 'product_id');
 
         $mainStore = $this->stockLocations->getMainStoreLocation();
         $mainBalances = $this->stockBalances->getQuantitiesForProductsAtLocation($productIds, $mainStore);

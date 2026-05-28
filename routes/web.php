@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\ClaimController;
 use App\Http\Controllers\Admin\ConsultationTaskController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DepartmentController;
+use App\Http\Controllers\Admin\DepartmentConsumablesController;
 use App\Http\Controllers\Admin\DesignationController;
 use App\Http\Controllers\Admin\DrugController;
 use App\Http\Controllers\Admin\EmergencyContactController;
@@ -240,6 +241,7 @@ Route::middleware('auth')->group(function () {
         // Wards & Beds
         Route::middleware('can:ward.view')->group(function () {
             Route::get('wards', [WardController::class, 'index'])->name('wards.index');
+            Route::get('wards/consumables', [DepartmentConsumablesController::class, 'ward'])->name('wards.consumables.index');
             Route::post('wards', [WardController::class, 'store'])->name('wards.store')->middleware('can:ward.manage');
             Route::put('wards/{ward}', [WardController::class, 'update'])->name('wards.update')->middleware('can:ward.manage');
             Route::patch('wards/{ward}/toggle', [WardController::class, 'toggle'])->name('wards.toggle')->middleware('can:ward.manage');
@@ -280,6 +282,7 @@ Route::middleware('auth')->group(function () {
         // Emergency
         Route::prefix('emergency')->name('emergency.')->group(function () {
             Route::get('board', [EmergencyBoardController::class, 'index'])->name('board')->middleware('can:emergency.board.view');
+            Route::get('consumables', [DepartmentConsumablesController::class, 'emergency'])->name('consumables.index')->middleware('can:emergency.board.view');
             Route::get('cases/create', [EmergencyCaseController::class, 'create'])->name('cases.create')->middleware('can:emergency.case.create');
             Route::post('cases', [EmergencyCaseController::class, 'store'])->name('cases.store')->middleware('can:emergency.case.create');
             Route::get('cases/{emergencyCase}', [EmergencyCaseController::class, 'show'])->name('cases.show')->middleware('can:emergency.case.view');

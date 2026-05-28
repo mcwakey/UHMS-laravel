@@ -78,12 +78,14 @@ class InvestigationItemController extends Controller
 
         // Pre-compute Lab-only on-hand for every product on this page.
         $productIds = $products->getCollection()->pluck('id')->all();
-        $balances = StockBalance::query()
-            ->whereIn('product_id', $productIds)
-            ->when($labLocationIds->isNotEmpty(), fn ($q) => $q->whereIn('stock_location_id', $labLocationIds))
-            ->select('product_id', DB::raw('SUM(quantity_on_hand) as total'))
-            ->groupBy('product_id')
-            ->pluck('total', 'product_id');
+        $balances = $labLocationIds->isEmpty()
+            ? collect()
+            : StockBalance::query()
+                ->whereIn('product_id', $productIds)
+                ->whereIn('stock_location_id', $labLocationIds)
+                ->select('product_id', DB::raw('SUM(quantity_on_hand) as total'))
+                ->groupBy('product_id')
+                ->pluck('total', 'product_id');
 
         $mainStore = $this->stockLocations->getMainStoreLocation();
         $mainBalances = $this->stockBalances->getQuantitiesForProductsAtLocation($productIds, $mainStore);

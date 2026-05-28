@@ -285,6 +285,14 @@ class SidebarMenuBuilder
                         'permission' => 'emergency.board.view',
                         'module' => 'emergency',
                     ],
+                    [
+                        'label' => 'Emergency Consumables',
+                        'icon' => 'ti ti-package',
+                        'route' => 'admin.emergency.consumables.index',
+                        'active_patterns' => ['admin.emergency.consumables.*'],
+                        'permission' => 'emergency.board.view',
+                        'module' => 'emergency',
+                    ],
                     // [
                     //     'label' => 'New Emergency Case',
                     //     'icon' => 'ti ti-ambulance',
@@ -444,6 +452,13 @@ class SidebarMenuBuilder
                         'active_patterns' => ['admin.admissions.medication-board', 'admin.admissions.medications.*'],
                         'permission' => 'ward.view',
                         // 'permission' => 'admission.medication_board.view',
+                    ],
+                    [
+                        'label' => 'Ward Consumables',
+                        'icon' => 'ti ti-package',
+                        'route' => 'admin.wards.consumables.index',
+                        'active_patterns' => ['admin.wards.consumables.*'],
+                        'permission' => 'ward.view',
                     ],
                     // [
                     //     'label' => 'Emergency Meds',

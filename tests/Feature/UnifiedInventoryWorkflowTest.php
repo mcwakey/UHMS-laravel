@@ -160,17 +160,23 @@ class UnifiedInventoryWorkflowTest extends TestCase
         $pharmacy = $this->department(DepartmentType::PHARMACY, 'Pharmacy', 'PHM');
         $lab = $this->department(DepartmentType::INVESTIGATION, 'Laboratory', 'LAB');
         $theatre = $this->department(DepartmentType::PROCEDURE, 'Theatre', 'THR');
+        $ward = $this->department(DepartmentType::TREATMENT, 'Children Ward', 'CHW');
+        $emergency = $this->department(DepartmentType::SUPPORT, 'Emergency Department', 'ER');
 
         $pharmacyLocation = $this->departmentLocation($pharmacy, 'Pharmacy Store', 'pharmacy');
         $labLocation = $this->departmentLocation($lab, 'Laboratory Store', 'lab');
         $theatreLocation = $this->departmentLocation($theatre, 'Theatre Store', 'theatre');
+        $wardLocation = $this->departmentLocation($ward, 'Children Ward Store', 'ward');
+        $emergencyLocation = $this->departmentLocation($emergency, 'Emergency Store', 'emergency');
 
         $drug = $this->product('Amoxicillin 250mg', 'AMOX-250', ProductType::DRUG, $pharmacy);
         $reagent = $this->product('Glucose Reagent', 'GLU-REAG', ProductType::REAGENT, $lab);
         $suture = $this->product('Absorbable Suture', 'SUT-01', ProductType::SURGICAL_SUPPLY, $theatre);
+        $wardGlove = $this->product('Ward Nitrile Gloves', 'WRD-GLV', ProductType::MEDICAL_SUPPLY, $ward);
+        $emergencyDressing = $this->product('Emergency Dressing Pack', 'ER-DRS', ProductType::MEDICAL_SUPPLY, $emergency);
 
         $stock = app(ProductStockService::class);
-        foreach ([$drug, $reagent, $suture] as $product) {
+        foreach ([$drug, $reagent, $suture, $wardGlove, $emergencyDressing] as $product) {
             $stock->receive([
                 'product_id' => $product->id,
                 'stock_location_id' => $mainStore->id,
@@ -181,6 +187,8 @@ class UnifiedInventoryWorkflowTest extends TestCase
         $this->assertSame(0.0, $this->pharmacyAvailable($drug));
         $this->assertSame(0.0, $this->labAvailable($reagent));
         $this->assertSame(0.0, $this->theatreAvailable($suture));
+        $this->assertSame(0.0, $this->wardAvailable($wardGlove));
+        $this->assertSame(0.0, $this->emergencyAvailable($emergencyDressing));
 
         $stock->transfer([
             'product_id' => $drug->id,
@@ -200,10 +208,24 @@ class UnifiedInventoryWorkflowTest extends TestCase
             'to_location_id' => $theatreLocation->id,
             'quantity' => 5,
         ]);
+        $stock->transfer([
+            'product_id' => $wardGlove->id,
+            'from_location_id' => $mainStore->id,
+            'to_location_id' => $wardLocation->id,
+            'quantity' => 9,
+        ]);
+        $stock->transfer([
+            'product_id' => $emergencyDressing->id,
+            'from_location_id' => $mainStore->id,
+            'to_location_id' => $emergencyLocation->id,
+            'quantity' => 7,
+        ]);
 
         $this->assertSame(12.0, $this->pharmacyAvailable($drug));
         $this->assertSame(8.0, $this->labAvailable($reagent));
         $this->assertSame(5.0, $this->theatreAvailable($suture));
+        $this->assertSame(9.0, $this->wardAvailable($wardGlove));
+        $this->assertSame(7.0, $this->emergencyAvailable($emergencyDressing));
     }
 
     public function test_department_catalogue_mutation_endpoints_do_not_create_parallel_item_rows(): void
@@ -627,5 +649,31 @@ class UnifiedInventoryWorkflowTest extends TestCase
         $this->assertNotNull($catalogueProduct);
 
         return (float) $catalogueProduct->available_in_theatre;
+    }
+
+    private function wardAvailable(Product $product): float
+    {
+        $response = $this->withoutMiddleware()->get(route('admin.wards.consumables.index', ['search' => $product->code]));
+        $response->assertOk();
+
+        $paginator = $response->viewData('products');
+        $catalogueProduct = $paginator->getCollection()->firstWhere('id', $product->id);
+
+        $this->assertNotNull($catalogueProduct);
+
+        return (float) $catalogueProduct->department_available_quantity;
+    }
+
+    private function emergencyAvailable(Product $product): float
+    {
+        $response = $this->withoutMiddleware()->get(route('admin.emergency.consumables.index', ['search' => $product->code]));
+        $response->assertOk();
+
+        $paginator = $response->viewData('products');
+        $catalogueProduct = $paginator->getCollection()->firstWhere('id', $product->id);
+
+        $this->assertNotNull($catalogueProduct);
+
+        return (float) $catalogueProduct->department_available_quantity;
     }
 }
