@@ -173,6 +173,22 @@ class Visit extends Model
         return $this->hasMany(EmergencyCase::class);
     }
 
+    public function emergencySessions()
+    {
+        return $this->hasMany(EmergencySession::class);
+    }
+
+    public function activeEmergencySession()
+    {
+        return $this->hasOne(EmergencySession::class)
+            ->whereIn('status', [
+                EmergencySession::STATUS_PENDING,
+                EmergencySession::STATUS_ACTIVE,
+                EmergencySession::STATUS_OBSERVATION,
+            ])
+            ->latestOfMany();
+    }
+
     public function visitInsurance()
     {
         return $this->belongsTo(PatientInsurance::class, 'visit_insurance_id');

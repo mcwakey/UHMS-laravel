@@ -12,6 +12,7 @@ class EmergencyBillingService
     public function __construct(
         private BillingService $billing,
         private EmergencyTimelineService $timeline,
+        private EmergencySessionService $sessions,
     ) {}
 
     public function addService(EmergencyCase $case, ServiceCatalog $service, int $quantity, User $user, ?string $notes = null): InvoiceItem
@@ -26,6 +27,7 @@ class EmergencyBillingService
             description: $notes ?: $service->name,
         );
 
+        $this->sessions->recordContribution($case, $user, 'Billing');
         $this->timeline->record($case, 'BILLING_ITEM_ADDED', 'Emergency billable service added', $service->name, $item, $user);
 
         return $item;

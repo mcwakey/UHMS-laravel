@@ -34,7 +34,7 @@ class PatientMergeLog extends Model
 
     public function mergeRequest(): BelongsTo
     {
-        return $this->belongsTo(PatientMergeRequest::class, 'patient_merge_request_id');
+        return $this->belongsTo(\App\Models\PatientMergeRequest::class, 'patient_merge_request_id');
     }
 
     public function mainPatient(): BelongsTo

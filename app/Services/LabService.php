@@ -183,6 +183,7 @@ class LabService
                 'request_number'       => LabRequest::generateRequestNumber(),
                 'visit_id'             => $visit->id,
                 'emergency_case_id'    => $data['emergency_case_id'] ?? null,
+                'emergency_session_id' => $data['emergency_session_id'] ?? null,
                 'patient_id'           => $visit->patient_id,
                 'requested_by'         => Auth::id(),
                 'department_id'        => $visit->department_id,

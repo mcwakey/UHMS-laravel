@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\DepartmentType;
+use App\Enums\ProductType;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\EmergencyBay;
@@ -11,14 +12,20 @@ use App\Models\MedicationFrequency;
 use App\Models\Patient;
 use App\Models\Product;
 use App\Models\ServiceCatalog;
+use App\Models\StockBalance;
 use App\Models\StockLocation;
 use App\Models\User;
+use App\Models\Ward;
 use App\Services\EmergencyCaseService;
+use App\Services\EmergencySessionService;
 use Illuminate\Http\Request;
 
 class EmergencyCaseController extends Controller
 {
-    public function __construct(private EmergencyCaseService $cases) {}
+    public function __construct(
+        private EmergencyCaseService $cases,
+        private EmergencySessionService $sessions,
+    ) {}
 
     public function create(Request $request)
     {
@@ -66,12 +73,25 @@ class EmergencyCaseController extends Controller
 
     public function show(EmergencyCase $emergencyCase)
     {
+        $this->sessions->getOrCreateForCase($emergencyCase, request()->user());
+
         $emergencyCase->load([
             'patient',
-            'visit.latestInvoice.items',
-            'bay',
+            'visit.visitInsurance.insuranceProvider',
+            'visit.latestInvoice.items.creator',
+            'visit.latestInvoice.payments',
+            'bay.ward',
+            'bay.bed',
             'assignedDoctor',
             'assignedNurse',
+            'activeEmergencySession.mainDoctor',
+            'activeEmergencySession.primaryNurse',
+            'activeEmergencySession.department',
+            'activeEmergencySession.startedBy',
+            'activeEmergencySession.contributors.user',
+            'activeBayAssignment.ward',
+            'activeBayAssignment.bed',
+            'activeBayAssignment.emergencyBay',
             'triagedBy',
             'disposedBy',
             'latestVitals.recordedBy',
@@ -90,20 +110,54 @@ class EmergencyCaseController extends Controller
             'procedureRequests.department',
             'procedureRequests.requestingDoctor',
             'procedureRequests.billingItem',
-            'clinicalTasks',
+            'clinicalTasks.assignedUser',
+            'clinicalTasks.completedBy',
+            'consumableUsages.product',
+            'consumableUsages.stockLocation',
+            'consumableUsages.invoiceItem',
+            'consumableUsages.user',
         ]);
+
+        $vitalsChartData = $emergencyCase->vitals->sortBy('recorded_at')->values()->map(fn ($vital) => [
+            'label' => $vital->recorded_at?->format('d M H:i'),
+            'systolic' => $vital->blood_pressure_systolic,
+            'diastolic' => $vital->blood_pressure_diastolic,
+            'hr' => $vital->heart_rate,
+            'temp' => $vital->temperature,
+            'spo2' => $vital->spo2,
+            'rr' => $vital->respiratory_rate,
+        ])->all();
+
+        $billingGroups = $this->groupEmergencyBillingItems($emergencyCase);
+
+        $medicationProducts = $this->productsWithStock([ProductType::DRUG->value]);
+        $consumableProducts = $this->productsWithStock([
+            ProductType::CONSUMABLE->value,
+            ProductType::SURGICAL_SUPPLY->value,
+            ProductType::MEDICAL_SUPPLY->value,
+            ProductType::SUPPLY->value,
+            ProductType::GENERAL_ITEM->value,
+        ]);
+
+        $investigationDepartments = Department::acceptsRequests()->orderBy('name')->get();
+        $procedureDepartments = Department::where('type', DepartmentType::PROCEDURE->value)->where('status', 'active')->orderBy('name')->get();
 
         return view('emergency.show', [
             'case' => $emergencyCase,
-            'bays' => EmergencyBay::active()->orderBy('name')->get(),
+            'bays' => EmergencyBay::active()->with(['ward', 'bed'])->orderBy('name')->get(),
+            'wards' => Ward::active()->with(['beds' => fn ($query) => $query->orderBy('bed_number')])->orderBy('name')->get(),
             'users' => User::where('status', 'active')->orderBy('first_name')->get(),
-            'products' => Product::where('is_active', true)->orderBy('name')->limit(100)->get(),
+            'products' => $medicationProducts,
+            'consumableProducts' => $consumableProducts,
             'frequencies' => MedicationFrequency::where('is_active', true)->orderBy('code')->get(),
             'stockLocations' => StockLocation::active()->whereIn('type', ['emergency', 'ward'])->orderBy('name')->get(),
             'services' => ServiceCatalog::active()->orderBy('name')->limit(100)->get(),
-            'investigationDepartments' => Department::acceptsRequests()->orderBy('name')->get(),
-            'procedureDepartments' => Department::where('type', DepartmentType::PROCEDURE->value)->where('status', 'active')->orderBy('name')->get(),
-            'procedureServices' => ServiceCatalog::active()->where('category', 'procedure')->orderBy('name')->get(),
+            'investigationDepartments' => $investigationDepartments,
+            'investigationServices' => ServiceCatalog::active()->whereIn('department_id', $investigationDepartments->pluck('id'))->orderBy('name')->get(),
+            'procedureDepartments' => $procedureDepartments,
+            'procedureServices' => ServiceCatalog::active()->whereIn('department_id', $procedureDepartments->pluck('id'))->orderBy('name')->get(),
+            'vitalsChartData' => $vitalsChartData,
+            'billingGroups' => $billingGroups,
             'identityCandidates' => Patient::active()
                 ->where('is_temporary', false)
                 ->where('id', '!=', $emergencyCase->patient_id)
@@ -122,7 +176,63 @@ class EmergencyCaseController extends Controller
         ]);
 
         $emergencyCase->update($data);
+        $this->sessions->syncTeam($emergencyCase->fresh(['activeEmergencySession']));
 
         return back()->with('success', 'Emergency case updated.');
+    }
+
+    private function groupEmergencyBillingItems(EmergencyCase $case): array
+    {
+        $items = $case->visit?->latestInvoice?->items ?? collect();
+
+        return $items->groupBy(function ($item) {
+            return match ($item->source_type) {
+                'emergency_service' => 'Emergency Services',
+                'emergency_medication_order' => 'Emergency Medications',
+                'emergency_consumable' => 'Emergency Consumables',
+                'investigation_service', 'emergency_investigation' => 'Emergency Investigations',
+                'procedure_service', 'emergency_procedure' => 'Emergency Procedures',
+                default => str_starts_with((string) $item->source_type, 'emergency') ? 'Other Emergency Charges' : 'Visit Charges',
+            };
+        })->all();
+    }
+
+    private function productsWithStock(array $productTypes)
+    {
+        $products = Product::query()
+            ->where('is_active', true)
+            ->whereIn('product_type', $productTypes)
+            ->orderBy('name')
+            ->limit(150)
+            ->get();
+
+        $productIds = $products->pluck('id')->all();
+        $locationIdsByType = StockLocation::active()
+            ->whereIn('type', ['emergency', 'pharmacy', 'store'])
+            ->get(['id', 'type', 'is_main'])
+            ->groupBy(fn ($location) => $location->is_main ? 'main' : $location->type)
+            ->map(fn ($locations) => $locations->pluck('id')->all());
+
+        $balances = empty($productIds)
+            ? collect()
+            : StockBalance::query()
+                ->whereIn('product_id', $productIds)
+                ->selectRaw('product_id, stock_location_id, SUM(quantity_on_hand) as quantity')
+                ->groupBy('product_id', 'stock_location_id')
+                ->get()
+                ->groupBy('product_id');
+
+        return $products->map(function (Product $product) use ($balances, $locationIdsByType) {
+            $rows = $balances->get($product->id, collect());
+            $sumFor = fn (string $type): float => (float) $rows
+                ->whereIn('stock_location_id', $locationIdsByType->get($type, []))
+                ->sum('quantity');
+
+            $product->emergency_available_quantity = $sumFor('emergency');
+            $product->pharmacy_available_quantity = $sumFor('pharmacy');
+            $product->main_available_quantity = $sumFor('main') + $sumFor('store');
+
+            return $product;
+        });
     }
 }

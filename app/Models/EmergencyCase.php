@@ -67,8 +67,16 @@ class EmergencyCase extends Model
         'chief_complaint',
         'initial_condition',
         'triage_category',
+        'auto_triage_category',
+        'final_triage_category',
         'triage_score',
         'triage_notes',
+        'triage_override_reason',
+        'triage_reasons',
+        'triage_warnings',
+        'avpu',
+        'pain_score',
+        'danger_signs',
         'emergency_status',
         'assigned_doctor_id',
         'assigned_nurse_id',
@@ -85,6 +93,9 @@ class EmergencyCase extends Model
         'arrival_time' => 'datetime',
         'triaged_at' => 'datetime',
         'disposition_time' => 'datetime',
+        'triage_reasons' => 'array',
+        'triage_warnings' => 'array',
+        'danger_signs' => 'array',
     ];
 
     public function visit()
@@ -130,6 +141,39 @@ class EmergencyCase extends Model
     public function disposedBy()
     {
         return $this->belongsTo(User::class, 'disposed_by');
+    }
+
+    public function emergencySessions()
+    {
+        return $this->hasMany(EmergencySession::class);
+    }
+
+    public function activeEmergencySession()
+    {
+        return $this->hasOne(EmergencySession::class)
+            ->whereIn('status', [
+                EmergencySession::STATUS_PENDING,
+                EmergencySession::STATUS_ACTIVE,
+                EmergencySession::STATUS_OBSERVATION,
+            ])
+            ->latestOfMany();
+    }
+
+    public function contributors()
+    {
+        return $this->hasMany(EmergencySessionContributor::class);
+    }
+
+    public function bayAssignments()
+    {
+        return $this->hasMany(EmergencyBayAssignment::class)->latest('assigned_at');
+    }
+
+    public function activeBayAssignment()
+    {
+        return $this->hasOne(EmergencyBayAssignment::class)
+            ->where('status', EmergencyBayAssignment::STATUS_ACTIVE)
+            ->latestOfMany('assigned_at');
     }
 
     public function logs()
@@ -182,6 +226,11 @@ class EmergencyCase extends Model
         return $this->hasMany(ProcedureRequest::class);
     }
 
+    public function consumableUsages()
+    {
+        return $this->hasMany(ConsumableUsage::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->whereNotIn('emergency_status', [
@@ -192,7 +241,7 @@ class EmergencyCase extends Model
 
     public function getTriageBadgeClassAttribute(): string
     {
-        return match ($this->triage_category) {
+        return match ($this->final_triage_category ?: $this->triage_category) {
             self::TRIAGE_RED => 'bg-danger',
             self::TRIAGE_ORANGE => 'bg-warning text-dark',
             self::TRIAGE_YELLOW => 'bg-yellow text-dark',
@@ -205,5 +254,10 @@ class EmergencyCase extends Model
     public function getWaitingMinutesAttribute(): int
     {
         return (int) $this->arrival_time?->diffInMinutes(now());
+    }
+
+    public function getCurrentTriageCategoryAttribute(): ?string
+    {
+        return $this->final_triage_category ?: $this->triage_category;
     }
 }

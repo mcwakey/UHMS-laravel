@@ -31,6 +31,7 @@ class MedicationOrder extends Model
         'visit_id',
         'admission_id',
         'emergency_case_id',
+        'emergency_session_id',
         'patient_id',
         'medical_record_id',
         'consultation_route_id',
@@ -78,6 +79,11 @@ class MedicationOrder extends Model
     public function emergencyCase()
     {
         return $this->belongsTo(EmergencyCase::class);
+    }
+
+    public function emergencySession()
+    {
+        return $this->belongsTo(EmergencySession::class);
     }
 
     public function patient()

@@ -21,6 +21,7 @@ class EmergencyNote extends Model
 
     protected $fillable = [
         'emergency_case_id',
+        'emergency_session_id',
         'visit_id',
         'patient_id',
         'note_type',
@@ -32,6 +33,11 @@ class EmergencyNote extends Model
     public function emergencyCase()
     {
         return $this->belongsTo(EmergencyCase::class);
+    }
+
+    public function emergencySession()
+    {
+        return $this->belongsTo(EmergencySession::class);
     }
 
     public function visit()

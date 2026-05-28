@@ -9,7 +9,6 @@ use App\Enums\UserStatus;
 use App\Enums\VisitStatus;
 use App\Models\Department;
 use App\Models\InvoiceItem;
-use App\Models\Patient;
 use App\Models\ServiceCatalog;
 use App\Models\Triage;
 use App\Models\User;

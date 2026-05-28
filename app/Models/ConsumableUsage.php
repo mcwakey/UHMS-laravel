@@ -8,6 +8,8 @@ class ConsumableUsage extends Model
 {
     protected $fillable = [
         'visit_id',
+        'emergency_case_id',
+        'emergency_session_id',
         'patient_id',
         'service_id',
         'source_type',
@@ -35,6 +37,16 @@ class ConsumableUsage extends Model
     public function visit()
     {
         return $this->belongsTo(Visit::class);
+    }
+
+    public function emergencyCase()
+    {
+        return $this->belongsTo(EmergencyCase::class);
+    }
+
+    public function emergencySession()
+    {
+        return $this->belongsTo(EmergencySession::class);
     }
 
     public function patient()

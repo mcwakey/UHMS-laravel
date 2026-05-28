@@ -13,6 +13,7 @@ class EmergencyDispositionService
     public function __construct(
         private EmergencyBayService $bays,
         private EmergencyTimelineService $timeline,
+        private EmergencySessionService $sessions,
     ) {}
 
     public function dispose(EmergencyCase $case, array $data, User $user): EmergencyCase
@@ -30,6 +31,7 @@ class EmergencyDispositionService
 
             $this->applyVisitDisposition($case->fresh('visit.patient'), $data, $user);
             $this->bays->release($case->fresh('bay'));
+            $this->completeSession($case->fresh('activeEmergencySession'), $user);
             $this->timeline->record($case->fresh(), 'DISPOSITION', 'Emergency case disposed', $disposition, $case, $user);
 
             return $case->fresh(['visit', 'patient', 'bay', 'disposedBy']);
@@ -80,5 +82,20 @@ class EmergencyDispositionService
             'status' => VisitStatus::COMPLETED->value,
             'checked_out_at' => now(),
         ]);
+    }
+
+    private function completeSession(EmergencyCase $case, User $user): void
+    {
+        $session = $case->activeEmergencySession;
+        if (! $session) {
+            return;
+        }
+
+        $session->update([
+            'status' => \App\Models\EmergencySession::STATUS_COMPLETED,
+            'ended_at' => now(),
+            'ended_by' => $user->id,
+        ]);
+        $this->sessions->recordContribution($case, $user, 'Disposition');
     }
 }

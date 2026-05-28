@@ -73,7 +73,7 @@ class PatientMergeRequest extends Model
 
     public function logs(): HasMany
     {
-        return $this->hasMany(PatientMergeLog::class, 'patient_merge_request_id')->latest('occurred_at');
+        return $this->hasMany(\App\Models\PatientMergeLog::class, 'patient_merge_request_id')->latest('occurred_at');
     }
 
     public function getCanExecuteAttribute(): bool

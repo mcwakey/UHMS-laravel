@@ -53,6 +53,7 @@ class ProcedureRequestService
                 'request_number'     => ProcedureRequest::generateNumber(),
                 'visit_id'           => $visit->id,
                 'emergency_case_id'  => $data['emergency_case_id'] ?? null,
+                'emergency_session_id' => $data['emergency_session_id'] ?? null,
                 'patient_id'         => $visit->patient_id,
                 'requested_by'       => $doctor->id,
                 'department_id'      => $department->id,

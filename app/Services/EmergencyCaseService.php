@@ -19,6 +19,7 @@ class EmergencyCaseService
         private EmergencyTimelineService $timeline,
         private EmergencyBayService $bays,
         private PatientMergeGuard $patientMergeGuard,
+        private EmergencySessionService $sessions,
     ) {}
 
     public function create(array $data, User $user): EmergencyCase
@@ -64,12 +65,13 @@ class EmergencyCaseService
             ]);
 
             $this->timeline->record($case, 'ARRIVAL', 'Emergency case created', $case->chief_complaint, $case, $user);
+            $this->sessions->getOrCreateForCase($case, $user);
 
             if (! empty($data['emergency_bay_id'])) {
                 $this->bays->assign($case, (int) $data['emergency_bay_id'], $user, true);
             }
 
-            return $case->fresh(['patient', 'visit', 'bay', 'assignedDoctor', 'assignedNurse']);
+            return $case->fresh(['patient', 'visit', 'bay', 'assignedDoctor', 'assignedNurse', 'activeEmergencySession']);
         });
     }
 

@@ -14,6 +14,7 @@ class ClinicalTaskService
             'visit_id' => $data['visit_id'] ?? null,
             'admission_id' => $data['admission_id'] ?? null,
             'emergency_case_id' => $data['emergency_case_id'] ?? null,
+            'emergency_session_id' => $data['emergency_session_id'] ?? null,
             'patient_id' => $data['patient_id'] ?? null,
             'task_type' => $data['task_type'] ?? ClinicalTask::TYPE_OTHER,
             'title' => $data['title'],
@@ -45,6 +46,7 @@ class ClinicalTaskService
                 'visit_id' => $schedule->visit_id,
                 'admission_id' => $schedule->admission_id,
                 'emergency_case_id' => $schedule->emergency_case_id,
+                'emergency_session_id' => $schedule->emergency_session_id,
                 'patient_id' => $schedule->patient_id,
                 'title' => 'Administer '.$order->display_name,
                 'description' => trim(sprintf(

@@ -38,10 +38,19 @@ class EmergencyBayController extends Controller
     {
         $data = $request->validate([
             'emergency_bay_id' => ['required', 'exists:emergency_bays,id'],
+            'ward_id' => ['nullable', 'exists:wards,id'],
+            'bed_id' => ['nullable', 'exists:beds,id'],
             'override' => ['nullable', 'boolean'],
         ]);
 
-        $this->bays->assign($emergencyCase, (int) $data['emergency_bay_id'], $request->user(), (bool) ($data['override'] ?? false));
+        $this->bays->assign(
+            $emergencyCase,
+            (int) $data['emergency_bay_id'],
+            $request->user(),
+            (bool) ($data['override'] ?? false),
+            isset($data['ward_id']) ? (int) $data['ward_id'] : null,
+            isset($data['bed_id']) ? (int) $data['bed_id'] : null,
+        );
 
         return back()->with('success', 'Emergency bay assigned.');
     }

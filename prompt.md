@@ -1,1544 +1,1353 @@
-````text
+```text
 You are a senior Laravel + Inertia/Vue architect working on UHMS — Ultimate Hospital Management System.
 
-We need to implement a safe Patient Folder Merge system.
+We need to refine and complete the Emergency Case Management module.
 
-UHMS already has patients, visits, emergency cases, admissions, consultation records, medical records, prescriptions, medication administration/MAR, investigations, procedures, invoices, payments, claims, documents, stock usage, clinical tasks, and visit preview.
+UHMS already has OPD/Visit, Admission, Billing, Pharmacy/Product Stock, Investigations, Procedures, Consultation Sessions, Clinical Record Ownership, MAR/Medication Administration planning, Visit Preview, and Patient Merge foundations.
 
-We now need a system that allows authorized users to merge two patient folders into one without losing any records.
+Emergency must now be refined so it behaves like a proper Emergency Clinical Session, integrated with the existing UHMS mechanisms instead of becoming a parallel system.
 
-This feature must support two main cases:
+Do not rebuild the whole emergency module from scratch unless a part is missing or badly implemented.
 
-1. Emergency temporary patient folder later identified as an existing real patient.
-2. Two duplicate/parallel real patient folders that need to become one.
+First inspect the current implementation, identify gaps, preserve what works, and implement only missing/incomplete parts.
 
-The user must be able to choose which patient folder remains as the main patient folder.
-
-Do not delete patient records.
-
-Do not lose clinical, billing, emergency, admission, pharmacy, investigation, procedure, stock, MAR, claim, or document history.
-
----
-
-# 1. Core Concept
-
-Patient merge must work like this:
-
-```text
-Main Patient Folder = patient record that remains active
-Duplicate / Temporary Folder = patient record merged into the main folder
-Merged Patient Folder = locked, inactive, and redirected to the main patient
-````
-
-The duplicate patient must not be deleted.
-
-Instead:
-
-```text
-duplicate_patient.merge_status = MERGED
-duplicate_patient.merged_into_patient_id = main_patient.id
-duplicate_patient.is_active = false
-```
-
-The old patient folder must remain available for audit and redirect/search purposes.
+Do not break:
+- OPD / Visit workflow
+- Admission workflow
+- Consultation workflow
+- Billing / Invoice system
+- Pharmacy / Product stock system
+- Investigation workflow
+- Procedure workflow
+- MAR / Medication Administration system
+- Clinical Tasks / Reminders
+- Visit Preview
+- Patient Merge
+- Insurance pricing / claims foundation
 
 ---
 
-# 2. Main Objectives
+# 1. Main Objective
 
-Implement a Patient Folder Merge system that can:
+Refine Emergency Case Management so the Emergency page becomes a complete clinical workspace.
 
-1. Search and select two patient folders.
-2. Let user choose which one remains the main folder.
-3. Compare the folders side by side.
-4. Let user resolve demographic conflicts field-by-field.
-5. Preview records that will be moved.
-6. Merge all related records safely.
-7. Preserve audit logs.
-8. Lock the merged duplicate folder.
-9. Keep old patient numbers as aliases.
-10. Redirect old patient folder to the main patient.
-11. Prevent new visits/care under merged folders.
-12. Support emergency temporary patient identity confirmation.
-13. Support duplicate patient folder merge.
-14. Avoid duplicate child records where possible.
-15. Preserve all clinical and financial history.
+Emergency must support:
 
----
-
-# 3. Important Rules
-
-Do not delete the duplicate patient.
-
-Do not delete clinical records.
-
-Do not delete billing records.
-
-Do not create duplicate invoices.
-
-Do not merge without explicit confirmation.
-
-Do not allow merging a patient into themselves.
-
-Do not allow new visits under a merged patient.
-
-Do not overwrite main patient demographics automatically.
-
-Do not lose old patient number.
-
-Do not break old references.
-
-Do not merge financial records incorrectly.
-
-Do not bypass audit logging.
-
-Do not break Emergency, OPD, Admission, Billing, Pharmacy, Investigation, Procedure, MAR, Claims, Visit Preview, or Stock workflows.
+1. Automated emergency triage calculation.
+2. Emergency vitals history and graph, mirroring Admission vitals section.
+3. Medication / MAR section with proper searchable product/drug list.
+4. Automatic medication quantity calculation like consultation prescriptions.
+5. Emergency MAR integration.
+6. Investigation section refined to mirror Consultation Investigations.
+7. Procedure section refined and decoupled from Billing.
+8. Billing section refined as a financial summary/action area.
+9. Bay and Team section linked to wards/beds/bays.
+10. Emergency treated as a clinical session with medical records.
+11. Main emergency doctor, assigned nurse, and contributors.
+12. All emergency records visible in Consultation/Visit Preview where appropriate.
+13. Record ownership preserved across emergency notes, vitals, medications, investigations, procedures, and billing.
 
 ---
 
-# 4. Use Cases
+# 2. Core Concept
 
-## Case 1 — Emergency Temporary Patient Identified Later
+Emergency must be treated as a proper clinical session.
 
-Example:
+Correct model:
 
-```text
-Temporary Patient:
-TEMP-ER-2026-00012 — Unknown Male Adult
+Visit
+    ↓
+Emergency Case
+    ↓
+Emergency Session
+    ↓
+Medical Records / Vitals / MAR / Investigations / Procedures / Billing / Team / Disposition
 
-Real Patient:
-PAT-2024-00077 — Kofi Mensah
-```
+Emergency should not be a loose page with disconnected widgets.
 
-User chooses:
-
-```text
-Main patient to keep: PAT-2024-00077
-Patient to merge: TEMP-ER-2026-00012
-```
-
-Expected result:
-
-* emergency case moves to real patient
-* visit moves to real patient
-* vitals move to real patient
-* notes move to real patient
-* medication/MAR records move to real patient
-* investigations move to real patient
-* procedures move to real patient
-* invoices/payments move to real patient
-* claims move to real patient
-* documents move to real patient
-* temporary patient is marked MERGED
-* old temporary number becomes alias
-* opening temporary folder redirects to main patient
-
-## Case 2 — Two Duplicate Real Patient Folders
-
-Example:
-
-```text
-PAT-2025-00021 — Ama Mensah
-PAT-2026-00009 — Ama Mensah
-```
-
-User chooses which one remains main.
-
-Expected result:
-
-* all visits from duplicate move to main
-* admissions move to main
-* emergency cases move to main
-* clinical records move to main
-* invoices/payments move to main
-* insurances and next of kin are merged intelligently
-* duplicate patient is marked MERGED
-* old patient number becomes alias
-* search by old number still finds/redirects to main patient
+Emergency must be integrated into the same patient, visit, invoice, medical record, stock, medication, investigation, procedure, and preview architecture.
 
 ---
 
-# 5. Database Changes — Patients
+# 3. Emergency Page Recommended Sections
 
-Update `patients` table if missing:
+The Emergency Case Detail page should have these sections:
 
-```text
-merge_status nullable/default ACTIVE
-merged_into_patient_id nullable foreign key to patients.id
-merged_at nullable
-merged_by nullable foreign key to users.id
-is_temporary boolean default false
-temporary_reason nullable
-identity_confirmed_at nullable
-identity_confirmed_by nullable foreign key to users.id
-is_active boolean default true
-```
+1. Emergency Header / Patient Summary
+2. Triage & Vitals
+3. Bay / Bed & Team
+4. Emergency Clinical Notes / Assessment
+5. Medication / MAR
+6. Investigations
+7. Procedures
+8. Consumables
+9. Billing
+10. Tasks / Monitoring
+11. Disposition
+12. Emergency Timeline
 
-Suggested statuses:
+The top header should always clearly show:
 
-```text
-ACTIVE
-TEMPORARY
-MERGED
-ARCHIVED
-```
-
-Rules:
-
-* ACTIVE patients can receive new visits.
-* TEMPORARY patients can receive emergency care.
-* MERGED patients cannot receive new visits.
-* MERGED patients should redirect to main patient.
-* ARCHIVED patients are inactive but not necessarily merged.
+- Patient
+- Emergency number
+- Visit number
+- Triage category
+- Current emergency status
+- Bay / bed
+- Main doctor
+- Primary nurse
+- Contributors
+- Time since arrival
+- Critical alerts
+- Insurance/payment context if useful
 
 ---
 
-# 6. Patient Merge Requests Table
+# 4. Emergency Session Model
 
-Create:
+Create or update an Emergency Session concept.
 
-```text
-patient_merge_requests
+If an existing consultation/session mechanism can support this, reuse it.
+
+Recommended table if missing:
+
+emergency_sessions
 - id
-- main_patient_id
-- duplicate_patient_id
+- emergency_case_id
+- visit_id
+- patient_id
+- department_id
+- medical_record_id nullable
+- main_doctor_id nullable
+- primary_nurse_id nullable
 - status
-- reason
-- requested_by
-- reviewed_by nullable
-- approved_by nullable
-- completed_by nullable
-- completed_at nullable
-- field_resolution json nullable
-- merge_summary json nullable
-- error_message nullable
+- started_at nullable
+- ended_at nullable
+- started_by nullable
+- ended_by nullable
+- notes nullable
 - created_at
 - updated_at
-```
 
 Statuses:
 
-```text
-DRAFT
-PENDING_REVIEW
-APPROVED
-REJECTED
+PENDING
+ACTIVE
+OBSERVATION
 COMPLETED
-FAILED
 CANCELLED
-```
-
-For first version, Super Admin / authorized Records Officer may execute immediately.
-
-If approval workflow already exists, use it.
-
----
-
-# 7. Patient Merge Logs Table
-
-Create:
-
-```text
-patient_merge_logs
-- id
-- patient_merge_request_id
-- main_patient_id
-- duplicate_patient_id
-- record_type
-- record_id
-- action
-- old_patient_id nullable
-- new_patient_id nullable
-- details json nullable
-- performed_by
-- created_at
-```
-
-Actions may include:
-
-```text
-REASSIGNED
-SKIPPED_DUPLICATE
-MERGED_CHILD_RECORD
-ALIAS_CREATED
-PATIENT_MARKED_MERGED
-FIELD_UPDATED
-ERROR
-```
-
-This log must make the merge auditable.
-
----
-
-# 8. Patient Aliases Table
-
-Create:
-
-```text
-patient_aliases
-- id
-- patient_id
-- alias_type
-- alias_value
-- source_patient_id nullable
-- created_by nullable
-- created_at
-- updated_at
-```
-
-Alias types:
-
-```text
-OLD_PATIENT_NUMBER
-OLD_TEMPORARY_NUMBER
-OLD_NAME
-OLD_PHONE
-OLD_GHANA_CARD
-OLD_INSURANCE_NUMBER
-```
-
-Examples:
-
-```text
-OLD_PATIENT_NUMBER = TEMP-ER-2026-00012
-OLD_PATIENT_NUMBER = PAT-2026-00009
-OLD_NAME = Unknown Male Adult
-```
-
-Search should include aliases and redirect to the main patient.
-
----
-
-# 9. Merge Workflow
-
-Implement this workflow:
-
-```text
-Search patients
-↓
-Select main patient to keep
-↓
-Select duplicate patient to merge
-↓
-Compare folders side by side
-↓
-Choose demographic field resolution
-↓
-Preview merge impact
-↓
-Confirm merge
-↓
-System performs transaction
-↓
-System logs all moved records
-↓
-Duplicate patient becomes MERGED
-↓
-Old patient number becomes alias
-↓
-Opening duplicate folder redirects to main folder
-```
-
----
-
-# 10. Merge UI Pages
-
-Create patient merge pages.
-
-Suggested menu:
-
-```text
-Patients
-├── Patient Merge
-├── Merge Requests
-├── Possible Duplicates
-└── Merge Logs
-```
-
-Pages:
-
-```text
-PatientMerge/Search.vue
-PatientMerge/Compare.vue
-PatientMerge/Preview.vue
-PatientMerge/Show.vue
-PatientMerge/Logs.vue
-```
-
-Or Blade equivalents depending project stack.
-
----
-
-# 11. Patient Search / Selection UI
-
-The user must be able to search patient folders by:
-
-```text
-patient number
-temporary patient number
-name
-phone number
-Ghana Card number
-insurance membership number
-next of kin name
-next of kin phone
-old patient alias
-```
-
-The UI must clearly distinguish:
-
-```text
-Main patient to keep
-Duplicate patient to merge
-```
-
-Do not allow same patient to be selected for both.
-
-If selected patient is already merged, show warning and resolve to the final main patient.
-
----
-
-# 12. Side-by-Side Comparison UI
-
-Show both patient folders side by side.
-
-Fields:
-
-```text
-Patient number
-Name
-Gender
-Date of birth / age
-Phone
-Ghana Card
-Address
-Occupation
-Marital status
-Religion
-Insurance memberships
-Next of kin
-Visits count
-Admissions count
-Emergency cases count
-Invoices count
-Payments count
-Claims count
-Documents count
-Last visit date
-Created date
-Temporary status
-Merged status
-```
-
-Clearly mark:
-
-```text
-MAIN TO KEEP
-DUPLICATE TO MERGE
-```
-
----
-
-# 13. Field Resolution UI
-
-For demographics, the user should decide which value to keep.
-
-Default:
-
-```text
-Main patient value wins
-```
-
-But user can choose duplicate value for selected fields.
-
-Example:
-
-```text
-Name: keep main
-Phone: use duplicate
-Ghana Card: use duplicate
-Address: keep main
-Occupation: use duplicate
-Religion: keep main
-Marital status: keep main
-```
-
-Store decision in:
-
-```text
-patient_merge_requests.field_resolution
-```
 
 Rules:
 
-* Do not overwrite main fields without user selection.
-* Show empty vs non-empty clearly.
-* If main field is empty and duplicate has value, suggest using duplicate value.
-* If values conflict, highlight conflict.
-* If values are identical, mark as matching.
+- One active emergency session should exist per active emergency case.
+- Emergency records should link to emergency_session_id where possible.
+- Emergency records should also link to visit_id, patient_id, and emergency_case_id.
+- Emergency session should be visible in Visit Preview.
+- Emergency session should be visible in patient medical history/consultation history where appropriate.
 
 ---
 
-# 14. Merge Impact Preview
+# 5. Emergency Contributors / Team
 
-Before final merge, show record counts to be moved.
+Emergency must support a team, not only one assigned doctor.
 
-Example:
+Distinguish:
 
-```text
-Records to move:
-- Visits: 3
-- Emergency Cases: 1
-- Admissions: 1
-- Medical Records: 5
-- Prescriptions: 12
-- Medication Orders: 4
-- Medication Administration Schedules: 20
-- Medication Administrations: 8
-- Investigations: 6
-- Procedures: 2
-- Invoices: 3
-- Invoice Items: 22
-- Payments: 4
-- Claims: 1
-- Documents: 7
-- Patient Insurances: 2
-- Next of Kin: 1
-```
+- Main emergency doctor
+- Primary nurse
+- Contributing doctors
+- Contributing nurses
+- Other contributors
 
-Also show warnings:
+Do not overwrite the main doctor when another doctor adds input.
 
-```text
-Duplicate insurance membership found.
-Both patients have active visits.
-Duplicate phone number conflict.
-Merged patient will be locked after merge.
-```
+Create or reuse contributor table.
 
-User must confirm:
+Recommended table if missing:
 
-```text
-I understand this merge will move records and lock the duplicate patient folder.
-```
+emergency_session_contributors
+- id
+- emergency_session_id
+- emergency_case_id
+- user_id
+- role nullable
+- first_contributed_at
+- last_contributed_at
+- created_at
+- updated_at
+
+Rules:
+
+- Every emergency record keeps its own creator/owner.
+- A contributor is automatically added when a non-main user creates a record.
+- Main doctor remains main doctor until explicitly changed.
+- Primary nurse remains primary nurse until explicitly changed.
+- Contributors can view but cannot edit other users’ records unless authorized.
+- Emergency page must show main doctor, primary nurse, and contributors.
 
 ---
 
-# 15. Records That Must Be Reassigned
+# 6. Emergency Record Ownership
 
-The merge must update patient references across the system.
+All emergency records must store and display their creator.
 
-Inspect actual table names first, then update all relevant patient foreign keys.
+This applies to:
 
-Likely records include:
+- triage
+- vitals
+- emergency notes
+- doctor assessments
+- nursing notes
+- medications
+- MAR administrations
+- investigations
+- procedures
+- consumable usage
+- tasks
+- disposition notes
 
-```text
-visits
-emergency_cases
-admissions
-visit_consultation_routes
-medical_records
-complaints
-history_of_presenting_complaints
-examinations
-diagnoses
-clinical_notes
-prescriptions
-prescription_items
-medication_orders
-medication_administration_schedules
-medication_administrations
-clinical_tasks
-vitals
-triage_records
-investigation_requests
-investigation_request_items
-investigation_results
-procedure_requests
-procedure_records
-theatre_records
-invoices
-invoice_items
-payments
-claims
-claim_items
-claim_payments
-patient_insurances
-patient_next_of_kins
-patient_documents
-appointments
-follow_ups
-department_consumable_usages
-stock_movements if patient_id exists
-attachments/files with patient_id
-audit/activity logs where patient_id exists
-```
+Each record should have:
 
-Do not assume table names. Search the codebase/migrations for `patient_id`.
+created_by
+updated_by nullable
+created_at
+updated_at
+
+Do not display every record as if it was created by the main doctor.
+
+Preserve existing ownership logic if already implemented.
 
 ---
 
-# 16. PatientMergeService
+# 7. Automated Emergency Triage Calculation
 
-Create service:
+Emergency triage should be automated.
 
-```text
-PatientMergeService
-```
+In the Triage section, the user records vitals and danger signs, and the system automatically suggests a triage category.
+
+The user may override the suggested category, but override must be logged with reason.
+
+Triage should consider:
+
+- temperature
+- pulse
+- respiratory rate
+- systolic BP
+- diastolic BP
+- SpO2
+- AVPU / consciousness level
+- pain score
+- danger signs
+- trauma flag
+- bleeding flag
+- seizure flag
+- respiratory distress
+- age group if available
+- pregnancy if available
+- shock indicators if available
+
+Triage categories:
+
+RED = Immediate / Resuscitation
+ORANGE = Very urgent
+YELLOW = Urgent
+GREEN = Less urgent
+BLACK = Dead on arrival / expectant
+
+Target times:
+
+RED = immediately
+ORANGE = within 10 minutes
+YELLOW = within 30 minutes
+GREEN = within 60 minutes
+BLACK = special handling
+
+Store:
+
+auto_triage_category
+final_triage_category
+triage_score
+override_reason nullable
+triaged_by
+triaged_at
+
+If emergency_cases already has triage_category, preserve it but add auto/final logic as needed.
+
+---
+
+# 8. Emergency Triage Service
+
+Create or update:
+
+EmergencyTriageScoringService
 
 Required methods:
 
-```php
-public function preview(Patient $mainPatient, Patient $duplicatePatient): array;
+calculateFromVitals(array $vitals, array $flags = []): EmergencyTriageResult
 
-public function merge(
-    Patient $mainPatient,
-    Patient $duplicatePatient,
-    User $user,
-    array $fieldResolution = [],
-    ?string $reason = null
-): PatientMergeRequest;
-```
+suggestCategory(EmergencyCase $case): EmergencyTriageResult
 
-The merge method must:
+Return structured result:
 
-1. Validate patients.
-2. Start database transaction.
-3. Apply selected demographic field resolution.
-4. Reassign child records from duplicate to main.
-5. Merge unique patient insurances.
-6. Merge unique next of kin.
-7. Create aliases for old patient number/name/identifiers.
-8. Mark duplicate patient as MERGED.
-9. Log every major action.
-10. Commit transaction.
-11. Return completed merge request.
-
-If failure occurs:
-
-* rollback transaction
-* mark request FAILED if already created
-* save error message
-* log error
-* do not leave partial merge
-
----
-
-# 17. PatientMergePreviewService
-
-Create service:
-
-```text
-PatientMergePreviewService
-```
-
-It should return:
-
-```text
-main patient details
-duplicate patient details
-field conflicts
-matching fields
-empty-field suggestions
-record counts by table/module
-warnings
-blocking issues
-```
-
-Blocking issues may include:
-
-```text
-same patient selected
-main patient is merged into another patient
-duplicate patient already merged into another active patient
-patients belong to different facilities if multi-facility restrictions apply
-user lacks permission
-```
-
----
-
-# 18. Reassignment Strategy
-
-Use generic helper for simple tables:
-
-```php
-DB::table($table)
-    ->where('patient_id', $duplicatePatient->id)
-    ->update(['patient_id' => $mainPatient->id]);
-```
-
-But for sensitive records, handle carefully:
-
-```text
-patient_insurances
-next_of_kin
-claims
-payments
-active visits
-temporary patient identity
-```
-
-Use model/service-level logic where business rules are needed.
-
-Do not update blindly if a table needs deduplication.
-
----
-
-# 19. Patient Insurance Merge Rules
-
-Merge patient insurances carefully.
-
-If duplicate patient has insurance records:
-
-* move unique insurance records to main patient
-* avoid duplicates
-
-Duplicate definition:
-
-```text
-same insurance_provider_id
-same membership_number
-same policy_number if applicable
-same active period if applicable
-```
-
-If same insurance already exists on main:
-
-```text
-do not create duplicate
-mark duplicate insurance as merged/archived if field exists
-or log skipped duplicate
-```
-
-If duplicate insurance has useful data missing on main, consider updating main insurance only if safe.
-
-Always log action.
-
----
-
-# 20. Next of Kin Merge Rules
-
-Merge next of kin carefully.
-
-Duplicate definition:
-
-```text
-same name + same phone
-or same phone
-```
+[
+    'score' => 0,
+    'category' => 'RED',
+    'reasons' => [],
+    'warnings' => [],
+]
 
 Rules:
 
-* move unique next of kin to main patient
-* skip duplicate next of kin
-* log skipped duplicates
-* do not delete skipped records unless safe; archive/mark merged if available
-
----
-
-# 21. Documents / Attachments Merge Rules
-
-All documents/files linked to duplicate patient must move to main patient.
-
-Rules:
-
-* preserve file paths
-* preserve uploaded_by
-* preserve created_at
-* update patient_id
-* log action
-* do not delete files
-
-If document title conflicts, keep both.
-
----
-
-# 22. Invoice / Payment / Claim Merge Rules
-
-Financial records must be preserved.
-
-Move:
-
-```text
-invoices
-invoice_items
-payments
-claims
-claim_items
-claim_payments
-```
-
-Rules:
-
-* do not recalculate totals
-* do not duplicate invoice numbers
-* do not merge two invoices into one automatically
-* each invoice remains exactly as it was but linked to main patient
-* claim histories remain unchanged except patient_id
-* payment histories remain unchanged except patient_id
-* audit logs must show reassignment
-
-If there is one visit invoice architecture, preserve visit-invoice relationship.
-
----
-
-# 23. Clinical Record Merge Rules
-
-Move all clinical records to main patient.
-
-Rules:
-
-* preserve visit_id
-* preserve medical_record_id
-* preserve consultation_route_id
-* preserve created_by
-* preserve doctor ownership
-* preserve timestamps
-* preserve source patterns
-* preserve audit logs
-* do not rewrite clinical content
-* do not merge separate medical records into one unless they belong to the same visit/session and existing workflow requires it
-
-Main rule:
-
-```text
-Reassign patient_id. Preserve clinical structure.
-```
-
----
-
-# 24. Emergency Temporary Patient Identity Confirmation
-
-Add a quick merge path from Emergency Case Detail page.
-
-Button:
-
-```text
-Confirm Identity / Merge Temporary Patient
-```
-
-Workflow:
-
-```text
-Open emergency case
-↓
-Search real patient
-↓
-Select real patient as main
-↓
-Preview merge impact
-↓
-Confirm merge
-↓
-Temporary patient merges into real patient
-↓
-Emergency case now belongs to real patient
-```
-
-After merge:
-
-```text
-temporary_patient.identity_confirmed_at = now
-temporary_patient.identity_confirmed_by = user
-temporary_patient.merge_status = MERGED
-temporary_patient.merged_into_patient_id = real_patient.id
-```
-
-On the emergency case page, show:
-
-```text
-Identity confirmed: linked to PAT-2024-00077 — Kofi Mensah
-```
-
----
-
-# 25. Duplicate Patient Merge Path
-
-Add a general path from Patient module.
-
-Button:
-
-```text
-Merge Patient Folder
-```
-
-or
-
-```text
-Mark as Duplicate / Merge
-```
-
-Workflow:
-
-```text
-Open patient folder
-↓
-Select another patient to merge with
-↓
-Choose which folder remains main
-↓
-Compare and resolve fields
-↓
-Preview
-↓
-Confirm merge
-```
-
----
-
-# 26. Redirect Behavior for Merged Patients
-
-When opening a merged patient folder:
-
-Show a clear page/message:
-
-```text
-This patient folder has been merged into:
-PAT-2024-00077 — Kofi Mensah
-
-Merged on: 27 May 2026
-Merged by: Records Officer
-Reason: Temporary emergency identity confirmed
-
-[Open Main Patient Folder]
-[View Merge Log]
-```
-
-Do not allow:
-
-```text
-new visit
-new admission
-new emergency case
-new invoice
-new prescription
-new claim
-new document upload
-```
-
-under merged patient.
-
-Search results may show merged folder but must clearly mark:
-
-```text
-MERGED → Open main folder
-```
-
----
-
-# 27. Patient Search Alias Support
-
-Update patient search to include aliases.
-
-Searching old patient number should find main patient.
+- Keep calculation configurable where possible.
+- Do not hardcode everything in Vue.
+- Allow future hospital-specific triage rules.
+- If values are missing, return warnings instead of crashing.
+- Display reasons behind suggested category.
 
 Example:
 
-```text
-Search: TEMP-ER-2026-00012
-Result: PAT-2024-00077 — Kofi Mensah
-Alias match: OLD_TEMPORARY_NUMBER TEMP-ER-2026-00012
-```
-
-Searching old duplicate patient number should also work.
-
-Do not make old identifiers disappear.
+Suggested Category: RED
+Reasons:
+- SpO2 below critical threshold
+- Altered consciousness
+- Respiratory distress
 
 ---
 
-# 28. Prevent New Records Under Merged Patient
+# 9. Emergency Triage & Vitals Section
 
-Add validation/guard wherever new patient-related records are created.
+The Emergency Triage section should include vitals history and graph, mirroring the Admission vitals section if possible.
 
-If patient is MERGED:
+Inspect the Admission view page vitals section and reuse/mirror its UI and logic.
 
-```text
-throw validation error:
-This patient folder has been merged into PAT-xxxx. Please use the main patient folder.
-```
+Emergency Triage/Vitals section should show:
 
-Apply to:
+- latest vitals cards
+- vitals history table
+- vitals trend graph
+- critical value indicators
+- recorded by
+- recorded at
+- triage score/category
+- auto-calculated category
+- final category
+- override reason if any
 
-```text
-new visit
-new emergency case
-new admission
-new invoice
-new appointment
-new prescription
-new investigation
-new procedure
-new document
-new claim
-```
+Vitals graph should include common vital trends:
 
-Use a reusable guard:
+- temperature
+- pulse
+- respiratory rate
+- blood pressure
+- SpO2
+- pain score if available
 
-```text
-PatientMergeGuard
-```
+Do not duplicate vitals logic if an existing vitals component/service exists.
 
-or method:
-
-```php
-$patient->assertCanReceiveNewRecords();
-```
+Extend existing vitals system to support emergency_case_id and emergency_session_id if needed.
 
 ---
 
-# 29. Patient Model Relationships
+# 10. Emergency Vitals Monitoring Tasks
 
-Add relationships:
+If Clinical Tasks/Reminders exist, use them for emergency monitoring.
 
-```php
-public function mergedInto()
-public function mergedPatients()
-public function aliases()
-public function mergeRequestsAsMain()
-public function mergeRequestsAsDuplicate()
-```
+Example rules:
 
-Useful accessors:
+RED case → vitals every 15 minutes
+ORANGE case → vitals every 30 minutes
+YELLOW case → vitals every 60 minutes
 
-```php
-public function isMerged(): bool
-public function getFinalPatient(): Patient
-```
+Create monitoring tasks where appropriate.
 
-`getFinalPatient()` should follow chain safely if a merged patient points to another merged patient.
-
-Prevent infinite loops.
+Do not force this if Clinical Tasks are not fully ready, but prepare integration points.
 
 ---
 
-# 30. Merge Chain Handling
+# 11. Medication / MAR Section Refinement
 
-If patient A was merged into B, and later B is merged into C:
+The current Emergency Medication/MAR section is limited by a small/static drug list and cannot search properly.
 
-The system should resolve A → C.
+Refine it.
 
-Options:
+The medication product search must use the unified Products catalogue.
 
-1. Update A.merged_into_patient_id to C during second merge.
-2. Keep A → B → C but `getFinalPatient()` resolves C.
+Product/drug source:
 
-Preferred:
+products
 
-```text
-Update old merged children to point to final main patient.
-```
+Do not use a separate drug stock or static list.
 
-This keeps redirect simple.
+The medication search should support:
 
----
+- product name
+- generic name if available
+- brand name if available
+- SKU/code if available
+- barcode if available
+- category
+- department availability
 
-# 31. Approval Workflow
+The list should show:
 
-If the project supports approvals, implement:
-
-```text
-Draft merge request
-↓
-Pending review
-↓
-Approved
-↓
-Executed
-```
-
-If not, implement direct merge for users with:
-
-```text
-patients.merge.execute
-```
-
-For first version:
-
-* Super Admin can execute immediately.
-* Records Officer may request merge.
-* Admin may approve.
-
-Do not overcomplicate if approval infrastructure is missing.
+- product/drug name
+- strength if available
+- form if available
+- emergency available quantity
+- pharmacy available quantity if useful
+- main stock quantity
+- stock status
+- price/insurance price if billable
 
 ---
 
-# 32. Duplicate Detection Helper
+# 12. Medication Quantity Automation
 
-Prepare or implement duplicate suggestions.
+Mirror the consultation prescription quantity calculation behavior.
 
-Possible matching criteria:
+Medication entry should include:
 
-```text
-same Ghana Card number
-same phone number
-same insurance membership number
-same next of kin phone
-same name + similar date of birth
-similar name + same gender + same phone
-```
+- drug/product
+- dose
+- dose unit
+- route
+- frequency
+- duration value
+- duration unit
+- start time
+- expected doses
+- calculated quantity
+- instructions
+- STAT / PRN / SOS indicator
 
-For first implementation, manual search is enough.
+Example:
 
-But if easy, create:
+Ceftriaxone 1g IV BD for 5 days
+BD x 5 days = 10 doses
+Calculated quantity = 10
 
-```text
-Possible Duplicate Patients
-```
+If user manually changes quantity, show warning:
 
-with match reason.
+BD for 5 days usually requires 10 doses. You entered 8.
 
-Do not auto-merge duplicates.
+Do not block unless hospital policy requires blocking.
 
-Only suggest.
-
----
-
-# 33. Permissions
-
-Add permissions:
-
-```text
-patients.merge.view
-patients.merge.create
-patients.merge.preview
-patients.merge.approve
-patients.merge.execute
-patients.merge.cancel
-patients.merge.view_logs
-patients.merge.confirm_identity
-patients.merge.suggest_duplicates
-```
-
-Suggested roles:
-
-```text
-Super Admin
-Hospital Admin
-Records Officer
-Emergency Supervisor
-```
-
-Doctors and nurses should not merge folders by default.
-
-They may have permission to flag possible duplicate only if implemented.
+Use the same frequency table/logic as MAR/consultation prescription if available.
 
 ---
 
-# 34. Routes / Controllers
+# 13. Emergency Medication Flow
+
+Emergency medication should support:
+
+- STAT medication
+- PRN/SOS medication
+- scheduled medication
+- immediate administration
+- pharmacy dispensing
+- emergency stock administration
+- billing before/after depending existing workflow
+- MAR chart
+- clinical tasks/reminders
+
+Rules:
+
+- If medication is administered from Emergency stock, create stock OUT movement from Emergency stock once.
+- If medication is pharmacy-dispensed to patient, MAR administration must not deduct stock again.
+- Do not deduct stock at prescription/order stage.
+- Do not deduct stock twice.
+- Use existing Medication Administration / MAR services where available.
+- Use existing Product Stock Movement system.
+
+---
+
+# 14. Emergency MAR Integration
+
+Emergency MAR should be accessible from:
+
+- Emergency Case Detail page
+- Emergency Board
+- Visit Preview medication section
+
+Medication section should show:
+
+- active medication orders
+- due now
+- overdue
+- upcoming
+- administered today
+- PRN/SOS
+- MAR Chart button
+
+Actions:
+
+- prescribe/order
+- administer STAT
+- administer PRN/SOS
+- open MAR
+- view administration details
+- hold/stop medication if authorized
+
+---
+
+# 15. Emergency Investigations Section Refinement
+
+The Emergency Investigations section should mirror the Consultation Investigations section.
+
+Inspect the Consultation Investigations implementation and reuse/mirror its behavior where possible.
+
+Emergency Investigations should allow:
+
+- select investigation department
+- load services under selected department
+- select one or more services
+- mark priority: EMERGENCY / URGENT / ROUTINE
+- add clinical reason
+- submit request
+- group requested investigations by department
+- show requester/owner
+- show status
+- show result
+- show verified result
+- show billing status if applicable
+
+Rules:
+
+- Lab is just one investigation department.
+- Use existing Investigation workflow.
+- Do not create parallel emergency investigation tables unless necessary.
+- Add emergency_case_id and priority fields if missing.
+- Emergency requests must be visible as urgent to investigation departments.
+- Result should appear on Emergency Case Detail and Visit Preview.
+- Do not bypass BillingService.
+
+Expected display:
+
+Laboratory
+    Dr. Kofi Mensah
+        FBC — Emergency priority — Pending
+        Malaria RDT — Result verified
+
+X-Ray
+    Dr. Ama Boateng
+        Chest X-Ray — Accepted
+
+---
+
+# 16. Emergency Investigation Data Fields
+
+If missing, add to investigation request tables or equivalent:
+
+emergency_case_id nullable
+emergency_session_id nullable
+is_emergency boolean default false
+priority nullable
+
+Priority values:
+
+EMERGENCY
+URGENT
+ROUTINE
+
+Use existing priority/status fields if already present.
+
+---
+
+# 17. Emergency Procedures Section Refinement
+
+Procedures and Billing must be decoupled.
+
+Procedure section is clinical.
+
+Billing section is financial.
+
+Emergency Procedures should mirror the Consultation Investigation/request style.
+
+Emergency Procedures should allow:
+
+- select procedure/theatre/minor procedure department
+- load procedure services
+- select procedure service
+- add clinical reason/notes
+- mark urgency
+- submit procedure request
+- track procedure status
+- view procedure report
+- view billing status only as metadata
+
+Types:
+
+- emergency bedside procedure
+- theatre transfer procedure
+- minor procedure room procedure
+
+Rules:
+
+- Use existing Procedure/Theatre workflow where applicable.
+- Do not bypass theatre workflow for theatre procedures.
+- Do not mix procedure UI with billing UI.
+- Bill procedures through BillingService where required.
+- Show procedure status on emergency case detail.
+- Requested procedures must show record owners/requested_by.
+- Procedure records must be visible in Visit Preview.
+
+Expected display:
+
+Procedures
+
+Minor Procedure Room
+    Dr. Kofi Mensah
+        Wound suturing — Pending
+
+Theatre
+    Dr. Ama Boateng
+        Emergency laparotomy — Requested / awaiting theatre
+
+---
+
+# 18. Emergency Procedure Data Fields
+
+If missing, add to procedure request tables or equivalent:
+
+emergency_case_id nullable
+emergency_session_id nullable
+is_emergency boolean default false
+priority nullable
+performed_at nullable
+performed_by nullable
+
+Use existing fields if already present.
+
+---
+
+# 19. Billing Section Refinement
+
+Emergency Billing must be separated from Procedures.
+
+Emergency Billing section should be a financial summary and action point.
+
+It should use the visit’s single invoice.
+
+Emergency billing should group invoice items by source:
+
+- Emergency Services
+- Emergency Medications
+- Emergency Consumables
+- Emergency Investigations
+- Emergency Procedures
+- Emergency Admission/Observation Charges
+- Other Emergency Charges
+
+Display:
+
+- item description
+- source
+- quantity
+- cash price
+- insurance price
+- selected price
+- patient payable
+- paid amount
+- balance
+- payment status
+- billing status
+- created by
+- created at
+
+Rules:
+
+- Do not create a separate emergency invoice.
+- Use one visit = one invoice.
+- Emergency care must not be blocked by unpaid bills.
+- Emergency billable items must be added through BillingService.
+- Use selected visit insurance and pricing rules.
+- Fallback to Cash and Carry where needed.
+- Prevent duplicate invoice items using source_type/source_id.
+- Do not mix clinical procedure request UI into billing UI.
+
+---
+
+# 20. Emergency Billing Actions
+
+Billing section may include actions:
+
+- View full invoice
+- Add emergency service charge if authorized
+- Add emergency consumable charge if authorized
+- Record payment
+- Print invoice
+- Show unpaid balance
+
+Do not allow billing actions to bypass BillingService.
+
+Do not allow payment requirement to block emergency care.
+
+---
+
+# 21. Bay and Team Refinement
+
+Bay and Team section should link emergency bay assignment to wards/beds/bays.
+
+Instead of independent emergency bays only, support this structure:
+
+Emergency Department
+    ↓
+Emergency Ward / Unit
+    ↓
+Beds / Bays
+
+In Bay & Team section:
+
+1. Select emergency ward/unit.
+2. Load beds/bays under that ward.
+3. Assign patient to a bed/bay.
+4. Mark bed/bay as occupied.
+5. Release or mark cleaning when patient leaves.
+
+This should mirror Admission bed assignment where possible.
+
+---
+
+# 22. Emergency Ward / Bed / Bay Data
+
+Reuse existing ward/bed system if available.
+
+If emergency_bays already exists, link it to ward/bed structure.
+
+Suggested fields if using emergency_bays:
+
+emergency_bays
+- id
+- ward_id nullable
+- bed_id nullable
+- name
+- code
+- bay_type
+- status
+- is_active
+- notes nullable
+- created_at
+- updated_at
+
+Suggested assignment table if missing:
+
+emergency_bay_assignments
+- id
+- emergency_case_id
+- emergency_session_id nullable
+- ward_id nullable
+- bed_id nullable
+- emergency_bay_id nullable
+- assigned_by
+- assigned_at
+- released_by nullable
+- released_at nullable
+- status
+- notes nullable
+- created_at
+- updated_at
+
+Assignment statuses:
+
+ACTIVE
+RELEASED
+TRANSFERRED
+CANCELLED
+
+Rules:
+
+- Only available beds/bays can be assigned unless override permission exists.
+- Occupied bed/bay cannot be assigned twice.
+- When assigned, bed/bay becomes occupied.
+- When released, bed/bay becomes available/cleaning based on workflow.
+- Do not break Admission bed system.
+
+---
+
+# 23. Emergency Team Assignment
+
+Bay & Team section should support:
+
+- assign main doctor
+- assign primary nurse
+- add contributing doctors
+- add contributing nurses
+- show contributors
+- show who is currently responsible
+
+Rules:
+
+- Changing main doctor must be explicit and logged.
+- Adding contributor does not change main doctor.
+- Contributor entries should be attached to their own creator.
+- Team assignment should appear in Emergency Timeline.
+
+---
+
+# 24. Emergency Clinical Notes / Assessment
+
+Emergency notes should be refined as part of the Emergency Session.
+
+Support note types:
+
+- Doctor Assessment
+- Nursing Note
+- Resuscitation Note
+- Observation Note
+- General Note
+
+Each note should show:
+
+- note type
+- content
+- created by
+- created at
+- updated by if edited
+- emergency session
+- edit action if permitted
+
+Do not overwrite notes from other users.
+
+Use existing consultation ownership/edit rules if available.
+
+---
+
+# 25. Emergency Records Under Consultation / Medical History
+
+Emergency session must be treated as part of the patient medical record history.
+
+After emergency records are created, they should be visible under:
+
+- Visit Preview
+- Patient clinical history
+- Consultation/medical record history where appropriate
+- Claims mirror where relevant
+
+Emergency session should show:
+
+Emergency Session
+    - Triage
+    - Vitals
+    - Doctor assessment
+    - Nursing notes
+    - Medications/MAR
+    - Investigations
+    - Procedures
+    - Billing summary
+    - Disposition
+
+Do not hide emergency records from future consultations.
+
+---
+
+# 26. Integration With Visit Preview
+
+Update Visit Preview to show emergency records chronologically.
+
+Include:
+
+- emergency case created
+- arrival details
+- triage calculated category
+- final triage category
+- vitals records and trends summary
+- bay/bed assignment
+- team assignment
+- doctor assessments
+- nursing notes
+- medications ordered/administered
+- MAR events
+- investigations requested/results
+- procedures requested/performed
+- consumables used
+- billing events
+- tasks/reminders
+- disposition
+- transfers to admission/OPD/theatre
+- death/DOA if applicable
+
+Every entry must show:
+
+- time
+- user
+- role
+- department/session
+- details
+
+---
+
+# 27. Tasks / Monitoring Section
+
+Emergency should use Clinical Tasks/Reminders for:
+
+- vitals monitoring
+- medication administration
+- doctor review
+- nursing observation
+- investigation follow-up
+- procedure preparation
+- disposition review
+- transfer preparation
+
+Emergency page should show:
+
+- due tasks
+- overdue tasks
+- completed tasks
+- task owner/assigned role
+- action buttons
+
+Do not duplicate Clinical Task engine.
+
+Add emergency_case_id/emergency_session_id to tasks if missing.
+
+---
+
+# 28. Consumables Section
+
+Emergency Consumables should use products linked to Emergency department and Emergency stock location.
+
+Consumables section should allow:
+
+- search product
+- show Emergency available quantity
+- show Main Store quantity
+- enter quantity used
+- reason/use case
+- billable/non-billable handling
+- create stock OUT from Emergency stock location
+- create invoice item if billable
+- link usage to emergency_case_id and emergency_session_id
+
+Rules:
+
+- Do not consume directly from Main Store.
+- Do not create products from Emergency.
+- Do not use separate emergency item table.
+- Use unified products and stock movements.
+- Use BillingService for billable consumables.
+
+---
+
+# 29. Emergency Stock Location
+
+Emergency stock must come from Emergency department’s linked stock location.
+
+If no emergency stock location exists, show clear error:
+
+No Emergency stock location is configured. Please configure a stock location for Emergency department.
+
+Do not silently use Main Store.
+
+---
+
+# 30. UI/UX Consistency
+
+Emergency sections should mirror existing good UI patterns:
+
+- Vitals → mirror Admission vitals section with graph/history
+- Medication/MAR → mirror Consultation prescription behavior + MAR
+- Investigations → mirror Consultation Investigations
+- Procedures → mirror Consultation request pattern
+- Billing → mirror Visit invoice/billing summary
+- Bay assignment → mirror Admission bed assignment
+- Session/contributors → mirror Consultation session ownership logic
+
+Do not invent inconsistent UI if a working component already exists.
+
+Reuse components where possible.
+
+---
+
+# 31. Data Loading / Performance
+
+Emergency Case Detail must avoid N+1 queries.
+
+Eager-load:
+
+- patient
+- visit
+- emergency case
+- emergency session
+- medical record
+- main doctor
+- primary nurse
+- contributors
+- latest vitals
+- vitals history
+- triage
+- bay/bed/ward
+- notes with creators
+- medication orders/products/frequencies
+- MAR schedules/tasks/administrations
+- investigations with departments/services/owners/results
+- procedures with departments/services/owners/status
+- consumables/products/stock movements
+- invoice/invoice items/payments
+- tasks
+- timeline logs
+
+Do not load huge historical datasets unnecessarily on the board.
+
+Emergency Board should load summary counts only.
+
+Emergency Detail can load full case details.
+
+---
+
+# 32. Backend Services to Create / Update
+
+Create or update services as needed:
+
+EmergencyCaseService
+EmergencySessionService
+EmergencyTriageScoringService
+EmergencyVitalsService
+EmergencyBoardService
+EmergencyBayAssignmentService
+EmergencyTeamService
+EmergencyNoteService
+EmergencyMedicationService
+EmergencyInvestigationService
+EmergencyProcedureService
+EmergencyBillingService
+EmergencyConsumableService
+EmergencyTimelineService
+EmergencyDispositionService
+EmergencyTaskService
+MarChartService
+MedicationScheduleService
+MedicationAdministrationService
+ClinicalTaskService
+BillingService
+StockLocationResolver
+StockMovementService
+VisitPreviewService
+
+Do not duplicate existing services. Extend existing ones where possible.
+
+---
+
+# 33. Routes / Controllers
 
 Use existing route conventions.
 
 Suggested controllers:
 
-```text
-PatientMergeController
-PatientMergePreviewController
-PatientMergeExecutionController
-PatientMergeLogController
-PatientAliasController
-PatientDuplicateSuggestionController
-EmergencyPatientIdentityController
-```
+EmergencyCaseController
+EmergencySessionController
+EmergencyTriageController
+EmergencyVitalsController
+EmergencyBayTeamController
+EmergencyNoteController
+EmergencyMedicationController
+EmergencyInvestigationController
+EmergencyProcedureController
+EmergencyBillingController
+EmergencyConsumableController
+EmergencyTaskController
+EmergencyTimelineController
 
-Suggested routes:
+Suggested routes under existing admin prefix if applicable:
 
-```php
-Route::prefix('admin/patients/merge')
-    ->name('admin.patients.merge.')
-    ->middleware(['auth'])
-    ->group(function () {
-        Route::get('/', [PatientMergeController::class, 'index'])->name('index');
-        Route::get('/create', [PatientMergeController::class, 'create'])->name('create');
-        Route::post('/preview', [PatientMergePreviewController::class, 'store'])->name('preview');
-        Route::post('/execute', [PatientMergeExecutionController::class, 'store'])->name('execute');
-        Route::get('/requests/{mergeRequest}', [PatientMergeController::class, 'show'])->name('show');
-        Route::get('/requests/{mergeRequest}/logs', [PatientMergeLogController::class, 'index'])->name('logs');
-    });
+GET /admin/emergency/cases/{emergencyCase}
+PATCH /admin/emergency/cases/{emergencyCase}
 
-Route::post('/admin/emergency/cases/{emergencyCase}/confirm-identity', [EmergencyPatientIdentityController::class, 'store'])
-    ->name('admin.emergency.cases.confirm-identity');
-```
+POST /admin/emergency/cases/{emergencyCase}/triage
+POST /admin/emergency/cases/{emergencyCase}/vitals
+POST /admin/emergency/cases/{emergencyCase}/bay-team
+POST /admin/emergency/cases/{emergencyCase}/notes
+POST /admin/emergency/cases/{emergencyCase}/medications
+POST /admin/emergency/cases/{emergencyCase}/investigations
+POST /admin/emergency/cases/{emergencyCase}/procedures
+POST /admin/emergency/cases/{emergencyCase}/consumables
+POST /admin/emergency/cases/{emergencyCase}/tasks
 
-Adapt to existing project routes.
+GET /admin/emergency/cases/{emergencyCase}/billing
+GET /admin/emergency/cases/{emergencyCase}/timeline
+GET /admin/emergency/cases/{emergencyCase}/mar-chart
 
----
-
-# 35. Services to Create / Update
-
-Create or update:
-
-```text
-PatientMergeService
-PatientMergePreviewService
-PatientMergeValidationService
-PatientMergeLogger
-PatientAliasService
-PatientSearchService
-PatientDuplicateDetectionService
-EmergencyPatientIdentityService
-PatientMergeGuard
-```
-
-Do not put merge logic directly in controllers.
+Adapt names to existing project structure.
 
 ---
 
-# 36. Transaction Safety
+# 34. Frontend Components
 
-Merge execution must run inside a database transaction.
+If using Inertia/Vue, create or update:
 
-Pseudo-flow:
+Emergency/ShowCase.vue
+Emergency/Components/EmergencyHeader.vue
+Emergency/Components/TriageVitalsSection.vue
+Emergency/Components/VitalsGraph.vue
+Emergency/Components/BayTeamSection.vue
+Emergency/Components/EmergencyNotesSection.vue
+Emergency/Components/EmergencyMedicationSection.vue
+Emergency/Components/EmergencyInvestigationSection.vue
+Emergency/Components/EmergencyProcedureSection.vue
+Emergency/Components/EmergencyConsumablesSection.vue
+Emergency/Components/EmergencyBillingSection.vue
+Emergency/Components/EmergencyTasksSection.vue
+Emergency/Components/EmergencyTimeline.vue
 
-```php
-DB::transaction(function () {
-    // validate
-    // create merge request
-    // apply demographic field resolution
-    // move/reassign records
-    // merge insurances
-    // merge next of kin
-    // create aliases
-    // mark duplicate patient as merged
-    // write logs
-});
-```
+Reuse existing components where possible:
 
-If anything fails:
-
-* rollback all changes
-* show error
-* do not leave partial merge
-
----
-
-# 37. Record Reassignment Configuration
-
-Create a centralized configuration listing mergeable tables and patient FK columns.
-
-Example:
-
-```php
-return [
-    'visits' => ['patient_id'],
-    'emergency_cases' => ['patient_id'],
-    'admissions' => ['patient_id'],
-    'medical_records' => ['patient_id'],
-    'invoices' => ['patient_id'],
-    'invoice_items' => ['patient_id'],
-    'payments' => ['patient_id'],
-    'claims' => ['patient_id'],
-    'claim_items' => ['patient_id'],
-    'clinical_tasks' => ['patient_id'],
-];
-```
-
-Use this for preview counts and merge execution.
-
-But sensitive tables like insurances and next of kin should have custom handlers.
+- Admission vitals graph/table
+- Consultation investigation selector
+- Consultation prescription quantity calculator
+- MAR chart/modal
+- Visit billing summary
+- Admission bed selector
+- Consultation contributor display
 
 ---
 
-# 38. Sensitive Table Custom Handlers
+# 35. Validation Rules
 
-Use custom handlers for:
+Emergency triage:
 
-```text
-patient_insurances
-patient_next_of_kins
-patient_aliases
-patients
-claims if special status checks exist
-active visits if workflow restrictions exist
-```
+- emergency_case_id required
+- vitals required depending policy
+- auto_triage_category generated by service
+- final_triage_category required
+- override_reason required if final category differs from auto category
+- triaged_by = current user
 
-Generic update is acceptable for simple patient_id references.
+Emergency vitals:
 
----
+- emergency_case_id required
+- patient_id required
+- recorded_by = current user
+- recorded_at required
+- at least one vital field required
 
-# 39. Authorization and Confirmation
+Emergency medication:
 
-Before merge execution:
+- product_id required
+- product must be medication/drug or allowed product type
+- dose required unless PRN protocol allows free text
+- route required
+- frequency required
+- duration or total doses required for scheduled medication
+- STAT creates immediate schedule
+- PRN/SOS does not create fixed schedule
+- source stock validated on administration
 
-* user must have `patients.merge.execute`
-* reason is required
-* main patient and duplicate patient must be confirmed
-* checkbox confirmation required
-* show warning that merge is not reversible from UI
+Emergency investigation:
 
-Confirmation text:
+- department_id required
+- selected services required
+- services must belong to department
+- priority required
+- emergency_case_id required
 
-```text
-I confirm that I want to merge this patient folder into the selected main patient folder. I understand the duplicate folder will be locked and all records will be reassigned to the main folder.
-```
+Emergency procedure:
 
----
+- procedure department required
+- procedure service required
+- reason/notes required if configured
+- priority required
+- emergency_case_id required
 
-# 40. Rollback Strategy
+Bay/team:
 
-For first implementation:
+- ward_id required if bed/bay depends on ward
+- bed_id or emergency_bay_id required
+- selected bed/bay must be available unless override permission
+- main doctor nullable
+- primary nurse nullable
 
-```text
-No normal UI rollback.
-Merge is irreversible from UI.
-Support/admin rollback may be possible using merge logs.
-```
+Consumables:
 
-Do not build rollback UI unless explicitly required.
+- product_id required
+- quantity > 0
+- emergency stock location required
+- quantity <= emergency available quantity
+- billable products use BillingService
 
-But logs must be detailed enough to support manual rollback.
+Billing:
 
----
-
-# 41. Activity / Audit Integration
-
-If the project has activity logs, record:
-
-```text
-patient_merge_requested
-patient_merge_previewed
-patient_merge_executed
-patient_marked_merged
-patient_alias_created
-emergency_identity_confirmed
-```
-
-Include:
-
-```text
-main_patient_id
-duplicate_patient_id
-performed_by
-reason
-timestamp
-```
+- all invoice item creation through BillingService
+- prevent duplicate source_type/source_id
 
 ---
 
-# 42. Visit Preview Integration
+# 36. Permissions
 
-Visit Preview should still work after merge.
+Add or verify permissions:
 
-If a visit originally belonged to duplicate patient, after merge it should show under main patient.
+emergency.case.view
+emergency.case.update
+emergency.session.manage
+emergency.triage.perform
+emergency.triage.override
+emergency.vitals.record
+emergency.vitals.view_graph
+emergency.bay_team.manage
+emergency.notes.create
+emergency.notes.edit_own
+emergency.notes.edit_any
+emergency.medication.order
+emergency.medication.administer
+emergency.mar.view
+emergency.investigation.request
+emergency.procedure.request
+emergency.consumables.use
+emergency.billing.view
+emergency.billing.manage
+emergency.tasks.manage
+emergency.timeline.view
 
-Visit Preview may show note:
-
-```text
-This visit was originally created under merged patient folder TEMP-ER-2026-00012.
-```
-
-This can come from merge logs/aliases if useful.
-
-Do not lose the clinical timeline.
-
----
-
-# 43. Claims / Insurance Integration
-
-After merge:
-
-* claims should belong to main patient
-* claim items should belong to main patient
-* patient insurance should merge safely
-* membership numbers should remain searchable
-* verification/CCC codes should remain unchanged
-* no claim amount recalculation should happen
-
-Do not change claim status during patient merge.
+Use existing permission names if already defined.
 
 ---
 
-# 44. Stock / Medication / MAR Integration
-
-After merge:
-
-* medication orders should belong to main patient
-* medication schedules should belong to main patient
-* medication administrations should belong to main patient
-* MAR chart should show under main patient
-* stock movements remain unchanged except patient_id if such column exists
-* do not duplicate stock movement
-* do not change stock balances
-
-Patient merge must not affect inventory quantities.
-
----
-
-# 45. UI / UX Requirements
-
-Use clear and safe UI.
-
-Required screens:
-
-1. Search/select patients.
-2. Side-by-side comparison.
-3. Field conflict resolution.
-4. Merge impact preview.
-5. Confirmation screen/modal.
-6. Completed merge result.
-7. Merge log view.
-8. Merged patient redirect page.
-
-Visual warnings:
-
-```text
-Temporary patient
-Already merged
-Active visit
-Active admission
-Outstanding invoice
-Open claim
-Different Ghana Card
-Different insurance number
-```
-
-Do not make merge a one-click hidden action.
-
----
-
-# 46. Performance Requirements
-
-Preview should be efficient.
-
-Avoid loading full records during preview.
-
-Use counts:
-
-```php
-DB::table($table)->where('patient_id', $duplicatePatient->id)->count();
-```
-
-For comparison page, eager-load only necessary patient relationships:
-
-```text
-insurances
-next of kin
-latest visit
-aliases
-```
-
-Do not load all clinical history in the preview page.
-
----
-
-# 47. Tests Required
+# 37. Tests Required
 
 Add or update tests.
 
-## Basic Merge
+## Emergency Session
 
-1. User can select main patient and duplicate patient.
-2. Cannot merge patient into itself.
-3. Cannot merge without permission.
-4. Cannot merge without reason.
-5. Merge executes inside transaction.
-6. Duplicate patient is marked MERGED.
-7. Duplicate patient points to main patient.
-8. Main patient remains ACTIVE.
+1. Emergency case has emergency session.
+2. Emergency session links to visit and patient.
+3. Emergency session has main doctor and primary nurse.
+4. Contributors can be added without changing main doctor.
+5. Emergency records link to emergency session.
 
-## Emergency Temporary Merge
+## Triage / Vitals
 
-9. Temporary emergency patient can be merged into real patient.
-10. Emergency case moves to real patient.
-11. Emergency visit moves to real patient.
-12. Temporary patient number becomes alias.
-13. Emergency case page shows identity confirmed.
+6. Triage category is auto-calculated from vitals.
+7. User can override triage category with reason.
+8. Override without reason fails.
+9. Emergency vitals history displays records.
+10. Emergency vitals graph receives correct data.
+11. Emergency vitals mirror Admission vitals behavior where possible.
 
-## Clinical Records
+## Medication / MAR
 
-14. Visits move to main patient.
-15. Medical records move to main patient.
-16. Consultation records move to main patient.
-17. Vitals move to main patient.
-18. Diagnoses move to main patient.
-19. Prescriptions move to main patient.
-20. Medication orders/schedules/administrations move to main patient.
-21. Investigations move to main patient.
-22. Procedures move to main patient.
-23. Clinical tasks move to main patient.
+12. Emergency medication search uses Products.
+13. Emergency medication search is not limited to static list.
+14. Medication quantity is calculated from frequency/duration.
+15. STAT medication creates immediate due task.
+16. PRN/SOS medication does not create recurring schedule.
+17. Emergency medication appears in MAR.
+18. Emergency stock administration deducts Emergency stock once.
+19. Pharmacy-dispensed medication does not deduct stock again.
+20. Emergency medication does not create parallel drug stock.
 
-## Billing / Claims
+## Investigations
 
-24. Invoices move to main patient.
-25. Invoice items move to main patient.
-26. Payments move to main patient.
-27. Claims move to main patient.
-28. Claim items move to main patient.
-29. Totals/statuses are not recalculated during merge.
+21. Emergency investigation section loads departments.
+22. Selecting department loads investigation services.
+23. Multiple services can be requested.
+24. Requests are marked emergency/urgent.
+25. Requests are grouped by department.
+26. Request owners are displayed.
+27. Results are visible when verified.
+28. Existing Investigation workflow is used.
 
-## Insurances / Next of Kin
+## Procedures
 
-30. Unique patient insurance records merge.
-31. Duplicate insurance membership is not duplicated.
-32. Unique next of kin records merge.
-33. Duplicate next of kin is skipped/logged.
+29. Procedure section is separate from Billing.
+30. Selecting procedure department loads procedure services.
+31. Procedure requests are created with emergency context.
+32. Procedure owners are displayed.
+33. Procedure status is shown.
+34. Procedure billing uses BillingService but UI remains clinical.
 
-## Aliases / Search / Redirect
+## Billing
 
-34. Old patient number alias is created.
-35. Search by old patient number finds main patient.
-36. Opening merged patient redirects/shows merged notice.
-37. Cannot create new visit under merged patient.
-38. Cannot create emergency case under merged patient.
+35. Billing section shows emergency invoice items grouped by source.
+36. Emergency billing uses visit invoice.
+37. Emergency care is not blocked by unpaid invoice.
+38. Duplicate invoice items are prevented.
+39. BillingService is used.
 
-## Logs / Audit
+## Bay / Team
 
-39. Merge request is created.
-40. Merge logs are created for moved records.
-41. Field resolution is stored.
-42. Activity log records merge execution.
+40. Selecting emergency ward loads beds/bays.
+41. Patient can be assigned to available bed/bay.
+42. Occupied bed/bay cannot be assigned without override.
+43. Bay/bed status updates after assignment.
+44. Team assignment logs main doctor/nurse/contributors.
 
-## Failure Safety
+## Consumables
 
-43. If one table update fails, entire merge rolls back.
-44. Failed merge does not partially move records.
-45. Error is reported clearly.
+45. Emergency consumable search uses Products.
+46. Emergency consumables use Emergency stock location.
+47. Emergency consumable usage creates stock OUT.
+48. Billable consumable creates invoice item.
+49. Emergency cannot consume directly from Main Store.
+
+## Visit Preview / History
+
+50. Visit Preview includes emergency session records.
+51. Emergency records appear chronologically.
+52. Emergency session is visible in patient clinical history.
+53. Record owners are preserved in preview/history.
+
+## Performance / UX
+
+54. Emergency detail avoids N+1 queries.
+55. Emergency sections update without full page reload where applicable.
+56. Modals do not leave stuck backdrops.
+57. UI mirrors existing Admission/Consultation components where applicable.
 
 ---
 
-# 48. Deliverables
+# 38. Deliverables
 
 Provide:
 
-1. Gap analysis of current patient/emergency duplicate handling.
-2. Patient merge migrations.
-3. Patient aliases support.
-4. Patient merge request/log tables.
-5. Patient model merge relationships/accessors.
-6. Merge preview service.
-7. Merge execution service.
-8. Field conflict resolution.
-9. Side-by-side comparison UI.
-10. Merge impact preview UI.
-11. Emergency identity confirmation merge flow.
-12. Duplicate patient merge flow.
-13. Merged patient redirect behavior.
-14. Patient search alias support.
-15. New record guard for merged patients.
-16. Permissions/menus/routes.
-17. Tests or verification notes.
-18. Files modified.
-19. Remaining TODOs.
+1. Gap analysis of current Emergency module.
+2. Emergency session integration.
+3. Automated triage calculation.
+4. Triage override logic.
+5. Emergency vitals history and graph mirroring Admission.
+6. Refined Medication/MAR section with searchable Product drugs.
+7. Medication quantity auto-calculation.
+8. Emergency MAR integration.
+9. Refined Investigations section mirroring Consultation.
+10. Refined Procedures section decoupled from Billing.
+11. Refined Billing section grouped by source.
+12. Bay/Team section linked to wards/beds/bays.
+13. Emergency contributors support.
+14. Emergency records available in Visit Preview/medical history.
+15. Consumables integration with Emergency stock.
+16. Backend services/controllers/routes updated.
+17. Permissions/seeders if needed.
+18. Tests or verification notes.
+19. Files modified.
+20. Remaining TODOs.
 
 ---
 
-# 49. Important Rules
+# 39. Important Rules
 
-Do not delete duplicate patient folder.
+Do not copy OPD blindly.
 
-Do not lose any records.
+Do not create parallel emergency clinical systems when existing Consultation/Admission systems can be reused.
 
-Do not overwrite main patient data without explicit field selection.
+Do not create a parallel billing system.
 
-Do not merge without audit trail.
+Do not create a parallel investigation system.
 
-Do not allow new care under merged patient folder.
+Do not create a parallel procedure system.
 
-Do not recalculate invoices/claims during merge.
+Do not create a parallel drug/product stock system.
 
-Do not change stock balances during merge.
+Do not bypass BillingService.
 
-Do not break Emergency, OPD, Admission, Billing, Pharmacy, Investigation, Procedure, MAR, Claims, Visit Preview, or Stock workflows.
+Do not bypass StockMovementService.
 
-Now inspect the current UHMS implementation and build a safe Patient Folder Merge system that supports emergency temporary patient identity confirmation and duplicate patient folder consolidation.
+Do not bypass Medication/MAR services.
 
-```
+Do not deduct stock twice.
+
+Do not block emergency care due to unpaid invoices.
+
+Do not overwrite main emergency doctor when contributors add records.
+
+Do not hide emergency records from Visit Preview or patient medical history.
+
+Now inspect the current UHMS implementation and refine Emergency Case Management according to the requirements above, reusing and mirroring existing Admission, Consultation, Billing, Investigation, Procedure, MAR, and Stock mechanisms wherever possible.
 ```

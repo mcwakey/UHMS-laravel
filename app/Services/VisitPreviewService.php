@@ -62,11 +62,24 @@ class VisitPreviewService
             'emergencyCase.bay',
             'emergencyCase.assignedDoctor',
             'emergencyCase.assignedNurse',
+            'emergencyCase.activeEmergencySession.mainDoctor',
+            'emergencyCase.activeEmergencySession.primaryNurse',
+            'emergencyCase.activeEmergencySession.department',
+            'emergencyCase.activeEmergencySession.startedBy',
+            'emergencyCase.activeEmergencySession.contributors.user',
+            'emergencyCase.bayAssignments.ward',
+            'emergencyCase.bayAssignments.bed',
+            'emergencyCase.bayAssignments.emergencyBay',
+            'emergencyCase.bayAssignments.assignedBy',
             'emergencyCase.createdBy',
             'emergencyCase.triagedBy',
             'emergencyCase.disposedBy',
             'emergencyCase.logs.performedBy',
             'emergencyCase.notes.creator',
+            'emergencyCase.consumableUsages.product',
+            'emergencyCase.consumableUsages.user',
+            'emergencyCase.clinicalTasks.assignedUser',
+            'emergencyCase.clinicalTasks.completedBy',
             'triage.triagedBy',
             'triage.department',
             'vitals.recordedBy',
@@ -194,15 +207,59 @@ class VisitPreviewService
                 $items[] = $this->item(
                     $case->triaged_at,
                     'Emergency Triage Completed',
-                    $case->triage_notes ?: 'Emergency triage recorded.',
+                    $case->triage_notes ?: 'Emergency triage recorded. Automated category: '.($case->auto_triage_category ?: '—').'.',
                     optional($case->triagedBy)->full_name,
                     'Emergency',
-                    $case->triage_category ?: 'TRIAGE', 'bg-danger',
+                    $case->current_triage_category ?: 'TRIAGE', 'bg-danger',
                     'emergency_case', $case->id,
                     array_filter([
-                        'Category' => $case->triage_category,
+                        'Automated Category' => $case->auto_triage_category,
+                        'Final Category' => $case->current_triage_category,
                         'Score' => $case->triage_score,
+                        'Override Reason' => $case->triage_override_reason,
                     ])
+                );
+            }
+
+            if ($session = $case->activeEmergencySession) {
+                $contributors = $session->contributors
+                    ->map(fn ($contributor) => $contributor->user?->full_name)
+                    ->filter()
+                    ->unique()
+                    ->implode(', ');
+
+                $items[] = $this->item(
+                    $session->started_at ?? $session->created_at,
+                    'Emergency Session Active',
+                    'Emergency clinical session opened.',
+                    optional($session->startedBy)->full_name,
+                    optional($session->department)->name ?: 'Emergency',
+                    'ER SESSION', 'bg-danger',
+                    'emergency_session', $session->id,
+                    array_filter([
+                        'Main Doctor' => $session->mainDoctor?->full_name,
+                        'Primary Nurse' => $session->primaryNurse?->full_name,
+                        'Contributors' => $contributors ?: null,
+                    ])
+                );
+            }
+
+            foreach ($case->bayAssignments ?? [] as $assignment) {
+                $location = collect([
+                    $assignment->ward?->name,
+                    $assignment->bed?->bed_number,
+                    $assignment->emergencyBay?->name,
+                ])->filter()->implode(' / ');
+
+                $items[] = $this->item(
+                    $assignment->assigned_at ?? $assignment->created_at,
+                    'Emergency Bay / Bed Assigned',
+                    $location ?: 'Emergency location assigned.',
+                    optional($assignment->assignedBy)->full_name,
+                    'Emergency',
+                    'LOCATION', 'bg-secondary',
+                    'emergency_bay_assignment', $assignment->id,
+                    array_filter(['Status' => $assignment->status])
                 );
             }
 
@@ -227,6 +284,38 @@ class VisitPreviewService
                     'Emergency',
                     'ER LOG', 'bg-danger',
                     'emergency_case_log', $log->id
+                );
+            }
+
+            foreach ($case->clinicalTasks ?? [] as $task) {
+                $items[] = $this->item(
+                    $task->scheduled_at ?? $task->created_at,
+                    'Emergency Task: '.$task->title,
+                    $task->description ?: 'Emergency clinical task.',
+                    optional($task->assignedUser)->full_name ?: optional($task->completedBy)->full_name,
+                    'Emergency',
+                    $task->status, 'bg-warning text-dark',
+                    'clinical_task', $task->id,
+                    array_filter([
+                        'Priority' => $task->priority,
+                        'Assigned Role' => $task->assigned_role,
+                    ])
+                );
+            }
+
+            foreach ($case->consumableUsages ?? [] as $usage) {
+                $items[] = $this->item(
+                    $usage->used_at ?? $usage->created_at,
+                    'Emergency Consumable Used',
+                    trim(($usage->product?->name ?: 'Consumable').' x '.$usage->quantity_used),
+                    optional($usage->user)->full_name,
+                    'Emergency',
+                    'CONSUMABLE', 'bg-info text-dark',
+                    'consumable_usage', $usage->id,
+                    array_filter([
+                        'Billable' => $usage->is_billable ? 'Yes' : 'No',
+                        'Notes' => $usage->notes,
+                    ])
                 );
             }
 
@@ -785,6 +874,7 @@ class VisitPreviewService
             'has_admission' => $visit->admission !== null,
             'has_emergency_case' => $visit->emergencyCase !== null,
             'emergency_number' => $visit->emergencyCase?->emergency_number,
+            'emergency_session_status' => $visit->emergencyCase?->activeEmergencySession?->status,
             'emergency_disposition' => $visit->emergencyCase?->disposition,
             'billing_status' => $visit->invoices->isEmpty()
                 ? 'No invoice'

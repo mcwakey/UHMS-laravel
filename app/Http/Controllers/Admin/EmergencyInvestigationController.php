@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\EmergencyCase;
 use App\Services\EmergencyInvestigationService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class EmergencyInvestigationController extends Controller
 {
@@ -14,8 +15,14 @@ class EmergencyInvestigationController extends Controller
     public function store(Request $request, EmergencyCase $emergencyCase)
     {
         $data = $request->validate([
-            'test_name' => ['required', 'string', 'max:180'],
-            'target_department_id' => ['nullable', 'exists:departments,id'],
+            'target_department_id' => ['required', 'exists:departments,id'],
+            'service_id' => [
+                'required',
+                Rule::exists('service_catalog', 'id')->where(fn ($query) => $query
+                    ->where('is_active', true)
+                    ->where('department_id', $request->input('target_department_id'))),
+            ],
+            'test_name' => ['nullable', 'string', 'max:180'],
             'clinical_info' => ['nullable', 'string', 'max:2000'],
             'urgency' => ['nullable', 'in:routine,urgent,emergency'],
         ]);

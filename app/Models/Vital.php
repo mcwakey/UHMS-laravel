@@ -13,6 +13,7 @@ class Vital extends Model
         'visit_id',
         'admission_id',
         'emergency_case_id',
+        'emergency_session_id',
         'triage_id',
         'monitoring_context',
         'patient_id',
@@ -62,6 +63,11 @@ class Vital extends Model
     public function emergencyCase()
     {
         return $this->belongsTo(EmergencyCase::class);
+    }
+
+    public function emergencySession()
+    {
+        return $this->belongsTo(EmergencySession::class);
     }
 
     public function triage()

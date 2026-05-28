@@ -15,21 +15,31 @@ class EmergencyMedicationService
         private MedicationScheduleService $schedules,
         private BillingService $billing,
         private EmergencyTimelineService $timeline,
+        private EmergencySessionService $sessions,
     ) {}
 
     public function order(EmergencyCase $case, array $data, User $user): MedicationOrder
     {
         return DB::transaction(function () use ($case, $data, $user) {
+            $session = $this->sessions->getOrCreateForCase($case, $user);
             $product = Product::findOrFail($data['product_id']);
             $frequency = $this->frequencies->resolve($data['frequency_code'] ?? 'STAT');
-            [$durationValue, $durationUnit] = $this->frequencies->parseDuration($data['duration'] ?? null);
+            if (! empty($data['duration_value'])) {
+                $durationValue = (int) $data['duration_value'];
+                $durationUnit = $data['duration_unit'] ?? 'days';
+            } else {
+                [$durationValue, $durationUnit] = $this->frequencies->parseDuration($data['duration'] ?? null);
+            }
             [$dose, $doseUnit] = $this->frequencies->splitDose($data['dose'] ?? null);
-            $quantity = max(0, (int) ($data['quantity_ordered'] ?? 1));
+            $manualQuantity = array_key_exists('quantity_ordered', $data) && $data['quantity_ordered'] !== null && $data['quantity_ordered'] !== '';
+            $quantity = $manualQuantity ? max(0, (int) $data['quantity_ordered']) : 0;
             $totalDoses = $this->frequencies->expectedDoses($frequency, $durationValue, $durationUnit, $quantity);
+            $calculatedQuantity = $totalDoses ?: max(1, $quantity ?: 1);
 
             $order = MedicationOrder::create([
                 'visit_id' => $case->visit_id,
                 'emergency_case_id' => $case->id,
+                'emergency_session_id' => $session->id,
                 'patient_id' => $case->patient_id,
                 'prescribed_by' => $user->id,
                 'product_id' => $product->id,
@@ -42,7 +52,7 @@ class EmergencyMedicationService
                 'duration_value' => $durationValue,
                 'duration_unit' => $durationUnit,
                 'total_doses' => $totalDoses,
-                'quantity_ordered' => $quantity ?: $totalDoses,
+                'quantity_ordered' => $manualQuantity ? $quantity : $calculatedQuantity,
                 'quantity_dispensed' => (float) ($data['quantity_dispensed'] ?? 0),
                 'start_at' => $data['start_at'] ?? now(),
                 'instructions' => $data['instructions'] ?? null,
@@ -63,6 +73,7 @@ class EmergencyMedicationService
             }
 
             $this->schedules->generateForOrder($order->fresh('frequency'));
+            $this->sessions->recordContribution($case, $user, 'Medication Order');
             $this->timeline->record($case, 'MEDICATION_ORDERED', 'Emergency medication ordered', $order->display_name, $order, $user);
 
             return $order->fresh(['frequency', 'schedules.clinicalTask']);

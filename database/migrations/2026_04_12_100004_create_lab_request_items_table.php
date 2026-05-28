@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('lab_request_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('lab_request_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('lab_test_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('lab_test_id')->nullable()->constrained()->nullOnDelete();
             $table->string('status')->default('pending'); // pending, processing, completed
             $table->timestamps();
         });

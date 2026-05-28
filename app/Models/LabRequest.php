@@ -17,6 +17,7 @@ class LabRequest extends Model
         'sample_id',
         'visit_id',
         'emergency_case_id',
+        'emergency_session_id',
         'patient_id',
         'requested_by',
         'department_id',
@@ -45,6 +46,11 @@ class LabRequest extends Model
     public function emergencyCase(): BelongsTo
     {
         return $this->belongsTo(EmergencyCase::class);
+    }
+
+    public function emergencySession(): BelongsTo
+    {
+        return $this->belongsTo(EmergencySession::class);
     }
 
     public function patient(): BelongsTo

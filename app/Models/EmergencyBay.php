@@ -38,6 +38,8 @@ class EmergencyBay extends Model
         'code',
         'bay_type',
         'department_id',
+        'ward_id',
+        'bed_id',
         'status',
         'notes',
         'is_active',
@@ -50,6 +52,16 @@ class EmergencyBay extends Model
     public function department()
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function ward()
+    {
+        return $this->belongsTo(Ward::class);
+    }
+
+    public function bed()
+    {
+        return $this->belongsTo(Bed::class);
     }
 
     public function emergencyCases()

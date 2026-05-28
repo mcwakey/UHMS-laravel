@@ -20,6 +20,8 @@ class EmergencyMedicationController extends Controller
             'route' => ['required', 'string', 'max:80'],
             'frequency_code' => ['required', 'string', 'max:40'],
             'duration' => ['nullable', 'string', 'max:80'],
+            'duration_value' => ['nullable', 'integer', 'min:1', 'max:365'],
+            'duration_unit' => ['nullable', 'in:days,weeks,months'],
             'quantity_ordered' => ['nullable', 'integer', 'min:0', 'max:999'],
             'quantity_dispensed' => ['nullable', 'numeric', 'min:0', 'max:999'],
             'start_at' => ['nullable', 'date'],

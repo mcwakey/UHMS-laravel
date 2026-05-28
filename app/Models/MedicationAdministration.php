@@ -40,6 +40,7 @@ class MedicationAdministration extends Model
         'visit_id',
         'admission_id',
         'emergency_case_id',
+        'emergency_session_id',
         'patient_id',
         'administered_by',
         'administered_at',
@@ -94,6 +95,11 @@ class MedicationAdministration extends Model
     public function emergencyCase()
     {
         return $this->belongsTo(EmergencyCase::class);
+    }
+
+    public function emergencySession()
+    {
+        return $this->belongsTo(EmergencySession::class);
     }
 
     public function patient()
