@@ -69,6 +69,7 @@ class EmergencyCaseManagementTest extends TestCase
             'medication_administration.administer',
             'visits.view',
             'visits.preview',
+            'patients.merge.confirm_identity',
         ] as $permission) {
             $role->givePermissionTo(Permission::findOrCreate($permission, 'web'));
         }
@@ -148,6 +149,28 @@ class EmergencyCaseManagementTest extends TestCase
         $response->assertOk();
         $response->assertSee($case->emergency_number);
         $response->assertSee('Emergency Control Sheet');
+    }
+
+    public function test_temporary_emergency_identity_confirmation_is_modal_based(): void
+    {
+        $temporaryPatient = Patient::factory()->create([
+            'registered_by' => $this->user->id,
+            'patient_number' => 'TEMP-ER-TEST-0001',
+            'first_name' => 'Unknown',
+            'last_name' => 'Emergency',
+            'is_temporary' => true,
+            'temporary_reason' => 'Unidentified arrival',
+            'status' => 'active',
+        ]);
+        $case = $this->makeCase(['patient_id' => $temporaryPatient->id]);
+        $case->visit()->update(['patient_id' => $temporaryPatient->id]);
+
+        $response = $this->actingAs($this->user)->get(route('admin.emergency.cases.show', $case));
+
+        $response->assertOk()
+            ->assertSee('confirmEmergencyIdentityModal', false)
+            ->assertSee('Register Patient')
+            ->assertDontSee('card border-warning mb-3', false);
     }
 
     public function test_emergency_bays_and_reports_pages_load(): void

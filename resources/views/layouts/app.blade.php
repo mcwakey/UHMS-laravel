@@ -6,6 +6,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'UHMS') - {{ config('app.name') }}</title>
 
+    @include('layouts.partials.frame-breaker')
+
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ URL::asset('build/img/favicon.png') }}">
 

@@ -4,6 +4,10 @@
 @php
     $triageClass = $case->triage_badge_class;
     $activeInvoice = $case->visit?->latestInvoice;
+    $temporaryPatient = $case->patient?->is_temporary ? $case->patient : null;
+    $identityAction = old('_identity_action');
+    $shouldOpenIdentityModal = $errors->any() && in_array($identityAction, ['existing', 'register'], true);
+    $identityModalTabSelector = $identityAction === 'register' ? '#register-identity-tab' : '#existing-identity-tab';
 @endphp
 
 @section('content')
@@ -13,6 +17,13 @@
         <p class="text-muted mb-0">{{ $case->patient->full_name ?? 'Unknown patient' }} - {{ $case->visit->visit_number ?? 'No visit number' }}</p>
     </div>
     <div class="d-flex flex-wrap gap-2">
+        @if($temporaryPatient)
+            @can('patients.merge.confirm_identity')
+                <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#confirmEmergencyIdentityModal">
+                    <i class="ti ti-id-badge-2 me-1"></i>Confirm Identity
+                </button>
+            @endcan
+        @endif
         <a href="{{ route('admin.emergency.board') }}" class="btn btn-outline-secondary btn-sm">Board</a>
         @if($case->visit)
             <a href="{{ route('admin.emergency.mar-chart', $case->visit) }}" class="btn btn-outline-danger btn-sm">Open MAR</a>
@@ -33,44 +44,6 @@
             @endforeach
         </ul>
     </div>
-@endif
-
-@if($case->patient?->is_temporary)
-@can('patients.merge.confirm_identity')
-<div class="card border-warning mb-3">
-    <div class="card-header bg-warning-subtle text-warning d-flex align-items-center justify-content-between">
-        <h5 class="card-title mb-0"><i class="ti ti-id-badge-2 me-1"></i>Confirm Temporary Emergency Identity</h5>
-        <span class="badge bg-warning text-dark">{{ $case->patient->patient_number }}</span>
-    </div>
-    <div class="card-body">
-        <form method="POST" action="{{ route('admin.emergency.cases.confirm-identity', $case) }}" class="row g-2 align-items-end">
-            @csrf
-            <div class="col-md-5">
-                <label class="form-label">Confirmed Patient Folder</label>
-                <select name="confirmed_patient_id" class="form-select" required>
-                    <option value="">Select confirmed patient</option>
-                    @foreach($identityCandidates as $candidate)
-                        <option value="{{ $candidate->id }}">{{ $candidate->patient_number }} - {{ $candidate->full_name }} - {{ $candidate->phone }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Confirmation Note</label>
-                <input type="text" name="reason" class="form-control" placeholder="ID confirmed by family, Ghana Card, or staff verification">
-            </div>
-            <div class="col-md-2">
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" name="confirmed" value="1" id="identityConfirmed" required>
-                    <label class="form-check-label" for="identityConfirmed">Confirmed</label>
-                </div>
-            </div>
-            <div class="col-md-1">
-                <button class="btn btn-warning w-100" type="submit"><i class="ti ti-git-merge"></i></button>
-            </div>
-        </form>
-    </div>
-</div>
-@endcan
 @endif
 
 <div class="row g-3 mb-3">
@@ -455,4 +428,210 @@
         </form>
     </div>
 </div>
+
+@if($temporaryPatient)
+@can('patients.merge.confirm_identity')
+<div class="modal fade" id="confirmEmergencyIdentityModal" tabindex="-1" aria-labelledby="confirmEmergencyIdentityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header bg-warning-subtle">
+                <div>
+                    <h5 class="modal-title" id="confirmEmergencyIdentityModalLabel"><i class="ti ti-id-badge-2 me-1"></i>Confirm Temporary Emergency Identity</h5>
+                    <div class="small text-muted">{{ $temporaryPatient->patient_number }} - {{ $temporaryPatient->full_name }}</div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-tabs mb-3" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {{ old('_identity_action') === 'register' ? '' : 'active' }}" id="existing-identity-tab" data-bs-toggle="tab" data-bs-target="#existing-identity-pane" type="button" role="tab" aria-controls="existing-identity-pane" aria-selected="{{ old('_identity_action') === 'register' ? 'false' : 'true' }}">
+                            <i class="ti ti-users me-1"></i>Existing Patient
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link {{ old('_identity_action') === 'register' ? 'active' : '' }}" id="register-identity-tab" data-bs-toggle="tab" data-bs-target="#register-identity-pane" type="button" role="tab" aria-controls="register-identity-pane" aria-selected="{{ old('_identity_action') === 'register' ? 'true' : 'false' }}">
+                            <i class="ti ti-user-plus me-1"></i>Register Patient
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <div class="tab-pane fade {{ old('_identity_action') === 'register' ? '' : 'show active' }}" id="existing-identity-pane" role="tabpanel" aria-labelledby="existing-identity-tab" tabindex="0">
+                        <form method="POST" action="{{ route('admin.emergency.cases.confirm-identity', $case) }}" class="row g-3">
+                            @csrf
+                            <input type="hidden" name="_identity_action" value="existing">
+                            <div class="col-md-7">
+                                <label class="form-label">Confirmed Patient Folder <span class="text-danger">*</span></label>
+                                <select name="confirmed_patient_id" class="form-select @error('confirmed_patient_id') is-invalid @enderror" required>
+                                    <option value="">Select confirmed patient</option>
+                                    @foreach($identityCandidates as $candidate)
+                                        <option value="{{ $candidate->id }}" @selected(old('confirmed_patient_id') == $candidate->id)>{{ $candidate->patient_number }} - {{ $candidate->full_name }} - {{ $candidate->phone }}</option>
+                                    @endforeach
+                                </select>
+                                @error('confirmed_patient_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-5">
+                                <label class="form-label">Confirmation Note</label>
+                                <input type="text" name="reason" class="form-control @error('reason') is-invalid @enderror" value="{{ old('reason') }}" placeholder="ID confirmed by family, Ghana Card, or staff verification">
+                                @error('reason')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-8">
+                                <div class="form-check">
+                                    <input class="form-check-input @error('confirmed') is-invalid @enderror" type="checkbox" name="confirmed" value="1" id="existingIdentityConfirmed" required @checked(old('confirmed'))>
+                                    <label class="form-check-label" for="existingIdentityConfirmed">I have verified this temporary patient belongs to the selected folder.</label>
+                                    @error('confirmed')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <button class="btn btn-warning" type="submit"><i class="ti ti-git-merge me-1"></i>Merge Into Existing Folder</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="tab-pane fade {{ old('_identity_action') === 'register' ? 'show active' : '' }}" id="register-identity-pane" role="tabpanel" aria-labelledby="register-identity-tab" tabindex="0">
+                        <form method="POST" action="{{ route('admin.emergency.cases.register-identity', $case) }}" class="row g-3">
+                            @csrf
+                            <input type="hidden" name="_identity_action" value="register">
+                            <div class="col-md-4">
+                                <label class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" name="first_name" class="form-control @error('first_name') is-invalid @enderror" value="{{ old('first_name', $temporaryPatient->first_name) }}" required>
+                                @error('first_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Other Names</label>
+                                <input type="text" name="other_names" class="form-control @error('other_names') is-invalid @enderror" value="{{ old('other_names', $temporaryPatient->other_names) }}">
+                                @error('other_names')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" name="last_name" class="form-control @error('last_name') is-invalid @enderror" value="{{ old('last_name', $temporaryPatient->last_name) }}" required>
+                                @error('last_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                                <input type="date" name="date_of_birth" class="form-control @error('date_of_birth') is-invalid @enderror" value="{{ old('date_of_birth', $temporaryPatient->date_of_birth?->format('Y-m-d')) }}" required>
+                                @error('date_of_birth')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Gender <span class="text-danger">*</span></label>
+                                <select name="gender" class="form-select @error('gender') is-invalid @enderror" required>
+                                    <option value="">Select Gender</option>
+                                    @foreach(\App\Enums\Gender::cases() as $gender)
+                                        <option value="{{ $gender->value }}" @selected(old('gender', $temporaryPatient->getRawOriginal('gender')) === $gender->value)>{{ $gender->label() }}</option>
+                                    @endforeach
+                                </select>
+                                @error('gender')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                <input type="tel" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone', $temporaryPatient->phone === '0000000000' ? '' : $temporaryPatient->phone) }}" required>
+                                @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Secondary Phone</label>
+                                <input type="tel" name="phone_secondary" class="form-control @error('phone_secondary') is-invalid @enderror" value="{{ old('phone_secondary', $temporaryPatient->phone_secondary) }}">
+                                @error('phone_secondary')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email', $temporaryPatient->email) }}">
+                                @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Ghana Card Number</label>
+                                <input type="text" name="ghana_card_number" class="form-control @error('ghana_card_number') is-invalid @enderror" value="{{ old('ghana_card_number', $temporaryPatient->ghana_card_number) }}">
+                                @error('ghana_card_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Blood Group</label>
+                                <select name="blood_group" class="form-select @error('blood_group') is-invalid @enderror">
+                                    <option value="">Select</option>
+                                    @foreach(\App\Enums\BloodGroup::cases() as $bloodGroup)
+                                        <option value="{{ $bloodGroup->value }}" @selected(old('blood_group', $temporaryPatient->getRawOriginal('blood_group')) === $bloodGroup->value)>{{ $bloodGroup->label() }}</option>
+                                    @endforeach
+                                </select>
+                                @error('blood_group')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Marital Status</label>
+                                <select name="marital_status" class="form-select @error('marital_status') is-invalid @enderror">
+                                    <option value="">Select</option>
+                                    @foreach(\App\Enums\MaritalStatus::cases() as $maritalStatus)
+                                        <option value="{{ $maritalStatus->value }}" @selected(old('marital_status', $temporaryPatient->getRawOriginal('marital_status')) === $maritalStatus->value)>{{ $maritalStatus->label() }}</option>
+                                    @endforeach
+                                </select>
+                                @error('marital_status')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Region</label>
+                                <input type="text" name="region" class="form-control @error('region') is-invalid @enderror" value="{{ old('region', $temporaryPatient->region) }}">
+                                @error('region')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">City</label>
+                                <input type="text" name="city" class="form-control @error('city') is-invalid @enderror" value="{{ old('city', $temporaryPatient->city) }}">
+                                @error('city')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Town</label>
+                                <input type="text" name="town" class="form-control @error('town') is-invalid @enderror" value="{{ old('town', $temporaryPatient->town) }}">
+                                @error('town')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Digital Address</label>
+                                <input type="text" name="digital_address" class="form-control @error('digital_address') is-invalid @enderror" value="{{ old('digital_address', $temporaryPatient->digital_address) }}">
+                                @error('digital_address')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Address</label>
+                                <textarea name="address" class="form-control @error('address') is-invalid @enderror" rows="2">{{ old('address', $temporaryPatient->address) }}</textarea>
+                                @error('address')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Confirmation Note</label>
+                                <input type="text" name="reason" class="form-control @error('reason') is-invalid @enderror" value="{{ old('reason') }}" placeholder="Patient identified during emergency registration">
+                                @error('reason')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                            </div>
+                            <div class="col-md-8">
+                                <div class="form-check">
+                                    <input class="form-check-input @error('confirmed') is-invalid @enderror" type="checkbox" name="confirmed" value="1" id="registerIdentityConfirmed" required @checked(old('confirmed'))>
+                                    <label class="form-check-label" for="registerIdentityConfirmed">I have verified these details and want to register this emergency patient.</label>
+                                    @error('confirmed')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <button class="btn btn-warning" type="submit"><i class="ti ti-user-plus me-1"></i>Register and Confirm</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var shouldOpen = @json($shouldOpenIdentityModal);
+        if (!shouldOpen || !window.bootstrap) {
+            return;
+        }
+
+        var modalEl = document.getElementById('confirmEmergencyIdentityModal');
+        if (!modalEl) {
+            return;
+        }
+
+        var tabSelector = @json($identityModalTabSelector);
+        var tabEl = document.querySelector(tabSelector);
+        if (tabEl && bootstrap.Tab) {
+            bootstrap.Tab.getOrCreateInstance(tabEl).show();
+        }
+
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    });
+</script>
+@endpush
+@endcan
+@endif
 @endsection

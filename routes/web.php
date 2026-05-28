@@ -296,6 +296,7 @@ Route::middleware('auth')->group(function () {
             Route::get('cases/{emergencyCase}', [EmergencyCaseController::class, 'show'])->name('cases.show')->middleware('can:emergency.case.view');
             Route::patch('cases/{emergencyCase}', [EmergencyCaseController::class, 'update'])->name('cases.update')->middleware('can:emergency.case.update');
             Route::post('cases/{emergencyCase}/confirm-identity', [EmergencyPatientIdentityController::class, 'store'])->name('cases.confirm-identity')->middleware('can:patients.merge.confirm_identity');
+            Route::post('cases/{emergencyCase}/register-identity', [EmergencyPatientIdentityController::class, 'register'])->name('cases.register-identity')->middleware('can:patients.merge.confirm_identity');
 
             Route::post('cases/{emergencyCase}/triage', [EmergencyTriageController::class, 'store'])->name('triage.store')->middleware('can:emergency.triage.perform');
             Route::post('cases/{emergencyCase}/assign-bay', [EmergencyBayController::class, 'assign'])->name('bay.assign')->middleware('can:emergency.bay.assign');

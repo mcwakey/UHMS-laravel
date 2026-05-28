@@ -28,5 +28,33 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $redirectInertiaToLogin = function (\Illuminate\Http\Request $request) {
+            if ($request->hasSession()) {
+                $intendedUrl = $request->isMethod('GET')
+                    ? $request->fullUrl()
+                    : $request->headers->get('referer');
+
+                if ($intendedUrl) {
+                    $request->session()->put('url.intended', $intendedUrl);
+                }
+            }
+
+            return \Inertia\Inertia::location(route('login'));
+        };
+
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, \Illuminate\Http\Request $request) use ($redirectInertiaToLogin) {
+            if ($request->headers->has('X-Inertia')) {
+                return $redirectInertiaToLogin($request);
+            }
+
+            return null;
+        });
+
+        $exceptions->respond(function ($response, \Throwable $e, \Illuminate\Http\Request $request) use ($redirectInertiaToLogin) {
+            if ($request->headers->has('X-Inertia') && in_array($response->getStatusCode(), [401, 419], true)) {
+                return $redirectInertiaToLogin($request);
+            }
+
+            return $response;
+        });
     })->create();

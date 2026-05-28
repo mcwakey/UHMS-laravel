@@ -134,7 +134,7 @@
                         <td class="text-end">
                             <div class="d-flex align-items-center justify-content-end gap-1">
                                 @can('visits.create')
-                                @if($patient->isMerged())
+                                @if($patient->isMerged() || $patient->status === 'deceased')
                                 <button type="button" class="btn btn-sm btn-outline-secondary" title="Merged folder cannot receive new visits" disabled>
                                     <i class="ti ti-lock"></i>
                                 </button>
@@ -151,6 +151,7 @@
                                     <ul class="dropdown-menu dropdown-menu-end">
                                         <li><a class="dropdown-item" href="{{ route('admin.patients.show', $patient) }}"><i class="ti ti-eye me-2"></i>View Profile</a></li>
                                         @can('patients.edit')
+                                        @if(!$patient->isMerged() && $patient->status !== 'deceased')
                                         <li><a class="dropdown-item" href="{{ route('admin.patients.edit', $patient) }}"><i class="ti ti-edit me-2"></i>Edit</a></li>
                                         <li>
                                             <form method="POST" action="{{ route('admin.patients.toggle-status', $patient) }}" class="d-inline">
@@ -161,6 +162,7 @@
                                                 </button>
                                             </form>
                                         </li>
+                                        @endif
                                         @endcan
                                     </ul>
                                 </div>

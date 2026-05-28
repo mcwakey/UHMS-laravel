@@ -43,6 +43,7 @@ class PatientMergeTest extends TestCase
             'patients.merge.request',
             'patients.merge.execute',
             'patients.merge.confirm_identity',
+            'emergency.case.view',
             'visits.create',
             'emergency.case.create',
         ] as $permission) {
@@ -248,6 +249,71 @@ class PatientMergeTest extends TestCase
             'id' => $temporaryPatient->id,
             'merge_status' => 'MERGED',
             'merged_to_patient_id' => $mainPatient->id,
+        ]);
+    }
+
+    public function test_temporary_emergency_patient_can_be_registered_as_new_patient(): void
+    {
+        $temporaryPatient = Patient::factory()->create([
+            'registered_by' => $this->user->id,
+            'patient_number' => 'TEMP-ER-0002',
+            'first_name' => 'Unknown',
+            'last_name' => 'Emergency',
+            'is_temporary' => true,
+            'temporary_reason' => 'Arrived without identity documents',
+            'status' => 'active',
+            'phone' => '0000000000',
+        ]);
+        $visit = Visit::factory()->create([
+            'patient_id' => $temporaryPatient->id,
+            'visit_type' => VisitType::EMERGENCY->value,
+            'status' => VisitStatus::EMERGENCY->value,
+            'created_by' => $this->user->id,
+        ]);
+        $case = EmergencyCase::create([
+            'emergency_number' => 'ER-TEST-0002',
+            'visit_id' => $visit->id,
+            'patient_id' => $temporaryPatient->id,
+            'arrival_mode' => 'UNKNOWN',
+            'arrival_time' => now(),
+            'emergency_status' => EmergencyCase::STATUS_WAITING_TRIAGE,
+            'created_by' => $this->user->id,
+        ]);
+
+        $response = $this->actingAs($this->user)->post(route('admin.emergency.cases.register-identity', $case), [
+            '_identity_action' => 'register',
+            'first_name' => 'Kojo',
+            'last_name' => 'Boateng',
+            'date_of_birth' => now()->subYears(32)->toDateString(),
+            'gender' => 'male',
+            'phone' => '0245550101',
+            'reason' => 'Patient provided details after stabilization.',
+            'confirmed' => '1',
+        ]);
+
+        $registeredPatient = Patient::where('phone', '0245550101')->first();
+
+        $response->assertRedirect(route('admin.emergency.cases.show', $case));
+        $this->assertNotNull($registeredPatient);
+        $this->assertFalse($registeredPatient->is_temporary);
+        $this->assertNotSame($temporaryPatient->id, $registeredPatient->id);
+        $this->assertDatabaseHas('emergency_cases', [
+            'id' => $case->id,
+            'patient_id' => $registeredPatient->id,
+        ]);
+        $this->assertDatabaseHas('visits', [
+            'id' => $visit->id,
+            'patient_id' => $registeredPatient->id,
+        ]);
+        $this->assertDatabaseHas('patient_aliases', [
+            'patient_id' => $registeredPatient->id,
+            'alias_type' => PatientAlias::TYPE_TEMPORARY_PATIENT_NUMBER,
+            'alias_value' => 'TEMP-ER-0002',
+        ]);
+        $this->assertDatabaseHas('patients', [
+            'id' => $temporaryPatient->id,
+            'merge_status' => 'MERGED',
+            'merged_to_patient_id' => $registeredPatient->id,
         ]);
     }
 

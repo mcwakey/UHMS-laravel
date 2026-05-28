@@ -105,6 +105,7 @@ class EmergencyCaseController extends Controller
             'procedureDepartments' => Department::where('type', DepartmentType::PROCEDURE->value)->where('status', 'active')->orderBy('name')->get(),
             'procedureServices' => ServiceCatalog::active()->where('category', 'procedure')->orderBy('name')->get(),
             'identityCandidates' => Patient::active()
+                ->where('is_temporary', false)
                 ->where('id', '!=', $emergencyCase->patient_id)
                 ->orderByDesc('created_at')
                 ->limit(50)

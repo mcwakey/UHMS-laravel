@@ -19,6 +19,8 @@
 
     <title inertia>{{ config('app.name', 'UHMS') }}</title>
 
+    @include('layouts.partials.frame-breaker')
+
     <script src="{{ URL::asset('build/js/theme-script.js') }}"></script>
 
     <link rel="stylesheet" href="{{ URL::asset('build/css/bootstrap.min.css') }}">

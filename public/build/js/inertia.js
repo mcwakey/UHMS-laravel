@@ -76,9 +76,33 @@ function fallbackToNative(targetUrl, reason) {
     console.warn('[bridge] fell back to native nav', { url: targetUrl, reason });
     try {
         const url = targetUrl || window.location.href;
-        window.location.href = url;
+        const targetWindow = window.self !== window.top ? window.top : window;
+        targetWindow.location.href = url;
     } catch (_) {
         window.location.reload();
+    }
+}
+
+function closeInertiaErrorDialog() {
+    try {
+        document.querySelectorAll('#inertia-error-dialog').forEach((dialog) => {
+            if (typeof dialog.close === 'function') {
+                dialog.close();
+            }
+            dialog.remove();
+        });
+    } catch (_) {}
+}
+
+function isAuthExpiredResponse(response) {
+    if (!response) return false;
+    if ([401, 419].includes(response.status)) return true;
+
+    try {
+        const responseUrl = new URL(response.request?.responseURL || '', window.location.href);
+        return responseUrl.origin === window.location.origin && responseUrl.pathname.replace(/\/$/, '') === '/login';
+    } catch (_) {
+        return false;
     }
 }
 
@@ -98,6 +122,12 @@ router.on('invalid', (event) => {
     }
     const response = event?.detail?.response;
     const url = response?.request?.responseURL || window.location.href;
+    if (isAuthExpiredResponse(response)) {
+        closeInertiaErrorDialog();
+        fallbackToNative([401, 419].includes(response?.status) ? '/login' : url, 'auth-expired-inertia-response');
+        return;
+    }
+
     const isRepeat = recordFailure(url);
     // eslint-disable-next-line no-console
     console.warn('[bridge] invalid Inertia response', { url, status: response?.status, isRepeat });
@@ -181,10 +211,15 @@ if (document.readyState === 'loading') {
 // page is injected via the legacy bridge.
 router.on('finish', () => {
     queueMicrotask(() => {
+        closeInertiaErrorDialog();
         document.documentElement.classList.remove('uhms-loading');
         upgradeLegacyConfirms(document);
     });
 });
+
+document.addEventListener('inertia:before', closeInertiaErrorDialog);
+document.addEventListener('inertia:navigate', closeInertiaErrorDialog);
+document.addEventListener('inertia:success', closeInertiaErrorDialog);
 
 // ─── Delegated `data-confirm` handler for legacy Blade ────────────────────
 // Lets us migrate `onsubmit="return confirm('Cancel this invoice?')"` to a
