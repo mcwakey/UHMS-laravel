@@ -6,7 +6,10 @@
     $activeInvoice = $case->visit?->latestInvoice;
     $temporaryPatient = $case->patient?->is_temporary ? $case->patient : null;
     $identityAction = old('_identity_action');
+    $formContext = old('_form');
     $shouldOpenIdentityModal = $errors->any() && in_array($identityAction, ['existing', 'register'], true);
+    $shouldOpenTriageModal = $errors->any() && $formContext === 'triage';
+    $shouldOpenControlSheetModal = $errors->any() && $formContext === 'control_sheet';
     $identityModalTabSelector = $identityAction === 'register' ? '#register-identity-tab' : '#existing-identity-tab';
     $session = $case->activeEmergencySession;
     $currentTriage = $case->current_triage_category ?: 'UNTRIAGED';
@@ -66,6 +69,7 @@
     .vitals-label { font-size: .68rem; color: #6c757d; }
     .er-section-title { font-size: .88rem; letter-spacing: 0; text-transform: uppercase; color: #6c757d; }
     .er-scroll { max-height: 360px; overflow: auto; }
+    .er-chart-wrap { position: relative; height: 190px; min-height: 190px; }
 </style>
 @endpush
 
@@ -166,7 +170,12 @@
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h5 class="card-title mb-0">Emergency Control Sheet</h5>
-                <span class="badge bg-light text-dark">{{ $case->arrival_mode }}</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-light text-dark">{{ $case->arrival_mode }}</span>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#controlSheetModal">
+                        <i class="ti ti-edit me-1"></i>Edit
+                    </button>
+                </div>
             </div>
             <div class="card-body">
                 <div class="row g-3">
@@ -226,7 +235,9 @@
                         <div class="col-6 col-md-3"><div class="vitals-val">{{ $latestVitals?->respiratory_rate ?? '-' }}</div><div class="vitals-label">RR</div></div>
                         <div class="col-6 col-md-3"><div class="vitals-val">{{ $latestVitals?->spo2 ?? '-' }}</div><div class="vitals-label">SpO2</div></div>
                     </div>
-                    <canvas id="emergencyVitalsChart" height="110"></canvas>
+                    <div class="er-chart-wrap">
+                        <canvas id="emergencyVitalsChart"></canvas>
+                    </div>
                     <div class="table-responsive mt-3 er-scroll">
                         <table class="table table-sm align-middle mb-0">
                             <thead><tr><th>Time</th><th>BP</th><th>HR</th><th>RR</th><th>Temp</th><th>SpO2</th><th>By</th></tr></thead>
@@ -304,98 +315,32 @@
 
     <div class="col-xl-4">
         <div class="card mb-3">
-            <div class="card-header"><h5 class="card-title mb-0">Triage</h5></div>
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h5 class="card-title mb-0">Triage</h5>
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#triageModal">
+                    <i class="ti ti-activity-heartbeat me-1"></i>Record
+                </button>
+            </div>
             <div class="card-body">
-                <form method="POST" action="{{ route('admin.emergency.triage.store', $case) }}">
-                    @csrf
-                    <div class="row g-2 mb-2">
-                        <div class="col-6">
-                            <label class="form-label small">Auto Category</label>
-                            <input class="form-control form-control-sm" value="{{ $case->auto_triage_category ?: 'Calculated on save' }}" readonly>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small">Final Category</label>
-                            <select class="form-select form-select-sm" name="final_triage_category">
-                                <option value="">Use automated category</option>
-                                @foreach(['RED','ORANGE','YELLOW','GREEN','BLACK'] as $category)
-                                    <option value="{{ $category }}" @selected($currentTriage === $category)>{{ $category }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                    <div class="row g-2 mb-2">
-                        <div class="col-6">
-                            <label class="form-label small">AVPU</label>
-                            <select class="form-select form-select-sm" name="avpu">
-                                <option value="">Not recorded</option>
-                                @foreach(['A' => 'Alert', 'V' => 'Voice', 'P' => 'Pain', 'U' => 'Unresponsive'] as $value => $label)
-                                    <option value="{{ $value }}" @selected(old('avpu', $case->avpu) === $value)>{{ $label }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label small">Pain Score</label>
-                            <input class="form-control form-control-sm" type="number" min="0" max="10" name="pain_score" value="{{ old('pain_score', $case->pain_score) }}" placeholder="0-10">
-                        </div>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small">Danger Signs</label>
-                        <div class="row g-1">
-                            @foreach($dangerSignOptions as $value => $label)
-                                <div class="col-6">
-                                    <div class="form-check small">
-                                        <input class="form-check-input" type="checkbox" name="danger_signs[]" value="{{ $value }}" id="danger_{{ $value }}" @checked(in_array($value, old('danger_signs', $case->danger_signs ?: []), true))>
-                                        <label class="form-check-label" for="danger_{{ $value }}">{{ $label }}</label>
-                                    </div>
-                                </div>
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="badge {{ $triageClass }}">{{ $currentTriage }}</span>
+                    <span class="small text-muted">Score {{ $case->triage_score ?? '-' }}</span>
+                </div>
+                <div class="small mb-1">Auto: <span class="fw-semibold">{{ $case->auto_triage_category ?: 'Pending' }}</span></div>
+                <div class="small mb-1">AVPU: <span class="fw-semibold">{{ $case->avpu ?: 'Not recorded' }}</span></div>
+                <div class="small mb-2">Pain: <span class="fw-semibold">{{ $case->pain_score ?? 'Not recorded' }}</span></div>
+                @if($case->triage_reasons)
+                    <div class="border rounded p-2 small">
+                        <div class="fw-semibold text-danger mb-1">Automated reasons</div>
+                        <ul class="mb-0 ps-3">
+                            @foreach(array_slice($case->triage_reasons, 0, 3) as $reason)
+                                <li>{{ $reason }}</li>
                             @endforeach
-                        </div>
+                        </ul>
                     </div>
-                    <div class="mb-2">
-                        <label class="form-label small">Override Reason</label>
-                        <input class="form-control form-control-sm" name="triage_override_reason" value="{{ old('triage_override_reason', $case->triage_override_reason) }}" placeholder="Required only if final category differs from auto category">
-                    </div>
-                    @if($case->triage_reasons || $case->triage_warnings)
-                        <div class="border rounded p-2 mb-2 small">
-                            @if($case->triage_reasons)
-                                <div class="fw-semibold text-danger mb-1">Automated reasons</div>
-                                <ul class="mb-2 ps-3">
-                                    @foreach($case->triage_reasons as $reason)
-                                        <li>{{ $reason }}</li>
-                                    @endforeach
-                                </ul>
-                            @endif
-                            @if($case->triage_warnings)
-                                <div class="fw-semibold text-warning mb-1">Warnings</div>
-                                <ul class="mb-0 ps-3">
-                                    @foreach($case->triage_warnings as $warning)
-                                        <li>{{ $warning }}</li>
-                                    @endforeach
-                                </ul>
-                            @endif
-                        </div>
-                    @endif
-                    <div class="mb-2 d-none">
-                        <label class="form-label">Legacy Category</label>
-                        <select class="form-select" name="triage_category">
-                            <option value="">Use automated category</option>
-                            @foreach(['RED','ORANGE','YELLOW','GREEN','BLACK'] as $category)
-                                <option value="{{ $category }}" @selected($currentTriage === $category)>{{ $category }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-6"><input class="form-control form-control-sm" name="blood_pressure_systolic" placeholder="BP Sys"></div>
-                        <div class="col-6"><input class="form-control form-control-sm" name="blood_pressure_diastolic" placeholder="BP Dia"></div>
-                        <div class="col-4"><input class="form-control form-control-sm" name="heart_rate" placeholder="HR"></div>
-                        <div class="col-4"><input class="form-control form-control-sm" name="respiratory_rate" placeholder="RR"></div>
-                        <div class="col-4"><input class="form-control form-control-sm" name="spo2" placeholder="SpO2"></div>
-                        <div class="col-6"><input class="form-control form-control-sm" name="temperature" placeholder="Temp"></div>
-                        <div class="col-6"><input class="form-control form-control-sm" name="triage_score" placeholder="Manual score"></div>
-                    </div>
-                    <textarea class="form-control form-control-sm mt-2" name="triage_notes" rows="2" placeholder="Triage notes">{{ $case->triage_notes }}</textarea>
-                    <button class="btn btn-primary w-100 mt-2" type="submit">Save Triage</button>
-                </form>
+                @else
+                    <div class="text-muted small">No triage score has been calculated yet.</div>
+                @endif
             </div>
         </div>
 
@@ -778,6 +723,174 @@
     </div>
 </div>
 
+<div class="modal fade" id="controlSheetModal" tabindex="-1" aria-labelledby="controlSheetModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.emergency.cases.update', $case) }}">
+                @csrf
+                @method('PATCH')
+                <input type="hidden" name="_form" value="control_sheet">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title" id="controlSheetModalLabel">Emergency Control Sheet</h5>
+                        <div class="small text-muted">{{ $case->emergency_number }}</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Arrival Mode</label>
+                            <select class="form-select" name="arrival_mode">
+                                @foreach(['WALK_IN','AMBULANCE','POLICE','FAMILY_BROUGHT','REFERRAL','TRANSFER_FROM_OPD','TRANSFER_FROM_WARD','UNKNOWN'] as $mode)
+                                    <option value="{{ $mode }}" @selected(old('arrival_mode', $case->arrival_mode) === $mode)>{{ str_replace('_', ' ', $mode) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Arrival Time</label>
+                            <input class="form-control" type="datetime-local" name="arrival_time" value="{{ old('arrival_time', $case->arrival_time?->format('Y-m-d\TH:i')) }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Brought By</label>
+                            <input class="form-control" name="brought_by" value="{{ old('brought_by', $case->brought_by) }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Source</label>
+                            <input class="form-control" name="source" value="{{ old('source', $case->source) }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Referral Facility</label>
+                            <input class="form-control" name="referral_facility" value="{{ old('referral_facility', $case->referral_facility) }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Emergency Status</label>
+                            <select class="form-select" name="emergency_status">
+                                @foreach(['WAITING_TRIAGE','TRIAGED','UNDER_EMERGENCY_CARE','OBSERVATION','READY_FOR_DISPOSITION','CANCELLED'] as $status)
+                                    <option value="{{ $status }}" @selected(old('emergency_status', $case->emergency_status) === $status)>{{ str_replace('_', ' ', $status) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Chief Complaint</label>
+                            <textarea class="form-control" name="chief_complaint" rows="3">{{ old('chief_complaint', $case->chief_complaint) }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Initial Condition</label>
+                            <textarea class="form-control" name="initial_condition" rows="3">{{ old('initial_condition', $case->initial_condition) }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Control Sheet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="triageModal" tabindex="-1" aria-labelledby="triageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.emergency.triage.store', $case) }}">
+                @csrf
+                <input type="hidden" name="_form" value="triage">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title" id="triageModalLabel">Record Emergency Triage</h5>
+                        <div class="small text-muted">{{ $case->emergency_number }} - {{ $case->patient->full_name ?? 'Unknown patient' }}</div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Auto Category</label>
+                            <input class="form-control" value="{{ $case->auto_triage_category ?: 'Calculated on save' }}" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Final Category</label>
+                            <select class="form-select" name="final_triage_category">
+                                <option value="">Use automated category</option>
+                                @foreach(['RED','ORANGE','YELLOW','GREEN','BLACK'] as $category)
+                                    <option value="{{ $category }}" @selected(old('final_triage_category', $currentTriage) === $category)>{{ $category }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">AVPU</label>
+                            <select class="form-select" name="avpu">
+                                <option value="">Not recorded</option>
+                                @foreach(['A' => 'Alert', 'V' => 'Voice', 'P' => 'Pain', 'U' => 'Unresponsive'] as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('avpu', $case->avpu) === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Pain Score</label>
+                            <input class="form-control" type="number" min="0" max="10" name="pain_score" value="{{ old('pain_score', $case->pain_score) }}" placeholder="0-10">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Danger Signs</label>
+                            <div class="row g-2">
+                                @foreach($dangerSignOptions as $value => $label)
+                                    <div class="col-sm-6 col-lg-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="danger_signs[]" value="{{ $value }}" id="triage_danger_{{ $value }}" @checked(in_array($value, old('danger_signs', $case->danger_signs ?: []), true))>
+                                            <label class="form-check-label" for="triage_danger_{{ $value }}">{{ $label }}</label>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Override Reason</label>
+                            <input class="form-control" name="triage_override_reason" value="{{ old('triage_override_reason', $case->triage_override_reason) }}" placeholder="Required only if final category differs from auto category">
+                        </div>
+                        <div class="col-md-3"><input class="form-control" name="blood_pressure_systolic" value="{{ old('blood_pressure_systolic') }}" placeholder="BP Sys"></div>
+                        <div class="col-md-3"><input class="form-control" name="blood_pressure_diastolic" value="{{ old('blood_pressure_diastolic') }}" placeholder="BP Dia"></div>
+                        <div class="col-md-2"><input class="form-control" name="heart_rate" value="{{ old('heart_rate') }}" placeholder="HR"></div>
+                        <div class="col-md-2"><input class="form-control" name="respiratory_rate" value="{{ old('respiratory_rate') }}" placeholder="RR"></div>
+                        <div class="col-md-2"><input class="form-control" name="spo2" value="{{ old('spo2') }}" placeholder="SpO2"></div>
+                        <div class="col-md-6"><input class="form-control" name="temperature" value="{{ old('temperature') }}" placeholder="Temperature"></div>
+                        <div class="col-md-6"><input class="form-control" name="triage_score" value="{{ old('triage_score') }}" placeholder="Manual score"></div>
+                        <div class="col-12">
+                            <textarea class="form-control" name="triage_notes" rows="3" placeholder="Triage notes">{{ old('triage_notes', $case->triage_notes) }}</textarea>
+                        </div>
+                        @if($case->triage_reasons || $case->triage_warnings)
+                            <div class="col-12">
+                                <div class="border rounded p-3 small">
+                                    @if($case->triage_reasons)
+                                        <div class="fw-semibold text-danger mb-1">Automated reasons</div>
+                                        <ul class="mb-2 ps-3">
+                                            @foreach($case->triage_reasons as $reason)
+                                                <li>{{ $reason }}</li>
+                                            @endforeach
+                                        </ul>
+                                    @endif
+                                    @if($case->triage_warnings)
+                                        <div class="fw-semibold text-warning mb-1">Warnings</div>
+                                        <ul class="mb-0 ps-3">
+                                            @foreach($case->triage_warnings as $warning)
+                                                <li>{{ $warning }}</li>
+                                            @endforeach
+                                        </ul>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Triage</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -789,14 +902,24 @@ document.addEventListener('DOMContentLoaded', function () {
             data: {
                 labels: vitalsChartData.labels,
                 datasets: [
+                    { label: 'Systolic BP', data: vitalsChartData.systolic, borderColor: '#6f42c1', tension: .3, spanGaps: true },
+                    { label: 'Diastolic BP', data: vitalsChartData.diastolic, borderColor: '#20c997', tension: .3, spanGaps: true },
                     { label: 'Heart Rate', data: vitalsChartData.heart_rate, borderColor: '#dc3545', tension: .3, spanGaps: true },
                     { label: 'Respiratory Rate', data: vitalsChartData.respiratory_rate, borderColor: '#0d6efd', tension: .3, spanGaps: true },
                     { label: 'Temperature', data: vitalsChartData.temperature, borderColor: '#fd7e14', tension: .3, spanGaps: true },
                     { label: 'SpO2', data: vitalsChartData.spo2, borderColor: '#198754', tension: .3, spanGaps: true }
                 ]
             },
-            options: { responsive: true, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: false } } }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: false } } }
         });
+    }
+
+    var modalToOpen = @json($shouldOpenTriageModal ? 'triageModal' : ($shouldOpenControlSheetModal ? 'controlSheetModal' : null));
+    if (modalToOpen && window.bootstrap) {
+        var targetModal = document.getElementById(modalToOpen);
+        if (targetModal) {
+            bootstrap.Modal.getOrCreateInstance(targetModal).show();
+        }
     }
 
     document.querySelectorAll('[data-filter-target]').forEach(function (input) {

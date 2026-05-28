@@ -118,15 +118,25 @@ class EmergencyCaseController extends Controller
             'consumableUsages.user',
         ]);
 
-        $vitalsChartData = $emergencyCase->vitals->sortBy('recorded_at')->values()->map(fn ($vital) => [
+        $vitalsChartRows = $emergencyCase->vitals->sortBy('recorded_at')->values()->map(fn ($vital) => [
             'label' => $vital->recorded_at?->format('d M H:i'),
-            'systolic' => $vital->blood_pressure_systolic,
-            'diastolic' => $vital->blood_pressure_diastolic,
-            'hr' => $vital->heart_rate,
-            'temp' => $vital->temperature,
-            'spo2' => $vital->spo2,
-            'rr' => $vital->respiratory_rate,
-        ])->all();
+            'systolic' => $vital->blood_pressure_systolic !== null ? (int) $vital->blood_pressure_systolic : null,
+            'diastolic' => $vital->blood_pressure_diastolic !== null ? (int) $vital->blood_pressure_diastolic : null,
+            'heart_rate' => $vital->heart_rate !== null ? (int) $vital->heart_rate : null,
+            'temperature' => $vital->temperature !== null ? (float) $vital->temperature : null,
+            'spo2' => $vital->spo2 !== null ? (int) $vital->spo2 : null,
+            'respiratory_rate' => $vital->respiratory_rate !== null ? (int) $vital->respiratory_rate : null,
+        ]);
+
+        $vitalsChartData = [
+            'labels' => $vitalsChartRows->pluck('label')->all(),
+            'systolic' => $vitalsChartRows->pluck('systolic')->all(),
+            'diastolic' => $vitalsChartRows->pluck('diastolic')->all(),
+            'heart_rate' => $vitalsChartRows->pluck('heart_rate')->all(),
+            'temperature' => $vitalsChartRows->pluck('temperature')->all(),
+            'spo2' => $vitalsChartRows->pluck('spo2')->all(),
+            'respiratory_rate' => $vitalsChartRows->pluck('respiratory_rate')->all(),
+        ];
 
         $billingGroups = $this->groupEmergencyBillingItems($emergencyCase);
 
@@ -141,6 +151,7 @@ class EmergencyCaseController extends Controller
 
         $investigationDepartments = Department::acceptsRequests()->orderBy('name')->get();
         $procedureDepartments = Department::where('type', DepartmentType::PROCEDURE->value)->where('status', 'active')->orderBy('name')->get();
+        $emergencyDepartmentId = $this->emergencyDepartmentId($emergencyCase);
 
         return view('emergency.show', [
             'case' => $emergencyCase,
@@ -151,7 +162,11 @@ class EmergencyCaseController extends Controller
             'consumableProducts' => $consumableProducts,
             'frequencies' => MedicationFrequency::where('is_active', true)->orderBy('code')->get(),
             'stockLocations' => StockLocation::active()->whereIn('type', ['emergency', 'ward'])->orderBy('name')->get(),
-            'services' => ServiceCatalog::active()->orderBy('name')->limit(100)->get(),
+            'services' => ServiceCatalog::active()
+                ->when($emergencyDepartmentId !== null, fn ($query) => $query->where('department_id', $emergencyDepartmentId), fn ($query) => $query->whereRaw('1 = 0'))
+                ->orderBy('name')
+                ->limit(100)
+                ->get(),
             'investigationDepartments' => $investigationDepartments,
             'investigationServices' => ServiceCatalog::active()->whereIn('department_id', $investigationDepartments->pluck('id'))->orderBy('name')->get(),
             'procedureDepartments' => $procedureDepartments,
@@ -170,15 +185,42 @@ class EmergencyCaseController extends Controller
     public function update(Request $request, EmergencyCase $emergencyCase)
     {
         $data = $request->validate([
+            'arrival_mode' => ['nullable', 'in:WALK_IN,AMBULANCE,POLICE,FAMILY_BROUGHT,REFERRAL,TRANSFER_FROM_OPD,TRANSFER_FROM_WARD,UNKNOWN'],
+            'arrival_time' => ['nullable', 'date'],
+            'brought_by' => ['nullable', 'string', 'max:120'],
+            'source' => ['nullable', 'string', 'max:120'],
+            'referral_facility' => ['nullable', 'string', 'max:180'],
+            'chief_complaint' => ['nullable', 'string', 'max:2000'],
+            'initial_condition' => ['nullable', 'string', 'max:2000'],
             'assigned_doctor_id' => ['nullable', 'exists:users,id'],
             'assigned_nurse_id' => ['nullable', 'exists:users,id'],
             'emergency_status' => ['nullable', 'in:ARRIVED,WAITING_TRIAGE,TRIAGED,UNDER_EMERGENCY_CARE,OBSERVATION,READY_FOR_DISPOSITION,CANCELLED'],
         ]);
 
         $emergencyCase->update($data);
+
+        if (array_key_exists('chief_complaint', $data) || array_key_exists('initial_condition', $data)) {
+            $emergencyCase->visit?->update([
+                'chief_complaint' => $data['chief_complaint'] ?? $emergencyCase->visit?->chief_complaint,
+                'notes' => $data['initial_condition'] ?? $emergencyCase->visit?->notes,
+            ]);
+        }
+
         $this->sessions->syncTeam($emergencyCase->fresh(['activeEmergencySession']));
 
         return back()->with('success', 'Emergency case updated.');
+    }
+
+    private function emergencyDepartmentId(EmergencyCase $case): ?int
+    {
+        $case->loadMissing(['visit', 'activeEmergencySession']);
+
+        return $case->visit?->current_department_id
+            ?: $case->activeEmergencySession?->department_id
+            ?: Department::query()
+                ->whereIn('code', ['ER', 'EMR'])
+                ->orWhere('name', 'like', '%Emergency%')
+                ->value('id');
     }
 
     private function groupEmergencyBillingItems(EmergencyCase $case): array

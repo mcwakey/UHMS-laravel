@@ -18,6 +18,7 @@ use App\Models\StockBalance;
 use App\Models\StockLocation;
 use App\Models\User;
 use App\Models\Visit;
+use App\Models\Vital;
 use App\Services\EmergencyMedicationService;
 use App\Services\EmergencySessionService;
 use App\Services\EmergencyTriageService;
@@ -71,6 +72,7 @@ class EmergencyCaseManagementTest extends TestCase
             'emergency.investigation.request',
             'emergency.procedure.request',
             'emergency.consumables.use',
+            'invoices.create',
             'emergency.reports.view',
             'emergency.settings.manage',
             'emergency.medication_board.view',
@@ -159,12 +161,29 @@ class EmergencyCaseManagementTest extends TestCase
     public function test_emergency_case_detail_loads_control_sheet(): void
     {
         $case = $this->makeCase();
+        Vital::create([
+            'visit_id' => $case->visit_id,
+            'emergency_case_id' => $case->id,
+            'patient_id' => $this->patient->id,
+            'recorded_by' => $this->user->id,
+            'blood_pressure_systolic' => 120,
+            'blood_pressure_diastolic' => 80,
+            'heart_rate' => 88,
+            'temperature' => 37.1,
+            'respiratory_rate' => 18,
+            'spo2' => 98,
+            'recorded_at' => now(),
+        ]);
 
         $response = $this->actingAs($this->user)->get(route('admin.emergency.cases.show', $case));
 
         $response->assertOk();
         $response->assertSee($case->emergency_number);
         $response->assertSee('Emergency Control Sheet');
+        $response->assertSee('controlSheetModal', false);
+        $response->assertSee('triageModal', false);
+        $response->assertSee('emergencyVitalsChart', false);
+        $response->assertSee('BP 120', false);
     }
 
     public function test_temporary_emergency_identity_confirmation_is_modal_based(): void
@@ -431,6 +450,46 @@ class EmergencyCaseManagementTest extends TestCase
             'service_catalog_id' => $service->id,
             'is_emergency' => true,
         ]);
+    }
+
+    public function test_emergency_billing_only_uses_services_from_emergency_department(): void
+    {
+        $case = $this->makeCase();
+        $emergencyService = ServiceCatalog::create([
+            'name' => 'Emergency Observation Fee',
+            'code' => 'ER-OBS',
+            'category' => 'emergency',
+            'price' => 35,
+            'is_active' => true,
+            'is_billable' => true,
+            'department_id' => $this->department->id,
+        ]);
+        $otherDepartment = Department::factory()->create([
+            'name' => 'General OPD',
+            'code' => 'GOPD',
+            'type' => 'consultation',
+            'status' => 'active',
+        ]);
+        $otherService = ServiceCatalog::create([
+            'name' => 'General OPD Review Fee',
+            'code' => 'OPD-REV',
+            'category' => 'consultation',
+            'price' => 20,
+            'is_active' => true,
+            'is_billable' => true,
+            'department_id' => $otherDepartment->id,
+        ]);
+
+        $this->actingAs($this->user)
+            ->get(route('admin.emergency.cases.show', $case))
+            ->assertOk()
+            ->assertSee($emergencyService->name)
+            ->assertDontSee($otherService->name);
+
+        $this->actingAs($this->user)->post(route('admin.emergency.services.store', $case), [
+            'service_catalog_id' => $otherService->id,
+            'quantity' => 1,
+        ])->assertSessionHasErrors('service_catalog_id');
     }
 
     public function test_emergency_consumable_uses_stock_and_bills_visit_invoice(): void
