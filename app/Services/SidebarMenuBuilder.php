@@ -50,6 +50,14 @@ class SidebarMenuBuilder
                         'permission' => 'patients.view',
                         'module' => 'patients',
                     ],
+                    // [
+                    //     'label' => 'Folder Merge',
+                    //     'icon' => 'ti ti-git-merge',
+                    //     'route' => 'admin.patients.merge.index',
+                    //     'active_patterns' => ['admin.patients.merge.*'],
+                    //     'permission' => 'patients.merge.view',
+                    //     'module' => 'patients',
+                    // ],
                     [
                         'label' => 'Appointments',
                         'icon' => 'ti ti-calendar-event',

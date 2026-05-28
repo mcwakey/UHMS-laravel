@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\EmergencyBayController;
 use App\Http\Controllers\Admin\EmergencyBillingController;
 use App\Http\Controllers\Admin\EmergencyBoardController;
 use App\Http\Controllers\Admin\EmergencyCaseController;
+use App\Http\Controllers\Admin\EmergencyPatientIdentityController;
 use App\Http\Controllers\Admin\EmergencyDispositionController;
 use App\Http\Controllers\Admin\EmergencyInvestigationController;
 use App\Http\Controllers\Admin\EmergencyMedicationBoardController;
@@ -46,6 +47,7 @@ use App\Http\Controllers\Admin\ModuleController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\PatientController;
 use App\Http\Controllers\Admin\PatientInsuranceController;
+use App\Http\Controllers\Admin\PatientMergeController;
 use App\Http\Controllers\Admin\PayrollController;
 use App\Http\Controllers\Admin\ProcedureCatalogueController;
 use App\Http\Controllers\Admin\ProcedureConsumablesController;
@@ -190,6 +192,12 @@ Route::middleware('auth')->group(function () {
         // Patients
         Route::middleware('can:patients.view')->group(function () {
             Route::get('patients', [PatientController::class, 'index'])->name('patients.index');
+            Route::get('patients/merge', [PatientMergeController::class, 'index'])->name('patients.merge.index')->middleware('can:patients.merge.view');
+            Route::get('patients/merge/compare', [PatientMergeController::class, 'compare'])->name('patients.merge.compare')->middleware('can:patients.merge.request');
+            Route::post('patients/merge/requests', [PatientMergeController::class, 'store'])->name('patients.merge.requests.store')->middleware('can:patients.merge.request');
+            Route::get('patients/merge/requests/{mergeRequest}', [PatientMergeController::class, 'show'])->name('patients.merge.requests.show')->middleware('can:patients.merge.view');
+            Route::post('patients/merge/requests/{mergeRequest}/execute', [PatientMergeController::class, 'execute'])->name('patients.merge.requests.execute')->middleware('can:patients.merge.execute');
+            Route::get('patients/merge/logs', [PatientMergeController::class, 'logs'])->name('patients.merge.logs')->middleware('can:patients.merge.view');
             Route::get('patients/create', [PatientController::class, 'create'])->name('patients.create')->middleware('can:patients.create');
             Route::post('patients', [PatientController::class, 'store'])->name('patients.store')->middleware('can:patients.create');
             Route::get('patients/{patient}', [PatientController::class, 'show'])->name('patients.show');
@@ -287,6 +295,7 @@ Route::middleware('auth')->group(function () {
             Route::post('cases', [EmergencyCaseController::class, 'store'])->name('cases.store')->middleware('can:emergency.case.create');
             Route::get('cases/{emergencyCase}', [EmergencyCaseController::class, 'show'])->name('cases.show')->middleware('can:emergency.case.view');
             Route::patch('cases/{emergencyCase}', [EmergencyCaseController::class, 'update'])->name('cases.update')->middleware('can:emergency.case.update');
+            Route::post('cases/{emergencyCase}/confirm-identity', [EmergencyPatientIdentityController::class, 'store'])->name('cases.confirm-identity')->middleware('can:patients.merge.confirm_identity');
 
             Route::post('cases/{emergencyCase}/triage', [EmergencyTriageController::class, 'store'])->name('triage.store')->middleware('can:emergency.triage.perform');
             Route::post('cases/{emergencyCase}/assign-bay', [EmergencyBayController::class, 'assign'])->name('bay.assign')->middleware('can:emergency.bay.assign');

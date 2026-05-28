@@ -18,6 +18,7 @@ class EmergencyCaseService
         private EmergencyNumberService $numbers,
         private EmergencyTimelineService $timeline,
         private EmergencyBayService $bays,
+        private PatientMergeGuard $patientMergeGuard,
     ) {}
 
     public function create(array $data, User $user): EmergencyCase
@@ -26,6 +27,8 @@ class EmergencyCaseService
             $patient = empty($data['patient_id'])
                 ? $this->createTemporaryPatient($data, $user)
                 : Patient::findOrFail($data['patient_id']);
+
+            $this->patientMergeGuard->assertCanReceiveNewRecords($patient, 'emergency case');
 
             $arrival = Carbon::parse($data['arrival_time'] ?? now());
 

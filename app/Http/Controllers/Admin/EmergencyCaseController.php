@@ -53,7 +53,11 @@ class EmergencyCaseController extends Controller
             'assigned_nurse_id' => ['nullable', 'exists:users,id'],
         ]);
 
-        $case = $this->cases->create($data, $request->user());
+        try {
+            $case = $this->cases->create($data, $request->user());
+        } catch (\InvalidArgumentException $e) {
+            return back()->withInput()->withErrors(['patient_id' => $e->getMessage()]);
+        }
 
         return redirect()
             ->route('admin.emergency.cases.show', $case)
@@ -100,6 +104,11 @@ class EmergencyCaseController extends Controller
             'investigationDepartments' => Department::acceptsRequests()->orderBy('name')->get(),
             'procedureDepartments' => Department::where('type', DepartmentType::PROCEDURE->value)->where('status', 'active')->orderBy('name')->get(),
             'procedureServices' => ServiceCatalog::active()->where('category', 'procedure')->orderBy('name')->get(),
+            'identityCandidates' => Patient::active()
+                ->where('id', '!=', $emergencyCase->patient_id)
+                ->orderByDesc('created_at')
+                ->limit(50)
+                ->get(),
         ]);
     }
 

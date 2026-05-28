@@ -33,6 +33,7 @@ class VisitService
         protected VisitWorkflowService $workflowService,
         protected ServicePricingService $pricingService,
         protected BillingService $billingService,
+        protected PatientMergeGuard $patientMergeGuard,
     ) {}
 
     public function list(array $filters = []): LengthAwarePaginator
@@ -93,7 +94,7 @@ class VisitService
         $data['created_by'] = Auth::id();
 
         // Calculate and store patient age at time of visit
-        $patient = Patient::find($data['patient_id']);
+        $patient = $this->patientMergeGuard->assertCanReceiveNewRecords($data['patient_id'], 'visit');
         if ($patient && $patient->date_of_birth) {
             $data['patient_age'] = $patient->date_of_birth->age;
         }

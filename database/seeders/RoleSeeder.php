@@ -24,6 +24,11 @@ class RoleSeeder extends Seeder
             'patients.create',
             'patients.edit',
             'patients.delete',
+            'patients.merge.view',
+            'patients.merge.request',
+            'patients.merge.approve',
+            'patients.merge.execute',
+            'patients.merge.confirm_identity',
 
             // ── Visits ────────────────────────────────────────────────────
             'visits.view',

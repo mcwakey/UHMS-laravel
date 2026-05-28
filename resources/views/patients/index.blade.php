@@ -8,6 +8,9 @@
         <h4 class="fw-bold mb-0">Patients <span class="badge badge-soft-primary fw-medium border py-1 px-2 border-primary fs-13 ms-1">Total: {{ $patients->total() }}</span></h4>
     </div>
     <div class="text-end d-flex">
+        @can('patients.merge.view')
+        <a href="{{ route('admin.patients.merge.index') }}" class="btn btn-outline-primary btn-md fs-13 me-2"><i class="ti ti-git-merge me-1"></i>Folder Merge</a>
+        @endcan
         @can('patients.create')
         <a href="{{ route('admin.patients.create') }}" class="btn btn-primary btn-md fs-13"><i class="ti ti-plus me-1"></i>New Patient</a>
         @endcan
@@ -117,7 +120,9 @@
                             @endif
                         </td>
                         <td>
-                            @if($patient->status === 'active')
+                            @if($patient->isMerged())
+                                <span class="badge badge-soft-dark">Merged</span>
+                            @elseif($patient->status === 'active')
                                 <span class="badge badge-soft-success">Active</span>
                             @elseif($patient->status === 'inactive')
                                 <span class="badge badge-soft-warning">Inactive</span>
@@ -129,9 +134,15 @@
                         <td class="text-end">
                             <div class="d-flex align-items-center justify-content-end gap-1">
                                 @can('visits.create')
+                                @if($patient->isMerged())
+                                <button type="button" class="btn btn-sm btn-outline-secondary" title="Merged folder cannot receive new visits" disabled>
+                                    <i class="ti ti-lock"></i>
+                                </button>
+                                @else
                                 <a href="{{ route('admin.visits.create', ['patient_id' => $patient->id]) }}" class="btn btn-sm btn-outline-success" title="New Visit">
                                     <i class="ti ti-stethoscope"></i>
                                 </a>
+                                @endif
                                 @endcan
                                 <div class="dropdown">
                                     <a href="javascript:void(0);" class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">

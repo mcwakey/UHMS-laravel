@@ -99,6 +99,10 @@ class PatientController extends Controller
     {
         // AJAX: Return patient insurances as JSON
         if ($request->ajax() && $request->get('format') === 'insurances') {
+            if ($patient->isMerged()) {
+                $patient = $patient->getFinalPatient();
+            }
+
             $patient->load('insurances.insuranceProvider');
             return response()->json([
                 'insurances' => $patient->insurances
@@ -111,6 +115,12 @@ class PatientController extends Controller
                         'is_expired' => $ins->is_expired,
                     ])->values(),
             ]);
+        }
+
+        if ($patient->isMerged()) {
+            $patient->load(['mergedToPatient', 'mergedBy', 'aliases']);
+
+            return view('patients.merged', compact('patient'));
         }
 
         $patient->load([

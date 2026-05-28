@@ -50,11 +50,15 @@ class Patient extends Model
         'allergies',
         'chronic_conditions',
         'status',
+        'is_active',
         'is_temporary',
         'temporary_reason',
         'identity_confirmed_at',
         'identity_confirmed_by',
         'merged_to_patient_id',
+        'merge_status',
+        'merged_at',
+        'merged_by',
         'registered_by',
         // Deceased fields
         'is_deceased',
@@ -73,8 +77,10 @@ class Patient extends Model
             'marital_status'=> MaritalStatus::class,
             'is_deceased'   => 'boolean',
             'deceased_at'   => 'date',
+            'is_active'      => 'boolean',
             'is_temporary'   => 'boolean',
             'identity_confirmed_at' => 'datetime',
+            'merged_at' => 'datetime',
         ];
     }
 
@@ -184,6 +190,36 @@ class Patient extends Model
         return $this->belongsTo(self::class, 'merged_to_patient_id');
     }
 
+    public function mergedInto()
+    {
+        return $this->mergedToPatient();
+    }
+
+    public function mergedFromPatients()
+    {
+        return $this->hasMany(self::class, 'merged_to_patient_id');
+    }
+
+    public function mergedBy()
+    {
+        return $this->belongsTo(User::class, 'merged_by');
+    }
+
+    public function aliases()
+    {
+        return $this->hasMany(PatientAlias::class);
+    }
+
+    public function mergeRequestsAsMain()
+    {
+        return $this->hasMany(PatientMergeRequest::class, 'main_patient_id');
+    }
+
+    public function mergeRequestsAsDuplicate()
+    {
+        return $this->hasMany(PatientMergeRequest::class, 'duplicate_patient_id');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Accessors
@@ -216,7 +252,12 @@ class Patient extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->where('status', 'active')
+            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->whereNull('merge_status')
+                  ->orWhere('merge_status', '!=', 'MERGED');
+            });
     }
 
     public function scopeSearch($query, ?string $term)
@@ -237,6 +278,11 @@ class Patient extends Model
               ->orWhereHas('emergencyContacts', function ($ec) use ($term) {
                   $ec->where('name', 'like', "%{$term}%")
                      ->orWhere('phone', 'like', "%{$term}%");
+              })
+              ->orWhereHas('aliases', function ($alias) use ($term) {
+                  $normalized = PatientAlias::normalize($term);
+                  $alias->where('alias_value', 'like', "%{$term}%")
+                        ->orWhere('normalized_alias_value', 'like', "%{$normalized}%");
               });
         });
     }
@@ -250,5 +296,37 @@ class Patient extends Model
     public static function generatePatientNumber(): string
     {
         return static::generateNumber('PT', 'patients', 'patient_number');
+    }
+
+    public function isMerged(): bool
+    {
+        return $this->merge_status === 'MERGED' || $this->merged_to_patient_id !== null;
+    }
+
+    public function getFinalPatient(): self
+    {
+        $patient = $this;
+        $seen = [];
+
+        while ($patient->merged_to_patient_id && ! in_array($patient->id, $seen, true)) {
+            $seen[] = $patient->id;
+            $patient = $patient->mergedToPatient()->first() ?? $patient;
+        }
+
+        return $patient;
+    }
+
+    public function assertCanReceiveNewRecords(string $context = 'record'): void
+    {
+        if (! $this->isMerged()) {
+            return;
+        }
+
+        $main = $this->getFinalPatient();
+        $mainLabel = $main->id === $this->id
+            ? 'the main patient folder'
+            : "patient {$main->patient_number}";
+
+        throw new \InvalidArgumentException("This patient folder has been merged. Create the {$context} under {$mainLabel} instead.");
     }
 }

@@ -35,6 +35,44 @@
     </div>
 @endif
 
+@if($case->patient?->is_temporary)
+@can('patients.merge.confirm_identity')
+<div class="card border-warning mb-3">
+    <div class="card-header bg-warning-subtle text-warning d-flex align-items-center justify-content-between">
+        <h5 class="card-title mb-0"><i class="ti ti-id-badge-2 me-1"></i>Confirm Temporary Emergency Identity</h5>
+        <span class="badge bg-warning text-dark">{{ $case->patient->patient_number }}</span>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ route('admin.emergency.cases.confirm-identity', $case) }}" class="row g-2 align-items-end">
+            @csrf
+            <div class="col-md-5">
+                <label class="form-label">Confirmed Patient Folder</label>
+                <select name="confirmed_patient_id" class="form-select" required>
+                    <option value="">Select confirmed patient</option>
+                    @foreach($identityCandidates as $candidate)
+                        <option value="{{ $candidate->id }}">{{ $candidate->patient_number }} - {{ $candidate->full_name }} - {{ $candidate->phone }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Confirmation Note</label>
+                <input type="text" name="reason" class="form-control" placeholder="ID confirmed by family, Ghana Card, or staff verification">
+            </div>
+            <div class="col-md-2">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="confirmed" value="1" id="identityConfirmed" required>
+                    <label class="form-check-label" for="identityConfirmed">Confirmed</label>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <button class="btn btn-warning w-100" type="submit"><i class="ti ti-git-merge"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+@endcan
+@endif
+
 <div class="row g-3 mb-3">
     <div class="col-md-6 col-xl-3">
         <div class="card h-100 border-0 bg-light">
