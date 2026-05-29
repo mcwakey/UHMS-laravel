@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
 use Inertia\Middleware;
@@ -38,6 +39,41 @@ class HandleInertiaRequests extends Middleware
                 'error'   => fn () => $request->session()->get('error'),
             ],
             'csrf_token' => fn () => csrf_token(),
+
+            // Notifications: light header for the topbar dropdown / SPA layouts.
+            // Lazy-evaluated so requests for guests or partial reloads stay cheap.
+            'notifications' => function () use ($request) {
+                $user = $request->user();
+                if (! $user) {
+                    return ['unread_count' => 0, 'latest' => []];
+                }
+                try {
+                    $service = app(NotificationService::class);
+                    $limit = (int) config('notifications.latest_limit', 10);
+                    $latest = $service->latest($user, $limit)->map(function ($n) {
+                        $data = is_array($n->data) ? $n->data : (array) $n->data;
+                        return [
+                            'id' => $n->id,
+                            'title' => $data['title'] ?? null,
+                            'message' => $data['message'] ?? 'Notification',
+                            'module' => $data['module'] ?? 'SYSTEM',
+                            'priority' => $data['priority'] ?? 'NORMAL',
+                            'icon' => $data['icon'] ?? 'ti-bell',
+                            'color' => $data['color'] ?? 'primary',
+                            'url' => $data['action_url'] ?? ($data['url'] ?? '#'),
+                            'time' => $n->created_at?->diffForHumans(),
+                            'read' => ! is_null($n->read_at),
+                        ];
+                    })->values()->all();
+                    return [
+                        'unread_count' => $service->unreadCount($user),
+                        'latest' => $latest,
+                    ];
+                } catch (\Throwable $e) {
+                    report($e);
+                    return ['unread_count' => 0, 'latest' => []];
+                }
+            },
 
             // Sidebar + topbar HTML for true Inertia pages (consumed by
             // resources/js/Layouts/AppLayout.vue). Lazy-evaluated and only

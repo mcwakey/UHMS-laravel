@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\NotificationModule;
+use App\Enums\NotificationPriority;
 use App\Enums\ProcedureStatus;
 use App\Models\ProcedureRequest;
 use App\Models\ProcedureStatusLog;
@@ -15,6 +17,7 @@ class ProcedureWorkflowService
 {
     public function __construct(
         protected BillingService $billingService,
+        protected NotificationService $notifications,
     ) {}
 
     public function acceptProcedure(ProcedureRequest $request, User $user, ?string $notes = null): ProcedureRequest
@@ -146,7 +149,10 @@ class ProcedureWorkflowService
 
             $this->logStatusChange($request, $from, ProcedureStatus::CANCELLED, $user, $reason);
 
-            return $request->fresh();
+            $fresh = $request->fresh();
+            $this->notifyProcedureCancelled($fresh, $user, $reason);
+
+            return $fresh;
         });
     }
 
@@ -169,8 +175,75 @@ class ProcedureWorkflowService
 
             $this->logStatusChange($request, $from, ProcedureStatus::COMPLETED, $user, 'Procedure completed.');
 
-            return $request->fresh();
+            $fresh = $request->fresh();
+            $this->notifyProcedureCompleted($fresh, $user);
+
+            return $fresh;
         });
+    }
+
+    /* ── Notifications ──────────────────────────────────────────── */
+
+    protected function notifyProcedureCancelled(ProcedureRequest $request, User $actor, string $reason): void
+    {
+        $request->loadMissing(['patient', 'service', 'requestedBy']);
+        $patient = $request->patient;
+        $title = $patient ? trim($patient->first_name . ' ' . $patient->last_name) : 'patient';
+        $serviceName = $request->service?->name ?? 'Procedure';
+
+        $payload = [
+            'title' => 'Procedure cancelled',
+            'message' => sprintf('%s for %s was cancelled: %s', $serviceName, $title, $reason),
+            'module' => NotificationModule::PROCEDURE,
+            'priority' => NotificationPriority::HIGH,
+            'source_type' => 'procedure_request',
+            'source_id' => $request->id,
+            'action_url' => $this->procedureUrl($request),
+            'patient_id' => $request->patient_id,
+        ];
+
+        $recipients = collect();
+        if ($request->requestedBy && $request->requestedBy->id !== $actor->id) {
+            $recipients->push($request->requestedBy);
+        }
+        $this->notifications->notifyUsers($recipients, $payload);
+    }
+
+    protected function notifyProcedureCompleted(ProcedureRequest $request, User $actor): void
+    {
+        $request->loadMissing(['patient', 'service', 'requestedBy']);
+        $patient = $request->patient;
+        $title = $patient ? trim($patient->first_name . ' ' . $patient->last_name) : 'patient';
+        $serviceName = $request->service?->name ?? 'Procedure';
+
+        $payload = [
+            'title' => 'Procedure completed',
+            'message' => sprintf('%s for %s has been completed.', $serviceName, $title),
+            'module' => NotificationModule::PROCEDURE,
+            'priority' => NotificationPriority::NORMAL,
+            'source_type' => 'procedure_request_completed',
+            'source_id' => $request->id,
+            'action_url' => $this->procedureUrl($request),
+            'patient_id' => $request->patient_id,
+        ];
+
+        if ($request->requestedBy && $request->requestedBy->id !== $actor->id) {
+            $this->notifications->notifyUser($request->requestedBy, $payload);
+        }
+    }
+
+    protected function procedureUrl(ProcedureRequest $request): string
+    {
+        foreach (['admin.procedures.show', 'admin.procedures.index'] as $name) {
+            try {
+                return $name === 'admin.procedures.show'
+                    ? route($name, $request->id)
+                    : route($name);
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+        return '#';
     }
 
     /**

@@ -278,6 +278,9 @@ class RoleSeeder extends Seeder
 
             // ── Notifications ─────────────────────────────────────────────
             'notifications.view',
+            'notifications.mark_read',
+            'notifications.delete',
+            'notifications.manage',
 
             // ── Clinical Coding ───────────────────────────────────────────
             'icd.view',

@@ -1103,6 +1103,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/recent', [NotificationController::class, 'recent'])->name('recent');
             Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('mark-read');
             Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+            Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
         });
 
         // Profile (All authenticated users)

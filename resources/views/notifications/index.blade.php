@@ -24,8 +24,30 @@
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header d-flex align-items-center justify-content-between">
+                    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <h5 class="card-title mb-0">All Notifications</h5>
+                        <form method="GET" class="d-flex flex-wrap gap-2 align-items-center">
+                            <select name="read" class="form-select form-select-sm" style="min-width:140px;" onchange="this.form.submit()">
+                                <option value="" {{ $filterRead ? '' : 'selected' }}>All</option>
+                                <option value="unread" {{ $filterRead === 'unread' ? 'selected' : '' }}>Unread</option>
+                                <option value="read" {{ $filterRead === 'read' ? 'selected' : '' }}>Read</option>
+                            </select>
+                            <select name="module" class="form-select form-select-sm" style="min-width:160px;" onchange="this.form.submit()">
+                                <option value="">All modules</option>
+                                @foreach($moduleOptions as $mod)
+                                    <option value="{{ $mod->value }}" {{ $filterModule === $mod->value ? 'selected' : '' }}>{{ $mod->label() }}</option>
+                                @endforeach
+                            </select>
+                            <select name="priority" class="form-select form-select-sm" style="min-width:140px;" onchange="this.form.submit()">
+                                <option value="">All priorities</option>
+                                @foreach($priorityOptions as $pri)
+                                    <option value="{{ $pri->value }}" {{ $filterPriority === $pri->value ? 'selected' : '' }}>{{ $pri->label() }}</option>
+                                @endforeach
+                            </select>
+                            @if($filterRead || $filterModule || $filterPriority)
+                                <a href="{{ route('admin.notifications.index') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-x me-1"></i>Reset</a>
+                            @endif
+                        </form>
                         @if($notifications->where('read_at', null)->count() > 0)
                             <button class="btn btn-sm btn-outline-primary" id="markAllReadPageBtn">
                                 <i class="ti ti-checks me-1"></i>Mark All as Read
@@ -41,32 +63,46 @@
                                     </span>
                                 </div>
                                 <div class="flex-grow-1">
-                                    <a href="{{ $notification->data['url'] ?? '#' }}" class="text-dark notification-page-item" data-id="{{ $notification->id }}">
-                                        <p class="mb-1 {{ is_null($notification->read_at) ? 'fw-semibold' : '' }}">
-                                            {{ $notification->data['message'] ?? 'Notification' }}
+                                    @php
+                                        $data = is_array($notification->data) ? $notification->data : (array) $notification->data;
+                                        $module = $data['module'] ?? null;
+                                        $priority = $data['priority'] ?? null;
+                                        $url = $data['action_url'] ?? ($data['url'] ?? '#');
+                                        $title = $data['title'] ?? null;
+                                    @endphp
+                                    <a href="{{ $url }}" class="text-dark notification-page-item" data-id="{{ $notification->id }}">
+                                        @if($title)
+                                            <p class="mb-0 {{ is_null($notification->read_at) ? 'fw-semibold' : 'fw-medium' }}">{{ $title }}</p>
+                                        @endif
+                                        <p class="mb-1 fs-13 {{ is_null($notification->read_at) ? 'fw-semibold' : '' }}">
+                                            {{ $data['message'] ?? 'Notification' }}
                                         </p>
                                     </a>
-                                    <div class="d-flex align-items-center gap-2">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
                                         <small class="text-muted">
                                             <i class="ti ti-clock me-1"></i>{{ $notification->created_at->diffForHumans() }}
                                         </small>
-                                        @if($notification->data['type'] ?? false)
-                                            <span class="badge bg-{{ $notification->data['color'] ?? 'primary' }}-subtle text-{{ $notification->data['color'] ?? 'primary' }} rounded-pill">
-                                                {{ ucfirst(str_replace('_', ' ', $notification->data['type'])) }}
-                                            </span>
+                                        @if($module)
+                                            <span class="badge bg-info-subtle text-info rounded-pill">{{ ucwords(strtolower(str_replace('_', ' ', $module))) }}</span>
+                                        @endif
+                                        @if($priority && $priority !== 'NORMAL')
+                                            <span class="badge bg-{{ $data['color'] ?? 'primary' }}-subtle text-{{ $data['color'] ?? 'primary' }} rounded-pill">{{ ucfirst(strtolower($priority)) }}</span>
                                         @endif
                                         @if(is_null($notification->read_at))
                                             <span class="badge bg-primary-subtle text-primary rounded-pill">Unread</span>
                                         @endif
                                     </div>
                                 </div>
-                                @if(is_null($notification->read_at))
-                                    <div class="flex-shrink-0 ms-2">
+                                <div class="flex-shrink-0 ms-2 d-flex gap-1">
+                                    @if(is_null($notification->read_at))
                                         <button class="btn btn-sm btn-link text-muted p-0 mark-read-btn" data-id="{{ $notification->id }}" title="Mark as read">
                                             <i class="ti ti-check fs-16"></i>
                                         </button>
-                                    </div>
-                                @endif
+                                    @endif
+                                    <button class="btn btn-sm btn-link text-danger p-0 delete-notification-btn" data-id="{{ $notification->id }}" title="Delete">
+                                        <i class="ti ti-trash fs-16"></i>
+                                    </button>
+                                </div>
                             </div>
                         @empty
                             <div class="text-center text-muted py-5">
@@ -129,6 +165,21 @@ $(document).ready(function() {
                 } else {
                     location.reload();
                 }
+            }
+        });
+    });
+
+    // Delete a notification
+    $('.delete-notification-btn').on('click', function() {
+        var btn = $(this);
+        var id = btn.data('id');
+        if (! confirm('Delete this notification?')) return;
+        $.ajax({
+            url: '{{ url("admin/notifications") }}/' + id,
+            method: 'DELETE',
+            data: { _token: '{{ csrf_token() }}' },
+            success: function() {
+                btn.closest('.d-flex.align-items-start').remove();
             }
         });
     });

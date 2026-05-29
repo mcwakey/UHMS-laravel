@@ -1,1516 +1,1214 @@
-```text
+Use this full prompt for Codex/Copilot:
+
+````text
 You are a senior Laravel + Inertia/Vue architect working on UHMS — Ultimate Hospital Management System.
 
-We need to implement Theatre Rooms Management as part of the existing Procedure/Theatre workflow.
+The Notifications system is not working correctly, and many important workflows now depend on notifications.
 
-UHMS already has patients, visits, admission, emergency, consultation, procedures, billing, invoices, insurance pricing, product stock, stock locations, consumables, MAR/medication administration, clinical tasks, and visit preview.
+We need a full technical analysis, gap report, repair implementation, and solution report for the notification system.
 
-Theatre Rooms Management must integrate with the existing Procedure module. Do not create a parallel procedure system.
+Notifications are critical for:
 
-Theatre Rooms Management should handle the physical theatre/procedure rooms, schedules, room availability, theatre team, pre-op workflow, anaesthesia note, surgeon operative note, post-op/recovery note, consumables, billing, and visit preview integration.
+- Emergency alerts
+- Medication/MAR due and overdue reminders
+- Clinical tasks/reminders
+- Admission tasks
+- Investigation requests/results
+- Procedure/theatre requests
+- Pharmacy dispensing alerts
+- Stock requisitions/transfers
+- Low stock alerts
+- Billing/payment alerts
+- Claim preparation/submission alerts
+- Patient merge alerts/approval
+- Appointment/follow-up reminders
+- System/admin alerts
 
----
+Your task is to inspect the current UHMS notification implementation, identify why it is not working, fix it properly, and produce reports of what you found and what you changed.
 
-# 1. Core Concept
+Do not patch only one notification screen. Build a reliable notification foundation for the whole system.
 
-Current procedure workflow should evolve into:
-
-Procedure Request
-    ↓
-Theatre Accepts Procedure
-    ↓
-Billing Item Created if required
-    ↓
-Theatre Case Created / Linked
-    ↓
-Theatre Room Scheduled
-    ↓
-Pre-op Checklist
-    ↓
-Anaesthesia Note
-    ↓
-Surgeon Operative Note
-    ↓
-Post-op / Recovery Note
-    ↓
-Completed
-
-Theatre Rooms Management answers:
-
-- Which room?
-- At what time?
-- For which patient?
-- For which procedure?
-- With which surgeon/team?
-- What is the room status?
-- What resources/equipment are needed?
-- What is the case status?
+Do not break existing UHMS workflows.
 
 ---
 
-# 2. Main Objectives
+# 1. Main Objective
 
-Implement:
+Perform a full notification system audit and repair.
 
-1. Theatre rooms CRUD.
-2. Theatre room types and statuses.
-3. Theatre schedule board.
-4. Theatre room calendar.
-5. Theatre case management.
-6. Procedure request to theatre case linking.
-7. Theatre room assignment.
-8. Double-booking prevention.
-9. Emergency theatre case priority.
-10. Theatre team assignment.
-11. Pre-op checklist.
-12. Anaesthesia note.
-13. Surgeon operative note.
-14. Post-op/recovery note.
-15. Theatre consumables from Theatre stock location.
-16. Theatre billing integration through existing BillingService.
-17. Theatre room maintenance/blocking.
-18. Theatre reports foundation.
-19. Visit Preview integration.
-20. Permissions and menu updates.
+You must:
+
+1. Inspect the current notification implementation.
+2. Identify all gaps, bugs, missing pieces, and broken flows.
+3. Fix the notification backend.
+4. Fix the notification frontend/UI.
+5. Fix notification triggers from dependent modules.
+6. Ensure notifications are stored, delivered, displayed, counted, read/unread, and actionable.
+7. Add reports explaining the issues found and the solutions implemented.
+8. Identify remaining improvements that need separate future reports/prompts.
 
 ---
 
-# 3. Important Rules
+# 2. Expected Deliverables
 
-Do not create a parallel procedure workflow.
+At the end, provide these markdown reports in the project documentation folder, for example:
 
-Do not create a parallel billing system.
+```text
+docs/NOTIFICATIONS_GAP_ANALYSIS.md
+docs/NOTIFICATIONS_SOLUTION_REPORT.md
+docs/NOTIFICATIONS_REMAINING_RECOMMENDATIONS.md
+````
 
-Do not create a parallel stock system.
+If the project already has a documentation folder, use the existing convention.
 
-Do not create theatre consumables outside Products.
+The reports must include:
 
-Do not bypass BillingService.
+## NOTIFICATIONS_GAP_ANALYSIS.md
 
-Do not bypass StockMovementService.
+Explain:
 
-Do not bypass existing Procedure Request workflow.
+* Current notification architecture found
+* Existing notification tables/models/classes
+* Existing notification UI/components
+* Existing notification channels
+* Existing notification triggers
+* What is broken
+* What is missing
+* What is duplicated
+* What is unused/dead code
+* Which workflows depend on notifications
+* Root causes of notification failure
 
-Do not block emergency/life-saving theatre care because invoice is unpaid.
+## NOTIFICATIONS_SOLUTION_REPORT.md
 
-Do not allow double-booking of active theatre cases in the same room/time.
+Explain:
 
-Do not delete clinical theatre notes. Use correction/audit trail if needed.
+* Files changed
+* Migrations added/updated
+* Models updated
+* Services created/updated
+* Controllers/routes created/updated
+* Frontend components updated
+* Notification triggers fixed
+* Queue/scheduler changes
+* Tests added
+* How to verify the fix
+* Known limitations
 
-Do not overwrite the main surgeon when another theatre team member adds notes.
+## NOTIFICATIONS_REMAINING_RECOMMENDATIONS.md
 
-Do not break existing procedures, emergency, admission, billing, stock, MAR, visit preview, or consultation workflows.
+Explain:
+
+* Remaining notification improvements
+* Advanced notification features to build later
+* External SMS/WhatsApp/email push recommendations
+* Real-time broadcasting recommendations
+* Escalation workflow improvements
+* Risk areas that need more testing
 
 ---
 
-# 4. Theatre Rooms
+# 3. Notification System Must Support
 
-Create or update:
+UHMS notifications must support:
 
-theatre_rooms
+```text
+database/in-app notifications
+read/unread status
+notification dropdown/header count
+notification list page
+notification detail/action links
+priority levels
+module/source tracking
+recipient targeting
+role/department targeting
+task/reminder notifications
+due/overdue alerts
+escalation alerts
+auditability
+```
 
-Recommended fields:
+Optional but prepare for later:
 
-id
-name
-code
-department_id nullable
-room_type
-capacity nullable
-location nullable
-status
-notes nullable
-is_active boolean default true
+```text
+email notifications
+SMS notifications
+WhatsApp notifications
+browser push notifications
+real-time WebSocket/broadcast notifications
+sound alerts
+```
+
+Do not implement external SMS/WhatsApp unless infrastructure already exists.
+
+---
+
+# 4. Inspect Current Implementation
+
+First inspect the project for:
+
+```text
+Notification models
+Laravel notification classes
+database notifications table
+custom notifications table if any
+notification services
+notification controllers
+notification routes
+notification Vue/Inertia components
+notification Blade partials
+notification dropdown/header component
+notification bell/count
+notification read/unread logic
+notification mark-as-read actions
+notification queue configuration
+scheduler/cron configuration
+broadcasting configuration
+event/listener setup
+jobs
+policies/permissions
+seeders
+```
+
+Search for:
+
+```text
+Notification
+notifications
+notify
+notifiable
+database_notifications
+markAsRead
+unreadNotifications
+read_at
+broadcast
+event
+listener
+job
+queue
+scheduler
+reminder
+alert
+task
+overdue
+```
+
+---
+
+# 5. Decide Notification Architecture
+
+If the project already uses Laravel’s built-in notifications, use and fix that.
+
+Laravel default structure:
+
+```text
+notifications table
+notifiable_type
+notifiable_id
+type
+data
+read_at
 created_at
 updated_at
+```
 
-Room types:
+If the project has a custom notification table, inspect whether it is better to keep or migrate.
 
-MAJOR_THEATRE
-MINOR_THEATRE
-EMERGENCY_THEATRE
-MATERNITY_THEATRE
-ENDOSCOPY_ROOM
-PROCEDURE_ROOM
-RECOVERY_ROOM
-DENTAL_PROCEDURE_ROOM
-EYE_THEATRE
-OTHER
+Preferred approach:
 
-Room statuses:
+Use Laravel database notifications unless the existing custom system is already deeply integrated.
 
-AVAILABLE
-OCCUPIED
-SCHEDULED
-CLEANING
-MAINTENANCE
-OUT_OF_SERVICE
-RESERVED
+Do not run two parallel notification systems unless unavoidable.
 
-Examples:
-
-- Main Theatre 1
-- Main Theatre 2
-- Minor Procedure Room
-- Maternity Theatre
-- Emergency Theatre
-- Endoscopy Room
-- Dental Procedure Room
-- Eye Theatre
-- Recovery Room
+If both exist, consolidate or create a bridge service so the UI reads from one consistent source.
 
 ---
 
-# 5. Theatre Room CRUD UI
+# 6. Notification Data Requirements
 
-Create Theatre Room management page.
+Each notification should include enough structured data.
 
-Fields:
+Recommended data payload:
 
-- Room name
-- Room code
-- Department
-- Room type
-- Capacity
-- Location
-- Status
-- Notes
-- Active/inactive
+```json
+{
+  "title": "Medication overdue",
+  "message": "Ceftriaxone 1g IV for Ama Mensah is overdue by 25 minutes.",
+  "module": "MAR",
+  "source_type": "medication_administration_schedule",
+  "source_id": 12,
+  "priority": "HIGH",
+  "action_url": "/admin/admissions/5/mar-chart",
+  "patient_id": 10,
+  "visit_id": 22,
+  "admission_id": 5,
+  "emergency_case_id": null,
+  "department_id": 3,
+  "metadata": {}
+}
+```
 
-Actions:
+Supported priority levels:
 
-- Create room
-- Edit room
-- Deactivate room
-- Set available
-- Set cleaning
-- Set maintenance
-- Set out of service
-- View schedule
-
-Rules:
-
-- Room code must be unique.
-- Inactive/out-of-service rooms cannot be scheduled.
-- Rooms with active theatre cases should not be deactivated without override permission.
-
----
-
-# 6. Theatre Cases
-
-Create or update:
-
-theatre_cases
-
-Recommended fields:
-
-id
-procedure_request_id nullable
-visit_id
-patient_id
-admission_id nullable
-emergency_case_id nullable
-theatre_room_id nullable
-scheduled_start_at nullable
-scheduled_end_at nullable
-actual_start_at nullable
-actual_end_at nullable
-expected_duration_minutes nullable
-primary_surgeon_id nullable
-assistant_surgeon_id nullable
-anaesthetist_id nullable
-scrub_nurse_id nullable
-circulating_nurse_id nullable
-recovery_nurse_id nullable
-priority
-status
-accepted_by nullable
-accepted_at nullable
-scheduled_by nullable
-completed_by nullable
-completed_at nullable
-cancelled_by nullable
-cancelled_at nullable
-cancellation_reason nullable
-notes nullable
-created_at
-updated_at
-
-Priority values:
-
-ELECTIVE
+```text
+LOW
+NORMAL
+HIGH
 URGENT
+CRITICAL
+```
+
+Supported modules:
+
+```text
 EMERGENCY
-LIFE_SAVING
-
-Theatre case statuses:
-
-REQUESTED
-ACCEPTED
-BILLED
-SCHEDULED
-PRE_OP
-ANAESTHESIA_READY
-IN_THEATRE
-IN_SURGERY
-SURGERY_DONE
-RECOVERY
-POST_OP
-COMPLETED
-CANCELLED
-POSTPONED
+ADMISSION
+CONSULTATION
+MAR
+CLINICAL_TASKS
+INVESTIGATION
+PROCEDURE
+THEATRE
+PHARMACY
+BILLING
+CLAIMS
+STOCK
+PATIENTS
+SYSTEM
+```
 
 ---
 
-# 7. Procedure Request Integration
+# 7. Notification Service
 
-Theatre Case must be linked to the existing procedure request.
+Create or update a central service:
 
-When a procedure request is accepted by Theatre:
+```text
+NotificationService
+```
 
-- create or update theatre_case
-- link procedure_request_id
-- link visit_id and patient_id
-- link admission_id or emergency_case_id where applicable
-- preserve requested_by / created_by from procedure request
-- set theatre case status = ACCEPTED
-- bill procedure if workflow requires billing at acceptance
-- do not duplicate billing
+Responsibilities:
 
-Procedure Request remains the clinical request entry point.
+```text
+send notification to one user
+send notification to multiple users
+send notification to role
+send notification to department users
+send notification to permission holders
+create database notification
+avoid duplicate active notifications where needed
+mark notification read
+mark all read
+fetch unread count
+fetch latest notifications
+build action URL
+```
 
-Theatre Case becomes the operational theatre execution record.
+Suggested methods:
 
----
+```php
+notifyUser(User $user, string $type, array $data): void;
 
-# 8. Theatre Room Scheduling
+notifyUsers(Collection|array $users, string $type, array $data): void;
 
-Theatre staff should assign:
+notifyRole(string $role, string $type, array $data): void;
 
-- theatre room
-- date
-- start time
-- expected duration
-- surgeon
-- anaesthetist
-- scrub nurse
-- circulating nurse
-- assistant surgeon optional
-- priority
-- notes
+notifyDepartment(int $departmentId, string $type, array $data): void;
 
-When scheduled:
+notifyPermission(string $permission, string $type, array $data): void;
 
-- set scheduled_start_at
-- set scheduled_end_at
-- set theatre_room_id
-- set assigned theatre team
-- set status = SCHEDULED
-- mark room as SCHEDULED or keep AVAILABLE depending calendar design
-- log scheduling event
+unreadCount(User $user): int;
 
-The system must check room availability.
+latest(User $user, int $limit = 10);
 
-If room is unavailable, show:
+markAsRead(User $user, string $notificationId): void;
 
-Room already booked from 08:00 to 09:30. Choose another room or time.
+markAllAsRead(User $user): void;
+```
+
+Do not duplicate notification-sending code inside many controllers.
 
 ---
 
-# 9. Double-Booking Prevention
+# 8. Notification Types / Classes
 
-Prevent two active theatre cases in the same room during overlapping times.
+Create/update Laravel notification classes as needed.
 
-Overlap rule:
+At minimum support generic notification:
 
-A case conflicts if:
+```text
+GenericSystemNotification
+```
 
-existing.scheduled_start_at < new.scheduled_end_at
-AND
-existing.scheduled_end_at > new.scheduled_start_at
-AND
-existing.theatre_room_id = selected room
-AND
-existing.status NOT IN (CANCELLED, POSTPONED, COMPLETED)
+Better: create specific notifications for important modules:
 
-Do not allow scheduling into:
+```text
+EmergencyAlertNotification
+MedicationDueNotification
+MedicationOverdueNotification
+ClinicalTaskNotification
+InvestigationRequestNotification
+InvestigationResultNotification
+ProcedureRequestNotification
+TheatreCaseNotification
+PharmacyDispensingNotification
+StockAlertNotification
+BillingNotification
+ClaimNotification
+PatientMergeNotification
+```
 
-- OUT_OF_SERVICE room
-- MAINTENANCE room
-- inactive room
-
-Emergency override may be allowed only with permission:
-
-theatre.schedule.override
-
-If override occurs:
-
-- require reason
-- log override
-- optionally mark affected elective case as POSTPONED
+If too many classes are excessive, use one generic database notification with structured type/module data.
 
 ---
 
-# 10. Theatre Schedule Board
+# 9. Notification UI
 
-Create Theatre Schedule Board.
+Fix or create notification UI.
 
-Views:
+Must include:
 
-- Today’s Theatre List
-- Upcoming Cases
-- Emergency Cases
-- By Room
-- By Surgeon
-- By Status
-- Completed Cases
-- Cancelled/Postponed Cases
+## Header/Bell Component
 
-Columns:
+Show:
 
-- Time
-- Patient
-- Visit / Admission / Emergency No.
-- Procedure
-- Room
-- Surgeon
-- Anaesthetist
-- Priority
-- Status
-- Billing Status
-- Actions
+```text
+notification bell icon
+unread count badge
+latest unread notifications
+priority indicator
+time ago
+mark as read
+view all
+```
+
+## Notification List Page
+
+Show:
+
+```text
+all notifications
+filter by read/unread
+filter by module
+filter by priority
+search
+pagination
+mark selected as read
+mark all as read
+open action link
+```
+
+## Notification Detail / Action
+
+Clicking notification should:
+
+```text
+mark as read
+redirect to action_url
+```
+
+If action_url is missing, open notification detail or list.
+
+---
+
+# 10. Notification Read/Unread Logic
+
+Fix read/unread behavior.
+
+Requirements:
+
+```text
+Unread count must be accurate.
+Clicking notification marks it as read.
+Mark as read works for one notification.
+Mark all as read works.
+Read notifications should not appear as unread.
+Unread count should update without full page reload where possible.
+```
+
+If using Inertia:
+
+```text
+share unread notification count globally through HandleInertiaRequests
+partial reload notifications after mark read
+```
+
+Do not calculate unread count with expensive query on every request if performance is bad. Cache if needed later.
+
+---
+
+# 11. Inertia Shared Props
+
+If using Inertia, add shared props:
+
+```php
+'notifications' => [
+    'unread_count' => ...,
+    'latest' => ...,
+]
+```
+
+Only load a small number of latest notifications globally.
 
 Example:
 
-08:00 | Ama Mensah | Appendectomy | Theatre 1 | Dr. Kofi | Scheduled
-10:30 | Yao Mensah | Wound Debridement | Minor Room | Dr. Ama | Pre-op
-Emergency | Unknown Male | Exploratory Laparotomy | Emergency Theatre | Pending Room
+```text
+latest limit = 5 or 10
+```
 
-Actions:
-
-- View case
-- Assign room
-- Reschedule
-- Start pre-op
-- Record anaesthesia
-- Start surgery
-- Add operative note
-- Send to recovery
-- Complete
-- Cancel/Postpone
+Do not load all notifications into every page.
 
 ---
 
-# 11. Theatre Room Calendar
+# 12. Routes / Controllers
 
-Create room calendar view.
+Create or update notification routes.
 
-For each theatre room, show scheduled blocks:
+Suggested:
 
-08:00 - 09:30 Appendectomy
-10:00 - 11:00 Hernia Repair
-11:00 - 11:30 Cleaning
-12:00 - 13:00 C-section
+```php
+Route::prefix('admin/notifications')
+    ->name('admin.notifications.')
+    ->middleware(['auth'])
+    ->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::get('/latest', [NotificationController::class, 'latest'])->name('latest');
+        Route::post('/{notification}/read', [NotificationController::class, 'markAsRead'])->name('read');
+        Route::post('/read-all', [NotificationController::class, 'markAllAsRead'])->name('read-all');
+        Route::delete('/{notification}', [NotificationController::class, 'destroy'])->name('destroy');
+    });
+```
 
-Features:
-
-- daily view
-- weekly view optional
-- filter by room
-- filter by surgeon
-- filter by priority
-- show maintenance/cleaning blocks
-- show emergency cases clearly
-
-Rules:
-
-- calendar data must come from theatre_cases and room blocks/maintenance
-- prevent double-booking
-- sort chronologically
+Adapt route names to existing project conventions.
 
 ---
 
-# 12. Theatre Room Maintenance / Blocking
+# 13. Queue / Scheduler Audit
 
-Create support for room blocking.
+Notifications may fail because queue/scheduler is not working.
 
-Recommended table:
+Inspect:
 
-theatre_room_blocks
+```text
+.env queue connection
+QUEUE_CONNECTION
+failed_jobs table
+jobs table
+queue worker setup
+scheduled tasks
+app/Console/Kernel.php or routes/console.php
+Laravel version scheduler format
+notification jobs
+event listeners queued or sync
+```
 
-Fields:
+If notifications are queued:
 
-id
-theatre_room_id
-block_type
-start_at
-end_at
-reason
-notes nullable
-created_by
-created_at
-updated_at
+* ensure jobs table exists
+* ensure failed_jobs table exists
+* ensure queue worker instructions are documented
+* ensure local/dev can use sync queue if needed
 
-Block types:
+For dev reliability, if no worker is running, important database notifications may need to be created synchronously.
 
-CLEANING
-MAINTENANCE
-STERILIZATION
-EQUIPMENT_FAILURE
-RESERVED_EMERGENCY_SLOT
-OTHER
-
-Rules:
-
-- Cannot schedule normal cases during active room block.
-- Emergency override requires permission and reason.
-- Blocks should appear on room calendar.
+Do not silently queue critical database notification if queue worker is absent.
 
 ---
 
-# 13. Emergency Theatre Cases
+# 14. Scheduler for Reminders
 
-Emergency cases can create theatre requests.
-
-Flow:
-
-Emergency Case
-    ↓
-Procedure Request
-    ↓
-Theatre Case
-    ↓
-Emergency Theatre scheduling
-
-Emergency theatre cases should:
-
-- have priority EMERGENCY or LIFE_SAVING
-- appear at top of Theatre Board
-- suggest Emergency Theatre room first if available
-- allow urgent scheduling
-- not be blocked by unpaid invoice
-- still create billing items through BillingService
-
-If emergency case is linked:
-
-theatre_cases.emergency_case_id should be set.
-
----
-
-# 14. Theatre Team Management
-
-Theatre case should track:
-
-- primary surgeon
-- assistant surgeon
-- anaesthetist
-- scrub nurse
-- circulating nurse
-- recovery nurse
-- other staff/contributors
-
-Optional table:
-
-theatre_case_team_members
-
-Fields:
-
-id
-theatre_case_id
-user_id
-role
-assigned_by
-assigned_at
-created_at
-updated_at
-
-Roles:
-
-PRIMARY_SURGEON
-ASSISTANT_SURGEON
-ANAESTHETIST
-SCRUB_NURSE
-CIRCULATING_NURSE
-RECOVERY_NURSE
-OBSERVER
-OTHER
-
-Rules:
-
-- Do not overwrite primary surgeon when another team member adds a note.
-- Each note/action must show its creator.
-- Contributors should be visible on theatre case page.
-- Team assignment changes should be logged.
-
----
-
-# 15. Theatre Case Detail Page
-
-Create Theatre Case Detail page.
-
-Sections:
-
-1. Patient / Visit Header
-2. Procedure Request Summary
-3. Room & Schedule
-4. Theatre Team
-5. Pre-op Checklist
-6. Anaesthesia Note
-7. Surgeon Operative Note
-8. Consumables / Equipment
-9. Post-op / Recovery
-10. Billing Summary
-11. Timeline / Audit
-
-Header should show:
-
-- patient
-- visit/admission/emergency number
-- procedure
-- priority
-- room
-- scheduled time
-- status
-- primary surgeon
-- anaesthetist
-- billing status
-
----
-
-# 16. Pre-op Checklist
-
-Create pre-op checklist support.
-
-Recommended table:
-
-theatre_preop_checklists
-
-Fields:
-
-id
-theatre_case_id
-completed_by nullable
-completed_at nullable
-status
-notes nullable
-created_at
-updated_at
-
-Checklist item table:
-
-theatre_preop_checklist_items
-
-Fields:
-
-id
-theatre_preop_checklist_id
-item_key
-label
-status
-notes nullable
-checked_by nullable
-checked_at nullable
-created_at
-updated_at
-
-Checklist item statuses:
-
-PENDING
-COMPLETE
-INCOMPLETE
-WAIVED
-
-Default checklist items:
-
-- Patient identity confirmed
-- Consent signed
-- Procedure site marked
-- Allergies checked
-- Fasting status confirmed
-- Vitals checked
-- Lab results reviewed
-- Blood available if needed
-- Anaesthesia assessment done
-- Equipment ready
-- Implants/prosthesis ready
-- Antibiotic prophylaxis given
-
-Rules:
-
-- Required checklist items should be configurable.
-- Warn before moving to IN_SURGERY if required checklist items are incomplete.
-- If user proceeds despite incomplete checklist, require override permission and reason.
-- Checklist actions must be logged.
-
----
-
-# 17. Anaesthesia Note
-
-Create anaesthesia note support.
-
-Recommended table:
-
-theatre_anaesthesia_notes
-
-Fields:
-
-id
-theatre_case_id
-anaesthetist_id nullable
-anaesthesia_type
-asa_class nullable
-airway_assessment nullable
-pre_anaesthesia_assessment nullable
-drugs_given text/json nullable
-induction_time nullable
-monitoring_notes nullable
-complications nullable
-recovery_status nullable
-notes nullable
-created_by
-updated_by nullable
-created_at
-updated_at
-
-Anaesthesia types:
-
-GENERAL
-SPINAL
-EPIDURAL
-LOCAL
-SEDATION
-REGIONAL_BLOCK
-NONE
-
-Rules:
-
-- Anaesthesia note must show creator.
-- Anaesthetist can edit own note while case active.
-- Other users cannot edit unless authorized.
-- Completed theatre case notes require correction permission.
-
----
-
-# 18. Surgeon Operative Note
-
-Create operative note support.
-
-Recommended table:
-
-theatre_operative_notes
-
-Fields:
-
-id
-theatre_case_id
-surgeon_id nullable
-procedure_performed
-indication nullable
-findings nullable
-technique nullable
-incision nullable
-complications nullable
-estimated_blood_loss nullable
-specimens_taken nullable
-implants_used nullable
-drains_placed nullable
-post_op_diagnosis nullable
-post_op_plan nullable
-notes nullable
-created_by
-updated_by nullable
-created_at
-updated_at
-
-Rules:
-
-- Operative note becomes part of patient clinical history.
-- Operative note must appear in Visit Preview.
-- Surgeon can edit own note while case active.
-- Completed case requires correction permission.
-
----
-
-# 19. Post-op / Recovery Note
-
-Create recovery/post-op note support.
-
-Recommended table:
-
-theatre_recovery_notes
-
-Fields:
-
-id
-theatre_case_id
-recovery_room_id nullable
-recovery_nurse_id nullable
-arrival_at nullable
-discharge_from_recovery_at nullable
-consciousness_level nullable
-pain_score nullable
-nausea_vomiting nullable
-bleeding_status nullable
-oxygen_support nullable
-vitals_summary nullable
-post_op_medications nullable
-notes nullable
-created_by
-updated_by nullable
-created_at
-updated_at
-
-This section should support:
-
-- recovery room/bed
-- vitals
-- pain score
-- consciousness
-- nausea/vomiting
-- bleeding
-- oxygen
-- post-op medication
-- recovery nurse
-- discharge from recovery time
-
-Integrate with MAR/clinical tasks where possible.
-
----
-
-# 20. Theatre Consumables
-
-Theatre uses consumables from Theatre stock location.
+For reminders/due/overdue tasks, implement or fix scheduled command.
 
 Examples:
 
-- sutures
-- gloves
-- gauze
-- drapes
-- blades
-- catheters
-- syringes
-- anaesthetic drugs
-- implants
-- oxygen supplies
+```text
+clinical-tasks:check-due
+medications:check-overdue
+notifications:dispatch-reminders
+```
 
-Rules:
+The command should:
 
-- Theatre cannot create products.
-- Theatre selects products from Products linked to Theatre/Procedure department.
-- Theatre stock comes from Theatre stock location.
-- Stock deducts from Theatre stock location.
-- Billable consumables create invoice items through BillingService.
-- Non-billable consumables only create stock movement.
-- Do not consume directly from Main Store.
-- Do not create separate theatre item stock.
+* find due tasks
+* find overdue tasks
+* create notifications
+* avoid duplicate notifications
+* escalate where needed
+* update last_notified_at / escalation_level if available
 
-Recommended table if missing:
-
-theatre_consumable_usages
-
-Fields:
-
-id
-theatre_case_id
-visit_id
-patient_id
-department_id nullable
-stock_location_id
-product_id
-quantity
-is_billable
-invoice_item_id nullable
-stock_movement_id nullable
-used_by
-used_at
-notes nullable
-created_at
-updated_at
-
-Use existing department_consumable_usages table if already available instead of creating duplicate.
+If scheduler is not configured, document commands in solution report.
 
 ---
 
-# 21. Theatre Equipment
+# 15. Duplicate Notification Prevention
 
-Prepare simple equipment tracking if not already available.
+Avoid spamming duplicate notifications.
 
-Optional table:
+For recurring checks, implement deduplication.
 
-theatre_equipment
+Example:
 
-Fields:
+```text
+Medication overdue for same schedule should not notify every minute.
+```
 
-id
-name
-code
-equipment_type
-theatre_room_id nullable
-status
-notes nullable
-is_active
-created_at
-updated_at
+Use:
 
-Equipment statuses:
+```text
+source_type
+source_id
+type
+recipient
+last_notified_at
+deduplication window
+```
 
-AVAILABLE
-IN_USE
-MAINTENANCE
-OUT_OF_SERVICE
+If Laravel default notifications are used, dedupe through service query before sending.
 
-Optional theatre case equipment table:
+Suggested dedupe window:
 
-theatre_case_equipment
+```text
+15 minutes for due reminders
+30 minutes for overdue reminders
+```
 
-Fields:
-
-id
-theatre_case_id
-theatre_equipment_id
-status
-notes nullable
-assigned_by
-created_at
-updated_at
-
-This can be basic in first implementation.
-
-Do not overbuild if asset management already exists; reuse assets if possible.
+Make configurable.
 
 ---
 
-# 22. Billing Integration
-
-Theatre billing must stay separate from clinical notes but integrated.
-
-Billing items may include:
-
-- procedure service
-- theatre room charge
-- anaesthesia charge
-- surgeon fee
-- consumables
-- implants
-- recovery charge
-- emergency theatre surcharge
-
-Rules:
-
-- Use the visit invoice.
-- Use BillingService.
-- Use insurance pricing.
-- Use selected visit insurance.
-- Cash and Carry fallback still applies.
-- Do not block emergency/life-saving theatre care because invoice is unpaid.
-- Avoid duplicate billing using source_type/source_id.
-- Do not create separate theatre invoice system.
-
-Source examples:
-
-source_type = theatre_case
-source_type = theatre_consumable_usage
-source_type = theatre_anaesthesia
-source_type = theatre_room_charge
-
-The theatre case page should show billing summary but not mix billing forms into clinical note sections.
-
----
-
-# 23. Theatre Case Status Transitions
-
-Implement status transitions:
-
-REQUESTED
-↓
-ACCEPTED
-↓
-BILLED
-↓
-SCHEDULED
-↓
-PRE_OP
-↓
-ANAESTHESIA_READY
-↓
-IN_THEATRE
-↓
-IN_SURGERY
-↓
-SURGERY_DONE
-↓
-RECOVERY
-↓
-POST_OP
-↓
-COMPLETED
-
-Also support:
-
-CANCELLED
-POSTPONED
-
-Rules:
-
-- Only valid transitions allowed.
-- Log each transition.
-- Require reason for cancellation/postponement.
-- Do not complete case without required notes unless override permission.
-- Do not move to IN_SURGERY if required pre-op checklist incomplete unless override permission.
+# 16. Notification Triggers to Fix
+
+Audit and fix notification triggers for these modules.
 
----
+## Emergency
 
-# 24. Theatre Timeline / Audit
+Notify:
 
-Create or use activity log.
-
-Timeline events:
-
-- procedure requested
-- theatre accepted
-- billed
-- room scheduled
-- team assigned
-- pre-op checklist updated
-- anaesthesia note added
-- surgery started
-- operative note added
-- surgery completed
-- recovery started
-- recovery note added
-- consumables used
-- billing item created
-- case completed
-- cancelled/postponed
-
-Each event must show:
-
-- time
-- user
-- role
-- action
-- details
-
-If no existing activity log supports this, create:
-
-theatre_case_logs
-
-Fields:
-
-id
-theatre_case_id
-visit_id
-patient_id
-action
-title
-description nullable
-source_type nullable
-source_id nullable
-performed_by
-created_at
-
----
-
-# 25. Visit Preview Integration
-
-Update Visit Preview to include Theatre/Procedure timeline.
-
-Visit Preview should show:
-
-- procedure request
-- theatre acceptance
-- room schedule
-- theatre team
-- pre-op checklist summary
-- anaesthesia note
-- surgeon operative note
-- consumables used
-- post-op/recovery note
-- theatre billing items
-- completion/disposition
-
-Every entry must show:
-
-- time
-- user
-- role
-- department/session
-- details
-
-The operative note and anaesthesia note must be visible in patient clinical history.
-
----
-
-# 26. Procedure Catalogue Integration
-
-Procedure catalogue should continue to load from services with department type PROCEDURE/THEATRE.
-
-Theatre rooms management should not replace procedure catalogue.
-
-Procedure Request uses procedure services.
-
-Theatre Case executes/schedules the accepted procedure.
-
----
-
-# 27. UI/UX Requirements
-
-Use existing UHMS UI design patterns.
-
-Theatre Board should be easy to scan.
-
-Theatre Case Detail should feel like an operational clinical document.
-
-Avoid hiding critical information.
-
-Use badges for:
-
-- priority
-- status
-- room status
-- billing status
-- checklist status
-
-Use modals for:
-
-- assign room
-- assign team
-- reschedule
-- cancel/postpone
-- add consumable
-- add/edit note
-
-Modals must:
-
-- close only after successful save
-- show validation errors inside modal
-- not leave stuck backdrop
-- update UI immediately without full page reload
-
----
-
-# 28. Permissions
-
-Add or verify permissions:
-
-theatre.rooms.view
-theatre.rooms.create
-theatre.rooms.update
-theatre.rooms.deactivate
-theatre.rooms.manage_status
-
-theatre.board.view
-theatre.cases.view
-theatre.cases.accept
-theatre.cases.schedule
-theatre.cases.reschedule
-theatre.cases.cancel
-theatre.cases.postpone
-theatre.cases.complete
-
-theatre.team.assign
-theatre.preop.manage
-theatre.anaesthesia.create
-theatre.anaesthesia.edit_own
-theatre.anaesthesia.edit_any
-theatre.operative_note.create
-theatre.operative_note.edit_own
-theatre.operative_note.edit_any
-theatre.recovery_note.create
-theatre.recovery_note.edit_own
-theatre.recovery_note.edit_any
-
-theatre.consumables.use
-theatre.billing.view
-theatre.billing.manage
-theatre.schedule.override
-theatre.reports.view
-
-Suggested roles:
-
-- Theatre Nurse
-- Surgeon
-- Anaesthetist
-- Recovery Nurse
-- Theatre Manager
-- Doctor
-- Admin
-- Super Admin
-
----
-
-# 29. Routes / Controllers
-
-Use existing route conventions.
-
-Suggested controllers:
-
-TheatreRoomController
-TheatreBoardController
-TheatreCaseController
-TheatreScheduleController
-TheatreTeamController
-TheatrePreopChecklistController
-TheatreAnaesthesiaNoteController
-TheatreOperativeNoteController
-TheatreRecoveryNoteController
-TheatreConsumableController
-TheatreBillingController
-TheatreTimelineController
-TheatreReportController
-
-Suggested routes:
-
-Route::prefix('admin/theatre')
-    ->name('admin.theatre.')
-    ->middleware(['auth'])
-    ->group(function () {
-        Route::get('/rooms', [TheatreRoomController::class, 'index'])->name('rooms.index');
-        Route::post('/rooms', [TheatreRoomController::class, 'store'])->name('rooms.store');
-        Route::patch('/rooms/{theatreRoom}', [TheatreRoomController::class, 'update'])->name('rooms.update');
-
-        Route::get('/board', [TheatreBoardController::class, 'index'])->name('board');
-        Route::get('/calendar', [TheatreScheduleController::class, 'calendar'])->name('calendar');
-
-        Route::get('/cases/{theatreCase}', [TheatreCaseController::class, 'show'])->name('cases.show');
-        Route::post('/procedure-requests/{procedureRequest}/accept', [TheatreCaseController::class, 'accept'])->name('procedure-requests.accept');
-
-        Route::post('/cases/{theatreCase}/schedule', [TheatreScheduleController::class, 'schedule'])->name('cases.schedule');
-        Route::post('/cases/{theatreCase}/team', [TheatreTeamController::class, 'store'])->name('cases.team.store');
-        Route::post('/cases/{theatreCase}/preop', [TheatrePreopChecklistController::class, 'update'])->name('cases.preop.update');
-        Route::post('/cases/{theatreCase}/anaesthesia', [TheatreAnaesthesiaNoteController::class, 'store'])->name('cases.anaesthesia.store');
-        Route::post('/cases/{theatreCase}/operative-note', [TheatreOperativeNoteController::class, 'store'])->name('cases.operative-note.store');
-        Route::post('/cases/{theatreCase}/recovery-note', [TheatreRecoveryNoteController::class, 'store'])->name('cases.recovery-note.store');
-        Route::post('/cases/{theatreCase}/consumables', [TheatreConsumableController::class, 'store'])->name('cases.consumables.store');
-        Route::post('/cases/{theatreCase}/complete', [TheatreCaseController::class, 'complete'])->name('cases.complete');
-        Route::post('/cases/{theatreCase}/cancel', [TheatreCaseController::class, 'cancel'])->name('cases.cancel');
-    });
-
-Adapt to existing project route naming.
-
----
-
-# 30. Frontend Pages / Components
-
-If using Inertia/Vue, create or update:
-
-resources/js/Pages/Theatre/Rooms.vue
-resources/js/Pages/Theatre/Board.vue
-resources/js/Pages/Theatre/Calendar.vue
-resources/js/Pages/Theatre/ShowCase.vue
-
-Components:
-
-TheatreRoomForm
-TheatreRoomStatusBadge
-TheatreScheduleBoard
-TheatreRoomCalendar
-TheatreCaseHeader
-TheatreTeamSection
-TheatrePreopChecklist
-AnaesthesiaNoteSection
-OperativeNoteSection
-RecoveryNoteSection
-TheatreConsumablesSection
-TheatreBillingSummary
-TheatreTimeline
-ScheduleTheatreCaseModal
-AssignTheatreTeamModal
-CancelPostponeModal
-
-Reuse existing components where possible.
-
----
-
-# 31. Services to Create / Update
-
-Create or update:
-
-TheatreRoomService
-TheatreScheduleService
-TheatreCaseService
-TheatreTeamService
-TheatrePreopChecklistService
-TheatreAnaesthesiaService
-TheatreOperativeNoteService
-TheatreRecoveryService
-TheatreConsumableService
-TheatreBillingService
-TheatreTimelineService
-TheatreReportService
-BillingService
-StockLocationResolver
-StockMovementService
-VisitPreviewService
-
-Do not duplicate existing BillingService or StockMovementService.
-
----
-
-# 32. Validation Rules
-
-Theatre room:
-
-- name required
-- code required unique
-- room_type required
-- status required
-- cannot deactivate active room with scheduled/in-progress case unless override
-
-Scheduling:
-
-- theatre_room_id required
-- scheduled_start_at required
-- expected_duration required
-- scheduled_end_at calculated or required
-- room must be active
-- room must not be out of service/maintenance
-- no overlapping active case unless override
-- surgeon/anaesthetist optional depending procedure type
-- override requires permission and reason
-
-Pre-op:
-
-- checklist exists for theatre case
-- required items must be completed before IN_SURGERY unless override
-- waiver requires note/reason
-
-Anaesthesia note:
-
-- anaesthesia_type required
-- created_by current user
-- theatre_case_id required
-
-Operative note:
-
-- procedure_performed required
-- theatre_case_id required
-- created_by current user
-
-Recovery note:
-
-- theatre_case_id required
-- recovery nurse/current user
-- notes or recovery fields required
-
-Consumables:
-
-- product_id required
-- quantity > 0
-- theatre stock location required
-- quantity <= theatre available stock
-- billable consumables use BillingService
-
-Status transitions:
-
-- only valid transitions allowed
-- cancellation/postponement requires reason
-- completion requires operative note or override depending configuration
-
----
-
-# 33. Performance Requirements
-
-Avoid N+1 queries.
-
-Theatre Board should eager-load:
-
-- patient
-- visit
-- procedure request
-- procedure service
-- theatre room
-- primary surgeon
-- anaesthetist
-- priority
-- status
-- billing status
-
-Theatre Case Detail should eager-load:
-
-- patient
-- visit
-- admission/emergency
-- procedure request/service
-- room
-- team members
-- checklist/items
-- anaesthesia note
-- operative note
-- recovery note
-- consumables/products
-- invoice items
-- logs
-
-Calendar should load only cases and blocks within selected date range.
-
-Add indexes:
-
-theatre_cases.theatre_room_id
-theatre_cases.scheduled_start_at
-theatre_cases.scheduled_end_at
-theatre_cases.status
-theatre_cases.patient_id
-theatre_cases.visit_id
-theatre_room_blocks.theatre_room_id
-theatre_room_blocks.start_at
-theatre_room_blocks.end_at
-
----
-
-# 34. Reports
-
-Prepare reports:
-
-- Theatre utilization report
-- Room occupancy report
-- Procedures by surgeon
-- Procedures by department
-- Emergency theatre cases
-- Cancelled/postponed cases
-- Average start delay
-- Average procedure duration
-- Complication report
-- Consumables usage report
-- Anaesthesia report
-
-At minimum create report foundations/routes if reporting system exists.
-
----
-
-# 35. Tests Required
-
-Add or update tests.
-
-## Theatre Rooms
-
-1. User can create theatre room.
-2. Room code must be unique.
-3. User can update room status.
-4. Out-of-service room cannot be scheduled.
-5. Room with active case cannot be deactivated without override.
-
-## Scheduling
-
-6. Procedure request can be accepted into theatre case.
-7. Theatre case can be scheduled to room.
-8. Double-booking same room/time is prevented.
-9. Cancelled cases do not block scheduling.
-10. Maintenance blocks prevent scheduling.
-11. Emergency override requires permission and reason.
-
-## Theatre Board / Calendar
-
-12. Theatre Board shows today’s cases.
-13. Theatre Board filters by room.
-14. Theatre Board filters by surgeon.
-15. Theatre Calendar shows scheduled cases.
-16. Theatre Calendar shows room blocks.
-
-## Team
-
-17. Theatre team can be assigned.
-18. Additional team member does not overwrite primary surgeon.
-19. Team assignment is logged.
-
-## Pre-op
-
-20. Pre-op checklist is created.
-21. Checklist items can be completed.
-22. Missing required checklist warns/blocks before IN_SURGERY.
-23. Waived checklist item requires note.
-
-## Anaesthesia / Operative / Recovery Notes
-
-24. Anaesthesia note can be recorded.
-25. Operative note can be recorded.
-26. Recovery note can be recorded.
-27. Notes show creator.
-28. Unauthorized user cannot edit another user’s note.
-
-## Consumables / Stock
-
-29. Theatre consumable usage deducts Theatre stock.
-30. Theatre cannot consume directly from Main Store.
-31. Billable consumable creates invoice item.
-32. Non-billable consumable does not create invoice item.
-33. Stock is not deducted twice.
+```text
+new RED emergency case
+patient waiting triage
+triage overdue
+emergency medication overdue
+urgent investigation requested/result ready
+ready for disposition
+```
+
+Recipients:
+
+```text
+Emergency nurses
+Emergency doctors
+Triage nurses
+Emergency supervisor
+```
+
+## Admission
+
+Notify:
+
+```text
+new admission
+bed assigned
+patient transferred
+vitals monitoring due
+clinical task overdue
+```
+
+Recipients:
+
+```text
+ward nurses
+assigned doctor
+ward supervisor
+```
+
+## MAR / Medication Administration
+
+Notify:
+
+```text
+medication due soon
+medication due now
+medication overdue
+medication held
+medication missed
+reaction recorded
+```
+
+Recipients:
+
+```text
+assigned nurse
+ward nurses
+emergency nurses
+ward supervisor
+doctor if escalated
+```
+
+## Clinical Tasks
+
+Notify:
+
+```text
+task assigned
+task due
+task overdue
+task completed
+task escalated
+```
+
+## Investigations
+
+Notify:
+
+```text
+new investigation request
+emergency/urgent investigation request
+result entered
+result verified
+result rejected/correction required
+```
+
+Recipients:
+
+```text
+investigation department users
+requesting doctor
+emergency/consultation team
+```
+
+## Procedures / Theatre
+
+Notify:
+
+```text
+procedure requested
+procedure accepted
+theatre case scheduled
+theatre case rescheduled
+pre-op incomplete
+procedure completed
+procedure cancelled/postponed
+```
+
+## Pharmacy
+
+Notify:
+
+```text
+new prescription awaiting pharmacy review
+drug billed and ready to dispense
+partial dispensing
+out of stock drug
+dispensing completed
+```
+
+## Stock
+
+Notify:
+
+```text
+low stock
+critical stock
+out of stock
+stock requisition submitted
+stock requisition approved/rejected
+stock transfer sent
+stock transfer received/acknowledged
+purchase order received
+```
 
 ## Billing
 
-34. Theatre case billing uses visit invoice.
-35. BillingService is used.
-36. Duplicate billing is prevented by source_type/source_id.
-37. Emergency theatre case is not blocked by unpaid invoice.
+Notify:
 
-## Status Workflow
+```text
+invoice created
+payment received
+invoice overdue
+large outstanding balance
+```
 
-38. Theatre case follows valid status transitions.
-39. Cancellation requires reason.
-40. Completion requires required clinical notes or authorized override.
+## Claims
 
-## Visit Preview
+Notify:
 
-41. Visit Preview includes theatre timeline.
-42. Operative note appears in patient clinical history.
-43. Anaesthesia note appears in patient clinical history.
-44. Consumables and billing references appear where appropriate.
+```text
+claim prepared
+claim missing CCC/verification code
+claim ready for submission
+claim submitted
+claim rejected
+claim paid
+```
+
+## Patient Merge
+
+Notify:
+
+```text
+possible duplicate found
+merge requested
+merge approved
+merge completed
+merge failed
+emergency identity confirmed
+```
 
 ---
 
-# 36. Deliverables
+# 17. Notification Recipients
+
+Recipient targeting must be reliable.
+
+Implement helper methods to get recipients by:
+
+```text
+user
+role
+permission
+department
+assigned doctor
+assigned nurse
+patient care team
+stock location department
+investigation department
+procedure department
+ward
+emergency unit
+```
+
+Do not hardcode only Super Admin as recipient.
+
+Do not notify every user for every event.
+
+---
+
+# 18. Notification Permissions
+
+Add or verify permissions:
+
+```text
+notifications.view
+notifications.mark_read
+notifications.delete
+notifications.manage
+
+notifications.emergency.receive
+notifications.admission.receive
+notifications.mar.receive
+notifications.investigation.receive
+notifications.procedure.receive
+notifications.pharmacy.receive
+notifications.stock.receive
+notifications.billing.receive
+notifications.claims.receive
+notifications.patient_merge.receive
+```
+
+Use existing permission style if already defined.
+
+---
+
+# 19. Notification Settings
+
+Prepare notification preferences/settings if not already available.
+
+For first implementation, global settings are enough.
+
+Suggested config:
+
+```text
+notifications.enabled
+notifications.due_reminder_minutes
+notifications.overdue_reminder_minutes
+notifications.dedupe_minutes
+notifications.latest_limit
+notifications.poll_interval_seconds
+```
+
+Optional later:
+
+```text
+per-user notification preferences
+per-role preferences
+mute module notifications
+external channel preferences
+```
+
+---
+
+# 20. Frontend Polling / Refresh
+
+If real-time broadcasting is not implemented, use polling.
+
+Recommended:
+
+```text
+poll latest notifications every 30-60 seconds
+poll urgent board counts separately if needed
+```
+
+Do not overload server.
+
+Only fetch:
+
+```text
+unread count
+latest notifications
+```
+
+Full notification list should paginate.
+
+If broadcasting exists, fix/implement Laravel Echo events carefully.
+
+---
+
+# 21. Notification Actions
+
+Every actionable notification should have an action_url.
+
+Examples:
+
+```text
+Emergency RED case → /admin/emergency/cases/{id}
+Medication overdue → /admin/admissions/{admission}/mar-chart
+Investigation result verified → /admin/investigations/requests/{id}
+Procedure scheduled → /admin/theatre/cases/{id}
+Stock out → /admin/stock/balances
+Claim rejected → /admin/claims/{id}
+Patient merge requested → /admin/patients/merge/requests/{id}
+```
+
+Do not create dead notifications with no way to act unless they are purely informational.
+
+---
+
+# 22. Audit / Logging
+
+Notification failures should be traceable.
+
+If a notification cannot be sent:
+
+* log error
+* do not crash critical workflow unless notification is mandatory
+* record in solution report
+
+Consider adding:
+
+```text
+notification_logs
+```
+
+only if existing logs are insufficient.
+
+Recommended fields:
+
+```text
+id
+type
+module
+recipient_id nullable
+source_type nullable
+source_id nullable
+status
+error_message nullable
+created_at
+```
+
+But avoid overbuilding if Laravel notifications already suffice.
+
+---
+
+# 23. Notification Testing Page / Debug Tool
+
+Create a dev/admin-only notification test page or command.
+
+Suggested command:
+
+```bash
+php artisan notifications:test --user=1
+```
+
+It should send a test database notification to a user.
+
+Also create a simple route/page if useful:
+
+```text
+/admin/notifications/debug
+```
+
+Only accessible to Super Admin/dev.
+
+Purpose:
+
+* verify database notifications
+* verify unread count
+* verify UI dropdown
+* verify mark as read
+* verify action links
+
+Do not expose debug tools to normal users.
+
+---
+
+# 24. Common Root Causes to Check
+
+Specifically check for:
+
+```text
+notifications table missing
+wrong notifiable model
+User model missing Notifiable trait
+queue worker not running
+notifications queued but never processed
+failed jobs
+wrong route/action_url
+frontend not reading latest notifications
+unread count not shared through Inertia
+markAsRead route broken
+CSRF/method mismatch
+notification dropdown component not mounted
+layout not receiving props
+permissions hiding notifications
+recipient query returning no users
+department/role relationships broken
+broadcasting configured but not connected
+scheduler not running
+duplicate custom notification tables causing confusion
+```
+
+Fix actual root causes, not symptoms.
+
+---
+
+# 25. Database / Model Checks
+
+Verify:
+
+## User model
+
+Must include if using Laravel notifications:
+
+```php
+use Illuminate\Notifications\Notifiable;
+```
+
+## notifications table
+
+Must exist if database channel is used.
+
+If missing:
+
+```bash
+php artisan notifications:table
+php artisan migrate
+```
+
+or create migration manually.
+
+## Notifiable relationships
+
+Ensure current authenticated user can access:
+
+```php
+$user->notifications()
+$user->unreadNotifications()
+$user->readNotifications()
+```
+
+---
+
+# 26. UI Failure Checks
+
+Verify:
+
+* layout renders notification dropdown
+* notification prop exists on every authenticated page
+* unread count is not null
+* latest notifications list displays
+* mark read action updates UI
+* action links work
+* mobile/responsive layout works
+* empty state displays properly
+* priority/status badges show correctly
+
+---
+
+# 27. Implementation Reports
+
+After fixing, create:
+
+## docs/NOTIFICATIONS_GAP_ANALYSIS.md
+
+Include:
+
+```text
+Overview
+Current implementation found
+Broken areas
+Root causes
+Affected modules
+Risk level
+Recommended fix plan
+```
+
+## docs/NOTIFICATIONS_SOLUTION_REPORT.md
+
+Include:
+
+```text
+Summary of fixes
+Files changed
+Migrations
+Services
+Controllers
+Frontend components
+Triggers restored
+Queue/scheduler changes
+Testing performed
+How to verify
+```
+
+## docs/NOTIFICATIONS_REMAINING_RECOMMENDATIONS.md
+
+Include:
+
+```text
+Real-time broadcasting plan
+External SMS/WhatsApp/email plan
+Per-user preferences
+Advanced escalation plan
+Notification analytics
+Unresolved risks
+Future implementation prompts needed
+```
+
+If another module needs separate deep analysis, mention it clearly in the remaining recommendations report.
+
+---
+
+# 28. Tests Required
+
+Add or update tests.
+
+## Core Notifications
+
+1. User can receive database notification.
+2. User unread count increases after notification.
+3. User can list latest notifications.
+4. User can mark one notification as read.
+5. User can mark all notifications as read.
+6. Read notifications do not count as unread.
+7. Notification action URL is stored and returned.
+8. Notification priority/module is stored and displayed.
+
+## Service
+
+9. NotificationService can notify one user.
+10. NotificationService can notify multiple users.
+11. NotificationService can notify users by role.
+12. NotificationService can notify users by department.
+13. Duplicate prevention works for same source/type/user.
+14. Missing recipient does not crash workflow.
+
+## UI
+
+15. Header bell shows unread count.
+16. Dropdown shows latest notifications.
+17. Clicking notification marks it as read.
+18. View all opens notification list page.
+19. Notification list paginates.
+20. Filters by module/read status work if implemented.
+
+## Workflow Triggers
+
+21. Emergency RED case creates notification.
+22. Medication overdue creates notification.
+23. Clinical task assigned creates notification.
+24. Investigation result verified notifies requesting doctor.
+25. Procedure/theatre request notifies relevant users.
+26. Stock low/out creates stock notification.
+27. Claim rejected creates claim notification.
+28. Patient merge request creates notification.
+
+## Scheduler / Queue
+
+29. Due task command creates due notifications.
+30. Overdue task command creates overdue notifications.
+31. Duplicate due reminders are not created inside dedupe window.
+32. Failed notification jobs are handled/logged.
+
+---
+
+# 29. Verification Checklist
+
+After implementation, verify manually:
+
+```text
+Login as admin
+Send test notification
+Unread count appears
+Dropdown shows notification
+Click notification opens target page
+Notification becomes read
+Mark all as read works
+
+Create emergency RED case
+Emergency notification appears for emergency users
+
+Create medication overdue/due task
+MAR notification appears for nurses
+
+Verify notification reports exist in docs folder
+```
+
+---
+
+# 30. Deliverables
 
 Provide:
 
-1. Gap analysis of current Procedure/Theatre workflow.
-2. Theatre room migrations/models.
-3. Theatre case model/integration.
-4. Theatre room CRUD.
-5. Theatre Schedule Board.
-6. Theatre Room Calendar.
-7. Room double-booking prevention.
-8. Emergency theatre case handling.
-9. Theatre team assignment.
-10. Pre-op checklist.
-11. Anaesthesia note.
-12. Surgeon operative note.
-13. Post-op/recovery note.
-14. Theatre consumables from Theatre stock.
-15. Theatre billing integration.
-16. Room maintenance/blocking.
-17. Theatre timeline/audit.
-18. Visit Preview integration.
-19. Permissions/menu/routes.
-20. Tests or verification notes.
-21. Files modified.
-22. Remaining TODOs.
+1. Full notification gap analysis report.
+2. Notification solution report.
+3. Remaining recommendations report.
+4. NotificationService or equivalent central service.
+5. Fixed notification table/model setup.
+6. Fixed User Notifiable setup.
+7. Fixed notification routes/controllers.
+8. Fixed notification dropdown/list UI.
+9. Fixed read/unread logic.
+10. Fixed Inertia shared props or layout data.
+11. Fixed queue/scheduler issues.
+12. Fixed notification triggers in critical modules.
+13. Duplicate notification prevention.
+14. Tests or verification notes.
+15. Files modified.
+16. Remaining TODOs.
 
 ---
 
-# 37. Important Rules
+# 31. Important Rules
 
-Do not create a parallel procedure system.
+Do not leave notifications half-working.
 
-Do not replace Procedure Request with Theatre Room management.
+Do not create multiple competing notification systems.
 
-Do not create a parallel billing system.
+Do not notify only Super Admin for everything.
 
-Do not create a parallel stock system.
+Do not rely on queue if queue worker is not configured for critical database notifications.
 
-Do not allow double-booking active cases.
+Do not create notification spam.
 
-Do not schedule inactive/out-of-service rooms.
+Do not hide notification errors.
 
-Do not block emergency/life-saving theatre care because invoice is unpaid.
+Do not break dependent modules.
 
-Do not deduct stock twice.
+Do not implement external SMS/WhatsApp unless infrastructure already exists.
 
-Do not bypass BillingService.
+Do not remove existing notifications without replacing them.
 
-Do not bypass StockMovementService.
+Now inspect the UHMS notification implementation, identify all gaps, fix the notification system, restore dependent workflow triggers, and generate the required reports.
 
-Do not hide theatre clinical notes from Visit Preview or patient history.
-
-Now inspect the current UHMS implementation and implement Theatre Rooms Management as an operational layer integrated into the existing Procedure/Theatre workflow.
+```
 ```

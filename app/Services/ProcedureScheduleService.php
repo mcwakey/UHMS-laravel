@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\NotificationModule;
+use App\Enums\NotificationPriority;
 use App\Enums\ProcedureStatus;
 use App\Enums\TheatreRoomStatus;
 use App\Models\ProcedureRequest;
@@ -17,6 +19,7 @@ class ProcedureScheduleService
     public function __construct(
         protected ProcedureWorkflowService $workflow,
         protected TheatreRoomAvailabilityService $availability,
+        protected NotificationService $notifications,
     ) {}
 
     public function scheduleProcedure(ProcedureRequest $request, array $data, User $user): ProcedureSchedule
@@ -67,7 +70,10 @@ class ProcedureScheduleService
             $this->markRoomScheduled((int) $data['theatre_room_id']);
             $this->markRequestScheduled($request, $user, 'Procedure scheduled.');
 
-            return $schedule->fresh();
+            $fresh = $schedule->fresh();
+            $this->notifyScheduled($request, $fresh, $user);
+
+            return $fresh;
         });
     }
 
@@ -194,5 +200,63 @@ class ProcedureScheduleService
         }
 
         $this->workflow->transition($request, ProcedureStatus::SCHEDULED, $user, $reason);
+    }
+
+    protected function notifyScheduled(ProcedureRequest $request, ProcedureSchedule $schedule, User $actor): void
+    {
+        $request->loadMissing(['patient', 'service']);
+        $patient = $request->patient;
+        $patientName = $patient ? trim($patient->first_name . ' ' . $patient->last_name) : 'patient';
+        $serviceName = $request->service?->name ?? 'Procedure';
+        $when = $schedule->scheduled_start
+            ? Carbon::parse($schedule->scheduled_start)->format('D, d M Y H:i')
+            : 'TBD';
+
+        $base = [
+            'title' => 'New theatre case scheduled',
+            'module' => NotificationModule::THEATRE,
+            'priority' => $request->is_emergency || $request->priority === 'emergency'
+                ? NotificationPriority::URGENT
+                : NotificationPriority::HIGH,
+            'source_type' => 'procedure_schedule',
+            'source_id' => $schedule->id,
+            'patient_id' => $request->patient_id,
+            'action_url' => $this->scheduleUrl(),
+            'metadata' => [
+                'procedure_request_id' => $request->id,
+                'theatre_room_id' => $schedule->theatre_room_id,
+                'scheduled_start' => (string) $schedule->scheduled_start,
+            ],
+        ];
+
+        $recipientIds = array_filter([
+            $schedule->surgeon_id,
+            $schedule->anaesthetist_id,
+            $schedule->assistant_surgeon_id,
+        ]);
+        $nurseIds = is_array($schedule->theatre_nurse_ids) ? $schedule->theatre_nurse_ids : [];
+        $recipientIds = array_unique(array_merge($recipientIds, $nurseIds));
+        $recipientIds = array_diff($recipientIds, [$actor->id]);
+
+        if (! empty($recipientIds)) {
+            $users = User::query()->whereIn('id', $recipientIds)->get();
+            foreach ($users as $user) {
+                $this->notifications->notifyUser($user, array_merge($base, [
+                    'message' => sprintf('You are scheduled for %s (%s) at %s.', $serviceName, $patientName, $when),
+                ]));
+            }
+        }
+    }
+
+    protected function scheduleUrl(): string
+    {
+        foreach (['admin.theatre.calendar', 'admin.theatre.board'] as $name) {
+            try {
+                return route($name);
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+        return '#';
     }
 }
