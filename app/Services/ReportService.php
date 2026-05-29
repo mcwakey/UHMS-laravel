@@ -27,6 +27,7 @@ use App\Models\PayrollRecord;
 use App\Models\Prescription;
 use App\Models\User;
 use App\Models\Visit;
+use App\Models\VisitConsultationRoute;
 use App\Models\Ward;
 use Illuminate\Support\Facades\DB;
 
@@ -329,10 +330,22 @@ class ReportService
 
     /**
      * Department load for dashboard.
+     *
+     * Counts consultation sessions per department today so that visits touching
+     * multiple departments (e.g. Emergency + OPD + ENT) each contribute to
+     * every relevant department's count rather than only the primary one.
      */
     public function departmentLoad(): array
     {
-        return [];
+        return VisitConsultationRoute::join('departments', 'visit_consultation_routes.department_id', '=', 'departments.id')
+            ->join('visits', 'visit_consultation_routes.visit_id', '=', 'visits.id')
+            ->select('departments.name', DB::raw('COUNT(*) as count'))
+            ->whereDate('visits.visit_date', today())
+            ->whereNotIn('visit_consultation_routes.status', [VisitConsultationRoute::STATUS_CANCELLED])
+            ->groupBy('departments.name')
+            ->orderByDesc('count')
+            ->pluck('count', 'name')
+            ->toArray();
     }
 
     /*

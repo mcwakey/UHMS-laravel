@@ -165,7 +165,7 @@
                     <canvas id="deptChart" height="200"></canvas>
                 @else
                     <div class="text-center text-muted py-5">
-                        <i class="ti ti-chart-donut fs-48 d-block mb-2"></i>No visits today
+                        <i class="ti ti-chart-donut fs-48 d-block mb-2"></i>No department activity today
                     </div>
                 @endif
             </div>
