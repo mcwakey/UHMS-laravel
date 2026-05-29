@@ -9,6 +9,7 @@ use App\Models\EmergencyBayAssignment;
 use App\Models\EmergencyCase;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class EmergencyBayService
@@ -16,6 +17,7 @@ class EmergencyBayService
     public function __construct(
         private ?EmergencyTimelineService $timeline = null,
         private ?EmergencySessionService $sessions = null,
+        private ?EmergencyBedBillingService $bedBilling = null,
     ) {}
 
     public function assign(EmergencyCase $case, int $bayId, User $user, bool $override = false, ?int $wardId = null, ?int $bedId = null): EmergencyCase
@@ -43,6 +45,7 @@ class EmergencyBayService
 
             $activeAssignment = $case->activeBayAssignment()->with(['bed', 'emergencyBay'])->first();
             if ($activeAssignment && (int) $activeAssignment->emergency_bay_id !== $bay->id) {
+                $this->bedBilling()->endForCase($case, $user);
                 $activeAssignment->update([
                     'status' => EmergencyBayAssignment::STATUS_TRANSFERRED,
                     'released_by' => $user->id,
@@ -69,7 +72,7 @@ class EmergencyBayService
             $bay->markOccupied();
             $bed?->markOccupied();
 
-            EmergencyBayAssignment::create([
+            $assignment = EmergencyBayAssignment::create([
                 'emergency_case_id' => $case->id,
                 'emergency_session_id' => $session->id,
                 'ward_id' => $wardId ?: $bed?->ward_id ?: $bay->ward_id,
@@ -80,6 +83,8 @@ class EmergencyBayService
                 'status' => EmergencyBayAssignment::STATUS_ACTIVE,
             ]);
 
+            $this->bedBilling()->startForAssignment($assignment->fresh(['emergencyCase.visit', 'emergencyBay.bed']), $user);
+
             $this->sessions()->recordContribution($case, $user, 'Bay Assignment');
 
             $this->timeline()?->record($case->fresh('bay'), 'BAY_ASSIGNED', 'Emergency bay assigned', $bay->name, $bay, $user);
@@ -88,17 +93,20 @@ class EmergencyBayService
         });
     }
 
-    public function release(EmergencyCase $case, string $bayStatus = EmergencyBay::STATUS_AVAILABLE): void
+    public function release(EmergencyCase $case, string $bayStatus = EmergencyBay::STATUS_AVAILABLE, ?User $user = null): void
     {
         if (! $case->emergency_bay_id) {
             return;
         }
+
+        $this->bedBilling()->endForCase($case, $user ?? Auth::user());
 
         $assignment = $case->activeBayAssignment()->with('bed')->first();
         if ($assignment) {
             $assignment->update([
                 'status' => EmergencyBayAssignment::STATUS_RELEASED,
                 'released_at' => now(),
+                'released_by' => $user?->id ?? Auth::id(),
             ]);
             $assignment->bed?->markAvailable();
         }
@@ -115,6 +123,11 @@ class EmergencyBayService
     private function sessions(): EmergencySessionService
     {
         return $this->sessions ??= app(EmergencySessionService::class);
+    }
+
+    private function bedBilling(): EmergencyBedBillingService
+    {
+        return $this->bedBilling ??= app(EmergencyBedBillingService::class);
     }
 
     private function bedStatus(Bed $bed): string

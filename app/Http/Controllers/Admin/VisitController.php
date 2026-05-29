@@ -146,7 +146,7 @@ class VisitController extends Controller
         $selectedPatient = null;
 
         if ($request->has('patient_id')) {
-            $selectedPatient = Patient::find($request->patient_id);
+            $selectedPatient = Patient::with('activeAdmission.bed.ward')->find($request->patient_id);
         }
 
         // Insurance providers (excluding the synthetic Cash & Carry default)
@@ -159,7 +159,9 @@ class VisitController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('visits.create', compact('departments', 'selectedPatient', 'insuranceProviders'));
+        $canOverrideActiveAdmission = $request->user()?->can('visits.create_while_admitted') ?? false;
+
+        return view('visits.create', compact('departments', 'selectedPatient', 'insuranceProviders', 'canOverrideActiveAdmission'));
     }
 
     public function store(StoreVisitRequest $request)
@@ -383,10 +385,12 @@ class VisitController extends Controller
         $patients = Patient::search($term)
             ->whereIn('status', ['active', 'inactive', 'deceased'])
             ->select('id', 'patient_number', 'first_name', 'last_name', 'other_names', 'phone', 'status', 'is_deceased')
+            ->with('activeAdmission.bed.ward')
             ->limit(10)
             ->get()
             ->map(function ($p) {
                 $lastVisit = $p->visits()->latest('visit_date')->value('visit_date');
+                $activeAdmission = $p->activeAdmission;
 
                 return [
                     'id' => $p->id,
@@ -396,6 +400,12 @@ class VisitController extends Controller
                     'phone' => $p->phone,
                     'last_visit_date' => $lastVisit ? Carbon::parse($lastVisit)->format('d M Y') : null,
                     'is_deceased' => (bool) $p->is_deceased,
+                    'active_admission' => $activeAdmission ? [
+                        'id' => $activeAdmission->id,
+                        'admission_number' => $activeAdmission->admission_number,
+                        'bed' => $activeAdmission->bed?->bed_number,
+                        'ward' => $activeAdmission->bed?->ward?->name,
+                    ] : null,
                 ];
             });
 

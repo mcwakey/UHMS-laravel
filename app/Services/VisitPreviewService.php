@@ -56,6 +56,8 @@ class VisitPreviewService
             'pendingConsultationRoutes.doctor',
             'createdBy',
             'currentDepartment',
+            'pathwayEvents.department',
+            'pathwayEvents.createdBy',
             'visitInsurance.insuranceProvider',
             'statusLogs.changedBy',
             'emergencyCase.patient',
@@ -182,6 +184,25 @@ class VisitPreviewService
                 'Chief Complaint' => $visit->chief_complaint ?: '—',
             ]
         );
+
+        foreach ($visit->pathwayEvents ?? [] as $event) {
+            $items[] = $this->item(
+                $event->started_at ?? $event->created_at,
+                $event->title,
+                $event->description ?: $this->formatStatus($event->event_type),
+                optional($event->createdBy)->full_name,
+                optional($event->department)->name,
+                'PATHWAY',
+                'bg-info',
+                $event->source_type ?: 'visit_pathway_event',
+                $event->source_id ?: $event->id,
+                [
+                    'Event' => $this->formatStatus($event->event_type),
+                    'Status' => $event->status ? $this->formatStatus($event->status) : '—',
+                    'Completed At' => $event->completed_at ? $event->completed_at->format('d M Y, h:i A') : '—',
+                ]
+            );
+        }
 
         // 2. Status logs
         foreach ($visit->statusLogs ?? [] as $log) {

@@ -11,6 +11,7 @@ class VisitWorkflowService
     public function __construct(
         protected QueueService $queueService,
         protected InsuranceService $insuranceService,
+        protected VisitPathwayService $pathway,
     ) {}
 
     /**
@@ -126,24 +127,30 @@ class VisitWorkflowService
 
     public function moveToBilling(Visit $visit, ?string $notes = null): Visit
     {
-        if (! in_array(VisitStatus::BILLING, $visit->status->allowedTransitions())) {
-            return $visit->fresh();
-        }
+        $this->pathway->record($visit, 'BILLING_READY', [
+            'title' => 'Billing ready',
+            'description' => $notes ?? 'Invoice created',
+        ]);
 
-        return $this->transition($visit, VisitStatus::BILLING, $notes ?? 'Invoice created');
+        return $visit->fresh();
     }
 
     public function completeAfterPayment(Visit $visit, ?string $notes = null): Visit
     {
-        if ($visit->status !== VisitStatus::BILLING) {
-            return $visit->fresh();
-        }
+        $this->pathway->record($visit, 'PAYMENT_COMPLETED', [
+            'title' => 'Payment completed',
+            'description' => $notes ?? 'Invoice fully paid',
+        ]);
 
-        return $this->transition($visit, VisitStatus::COMPLETED, $notes ?? 'Visit completed after full payment');
+        return $visit->fresh();
     }
 
     public function transition(Visit $visit, VisitStatus $newStatus, ?string $notes = null): Visit
     {
+        if ($newStatus->isDepartmentMovementStatus()) {
+            throw new \InvalidArgumentException("{$newStatus->label()} is tracked through pathway events, not visit.status.");
+        }
+
         if (! $visit->canTransitionTo($newStatus)) {
             throw new \InvalidArgumentException(
                 "Cannot transition from {$visit->status->label()} to {$newStatus->label()}"
@@ -151,6 +158,12 @@ class VisitWorkflowService
         }
 
         $visit->transitionTo($newStatus, $notes);
+
+        $this->pathway->record($visit->fresh(), 'VISIT_STATUS_CHANGED', [
+            'status' => $newStatus->value,
+            'title' => 'Visit status changed',
+            'description' => $notes,
+        ]);
 
         if ($newStatus === VisitStatus::WAITING) {
             $this->queueService->addTriageEntry($visit->fresh());
@@ -184,7 +197,7 @@ class VisitWorkflowService
         if ($visit->status === VisitStatus::CONSULTING) {
             return $visit;
         }
-        if ($visit->status !== VisitStatus::WAITING_CONSULTATION) {
+        if (! in_array($visit->status, [VisitStatus::WAITING_CONSULTATION, VisitStatus::ACTIVE, VisitStatus::EMERGENCY], true)) {
             throw new \RuntimeException(
                 'Visit is not in a consultable state. Current: ' . $visit->status->label()
             );
@@ -231,6 +244,16 @@ class VisitWorkflowService
 
         // Doctor identification is recorded on the route, not on the visit
         // itself, to support multi-department routing.
+
+        $this->pathway->record($visit, 'CONSULTATION_STARTED', [
+            'source' => $route,
+            'department_id' => $route->department_id,
+            'title' => $route->isEmergencySession() ? 'Emergency session started' : 'Consultation started',
+        ]);
+
+        if ($visit->status === VisitStatus::EMERGENCY) {
+            return $visit->fresh();
+        }
 
         return $this->transition($visit, VisitStatus::CONSULTING, 'Consultation started');
     }

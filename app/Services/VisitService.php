@@ -33,6 +33,9 @@ class VisitService
         protected ServicePricingService $pricingService,
         protected BillingService $billingService,
         protected PatientMergeGuard $patientMergeGuard,
+        protected VisitGuardService $visitGuard,
+        protected VisitStatusService $statusService,
+        protected VisitPathwayService $pathway,
     ) {}
 
     public function list(array $filters = []): LengthAwarePaginator
@@ -93,10 +96,15 @@ class VisitService
         $data['created_by'] = Auth::id();
 
         // Calculate and store patient age at time of visit
-        $patient = $this->patientMergeGuard->assertCanReceiveNewRecords($data['patient_id'], 'visit');
+        $patient = $this->visitGuard->assertCanCreateVisit(
+            $data['patient_id'],
+            Auth::user(),
+            $data['admission_override_reason'] ?? null,
+        );
         if ($patient && $patient->date_of_birth) {
             $data['patient_age'] = $patient->date_of_birth->age;
         }
+        unset($data['admission_override_reason']);
 
         // Determine if this is a scheduled visit (future date) or walk-in
         $visitDate = Carbon::parse($data['visit_date']);
@@ -114,10 +122,21 @@ class VisitService
         }
 
         $visit = Visit::create($data);
+        $this->pathway->record($visit, 'VISIT_REGISTERED', [
+            'title' => 'Visit registered',
+            'description' => $isScheduled ? 'Scheduled visit created.' : 'Walk-in visit registered.',
+        ]);
 
-        return $this->workflowService
+        $visit = $this->workflowService
             ->initialize($visit, $isScheduled)
             ->load(['patient', 'activeConsultationRoute.doctor', 'pendingConsultationRoutes.doctor']);
+
+        $this->pathway->record($visit, $isScheduled ? 'VISIT_SCHEDULED' : 'VISIT_WAITING', [
+            'title' => $isScheduled ? 'Visit scheduled' : 'Visit waiting',
+            'description' => $isScheduled ? 'Visit is scheduled for a future date.' : 'Patient is waiting for triage or consultation.',
+        ]);
+
+        return $visit;
     }
 
     /**
@@ -191,6 +210,13 @@ class VisitService
                         'invoice_item_id' => $invoiceItem?->id,
                     ]
                 );
+
+                $this->pathway->record($visit, 'CONSULTATION_ROUTE_CREATED', [
+                    'source' => $route,
+                    'department_id' => $route->department_id,
+                    'title' => 'Consultation route created',
+                    'description' => $catalog->name,
+                ]);
             }
         }
 
@@ -419,7 +445,7 @@ class VisitService
 
     public function transition(Visit $visit, VisitStatus $newStatus, ?string $notes = null): Visit
     {
-        return $this->workflowService->transition($visit, $newStatus, $notes);
+        return $this->statusService->transition($visit, $newStatus, $notes);
     }
 
     /**
@@ -430,10 +456,10 @@ class VisitService
     {
         $serviceStatuses = [
             VisitStatus::TRIAGE,
+            VisitStatus::WAITING_CONSULTATION,
             VisitStatus::CONSULTING,
-            VisitStatus::LAB,
-            VisitStatus::PHARMACY,
-            VisitStatus::BILLING,
+            VisitStatus::ACTIVE,
+            VisitStatus::EMERGENCY,
         ];
 
         if (! in_array($visit->status, $serviceStatuses)) {
@@ -444,16 +470,20 @@ class VisitService
 
         $department = Department::findOrFail($departmentId);
 
-        // Map department type to visit status
-        $newStatus = $department->type
-            ? $department->type->toVisitStatus()
-            : VisitStatus::CONSULTING;
-
         // Complete the current active queue entry
         $this->queueService->completeCurrentEntry($visit);
 
-        // Transition visit status
-        $this->workflowService->transition($visit, $newStatus, $notes ?? "Sent to {$department->name}");
+        if ($visit->status === VisitStatus::TRIAGE) {
+            $this->statusService->setWaitingConsultation($visit, $notes ?? "Assigned to {$department->name}");
+        } elseif (! in_array($visit->status, [VisitStatus::CONSULTING, VisitStatus::EMERGENCY], true)) {
+            $this->statusService->setActive($visit, $notes ?? "Sent to {$department->name}");
+        }
+
+        $this->pathway->record($visit->fresh(), 'DEPARTMENT_MOVEMENT', [
+            'department_id' => $departmentId,
+            'title' => "Sent to {$department->name}",
+            'description' => $notes,
+        ]);
 
         // Create new queue entry for the target department
         $this->queueService->addForDepartment($visit->fresh(), $departmentId);
@@ -518,8 +548,16 @@ class VisitService
         if (! empty($data['department_id'])) {
             $this->assignDepartment($visit, (int) $data['department_id'], $nextStatus);
         } else {
-            $this->workflowService->transition($visit, $nextStatus, "Triage complete — score: {$score->label()}");
+            $this->statusService->transition($visit, $nextStatus, "Triage complete - score: {$score->label()}");
         }
+
+        $this->pathway->record($visit->fresh(), 'TRIAGE_COMPLETED', [
+            'source' => $triage,
+            'department_id' => $data['department_id'] ?? null,
+            'status' => $score->value,
+            'title' => 'Triage completed',
+            'description' => "Score: {$score->label()}",
+        ]);
 
         return $visit->fresh(['triage', 'currentDepartment']);
     }
@@ -564,7 +602,12 @@ class VisitService
         $this->queueService->completeCurrentEntry($visit);
 
         // Transition status
-        $this->workflowService->transition($visit, $newStatus, "Assigned to {$department->name}");
+        $this->statusService->transition($visit, $newStatus, "Assigned to {$department->name}");
+
+        $this->pathway->record($visit->fresh(), 'CONSULTATION_ASSIGNED', [
+            'department_id' => $departmentId,
+            'title' => "Assigned to {$department->name}",
+        ]);
 
         // Create queue entry for the new department
         $this->queueService->addForDepartment($visit->fresh(), $departmentId);
@@ -650,6 +693,12 @@ class VisitService
             'notes' => $notes,
         ]);
 
+        $this->pathway->record($visit, 'CONSULTATION_REFERRED', [
+            'department_id' => $departmentId,
+            'title' => "Referred to {$department->name}",
+            'description' => $notes,
+        ]);
+
         // Billing: only if the target service has not already been billed on
         // this visit. createConsultationBilling() (which routes through
         // attachServices → BillingService) is itself idempotent, but checking
@@ -725,9 +774,15 @@ class VisitService
         // Billing line for investigation
         $this->createInvestigationBilling($visit, $departmentId);
 
-        // Queue transition
+        $this->pathway->record($visit, 'INVESTIGATION_REQUESTED', [
+            'department_id' => $departmentId,
+            'title' => "Investigation requested - {$department->name}",
+            'description' => $notes,
+        ]);
+
+        // Queue movement only; global visit status remains CONSULTING so the
+        // patient can return to the same consultation session.
         $this->queueService->completeCurrentEntry($visit);
-        $this->workflowService->transition($visit, VisitStatus::WAITING_INVESTIGATION, $notes ?? "Sent to {$department->name} for investigation");
         $this->queueService->addForDepartment($visit->fresh(), $departmentId);
 
         return $visit->fresh();

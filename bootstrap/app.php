@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('claims:check-stale')->dailyAt('06:00')->withoutOverlapping();
         $schedule->command('notifications:check-escalations')->everyFifteenMinutes()->withoutOverlapping();
         $schedule->command('notifications:flush-digest')->everyTenMinutes()->withoutOverlapping();
+        $schedule->command('outpatient-sessions:auto-complete')->dailyAt('00:10')->withoutOverlapping();
         $schedule->command('reports:notifications-summary')->monthlyOn(1, '06:00');
     })
     ->withMiddleware(function (Middleware $middleware) {

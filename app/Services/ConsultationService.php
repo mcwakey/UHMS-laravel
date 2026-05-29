@@ -152,6 +152,8 @@ class ConsultationService
      */
     public function addComplaint(MedicalRecord $record, array $data): Complaint
     {
+        $this->assertRecordEditable($record);
+
         $complaint = $record->complaints()->create(array_merge($this->entryContext($record), $data));
         $this->afterEntryCreated($record, $complaint, 'Complaint');
 
@@ -163,6 +165,8 @@ class ConsultationService
      */
     public function updateComplaint(Complaint $complaint, array $data): Complaint
     {
+        $this->assertEntryEditable($complaint);
+
         $old = $complaint->getOriginal();
         $complaint->update(array_merge($data, ['updated_by' => Auth::id()]));
         $this->entryLogs->updated($complaint, $old, Auth::user());
@@ -175,6 +179,8 @@ class ConsultationService
      */
     public function deleteComplaint(Complaint $complaint): void
     {
+        $this->assertEntryEditable($complaint);
+
         $this->entryLogs->deleted($complaint, Auth::user());
         $complaint->delete();
     }
@@ -185,6 +191,8 @@ class ConsultationService
      */
     public function addDiagnosis(MedicalRecord $record, array $data): Diagnosis
     {
+        $this->assertRecordEditable($record);
+
         if (! isset($data['is_primary']) && ! $record->diagnoses()->where('is_primary', true)->exists()) {
             $data['is_primary'] = true;
         }
@@ -200,6 +208,8 @@ class ConsultationService
      */
     public function setPrimaryDiagnosis(Diagnosis $diagnosis): Diagnosis
     {
+        $this->assertEntryEditable($diagnosis);
+
         // Unset all primaries for this record first
         $diagnosis->medicalRecord->diagnoses()->update(['is_primary' => false]);
         $diagnosis->update(['is_primary' => true, 'updated_by' => Auth::id()]);
@@ -212,6 +222,8 @@ class ConsultationService
      */
     public function updateDiagnosis(Diagnosis $diagnosis, array $data): Diagnosis
     {
+        $this->assertEntryEditable($diagnosis);
+
         $old = $diagnosis->getOriginal();
         $diagnosis->update(array_merge($data, ['updated_by' => Auth::id()]));
         $this->entryLogs->updated($diagnosis, $old, Auth::user());
@@ -224,6 +236,8 @@ class ConsultationService
      */
     public function deleteDiagnosis(Diagnosis $diagnosis): void
     {
+        $this->assertEntryEditable($diagnosis);
+
         $this->entryLogs->deleted($diagnosis, Auth::user());
         $diagnosis->delete();
     }
@@ -233,6 +247,8 @@ class ConsultationService
      */
     public function addInvestigation(MedicalRecord $record, array $data): Investigation
     {
+        $this->assertRecordEditable($record);
+
         $investigation = $record->investigations()->create(array_merge($this->entryContext($record), $data));
         $this->afterEntryCreated($record, $investigation, 'Investigation');
 
@@ -244,6 +260,8 @@ class ConsultationService
      */
     public function updateInvestigation(Investigation $investigation, array $data): Investigation
     {
+        $this->assertEntryEditable($investigation);
+
         $old = $investigation->getOriginal();
         $investigation->update(array_merge($data, ['updated_by' => Auth::id()]));
         $this->entryLogs->updated($investigation, $old, Auth::user());
@@ -256,6 +274,8 @@ class ConsultationService
      */
     public function deleteInvestigation(Investigation $investigation): void
     {
+        $this->assertEntryEditable($investigation);
+
         $this->entryLogs->deleted($investigation, Auth::user());
         $investigation->delete();
     }
@@ -265,6 +285,8 @@ class ConsultationService
      */
     public function addTreatment(MedicalRecord $record, array $data): Treatment
     {
+        $this->assertRecordEditable($record);
+
         $treatment = $record->treatments()->create(array_merge($this->entryContext($record), $data));
         $this->afterEntryCreated($record, $treatment, 'Treatment');
 
@@ -276,6 +298,8 @@ class ConsultationService
      */
     public function updateTreatment(Treatment $treatment, array $data): Treatment
     {
+        $this->assertEntryEditable($treatment);
+
         $old = $treatment->getOriginal();
         $treatment->update(array_merge($data, ['updated_by' => Auth::id()]));
         $this->entryLogs->updated($treatment, $old, Auth::user());
@@ -288,6 +312,8 @@ class ConsultationService
      */
     public function deleteTreatment(Treatment $treatment): void
     {
+        $this->assertEntryEditable($treatment);
+
         $this->entryLogs->deleted($treatment, Auth::user());
         $treatment->delete();
     }
@@ -309,6 +335,29 @@ class ConsultationService
         if ($user = Auth::user()) {
             $this->contributors->recordContribution($record, $user, $role);
             $this->entryLogs->created($entry, $user);
+        }
+    }
+
+    private function assertRecordEditable(MedicalRecord $record): void
+    {
+        $route = $record->consultationRoute;
+        if (! $route || ! $route->locked_at) {
+            return;
+        }
+
+        $user = Auth::user();
+        if ($user && method_exists($user, 'can') && ($user->can('consultation.entries.correct_completed') || $user->can('visits.reopen_locked_session'))) {
+            return;
+        }
+
+        throw new \RuntimeException('This outpatient consultation session is locked. Use correction permission to amend it.');
+    }
+
+    private function assertEntryEditable(object $entry): void
+    {
+        $record = method_exists($entry, 'medicalRecord') ? $entry->medicalRecord : null;
+        if ($record instanceof MedicalRecord) {
+            $this->assertRecordEditable($record);
         }
     }
 }

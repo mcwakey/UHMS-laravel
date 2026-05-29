@@ -21,6 +21,7 @@ class EmergencyCaseService
         private EmergencyBayService $bays,
         private PatientMergeGuard $patientMergeGuard,
         private EmergencySessionService $sessions,
+        private VisitPathwayService $pathway,
         private ?\App\Services\ActivityLogService $logger = null,
     ) {
         $this->logger = $this->logger ?: app(\App\Services\ActivityLogService::class);
@@ -29,15 +30,30 @@ class EmergencyCaseService
     public function create(array $data, User $user): EmergencyCase
     {
         return DB::transaction(function () use ($data, $user) {
-            $patient = empty($data['patient_id'])
+            $existingVisit = ! empty($data['visit_id'])
+                ? Visit::query()->lockForUpdate()->with('patient')->findOrFail($data['visit_id'])
+                : null;
+
+            $patient = $existingVisit?->patient ?? (empty($data['patient_id'])
                 ? $this->createTemporaryPatient($data, $user)
-                : Patient::findOrFail($data['patient_id']);
+                : Patient::findOrFail($data['patient_id']));
+
+            if ($existingVisit && ! empty($data['patient_id']) && (int) $data['patient_id'] !== (int) $existingVisit->patient_id) {
+                throw new \InvalidArgumentException('The selected emergency patient does not match the existing visit patient.');
+            }
+
+            if ($existingVisit && EmergencyCase::query()
+                ->where('visit_id', $existingVisit->id)
+                ->whereNotIn('emergency_status', [EmergencyCase::STATUS_DISPOSED, EmergencyCase::STATUS_CANCELLED])
+                ->exists()) {
+                throw new \InvalidArgumentException('This visit already has an active emergency case.');
+            }
 
             $this->patientMergeGuard->assertCanReceiveNewRecords($patient, 'emergency case');
 
             $arrival = Carbon::parse($data['arrival_time'] ?? now());
 
-            $visit = Visit::create([
+            $visit = $existingVisit ?: Visit::create([
                 'visit_number' => Visit::generateVisitNumber(),
                 'patient_id' => $patient->id,
                 'patient_age' => $patient->date_of_birth?->age,
@@ -50,6 +66,27 @@ class EmergencyCaseService
                 'checked_in_at' => $arrival,
                 'created_by' => $user->id,
             ]);
+
+            if ($existingVisit) {
+                if ($visit->canTransitionTo(VisitStatus::EMERGENCY)) {
+                    $visit->transitionTo(VisitStatus::EMERGENCY, 'Emergency case opened from existing visit');
+                } else {
+                    $visit->update(['status' => VisitStatus::EMERGENCY->value]);
+                }
+
+                $visit->update([
+                    'visit_type' => VisitType::EMERGENCY->value,
+                    'priority' => Priority::EMERGENCY->value,
+                    'chief_complaint' => $data['chief_complaint'] ?? $visit->chief_complaint,
+                    'notes' => $data['initial_condition'] ?? $visit->notes,
+                    'checked_in_at' => $visit->checked_in_at ?? $arrival,
+                ]);
+            } else {
+                $this->pathway->record($visit, 'VISIT_REGISTERED', [
+                    'title' => 'Emergency visit registered',
+                    'description' => $data['chief_complaint'] ?? null,
+                ]);
+            }
 
             $case = EmergencyCase::create([
                 'emergency_number' => $this->numbers->generateCaseNumber(),
@@ -70,6 +107,13 @@ class EmergencyCaseService
 
             $this->timeline->record($case, 'ARRIVAL', 'Emergency case created', $case->chief_complaint, $case, $user);
             $this->sessions->getOrCreateForCase($case, $user);
+
+            $this->pathway->record($visit->fresh(), 'EMERGENCY_SESSION_CREATED', [
+                'source' => $case,
+                'title' => 'Emergency Session created',
+                'description' => $existingVisit ? 'Emergency Session was attached to the existing visit.' : 'Emergency Session was created for the emergency visit.',
+                'created_by' => $user->id,
+            ]);
 
             if (! empty($data['emergency_bay_id'])) {
                 $this->bays->assign($case, (int) $data['emergency_bay_id'], $user, true);

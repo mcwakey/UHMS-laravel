@@ -15,6 +15,7 @@ use App\Models\ServiceCatalog;
 use App\Models\StockBalance;
 use App\Models\StockLocation;
 use App\Models\User;
+use App\Models\Visit;
 use App\Models\Ward;
 use App\Services\EmergencyCaseService;
 use App\Services\EmergencySessionService;
@@ -29,22 +30,33 @@ class EmergencyCaseController extends Controller
 
     public function create(Request $request)
     {
+        $existingVisit = $request->query('visit_id')
+            ? Visit::with('patient')->find($request->query('visit_id'))
+            : null;
+
+        $patients = Patient::query()
+            ->when($request->query('search'), fn ($q, $search) => $q->search($search))
+            ->latest()
+            ->limit(20)
+            ->get();
+
+        if ($existingVisit?->patient && ! $patients->contains('id', $existingVisit->patient_id)) {
+            $patients->prepend($existingVisit->patient);
+        }
+
         return view('emergency.create', [
-            'patients' => Patient::query()
-                ->when($request->query('search'), fn ($q, $search) => $q->search($search))
-                ->latest()
-                ->limit(20)
-                ->get(),
+            'patients' => $patients,
             'bays' => EmergencyBay::available()->orderBy('name')->get(),
             'users' => User::where('status', 'active')->orderBy('first_name')->get(),
+            'existingVisit' => $existingVisit,
         ]);
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'patient_id' => ['nullable', 'exists:patients,id', 'required_without:temporary_display_name'],
-            'temporary_display_name' => ['nullable', 'string', 'max:120', 'required_without:patient_id'],
+            'patient_id' => ['nullable', 'exists:patients,id', 'required_without_all:temporary_display_name,visit_id'],
+            'temporary_display_name' => ['nullable', 'string', 'max:120', 'required_without_all:patient_id,visit_id'],
             'temporary_gender' => ['nullable', 'in:male,female'],
             'estimated_age' => ['nullable', 'integer', 'min:0', 'max:120'],
             'temporary_reason' => ['nullable', 'string', 'max:500'],
@@ -58,6 +70,7 @@ class EmergencyCaseController extends Controller
             'emergency_bay_id' => ['nullable', 'exists:emergency_bays,id'],
             'assigned_doctor_id' => ['nullable', 'exists:users,id'],
             'assigned_nurse_id' => ['nullable', 'exists:users,id'],
+            'visit_id' => ['nullable', 'exists:visits,id'],
         ]);
 
         try {

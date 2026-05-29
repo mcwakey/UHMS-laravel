@@ -58,9 +58,12 @@ class MedicalRecordEntryPermissionService
     {
         $route = method_exists($entry, 'consultationRoute') ? $entry->consultationRoute : null;
 
-        return $route && in_array($route->status, [
-            VisitConsultationRoute::STATUS_COMPLETED,
-            VisitConsultationRoute::STATUS_CANCELLED,
-        ], true);
+        return $route && (
+            $route->locked_at !== null
+            || in_array($route->status, [
+                VisitConsultationRoute::STATUS_COMPLETED,
+                VisitConsultationRoute::STATUS_CANCELLED,
+            ], true)
+        );
     }
 }

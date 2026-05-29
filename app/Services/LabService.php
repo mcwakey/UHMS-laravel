@@ -224,6 +224,13 @@ class LabService
 
             LabRequestCreated::dispatch($request);
 
+            app(VisitPathwayService::class)->record($visit, 'INVESTIGATION_REQUESTED', [
+                'source' => $request,
+                'department_id' => $request->target_department_id ?? $request->department_id,
+                'title' => 'Investigation requested',
+                'description' => $request->request_number,
+            ]);
+
             return $request;
         });
     }
@@ -254,6 +261,15 @@ class LabService
 
         $request->update(['status' => 'processing']);
         $request->items()->where('status', 'pending')->update(['status' => 'processing']);
+
+        if ($request->visit) {
+            app(VisitPathwayService::class)->record($request->visit, 'INVESTIGATION_ACCEPTED', [
+                'source' => $request,
+                'department_id' => $request->target_department_id ?? $request->department_id,
+                'title' => 'Investigation accepted',
+                'description' => $request->request_number,
+            ]);
+        }
 
         return $request;
     }
@@ -327,6 +343,15 @@ class LabService
             // Auto-update request status
             $this->updateRequestStatus($item->labRequest);
 
+            if ($item->labRequest?->visit) {
+                app(VisitPathwayService::class)->record($item->labRequest->visit, 'INVESTIGATION_RESULT_READY', [
+                    'source' => $result,
+                    'department_id' => $item->labRequest->target_department_id ?? $item->labRequest->department_id,
+                    'title' => 'Investigation result ready',
+                    'description' => $item->name ?? $item->service?->name ?? $item->labTest?->name,
+                ]);
+            }
+
             return $result;
         });
     }
@@ -341,6 +366,17 @@ class LabService
             'verified_by' => Auth::id(),
             'verified_at' => now(),
         ]);
+
+        $result->loadMissing('requestItem.labRequest.visit');
+        $request = $result->requestItem?->labRequest;
+        if ($request?->visit) {
+            app(VisitPathwayService::class)->record($request->visit, 'INVESTIGATION_VERIFIED', [
+                'source' => $result,
+                'department_id' => $request->target_department_id ?? $request->department_id,
+                'title' => 'Investigation result verified',
+                'description' => $request->request_number,
+            ]);
+        }
 
         return $result;
     }

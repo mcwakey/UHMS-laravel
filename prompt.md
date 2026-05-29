@@ -1,1000 +1,1310 @@
 ````text
-You are a senior technical writer and Laravel/Inertia/Vue documentation assistant working on UHMS — Ultimate Hospital Management System.
+You are a senior Laravel + Inertia/Vue architect working on UHMS — Ultimate Hospital Management System.
 
-We need to update the UHMS User Manual to reflect all recent workflow changes and new modules.
+We need to fix and refine the Visit, Emergency, Admission, Billing, Bed Count, Consumables, and Patient Pathway workflow.
 
-The current user manual already exists. Do not rewrite it blindly. First inspect the existing manual files, then update them carefully while preserving the current structure, tone, numbering, and formatting.
+UHMS already has OPD/Visits, Admission, Emergency, Consultation Sessions, Investigations, Pharmacy, Procedures/Theatre, Billing, Stock/Consumables, Beds, MAR, and Visit Preview.
 
-Update the user manual so it accurately reflects the current UHMS workflow after the latest changes.
+The current problem is that the Visit Status Flow and patient movement logic are too rigid and do not properly reflect the real path/parcours a patient follows in the hospital.
 
-Focus on:
+We need to redesign the logic carefully without breaking existing workflows.
 
-- Emergency Case Management
-- Emergency as a Consultation/Clinical Session
-- Admission Medication Administration / MAR
-- Emergency Medication / MAR
-- Clinical Tasks / Reminders
-- MAR Chart
-- Theatre Rooms Management
-- Procedure/Theatre workflow
-- Patient Folder Merge
-- Notifications
-- Logs / Audit Trail
-- Pharmacy billing before dispensing
-- Ward/Emergency/Investigation/Procedure consumables
-- Unified Product Stock system
-- Stock Balance matrix
-- Consultation ownership/grouping updates
-- Consultation Summary document-style page
-- Claims preparation clinical mirror
-- Insurance-type-based claims workflow
-- NHIA/NHIS claims workflow
+Do not rebuild the whole system blindly. First inspect the current implementation, identify gaps, then fix only what is wrong or incomplete.
 
-Do not remove existing valid sections unless they are obsolete.
+Do not break:
+- OPD visit creation
+- consultation sessions
+- emergency cases
+- admission
+- billing
+- pharmacy
+- investigations
+- procedures/theatre
+- stock/consumables
+- bed management
+- visit preview
+- patient history
+- claims
 
 ---
 
-# 1. Main Objective
+# 1. Main Problems to Fix
 
-Update the UHMS User Manual so that end users understand how to use the latest implemented workflows.
+Fix the following issues:
 
-The manual should be practical, clear, and role-friendly.
-
-It should explain:
-
-- what each module is for
-- who uses it
-- where to find it
-- how to perform common tasks
-- important rules
-- workflow status changes
-- warnings and restrictions
-- expected outputs/results
-
-The manual should not be written like developer documentation.
-
-It should be written for hospital users, admins, nurses, doctors, pharmacists, records officers, cashiers, theatre staff, emergency staff, store officers, claims officers, and system administrators.
-
----
-
-# 2. Existing Manual Inspection
-
-First inspect existing manual files.
-
-Look for files such as:
-
-- UHMS_USER_MANUAL.md
-- UHMS_Updated_User_Manual.md
-- USER_MANUAL.md
-- docs/user-manual/*
-- docs/UHMS_USER_MANUAL.md
-- README/manual files
-
-Then decide where updates should be applied.
-
-If there is one main user manual, update that.
-
-If there is an updated manual and an older manual, merge the latest changes into the main manual.
-
-Do not create duplicate competing manuals unless required.
+1. If a patient is currently admitted and not yet discharged, the system must not allow creating another normal OPD visit for that patient.
+2. When creating an emergency case from a visit, the system currently does not create the Emergency Session. This must be fixed.
+3. Re-examine the Visit Status Flow.
+4. Remove misleading visit statuses such as laboratory, pharmacy, billing from the main visit status flow.
+5. Visit status should reflect the patient’s global care state, not every department they pass through.
+6. A patient may go directly to investigation, pharmacy, or procedure without consultation.
+7. A patient may be in consultation, then sent to investigation/pharmacy/procedure, then return to consultation without changing the main visit status away from CONSULTING.
+8. Visit Preview must reflect the real pathway/parcours of the patient through departments.
+9. All outpatient sessions should be automatically locked/completed after midnight / next day.
+10. Emergency beds and emergency consumables should be billed per day like normal admission.
+11. When disposing emergency patient to admission:
+    - emergency bed count must end
+    - admission bed count must start
+    - emergency consumable daily billing must end
+    - admission consumable/daily billing must start
 
 ---
 
-# 3. Add Revision Note at Top
+# 2. Important Conceptual Correction
 
-At the top of the manual, add a short revision note.
+Visit status should not be used as a replacement for department movement history.
+
+Wrong approach:
+
+```text
+visit.status = LABORATORY
+visit.status = PHARMACY
+visit.status = BILLING
+visit.status = XRAY
+````
+
+Correct approach:
+
+```text
+visit.status = ACTIVE / WAITING_CONSULTATION / CONSULTING / COMPLETED / ADMITTED / EMERGENCY / CANCELLED
+```
+
+Then the patient’s actual hospital pathway should be tracked separately using sessions, routes, tasks, requests, invoice items, and visit timeline records.
+
+The Visit Status answers:
+
+```text
+What is the global state of this visit?
+```
+
+The Visit Pathway / Timeline answers:
+
+```text
+Where did the patient go?
+What services were requested?
+Which departments handled the patient?
+What happened chronologically?
+```
+
+---
+
+# 3. Patient Cannot Create New OPD Visit While Admitted
+
+If a patient has an active admission that is not discharged, the system must prevent creating another normal OPD visit.
+
+Definition of active admission:
+
+```text
+admission.status NOT IN (DISCHARGED, CANCELLED, TRANSFERRED_OUT, DECEASED)
+```
+
+or use the project’s existing completed/discharged statuses.
+
+When creating a new OPD visit:
+
+1. Check whether the patient has an active admission.
+2. If yes, block visit creation.
+3. Show clear message:
+
+```text
+This patient is currently admitted and has not yet been discharged. A new OPD visit cannot be created until the admission is completed.
+```
+
+Allow exceptions only if the system has an authorized override permission.
+
+Suggested permission:
+
+```text
+visits.create_while_admitted
+```
+
+If override is used:
+
+* require reason
+* log the action
+* show warning
+* do not silently allow it
+
+This guard should apply to:
+
+* Visit creation page
+* API/controller store method
+* Any quick-create visit flow
+* Emergency-to-OPD transfer if patient is actively admitted unless clinically allowed
+
+---
+
+# 4. Emergency Case Created From Visit Must Create Emergency Session
+
+When an emergency case is created from a visit, the system must also create or link an Emergency Session.
+
+Emergency must be treated like a consultation/clinical session.
+
+Correct flow:
+
+```text
+Visit created or selected
+↓
+Emergency Case created
+↓
+Emergency Session created
+↓
+Emergency records attach to that session
+↓
+Emergency Session appears on Consultation page/session list
+↓
+Visit Preview includes Emergency Session chronologically
+```
+
+Emergency Session must link to:
+
+```text
+visit_id
+patient_id
+emergency_case_id
+department_id = Emergency Department
+medical_record_id if used
+main_doctor_id nullable
+primary_nurse_id nullable
+status
+started_at
+created_by
+```
+
+Use the existing consultation session / visit consultation route mechanism if possible.
+
+Do not create a completely separate emergency-only session system if the existing session table can support:
+
+```text
+session_type = EMERGENCY
+emergency_case_id
+```
+
+If the current session table is `visit_consultation_routes` or similar, extend it.
+
+Emergency records must link to:
+
+```text
+visit_id
+patient_id
+emergency_case_id
+consultation_route_id / clinical_session_id
+medical_record_id if used
+created_by
+updated_by nullable
+```
+
+---
+
+# 5. Emergency Session Must Appear on Consultation Page
+
+If a patient went through Emergency, the Consultation page must show the Emergency Session in the session list.
 
 Example:
 
 ```text
-Revision Note:
-This manual has been updated to reflect the redesigned UHMS workflows, including Emergency Case Management, Medication Administration/MAR, Theatre Room Management, Patient Folder Merge, unified stock management, Notifications, Logs, and enhanced Consultation Summary workflows. Some screenshots may predate the latest interface changes and should be regenerated where required.
-````
+Consultation Sessions for This Visit
 
-If screenshots are outdated, clearly state that screenshots may need regeneration.
+Emergency Department Session
+Status: Completed
+Triage: RED
+Main Doctor: Dr. Kofi
+Primary Nurse: Nurse Ama
+Contributors: Dr. Mensah, Nurse Yaa
+Records: Triage, vitals, notes, medications, investigations, procedures, disposition
+[View Session]
 
-Do not pretend screenshots are updated if they are not.
-
----
-
-# 4. Update Table of Contents
-
-Update the table of contents to include new/updated sections.
-
-Suggested major sections:
-
-1. Introduction
-2. Login and Dashboard
-3. User Roles and Permissions
-4. Patient Registration
-5. Patient Search and Patient Folder
-6. Patient Folder Merge
-7. Visits / OPD Workflow
-8. Emergency Case Management
-9. Admission / Inpatient Workflow
-10. Consultation Workflow
-11. Consultation Summary
-12. Clinical Tasks and Reminders
-13. Medication Administration Record / MAR
-14. MAR Chart
-15. Investigations
-16. Procedures and Theatre
-17. Theatre Rooms Management
-18. Pharmacy
-19. Billing and Payments
-20. Insurance and Claims
-21. NHIA / NHIS Claims
-22. Store / Products / Stock
-23. Ward, Emergency, Investigation and Procedure Consumables
-24. Supplier Ledger and Procurement
-25. Notifications
-26. Logs / Audit Trail
-27. Reports
-28. System Settings
-29. Troubleshooting
-30. Appendices
-
-Adapt numbering to the existing manual.
-
----
-
-# 5. Patient Folder Merge Section
-
-Add a user-facing section explaining Patient Folder Merge.
-
-Explain use cases:
-
-* temporary emergency patient later identified
-* duplicate patient records created accidentally
-
-Explain workflow:
-
-1. Open Patient Merge.
-2. Search main patient folder to keep.
-3. Search duplicate/temporary folder to merge.
-4. Compare records side by side.
-5. Choose which demographic fields to keep.
-6. Preview affected records.
-7. Confirm merge.
-8. Duplicate folder is locked and redirected to the main folder.
-
-Explain important rules:
-
-* merged folder is not deleted
-* old patient number remains searchable
-* all visits, emergency cases, admissions, invoices, claims, documents, and clinical records are moved to the main folder
-* only authorized users can merge patient folders
-* merge cannot be casually reversed from UI
-
-Add emergency identity confirmation:
-
-```text
-From an Emergency Case, staff can confirm the identity of a temporary patient by searching the real patient and merging the temporary folder into the real patient folder.
+OPD Consultation Session
+Status: Active
+Main Doctor: Dr. Yao
+[Continue Consultation]
 ```
 
+Rules:
+
+* Emergency Session should be viewable from Consultation page.
+* If emergency case is still active, authorized emergency staff may edit.
+* If emergency case is completed/disposed, show read-only unless user has correction permission.
+* Consultation doctors should be able to view emergency history before continuing care.
+* Emergency records must preserve creators/contributors.
+* Emergency Session must also appear in Visit Preview and patient clinical history.
+
 ---
 
-# 6. Emergency Case Management Section
+# 6. Rebuild Visit Status Flow Correctly
 
-Add or update Emergency section.
+Re-examine all visit statuses currently used.
 
-Explain that UHMS has three main patient pathways:
+Remove or stop using statuses like:
 
 ```text
-OPD / Visit = Outpatient care
-Admission = Inpatient care
-Emergency = Urgent or critical care
+LABORATORY
+PHARMACY
+BILLING
+XRAY
+SCAN
+PROCEDURE
 ```
 
-Explain Emergency workflow:
+as global visit statuses.
 
-1. Create emergency case.
-2. Use existing patient or create unknown/temporary patient.
-3. Capture arrival details.
-4. Record emergency triage and vitals.
-5. Assign bay/bed and team.
-6. Start emergency clinical session.
-7. Record emergency notes/assessment.
-8. Request investigations.
-9. Request procedures.
-10. Order/administer medication and use MAR.
-11. Record consumables.
-12. Review billing.
-13. Complete disposition.
+These should be represented as department requests/tasks/timeline events, not visit.status.
 
-Emergency statuses:
-
-* ARRIVED
-* WAITING_TRIAGE
-* TRIAGED
-* UNDER_EMERGENCY_CARE
-* OBSERVATION
-* READY_FOR_DISPOSITION
-* DISPOSED
-* CANCELLED
-
-Disposition options:
-
-* Admitted
-* Discharged
-* Transferred to OPD
-* Transferred to Theatre
-* Referred out
-* Left against medical advice
-* Absconded
-* Died
-* Dead on arrival
-
-Important rule:
+Recommended Visit Statuses:
 
 ```text
-Emergency care must not be blocked because payment has not been made.
+REGISTERED
+WAITING_TRIAGE
+TRIAGE
+WAITING_CONSULTATION
+CONSULTING
+ACTIVE
+EMERGENCY
+ADMITTED
+COMPLETED
+CANCELLED
+NO_SHOW
+DECEASED
 ```
 
----
+Use the project’s existing status names if already established, but clean the meaning.
 
-# 7. Emergency as Consultation Session
+Suggested meanings:
 
-Add this clearly.
+## REGISTERED
 
-Emergency must be explained as a clinical session.
+Visit has been created but no clinical workflow started.
 
-User-facing explanation:
+## WAITING_TRIAGE
 
-```text
-When a patient goes through Emergency, UHMS creates an Emergency Session under the visit. This session appears together with other consultation sessions so doctors can view the emergency history before continuing care.
-```
+Patient is waiting for triage.
 
-Explain that Consultation page can show:
+## TRIAGE
 
-* Emergency Session
-* OPD Session
-* Dental Session
-* ENT Session
-* Admission Review Session
+Patient is currently undergoing triage.
 
-Emergency Session contains:
+## WAITING_CONSULTATION
 
-* triage
-* vitals
-* emergency notes
-* medications/MAR
-* investigations
-* procedures
-* consumables
-* billing references
-* disposition
+Triage is done or visit is ready for doctor/session.
 
-Explain that this improves:
+## CONSULTING
 
-* patient history
-* visit preview
-* claims preparation
-* continuity of care
-
----
-
-# 8. Emergency Triage and Vitals
-
-Update emergency triage documentation.
-
-Explain that triage can be auto-calculated from:
-
-* temperature
-* pulse
-* respiratory rate
-* blood pressure
-* oxygen saturation
-* AVPU/consciousness
-* pain score
-* danger signs
-* trauma/bleeding/seizure/respiratory distress indicators
-
-Triage categories:
-
-* RED: Immediate / Resuscitation
-* ORANGE: Very urgent
-* YELLOW: Urgent
-* GREEN: Less urgent
-* BLACK: Dead on arrival / expectant
-
-Explain that users may override the auto-suggested category if authorized and must provide a reason.
-
-Explain vitals display:
-
-* latest vitals cards
-* vitals history table
-* vitals graph/trends
-* recorded by and time
-
----
-
-# 9. Bay / Bed and Team Assignment
-
-Add emergency bay/team section.
-
-Explain:
-
-1. Select emergency ward/unit.
-2. Select available bay/bed.
-3. Assign patient.
-4. Assign main emergency doctor.
-5. Assign primary nurse.
-6. Add contributors.
-
-Explain that contributors can add records without replacing the main doctor/nurse.
-
-Explain bed/bay statuses:
-
-* Available
-* Occupied
-* Cleaning
-* Out of service
-* Reserved
-
----
-
-# 10. Admission Medication Administration / MAR
-
-Add or update Admission medication section.
-
-Explain the difference:
-
-```text
-Prescription = what doctor ordered.
-Dispensing = what pharmacy supplied.
-Administration = what nurse actually gave.
-```
-
-Explain workflow:
-
-1. Doctor prescribes medication.
-2. Pharmacy dispenses medication.
-3. System generates administration schedules.
-4. Clinical tasks/reminders notify nurses.
-5. Nurse records each dose.
-6. System tracks progress until complete.
-
-Medication order statuses:
-
-* Pending dispensing
-* Partially dispensed
-* Dispensed
-* Active administration
-* Completed
-* Held
-* Stopped
-* Cancelled
-* Expired
-
-Dose statuses:
-
-* Scheduled
-* Due
-* Overdue
-* Given
-* Held
-* Missed
-* Refused
-* Skipped
-* Cancelled
-
-Explain that nurse administration does not reduce stock again if pharmacy already dispensed the medication.
-
----
-
-# 11. Emergency Medication / MAR
-
-Add emergency medication workflow.
-
-Explain emergency supports:
-
-* STAT medication
-* PRN/SOS medication
-* scheduled medication
-* immediate administration
-* emergency stock source
-* MAR chart
-
-Explain stock rule:
-
-```text
-If medication is administered from Emergency stock, stock is deducted once from Emergency stock.
-If medication was dispensed by Pharmacy to the patient, administration does not deduct stock again.
-```
-
-Explain that medication search comes from Products, not a separate drug list.
-
-Explain automatic quantity calculation:
-
-```text
-BD for 5 days = 10 doses.
-TDS for 3 days = 9 doses.
-```
-
----
-
-# 12. Clinical Tasks and Reminders
-
-Add or update Clinical Tasks section.
-
-Explain clinical tasks can remind staff for:
-
-* medication administration
-* vitals monitoring
-* wound dressing
-* blood sugar check
-* doctor review
-* investigation follow-up
-* procedure preparation
-* nursing observation
-
-Explain statuses:
-
-* Scheduled
-* Due
-* Overdue
-* In Progress
-* Completed
-* Missed
-* Held
-* Refused
-* Cancelled
-
-Explain due/overdue alerts and escalation.
-
----
-
-# 13. MAR Chart Section
-
-Add a MAR Chart section.
-
-Explain:
-
-```text
-The MAR Chart is a patient-specific medication administration grid. It is not a statistical chart.
-```
-
-Explain layout:
-
-* rows = medications
-* columns = scheduled times
-* cells = dose status
-
-Explain actions:
-
-* Due/Overdue cell opens administration modal
-* Given/Held/Missed/Refused cell opens details
-* PRN/SOS medications appear separately
-* Print MAR button prints the chart
-
-Explain statuses and legend.
-
-Mention where MAR can be opened:
-
-* Admission Board
-* Emergency Board
-* Admission Detail
-* Emergency Case Detail
-* Visit Preview
-
----
-
-# 14. Consultation Workflow Updates
-
-Update Consultation section to include required clinical order:
-
-1. Vitals / Patient Summary
-2. Complaints
-3. History of Presenting Complaint
-4. Examination / Physical Examination
-5. Diagnosis
-6. Investigations
-7. Treatments / Prescriptions
-8. Procedures
-9. Tasks / Follow-up / Instructions
-10. Notes / Summary
-
-Explain record ownership:
-
-* records are grouped by doctor/user
-* contributors are shown
-* main doctor is not overwritten
-* users can edit only records they are allowed to edit
-
-Explain Emergency Session appears in consultation sessions if the patient passed through Emergency.
-
----
-
-# 15. Consultation Summary Page
-
-Update Consultation Summary section.
-
-Describe the new document-style summary page.
-
-It should show:
-
-* patient and visit header
-* session details
-* main doctor and contributors
-* complaints
-* HOPC
-* examination
-* diagnoses
-* investigations
-* treatments/prescriptions
-* procedures
-* tasks/follow-up
-* notes
-* record owners
-* dates/times
-
-Mention:
-
-```text
-The Consultation Summary page is designed like a readable clinical document and should not hide important information.
-```
-
-Mention print option if implemented.
-
----
-
-# 16. Investigations
-
-Update Investigations section.
-
-Explain both consultation and emergency investigations.
-
-User workflow:
-
-1. Select investigation department.
-2. Select service/items.
-3. Add clinical reason.
-4. Submit request.
-5. Department accepts/handles request.
-6. Results are entered.
-7. Results are verified.
-8. Doctor can view verified results.
-
-Emergency investigations can be marked:
-
-* Emergency
-* Urgent
-* Routine
-
-Explain grouping by department and owner.
-
-Explain consumables used by investigation departments are deducted from their department stock.
-
----
-
-# 17. Procedures and Theatre
-
-Update Procedure section.
-
-Explain procedure request workflow:
-
-1. Doctor requests procedure.
-2. Procedure/Theatre accepts.
-3. Billing item may be created.
-4. Theatre schedules.
-5. Pre-op is completed.
-6. Anaesthesia note is recorded.
-7. Surgeon operative note is recorded.
-8. Recovery/post-op note is recorded.
-9. Case is completed.
-
-Explain procedures can come from:
-
-* Consultation
-* Emergency
-* Admission
-
-Explain billing is separate from the clinical procedure section.
-
----
-
-# 18. Theatre Rooms Management
-
-Add new Theatre Rooms section.
-
-Explain:
-
-* theatre rooms CRUD
-* room statuses
-* theatre schedule board
-* room calendar
-* scheduling theatre case
-* double-booking prevention
-* emergency theatre cases
-* theatre team
-* pre-op checklist
-* anaesthesia note
-* operative note
-* recovery note
-* consumables
-* billing
-* visit preview
-
-Room statuses:
-
-* Available
-* Occupied
-* Scheduled
-* Cleaning
-* Maintenance
-* Out of service
-* Reserved
-
-Theatre case statuses:
-
-* Requested
-* Accepted
-* Billed
-* Scheduled
-* Pre-op
-* Anaesthesia Ready
-* In Theatre
-* In Surgery
-* Surgery Done
-* Recovery
-* Post-op
-* Completed
-* Cancelled
-* Postponed
-
----
-
-# 19. Pharmacy Updates
-
-Update Pharmacy section.
-
-Explain drugs can be billed before dispensing.
-
-Workflow:
-
-1. Doctor prescribes drugs.
-2. Pharmacy reviews prescription.
-3. Pharmacy selects drugs to bill/dispense.
-4. Pharmacy can reduce quantities.
-5. Only selected drugs are billed.
-6. Only billed drugs appear on dispense page.
-7. Dispensing reduces pharmacy stock.
+Patient is actively under one or more consultation/clinical sessions.
 
 Important:
 
-```text
-Billing is financial. Dispensing is physical stock movement.
-```
+A patient should remain CONSULTING even if the doctor sends them to investigation, pharmacy, or procedure and expects them to return.
 
-Explain pharmacy catalogue displays:
+## ACTIVE
 
-* Pharmacy Available Qty
-* Main Stock Qty
-* Stock Status
+Generic active status if visit is ongoing but not strictly consulting.
 
----
+## EMERGENCY
 
-# 20. Ward and Emergency Consumables
+Visit is currently under emergency care.
 
-Add Ward/Emergency consumables section.
+## ADMITTED
 
-Explain:
+Visit has moved into admission/inpatient workflow.
 
-* Ward uses Ward stock location.
-* Emergency uses Emergency stock location.
-* Users select products/consumables linked to their department.
-* Usage deducts from department stock.
-* Billable consumables create invoice items.
-* Non-billable consumables only create stock movements.
-* Departments cannot create products.
+## COMPLETED
 
----
+Visit is completed/closed.
 
-# 21. Stock / Products / Inventory
+## CANCELLED
 
-Update Store/Stock section.
+Visit was cancelled.
 
-Reinforce:
+## DECEASED
 
-```text
-Every physical item comes from Products.
-```
-
-Includes:
-
-* drugs
-* consumables
-* investigation items
-* procedure items
-* theatre consumables
-* emergency supplies
-* ward supplies
-
-Explain Main Store rule:
-
-* purchase receipts go into Main Store
-* departments receive stock through requisition/transfer
-* departments consume only from their own stock locations
-
-Explain Stock Balance Matrix:
-
-```text
-Product | Main Store | Pharmacy | Ward | Emergency | Lab | Theatre | Total | Status
-```
-
-Explain low stock display:
-
-* no yellow row background
-* status shown beside each location quantity
-* statuses: OK, LOW, CRITICAL, OUT, NOT STOCKED
+Visit ended due to death if applicable.
 
 ---
 
-# 22. Insurance and Claims
+# 7. Patient Pathway / Parcours Must Be Separate From Visit Status
 
-Update Insurance/Claims section.
+Create or update a patient pathway tracking mechanism.
 
-Explain insurance type based claims:
+Recommended table:
 
 ```text
-Insurance Type = claim workflow
-Insurance Provider = organization under that type
+visit_pathway_events
+- id
+- visit_id
+- patient_id
+- event_type
+- department_id nullable
+- source_type nullable
+- source_id nullable
+- status nullable
+- title
+- description nullable
+- started_at nullable
+- completed_at nullable
+- created_by nullable
+- created_at
+- updated_at
 ```
+
+Possible event types:
+
+```text
+VISIT_CREATED
+TRIAGE_STARTED
+TRIAGE_COMPLETED
+CONSULTATION_STARTED
+CONSULTATION_COMPLETED
+SENT_TO_INVESTIGATION
+INVESTIGATION_REQUESTED
+INVESTIGATION_ACCEPTED
+INVESTIGATION_RESULT_READY
+INVESTIGATION_VERIFIED
+PRESCRIPTION_CREATED
+SENT_TO_PHARMACY
+PHARMACY_BILLED
+PHARMACY_DISPENSED
+PROCEDURE_REQUESTED
+THEATRE_SCHEDULED
+PROCEDURE_COMPLETED
+EMERGENCY_STARTED
+EMERGENCY_DISPOSED
+ADMISSION_STARTED
+BED_ASSIGNED
+ADMISSION_DISCHARGED
+BILLING_ITEM_ADDED
+PAYMENT_RECEIVED
+VISIT_COMPLETED
+```
+
+If existing activity logs or visit timeline exists, extend it instead of creating a duplicate.
+
+The goal is:
+
+```text
+Visit status stays clinically meaningful.
+Visit pathway records every department/service movement.
+Visit Preview uses pathway events to show the real patient journey.
+```
+
+---
+
+# 8. Handling Different Patient Routes
+
+The system must support multiple patient routes.
+
+## Route A — Direct Investigation
 
 Example:
 
 ```text
-Insurance Type: NHIA
-Provider: NHIS
+Visit created
+↓
+Investigation service selected/requested
+↓
+Patient goes to investigation
+↓
+Result entered/verified
+↓
+Visit completed or sent to consultation if needed
 ```
 
-Explain NHIA/NHIS claims preparation:
+Visit status can remain ACTIVE or COMPLETED depending flow.
 
-1. Claim officer opens eligible visit.
-2. System prepares claim from invoice items.
-3. Claim officer reviews clinical mirror.
-4. Claim officer can select doctor-entered information or enter claim-facing manual details.
-5. CCC/verification code is entered if required.
-6. Claim is validated.
-7. Claim is marked ready.
-8. Claim is exported/submitted.
-9. Claim status and payment are tracked.
+Do not force CONSULTING if no consultation session exists.
 
-Explain claim clinical mirror includes:
+## Route B — Direct Pharmacy
 
-* consultation
-* complaints
-* HOPC
-* diagnosis
-* prescriptions/drugs
-* investigations
-* procedures
-* invoice items
+Example:
 
-Emphasize claim edits do not overwrite clinical records.
+```text
+Visit created
+↓
+Drug/product service selected or prescription exists
+↓
+Pharmacy bills/dispenses
+↓
+Visit completed
+```
+
+Do not set visit.status = PHARMACY.
+
+Use pathway event:
+
+```text
+SENT_TO_PHARMACY / PHARMACY_DISPENSED
+```
+
+## Route C — Direct Procedure
+
+Example:
+
+```text
+Visit created
+↓
+Procedure requested
+↓
+Procedure/theatre handles it
+↓
+Visit completed or admitted if needed
+```
+
+Do not set visit.status = PROCEDURE.
+
+## Route D — Consultation With Investigation/Pharmacy Return
+
+Example:
+
+```text
+Visit created
+↓
+Triage
+↓
+Consulting
+↓
+Doctor sends patient to investigation
+↓
+Patient returns to consulting
+↓
+Doctor reviews result
+↓
+Doctor prescribes drugs
+↓
+Patient goes to pharmacy
+↓
+Patient may return to consulting or complete visit
+```
+
+In this case:
+
+```text
+visit.status should remain CONSULTING
+```
+
+while investigation/pharmacy/procedure activities are tracked as pathway events and request statuses.
 
 ---
 
-# 23. Billing Updates
+# 9. Consultation Session Lock After Midnight
 
-Update Billing section.
+All outpatient sessions should be automatically locked/completed after midnight or the next day.
 
-Explain single visit invoice:
+Requirement:
+
+```text
+Outpatient sessions from yesterday that are still active should be automatically completed/locked.
+```
+
+This applies to:
+
+```text
+OPD consultation sessions
+outpatient visit sessions
+non-admission, non-emergency active clinical sessions
+```
+
+Do not automatically close:
+
+```text
+active admissions
+active emergency cases
+active inpatient sessions
+theatre cases still in progress
+```
+
+Suggested scheduled command:
+
+```bash
+php artisan visits:close-outpatient-sessions
+```
+
+or:
+
+```bash
+php artisan outpatient-sessions:auto-complete
+```
+
+Logic:
+
+1. Find outpatient visits/sessions where date < today.
+2. Status is still active/consulting/waiting.
+3. Not admitted.
+4. Not active emergency.
+5. Not already completed/cancelled.
+6. Mark sessions as completed/locked.
+7. Mark visit completed if no active pending workflow remains.
+8. Log action.
+9. Notify relevant users if needed.
+
+Session fields:
+
+```text
+locked_at
+locked_by nullable
+lock_reason
+completed_at
+completed_by nullable
+```
+
+Lock reason:
+
+```text
+Automatically completed after end of outpatient day.
+```
+
+This should run automatically through scheduler.
+
+If scheduler is not configured, document it.
+
+---
+
+# 10. Manual Override for Locked Sessions
+
+After outpatient session is auto-locked, users should not freely edit it.
+
+Allow corrections only with permission.
+
+Suggested permission:
+
+```text
+consultation.entries.correct_completed
+visits.reopen_locked_session
+```
+
+If reopening:
+
+* require reason
+* log action
+* show warning
+* preserve audit trail
+
+---
+
+# 11. Emergency Beds Billed Per Day
+
+Emergency beds/bays should be billable per day like normal admission.
+
+When a patient is assigned to an emergency bed/bay:
+
+```text
+start emergency bed count
+```
+
+When patient leaves emergency bed/bay:
+
+```text
+end emergency bed count
+```
+
+Billing should calculate based on emergency bed occupancy days or configured billing unit.
+
+Supported billing units:
+
+```text
+PER_DAY
+PER_HOUR
+PER_SHIFT
+FLAT
+```
+
+For now, implement per-day if that is the existing admission pattern.
+
+Emergency bed billing must use:
+
+```text
+BillingService
+visit invoice
+insurance pricing rules
+cash and carry fallback
+source_type/source_id
+```
+
+Do not create a separate emergency invoice.
+
+Recommended table if missing:
+
+```text
+emergency_bed_charges
+- id
+- emergency_case_id
+- visit_id
+- patient_id
+- bed_id nullable
+- emergency_bay_id nullable
+- ward_id nullable
+- started_at
+- ended_at nullable
+- billing_unit
+- quantity
+- service_id nullable
+- invoice_item_id nullable
+- status
+- created_by
+- ended_by nullable
+- created_at
+- updated_at
+```
+
+Statuses:
+
+```text
+ACTIVE
+BILLED
+ENDED
+CANCELLED
+```
+
+If existing bed assignment table can handle charges, extend it instead.
+
+---
+
+# 12. Emergency Consumables Billed Per Day
+
+Emergency consumables or emergency daily care consumable packages should be billable per day like admission if configured.
+
+Examples:
+
+```text
+Emergency observation consumables
+Emergency nursing care consumables
+Emergency bed consumable package
+```
+
+Important distinction:
+
+## Direct consumable usage
+
+Example:
+
+```text
+1 cannula used
+2 syringes used
+```
+
+This should be billed/stock-deducted immediately based on actual usage.
+
+## Daily emergency consumable charge
+
+Example:
+
+```text
+Emergency care consumables package per day
+```
+
+This should be billed per day while patient occupies emergency bed/observation.
+
+Implement both if needed, but do not duplicate billing.
+
+Use existing BillingService and Product/Stock system.
+
+Emergency daily consumables should stop when emergency bed count stops.
+
+---
+
+# 13. Disposing Emergency Patient to Admission
+
+When emergency disposition is ADMITTED:
+
+The system must transition occupancy and daily billing correctly.
+
+Flow:
+
+```text
+Emergency case active
+↓
+Emergency bed/bay assigned
+↓
+Emergency bed count active
+↓
+Emergency daily consumables active
+↓
+Disposition = ADMITTED
+↓
+End emergency bed count
+↓
+End emergency daily consumable count
+↓
+Create/start admission
+↓
+Assign admission bed
+↓
+Start admission bed count
+↓
+Start admission daily consumables if configured
+↓
+Visit status = ADMITTED
+```
+
+Important:
+
+* Do not continue emergency bed billing after admission starts.
+* Do not continue emergency consumable daily billing after admission starts.
+* Do not start admission bed count before emergency bed count ends unless overlap is intentionally allowed.
+* Preserve emergency timeline.
+* Preserve same visit/invoice.
+* Do not create duplicate visit unless project explicitly requires it.
+* Admission should continue the same patient journey.
+
+---
+
+# 14. Emergency Bed Count End Rules
+
+Emergency bed count should end when:
+
+```text
+Emergency case disposed to admission
+Emergency case discharged
+Emergency case transferred to OPD
+Emergency case transferred to theatre if emergency bed released
+Emergency case referred out
+Emergency case marked death/DOA
+Emergency bed manually released
+```
+
+When ending emergency bed count:
+
+* set ended_at
+* calculate quantity/day count
+* finalize invoice item if needed
+* release bed/bay status to AVAILABLE or CLEANING
+* log action
+
+---
+
+# 15. Admission Bed Count Start Rules
+
+When emergency disposes to admission:
+
+* use existing admission creation workflow
+* assign admission ward/bed
+* create admission bed assignment
+* start admission bed count
+* start daily admission billing if existing system supports it
+* do not duplicate emergency bed charge
+
+If no admission bed is assigned immediately:
+
+* admission can be created as waiting bed
+* emergency bed may remain active until physical transfer
+* system must clearly show patient still occupying emergency bed
+* emergency bed billing continues until actual release
+
+This is important.
+
+Add two possible workflows:
+
+## Immediate transfer to admission bed
+
+Emergency bed ends immediately.
+
+Admission bed starts immediately.
+
+## Admission accepted but waiting bed
+
+Emergency disposition may be ADMISSION_PENDING_BED.
+
+Emergency bed remains active until bed transfer is completed.
+
+Use whichever matches existing admission workflow, but support the logic safely.
+
+---
+
+# 16. Visit Preview Must Show Pathway
+
+Visit Preview must now show the real patient parcours.
+
+Example:
+
+```text
+08:00 Visit created
+08:05 Triage completed
+08:10 Consultation started
+08:25 Investigation requested: FBC, Malaria RDT
+08:50 Lab result verified
+09:00 Consultation continued
+09:15 Prescription created
+09:20 Pharmacy billed selected drugs
+09:35 Pharmacy dispensed drugs
+09:45 Visit completed
+```
+
+For Emergency to Admission:
+
+```text
+10:00 Emergency case created
+10:05 RED triage calculated
+10:08 Emergency bed assigned: Resus Bay 1
+10:15 Emergency medication administered
+10:40 Emergency investigation requested
+11:30 Decision: Admit patient
+11:45 Emergency bed count ended
+11:50 Admission created
+12:00 Admission bed assigned
+12:00 Admission bed count started
+```
+
+This is more accurate than changing visit.status to LAB/PHARMACY.
+
+---
+
+# 17. Billing Integration
+
+All emergency/admission bed and consumable charges must use the existing BillingService.
+
+Rules:
 
 ```text
 One visit = one invoice.
+Emergency bed charge goes to visit invoice.
+Emergency consumable charge goes to visit invoice.
+Admission bed charge goes to visit invoice.
+Admission consumable charge goes to visit invoice.
+Insurance pricing applies.
+Cash and Carry fallback applies.
+Prevent duplicate charges using source_type/source_id.
 ```
 
-Items are added from:
-
-* visit services
-* emergency services
-* investigations
-* pharmacy
-* procedures/theatre
-* consumables
-* admission/ward charges
-
-Explain invoice item logic:
-
-* cash price
-* insurance price
-* selected price
-* patient payable
-* paid amount
-* balance
-* discount entered manually by user
-
-Explain payments can cover invoice lines partially or fully.
-
----
-
-# 24. Notifications Section
-
-Add Notifications section.
-
-Explain notifications are used for:
-
-* emergency alerts
-* medication due/overdue
-* clinical tasks
-* investigation results
-* procedure/theatre updates
-* stock alerts
-* claims
-* patient merge requests
-* billing/payment alerts
-
-Explain notification UI:
-
-* bell icon
-* unread count
-* notification list
-* mark as read
-* action links
-
-Explain users only receive notifications relevant to their role/department/assignment.
-
----
-
-# 25. Logs / Audit Trail Section
-
-Add Logs section.
-
-Explain logs track:
-
-* who did what
-* when it happened
-* which record was affected
-* old and new values
-* reason for correction/override
-* module/source
-
-Explain logs exist for:
-
-* clinical actions
-* financial actions
-* stock actions
-* emergency
-* admission
-* MAR
-* theatre
-* patient merge
-* security/authentication
-* user/permission changes
-
-Explain only authorized users can view logs.
-
----
-
-# 26. Reports Section
-
-Update Reports section to include new reports:
-
-Emergency reports:
-
-* attendance
-* triage category
-* waiting time
-* disposition
-* mortality
-* emergency medication
-
-MAR reports:
-
-* medication administration
-* overdue medication
-* missed dose
-* nurse administration
-
-Theatre reports:
-
-* room utilization
-* procedures by surgeon
-* cancelled/postponed cases
-* consumables usage
-* anaesthesia report
-
-Stock reports:
-
-* stock balance matrix
-* low/out stock
-* department stock
-* movement history
-* requisitions/transfers
-
-Claims reports:
-
-* submitted claims
-* rejected claims
-* paid claims
-* NHIA/NHIS claims
-
-Logs/notification reports if implemented.
-
----
-
-# 27. Screenshots
-
-Do not generate fake screenshots.
-
-If screenshots are outdated, add a note:
+Source examples:
 
 ```text
-Screenshot update required: this section has changed after the latest workflow redesign.
+source_type = emergency_bed_charge
+source_id = emergency_bed_charge.id
+
+source_type = emergency_daily_consumable_charge
+source_id = charge.id
+
+source_type = admission_bed_charge
+source_id = admission_bed_charge.id
 ```
 
-If screenshot placeholders exist, mark them clearly.
-
-If the project has a screenshot capture script, update references but do not claim screenshots were regenerated unless actually done.
+Do not create separate emergency/admission invoice.
 
 ---
 
-# 28. Style Requirements
+# 18. Services to Create or Update
 
-The user manual should be:
+Create/update services as needed:
 
-* clear
-* practical
-* user-focused
-* not too technical
-* organized by module
-* step-by-step where useful
-* consistent in headings
-* easy for hospital staff to follow
+```text
+VisitStatusService
+VisitPathwayService
+VisitGuardService
+OutpatientSessionAutoCloseService
+EmergencySessionService
+EmergencyBedBillingService
+EmergencyConsumableBillingService
+EmergencyDispositionService
+AdmissionBedBillingService
+AdmissionTransferService
+BillingService
+VisitPreviewService
+ActivityLogService
+NotificationService
+```
 
-Use tables where helpful for statuses and roles.
+Do not duplicate existing services if already available.
 
-Use warnings/notes for important rules.
+---
+
+# 19. VisitGuardService
+
+Create or update:
+
+```text
+VisitGuardService
+```
+
+Responsibilities:
+
+```text
+prevent OPD visit creation while active admission exists
+prevent new records under merged patient
+validate visit status transitions
+validate outpatient session locking rules
+```
+
+Suggested method:
+
+```php
+public function assertCanCreateVisit(Patient $patient, ?User $user = null): void
+```
+
+This should check:
+
+* patient is not merged
+* patient is not actively admitted
+* other business rules
+
+---
+
+# 20. VisitStatusService
+
+Create/update service to centralize status transitions.
+
+Responsibilities:
+
+```text
+set visit waiting triage
+set visit triage
+set visit waiting consultation
+set visit consulting
+set visit emergency
+set visit admitted
+set visit completed
+set visit cancelled
+```
+
+Do not allow controllers to randomly set visit.status to laboratory/pharmacy/billing.
+
+Deprecate or remove usage of old statuses.
+
+---
+
+# 21. VisitPathwayService
+
+Create/update service to record patient parcours.
+
+Responsibilities:
+
+```text
+record pathway event
+record department movement
+record request creation
+record completion
+build pathway timeline for Visit Preview
+```
+
+Example method:
+
+```php
+record(Visit $visit, string $eventType, array $data = []): VisitPathwayEvent
+```
+
+Use this whenever:
+
+* investigation requested
+* pharmacy billed/dispensed
+* procedure requested/completed
+* emergency started/disposed
+* admission started/discharged
+* billing item added
+* payment received
+
+---
+
+# 22. Scheduler Command
+
+Create scheduled command:
+
+```bash
+php artisan outpatient-sessions:auto-complete
+```
+
+or use existing naming convention.
+
+The command should:
+
+* find outpatient sessions from previous days still active
+* complete/lock them
+* update visit status if appropriate
+* log all changes
+* optionally notify responsible staff/admin
+
+Add scheduler entry.
+
+Document in code/report that server cron must run Laravel scheduler.
+
+---
+
+# 23. UI Changes
+
+## Visit Creation UI
+
+If patient has active admission, show blocking warning.
 
 Example:
 
 ```text
-Important:
-Billing a drug does not reduce stock. Stock is reduced only when the drug is dispensed.
+This patient is currently admitted in Ward A / Bed 3 since 26 May 2026.
+You cannot create a new OPD visit until the patient is discharged.
+```
+
+Show link:
+
+```text
+Open Active Admission
+```
+
+If user has override permission, show override option with reason.
+
+## Emergency Creation UI
+
+When creating emergency case from visit, ensure UI shows:
+
+```text
+Emergency Session will be created for this visit.
+```
+
+After creation, redirect to Emergency Case page and show session.
+
+## Consultation Page
+
+Show Emergency Session in session list.
+
+## Visit Preview
+
+Show pathway timeline/parcours.
+
+## Emergency Disposition UI
+
+When disposing to Admission, show bed count transition:
+
+```text
+Emergency bed billing will end.
+Admission bed billing will start when admission bed is assigned.
+```
+
+If admission bed not assigned:
+
+```text
+Patient remains in Emergency bed until admission bed transfer is completed.
+Emergency bed billing continues.
 ```
 
 ---
 
-# 29. Do Not Include Developer-Only Details
+# 24. Data / Migration Updates
 
-Avoid too much code-level explanation.
+Add fields where missing.
 
-Do not include migrations, model names, route names, service class names, unless the existing manual already has a technical appendix.
+Possible visit fields:
 
-This is a user manual, not an implementation prompt.
+```text
+status
+completed_at
+completed_by
+locked_at
+locked_by
+lock_reason
+```
+
+Possible session fields:
+
+```text
+session_type
+emergency_case_id nullable
+locked_at
+locked_by
+lock_reason
+completed_at
+completed_by
+```
+
+Possible pathway table:
+
+```text
+visit_pathway_events
+```
+
+Possible emergency/admission charge tracking tables if missing:
+
+```text
+emergency_bed_charges
+emergency_daily_consumable_charges
+admission_bed_charges
+admission_daily_consumable_charges
+```
+
+Use existing tables if similar structures already exist.
 
 ---
 
-# 30. Deliverables
+# 25. Validation Rules
+
+Visit creation:
+
+```text
+patient_id required
+patient must not be merged
+patient must not have active admission unless override permission and reason
+```
+
+Emergency case creation from visit:
+
+```text
+visit_id required
+patient_id required
+emergency case must create/link emergency session
+```
+
+Visit status transition:
+
+```text
+cannot set visit.status to LABORATORY/PHARMACY/BILLING
+cannot complete visit with active admission/emergency unless allowed
+cannot admit without admission workflow
+```
+
+Outpatient auto-lock:
+
+```text
+only outpatient sessions
+not active emergency
+not active admission
+session date before today
+```
+
+Emergency-to-admission disposition:
+
+```text
+emergency_case_id required
+admission creation required
+emergency bed count end required when bed released
+admission bed count start required when admission bed assigned
+```
+
+---
+
+# 26. Tests Required
+
+Add or update tests.
+
+## Visit Creation Guard
+
+1. Cannot create OPD visit when patient has active admission.
+2. Can create OPD visit after admission is discharged.
+3. Override requires permission.
+4. Override requires reason.
+5. Attempt is logged.
+
+## Emergency Session
+
+6. Creating emergency case from visit creates emergency session.
+7. Emergency session links to visit/patient/emergency case.
+8. Emergency session appears on Consultation page.
+9. Emergency records link to emergency session.
+10. Emergency session appears in Visit Preview.
+
+## Visit Status Flow
+
+11. Visit status is not set to LABORATORY.
+12. Visit status is not set to PHARMACY.
+13. Visit status is not set to BILLING.
+14. Patient can go to investigation while visit remains CONSULTING.
+15. Patient can go to pharmacy while visit remains CONSULTING.
+16. Patient can go to procedure while visit remains CONSULTING.
+17. Direct investigation route records pathway event.
+18. Direct pharmacy route records pathway event.
+19. Direct procedure route records pathway event.
+
+## Pathway / Preview
+
+20. Investigation request creates pathway event.
+21. Pharmacy billing creates pathway event.
+22. Pharmacy dispensing creates pathway event.
+23. Procedure request creates pathway event.
+24. Emergency disposition creates pathway event.
+25. Visit Preview shows chronological pathway.
+
+## Outpatient Auto-Lock
+
+26. Previous-day outpatient sessions auto-complete.
+27. Active admission sessions are not auto-closed.
+28. Active emergency cases are not auto-closed.
+29. Locked outpatient sessions cannot be edited without correction permission.
+30. Auto-lock action is logged.
+
+## Emergency Bed / Consumable Billing
+
+31. Emergency bed assignment starts bed count.
+32. Emergency bed release ends bed count.
+33. Emergency bed charge is billed per day.
+34. Emergency daily consumable charge is billed per day if configured.
+35. Duplicate emergency bed charges are prevented.
+36. Billing uses visit invoice.
+
+## Emergency to Admission
+
+37. Disposing to admission ends emergency bed count when bed released.
+38. Disposing to admission starts admission bed count when admission bed assigned.
+39. If admission bed is not assigned, emergency bed remains active.
+40. Emergency consumable daily billing ends when emergency bed/care ends.
+41. Admission daily billing starts when admission bed/care starts.
+42. Same visit/invoice is preserved.
+
+---
+
+# 27. Reports / Documentation
+
+Create or update an implementation report:
+
+```text
+docs/VISIT_STATUS_AND_PATIENT_PATHWAY_REPORT.md
+```
+
+Include:
+
+* previous problems found
+* old statuses removed/deprecated
+* new visit status flow
+* pathway/timeline mechanism
+* emergency session creation fix
+* admission active visit guard
+* outpatient auto-lock logic
+* emergency-to-admission bed billing transition
+* files modified
+* remaining TODOs
+
+---
+
+# 28. Deliverables
 
 Provide:
 
-1. Updated user manual file.
-2. Any updated linked documentation files if needed.
-3. A short summary of sections updated.
-4. A list of screenshots that need regeneration.
-5. A list of assumptions or unclear areas.
-6. Files modified.
+1. Gap analysis of current Visit Status Flow.
+2. Guard preventing new OPD visit during active admission.
+3. Emergency case creation now creates Emergency Session.
+4. Emergency Session appears on Consultation page.
+5. Visit status flow cleaned.
+6. Laboratory/Pharmacy/Billing removed from main visit statuses.
+7. Patient pathway/parcours tracking implemented.
+8. Visit Preview updated to show pathway.
+9. Outpatient sessions auto-complete/lock after midnight.
+10. Emergency bed billing per day.
+11. Emergency consumables per day where configured.
+12. Emergency-to-admission transition handles bed count correctly.
+13. Admission bed count starts correctly.
+14. Tests or verification notes.
+15. Documentation/report file.
+16. Files modified.
+17. Remaining TODOs.
 
 ---
 
-# 31. Important Rules
+# 29. Important Rules
 
-Do not remove existing useful documentation.
+Do not create a new OPD visit for actively admitted patients.
 
-Do not invent screenshots.
+Do not create emergency case without emergency session.
 
-Do not claim features are complete if the manual is only describing planned workflow. If a feature is not fully implemented, mark it as pending or planned based on current code.
+Do not isolate Emergency from consultation/session history.
 
-Do not create duplicate manuals unless necessary.
+Do not use LABORATORY, PHARMACY, BILLING as main visit statuses.
 
-Do not write developer implementation details inside the user manual.
+Do not change visit status away from CONSULTING just because patient goes to investigation/pharmacy/procedure.
 
-Do not contradict the updated UHMS workflow.
+Do not auto-close active admission or active emergency cases.
 
-Now inspect the current manual and update it to reflect all recent UHMS workflow changes.
+Do not continue emergency bed billing after patient is physically transferred to admission bed.
+
+Do not start admission bed billing before admission bed assignment unless configured.
+
+Do not duplicate emergency/admission bed charges.
+
+Do not create separate invoices.
+
+Do not break existing consultation, emergency, admission, billing, pharmacy, investigation, procedure, stock, MAR, visit preview, or claims workflows.
+
+Now inspect the current UHMS implementation and correct the Visit Status Flow, Emergency Session creation, active admission visit guard, outpatient auto-lock, and emergency-to-admission billing/bed transition logic as described above.
 
 ```
 ```

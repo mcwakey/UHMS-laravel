@@ -448,9 +448,12 @@
 {{-- CONSULTATION GATING — Start Consultation banner --}}
 {{-- ============================================================ --}}
 @php
-    $canEdit = $visit->status === \App\Enums\VisitStatus::CONSULTING
+    $canCorrectLocked = auth()->user()?->can('consultation.entries.correct_completed') || auth()->user()?->can('visits.reopen_locked_session');
+    $isSelectedRouteLocked = $selectedRoute && $selectedRoute->locked_at;
+    $canEdit = in_array($visit->status, [\App\Enums\VisitStatus::CONSULTING, \App\Enums\VisitStatus::EMERGENCY], true)
         && $selectedRoute
-        && $selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE;
+        && $selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE
+        && (! $isSelectedRouteLocked || $canCorrectLocked);
     $needsStart = $selectedRoute
         && in_array($selectedRoute->status, [
             \App\Models\VisitConsultationRoute::STATUS_PENDING,
@@ -475,6 +478,11 @@
 @elseif($canEdit)
 <div class="alert alert-success py-2 mb-3 small d-flex align-items-center">
     <i class="ti ti-pencil me-2"></i><strong>Consultation in progress</strong>&nbsp;— you may now enter clinical information.
+</div>
+@endif
+@if($isSelectedRouteLocked && ! $canCorrectLocked)
+<div class="alert alert-secondary py-2 mb-3 small d-flex align-items-center">
+    <i class="ti ti-lock me-2"></i><strong>Session locked</strong>&nbsp;- this outpatient session is read-only.
 </div>
 @endif
 

@@ -58,6 +58,28 @@
                             <i class="ti ti-skull fs-18 flex-shrink-0"></i>
                             <span><strong>This patient is marked as deceased and cannot start a new visit.</strong></span>
                         </div>
+                        @php($selectedActiveAdmission = $selectedPatient?->activeAdmission)
+                        <div id="activeAdmissionWarning" class="alert alert-warning mb-2 {{ $selectedActiveAdmission ? '' : 'd-none' }}">
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="ti ti-bed fs-18 flex-shrink-0"></i>
+                                <div>
+                                    <div class="fw-semibold">This patient is currently admitted.</div>
+                                    <div class="small" id="activeAdmissionText">
+                                        @if($selectedActiveAdmission)
+                                            Admission {{ $selectedActiveAdmission->admission_number }}{{ $selectedActiveAdmission->bed ? ' - '.$selectedActiveAdmission->bed->ward?->name.' / Bed '.$selectedActiveAdmission->bed->bed_number : '' }}.
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                            @if($canOverrideActiveAdmission)
+                                <div class="mt-2">
+                                    <label class="form-label small mb-1" for="admissionOverrideReason">Override reason</label>
+                                    <textarea class="form-control" id="admissionOverrideReason" name="admission_override_reason" rows="2" placeholder="Required when creating an OPD visit while admission is active">{{ old('admission_override_reason') }}</textarea>
+                                </div>
+                            @else
+                                <div class="small mt-2">Complete the admission before creating a new OPD visit.</div>
+                            @endif
+                        </div>
                         <div class="alert alert-light border d-flex align-items-center gap-3 mb-0">
                             <div class="avatar avatar-lg bg-primary rounded-circle text-white d-flex align-items-center justify-content-center">
                                 <span id="patientInitial">{{ $selectedPatient ? strtoupper(substr($selectedPatient->first_name, 0, 1)) : '' }}</span>
@@ -700,6 +722,25 @@ document.addEventListener('DOMContentLoaded', function() {
             deceasedWarning.classList.add('d-none');
         }
 
+        const activeAdmissionWarning = document.getElementById('activeAdmissionWarning');
+        const activeAdmissionText = document.getElementById('activeAdmissionText');
+        if (patient.active_admission) {
+            const admission = patient.active_admission;
+            let text = 'Admission ' + admission.admission_number;
+            if (admission.ward || admission.bed) {
+                text += ' - ' + [admission.ward, admission.bed ? 'Bed ' + admission.bed : null].filter(Boolean).join(' / ');
+            }
+            activeAdmissionText.textContent = text + '.';
+            activeAdmissionWarning.classList.remove('d-none');
+        } else {
+            activeAdmissionText.textContent = '';
+            activeAdmissionWarning.classList.add('d-none');
+            const overrideReason = document.getElementById('admissionOverrideReason');
+            if (overrideReason) {
+                overrideReason.value = '';
+            }
+        }
+
         patientInfo.classList.remove('d-none');
         resultsDiv.classList.add('d-none');
 
@@ -710,6 +751,11 @@ document.addEventListener('DOMContentLoaded', function() {
         patientIdInput.value = '';
         searchInput.value = '';
         patientInfo.classList.add('d-none');
+        document.getElementById('activeAdmissionWarning').classList.add('d-none');
+        const overrideReason = document.getElementById('admissionOverrideReason');
+        if (overrideReason) {
+            overrideReason.value = '';
+        }
         insuranceCard.classList.add('d-none');
         document.getElementById('visitInsuranceId').value = '';
         patientInsurances = [];

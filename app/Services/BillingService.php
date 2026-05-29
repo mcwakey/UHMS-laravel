@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Enums\InvoiceStatus;
-use App\Enums\VisitStatus;use App\Models\Invoice;
+use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
 use App\Models\Product;
@@ -58,6 +58,7 @@ class BillingService
         int $quantity = 1,
         ?int $departmentId = null,
         ?string $description = null,
+        ?float $unitPriceOverride = null,
     ): InvoiceItem {
         if ($quantity < 1) {
             throw new \RuntimeException('Quantity must be at least 1.');
@@ -69,7 +70,7 @@ class BillingService
             throw new \RuntimeException("Service '{$service->name}' is marked non-billable and cannot be added to an invoice.");
         }
 
-        return DB::transaction(function () use ($visit, $service, $sourceType, $sourceId, $quantity, $departmentId, $description) {
+        return DB::transaction(function () use ($visit, $service, $sourceType, $sourceId, $quantity, $departmentId, $description, $unitPriceOverride) {
             $invoice = $this->invoiceService->getOrCreateVisitInvoice($visit);
 
             // Duplicate guard #1: same source_type+source_id may only appear once per invoice.
@@ -114,6 +115,17 @@ class BillingService
             $insType = $snap['insurance_type'] ?? null;
             $pricingSrc = $snap['pricing_source'] ?? 'cash_price';
             $isInsurance = $payerType === 'insurance';
+
+            if ($unitPriceOverride !== null) {
+                $cashPrice = $unitPriceOverride;
+                $selectedPrice = $unitPriceOverride;
+                $insurancePrice = null;
+                $payerType = 'cash';
+                $providerId = null;
+                $insType = null;
+                $pricingSrc = 'manual_override';
+                $isInsurance = false;
+            }
 
             // Canonical formulas (per UHMS billing rules).
             $insurancePrice = $isInsurance ? $selectedPrice : null;
@@ -503,8 +515,7 @@ class BillingService
                 );
             }
 
-            // Transition visit to billing via the workflow engine
-            if ($visit && in_array(VisitStatus::BILLING, $visit->status->allowedTransitions())) {
+            if ($visit) {
                 $this->visitWorkflowService->moveToBilling($visit);
             }
 

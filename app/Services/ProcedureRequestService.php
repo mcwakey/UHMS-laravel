@@ -72,6 +72,14 @@ class ProcedureRequestService
 
             $this->workflow->logStatusChange($request, null, ProcedureStatus::REQUESTED, $doctor, 'Procedure requested by doctor.');
 
+            app(VisitPathwayService::class)->record($visit, 'PROCEDURE_REQUESTED', [
+                'source' => $request,
+                'department_id' => $department->id,
+                'title' => 'Procedure requested',
+                'description' => $service->name,
+                'created_by' => $doctor->id,
+            ]);
+
             return $request->fresh(['service', 'department', 'requestingDoctor']);
         });
     }

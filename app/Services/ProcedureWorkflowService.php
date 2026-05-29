@@ -37,6 +37,16 @@ class ProcedureWorkflowService
 
             $this->logStatusChange($request, ProcedureStatus::REQUESTED, ProcedureStatus::ACCEPTED, $user, $notes);
 
+            if ($request->visit) {
+                app(VisitPathwayService::class)->record($request->visit, 'PROCEDURE_ACCEPTED', [
+                    'source' => $request,
+                    'department_id' => $request->department_id,
+                    'title' => 'Procedure accepted',
+                    'description' => $notes,
+                    'created_by' => $user->id,
+                ]);
+            }
+
             return $request->fresh();
         });
     }
@@ -58,6 +68,16 @@ class ProcedureWorkflowService
             ])->save();
 
             $this->logStatusChange($request, $from, ProcedureStatus::REJECTED, $user, $reason);
+
+            if ($request->visit) {
+                app(VisitPathwayService::class)->record($request->visit, 'PROCEDURE_REJECTED', [
+                    'source' => $request,
+                    'department_id' => $request->department_id,
+                    'title' => 'Procedure rejected',
+                    'description' => $reason,
+                    'created_by' => $user->id,
+                ]);
+            }
 
             return $request->fresh();
         });
@@ -107,6 +127,14 @@ class ProcedureWorkflowService
             ])->save();
 
             $this->logStatusChange($request, $from, ProcedureStatus::BILLED, $user, 'Procedure billed on visit invoice.');
+
+            app(VisitPathwayService::class)->record($visit, 'PROCEDURE_BILLED', [
+                'source' => $request,
+                'department_id' => $request->department_id,
+                'title' => 'Procedure billed',
+                'description' => $service->name,
+                'created_by' => $user->id,
+            ]);
 
             return $request->fresh(['billingItem']);
         });
@@ -186,6 +214,15 @@ class ProcedureWorkflowService
             $this->logStatusChange($request, $from, ProcedureStatus::COMPLETED, $user, 'Procedure completed.');
 
             $fresh = $request->fresh();
+            if ($fresh->visit) {
+                app(VisitPathwayService::class)->record($fresh->visit, 'PROCEDURE_COMPLETED', [
+                    'source' => $fresh,
+                    'department_id' => $fresh->department_id,
+                    'title' => 'Procedure completed',
+                    'description' => $fresh->service?->name,
+                    'created_by' => $user->id,
+                ]);
+            }
             $this->notifyProcedureCompleted($fresh, $user);
             $this->logger->log(LogModule::PROCEDURE, 'COMPLETED', [
                 'patient_id' => $fresh->patient_id,

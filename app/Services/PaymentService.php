@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\InvoiceStatus;
 use App\Enums\LogModule;
-use App\Enums\VisitStatus;
 use App\Events\PaymentRecorded;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
@@ -118,7 +117,7 @@ class PaymentService
             // Complete visit if fully paid.
             if (($invoice->status?->value ?? $invoice->status) === InvoiceStatus::PAID->value) {
                 $visit = $invoice->visit;
-                if ($visit && $visit->status === VisitStatus::BILLING) {
+                if ($visit) {
                     $this->visitWorkflowService->completeAfterPayment($visit);
                 }
             }

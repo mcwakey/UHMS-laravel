@@ -37,6 +37,15 @@
 
 <form method="POST" action="{{ route('admin.emergency.cases.store') }}">
     @csrf
+    @if(!empty($existingVisit))
+        <input type="hidden" name="visit_id" value="{{ $existingVisit->id }}">
+        <div class="alert alert-info d-flex align-items-start gap-2">
+            <div>
+                <div class="fw-semibold">Emergency Session will be created for this visit.</div>
+                <div class="small">{{ $existingVisit->visit_number }} - {{ $existingVisit->patient?->full_name }}. Billing remains on the same visit invoice.</div>
+            </div>
+        </div>
+    @endif
     <div class="row g-3">
         <div class="col-xl-7">
             <div class="card h-100">
@@ -46,14 +55,17 @@
                 <div class="card-body">
                     <div class="mb-3">
                         <label class="form-label">Existing Patient</label>
-                        <select class="form-select" name="patient_id">
+                        <select class="form-select" name="patient_id" @disabled(!empty($existingVisit))>
                             <option value="">Create temporary emergency patient</option>
                             @foreach($patients as $patient)
-                                <option value="{{ $patient->id }}" @selected(old('patient_id') == $patient->id)>
+                                <option value="{{ $patient->id }}" @selected(old('patient_id', $existingVisit?->patient_id ?? null) == $patient->id)>
                                     {{ $patient->full_name }} - {{ $patient->patient_number }}{{ $patient->phone ? ' - '.$patient->phone : '' }}
                                 </option>
                             @endforeach
                         </select>
+                        @if(!empty($existingVisit))
+                            <input type="hidden" name="patient_id" value="{{ $existingVisit->patient_id }}">
+                        @endif
                         <small class="text-muted">Leave blank when the patient is unknown or cannot be identified yet.</small>
                     </div>
 

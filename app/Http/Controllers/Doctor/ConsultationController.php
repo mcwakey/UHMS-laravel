@@ -199,6 +199,7 @@ class ConsultationController extends Controller
             ->whereHas('visit', function ($visitQuery) {
                 $visitQuery->whereIn('status', [
                     VisitStatus::WAITING_CONSULTATION->value,
+                    VisitStatus::ACTIVE->value,
                     VisitStatus::CONSULTING->value,
                     VisitStatus::EMERGENCY->value,
                 ]);

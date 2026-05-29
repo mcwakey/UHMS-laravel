@@ -90,6 +90,16 @@ class InvestigationRequestService
                 'accepted_by' => $user->id,
             ]);
 
+            if ($labRequest->visit) {
+                app(VisitPathwayService::class)->record($labRequest->visit, 'INVESTIGATION_ACCEPTED', [
+                    'source' => $labRequest,
+                    'department_id' => $labRequest->target_department_id ?? $labRequest->department_id,
+                    'title' => 'Investigation accepted',
+                    'description' => count($itemIds) . ' item(s) accepted for ' . $labRequest->request_number,
+                    'created_by' => $user->id,
+                ]);
+            }
+
             // Update aggregate request status: any accepted → processing.
             $labRequest->refresh()->loadMissing('items');
             $itemStatuses = $labRequest->items->pluck('status');
@@ -121,6 +131,15 @@ class InvestigationRequestService
             ->whereIn('id', $itemIds)
             ->where('status', 'pending')
             ->update(['status' => 'rejected']);
+
+        if ($labRequest->visit) {
+            app(VisitPathwayService::class)->record($labRequest->visit, 'INVESTIGATION_REJECTED', [
+                'source' => $labRequest,
+                'department_id' => $labRequest->target_department_id ?? $labRequest->department_id,
+                'title' => 'Investigation rejected',
+                'description' => $reason,
+            ]);
+        }
 
         return $labRequest->fresh();
     }

@@ -55,6 +55,11 @@ class Visit extends Model
         'rescheduled_reason',
         'consultation_mode',
         'meeting_link',
+        'completed_at',
+        'completed_by',
+        'locked_at',
+        'locked_by',
+        'lock_reason',
     ];
 
     protected function casts(): array
@@ -68,6 +73,8 @@ class Visit extends Model
             'consultation_mode' => ConsultationMode::class,
             'checked_in_at' => 'datetime',
             'checked_out_at' => 'datetime',
+            'completed_at' => 'datetime',
+            'locked_at' => 'datetime',
             'rescheduled_at' => 'datetime',
         ];
     }
@@ -156,6 +163,11 @@ class Visit extends Model
     public function latestInvoice()
     {
         return $this->hasOne(Invoice::class)->latestOfMany();
+    }
+
+    public function pathwayEvents()
+    {
+        return $this->hasMany(VisitPathwayEvent::class)->orderBy('started_at')->orderBy('id');
     }
 
     public function admission()
@@ -386,6 +398,10 @@ class Visit extends Model
 
     public function transitionTo(VisitStatus $target, ?string $notes = null): void
     {
+        if ($target->isDepartmentMovementStatus()) {
+            throw new \InvalidArgumentException("{$target->label()} is tracked through pathway events, not visit.status.");
+        }
+
         $from = $this->status;
 
         $this->update(['status' => $target]);
@@ -403,7 +419,7 @@ class Visit extends Model
         }
 
         if (in_array($target, [VisitStatus::COMPLETED, VisitStatus::CANCELLED])) {
-            $this->update(['checked_out_at' => now()]);
+            $this->update(['checked_out_at' => now(), 'completed_at' => $target === VisitStatus::COMPLETED ? now() : $this->completed_at]);
         }
     }
 

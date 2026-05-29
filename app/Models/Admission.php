@@ -126,7 +126,7 @@ class Admission extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('status', AdmissionStatus::ADMITTED);
+        return $query->whereIn('status', [AdmissionStatus::ADMITTED, AdmissionStatus::ON_LEAVE]);
     }
 
     public function scopeByStatus($query, AdmissionStatus $status)

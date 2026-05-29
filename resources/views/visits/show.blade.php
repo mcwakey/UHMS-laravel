@@ -33,6 +33,13 @@
             <i class="ti ti-plus me-1"></i>New Visit for Patient
         </a>
         @endcan
+        @can('emergency.case.create')
+        @if(!in_array($visit->status, [\App\Enums\VisitStatus::COMPLETED, \App\Enums\VisitStatus::CANCELLED, \App\Enums\VisitStatus::NO_SHOW], true))
+        <a href="{{ route('admin.emergency.cases.create', ['visit_id' => $visit->id]) }}" class="btn btn-outline-danger btn-md">
+            <i class="ti ti-ambulance me-1"></i>Create Emergency Case
+        </a>
+        @endif
+        @endcan
         @can('invoices.create')
         <a href="{{ route('admin.billing.invoices.create', ['visit_id' => $visit->id]) }}" class="btn btn-success btn-md">
             <i class="ti ti-file-invoice me-1"></i>Bill Visit
@@ -65,10 +72,10 @@
                             \App\Enums\VisitStatus::REGISTERED,
                             \App\Enums\VisitStatus::WAITING,
                             \App\Enums\VisitStatus::TRIAGE,
+                            \App\Enums\VisitStatus::ACTIVE,
                             \App\Enums\VisitStatus::CONSULTING,
-                            \App\Enums\VisitStatus::LAB,
-                            \App\Enums\VisitStatus::PHARMACY,
-                            \App\Enums\VisitStatus::BILLING,
+                            \App\Enums\VisitStatus::EMERGENCY,
+                            \App\Enums\VisitStatus::ADMITTED,
                             \App\Enums\VisitStatus::COMPLETED,
                         ];
                         $visitedStatuses = $visit->statusLogs->pluck('to_status')->toArray();
@@ -105,10 +112,10 @@
             // Statuses that can use the department send button (triage or at a service dept)
             $canSendToDept = in_array($visit->status, [
                 \App\Enums\VisitStatus::TRIAGE,
+                \App\Enums\VisitStatus::WAITING_CONSULTATION,
+                \App\Enums\VisitStatus::ACTIVE,
                 \App\Enums\VisitStatus::CONSULTING,
-                \App\Enums\VisitStatus::LAB,
-                \App\Enums\VisitStatus::PHARMACY,
-                \App\Enums\VisitStatus::BILLING,
+                \App\Enums\VisitStatus::EMERGENCY,
             ]);
             $consultationRoutes = $visit->consultationRoutes->sortBy(fn ($route) => match ($route->status) {
                 \App\Models\VisitConsultationRoute::STATUS_ACTIVE => 0,

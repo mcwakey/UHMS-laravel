@@ -86,7 +86,7 @@
                     <label class="form-label">Status</label>
                     <select name="status" class="form-select">
                         <option value="">All Statuses</option>
-                        @foreach(\App\Enums\VisitStatus::cases() as $status)
+                        @foreach(collect(\App\Enums\VisitStatus::cases())->reject(fn($status) => $status->isDepartmentMovementStatus()) as $status)
                             <option value="{{ $status->value }}" {{ ($filters['status'] ?? '') == $status->value ? 'selected' : '' }}>{{ $status->label() }}</option>
                         @endforeach
                     </select>

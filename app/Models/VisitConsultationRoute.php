@@ -68,6 +68,9 @@ class VisitConsultationRoute extends Model
         'cancelled_at',
         'cancelled_by',
         'cancellation_reason',
+        'locked_at',
+        'locked_by',
+        'lock_reason',
         'notes',
     ];
 
@@ -77,7 +80,13 @@ class VisitConsultationRoute extends Model
         'paused_at' => 'datetime',
         'completed_at' => 'datetime',
         'cancelled_at' => 'datetime',
+        'locked_at' => 'datetime',
     ];
+
+    public function isLocked(): bool
+    {
+        return $this->locked_at !== null;
+    }
 
     public function visit(): BelongsTo
     {

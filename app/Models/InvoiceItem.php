@@ -27,6 +27,16 @@ class InvoiceItem extends Model
 
     public const SOURCE_EMERGENCY_CONSUMABLE = 'emergency_consumable';
 
+    public const SOURCE_EMERGENCY_BED_CHARGE = 'emergency_bed_charge';
+
+    public const SOURCE_EMERGENCY_DAILY_CONSUMABLE_CHARGE = 'emergency_daily_consumable_charge';
+
+    public const SOURCE_ADMISSION_FEE = 'admission_fee';
+
+    public const SOURCE_ADMISSION_BED_CHARGE = 'admission_bed_charge';
+
+    public const SOURCE_ADMISSION_DAILY_CONSUMABLE_CHARGE = 'admission_daily_consumable_charge';
+
     public const SOURCE_INVESTIGATION_CONSUMABLE = 'investigation_consumable';
 
     public const SOURCE_PROCEDURE_CONSUMABLE = 'procedure_consumable';
@@ -41,6 +51,11 @@ class InvoiceItem extends Model
             self::SOURCE_PHARMACY_BILLING_SELECTION,
             self::SOURCE_WARD_CONSUMABLE,
             self::SOURCE_EMERGENCY_CONSUMABLE,
+            self::SOURCE_EMERGENCY_BED_CHARGE,
+            self::SOURCE_EMERGENCY_DAILY_CONSUMABLE_CHARGE,
+            self::SOURCE_ADMISSION_FEE,
+            self::SOURCE_ADMISSION_BED_CHARGE,
+            self::SOURCE_ADMISSION_DAILY_CONSUMABLE_CHARGE,
             self::SOURCE_INVESTIGATION_CONSUMABLE,
             self::SOURCE_PROCEDURE_CONSUMABLE,
         ];

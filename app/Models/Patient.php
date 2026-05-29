@@ -100,6 +100,18 @@ class Patient extends Model
         return $this->hasMany(Visit::class);
     }
 
+    public function admissions()
+    {
+        return $this->hasMany(Admission::class);
+    }
+
+    public function activeAdmission()
+    {
+        return $this->hasOne(Admission::class)
+            ->whereNotIn('status', ['discharged', 'transferred', 'deceased'])
+            ->latestOfMany('admission_date');
+    }
+
     public function emergencyCases()
     {
         return $this->hasMany(EmergencyCase::class);

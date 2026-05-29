@@ -14,6 +14,8 @@ class EmergencyDispositionService
         private EmergencyBayService $bays,
         private EmergencyTimelineService $timeline,
         private EmergencySessionService $sessions,
+        private VisitStatusService $statuses,
+        private VisitPathwayService $pathway,
     ) {}
 
     public function dispose(EmergencyCase $case, array $data, User $user): EmergencyCase
@@ -30,9 +32,20 @@ class EmergencyDispositionService
             ]);
 
             $this->applyVisitDisposition($case->fresh('visit.patient'), $data, $user);
-            $this->bays->release($case->fresh('bay'));
+            if ($disposition !== EmergencyCase::DISPOSITION_ADMITTED) {
+                $this->bays->release($case->fresh('bay'), user: $user);
+            }
             $this->sessions->completeForDisposition($case->fresh(['activeEmergencySession.consultationRoute', 'emergencySessions.consultationRoute']), $user);
             $this->timeline->record($case->fresh(), 'DISPOSITION', 'Emergency case disposed', $disposition, $case, $user);
+
+            $this->pathway->record($case->visit, 'EMERGENCY_DISPOSITION', [
+                'source' => $case,
+                'status' => $disposition,
+                'title' => 'Emergency disposition recorded',
+                'description' => $disposition === EmergencyCase::DISPOSITION_ADMITTED
+                    ? 'Patient accepted for admission; emergency bed billing continues until ward bed assignment.'
+                    : ($data['disposition_notes'] ?? $disposition),
+            ]);
 
             return $case->fresh(['visit', 'patient', 'bay', 'disposedBy']);
         });
@@ -44,28 +57,34 @@ class EmergencyDispositionService
         $disposition = $data['disposition'];
 
         match ($disposition) {
-            EmergencyCase::DISPOSITION_ADMITTED => $visit->update([
-                'status' => VisitStatus::ADMITTING->value,
-                'visit_type' => VisitType::INPATIENT->value,
-            ]),
-            EmergencyCase::DISPOSITION_TRANSFERRED_TO_OPD => $visit->update([
-                'status' => VisitStatus::WAITING_CONSULTATION->value,
-                'visit_type' => VisitType::OUTPATIENT->value,
-            ]),
-            EmergencyCase::DISPOSITION_TRANSFERRED_TO_THEATRE => $visit->update([
-                'status' => VisitStatus::CONSULTING->value,
-            ]),
+            EmergencyCase::DISPOSITION_ADMITTED => $this->markAdmitting($visit),
+            EmergencyCase::DISPOSITION_TRANSFERRED_TO_OPD => $this->markTransferredToOpd($visit),
+            EmergencyCase::DISPOSITION_TRANSFERRED_TO_THEATRE => $this->statuses->setConsulting($visit, 'Transferred to theatre'),
             EmergencyCase::DISPOSITION_DISCHARGED,
             EmergencyCase::DISPOSITION_REFERRED_OUT,
             EmergencyCase::DISPOSITION_LEFT_AGAINST_MEDICAL_ADVICE,
-            EmergencyCase::DISPOSITION_ABSCONDED => $visit->update([
-                'status' => VisitStatus::COMPLETED->value,
-                'checked_out_at' => now(),
-            ]),
+            EmergencyCase::DISPOSITION_ABSCONDED => $this->statuses->setCompleted($visit, 'Emergency case completed'),
             EmergencyCase::DISPOSITION_DIED,
             EmergencyCase::DISPOSITION_DEAD_ON_ARRIVAL => $this->markDeath($case, $data, $user),
             default => null,
         };
+    }
+
+    private function markAdmitting($visit): void
+    {
+        if ($visit->canTransitionTo(VisitStatus::ADMITTING)) {
+            $visit->transitionTo(VisitStatus::ADMITTING, 'Emergency patient accepted for admission');
+        } else {
+            $visit->update(['status' => VisitStatus::ADMITTING->value]);
+        }
+
+        $visit->update(['visit_type' => VisitType::INPATIENT->value]);
+    }
+
+    private function markTransferredToOpd($visit): void
+    {
+        $visit->update(['visit_type' => VisitType::OUTPATIENT->value]);
+        $this->statuses->setWaitingConsultation($visit, 'Transferred from emergency to OPD consultation');
     }
 
     private function markDeath(EmergencyCase $case, array $data, User $user): void
@@ -78,10 +97,7 @@ class EmergencyDispositionService
             'marked_deceased_by' => $user->id,
         ]);
 
-        $case->visit->update([
-            'status' => VisitStatus::COMPLETED->value,
-            'checked_out_at' => now(),
-        ]);
+        $this->statuses->transition($case->visit, VisitStatus::DECEASED, 'Patient died in emergency care');
     }
 
 }

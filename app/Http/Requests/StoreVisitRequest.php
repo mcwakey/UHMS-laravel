@@ -33,6 +33,7 @@ class StoreVisitRequest extends FormRequest
             'verification_reference_code' => ['nullable', 'string', 'max:80'],
             'consultation_mode' => ['nullable', 'string', 'in:in_person,telehealth,virtual'],
             'meeting_link' => ['nullable', 'url', 'max:500'],
+            'admission_override_reason' => ['nullable', 'string', 'max:1000'],
 
             // Visit services
             'services' => ['nullable', 'array'],

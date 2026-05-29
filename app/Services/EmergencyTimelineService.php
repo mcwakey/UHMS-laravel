@@ -18,7 +18,7 @@ class EmergencyTimelineService
         ?Model $source = null,
         ?User $user = null,
     ): EmergencyCaseLog {
-        return EmergencyCaseLog::create([
+        $log = EmergencyCaseLog::create([
             'emergency_case_id' => $case->id,
             'visit_id' => $case->visit_id,
             'patient_id' => $case->patient_id,
@@ -29,5 +29,16 @@ class EmergencyTimelineService
             'source_id' => $source?->getKey(),
             'performed_by' => $user?->id ?? Auth::id(),
         ]);
+
+        if ($case->visit) {
+            app(VisitPathwayService::class)->record($case->visit, 'EMERGENCY_' . $action, [
+                'source' => $source ?? $log,
+                'title' => $title,
+                'description' => $description,
+                'created_by' => $user?->id ?? Auth::id(),
+            ]);
+        }
+
+        return $log;
     }
 }

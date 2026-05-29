@@ -139,6 +139,14 @@ class PharmacyBillingSelectionService
 
             $this->updatePrescriptionStatus($prescription);
 
+            app(VisitPathwayService::class)->record($prescription->visit, 'PHARMACY_BILLED', [
+                'source' => $prescription,
+                'department_id' => $pharmacyDepartment?->id,
+                'title' => 'Pharmacy items billed',
+                'description' => $created->count() . ' item(s) selected for dispensing',
+                'created_by' => $userId,
+            ]);
+
             return $created;
         });
     }

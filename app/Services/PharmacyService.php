@@ -473,6 +473,14 @@ class PharmacyService
             // Update prescription status
             $this->updatePrescriptionStatus($prescription);
 
+            if ($prescription->visit) {
+                app(VisitPathwayService::class)->record($prescription->visit, 'PHARMACY_DISPENSED', [
+                    'source' => $lastRecord,
+                    'title' => 'Medication dispensed',
+                    'description' => ($item->drug_name ?? 'Medication') . ' x ' . $quantity,
+                ]);
+            }
+
             // Track dispensed quantity in the MAR system (non-critical — do not roll back dispense on failure)
             try {
                 app(MedicationOrderService::class)->recordDispensedQuantity($item, $quantity);
