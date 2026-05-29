@@ -184,12 +184,17 @@
                         noNotif.style.display = 'none';
                         var html = '';
                         data.notifications.forEach(function(n) {
+                            var modBadge = n.module ? '<span class="badge bg-light text-dark border me-1 fs-11">' + $('<span>').text(n.module).html() + '</span>' : '';
+                            var prioBadge = (n.priority && n.priority !== 'NORMAL') ? '<span class="badge bg-' + n.color + ' me-1 fs-11">' + $('<span>').text(n.priority).html() + '</span>' : '';
+                            var title = n.title ? '<div class="fw-semibold fs-13 mb-0">' + $('<span>').text(n.title).html() + '</div>' : '';
                             html += '<a href="' + n.url + '" class="dropdown-item px-3 py-2 notification-item" data-id="' + n.id + '">' +
                                 '<div class="d-flex align-items-start">' +
                                 '<div class="flex-shrink-0 me-2">' +
                                 '<span class="avatar avatar-sm bg-' + n.color + '-subtle rounded-circle d-flex align-items-center justify-content-center">' +
                                 '<i class="ti ' + n.icon + ' text-' + n.color + '"></i></span></div>' +
                                 '<div class="flex-grow-1">' +
+                                title +
+                                '<div class="mb-1">' + modBadge + prioBadge + '</div>' +
                                 '<p class="mb-0 fs-13">' + $('<span>').text(n.message).html() + '</p>' +
                                 '<span class="fs-12 text-muted">' + $('<span>').text(n.time).html() + '</span>' +
                                 '</div></div></a>';

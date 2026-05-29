@@ -9,6 +9,8 @@ use App\Events\PatientDischarged;
 use App\Events\PaymentRecorded;
 use App\Events\PrescriptionCreated;
 use App\Events\StockLow;
+use App\Listeners\Auth\LogAuthEvents;
+use App\Listeners\Audit\ForwardCriticalActivityListener;
 use App\Listeners\NotifyAccountants;
 use App\Listeners\NotifyAccountantsDischarge;
 use App\Listeners\NotifyDoctorLabResults;
@@ -80,6 +82,20 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(PatientAdmitted::class, NotifyWardStaffAdmission::class);
         Event::listen(PatientDischarged::class, NotifyAccountantsDischarge::class);
         Event::listen(StockLow::class, NotifyStockManagers::class);
+
+        // Security / auth audit logging
+        Event::listen(\Illuminate\Auth\Events\Login::class, [LogAuthEvents::class, 'handleLogin']);
+        Event::listen(\Illuminate\Auth\Events\Logout::class, [LogAuthEvents::class, 'handleLogout']);
+        Event::listen(\Illuminate\Auth\Events\Failed::class, [LogAuthEvents::class, 'handleFailed']);
+        Event::listen(\Illuminate\Auth\Events\PasswordReset::class, [LogAuthEvents::class, 'handlePasswordReset']);
+
+        // Forward CRITICAL / SECURITY activity rows to optional external sinks.
+        Event::listen('eloquent.saved: ' . \Spatie\Activitylog\Models\Activity::class, ForwardCriticalActivityListener::class);
+
+        // Module-tagged log observers (extend Spatie LogsActivity with severity / context).
+        \App\Models\Invoice::observe(\App\Observers\InvoiceObserver::class);
+        \App\Models\Payment::observe(\App\Observers\PaymentObserver::class);
+        \App\Models\User::observe(\App\Observers\UserObserver::class);
 
         // ---- Module feature-flag Blade directives ----
         // @module('pharmacy') ... @endmodule  → renders only when module enabled

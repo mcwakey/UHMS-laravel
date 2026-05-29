@@ -14,7 +14,37 @@ class DatabaseNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        $channels = $this->payload['_channels'] ?? ['database'];
+        $allowed = ['database', 'broadcast', 'mail', 'sms'];
+        $channels = array_values(array_intersect($allowed, (array) $channels));
+        return $channels ?: ['database'];
+    }
+
+    public function toMail(object $notifiable)
+    {
+        $title = (string) ($this->payload['title'] ?? 'Notification');
+        $message = (string) ($this->payload['message'] ?? $title);
+        $mail = (new \Illuminate\Notifications\Messages\MailMessage)
+            ->subject($title)
+            ->line($message);
+        if (! empty($this->payload['action_url'])) {
+            $mail->action('View details', $this->payload['action_url']);
+        }
+        return $mail;
+    }
+
+    public function toBroadcast(object $notifiable): \Illuminate\Notifications\Messages\BroadcastMessage
+    {
+        return new \Illuminate\Notifications\Messages\BroadcastMessage($this->toArray($notifiable));
+    }
+
+    public function toSms(object $notifiable): array
+    {
+        // Placeholder channel — wire to your SMS provider notification channel.
+        return [
+            'to' => $notifiable->phone ?? null,
+            'message' => (string) ($this->payload['message'] ?? $this->payload['title'] ?? 'Notification'),
+        ];
     }
 
     public function toArray(object $notifiable): array

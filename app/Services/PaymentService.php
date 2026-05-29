@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\InvoiceStatus;
+use App\Enums\LogModule;
 use App\Enums\VisitStatus;
 use App\Events\PaymentRecorded;
 use App\Models\Invoice;
@@ -22,7 +23,10 @@ class PaymentService
     public function __construct(
         protected InvoiceService $invoiceService,
         protected VisitWorkflowService $visitWorkflowService,
-    ) {}
+        protected ?ActivityLogService $logger = null,
+    ) {
+        $this->logger = $this->logger ?: app(ActivityLogService::class);
+    }
 
     /**
      * @param array $data           ['amount', 'payment_method', 'reference_number'?, 'notes'?, 'paid_at'?]
@@ -123,6 +127,20 @@ class PaymentService
         });
 
         PaymentRecorded::dispatch($payment);
+
+        $this->logger?->log(LogModule::PAYMENTS, 'PAYMENT_RECORDED', [
+            'payment_id' => $payment->id,
+            'invoice_id' => $payment->invoice_id,
+            'patient_id' => $payment->patient_id,
+            'metadata' => [
+                'amount' => $payment->amount,
+                'method' => $payment->payment_method,
+                'allocations' => $payment->allocations->map(fn ($a) => [
+                    'invoice_item_id' => $a->invoice_item_id,
+                    'amount' => $a->amount,
+                ])->all(),
+            ],
+        ], $payment, 'Payment recorded');
 
         return $payment;
     }

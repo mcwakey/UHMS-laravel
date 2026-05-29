@@ -1,5 +1,11 @@
 # UHMS Notifications — Remaining Recommendations
 
+> **Status: COMPLETED** — all backlog items below were implemented in the
+> Notifications-Final pass (2026-05-29). See
+> [docs/NOTIFICATIONS_DEVELOPER_GUIDE.md](NOTIFICATIONS_DEVELOPER_GUIDE.md)
+> for the developer-facing summary. External integrations (Slack/SIEM/S3/
+> SMS/broadcast) ship env-gated and no-op when their env vars are unset.
+
 _Date: 2026-05-29_
 
 This is the deliberately-deferred backlog. Everything below is

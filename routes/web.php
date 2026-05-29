@@ -57,6 +57,9 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ProductPricingController;
 use App\Http\Controllers\Admin\ProductStockController;
 use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\LogRetentionController;
+use App\Http\Controllers\Admin\NotificationBroadcastController;
+use App\Http\Controllers\Admin\NotificationPreferenceController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\PurchaseReturnController;
 use App\Http\Controllers\Admin\QueueController;
@@ -867,6 +870,25 @@ Route::middleware('auth')->group(function () {
             Route::get('activity-log', [ActivityLogController::class, 'index'])->name('activity-log');
         });
 
+        // Activity logs (dedicated viewer with permission scoping)
+        Route::prefix('logs')->name('logs.')->group(function () {
+            Route::get('/', [ActivityLogController::class, 'index'])
+                ->middleware('can:logs.view')
+                ->name('index');
+            Route::get('export', [ActivityLogController::class, 'export'])
+                ->middleware('can:logs.export')
+                ->name('export');
+            Route::get('retention', [LogRetentionController::class, 'index'])
+                ->middleware('can:logs.manage_retention')
+                ->name('retention.index');
+            Route::put('retention', [LogRetentionController::class, 'update'])
+                ->middleware('can:logs.manage_retention')
+                ->name('retention.update');
+            Route::get('{activityLog}', [ActivityLogController::class, 'show'])
+                ->middleware('can:logs.view')
+                ->name('show');
+        });
+
         // Modules Management (Admin)
         Route::middleware('can:modules.manage')->prefix('modules')->name('modules.')->group(function () {
             Route::get('/', [ModuleController::class, 'index'])->name('index');
@@ -1104,12 +1126,22 @@ Route::middleware('auth')->group(function () {
             Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('mark-read');
             Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
             Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
+
+            // Broadcast (admin)
+            Route::middleware('can:notifications.broadcast')->group(function () {
+                Route::get('/broadcast', [NotificationBroadcastController::class, 'create'])->name('broadcast.create');
+                Route::post('/broadcast', [NotificationBroadcastController::class, 'store'])->name('broadcast.store');
+            });
         });
 
         // Profile (All authenticated users)
         Route::get('profile', [ProfileController::class, 'edit'])->name('profile');
         Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::put('profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+        // Per-user notification preferences (no extra permission required)
+        Route::get('profile/notifications', [NotificationPreferenceController::class, 'index'])->name('notification-preferences.index');
+        Route::put('profile/notifications', [NotificationPreferenceController::class, 'update'])->name('notification-preferences.update');
     });
 
     /*

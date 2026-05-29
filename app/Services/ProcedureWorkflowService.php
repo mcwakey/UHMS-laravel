@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\LogModule;
+use App\Enums\LogSeverity;
 use App\Enums\NotificationModule;
 use App\Enums\NotificationPriority;
 use App\Enums\ProcedureStatus;
@@ -18,6 +20,7 @@ class ProcedureWorkflowService
     public function __construct(
         protected BillingService $billingService,
         protected NotificationService $notifications,
+        protected ActivityLogService $logger,
     ) {}
 
     public function acceptProcedure(ProcedureRequest $request, User $user, ?string $notes = null): ProcedureRequest
@@ -151,6 +154,13 @@ class ProcedureWorkflowService
 
             $fresh = $request->fresh();
             $this->notifyProcedureCancelled($fresh, $user, $reason);
+            $this->logger->log(LogModule::PROCEDURE, 'CANCELLED', [
+                'severity' => LogSeverity::WARNING,
+                'reason' => $reason,
+                'patient_id' => $fresh->patient_id,
+                'visit_id' => $fresh->visit_id,
+                'procedure_request_id' => $fresh->id,
+            ], $fresh, 'Procedure cancelled');
 
             return $fresh;
         });
@@ -177,6 +187,11 @@ class ProcedureWorkflowService
 
             $fresh = $request->fresh();
             $this->notifyProcedureCompleted($fresh, $user);
+            $this->logger->log(LogModule::PROCEDURE, 'COMPLETED', [
+                'patient_id' => $fresh->patient_id,
+                'visit_id' => $fresh->visit_id,
+                'procedure_request_id' => $fresh->id,
+            ], $fresh, 'Procedure completed');
 
             return $fresh;
         });

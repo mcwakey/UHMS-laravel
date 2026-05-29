@@ -7,12 +7,19 @@ use App\Models\PatientAlias;
 use App\Models\PatientMergeLog;
 use App\Models\PatientMergeRequest;
 use App\Models\User;
+use App\Enums\LogModule;
+use App\Enums\LogSeverity;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class PatientMergeService
 {
-    public function __construct(private \App\Services\PatientMergePreviewService $previewService) {}
+    public function __construct(
+        private \App\Services\PatientMergePreviewService $previewService,
+        private ?\App\Services\ActivityLogService $logger = null,
+    ) {
+        $this->logger = $this->logger ?: app(\App\Services\ActivityLogService::class);
+    }
 
     public function createRequest(
         Patient $mainPatient,
@@ -104,6 +111,17 @@ class PatientMergeService
                 'merged_to_patient_id' => $mainPatient->id,
                 'merge_status' => 'MERGED',
             ], $user);
+
+            $this->logger?->log(LogModule::PATIENT_MERGE, 'PATIENT_MERGED', [
+                'severity' => LogSeverity::SECURITY,
+                'patient_id' => $mainPatient->id,
+                'metadata' => [
+                    'merge_request_id' => $mergeRequest->id,
+                    'duplicate_patient_id' => $duplicatePatient->id,
+                    'duplicate_patient_number' => $duplicatePatient->patient_number,
+                    'main_patient_number' => $mainPatient->patient_number,
+                ],
+            ], $mergeRequest, 'Patient folder merged');
 
             return $mergeRequest->fresh(['mainPatient', 'duplicatePatient', 'logs.performedBy']);
         });

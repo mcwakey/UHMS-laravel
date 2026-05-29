@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\LogModule;
 use App\Enums\Priority;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
@@ -20,7 +21,10 @@ class EmergencyCaseService
         private EmergencyBayService $bays,
         private PatientMergeGuard $patientMergeGuard,
         private EmergencySessionService $sessions,
-    ) {}
+        private ?\App\Services\ActivityLogService $logger = null,
+    ) {
+        $this->logger = $this->logger ?: app(\App\Services\ActivityLogService::class);
+    }
 
     public function create(array $data, User $user): EmergencyCase
     {
@@ -70,6 +74,16 @@ class EmergencyCaseService
             if (! empty($data['emergency_bay_id'])) {
                 $this->bays->assign($case, (int) $data['emergency_bay_id'], $user, true);
             }
+
+            $this->logger?->log(LogModule::EMERGENCY, 'CASE_CREATED', [
+                'emergency_case_id' => $case->id,
+                'patient_id' => $patient->id,
+                'visit_id' => $visit->id,
+                'metadata' => [
+                    'arrival_mode' => $data['arrival_mode'],
+                    'temporary_patient' => $patient->is_temporary ?? false,
+                ],
+            ], $case, 'Emergency case created');
 
             return $case->fresh(['patient', 'visit', 'bay', 'assignedDoctor', 'assignedNurse', 'activeEmergencySession']);
         });

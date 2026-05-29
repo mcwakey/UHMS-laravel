@@ -3,8 +3,7 @@
 namespace App\Services;
 
 use App\Enums\InvoiceStatus;
-use App\Enums\VisitStatus;
-use App\Models\Invoice;
+use App\Enums\VisitStatus;use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
 use App\Models\Product;
@@ -15,6 +14,7 @@ use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Enums\LogModule;
 
 class BillingService
 {
@@ -24,9 +24,11 @@ class BillingService
         protected ServicePriceResolver $priceResolver,
         protected ?InvoiceService $invoiceService = null,
         protected ?ProductPriceResolver $productPriceResolver = null,
+        protected ?ActivityLogService $logger = null,
     ) {
         $this->invoiceService = $this->invoiceService ?: app(InvoiceService::class);
         $this->productPriceResolver = $this->productPriceResolver ?: app(ProductPriceResolver::class);
+        $this->logger = $this->logger ?: app(ActivityLogService::class);
     }
 
     /**
@@ -229,6 +231,19 @@ class BillingService
                 'amount' => $discountAmount,
                 'applied_by' => $user?->id,
             ]);
+
+            $this->logger?->logCorrection(
+                $item,
+                LogModule::BILLING,
+                ['discount_amount' => (float) $item->getOriginal('discount_amount')],
+                ['discount_amount' => round($discountAmount, 2)],
+                'Discount applied to invoice item',
+                [
+                    'invoice_id' => $item->invoice_id,
+                    'patient_id' => $item->patient_id,
+                    'metadata' => ['amount' => $discountAmount],
+                ]
+            );
 
             // Refresh invoice header totals + status.
             $invoice = $item->invoice()->with('items')->first();

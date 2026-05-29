@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\AdmissionStatus;
 use App\Enums\BillingType;
 use App\Enums\InvoiceStatus;
+use App\Enums\LogModule;
+use App\Enums\LogSeverity;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Events\PatientAdmitted;
@@ -20,7 +22,10 @@ class AdmissionService
 {
     public function __construct(
         protected InsuranceService $insuranceService,
-    ) {}
+        protected ?ActivityLogService $logger = null,
+    ) {
+        $this->logger = $this->logger ?: app(ActivityLogService::class);
+    }
 
     public function list(array $filters = []): LengthAwarePaginator
     {
@@ -75,6 +80,16 @@ class AdmissionService
         });
 
         PatientAdmitted::dispatch($admission);
+
+        $this->logger?->log(LogModule::ADMISSION, 'ADMITTED', [
+            'admission_id' => $admission->id,
+            'patient_id' => $admission->patient_id,
+            'visit_id' => $admission->visit_id,
+            'metadata' => [
+                'bed_id' => $admission->bed_id,
+                'admission_type' => $data['admission_type'] ?? null,
+            ],
+        ], $admission, 'Patient admitted');
 
         return $admission;
     }
@@ -244,6 +259,17 @@ class AdmissionService
         });
 
         PatientDischarged::dispatch($admission);
+
+        $this->logger?->log(LogModule::ADMISSION, 'DISCHARGED', [
+            'severity' => LogSeverity::NOTICE,
+            'admission_id' => $admission->id,
+            'patient_id' => $admission->patient_id,
+            'visit_id' => $admission->visit_id,
+            'metadata' => [
+                'discharge_type' => $data['discharge_type'] ?? null,
+                'discharged_by' => Auth::id(),
+            ],
+        ], $admission, 'Patient discharged');
 
         return $admission;
     }

@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\LogModule;
+use App\Enums\LogSeverity;
 use App\Enums\StockMovementDirection;
 use App\Enums\StockMovementType;
 use App\Models\StockMovement;
@@ -15,7 +17,10 @@ class StockMovementService
 {
     public function __construct(
         private StockBalanceService $balances,
-    ) {}
+        private ?ActivityLogService $logger = null,
+    ) {
+        $this->logger = $this->logger ?: app(ActivityLogService::class);
+    }
 
     /**
      * Create a single stock movement and update the corresponding balance.
@@ -126,6 +131,21 @@ class StockMovementService
                 'source_id'         => $movement->source_id,
                 'performed_by'      => $movement->performed_by,
             ]);
+
+            $action = $type->value === 'ADJUSTMENT' ? 'STOCK_ADJUSTED' : 'STOCK_' . $direction->value;
+            $severity = $type->value === 'ADJUSTMENT' ? LogSeverity::WARNING : LogSeverity::INFO;
+            $this->logger?->log(LogModule::STOCK, $action, [
+                'severity' => $severity,
+                'metadata' => [
+                    'drug_id' => $drugId,
+                    'location_id' => $locationId,
+                    'type' => $type->value,
+                    'direction' => $direction->value,
+                    'quantity' => $quantity,
+                    'batch_no' => $movement->batch_no,
+                    'notes' => $movement->notes,
+                ],
+            ], $movement, sprintf('Stock %s: %s qty %.2f', $direction->value, $type->value, $quantity));
 
             return $movement;
         });

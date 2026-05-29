@@ -281,6 +281,17 @@ class RoleSeeder extends Seeder
             'notifications.mark_read',
             'notifications.delete',
             'notifications.manage',
+            'notifications.broadcast',
+            'notifications.manage_preferences',
+
+            // ── Activity / Audit Logs ─────────────────────────────────────
+            'logs.view',
+            'logs.view_clinical',
+            'logs.view_financial',
+            'logs.view_stock',
+            'logs.view_security',
+            'logs.export',
+            'logs.manage_retention',
 
             // ── Clinical Coding ───────────────────────────────────────────
             'icd.view',

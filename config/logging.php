@@ -123,10 +123,20 @@ return [
             'handler' => NullHandler::class,
         ],
 
+        'activity_failures' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/activity_failures.log'),
+            'level' => env('LOG_LEVEL', 'warning'),
+            'days' => env('LOG_ACTIVITY_FAILURES_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
 
     ],
+
+    'activity_failures_channel' => env('LOG_ACTIVITY_FAILURES_CHANNEL', 'activity_failures'),
 
 ];

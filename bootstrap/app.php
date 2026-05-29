@@ -13,6 +13,13 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withSchedule(function (Schedule $schedule) {
         $schedule->command('notifications:cleanup')->dailyAt('02:30')->withoutOverlapping();
+        $schedule->command('logs:cleanup')->dailyAt('02:45')->withoutOverlapping();
+        $schedule->command('medications:check-overdue')->everyFifteenMinutes()->withoutOverlapping();
+        $schedule->command('clinical-tasks:check-due')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('claims:check-stale')->dailyAt('06:00')->withoutOverlapping();
+        $schedule->command('notifications:check-escalations')->everyFifteenMinutes()->withoutOverlapping();
+        $schedule->command('notifications:flush-digest')->everyTenMinutes()->withoutOverlapping();
+        $schedule->command('reports:notifications-summary')->monthlyOn(1, '06:00');
     })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([

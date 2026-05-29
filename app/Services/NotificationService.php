@@ -5,11 +5,14 @@ namespace App\Services;
 use App\Enums\NotificationModule;
 use App\Enums\NotificationPriority;
 use App\Models\Department;
+use App\Models\NotificationDigestQueue;
+use App\Models\NotificationPreference;
 use App\Models\User;
 use App\Notifications\DatabaseNotification;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Spatie\Permission\Models\Permission;
 
 /**
@@ -34,6 +37,22 @@ class NotificationService
 
         if ($dedupeMinutes > 0 && $this->hasRecentDuplicate($user, $payload, $dedupeMinutes)) {
             return false;
+        }
+
+        // Per-user channel preferences (DB/broadcast/mail/sms). Defaults to database only.
+        $preference = $this->resolvePreference($user, $payload['module']);
+        $channels = $preference?->channels ?: ['database'];
+        $payload['_channels'] = $channels;
+
+        // Quiet-hours digest: defer non-urgent notifications.
+        if (
+            $preference
+            && $preference->digest_enabled
+            && $payload['priority'] !== NotificationPriority::URGENT->value
+            && $payload['priority'] !== NotificationPriority::CRITICAL->value
+            && $this->inQuietHours($preference)
+        ) {
+            return $this->enqueueDigest($user, $payload, $preference);
         }
 
         try {
@@ -182,5 +201,56 @@ class NotificationService
             ->where('created_at', '>=', $since)
             ->where('data', 'like', '%' . $needle . '%')
             ->exists();
+    }
+
+    protected function resolvePreference(User $user, string $module): ?NotificationPreference
+    {
+        if (! Schema::hasTable('notification_preferences')) {
+            return null;
+        }
+        try {
+            return NotificationPreference::forUser((int) $user->id, $module);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    protected function inQuietHours(NotificationPreference $pref): bool
+    {
+        if (! $pref->quiet_hours_start || ! $pref->quiet_hours_end) {
+            return false;
+        }
+        $now = now()->format('H:i:s');
+        $start = $pref->quiet_hours_start;
+        $end = $pref->quiet_hours_end;
+        return $start < $end
+            ? ($now >= $start && $now < $end)
+            : ($now >= $start || $now < $end);
+    }
+
+    protected function enqueueDigest(User $user, array $payload, NotificationPreference $pref): bool
+    {
+        if (! Schema::hasTable('notification_digest_queue')) {
+            return false;
+        }
+        try {
+            $now = now();
+            $scheduled = $now->copy()->setTimeFromTimeString($pref->quiet_hours_end);
+            if ($scheduled <= $now) {
+                $scheduled->addDay();
+            }
+            NotificationDigestQueue::create([
+                'user_id' => $user->id,
+                'payload' => $payload,
+                'scheduled_for' => $scheduled,
+            ]);
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning('NotificationService.enqueueDigest failed', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
     }
 }
