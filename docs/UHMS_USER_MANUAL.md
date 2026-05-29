@@ -1,10 +1,10 @@
 # UHMS User Manual
 
-Current system state as of May 13, 2026.
+Current system state as of May 29, 2026.
 
 This manual is workflow-first. Each section walks you through what to do, in what order, and which screen to use. It is illustrated with screenshots from the running system and includes flow diagrams for the most important processes.
 
-> **Important — Updated Workflow Edition.** This manual now reflects the consolidated UHMS workflow described in [UHMS_Updated_User_Manual.md](UHMS_Updated_User_Manual.md). Key rules to keep in mind throughout:
+> **Revision Note (2026-05-29).** This manual has been updated to reflect the redesigned UHMS workflows, including Emergency Case Management, Medication Administration / MAR, Theatre Room Management, Patient Folder Merge, Unified Product Stock, Notifications, Logs / Audit Trail, and the enhanced Consultation Summary. The new and updated workflows are described in detail in [Appendix M — Workflow Update (May 2026)](#appendix-m--workflow-update-may-2026). Some screenshots may predate the latest interface changes and should be regenerated; see [Regenerating screenshots](#regenerating-screenshots).
 >
 > - **One visit = one main invoice.** Every billable activity (consultation, investigation, pharmacy, ward, procedure) adds an item to the same visit invoice.
 > - **Every visit starts at triage.** Triage completion moves the visit from `TRIAGE` to `WAITING_CONSULTATION`.
@@ -49,6 +49,29 @@ This manual is workflow-first. Each section walks you through what to do, in wha
 - [27. Troubleshooting](#27-troubleshooting)
 - [28. Current Implementation Notes](#28-current-implementation-notes)
 - [29. Quick Reference by Department](#29-quick-reference-by-department)
+- [Appendix M — Workflow Update (May 2026)](#appendix-m--workflow-update-may-2026)
+  - [M.1 Patient Folder Merge](#m1-patient-folder-merge)
+  - [M.2 Emergency Case Management](#m2-emergency-case-management)
+  - [M.3 Emergency as a Consultation Session](#m3-emergency-as-a-consultation-session)
+  - [M.4 Emergency Triage and Vitals](#m4-emergency-triage-and-vitals)
+  - [M.5 Bay / Bed and Team Assignment](#m5-bay--bed-and-team-assignment)
+  - [M.6 Admission Medication Administration / MAR](#m6-admission-medication-administration--mar)
+  - [M.7 Emergency Medication / MAR](#m7-emergency-medication--mar)
+  - [M.8 Clinical Tasks and Reminders](#m8-clinical-tasks-and-reminders)
+  - [M.9 MAR Chart](#m9-mar-chart)
+  - [M.10 Consultation Workflow Updates](#m10-consultation-workflow-updates)
+  - [M.11 Consultation Summary (Document View)](#m11-consultation-summary-document-view)
+  - [M.12 Investigations (Consultation & Emergency)](#m12-investigations-consultation--emergency)
+  - [M.13 Procedures and Theatre](#m13-procedures-and-theatre)
+  - [M.14 Theatre Rooms Management](#m14-theatre-rooms-management)
+  - [M.15 Pharmacy — Bill Before Dispense](#m15-pharmacy--bill-before-dispense)
+  - [M.16 Ward / Emergency / Investigation / Procedure Consumables](#m16-ward--emergency--investigation--procedure-consumables)
+  - [M.17 Unified Product Stock & Stock Balance Matrix](#m17-unified-product-stock--stock-balance-matrix)
+  - [M.18 Insurance Type-based Claims & NHIA/NHIS](#m18-insurance-type-based-claims--nhianhis)
+  - [M.19 Billing Updates](#m19-billing-updates)
+  - [M.20 Notifications](#m20-notifications)
+  - [M.21 Logs / Audit Trail](#m21-logs--audit-trail)
+  - [M.22 New / Updated Reports](#m22-new--updated-reports)
 
 ## 1. Purpose and Audience
 
@@ -2097,4 +2120,758 @@ npm run screenshots
 - Pages that 404 or redirect to login are logged and skipped — the script does not abort on a missing route.
 - Captures use a fixed 1440×900 viewport with `fullPage: true` for consistent output.
 - The script never commits credentials. Use environment variables (or a local `.env`-style shell setup) and seed/demo data only.
+
+
+
+
+---
+
+# Appendix M — Workflow Update (May 2026)
+
+This appendix consolidates the workflow changes introduced in the May 2026 release. It complements the numbered sections above; existing instructions remain valid unless explicitly superseded here.
+
+> **Screenshot note.** Several screens covered in this appendix (MAR Chart, Theatre Rooms board, Emergency Case detail, Patient Folder Merge) have been redesigned and the existing screenshots may not reflect the latest layout. Rerun the capture script — see [Regenerating screenshots](#regenerating-screenshots) — to refresh them after the new UI stabilises in your environment.
+
+## M.1 Patient Folder Merge
+
+**Who uses it:** Records officers, ward managers, supervisors with the `patients.merge` permission.
+
+**Where:** Sidebar → Patients → Merge folders (also reachable from an Emergency Case detail when a temporary patient is later identified).
+
+### Use cases
+
+- A temporary emergency patient is later identified as a known patient.
+- Duplicate patient folders were created accidentally during registration.
+
+### Step by step
+
+1. Open **Patients → Merge folders**.
+2. Search the **main folder** you want to keep.
+3. Search the **duplicate / temporary folder** to merge into it.
+4. Compare the two folders side by side.
+5. For each demographic field (name, DOB, phone, NHIS, etc.) pick the value to keep on the main folder.
+6. Click **Preview affected records** to see every visit, invoice, admission, emergency case, claim, prescription, lab result, and document that will be moved.
+7. Enter the reason and click **Confirm merge**.
+8. The duplicate folder is locked and from now on opening its number redirects to the main folder.
+
+### Rules
+
+- The duplicate folder is **never deleted** — it is locked, flagged `MERGED`, and remains searchable by its old patient number.
+- All visits, emergency cases, admissions, invoices, payments, claims, prescriptions, investigations, procedures and documents are moved to the main folder.
+- Only users with the `patients.merge` permission can perform a merge.
+- A merge cannot be undone from the UI; an administrator with database access is required to reverse it.
+
+### Confirming an emergency patient's identity
+
+From an Emergency Case detail page:
+
+1. Click **Confirm identity**.
+2. Search the real patient by name, phone, NHIS or patient number.
+3. Review the comparison and confirm.
+4. The temporary folder is merged into the real folder; the emergency case, its triage, vitals, MAR doses, investigations and bills move with it.
+
+---
+
+## M.2 Emergency Case Management
+
+UHMS supports three patient pathways:
+
+| Pathway | When to use |
+| --- | --- |
+| **OPD / Visit** | Routine outpatient care |
+| **Admission** | Inpatient care that requires a bed |
+| **Emergency** | Urgent or critical care that cannot wait |
+
+**Where:** Sidebar → Emergency.
+
+### Workflow
+
+1. **Create case** → choose an existing patient, or capture an **unknown / temporary patient**.
+2. Record **arrival details** (mode of arrival, accompanying persons, presenting complaint).
+3. Perform **triage** — see [M.4](#m4-emergency-triage-and-vitals).
+4. Assign a **bay / bed** and a **team** — see [M.5](#m5-bay--bed-and-team-assignment).
+5. **Start an emergency clinical session**.
+6. Record assessment / emergency notes.
+7. Request **investigations** and **procedures**.
+8. Order / administer **medication** and use the **MAR** — see [M.7](#m7-emergency-medication--mar).
+9. Record **consumables** used during care.
+10. Review the visit invoice in **Billing**.
+11. Record the patient's **disposition** to close the case.
+
+### Case statuses
+
+`ARRIVED → WAITING_TRIAGE → TRIAGED → UNDER_EMERGENCY_CARE → OBSERVATION → READY_FOR_DISPOSITION → DISPOSED`
+
+`CANCELLED` is also possible.
+
+### Disposition options
+
+- Admitted
+- Discharged
+- Transferred to OPD
+- Transferred to Theatre
+- Referred out
+- Left against medical advice
+- Absconded
+- Died
+- Dead on arrival
+
+> **Important.** Emergency care must not be blocked because payment has not been made. Triage, vitals, medication, investigations and procedures may all be recorded before any bill is settled.
+
+---
+
+## M.3 Emergency as a Consultation Session
+
+When a patient passes through Emergency, UHMS creates an **Emergency Session** under the visit. This session appears alongside other consultation sessions, so the next doctor who sees the patient — whether on the ward, in OPD or in clinic — can read the full emergency history before continuing care.
+
+The Consultation page can therefore display any of:
+
+- Emergency Session
+- OPD Session
+- Dental Session
+- ENT Session
+- Admission Review Session
+
+An Emergency Session contains:
+
+- Triage and vitals
+- Emergency notes / assessment
+- Medications and the MAR for those doses
+- Investigations
+- Procedures
+- Consumables used
+- Billing references
+- Disposition
+
+This gives a single, continuous clinical history across emergency, outpatient and inpatient care, improves visit previews, supports cleaner claims preparation and provides true continuity of care.
+
+---
+
+## M.4 Emergency Triage and Vitals
+
+**Who uses it:** Triage nurses, emergency nurses.
+
+### Automatic triage suggestion
+
+Triage category is auto-suggested from vitals and red-flag inputs:
+
+- Temperature
+- Pulse / heart rate
+- Respiratory rate
+- Blood pressure
+- Oxygen saturation (SpO₂)
+- AVPU / consciousness
+- Pain score
+- Danger signs (severe bleeding, seizure, respiratory distress, trauma)
+
+### Categories
+
+| Code | Meaning |
+| --- | --- |
+| **RED** | Immediate / resuscitation |
+| **ORANGE** | Very urgent |
+| **YELLOW** | Urgent |
+| **GREEN** | Less urgent |
+| **BLACK** | Dead on arrival / expectant |
+
+### Manual override
+
+Authorised users may override the suggested category. A **reason is required** and is stored in the audit log.
+
+### Vitals display
+
+The case detail and ward round screens show:
+
+- Latest vitals as cards
+- Vitals history table
+- Vitals trend chart
+- Who recorded each set, and when
+
+---
+
+## M.5 Bay / Bed and Team Assignment
+
+### Assigning a bay / bed
+
+1. Choose the **emergency ward / unit**.
+2. Pick an **available bay or bed**.
+3. Confirm assignment.
+
+### Assigning a team
+
+1. Set the **main emergency doctor**.
+2. Set the **primary nurse**.
+3. Add any number of **contributors** (other doctors, residents, support nurses).
+
+Contributors can add records (notes, medication, procedures) without replacing the main doctor or nurse.
+
+### Bed / bay statuses
+
+`Available | Occupied | Cleaning | Out of service | Reserved`
+
+A bay marked **Occupied** cannot be assigned to another patient until the patient is moved or discharged from it.
+
+---
+
+## M.6 Admission Medication Administration / MAR
+
+**Who uses it:** Ward nurses, doctors, pharmacy.
+
+### Three different steps
+
+| Step | What it means |
+| --- | --- |
+| **Prescription** | What the doctor ordered |
+| **Dispensing** | What pharmacy supplied to the ward |
+| **Administration** | What the nurse actually gave to the patient |
+
+### Workflow
+
+1. Doctor prescribes a medication on the consultation / ward round screen.
+2. Pharmacy reviews and **dispenses** the prescribed quantity.
+3. UHMS generates the administration **schedule** (one row per dose).
+4. The clinical tasks board and topbar bell notify the nurse when doses are **DUE** or **OVERDUE**.
+5. Nurse records each dose from the MAR Chart.
+6. Order progresses until all doses are complete.
+
+### Order statuses
+
+`Pending dispensing | Partially dispensed | Dispensed | Active administration | Completed | Held | Stopped | Cancelled | Expired`
+
+### Dose statuses
+
+`Scheduled | Due | Overdue | Given | Held | Missed | Refused | Skipped | Cancelled`
+
+> **Important.** Nurse administration does **not** reduce stock again if pharmacy already dispensed the medication for that patient. Stock leaves pharmacy on dispense; administration is a clinical action, not a stock movement.
+
+---
+
+## M.7 Emergency Medication / MAR
+
+Emergency supports:
+
+- **STAT** medication (give once, immediately)
+- **PRN / SOS** medication (give as needed)
+- **Scheduled** medication (e.g., BD × 3 days)
+- Immediate administration at the bedside
+- Stock sourced directly from the **Emergency stock location**
+- A MAR chart per emergency case
+
+### Stock rule
+
+| Source of medication | Stock impact |
+| --- | --- |
+| Administered from **Emergency stock** | Stock is deducted **once** from Emergency stock at administration. |
+| **Dispensed by Pharmacy** for the patient | Stock leaves Pharmacy at dispense; administration does **not** deduct stock again. |
+
+### Notes
+
+- Medication search comes from **Products** (the unified catalogue). There is no separate "drug list".
+- Quantity for scheduled orders is computed automatically from frequency × duration. For example: `BD for 5 days = 10 doses`, `TDS for 3 days = 9 doses`.
+
+---
+
+## M.8 Clinical Tasks and Reminders
+
+**Where:** Sidebar → Clinical Tasks (also visible inside Admission and Emergency case detail pages).
+
+Tasks are auto-created and visible to the assigned user, role or department for:
+
+- Medication administration
+- Vitals monitoring
+- Wound dressing
+- Blood sugar / BSL check
+- Doctor review
+- Investigation follow-up
+- Procedure preparation
+- General nursing observations
+
+### Statuses
+
+`Scheduled | Due | Overdue | In Progress | Completed | Missed | Held | Refused | Cancelled`
+
+### Due / overdue alerts
+
+- Due tasks appear on the topbar bell and on the clinical tasks board.
+- Tasks not actioned within their window become **Overdue** and may be escalated to the charge nurse or department.
+
+---
+
+## M.9 MAR Chart
+
+The **MAR Chart** is a per-patient medication administration grid. It is **not** a statistical chart.
+
+### Layout
+
+- **Rows** = active medications
+- **Columns** = scheduled dose times
+- **Cells** = dose status (Scheduled, Due, Given, Held, Missed, …)
+
+### How to use a cell
+
+| Cell shows | Action |
+| --- | --- |
+| **Due** or **Overdue** | Click to open the administration modal and record the dose |
+| **Given / Held / Missed / Refused** | Click to view details (who, when, notes) |
+| **PRN / SOS row** | Listed separately below the scheduled grid; click **Give now** to record |
+
+### Print
+
+Click **Print MAR** to print the chart for the bedside chart binder.
+
+### Where MAR can be opened
+
+- Admission Board
+- Admission detail page
+- Emergency Board
+- Emergency Case detail page
+- Visit preview
+
+A legend at the top of the chart explains the colour codes.
+
+---
+
+## M.10 Consultation Workflow Updates
+
+Consultations follow this clinical order:
+
+1. Vitals / patient summary
+2. Complaints
+3. History of presenting complaint (HOPC)
+4. Examination / physical examination
+5. Diagnosis
+6. Investigations
+7. Treatments / prescriptions
+8. Procedures
+9. Tasks / follow-up / instructions
+10. Notes / summary
+
+### Record ownership
+
+- Records are **grouped by the doctor or user** who entered them.
+- Contributors are listed under the main doctor; the main doctor of a session is **not** overwritten when another user adds a record.
+- A user can edit only the records their role permits them to edit.
+
+### Emergency Session in Consultation
+
+If the patient passed through Emergency on this visit, the **Emergency Session** appears at the top of the sessions list so the consulting doctor sees emergency history before continuing.
+
+---
+
+## M.11 Consultation Summary (Document View)
+
+The Consultation Summary page is designed like a **readable clinical document**, not a form.
+
+It shows, in order:
+
+- Patient and visit header
+- Session details (type, start/end, status)
+- Main doctor and contributors
+- Complaints
+- HOPC
+- Examination
+- Diagnoses
+- Investigations (with results when verified)
+- Treatments / prescriptions
+- Procedures
+- Tasks / follow-up
+- Notes
+- Record owners and date/time stamps
+
+The page must not hide important information; collapsing blocks are avoided. Use the **Print** button (where shown) to produce a paper-friendly copy.
+
+---
+
+## M.12 Investigations (Consultation & Emergency)
+
+The investigation workflow is the same for consultation, admission and emergency requests:
+
+1. Select the **investigation department** (Lab, X-ray, Scan, CT, Ultrasound, ECG, …).
+2. Select the **service / items**.
+3. Add a **clinical reason**.
+4. Submit the request.
+5. The department **accepts** the request.
+6. Results are **entered**.
+7. Results are **verified** by an authorised user.
+8. The requesting doctor sees verified results in the consultation / case.
+
+Emergency requests can additionally be marked **Emergency**, **Urgent** or **Routine** to drive queueing.
+
+Investigations are grouped by department and owner. Consumables used by the investigation department are deducted from that department's stock — see [M.16](#m16-ward--emergency--investigation--procedure-consumables).
+
+---
+
+## M.13 Procedures and Theatre
+
+### Request workflow
+
+1. A doctor requests a procedure from a consultation, admission or emergency case.
+2. Theatre / Procedure team **accepts** the request.
+3. A **billing item** is created (if applicable).
+4. Theatre **schedules** the case — see [M.14](#m14-theatre-rooms-management).
+5. **Pre-op** is completed (checklist, consent, fasting).
+6. **Anaesthesia note** is recorded.
+7. The surgeon enters the **operative note**.
+8. **Recovery / post-op** note is recorded.
+9. The case is **completed**.
+
+Billing is recorded separately from the clinical procedure section. Cancelling the clinical record does not by itself reverse a posted invoice item.
+
+---
+
+## M.14 Theatre Rooms Management
+
+**Where:** Sidebar → Theatre.
+
+### Theatre rooms
+
+- Create, edit and retire rooms with their type (Major, Minor, Endoscopy, …) and capacity.
+- Each room has a status — see below.
+- Rooms can be **blocked** for cleaning, maintenance or reservation.
+
+### Boards
+
+| Screen | What it shows |
+| --- | --- |
+| **Theatre board** | Today's cases per room |
+| **Room calendar** | Week / day calendar for each room |
+
+### Scheduling
+
+1. Open a procedure / theatre case.
+2. Pick a room and a time slot.
+3. UHMS prevents double-booking the same room and time window.
+4. A blocked room cannot be scheduled.
+
+Emergency theatre cases follow the same flow but are flagged urgent and can be inserted into the next available slot.
+
+### Theatre case statuses
+
+`Requested → Accepted → Billed → Scheduled → Pre-op → Anaesthesia Ready → In Theatre → In Surgery → Surgery Done → Recovery → Post-op → Completed`
+
+`Cancelled` and `Postponed` are also possible.
+
+### Room statuses
+
+`Available | Occupied | Scheduled | Cleaning | Maintenance | Out of service | Reserved`
+
+### What is captured per case
+
+- Theatre team (surgeon, assistant, anaesthetist, nurse)
+- Pre-op checklist
+- Anaesthesia note
+- Operative note
+- Recovery / post-op note
+- Consumables used
+- Billing items
+- Summary visible in the visit preview
+
+---
+
+## M.15 Pharmacy — Bill Before Dispense
+
+The pharmacy now supports billing drugs **before** they are dispensed. This avoids the patient leaving without their drugs after payment and gives pharmacy full control over what is finally supplied.
+
+### Workflow
+
+1. Doctor prescribes drugs.
+2. Pharmacy opens the prescription and **reviews** it.
+3. Pharmacy **selects which drugs to bill / dispense** and can **reduce quantities**.
+4. Only the selected drugs are **billed** to the visit invoice.
+5. Only the **billed** drugs appear on the **dispense** page.
+6. Dispensing **reduces pharmacy stock**.
+
+> **Important.** Billing is financial. Dispensing is the physical stock movement. Billing a drug does not reduce stock; dispensing does.
+
+### Pharmacy catalogue display
+
+For each drug the catalogue shows:
+
+- Pharmacy available quantity (Pharmacy stock location)
+- Main store quantity (Main Store stock location)
+- Stock status (OK / LOW / CRITICAL / OUT / NOT STOCKED)
+
+---
+
+## M.16 Ward / Emergency / Investigation / Procedure Consumables
+
+Each clinical area records the consumables it uses against the patient's visit:
+
+| Area | Stock location consumed | Where to record |
+| --- | --- | --- |
+| **Ward** | Ward stock location | Admission detail → Consumables |
+| **Emergency** | Emergency stock location | Emergency case → Consumables |
+| **Investigation** | Department stock location (Lab, X-ray, …) | Investigation request → Consumables |
+| **Procedure / Theatre** | Theatre stock location | Theatre case → Consumables |
+
+### Rules
+
+- Departments choose products from the **unified product catalogue**; they cannot create new products themselves.
+- Usage deducts stock from the **department's own stock location**.
+- **Billable** consumables also create an item on the visit invoice.
+- **Non-billable** consumables only create a stock movement.
+
+---
+
+## M.17 Unified Product Stock & Stock Balance Matrix
+
+Every physical item the hospital handles comes from **Products** — there is no parallel drug, consumable or theatre-item table.
+
+This includes:
+
+- Drugs
+- Consumables
+- Investigation items
+- Procedure items
+- Theatre consumables
+- Emergency supplies
+- Ward supplies
+
+### Main Store rule
+
+- Purchase receipts always land in **Main Store**.
+- Departments receive stock via **requisition / transfer** from Main Store.
+- Departments consume only from **their own stock location**.
+
+### Stock Balance Matrix
+
+The matrix shows current quantities per location:
+
+```
+Product | Main Store | Pharmacy | Ward | Emergency | Lab | Theatre | Total | Status
+```
+
+- The row is **not highlighted yellow** for low stock.
+- Status is shown **beside each location quantity**.
+- Statuses: `OK`, `LOW`, `CRITICAL`, `OUT`, `NOT STOCKED`.
+
+> **Important.** Stock is never edited directly. Current quantity for a product at a location is computed from stock movements: `IN movements − OUT movements`.
+
+---
+
+## M.18 Insurance Type-based Claims & NHIA/NHIS
+
+UHMS distinguishes between:
+
+| Concept | Meaning |
+| --- | --- |
+| **Insurance Type** | The claim workflow (e.g., NHIA, Private cash insurance, Corporate) |
+| **Insurance Provider** | An organisation operating under a type (e.g., NHIS under NHIA) |
+
+### NHIA / NHIS claim preparation
+
+1. A claims officer opens an **eligible visit**.
+2. UHMS prepares a claim from the visit's invoice items.
+3. The officer reviews the **clinical mirror** (read-only copy of the clinical record).
+4. The officer may select doctor-entered information or enter **claim-facing** values without touching the clinical record.
+5. The CCC / verification code is entered if required.
+6. The claim is **validated**.
+7. The claim is marked **Ready**.
+8. The claim is **exported / submitted**.
+9. Claim status and payment are tracked from the Claims dashboard.
+
+### Clinical mirror
+
+The claim's clinical mirror shows:
+
+- Consultation
+- Complaints
+- HOPC
+- Diagnosis
+- Prescriptions / drugs
+- Investigations
+- Procedures
+- Invoice items
+
+> **Important.** Editing the claim never overwrites the clinical record. Claim-side edits live on the claim only.
+
+---
+
+## M.19 Billing Updates
+
+One visit produces one invoice — see the principles at the top of this manual. Items on that invoice can come from:
+
+- Visit services (consultation fee, etc.)
+- Emergency services
+- Investigations
+- Pharmacy
+- Procedures / Theatre
+- Consumables (Ward / Emergency / Investigation / Theatre)
+- Admission / ward charges
+
+Per invoice item UHMS tracks:
+
+- Cash price
+- Insurance price
+- Selected price (the one that applies)
+- Patient payable
+- Paid amount
+- Balance
+- Discount (manually entered by an authorised user)
+
+Payments may cover one or more invoice lines partially or in full. Allocations are visible on the payment receipt and on the invoice.
+
+---
+
+## M.20 Notifications
+
+**Where:** Bell icon in the topbar (also Sidebar → Notifications), and per-user preferences at **Profile → Notification preferences**.
+
+Notifications are used for:
+
+- Emergency alerts (new red triage, bay assignment)
+- Medication **Due** / **Overdue** doses
+- Clinical tasks
+- Investigation results ready
+- Procedure / theatre updates
+- Stock alerts (low / out)
+- Claims status changes
+- Patient merge requests
+- Billing / payment alerts
+
+### Topbar bell
+
+- Shows an unread count badge.
+- Each item shows a module chip (e.g., `PHARMACY`) and a priority badge (when not Normal).
+- Click an item to open the related screen and mark it read.
+- **Mark all as read** clears the badge.
+
+### Preferences (per user)
+
+For each module you can choose:
+
+- **Channels** — `database` (in-app), `broadcast` (real-time), `mail`, `sms`. In-app is always on.
+- **Digest mode** — defer non-urgent alerts.
+- **Quiet hours** — a window during which non-urgent alerts are deferred until the window closes.
+
+Urgent and Critical notifications **bypass** digest and quiet hours.
+
+### Broadcast (admin)
+
+Users with `notifications.broadcast` can send a notification to a role, a permission group, or a department from **Admin → Notifications → Broadcast**.
+
+### Targeting rule
+
+You only receive notifications relevant to your role, permission or department assignment.
+
+---
+
+## M.21 Logs / Audit Trail
+
+**Where:** Sidebar → Logs (requires `logs.view`); retention at **Admin → Logs → Retention** (`logs.manage_retention`).
+
+UHMS tracks an immutable audit trail of:
+
+- Who did what
+- When it happened
+- Which record was affected
+- Old and new values (where applicable)
+- Reason for a correction or override
+- Module / source
+
+### Coverage
+
+Logs exist for:
+
+- Clinical actions (consultation, prescription, MAR, investigation results)
+- Financial actions (invoice, payment, refund, discount, write-off)
+- Stock actions (in, out, adjustment, transfer)
+- Emergency
+- Admission and discharge
+- Theatre
+- Patient folder merges
+- Security / authentication (login, logout, failed login, password reset, password change)
+- User and permission changes
+
+### Permission scoping
+
+The `/admin/logs` viewer hides modules a user cannot see. Sub-permissions:
+
+| Permission | Sees |
+| --- | --- |
+| `logs.view_clinical` | Patient, admission, pharmacy, investigation, emergency |
+| `logs.view_financial` | Billing, payments, insurance, claims |
+| `logs.view_stock` | Stock, procurement |
+| `logs.view_security` | Auth, users, roles, patient merge |
+| `logs.export` | CSV / JSON export |
+| `logs.manage_retention` | Per-module retention overrides |
+
+### Retention
+
+Default retention is configurable (default 365 days). Per-module overrides can be set under **Admin → Logs → Retention** with a reason. A scheduled cleanup purges rows past their retention window.
+
+### Sensitive fields
+
+Passwords, tokens and similar secrets are automatically masked as `***MASKED***` in log entries.
+
+---
+
+## M.22 New / Updated Reports
+
+The following reports are new or have been updated:
+
+### Emergency
+
+- Emergency attendance
+- Triage category distribution
+- Waiting time
+- Disposition outcomes
+- Mortality
+- Emergency medication usage
+
+### MAR
+
+- Medication administration
+- Overdue medication
+- Missed doses
+- Administrations per nurse
+
+### Theatre
+
+- Room utilisation
+- Procedures by surgeon
+- Cancelled / postponed cases
+- Theatre consumables usage
+- Anaesthesia report
+
+### Stock
+
+- Stock balance matrix
+- Low / out of stock
+- Department stock
+- Movement history
+- Requisitions and transfers
+
+### Claims
+
+- Submitted claims
+- Rejected claims
+- Paid claims
+- NHIA / NHIS claims
+
+Reports respect the same role / module / permission filters as the rest of UHMS.
+
+---
+
+### Screenshots to regenerate
+
+The following sections likely need fresh screenshots after the May 2026 redesign:
+
+- Emergency Board and Emergency Case detail
+- MAR Chart (admission and emergency)
+- Clinical Tasks board
+- Theatre rooms list, theatre board and room calendar
+- Patient Folder Merge (search → compare → preview → confirm)
+- Notifications topbar bell with module / priority chips
+- `/admin/logs` viewer with module column and retention page
+- Pharmacy bill-before-dispense page
+- Consultation Summary document view
+
+Use `npm run screenshots` after the UI stabilises in your environment — see [Regenerating screenshots](#regenerating-screenshots).
+
+### Assumptions and unclear areas
+
+- The exact label "Confirm identity" on the Emergency Case detail is documented based on the current implementation; verify after the next UI polish pass.
+- Exported claim formats are vendor-specific; only the in-app workflow is documented here.
+- Broadcast (real-time) notifications require a broadcaster (`BROADCAST_CONNECTION`) to be configured; without one, only in-app and email/SMS (if configured) are delivered.
 

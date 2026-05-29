@@ -1,937 +1,1000 @@
-I’ll treat **“ogs” as “logs”** — system/activity/audit logs. Here’s the full prompt:
+````text
+You are a senior technical writer and Laravel/Inertia/Vue documentation assistant working on UHMS — Ultimate Hospital Management System.
 
-```text
-You are a senior Laravel + Inertia/Vue architect working on UHMS — Ultimate Hospital Management System.
+We need to update the UHMS User Manual to reflect all recent workflow changes and new modules.
 
-We need to perform a full analysis, repair, and standardization of the Logs system across UHMS.
+The current user manual already exists. Do not rewrite it blindly. First inspect the existing manual files, then update them carefully while preserving the current structure, tone, numbering, and formatting.
 
-Logs are critical because many modules now require traceability, auditability, accountability, correction history, and workflow tracking.
+Update the user manual so it accurately reflects the current UHMS workflow after the latest changes.
 
-The system must properly log actions from:
+Focus on:
 
-- Emergency
-- Admission
-- Consultation
-- Medication Administration / MAR
+- Emergency Case Management
+- Emergency as a Consultation/Clinical Session
+- Admission Medication Administration / MAR
+- Emergency Medication / MAR
 - Clinical Tasks / Reminders
-- Investigations
-- Procedures / Theatre
-- Pharmacy
-- Billing / Payments
-- Claims
-- Stock / Inventory
-- Purchase Orders
-- Supplier Ledger
-- Patient Merge
-- Insurance
-- User / Role / Permission changes
-- System settings
+- MAR Chart
+- Theatre Rooms Management
+- Procedure/Theatre workflow
+- Patient Folder Merge
 - Notifications
-- Login / Authentication
-- Critical data edits and corrections
+- Logs / Audit Trail
+- Pharmacy billing before dispensing
+- Ward/Emergency/Investigation/Procedure consumables
+- Unified Product Stock system
+- Stock Balance matrix
+- Consultation ownership/grouping updates
+- Consultation Summary document-style page
+- Claims preparation clinical mirror
+- Insurance-type-based claims workflow
+- NHIA/NHIS claims workflow
 
-Your task is to inspect the current UHMS logs implementation, identify gaps, fix or standardize the logging system, and generate proper reports.
-
-Do not patch only one module. Build a reliable logging foundation for the whole system.
-
-Do not break existing UHMS workflows.
+Do not remove existing valid sections unless they are obsolete.
 
 ---
 
 # 1. Main Objective
 
-Perform a full logging/audit system audit and repair.
+Update the UHMS User Manual so that end users understand how to use the latest implemented workflows.
 
-You must:
+The manual should be practical, clear, and role-friendly.
 
-1. Inspect the current logging implementation.
-2. Identify all existing logs, activity logs, audit logs, event logs, and module-specific logs.
-3. Identify what is broken, duplicated, missing, or inconsistent.
-4. Standardize logging across UHMS.
-5. Ensure important actions are logged.
-6. Ensure logs capture who did what, when, where, and why.
-7. Ensure logs are searchable and filterable.
-8. Ensure logs are visible to authorized users.
-9. Ensure sensitive logs are protected.
-10. Generate reports explaining gaps, fixes, and remaining recommendations.
+It should explain:
 
----
+- what each module is for
+- who uses it
+- where to find it
+- how to perform common tasks
+- important rules
+- workflow status changes
+- warnings and restrictions
+- expected outputs/results
 
-# 2. Expected Documentation Reports
+The manual should not be written like developer documentation.
 
-Create these markdown reports in the project documentation folder:
-
-docs/LOGS_GAP_ANALYSIS.md
-docs/LOGS_SOLUTION_REPORT.md
-docs/LOGS_REMAINING_RECOMMENDATIONS.md
-
-If the project already has a documentation folder convention, follow it.
+It should be written for hospital users, admins, nurses, doctors, pharmacists, records officers, cashiers, theatre staff, emergency staff, store officers, claims officers, and system administrators.
 
 ---
 
-# 3. LOGS_GAP_ANALYSIS.md
+# 2. Existing Manual Inspection
 
-This report must explain:
+First inspect existing manual files.
 
-- Current logging architecture found
-- Existing log tables
-- Existing models/services/classes
-- Existing module-specific logs
-- Existing activity/audit log package if any
-- What actions are currently logged
-- What important actions are not logged
-- What logs are duplicated or inconsistent
-- What logs are unused/dead code
-- What frontend log views exist
-- What log permissions exist
-- Root causes of logging problems
-- Modules depending on logs
-- Risk level of current logging gaps
+Look for files such as:
 
----
+- UHMS_USER_MANUAL.md
+- UHMS_Updated_User_Manual.md
+- USER_MANUAL.md
+- docs/user-manual/*
+- docs/UHMS_USER_MANUAL.md
+- README/manual files
 
-# 4. LOGS_SOLUTION_REPORT.md
+Then decide where updates should be applied.
 
-This report must explain:
+If there is one main user manual, update that.
 
-- Summary of fixes made
-- Files changed
-- Migrations added/updated
-- Models updated
-- Services created/updated
-- Controllers/routes created/updated
-- Frontend pages/components updated
-- Log triggers restored/added
-- Permissions added/updated
-- Tests added
-- How to verify logs are working
-- Known limitations
+If there is an updated manual and an older manual, merge the latest changes into the main manual.
+
+Do not create duplicate competing manuals unless required.
 
 ---
 
-# 5. LOGS_REMAINING_RECOMMENDATIONS.md
+# 3. Add Revision Note at Top
 
-This report must explain:
+At the top of the manual, add a short revision note.
 
-- Remaining improvements
-- Advanced audit features to implement later
-- Security/event monitoring recommendations
-- Log retention and archiving recommendations
-- Export/reporting recommendations
-- Risk areas needing deeper testing
-- Future implementation prompts needed
+Example:
 
----
+```text
+Revision Note:
+This manual has been updated to reflect the redesigned UHMS workflows, including Emergency Case Management, Medication Administration/MAR, Theatre Room Management, Patient Folder Merge, unified stock management, Notifications, Logs, and enhanced Consultation Summary workflows. Some screenshots may predate the latest interface changes and should be regenerated where required.
+````
 
-# 6. Core Logging Requirements
+If screenshots are outdated, clearly state that screenshots may need regeneration.
 
-UHMS logs must answer:
-
-Who did it?
-What did they do?
-When did they do it?
-Where/module did it happen?
-Which record was affected?
-What changed?
-Why was it changed, if reason is required?
-Was it normal action, correction, override, or system event?
-
-Each log should support:
-
-- actor/user
-- action
-- module
-- source/subject type
-- source/subject ID
-- old values
-- new values
-- description
-- reason
-- IP address if available
-- user agent if useful
-- severity/level
-- created_at
+Do not pretend screenshots are updated if they are not.
 
 ---
 
-# 7. Recommended Central Log Table
+# 4. Update Table of Contents
 
-If no strong logging system exists, create a central table:
+Update the table of contents to include new/updated sections.
 
-activity_logs
-- id
-- user_id nullable
-- module nullable
-- action
-- description nullable
-- subject_type nullable
-- subject_id nullable
-- causer_type nullable
-- causer_id nullable
-- patient_id nullable
-- visit_id nullable
-- admission_id nullable
-- emergency_case_id nullable
-- department_id nullable
-- severity default INFO
-- old_values json nullable
-- new_values json nullable
-- metadata json nullable
-- reason nullable
-- ip_address nullable
-- user_agent nullable
-- created_at
-- updated_at
+Suggested major sections:
 
-Severity levels:
+1. Introduction
+2. Login and Dashboard
+3. User Roles and Permissions
+4. Patient Registration
+5. Patient Search and Patient Folder
+6. Patient Folder Merge
+7. Visits / OPD Workflow
+8. Emergency Case Management
+9. Admission / Inpatient Workflow
+10. Consultation Workflow
+11. Consultation Summary
+12. Clinical Tasks and Reminders
+13. Medication Administration Record / MAR
+14. MAR Chart
+15. Investigations
+16. Procedures and Theatre
+17. Theatre Rooms Management
+18. Pharmacy
+19. Billing and Payments
+20. Insurance and Claims
+21. NHIA / NHIS Claims
+22. Store / Products / Stock
+23. Ward, Emergency, Investigation and Procedure Consumables
+24. Supplier Ledger and Procurement
+25. Notifications
+26. Logs / Audit Trail
+27. Reports
+28. System Settings
+29. Troubleshooting
+30. Appendices
 
-DEBUG
-INFO
-NOTICE
-WARNING
-ERROR
-CRITICAL
-SECURITY
-
-If the project already uses Spatie Activitylog or another audit package, inspect it and decide whether to extend it instead of creating a parallel system.
-
-Do not create competing log systems if a good one already exists.
+Adapt numbering to the existing manual.
 
 ---
 
-# 8. Log Service
+# 5. Patient Folder Merge Section
 
-Create or update a central service:
+Add a user-facing section explaining Patient Folder Merge.
 
-ActivityLogService
+Explain use cases:
 
-Responsibilities:
+* temporary emergency patient later identified
+* duplicate patient records created accidentally
 
-- log normal actions
-- log clinical actions
-- log financial actions
-- log stock actions
-- log corrections
-- log overrides
-- log security events
-- log system events
-- attach patient/visit/admission/emergency context
-- capture old/new values
-- capture request metadata
-- support module filtering
+Explain workflow:
 
-Suggested methods:
+1. Open Patient Merge.
+2. Search main patient folder to keep.
+3. Search duplicate/temporary folder to merge.
+4. Compare records side by side.
+5. Choose which demographic fields to keep.
+6. Preview affected records.
+7. Confirm merge.
+8. Duplicate folder is locked and redirected to the main folder.
 
-log(string $module, string $action, array $data = []): void;
+Explain important rules:
 
-logCreated(Model $model, string $module, ?string $description = null): void;
+* merged folder is not deleted
+* old patient number remains searchable
+* all visits, emergency cases, admissions, invoices, claims, documents, and clinical records are moved to the main folder
+* only authorized users can merge patient folders
+* merge cannot be casually reversed from UI
 
-logUpdated(Model $model, string $module, array $oldValues, array $newValues, ?string $reason = null): void;
+Add emergency identity confirmation:
 
-logDeleted(Model $model, string $module, ?string $reason = null): void;
-
-logCorrection(Model $model, string $module, array $oldValues, array $newValues, string $reason): void;
-
-logOverride(Model $model, string $module, array $data, string $reason): void;
-
-logSecurity(string $action, array $data = []): void;
-
-Do not scatter logging logic randomly across controllers.
+```text
+From an Emergency Case, staff can confirm the identity of a temporary patient by searching the real patient and merging the temporary folder into the real patient folder.
+```
 
 ---
 
-# 9. Module Names
+# 6. Emergency Case Management Section
 
-Use consistent module names:
+Add or update Emergency section.
 
-EMERGENCY
-ADMISSION
-CONSULTATION
-MAR
-CLINICAL_TASKS
-INVESTIGATION
-PROCEDURE
-THEATRE
-PHARMACY
-BILLING
-PAYMENTS
-CLAIMS
-STOCK
-PURCHASE_ORDERS
-SUPPLIER_LEDGER
-PATIENTS
-PATIENT_MERGE
-INSURANCE
-USERS
-ROLES
-PERMISSIONS
-SETTINGS
-NOTIFICATIONS
-AUTH
-SYSTEM
+Explain that UHMS has three main patient pathways:
 
----
+```text
+OPD / Visit = Outpatient care
+Admission = Inpatient care
+Emergency = Urgent or critical care
+```
 
-# 10. Action Names
+Explain Emergency workflow:
 
-Use consistent action names:
+1. Create emergency case.
+2. Use existing patient or create unknown/temporary patient.
+3. Capture arrival details.
+4. Record emergency triage and vitals.
+5. Assign bay/bed and team.
+6. Start emergency clinical session.
+7. Record emergency notes/assessment.
+8. Request investigations.
+9. Request procedures.
+10. Order/administer medication and use MAR.
+11. Record consumables.
+12. Review billing.
+13. Complete disposition.
 
-CREATED
-UPDATED
-DELETED
-VIEWED
-APPROVED
-REJECTED
-CANCELLED
-COMPLETED
-SUBMITTED
-VERIFIED
-REOPENED
-ASSIGNED
-TRANSFERRED
-DISPENSED
-ADMINISTERED
-BILLED
-PAID
-REFUNDED
-CORRECTED
-OVERRIDE_UPDATED
-OVERRIDE_DELETED
-STATUS_CHANGED
-LOGIN
-LOGOUT
-FAILED_LOGIN
-PASSWORD_CHANGED
-PERMISSION_CHANGED
-ROLE_CHANGED
-MERGED
-EXPORTED
-PRINTED
+Emergency statuses:
+
+* ARRIVED
+* WAITING_TRIAGE
+* TRIAGED
+* UNDER_EMERGENCY_CARE
+* OBSERVATION
+* READY_FOR_DISPOSITION
+* DISPOSED
+* CANCELLED
+
+Disposition options:
+
+* Admitted
+* Discharged
+* Transferred to OPD
+* Transferred to Theatre
+* Referred out
+* Left against medical advice
+* Absconded
+* Died
+* Dead on arrival
+
+Important rule:
+
+```text
+Emergency care must not be blocked because payment has not been made.
+```
 
 ---
 
-# 11. Clinical Logging Requirements
+# 7. Emergency as Consultation Session
 
-Clinical logs are critical.
+Add this clearly.
 
-Log actions for:
+Emergency must be explained as a clinical session.
 
-- consultation started
-- consultation completed
-- complaint added/edited
-- HOPC added/edited
-- examination added/edited
-- diagnosis added/edited
-- prescription added/edited
-- investigation requested
-- investigation result entered
-- investigation result verified
-- procedure requested
-- theatre case updated
-- emergency triage recorded
-- emergency vitals recorded
-- admission vitals recorded
-- clinical task created/completed
-- medication administered
-- medication held/missed/refused
-- MAR correction
-- patient deceased marking
-- patient merge
+User-facing explanation:
 
-Every clinical correction must capture:
+```text
+When a patient goes through Emergency, UHMS creates an Emergency Session under the visit. This session appears together with other consultation sessions so doctors can view the emergency history before continuing care.
+```
 
-- old value
-- new value
-- corrected by
-- correction reason
-- correction time
+Explain that Consultation page can show:
 
-Do not delete clinical history silently.
+* Emergency Session
+* OPD Session
+* Dental Session
+* ENT Session
+* Admission Review Session
 
----
+Emergency Session contains:
 
-# 12. Financial Logging Requirements
+* triage
+* vitals
+* emergency notes
+* medications/MAR
+* investigations
+* procedures
+* consumables
+* billing references
+* disposition
 
-Billing and finance actions must be logged.
+Explain that this improves:
 
-Log:
-
-- invoice created
-- invoice item added
-- invoice item updated
-- invoice item cancelled
-- discount applied
-- payment recorded
-- payment reversed
-- refund recorded
-- claim prepared
-- claim submitted
-- claim approved
-- claim rejected
-- claim paid
-- supplier payment recorded
-- supplier credit note
-- supplier debit note
-- purchase order approved
-- purchase order received
-
-Financial logs must preserve:
-
-- old amount
-- new amount
-- user
-- reason if correction
-- payment reference
-- invoice/claim/payment IDs
-
-Do not recalculate or silently mutate financial data without logs.
+* patient history
+* visit preview
+* claims preparation
+* continuity of care
 
 ---
 
-# 13. Stock / Inventory Logging Requirements
+# 8. Emergency Triage and Vitals
 
-Stock logs are critical.
+Update emergency triage documentation.
 
-Log:
+Explain that triage can be auto-calculated from:
 
-- product created/updated
-- product department changed
-- purchase order created/approved/received
-- stock received
-- stock transfer requested
-- stock transfer approved
-- stock transfer dispatched
-- stock transfer received/acknowledged
-- stock adjustment
-- stock return
-- purchase return
-- pharmacy dispensing
-- ward consumable usage
-- emergency consumable usage
-- investigation consumable usage
-- procedure/theatre consumable usage
-- stock correction
-- low stock alert generated
+* temperature
+* pulse
+* respiratory rate
+* blood pressure
+* oxygen saturation
+* AVPU/consciousness
+* pain score
+* danger signs
+* trauma/bleeding/seizure/respiratory distress indicators
 
-Stock logs must capture:
+Triage categories:
 
-- product
-- stock location
-- quantity before
-- quantity changed
-- quantity after
-- movement type
-- source document
-- performed by
-- reason
+* RED: Immediate / Resuscitation
+* ORANGE: Very urgent
+* YELLOW: Urgent
+* GREEN: Less urgent
+* BLACK: Dead on arrival / expectant
 
-Do not change stock balances without stock movement and log.
+Explain that users may override the auto-suggested category if authorized and must provide a reason.
+
+Explain vitals display:
+
+* latest vitals cards
+* vitals history table
+* vitals graph/trends
+* recorded by and time
 
 ---
 
-# 14. Emergency Logging Requirements
+# 9. Bay / Bed and Team Assignment
 
-Log:
+Add emergency bay/team section.
 
-- emergency case created
-- unknown patient created
-- emergency identity confirmed
-- emergency triage recorded
-- triage auto-category calculated
-- triage category overridden
-- bay assigned/released
-- main doctor assigned
-- nurse assigned
-- contributor added
-- emergency note added/edited
-- emergency medication ordered/administered
-- emergency investigation requested/result received
-- emergency procedure requested/performed
-- emergency consumable used
-- emergency disposition completed
-- emergency transferred to admission/OPD/theatre
-- emergency death/DOA recorded
+Explain:
 
-Logs must appear in Emergency Timeline and Visit Preview where appropriate.
+1. Select emergency ward/unit.
+2. Select available bay/bed.
+3. Assign patient.
+4. Assign main emergency doctor.
+5. Assign primary nurse.
+6. Add contributors.
+
+Explain that contributors can add records without replacing the main doctor/nurse.
+
+Explain bed/bay statuses:
+
+* Available
+* Occupied
+* Cleaning
+* Out of service
+* Reserved
 
 ---
 
-# 15. Admission Logging Requirements
+# 10. Admission Medication Administration / MAR
 
-Log:
+Add or update Admission medication section.
 
-- admission created
-- bed assigned
-- bed transferred
-- admission status changed
-- admission vitals recorded
-- admission notes added
-- clinical task created/completed
-- medication administered
-- patient discharged
-- admission converted/transferred if applicable
+Explain the difference:
 
----
+```text
+Prescription = what doctor ordered.
+Dispensing = what pharmacy supplied.
+Administration = what nurse actually gave.
+```
 
-# 16. MAR / Medication Administration Logging
+Explain workflow:
 
-Log:
+1. Doctor prescribes medication.
+2. Pharmacy dispenses medication.
+3. System generates administration schedules.
+4. Clinical tasks/reminders notify nurses.
+5. Nurse records each dose.
+6. System tracks progress until complete.
 
-- medication order created
-- medication schedule generated
-- clinical task created for dose
-- dose administered
-- dose held
-- dose missed
-- dose refused
-- dose skipped
-- adverse reaction recorded
-- medication stopped
-- medication held
-- schedule cancelled
-- MAR correction
+Medication order statuses:
 
-MAR logs must capture:
+* Pending dispensing
+* Partially dispensed
+* Dispensed
+* Active administration
+* Completed
+* Held
+* Stopped
+* Cancelled
+* Expired
 
-- medication
-- dose
-- scheduled time
-- actual time
-- administered by
-- reason not given
-- reaction
-- correction reason if changed
+Dose statuses:
 
----
+* Scheduled
+* Due
+* Overdue
+* Given
+* Held
+* Missed
+* Refused
+* Skipped
+* Cancelled
 
-# 17. Procedure / Theatre Logging
-
-Log:
-
-- procedure requested
-- procedure accepted
-- theatre case created
-- theatre room assigned
-- theatre rescheduled
-- theatre team assigned
-- pre-op checklist updated
-- anaesthesia note added/edited
-- operative note added/edited
-- recovery note added/edited
-- theatre consumables used
-- case completed
-- case cancelled/postponed
-- room maintenance/block created
+Explain that nurse administration does not reduce stock again if pharmacy already dispensed the medication.
 
 ---
 
-# 18. Patient Merge Logging
+# 11. Emergency Medication / MAR
 
-Patient merge must be fully logged.
+Add emergency medication workflow.
 
-Log:
+Explain emergency supports:
 
-- merge request created
-- merge preview generated
-- merge approved/rejected
-- merge executed
-- each major table reassignment
-- patient aliases created
-- duplicate patient marked merged
-- identity confirmed
-- merge failed
+* STAT medication
+* PRN/SOS medication
+* scheduled medication
+* immediate administration
+* emergency stock source
+* MAR chart
 
-Logs must include:
+Explain stock rule:
 
-- main_patient_id
-- duplicate_patient_id
-- records moved summary
-- field resolution
-- performed_by
-- reason
+```text
+If medication is administered from Emergency stock, stock is deducted once from Emergency stock.
+If medication was dispensed by Pharmacy to the patient, administration does not deduct stock again.
+```
 
----
+Explain that medication search comes from Products, not a separate drug list.
 
-# 19. Authentication / Security Logging
+Explain automatic quantity calculation:
 
-Log security events:
-
-- login
-- logout
-- failed login
-- password changed
-- password reset requested
-- user created
-- user disabled
-- role changed
-- permission changed
-- unauthorized access attempt if detectable
-- sensitive export
-- settings changed
-
-Do not expose sensitive data like passwords/tokens in logs.
+```text
+BD for 5 days = 10 doses.
+TDS for 3 days = 9 doses.
+```
 
 ---
 
-# 20. Log UI
+# 12. Clinical Tasks and Reminders
 
-Create or repair a Log Viewer page.
+Add or update Clinical Tasks section.
 
-Suggested menu:
+Explain clinical tasks can remind staff for:
 
-System
-├── Activity Logs
-├── Clinical Logs
-├── Financial Logs
-├── Stock Logs
-├── Security Logs
+* medication administration
+* vitals monitoring
+* wound dressing
+* blood sugar check
+* doctor review
+* investigation follow-up
+* procedure preparation
+* nursing observation
 
-Or one Activity Logs page with filters.
+Explain statuses:
 
-Log viewer should support:
+* Scheduled
+* Due
+* Overdue
+* In Progress
+* Completed
+* Missed
+* Held
+* Refused
+* Cancelled
 
-- search
-- filter by module
-- filter by action
-- filter by severity
-- filter by user
-- filter by patient
-- filter by visit
-- filter by date range
-- filter by subject type
-- pagination
-- view details
-- export if authorized
-
-Do not load all logs at once.
+Explain due/overdue alerts and escalation.
 
 ---
 
-# 21. Log Detail View
+# 13. MAR Chart Section
 
-Each log detail should show:
+Add a MAR Chart section.
 
-- action
-- module
-- description
-- user/actor
-- subject
-- patient/visit context
-- old values
-- new values
-- metadata
-- reason
-- IP/user agent if available
-- timestamp
+Explain:
 
-For old/new values, show readable diff if possible.
+```text
+The MAR Chart is a patient-specific medication administration grid. It is not a statistical chart.
+```
 
----
+Explain layout:
 
-# 22. Permissions
+* rows = medications
+* columns = scheduled times
+* cells = dose status
 
-Add or verify permissions:
+Explain actions:
 
-logs.view
-logs.view_clinical
-logs.view_financial
-logs.view_stock
-logs.view_security
-logs.export
-logs.delete
-logs.manage_retention
+* Due/Overdue cell opens administration modal
+* Given/Held/Missed/Refused cell opens details
+* PRN/SOS medications appear separately
+* Print MAR button prints the chart
 
-Most users should not see all logs.
+Explain statuses and legend.
 
-Suggested access:
+Mention where MAR can be opened:
 
-- Super Admin: all logs
-- Admin: most logs
-- Records Officer: patient/merge logs
-- Finance: billing/payment/claims logs
-- Pharmacist/Store: stock/pharmacy logs
-- Doctor/Nurse: clinical logs related to their patients if policy allows
-- Security/Admin: auth/security logs
-
-Do not expose sensitive financial/security logs to normal users.
+* Admission Board
+* Emergency Board
+* Admission Detail
+* Emergency Case Detail
+* Visit Preview
 
 ---
 
-# 23. Log Retention
+# 14. Consultation Workflow Updates
 
-Prepare retention policy.
+Update Consultation section to include required clinical order:
 
-Do not delete logs by default.
+1. Vitals / Patient Summary
+2. Complaints
+3. History of Presenting Complaint
+4. Examination / Physical Examination
+5. Diagnosis
+6. Investigations
+7. Treatments / Prescriptions
+8. Procedures
+9. Tasks / Follow-up / Instructions
+10. Notes / Summary
 
-Create recommendation in report for:
+Explain record ownership:
 
-- clinical logs retained long-term
-- financial logs retained long-term
-- security logs retained according to policy
-- old debug logs archived
-- exports restricted
+* records are grouped by doctor/user
+* contributors are shown
+* main doctor is not overwritten
+* users can edit only records they are allowed to edit
 
-Do not implement auto-delete unless explicitly configured.
-
----
-
-# 24. Log Export
-
-If export infrastructure exists, allow authorized export.
-
-Formats:
-
-- CSV
-- Excel
-- PDF optional
-
-Exports must be logged:
-
-action = EXPORTED
-module = SYSTEM or LOGS
-
-Do not allow unrestricted export of sensitive logs.
+Explain Emergency Session appears in consultation sessions if the patient passed through Emergency.
 
 ---
 
-# 25. Frontend / Inertia Requirements
+# 15. Consultation Summary Page
 
-If using Inertia/Vue:
+Update Consultation Summary section.
 
-Create or update:
+Describe the new document-style summary page.
 
-resources/js/Pages/Logs/Index.vue
-resources/js/Pages/Logs/Show.vue
+It should show:
 
-Components:
+* patient and visit header
+* session details
+* main doctor and contributors
+* complaints
+* HOPC
+* examination
+* diagnoses
+* investigations
+* treatments/prescriptions
+* procedures
+* tasks/follow-up
+* notes
+* record owners
+* dates/times
 
-LogFilterPanel
-LogTable
-LogSeverityBadge
-LogActionBadge
-LogDetailPanel
-JsonDiffViewer
+Mention:
 
-Use pagination.
+```text
+The Consultation Summary page is designed like a readable clinical document and should not hide important information.
+```
 
-Do not load huge JSON blobs in table rows. Show them in detail modal/page.
-
----
-
-# 26. Routes / Controllers
-
-Use existing route conventions.
-
-Suggested routes:
-
-Route::prefix('admin/logs')
-    ->name('admin.logs.')
-    ->middleware(['auth'])
-    ->group(function () {
-        Route::get('/', [ActivityLogController::class, 'index'])->name('index');
-        Route::get('/{activityLog}', [ActivityLogController::class, 'show'])->name('show');
-        Route::get('/export', [ActivityLogExportController::class, 'export'])->name('export');
-    });
-
-Suggested controllers:
-
-ActivityLogController
-ActivityLogExportController
-ClinicalLogController optional
-FinancialLogController optional
-StockLogController optional
-SecurityLogController optional
-
-Prefer one flexible ActivityLogController first.
+Mention print option if implemented.
 
 ---
 
-# 27. Logging Middleware / Helpers
+# 16. Investigations
 
-Consider middleware/helper to capture request context:
+Update Investigations section.
 
-- IP address
-- user agent
-- authenticated user
-- route name
-- request ID if available
+Explain both consultation and emergency investigations.
 
-Do not log sensitive request data.
+User workflow:
 
-Mask sensitive fields:
+1. Select investigation department.
+2. Select service/items.
+3. Add clinical reason.
+4. Submit request.
+5. Department accepts/handles request.
+6. Results are entered.
+7. Results are verified.
+8. Doctor can view verified results.
 
-password
-password_confirmation
-token
-api_key
-secret
-remember_token
-card_number
-pin
+Emergency investigations can be marked:
 
----
+* Emergency
+* Urgent
+* Routine
 
-# 28. Model Observers
+Explain grouping by department and owner.
 
-For critical models, create observers if useful:
-
-PatientObserver
-VisitObserver
-InvoiceObserver
-PaymentObserver
-StockMovementObserver
-MedicationAdministrationObserver
-EmergencyCaseObserver
-TheatreCaseObserver
-ClaimObserver
-UserObserver
-
-Observers should log important lifecycle actions.
-
-Do not over-log every tiny update if it causes noise.
-
-Use explicit service logs for workflow actions.
+Explain consumables used by investigation departments are deducted from their department stock.
 
 ---
 
-# 29. Avoid Log Noise
+# 17. Procedures and Theatre
 
-Not every minor frontend save should create useless noise.
+Update Procedure section.
 
-Prioritize:
+Explain procedure request workflow:
 
-- clinical changes
-- financial changes
-- stock changes
-- status changes
-- assignments
-- corrections
-- overrides
-- security events
-- merges
-- approvals
-- submissions
-- cancellations
+1. Doctor requests procedure.
+2. Procedure/Theatre accepts.
+3. Billing item may be created.
+4. Theatre schedules.
+5. Pre-op is completed.
+6. Anaesthesia note is recorded.
+7. Surgeon operative note is recorded.
+8. Recovery/post-op note is recorded.
+9. Case is completed.
 
-Avoid logging harmless page views unless needed.
+Explain procedures can come from:
 
----
+* Consultation
+* Emergency
+* Admission
 
-# 30. Tests Required
-
-Add or update tests.
-
-## Core Logs
-
-1. ActivityLogService creates log.
-2. Log stores user, module, action, subject.
-3. Log stores old/new values.
-4. Log stores reason.
-5. Log stores patient/visit context.
-6. Log viewer lists logs.
-7. Log filters by module.
-8. Log filters by user.
-9. Log filters by patient.
-10. Log detail shows old/new values.
-
-## Clinical Logs
-
-11. Consultation record update creates log.
-12. Emergency triage override creates log.
-13. Medication administration creates log.
-14. MAR correction creates log.
-15. Investigation result verification creates log.
-16. Theatre operative note update creates log.
-
-## Financial Logs
-
-17. Invoice item creation creates log.
-18. Payment recording creates log.
-19. Payment correction/reversal creates log.
-20. Claim submission/rejection creates log.
-
-## Stock Logs
-
-21. Stock movement creates log.
-22. Pharmacy dispensing creates log.
-23. Emergency consumable usage creates log.
-24. Theatre consumable usage creates log.
-25. Stock adjustment creates log with reason.
-
-## Patient Merge Logs
-
-26. Patient merge creates merge logs.
-27. Patient alias creation creates log.
-28. Merged patient redirect/action is logged if needed.
-
-## Security Logs
-
-29. Login event creates security log if implemented.
-30. Failed login creates security log if implemented.
-31. Role/permission change creates log.
-
-## Permissions
-
-32. Unauthorized user cannot view logs.
-33. Finance user can view financial logs if permitted.
-34. Normal user cannot view security logs.
-35. Export requires permission.
+Explain billing is separate from the clinical procedure section.
 
 ---
 
-# 31. Verification Checklist
+# 18. Theatre Rooms Management
 
-After implementation, verify manually:
+Add new Theatre Rooms section.
 
-- Create consultation note and check log.
-- Edit diagnosis and check old/new values.
-- Record emergency triage override and check reason.
-- Administer medication and check MAR log.
-- Create stock movement and check stock log.
-- Record payment and check finance log.
-- Merge patients and check merge logs.
-- Open log viewer and filter by patient.
-- Open log detail and inspect metadata.
-- Confirm unauthorized user cannot access logs.
+Explain:
+
+* theatre rooms CRUD
+* room statuses
+* theatre schedule board
+* room calendar
+* scheduling theatre case
+* double-booking prevention
+* emergency theatre cases
+* theatre team
+* pre-op checklist
+* anaesthesia note
+* operative note
+* recovery note
+* consumables
+* billing
+* visit preview
+
+Room statuses:
+
+* Available
+* Occupied
+* Scheduled
+* Cleaning
+* Maintenance
+* Out of service
+* Reserved
+
+Theatre case statuses:
+
+* Requested
+* Accepted
+* Billed
+* Scheduled
+* Pre-op
+* Anaesthesia Ready
+* In Theatre
+* In Surgery
+* Surgery Done
+* Recovery
+* Post-op
+* Completed
+* Cancelled
+* Postponed
 
 ---
 
-# 32. Deliverables
+# 19. Pharmacy Updates
+
+Update Pharmacy section.
+
+Explain drugs can be billed before dispensing.
+
+Workflow:
+
+1. Doctor prescribes drugs.
+2. Pharmacy reviews prescription.
+3. Pharmacy selects drugs to bill/dispense.
+4. Pharmacy can reduce quantities.
+5. Only selected drugs are billed.
+6. Only billed drugs appear on dispense page.
+7. Dispensing reduces pharmacy stock.
+
+Important:
+
+```text
+Billing is financial. Dispensing is physical stock movement.
+```
+
+Explain pharmacy catalogue displays:
+
+* Pharmacy Available Qty
+* Main Stock Qty
+* Stock Status
+
+---
+
+# 20. Ward and Emergency Consumables
+
+Add Ward/Emergency consumables section.
+
+Explain:
+
+* Ward uses Ward stock location.
+* Emergency uses Emergency stock location.
+* Users select products/consumables linked to their department.
+* Usage deducts from department stock.
+* Billable consumables create invoice items.
+* Non-billable consumables only create stock movements.
+* Departments cannot create products.
+
+---
+
+# 21. Stock / Products / Inventory
+
+Update Store/Stock section.
+
+Reinforce:
+
+```text
+Every physical item comes from Products.
+```
+
+Includes:
+
+* drugs
+* consumables
+* investigation items
+* procedure items
+* theatre consumables
+* emergency supplies
+* ward supplies
+
+Explain Main Store rule:
+
+* purchase receipts go into Main Store
+* departments receive stock through requisition/transfer
+* departments consume only from their own stock locations
+
+Explain Stock Balance Matrix:
+
+```text
+Product | Main Store | Pharmacy | Ward | Emergency | Lab | Theatre | Total | Status
+```
+
+Explain low stock display:
+
+* no yellow row background
+* status shown beside each location quantity
+* statuses: OK, LOW, CRITICAL, OUT, NOT STOCKED
+
+---
+
+# 22. Insurance and Claims
+
+Update Insurance/Claims section.
+
+Explain insurance type based claims:
+
+```text
+Insurance Type = claim workflow
+Insurance Provider = organization under that type
+```
+
+Example:
+
+```text
+Insurance Type: NHIA
+Provider: NHIS
+```
+
+Explain NHIA/NHIS claims preparation:
+
+1. Claim officer opens eligible visit.
+2. System prepares claim from invoice items.
+3. Claim officer reviews clinical mirror.
+4. Claim officer can select doctor-entered information or enter claim-facing manual details.
+5. CCC/verification code is entered if required.
+6. Claim is validated.
+7. Claim is marked ready.
+8. Claim is exported/submitted.
+9. Claim status and payment are tracked.
+
+Explain claim clinical mirror includes:
+
+* consultation
+* complaints
+* HOPC
+* diagnosis
+* prescriptions/drugs
+* investigations
+* procedures
+* invoice items
+
+Emphasize claim edits do not overwrite clinical records.
+
+---
+
+# 23. Billing Updates
+
+Update Billing section.
+
+Explain single visit invoice:
+
+```text
+One visit = one invoice.
+```
+
+Items are added from:
+
+* visit services
+* emergency services
+* investigations
+* pharmacy
+* procedures/theatre
+* consumables
+* admission/ward charges
+
+Explain invoice item logic:
+
+* cash price
+* insurance price
+* selected price
+* patient payable
+* paid amount
+* balance
+* discount entered manually by user
+
+Explain payments can cover invoice lines partially or fully.
+
+---
+
+# 24. Notifications Section
+
+Add Notifications section.
+
+Explain notifications are used for:
+
+* emergency alerts
+* medication due/overdue
+* clinical tasks
+* investigation results
+* procedure/theatre updates
+* stock alerts
+* claims
+* patient merge requests
+* billing/payment alerts
+
+Explain notification UI:
+
+* bell icon
+* unread count
+* notification list
+* mark as read
+* action links
+
+Explain users only receive notifications relevant to their role/department/assignment.
+
+---
+
+# 25. Logs / Audit Trail Section
+
+Add Logs section.
+
+Explain logs track:
+
+* who did what
+* when it happened
+* which record was affected
+* old and new values
+* reason for correction/override
+* module/source
+
+Explain logs exist for:
+
+* clinical actions
+* financial actions
+* stock actions
+* emergency
+* admission
+* MAR
+* theatre
+* patient merge
+* security/authentication
+* user/permission changes
+
+Explain only authorized users can view logs.
+
+---
+
+# 26. Reports Section
+
+Update Reports section to include new reports:
+
+Emergency reports:
+
+* attendance
+* triage category
+* waiting time
+* disposition
+* mortality
+* emergency medication
+
+MAR reports:
+
+* medication administration
+* overdue medication
+* missed dose
+* nurse administration
+
+Theatre reports:
+
+* room utilization
+* procedures by surgeon
+* cancelled/postponed cases
+* consumables usage
+* anaesthesia report
+
+Stock reports:
+
+* stock balance matrix
+* low/out stock
+* department stock
+* movement history
+* requisitions/transfers
+
+Claims reports:
+
+* submitted claims
+* rejected claims
+* paid claims
+* NHIA/NHIS claims
+
+Logs/notification reports if implemented.
+
+---
+
+# 27. Screenshots
+
+Do not generate fake screenshots.
+
+If screenshots are outdated, add a note:
+
+```text
+Screenshot update required: this section has changed after the latest workflow redesign.
+```
+
+If screenshot placeholders exist, mark them clearly.
+
+If the project has a screenshot capture script, update references but do not claim screenshots were regenerated unless actually done.
+
+---
+
+# 28. Style Requirements
+
+The user manual should be:
+
+* clear
+* practical
+* user-focused
+* not too technical
+* organized by module
+* step-by-step where useful
+* consistent in headings
+* easy for hospital staff to follow
+
+Use tables where helpful for statuses and roles.
+
+Use warnings/notes for important rules.
+
+Example:
+
+```text
+Important:
+Billing a drug does not reduce stock. Stock is reduced only when the drug is dispensed.
+```
+
+---
+
+# 29. Do Not Include Developer-Only Details
+
+Avoid too much code-level explanation.
+
+Do not include migrations, model names, route names, service class names, unless the existing manual already has a technical appendix.
+
+This is a user manual, not an implementation prompt.
+
+---
+
+# 30. Deliverables
 
 Provide:
 
-1. LOGS_GAP_ANALYSIS.md
-2. LOGS_SOLUTION_REPORT.md
-3. LOGS_REMAINING_RECOMMENDATIONS.md
-4. Central ActivityLogService or equivalent
-5. Log table/model updates
-6. Log viewer UI
-7. Log detail UI
-8. Permissions/routes/controllers
-9. Module log triggers
-10. Tests or verification notes
-11. Files modified
-12. Remaining TODOs
+1. Updated user manual file.
+2. Any updated linked documentation files if needed.
+3. A short summary of sections updated.
+4. A list of screenshots that need regeneration.
+5. A list of assumptions or unclear areas.
+6. Files modified.
 
 ---
 
-# 33. Important Rules
+# 31. Important Rules
 
-Do not create multiple competing log systems.
+Do not remove existing useful documentation.
 
-Do not lose old logs.
+Do not invent screenshots.
 
-Do not log passwords, tokens, secrets, or sensitive credentials.
+Do not claim features are complete if the manual is only describing planned workflow. If a feature is not fully implemented, mark it as pending or planned based on current code.
 
-Do not expose logs to unauthorized users.
+Do not create duplicate manuals unless necessary.
 
-Do not silently change clinical, financial, or stock records without logs.
+Do not write developer implementation details inside the user manual.
 
-Do not delete logs by default.
+Do not contradict the updated UHMS workflow.
 
-Do not over-log meaningless noise.
+Now inspect the current manual and update it to reflect all recent UHMS workflow changes.
 
-Do not break existing UHMS workflows.
-
-Now inspect the UHMS logging implementation, produce the required gap analysis, fix and standardize the logging system, and generate the solution and recommendation reports.
+```
 ```
