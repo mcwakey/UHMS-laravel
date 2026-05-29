@@ -91,6 +91,8 @@ use App\Http\Controllers\Lab\LabResultController;
 use App\Http\Controllers\Pharmacy\DispensingController;
 use App\Http\Controllers\StaffDashboardController;
 use App\Http\Controllers\Theatre\TheatreController;
+use App\Http\Controllers\Theatre\TheatreRoomController;
+use App\Http\Controllers\Theatre\TheatreScheduleController;
 use App\Models\Department;
 use App\Models\User;
 use App\Services\ProcedureRequestService;
@@ -899,9 +901,24 @@ Route::middleware('auth')->group(function () {
 
         // ── Theatre / Procedure Workflow ───────────────────────────────
         Route::prefix('theatre')->name('theatre.')->group(function () {
+            Route::middleware('can:theatre.rooms.view')->group(function () {
+                Route::get('rooms', [TheatreRoomController::class, 'index'])->name('rooms.index');
+            });
+            Route::middleware('can:theatre.rooms.create')->group(function () {
+                Route::post('rooms', [TheatreRoomController::class, 'store'])->name('rooms.store');
+                Route::post('rooms/{theatreRoom}/blocks', [TheatreRoomController::class, 'storeBlock'])->name('rooms.blocks.store');
+            });
+            Route::middleware('can:theatre.rooms.update')->group(function () {
+                Route::patch('rooms/{theatreRoom}', [TheatreRoomController::class, 'update'])->name('rooms.update');
+                Route::patch('rooms/{theatreRoom}/status', [TheatreRoomController::class, 'status'])->name('rooms.status');
+                Route::delete('room-blocks/{block}', [TheatreRoomController::class, 'destroyBlock'])->name('rooms.blocks.destroy');
+            });
+
             // Dashboard + detail
             Route::middleware('can:procedure.view')->group(function () {
                 Route::get('/', [TheatreController::class, 'index'])->name('index');
+                Route::get('board', [TheatreController::class, 'index'])->name('board');
+                Route::get('calendar', [TheatreScheduleController::class, 'calendar'])->name('calendar');
                 // Procedure Consumables — read-only filtered product catalogue.
                 Route::get('consumables', [ProcedureConsumablesController::class, 'index'])
                     ->name('consumables.index');

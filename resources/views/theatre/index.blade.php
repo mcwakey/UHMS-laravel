@@ -5,19 +5,59 @@
 @section('content')
 <div class="container-fluid">
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="mb-0">Theatre / Procedure Workflow</h3>
-        <form action="{{ route('admin.theatre.index') }}" method="GET" class="d-flex gap-2">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+            <h3 class="mb-1">Theatre Schedule Board</h3>
+            <div class="text-muted small">Procedure requests, room assignments, billing state, and theatre workflow status.</div>
+        </div>
+        <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.theatre.calendar') }}">
+                <i class="ti ti-calendar"></i> Calendar
+            </a>
+            @can('theatre.rooms.view')
+                <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.theatre.rooms.index') }}">
+                    <i class="ti ti-door"></i> Rooms
+                </a>
+            @endcan
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+        <form action="{{ route('admin.theatre.index') }}" method="GET" class="row g-2 align-items-end">
             <input type="hidden" name="tab" value="{{ $tab }}">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Search request #, patient, visit…" class="form-control form-control-sm" style="min-width:240px;">
-            <select name="priority" class="form-select form-select-sm" style="width:140px;">
-                <option value="">Any priority</option>
-                @foreach (['routine','urgent','emergency'] as $p)
-                    <option value="{{ $p }}" @selected(request('priority')===$p)>{{ ucfirst($p) }}</option>
-                @endforeach
-            </select>
-            <button class="btn btn-sm btn-primary">Filter</button>
+            <div class="col-md-3">
+                <label class="form-label small">Search</label>
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Request #, patient, visit" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Priority</label>
+                <select name="priority" class="form-select form-select-sm">
+                    <option value="">Any priority</option>
+                    @foreach (['routine','urgent','emergency'] as $p)
+                        <option value="{{ $p }}" @selected(request('priority')===$p)>{{ ucfirst($p) }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Room</label>
+                <select name="room_id" class="form-select form-select-sm">
+                    <option value="">Any room</option>
+                    @foreach ($rooms as $room)
+                        <option value="{{ $room->id }}" @selected((int) request('room_id') === (int) $room->id)>{{ $room->code }} - {{ $room->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Scheduled date</label>
+                <input type="date" name="date" class="form-control form-control-sm" value="{{ request('date') }}">
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-sm btn-primary flex-fill">Filter</button>
+                <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.theatre.index', ['tab' => $tab]) }}">Reset</a>
+            </div>
         </form>
+        </div>
     </div>
 
     {{-- Stats --}}

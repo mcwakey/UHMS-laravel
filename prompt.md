@@ -1,870 +1,1034 @@
 ```text
 You are a senior Laravel + Inertia/Vue architect working on UHMS — Ultimate Hospital Management System.
 
-We need to refine and complete the Emergency Case Management module.
+We need to implement Theatre Rooms Management as part of the existing Procedure/Theatre workflow.
 
-UHMS already has OPD/Visit, Admission, Billing, Pharmacy/Product Stock, Investigations, Procedures, Consultation Sessions, Clinical Record Ownership, MAR/Medication Administration planning, Visit Preview, and Patient Merge foundations.
+UHMS already has patients, visits, admission, emergency, consultation, procedures, billing, invoices, insurance pricing, product stock, stock locations, consumables, MAR/medication administration, clinical tasks, and visit preview.
 
-Emergency must now be refined so it behaves like a proper Emergency Clinical Session, integrated with the existing UHMS mechanisms instead of becoming a parallel system.
+Theatre Rooms Management must integrate with the existing Procedure module. Do not create a parallel procedure system.
 
-Do not rebuild the whole emergency module from scratch unless a part is missing or badly implemented.
-
-First inspect the current implementation, identify gaps, preserve what works, and implement only missing/incomplete parts.
-
-Do not break:
-- OPD / Visit workflow
-- Admission workflow
-- Consultation workflow
-- Billing / Invoice system
-- Pharmacy / Product stock system
-- Investigation workflow
-- Procedure workflow
-- MAR / Medication Administration system
-- Clinical Tasks / Reminders
-- Visit Preview
-- Patient Merge
-- Insurance pricing / claims foundation
+Theatre Rooms Management should handle the physical theatre/procedure rooms, schedules, room availability, theatre team, pre-op workflow, anaesthesia note, surgeon operative note, post-op/recovery note, consumables, billing, and visit preview integration.
 
 ---
 
-# 1. Main Objective
+# 1. Core Concept
 
-Refine Emergency Case Management so the Emergency page becomes a complete clinical workspace.
+Current procedure workflow should evolve into:
 
-Emergency must support:
-
-1. Automated emergency triage calculation.
-2. Emergency vitals history and graph, mirroring Admission vitals section.
-3. Medication / MAR section with proper searchable product/drug list.
-4. Automatic medication quantity calculation like consultation prescriptions.
-5. Emergency MAR integration.
-6. Investigation section refined to mirror Consultation Investigations.
-7. Procedure section refined and decoupled from Billing.
-8. Billing section refined as a financial summary/action area.
-9. Bay and Team section linked to wards/beds/bays.
-10. Emergency treated as a clinical session with medical records.
-11. Main emergency doctor, assigned nurse, and contributors.
-12. All emergency records visible in Consultation/Visit Preview where appropriate.
-13. Record ownership preserved across emergency notes, vitals, medications, investigations, procedures, and billing.
-
----
-
-# 2. Core Concept
-
-Emergency must be treated as a proper clinical session.
-
-Correct model:
-
-Visit
+Procedure Request
     ↓
-Emergency Case
+Theatre Accepts Procedure
     ↓
-Emergency Session
+Billing Item Created if required
     ↓
-Medical Records / Vitals / MAR / Investigations / Procedures / Billing / Team / Disposition
+Theatre Case Created / Linked
+    ↓
+Theatre Room Scheduled
+    ↓
+Pre-op Checklist
+    ↓
+Anaesthesia Note
+    ↓
+Surgeon Operative Note
+    ↓
+Post-op / Recovery Note
+    ↓
+Completed
 
-Emergency should not be a loose page with disconnected widgets.
+Theatre Rooms Management answers:
 
-Emergency must be integrated into the same patient, visit, invoice, medical record, stock, medication, investigation, procedure, and preview architecture.
+- Which room?
+- At what time?
+- For which patient?
+- For which procedure?
+- With which surgeon/team?
+- What is the room status?
+- What resources/equipment are needed?
+- What is the case status?
 
 ---
 
-# 3. Emergency Page Recommended Sections
+# 2. Main Objectives
 
-The Emergency Case Detail page should have these sections:
+Implement:
 
-1. Emergency Header / Patient Summary
-2. Triage & Vitals
-3. Bay / Bed & Team
-4. Emergency Clinical Notes / Assessment
-5. Medication / MAR
-6. Investigations
-7. Procedures
-8. Consumables
-9. Billing
-10. Tasks / Monitoring
-11. Disposition
-12. Emergency Timeline
-
-The top header should always clearly show:
-
-- Patient
-- Emergency number
-- Visit number
-- Triage category
-- Current emergency status
-- Bay / bed
-- Main doctor
-- Primary nurse
-- Contributors
-- Time since arrival
-- Critical alerts
-- Insurance/payment context if useful
+1. Theatre rooms CRUD.
+2. Theatre room types and statuses.
+3. Theatre schedule board.
+4. Theatre room calendar.
+5. Theatre case management.
+6. Procedure request to theatre case linking.
+7. Theatre room assignment.
+8. Double-booking prevention.
+9. Emergency theatre case priority.
+10. Theatre team assignment.
+11. Pre-op checklist.
+12. Anaesthesia note.
+13. Surgeon operative note.
+14. Post-op/recovery note.
+15. Theatre consumables from Theatre stock location.
+16. Theatre billing integration through existing BillingService.
+17. Theatre room maintenance/blocking.
+18. Theatre reports foundation.
+19. Visit Preview integration.
+20. Permissions and menu updates.
 
 ---
 
-# 4. Emergency Session Model
+# 3. Important Rules
 
-Create or update an Emergency Session concept.
+Do not create a parallel procedure workflow.
 
-If an existing consultation/session mechanism can support this, reuse it.
+Do not create a parallel billing system.
 
-Recommended table if missing:
+Do not create a parallel stock system.
 
-emergency_sessions
-- id
-- emergency_case_id
-- visit_id
-- patient_id
-- department_id
-- medical_record_id nullable
-- main_doctor_id nullable
-- primary_nurse_id nullable
-- status
-- started_at nullable
-- ended_at nullable
-- started_by nullable
-- ended_by nullable
-- notes nullable
-- created_at
-- updated_at
+Do not create theatre consumables outside Products.
 
-Statuses:
+Do not bypass BillingService.
 
-PENDING
-ACTIVE
-OBSERVATION
+Do not bypass StockMovementService.
+
+Do not bypass existing Procedure Request workflow.
+
+Do not block emergency/life-saving theatre care because invoice is unpaid.
+
+Do not allow double-booking of active theatre cases in the same room/time.
+
+Do not delete clinical theatre notes. Use correction/audit trail if needed.
+
+Do not overwrite the main surgeon when another theatre team member adds notes.
+
+Do not break existing procedures, emergency, admission, billing, stock, MAR, visit preview, or consultation workflows.
+
+---
+
+# 4. Theatre Rooms
+
+Create or update:
+
+theatre_rooms
+
+Recommended fields:
+
+id
+name
+code
+department_id nullable
+room_type
+capacity nullable
+location nullable
+status
+notes nullable
+is_active boolean default true
+created_at
+updated_at
+
+Room types:
+
+MAJOR_THEATRE
+MINOR_THEATRE
+EMERGENCY_THEATRE
+MATERNITY_THEATRE
+ENDOSCOPY_ROOM
+PROCEDURE_ROOM
+RECOVERY_ROOM
+DENTAL_PROCEDURE_ROOM
+EYE_THEATRE
+OTHER
+
+Room statuses:
+
+AVAILABLE
+OCCUPIED
+SCHEDULED
+CLEANING
+MAINTENANCE
+OUT_OF_SERVICE
+RESERVED
+
+Examples:
+
+- Main Theatre 1
+- Main Theatre 2
+- Minor Procedure Room
+- Maternity Theatre
+- Emergency Theatre
+- Endoscopy Room
+- Dental Procedure Room
+- Eye Theatre
+- Recovery Room
+
+---
+
+# 5. Theatre Room CRUD UI
+
+Create Theatre Room management page.
+
+Fields:
+
+- Room name
+- Room code
+- Department
+- Room type
+- Capacity
+- Location
+- Status
+- Notes
+- Active/inactive
+
+Actions:
+
+- Create room
+- Edit room
+- Deactivate room
+- Set available
+- Set cleaning
+- Set maintenance
+- Set out of service
+- View schedule
+
+Rules:
+
+- Room code must be unique.
+- Inactive/out-of-service rooms cannot be scheduled.
+- Rooms with active theatre cases should not be deactivated without override permission.
+
+---
+
+# 6. Theatre Cases
+
+Create or update:
+
+theatre_cases
+
+Recommended fields:
+
+id
+procedure_request_id nullable
+visit_id
+patient_id
+admission_id nullable
+emergency_case_id nullable
+theatre_room_id nullable
+scheduled_start_at nullable
+scheduled_end_at nullable
+actual_start_at nullable
+actual_end_at nullable
+expected_duration_minutes nullable
+primary_surgeon_id nullable
+assistant_surgeon_id nullable
+anaesthetist_id nullable
+scrub_nurse_id nullable
+circulating_nurse_id nullable
+recovery_nurse_id nullable
+priority
+status
+accepted_by nullable
+accepted_at nullable
+scheduled_by nullable
+completed_by nullable
+completed_at nullable
+cancelled_by nullable
+cancelled_at nullable
+cancellation_reason nullable
+notes nullable
+created_at
+updated_at
+
+Priority values:
+
+ELECTIVE
+URGENT
+EMERGENCY
+LIFE_SAVING
+
+Theatre case statuses:
+
+REQUESTED
+ACCEPTED
+BILLED
+SCHEDULED
+PRE_OP
+ANAESTHESIA_READY
+IN_THEATRE
+IN_SURGERY
+SURGERY_DONE
+RECOVERY
+POST_OP
 COMPLETED
 CANCELLED
-
-Rules:
-
-- One active emergency session should exist per active emergency case.
-- Emergency records should link to emergency_session_id where possible.
-- Emergency records should also link to visit_id, patient_id, and emergency_case_id.
-- Emergency session should be visible in Visit Preview.
-- Emergency session should be visible in patient medical history/consultation history where appropriate.
+POSTPONED
 
 ---
 
-# 5. Emergency Contributors / Team
+# 7. Procedure Request Integration
 
-Emergency must support a team, not only one assigned doctor.
+Theatre Case must be linked to the existing procedure request.
 
-Distinguish:
+When a procedure request is accepted by Theatre:
 
-- Main emergency doctor
-- Primary nurse
-- Contributing doctors
-- Contributing nurses
-- Other contributors
+- create or update theatre_case
+- link procedure_request_id
+- link visit_id and patient_id
+- link admission_id or emergency_case_id where applicable
+- preserve requested_by / created_by from procedure request
+- set theatre case status = ACCEPTED
+- bill procedure if workflow requires billing at acceptance
+- do not duplicate billing
 
-Do not overwrite the main doctor when another doctor adds input.
+Procedure Request remains the clinical request entry point.
 
-Create or reuse contributor table.
-
-Recommended table if missing:
-
-emergency_session_contributors
-- id
-- emergency_session_id
-- emergency_case_id
-- user_id
-- role nullable
-- first_contributed_at
-- last_contributed_at
-- created_at
-- updated_at
-
-Rules:
-
-- Every emergency record keeps its own creator/owner.
-- A contributor is automatically added when a non-main user creates a record.
-- Main doctor remains main doctor until explicitly changed.
-- Primary nurse remains primary nurse until explicitly changed.
-- Contributors can view but cannot edit other users’ records unless authorized.
-- Emergency page must show main doctor, primary nurse, and contributors.
+Theatre Case becomes the operational theatre execution record.
 
 ---
 
-# 6. Emergency Record Ownership
+# 8. Theatre Room Scheduling
 
-All emergency records must store and display their creator.
+Theatre staff should assign:
 
-This applies to:
+- theatre room
+- date
+- start time
+- expected duration
+- surgeon
+- anaesthetist
+- scrub nurse
+- circulating nurse
+- assistant surgeon optional
+- priority
+- notes
 
-- triage
-- vitals
-- emergency notes
-- doctor assessments
-- nursing notes
-- medications
-- MAR administrations
-- investigations
-- procedures
-- consumable usage
-- tasks
-- disposition notes
+When scheduled:
 
-Each record should have:
+- set scheduled_start_at
+- set scheduled_end_at
+- set theatre_room_id
+- set assigned theatre team
+- set status = SCHEDULED
+- mark room as SCHEDULED or keep AVAILABLE depending calendar design
+- log scheduling event
 
+The system must check room availability.
+
+If room is unavailable, show:
+
+Room already booked from 08:00 to 09:30. Choose another room or time.
+
+---
+
+# 9. Double-Booking Prevention
+
+Prevent two active theatre cases in the same room during overlapping times.
+
+Overlap rule:
+
+A case conflicts if:
+
+existing.scheduled_start_at < new.scheduled_end_at
+AND
+existing.scheduled_end_at > new.scheduled_start_at
+AND
+existing.theatre_room_id = selected room
+AND
+existing.status NOT IN (CANCELLED, POSTPONED, COMPLETED)
+
+Do not allow scheduling into:
+
+- OUT_OF_SERVICE room
+- MAINTENANCE room
+- inactive room
+
+Emergency override may be allowed only with permission:
+
+theatre.schedule.override
+
+If override occurs:
+
+- require reason
+- log override
+- optionally mark affected elective case as POSTPONED
+
+---
+
+# 10. Theatre Schedule Board
+
+Create Theatre Schedule Board.
+
+Views:
+
+- Today’s Theatre List
+- Upcoming Cases
+- Emergency Cases
+- By Room
+- By Surgeon
+- By Status
+- Completed Cases
+- Cancelled/Postponed Cases
+
+Columns:
+
+- Time
+- Patient
+- Visit / Admission / Emergency No.
+- Procedure
+- Room
+- Surgeon
+- Anaesthetist
+- Priority
+- Status
+- Billing Status
+- Actions
+
+Example:
+
+08:00 | Ama Mensah | Appendectomy | Theatre 1 | Dr. Kofi | Scheduled
+10:30 | Yao Mensah | Wound Debridement | Minor Room | Dr. Ama | Pre-op
+Emergency | Unknown Male | Exploratory Laparotomy | Emergency Theatre | Pending Room
+
+Actions:
+
+- View case
+- Assign room
+- Reschedule
+- Start pre-op
+- Record anaesthesia
+- Start surgery
+- Add operative note
+- Send to recovery
+- Complete
+- Cancel/Postpone
+
+---
+
+# 11. Theatre Room Calendar
+
+Create room calendar view.
+
+For each theatre room, show scheduled blocks:
+
+08:00 - 09:30 Appendectomy
+10:00 - 11:00 Hernia Repair
+11:00 - 11:30 Cleaning
+12:00 - 13:00 C-section
+
+Features:
+
+- daily view
+- weekly view optional
+- filter by room
+- filter by surgeon
+- filter by priority
+- show maintenance/cleaning blocks
+- show emergency cases clearly
+
+Rules:
+
+- calendar data must come from theatre_cases and room blocks/maintenance
+- prevent double-booking
+- sort chronologically
+
+---
+
+# 12. Theatre Room Maintenance / Blocking
+
+Create support for room blocking.
+
+Recommended table:
+
+theatre_room_blocks
+
+Fields:
+
+id
+theatre_room_id
+block_type
+start_at
+end_at
+reason
+notes nullable
+created_by
+created_at
+updated_at
+
+Block types:
+
+CLEANING
+MAINTENANCE
+STERILIZATION
+EQUIPMENT_FAILURE
+RESERVED_EMERGENCY_SLOT
+OTHER
+
+Rules:
+
+- Cannot schedule normal cases during active room block.
+- Emergency override requires permission and reason.
+- Blocks should appear on room calendar.
+
+---
+
+# 13. Emergency Theatre Cases
+
+Emergency cases can create theatre requests.
+
+Flow:
+
+Emergency Case
+    ↓
+Procedure Request
+    ↓
+Theatre Case
+    ↓
+Emergency Theatre scheduling
+
+Emergency theatre cases should:
+
+- have priority EMERGENCY or LIFE_SAVING
+- appear at top of Theatre Board
+- suggest Emergency Theatre room first if available
+- allow urgent scheduling
+- not be blocked by unpaid invoice
+- still create billing items through BillingService
+
+If emergency case is linked:
+
+theatre_cases.emergency_case_id should be set.
+
+---
+
+# 14. Theatre Team Management
+
+Theatre case should track:
+
+- primary surgeon
+- assistant surgeon
+- anaesthetist
+- scrub nurse
+- circulating nurse
+- recovery nurse
+- other staff/contributors
+
+Optional table:
+
+theatre_case_team_members
+
+Fields:
+
+id
+theatre_case_id
+user_id
+role
+assigned_by
+assigned_at
+created_at
+updated_at
+
+Roles:
+
+PRIMARY_SURGEON
+ASSISTANT_SURGEON
+ANAESTHETIST
+SCRUB_NURSE
+CIRCULATING_NURSE
+RECOVERY_NURSE
+OBSERVER
+OTHER
+
+Rules:
+
+- Do not overwrite primary surgeon when another team member adds a note.
+- Each note/action must show its creator.
+- Contributors should be visible on theatre case page.
+- Team assignment changes should be logged.
+
+---
+
+# 15. Theatre Case Detail Page
+
+Create Theatre Case Detail page.
+
+Sections:
+
+1. Patient / Visit Header
+2. Procedure Request Summary
+3. Room & Schedule
+4. Theatre Team
+5. Pre-op Checklist
+6. Anaesthesia Note
+7. Surgeon Operative Note
+8. Consumables / Equipment
+9. Post-op / Recovery
+10. Billing Summary
+11. Timeline / Audit
+
+Header should show:
+
+- patient
+- visit/admission/emergency number
+- procedure
+- priority
+- room
+- scheduled time
+- status
+- primary surgeon
+- anaesthetist
+- billing status
+
+---
+
+# 16. Pre-op Checklist
+
+Create pre-op checklist support.
+
+Recommended table:
+
+theatre_preop_checklists
+
+Fields:
+
+id
+theatre_case_id
+completed_by nullable
+completed_at nullable
+status
+notes nullable
+created_at
+updated_at
+
+Checklist item table:
+
+theatre_preop_checklist_items
+
+Fields:
+
+id
+theatre_preop_checklist_id
+item_key
+label
+status
+notes nullable
+checked_by nullable
+checked_at nullable
+created_at
+updated_at
+
+Checklist item statuses:
+
+PENDING
+COMPLETE
+INCOMPLETE
+WAIVED
+
+Default checklist items:
+
+- Patient identity confirmed
+- Consent signed
+- Procedure site marked
+- Allergies checked
+- Fasting status confirmed
+- Vitals checked
+- Lab results reviewed
+- Blood available if needed
+- Anaesthesia assessment done
+- Equipment ready
+- Implants/prosthesis ready
+- Antibiotic prophylaxis given
+
+Rules:
+
+- Required checklist items should be configurable.
+- Warn before moving to IN_SURGERY if required checklist items are incomplete.
+- If user proceeds despite incomplete checklist, require override permission and reason.
+- Checklist actions must be logged.
+
+---
+
+# 17. Anaesthesia Note
+
+Create anaesthesia note support.
+
+Recommended table:
+
+theatre_anaesthesia_notes
+
+Fields:
+
+id
+theatre_case_id
+anaesthetist_id nullable
+anaesthesia_type
+asa_class nullable
+airway_assessment nullable
+pre_anaesthesia_assessment nullable
+drugs_given text/json nullable
+induction_time nullable
+monitoring_notes nullable
+complications nullable
+recovery_status nullable
+notes nullable
 created_by
 updated_by nullable
 created_at
 updated_at
 
-Do not display every record as if it was created by the main doctor.
+Anaesthesia types:
 
-Preserve existing ownership logic if already implemented.
+GENERAL
+SPINAL
+EPIDURAL
+LOCAL
+SEDATION
+REGIONAL_BLOCK
+NONE
+
+Rules:
+
+- Anaesthesia note must show creator.
+- Anaesthetist can edit own note while case active.
+- Other users cannot edit unless authorized.
+- Completed theatre case notes require correction permission.
 
 ---
 
-# 7. Automated Emergency Triage Calculation
+# 18. Surgeon Operative Note
 
-Emergency triage should be automated.
+Create operative note support.
 
-In the Triage section, the user records vitals and danger signs, and the system automatically suggests a triage category.
+Recommended table:
 
-The user may override the suggested category, but override must be logged with reason.
+theatre_operative_notes
 
-Triage should consider:
+Fields:
 
-- temperature
-- pulse
-- respiratory rate
-- systolic BP
-- diastolic BP
-- SpO2
-- AVPU / consciousness level
+id
+theatre_case_id
+surgeon_id nullable
+procedure_performed
+indication nullable
+findings nullable
+technique nullable
+incision nullable
+complications nullable
+estimated_blood_loss nullable
+specimens_taken nullable
+implants_used nullable
+drains_placed nullable
+post_op_diagnosis nullable
+post_op_plan nullable
+notes nullable
+created_by
+updated_by nullable
+created_at
+updated_at
+
+Rules:
+
+- Operative note becomes part of patient clinical history.
+- Operative note must appear in Visit Preview.
+- Surgeon can edit own note while case active.
+- Completed case requires correction permission.
+
+---
+
+# 19. Post-op / Recovery Note
+
+Create recovery/post-op note support.
+
+Recommended table:
+
+theatre_recovery_notes
+
+Fields:
+
+id
+theatre_case_id
+recovery_room_id nullable
+recovery_nurse_id nullable
+arrival_at nullable
+discharge_from_recovery_at nullable
+consciousness_level nullable
+pain_score nullable
+nausea_vomiting nullable
+bleeding_status nullable
+oxygen_support nullable
+vitals_summary nullable
+post_op_medications nullable
+notes nullable
+created_by
+updated_by nullable
+created_at
+updated_at
+
+This section should support:
+
+- recovery room/bed
+- vitals
 - pain score
-- danger signs
-- trauma flag
-- bleeding flag
-- seizure flag
-- respiratory distress
-- age group if available
-- pregnancy if available
-- shock indicators if available
+- consciousness
+- nausea/vomiting
+- bleeding
+- oxygen
+- post-op medication
+- recovery nurse
+- discharge from recovery time
 
-Triage categories:
-
-RED = Immediate / Resuscitation
-ORANGE = Very urgent
-YELLOW = Urgent
-GREEN = Less urgent
-BLACK = Dead on arrival / expectant
-
-Target times:
-
-RED = immediately
-ORANGE = within 10 minutes
-YELLOW = within 30 minutes
-GREEN = within 60 minutes
-BLACK = special handling
-
-Store:
-
-auto_triage_category
-final_triage_category
-triage_score
-override_reason nullable
-triaged_by
-triaged_at
-
-If emergency_cases already has triage_category, preserve it but add auto/final logic as needed.
+Integrate with MAR/clinical tasks where possible.
 
 ---
 
-# 8. Emergency Triage Service
+# 20. Theatre Consumables
 
-Create or update:
+Theatre uses consumables from Theatre stock location.
 
-EmergencyTriageScoringService
+Examples:
 
-Required methods:
-
-calculateFromVitals(array $vitals, array $flags = []): EmergencyTriageResult
-
-suggestCategory(EmergencyCase $case): EmergencyTriageResult
-
-Return structured result:
-
-[
-    'score' => 0,
-    'category' => 'RED',
-    'reasons' => [],
-    'warnings' => [],
-]
+- sutures
+- gloves
+- gauze
+- drapes
+- blades
+- catheters
+- syringes
+- anaesthetic drugs
+- implants
+- oxygen supplies
 
 Rules:
 
-- Keep calculation configurable where possible.
-- Do not hardcode everything in Vue.
-- Allow future hospital-specific triage rules.
-- If values are missing, return warnings instead of crashing.
-- Display reasons behind suggested category.
+- Theatre cannot create products.
+- Theatre selects products from Products linked to Theatre/Procedure department.
+- Theatre stock comes from Theatre stock location.
+- Stock deducts from Theatre stock location.
+- Billable consumables create invoice items through BillingService.
+- Non-billable consumables only create stock movement.
+- Do not consume directly from Main Store.
+- Do not create separate theatre item stock.
 
-Example:
+Recommended table if missing:
 
-Suggested Category: RED
-Reasons:
-- SpO2 below critical threshold
-- Altered consciousness
-- Respiratory distress
+theatre_consumable_usages
 
----
+Fields:
 
-# 9. Emergency Triage & Vitals Section
+id
+theatre_case_id
+visit_id
+patient_id
+department_id nullable
+stock_location_id
+product_id
+quantity
+is_billable
+invoice_item_id nullable
+stock_movement_id nullable
+used_by
+used_at
+notes nullable
+created_at
+updated_at
 
-The Emergency Triage section should include vitals history and graph, mirroring the Admission vitals section if possible.
-
-Inspect the Admission view page vitals section and reuse/mirror its UI and logic.
-
-Emergency Triage/Vitals section should show:
-
-- latest vitals cards
-- vitals history table
-- vitals trend graph
-- critical value indicators
-- recorded by
-- recorded at
-- triage score/category
-- auto-calculated category
-- final category
-- override reason if any
-
-Vitals graph should include common vital trends:
-
-- temperature
-- pulse
-- respiratory rate
-- blood pressure
-- SpO2
-- pain score if available
-
-Do not duplicate vitals logic if an existing vitals component/service exists.
-
-Extend existing vitals system to support emergency_case_id and emergency_session_id if needed.
+Use existing department_consumable_usages table if already available instead of creating duplicate.
 
 ---
 
-# 10. Emergency Vitals Monitoring Tasks
+# 21. Theatre Equipment
 
-If Clinical Tasks/Reminders exist, use them for emergency monitoring.
+Prepare simple equipment tracking if not already available.
 
-Example rules:
+Optional table:
 
-RED case → vitals every 15 minutes
-ORANGE case → vitals every 30 minutes
-YELLOW case → vitals every 60 minutes
+theatre_equipment
 
-Create monitoring tasks where appropriate.
+Fields:
 
-Do not force this if Clinical Tasks are not fully ready, but prepare integration points.
+id
+name
+code
+equipment_type
+theatre_room_id nullable
+status
+notes nullable
+is_active
+created_at
+updated_at
 
----
+Equipment statuses:
 
-# 11. Medication / MAR Section Refinement
+AVAILABLE
+IN_USE
+MAINTENANCE
+OUT_OF_SERVICE
 
-The current Emergency Medication/MAR section is limited by a small/static drug list and cannot search properly.
+Optional theatre case equipment table:
 
-Refine it.
+theatre_case_equipment
 
-The medication product search must use the unified Products catalogue.
+Fields:
 
-Product/drug source:
+id
+theatre_case_id
+theatre_equipment_id
+status
+notes nullable
+assigned_by
+created_at
+updated_at
 
-products
+This can be basic in first implementation.
 
-Do not use a separate drug stock or static list.
-
-The medication search should support:
-
-- product name
-- generic name if available
-- brand name if available
-- SKU/code if available
-- barcode if available
-- category
-- department availability
-
-The list should show:
-
-- product/drug name
-- strength if available
-- form if available
-- emergency available quantity
-- pharmacy available quantity if useful
-- main stock quantity
-- stock status
-- price/insurance price if billable
+Do not overbuild if asset management already exists; reuse assets if possible.
 
 ---
 
-# 12. Medication Quantity Automation
+# 22. Billing Integration
 
-Mirror the consultation prescription quantity calculation behavior.
+Theatre billing must stay separate from clinical notes but integrated.
 
-Medication entry should include:
+Billing items may include:
 
-- drug/product
-- dose
-- dose unit
-- route
-- frequency
-- duration value
-- duration unit
-- start time
-- expected doses
-- calculated quantity
-- instructions
-- STAT / PRN / SOS indicator
-
-Example:
-
-Ceftriaxone 1g IV BD for 5 days
-BD x 5 days = 10 doses
-Calculated quantity = 10
-
-If user manually changes quantity, show warning:
-
-BD for 5 days usually requires 10 doses. You entered 8.
-
-Do not block unless hospital policy requires blocking.
-
-Use the same frequency table/logic as MAR/consultation prescription if available.
-
----
-
-# 13. Emergency Medication Flow
-
-Emergency medication should support:
-
-- STAT medication
-- PRN/SOS medication
-- scheduled medication
-- immediate administration
-- pharmacy dispensing
-- emergency stock administration
-- billing before/after depending existing workflow
-- MAR chart
-- clinical tasks/reminders
+- procedure service
+- theatre room charge
+- anaesthesia charge
+- surgeon fee
+- consumables
+- implants
+- recovery charge
+- emergency theatre surcharge
 
 Rules:
 
-- If medication is administered from Emergency stock, create stock OUT movement from Emergency stock once.
-- If medication is pharmacy-dispensed to patient, MAR administration must not deduct stock again.
-- Do not deduct stock at prescription/order stage.
-- Do not deduct stock twice.
-- Use existing Medication Administration / MAR services where available.
-- Use existing Product Stock Movement system.
+- Use the visit invoice.
+- Use BillingService.
+- Use insurance pricing.
+- Use selected visit insurance.
+- Cash and Carry fallback still applies.
+- Do not block emergency/life-saving theatre care because invoice is unpaid.
+- Avoid duplicate billing using source_type/source_id.
+- Do not create separate theatre invoice system.
+
+Source examples:
+
+source_type = theatre_case
+source_type = theatre_consumable_usage
+source_type = theatre_anaesthesia
+source_type = theatre_room_charge
+
+The theatre case page should show billing summary but not mix billing forms into clinical note sections.
 
 ---
 
-# 14. Emergency MAR Integration
+# 23. Theatre Case Status Transitions
+
+Implement status transitions:
+
+REQUESTED
+↓
+ACCEPTED
+↓
+BILLED
+↓
+SCHEDULED
+↓
+PRE_OP
+↓
+ANAESTHESIA_READY
+↓
+IN_THEATRE
+↓
+IN_SURGERY
+↓
+SURGERY_DONE
+↓
+RECOVERY
+↓
+POST_OP
+↓
+COMPLETED
+
+Also support:
 
-Emergency MAR should be accessible from:
-
-- Emergency Case Detail page
-- Emergency Board
-- Visit Preview medication section
-
-Medication section should show:
-
-- active medication orders
-- due now
-- overdue
-- upcoming
-- administered today
-- PRN/SOS
-- MAR Chart button
-
-Actions:
-
-- prescribe/order
-- administer STAT
-- administer PRN/SOS
-- open MAR
-- view administration details
-- hold/stop medication if authorized
-
----
-
-# 15. Emergency Investigations Section Refinement
-
-The Emergency Investigations section should mirror the Consultation Investigations section.
-
-Inspect the Consultation Investigations implementation and reuse/mirror its behavior where possible.
-
-Emergency Investigations should allow:
-
-- select investigation department
-- load services under selected department
-- select one or more services
-- mark priority: EMERGENCY / URGENT / ROUTINE
-- add clinical reason
-- submit request
-- group requested investigations by department
-- show requester/owner
-- show status
-- show result
-- show verified result
-- show billing status if applicable
-
-Rules:
-
-- Lab is just one investigation department.
-- Use existing Investigation workflow.
-- Do not create parallel emergency investigation tables unless necessary.
-- Add emergency_case_id and priority fields if missing.
-- Emergency requests must be visible as urgent to investigation departments.
-- Result should appear on Emergency Case Detail and Visit Preview.
-- Do not bypass BillingService.
-
-Expected display:
-
-Laboratory
-    Dr. Kofi Mensah
-        FBC — Emergency priority — Pending
-        Malaria RDT — Result verified
-
-X-Ray
-    Dr. Ama Boateng
-        Chest X-Ray — Accepted
-
----
-
-# 16. Emergency Investigation Data Fields
-
-If missing, add to investigation request tables or equivalent:
-
-emergency_case_id nullable
-emergency_session_id nullable
-is_emergency boolean default false
-priority nullable
-
-Priority values:
-
-EMERGENCY
-URGENT
-ROUTINE
-
-Use existing priority/status fields if already present.
-
----
-
-# 17. Emergency Procedures Section Refinement
-
-Procedures and Billing must be decoupled.
-
-Procedure section is clinical.
-
-Billing section is financial.
-
-Emergency Procedures should mirror the Consultation Investigation/request style.
-
-Emergency Procedures should allow:
-
-- select procedure/theatre/minor procedure department
-- load procedure services
-- select procedure service
-- add clinical reason/notes
-- mark urgency
-- submit procedure request
-- track procedure status
-- view procedure report
-- view billing status only as metadata
-
-Types:
-
-- emergency bedside procedure
-- theatre transfer procedure
-- minor procedure room procedure
-
-Rules:
-
-- Use existing Procedure/Theatre workflow where applicable.
-- Do not bypass theatre workflow for theatre procedures.
-- Do not mix procedure UI with billing UI.
-- Bill procedures through BillingService where required.
-- Show procedure status on emergency case detail.
-- Requested procedures must show record owners/requested_by.
-- Procedure records must be visible in Visit Preview.
-
-Expected display:
-
-Procedures
-
-Minor Procedure Room
-    Dr. Kofi Mensah
-        Wound suturing — Pending
-
-Theatre
-    Dr. Ama Boateng
-        Emergency laparotomy — Requested / awaiting theatre
-
----
-
-# 18. Emergency Procedure Data Fields
-
-If missing, add to procedure request tables or equivalent:
-
-emergency_case_id nullable
-emergency_session_id nullable
-is_emergency boolean default false
-priority nullable
-performed_at nullable
-performed_by nullable
-
-Use existing fields if already present.
-
----
-
-# 19. Billing Section Refinement
-
-Emergency Billing must be separated from Procedures.
-
-Emergency Billing section should be a financial summary and action point.
-
-It should use the visit’s single invoice.
-
-Emergency billing should group invoice items by source:
-
-- Emergency Services
-- Emergency Medications
-- Emergency Consumables
-- Emergency Investigations
-- Emergency Procedures
-- Emergency Admission/Observation Charges
-- Other Emergency Charges
-
-Display:
-
-- item description
-- source
-- quantity
-- cash price
-- insurance price
-- selected price
-- patient payable
-- paid amount
-- balance
-- payment status
-- billing status
-- created by
-- created at
-
-Rules:
-
-- Do not create a separate emergency invoice.
-- Use one visit = one invoice.
-- Emergency care must not be blocked by unpaid bills.
-- Emergency billable items must be added through BillingService.
-- Use selected visit insurance and pricing rules.
-- Fallback to Cash and Carry where needed.
-- Prevent duplicate invoice items using source_type/source_id.
-- Do not mix clinical procedure request UI into billing UI.
-
----
-
-# 20. Emergency Billing Actions
-
-Billing section may include actions:
-
-- View full invoice
-- Add emergency service charge if authorized
-- Add emergency consumable charge if authorized
-- Record payment
-- Print invoice
-- Show unpaid balance
-
-Do not allow billing actions to bypass BillingService.
-
-Do not allow payment requirement to block emergency care.
-
----
-
-# 21. Bay and Team Refinement
-
-Bay and Team section should link emergency bay assignment to wards/beds/bays.
-
-Instead of independent emergency bays only, support this structure:
-
-Emergency Department
-    ↓
-Emergency Ward / Unit
-    ↓
-Beds / Bays
-
-In Bay & Team section:
-
-1. Select emergency ward/unit.
-2. Load beds/bays under that ward.
-3. Assign patient to a bed/bay.
-4. Mark bed/bay as occupied.
-5. Release or mark cleaning when patient leaves.
-
-This should mirror Admission bed assignment where possible.
-
----
-
-# 22. Emergency Ward / Bed / Bay Data
-
-Reuse existing ward/bed system if available.
-
-If emergency_bays already exists, link it to ward/bed structure.
-
-Suggested fields if using emergency_bays:
-
-emergency_bays
-- id
-- ward_id nullable
-- bed_id nullable
-- name
-- code
-- bay_type
-- status
-- is_active
-- notes nullable
-- created_at
-- updated_at
-
-Suggested assignment table if missing:
-
-emergency_bay_assignments
-- id
-- emergency_case_id
-- emergency_session_id nullable
-- ward_id nullable
-- bed_id nullable
-- emergency_bay_id nullable
-- assigned_by
-- assigned_at
-- released_by nullable
-- released_at nullable
-- status
-- notes nullable
-- created_at
-- updated_at
-
-Assignment statuses:
-
-ACTIVE
-RELEASED
-TRANSFERRED
 CANCELLED
+POSTPONED
 
 Rules:
 
-- Only available beds/bays can be assigned unless override permission exists.
-- Occupied bed/bay cannot be assigned twice.
-- When assigned, bed/bay becomes occupied.
-- When released, bed/bay becomes available/cleaning based on workflow.
-- Do not break Admission bed system.
+- Only valid transitions allowed.
+- Log each transition.
+- Require reason for cancellation/postponement.
+- Do not complete case without required notes unless override permission.
+- Do not move to IN_SURGERY if required pre-op checklist incomplete unless override permission.
 
 ---
 
-# 23. Emergency Team Assignment
+# 24. Theatre Timeline / Audit
 
-Bay & Team section should support:
+Create or use activity log.
 
-- assign main doctor
-- assign primary nurse
-- add contributing doctors
-- add contributing nurses
-- show contributors
-- show who is currently responsible
+Timeline events:
 
-Rules:
-
-- Changing main doctor must be explicit and logged.
-- Adding contributor does not change main doctor.
-- Contributor entries should be attached to their own creator.
-- Team assignment should appear in Emergency Timeline.
-
----
-
-# 24. Emergency Clinical Notes / Assessment
-
-Emergency notes should be refined as part of the Emergency Session.
-
-Support note types:
-
-- Doctor Assessment
-- Nursing Note
-- Resuscitation Note
-- Observation Note
-- General Note
-
-Each note should show:
-
-- note type
-- content
-- created by
-- created at
-- updated by if edited
-- emergency session
-- edit action if permitted
-
-Do not overwrite notes from other users.
-
-Use existing consultation ownership/edit rules if available.
-
----
-
-# 25. Emergency Records Under Consultation / Medical History
-
-Emergency session must be treated as part of the patient medical record history.
-
-After emergency records are created, they should be visible under:
-
-- Visit Preview
-- Patient clinical history
-- Consultation/medical record history where appropriate
-- Claims mirror where relevant
-
-Emergency session should show:
-
-Emergency Session
-    - Triage
-    - Vitals
-    - Doctor assessment
-    - Nursing notes
-    - Medications/MAR
-    - Investigations
-    - Procedures
-    - Billing summary
-    - Disposition
-
-Do not hide emergency records from future consultations.
-
----
-
-# 26. Integration With Visit Preview
-
-Update Visit Preview to show emergency records chronologically.
-
-Include:
-
-- emergency case created
-- arrival details
-- triage calculated category
-- final triage category
-- vitals records and trends summary
-- bay/bed assignment
-- team assignment
-- doctor assessments
-- nursing notes
-- medications ordered/administered
-- MAR events
-- investigations requested/results
-- procedures requested/performed
+- procedure requested
+- theatre accepted
+- billed
+- room scheduled
+- team assigned
+- pre-op checklist updated
+- anaesthesia note added
+- surgery started
+- operative note added
+- surgery completed
+- recovery started
+- recovery note added
 - consumables used
-- billing events
-- tasks/reminders
-- disposition
-- transfers to admission/OPD/theatre
-- death/DOA if applicable
+- billing item created
+- case completed
+- cancelled/postponed
+
+Each event must show:
+
+- time
+- user
+- role
+- action
+- details
+
+If no existing activity log supports this, create:
+
+theatre_case_logs
+
+Fields:
+
+id
+theatre_case_id
+visit_id
+patient_id
+action
+title
+description nullable
+source_type nullable
+source_id nullable
+performed_by
+created_at
+
+---
+
+# 25. Visit Preview Integration
+
+Update Visit Preview to include Theatre/Procedure timeline.
+
+Visit Preview should show:
+
+- procedure request
+- theatre acceptance
+- room schedule
+- theatre team
+- pre-op checklist summary
+- anaesthesia note
+- surgeon operative note
+- consumables used
+- post-op/recovery note
+- theatre billing items
+- completion/disposition
 
 Every entry must show:
 
@@ -874,480 +1038,479 @@ Every entry must show:
 - department/session
 - details
 
----
-
-# 27. Tasks / Monitoring Section
-
-Emergency should use Clinical Tasks/Reminders for:
-
-- vitals monitoring
-- medication administration
-- doctor review
-- nursing observation
-- investigation follow-up
-- procedure preparation
-- disposition review
-- transfer preparation
-
-Emergency page should show:
-
-- due tasks
-- overdue tasks
-- completed tasks
-- task owner/assigned role
-- action buttons
-
-Do not duplicate Clinical Task engine.
-
-Add emergency_case_id/emergency_session_id to tasks if missing.
+The operative note and anaesthesia note must be visible in patient clinical history.
 
 ---
 
-# 28. Consumables Section
+# 26. Procedure Catalogue Integration
 
-Emergency Consumables should use products linked to Emergency department and Emergency stock location.
+Procedure catalogue should continue to load from services with department type PROCEDURE/THEATRE.
 
-Consumables section should allow:
+Theatre rooms management should not replace procedure catalogue.
 
-- search product
-- show Emergency available quantity
-- show Main Store quantity
-- enter quantity used
-- reason/use case
-- billable/non-billable handling
-- create stock OUT from Emergency stock location
-- create invoice item if billable
-- link usage to emergency_case_id and emergency_session_id
+Procedure Request uses procedure services.
 
-Rules:
-
-- Do not consume directly from Main Store.
-- Do not create products from Emergency.
-- Do not use separate emergency item table.
-- Use unified products and stock movements.
-- Use BillingService for billable consumables.
+Theatre Case executes/schedules the accepted procedure.
 
 ---
 
-# 29. Emergency Stock Location
+# 27. UI/UX Requirements
 
-Emergency stock must come from Emergency department’s linked stock location.
+Use existing UHMS UI design patterns.
 
-If no emergency stock location exists, show clear error:
+Theatre Board should be easy to scan.
 
-No Emergency stock location is configured. Please configure a stock location for Emergency department.
+Theatre Case Detail should feel like an operational clinical document.
 
-Do not silently use Main Store.
+Avoid hiding critical information.
 
----
+Use badges for:
 
-# 30. UI/UX Consistency
+- priority
+- status
+- room status
+- billing status
+- checklist status
 
-Emergency sections should mirror existing good UI patterns:
+Use modals for:
 
-- Vitals → mirror Admission vitals section with graph/history
-- Medication/MAR → mirror Consultation prescription behavior + MAR
-- Investigations → mirror Consultation Investigations
-- Procedures → mirror Consultation request pattern
-- Billing → mirror Visit invoice/billing summary
-- Bay assignment → mirror Admission bed assignment
-- Session/contributors → mirror Consultation session ownership logic
+- assign room
+- assign team
+- reschedule
+- cancel/postpone
+- add consumable
+- add/edit note
 
-Do not invent inconsistent UI if a working component already exists.
+Modals must:
 
-Reuse components where possible.
-
----
-
-# 31. Data Loading / Performance
-
-Emergency Case Detail must avoid N+1 queries.
-
-Eager-load:
-
-- patient
-- visit
-- emergency case
-- emergency session
-- medical record
-- main doctor
-- primary nurse
-- contributors
-- latest vitals
-- vitals history
-- triage
-- bay/bed/ward
-- notes with creators
-- medication orders/products/frequencies
-- MAR schedules/tasks/administrations
-- investigations with departments/services/owners/results
-- procedures with departments/services/owners/status
-- consumables/products/stock movements
-- invoice/invoice items/payments
-- tasks
-- timeline logs
-
-Do not load huge historical datasets unnecessarily on the board.
-
-Emergency Board should load summary counts only.
-
-Emergency Detail can load full case details.
+- close only after successful save
+- show validation errors inside modal
+- not leave stuck backdrop
+- update UI immediately without full page reload
 
 ---
 
-# 32. Backend Services to Create / Update
+# 28. Permissions
 
-Create or update services as needed:
+Add or verify permissions:
 
-EmergencyCaseService
-EmergencySessionService
-EmergencyTriageScoringService
-EmergencyVitalsService
-EmergencyBoardService
-EmergencyBayAssignmentService
-EmergencyTeamService
-EmergencyNoteService
-EmergencyMedicationService
-EmergencyInvestigationService
-EmergencyProcedureService
-EmergencyBillingService
-EmergencyConsumableService
-EmergencyTimelineService
-EmergencyDispositionService
-EmergencyTaskService
-MarChartService
-MedicationScheduleService
-MedicationAdministrationService
-ClinicalTaskService
-BillingService
-StockLocationResolver
-StockMovementService
-VisitPreviewService
+theatre.rooms.view
+theatre.rooms.create
+theatre.rooms.update
+theatre.rooms.deactivate
+theatre.rooms.manage_status
 
-Do not duplicate existing services. Extend existing ones where possible.
+theatre.board.view
+theatre.cases.view
+theatre.cases.accept
+theatre.cases.schedule
+theatre.cases.reschedule
+theatre.cases.cancel
+theatre.cases.postpone
+theatre.cases.complete
+
+theatre.team.assign
+theatre.preop.manage
+theatre.anaesthesia.create
+theatre.anaesthesia.edit_own
+theatre.anaesthesia.edit_any
+theatre.operative_note.create
+theatre.operative_note.edit_own
+theatre.operative_note.edit_any
+theatre.recovery_note.create
+theatre.recovery_note.edit_own
+theatre.recovery_note.edit_any
+
+theatre.consumables.use
+theatre.billing.view
+theatre.billing.manage
+theatre.schedule.override
+theatre.reports.view
+
+Suggested roles:
+
+- Theatre Nurse
+- Surgeon
+- Anaesthetist
+- Recovery Nurse
+- Theatre Manager
+- Doctor
+- Admin
+- Super Admin
 
 ---
 
-# 33. Routes / Controllers
+# 29. Routes / Controllers
 
 Use existing route conventions.
 
 Suggested controllers:
 
-EmergencyCaseController
-EmergencySessionController
-EmergencyTriageController
-EmergencyVitalsController
-EmergencyBayTeamController
-EmergencyNoteController
-EmergencyMedicationController
-EmergencyInvestigationController
-EmergencyProcedureController
-EmergencyBillingController
-EmergencyConsumableController
-EmergencyTaskController
-EmergencyTimelineController
+TheatreRoomController
+TheatreBoardController
+TheatreCaseController
+TheatreScheduleController
+TheatreTeamController
+TheatrePreopChecklistController
+TheatreAnaesthesiaNoteController
+TheatreOperativeNoteController
+TheatreRecoveryNoteController
+TheatreConsumableController
+TheatreBillingController
+TheatreTimelineController
+TheatreReportController
 
-Suggested routes under existing admin prefix if applicable:
+Suggested routes:
 
-GET /admin/emergency/cases/{emergencyCase}
-PATCH /admin/emergency/cases/{emergencyCase}
+Route::prefix('admin/theatre')
+    ->name('admin.theatre.')
+    ->middleware(['auth'])
+    ->group(function () {
+        Route::get('/rooms', [TheatreRoomController::class, 'index'])->name('rooms.index');
+        Route::post('/rooms', [TheatreRoomController::class, 'store'])->name('rooms.store');
+        Route::patch('/rooms/{theatreRoom}', [TheatreRoomController::class, 'update'])->name('rooms.update');
 
-POST /admin/emergency/cases/{emergencyCase}/triage
-POST /admin/emergency/cases/{emergencyCase}/vitals
-POST /admin/emergency/cases/{emergencyCase}/bay-team
-POST /admin/emergency/cases/{emergencyCase}/notes
-POST /admin/emergency/cases/{emergencyCase}/medications
-POST /admin/emergency/cases/{emergencyCase}/investigations
-POST /admin/emergency/cases/{emergencyCase}/procedures
-POST /admin/emergency/cases/{emergencyCase}/consumables
-POST /admin/emergency/cases/{emergencyCase}/tasks
+        Route::get('/board', [TheatreBoardController::class, 'index'])->name('board');
+        Route::get('/calendar', [TheatreScheduleController::class, 'calendar'])->name('calendar');
 
-GET /admin/emergency/cases/{emergencyCase}/billing
-GET /admin/emergency/cases/{emergencyCase}/timeline
-GET /admin/emergency/cases/{emergencyCase}/mar-chart
+        Route::get('/cases/{theatreCase}', [TheatreCaseController::class, 'show'])->name('cases.show');
+        Route::post('/procedure-requests/{procedureRequest}/accept', [TheatreCaseController::class, 'accept'])->name('procedure-requests.accept');
 
-Adapt names to existing project structure.
+        Route::post('/cases/{theatreCase}/schedule', [TheatreScheduleController::class, 'schedule'])->name('cases.schedule');
+        Route::post('/cases/{theatreCase}/team', [TheatreTeamController::class, 'store'])->name('cases.team.store');
+        Route::post('/cases/{theatreCase}/preop', [TheatrePreopChecklistController::class, 'update'])->name('cases.preop.update');
+        Route::post('/cases/{theatreCase}/anaesthesia', [TheatreAnaesthesiaNoteController::class, 'store'])->name('cases.anaesthesia.store');
+        Route::post('/cases/{theatreCase}/operative-note', [TheatreOperativeNoteController::class, 'store'])->name('cases.operative-note.store');
+        Route::post('/cases/{theatreCase}/recovery-note', [TheatreRecoveryNoteController::class, 'store'])->name('cases.recovery-note.store');
+        Route::post('/cases/{theatreCase}/consumables', [TheatreConsumableController::class, 'store'])->name('cases.consumables.store');
+        Route::post('/cases/{theatreCase}/complete', [TheatreCaseController::class, 'complete'])->name('cases.complete');
+        Route::post('/cases/{theatreCase}/cancel', [TheatreCaseController::class, 'cancel'])->name('cases.cancel');
+    });
+
+Adapt to existing project route naming.
 
 ---
 
-# 34. Frontend Components
+# 30. Frontend Pages / Components
 
 If using Inertia/Vue, create or update:
 
-Emergency/ShowCase.vue
-Emergency/Components/EmergencyHeader.vue
-Emergency/Components/TriageVitalsSection.vue
-Emergency/Components/VitalsGraph.vue
-Emergency/Components/BayTeamSection.vue
-Emergency/Components/EmergencyNotesSection.vue
-Emergency/Components/EmergencyMedicationSection.vue
-Emergency/Components/EmergencyInvestigationSection.vue
-Emergency/Components/EmergencyProcedureSection.vue
-Emergency/Components/EmergencyConsumablesSection.vue
-Emergency/Components/EmergencyBillingSection.vue
-Emergency/Components/EmergencyTasksSection.vue
-Emergency/Components/EmergencyTimeline.vue
+resources/js/Pages/Theatre/Rooms.vue
+resources/js/Pages/Theatre/Board.vue
+resources/js/Pages/Theatre/Calendar.vue
+resources/js/Pages/Theatre/ShowCase.vue
 
-Reuse existing components where possible:
+Components:
 
-- Admission vitals graph/table
-- Consultation investigation selector
-- Consultation prescription quantity calculator
-- MAR chart/modal
-- Visit billing summary
-- Admission bed selector
-- Consultation contributor display
+TheatreRoomForm
+TheatreRoomStatusBadge
+TheatreScheduleBoard
+TheatreRoomCalendar
+TheatreCaseHeader
+TheatreTeamSection
+TheatrePreopChecklist
+AnaesthesiaNoteSection
+OperativeNoteSection
+RecoveryNoteSection
+TheatreConsumablesSection
+TheatreBillingSummary
+TheatreTimeline
+ScheduleTheatreCaseModal
+AssignTheatreTeamModal
+CancelPostponeModal
+
+Reuse existing components where possible.
 
 ---
 
-# 35. Validation Rules
+# 31. Services to Create / Update
 
-Emergency triage:
+Create or update:
 
-- emergency_case_id required
-- vitals required depending policy
-- auto_triage_category generated by service
-- final_triage_category required
-- override_reason required if final category differs from auto category
-- triaged_by = current user
+TheatreRoomService
+TheatreScheduleService
+TheatreCaseService
+TheatreTeamService
+TheatrePreopChecklistService
+TheatreAnaesthesiaService
+TheatreOperativeNoteService
+TheatreRecoveryService
+TheatreConsumableService
+TheatreBillingService
+TheatreTimelineService
+TheatreReportService
+BillingService
+StockLocationResolver
+StockMovementService
+VisitPreviewService
 
-Emergency vitals:
+Do not duplicate existing BillingService or StockMovementService.
 
-- emergency_case_id required
-- patient_id required
-- recorded_by = current user
-- recorded_at required
-- at least one vital field required
+---
 
-Emergency medication:
+# 32. Validation Rules
 
-- product_id required
-- product must be medication/drug or allowed product type
-- dose required unless PRN protocol allows free text
-- route required
-- frequency required
-- duration or total doses required for scheduled medication
-- STAT creates immediate schedule
-- PRN/SOS does not create fixed schedule
-- source stock validated on administration
+Theatre room:
 
-Emergency investigation:
+- name required
+- code required unique
+- room_type required
+- status required
+- cannot deactivate active room with scheduled/in-progress case unless override
 
-- department_id required
-- selected services required
-- services must belong to department
-- priority required
-- emergency_case_id required
+Scheduling:
 
-Emergency procedure:
+- theatre_room_id required
+- scheduled_start_at required
+- expected_duration required
+- scheduled_end_at calculated or required
+- room must be active
+- room must not be out of service/maintenance
+- no overlapping active case unless override
+- surgeon/anaesthetist optional depending procedure type
+- override requires permission and reason
 
-- procedure department required
-- procedure service required
-- reason/notes required if configured
-- priority required
-- emergency_case_id required
+Pre-op:
 
-Bay/team:
+- checklist exists for theatre case
+- required items must be completed before IN_SURGERY unless override
+- waiver requires note/reason
 
-- ward_id required if bed/bay depends on ward
-- bed_id or emergency_bay_id required
-- selected bed/bay must be available unless override permission
-- main doctor nullable
-- primary nurse nullable
+Anaesthesia note:
+
+- anaesthesia_type required
+- created_by current user
+- theatre_case_id required
+
+Operative note:
+
+- procedure_performed required
+- theatre_case_id required
+- created_by current user
+
+Recovery note:
+
+- theatre_case_id required
+- recovery nurse/current user
+- notes or recovery fields required
 
 Consumables:
 
 - product_id required
 - quantity > 0
-- emergency stock location required
-- quantity <= emergency available quantity
-- billable products use BillingService
+- theatre stock location required
+- quantity <= theatre available stock
+- billable consumables use BillingService
 
-Billing:
+Status transitions:
 
-- all invoice item creation through BillingService
-- prevent duplicate source_type/source_id
-
----
-
-# 36. Permissions
-
-Add or verify permissions:
-
-emergency.case.view
-emergency.case.update
-emergency.session.manage
-emergency.triage.perform
-emergency.triage.override
-emergency.vitals.record
-emergency.vitals.view_graph
-emergency.bay_team.manage
-emergency.notes.create
-emergency.notes.edit_own
-emergency.notes.edit_any
-emergency.medication.order
-emergency.medication.administer
-emergency.mar.view
-emergency.investigation.request
-emergency.procedure.request
-emergency.consumables.use
-emergency.billing.view
-emergency.billing.manage
-emergency.tasks.manage
-emergency.timeline.view
-
-Use existing permission names if already defined.
+- only valid transitions allowed
+- cancellation/postponement requires reason
+- completion requires operative note or override depending configuration
 
 ---
 
-# 37. Tests Required
+# 33. Performance Requirements
+
+Avoid N+1 queries.
+
+Theatre Board should eager-load:
+
+- patient
+- visit
+- procedure request
+- procedure service
+- theatre room
+- primary surgeon
+- anaesthetist
+- priority
+- status
+- billing status
+
+Theatre Case Detail should eager-load:
+
+- patient
+- visit
+- admission/emergency
+- procedure request/service
+- room
+- team members
+- checklist/items
+- anaesthesia note
+- operative note
+- recovery note
+- consumables/products
+- invoice items
+- logs
+
+Calendar should load only cases and blocks within selected date range.
+
+Add indexes:
+
+theatre_cases.theatre_room_id
+theatre_cases.scheduled_start_at
+theatre_cases.scheduled_end_at
+theatre_cases.status
+theatre_cases.patient_id
+theatre_cases.visit_id
+theatre_room_blocks.theatre_room_id
+theatre_room_blocks.start_at
+theatre_room_blocks.end_at
+
+---
+
+# 34. Reports
+
+Prepare reports:
+
+- Theatre utilization report
+- Room occupancy report
+- Procedures by surgeon
+- Procedures by department
+- Emergency theatre cases
+- Cancelled/postponed cases
+- Average start delay
+- Average procedure duration
+- Complication report
+- Consumables usage report
+- Anaesthesia report
+
+At minimum create report foundations/routes if reporting system exists.
+
+---
+
+# 35. Tests Required
 
 Add or update tests.
 
-## Emergency Session
+## Theatre Rooms
 
-1. Emergency case has emergency session.
-2. Emergency session links to visit and patient.
-3. Emergency session has main doctor and primary nurse.
-4. Contributors can be added without changing main doctor.
-5. Emergency records link to emergency session.
+1. User can create theatre room.
+2. Room code must be unique.
+3. User can update room status.
+4. Out-of-service room cannot be scheduled.
+5. Room with active case cannot be deactivated without override.
 
-## Triage / Vitals
+## Scheduling
 
-6. Triage category is auto-calculated from vitals.
-7. User can override triage category with reason.
-8. Override without reason fails.
-9. Emergency vitals history displays records.
-10. Emergency vitals graph receives correct data.
-11. Emergency vitals mirror Admission vitals behavior where possible.
+6. Procedure request can be accepted into theatre case.
+7. Theatre case can be scheduled to room.
+8. Double-booking same room/time is prevented.
+9. Cancelled cases do not block scheduling.
+10. Maintenance blocks prevent scheduling.
+11. Emergency override requires permission and reason.
 
-## Medication / MAR
+## Theatre Board / Calendar
 
-12. Emergency medication search uses Products.
-13. Emergency medication search is not limited to static list.
-14. Medication quantity is calculated from frequency/duration.
-15. STAT medication creates immediate due task.
-16. PRN/SOS medication does not create recurring schedule.
-17. Emergency medication appears in MAR.
-18. Emergency stock administration deducts Emergency stock once.
-19. Pharmacy-dispensed medication does not deduct stock again.
-20. Emergency medication does not create parallel drug stock.
+12. Theatre Board shows today’s cases.
+13. Theatre Board filters by room.
+14. Theatre Board filters by surgeon.
+15. Theatre Calendar shows scheduled cases.
+16. Theatre Calendar shows room blocks.
 
-## Investigations
+## Team
 
-21. Emergency investigation section loads departments.
-22. Selecting department loads investigation services.
-23. Multiple services can be requested.
-24. Requests are marked emergency/urgent.
-25. Requests are grouped by department.
-26. Request owners are displayed.
-27. Results are visible when verified.
-28. Existing Investigation workflow is used.
+17. Theatre team can be assigned.
+18. Additional team member does not overwrite primary surgeon.
+19. Team assignment is logged.
 
-## Procedures
+## Pre-op
 
-29. Procedure section is separate from Billing.
-30. Selecting procedure department loads procedure services.
-31. Procedure requests are created with emergency context.
-32. Procedure owners are displayed.
-33. Procedure status is shown.
-34. Procedure billing uses BillingService but UI remains clinical.
+20. Pre-op checklist is created.
+21. Checklist items can be completed.
+22. Missing required checklist warns/blocks before IN_SURGERY.
+23. Waived checklist item requires note.
+
+## Anaesthesia / Operative / Recovery Notes
+
+24. Anaesthesia note can be recorded.
+25. Operative note can be recorded.
+26. Recovery note can be recorded.
+27. Notes show creator.
+28. Unauthorized user cannot edit another user’s note.
+
+## Consumables / Stock
+
+29. Theatre consumable usage deducts Theatre stock.
+30. Theatre cannot consume directly from Main Store.
+31. Billable consumable creates invoice item.
+32. Non-billable consumable does not create invoice item.
+33. Stock is not deducted twice.
 
 ## Billing
 
-35. Billing section shows emergency invoice items grouped by source.
-36. Emergency billing uses visit invoice.
-37. Emergency care is not blocked by unpaid invoice.
-38. Duplicate invoice items are prevented.
-39. BillingService is used.
+34. Theatre case billing uses visit invoice.
+35. BillingService is used.
+36. Duplicate billing is prevented by source_type/source_id.
+37. Emergency theatre case is not blocked by unpaid invoice.
 
-## Bay / Team
+## Status Workflow
 
-40. Selecting emergency ward loads beds/bays.
-41. Patient can be assigned to available bed/bay.
-42. Occupied bed/bay cannot be assigned without override.
-43. Bay/bed status updates after assignment.
-44. Team assignment logs main doctor/nurse/contributors.
+38. Theatre case follows valid status transitions.
+39. Cancellation requires reason.
+40. Completion requires required clinical notes or authorized override.
 
-## Consumables
+## Visit Preview
 
-45. Emergency consumable search uses Products.
-46. Emergency consumables use Emergency stock location.
-47. Emergency consumable usage creates stock OUT.
-48. Billable consumable creates invoice item.
-49. Emergency cannot consume directly from Main Store.
-
-## Visit Preview / History
-
-50. Visit Preview includes emergency session records.
-51. Emergency records appear chronologically.
-52. Emergency session is visible in patient clinical history.
-53. Record owners are preserved in preview/history.
-
-## Performance / UX
-
-54. Emergency detail avoids N+1 queries.
-55. Emergency sections update without full page reload where applicable.
-56. Modals do not leave stuck backdrops.
-57. UI mirrors existing Admission/Consultation components where applicable.
+41. Visit Preview includes theatre timeline.
+42. Operative note appears in patient clinical history.
+43. Anaesthesia note appears in patient clinical history.
+44. Consumables and billing references appear where appropriate.
 
 ---
 
-# 38. Deliverables
+# 36. Deliverables
 
 Provide:
 
-1. Gap analysis of current Emergency module.
-2. Emergency session integration.
-3. Automated triage calculation.
-4. Triage override logic.
-5. Emergency vitals history and graph mirroring Admission.
-6. Refined Medication/MAR section with searchable Product drugs.
-7. Medication quantity auto-calculation.
-8. Emergency MAR integration.
-9. Refined Investigations section mirroring Consultation.
-10. Refined Procedures section decoupled from Billing.
-11. Refined Billing section grouped by source.
-12. Bay/Team section linked to wards/beds/bays.
-13. Emergency contributors support.
-14. Emergency records available in Visit Preview/medical history.
-15. Consumables integration with Emergency stock.
-16. Backend services/controllers/routes updated.
-17. Permissions/seeders if needed.
-18. Tests or verification notes.
-19. Files modified.
-20. Remaining TODOs.
+1. Gap analysis of current Procedure/Theatre workflow.
+2. Theatre room migrations/models.
+3. Theatre case model/integration.
+4. Theatre room CRUD.
+5. Theatre Schedule Board.
+6. Theatre Room Calendar.
+7. Room double-booking prevention.
+8. Emergency theatre case handling.
+9. Theatre team assignment.
+10. Pre-op checklist.
+11. Anaesthesia note.
+12. Surgeon operative note.
+13. Post-op/recovery note.
+14. Theatre consumables from Theatre stock.
+15. Theatre billing integration.
+16. Room maintenance/blocking.
+17. Theatre timeline/audit.
+18. Visit Preview integration.
+19. Permissions/menu/routes.
+20. Tests or verification notes.
+21. Files modified.
+22. Remaining TODOs.
 
 ---
 
-# 39. Important Rules
-
-Do not copy OPD blindly.
-
-Do not create parallel emergency clinical systems when existing Consultation/Admission systems can be reused.
-
-Do not create a parallel billing system.
-
-Do not create a parallel investigation system.
+# 37. Important Rules
 
 Do not create a parallel procedure system.
 
-Do not create a parallel drug/product stock system.
+Do not replace Procedure Request with Theatre Room management.
+
+Do not create a parallel billing system.
+
+Do not create a parallel stock system.
+
+Do not allow double-booking active cases.
+
+Do not schedule inactive/out-of-service rooms.
+
+Do not block emergency/life-saving theatre care because invoice is unpaid.
+
+Do not deduct stock twice.
 
 Do not bypass BillingService.
 
 Do not bypass StockMovementService.
 
-Do not bypass Medication/MAR services.
+Do not hide theatre clinical notes from Visit Preview or patient history.
 
-Do not deduct stock twice.
-
-Do not block emergency care due to unpaid invoices.
-
-Do not overwrite main emergency doctor when contributors add records.
-
-Do not hide emergency records from Visit Preview or patient medical history.
-
-Now inspect the current UHMS implementation and refine Emergency Case Management according to the requirements above, reusing and mirroring existing Admission, Consultation, Billing, Investigation, Procedure, MAR, and Stock mechanisms wherever possible.
+Now inspect the current UHMS implementation and implement Theatre Rooms Management as an operational layer integrated into the existing Procedure/Theatre workflow.
 ```

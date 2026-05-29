@@ -12,16 +12,17 @@ class ProcedureSchedule extends Model
 
     protected $fillable = [
         'procedure_request_id', 'theatre_room_id',
-        'scheduled_start', 'scheduled_end',
+        'scheduled_start', 'scheduled_end', 'expected_duration_minutes',
         'surgeon_id', 'anaesthetist_id', 'assistant_surgeon_id',
         'theatre_nurse_ids', 'required_equipment',
-        'status', 'notes',
+        'status', 'notes', 'override_reason',
         'scheduled_by', 'scheduled_at', 'is_current',
     ];
 
     protected $casts = [
         'scheduled_start'   => 'datetime',
         'scheduled_end'     => 'datetime',
+        'expected_duration_minutes' => 'integer',
         'scheduled_at'      => 'datetime',
         'theatre_nurse_ids' => 'array',
         'is_current'        => 'boolean',

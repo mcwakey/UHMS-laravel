@@ -17,6 +17,7 @@ use App\Services\ProcedureTemplateService;
 use App\Services\ProcedureWorkflowService;
 use App\Services\ServiceConsumableService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class TheatreController extends Controller
@@ -125,7 +126,18 @@ class TheatreController extends Controller
             $query->where('priority', $prio);
         }
 
+        if ($roomId = $request->integer('room_id')) {
+            $query->whereHas('schedule', fn ($schedule) => $schedule->where('theatre_room_id', $roomId));
+        }
+
+        if ($date = $request->input('date')) {
+            $day = Carbon::parse($date);
+            $query->whereHas('schedule', fn ($schedule) => $schedule
+                ->whereBetween('scheduled_start', [$day->copy()->startOfDay(), $day->copy()->endOfDay()]));
+        }
+
         $requests = $query->latest('id')->paginate(20)->withQueryString();
+        $rooms = TheatreRoom::query()->orderBy('name')->get(['id', 'name', 'code']);
 
         $stats = [
             'pending'    => ProcedureRequest::where('status', ProcedureStatus::REQUESTED->value)->count(),
@@ -141,7 +153,7 @@ class TheatreController extends Controller
                 ->whereDate('completed_at', today())->count(),
         ];
 
-        return view('theatre.index', compact('requests', 'stats', 'tab'));
+        return view('theatre.index', compact('requests', 'stats', 'tab', 'rooms'));
     }
 
     public function show(ProcedureRequest $procedure)
@@ -158,7 +170,7 @@ class TheatreController extends Controller
         ]);
 
         $timeline      = $this->reports->getTimeline($procedure);
-        $theatreRooms  = TheatreRoom::active()->orderBy('name')->get();
+        $theatreRooms  = TheatreRoom::schedulable()->orderBy('name')->get();
         $clinicians    = User::query()->where('status', 'active')->orderBy('first_name')->get(['id', 'first_name', 'last_name']);
 
         // Dynamic procedure template (Phase A): build per-stage section/field views with saved values.
@@ -269,14 +281,17 @@ class TheatreController extends Controller
     public function schedule(Request $request, ProcedureRequest $procedure)
     {
         $data = $request->validate([
-            'theatre_room_id'      => ['nullable', 'exists:theatre_rooms,id'],
+            'theatre_room_id'      => ['required', 'exists:theatre_rooms,id'],
             'scheduled_start'      => ['required', 'date'],
             'scheduled_end'        => ['nullable', 'date', 'after:scheduled_start'],
+            'expected_duration_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
             'surgeon_id'           => ['nullable', 'exists:users,id'],
             'anaesthetist_id'      => ['nullable', 'exists:users,id'],
             'assistant_surgeon_id' => ['nullable', 'exists:users,id'],
             'required_equipment'   => ['nullable', 'string', 'max:1000'],
             'notes'                => ['nullable', 'string', 'max:1000'],
+            'override_room_conflict' => ['nullable', 'boolean'],
+            'override_reason' => ['nullable', 'required_if:override_room_conflict,1', 'string', 'max:1000'],
         ]);
 
         try {
@@ -290,15 +305,18 @@ class TheatreController extends Controller
     public function reschedule(Request $request, ProcedureRequest $procedure)
     {
         $data = $request->validate([
-            'theatre_room_id'      => ['nullable', 'exists:theatre_rooms,id'],
+            'theatre_room_id'      => ['required', 'exists:theatre_rooms,id'],
             'scheduled_start'      => ['required', 'date'],
             'scheduled_end'        => ['nullable', 'date', 'after:scheduled_start'],
+            'expected_duration_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
             'surgeon_id'           => ['nullable', 'exists:users,id'],
             'anaesthetist_id'      => ['nullable', 'exists:users,id'],
             'assistant_surgeon_id' => ['nullable', 'exists:users,id'],
             'required_equipment'   => ['nullable', 'string', 'max:1000'],
             'notes'                => ['nullable', 'string', 'max:1000'],
             'reason'               => ['required', 'string', 'max:500'],
+            'override_room_conflict' => ['nullable', 'boolean'],
+            'override_reason' => ['nullable', 'required_if:override_room_conflict,1', 'string', 'max:1000'],
         ]);
 
         try {
