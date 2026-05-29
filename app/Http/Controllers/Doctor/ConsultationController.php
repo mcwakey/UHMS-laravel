@@ -180,19 +180,27 @@ class ConsultationController extends Controller
                 'routeServices.service',
                 'services',
                 'doctor',
+                'mainDoctor',
+                'primaryNurse',
+                'emergencyCase',
+                'emergencySession',
             ])
             ->whereIn('status', [
                 VisitConsultationRoute::STATUS_PENDING,
                 VisitConsultationRoute::STATUS_ACTIVE,
                 VisitConsultationRoute::STATUS_PAUSED,
             ])
-            ->whereHas('department', function ($d) {
-                $d->where('type', DepartmentType::CONSULTATION->value);
+            ->where(function ($routeQuery) {
+                $routeQuery->where('session_type', VisitConsultationRoute::SESSION_TYPE_EMERGENCY)
+                    ->orWhereHas('department', function ($departmentQuery) {
+                        $departmentQuery->where('type', DepartmentType::CONSULTATION->value);
+                    });
             })
             ->whereHas('visit', function ($visitQuery) {
                 $visitQuery->whereIn('status', [
                     VisitStatus::WAITING_CONSULTATION->value,
                     VisitStatus::CONSULTING->value,
+                    VisitStatus::EMERGENCY->value,
                 ]);
             });
 
@@ -219,7 +227,11 @@ class ConsultationController extends Controller
         }
 
         if ($request->boolean('my_patients')) {
-            $query->where('doctor_id', Auth::id());
+            $query->where(function ($routeQuery) {
+                $routeQuery->where('doctor_id', Auth::id())
+                    ->orWhere('main_doctor_id', Auth::id())
+                    ->orWhereHas('contributors', fn ($contributors) => $contributors->where('user_id', Auth::id()));
+            });
         }
 
         $routes = $query
@@ -243,6 +255,32 @@ class ConsultationController extends Controller
         $selectedRoute = $route
             ?? $activeRoute
             ?? ($sessions->count() === 1 ? $sessions->first() : null);
+
+        $selectedRoute?->loadMissing([
+            'department',
+            'routeServices.service',
+            'doctor',
+            'mainDoctor',
+            'primaryNurse',
+            'emergencySession.mainDoctor',
+            'emergencySession.primaryNurse',
+            'emergencySession.contributors.user',
+            'emergencyCase.assignedDoctor',
+            'emergencyCase.assignedNurse',
+            'emergencyCase.triagedBy',
+            'emergencyCase.disposedBy',
+            'emergencyCase.latestVitals.recordedBy',
+            'emergencyCase.vitals.recordedBy',
+            'emergencyCase.notes.creator',
+            'emergencyCase.medicationOrders.frequency',
+            'emergencyCase.medicationOrders.prescriber',
+            'emergencyCase.labRequests.items',
+            'emergencyCase.labRequests.targetDepartment',
+            'emergencyCase.procedureRequests.service',
+            'emergencyCase.procedureRequests.department',
+            'emergencyCase.consumableUsages.product',
+            'emergencyCase.consumableUsages.invoiceItem',
+        ]);
 
         $routeSelectorRequired = ! $selectedRoute && $sessions->count() > 1;
         $record = $selectedRoute
@@ -339,6 +377,10 @@ class ConsultationController extends Controller
             ->with([
                 'department',
                 'doctor',
+                'mainDoctor',
+                'primaryNurse',
+                'emergencyCase',
+                'emergencySession',
             ])
             ->orderByRaw("CASE status WHEN 'ACTIVE' THEN 0 WHEN 'PENDING' THEN 1 WHEN 'PAUSED' THEN 2 WHEN 'COMPLETED' THEN 3 ELSE 4 END")
             ->oldest()

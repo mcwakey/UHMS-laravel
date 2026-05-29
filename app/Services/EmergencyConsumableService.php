@@ -44,6 +44,8 @@ class EmergencyConsumableService
                 'visit_id' => $case->visit_id,
                 'emergency_case_id' => $case->id,
                 'emergency_session_id' => $session->id,
+                'medical_record_id' => $session->medical_record_id,
+                'consultation_route_id' => $session->consultation_route_id,
                 'patient_id' => $case->patient_id,
                 'source_type' => 'emergency_care',
                 'source_id' => $case->id,

@@ -57,6 +57,8 @@ class EmergencyTriageService
                     'visit_id' => $case->visit_id,
                     'emergency_case_id' => $case->id,
                     'emergency_session_id' => $session->id,
+                    'medical_record_id' => $session->medical_record_id,
+                    'consultation_route_id' => $session->consultation_route_id,
                     'patient_id' => $case->patient_id,
                     'recorded_by' => $user->id,
                     'monitoring_context' => 'EMERGENCY_TRIAGE',
@@ -76,6 +78,7 @@ class EmergencyTriageService
 
     private function createMonitoringTask(EmergencyCase $case, User $user, ?int $sessionId = null): void
     {
+        $session = $sessionId ? $case->emergencySessions()->find($sessionId) : null;
         $minutes = match ($case->triage_category) {
             EmergencyCase::TRIAGE_RED => 15,
             EmergencyCase::TRIAGE_ORANGE => 30,
@@ -107,6 +110,8 @@ class EmergencyTriageService
             'visit_id' => $case->visit_id,
             'emergency_case_id' => $case->id,
             'emergency_session_id' => $sessionId,
+            'medical_record_id' => $session?->medical_record_id,
+            'consultation_route_id' => $session?->consultation_route_id,
             'patient_id' => $case->patient_id,
             'title' => 'Repeat emergency vitals',
             'description' => "{$case->triage_category} emergency case monitoring.",

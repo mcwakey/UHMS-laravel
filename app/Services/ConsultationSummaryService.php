@@ -16,8 +16,20 @@ class ConsultationSummaryService
         $record->loadMissing([
             'department',
             'consultationRoute.doctor',
+            'consultationRoute.mainDoctor',
             'consultationRoute.contributors.user',
             'consultationRoute.routeServices.service',
+            'consultationRoute.emergencyCase.triagedBy',
+            'consultationRoute.emergencyCase.notes.creator',
+            'consultationRoute.emergencyCase.vitals.recordedBy',
+            'consultationRoute.emergencyCase.medicationOrders.prescriber',
+            'consultationRoute.emergencyCase.medicationOrders.frequency',
+            'consultationRoute.emergencyCase.labRequests.items',
+            'consultationRoute.emergencyCase.labRequests.requestedBy',
+            'consultationRoute.emergencyCase.procedureRequests.service',
+            'consultationRoute.emergencyCase.procedureRequests.requestingDoctor',
+            'consultationRoute.emergencyCase.consumableUsages.product',
+            'consultationRoute.emergencyCase.consumableUsages.user',
             'complaints.creator',
             'complaints.updater',
             'complaints.sourcePattern',
@@ -48,7 +60,8 @@ class ConsultationSummaryService
         ]);
 
         $summary = $this->emptySummary();
-        $summary['main_doctor'] = $record->consultationRoute?->doctor?->full_name;
+        $summary['main_doctor'] = $record->consultationRoute?->doctor?->full_name
+            ?? $record->consultationRoute?->mainDoctor?->full_name;
         $summary['department'] = $record->department?->name ?: $record->consultationRoute?->department?->name;
         $summary['services'] = $record->consultationRoute?->routeServices
             ? $record->consultationRoute->routeServices->map(fn ($routeService) => $routeService->service?->name)->filter()->values()->all()
@@ -124,7 +137,73 @@ class ConsultationSummaryService
             ]);
         }
 
+        if ($record->consultationRoute?->isEmergencySession() && $record->consultationRoute->emergencyCase) {
+            $this->appendEmergencySections($summary, $record->consultationRoute->emergencyCase);
+        }
+
         return $summary;
+    }
+
+    private function appendEmergencySections(array &$summary, object $case): void
+    {
+        if ($case->triaged_at || $case->triage_notes || $case->current_triage_category) {
+            $summary['sections']['examination'][] = $this->entry('Emergency Triage', $case->triage_notes ?: 'Emergency triage recorded.', $case, [
+                'Category' => $case->current_triage_category,
+                'Automated Category' => $case->auto_triage_category,
+                'Score' => $case->triage_score,
+                'Triaged By' => $case->triagedBy?->full_name,
+            ]);
+        }
+
+        foreach ($case->vitals ?? [] as $vital) {
+            $summary['sections']['examination'][] = $this->entry('Emergency Vitals', collect([
+                'BP' => $vital->blood_pressure,
+                'HR' => $vital->heart_rate,
+                'RR' => $vital->respiratory_rate,
+                'Temp' => $vital->temperature,
+                'SpO2' => $vital->spo2 ? $vital->spo2.'%' : null,
+            ])->filter()->map(fn ($value, $key) => "{$key}: {$value}")->implode(' · '), $vital, [
+                'Context' => $vital->monitoring_context,
+                'Recorded At' => $vital->recorded_at?->format('d M Y, h:i A'),
+            ]);
+        }
+
+        foreach ($case->notes ?? [] as $note) {
+            $summary['sections']['notes'][] = $this->entry('Emergency '.str_replace('_', ' ', $note->note_type), $note->content, $note);
+        }
+
+        foreach ($case->medicationOrders ?? [] as $order) {
+            $summary['sections']['prescriptions'][] = $this->entry('Emergency Medication', $order->display_name, $order, [
+                'Dose' => trim(($order->dose ?: '').' '.($order->dose_unit ?: '')),
+                'Route' => $order->route,
+                'Frequency' => $order->frequency?->name ?? $order->frequency_code,
+                'Status' => $order->status,
+            ]);
+        }
+
+        foreach ($case->labRequests ?? [] as $request) {
+            $tests = $request->items->map(fn ($item) => $item->display_name ?? $item->name)->filter()->implode(', ');
+            $summary['sections']['investigations'][] = $this->entry('Emergency Investigation', $tests ?: $request->request_number, $request, [
+                'Urgency' => $request->urgency,
+                'Status' => $request->status,
+                'Clinical Info' => $request->clinical_info,
+            ]);
+        }
+
+        foreach ($case->procedureRequests ?? [] as $procedure) {
+            $summary['sections']['procedures'][] = $this->entry('Emergency Procedure', $procedure->service?->name ?? $procedure->procedure?->name ?? 'Procedure request', $procedure, [
+                'Priority' => $procedure->priority,
+                'Status' => $procedure->status?->label() ?? $procedure->status,
+                'Indication' => $procedure->indication,
+            ]);
+        }
+
+        foreach ($case->consumableUsages ?? [] as $usage) {
+            $summary['sections']['treatments'][] = $this->entry('Emergency Consumable', trim(($usage->product?->name ?: 'Consumable').' x '.(float) $usage->quantity_used), $usage, [
+                'Billable' => $usage->is_billable ? 'Yes' : 'No',
+                'Notes' => $usage->notes,
+            ]);
+        }
     }
 
     public function forVisit(Visit $visit): array
@@ -163,7 +242,15 @@ class ConsultationSummaryService
 
     private function entry(string $type, ?string $content, object $entry, array $details = []): array
     {
-        $creator = $entry->creator ?? $entry->createdBy ?? $entry->doctor ?? null;
+        $creator = $entry->creator
+            ?? $entry->createdBy
+            ?? $entry->doctor
+            ?? $entry->recordedBy
+            ?? $entry->requestedBy
+            ?? $entry->requestingDoctor
+            ?? $entry->prescriber
+            ?? $entry->user
+            ?? null;
         $updater = $entry->updater ?? null;
 
         return [

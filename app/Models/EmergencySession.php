@@ -21,6 +21,7 @@ class EmergencySession extends Model
 
     protected $fillable = [
         'emergency_case_id',
+        'consultation_route_id',
         'visit_id',
         'patient_id',
         'department_id',
@@ -46,6 +47,11 @@ class EmergencySession extends Model
     public function emergencyCase()
     {
         return $this->belongsTo(EmergencyCase::class);
+    }
+
+    public function consultationRoute()
+    {
+        return $this->belongsTo(VisitConsultationRoute::class, 'consultation_route_id');
     }
 
     public function visit()
@@ -121,5 +127,10 @@ class EmergencySession extends Model
     public function clinicalTasks()
     {
         return $this->hasMany(ClinicalTask::class);
+    }
+
+    public function consumableUsages()
+    {
+        return $this->hasMany(ConsumableUsage::class);
     }
 }

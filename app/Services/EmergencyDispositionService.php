@@ -31,7 +31,7 @@ class EmergencyDispositionService
 
             $this->applyVisitDisposition($case->fresh('visit.patient'), $data, $user);
             $this->bays->release($case->fresh('bay'));
-            $this->completeSession($case->fresh('activeEmergencySession'), $user);
+            $this->sessions->completeForDisposition($case->fresh(['activeEmergencySession.consultationRoute', 'emergencySessions.consultationRoute']), $user);
             $this->timeline->record($case->fresh(), 'DISPOSITION', 'Emergency case disposed', $disposition, $case, $user);
 
             return $case->fresh(['visit', 'patient', 'bay', 'disposedBy']);
@@ -84,18 +84,4 @@ class EmergencyDispositionService
         ]);
     }
 
-    private function completeSession(EmergencyCase $case, User $user): void
-    {
-        $session = $case->activeEmergencySession;
-        if (! $session) {
-            return;
-        }
-
-        $session->update([
-            'status' => \App\Models\EmergencySession::STATUS_COMPLETED,
-            'ended_at' => now(),
-            'ended_by' => $user->id,
-        ]);
-        $this->sessions->recordContribution($case, $user, 'Disposition');
-    }
 }

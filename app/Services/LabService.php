@@ -184,6 +184,8 @@ class LabService
                 'visit_id'             => $visit->id,
                 'emergency_case_id'    => $data['emergency_case_id'] ?? null,
                 'emergency_session_id' => $data['emergency_session_id'] ?? null,
+                'medical_record_id'    => $data['medical_record_id'] ?? null,
+                'consultation_route_id' => $data['consultation_route_id'] ?? null,
                 'patient_id'           => $visit->patient_id,
                 'requested_by'         => Auth::id(),
                 'department_id'        => $visit->department_id,

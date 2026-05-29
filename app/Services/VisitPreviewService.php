@@ -67,6 +67,13 @@ class VisitPreviewService
             'emergencyCase.activeEmergencySession.department',
             'emergencyCase.activeEmergencySession.startedBy',
             'emergencyCase.activeEmergencySession.contributors.user',
+            'emergencyCase.emergencySessions.mainDoctor',
+            'emergencyCase.emergencySessions.primaryNurse',
+            'emergencyCase.emergencySessions.department',
+            'emergencyCase.emergencySessions.startedBy',
+            'emergencyCase.emergencySessions.endedBy',
+            'emergencyCase.emergencySessions.contributors.user',
+            'emergencyCase.emergencySessions.consultationRoute.medicalRecord',
             'emergencyCase.bayAssignments.ward',
             'emergencyCase.bayAssignments.bed',
             'emergencyCase.bayAssignments.emergencyBay',
@@ -118,6 +125,10 @@ class VisitPreviewService
             'consultationRoutes.service',
             'consultationRoutes.routeServices.service',
             'consultationRoutes.doctor',
+            'consultationRoutes.mainDoctor',
+            'consultationRoutes.primaryNurse',
+            'consultationRoutes.emergencyCase',
+            'consultationRoutes.emergencySession',
             'consultationRoutes.routedBy',
             'consultationRoutes.logs.performedBy',
             'labRequests.requestedBy',
@@ -221,16 +232,23 @@ class VisitPreviewService
                 );
             }
 
-            if ($session = $case->activeEmergencySession) {
+            $emergencySessions = $case->emergencySessions && $case->emergencySessions->isNotEmpty()
+                ? $case->emergencySessions
+                : collect($case->activeEmergencySession ? [$case->activeEmergencySession] : []);
+
+            foreach ($emergencySessions as $session) {
                 $contributors = $session->contributors
                     ->map(fn ($contributor) => $contributor->user?->full_name)
                     ->filter()
                     ->unique()
                     ->implode(', ');
+                $sessionTitle = $session->status === \App\Models\EmergencySession::STATUS_COMPLETED
+                    ? 'Emergency Session Completed'
+                    : 'Emergency Session Active';
 
                 $items[] = $this->item(
                     $session->started_at ?? $session->created_at,
-                    'Emergency Session Active',
+                    $sessionTitle,
                     'Emergency clinical session opened.',
                     optional($session->startedBy)->full_name,
                     optional($session->department)->name ?: 'Emergency',
@@ -240,6 +258,7 @@ class VisitPreviewService
                         'Main Doctor' => $session->mainDoctor?->full_name,
                         'Primary Nurse' => $session->primaryNurse?->full_name,
                         'Contributors' => $contributors ?: null,
+                        'Medical Record' => $session->medical_record_id ? 'MR-'.str_pad((string) $session->medical_record_id, 5, '0', STR_PAD_LEFT) : null,
                     ])
                 );
             }
@@ -392,7 +411,12 @@ class VisitPreviewService
                 $serviceNames = collect([$route->service->name]);
             }
             $serviceList = $serviceNames->implode(', ');
-            $sessionName = $deptName ? "{$deptName} Department Session" : 'Consultation Department Session';
+            $isEmergencyRoute = method_exists($route, 'isEmergencySession') && $route->isEmergencySession();
+            $sessionName = $isEmergencyRoute
+                ? 'Emergency Department Session'
+                : ($deptName ? "{$deptName} Department Session" : 'Consultation Department Session');
+            $sessionBadge = $isEmergencyRoute ? 'ER SESSION' : 'SESSION';
+            $sessionBadgeClass = $isEmergencyRoute ? 'bg-danger' : 'bg-primary';
 
             $items[] = $this->item(
                 $route->created_at,
@@ -400,11 +424,12 @@ class VisitPreviewService
                 trim(($deptName ?: 'Department').' routed for consultation.'.($serviceList ? " Services: {$serviceList}." : '')),
                 optional($route->routedBy)->full_name,
                 $deptName,
-                'SESSION', 'bg-primary',
+                $sessionBadge, $sessionBadgeClass,
                 'consultation_route', $route->id,
                 array_filter([
                     'Status' => $route->status,
-                    'Doctor' => optional($route->doctor)->full_name,
+                    'Doctor' => optional($route->doctor ?? $route->mainDoctor)->full_name,
+                    'Primary Nurse' => optional($route->primaryNurse)->full_name,
                     'Linked Services' => $serviceList,
                 ])
             );
@@ -416,7 +441,7 @@ class VisitPreviewService
                     $log->notes ?: "Consultation session moved to {$log->to_status}.",
                     optional($log->performedBy)->full_name,
                     $deptName,
-                    'SESSION', 'bg-primary',
+                    $sessionBadge, $sessionBadgeClass,
                     'consultation_route_log', $log->id,
                     array_filter([
                         'From' => $log->from_status,

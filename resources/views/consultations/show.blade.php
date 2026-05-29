@@ -101,6 +101,16 @@
     $canDeleteEntry = fn ($entry) => auth()->user() && $entryPermissions->canDelete(auth()->user(), $entry);
     $canEditEntry = fn ($entry) => auth()->user() && $entryPermissions->canEdit(auth()->user(), $entry);
     $contributors = $selectedRoute?->contributors?->map(fn ($contributor) => $contributor->user?->full_name)->filter()->unique()->values() ?? collect();
+    $isEmergencyRoute = $selectedRoute?->isEmergencySession() ?? false;
+    $emergencyCase = $selectedRoute?->emergencyCase;
+    $emergencySession = $selectedRoute?->emergencySession;
+    $emergencyReadOnly = $isEmergencyRoute && in_array($emergencyCase?->emergency_status, [
+        \App\Models\EmergencyCase::STATUS_DISPOSED,
+        \App\Models\EmergencyCase::STATUS_CANCELLED,
+    ], true);
+    $selectedRouteLabel = $isEmergencyRoute
+        ? 'Emergency Department Session'
+        : ($selectedRoute?->department?->name ?? 'No active session');
 @endphp
 
 {{-- ============================================================ --}}
@@ -111,7 +121,12 @@
         <div>
             <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-primary"></i>Current Session</h6>
             {{-- <small class="text-muted">Visit {{ $visit->visit_number }} · {{ $visit->patient->full_name }}</small> --}}
-            <div class="fw-semibold ms-2">{{ $selectedRoute?->department?->name ?? 'No active session' }}</div>
+            <div class="fw-semibold ms-2">
+                {{ $selectedRouteLabel }}
+                @if($isEmergencyRoute)
+                    <span class="badge bg-danger ms-1">Emergency</span>
+                @endif
+            </div>
         </div>
             {{-- <div class="session-summary-item">
                 <div class="text-muted small">Department</div>
@@ -208,6 +223,138 @@
         </div> --}}
     {{-- </div> --}}
 </div>
+
+@if($isEmergencyRoute && $emergencyCase)
+<div class="card mb-3 border-danger-subtle">
+    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div>
+            <h6 class="fw-bold mb-0"><i class="ti ti-urgent me-1 text-danger"></i>Emergency Department Session</h6>
+            <small class="text-muted">{{ $emergencyCase->emergency_number }} · {{ $emergencyCase->arrival_time?->format('d M Y, h:i A') ?? $emergencyCase->created_at?->format('d M Y, h:i A') }}</small>
+        </div>
+        <div class="d-flex flex-wrap gap-1">
+            <span class="badge bg-danger">{{ str_replace('_', ' ', $emergencyCase->emergency_status) }}</span>
+            @if($emergencyCase->current_triage_category)
+                <span class="badge {{ $emergencyCase->triage_badge_class }}">{{ $emergencyCase->current_triage_category }}</span>
+            @endif
+            @if($emergencyReadOnly)
+                <span class="badge bg-secondary">Read only</span>
+            @endif
+        </div>
+    </div>
+    <div class="card-body">
+        @if($emergencyReadOnly)
+            <div class="alert alert-secondary py-2 small mb-3">
+                This emergency session has been disposed or cancelled. Clinical details are shown as a completed session record.
+            </div>
+        @endif
+
+        <div class="session-summary-grid mb-3">
+            <div class="session-summary-item">
+                <div class="text-muted small">Chief Complaint</div>
+                <div class="fw-semibold">{{ $emergencyCase->chief_complaint ?: '-' }}</div>
+            </div>
+            <div class="session-summary-item">
+                <div class="text-muted small">Main Doctor</div>
+                <div class="fw-semibold">{{ $emergencySession?->mainDoctor?->full_name ?? $emergencyCase->assignedDoctor?->full_name ?? 'Unassigned' }}</div>
+            </div>
+            <div class="session-summary-item">
+                <div class="text-muted small">Primary Nurse</div>
+                <div class="fw-semibold">{{ $emergencySession?->primaryNurse?->full_name ?? $emergencyCase->assignedNurse?->full_name ?? 'Unassigned' }}</div>
+            </div>
+            <div class="session-summary-item">
+                <div class="text-muted small">Medical Record</div>
+                <div class="fw-semibold">{{ $emergencySession?->medical_record_id ? 'MR-'.str_pad((string) $emergencySession->medical_record_id, 5, '0', STR_PAD_LEFT) : '-' }}</div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <div class="col-lg-4">
+                <div class="border rounded p-2 h-100">
+                    <div class="fw-semibold small mb-2"><i class="ti ti-heartbeat me-1 text-danger"></i>Triage & Vitals</div>
+                    @php $latestEmergencyVitals = $emergencyCase->latestVitals; @endphp
+                    <div class="small text-muted mb-1">Triaged by {{ $emergencyCase->triagedBy?->full_name ?? '-' }}</div>
+                    <div class="small mb-2">{{ $emergencyCase->triage_notes ?: 'No triage notes recorded.' }}</div>
+                    @if($latestEmergencyVitals)
+                        <div class="d-flex flex-wrap gap-1 small">
+                            @if($latestEmergencyVitals->blood_pressure)<span class="badge bg-light text-dark">BP {{ $latestEmergencyVitals->blood_pressure }}</span>@endif
+                            @if($latestEmergencyVitals->heart_rate)<span class="badge bg-light text-dark">HR {{ $latestEmergencyVitals->heart_rate }}</span>@endif
+                            @if($latestEmergencyVitals->respiratory_rate)<span class="badge bg-light text-dark">RR {{ $latestEmergencyVitals->respiratory_rate }}</span>@endif
+                            @if($latestEmergencyVitals->temperature)<span class="badge bg-light text-dark">Temp {{ $latestEmergencyVitals->temperature }}</span>@endif
+                            @if($latestEmergencyVitals->spo2)<span class="badge bg-light text-dark">SpO2 {{ $latestEmergencyVitals->spo2 }}%</span>@endif
+                        </div>
+                    @endif
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="border rounded p-2 h-100">
+                    <div class="fw-semibold small mb-2"><i class="ti ti-notes me-1 text-primary"></i>Emergency Notes</div>
+                    @forelse($emergencyCase->notes->take(3) as $note)
+                        <div class="small border-bottom pb-1 mb-1">
+                            <span class="badge bg-light text-dark">{{ str_replace('_', ' ', $note->note_type) }}</span>
+                            {{ Str::limit($note->content, 120) }}
+                            <div class="text-muted">{{ $note->creator?->full_name ?? 'Unknown user' }} · {{ $note->created_at?->format('d M, h:i A') }}</div>
+                        </div>
+                    @empty
+                        <div class="small text-muted">No emergency notes recorded.</div>
+                    @endforelse
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="border rounded p-2 h-100">
+                    <div class="fw-semibold small mb-2"><i class="ti ti-pill me-1 text-success"></i>Medication / MAR</div>
+                    @forelse($emergencyCase->medicationOrders->take(4) as $order)
+                        <div class="small border-bottom pb-1 mb-1">
+                            <div class="fw-semibold">{{ $order->display_name }}</div>
+                            <div class="text-muted">{{ trim(($order->dose ?: '').' '.($order->dose_unit ?: '').' '.($order->route ?: '')) ?: '-' }} · {{ $order->status }}</div>
+                        </div>
+                    @empty
+                        <div class="small text-muted">No emergency medications ordered.</div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mt-0">
+            <div class="col-lg-4">
+                <div class="border rounded p-2 h-100">
+                    <div class="fw-semibold small mb-2"><i class="ti ti-microscope me-1 text-info"></i>Investigations</div>
+                    @forelse($emergencyCase->labRequests->take(4) as $request)
+                        <div class="small">{{ $request->items->map(fn($item) => $item->display_name ?? $item->name)->filter()->implode(', ') ?: $request->request_number }} <span class="text-muted">{{ $request->status }}</span></div>
+                    @empty
+                        <div class="small text-muted">No investigations requested.</div>
+                    @endforelse
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="border rounded p-2 h-100">
+                    <div class="fw-semibold small mb-2"><i class="ti ti-activity me-1 text-warning"></i>Procedures</div>
+                    @forelse($emergencyCase->procedureRequests->take(4) as $procedure)
+                        <div class="small">{{ $procedure->service?->name ?? $procedure->procedure?->name ?? 'Procedure request' }} <span class="text-muted">{{ $procedure->status?->label() ?? $procedure->status }}</span></div>
+                    @empty
+                        <div class="small text-muted">No procedures requested.</div>
+                    @endforelse
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="border rounded p-2 h-100">
+                    <div class="fw-semibold small mb-2"><i class="ti ti-package me-1 text-secondary"></i>Consumables</div>
+                    @forelse($emergencyCase->consumableUsages->take(4) as $usage)
+                        <div class="small">{{ $usage->product?->name ?? 'Consumable' }} x {{ (float) $usage->quantity_used }} @if($usage->invoice_item_id)<span class="badge bg-success-subtle text-success">Billed</span>@endif</div>
+                    @empty
+                        <div class="small text-muted">No consumables used.</div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <a href="{{ route('admin.emergency.cases.show', $emergencyCase) }}" class="btn btn-sm btn-outline-danger">
+                <i class="ti ti-external-link me-1"></i>Open Emergency Control Sheet
+            </a>
+        </div>
+    </div>
+</div>
+@endif
 
 {{-- ============================================================ --}}
 {{-- VITALS — STATIC SECTION (always visible) --}}
@@ -1826,9 +1973,15 @@
                         $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_COMPLETED ? ' is-completed' : '';
                         $rowClass .= $session->status === \App\Models\VisitConsultationRoute::STATUS_CANCELLED ? ' is-cancelled' : '';
                         $sessionServiceNames = $routeServiceNames($session);
+                        $sessionLabel = $session->isEmergencySession() ? 'Emergency Department Session' : ($session->department?->name ?? '-');
                     @endphp
                     <tr class="session-route-row {{ trim($rowClass) }}">
-                        <td class="fw-medium">{{ $session->department?->name ?? '-' }}</td>
+                        <td class="fw-medium">
+                            {{ $sessionLabel }}
+                            @if($session->isEmergencySession())
+                                <span class="badge bg-danger ms-1">Emergency</span>
+                            @endif
+                        </td>
                         <td>
                             {{ $sessionServiceNames->implode(', ') ?: '-' }}
                             @if($selectedRoute && $selectedRoute->id === $session->id)

@@ -30,6 +30,8 @@ class EmergencyInvestigationService
             'is_emergency' => true,
             'emergency_case_id' => $case->id,
             'emergency_session_id' => $session->id,
+            'medical_record_id' => $session->medical_record_id,
+            'consultation_route_id' => $session->consultation_route_id,
         ]);
 
         $this->sessions->recordContribution($case, $user, 'Investigation');

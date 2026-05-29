@@ -6,11 +6,13 @@ use App\Enums\ProductType;
 use App\Enums\StockMovementType;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
+use App\Models\ConsultationSessionContributor;
 use App\Models\ClinicalTask;
 use App\Models\Department;
 use App\Models\EmergencyBay;
 use App\Models\EmergencyCase;
 use App\Models\InvoiceItem;
+use App\Models\MedicalRecord;
 use App\Models\Patient;
 use App\Models\Product;
 use App\Models\ServiceCatalog;
@@ -18,10 +20,12 @@ use App\Models\StockBalance;
 use App\Models\StockLocation;
 use App\Models\User;
 use App\Models\Visit;
+use App\Models\VisitConsultationRoute;
 use App\Models\Vital;
 use App\Services\EmergencyMedicationService;
 use App\Services\EmergencySessionService;
 use App\Services\EmergencyTriageService;
+use App\Services\ConsultationService;
 use App\Services\VisitPreviewService;
 use Database\Seeders\MedicationFrequencySeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -75,6 +79,7 @@ class EmergencyCaseManagementTest extends TestCase
             'invoices.create',
             'emergency.reports.view',
             'emergency.settings.manage',
+            'consultations.view',
             'emergency.medication_board.view',
             'emergency.mar_chart.view',
             'medication_administration.view',
@@ -126,6 +131,24 @@ class EmergencyCaseManagementTest extends TestCase
             'visit_id' => $case->visit_id,
             'patient_id' => $this->patient->id,
             'status' => 'ACTIVE',
+        ]);
+
+        $route = VisitConsultationRoute::where('emergency_case_id', $case->id)->first();
+        $session = $case->fresh('activeEmergencySession')->activeEmergencySession;
+
+        $this->assertNotNull($route);
+        $this->assertNotNull($session);
+        $this->assertSame(VisitConsultationRoute::SESSION_TYPE_EMERGENCY, $route->session_type);
+        $this->assertSame($case->visit_id, $route->visit_id);
+        $this->assertSame($case->patient_id, $route->patient_id);
+        $this->assertSame($this->department->id, $route->department_id);
+        $this->assertSame($route->id, $session->consultation_route_id);
+        $this->assertNotNull($session->medical_record_id);
+        $this->assertDatabaseHas('medical_records', [
+            'id' => $session->medical_record_id,
+            'visit_id' => $case->visit_id,
+            'patient_id' => $case->patient_id,
+            'consultation_route_id' => $route->id,
         ]);
     }
 
@@ -247,16 +270,25 @@ class EmergencyCaseManagementTest extends TestCase
         $this->assertDatabaseHas('vitals', [
             'emergency_case_id' => $case->id,
             'emergency_session_id' => $session->id,
+            'medical_record_id' => $session->medical_record_id,
+            'consultation_route_id' => $session->consultation_route_id,
             'patient_id' => $case->patient_id,
             'monitoring_context' => 'EMERGENCY_TRIAGE',
         ]);
         $this->assertDatabaseHas('clinical_tasks', [
             'emergency_case_id' => $case->id,
             'emergency_session_id' => $session->id,
+            'medical_record_id' => $session->medical_record_id,
+            'consultation_route_id' => $session->consultation_route_id,
             'task_type' => ClinicalTask::TYPE_VITALS_MONITORING,
         ]);
         $this->assertDatabaseHas('emergency_session_contributors', [
             'emergency_session_id' => $session->id,
+            'user_id' => $this->user->id,
+            'role' => 'Triage',
+        ]);
+        $this->assertDatabaseHas('consultation_session_contributors', [
+            'consultation_route_id' => $session->consultation_route_id,
             'user_id' => $this->user->id,
             'role' => 'Triage',
         ]);
@@ -311,12 +343,18 @@ class EmergencyCaseManagementTest extends TestCase
 
         $this->assertSame($doctor->id, $session->main_doctor_id);
         $this->assertSame($nurse->id, $session->primary_nurse_id);
+        $this->assertSame($doctor->id, $session->consultationRoute->main_doctor_id);
+        $this->assertSame($nurse->id, $session->consultationRoute->primary_nurse_id);
         $this->assertDatabaseHas('emergency_session_contributors', [
             'emergency_session_id' => $session->id,
             'emergency_case_id' => $case->id,
             'user_id' => $clinician->id,
             'role' => 'Procedure',
         ]);
+        $this->assertTrue(ConsultationSessionContributor::where('consultation_route_id', $session->consultation_route_id)
+            ->where('user_id', $clinician->id)
+            ->where('role', 'Procedure')
+            ->exists());
     }
 
     public function test_bay_assignment_marks_bay_occupied_and_blocks_double_assignment(): void
@@ -367,14 +405,20 @@ class EmergencyCaseManagementTest extends TestCase
 
         $this->assertSame($case->id, $order->emergency_case_id);
         $this->assertNotNull($order->emergency_session_id);
+        $this->assertNotNull($order->medical_record_id);
+        $this->assertNotNull($order->consultation_route_id);
         $this->assertDatabaseHas('medication_administration_schedules', [
             'medication_order_id' => $order->id,
             'emergency_case_id' => $case->id,
             'emergency_session_id' => $order->emergency_session_id,
+            'medical_record_id' => $order->medical_record_id,
+            'consultation_route_id' => $order->consultation_route_id,
         ]);
         $this->assertDatabaseHas('clinical_tasks', [
             'emergency_case_id' => $case->id,
             'emergency_session_id' => $order->emergency_session_id,
+            'medical_record_id' => $order->medical_record_id,
+            'consultation_route_id' => $order->consultation_route_id,
             'task_type' => ClinicalTask::TYPE_MEDICATION_ADMINISTRATION,
         ]);
     }
@@ -408,6 +452,8 @@ class EmergencyCaseManagementTest extends TestCase
         $this->assertDatabaseHas('lab_requests', [
             'visit_id' => $case->visit_id,
             'emergency_case_id' => $case->id,
+            'medical_record_id' => $case->fresh('activeEmergencySession')->activeEmergencySession->medical_record_id,
+            'consultation_route_id' => $case->fresh('activeEmergencySession')->activeEmergencySession->consultation_route_id,
             'target_department_id' => $department->id,
             'is_emergency' => true,
         ]);
@@ -446,6 +492,8 @@ class EmergencyCaseManagementTest extends TestCase
         $this->assertDatabaseHas('procedure_requests', [
             'visit_id' => $case->visit_id,
             'emergency_case_id' => $case->id,
+            'medical_record_id' => $case->fresh('activeEmergencySession')->activeEmergencySession->medical_record_id,
+            'consultation_route_id' => $case->fresh('activeEmergencySession')->activeEmergencySession->consultation_route_id,
             'department_id' => $department->id,
             'service_catalog_id' => $service->id,
             'is_emergency' => true,
@@ -538,6 +586,8 @@ class EmergencyCaseManagementTest extends TestCase
             'visit_id' => $case->visit_id,
             'emergency_case_id' => $case->id,
             'emergency_session_id' => $session->id,
+            'medical_record_id' => $session->medical_record_id,
+            'consultation_route_id' => $session->consultation_route_id,
             'product_id' => $product->id,
         ]);
         $this->assertDatabaseHas('invoice_items', [
@@ -567,8 +617,28 @@ class EmergencyCaseManagementTest extends TestCase
 
         $this->assertTrue($titles->contains('Emergency Case Opened'));
         $this->assertTrue($titles->contains('Emergency Session Active'));
+        $this->assertTrue($titles->contains('Emergency Department Session Routed'));
         $this->assertTrue($titles->contains('Emergency Doctor Assessment'));
         $this->assertSame($case->emergency_number, $preview['summary']['emergency_number']);
+    }
+
+    public function test_emergency_session_appears_in_consultation_history(): void
+    {
+        $case = $this->makeCase([
+            'chief_complaint' => 'Emergency collapse',
+        ]);
+
+        $session = app(EmergencySessionService::class)->getOrCreateForCase($case, $this->user);
+
+        $history = app(ConsultationService::class)->getPatientHistory($this->patient->id);
+        $records = collect($history['records']);
+
+        $this->assertTrue($records->contains(fn (MedicalRecord $record) => (int) $record->consultation_route_id === (int) $session->consultation_route_id));
+        $this->assertDatabaseHas('visit_consultation_routes', [
+            'id' => $session->consultation_route_id,
+            'session_type' => VisitConsultationRoute::SESSION_TYPE_EMERGENCY,
+            'emergency_case_id' => $case->id,
+        ]);
     }
 
     private function makeCase(array $overrides = []): EmergencyCase

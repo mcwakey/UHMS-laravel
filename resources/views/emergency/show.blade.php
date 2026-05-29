@@ -294,23 +294,273 @@
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-header"><h5 class="card-title mb-0">Emergency Timeline</h5></div>
-            <div class="card-body">
-                @forelse($case->logs->sortByDesc('created_at') as $log)
-                    <div class="d-flex gap-3 pb-3 mb-3 border-bottom">
-                        <div class="text-muted small" style="min-width: 110px;">{{ $log->created_at?->format('d M H:i') }}</div>
-                        <div>
-                            <div class="fw-semibold">{{ $log->title }}</div>
-                            @if($log->description)<div class="small">{{ $log->description }}</div>@endif
-                            <small class="text-muted">{{ $log->action }} by {{ $log->performedBy->name ?? 'System' }}</small>
-                        </div>
+        <div class="row g-3">
+            <div class="col-xl-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Medication / MAR</h5>
+                        <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.emergency.mar-chart', $case->visit) }}">Open MAR</a>
                     </div>
-                @empty
-                    <div class="text-muted">No timeline entries yet.</div>
-                @endforelse
+                    <div class="card-body">
+                        <div class="row g-2 text-center mb-3">
+                            <div class="col-3"><div class="fw-bold text-danger">{{ $medCounts['due_now'] }}</div><small class="text-muted">Due</small></div>
+                            <div class="col-3"><div class="fw-bold text-warning">{{ $medCounts['overdue'] }}</div><small class="text-muted">Late</small></div>
+                            <div class="col-3"><div class="fw-bold text-primary">{{ $medCounts['upcoming'] }}</div><small class="text-muted">Next</small></div>
+                            <div class="col-3"><div class="fw-bold text-success">{{ $medCounts['administered_today'] }}</div><small class="text-muted">Given</small></div>
+                        </div>
+                        <form method="POST" action="{{ route('admin.emergency.medications.store', $case) }}" class="row g-2 mb-3">
+                            @csrf
+                            <div class="col-12">
+                                <input class="form-control form-control-sm mb-1" data-filter-target="medicationProductSelect" placeholder="Search medication">
+                                <select class="form-select" name="product_id" id="medicationProductSelect" required>
+                                    <option value="">Select medication/product</option>
+                                    @foreach($products as $product)
+                                        <option value="{{ $product->id }}" data-emergency-stock="{{ $product->emergency_available_quantity ?? 0 }}" data-pharmacy-stock="{{ $product->pharmacy_available_quantity ?? 0 }}">
+                                            {{ $product->name }} - ER {{ number_format($product->emergency_available_quantity ?? 0, 0) }} / Pharmacy {{ number_format($product->pharmacy_available_quantity ?? 0, 0) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <small class="text-muted">Emergency stock is shown first; pharmacy remains the wider stock source for formal dispensing.</small>
+                            </div>
+                            <div class="col-4"><input class="form-control" name="dose" placeholder="Dose" required></div>
+                            <div class="col-4"><input class="form-control" name="route" placeholder="Route" required></div>
+                            <div class="col-4">
+                                <select class="form-select" name="frequency_code" required>
+                                    @foreach($frequencies as $frequency)
+                                        <option value="{{ $frequency->code }}">{{ $frequency->code }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-4"><input class="form-control" type="number" min="1" name="duration_value" value="1" placeholder="Duration"></div>
+                            <div class="col-4">
+                                <select class="form-select" name="duration_unit">
+                                    <option value="days">Days</option>
+                                    <option value="weeks">Weeks</option>
+                                    <option value="months">Months</option>
+                                </select>
+                            </div>
+                            <div class="col-4"><input class="form-control" type="number" min="0" name="quantity_ordered" placeholder="Qty override"></div>
+                            <div class="col-12"><input class="form-control" type="datetime-local" name="start_at"></div>
+                            <div class="col-12"><div class="small text-muted" id="medicationQuantityHint">Quantity is calculated from frequency and duration unless overridden.</div></div>
+                            <div class="col-12"><textarea class="form-control" name="instructions" rows="2" placeholder="Instructions"></textarea></div>
+                            <div class="col-12"><button class="btn btn-outline-danger w-100" type="submit">Order Emergency Medication</button></div>
+                        </form>
+                        @forelse($case->medicationOrders as $order)
+                            <div class="border rounded p-2 mb-2">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <div class="fw-semibold">{{ $order->display_name }}</div>
+                                    <span class="badge bg-light text-dark">{{ $order->status }}</span>
+                                </div>
+                                <small class="text-muted">{{ $order->dose }} {{ $order->route }} {{ $order->frequency?->code }} - Qty {{ $order->quantity_ordered ?? '-' }}</small>
+                                @if($order->schedules->isNotEmpty())
+                                    <div class="small mt-1">Next: {{ optional($order->schedules->whereIn('status', ['SCHEDULED', 'DUE'])->sortBy('scheduled_at')->first())->scheduled_at?->format('d M H:i') ?: 'No pending doses' }}</div>
+                                @endif
+                            </div>
+                        @empty
+                            <div class="text-muted">No emergency medication orders yet.</div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Investigations</h5>
+                        <span class="badge bg-light text-dark">{{ $case->labRequests->count() }}</span>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ route('admin.emergency.investigations.store', $case) }}" class="row g-2 mb-3">
+                            @csrf
+                            <div class="col-12">
+                                <select class="form-select" name="target_department_id" id="emergencyInvestigationDepartment" required>
+                                    <option value="">Investigation department</option>
+                                    @foreach($investigationDepartments as $department)
+                                        <option value="{{ $department->id }}" @selected(old('target_department_id') == $department->id)>{{ $department->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <select class="form-select" name="service_id" id="emergencyInvestigationService" data-old-value="{{ old('service_id') }}" required disabled>
+                                    <option value="">Select department first</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <select class="form-select" name="urgency">
+                                    <option value="emergency" @selected(old('urgency', 'emergency') === 'emergency')>Emergency</option>
+                                    <option value="urgent" @selected(old('urgency') === 'urgent')>Urgent</option>
+                                    <option value="routine" @selected(old('urgency') === 'routine')>Routine</option>
+                                </select>
+                            </div>
+                            <div class="col-12"><textarea class="form-control" name="clinical_info" rows="2" placeholder="Clinical information">{{ old('clinical_info') }}</textarea></div>
+                            <div class="col-12"><button class="btn btn-outline-primary w-100" type="submit">Request Investigation</button></div>
+                        </form>
+                        @forelse($case->labRequests as $request)
+                            @php $requestItems = $request->items->map(fn ($item) => $item->display_name ?? $item->name ?? $item->labTest?->name)->filter()->implode(', '); @endphp
+                            <div class="border rounded p-2 mb-2">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <div class="fw-semibold">{{ $requestItems ?: $request->request_number }}</div>
+                                    <span class="badge bg-light text-dark">{{ $request->status }}</span>
+                                </div>
+                                <small class="text-muted">{{ $request->targetDepartment->name ?? 'Department pending' }} - {{ $request->urgency ?? 'routine' }} - Requested by {{ $request->requestedBy->name ?? 'Unknown' }}</small>
+                            </div>
+                        @empty
+                            <div class="text-muted">No emergency investigations yet.</div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Procedures</h5>
+                        <span class="badge bg-light text-dark">{{ $case->procedureRequests->count() }}</span>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ route('admin.emergency.procedures.store', $case) }}" class="row g-2 mb-3">
+                            @csrf
+                            <div class="col-12">
+                                <select class="form-select" name="department_id" id="emergencyProcedureDepartment" required>
+                                    <option value="">Procedure department</option>
+                                    @foreach($procedureDepartments as $department)
+                                        <option value="{{ $department->id }}" @selected(old('department_id') == $department->id)>{{ $department->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <select class="form-select" name="service_catalog_id" id="emergencyProcedureService" data-old-value="{{ old('service_catalog_id') }}" required disabled>
+                                    <option value="">Select department first</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <select class="form-select" name="priority" required>
+                                    <option value="emergency" @selected(old('priority', 'emergency') === 'emergency')>Emergency</option>
+                                    <option value="urgent" @selected(old('priority') === 'urgent')>Urgent</option>
+                                    <option value="routine" @selected(old('priority') === 'routine')>Routine</option>
+                                </select>
+                            </div>
+                            <div class="col-12"><textarea class="form-control" name="indication" rows="2" placeholder="Indication" required>{{ old('indication') }}</textarea></div>
+                            <div class="col-12"><button class="btn btn-outline-primary w-100" type="submit">Request Procedure</button></div>
+                        </form>
+                        @forelse($case->procedureRequests as $request)
+                            <div class="border rounded p-2 mb-2">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <div class="fw-semibold">{{ $request->service?->name ?? $request->procedure_name ?? $request->request_number }}</div>
+                                    <span class="badge bg-light text-dark">{{ $request->status }}</span>
+                                </div>
+                                <small class="text-muted">{{ $request->department->name ?? 'Department pending' }} - {{ $request->priority ?? 'routine' }} - Requested by {{ $request->requestingDoctor->name ?? 'Unknown' }}</small>
+                            </div>
+                        @empty
+                            <div class="text-muted">No emergency procedures yet.</div>
+                        @endforelse
+                    </div>
+                </div>
             </div>
         </div>
+
+        <div class="row g-3 mt-1">
+            <div class="col-xl-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Consumables</h5>
+                        <span class="badge bg-light text-dark">Emergency stock</span>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ route('admin.emergency.consumables.store', $case) }}" class="row g-2 mb-3">
+                            @csrf
+                            <div class="col-12">
+                                <input class="form-control form-control-sm mb-1" data-filter-target="emergencyConsumableSelect" placeholder="Search consumable">
+                                <select class="form-select" name="product_id" id="emergencyConsumableSelect" required>
+                                    <option value="">Select consumable</option>
+                                    @foreach($consumableProducts as $product)
+                                        <option value="{{ $product->id }}">{{ $product->name }} - ER {{ number_format($product->emergency_available_quantity ?? 0, 0) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-4"><input class="form-control" type="number" min="0.0001" step="0.01" name="quantity" value="1" required></div>
+                            <div class="col-8"><input class="form-control" name="notes" placeholder="Usage notes"></div>
+                            <div class="col-12"><button class="btn btn-outline-danger w-100" type="submit">Use Consumable</button></div>
+                        </form>
+                        <div class="er-scroll">
+                            @forelse($case->consumableUsages->sortByDesc('used_at') as $usage)
+                                <div class="border rounded p-2 mb-2 small">
+                                    <div class="d-flex justify-content-between gap-2">
+                                        <span class="fw-semibold">{{ $usage->product->name ?? 'Consumable' }}</span>
+                                        <span>{{ number_format((float) $usage->quantity_used, 2) }}</span>
+                                    </div>
+                                    <span class="text-muted">{{ $usage->used_at?->format('d M H:i') }} - {{ $usage->user->name ?? 'Unknown' }}</span>
+                                </div>
+                            @empty
+                                <div class="text-muted">No emergency consumables recorded yet.</div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Tasks and Monitoring</h5>
+                        <span class="badge bg-light text-dark">{{ $pendingTasks->count() }} pending</span>
+                    </div>
+                    <div class="card-body er-scroll">
+                        @forelse($case->clinicalTasks->sortByDesc('scheduled_at') as $task)
+                            <div class="border rounded p-2 mb-2">
+                                <div class="d-flex justify-content-between gap-2">
+                                    <div class="fw-semibold">{{ $task->title }}</div>
+                                    <span class="badge bg-light text-dark">{{ $task->status }}</span>
+                                </div>
+                                <small class="text-muted">{{ $task->priority }} - {{ $task->scheduled_at?->format('d M H:i') ?: 'No schedule' }} - {{ $task->assignedUser->name ?? $task->assigned_role ?? 'Unassigned' }}</small>
+                            </div>
+                        @empty
+                            <div class="text-muted">No emergency monitoring tasks yet.</div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">Billing</h5>
+                        @if($activeInvoice)
+                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.billing.invoices.show', $activeInvoice) }}">Invoice</a>
+                        @endif
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ route('admin.emergency.services.store', $case) }}" class="row g-2 mb-3">
+                            @csrf
+                            <div class="col-8">
+                                <select class="form-select" name="service_catalog_id" required>
+                                    <option value="">Add billable emergency service</option>
+                                    @foreach($services as $service)
+                                        <option value="{{ $service->id }}">{{ $service->name }} - {{ $service->formatted_price }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-4"><input class="form-control" type="number" name="quantity" min="1" value="1"></div>
+                            <div class="col-12"><button class="btn btn-outline-success w-100" type="submit">Add to Invoice</button></div>
+                        </form>
+                        @if($billingGroups)
+                            @foreach($billingGroups as $group => $items)
+                                <div class="mb-2">
+                                    <div class="er-section-title mb-1">{{ $group }}</div>
+                                    @foreach($items as $item)
+                                        <div class="d-flex justify-content-between small border-bottom py-1">
+                                            <span>{{ $item->description }}</span>
+                                            <span>{{ number_format((float) $item->total, 2) }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endforeach
+                        @else
+                            <div class="text-muted">No emergency invoice items yet.</div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <div class="col-xl-4">
@@ -421,271 +671,22 @@
                 </form>
             </div>
         </div>
-    </div>
-</div>
 
-<div class="row g-3">
-    <div class="col-xl-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">Medication / MAR</h5>
-                <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.emergency.mar-chart', $case->visit) }}">Open MAR</a>
-            </div>
+        <div class="card mb-3">
+            <div class="card-header"><h5 class="card-title mb-0">Emergency Timeline</h5></div>
             <div class="card-body">
-                <div class="row g-2 text-center mb-3">
-                    <div class="col-3"><div class="fw-bold text-danger">{{ $medCounts['due_now'] }}</div><small class="text-muted">Due</small></div>
-                    <div class="col-3"><div class="fw-bold text-warning">{{ $medCounts['overdue'] }}</div><small class="text-muted">Late</small></div>
-                    <div class="col-3"><div class="fw-bold text-primary">{{ $medCounts['upcoming'] }}</div><small class="text-muted">Next</small></div>
-                    <div class="col-3"><div class="fw-bold text-success">{{ $medCounts['administered_today'] }}</div><small class="text-muted">Given</small></div>
-                </div>
-                <form method="POST" action="{{ route('admin.emergency.medications.store', $case) }}" class="row g-2 mb-3">
-                    @csrf
-                    <div class="col-12">
-                        <input class="form-control form-control-sm mb-1" data-filter-target="medicationProductSelect" placeholder="Search medication">
-                        <select class="form-select" name="product_id" id="medicationProductSelect" required>
-                            <option value="">Select medication/product</option>
-                            @foreach($products as $product)
-                                <option value="{{ $product->id }}" data-emergency-stock="{{ $product->emergency_available_quantity ?? 0 }}" data-pharmacy-stock="{{ $product->pharmacy_available_quantity ?? 0 }}">
-                                    {{ $product->name }} - ER {{ number_format($product->emergency_available_quantity ?? 0, 0) }} / Pharmacy {{ number_format($product->pharmacy_available_quantity ?? 0, 0) }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <small class="text-muted">Emergency stock is shown first; pharmacy remains the wider stock source for formal dispensing.</small>
-                    </div>
-                    <div class="col-4"><input class="form-control" name="dose" placeholder="Dose" required></div>
-                    <div class="col-4"><input class="form-control" name="route" placeholder="Route" required></div>
-                    <div class="col-4">
-                        <select class="form-select" name="frequency_code" required>
-                            @foreach($frequencies as $frequency)
-                                <option value="{{ $frequency->code }}">{{ $frequency->code }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-4"><input class="form-control" type="number" min="1" name="duration_value" value="1" placeholder="Duration"></div>
-                    <div class="col-4">
-                        <select class="form-select" name="duration_unit">
-                            <option value="days">Days</option>
-                            <option value="weeks">Weeks</option>
-                            <option value="months">Months</option>
-                        </select>
-                    </div>
-                    <div class="col-4"><input class="form-control" type="number" min="0" name="quantity_ordered" placeholder="Qty override"></div>
-                    <div class="col-12"><input class="form-control" type="datetime-local" name="start_at"></div>
-                    <div class="col-12"><div class="small text-muted" id="medicationQuantityHint">Quantity is calculated from frequency and duration unless overridden.</div></div>
-                    <div class="col-12"><textarea class="form-control" name="instructions" rows="2" placeholder="Instructions"></textarea></div>
-                    <div class="col-12"><button class="btn btn-outline-danger w-100" type="submit">Order Emergency Medication</button></div>
-                </form>
-                @forelse($case->medicationOrders as $order)
-                    <div class="border rounded p-2 mb-2">
-                        <div class="d-flex justify-content-between gap-2">
-                            <div class="fw-semibold">{{ $order->display_name }}</div>
-                            <span class="badge bg-light text-dark">{{ $order->status }}</span>
+                @forelse($case->logs->sortByDesc('created_at') as $log)
+                    <div class="d-flex gap-3 pb-3 mb-3 border-bottom">
+                        <div class="text-muted small" style="min-width: 110px;">{{ $log->created_at?->format('d M H:i') }}</div>
+                        <div>
+                            <div class="fw-semibold">{{ $log->title }}</div>
+                            @if($log->description)<div class="small">{{ $log->description }}</div>@endif
+                            <small class="text-muted">{{ $log->action }} by {{ $log->performedBy->name ?? 'System' }}</small>
                         </div>
-                        <small class="text-muted">{{ $order->dose }} {{ $order->route }} {{ $order->frequency?->code }} - Qty {{ $order->quantity_ordered ?? '-' }}</small>
-                        @if($order->schedules->isNotEmpty())
-                            <div class="small mt-1">Next: {{ optional($order->schedules->whereIn('status', ['SCHEDULED', 'DUE'])->sortBy('scheduled_at')->first())->scheduled_at?->format('d M H:i') ?: 'No pending doses' }}</div>
-                        @endif
                     </div>
                 @empty
-                    <div class="text-muted">No emergency medication orders yet.</div>
+                    <div class="text-muted">No timeline entries yet.</div>
                 @endforelse
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">Investigations</h5>
-                <span class="badge bg-light text-dark">{{ $case->labRequests->count() }}</span>
-            </div>
-            <div class="card-body">
-                <form method="POST" action="{{ route('admin.emergency.investigations.store', $case) }}" class="row g-2 mb-3">
-                    @csrf
-                    <div class="col-12">
-                        <select class="form-select" name="target_department_id" id="emergencyInvestigationDepartment" required>
-                            <option value="">Investigation department</option>
-                            @foreach($investigationDepartments as $department)
-                                <option value="{{ $department->id }}" @selected(old('target_department_id') == $department->id)>{{ $department->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-12">
-                        <select class="form-select" name="service_id" id="emergencyInvestigationService" data-old-value="{{ old('service_id') }}" required disabled>
-                            <option value="">Select department first</option>
-                        </select>
-                    </div>
-                    <div class="col-12">
-                        <select class="form-select" name="urgency">
-                            <option value="emergency" @selected(old('urgency', 'emergency') === 'emergency')>Emergency</option>
-                            <option value="urgent" @selected(old('urgency') === 'urgent')>Urgent</option>
-                            <option value="routine" @selected(old('urgency') === 'routine')>Routine</option>
-                        </select>
-                    </div>
-                    <div class="col-12"><textarea class="form-control" name="clinical_info" rows="2" placeholder="Clinical information">{{ old('clinical_info') }}</textarea></div>
-                    <div class="col-12"><button class="btn btn-outline-primary w-100" type="submit">Request Investigation</button></div>
-                </form>
-                @forelse($case->labRequests as $request)
-                    @php $requestItems = $request->items->map(fn ($item) => $item->display_name ?? $item->name ?? $item->labTest?->name)->filter()->implode(', '); @endphp
-                    <div class="border rounded p-2 mb-2">
-                        <div class="d-flex justify-content-between gap-2">
-                            <div class="fw-semibold">{{ $requestItems ?: $request->request_number }}</div>
-                            <span class="badge bg-light text-dark">{{ $request->status }}</span>
-                        </div>
-                        <small class="text-muted">{{ $request->targetDepartment->name ?? 'Department pending' }} - {{ $request->urgency ?? 'routine' }} - Requested by {{ $request->requestedBy->name ?? 'Unknown' }}</small>
-                    </div>
-                @empty
-                    <div class="text-muted">No emergency investigations yet.</div>
-                @endforelse
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">Procedures</h5>
-                <span class="badge bg-light text-dark">{{ $case->procedureRequests->count() }}</span>
-            </div>
-            <div class="card-body">
-                <form method="POST" action="{{ route('admin.emergency.procedures.store', $case) }}" class="row g-2 mb-3">
-                    @csrf
-                    <div class="col-12">
-                        <select class="form-select" name="department_id" id="emergencyProcedureDepartment" required>
-                            <option value="">Procedure department</option>
-                            @foreach($procedureDepartments as $department)
-                                <option value="{{ $department->id }}" @selected(old('department_id') == $department->id)>{{ $department->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-12">
-                        <select class="form-select" name="service_catalog_id" id="emergencyProcedureService" data-old-value="{{ old('service_catalog_id') }}" required disabled>
-                            <option value="">Select department first</option>
-                        </select>
-                    </div>
-                    <div class="col-12">
-                        <select class="form-select" name="priority" required>
-                            <option value="emergency" @selected(old('priority', 'emergency') === 'emergency')>Emergency</option>
-                            <option value="urgent" @selected(old('priority') === 'urgent')>Urgent</option>
-                            <option value="routine" @selected(old('priority') === 'routine')>Routine</option>
-                        </select>
-                    </div>
-                    <div class="col-12"><textarea class="form-control" name="indication" rows="2" placeholder="Indication" required>{{ old('indication') }}</textarea></div>
-                    <div class="col-12"><button class="btn btn-outline-primary w-100" type="submit">Request Procedure</button></div>
-                </form>
-                @forelse($case->procedureRequests as $request)
-                    <div class="border rounded p-2 mb-2">
-                        <div class="d-flex justify-content-between gap-2">
-                            <div class="fw-semibold">{{ $request->service?->name ?? $request->procedure_name ?? $request->request_number }}</div>
-                            <span class="badge bg-light text-dark">{{ $request->status }}</span>
-                        </div>
-                        <small class="text-muted">{{ $request->department->name ?? 'Department pending' }} - {{ $request->priority ?? 'routine' }} - Requested by {{ $request->requestingDoctor->name ?? 'Unknown' }}</small>
-                    </div>
-                @empty
-                    <div class="text-muted">No emergency procedures yet.</div>
-                @endforelse
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row g-3 mt-1">
-    <div class="col-xl-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">Consumables</h5>
-                <span class="badge bg-light text-dark">Emergency stock</span>
-            </div>
-            <div class="card-body">
-                <form method="POST" action="{{ route('admin.emergency.consumables.store', $case) }}" class="row g-2 mb-3">
-                    @csrf
-                    <div class="col-12">
-                        <input class="form-control form-control-sm mb-1" data-filter-target="emergencyConsumableSelect" placeholder="Search consumable">
-                        <select class="form-select" name="product_id" id="emergencyConsumableSelect" required>
-                            <option value="">Select consumable</option>
-                            @foreach($consumableProducts as $product)
-                                <option value="{{ $product->id }}">{{ $product->name }} - ER {{ number_format($product->emergency_available_quantity ?? 0, 0) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-4"><input class="form-control" type="number" min="0.0001" step="0.01" name="quantity" value="1" required></div>
-                    <div class="col-8"><input class="form-control" name="notes" placeholder="Usage notes"></div>
-                    <div class="col-12"><button class="btn btn-outline-danger w-100" type="submit">Use Consumable</button></div>
-                </form>
-                <div class="er-scroll">
-                    @forelse($case->consumableUsages->sortByDesc('used_at') as $usage)
-                        <div class="border rounded p-2 mb-2 small">
-                            <div class="d-flex justify-content-between gap-2">
-                                <span class="fw-semibold">{{ $usage->product->name ?? 'Consumable' }}</span>
-                                <span>{{ number_format((float) $usage->quantity_used, 2) }}</span>
-                            </div>
-                            <span class="text-muted">{{ $usage->used_at?->format('d M H:i') }} - {{ $usage->user->name ?? 'Unknown' }}</span>
-                        </div>
-                    @empty
-                        <div class="text-muted">No emergency consumables recorded yet.</div>
-                    @endforelse
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">Tasks and Monitoring</h5>
-                <span class="badge bg-light text-dark">{{ $pendingTasks->count() }} pending</span>
-            </div>
-            <div class="card-body er-scroll">
-                @forelse($case->clinicalTasks->sortByDesc('scheduled_at') as $task)
-                    <div class="border rounded p-2 mb-2">
-                        <div class="d-flex justify-content-between gap-2">
-                            <div class="fw-semibold">{{ $task->title }}</div>
-                            <span class="badge bg-light text-dark">{{ $task->status }}</span>
-                        </div>
-                        <small class="text-muted">{{ $task->priority }} - {{ $task->scheduled_at?->format('d M H:i') ?: 'No schedule' }} - {{ $task->assignedUser->name ?? $task->assigned_role ?? 'Unassigned' }}</small>
-                    </div>
-                @empty
-                    <div class="text-muted">No emergency monitoring tasks yet.</div>
-                @endforelse
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">Billing</h5>
-                @if($activeInvoice)
-                    <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.billing.invoices.show', $activeInvoice) }}">Invoice</a>
-                @endif
-            </div>
-            <div class="card-body">
-                <form method="POST" action="{{ route('admin.emergency.services.store', $case) }}" class="row g-2 mb-3">
-                    @csrf
-                    <div class="col-8">
-                        <select class="form-select" name="service_catalog_id" required>
-                            <option value="">Add billable emergency service</option>
-                            @foreach($services as $service)
-                                <option value="{{ $service->id }}">{{ $service->name }} - {{ $service->formatted_price }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-4"><input class="form-control" type="number" name="quantity" min="1" value="1"></div>
-                    <div class="col-12"><button class="btn btn-outline-success w-100" type="submit">Add to Invoice</button></div>
-                </form>
-                @if($billingGroups)
-                    @foreach($billingGroups as $group => $items)
-                        <div class="mb-2">
-                            <div class="er-section-title mb-1">{{ $group }}</div>
-                            @foreach($items as $item)
-                                <div class="d-flex justify-content-between small border-bottom py-1">
-                                    <span>{{ $item->description }}</span>
-                                    <span>{{ number_format((float) $item->total, 2) }}</span>
-                                </div>
-                            @endforeach
-                        </div>
-                    @endforeach
-                @else
-                    <div class="text-muted">No emergency invoice items yet.</div>
-                @endif
             </div>
         </div>
     </div>

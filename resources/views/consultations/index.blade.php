@@ -73,6 +73,9 @@
                         if ($serviceNames->isEmpty() && $route->service) {
                             $serviceNames = collect([$route->service->name]);
                         }
+                        $routeDepartmentLabel = $route->isEmergencySession()
+                            ? 'Emergency Department Session'
+                            : ($route->department?->name ?? '-');
                     @endphp
                     <tr>
                         <td>
@@ -91,7 +94,9 @@
                             <span class="fw-medium">{{ $visit->visit_number }}</span>
                             <div class="small text-muted">{{ $visit->visit_type?->label() }}</div>
                         </td>
-                        <td><span class="badge bg-light text-dark">{{ $route->department?->name ?? '-' }}</span></td>
+                        <td>
+                            <span class="badge {{ $route->isEmergencySession() ? 'bg-danger' : 'bg-light text-dark' }}">{{ $routeDepartmentLabel }}</span>
+                        </td>
                         <td>
                             <div class="fw-medium small">{{ $serviceNames->implode(', ') ?: '-' }}</div>
                             <small class="text-muted">{{ Str::limit($visit->chief_complaint, 36) ?? '-' }}</small>
@@ -102,7 +107,7 @@
                                 <span class="badge bg-{{ $visit->triage_score->color() }} ms-1">{{ $visit->triage_score->label() }}</span>
                             @endif
                         </td>
-                        <td>{{ $route->doctor ? 'Dr. ' . $route->doctor->full_name : '-' }}</td>
+                        <td>{{ $route->doctor || $route->mainDoctor ? 'Dr. ' . ($route->doctor?->full_name ?? $route->mainDoctor?->full_name) : '-' }}</td>
                         <td>
                             <span class="badge bg-{{ $isActive ? 'success' : 'warning' }}">{{ $route->status }}</span>
                             <div class="small text-muted">{{ $visit->status->label() }}</div>

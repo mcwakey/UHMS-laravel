@@ -15,6 +15,8 @@ class ClinicalTaskService
             'admission_id' => $data['admission_id'] ?? null,
             'emergency_case_id' => $data['emergency_case_id'] ?? null,
             'emergency_session_id' => $data['emergency_session_id'] ?? null,
+            'medical_record_id' => $data['medical_record_id'] ?? null,
+            'consultation_route_id' => $data['consultation_route_id'] ?? null,
             'patient_id' => $data['patient_id'] ?? null,
             'task_type' => $data['task_type'] ?? ClinicalTask::TYPE_OTHER,
             'title' => $data['title'],
@@ -47,6 +49,8 @@ class ClinicalTaskService
                 'admission_id' => $schedule->admission_id,
                 'emergency_case_id' => $schedule->emergency_case_id,
                 'emergency_session_id' => $schedule->emergency_session_id,
+                'medical_record_id' => $schedule->medical_record_id,
+                'consultation_route_id' => $schedule->consultation_route_id,
                 'patient_id' => $schedule->patient_id,
                 'title' => 'Administer '.$order->display_name,
                 'description' => trim(sprintf(

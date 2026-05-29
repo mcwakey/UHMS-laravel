@@ -14,7 +14,7 @@ class ConsultationSessionService
     public function getCurrentSession(Visit $visit): ?VisitConsultationRoute
     {
         return $visit->consultationRoutes()
-            ->with(['department', 'service', 'services', 'routeServices.service', 'doctor', 'medicalRecord'])
+            ->with(['department', 'service', 'services', 'routeServices.service', 'doctor', 'mainDoctor', 'primaryNurse', 'medicalRecord', 'emergencyCase', 'emergencySession'])
             ->orderByRaw("CASE status WHEN 'ACTIVE' THEN 0 WHEN 'PENDING' THEN 1 WHEN 'PAUSED' THEN 2 WHEN 'COMPLETED' THEN 3 ELSE 4 END")
             ->oldest()
             ->first();
@@ -23,7 +23,7 @@ class ConsultationSessionService
     public function getAllSessionsForVisit(Visit $visit): Collection
     {
         return $visit->consultationRoutes()
-            ->with(['department', 'service', 'services', 'routeServices.service', 'doctor', 'contributors.user', 'medicalRecord.doctor', 'logs.performedBy'])
+            ->with(['department', 'service', 'services', 'routeServices.service', 'doctor', 'mainDoctor', 'primaryNurse', 'contributors.user', 'medicalRecord.doctor', 'logs.performedBy', 'emergencyCase', 'emergencySession.contributors.user'])
             ->orderByRaw("CASE status WHEN 'ACTIVE' THEN 0 WHEN 'PENDING' THEN 1 WHEN 'PAUSED' THEN 2 WHEN 'COMPLETED' THEN 3 ELSE 4 END")
             ->oldest()
             ->get();
@@ -65,7 +65,7 @@ class ConsultationSessionService
     public function resolveRouteForVisit(Visit $visit, ?int $routeId = null): ?VisitConsultationRoute
     {
         $query = $visit->consultationRoutes()
-            ->with(['department', 'service', 'services', 'routeServices.service', 'doctor', 'medicalRecord']);
+            ->with(['department', 'service', 'services', 'routeServices.service', 'doctor', 'mainDoctor', 'primaryNurse', 'medicalRecord', 'emergencyCase', 'emergencySession']);
 
         if ($routeId) {
             return $query->whereKey($routeId)->first();

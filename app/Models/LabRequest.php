@@ -18,6 +18,8 @@ class LabRequest extends Model
         'visit_id',
         'emergency_case_id',
         'emergency_session_id',
+        'medical_record_id',
+        'consultation_route_id',
         'patient_id',
         'requested_by',
         'department_id',
@@ -51,6 +53,16 @@ class LabRequest extends Model
     public function emergencySession(): BelongsTo
     {
         return $this->belongsTo(EmergencySession::class);
+    }
+
+    public function medicalRecord(): BelongsTo
+    {
+        return $this->belongsTo(MedicalRecord::class);
+    }
+
+    public function consultationRoute(): BelongsTo
+    {
+        return $this->belongsTo(VisitConsultationRoute::class, 'consultation_route_id');
     }
 
     public function patient(): BelongsTo

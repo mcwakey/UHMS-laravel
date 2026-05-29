@@ -33,6 +33,10 @@ class VisitConsultationRoute extends Model
 {
     use HasFactory;
 
+    public const SESSION_TYPE_CONSULTATION = 'CONSULTATION';
+
+    public const SESSION_TYPE_EMERGENCY = 'EMERGENCY';
+
     public const STATUS_PENDING = 'PENDING';
 
     public const STATUS_ACTIVE = 'ACTIVE';
@@ -46,9 +50,13 @@ class VisitConsultationRoute extends Model
     protected $fillable = [
         'visit_id',
         'patient_id',
+        'emergency_case_id',
         'department_id',
         'service_id',
         'doctor_id',
+        'main_doctor_id',
+        'primary_nurse_id',
+        'session_type',
         'status',
         'routed_by',
         'started_by',
@@ -106,6 +114,31 @@ class VisitConsultationRoute extends Model
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    public function mainDoctor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'main_doctor_id');
+    }
+
+    public function primaryNurse(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'primary_nurse_id');
+    }
+
+    public function emergencyCase(): BelongsTo
+    {
+        return $this->belongsTo(EmergencyCase::class);
+    }
+
+    public function emergencySession(): HasOne
+    {
+        return $this->hasOne(EmergencySession::class, 'consultation_route_id');
+    }
+
+    public function isEmergencySession(): bool
+    {
+        return $this->session_type === self::SESSION_TYPE_EMERGENCY || $this->emergency_case_id !== null;
     }
 
     public function routedBy(): BelongsTo

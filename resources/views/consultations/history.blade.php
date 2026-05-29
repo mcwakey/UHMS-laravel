@@ -142,8 +142,10 @@
         'history_of_presenting_complaint' => 'History of Presenting Complaint',
         'examination' => 'Examination Findings',
         'diagnoses' => 'Diagnoses',
+        'investigations' => 'Investigations',
         'treatments' => 'Treatments',
         'prescriptions' => 'Prescriptions',
+        'procedures' => 'Procedures',
         'tasks' => 'Tasks / Follow-up / Instructions',
         'notes' => 'Clinical Notes',
     ];
@@ -252,6 +254,10 @@
         @php
             $session = $bundle['session'];
             $summary = $bundle['summary'];
+            $isEmergencySession = $session?->isEmergencySession() ?? false;
+            $sessionTitle = $isEmergencySession
+                ? 'Emergency Department Session'
+                : ($session?->department?->name ?? ($summary['department'] ?? 'Consultation'));
             $statusColor = $session ? match($session->status) {
                 'ACTIVE' => 'success',
                 'COMPLETED' => 'secondary',
@@ -263,15 +269,15 @@
         <div class="session-card">
             <div class="session-head">
                 <h3>
-                    <i class="ti ti-stethoscope me-1 text-primary"></i>
-                    {{ $session?->department?->name ?? ($summary['department'] ?? 'Consultation') }}
+                    <i class="ti {{ $isEmergencySession ? 'ti-urgent text-danger' : 'ti-stethoscope text-primary' }} me-1"></i>
+                    {{ $sessionTitle }}
                     @if($session)
                         <span class="badge bg-{{ $statusColor }} ms-1">{{ $session->status }}</span>
                     @endif
                 </h3>
                 <div class="doc-meta">
-                    @if($session?->doctor)
-                        <strong>Main Doctor:</strong> Dr. {{ $session->doctor->full_name }}
+                    @if($session?->doctor || $session?->mainDoctor)
+                        <strong>Main Doctor:</strong> Dr. {{ $session->doctor?->full_name ?? $session->mainDoctor?->full_name }}
                     @elseif($summary['main_doctor'])
                         <strong>Main Doctor:</strong> Dr. {{ $summary['main_doctor'] }}
                     @else

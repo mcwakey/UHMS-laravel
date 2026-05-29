@@ -43,6 +43,8 @@ class MedicationScheduleService
                     'admission_id' => $order->admission_id,
                     'emergency_case_id' => $order->emergency_case_id,
                     'emergency_session_id' => $order->emergency_session_id,
+                    'medical_record_id' => $order->medical_record_id,
+                    'consultation_route_id' => $order->consultation_route_id,
                     'patient_id' => $order->patient_id,
                     'scheduled_at' => $scheduledAt,
                     'dose' => $order->dose,
