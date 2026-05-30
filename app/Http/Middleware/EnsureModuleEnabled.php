@@ -13,10 +13,18 @@ class EnsureModuleEnabled
 
     /**
      * Usage: Route::middleware('module:pharmacy')->group(...)
+     *
+     * Bypassed for users with the `modules.override_disabled` permission so
+     * Super Admins can still access screens during incident response.
      */
     public function handle(Request $request, Closure $next, string $slug): Response
     {
         if ($this->modules->disabled($slug)) {
+            $user = $request->user();
+            if ($user && method_exists($user, 'can') && $user->can('modules.override_disabled')) {
+                return $next($request);
+            }
+
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => "The {$slug} module is currently disabled.",

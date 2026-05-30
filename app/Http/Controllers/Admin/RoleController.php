@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Support\PermissionMeta;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -62,13 +63,24 @@ class RoleController extends Controller
 
     public function permissions(Role $role)
     {
-        $permissions = Permission::all()->groupBy(function ($permission) {
-            return explode('.', $permission->name)[0];
+        // Group by *resolved* module (PermissionMeta) so overrides are honoured.
+        $permissions = Permission::orderBy('name')->get()->groupBy(function ($permission) {
+            return PermissionMeta::module($permission->name);
+        })->sortKeys();
+
+        // Decorate with description + risk so the view doesn't need to read config.
+        $permissions = $permissions->map(function ($group) {
+            return $group->map(function ($p) {
+                $p->meta_description = PermissionMeta::description($p->name);
+                $p->meta_risk        = PermissionMeta::risk($p->name);
+                return $p;
+            });
         });
 
         $rolePermissions = $role->permissions->pluck('name')->toArray();
+        $riskLevels      = config('permissions.risk_levels', []);
 
-        return view('roles.permissions', compact('role', 'permissions', 'rolePermissions'));
+        return view('roles.permissions', compact('role', 'permissions', 'rolePermissions', 'riskLevels'));
     }
 
     public function updatePermissions(Request $request, Role $role)

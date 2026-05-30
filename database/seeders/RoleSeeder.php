@@ -24,6 +24,7 @@ class RoleSeeder extends Seeder
             'patients.create',
             'patients.edit',
             'patients.delete',
+            'patients.mark_deceased',
             'patients.merge.view',
             'patients.merge.request',
             'patients.merge.approve',
@@ -183,12 +184,10 @@ class RoleSeeder extends Seeder
             'product.create',
             'product.edit',
             'product.link_departments',
-            'product.link_department',      // alias used by some routes
             'product.pricing.manage',       // update base_price, is_billable, insurance prices
 
             // ── Stock Management ──────────────────────────────────────────
             'stock.location.manage',        // create/edit stock locations
-            'stock_location.manage',        // legacy alias kept for old routes
             'stock.view',                   // view stock balances and ledger
             'stock.view_balance',           // view current stock balance summary
             'stock.transfer',               // perform ad-hoc stock transfers
@@ -350,9 +349,7 @@ class RoleSeeder extends Seeder
             'theatre.reports.view',
 
             // ── Procedure Catalogue ───────────────────────────────────────
-            'procedure.catalogue.view',     // dotted canonical
-            'procedure.catalogue.manage',
-            'procedure_catalogue.view',     // legacy underscore alias
+            'procedure_catalogue.view',     // canonical (used by routes)
             'procedure_catalogue.manage',
             'procedure_template.manage',
             'service_consumable.manage',
@@ -378,6 +375,19 @@ class RoleSeeder extends Seeder
 
             // ── Modules ───────────────────────────────────────────────────
             'modules.manage',
+            'modules.override_disabled',
+
+            // ── Roles & permissions admin ────────────────────────────────
+            'roles.view',
+            'roles.create',
+            'roles.update',
+            'roles.delete',
+            'permissions.view',
+            'permissions.assign',
+
+            // ── User account admin (extra) ───────────────────────────────
+            'users.disable',
+            'users.reset_password',
         ];
 
         // Create all permissions
@@ -436,7 +446,7 @@ class RoleSeeder extends Seeder
             'procedures.view', 'procedures.create',
             'procedure.request', 'procedure.view', 'procedure.view_report',
             'procedure.record_anaesthesia', 'procedure.record_surgery',
-            'procedure.catalogue.view', 'procedure_catalogue.view',
+            'procedure_catalogue.view',
             'consumable_usage.record', 'consumable.use',
             'investigation.catalogue.view',
             'icd.view',
@@ -475,7 +485,7 @@ class RoleSeeder extends Seeder
             'appointments.view', 'appointments.create',
             'notifications.view',
             'procedures.view', 'procedure.request', 'procedure.view',
-            'procedure.catalogue.view', 'procedure_catalogue.view',
+            'procedure_catalogue.view',
             'investigation.catalogue.view',
             'icd.view',
             'product.view',
@@ -503,7 +513,7 @@ class RoleSeeder extends Seeder
             'notifications.view',
             'procedures.view',
             'procedure.view', 'procedure.record_preop', 'procedure.record_postop',
-            'procedure.catalogue.view', 'procedure_catalogue.view',
+            'procedure_catalogue.view',
             'consumable_usage.record', 'consumable.use',
             'product.view', 'stock.view_balance',
             // Requisitions: nurses can request stock and acknowledge receipt
@@ -535,7 +545,7 @@ class RoleSeeder extends Seeder
             'notifications.view',
             'procedures.view',
             'procedure.view', 'procedure.record_preop', 'procedure.record_postop',
-            'procedure.catalogue.view', 'procedure_catalogue.view',
+            'procedure_catalogue.view',
             'consumable_usage.record', 'consumable.use', 'ward.consumable.use',
             'product.view', 'stock.view_balance',
             // Requisitions: ward nurses can request stock and acknowledge receipt
@@ -600,7 +610,7 @@ class RoleSeeder extends Seeder
             'theatre.rooms.view', 'theatre.rooms.update', 'theatre.rooms.manage_status',
             'theatre.preop.manage', 'theatre.recovery_note.create',
             'theatre.consumables.use', 'theatre.billing.view',
-            'procedure.catalogue.view', 'procedure_catalogue.view',
+            'procedure_catalogue.view',
             'consumable_usage.record', 'consumable.use',
             'product.view', 'stock.view', 'stock.view_balance',
             'notifications.view',
@@ -621,7 +631,7 @@ class RoleSeeder extends Seeder
             'theatre.anaesthesia.create', 'theatre.anaesthesia.edit_own',
             'theatre.operative_note.create', 'theatre.recovery_note.create',
             'theatre.reports.view',
-            'procedure.catalogue.view', 'procedure_catalogue.view',
+            'procedure_catalogue.view',
             'icd.view',
             'consumable_usage.record', 'consumable.use',
             'product.view', 'stock.view_balance',
@@ -698,7 +708,7 @@ class RoleSeeder extends Seeder
             'lab.results.view', 'lab.results.create', 'lab.results.verify',
             'procedures.view',
             'procedure.view', 'procedure.record_surgery', 'procedure.view_report',
-            'procedure.catalogue.view', 'procedure_catalogue.view',
+            'procedure_catalogue.view',
             'investigation.catalogue.view',
             'icd.view',
             'product.view', 'stock.view_balance',
@@ -776,10 +786,10 @@ class RoleSeeder extends Seeder
             'pharmacy.drugs.manage', 'pharmacy.stock.manage',
             // Products
             'product.view', 'product.create', 'product.edit',
-            'product.link_departments', 'product.link_department',
+            'product.link_departments',
             'product.pricing.manage',
             // Stock locations & balances
-            'stock.location.manage', 'stock_location.manage',
+            'stock.location.manage',
             'stock.view', 'stock.view_balance',
             'stock.transfer', 'stock.adjust', 'stock.receive', 'stock.return',
             'stock.override_negative',

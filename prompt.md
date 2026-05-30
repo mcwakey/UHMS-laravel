@@ -1,1310 +1,1565 @@
 ````text
 You are a senior Laravel + Inertia/Vue architect working on UHMS — Ultimate Hospital Management System.
 
-We need to fix and refine the Visit, Emergency, Admission, Billing, Bed Count, Consumables, and Patient Pathway workflow.
+We need to run a deep analysis, correction, standardization, and documentation of the Roles, Permissions, and Modules system.
 
-UHMS already has OPD/Visits, Admission, Emergency, Consultation Sessions, Investigations, Pharmacy, Procedures/Theatre, Billing, Stock/Consumables, Beds, MAR, and Visit Preview.
+UHMS has grown significantly, and many system actions now require permissions but either:
 
-The current problem is that the Visit Status Flow and patient movement logic are too rigid and do not properly reflect the real path/parcours a patient follows in the hospital.
+- do not have permissions defined,
+- have permissions defined but not enforced,
+- are only protected in the UI and not backend,
+- are protected in backend but missing in UI,
+- use inconsistent permission names,
+- are hidden incorrectly,
+- are accessible to the wrong roles,
+- or are not explained properly to admins.
 
-We need to redesign the logic carefully without breaking existing workflows.
+We need to fix this extensively.
 
-Do not rebuild the whole system blindly. First inspect the current implementation, identify gaps, then fix only what is wrong or incomplete.
+This task must produce:
 
-Do not break:
-- OPD visit creation
-- consultation sessions
-- emergency cases
-- admission
-- billing
-- pharmacy
-- investigations
-- procedures/theatre
-- stock/consumables
-- bed management
-- visit preview
-- patient history
-- claims
+1. A full Roles & Permissions gap analysis report.
+2. A full Modules gap analysis report.
+3. A corrected permission structure.
+4. A corrected role-permission assignment structure.
+5. Backend authorization enforcement.
+6. Frontend/UI permission enforcement.
+7. Module access enforcement.
+8. Permission explanations in the UI.
+9. Module explanations in the UI.
+10. Updated seeders.
+11. Updated documentation/reports.
 
----
+Do not patch only one page.
 
-# 1. Main Problems to Fix
+Do a full system-wide analysis.
 
-Fix the following issues:
-
-1. If a patient is currently admitted and not yet discharged, the system must not allow creating another normal OPD visit for that patient.
-2. When creating an emergency case from a visit, the system currently does not create the Emergency Session. This must be fixed.
-3. Re-examine the Visit Status Flow.
-4. Remove misleading visit statuses such as laboratory, pharmacy, billing from the main visit status flow.
-5. Visit status should reflect the patient’s global care state, not every department they pass through.
-6. A patient may go directly to investigation, pharmacy, or procedure without consultation.
-7. A patient may be in consultation, then sent to investigation/pharmacy/procedure, then return to consultation without changing the main visit status away from CONSULTING.
-8. Visit Preview must reflect the real pathway/parcours of the patient through departments.
-9. All outpatient sessions should be automatically locked/completed after midnight / next day.
-10. Emergency beds and emergency consumables should be billed per day like normal admission.
-11. When disposing emergency patient to admission:
-    - emergency bed count must end
-    - admission bed count must start
-    - emergency consumable daily billing must end
-    - admission consumable/daily billing must start
+Do not break existing workflows.
 
 ---
 
-# 2. Important Conceptual Correction
+# 1. Main Objective
 
-Visit status should not be used as a replacement for department movement history.
+Inspect the entire UHMS system and repair the Roles, Permissions, and Modules system so that every sensitive action is properly protected and explained.
 
-Wrong approach:
+The system must support proper access control for:
+
+- Super Admin
+- Hospital Admin
+- Doctor
+- Nurse
+- Emergency Doctor
+- Emergency Nurse
+- Triage Nurse
+- Pharmacist
+- Pharmacy Manager
+- Lab / Investigation Staff
+- Radiology Staff
+- Theatre Staff
+- Surgeon
+- Anaesthetist
+- Ward Nurse
+- Store Officer
+- Procurement Officer
+- Cashier
+- Claims Officer
+- Records Officer
+- Receptionist
+- Accountant
+- Auditor
+- Department Head
+- System Administrator
+- Any existing custom roles
+
+Use existing roles if already defined.
+
+Do not blindly replace role names if the system already uses a working structure.
+
+---
+
+# 2. Required Reports
+
+Create these reports in the documentation folder:
 
 ```text
-visit.status = LABORATORY
-visit.status = PHARMACY
-visit.status = BILLING
-visit.status = XRAY
+docs/ROLES_PERMISSIONS_GAP_ANALYSIS.md
+docs/ROLES_PERMISSIONS_SOLUTION_REPORT.md
+docs/MODULES_GAP_ANALYSIS.md
+docs/MODULES_SOLUTION_REPORT.md
+docs/ROLES_PERMISSIONS_REMAINING_RECOMMENDATIONS.md
 ````
 
-Correct approach:
-
-```text
-visit.status = ACTIVE / WAITING_CONSULTATION / CONSULTING / COMPLETED / ADMITTED / EMERGENCY / CANCELLED
-```
-
-Then the patient’s actual hospital pathway should be tracked separately using sessions, routes, tasks, requests, invoice items, and visit timeline records.
-
-The Visit Status answers:
-
-```text
-What is the global state of this visit?
-```
-
-The Visit Pathway / Timeline answers:
-
-```text
-Where did the patient go?
-What services were requested?
-Which departments handled the patient?
-What happened chronologically?
-```
+If the project already has a docs convention, follow it.
 
 ---
 
-# 3. Patient Cannot Create New OPD Visit While Admitted
+# 3. ROLES_PERMISSIONS_GAP_ANALYSIS.md
 
-If a patient has an active admission that is not discharged, the system must prevent creating another normal OPD visit.
+This report must include:
 
-Definition of active admission:
-
-```text
-admission.status NOT IN (DISCHARGED, CANCELLED, TRANSFERRED_OUT, DECEASED)
-```
-
-or use the project’s existing completed/discharged statuses.
-
-When creating a new OPD visit:
-
-1. Check whether the patient has an active admission.
-2. If yes, block visit creation.
-3. Show clear message:
-
-```text
-This patient is currently admitted and has not yet been discharged. A new OPD visit cannot be created until the admission is completed.
-```
-
-Allow exceptions only if the system has an authorized override permission.
-
-Suggested permission:
-
-```text
-visits.create_while_admitted
-```
-
-If override is used:
-
-* require reason
-* log the action
-* show warning
-* do not silently allow it
-
-This guard should apply to:
-
-* Visit creation page
-* API/controller store method
-* Any quick-create visit flow
-* Emergency-to-OPD transfer if patient is actively admitted unless clinically allowed
+* current role system found
+* current permission system found
+* current module system found
+* role tables/models found
+* permission tables/models found
+* module tables/models found
+* seeders found
+* middleware found
+* policies/gates found
+* frontend permission checks found
+* missing permissions
+* unused permissions
+* duplicate permissions
+* inconsistent permission names
+* permissions defined but not enforced
+* actions protected in UI only
+* actions protected in backend only
+* actions missing both UI and backend protection
+* modules missing permission mapping
+* roles with excessive access
+* roles with insufficient access
+* dangerous actions without permission
+* root causes
+* risk level
+* recommended correction plan
 
 ---
 
-# 4. Emergency Case Created From Visit Must Create Emergency Session
+# 4. ROLES_PERMISSIONS_SOLUTION_REPORT.md
 
-When an emergency case is created from a visit, the system must also create or link an Emergency Session.
+This report must include:
 
-Emergency must be treated like a consultation/clinical session.
-
-Correct flow:
-
-```text
-Visit created or selected
-↓
-Emergency Case created
-↓
-Emergency Session created
-↓
-Emergency records attach to that session
-↓
-Emergency Session appears on Consultation page/session list
-↓
-Visit Preview includes Emergency Session chronologically
-```
-
-Emergency Session must link to:
-
-```text
-visit_id
-patient_id
-emergency_case_id
-department_id = Emergency Department
-medical_record_id if used
-main_doctor_id nullable
-primary_nurse_id nullable
-status
-started_at
-created_by
-```
-
-Use the existing consultation session / visit consultation route mechanism if possible.
-
-Do not create a completely separate emergency-only session system if the existing session table can support:
-
-```text
-session_type = EMERGENCY
-emergency_case_id
-```
-
-If the current session table is `visit_consultation_routes` or similar, extend it.
-
-Emergency records must link to:
-
-```text
-visit_id
-patient_id
-emergency_case_id
-consultation_route_id / clinical_session_id
-medical_record_id if used
-created_by
-updated_by nullable
-```
+* permissions added
+* permissions renamed or normalized
+* roles updated
+* middleware added/updated
+* policies/gates added/updated
+* controllers updated
+* routes updated
+* Vue/Inertia/Blade UI updated
+* menu/sidebar updated
+* seeders updated
+* module access updates
+* tests added
+* how to verify
+* files modified
+* known limitations
 
 ---
 
-# 5. Emergency Session Must Appear on Consultation Page
+# 5. MODULES_GAP_ANALYSIS.md
 
-If a patient went through Emergency, the Consultation page must show the Emergency Session in the session list.
+Analyze the module system.
 
-Example:
+Include:
 
-```text
-Consultation Sessions for This Visit
-
-Emergency Department Session
-Status: Completed
-Triage: RED
-Main Doctor: Dr. Kofi
-Primary Nurse: Nurse Ama
-Contributors: Dr. Mensah, Nurse Yaa
-Records: Triage, vitals, notes, medications, investigations, procedures, disposition
-[View Session]
-
-OPD Consultation Session
-Status: Active
-Main Doctor: Dr. Yao
-[Continue Consultation]
-```
-
-Rules:
-
-* Emergency Session should be viewable from Consultation page.
-* If emergency case is still active, authorized emergency staff may edit.
-* If emergency case is completed/disposed, show read-only unless user has correction permission.
-* Consultation doctors should be able to view emergency history before continuing care.
-* Emergency records must preserve creators/contributors.
-* Emergency Session must also appear in Visit Preview and patient clinical history.
+* current module table/model
+* current module seeder
+* active/inactive modules
+* core modules
+* optional modules
+* modules with missing routes
+* modules with missing menu entries
+* modules with missing permissions
+* modules visible without access
+* modules hidden even when user has access
+* modules not enforcing backend access
+* modules not described in UI
+* modules that should be core and cannot be disabled
+* modules that can be disabled safely
+* module dependencies
 
 ---
 
-# 6. Rebuild Visit Status Flow Correctly
+# 6. MODULES_SOLUTION_REPORT.md
 
-Re-examine all visit statuses currently used.
+Include:
 
-Remove or stop using statuses like:
-
-```text
-LABORATORY
-PHARMACY
-BILLING
-XRAY
-SCAN
-PROCEDURE
-```
-
-as global visit statuses.
-
-These should be represented as department requests/tasks/timeline events, not visit.status.
-
-Recommended Visit Statuses:
-
-```text
-REGISTERED
-WAITING_TRIAGE
-TRIAGE
-WAITING_CONSULTATION
-CONSULTING
-ACTIVE
-EMERGENCY
-ADMITTED
-COMPLETED
-CANCELLED
-NO_SHOW
-DECEASED
-```
-
-Use the project’s existing status names if already established, but clean the meaning.
-
-Suggested meanings:
-
-## REGISTERED
-
-Visit has been created but no clinical workflow started.
-
-## WAITING_TRIAGE
-
-Patient is waiting for triage.
-
-## TRIAGE
-
-Patient is currently undergoing triage.
-
-## WAITING_CONSULTATION
-
-Triage is done or visit is ready for doctor/session.
-
-## CONSULTING
-
-Patient is actively under one or more consultation/clinical sessions.
-
-Important:
-
-A patient should remain CONSULTING even if the doctor sends them to investigation, pharmacy, or procedure and expects them to return.
-
-## ACTIVE
-
-Generic active status if visit is ongoing but not strictly consulting.
-
-## EMERGENCY
-
-Visit is currently under emergency care.
-
-## ADMITTED
-
-Visit has moved into admission/inpatient workflow.
-
-## COMPLETED
-
-Visit is completed/closed.
-
-## CANCELLED
-
-Visit was cancelled.
-
-## DECEASED
-
-Visit ended due to death if applicable.
+* module fixes made
+* module permissions mapped
+* module descriptions added
+* module dependency rules added
+* menu visibility fixed
+* backend module guard fixed
+* module UI updated
+* seeders updated
+* files modified
+* tests/verification notes
 
 ---
 
-# 7. Patient Pathway / Parcours Must Be Separate From Visit Status
+# 7. Existing System Inspection
 
-Create or update a patient pathway tracking mechanism.
+First inspect the current implementation.
 
-Recommended table:
-
-```text
-visit_pathway_events
-- id
-- visit_id
-- patient_id
-- event_type
-- department_id nullable
-- source_type nullable
-- source_id nullable
-- status nullable
-- title
-- description nullable
-- started_at nullable
-- completed_at nullable
-- created_by nullable
-- created_at
-- updated_at
-```
-
-Possible event types:
+Search for:
 
 ```text
-VISIT_CREATED
-TRIAGE_STARTED
-TRIAGE_COMPLETED
-CONSULTATION_STARTED
-CONSULTATION_COMPLETED
-SENT_TO_INVESTIGATION
-INVESTIGATION_REQUESTED
-INVESTIGATION_ACCEPTED
-INVESTIGATION_RESULT_READY
-INVESTIGATION_VERIFIED
-PRESCRIPTION_CREATED
-SENT_TO_PHARMACY
-PHARMACY_BILLED
-PHARMACY_DISPENSED
-PROCEDURE_REQUESTED
-THEATRE_SCHEDULED
-PROCEDURE_COMPLETED
-EMERGENCY_STARTED
-EMERGENCY_DISPOSED
-ADMISSION_STARTED
-BED_ASSIGNED
-ADMISSION_DISCHARGED
-BILLING_ITEM_ADDED
-PAYMENT_RECEIVED
-VISIT_COMPLETED
+Role
+Roles
+Permission
+Permissions
+Module
+Modules
+Gate
+Policy
+can
+cannot
+hasPermission
+hasRole
+middleware
+permission:
+role:
+module:
+is_core
+is_active
+sidebar
+menu
+navigation
+auth
+authorize
+@can
+v-if
+permissions
 ```
 
-If existing activity logs or visit timeline exists, extend it instead of creating a duplicate.
-
-The goal is:
+Inspect:
 
 ```text
-Visit status stays clinically meaningful.
-Visit pathway records every department/service movement.
-Visit Preview uses pathway events to show the real patient journey.
+routes
+controllers
+middleware
+policies
+models
+seeders
+database migrations
+Vue/Inertia pages
+Blade views
+sidebar/menu components
+dashboard components
+admin settings pages
 ```
+
+Do not assume the current structure. Inspect before changing.
 
 ---
 
-# 8. Handling Different Patient Routes
+# 8. Preferred Authorization Architecture
 
-The system must support multiple patient routes.
+Use the project’s existing authorization system if it is already working.
 
-## Route A — Direct Investigation
+If the project uses Spatie Laravel Permission, follow Spatie conventions.
 
-Example:
+If the project uses custom roles/permissions, standardize it carefully.
 
-```text
-Visit created
-↓
-Investigation service selected/requested
-↓
-Patient goes to investigation
-↓
-Result entered/verified
-↓
-Visit completed or sent to consultation if needed
-```
-
-Visit status can remain ACTIVE or COMPLETED depending flow.
-
-Do not force CONSULTING if no consultation session exists.
-
-## Route B — Direct Pharmacy
-
-Example:
+The system must enforce permissions at both levels:
 
 ```text
-Visit created
-↓
-Drug/product service selected or prescription exists
-↓
-Pharmacy bills/dispenses
-↓
-Visit completed
+Backend authorization = security
+Frontend authorization = user experience
 ```
 
-Do not set visit.status = PHARMACY.
+Frontend hiding buttons is not enough.
 
-Use pathway event:
-
-```text
-SENT_TO_PHARMACY / PHARMACY_DISPENSED
-```
-
-## Route C — Direct Procedure
-
-Example:
-
-```text
-Visit created
-↓
-Procedure requested
-↓
-Procedure/theatre handles it
-↓
-Visit completed or admitted if needed
-```
-
-Do not set visit.status = PROCEDURE.
-
-## Route D — Consultation With Investigation/Pharmacy Return
-
-Example:
-
-```text
-Visit created
-↓
-Triage
-↓
-Consulting
-↓
-Doctor sends patient to investigation
-↓
-Patient returns to consulting
-↓
-Doctor reviews result
-↓
-Doctor prescribes drugs
-↓
-Patient goes to pharmacy
-↓
-Patient may return to consulting or complete visit
-```
-
-In this case:
-
-```text
-visit.status should remain CONSULTING
-```
-
-while investigation/pharmacy/procedure activities are tracked as pathway events and request statuses.
+Backend must always enforce permission.
 
 ---
 
-# 9. Consultation Session Lock After Midnight
+# 9. Permission Naming Convention
 
-All outpatient sessions should be automatically locked/completed after midnight or the next day.
+Use a consistent naming format.
 
-Requirement:
-
-```text
-Outpatient sessions from yesterday that are still active should be automatically completed/locked.
-```
-
-This applies to:
+Recommended:
 
 ```text
-OPD consultation sessions
-outpatient visit sessions
-non-admission, non-emergency active clinical sessions
+module.action
 ```
-
-Do not automatically close:
-
-```text
-active admissions
-active emergency cases
-active inpatient sessions
-theatre cases still in progress
-```
-
-Suggested scheduled command:
-
-```bash
-php artisan visits:close-outpatient-sessions
-```
-
-or:
-
-```bash
-php artisan outpatient-sessions:auto-complete
-```
-
-Logic:
-
-1. Find outpatient visits/sessions where date < today.
-2. Status is still active/consulting/waiting.
-3. Not admitted.
-4. Not active emergency.
-5. Not already completed/cancelled.
-6. Mark sessions as completed/locked.
-7. Mark visit completed if no active pending workflow remains.
-8. Log action.
-9. Notify relevant users if needed.
-
-Session fields:
-
-```text
-locked_at
-locked_by nullable
-lock_reason
-completed_at
-completed_by nullable
-```
-
-Lock reason:
-
-```text
-Automatically completed after end of outpatient day.
-```
-
-This should run automatically through scheduler.
-
-If scheduler is not configured, document it.
-
----
-
-# 10. Manual Override for Locked Sessions
-
-After outpatient session is auto-locked, users should not freely edit it.
-
-Allow corrections only with permission.
-
-Suggested permission:
-
-```text
-consultation.entries.correct_completed
-visits.reopen_locked_session
-```
-
-If reopening:
-
-* require reason
-* log action
-* show warning
-* preserve audit trail
-
----
-
-# 11. Emergency Beds Billed Per Day
-
-Emergency beds/bays should be billable per day like normal admission.
-
-When a patient is assigned to an emergency bed/bay:
-
-```text
-start emergency bed count
-```
-
-When patient leaves emergency bed/bay:
-
-```text
-end emergency bed count
-```
-
-Billing should calculate based on emergency bed occupancy days or configured billing unit.
-
-Supported billing units:
-
-```text
-PER_DAY
-PER_HOUR
-PER_SHIFT
-FLAT
-```
-
-For now, implement per-day if that is the existing admission pattern.
-
-Emergency bed billing must use:
-
-```text
-BillingService
-visit invoice
-insurance pricing rules
-cash and carry fallback
-source_type/source_id
-```
-
-Do not create a separate emergency invoice.
-
-Recommended table if missing:
-
-```text
-emergency_bed_charges
-- id
-- emergency_case_id
-- visit_id
-- patient_id
-- bed_id nullable
-- emergency_bay_id nullable
-- ward_id nullable
-- started_at
-- ended_at nullable
-- billing_unit
-- quantity
-- service_id nullable
-- invoice_item_id nullable
-- status
-- created_by
-- ended_by nullable
-- created_at
-- updated_at
-```
-
-Statuses:
-
-```text
-ACTIVE
-BILLED
-ENDED
-CANCELLED
-```
-
-If existing bed assignment table can handle charges, extend it instead.
-
----
-
-# 12. Emergency Consumables Billed Per Day
-
-Emergency consumables or emergency daily care consumable packages should be billable per day like admission if configured.
 
 Examples:
 
 ```text
-Emergency observation consumables
-Emergency nursing care consumables
-Emergency bed consumable package
+patients.view
+patients.create
+patients.update
+patients.delete
+patients.merge.execute
+
+emergency.case.view
+emergency.case.create
+emergency.triage.perform
+emergency.disposition.manage
+
+billing.invoice.view
+billing.invoice.create
+billing.payment.record
+
+stock.products.view
+stock.products.create
+stock.movements.adjust
+
+theatre.cases.schedule
+theatre.operative_note.create
 ```
-
-Important distinction:
-
-## Direct consumable usage
-
-Example:
-
-```text
-1 cannula used
-2 syringes used
-```
-
-This should be billed/stock-deducted immediately based on actual usage.
-
-## Daily emergency consumable charge
-
-Example:
-
-```text
-Emergency care consumables package per day
-```
-
-This should be billed per day while patient occupies emergency bed/observation.
-
-Implement both if needed, but do not duplicate billing.
-
-Use existing BillingService and Product/Stock system.
-
-Emergency daily consumables should stop when emergency bed count stops.
-
----
-
-# 13. Disposing Emergency Patient to Admission
-
-When emergency disposition is ADMITTED:
-
-The system must transition occupancy and daily billing correctly.
-
-Flow:
-
-```text
-Emergency case active
-↓
-Emergency bed/bay assigned
-↓
-Emergency bed count active
-↓
-Emergency daily consumables active
-↓
-Disposition = ADMITTED
-↓
-End emergency bed count
-↓
-End emergency daily consumable count
-↓
-Create/start admission
-↓
-Assign admission bed
-↓
-Start admission bed count
-↓
-Start admission daily consumables if configured
-↓
-Visit status = ADMITTED
-```
-
-Important:
-
-* Do not continue emergency bed billing after admission starts.
-* Do not continue emergency consumable daily billing after admission starts.
-* Do not start admission bed count before emergency bed count ends unless overlap is intentionally allowed.
-* Preserve emergency timeline.
-* Preserve same visit/invoice.
-* Do not create duplicate visit unless project explicitly requires it.
-* Admission should continue the same patient journey.
-
----
-
-# 14. Emergency Bed Count End Rules
-
-Emergency bed count should end when:
-
-```text
-Emergency case disposed to admission
-Emergency case discharged
-Emergency case transferred to OPD
-Emergency case transferred to theatre if emergency bed released
-Emergency case referred out
-Emergency case marked death/DOA
-Emergency bed manually released
-```
-
-When ending emergency bed count:
-
-* set ended_at
-* calculate quantity/day count
-* finalize invoice item if needed
-* release bed/bay status to AVAILABLE or CLEANING
-* log action
-
----
-
-# 15. Admission Bed Count Start Rules
-
-When emergency disposes to admission:
-
-* use existing admission creation workflow
-* assign admission ward/bed
-* create admission bed assignment
-* start admission bed count
-* start daily admission billing if existing system supports it
-* do not duplicate emergency bed charge
-
-If no admission bed is assigned immediately:
-
-* admission can be created as waiting bed
-* emergency bed may remain active until physical transfer
-* system must clearly show patient still occupying emergency bed
-* emergency bed billing continues until actual release
-
-This is important.
-
-Add two possible workflows:
-
-## Immediate transfer to admission bed
-
-Emergency bed ends immediately.
-
-Admission bed starts immediately.
-
-## Admission accepted but waiting bed
-
-Emergency disposition may be ADMISSION_PENDING_BED.
-
-Emergency bed remains active until bed transfer is completed.
-
-Use whichever matches existing admission workflow, but support the logic safely.
-
----
-
-# 16. Visit Preview Must Show Pathway
-
-Visit Preview must now show the real patient parcours.
-
-Example:
-
-```text
-08:00 Visit created
-08:05 Triage completed
-08:10 Consultation started
-08:25 Investigation requested: FBC, Malaria RDT
-08:50 Lab result verified
-09:00 Consultation continued
-09:15 Prescription created
-09:20 Pharmacy billed selected drugs
-09:35 Pharmacy dispensed drugs
-09:45 Visit completed
-```
-
-For Emergency to Admission:
-
-```text
-10:00 Emergency case created
-10:05 RED triage calculated
-10:08 Emergency bed assigned: Resus Bay 1
-10:15 Emergency medication administered
-10:40 Emergency investigation requested
-11:30 Decision: Admit patient
-11:45 Emergency bed count ended
-11:50 Admission created
-12:00 Admission bed assigned
-12:00 Admission bed count started
-```
-
-This is more accurate than changing visit.status to LAB/PHARMACY.
-
----
-
-# 17. Billing Integration
-
-All emergency/admission bed and consumable charges must use the existing BillingService.
 
 Rules:
 
-```text
-One visit = one invoice.
-Emergency bed charge goes to visit invoice.
-Emergency consumable charge goes to visit invoice.
-Admission bed charge goes to visit invoice.
-Admission consumable charge goes to visit invoice.
-Insurance pricing applies.
-Cash and Carry fallback applies.
-Prevent duplicate charges using source_type/source_id.
-```
+* use lowercase
+* use dot notation
+* module first
+* action last
+* avoid mixed formats like `View Patients`, `patient-view`, `can_view_patient`
+* do not create duplicate names for the same action
+* do not rename existing permissions without migration/compatibility if they are already used
 
-Source examples:
-
-```text
-source_type = emergency_bed_charge
-source_id = emergency_bed_charge.id
-
-source_type = emergency_daily_consumable_charge
-source_id = charge.id
-
-source_type = admission_bed_charge
-source_id = admission_bed_charge.id
-```
-
-Do not create separate emergency/admission invoice.
+If existing permission names are already widely used, create a normalization map and avoid breaking them.
 
 ---
 
-# 18. Services to Create or Update
+# 10. Permission Categories
 
-Create/update services as needed:
+Organize permissions by module.
+
+At minimum, review/create permissions for:
 
 ```text
-VisitStatusService
-VisitPathwayService
-VisitGuardService
-OutpatientSessionAutoCloseService
-EmergencySessionService
-EmergencyBedBillingService
-EmergencyConsumableBillingService
-EmergencyDispositionService
-AdmissionBedBillingService
-AdmissionTransferService
-BillingService
-VisitPreviewService
-ActivityLogService
-NotificationService
+dashboard
+modules
+users
+roles
+permissions
+patients
+patient_merge
+visits
+consultation
+emergency
+admission
+triage
+vitals
+clinical_tasks
+mar
+pharmacy
+billing
+payments
+claims
+insurance
+investigations
+procedures
+theatre
+stock
+products
+procurement
+purchase_orders
+supplier_ledger
+assets
+notifications
+logs
+reports
+settings
+system
 ```
-
-Do not duplicate existing services if already available.
 
 ---
 
-# 19. VisitGuardService
+# 11. Critical Missing Permission Audit
 
-Create or update:
+Find every action in the system that creates, updates, deletes, approves, rejects, submits, verifies, pays, dispenses, administers, transfers, merges, exports, prints, or changes status.
+
+Every such action must have a permission.
+
+Audit actions including but not limited to:
+
+## Patients
 
 ```text
-VisitGuardService
+patients.view
+patients.create
+patients.update
+patients.delete
+patients.mark_deceased
+patients.restore
+patients.documents.upload
+patients.documents.view
+patients.search
 ```
 
-Responsibilities:
+## Patient Merge
 
 ```text
-prevent OPD visit creation while active admission exists
-prevent new records under merged patient
-validate visit status transitions
-validate outpatient session locking rules
+patients.merge.view
+patients.merge.create
+patients.merge.preview
+patients.merge.approve
+patients.merge.execute
+patients.merge.cancel
+patients.merge.view_logs
+patients.merge.confirm_identity
+patients.merge.suggest_duplicates
 ```
 
-Suggested method:
+## Visits
+
+```text
+visits.view
+visits.create
+visits.update
+visits.cancel
+visits.complete
+visits.reopen
+visits.transition
+visits.create_while_admitted
+visits.view_preview
+visits.print_preview
+```
+
+## Consultation
+
+```text
+consultation.view
+consultation.start
+consultation.continue
+consultation.complete
+consultation.sessions.view
+consultation.sessions.create
+consultation.sessions.transfer
+consultation.entries.create
+consultation.entries.edit_own
+consultation.entries.edit_any
+consultation.entries.delete_own
+consultation.entries.delete_any
+consultation.entries.correct_completed
+consultation.summary.view
+consultation.summary.print
+```
+
+## Emergency
+
+```text
+emergency.board.view
+emergency.case.view
+emergency.case.create
+emergency.case.update
+emergency.case.cancel
+emergency.session.manage
+emergency.triage.perform
+emergency.triage.override
+emergency.vitals.record
+emergency.vitals.view_graph
+emergency.bay_team.manage
+emergency.notes.create
+emergency.notes.edit_own
+emergency.notes.edit_any
+emergency.medication.order
+emergency.medication.administer
+emergency.mar.view
+emergency.investigation.request
+emergency.procedure.request
+emergency.consumables.use
+emergency.billing.view
+emergency.billing.manage
+emergency.disposition.manage
+emergency.transfer.admit
+emergency.transfer.opd
+emergency.transfer.theatre
+emergency.refer
+emergency.death.record
+emergency.reports.view
+```
+
+## Admission
+
+```text
+admission.view
+admission.create
+admission.update
+admission.assign_bed
+admission.transfer_bed
+admission.discharge
+admission.cancel
+admission.vitals.record
+admission.notes.create
+admission.medication.view
+admission.mar.view
+admission.reports.view
+```
+
+## MAR / Medication Administration
+
+```text
+mar.view
+mar.print
+medication_orders.view
+medication_orders.manage
+medication_orders.stop
+medication_orders.hold
+medication_administration.view
+medication_administration.administer
+medication_administration.hold
+medication_administration.mark_missed
+medication_administration.correct
+medication_administration.view_reports
+```
+
+## Clinical Tasks
+
+```text
+clinical_tasks.view
+clinical_tasks.create
+clinical_tasks.update
+clinical_tasks.complete
+clinical_tasks.cancel
+clinical_tasks.escalate
+clinical_tasks.view_overdue
+```
+
+## Investigations
+
+```text
+investigations.view
+investigations.catalogue.view
+investigations.catalogue.manage
+investigations.request
+investigations.accept
+investigations.reject
+investigations.enter_result
+investigations.verify_result
+investigations.print_result
+investigations.view_result
+investigations.consumables.use
+investigations.billing.manage
+```
+
+## Procedures
+
+```text
+procedures.view
+procedures.catalogue.view
+procedures.catalogue.manage
+procedures.request
+procedures.accept
+procedures.reject
+procedures.schedule
+procedures.perform
+procedures.enter_report
+procedures.verify_report
+procedures.print_report
+procedures.consumables.use
+procedures.billing.manage
+```
+
+## Theatre
+
+```text
+theatre.rooms.view
+theatre.rooms.create
+theatre.rooms.update
+theatre.rooms.deactivate
+theatre.rooms.manage_status
+theatre.board.view
+theatre.calendar.view
+theatre.cases.view
+theatre.cases.accept
+theatre.cases.schedule
+theatre.cases.reschedule
+theatre.cases.cancel
+theatre.cases.postpone
+theatre.cases.complete
+theatre.team.assign
+theatre.preop.manage
+theatre.anaesthesia.create
+theatre.anaesthesia.edit_own
+theatre.anaesthesia.edit_any
+theatre.operative_note.create
+theatre.operative_note.edit_own
+theatre.operative_note.edit_any
+theatre.recovery_note.create
+theatre.recovery_note.edit_own
+theatre.recovery_note.edit_any
+theatre.consumables.use
+theatre.billing.view
+theatre.billing.manage
+theatre.schedule.override
+theatre.reports.view
+```
+
+## Pharmacy
+
+```text
+pharmacy.view
+pharmacy.catalogue.view
+pharmacy.prescriptions.view
+pharmacy.prescriptions.bill
+pharmacy.prescriptions.dispense
+pharmacy.prescriptions.partial_dispense
+pharmacy.dispensing.correct
+pharmacy.stock.view
+pharmacy.reports.view
+```
+
+## Billing / Payments
+
+```text
+billing.view
+billing.invoice.view
+billing.invoice.create
+billing.invoice.update
+billing.invoice.cancel
+billing.invoice.print
+billing.invoice.discount
+billing.invoice.apply_manual_discount
+billing.payment.view
+billing.payment.record
+billing.payment.reverse
+billing.payment.refund
+billing.reports.view
+```
+
+## Insurance / Claims
+
+```text
+insurance.view
+insurance.create
+insurance.update
+insurance.delete
+insurance.prices.manage
+insurance.patient_insurance.manage
+
+claims.view
+claims.prepare
+claims.review
+claims.edit_prepared
+claims.validate
+claims.submit
+claims.export
+claims.approve
+claims.reject
+claims.record_payment
+claims.view_reports
+```
+
+## Stock / Products
+
+```text
+stock.view
+stock.products.view
+stock.products.create
+stock.products.update
+stock.products.delete
+stock.products.assign_departments
+stock.balances.view
+stock.movements.view
+stock.movements.receive
+stock.movements.transfer
+stock.movements.adjust
+stock.movements.return
+stock.movements.purchase_return
+stock.requisitions.view
+stock.requisitions.create
+stock.requisitions.approve
+stock.requisitions.issue
+stock.requisitions.receive
+stock.reports.view
+```
+
+## Procurement / Supplier Ledger
+
+```text
+procurement.view
+purchase_orders.view
+purchase_orders.create
+purchase_orders.update
+purchase_orders.approve
+purchase_orders.receive
+purchase_orders.cancel
+purchase_orders.print
+
+supplier_ledger.view
+supplier_ledger.payment.create
+supplier_ledger.credit_note.create
+supplier_ledger.debit_note.create
+supplier_ledger.reports.view
+```
+
+## Assets
+
+```text
+assets.view
+assets.create
+assets.update
+assets.assign
+assets.transfer
+assets.maintenance
+assets.decommission
+assets.reports.view
+```
+
+## Notifications
+
+```text
+notifications.view
+notifications.mark_read
+notifications.delete
+notifications.manage
+notifications.emergency.receive
+notifications.admission.receive
+notifications.mar.receive
+notifications.investigation.receive
+notifications.procedure.receive
+notifications.pharmacy.receive
+notifications.stock.receive
+notifications.billing.receive
+notifications.claims.receive
+notifications.patient_merge.receive
+```
+
+## Logs
+
+```text
+logs.view
+logs.view_clinical
+logs.view_financial
+logs.view_stock
+logs.view_security
+logs.export
+logs.delete
+logs.manage_retention
+```
+
+## Reports
+
+```text
+reports.view
+reports.export
+reports.financial
+reports.clinical
+reports.stock
+reports.emergency
+reports.admission
+reports.theatre
+reports.claims
+```
+
+## System / Settings
+
+```text
+settings.view
+settings.update
+modules.view
+modules.enable
+modules.disable
+modules.configure
+users.view
+users.create
+users.update
+users.disable
+users.reset_password
+roles.view
+roles.create
+roles.update
+roles.delete
+permissions.view
+permissions.assign
+```
+
+---
+
+# 12. Backend Enforcement
+
+Every protected route/controller action must enforce permission.
+
+Use:
 
 ```php
-public function assertCanCreateVisit(Patient $patient, ?User $user = null): void
+$this->authorize(...)
 ```
 
-This should check:
-
-* patient is not merged
-* patient is not actively admitted
-* other business rules
-
----
-
-# 20. VisitStatusService
-
-Create/update service to centralize status transitions.
-
-Responsibilities:
-
-```text
-set visit waiting triage
-set visit triage
-set visit waiting consultation
-set visit consulting
-set visit emergency
-set visit admitted
-set visit completed
-set visit cancelled
-```
-
-Do not allow controllers to randomly set visit.status to laboratory/pharmacy/billing.
-
-Deprecate or remove usage of old statuses.
-
----
-
-# 21. VisitPathwayService
-
-Create/update service to record patient parcours.
-
-Responsibilities:
-
-```text
-record pathway event
-record department movement
-record request creation
-record completion
-build pathway timeline for Visit Preview
-```
-
-Example method:
+or middleware:
 
 ```php
-record(Visit $visit, string $eventType, array $data = []): VisitPathwayEvent
+->middleware('permission:patients.view')
 ```
 
-Use this whenever:
+or project equivalent.
 
-* investigation requested
-* pharmacy billed/dispensed
-* procedure requested/completed
-* emergency started/disposed
-* admission started/discharged
-* billing item added
-* payment received
+Do not rely only on menu visibility.
+
+Do not rely only on frontend checks.
+
+Audit:
+
+* GET pages
+* POST store actions
+* PATCH/PUT update actions
+* DELETE actions
+* export/print actions
+* approval actions
+* status changes
+* correction actions
+* override actions
+
+Every route with sensitive data/action must be protected.
 
 ---
 
-# 22. Scheduler Command
+# 13. Frontend/UI Enforcement
 
-Create scheduled command:
+Update UI to respect permissions.
 
-```bash
-php artisan outpatient-sessions:auto-complete
+Buttons/actions should only show when the user has permission.
+
+Examples:
+
+* Add Patient button only if `patients.create`
+* Edit Patient button only if `patients.update`
+* Merge Patient only if `patients.merge.execute` or `patients.merge.create`
+* Record Payment only if `billing.payment.record`
+* Dispense Drug only if `pharmacy.prescriptions.dispense`
+* Administer Medication only if `medication_administration.administer`
+* Verify Result only if `investigations.verify_result`
+* Schedule Theatre only if `theatre.cases.schedule`
+* View Logs only if `logs.view`
+
+If action is locked due to workflow status, show a clear locked reason.
+
+Frontend should receive current user permissions globally.
+
+For Inertia, share:
+
+```php
+'auth' => [
+    'user' => ...,
+    'roles' => ...,
+    'permissions' => [...],
+    'modules' => [...]
+]
 ```
 
-or use existing naming convention.
-
-The command should:
-
-* find outpatient sessions from previous days still active
-* complete/lock them
-* update visit status if appropriate
-* log all changes
-* optionally notify responsible staff/admin
-
-Add scheduler entry.
-
-Document in code/report that server cron must run Laravel scheduler.
+Do not expose sensitive data unnecessarily.
 
 ---
 
-# 23. UI Changes
+# 14. Sidebar/Menu Access
 
-## Visit Creation UI
+Update sidebar/menu logic.
 
-If patient has active admission, show blocking warning.
+A menu item should show only if:
+
+1. module is active, and
+2. user has at least one permission required for that module/menu.
+
+Example:
+
+Emergency menu appears only if:
+
+```text
+module emergency is active
+AND user has emergency.board.view or emergency.case.view or emergency.case.create
+```
+
+Do not show empty modules.
+
+Do not hide a module from Super Admin.
+
+Core modules should always be protected but not disabled.
+
+---
+
+# 15. Module System Analysis
+
+Inspect module system.
+
+Each module should have:
+
+```text
+name
+slug
+description
+is_core
+is_active
+icon
+sort_order
+permissions
+dependencies
+```
+
+If description field is missing, add it or provide descriptions in config/UI.
+
+Every module must explain:
+
+* what it does
+* who uses it
+* what happens if disabled
+* dependencies
+* related permissions
+
+---
+
+# 16. Module Descriptions
+
+Add clear descriptions for modules.
+
+Examples:
+
+## Patients
+
+Manages patient registration, patient folders, demographic records, insurance records, next of kin, documents, deceased status, and patient folder merge.
+
+## Visits
+
+Manages outpatient visits, patient pathway/parcours, visit status flow, visit preview, and visit completion.
+
+## Emergency
+
+Manages emergency cases, emergency triage, emergency sessions, emergency beds/bays, emergency medications, emergency investigations, emergency procedures, emergency billing, and emergency disposition.
+
+## Admission
+
+Manages inpatient admission, wards, beds, inpatient vitals, inpatient medication administration, discharge, and admission billing.
+
+## Consultation
+
+Manages clinical consultation sessions, complaints, history of presenting complaint, examination, diagnosis, prescriptions, investigations, procedures, tasks, notes, and consultation summary.
+
+## MAR
+
+Manages medication administration schedules, nurse dose recording, medication reminders, MAR chart, missed/held/refused doses, and administration reports.
+
+## Pharmacy
+
+Manages prescriptions, drug billing before dispensing, dispensing, pharmacy catalogue, pharmacy stock, and pharmacy reports.
+
+## Investigations
+
+Manages investigation catalogue, investigation requests, result entry, result verification, report printing, and investigation consumables.
+
+## Procedures / Theatre
+
+Manages procedure requests, theatre rooms, theatre scheduling, pre-op checklist, anaesthesia notes, operative notes, recovery notes, procedure consumables, and theatre reports.
+
+## Billing
+
+Manages visit invoices, invoice items, patient payments, discounts, balances, receipts, and billing reports.
+
+## Claims
+
+Manages insurance claim preparation, clinical mirror review, NHIA/NHIS claims, claim submission, rejection, approval, and payment tracking.
+
+## Stock
+
+Manages products, stock locations, stock balances, stock movements, requisitions, transfers, adjustments, returns, and stock reports.
+
+## Procurement
+
+Manages purchase orders, purchase receipts, supplier invoices, and procurement workflow.
+
+## Supplier Ledger
+
+Manages supplier payments, credit notes, debit notes, and supplier transaction history.
+
+## Assets
+
+Manages hospital assets, assignment, transfers, maintenance, and decommissioning.
+
+## Notifications
+
+Manages in-app alerts, due/overdue reminders, task notifications, emergency alerts, stock alerts, and workflow alerts.
+
+## Logs
+
+Manages audit trail, activity logs, clinical logs, financial logs, stock logs, and security logs.
+
+## Reports
+
+Provides clinical, financial, stock, operational, emergency, admission, theatre, and claims reports.
+
+## Settings
+
+Manages hospital configuration, departments, service pricing, insurance pricing, modules, roles, permissions, and system preferences.
+
+---
+
+# 17. Module Dependencies
+
+Define module dependencies.
+
+Examples:
+
+```text
+Emergency depends on Patients, Visits, Billing, Stock, Notifications, Logs
+Admission depends on Patients, Visits, Billing, Stock, MAR
+MAR depends on Patients, Visits, Products, Clinical Tasks, Notifications
+Pharmacy depends on Products, Stock, Billing
+Investigations depends on Services, Billing, Stock
+Theatre depends on Procedures, Billing, Stock
+Claims depends on Billing, Insurance, Consultation
+Stock depends on Products
+Billing depends on Patients, Visits
+```
+
+If a module is disabled, dependent modules should warn or prevent disabling.
+
+Core modules should not be disabled:
+
+```text
+Authentication
+Users & Roles
+Patients
+Visits
+Billing
+Settings
+Modules
+```
+
+Adapt to current system.
+
+---
+
+# 18. Module UI
+
+Update Modules page.
+
+For each module, display:
+
+* module name
+* slug
+* icon
+* description
+* status active/inactive
+* core yes/no
+* dependencies
+* permission count
+* linked permissions
+* users/roles impacted if disabled
+* enable/disable action if allowed
+
+When disabling module, show warning:
+
+```text
+Disabling Emergency will hide Emergency Board, Emergency Cases, Emergency MAR, and related menu items. Existing emergency records will remain available to authorized administrators.
+```
+
+Do not allow disabling core modules.
+
+---
+
+# 19. Permission UI
+
+Update Permission management UI.
+
+Each permission should show:
+
+* permission name
+* module
+* description
+* action type
+* risk level
+* assigned roles
+* created/updated date
+
+Add permission descriptions.
 
 Example:
 
 ```text
-This patient is currently admitted in Ward A / Bed 3 since 26 May 2026.
-You cannot create a new OPD visit until the patient is discharged.
+patients.merge.execute
+Allows user to permanently merge two patient folders into one active folder. High-risk permission.
 ```
 
-Show link:
+Risk levels:
 
 ```text
-Open Active Admission
+LOW
+NORMAL
+HIGH
+CRITICAL
 ```
 
-If user has override permission, show override option with reason.
+Critical permissions include:
 
-## Emergency Creation UI
-
-When creating emergency case from visit, ensure UI shows:
-
-```text
-Emergency Session will be created for this visit.
-```
-
-After creation, redirect to Emergency Case page and show session.
-
-## Consultation Page
-
-Show Emergency Session in session list.
-
-## Visit Preview
-
-Show pathway timeline/parcours.
-
-## Emergency Disposition UI
-
-When disposing to Admission, show bed count transition:
-
-```text
-Emergency bed billing will end.
-Admission bed billing will start when admission bed is assigned.
-```
-
-If admission bed not assigned:
-
-```text
-Patient remains in Emergency bed until admission bed transfer is completed.
-Emergency bed billing continues.
-```
+* users.update
+* roles.update
+* permissions.assign
+* patients.merge.execute
+* billing.payment.reverse
+* stock.movements.adjust
+* medication_administration.correct
+* logs.delete
+* modules.disable
+* settings.update
 
 ---
 
-# 24. Data / Migration Updates
+# 20. Role UI
 
-Add fields where missing.
+Update Role management UI.
 
-Possible visit fields:
+For each role, show:
 
-```text
-status
-completed_at
-completed_by
-locked_at
-locked_by
-lock_reason
-```
+* role name
+* description
+* assigned permissions grouped by module
+* users assigned
+* permission count
+* risk summary
+* last updated
 
-Possible session fields:
+Permission assignment should be grouped by module.
 
-```text
-session_type
-emergency_case_id nullable
-locked_at
-locked_by
-lock_reason
-completed_at
-completed_by
-```
-
-Possible pathway table:
+Example:
 
 ```text
-visit_pathway_events
+Patients
+[ ] patients.view
+[ ] patients.create
+[ ] patients.update
+[ ] patients.merge.execute
+
+Emergency
+[ ] emergency.board.view
+[ ] emergency.triage.perform
+[ ] emergency.disposition.manage
 ```
 
-Possible emergency/admission charge tracking tables if missing:
+Add search/filter for permissions.
 
-```text
-emergency_bed_charges
-emergency_daily_consumable_charges
-admission_bed_charges
-admission_daily_consumable_charges
-```
+Add “select all module permissions” carefully.
 
-Use existing tables if similar structures already exist.
+For critical permissions, show warning.
 
 ---
 
-# 25. Validation Rules
+# 21. Role Descriptions
 
-Visit creation:
+Add descriptions for common roles.
 
-```text
-patient_id required
-patient must not be merged
-patient must not have active admission unless override permission and reason
-```
+Examples:
 
-Emergency case creation from visit:
+## Super Admin
 
-```text
-visit_id required
-patient_id required
-emergency case must create/link emergency session
-```
+Full system access, including users, roles, permissions, modules, settings, logs, and all clinical/financial modules.
 
-Visit status transition:
+## Hospital Admin
 
-```text
-cannot set visit.status to LABORATORY/PHARMACY/BILLING
-cannot complete visit with active admission/emergency unless allowed
-cannot admit without admission workflow
-```
+Manages hospital operations, users, departments, reports, and most workflows but may not access developer/system-critical settings unless granted.
 
-Outpatient auto-lock:
+## Doctor
 
-```text
-only outpatient sessions
-not active emergency
-not active admission
-session date before today
-```
+Can manage consultations, diagnoses, prescriptions, investigation requests, procedure requests, and view patient clinical history.
 
-Emergency-to-admission disposition:
+## Nurse
 
-```text
-emergency_case_id required
-admission creation required
-emergency bed count end required when bed released
-admission bed count start required when admission bed assigned
-```
+Can record vitals, nursing notes, medication administration, clinical tasks, admission/emergency care activities depending assignment.
+
+## Pharmacist
+
+Can review prescriptions, bill selected drugs, dispense billed drugs, manage pharmacy stock view, and pharmacy reports.
+
+## Cashier
+
+Can view invoices, record payments, print receipts, and view payment reports.
+
+## Claims Officer
+
+Can prepare, review, validate, submit, and track insurance claims.
+
+## Store Officer
+
+Can manage products, stock movements, requisitions, transfers, stock balances, and purchase receipts depending permissions.
+
+## Theatre Staff
+
+Can view theatre board, manage theatre cases, record pre-op, anaesthesia, operative/recovery notes depending specific role.
+
+## Records Officer
+
+Can register patients, update patient folders, manage patient documents, and request/execute patient merges if authorized.
+
+Adapt descriptions to current roles.
 
 ---
 
-# 26. Tests Required
+# 22. Permission Descriptions
+
+Add a centralized permission description config or database field.
+
+Preferred:
+
+```text
+permissions.description
+permissions.module
+permissions.risk_level
+```
+
+If migration is too risky, create config:
+
+```php
+config/permissions.php
+```
+
+Example:
+
+```php
+'patients.view' => [
+    'module' => 'patients',
+    'description' => 'Allows viewing patient list and patient folders.',
+    'risk' => 'NORMAL',
+],
+```
+
+Use this config to display explanations in UI.
+
+---
+
+# 23. Backend Permission Audit Script / Command
+
+Create an artisan command to audit permissions.
+
+Suggested:
+
+```bash
+php artisan permissions:audit
+```
+
+The command should report:
+
+* routes missing permission middleware
+* permissions used in code but missing in database
+* permissions in database but unused in code
+* duplicate permission names
+* modules without permissions
+* menu items without permission checks
+
+Output to console and optionally:
+
+```text
+storage/reports/permissions_audit.json
+```
+
+or docs report.
+
+This helps future maintenance.
+
+---
+
+# 24. Route Permission Mapping
+
+Create or update route permission mapping.
+
+Option A: permission middleware directly on routes.
+
+Option B: config file:
+
+```php
+config/route_permissions.php
+```
+
+Example:
+
+```php
+'admin.patients.index' => 'patients.view',
+'admin.patients.store' => 'patients.create',
+'admin.patients.update' => 'patients.update',
+'admin.emergency.board' => 'emergency.board.view',
+```
+
+The audit command can compare route list against mapping.
+
+---
+
+# 25. Module Permission Mapping
+
+Create or update module-permission mapping.
+
+Example:
+
+```php
+'patients' => [
+    'patients.view',
+    'patients.create',
+    'patients.update',
+    'patients.merge.execute',
+],
+'emergency' => [
+    'emergency.board.view',
+    'emergency.case.view',
+    'emergency.triage.perform',
+],
+```
+
+Use this for:
+
+* module UI permission count
+* role assignment grouping
+* sidebar visibility
+* module dependency warning
+
+---
+
+# 26. Seeder Updates
+
+Update seeders:
+
+* PermissionSeeder
+* RoleSeeder
+* ModuleSeeder
+* RolePermissionSeeder
+* any existing access control seeders
+
+Rules:
+
+* seed permissions idempotently
+* do not duplicate permissions
+* do not remove custom permissions accidentally
+* assign Super Admin all permissions
+* assign reasonable defaults to other roles
+* respect existing custom assignments where possible
+
+If changing existing permission names, write migration/compatibility mapping.
+
+---
+
+# 27. Backend Guard for Modules
+
+Add module guard.
+
+If a module is inactive:
+
+* hide menus
+* block module routes unless user is Super Admin or has override permission
+* show clear message:
+
+```text
+The Emergency module is currently disabled.
+```
+
+Core modules cannot be disabled.
+
+Suggested permission:
+
+```text
+modules.override_disabled
+```
+
+Use carefully.
+
+---
+
+# 28. UI Action Inventory
+
+Audit all frontend action buttons/links.
+
+Every button that changes data must check permission.
+
+Examples:
+
+* Create
+* Edit
+* Delete
+* Cancel
+* Approve
+* Reject
+* Verify
+* Submit
+* Dispense
+* Administer
+* Pay
+* Reverse
+* Refund
+* Merge
+* Export
+* Print
+* Assign
+* Transfer
+* Complete
+* Reopen
+* Correct
+* Override
+
+Add helper:
+
+```js
+can('permission.name')
+```
+
+or use existing helper.
+
+For Vue/Inertia:
+
+```js
+const can = (permission) => page.props.auth.permissions.includes(permission)
+```
+
+or project equivalent.
+
+Do not leave dangerous buttons visible to unauthorized users.
+
+---
+
+# 29. Backend Policy Inventory
+
+Where resource ownership matters, use policies.
+
+Examples:
+
+* consultation entries: edit own vs edit any
+* notes: edit own vs edit any
+* medication administrations: correct permission
+* theatre notes: edit own vs edit any
+* logs: module-based view permission
+* patient merge: execute permission
+* payments: reverse permission
+
+Do not use simple global permission only where ownership matters.
+
+---
+
+# 30. Permission-Based Dashboard/Menu
+
+Update dashboards/menus by role.
+
+Consultation-type users should not see irrelevant menus.
+
+Emergency users should see emergency-relevant menus.
+
+Store users should see stock/procurement menus.
+
+Claims users should see claims menus.
+
+Cashiers should see billing/payment menus.
+
+But do not hardcode by role only. Prefer permissions.
+
+Menu visibility should be permission/module based.
+
+---
+
+# 31. Tests Required
 
 Add or update tests.
 
-## Visit Creation Guard
+## Permission Database
 
-1. Cannot create OPD visit when patient has active admission.
-2. Can create OPD visit after admission is discharged.
-3. Override requires permission.
-4. Override requires reason.
-5. Attempt is logged.
+1. Permission seeder creates required permissions.
+2. Permission names are unique.
+3. Permissions have module mapping.
+4. Permissions have descriptions.
+5. Permissions have risk levels.
 
-## Emergency Session
+## Roles
 
-6. Creating emergency case from visit creates emergency session.
-7. Emergency session links to visit/patient/emergency case.
-8. Emergency session appears on Consultation page.
-9. Emergency records link to emergency session.
-10. Emergency session appears in Visit Preview.
+6. Super Admin has all permissions.
+7. Doctor has consultation permissions but not financial reversal permissions.
+8. Nurse has vitals/MAR/task permissions but not role management.
+9. Pharmacist can bill/dispense drugs but cannot merge patients.
+10. Cashier can record payments but cannot edit clinical records.
+11. Claims Officer can manage claims but cannot dispense drugs.
+12. Store Officer can manage stock but cannot verify lab results.
 
-## Visit Status Flow
+## Backend Authorization
 
-11. Visit status is not set to LABORATORY.
-12. Visit status is not set to PHARMACY.
-13. Visit status is not set to BILLING.
-14. Patient can go to investigation while visit remains CONSULTING.
-15. Patient can go to pharmacy while visit remains CONSULTING.
-16. Patient can go to procedure while visit remains CONSULTING.
-17. Direct investigation route records pathway event.
-18. Direct pharmacy route records pathway event.
-19. Direct procedure route records pathway event.
+13. Unauthorized user cannot access patient merge execute.
+14. Unauthorized user cannot reverse payment.
+15. Unauthorized user cannot adjust stock.
+16. Unauthorized user cannot verify investigation result.
+17. Unauthorized user cannot administer medication without permission.
+18. Unauthorized user cannot view logs without permission.
+19. Unauthorized user cannot disable module.
+20. Authorized user can access allowed route.
 
-## Pathway / Preview
+## Frontend Permissions
 
-20. Investigation request creates pathway event.
-21. Pharmacy billing creates pathway event.
-22. Pharmacy dispensing creates pathway event.
-23. Procedure request creates pathway event.
-24. Emergency disposition creates pathway event.
-25. Visit Preview shows chronological pathway.
+21. Unauthorized user does not see restricted button.
+22. Authorized user sees permitted button.
+23. Sidebar hides modules without permission.
+24. Module disabled hides menu.
+25. Super Admin sees all modules.
 
-## Outpatient Auto-Lock
+## Modules
 
-26. Previous-day outpatient sessions auto-complete.
-27. Active admission sessions are not auto-closed.
-28. Active emergency cases are not auto-closed.
-29. Locked outpatient sessions cannot be edited without correction permission.
-30. Auto-lock action is logged.
+26. Core module cannot be disabled.
+27. Disabled module blocks route access.
+28. Module dependencies show warning.
+29. Module page shows descriptions.
+30. Module page shows linked permissions.
 
-## Emergency Bed / Consumable Billing
+## Audit Command
 
-31. Emergency bed assignment starts bed count.
-32. Emergency bed release ends bed count.
-33. Emergency bed charge is billed per day.
-34. Emergency daily consumable charge is billed per day if configured.
-35. Duplicate emergency bed charges are prevented.
-36. Billing uses visit invoice.
-
-## Emergency to Admission
-
-37. Disposing to admission ends emergency bed count when bed released.
-38. Disposing to admission starts admission bed count when admission bed assigned.
-39. If admission bed is not assigned, emergency bed remains active.
-40. Emergency consumable daily billing ends when emergency bed/care ends.
-41. Admission daily billing starts when admission bed/care starts.
-42. Same visit/invoice is preserved.
+31. permissions:audit detects missing route permission.
+32. permissions:audit detects permission used in code but missing in DB.
+33. permissions:audit detects unused permission.
+34. permissions:audit generates report.
 
 ---
 
-# 27. Reports / Documentation
+# 32. Verification Checklist
 
-Create or update an implementation report:
+After implementation, manually verify:
 
-```text
-docs/VISIT_STATUS_AND_PATIENT_PATHWAY_REPORT.md
-```
-
-Include:
-
-* previous problems found
-* old statuses removed/deprecated
-* new visit status flow
-* pathway/timeline mechanism
-* emergency session creation fix
-* admission active visit guard
-* outpatient auto-lock logic
-* emergency-to-admission bed billing transition
-* files modified
-* remaining TODOs
+* Login as Super Admin.
+* Open Roles page.
+* Permissions are grouped by module.
+* Permissions have descriptions.
+* Critical permissions show warning.
+* Open Modules page.
+* Modules show descriptions/dependencies/permissions.
+* Disable non-core module and verify menu/route behavior.
+* Try disabled core module and confirm blocked.
+* Login as Doctor and confirm only relevant menus show.
+* Login as Cashier and confirm clinical edit buttons hidden.
+* Login as Nurse and confirm MAR actions available.
+* Try unauthorized backend route and confirm 403.
+* Run permissions audit command.
+* Review generated reports.
 
 ---
 
-# 28. Deliverables
+# 33. Deliverables
 
 Provide:
 
-1. Gap analysis of current Visit Status Flow.
-2. Guard preventing new OPD visit during active admission.
-3. Emergency case creation now creates Emergency Session.
-4. Emergency Session appears on Consultation page.
-5. Visit status flow cleaned.
-6. Laboratory/Pharmacy/Billing removed from main visit statuses.
-7. Patient pathway/parcours tracking implemented.
-8. Visit Preview updated to show pathway.
-9. Outpatient sessions auto-complete/lock after midnight.
-10. Emergency bed billing per day.
-11. Emergency consumables per day where configured.
-12. Emergency-to-admission transition handles bed count correctly.
-13. Admission bed count starts correctly.
-14. Tests or verification notes.
-15. Documentation/report file.
-16. Files modified.
-17. Remaining TODOs.
+1. ROLES_PERMISSIONS_GAP_ANALYSIS.md
+2. ROLES_PERMISSIONS_SOLUTION_REPORT.md
+3. MODULES_GAP_ANALYSIS.md
+4. MODULES_SOLUTION_REPORT.md
+5. ROLES_PERMISSIONS_REMAINING_RECOMMENDATIONS.md
+6. Updated permissions list.
+7. Updated module list and descriptions.
+8. Updated role descriptions.
+9. Updated seeders.
+10. Backend authorization fixes.
+11. Frontend UI permission fixes.
+12. Sidebar/menu permission/module fixes.
+13. Permission descriptions in UI.
+14. Module descriptions in UI.
+15. Permission audit command.
+16. Tests or verification notes.
+17. Files modified.
+18. Remaining TODOs.
 
 ---
 
-# 29. Important Rules
+# 34. Important Rules
 
-Do not create a new OPD visit for actively admitted patients.
+Do not rely only on frontend permissions.
 
-Do not create emergency case without emergency session.
+Do not leave sensitive POST/PATCH/DELETE routes unprotected.
 
-Do not isolate Emergency from consultation/session history.
+Do not create duplicate permission names.
 
-Do not use LABORATORY, PHARMACY, BILLING as main visit statuses.
+Do not remove existing custom permissions without mapping.
 
-Do not change visit status away from CONSULTING just because patient goes to investigation/pharmacy/procedure.
+Do not hardcode menus only by role where permission-based checks should be used.
 
-Do not auto-close active admission or active emergency cases.
+Do not allow disabled modules to be accessed through direct URL.
 
-Do not continue emergency bed billing after patient is physically transferred to admission bed.
+Do not allow core modules to be disabled.
 
-Do not start admission bed billing before admission bed assignment unless configured.
+Do not give all roles excessive permissions just to make errors disappear.
 
-Do not duplicate emergency/admission bed charges.
+Do not break existing workflows.
 
-Do not create separate invoices.
+Do not hide important admin explanations.
 
-Do not break existing consultation, emergency, admission, billing, pharmacy, investigation, procedure, stock, MAR, visit preview, or claims workflows.
-
-Now inspect the current UHMS implementation and correct the Visit Status Flow, Emergency Session creation, active admission visit guard, outpatient auto-lock, and emergency-to-admission billing/bed transition logic as described above.
+Now inspect the current UHMS roles, permissions, modules, menus, routes, controllers, policies, seeders, and frontend UI. Produce the required gap reports, fix the authorization/module system extensively, update the UI explanations, and document all solutions.
 
 ```
 ```

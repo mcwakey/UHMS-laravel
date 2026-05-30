@@ -989,6 +989,14 @@ class SidebarMenuBuilder
                         'module' => 'users',
                     ],
                     [
+                        'label' => 'Permissions Dashboard',
+                        'icon' => 'ti ti-list-check',
+                        'route' => 'admin.permissions.index',
+                        'active_patterns' => ['admin.permissions.*'],
+                        'permission' => 'permissions.view',
+                        'module' => 'users',
+                    ],
+                    [
                         'label' => 'Departments',
                         'icon' => 'ti ti-building-bank',
                         'route' => 'admin.departments.index',

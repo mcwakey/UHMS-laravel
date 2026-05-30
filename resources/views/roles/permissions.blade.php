@@ -32,11 +32,17 @@
                 </div>
                 <div class="card-body py-2">
                     @foreach($modulePermissions as $permission)
-                    <div class="form-check mb-2">
-                        <input class="form-check-input perm-{{ $module }}" type="checkbox" name="permissions[]" value="{{ $permission->name }}" id="perm-{{ $permission->id }}"
+                    @php
+                        $riskMeta  = $riskLevels[$permission->meta_risk] ?? ['label' => $permission->meta_risk, 'color' => 'secondary'];
+                    @endphp
+                    <div class="form-check mb-2 d-flex align-items-start gap-2">
+                        <input class="form-check-input perm-{{ $module }} mt-1" type="checkbox" name="permissions[]" value="{{ $permission->name }}" id="perm-{{ $permission->id }}"
                             {{ in_array($permission->name, $rolePermissions) ? 'checked' : '' }}>
-                        <label class="form-check-label" for="perm-{{ $permission->id }}">
+                        <label class="form-check-label flex-grow-1" for="perm-{{ $permission->id }}"
+                            data-bs-toggle="tooltip" data-bs-placement="top"
+                            title="{{ $permission->meta_description }} ({{ $permission->name }})">
                             {{ ucfirst(str_replace($module . '.', '', $permission->name)) }}
+                            <span class="badge bg-{{ $riskMeta['color'] }} fs-10 ms-1">{{ $riskMeta['label'] }}</span>
                         </label>
                     </div>
                     @endforeach
@@ -66,5 +72,12 @@
             });
         });
     });
+
+    // Activate Bootstrap tooltips for permission descriptions
+    if (window.bootstrap && bootstrap.Tooltip) {
+        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+            new bootstrap.Tooltip(el);
+        });
+    }
 </script>
 @endpush

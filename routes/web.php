@@ -195,6 +195,18 @@ Route::middleware('auth')->group(function () {
             Route::put('roles/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('roles.permissions.update');
         });
 
+        // Permissions Dashboard (read-only audit / catalogue)
+        Route::middleware('can:permissions.view')->group(function () {
+            Route::get('permissions', [\App\Http\Controllers\Admin\PermissionDashboardController::class, 'index'])->name('permissions.index');
+            Route::post('permissions/refresh', [\App\Http\Controllers\Admin\PermissionDashboardController::class, 'refresh'])->name('permissions.refresh')->middleware('can:permissions.assign');
+        });
+
+        // Per-user direct permission overrides
+        Route::middleware('can:permissions.assign')->group(function () {
+            Route::get('users/{user}/permissions', [\App\Http\Controllers\Admin\UserPermissionController::class, 'edit'])->name('users.permissions.edit');
+            Route::put('users/{user}/permissions', [\App\Http\Controllers\Admin\UserPermissionController::class, 'update'])->name('users.permissions.update');
+        });
+
         // Patients
         Route::middleware('can:patients.view')->group(function () {
             Route::get('patients', [PatientController::class, 'index'])->name('patients.index');

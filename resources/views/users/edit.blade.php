@@ -8,6 +8,11 @@
         <h4 class="fw-bold mb-0">Edit User: {{ $user->full_name }}</h4>
     </div>
     <div>
+        @can('permissions.assign')
+        <a href="{{ route('admin.users.permissions.edit', $user) }}" class="btn btn-outline-warning btn-md me-1">
+            <i class="ti ti-shield-half me-1"></i>Direct Permissions
+        </a>
+        @endcan
         <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary btn-md">
             <i class="ti ti-arrow-left me-1"></i>Back to Users
         </a>

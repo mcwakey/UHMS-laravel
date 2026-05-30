@@ -1,0 +1,36 @@
+﻿Permissions audit
+------------------------------------------------------------
+Total permissions in DB:           305
+Permissions referenced in routes:  153
+Admin mutation routes scanned:     312
+
+Risk distribution:
+  LOW       87
+  NORMAL    145
+  HIGH      57
+  CRITICAL  16
+
+Permissions referenced by routes but missing in DB (1):
+  - patients.mark_deceased
+
+Admin mutation routes with no can:/role: middleware (6):
+  - [POST] admin/notifications/{id}/read
+  - [POST] admin/notifications/mark-all-read
+  - [DELETE] admin/notifications/{id}
+  - [PUT] admin/profile
+  - [PUT] admin/profile/password
+  - [PUT] admin/profile/notifications
+
+Possible duplicate permission names (11 pairs):
+  - consultation.create  Γçä  consultations.create
+  - emergency.report.view  Γçä  emergency.reports.view
+  - patients.create  Γçä  payments.create
+  - patients.view  Γçä  payments.view
+  - procedure.catalogue.manage  Γçä  procedure_catalogue.manage
+  - procedure.catalogue.view  Γçä  procedure_catalogue.view
+  - procedure.reschedule  Γçä  procedure.schedule
+  - procedure.view  Γçä  procedures.view
+  - product.link_department  Γçä  product.link_departments
+  - stock.location.manage  Γçä  stock_location.manage
+  - theatre.cases.reschedule  Γçä  theatre.cases.schedule
+JSON report: C:\xampp\htdocs\laravel\laravel\storage\reports\permissions_audit.json

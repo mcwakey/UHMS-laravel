@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Module;
 use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\View;
@@ -33,6 +34,18 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user()
                     ? $request->user()->only(['id', 'name', 'email'])
                     : null,
+                // Permission/role/module flags consumed by Vue `usePermissions()`
+                // composable and by `@can`-style directives in Inertia pages.
+                // Lazy and cached per request — no DB hit for guests.
+                'permissions' => fn () => $request->user()
+                    ? $request->user()->getAllPermissions()->pluck('name')->values()->all()
+                    : [],
+                'roles' => fn () => $request->user()
+                    ? $request->user()->getRoleNames()->values()->all()
+                    : [],
+                'modules' => fn () => $request->user()
+                    ? Module::query()->where('is_enabled', true)->orderBy('sort_order')->pluck('slug')->values()->all()
+                    : [],
             ],
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
