@@ -44,4 +44,16 @@ class PermissionsAuditCommandTest extends TestCase
         $this->assertSame('NORMAL', \App\Support\PermissionMeta::risk('patients.create'));
         $this->assertSame('HIGH', \App\Support\PermissionMeta::risk('claims.submit'));
     }
+
+    public function test_permission_meta_explains_permissions(): void
+    {
+        $this->assertSame(
+            'Allows the user to mark patient records as deceased.',
+            \App\Support\PermissionMeta::description('patients.mark_deceased')
+        );
+        $this->assertSame(
+            'Allows the user to assign theatre teams.',
+            \App\Support\PermissionMeta::description('theatre.team.assign')
+        );
+    }
 }

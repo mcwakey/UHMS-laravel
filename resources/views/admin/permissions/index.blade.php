@@ -146,7 +146,7 @@
                         <tr>
                             <th>Module</th>
                             <th>Permission</th>
-                            <th>Description</th>
+                            <th>What it allows</th>
                             <th>Risk</th>
                         </tr>
                     </thead>

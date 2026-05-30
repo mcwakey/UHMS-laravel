@@ -64,11 +64,15 @@
                                        for="upm-{{ $item['id'] }}"
                                        data-bs-toggle="tooltip" data-bs-placement="top"
                                        title="{{ $item['description'] }} ({{ $item['name'] }})">
-                                    {{ ucfirst(str_replace($module . '.', '', $item['name'])) }}
-                                    <span class="badge bg-{{ $rm['color'] }} fs-10 ms-1">{{ $rm['label'] }}</span>
-                                    @if($item['inherited'])
-                                        <span class="badge bg-info-transparent text-info fs-10 ms-1">via role</span>
-                                    @endif
+                                    <span class="d-flex align-items-center flex-wrap gap-1">
+                                        <span>{{ ucfirst(str_replace($module . '.', '', $item['name'])) }}</span>
+                                        <span class="badge bg-{{ $rm['color'] }} fs-10">{{ $rm['label'] }}</span>
+                                        @if($item['inherited'])
+                                            <span class="badge bg-info-transparent text-info fs-10">via role</span>
+                                        @endif
+                                    </span>
+                                    <span class="d-block text-muted fs-12 mt-1">{{ $item['description'] }}</span>
+                                    <code class="d-block fs-11 mt-1">{{ $item['name'] }}</code>
                                 </label>
                             </div>
                             @endforeach

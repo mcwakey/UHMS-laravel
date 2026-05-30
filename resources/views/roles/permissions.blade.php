@@ -41,8 +41,12 @@
                         <label class="form-check-label flex-grow-1" for="perm-{{ $permission->id }}"
                             data-bs-toggle="tooltip" data-bs-placement="top"
                             title="{{ $permission->meta_description }} ({{ $permission->name }})">
-                            {{ ucfirst(str_replace($module . '.', '', $permission->name)) }}
-                            <span class="badge bg-{{ $riskMeta['color'] }} fs-10 ms-1">{{ $riskMeta['label'] }}</span>
+                            <span class="d-flex align-items-center flex-wrap gap-1">
+                                <span>{{ ucfirst(str_replace($module . '.', '', $permission->name)) }}</span>
+                                <span class="badge bg-{{ $riskMeta['color'] }} fs-10">{{ $riskMeta['label'] }}</span>
+                            </span>
+                            <span class="d-block text-muted fs-12 mt-1">{{ $permission->meta_description }}</span>
+                            <code class="d-block fs-11 mt-1">{{ $permission->name }}</code>
                         </label>
                     </div>
                     @endforeach
