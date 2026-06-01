@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
+use App\Models\Drug;
+use App\Models\LabTest;
 use App\Models\MedicalPattern;
 use App\Models\Visit;
 use App\Services\ConsultationService;
@@ -36,7 +38,10 @@ class MedicalPatternController extends Controller
      */
     public function create()
     {
-        return view('patterns.create');
+        $drugs    = Drug::where('is_active', true)->orderBy('name')->get(['id', 'name', 'generic_name', 'strength', 'dosage_form']);
+        $labTests = LabTest::active()->orderBy('name')->get(['id', 'name']);
+
+        return view('patterns.create', compact('drugs', 'labTests'));
     }
 
     /**
@@ -113,8 +118,10 @@ class MedicalPatternController extends Controller
     public function edit(MedicalPattern $pattern)
     {
         $pattern->load('items');
+        $drugs    = Drug::where('is_active', true)->orderBy('name')->get(['id', 'name', 'generic_name', 'strength', 'dosage_form']);
+        $labTests = LabTest::active()->orderBy('name')->get(['id', 'name']);
 
-        return view('patterns.edit', compact('pattern'));
+        return view('patterns.edit', compact('pattern', 'drugs', 'labTests'));
     }
 
     /**

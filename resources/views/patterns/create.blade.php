@@ -142,6 +142,29 @@
 <script>
 var itemIndex = 0;
 
+var availableDrugs = @json($drugs);
+var availableLabTests = @json($labTests);
+
+function buildDrugOptions(selected) {
+    selected = selected || '';
+    var html = '<option value="">— Select drug —</option>';
+    availableDrugs.forEach(function(d) {
+        var label = d.name + (d.strength ? ' ' + d.strength : '') + (d.dosage_form ? ' (' + d.dosage_form + ')' : '');
+        var val = d.name;
+        html += '<option value="' + val.replace(/"/g, '&quot;') + '"' + (selected === val ? ' selected' : '') + '>' + label.replace(/"/g, '&quot;') + '</option>';
+    });
+    return html;
+}
+
+function buildLabTestOptions(selected) {
+    selected = selected || '';
+    var html = '<option value="">— Select investigation —</option>';
+    availableLabTests.forEach(function(t) {
+        html += '<option value="' + t.name.replace(/"/g, '&quot;') + '"' + (selected === t.name ? ' selected' : '') + '>' + t.name.replace(/"/g, '&quot;') + '</option>';
+    });
+    return html;
+}
+
 var templates = {
     complaint: function(idx) {
         return '<div class="pattern-item type-complaint" data-index="' + idx + '">' +
@@ -219,7 +242,8 @@ var templates = {
             '<input type="hidden" name="items[' + idx + '][type]" value="investigation">' +
             '<div class="d-flex align-items-center mb-2"><span class="badge bg-info me-2">Investigation Suggestion</span></div>' +
             '<div class="row g-2">' +
-                '<div class="col-md-5"><input type="text" name="items[' + idx + '][data][investigation_type]" class="form-control form-control-sm" required placeholder="Investigation"></div>' +
+                '<div class="col-md-5"><label class="form-label small">Investigation <span class="text-danger">*</span></label>' +
+                '<select name="items[' + idx + '][data][investigation_type]" class="form-select form-select-sm" required>' + buildLabTestOptions() + '</select></div>' +
                 '<div class="col-md-5"><input type="text" name="items[' + idx + '][data][description]" class="form-control form-control-sm" placeholder="Clinical reason"></div>' +
                 '<div class="col-md-2"><select name="items[' + idx + '][data][urgency]" class="form-select form-select-sm"><option value="routine">Routine</option><option value="urgent">Urgent</option><option value="emergency">Emergency</option></select></div>' +
             '</div></div>';
@@ -231,7 +255,7 @@ var templates = {
             '<div class="d-flex align-items-center mb-2"><span class="badge bg-primary me-2">Prescription Item</span></div>' +
             '<div class="row g-2">' +
                 '<div class="col-md-4"><label class="form-label small">Drug Name <span class="text-danger">*</span></label>' +
-                '<input type="text" name="items[' + idx + '][data][drug_name]" class="form-control form-control-sm" required placeholder="Drug name"></div>' +
+                '<select name="items[' + idx + '][data][drug_name]" class="form-select form-select-sm" required>' + buildDrugOptions() + '</select></div>' +
                 '<div class="col-md-2"><label class="form-label small">Dosage <span class="text-danger">*</span></label>' +
                 '<input type="text" name="items[' + idx + '][data][dosage]" class="form-control form-control-sm" required placeholder="500mg"></div>' +
                 '<div class="col-md-2"><label class="form-label small">Frequency</label>' +

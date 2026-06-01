@@ -445,6 +445,7 @@ class SidebarMenuBuilder
                         'route' => 'admin.admissions.requests',
                         'active_patterns' => ['admin.admissions.requests'],
                         'permission' => 'ward.view',
+                        'module' => 'ward',
                     ],
                     [
                         'label' => 'Admissions Board',
@@ -452,6 +453,7 @@ class SidebarMenuBuilder
                         'route' => 'admin.admissions.index',
                         'active_patterns' => ['admin.admissions.index'],
                         'permission' => 'ward.view',
+                        'module' => 'ward',
                     ],
                     [
                         'label' => 'Medication Board',
@@ -459,7 +461,7 @@ class SidebarMenuBuilder
                         'route' => 'admin.admissions.medication-board',
                         'active_patterns' => ['admin.admissions.medication-board', 'admin.admissions.medications.*'],
                         'permission' => 'ward.view',
-                        // 'permission' => 'admission.medication_board.view',
+                        'module' => 'ward',
                     ],
                     [
                         'label' => 'Ward Consumables',
@@ -467,6 +469,7 @@ class SidebarMenuBuilder
                         'route' => 'admin.wards.consumables.index',
                         'active_patterns' => ['admin.wards.consumables.*'],
                         'permission' => 'ward.view',
+                        'module' => 'ward',
                     ],
                     // [
                     //     'label' => 'Emergency Meds',
@@ -489,6 +492,7 @@ class SidebarMenuBuilder
                         'route' => 'admin.wards.index',
                         'active_patterns' => ['admin.wards.index'],
                         'permission' => 'ward.manage',
+                        'module' => 'ward',
                     ],
                     // [
                     //     'label' => 'Bed Management',
@@ -1168,6 +1172,7 @@ class SidebarMenuBuilder
                                 'route' => 'admin.modules.index',
                                 'active_patterns' => ['admin.modules.*'],
                                 'permission' => 'modules.manage',
+                                'module' => 'settings',
                             ],
                         ],
                     ],

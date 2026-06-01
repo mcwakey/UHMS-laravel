@@ -55,6 +55,15 @@ class DepartmentSeeder extends Seeder
             // ── Support / admin ──
             ['name' => 'Records',                 'code' => 'REC', 'type' => DepartmentType::ADMINISTRATIVE->value],
             ['name' => 'Billing',                 'code' => 'BIL', 'type' => DepartmentType::ADMINISTRATIVE->value],
+
+            // ── Ward / Inpatient departments ──
+            ['name' => 'Male Medical Ward',       'code' => 'MMW', 'type' => DepartmentType::ADMINISTRATIVE->value],
+            ['name' => 'Female Medical Ward',     'code' => 'FMW', 'type' => DepartmentType::ADMINISTRATIVE->value],
+            ['name' => 'Maternity Ward',          'code' => 'MAT', 'type' => DepartmentType::ADMINISTRATIVE->value],
+            ['name' => 'Paediatric Ward',         'code' => 'PCW', 'type' => DepartmentType::ADMINISTRATIVE->value],
+            ['name' => 'Surgical Ward',           'code' => 'SRW', 'type' => DepartmentType::ADMINISTRATIVE->value],
+            ['name' => 'ICU',                     'code' => 'ICU', 'type' => DepartmentType::ADMINISTRATIVE->value],
+            ['name' => 'NICU',                    'code' => 'NIC', 'type' => DepartmentType::ADMINISTRATIVE->value],
         ];
 
         foreach ($departments as $dept) {
