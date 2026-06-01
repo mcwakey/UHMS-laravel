@@ -169,6 +169,11 @@ class InvoiceItem extends Model
         return $this->hasMany(PaymentAllocation::class);
     }
 
+    public function serviceRendering()
+    {
+        return $this->hasOne(ServiceRendering::class);
+    }
+
     /**
      * Alias of serviceCatalog() — spec calls it service().
      */

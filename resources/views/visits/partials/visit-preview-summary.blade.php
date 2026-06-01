@@ -78,6 +78,12 @@
                     @if(($summary['procedures_count'] ?? 0) > 0)
                         <span class="badge bg-warning text-dark">{{ $summary['procedures_count'] }} Proc</span>
                     @endif
+                    @if(($summary['service_renderings_count'] ?? 0) > 0)
+                        <span class="badge bg-success">{{ $summary['service_renderings_count'] }} Services</span>
+                    @endif
+                    @if(($summary['pending_service_renderings_count'] ?? 0) > 0)
+                        <span class="badge bg-warning text-dark">{{ $summary['pending_service_renderings_count'] }} Pending Service</span>
+                    @endif
                     @if($summary['has_admission'] ?? false)
                         <span class="badge bg-dark">Admitted</span>
                     @endif

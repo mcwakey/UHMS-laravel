@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ServiceRendering;
 use App\Models\Visit;
 use Illuminate\Support\Carbon;
 
@@ -146,6 +147,13 @@ class VisitPreviewService
             'medicationOrders.prescriber',
             'medicationOrders.schedules.clinicalTask',
             'medicationOrders.administrations.administeredBy',
+            'serviceRenderings.service',
+            'serviceRenderings.department',
+            'serviceRenderings.invoiceItem.invoice',
+            'serviceRenderings.startedBy',
+            'serviceRenderings.renderedBy',
+            'serviceRenderings.createdBy',
+            'serviceRenderings.updatedBy',
             'invoices.items',
             'invoices.payments.receivedBy',
             'admission.admittedBy',
@@ -818,6 +826,67 @@ class VisitPreviewService
         }
 
         // 9. Billing — invoices and payments
+        foreach ($visit->serviceRenderings ?? [] as $rendering) {
+            $serviceName = $rendering->service?->name ?? $rendering->invoiceItem?->description ?? 'Service';
+            $details = array_filter([
+                'Invoice' => $rendering->invoiceItem?->invoice?->invoice_number,
+                'Billing Status' => $rendering->invoiceItem?->invoice?->status?->label() ?? null,
+                'Payment Status' => $rendering->invoiceItem?->payment_status ? ucwords(str_replace('_', ' ', $rendering->invoiceItem->payment_status)) : null,
+                'Patient Payable' => $rendering->invoiceItem ? 'GHS '.number_format((float) $rendering->invoiceItem->patient_payable, 2) : null,
+                'Notes' => $rendering->notes,
+                'Result' => $rendering->result_summary,
+                'Reason' => $rendering->reason_not_rendered,
+            ]);
+
+            $items[] = $this->item(
+                $rendering->created_at,
+                "{$serviceName} Awaiting Rendering",
+                'Billed service queued for department fulfilment.',
+                optional($rendering->createdBy)->full_name,
+                optional($rendering->department)->name,
+                'SERVICE', 'bg-warning text-dark',
+                'service_rendering', $rendering->id,
+                $details
+            );
+
+            if ($rendering->started_at) {
+                $items[] = $this->item(
+                    $rendering->started_at,
+                    "{$serviceName} Rendering Started",
+                    $rendering->notes ?: 'Service rendering started.',
+                    optional($rendering->startedBy)->full_name,
+                    optional($rendering->department)->name,
+                    'IN PROGRESS', 'bg-info',
+                    'service_rendering', $rendering->id,
+                    $details
+                );
+            }
+
+            if ($rendering->status === ServiceRendering::STATUS_RENDERED) {
+                $items[] = $this->item(
+                    $rendering->rendered_at ?? $rendering->updated_at,
+                    "{$serviceName} Rendered",
+                    $rendering->result_summary ?: 'Service rendered.',
+                    optional($rendering->renderedBy)->full_name,
+                    optional($rendering->department)->name,
+                    'RENDERED', 'bg-success',
+                    'service_rendering', $rendering->id,
+                    $details
+                );
+            } elseif (in_array($rendering->status, [ServiceRendering::STATUS_NOT_RENDERED, ServiceRendering::STATUS_CANCELLED], true)) {
+                $items[] = $this->item(
+                    $rendering->updated_at,
+                    "{$serviceName} ".ucwords(strtolower(str_replace('_', ' ', $rendering->status))),
+                    $rendering->reason_not_rendered ?: $rendering->notes ?: 'Service rendering closed.',
+                    optional($rendering->updatedBy)->full_name,
+                    optional($rendering->department)->name,
+                    str_replace('_', ' ', $rendering->status), 'bg-secondary',
+                    'service_rendering', $rendering->id,
+                    $details
+                );
+            }
+        }
+
         foreach ($visit->invoices ?? [] as $invoice) {
             $items[] = $this->item(
                 $invoice->created_at,
@@ -928,6 +997,10 @@ class VisitPreviewService
             'prescriptions_count' => $visit->prescriptions->count(),
             'investigations_count' => $visit->labRequests->count(),
             'procedures_count' => $visit->procedureRequests->count(),
+            'service_renderings_count' => $visit->serviceRenderings->count(),
+            'pending_service_renderings_count' => $visit->serviceRenderings
+                ->whereIn('status', ServiceRendering::ACTIVE_STATUSES)
+                ->count(),
             'has_admission' => $visit->admission !== null,
             'has_emergency_case' => $visit->emergencyCase !== null,
             'emergency_number' => $visit->emergencyCase?->emergency_number,

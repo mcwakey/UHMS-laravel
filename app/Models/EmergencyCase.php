@@ -231,6 +231,11 @@ class EmergencyCase extends Model
         return $this->hasMany(ConsumableUsage::class);
     }
 
+    public function serviceRenderings()
+    {
+        return $this->hasMany(ServiceRendering::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->whereNotIn('emergency_status', [

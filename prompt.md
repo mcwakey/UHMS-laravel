@@ -1,703 +1,700 @@
-You are a senior Laravel + Inertia/Vue developer working on UHMS — Ultimate Hospital Management System.
+You are a senior Laravel + Inertia/Vue architect working on UHMS — Ultimate Hospital Management System.
 
-We need to build and seed a proper Complaint Catalogue and Patient Complaint recording system.
+We need to implement a Service Rendering / Service Fulfilment page for all visit services that are not category/type = CONSULTATION.
 
-Complaints are currently needed in consultation, emergency, admission review, medical patterns, consultation summary, visit preview, claims mirror, and patient history.
+Currently, consultation services are handled through consultation sessions, but other service types also need a dedicated page where staff can see pending services, work on them, and mark whether they have been rendered or not.
 
-The goal is to allow doctors and clinicians to select common complaints from a seeded catalogue, search complaints easily, add custom complaints when needed, and save complaints correctly under the patient’s medical record/session.
+This is important because a patient may be billed for services such as wound dressing, injection, nebulization, ECG, nursing care, emergency service, ward service, minor service, administrative service, or other non-consultation services, and the hospital must know whether the service was actually rendered.
 
-Do not break existing consultation, emergency, admission, medical records, HOPC, diagnosis, medical patterns, visit preview, or claims workflows.
+Do not create a parallel billing system.
 
----
+Do not create a parallel consultation system.
 
-# 1. Main Objectives
-
-Implement:
-
-1. Complaint Catalogue / Complaint Definitions.
-2. Seed common complaints.
-3. Complaint search/autocomplete.
-4. Patient complaint recording.
-5. Multiple complaints per medical record/session.
-6. Custom complaint entry when complaint is not in catalogue.
-7. Complaint duration/severity fields.
-8. Link complaint to HOPC where applicable.
-9. Complaint ownership/created_by tracking.
-10. Complaint display in Consultation Summary.
-11. Complaint display in Visit Preview.
-12. Complaint support in Emergency Session.
-13. Complaint support in Medical Patterns.
-14. Complaint support in Claims clinical mirror.
+Do not break existing investigation, pharmacy, procedure, theatre, emergency, admission, billing, visit, or invoice workflows.
 
 ---
 
-# 2. Complaint Catalogue
+# 1. Main Objective
 
-Create or update a reusable complaint catalogue table.
+Create a page/module where all non-consultation services selected for a visit can be displayed, tracked, worked on, and marked as rendered.
 
-Recommended table:
+The page should answer:
 
-complaint_catalogues
-
-Fields:
-
-id
-name
-category nullable
-body_system nullable
-description nullable
-keywords json nullable
-is_active boolean default true
-sort_order nullable
-created_at
-updated_at
-
-Alternative names allowed if project convention differs:
-
-complaint_definitions
-complaint_master
-complaint_templates
-
-Use one consistent name across the system.
+- Which non-consultation services are pending?
+- Which department is responsible?
+- Which patient/visit does it belong to?
+- Has the service been rendered?
+- Who rendered it?
+- When was it rendered?
+- Was there a note/result/proof?
+- Was it billed?
+- Was it paid?
+- Is it cancelled or not rendered?
 
 ---
 
-# 3. Complaint Categories
+# 2. Services Included
 
-Seed complaints under useful categories.
+This page should include services where category/type is NOT CONSULTATION.
 
-Recommended categories:
+Examples:
 
-General
-Respiratory
-Cardiovascular
-Gastrointestinal
-Neurological
-Genitourinary
-Musculoskeletal
-Dermatology
-ENT
-Eye
-Dental
-Obstetrics/Gynecology
-Pediatrics
-Psychiatric
-Emergency/Trauma
+- Nursing services
+- Wound dressing
+- Injection administration
+- Nebulization
+- ECG
+- Observation service
+- Emergency service
+- Ward service
+- Admission service
+- Minor procedure service if not handled by theatre workflow
+- Administrative service
+- Bedside care service
+- Other general hospital services
 
----
+Do not include:
 
-# 4. Patient Complaint Records
+- Consultation services handled by consultation sessions
+- Investigation services handled by investigation workflow
+- Pharmacy/drug dispensing handled by pharmacy workflow
+- Procedure/theatre services already handled by procedure/theatre workflow
 
-Create or update patient complaint records.
-
-Recommended table:
-
-patient_complaints
-
-Fields:
-
-id
-patient_id
-visit_id
-medical_record_id nullable
-consultation_route_id nullable
-clinical_session_id nullable
-emergency_case_id nullable
-admission_id nullable
-complaint_catalogue_id nullable
-complaint_text
-duration nullable
-duration_unit nullable
-severity nullable
-notes nullable
-source_pattern_id nullable
-created_by
-updated_by nullable
-created_at
-updated_at
-
-If the project already has a complaints table, inspect it first and extend it instead of creating a duplicate table.
+However, if a non-consultation service does not have a specialized workflow, it must appear on this Service Rendering page.
 
 ---
 
-# 5. Complaint Recording Rules
+# 3. Service Rendering Statuses
 
-Doctors/clinicians must be able to:
+Each service item should have a rendering status.
 
-- search seeded complaints
-- select one or more complaints
-- add custom complaint if not found
-- enter duration
-- choose duration unit
-- enter severity
-- add notes
-- save under the current medical record/session
-- edit own complaint if permitted
-- view complaints grouped by owner/user where already implemented
+Recommended statuses:
 
-Duration units:
+PENDING
+IN_PROGRESS
+RENDERED
+NOT_RENDERED
+CANCELLED
+ON_HOLD
 
-Minutes
-Hours
-Days
-Weeks
-Months
-Years
+Meaning:
 
-Severity values:
-
-Mild
-Moderate
-Severe
-Critical
+PENDING = service selected/billed but not yet worked on  
+IN_PROGRESS = staff started working on it  
+RENDERED = service has been completed  
+NOT_RENDERED = service could not be rendered, with reason  
+CANCELLED = service was cancelled  
+ON_HOLD = service temporarily paused  
 
 ---
 
-# 6. Consultation Page Integration
+# 4. Data Model
 
-On the Consultation page, Complaints should appear before History of Presenting Complaint.
+Inspect the current invoice_items / visit services / selected services implementation first.
 
-Required clinical order:
+Do not recreate visit_services if the project already moved to invoice_items.
 
-1. Vitals / Patient Summary
-2. Complaints
-3. History of Presenting Complaint
-4. Examination
-5. Diagnosis
-6. Investigations
-7. Treatments / Prescriptions
-8. Procedures
-9. Tasks / Follow-up / Instructions
-10. Notes / Summary
+Preferred approach:
 
-Complaint section should allow:
+Use invoice_items as the source of billable services.
 
-- search complaint catalogue
-- add selected complaint
-- add custom complaint
-- display recorded complaints
-- group by owner/user if ownership grouping exists
-- edit permitted complaints
-- show duration/severity/notes
-- show creator and timestamp
+For each invoice item linked to a service, track rendering status either directly on invoice_items or in a separate service_renderings table.
 
-Do not merge complaints with HOPC.
+Recommended table if missing:
 
----
-
-# 7. HOPC Link
-
-History of Presenting Complaint may optionally link to one or more complaints.
-
-Support:
-
-complaint_id nullable
-
-or if multiple complaints:
-
-hopc_complaint pivot table
-
-Use the simplest structure consistent with current implementation.
+service_renderings
+- id
+- visit_id
+- patient_id
+- invoice_item_id nullable
+- service_id
+- department_id nullable
+- emergency_case_id nullable
+- admission_id nullable
+- consultation_route_id nullable
+- rendered_by nullable
+- started_by nullable
+- started_at nullable
+- rendered_at nullable
+- status
+- notes nullable
+- result_summary nullable
+- reason_not_rendered nullable
+- created_by
+- updated_by nullable
+- created_at
+- updated_at
 
 Rules:
 
-- HOPC can describe one complaint or multiple complaints.
-- Do not force every HOPC to link to a complaint.
-- Do not force one HOPC per complaint.
-- User can write one general HOPC narrative covering multiple complaints.
+- One invoice item/service should not create duplicate active rendering records.
+- Service rendering must preserve original billing/invoice link.
+- Rendering a service must not duplicate billing.
+- Cancelling/not-rendering should not automatically delete invoice item.
+- Billing correction/cancellation should follow BillingService rules.
 
 ---
 
-# 8. Emergency Integration
+# 5. Automatic Creation of Service Rendering Records
 
-Emergency Session must support complaints.
-
-Emergency complaint workflow:
-
-- during emergency case creation, chief complaint may be captured
-- chief complaint should become a patient complaint record if appropriate
-- emergency clinical session should show complaints
-- emergency complaints should appear in Consultation page session view
-- emergency complaints should appear in Visit Preview
-
-Emergency complaint must link to:
-
-patient_id
-visit_id
-emergency_case_id
-consultation_route_id / emergency session id
-created_by
-
----
-
-# 9. Admission Integration
-
-Admission review should support complaints where clinically needed.
-
-If admission review uses the same consultation/session system, use the same complaint component.
-
-Do not create separate admission-only complaint storage unless already required.
-
----
-
-# 10. Medical Pattern Integration
-
-Medical Patterns must support complaints.
-
-Pattern item type:
-
-COMPLAINT
-
-When creating a medical pattern:
-
-- user can add complaint catalogue items
-- user can add custom complaint text
-- user can set default duration/severity only if useful
-
-When applying a pattern:
-
-- selected complaints are created under the current medical record/session
-- created_by is the current user
-- source_pattern_id is set
-- complaints appear in Consultation Summary and Visit Preview
-
-Do not attribute pattern-applied complaints to the original pattern creator unless they are the current user applying it.
-
----
-
-# 11. Claims Mirror Integration
-
-Claims preparation mirror should show complaints.
-
-Claims officer should be able to:
-
-- view clinical complaints
-- select/copy complaint text into claim-facing fields if needed
-- not edit original clinical complaints
-
-Do not allow claims officer to overwrite doctor-entered complaints.
-
----
-
-# 12. Visit Preview Integration
-
-Visit Preview must show complaints chronologically and under the correct session.
-
-Display:
-
-Complaint
-Duration
-Severity
-Notes
-Entered by
-Session/department
-Created at
-Source pattern if applicable
-
-Emergency complaints should appear under Emergency Session.
-
-OPD complaints should appear under OPD Consultation Session.
-
----
-
-# 13. Complaint Seeder
-
-Create seeder:
-
-ComplaintCatalogueSeeder
-
-Seed common complaints.
-
-Use idempotent seeding:
-
-- updateOrCreate by name/category
-- do not create duplicates
-- keep existing custom records
-- do not deactivate existing records unless explicitly needed
-
-Seed at least these complaints:
-
-General:
-Fever
-General weakness
-Body pain
-Fatigue
-Loss of appetite
-Weight loss
-Night sweats
-Malaise
-
-Respiratory:
-Cough
-Shortness of breath
-Chest tightness
-Wheezing
-Sore throat
-Runny nose
-Nasal congestion
-Coughing blood
-
-Cardiovascular:
-Chest pain
-Palpitations
-Leg swelling
-Fainting
-Dizziness
-High blood pressure complaint
-
-Gastrointestinal:
-Abdominal pain
-Vomiting
-Nausea
-Diarrhea
-Constipation
-Heartburn
-Blood in stool
-Loss of appetite
-Abdominal swelling
-
-Neurological:
-Headache
-Convulsion
-Loss of consciousness
-Confusion
-Weakness of limb
-Numbness
-Tremors
-Dizziness
-
-Genitourinary:
-Painful urination
-Frequent urination
-Blood in urine
-Flank pain
-Urinary retention
-Incontinence
-
-Musculoskeletal:
-Back pain
-Joint pain
-Neck pain
-Limb pain
-Swelling of joint
-Difficulty walking
-Trauma injury
-
-Dermatology:
-Skin rash
-Itching
-Skin wound
-Burn
-Swelling
-Ulcer
-Skin infection
-
-ENT:
-Ear pain
-Ear discharge
-Hearing loss
-Nose bleeding
-Sore throat
-Difficulty swallowing
-
-Eye:
-Eye pain
-Red eye
-Blurred vision
-Eye discharge
-Loss of vision
-Foreign body in eye
-
-Dental:
-Toothache
-Gum bleeding
-Facial swelling
-Mouth ulcer
-Dental trauma
-
-Obstetrics/Gynecology:
-Vaginal bleeding
-Lower abdominal pain in pregnancy
-Labour pains
-Reduced fetal movement
-Vaginal discharge
-Missed period
-Pregnancy-related complaint
-
-Pediatrics:
-Poor feeding
-Excessive crying
-Fever in child
-Diarrhea in child
-Vomiting in child
-Convulsion in child
-Difficulty breathing in child
-
-Psychiatric:
-Anxiety
-Insomnia
-Depressed mood
-Aggression
-Confusion
-Substance use concern
-
-Emergency/Trauma:
-Road traffic accident
-Fall injury
-Assault
-Burn injury
-Poisoning
-Snake bite
-Animal bite
-Severe bleeding
-Unconsciousness
-Seizure
-Breathing difficulty
-Severe pain
-
----
-
-# 14. Complaint Search API
-
-Create endpoint for complaint search/autocomplete.
-
-Example route:
-
-GET /admin/complaints/search?q=fever
-
-Return:
-
-id
-name
-category
-body_system
-description
-keywords
+When a non-consultation service is added to a visit invoice, the system should create a service rendering record automatically if the service requires rendering tracking.
 
 Rules:
 
-- only active complaints
-- search by name, category, keywords
-- limit results
-- fast response
-- usable in Consultation/Emergency/Admission pages
+If service.category/type = CONSULTATION:
+    create/route consultation session, not service rendering.
+
+If service.category/type = INVESTIGATION:
+    use investigation workflow.
+
+If service.category/type = PHARMACY/PRODUCT/DRUG:
+    use pharmacy workflow.
+
+If service.category/type = PROCEDURE/THEATRE:
+    use procedure/theatre workflow.
+
+Else:
+    create service_rendering record with status PENDING.
+
+Use service configuration if available:
+
+requires_rendering_tracking = true/false
+
+If missing, infer from category/type.
 
 ---
 
-# 15. Complaint Management UI
+# 6. Service Rendering Page
 
-Add optional admin page for complaint catalogue management.
+Create a page:
 
-Menu:
+Service Rendering / Service Fulfilment
 
-Settings or Clinical Setup
-    Complaints Catalogue
+Suggested menu:
 
-Page should allow authorized users to:
+Clinical Services
+    Service Rendering
 
-- view complaints
-- search/filter by category
-- create complaint
-- edit complaint
-- activate/deactivate complaint
-- manage keywords
+or:
 
-Permissions:
+Operations
+    Service Rendering
 
-complaints.catalogue.view
-complaints.catalogue.create
-complaints.catalogue.update
-complaints.catalogue.deactivate
+The page should show a table of pending and active non-consultation services.
 
-If time is limited, at minimum seed and search catalogue now, then add management UI later.
+Columns:
+
+- Patient
+- Visit No.
+- Service
+- Department
+- Source
+- Invoice No.
+- Billing Status
+- Payment Status
+- Rendering Status
+- Requested/Created At
+- Rendered By
+- Rendered At
+- Actions
+
+Filters:
+
+- date range
+- department
+- service
+- status
+- patient
+- visit number
+- billing status
+- payment status
+- source: OPD / Emergency / Admission
+- rendered by
 
 ---
 
-# 16. Permissions
+# 7. Actions
 
-Add or verify:
+Users should be able to:
 
-complaints.view
-complaints.create
-complaints.edit_own
-complaints.edit_any
-complaints.delete_own
-complaints.delete_any
-complaints.catalogue.view
-complaints.catalogue.create
-complaints.catalogue.update
-complaints.catalogue.deactivate
-
-Use existing consultation entry permissions if the system already uses generic permissions.
-
-Do not allow unauthorized users to modify other clinicians’ complaints.
+- View service details
+- Start service
+- Mark as rendered
+- Mark as not rendered
+- Put on hold
+- Cancel service if authorized
+- Add notes/result summary
+- View related invoice item
+- View visit preview
+- Open patient folder
 
 ---
 
-# 17. Backend Services
+# 8. Start Service
+
+When user clicks Start:
+
+- status becomes IN_PROGRESS
+- started_by = current user
+- started_at = now
+- log action
+- update UI immediately
+
+Do not create new billing item.
+
+---
+
+# 9. Mark as Rendered
+
+When user marks service as rendered:
+
+Required fields:
+
+- rendered_at
+- rendered_by current user
+- notes optional
+- result_summary optional depending service
+
+Actions:
+
+- status = RENDERED
+- rendered_at = now unless user enters allowed time
+- rendered_by = current user
+- log action
+- update visit pathway
+- update visit preview
+- notify relevant user if needed
+
+Do not duplicate invoice item.
+
+Do not change payment status.
+
+---
+
+# 10. Mark as Not Rendered
+
+When marking as not rendered:
+
+Require:
+
+- reason_not_rendered
+
+Actions:
+
+- status = NOT_RENDERED
+- reason_not_rendered saved
+- log action
+- update visit pathway
+- optionally notify billing/cashier if invoice correction may be needed
+
+Important:
+
+Not rendered does not automatically remove invoice item.
+
+If refund/cancellation is needed, user must use BillingService/billing correction workflow.
+
+---
+
+# 11. Billing Relationship
+
+Service Rendering and Billing must be connected but not mixed.
+
+Billing tells:
+
+- service was charged
+- patient payable
+- payment status
+
+Rendering tells:
+
+- service was actually done
+
+The page should display billing/payment status but rendering actions should not directly modify billing except through authorized workflows.
+
+If a service is not rendered but already billed, show warning:
+
+This service was billed but marked as not rendered. Billing review may be required.
+
+---
+
+# 12. Department Responsibility
+
+Each service should be linked to a department or department type.
+
+The rendering page should allow staff to see services assigned to their department.
+
+Examples:
+
+- Nursing department sees nursing care, injections, wound dressing
+- Emergency sees emergency services
+- Ward sees ward services
+- ECG/Cardiology sees ECG services
+- Physiotherapy sees physiotherapy services
+
+Users should only see/render services they are authorized for, unless they have admin permission.
+
+---
+
+# 13. Visit Pathway Integration
+
+Every service rendering action should create pathway events.
+
+Examples:
+
+SERVICE_RENDERING_CREATED
+SERVICE_RENDERING_STARTED
+SERVICE_RENDERED
+SERVICE_NOT_RENDERED
+SERVICE_RENDERING_CANCELLED
+
+Visit Preview should show:
+
+10:20 Wound dressing service started by Nurse Ama  
+10:35 Wound dressing rendered by Nurse Ama  
+Notes: Dressing changed, wound clean.
+
+---
+
+# 14. Visit Preview Integration
+
+Update Visit Preview to include service renderings.
+
+Show under chronological timeline and/or service section:
+
+- service name
+- department
+- status
+- rendered by
+- rendered at
+- notes/result summary
+- billing/payment status
+- reason if not rendered
+
+---
+
+# 15. Consultation Page Integration
+
+If the patient is in consultation and doctor sends the patient for a non-consultation service, the visit status should remain CONSULTING.
+
+The service rendering should appear as a pathway event and on the Service Rendering page.
+
+When the service is completed, doctor can see it from Visit Preview / session summary.
+
+Do not change visit.status to service department names.
+
+---
+
+# 16. Emergency / Admission Integration
+
+Emergency and Admission may generate non-consultation services.
+
+Examples:
+
+- emergency observation
+- emergency nursing care
+- ward nursing service
+- injection service
+- bedside service
+
+These should appear on the Service Rendering page if they do not have their own specialized workflow.
+
+They should also link to:
+
+- emergency_case_id where applicable
+- admission_id where applicable
+
+---
+
+# 17. Permissions
+
+Add or verify permissions:
+
+service_rendering.view
+service_rendering.view_all
+service_rendering.start
+service_rendering.mark_rendered
+service_rendering.mark_not_rendered
+service_rendering.cancel
+service_rendering.edit_notes
+service_rendering.reports
+
+Rules:
+
+- Department users can work on services assigned to their department.
+- Admin/Super Admin can view all.
+- Only authorized users can cancel.
+- Only authorized users can edit rendered records.
+- Completed rendered records should require correction permission if edited.
+
+Optional correction permission:
+
+service_rendering.correct_completed
+
+---
+
+# 18. UI Permission Rules
+
+Frontend must hide/show buttons based on permissions and service status.
+
+Examples:
+
+- Start button only if PENDING and user can start
+- Mark Rendered only if PENDING or IN_PROGRESS and user can mark_rendered
+- Mark Not Rendered only if PENDING or IN_PROGRESS and user can mark_not_rendered
+- Cancel only if user can cancel
+- Edit notes only if user can edit_notes
+- Correct completed only if user can correct_completed
+
+Backend must enforce the same permissions.
+
+---
+
+# 19. Notifications
+
+Send notifications where useful:
+
+- new service rendering assigned to department
+- service rendered
+- service marked not rendered
+- service overdue if expected time exists
+- billing review needed for billed but not rendered service
+
+Do not spam.
+
+Use existing NotificationService.
+
+---
+
+# 20. Logs / Audit
+
+Every action must be logged:
+
+- service rendering created
+- service started
+- service rendered
+- service not rendered
+- service cancelled
+- notes edited
+- correction made
+
+Logs should include:
+
+- user
+- patient
+- visit
+- service
+- old status
+- new status
+- reason if applicable
+- timestamp
+
+Use ActivityLogService.
+
+---
+
+# 21. Reports
+
+Prepare report foundation.
+
+Reports:
+
+- rendered services report
+- pending services report
+- not rendered services report
+- services by department
+- services by staff
+- billed but not rendered report
+- rendered but unpaid report
+
+Filters:
+
+- date range
+- department
+- service
+- staff
+- status
+- patient
+- visit
+- billing status
+
+---
+
+# 22. Backend Services
 
 Create or update:
 
-ComplaintCatalogueService
-PatientComplaintService
-ComplaintSearchService
-MedicalPatternService
-ConsultationSummaryService
+ServiceRenderingService
+ServiceRenderingQueryService
+VisitPathwayService
 VisitPreviewService
-ClaimPreparationMirrorService
+BillingService
+NotificationService
+ActivityLogService
 
-Do not put all logic directly in controllers.
+Do not put workflow logic directly in controllers.
 
 ---
 
-# 18. Controllers / Routes
+# 23. Routes / Controllers
 
 Create or update:
 
-ComplaintCatalogueController
-ComplaintSearchController
-PatientComplaintController
+ServiceRenderingController
+ServiceRenderingActionController
+ServiceRenderingReportController
 
 Suggested routes:
 
-GET /admin/complaints/catalogue
-POST /admin/complaints/catalogue
-PATCH /admin/complaints/catalogue/{complaint}
-GET /admin/complaints/search
-POST /admin/medical-records/{medicalRecord}/complaints
-PATCH /admin/patient-complaints/{complaint}
-DELETE /admin/patient-complaints/{complaint}
+GET /admin/service-renderings
+GET /admin/service-renderings/{serviceRendering}
+POST /admin/service-renderings/{serviceRendering}/start
+POST /admin/service-renderings/{serviceRendering}/mark-rendered
+POST /admin/service-renderings/{serviceRendering}/mark-not-rendered
+POST /admin/service-renderings/{serviceRendering}/cancel
+PATCH /admin/service-renderings/{serviceRendering}/notes
 
 Adapt to existing route conventions.
 
 ---
 
-# 19. Frontend Components
+# 24. Frontend Components
 
-Create reusable component:
+If using Inertia/Vue, create:
 
-ComplaintSelector.vue
+resources/js/Pages/ServiceRenderings/Index.vue
+resources/js/Pages/ServiceRenderings/Show.vue
 
-Features:
+Components:
 
-- search complaint catalogue
-- select complaint
-- add custom complaint
-- duration input
-- duration unit select
-- severity select
-- notes
-- add to list
-- validation errors
-- loading state
+ServiceRenderingTable
+ServiceRenderingFilters
+ServiceRenderingStatusBadge
+ServiceRenderingActionModal
+MarkRenderedModal
+MarkNotRenderedModal
+ServiceRenderingDetailPanel
 
-Use in:
+Use existing UI style.
 
-- Consultation Complaints section
-- Emergency clinical session
-- Admission review if needed
-- Medical pattern builder
+Modals must:
 
----
-
-# 20. Validation Rules
-
-Patient complaint save:
-
-- patient_id required
-- visit_id required
-- medical_record_id or consultation_route_id required where applicable
-- complaint_catalogue_id nullable exists
-- complaint_text required if no complaint_catalogue_id
-- duration nullable
-- duration_unit nullable valid value
-- severity nullable valid value
-- created_by current user
-
-Catalogue complaint:
-
-- name required
-- category nullable
-- body_system nullable
-- is_active boolean
-- name/category should be unique where reasonable
+- close only after successful save
+- show validation errors inside modal
+- not leave stuck backdrop
+- update table immediately
+- preserve filters/page state
 
 ---
 
-# 21. Data Integrity Rules
+# 25. Validation Rules
 
-- Do not duplicate patient complaint records on repeated save.
-- Do not delete complaints with clinical history unless soft delete is already used.
-- Preserve created_by.
-- Preserve source_pattern_id.
-- Do not overwrite complaints from other doctors unless authorized.
-- Do not merge complaints with HOPC.
-- Custom complaint should save complaint_text even if no catalogue item exists.
+Start service:
+
+- status must be PENDING
+- user must have permission
+- service must not be cancelled
+- service must not already be rendered
+
+Mark rendered:
+
+- status must be PENDING or IN_PROGRESS
+- rendered_at required
+- rendered_by current user
+- notes optional
+- user must have permission
+
+Mark not rendered:
+
+- status must be PENDING or IN_PROGRESS
+- reason_not_rendered required
+- user must have permission
+
+Cancel:
+
+- status must not be RENDERED unless correction permission
+- cancellation reason required
+- user must have permission
 
 ---
 
-# 22. Tests Required
+# 26. Data Integrity Rules
+
+- Do not create duplicate service rendering for same invoice item/service.
+- Do not delete service rendering records.
+- Do not duplicate invoice items.
+- Do not change payment status from rendering page.
+- Do not remove charges automatically when not rendered.
+- Do not bypass BillingService for financial corrections.
+- Do not allow unauthorized department users to render services outside their department.
+- Preserve rendered_by and rendered_at.
+- Completed records require correction permission for changes.
+
+---
+
+# 27. Tests Required
 
 Add or update tests.
 
-1. ComplaintCatalogueSeeder seeds complaints.
-2. Seeder is idempotent.
-3. Complaint search returns active complaints.
-4. Complaint search finds by name.
-5. Doctor can add complaint from catalogue.
-6. Doctor can add custom complaint.
-7. Complaint saves under visit/patient/medical record/session.
-8. Complaint stores created_by.
-9. Complaint can include duration and severity.
-10. Complaint appears before HOPC in consultation page data.
-11. Emergency chief complaint can become patient complaint.
-12. Complaint appears in Consultation Summary.
-13. Complaint appears in Visit Preview.
-14. Complaint appears in Claims Mirror.
-15. Pattern can store complaint item.
-16. Applying pattern creates complaint under current doctor.
-17. Unauthorized user cannot edit another doctor’s complaint.
-18. Catalogue management requires permission.
+1. Non-consultation service creates service rendering record.
+2. Consultation service does not create service rendering record.
+3. Investigation service uses investigation workflow, not generic service rendering.
+4. Procedure/theatre service uses procedure workflow, not generic rendering if specialized workflow exists.
+5. Pending service appears on Service Rendering page.
+6. Department user sees services for their department.
+7. Unauthorized user cannot start service.
+8. Authorized user can start service.
+9. Authorized user can mark service rendered.
+10. Mark rendered saves rendered_by and rendered_at.
+11. Authorized user can mark service not rendered with reason.
+12. Not rendered without reason fails.
+13. Rendering does not create duplicate invoice item.
+14. Rendering does not change payment status.
+15. Billed but not rendered warning appears.
+16. Visit pathway records service rendering events.
+17. Visit Preview shows rendered service.
+18. Completed rendered service cannot be edited without correction permission.
+19. Service rendering actions are logged.
+20. Notifications are sent where configured.
 
 ---
 
-# 23. Deliverables
+# 28. Deliverables
 
 Provide:
 
-1. Gap analysis of current complaint implementation.
-2. Complaint catalogue model/migration if needed.
-3. Patient complaint model/migration if needed.
-4. ComplaintCatalogueSeeder with common complaints.
-5. Complaint search endpoint.
-6. Complaint selector UI/component.
-7. Consultation complaints section update.
-8. Emergency complaint integration.
-9. Medical pattern complaint support.
-10. Consultation Summary update.
-11. Visit Preview update.
-12. Claims mirror update.
-13. Permissions/seeders.
+1. Gap analysis of current non-consultation service handling.
+2. Service rendering model/migration if needed.
+3. Automatic creation of rendering records for non-consultation services.
+4. Service Rendering page.
+5. Filters and status badges.
+6. Start/Render/Not Rendered/Cancel actions.
+7. Billing relationship display.
+8. Visit Pathway integration.
+9. Visit Preview integration.
+10. Emergency/Admission integration.
+11. Permissions/seeders/menu.
+12. Notifications/logs integration.
+13. Reports foundation.
 14. Tests or verification notes.
 15. Files modified.
 16. Remaining TODOs.
 
 ---
 
-# 24. Important Rules
+# 29. Important Rules
 
-Do not remove existing complaint data.
+Do not use visit.status to represent laboratory/pharmacy/billing/service departments.
 
-Do not create duplicate complaint systems if one already exists.
+Do not create a parallel billing system.
 
-Do not merge complaints into HOPC.
+Do not duplicate invoice items.
 
-Do not force doctors to only use seeded complaints.
+Do not mark service as rendered just because it was billed.
 
-Do not allow claims officers to edit original clinical complaints.
+Do not remove billing automatically just because service was not rendered.
 
-Do not hide emergency complaints from consultation/session history.
+Do not mix specialized workflows into generic service rendering.
 
-Do not break consultation, emergency, admission, medical patterns, visit preview, or claims workflows.
+Do not break consultation, investigation, pharmacy, procedure/theatre, emergency, admission, billing, visit preview, or patient pathway workflows.
 
-Now inspect the current UHMS implementation and build/seed the Complaints Catalogue and patient complaint recording workflow as described.
+Now inspect the current UHMS implementation and build a Service Rendering / Service Fulfilment page for all non-consultation services that do not already have a specialized workflow.

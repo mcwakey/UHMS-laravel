@@ -136,6 +136,17 @@ class RoleSeeder extends Seeder
             'sponsors.manage',
             'services.manage',
 
+            // Service rendering / fulfilment
+            'service_rendering.view',
+            'service_rendering.view_all',
+            'service_rendering.start',
+            'service_rendering.mark_rendered',
+            'service_rendering.mark_not_rendered',
+            'service_rendering.cancel',
+            'service_rendering.edit_notes',
+            'service_rendering.reports',
+            'service_rendering.correct_completed',
+
             // ── Users & Roles ─────────────────────────────────────────────
             'users.view',
             'users.create',
@@ -464,6 +475,9 @@ class RoleSeeder extends Seeder
             'procedure.record_anaesthesia', 'procedure.record_surgery',
             'procedure_catalogue.view',
             'consumable_usage.record', 'consumable.use',
+            'service_rendering.view', 'service_rendering.start',
+            'service_rendering.mark_rendered', 'service_rendering.mark_not_rendered',
+            'service_rendering.edit_notes', 'service_rendering.reports',
             'investigation.catalogue.view',
             'icd.view',
             'product.view',
@@ -532,6 +546,9 @@ class RoleSeeder extends Seeder
             'procedure.view', 'procedure.record_preop', 'procedure.record_postop',
             'procedure_catalogue.view',
             'consumable_usage.record', 'consumable.use',
+            'service_rendering.view', 'service_rendering.start',
+            'service_rendering.mark_rendered', 'service_rendering.mark_not_rendered',
+            'service_rendering.edit_notes',
             'product.view', 'stock.view_balance',
             // Requisitions: nurses can request stock and acknowledge receipt
             'store.requisition.view', 'store.requisition.create', 'store.requisition.acknowledge',
@@ -565,6 +582,9 @@ class RoleSeeder extends Seeder
             'procedure.view', 'procedure.record_preop', 'procedure.record_postop',
             'procedure_catalogue.view',
             'consumable_usage.record', 'consumable.use', 'ward.consumable.use',
+            'service_rendering.view', 'service_rendering.start',
+            'service_rendering.mark_rendered', 'service_rendering.mark_not_rendered',
+            'service_rendering.edit_notes', 'service_rendering.reports',
             'product.view', 'stock.view_balance',
             // Requisitions: ward nurses can request stock and acknowledge receipt
             'store.requisition.view', 'store.requisition.create', 'store.requisition.acknowledge',
@@ -598,6 +618,9 @@ class RoleSeeder extends Seeder
             'emergency.triage.perform', 'emergency.bay.assign', 'emergency.notes.create',
             'emergency.vitals.record', 'emergency.medication.administer', 'emergency.consumables.use',
             'emergency.billing.view', 'emergency.tasks.manage', 'emergency.session.manage', 'emergency.reports.view',
+            'service_rendering.view', 'service_rendering.start',
+            'service_rendering.mark_rendered', 'service_rendering.mark_not_rendered',
+            'service_rendering.edit_notes',
             'notifications.view',
             'product.view', 'stock.view_balance',
         ]);

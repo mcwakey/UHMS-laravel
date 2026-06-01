@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\InvoiceStatus;
+use App\Enums\LogModule;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
@@ -14,7 +15,6 @@ use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Enums\LogModule;
 
 class BillingService
 {
@@ -177,6 +177,11 @@ class BillingService
 
             // Update invoice header totals + status.
             $this->invoiceService->recalculateTotals($invoice->fresh('items'));
+
+            app(ServiceRenderingService::class)->createForInvoiceItem(
+                $item->fresh(['invoice', 'visit.emergencyCase', 'visit.admission', 'visit.activeConsultationRoute', 'patient', 'department', 'serviceCatalog.department']),
+                Auth::user()
+            );
 
             return $item->fresh();
         });
@@ -463,7 +468,7 @@ class BillingService
                 $discount = (float) ($item['discount_amount'] ?? 0);
                 $payable = max(0.0, round($lineTotal - $discount, 2));
 
-                InvoiceItem::create([
+                $invoiceItem = InvoiceItem::create([
                     'invoice_id' => $invoice->id,
                     'visit_id' => $data['visit_id'],
                     'patient_id' => $data['patient_id'],
@@ -491,6 +496,11 @@ class BillingService
                     'pricing_source' => $item['pricing_source'] ?? null,
                     'created_by' => $actorId,
                 ]);
+
+                app(ServiceRenderingService::class)->createForInvoiceItem(
+                    $invoiceItem->fresh(['invoice', 'visit.emergencyCase', 'visit.admission', 'visit.activeConsultationRoute', 'patient', 'department', 'serviceCatalog.department']),
+                    Auth::user()
+                );
 
                 // Record usage for items that were evaluated at invoice time
                 // (lab / pharmacy — visit_services were already recorded in attachServices)

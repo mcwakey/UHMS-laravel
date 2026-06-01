@@ -69,6 +69,9 @@ use App\Http\Controllers\Admin\QueueController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\ServiceCatalogController;
+use App\Http\Controllers\Admin\ServiceRenderingActionController;
+use App\Http\Controllers\Admin\ServiceRenderingController;
+use App\Http\Controllers\Admin\ServiceRenderingReportController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SpecialtyController;
 use App\Http\Controllers\Admin\StockController;
@@ -90,7 +93,8 @@ use App\Http\Controllers\Billing\InvoiceController;
 use App\Http\Controllers\Billing\PaymentController;
 use App\Http\Controllers\Billing\CreditNoteController;
 use App\Http\Controllers\Billing\SponsorController;
-use App\Http\Controllers\Billing\BillingReportController;use App\Http\Controllers\Doctor\ConsultationController;
+use App\Http\Controllers\Billing\BillingReportController;
+use App\Http\Controllers\Doctor\ConsultationController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use App\Http\Controllers\Doctor\MedicalPatternController;
 use App\Http\Controllers\Doctor\PrescriptionController;
@@ -284,6 +288,20 @@ Route::middleware('auth')->group(function () {
             Route::patch('visits/{visit}/transition', [VisitController::class, 'transition'])->name('visits.transition')->middleware('can:visits.transition');
             Route::patch('visits/{visit}/send-to-department', [VisitController::class, 'sendToDepartment'])->name('visits.send-to-department')->middleware('can:visits.transition');
         });
+
+        Route::prefix('service-renderings')
+            ->name('service-renderings.')
+            ->middleware('can:service_rendering.view')
+            ->group(function () {
+                Route::get('/', [ServiceRenderingController::class, 'index'])->name('index');
+                Route::get('/reports', [ServiceRenderingReportController::class, 'index'])->name('reports')->middleware('can:service_rendering.reports');
+                Route::get('/{serviceRendering}', [ServiceRenderingController::class, 'show'])->name('show');
+                Route::post('/{serviceRendering}/start', [ServiceRenderingActionController::class, 'start'])->name('start')->middleware('can:service_rendering.start');
+                Route::post('/{serviceRendering}/mark-rendered', [ServiceRenderingActionController::class, 'markRendered'])->name('mark-rendered')->middleware('can:service_rendering.mark_rendered');
+                Route::post('/{serviceRendering}/mark-not-rendered', [ServiceRenderingActionController::class, 'markNotRendered'])->name('mark-not-rendered')->middleware('can:service_rendering.mark_not_rendered');
+                Route::post('/{serviceRendering}/cancel', [ServiceRenderingActionController::class, 'cancel'])->name('cancel')->middleware('can:service_rendering.cancel');
+                Route::patch('/{serviceRendering}/notes', [ServiceRenderingActionController::class, 'updateNotes'])->name('notes')->middleware('can:service_rendering.edit_notes');
+            });
 
         // Wards & Beds
         Route::middleware('can:ward.view')->group(function () {

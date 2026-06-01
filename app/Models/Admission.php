@@ -118,6 +118,11 @@ class Admission extends Model
         return $this->hasMany(ClinicalTask::class);
     }
 
+    public function serviceRenderings()
+    {
+        return $this->hasMany(ServiceRendering::class);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Scopes

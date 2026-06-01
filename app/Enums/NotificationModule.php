@@ -7,6 +7,7 @@ enum NotificationModule: string
     case EMERGENCY = 'EMERGENCY';
     case ADMISSION = 'ADMISSION';
     case CONSULTATION = 'CONSULTATION';
+    case SERVICE_RENDERING = 'SERVICE_RENDERING';
     case MAR = 'MAR';
     case CLINICAL_TASKS = 'CLINICAL_TASKS';
     case INVESTIGATION = 'INVESTIGATION';
@@ -30,6 +31,7 @@ enum NotificationModule: string
             self::EMERGENCY => 'ti-emergency-bed',
             self::ADMISSION => 'ti-bed',
             self::CONSULTATION => 'ti-stethoscope',
+            self::SERVICE_RENDERING => 'ti-clipboard-check',
             self::MAR => 'ti-pill',
             self::CLINICAL_TASKS => 'ti-checklist',
             self::INVESTIGATION => 'ti-test-pipe',

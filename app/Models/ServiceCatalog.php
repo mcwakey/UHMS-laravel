@@ -23,6 +23,7 @@ class ServiceCatalog extends Model
         'price',
         'is_active',
         'is_billable',
+        'requires_rendering_tracking',
         'department_id',
         'department_type',
     ];
@@ -33,6 +34,7 @@ class ServiceCatalog extends Model
             'price' => 'decimal:2',
             'is_active' => 'boolean',
             'is_billable' => 'boolean',
+            'requires_rendering_tracking' => 'boolean',
             'department_type' => DepartmentType::class,
         ];
     }
@@ -40,7 +42,7 @@ class ServiceCatalog extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['name', 'code', 'category', 'price', 'is_active', 'is_billable', 'department_id'])
+            ->logOnly(['name', 'code', 'category', 'price', 'is_active', 'is_billable', 'requires_rendering_tracking', 'department_id'])
             ->logOnlyDirty()
             ->useLogName('service_catalog')
             ->dontSubmitEmptyLogs();
@@ -90,6 +92,11 @@ class ServiceCatalog extends Model
     public function consumables()
     {
         return $this->hasMany(ServiceConsumable::class, 'service_id');
+    }
+
+    public function serviceRenderings()
+    {
+        return $this->hasMany(ServiceRendering::class, 'service_id');
     }
 
     /*

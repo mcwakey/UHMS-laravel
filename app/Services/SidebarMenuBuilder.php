@@ -181,6 +181,13 @@ class SidebarMenuBuilder
                         'permission' => 'consultations.view',
                         'module' => 'consultation',
                     ],
+                    [
+                        'label' => 'Service Rendering',
+                        'icon' => 'ti ti-clipboard-check',
+                        'route' => 'admin.service-renderings.index',
+                        'active_patterns' => ['admin.service-renderings.*'],
+                        'permission' => 'service_rendering.view',
+                    ],
                     // [
                     //     'label' => 'Procedures',
                     //     'icon' => 'ti ti-surgery',
