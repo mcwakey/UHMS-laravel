@@ -155,7 +155,7 @@ return new class extends Migration
             $table->index(['medication_order_id', 'status']);
             $table->index(['administered_by', 'administered_at']);
             $table->index(['admission_id', 'administered_at']);
-            $table->index(['emergency_case_id', 'administered_at']);
+            $table->index(['emergency_case_id', 'administered_at'], 'ma_emergency_administered_at_idx');
         });
 
         if (! Schema::hasTable('medication_administration_logs')) Schema::create('medication_administration_logs', function (Blueprint $table) {
