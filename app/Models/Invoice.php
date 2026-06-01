@@ -28,10 +28,12 @@ class Invoice extends Model
         'invoice_number',
         'visit_id',
         'patient_id',
+        'sponsor_id',
         'billing_type',
         'subtotal',
         'tax_amount',
         'discount_amount',
+        'adjustment_amount',
         'nhis_amount',
         'total_amount',
         'amount_paid',
@@ -50,6 +52,7 @@ class Invoice extends Model
             'subtotal' => 'decimal:2',
             'tax_amount' => 'decimal:2',
             'discount_amount' => 'decimal:2',
+            'adjustment_amount' => 'decimal:2',
             'nhis_amount' => 'decimal:2',
             'total_amount' => 'decimal:2',
             'amount_paid' => 'decimal:2',
@@ -74,6 +77,11 @@ class Invoice extends Model
         return $this->belongsTo(Patient::class);
     }
 
+    public function sponsor()
+    {
+        return $this->belongsTo(Sponsor::class);
+    }
+
     public function items()
     {
         return $this->hasMany(InvoiceItem::class);
@@ -87,6 +95,11 @@ class Invoice extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function creditNotes()
+    {
+        return $this->hasMany(CreditNote::class);
     }
 
     public function createdBy()

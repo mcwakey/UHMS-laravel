@@ -97,7 +97,9 @@ class InvoiceService
         $insuranceCovered = (float) $invoice->items->sum('insurance_covered');
         $patientTotal = (float) $invoice->items->sum('patient_payable');
         $paidAmount = (float) $invoice->items->sum('paid_amount');
-        $balance = max(0.0, (float) $invoice->items->sum('balance'));
+        // Non-cash adjustments (credit notes / write-offs) reduce the balance owed.
+        $adjustment = (float) $invoice->adjustment_amount;
+        $balance = max(0.0, round((float) $invoice->items->sum('balance') - $adjustment, 2));
 
         $invoice->forceFill([
             'subtotal' => round($subtotal, 2),

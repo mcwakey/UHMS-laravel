@@ -43,6 +43,23 @@
         <a data-no-inertia href="{{ route('admin.billing.invoices.print', $invoice) }}" target="_blank" class="btn btn-dark btn-md">
             <i class="ti ti-printer me-1"></i>Print
         </a>
+        <a data-no-inertia href="{{ route('admin.billing.invoices.pdf', $invoice) }}" class="btn btn-outline-danger btn-md">
+            <i class="ti ti-file-type-pdf me-1"></i>Download PDF
+        </a>
+        @can('invoices.edit')
+        @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::CANCELLED, \App\Enums\InvoiceStatus::REFUNDED, \App\Enums\InvoiceStatus::PAID], true))
+        <a href="{{ route('admin.billing.invoices.edit', $invoice) }}" class="btn btn-outline-secondary btn-md">
+            <i class="ti ti-edit me-1"></i>Edit
+        </a>
+        @endif
+        @endcan
+        @can('credit_notes.create')
+        @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::CANCELLED, \App\Enums\InvoiceStatus::REFUNDED], true) && $invoice->balance > 0)
+        <a href="{{ route('admin.billing.credit-notes.create', ['invoice_id' => $invoice->id]) }}" class="btn btn-outline-info btn-md">
+            <i class="ti ti-receipt-refund me-1"></i>Issue Credit Note
+        </a>
+        @endif
+        @endcan
     </div>
 </div>
 

@@ -10,6 +10,7 @@ use App\Models\Invoice;
 use App\Models\Payment;
 use App\Services\AccountingService;
 use App\Services\BillingService;
+use App\Services\RefundService;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
@@ -17,6 +18,7 @@ class PaymentController extends Controller
     public function __construct(
         protected BillingService $billingService,
         protected AccountingService $accountingService,
+        protected RefundService $refundService,
     ) {}
 
     /**
@@ -201,5 +203,41 @@ class PaymentController extends Controller
         $payment->load(['invoice.items', 'patient', 'receivedBy']);
 
         return view('billing.payments.receipt', compact('payment'));
+    }
+
+    /**
+     * Download payment receipt as a PDF.
+     */
+    public function receiptPdf(Payment $payment)
+    {
+        $payment->load(['invoice.items', 'patient', 'receivedBy']);
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('billing.payments.receipt-pdf', compact('payment'))
+            ->setPaper('a5');
+
+        return $pdf->download("receipt-{$payment->payment_number}.pdf");
+    }
+
+    /**
+     * Reverse (void) a recorded payment, restoring the invoice balance.
+     */
+    public function reverse(Request $request, Payment $payment)
+    {
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        try {
+            $reversal = $this->refundService->reversePayment($payment, $data['reason']);
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return back()->with('error', $e->getMessage());
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with(
+            'success',
+            "Payment {$payment->payment_number} reversed (reversal {$reversal->payment_number})."
+        );
     }
 }

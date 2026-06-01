@@ -85,7 +85,9 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Billing\InvoiceController;
 use App\Http\Controllers\Billing\PaymentController;
-use App\Http\Controllers\Doctor\ConsultationController;
+use App\Http\Controllers\Billing\CreditNoteController;
+use App\Http\Controllers\Billing\SponsorController;
+use App\Http\Controllers\Billing\BillingReportController;use App\Http\Controllers\Doctor\ConsultationController;
 use App\Http\Controllers\Doctor\DashboardController as DoctorDashboardController;
 use App\Http\Controllers\Doctor\MedicalPatternController;
 use App\Http\Controllers\Doctor\PrescriptionController;
@@ -791,14 +793,21 @@ Route::middleware('auth')->group(function () {
 
         // Billing
         Route::prefix('billing')->name('billing.')->middleware('module:billing')->group(function () {
+            // Billing dashboard
+            Route::get('dashboard', [BillingReportController::class, 'dashboard'])
+                ->name('dashboard')->middleware('can:invoices.view');
+
             // Invoices
             Route::middleware('can:invoices.view')->group(function () {
                 Route::get('invoices', [InvoiceController::class, 'index'])->name('invoices.index');
                 Route::get('invoices/create', [InvoiceController::class, 'create'])->name('invoices.create')->middleware('can:invoices.create');
                 Route::post('invoices', [InvoiceController::class, 'store'])->name('invoices.store')->middleware('can:invoices.create');
                 Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
+                Route::get('invoices/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoices.edit')->middleware('can:invoices.edit');
+                Route::put('invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update')->middleware('can:invoices.edit');
                 Route::patch('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel')->middleware('can:invoices.edit');
                 Route::get('invoices/{invoice}/print', [InvoiceController::class, 'print'])->name('invoices.print');
+                Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoices.pdf');
                 Route::post('invoices/{invoice}/items/{item}/discount', [InvoiceController::class, 'applyItemDiscount'])
                     ->name('invoices.items.discount')
                     ->middleware('can:invoices.edit');
@@ -810,6 +819,37 @@ Route::middleware('auth')->group(function () {
                 Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
                 Route::post('payments/{invoice}', [PaymentController::class, 'store'])->name('payments.store')->middleware('can:payments.create');
                 Route::get('payments/{payment}/receipt', [PaymentController::class, 'receipt'])->name('payments.receipt');
+                Route::get('payments/{payment}/receipt-pdf', [PaymentController::class, 'receiptPdf'])->name('payments.receipt-pdf');
+                Route::post('payments/{payment}/reverse', [PaymentController::class, 'reverse'])
+                    ->name('payments.reverse')->middleware('can:payments.refund');
+            });
+
+            // Credit notes & write-offs
+            Route::middleware('can:credit_notes.view')->prefix('credit-notes')->name('credit-notes.')->group(function () {
+                Route::get('/', [CreditNoteController::class, 'index'])->name('index');
+                Route::get('create', [CreditNoteController::class, 'create'])->name('create')->middleware('can:credit_notes.create');
+                Route::get('available', [CreditNoteController::class, 'available'])->name('available');
+                Route::post('/', [CreditNoteController::class, 'store'])->name('store')->middleware('can:credit_notes.create');
+                Route::patch('{creditNote}/cancel', [CreditNoteController::class, 'cancel'])->name('cancel')->middleware('can:credit_notes.create');
+            });
+
+            // Corporate sponsors
+            Route::middleware('can:sponsors.manage')->prefix('sponsors')->name('sponsors.')->group(function () {
+                Route::get('/', [SponsorController::class, 'index'])->name('index');
+                Route::post('/', [SponsorController::class, 'store'])->name('store');
+                Route::put('{sponsor}', [SponsorController::class, 'update'])->name('update');
+                Route::patch('{sponsor}/toggle', [SponsorController::class, 'toggle'])->name('toggle');
+            });
+
+            // Billing reports (AR aging & statements)
+            Route::middleware('can:invoices.view')->prefix('reports')->name('reports.')->group(function () {
+                Route::get('aging', [BillingReportController::class, 'aging'])->name('aging');
+                Route::get('aging/pdf', [BillingReportController::class, 'agingPdf'])->name('aging.pdf');
+            });
+            Route::middleware('can:invoices.view')->prefix('statements')->name('statements.')->group(function () {
+                Route::get('/', [BillingReportController::class, 'statements'])->name('index');
+                Route::get('{patient}', [BillingReportController::class, 'statementShow'])->name('show');
+                Route::get('{patient}/pdf', [BillingReportController::class, 'statementPdf'])->name('pdf');
             });
         });
 

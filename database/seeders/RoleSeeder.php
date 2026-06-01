@@ -119,6 +119,11 @@ class RoleSeeder extends Seeder
             'payments.view',
             'payments.create',
             'payments.void',
+            'payments.refund',
+            'credit_notes.view',
+            'credit_notes.create',
+            'credit_notes.write_off',
+            'sponsors.manage',
             'services.manage',
 
             // ── Users & Roles ─────────────────────────────────────────────
@@ -743,7 +748,9 @@ class RoleSeeder extends Seeder
             'patients.view',
             'visits.view',
             'invoices.view', 'invoices.create', 'invoices.edit', 'invoices.void',
-            'payments.view', 'payments.create', 'payments.void',
+            'payments.view', 'payments.create', 'payments.void', 'payments.refund',
+            'credit_notes.view', 'credit_notes.create', 'credit_notes.write_off',
+            'sponsors.manage',
             'services.manage',
             'reports.view', 'reports.generate',
             'claims.view',

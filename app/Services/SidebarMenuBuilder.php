@@ -791,13 +791,14 @@ class SidebarMenuBuilder
             [
                 'title' => 'Accounts & Finance',
                 'items' => [
-                    // [
-                    //     'label' => 'Cashier Handover',
-                    //     'icon' => 'ti ti-cash',
-                    //     'route' => 'admin.accounts.handover.index',
-                    //     'active_patterns' => ['admin.accounts.handover.*'],
-                    //     'permission' => 'accounts.cashier',
-                    // ],
+                    [
+                        'label' => 'Billing Dashboard',
+                        'icon' => 'ti ti-layout-dashboard',
+                        'route' => 'admin.billing.dashboard',
+                        'active_patterns' => ['admin.billing.dashboard'],
+                        'permission' => 'invoices.view',
+                        'module' => 'billing',
+                    ],
                     [
                         'label' => 'Receive Payments',
                         'icon' => 'ti ti-cash',
@@ -834,6 +835,38 @@ class SidebarMenuBuilder
                         'route' => 'admin.billing.payments.index',
                         'active_patterns' => ['admin.billing.payments.index', 'admin.billing.payments.receipt'],
                         'permission' => 'payments.view',
+                        'module' => 'billing',
+                    ],
+                    [
+                        'label' => 'Credit Notes',
+                        'icon' => 'ti ti-receipt-refund',
+                        'route' => 'admin.billing.credit-notes.index',
+                        'active_patterns' => ['admin.billing.credit-notes.*'],
+                        'permission' => 'credit_notes.view',
+                        'module' => 'billing',
+                    ],
+                    [
+                        'label' => 'Corporate Sponsors',
+                        'icon' => 'ti ti-building-bank',
+                        'route' => 'admin.billing.sponsors.index',
+                        'active_patterns' => ['admin.billing.sponsors.*'],
+                        'permission' => 'sponsors.manage',
+                        'module' => 'billing',
+                    ],
+                    [
+                        'label' => 'AR Aging',
+                        'icon' => 'ti ti-clock-dollar',
+                        'route' => 'admin.billing.reports.aging',
+                        'active_patterns' => ['admin.billing.reports.aging'],
+                        'permission' => 'invoices.view',
+                        'module' => 'billing',
+                    ],
+                    [
+                        'label' => 'Patient Statements',
+                        'icon' => 'ti ti-file-text',
+                        'route' => 'admin.billing.statements.index',
+                        'active_patterns' => ['admin.billing.statements.*'],
+                        'permission' => 'invoices.view',
                         'module' => 'billing',
                     ],
                     [

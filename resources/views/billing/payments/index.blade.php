@@ -115,12 +115,20 @@
                         <th class="text-end">Amount</th>
                         <th>Received By</th>
                         <th>Date</th>
+                        <th class="text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($payments as $payment)
                     <tr>
-                        <td class="fw-medium">{{ $payment->payment_number }}</td>
+                        <td class="fw-medium">
+                            {{ $payment->payment_number }}
+                            @if($payment->is_reversal)
+                                <span class="badge bg-danger ms-1">Reversal</span>
+                            @elseif($payment->status === \App\Enums\PaymentStatus::REVERSED)
+                                <span class="badge bg-secondary ms-1">Reversed</span>
+                            @endif
+                        </td>
                         <td>
                             <div class="fw-medium">{{ $payment->patient->full_name }}</div>
                             <small class="text-muted">{{ $payment->patient->patient_number }}</small>
@@ -134,13 +142,45 @@
                             <span class="badge bg-soft-primary">{{ $payment->payment_method->label() }}</span>
                         </td>
                         <td>{{ $payment->reference_number ?? '—' }}</td>
-                        <td class="text-end fw-bold text-success">&#8373;{{ number_format($payment->amount, 2) }}</td>
+                        <td class="text-end fw-bold {{ $payment->is_reversal ? 'text-danger' : 'text-success' }}">&#8373;{{ number_format($payment->amount, 2) }}</td>
                         <td>{{ $payment->receivedBy->name ?? '—' }}</td>
                         <td>{{ $payment->paid_at->format('d M Y H:i') }}</td>
+                        <td class="text-center">
+                            <div class="dropdown">
+                                <button type="button" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
+                                    <i class="ti ti-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.billing.payments.receipt', $payment) }}" target="_blank">
+                                            <i class="ti ti-eye me-1"></i>View Receipt
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('admin.billing.payments.receipt-pdf', $payment) }}">
+                                            <i class="ti ti-file-type-pdf me-1"></i>Download PDF
+                                        </a>
+                                    </li>
+                                    @can('payments.refund')
+                                    @if($payment->can_reverse)
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <button type="button" class="dropdown-item text-danger"
+                                                data-bs-toggle="modal" data-bs-target="#reversePaymentModal"
+                                                data-payment-url="{{ route('admin.billing.payments.reverse', $payment) }}"
+                                                data-payment-number="{{ $payment->payment_number }}">
+                                            <i class="ti ti-arrow-back-up me-1"></i>Reverse Payment
+                                        </button>
+                                    </li>
+                                    @endif
+                                    @endcan
+                                </ul>
+                            </div>
+                        </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center py-4">
+                        <td colspan="9" class="text-center py-4">
                             <div class="text-muted">
                                 <i class="ti ti-cash fs-1 d-block mb-2"></i>
                                 No payments found.
@@ -158,4 +198,53 @@
     </div>
     @endif
 </div>
+
+@can('payments.refund')
+<!-- Reverse Payment Modal -->
+<div class="modal fade" id="reversePaymentModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" id="reversePaymentForm">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reverse Payment <span id="reversePaymentNumber"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">
+                        This will create an offsetting reversal entry and restore the invoice balance.
+                        The original payment is retained for audit. This action cannot be undone.
+                    </p>
+                    <label class="form-label small">Reason <span class="text-danger">*</span></label>
+                    <textarea name="reason" class="form-control" rows="3" required maxlength="500"
+                              placeholder="Reason for reversal"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="ti ti-arrow-back-up me-1"></i>Reverse Payment
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@endcan
 @endsection
+
+@can('payments.refund')
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal = document.getElementById('reversePaymentModal');
+        if (!modal) return;
+        modal.addEventListener('show.bs.modal', function (event) {
+            const trigger = event.relatedTarget;
+            if (!trigger) return;
+            document.getElementById('reversePaymentForm').setAttribute('action', trigger.getAttribute('data-payment-url'));
+            document.getElementById('reversePaymentNumber').textContent = trigger.getAttribute('data-payment-number') || '';
+        });
+    });
+</script>
+@endpush
+@endcan
