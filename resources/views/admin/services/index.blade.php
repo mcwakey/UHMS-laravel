@@ -222,6 +222,15 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="mb-3">
+                                        <label class="form-label fw-medium">Service Rendering Tracking</label>
+                                        <select name="requires_rendering_tracking" class="form-select">
+                                            <option value="" {{ $service->requires_rendering_tracking === null ? 'selected' : '' }}>Auto (use department/category rules)</option>
+                                            <option value="1" {{ $service->requires_rendering_tracking === true ? 'selected' : '' }}>Always track (force on)</option>
+                                            <option value="0" {{ $service->requires_rendering_tracking === false ? 'selected' : '' }}>Never track (force off)</option>
+                                        </select>
+                                        <small class="text-muted">Override the default tracking logic for this service.</small>
+                                    </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
                                         <button type="submit" class="btn btn-primary">Update Service</button>
@@ -401,6 +410,15 @@
                             <small class="text-muted">Fallback when no insurance price configured</small>
                         </div>
                     </div>
+                </div>
+                <div class="mb-3 px-3">
+                    <label class="form-label fw-medium">Service Rendering Tracking</label>
+                    <select name="requires_rendering_tracking" class="form-select">
+                        <option value="">Auto (use department/category rules)</option>
+                        <option value="1">Always track (force on)</option>
+                        <option value="0">Never track (force off)</option>
+                    </select>
+                    <small class="text-muted">Override the default tracking logic for this service.</small>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>

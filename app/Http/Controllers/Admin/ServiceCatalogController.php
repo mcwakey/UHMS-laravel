@@ -60,6 +60,7 @@ class ServiceCatalogController extends Controller
             'price' => $request->price,
             'department_id' => $request->department_id,
             'department_type' => $request->department_type,
+            'requires_rendering_tracking' => $request->input('requires_rendering_tracking') === '' ? null : $request->boolean('requires_rendering_tracking'),
             'is_active' => true,
         ]);
 
@@ -82,6 +83,7 @@ class ServiceCatalogController extends Controller
             'price' => $request->price,
             'department_id' => $request->department_id,
             'department_type' => $request->department_type,
+            'requires_rendering_tracking' => $request->input('requires_rendering_tracking') === '' ? null : $request->boolean('requires_rendering_tracking'),
         ]);
 
         $service->specialties()->sync($request->specialties ?? []);

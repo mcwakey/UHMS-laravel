@@ -1,0 +1,2 @@
+﻿Updated 1 service(s) to requires_rendering_tracking=true
+Medical Certificate: id=7, dept_type=administrative, requires_rendering_tracking=true

@@ -1,0 +1,31 @@
+﻿
+[excluded_category:consultation] (30)
+  - General Consultation
+  - Eye Consultation
+  - Dental Consultation
+
+[source_type_needle:lab] (1)
+  - Malaria RDT ΓÇö LAB-20260518-0001
+
+[excluded_category:lab] (7)
+  - Blood Group & Cross Match
+  - Full Blood Count (FBC)
+  - HIV Screening
+  - Liver Function Test
+
+[excluded_category:procedure] (7)
+  - Tooth Extraction
+  - Suturing
+  - Foreign Body Removal (Eye)
+  - Dental Filling
+  - Dental Scaling & Polish
+  - Eye Drop Administration
+
+[source_type_needle:consultation] (1)
+  - General Consultation
+
+[source_type_needle:procedure] (1)
+  - Procedure: Caesarean Section (C/S)
+
+[excluded_dept_type:administrative] (2)
+  - Medical Certificate

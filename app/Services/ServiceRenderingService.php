@@ -84,6 +84,16 @@ class ServiceRenderingService
             return false;
         }
 
+        // Explicit flag takes priority over all heuristics.
+        if (array_key_exists('requires_rendering_tracking', $service->getAttributes())) {
+            if ($service->requires_rendering_tracking === true) {
+                return true;
+            }
+            if ($service->requires_rendering_tracking === false) {
+                return false;
+            }
+        }
+
         $sourceType = strtolower((string) $item->source_type);
         if (in_array($item->source_type, self::EXCLUDED_SOURCE_TYPES, true)) {
             return false;
@@ -103,16 +113,6 @@ class ServiceRenderingService
         $departmentType = $this->normaliseDepartmentType($service->department_type ?? $service->department?->type);
         if (in_array($departmentType, self::EXCLUDED_DEPARTMENT_TYPES, true)) {
             return false;
-        }
-
-        if (array_key_exists('requires_rendering_tracking', $service->getAttributes())) {
-            if ($service->requires_rendering_tracking === false) {
-                return false;
-            }
-
-            if ($service->requires_rendering_tracking === true) {
-                return true;
-            }
         }
 
         return true;
