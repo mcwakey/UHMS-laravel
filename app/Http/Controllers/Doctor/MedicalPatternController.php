@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
+use App\Models\ComplaintCatalogue;
 use App\Models\Drug;
 use App\Models\LabTest;
 use App\Models\MedicalPattern;
@@ -40,8 +41,9 @@ class MedicalPatternController extends Controller
     {
         $drugs    = Drug::where('is_active', true)->orderBy('name')->get(['id', 'name', 'generic_name', 'strength', 'dosage_form']);
         $labTests = LabTest::active()->orderBy('name')->get(['id', 'name']);
+        $complaintCatalogues = ComplaintCatalogue::active()->orderBy('category')->orderBy('name')->get(['id', 'name', 'category']);
 
-        return view('patterns.create', compact('drugs', 'labTests'));
+        return view('patterns.create', compact('drugs', 'labTests', 'complaintCatalogues'));
     }
 
     /**
@@ -120,8 +122,9 @@ class MedicalPatternController extends Controller
         $pattern->load('items');
         $drugs    = Drug::where('is_active', true)->orderBy('name')->get(['id', 'name', 'generic_name', 'strength', 'dosage_form']);
         $labTests = LabTest::active()->orderBy('name')->get(['id', 'name']);
+        $complaintCatalogues = ComplaintCatalogue::active()->orderBy('category')->orderBy('name')->get(['id', 'name', 'category']);
 
-        return view('patterns.edit', compact('pattern', 'drugs', 'labTests'));
+        return view('patterns.edit', compact('pattern', 'drugs', 'labTests', 'complaintCatalogues'));
     }
 
     /**

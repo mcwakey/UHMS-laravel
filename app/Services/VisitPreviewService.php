@@ -94,6 +94,7 @@ class VisitPreviewService
             'vitals.recordedBy',
             'medicalRecord.doctor',
             'medicalRecord.complaints.creator',
+            'medicalRecord.complaints.complaintCatalogue',
             'medicalRecord.historiesOfPresentingComplaint.creator',
             'medicalRecord.physicalExaminations.creator',
             'medicalRecord.diagnoses.creator',
@@ -109,6 +110,7 @@ class VisitPreviewService
             'medicalRecords.consultationRoute.routeServices.service',
             'medicalRecords.complaints.creator',
             'medicalRecords.complaints.sourcePattern',
+            'medicalRecords.complaints.complaintCatalogue',
             'medicalRecords.historiesOfPresentingComplaint.creator',
             'medicalRecords.historiesOfPresentingComplaint.sourcePattern',
             'medicalRecords.physicalExaminations.creator',
@@ -504,6 +506,7 @@ class VisitPreviewService
 
             // Complaints
             foreach ($mr->complaints ?? [] as $complaint) {
+                $duration = trim(($complaint->duration ?? '').' '.($complaint->duration_unit ?? ''));
                 $items[] = $this->item(
                     $complaint->created_at,
                     'Complaint Recorded',
@@ -512,7 +515,15 @@ class VisitPreviewService
                     $sessionDepartment,
                     'COMPLAINT', 'bg-warning text-dark',
                     'complaint', $complaint->id,
-                    array_filter(['Linked Services' => $serviceList, 'Source Pattern' => $complaint->sourcePattern?->name])
+                    array_filter([
+                        'Complaint' => $complaint->complaintCatalogue?->name,
+                        'Category' => $complaint->complaintCatalogue?->category,
+                        'Duration' => $duration,
+                        'Severity' => $complaint->severity ? ucfirst($complaint->severity) : null,
+                        'Notes' => $complaint->notes,
+                        'Linked Services' => $serviceList,
+                        'Source Pattern' => $complaint->sourcePattern?->name,
+                    ])
                 );
             }
 

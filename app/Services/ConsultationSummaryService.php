@@ -33,6 +33,7 @@ class ConsultationSummaryService
             'complaints.creator',
             'complaints.updater',
             'complaints.sourcePattern',
+            'complaints.complaintCatalogue',
             'historiesOfPresentingComplaint.creator',
             'historiesOfPresentingComplaint.updater',
             'historiesOfPresentingComplaint.sourcePattern',
@@ -72,8 +73,11 @@ class ConsultationSummaryService
 
         foreach ($record->complaints ?? [] as $entry) {
             $summary['sections']['complaints'][] = $this->entry('Complaint', $entry->description, $entry, [
-                'Duration' => $entry->duration,
-                'Severity' => $entry->severity,
+                'Catalogue' => $entry->complaintCatalogue?->name,
+                'Category' => $entry->complaintCatalogue?->category,
+                'Duration' => trim(($entry->duration ?? '').' '.($entry->duration_unit ?? '')),
+                'Severity' => $entry->severity ? ucfirst($entry->severity) : null,
+                'Notes' => $entry->notes,
             ]);
         }
 

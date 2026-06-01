@@ -181,6 +181,8 @@ class PermissionMeta
             'claims.payment' => 'claim payment records',
             'claims.report' => 'claim reports',
             'clinical_tasks' => 'clinical tasks',
+            'complaints' => 'patient complaints',
+            'complaints.catalogue' => 'complaint catalogue',
             'consultation' => 'consultation workspace',
             'consultation.entries' => 'consultation entries',
             'consultation.examination' => 'clinical examination notes',

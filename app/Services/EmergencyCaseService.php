@@ -21,6 +21,7 @@ class EmergencyCaseService
         private EmergencyBayService $bays,
         private PatientMergeGuard $patientMergeGuard,
         private EmergencySessionService $sessions,
+        private PatientComplaintService $patientComplaints,
         private VisitPathwayService $pathway,
         private ?\App\Services\ActivityLogService $logger = null,
     ) {
@@ -106,7 +107,10 @@ class EmergencyCaseService
             ]);
 
             $this->timeline->record($case, 'ARRIVAL', 'Emergency case created', $case->chief_complaint, $case, $user);
-            $this->sessions->getOrCreateForCase($case, $user);
+            $session = $this->sessions->getOrCreateForCase($case, $user);
+            if ($session->medicalRecord) {
+                $this->patientComplaints->syncEmergencyChiefComplaint($case, $session->medicalRecord, $user);
+            }
 
             $this->pathway->record($visit->fresh(), 'EMERGENCY_SESSION_CREATED', [
                 'source' => $case,

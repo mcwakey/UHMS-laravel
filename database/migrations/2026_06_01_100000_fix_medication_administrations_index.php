@@ -15,14 +15,17 @@ return new class extends Migration
             return;
         }
 
-        $exists = DB::selectOne(
-            "SELECT COUNT(*) AS cnt FROM information_schema.STATISTICS
-             WHERE TABLE_SCHEMA = DATABASE()
-               AND TABLE_NAME = 'medication_administrations'
-               AND INDEX_NAME = 'ma_emergency_administered_at_idx'"
-        );
+        $exists = DB::getDriverName() === 'sqlite'
+            ? collect(DB::select("PRAGMA index_list('medication_administrations')"))
+                ->contains(fn ($index) => ($index->name ?? null) === 'ma_emergency_administered_at_idx')
+            : (int) (DB::selectOne(
+                "SELECT COUNT(*) AS cnt FROM information_schema.STATISTICS
+                 WHERE TABLE_SCHEMA = DATABASE()
+                   AND TABLE_NAME = 'medication_administrations'
+                   AND INDEX_NAME = 'ma_emergency_administered_at_idx'"
+            )->cnt ?? 0) > 0;
 
-        if (! $exists || $exists->cnt == 0) {
+        if (! $exists) {
             Schema::table('medication_administrations', function (Blueprint $table) {
                 $table->index(['emergency_case_id', 'administered_at'], 'ma_emergency_administered_at_idx');
             });

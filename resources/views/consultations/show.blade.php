@@ -671,22 +671,40 @@
                                     @csrf
                                     <div class="row g-2">
                                         <div class="col-12">
-                                            <label class="form-label small">Description <span class="text-danger">*</span></label>
-                                            <input type="text" name="description" id="complaintDescInput" class="form-control" required placeholder="Type to search common complaints..." autocomplete="off" list="complaintSuggestions">
+                                            <label class="form-label small">Complaint <span class="text-danger">*</span></label>
+                                            <input type="hidden" name="complaint_catalogue_id" id="complaintCatalogueIdInput">
+                                            <input type="text" name="description" id="complaintDescInput" class="form-control" required placeholder="Search catalogue or type a custom complaint..." autocomplete="off" list="complaintSuggestions">
                                             <datalist id="complaintSuggestions"></datalist>
                                         </div>
-                                        <div class="col-6">
+                                        <div class="col-md-4">
                                             <label class="form-label small">Duration</label>
-                                            <input type="text" name="duration" class="form-control" placeholder="e.g., 3 days">
+                                            <input type="text" name="duration" class="form-control" placeholder="e.g., 3">
                                         </div>
-                                        <div class="col-6">
+                                        <div class="col-md-4">
+                                            <label class="form-label small">Duration Unit</label>
+                                            <select name="duration_unit" class="form-select">
+                                                <option value="">-- Select --</option>
+                                                <option value="minutes">Minutes</option>
+                                                <option value="hours">Hours</option>
+                                                <option value="days">Days</option>
+                                                <option value="weeks">Weeks</option>
+                                                <option value="months">Months</option>
+                                                <option value="years">Years</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
                                             <label class="form-label small">Severity</label>
                                             <select name="severity" class="form-select">
                                                 <option value="">-- Select --</option>
                                                 <option value="mild">Mild</option>
                                                 <option value="moderate">Moderate</option>
                                                 <option value="severe">Severe</option>
+                                                <option value="critical">Critical</option>
                                             </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label small">Notes</label>
+                                            <textarea name="notes" class="form-control" rows="2" placeholder="Clinical context or related notes"></textarea>
                                         </div>
                                     </div>
                                     <div class="mt-2 d-flex gap-2">
@@ -717,17 +735,26 @@
                                         <div>
                                             <p class="mb-1">{{ $complaint->description }}</p>
                                             <small class="text-muted">
-                                                @if($complaint->duration) Duration: {{ $complaint->duration }} &middot; @endif
+                                                @if($complaint->complaintCatalogue) Catalogue: {{ $complaint->complaintCatalogue->name }} &middot; @endif
+                                                @if($complaint->duration) Duration: {{ trim($complaint->duration.' '.($complaint->duration_unit ?? '')) }} &middot; @endif
                                                 @if($complaint->severity)
-                                                    Severity: <span class="badge bg-{{ $complaint->severity === 'severe' ? 'danger' : ($complaint->severity === 'moderate' ? 'warning' : 'info') }}">{{ ucfirst($complaint->severity) }}</span>
+                                                    Severity: <span class="badge bg-{{ in_array($complaint->severity, ['severe', 'critical'], true) ? 'danger' : ($complaint->severity === 'moderate' ? 'warning' : 'info') }}">{{ ucfirst($complaint->severity) }}</span>
                                                 @endif
                                             </small>
+                                            @if($complaint->notes)<small class="text-muted d-block">Notes: {{ $complaint->notes }}</small>@endif
                                             @if($entryFooter($complaint))<small class="text-muted d-block">{{ $entryFooter($complaint) }}</small>@endif
                                         </div>
                                         <div class="entry-actions d-flex gap-1">
                                             @if($canEditEntry($complaint))
                                             @php
-                                                $editEntryPayload = ['description' => $complaint->description, 'duration' => $complaint->duration, 'severity' => $complaint->severity];
+                                                $editEntryPayload = [
+                                                    'complaint_catalogue_id' => $complaint->complaint_catalogue_id,
+                                                    'description' => $complaint->description,
+                                                    'duration' => $complaint->duration,
+                                                    'duration_unit' => $complaint->duration_unit,
+                                                    'severity' => $complaint->severity,
+                                                    'notes' => $complaint->notes,
+                                                ];
                                             @endphp
                                             <button type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
                                                     data-entry-type="complaint"
@@ -2796,11 +2823,15 @@ function editSelect(name, label, value, options, attrs) {
 function buildEditFields(type, entry) {
     entry = entry || {};
     if (type === 'complaint') {
-        return editField('description', 'Description', entry.description, 'text', 'required') +
-            '<div class="row"><div class="col-md-6">' + editField('duration', 'Duration', entry.duration) + '</div><div class="col-md-6">' +
+        return '<input type="hidden" name="complaint_catalogue_id" value="' + escapeHtml(entry.complaint_catalogue_id || '') + '">' +
+            editField('description', 'Complaint', entry.description, 'text', 'required') +
+            '<div class="row"><div class="col-md-4">' + editField('duration', 'Duration', entry.duration) + '</div><div class="col-md-4">' +
+            editSelect('duration_unit', 'Duration Unit', entry.duration_unit, [
+                { value: '', label: '-- Select --' }, { value: 'minutes', label: 'Minutes' }, { value: 'hours', label: 'Hours' }, { value: 'days', label: 'Days' }, { value: 'weeks', label: 'Weeks' }, { value: 'months', label: 'Months' }, { value: 'years', label: 'Years' }
+            ]) + '</div><div class="col-md-4">' +
             editSelect('severity', 'Severity', entry.severity, [
-                { value: '', label: '-- Select --' }, { value: 'mild', label: 'Mild' }, { value: 'moderate', label: 'Moderate' }, { value: 'severe', label: 'Severe' }
-            ]) + '</div></div>';
+                { value: '', label: '-- Select --' }, { value: 'mild', label: 'Mild' }, { value: 'moderate', label: 'Moderate' }, { value: 'severe', label: 'Severe' }, { value: 'critical', label: 'Critical' }
+            ]) + '</div></div>' + editTextarea('notes', 'Notes', entry.notes, 2);
     }
     if (type === 'hopc') {
         return editTextarea('content', 'Narrative', entry.content, 4, 'required') +
@@ -3659,6 +3690,14 @@ if (psBtn) {
         diagnosis:  '{{ route("admin.consultations.suggest.diagnoses") }}',
     };
     var timers = {};
+    var complaintSuggestionIndex = {};
+
+    function syncComplaintCatalogueId(value) {
+        var hidden = document.getElementById('complaintCatalogueIdInput');
+        if (!hidden) return;
+        var match = complaintSuggestionIndex[(value || '').toLowerCase()];
+        hidden.value = match ? match.id : '';
+    }
 
     function bindSuggest(inputId, datalistId, type) {
         var inp = document.getElementById(inputId);
@@ -3674,12 +3713,27 @@ if (psBtn) {
                 })
                 .then(function (r) { return r.json(); })
                 .then(function (items) {
+                    if (type === 'complaint') {
+                        complaintSuggestionIndex = {};
+                        dl.innerHTML = items.map(function (item) {
+                            complaintSuggestionIndex[String(item.name || '').toLowerCase()] = item;
+                            var label = item.category ? item.category : 'Complaint catalogue';
+                            return '<option value="' + escapeHtml(item.name || '') + '" label="' + escapeHtml(label) + '">';
+                        }).join('');
+                        syncComplaintCatalogueId(inp.value);
+                        return;
+                    }
+
                     dl.innerHTML = items.map(function (s) {
                         return '<option value="' + escapeHtml(s) + '">';
                     }).join('');
                 });
             }, 280);
         });
+        if (type === 'complaint') {
+            inp.addEventListener('change', function () { syncComplaintCatalogueId(this.value); });
+            inp.addEventListener('blur', function () { syncComplaintCatalogueId(this.value); });
+        }
     }
 
     bindSuggest('complaintDescInput', 'complaintSuggestions', 'complaint');

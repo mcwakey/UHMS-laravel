@@ -16,9 +16,12 @@ class StoreConsultationRequest extends FormRequest
         return [
             // Complaints
             'complaints' => ['nullable', 'array'],
-            'complaints.*.description' => ['required_with:complaints', 'string', 'max:2000'],
+            'complaints.*.complaint_catalogue_id' => ['nullable', 'exists:complaint_catalogues,id'],
+            'complaints.*.description' => ['required_without:complaints.*.complaint_catalogue_id', 'nullable', 'string', 'max:2000'],
             'complaints.*.duration' => ['nullable', 'string', 'max:191'],
-            'complaints.*.severity' => ['nullable', 'in:mild,moderate,severe'],
+            'complaints.*.duration_unit' => ['nullable', 'in:minutes,hours,days,weeks,months,years'],
+            'complaints.*.severity' => ['nullable', 'in:mild,moderate,severe,critical'],
+            'complaints.*.notes' => ['nullable', 'string', 'max:2000'],
 
             // Diagnoses
             'diagnoses' => ['nullable', 'array'],

@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
             // ── Clinical reference data ──────────────────────────────────
             DesignationSeeder::class,
             SpecialtySeeder::class,
+            ComplaintCatalogueSeeder::class,
             IcdCodeSeeder::class,
 
             // ── Demo users (doctors, nurses, lab, pharmacy …) ────────────

@@ -147,6 +147,7 @@ var itemIndex = 0;
 
 var availableDrugs = @json($drugs);
 var availableLabTests = @json($labTests);
+var availableComplaintCatalogues = @json($complaintCatalogues);
 
 function buildDrugOptions(selected) {
     selected = selected || '';
@@ -168,6 +169,17 @@ function buildLabTestOptions(selected) {
     return html;
 }
 
+function buildComplaintCatalogueOptions(selected) {
+    selected = String(selected || '');
+    var html = '<option value="">-- Select complaint --</option>';
+    availableComplaintCatalogues.forEach(function(c) {
+        var label = c.name + (c.category ? ' (' + c.category + ')' : '');
+        var val = String(c.id);
+        html += '<option value="' + val.replace(/"/g, '&quot;') + '"' + (selected === val ? ' selected' : '') + '>' + label.replace(/"/g, '&quot;') + '</option>';
+    });
+    return html;
+}
+
 var templates = {
     complaint: function(idx) {
         return '<div class="pattern-item type-complaint" data-index="' + idx + '">' +
@@ -175,13 +187,19 @@ var templates = {
             '<input type="hidden" name="items[' + idx + '][type]" value="complaint">' +
             '<div class="d-flex align-items-center mb-2"><span class="badge bg-warning me-2">Complaint</span></div>' +
             '<div class="row g-2">' +
-                '<div class="col-md-12"><label class="form-label small">Description <span class="text-danger">*</span></label>' +
-                '<textarea name="items[' + idx + '][data][description]" class="form-control form-control-sm" rows="2" required placeholder="Complaint description..."></textarea></div>' +
-                '<div class="col-md-6"><label class="form-label small">Duration</label>' +
-                '<input type="text" name="items[' + idx + '][data][duration]" class="form-control form-control-sm" placeholder="e.g., 3 days"></div>' +
-                '<div class="col-md-6"><label class="form-label small">Severity</label>' +
+                '<div class="col-md-5"><label class="form-label small">Catalogue Complaint</label>' +
+                '<select name="items[' + idx + '][data][complaint_catalogue_id]" class="form-select form-select-sm">' + buildComplaintCatalogueOptions() + '</select></div>' +
+                '<div class="col-md-7"><label class="form-label small">Custom / Display Text</label>' +
+                '<input type="text" name="items[' + idx + '][data][description]" class="form-control form-control-sm" placeholder="Custom complaint or override text"></div>' +
+                '<div class="col-md-4"><label class="form-label small">Duration</label>' +
+                '<input type="text" name="items[' + idx + '][data][duration]" class="form-control form-control-sm" placeholder="e.g., 3"></div>' +
+                '<div class="col-md-4"><label class="form-label small">Duration Unit</label>' +
+                '<select name="items[' + idx + '][data][duration_unit]" class="form-select form-select-sm"><option value="">-- Select --</option><option value="minutes">Minutes</option><option value="hours">Hours</option><option value="days">Days</option><option value="weeks">Weeks</option><option value="months">Months</option><option value="years">Years</option></select></div>' +
+                '<div class="col-md-4"><label class="form-label small">Severity</label>' +
                 '<select name="items[' + idx + '][data][severity]" class="form-select form-select-sm">' +
-                '<option value="">-- Select --</option><option value="mild">Mild</option><option value="moderate">Moderate</option><option value="severe">Severe</option></select></div>' +
+                '<option value="">-- Select --</option><option value="mild">Mild</option><option value="moderate">Moderate</option><option value="severe">Severe</option><option value="critical">Critical</option></select></div>' +
+                '<div class="col-12"><label class="form-label small">Notes</label>' +
+                '<input type="text" name="items[' + idx + '][data][notes]" class="form-control form-control-sm" placeholder="Optional complaint notes"></div>' +
             '</div></div>';
     },
     history_of_presenting_complaint: function(idx) {

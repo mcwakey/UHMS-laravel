@@ -19,6 +19,7 @@ use App\Models\Visit;
 use App\Models\Ward;
 use App\Services\EmergencyCaseService;
 use App\Services\EmergencySessionService;
+use App\Services\PatientComplaintService;
 use Illuminate\Http\Request;
 
 class EmergencyCaseController extends Controller
@@ -26,6 +27,7 @@ class EmergencyCaseController extends Controller
     public function __construct(
         private EmergencyCaseService $cases,
         private EmergencySessionService $sessions,
+        private PatientComplaintService $patientComplaints,
     ) {}
 
     public function create(Request $request)
@@ -219,7 +221,13 @@ class EmergencyCaseController extends Controller
             ]);
         }
 
-        $this->sessions->syncTeam($emergencyCase->fresh(['activeEmergencySession']));
+        $session = $this->sessions->syncTeam($emergencyCase->fresh(['activeEmergencySession']));
+        if (array_key_exists('chief_complaint', $data)) {
+            $session?->loadMissing('medicalRecord');
+            if ($session?->medicalRecord) {
+                $this->patientComplaints->syncEmergencyChiefComplaint($emergencyCase->fresh(), $session->medicalRecord, $request->user());
+            }
+        }
 
         return back()->with('success', 'Emergency case updated.');
     }

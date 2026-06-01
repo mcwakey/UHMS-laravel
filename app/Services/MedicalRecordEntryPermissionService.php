@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\VisitConsultationRoute;
+use App\Models\Complaint;
 use Illuminate\Database\Eloquent\Model;
 
 class MedicalRecordEntryPermissionService
@@ -11,6 +12,7 @@ class MedicalRecordEntryPermissionService
     public function canView(User $user, Model $entry): bool
     {
         return $user->can('consultation.entries.view_all')
+            || ($entry instanceof Complaint && $user->can('complaints.view'))
             || $user->can('consultations.view')
             || $this->isOwner($user, $entry);
     }
@@ -26,10 +28,13 @@ class MedicalRecordEntryPermissionService
         }
 
         if ($this->isOwner($user, $entry)) {
-            return $user->can('consultation.entries.edit_own') || $user->can('consultations.create');
+            return $user->can('consultation.entries.edit_own')
+                || ($entry instanceof Complaint && $user->can('complaints.edit_own'))
+                || $user->can('consultations.create');
         }
 
-        return $user->can('consultation.entries.edit_any');
+        return $user->can('consultation.entries.edit_any')
+            || ($entry instanceof Complaint && $user->can('complaints.edit_any'));
     }
 
     public function canDelete(User $user, Model $entry): bool
@@ -43,10 +48,13 @@ class MedicalRecordEntryPermissionService
         }
 
         if ($this->isOwner($user, $entry)) {
-            return $user->can('consultation.entries.delete_own') || $user->can('consultations.create');
+            return $user->can('consultation.entries.delete_own')
+                || ($entry instanceof Complaint && $user->can('complaints.delete_own'))
+                || $user->can('consultations.create');
         }
 
-        return $user->can('consultation.entries.delete_any');
+        return $user->can('consultation.entries.delete_any')
+            || ($entry instanceof Complaint && $user->can('complaints.delete_any'));
     }
 
     public function isOwner(User $user, Model $entry): bool

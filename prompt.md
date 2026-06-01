@@ -1,1565 +1,703 @@
-````text
-You are a senior Laravel + Inertia/Vue architect working on UHMS — Ultimate Hospital Management System.
+You are a senior Laravel + Inertia/Vue developer working on UHMS — Ultimate Hospital Management System.
 
-We need to run a deep analysis, correction, standardization, and documentation of the Roles, Permissions, and Modules system.
+We need to build and seed a proper Complaint Catalogue and Patient Complaint recording system.
 
-UHMS has grown significantly, and many system actions now require permissions but either:
+Complaints are currently needed in consultation, emergency, admission review, medical patterns, consultation summary, visit preview, claims mirror, and patient history.
 
-- do not have permissions defined,
-- have permissions defined but not enforced,
-- are only protected in the UI and not backend,
-- are protected in backend but missing in UI,
-- use inconsistent permission names,
-- are hidden incorrectly,
-- are accessible to the wrong roles,
-- or are not explained properly to admins.
+The goal is to allow doctors and clinicians to select common complaints from a seeded catalogue, search complaints easily, add custom complaints when needed, and save complaints correctly under the patient’s medical record/session.
 
-We need to fix this extensively.
-
-This task must produce:
-
-1. A full Roles & Permissions gap analysis report.
-2. A full Modules gap analysis report.
-3. A corrected permission structure.
-4. A corrected role-permission assignment structure.
-5. Backend authorization enforcement.
-6. Frontend/UI permission enforcement.
-7. Module access enforcement.
-8. Permission explanations in the UI.
-9. Module explanations in the UI.
-10. Updated seeders.
-11. Updated documentation/reports.
-
-Do not patch only one page.
-
-Do a full system-wide analysis.
-
-Do not break existing workflows.
+Do not break existing consultation, emergency, admission, medical records, HOPC, diagnosis, medical patterns, visit preview, or claims workflows.
 
 ---
 
-# 1. Main Objective
+# 1. Main Objectives
 
-Inspect the entire UHMS system and repair the Roles, Permissions, and Modules system so that every sensitive action is properly protected and explained.
+Implement:
 
-The system must support proper access control for:
-
-- Super Admin
-- Hospital Admin
-- Doctor
-- Nurse
-- Emergency Doctor
-- Emergency Nurse
-- Triage Nurse
-- Pharmacist
-- Pharmacy Manager
-- Lab / Investigation Staff
-- Radiology Staff
-- Theatre Staff
-- Surgeon
-- Anaesthetist
-- Ward Nurse
-- Store Officer
-- Procurement Officer
-- Cashier
-- Claims Officer
-- Records Officer
-- Receptionist
-- Accountant
-- Auditor
-- Department Head
-- System Administrator
-- Any existing custom roles
-
-Use existing roles if already defined.
-
-Do not blindly replace role names if the system already uses a working structure.
+1. Complaint Catalogue / Complaint Definitions.
+2. Seed common complaints.
+3. Complaint search/autocomplete.
+4. Patient complaint recording.
+5. Multiple complaints per medical record/session.
+6. Custom complaint entry when complaint is not in catalogue.
+7. Complaint duration/severity fields.
+8. Link complaint to HOPC where applicable.
+9. Complaint ownership/created_by tracking.
+10. Complaint display in Consultation Summary.
+11. Complaint display in Visit Preview.
+12. Complaint support in Emergency Session.
+13. Complaint support in Medical Patterns.
+14. Complaint support in Claims clinical mirror.
 
 ---
 
-# 2. Required Reports
+# 2. Complaint Catalogue
 
-Create these reports in the documentation folder:
+Create or update a reusable complaint catalogue table.
 
-```text
-docs/ROLES_PERMISSIONS_GAP_ANALYSIS.md
-docs/ROLES_PERMISSIONS_SOLUTION_REPORT.md
-docs/MODULES_GAP_ANALYSIS.md
-docs/MODULES_SOLUTION_REPORT.md
-docs/ROLES_PERMISSIONS_REMAINING_RECOMMENDATIONS.md
-````
+Recommended table:
 
-If the project already has a docs convention, follow it.
+complaint_catalogues
 
----
+Fields:
 
-# 3. ROLES_PERMISSIONS_GAP_ANALYSIS.md
-
-This report must include:
-
-* current role system found
-* current permission system found
-* current module system found
-* role tables/models found
-* permission tables/models found
-* module tables/models found
-* seeders found
-* middleware found
-* policies/gates found
-* frontend permission checks found
-* missing permissions
-* unused permissions
-* duplicate permissions
-* inconsistent permission names
-* permissions defined but not enforced
-* actions protected in UI only
-* actions protected in backend only
-* actions missing both UI and backend protection
-* modules missing permission mapping
-* roles with excessive access
-* roles with insufficient access
-* dangerous actions without permission
-* root causes
-* risk level
-* recommended correction plan
-
----
-
-# 4. ROLES_PERMISSIONS_SOLUTION_REPORT.md
-
-This report must include:
-
-* permissions added
-* permissions renamed or normalized
-* roles updated
-* middleware added/updated
-* policies/gates added/updated
-* controllers updated
-* routes updated
-* Vue/Inertia/Blade UI updated
-* menu/sidebar updated
-* seeders updated
-* module access updates
-* tests added
-* how to verify
-* files modified
-* known limitations
-
----
-
-# 5. MODULES_GAP_ANALYSIS.md
-
-Analyze the module system.
-
-Include:
-
-* current module table/model
-* current module seeder
-* active/inactive modules
-* core modules
-* optional modules
-* modules with missing routes
-* modules with missing menu entries
-* modules with missing permissions
-* modules visible without access
-* modules hidden even when user has access
-* modules not enforcing backend access
-* modules not described in UI
-* modules that should be core and cannot be disabled
-* modules that can be disabled safely
-* module dependencies
-
----
-
-# 6. MODULES_SOLUTION_REPORT.md
-
-Include:
-
-* module fixes made
-* module permissions mapped
-* module descriptions added
-* module dependency rules added
-* menu visibility fixed
-* backend module guard fixed
-* module UI updated
-* seeders updated
-* files modified
-* tests/verification notes
-
----
-
-# 7. Existing System Inspection
-
-First inspect the current implementation.
-
-Search for:
-
-```text
-Role
-Roles
-Permission
-Permissions
-Module
-Modules
-Gate
-Policy
-can
-cannot
-hasPermission
-hasRole
-middleware
-permission:
-role:
-module:
-is_core
-is_active
-sidebar
-menu
-navigation
-auth
-authorize
-@can
-v-if
-permissions
-```
-
-Inspect:
-
-```text
-routes
-controllers
-middleware
-policies
-models
-seeders
-database migrations
-Vue/Inertia pages
-Blade views
-sidebar/menu components
-dashboard components
-admin settings pages
-```
-
-Do not assume the current structure. Inspect before changing.
-
----
-
-# 8. Preferred Authorization Architecture
-
-Use the project’s existing authorization system if it is already working.
-
-If the project uses Spatie Laravel Permission, follow Spatie conventions.
-
-If the project uses custom roles/permissions, standardize it carefully.
-
-The system must enforce permissions at both levels:
-
-```text
-Backend authorization = security
-Frontend authorization = user experience
-```
-
-Frontend hiding buttons is not enough.
-
-Backend must always enforce permission.
-
----
-
-# 9. Permission Naming Convention
-
-Use a consistent naming format.
-
-Recommended:
-
-```text
-module.action
-```
-
-Examples:
-
-```text
-patients.view
-patients.create
-patients.update
-patients.delete
-patients.merge.execute
-
-emergency.case.view
-emergency.case.create
-emergency.triage.perform
-emergency.disposition.manage
-
-billing.invoice.view
-billing.invoice.create
-billing.payment.record
-
-stock.products.view
-stock.products.create
-stock.movements.adjust
-
-theatre.cases.schedule
-theatre.operative_note.create
-```
-
-Rules:
-
-* use lowercase
-* use dot notation
-* module first
-* action last
-* avoid mixed formats like `View Patients`, `patient-view`, `can_view_patient`
-* do not create duplicate names for the same action
-* do not rename existing permissions without migration/compatibility if they are already used
-
-If existing permission names are already widely used, create a normalization map and avoid breaking them.
-
----
-
-# 10. Permission Categories
-
-Organize permissions by module.
-
-At minimum, review/create permissions for:
-
-```text
-dashboard
-modules
-users
-roles
-permissions
-patients
-patient_merge
-visits
-consultation
-emergency
-admission
-triage
-vitals
-clinical_tasks
-mar
-pharmacy
-billing
-payments
-claims
-insurance
-investigations
-procedures
-theatre
-stock
-products
-procurement
-purchase_orders
-supplier_ledger
-assets
-notifications
-logs
-reports
-settings
-system
-```
-
----
-
-# 11. Critical Missing Permission Audit
-
-Find every action in the system that creates, updates, deletes, approves, rejects, submits, verifies, pays, dispenses, administers, transfers, merges, exports, prints, or changes status.
-
-Every such action must have a permission.
-
-Audit actions including but not limited to:
-
-## Patients
-
-```text
-patients.view
-patients.create
-patients.update
-patients.delete
-patients.mark_deceased
-patients.restore
-patients.documents.upload
-patients.documents.view
-patients.search
-```
-
-## Patient Merge
-
-```text
-patients.merge.view
-patients.merge.create
-patients.merge.preview
-patients.merge.approve
-patients.merge.execute
-patients.merge.cancel
-patients.merge.view_logs
-patients.merge.confirm_identity
-patients.merge.suggest_duplicates
-```
-
-## Visits
-
-```text
-visits.view
-visits.create
-visits.update
-visits.cancel
-visits.complete
-visits.reopen
-visits.transition
-visits.create_while_admitted
-visits.view_preview
-visits.print_preview
-```
-
-## Consultation
-
-```text
-consultation.view
-consultation.start
-consultation.continue
-consultation.complete
-consultation.sessions.view
-consultation.sessions.create
-consultation.sessions.transfer
-consultation.entries.create
-consultation.entries.edit_own
-consultation.entries.edit_any
-consultation.entries.delete_own
-consultation.entries.delete_any
-consultation.entries.correct_completed
-consultation.summary.view
-consultation.summary.print
-```
-
-## Emergency
-
-```text
-emergency.board.view
-emergency.case.view
-emergency.case.create
-emergency.case.update
-emergency.case.cancel
-emergency.session.manage
-emergency.triage.perform
-emergency.triage.override
-emergency.vitals.record
-emergency.vitals.view_graph
-emergency.bay_team.manage
-emergency.notes.create
-emergency.notes.edit_own
-emergency.notes.edit_any
-emergency.medication.order
-emergency.medication.administer
-emergency.mar.view
-emergency.investigation.request
-emergency.procedure.request
-emergency.consumables.use
-emergency.billing.view
-emergency.billing.manage
-emergency.disposition.manage
-emergency.transfer.admit
-emergency.transfer.opd
-emergency.transfer.theatre
-emergency.refer
-emergency.death.record
-emergency.reports.view
-```
-
-## Admission
-
-```text
-admission.view
-admission.create
-admission.update
-admission.assign_bed
-admission.transfer_bed
-admission.discharge
-admission.cancel
-admission.vitals.record
-admission.notes.create
-admission.medication.view
-admission.mar.view
-admission.reports.view
-```
-
-## MAR / Medication Administration
-
-```text
-mar.view
-mar.print
-medication_orders.view
-medication_orders.manage
-medication_orders.stop
-medication_orders.hold
-medication_administration.view
-medication_administration.administer
-medication_administration.hold
-medication_administration.mark_missed
-medication_administration.correct
-medication_administration.view_reports
-```
-
-## Clinical Tasks
-
-```text
-clinical_tasks.view
-clinical_tasks.create
-clinical_tasks.update
-clinical_tasks.complete
-clinical_tasks.cancel
-clinical_tasks.escalate
-clinical_tasks.view_overdue
-```
-
-## Investigations
-
-```text
-investigations.view
-investigations.catalogue.view
-investigations.catalogue.manage
-investigations.request
-investigations.accept
-investigations.reject
-investigations.enter_result
-investigations.verify_result
-investigations.print_result
-investigations.view_result
-investigations.consumables.use
-investigations.billing.manage
-```
-
-## Procedures
-
-```text
-procedures.view
-procedures.catalogue.view
-procedures.catalogue.manage
-procedures.request
-procedures.accept
-procedures.reject
-procedures.schedule
-procedures.perform
-procedures.enter_report
-procedures.verify_report
-procedures.print_report
-procedures.consumables.use
-procedures.billing.manage
-```
-
-## Theatre
-
-```text
-theatre.rooms.view
-theatre.rooms.create
-theatre.rooms.update
-theatre.rooms.deactivate
-theatre.rooms.manage_status
-theatre.board.view
-theatre.calendar.view
-theatre.cases.view
-theatre.cases.accept
-theatre.cases.schedule
-theatre.cases.reschedule
-theatre.cases.cancel
-theatre.cases.postpone
-theatre.cases.complete
-theatre.team.assign
-theatre.preop.manage
-theatre.anaesthesia.create
-theatre.anaesthesia.edit_own
-theatre.anaesthesia.edit_any
-theatre.operative_note.create
-theatre.operative_note.edit_own
-theatre.operative_note.edit_any
-theatre.recovery_note.create
-theatre.recovery_note.edit_own
-theatre.recovery_note.edit_any
-theatre.consumables.use
-theatre.billing.view
-theatre.billing.manage
-theatre.schedule.override
-theatre.reports.view
-```
-
-## Pharmacy
-
-```text
-pharmacy.view
-pharmacy.catalogue.view
-pharmacy.prescriptions.view
-pharmacy.prescriptions.bill
-pharmacy.prescriptions.dispense
-pharmacy.prescriptions.partial_dispense
-pharmacy.dispensing.correct
-pharmacy.stock.view
-pharmacy.reports.view
-```
-
-## Billing / Payments
-
-```text
-billing.view
-billing.invoice.view
-billing.invoice.create
-billing.invoice.update
-billing.invoice.cancel
-billing.invoice.print
-billing.invoice.discount
-billing.invoice.apply_manual_discount
-billing.payment.view
-billing.payment.record
-billing.payment.reverse
-billing.payment.refund
-billing.reports.view
-```
-
-## Insurance / Claims
-
-```text
-insurance.view
-insurance.create
-insurance.update
-insurance.delete
-insurance.prices.manage
-insurance.patient_insurance.manage
-
-claims.view
-claims.prepare
-claims.review
-claims.edit_prepared
-claims.validate
-claims.submit
-claims.export
-claims.approve
-claims.reject
-claims.record_payment
-claims.view_reports
-```
-
-## Stock / Products
-
-```text
-stock.view
-stock.products.view
-stock.products.create
-stock.products.update
-stock.products.delete
-stock.products.assign_departments
-stock.balances.view
-stock.movements.view
-stock.movements.receive
-stock.movements.transfer
-stock.movements.adjust
-stock.movements.return
-stock.movements.purchase_return
-stock.requisitions.view
-stock.requisitions.create
-stock.requisitions.approve
-stock.requisitions.issue
-stock.requisitions.receive
-stock.reports.view
-```
-
-## Procurement / Supplier Ledger
-
-```text
-procurement.view
-purchase_orders.view
-purchase_orders.create
-purchase_orders.update
-purchase_orders.approve
-purchase_orders.receive
-purchase_orders.cancel
-purchase_orders.print
-
-supplier_ledger.view
-supplier_ledger.payment.create
-supplier_ledger.credit_note.create
-supplier_ledger.debit_note.create
-supplier_ledger.reports.view
-```
-
-## Assets
-
-```text
-assets.view
-assets.create
-assets.update
-assets.assign
-assets.transfer
-assets.maintenance
-assets.decommission
-assets.reports.view
-```
-
-## Notifications
-
-```text
-notifications.view
-notifications.mark_read
-notifications.delete
-notifications.manage
-notifications.emergency.receive
-notifications.admission.receive
-notifications.mar.receive
-notifications.investigation.receive
-notifications.procedure.receive
-notifications.pharmacy.receive
-notifications.stock.receive
-notifications.billing.receive
-notifications.claims.receive
-notifications.patient_merge.receive
-```
-
-## Logs
-
-```text
-logs.view
-logs.view_clinical
-logs.view_financial
-logs.view_stock
-logs.view_security
-logs.export
-logs.delete
-logs.manage_retention
-```
-
-## Reports
-
-```text
-reports.view
-reports.export
-reports.financial
-reports.clinical
-reports.stock
-reports.emergency
-reports.admission
-reports.theatre
-reports.claims
-```
-
-## System / Settings
-
-```text
-settings.view
-settings.update
-modules.view
-modules.enable
-modules.disable
-modules.configure
-users.view
-users.create
-users.update
-users.disable
-users.reset_password
-roles.view
-roles.create
-roles.update
-roles.delete
-permissions.view
-permissions.assign
-```
-
----
-
-# 12. Backend Enforcement
-
-Every protected route/controller action must enforce permission.
-
-Use:
-
-```php
-$this->authorize(...)
-```
-
-or middleware:
-
-```php
-->middleware('permission:patients.view')
-```
-
-or project equivalent.
-
-Do not rely only on menu visibility.
-
-Do not rely only on frontend checks.
-
-Audit:
-
-* GET pages
-* POST store actions
-* PATCH/PUT update actions
-* DELETE actions
-* export/print actions
-* approval actions
-* status changes
-* correction actions
-* override actions
-
-Every route with sensitive data/action must be protected.
-
----
-
-# 13. Frontend/UI Enforcement
-
-Update UI to respect permissions.
-
-Buttons/actions should only show when the user has permission.
-
-Examples:
-
-* Add Patient button only if `patients.create`
-* Edit Patient button only if `patients.update`
-* Merge Patient only if `patients.merge.execute` or `patients.merge.create`
-* Record Payment only if `billing.payment.record`
-* Dispense Drug only if `pharmacy.prescriptions.dispense`
-* Administer Medication only if `medication_administration.administer`
-* Verify Result only if `investigations.verify_result`
-* Schedule Theatre only if `theatre.cases.schedule`
-* View Logs only if `logs.view`
-
-If action is locked due to workflow status, show a clear locked reason.
-
-Frontend should receive current user permissions globally.
-
-For Inertia, share:
-
-```php
-'auth' => [
-    'user' => ...,
-    'roles' => ...,
-    'permissions' => [...],
-    'modules' => [...]
-]
-```
-
-Do not expose sensitive data unnecessarily.
-
----
-
-# 14. Sidebar/Menu Access
-
-Update sidebar/menu logic.
-
-A menu item should show only if:
-
-1. module is active, and
-2. user has at least one permission required for that module/menu.
-
-Example:
-
-Emergency menu appears only if:
-
-```text
-module emergency is active
-AND user has emergency.board.view or emergency.case.view or emergency.case.create
-```
-
-Do not show empty modules.
-
-Do not hide a module from Super Admin.
-
-Core modules should always be protected but not disabled.
-
----
-
-# 15. Module System Analysis
-
-Inspect module system.
-
-Each module should have:
-
-```text
+id
 name
-slug
-description
-is_core
-is_active
-icon
-sort_order
-permissions
-dependencies
-```
+category nullable
+body_system nullable
+description nullable
+keywords json nullable
+is_active boolean default true
+sort_order nullable
+created_at
+updated_at
 
-If description field is missing, add it or provide descriptions in config/UI.
+Alternative names allowed if project convention differs:
 
-Every module must explain:
+complaint_definitions
+complaint_master
+complaint_templates
 
-* what it does
-* who uses it
-* what happens if disabled
-* dependencies
-* related permissions
+Use one consistent name across the system.
 
 ---
 
-# 16. Module Descriptions
+# 3. Complaint Categories
 
-Add clear descriptions for modules.
+Seed complaints under useful categories.
 
-Examples:
+Recommended categories:
 
-## Patients
-
-Manages patient registration, patient folders, demographic records, insurance records, next of kin, documents, deceased status, and patient folder merge.
-
-## Visits
-
-Manages outpatient visits, patient pathway/parcours, visit status flow, visit preview, and visit completion.
-
-## Emergency
-
-Manages emergency cases, emergency triage, emergency sessions, emergency beds/bays, emergency medications, emergency investigations, emergency procedures, emergency billing, and emergency disposition.
-
-## Admission
-
-Manages inpatient admission, wards, beds, inpatient vitals, inpatient medication administration, discharge, and admission billing.
-
-## Consultation
-
-Manages clinical consultation sessions, complaints, history of presenting complaint, examination, diagnosis, prescriptions, investigations, procedures, tasks, notes, and consultation summary.
-
-## MAR
-
-Manages medication administration schedules, nurse dose recording, medication reminders, MAR chart, missed/held/refused doses, and administration reports.
-
-## Pharmacy
-
-Manages prescriptions, drug billing before dispensing, dispensing, pharmacy catalogue, pharmacy stock, and pharmacy reports.
-
-## Investigations
-
-Manages investigation catalogue, investigation requests, result entry, result verification, report printing, and investigation consumables.
-
-## Procedures / Theatre
-
-Manages procedure requests, theatre rooms, theatre scheduling, pre-op checklist, anaesthesia notes, operative notes, recovery notes, procedure consumables, and theatre reports.
-
-## Billing
-
-Manages visit invoices, invoice items, patient payments, discounts, balances, receipts, and billing reports.
-
-## Claims
-
-Manages insurance claim preparation, clinical mirror review, NHIA/NHIS claims, claim submission, rejection, approval, and payment tracking.
-
-## Stock
-
-Manages products, stock locations, stock balances, stock movements, requisitions, transfers, adjustments, returns, and stock reports.
-
-## Procurement
-
-Manages purchase orders, purchase receipts, supplier invoices, and procurement workflow.
-
-## Supplier Ledger
-
-Manages supplier payments, credit notes, debit notes, and supplier transaction history.
-
-## Assets
-
-Manages hospital assets, assignment, transfers, maintenance, and decommissioning.
-
-## Notifications
-
-Manages in-app alerts, due/overdue reminders, task notifications, emergency alerts, stock alerts, and workflow alerts.
-
-## Logs
-
-Manages audit trail, activity logs, clinical logs, financial logs, stock logs, and security logs.
-
-## Reports
-
-Provides clinical, financial, stock, operational, emergency, admission, theatre, and claims reports.
-
-## Settings
-
-Manages hospital configuration, departments, service pricing, insurance pricing, modules, roles, permissions, and system preferences.
+General
+Respiratory
+Cardiovascular
+Gastrointestinal
+Neurological
+Genitourinary
+Musculoskeletal
+Dermatology
+ENT
+Eye
+Dental
+Obstetrics/Gynecology
+Pediatrics
+Psychiatric
+Emergency/Trauma
 
 ---
 
-# 17. Module Dependencies
+# 4. Patient Complaint Records
 
-Define module dependencies.
+Create or update patient complaint records.
 
-Examples:
+Recommended table:
 
-```text
-Emergency depends on Patients, Visits, Billing, Stock, Notifications, Logs
-Admission depends on Patients, Visits, Billing, Stock, MAR
-MAR depends on Patients, Visits, Products, Clinical Tasks, Notifications
-Pharmacy depends on Products, Stock, Billing
-Investigations depends on Services, Billing, Stock
-Theatre depends on Procedures, Billing, Stock
-Claims depends on Billing, Insurance, Consultation
-Stock depends on Products
-Billing depends on Patients, Visits
-```
+patient_complaints
 
-If a module is disabled, dependent modules should warn or prevent disabling.
+Fields:
 
-Core modules should not be disabled:
+id
+patient_id
+visit_id
+medical_record_id nullable
+consultation_route_id nullable
+clinical_session_id nullable
+emergency_case_id nullable
+admission_id nullable
+complaint_catalogue_id nullable
+complaint_text
+duration nullable
+duration_unit nullable
+severity nullable
+notes nullable
+source_pattern_id nullable
+created_by
+updated_by nullable
+created_at
+updated_at
 
-```text
-Authentication
-Users & Roles
-Patients
-Visits
-Billing
-Settings
-Modules
-```
-
-Adapt to current system.
+If the project already has a complaints table, inspect it first and extend it instead of creating a duplicate table.
 
 ---
 
-# 18. Module UI
+# 5. Complaint Recording Rules
 
-Update Modules page.
+Doctors/clinicians must be able to:
 
-For each module, display:
+- search seeded complaints
+- select one or more complaints
+- add custom complaint if not found
+- enter duration
+- choose duration unit
+- enter severity
+- add notes
+- save under the current medical record/session
+- edit own complaint if permitted
+- view complaints grouped by owner/user where already implemented
 
-* module name
-* slug
-* icon
-* description
-* status active/inactive
-* core yes/no
-* dependencies
-* permission count
-* linked permissions
-* users/roles impacted if disabled
-* enable/disable action if allowed
+Duration units:
 
-When disabling module, show warning:
+Minutes
+Hours
+Days
+Weeks
+Months
+Years
 
-```text
-Disabling Emergency will hide Emergency Board, Emergency Cases, Emergency MAR, and related menu items. Existing emergency records will remain available to authorized administrators.
-```
+Severity values:
 
-Do not allow disabling core modules.
-
----
-
-# 19. Permission UI
-
-Update Permission management UI.
-
-Each permission should show:
-
-* permission name
-* module
-* description
-* action type
-* risk level
-* assigned roles
-* created/updated date
-
-Add permission descriptions.
-
-Example:
-
-```text
-patients.merge.execute
-Allows user to permanently merge two patient folders into one active folder. High-risk permission.
-```
-
-Risk levels:
-
-```text
-LOW
-NORMAL
-HIGH
-CRITICAL
-```
-
-Critical permissions include:
-
-* users.update
-* roles.update
-* permissions.assign
-* patients.merge.execute
-* billing.payment.reverse
-* stock.movements.adjust
-* medication_administration.correct
-* logs.delete
-* modules.disable
-* settings.update
+Mild
+Moderate
+Severe
+Critical
 
 ---
 
-# 20. Role UI
+# 6. Consultation Page Integration
 
-Update Role management UI.
+On the Consultation page, Complaints should appear before History of Presenting Complaint.
 
-For each role, show:
+Required clinical order:
 
-* role name
-* description
-* assigned permissions grouped by module
-* users assigned
-* permission count
-* risk summary
-* last updated
+1. Vitals / Patient Summary
+2. Complaints
+3. History of Presenting Complaint
+4. Examination
+5. Diagnosis
+6. Investigations
+7. Treatments / Prescriptions
+8. Procedures
+9. Tasks / Follow-up / Instructions
+10. Notes / Summary
 
-Permission assignment should be grouped by module.
+Complaint section should allow:
 
-Example:
+- search complaint catalogue
+- add selected complaint
+- add custom complaint
+- display recorded complaints
+- group by owner/user if ownership grouping exists
+- edit permitted complaints
+- show duration/severity/notes
+- show creator and timestamp
 
-```text
-Patients
-[ ] patients.view
-[ ] patients.create
-[ ] patients.update
-[ ] patients.merge.execute
-
-Emergency
-[ ] emergency.board.view
-[ ] emergency.triage.perform
-[ ] emergency.disposition.manage
-```
-
-Add search/filter for permissions.
-
-Add “select all module permissions” carefully.
-
-For critical permissions, show warning.
+Do not merge complaints with HOPC.
 
 ---
 
-# 21. Role Descriptions
+# 7. HOPC Link
 
-Add descriptions for common roles.
+History of Presenting Complaint may optionally link to one or more complaints.
 
-Examples:
+Support:
 
-## Super Admin
+complaint_id nullable
 
-Full system access, including users, roles, permissions, modules, settings, logs, and all clinical/financial modules.
+or if multiple complaints:
 
-## Hospital Admin
+hopc_complaint pivot table
 
-Manages hospital operations, users, departments, reports, and most workflows but may not access developer/system-critical settings unless granted.
-
-## Doctor
-
-Can manage consultations, diagnoses, prescriptions, investigation requests, procedure requests, and view patient clinical history.
-
-## Nurse
-
-Can record vitals, nursing notes, medication administration, clinical tasks, admission/emergency care activities depending assignment.
-
-## Pharmacist
-
-Can review prescriptions, bill selected drugs, dispense billed drugs, manage pharmacy stock view, and pharmacy reports.
-
-## Cashier
-
-Can view invoices, record payments, print receipts, and view payment reports.
-
-## Claims Officer
-
-Can prepare, review, validate, submit, and track insurance claims.
-
-## Store Officer
-
-Can manage products, stock movements, requisitions, transfers, stock balances, and purchase receipts depending permissions.
-
-## Theatre Staff
-
-Can view theatre board, manage theatre cases, record pre-op, anaesthesia, operative/recovery notes depending specific role.
-
-## Records Officer
-
-Can register patients, update patient folders, manage patient documents, and request/execute patient merges if authorized.
-
-Adapt descriptions to current roles.
-
----
-
-# 22. Permission Descriptions
-
-Add a centralized permission description config or database field.
-
-Preferred:
-
-```text
-permissions.description
-permissions.module
-permissions.risk_level
-```
-
-If migration is too risky, create config:
-
-```php
-config/permissions.php
-```
-
-Example:
-
-```php
-'patients.view' => [
-    'module' => 'patients',
-    'description' => 'Allows viewing patient list and patient folders.',
-    'risk' => 'NORMAL',
-],
-```
-
-Use this config to display explanations in UI.
-
----
-
-# 23. Backend Permission Audit Script / Command
-
-Create an artisan command to audit permissions.
-
-Suggested:
-
-```bash
-php artisan permissions:audit
-```
-
-The command should report:
-
-* routes missing permission middleware
-* permissions used in code but missing in database
-* permissions in database but unused in code
-* duplicate permission names
-* modules without permissions
-* menu items without permission checks
-
-Output to console and optionally:
-
-```text
-storage/reports/permissions_audit.json
-```
-
-or docs report.
-
-This helps future maintenance.
-
----
-
-# 24. Route Permission Mapping
-
-Create or update route permission mapping.
-
-Option A: permission middleware directly on routes.
-
-Option B: config file:
-
-```php
-config/route_permissions.php
-```
-
-Example:
-
-```php
-'admin.patients.index' => 'patients.view',
-'admin.patients.store' => 'patients.create',
-'admin.patients.update' => 'patients.update',
-'admin.emergency.board' => 'emergency.board.view',
-```
-
-The audit command can compare route list against mapping.
-
----
-
-# 25. Module Permission Mapping
-
-Create or update module-permission mapping.
-
-Example:
-
-```php
-'patients' => [
-    'patients.view',
-    'patients.create',
-    'patients.update',
-    'patients.merge.execute',
-],
-'emergency' => [
-    'emergency.board.view',
-    'emergency.case.view',
-    'emergency.triage.perform',
-],
-```
-
-Use this for:
-
-* module UI permission count
-* role assignment grouping
-* sidebar visibility
-* module dependency warning
-
----
-
-# 26. Seeder Updates
-
-Update seeders:
-
-* PermissionSeeder
-* RoleSeeder
-* ModuleSeeder
-* RolePermissionSeeder
-* any existing access control seeders
+Use the simplest structure consistent with current implementation.
 
 Rules:
 
-* seed permissions idempotently
-* do not duplicate permissions
-* do not remove custom permissions accidentally
-* assign Super Admin all permissions
-* assign reasonable defaults to other roles
-* respect existing custom assignments where possible
-
-If changing existing permission names, write migration/compatibility mapping.
+- HOPC can describe one complaint or multiple complaints.
+- Do not force every HOPC to link to a complaint.
+- Do not force one HOPC per complaint.
+- User can write one general HOPC narrative covering multiple complaints.
 
 ---
 
-# 27. Backend Guard for Modules
+# 8. Emergency Integration
 
-Add module guard.
+Emergency Session must support complaints.
 
-If a module is inactive:
+Emergency complaint workflow:
 
-* hide menus
-* block module routes unless user is Super Admin or has override permission
-* show clear message:
+- during emergency case creation, chief complaint may be captured
+- chief complaint should become a patient complaint record if appropriate
+- emergency clinical session should show complaints
+- emergency complaints should appear in Consultation page session view
+- emergency complaints should appear in Visit Preview
 
-```text
-The Emergency module is currently disabled.
-```
+Emergency complaint must link to:
 
-Core modules cannot be disabled.
-
-Suggested permission:
-
-```text
-modules.override_disabled
-```
-
-Use carefully.
+patient_id
+visit_id
+emergency_case_id
+consultation_route_id / emergency session id
+created_by
 
 ---
 
-# 28. UI Action Inventory
+# 9. Admission Integration
 
-Audit all frontend action buttons/links.
+Admission review should support complaints where clinically needed.
 
-Every button that changes data must check permission.
+If admission review uses the same consultation/session system, use the same complaint component.
 
-Examples:
-
-* Create
-* Edit
-* Delete
-* Cancel
-* Approve
-* Reject
-* Verify
-* Submit
-* Dispense
-* Administer
-* Pay
-* Reverse
-* Refund
-* Merge
-* Export
-* Print
-* Assign
-* Transfer
-* Complete
-* Reopen
-* Correct
-* Override
-
-Add helper:
-
-```js
-can('permission.name')
-```
-
-or use existing helper.
-
-For Vue/Inertia:
-
-```js
-const can = (permission) => page.props.auth.permissions.includes(permission)
-```
-
-or project equivalent.
-
-Do not leave dangerous buttons visible to unauthorized users.
+Do not create separate admission-only complaint storage unless already required.
 
 ---
 
-# 29. Backend Policy Inventory
+# 10. Medical Pattern Integration
 
-Where resource ownership matters, use policies.
+Medical Patterns must support complaints.
 
-Examples:
+Pattern item type:
 
-* consultation entries: edit own vs edit any
-* notes: edit own vs edit any
-* medication administrations: correct permission
-* theatre notes: edit own vs edit any
-* logs: module-based view permission
-* patient merge: execute permission
-* payments: reverse permission
+COMPLAINT
 
-Do not use simple global permission only where ownership matters.
+When creating a medical pattern:
 
----
+- user can add complaint catalogue items
+- user can add custom complaint text
+- user can set default duration/severity only if useful
 
-# 30. Permission-Based Dashboard/Menu
+When applying a pattern:
 
-Update dashboards/menus by role.
+- selected complaints are created under the current medical record/session
+- created_by is the current user
+- source_pattern_id is set
+- complaints appear in Consultation Summary and Visit Preview
 
-Consultation-type users should not see irrelevant menus.
-
-Emergency users should see emergency-relevant menus.
-
-Store users should see stock/procurement menus.
-
-Claims users should see claims menus.
-
-Cashiers should see billing/payment menus.
-
-But do not hardcode by role only. Prefer permissions.
-
-Menu visibility should be permission/module based.
+Do not attribute pattern-applied complaints to the original pattern creator unless they are the current user applying it.
 
 ---
 
-# 31. Tests Required
+# 11. Claims Mirror Integration
+
+Claims preparation mirror should show complaints.
+
+Claims officer should be able to:
+
+- view clinical complaints
+- select/copy complaint text into claim-facing fields if needed
+- not edit original clinical complaints
+
+Do not allow claims officer to overwrite doctor-entered complaints.
+
+---
+
+# 12. Visit Preview Integration
+
+Visit Preview must show complaints chronologically and under the correct session.
+
+Display:
+
+Complaint
+Duration
+Severity
+Notes
+Entered by
+Session/department
+Created at
+Source pattern if applicable
+
+Emergency complaints should appear under Emergency Session.
+
+OPD complaints should appear under OPD Consultation Session.
+
+---
+
+# 13. Complaint Seeder
+
+Create seeder:
+
+ComplaintCatalogueSeeder
+
+Seed common complaints.
+
+Use idempotent seeding:
+
+- updateOrCreate by name/category
+- do not create duplicates
+- keep existing custom records
+- do not deactivate existing records unless explicitly needed
+
+Seed at least these complaints:
+
+General:
+Fever
+General weakness
+Body pain
+Fatigue
+Loss of appetite
+Weight loss
+Night sweats
+Malaise
+
+Respiratory:
+Cough
+Shortness of breath
+Chest tightness
+Wheezing
+Sore throat
+Runny nose
+Nasal congestion
+Coughing blood
+
+Cardiovascular:
+Chest pain
+Palpitations
+Leg swelling
+Fainting
+Dizziness
+High blood pressure complaint
+
+Gastrointestinal:
+Abdominal pain
+Vomiting
+Nausea
+Diarrhea
+Constipation
+Heartburn
+Blood in stool
+Loss of appetite
+Abdominal swelling
+
+Neurological:
+Headache
+Convulsion
+Loss of consciousness
+Confusion
+Weakness of limb
+Numbness
+Tremors
+Dizziness
+
+Genitourinary:
+Painful urination
+Frequent urination
+Blood in urine
+Flank pain
+Urinary retention
+Incontinence
+
+Musculoskeletal:
+Back pain
+Joint pain
+Neck pain
+Limb pain
+Swelling of joint
+Difficulty walking
+Trauma injury
+
+Dermatology:
+Skin rash
+Itching
+Skin wound
+Burn
+Swelling
+Ulcer
+Skin infection
+
+ENT:
+Ear pain
+Ear discharge
+Hearing loss
+Nose bleeding
+Sore throat
+Difficulty swallowing
+
+Eye:
+Eye pain
+Red eye
+Blurred vision
+Eye discharge
+Loss of vision
+Foreign body in eye
+
+Dental:
+Toothache
+Gum bleeding
+Facial swelling
+Mouth ulcer
+Dental trauma
+
+Obstetrics/Gynecology:
+Vaginal bleeding
+Lower abdominal pain in pregnancy
+Labour pains
+Reduced fetal movement
+Vaginal discharge
+Missed period
+Pregnancy-related complaint
+
+Pediatrics:
+Poor feeding
+Excessive crying
+Fever in child
+Diarrhea in child
+Vomiting in child
+Convulsion in child
+Difficulty breathing in child
+
+Psychiatric:
+Anxiety
+Insomnia
+Depressed mood
+Aggression
+Confusion
+Substance use concern
+
+Emergency/Trauma:
+Road traffic accident
+Fall injury
+Assault
+Burn injury
+Poisoning
+Snake bite
+Animal bite
+Severe bleeding
+Unconsciousness
+Seizure
+Breathing difficulty
+Severe pain
+
+---
+
+# 14. Complaint Search API
+
+Create endpoint for complaint search/autocomplete.
+
+Example route:
+
+GET /admin/complaints/search?q=fever
+
+Return:
+
+id
+name
+category
+body_system
+description
+keywords
+
+Rules:
+
+- only active complaints
+- search by name, category, keywords
+- limit results
+- fast response
+- usable in Consultation/Emergency/Admission pages
+
+---
+
+# 15. Complaint Management UI
+
+Add optional admin page for complaint catalogue management.
+
+Menu:
+
+Settings or Clinical Setup
+    Complaints Catalogue
+
+Page should allow authorized users to:
+
+- view complaints
+- search/filter by category
+- create complaint
+- edit complaint
+- activate/deactivate complaint
+- manage keywords
+
+Permissions:
+
+complaints.catalogue.view
+complaints.catalogue.create
+complaints.catalogue.update
+complaints.catalogue.deactivate
+
+If time is limited, at minimum seed and search catalogue now, then add management UI later.
+
+---
+
+# 16. Permissions
+
+Add or verify:
+
+complaints.view
+complaints.create
+complaints.edit_own
+complaints.edit_any
+complaints.delete_own
+complaints.delete_any
+complaints.catalogue.view
+complaints.catalogue.create
+complaints.catalogue.update
+complaints.catalogue.deactivate
+
+Use existing consultation entry permissions if the system already uses generic permissions.
+
+Do not allow unauthorized users to modify other clinicians’ complaints.
+
+---
+
+# 17. Backend Services
+
+Create or update:
+
+ComplaintCatalogueService
+PatientComplaintService
+ComplaintSearchService
+MedicalPatternService
+ConsultationSummaryService
+VisitPreviewService
+ClaimPreparationMirrorService
+
+Do not put all logic directly in controllers.
+
+---
+
+# 18. Controllers / Routes
+
+Create or update:
+
+ComplaintCatalogueController
+ComplaintSearchController
+PatientComplaintController
+
+Suggested routes:
+
+GET /admin/complaints/catalogue
+POST /admin/complaints/catalogue
+PATCH /admin/complaints/catalogue/{complaint}
+GET /admin/complaints/search
+POST /admin/medical-records/{medicalRecord}/complaints
+PATCH /admin/patient-complaints/{complaint}
+DELETE /admin/patient-complaints/{complaint}
+
+Adapt to existing route conventions.
+
+---
+
+# 19. Frontend Components
+
+Create reusable component:
+
+ComplaintSelector.vue
+
+Features:
+
+- search complaint catalogue
+- select complaint
+- add custom complaint
+- duration input
+- duration unit select
+- severity select
+- notes
+- add to list
+- validation errors
+- loading state
+
+Use in:
+
+- Consultation Complaints section
+- Emergency clinical session
+- Admission review if needed
+- Medical pattern builder
+
+---
+
+# 20. Validation Rules
+
+Patient complaint save:
+
+- patient_id required
+- visit_id required
+- medical_record_id or consultation_route_id required where applicable
+- complaint_catalogue_id nullable exists
+- complaint_text required if no complaint_catalogue_id
+- duration nullable
+- duration_unit nullable valid value
+- severity nullable valid value
+- created_by current user
+
+Catalogue complaint:
+
+- name required
+- category nullable
+- body_system nullable
+- is_active boolean
+- name/category should be unique where reasonable
+
+---
+
+# 21. Data Integrity Rules
+
+- Do not duplicate patient complaint records on repeated save.
+- Do not delete complaints with clinical history unless soft delete is already used.
+- Preserve created_by.
+- Preserve source_pattern_id.
+- Do not overwrite complaints from other doctors unless authorized.
+- Do not merge complaints with HOPC.
+- Custom complaint should save complaint_text even if no catalogue item exists.
+
+---
+
+# 22. Tests Required
 
 Add or update tests.
 
-## Permission Database
-
-1. Permission seeder creates required permissions.
-2. Permission names are unique.
-3. Permissions have module mapping.
-4. Permissions have descriptions.
-5. Permissions have risk levels.
-
-## Roles
-
-6. Super Admin has all permissions.
-7. Doctor has consultation permissions but not financial reversal permissions.
-8. Nurse has vitals/MAR/task permissions but not role management.
-9. Pharmacist can bill/dispense drugs but cannot merge patients.
-10. Cashier can record payments but cannot edit clinical records.
-11. Claims Officer can manage claims but cannot dispense drugs.
-12. Store Officer can manage stock but cannot verify lab results.
-
-## Backend Authorization
-
-13. Unauthorized user cannot access patient merge execute.
-14. Unauthorized user cannot reverse payment.
-15. Unauthorized user cannot adjust stock.
-16. Unauthorized user cannot verify investigation result.
-17. Unauthorized user cannot administer medication without permission.
-18. Unauthorized user cannot view logs without permission.
-19. Unauthorized user cannot disable module.
-20. Authorized user can access allowed route.
-
-## Frontend Permissions
-
-21. Unauthorized user does not see restricted button.
-22. Authorized user sees permitted button.
-23. Sidebar hides modules without permission.
-24. Module disabled hides menu.
-25. Super Admin sees all modules.
-
-## Modules
-
-26. Core module cannot be disabled.
-27. Disabled module blocks route access.
-28. Module dependencies show warning.
-29. Module page shows descriptions.
-30. Module page shows linked permissions.
-
-## Audit Command
-
-31. permissions:audit detects missing route permission.
-32. permissions:audit detects permission used in code but missing in DB.
-33. permissions:audit detects unused permission.
-34. permissions:audit generates report.
+1. ComplaintCatalogueSeeder seeds complaints.
+2. Seeder is idempotent.
+3. Complaint search returns active complaints.
+4. Complaint search finds by name.
+5. Doctor can add complaint from catalogue.
+6. Doctor can add custom complaint.
+7. Complaint saves under visit/patient/medical record/session.
+8. Complaint stores created_by.
+9. Complaint can include duration and severity.
+10. Complaint appears before HOPC in consultation page data.
+11. Emergency chief complaint can become patient complaint.
+12. Complaint appears in Consultation Summary.
+13. Complaint appears in Visit Preview.
+14. Complaint appears in Claims Mirror.
+15. Pattern can store complaint item.
+16. Applying pattern creates complaint under current doctor.
+17. Unauthorized user cannot edit another doctor’s complaint.
+18. Catalogue management requires permission.
 
 ---
 
-# 32. Verification Checklist
-
-After implementation, manually verify:
-
-* Login as Super Admin.
-* Open Roles page.
-* Permissions are grouped by module.
-* Permissions have descriptions.
-* Critical permissions show warning.
-* Open Modules page.
-* Modules show descriptions/dependencies/permissions.
-* Disable non-core module and verify menu/route behavior.
-* Try disabled core module and confirm blocked.
-* Login as Doctor and confirm only relevant menus show.
-* Login as Cashier and confirm clinical edit buttons hidden.
-* Login as Nurse and confirm MAR actions available.
-* Try unauthorized backend route and confirm 403.
-* Run permissions audit command.
-* Review generated reports.
-
----
-
-# 33. Deliverables
+# 23. Deliverables
 
 Provide:
 
-1. ROLES_PERMISSIONS_GAP_ANALYSIS.md
-2. ROLES_PERMISSIONS_SOLUTION_REPORT.md
-3. MODULES_GAP_ANALYSIS.md
-4. MODULES_SOLUTION_REPORT.md
-5. ROLES_PERMISSIONS_REMAINING_RECOMMENDATIONS.md
-6. Updated permissions list.
-7. Updated module list and descriptions.
-8. Updated role descriptions.
-9. Updated seeders.
-10. Backend authorization fixes.
-11. Frontend UI permission fixes.
-12. Sidebar/menu permission/module fixes.
-13. Permission descriptions in UI.
-14. Module descriptions in UI.
-15. Permission audit command.
-16. Tests or verification notes.
-17. Files modified.
-18. Remaining TODOs.
+1. Gap analysis of current complaint implementation.
+2. Complaint catalogue model/migration if needed.
+3. Patient complaint model/migration if needed.
+4. ComplaintCatalogueSeeder with common complaints.
+5. Complaint search endpoint.
+6. Complaint selector UI/component.
+7. Consultation complaints section update.
+8. Emergency complaint integration.
+9. Medical pattern complaint support.
+10. Consultation Summary update.
+11. Visit Preview update.
+12. Claims mirror update.
+13. Permissions/seeders.
+14. Tests or verification notes.
+15. Files modified.
+16. Remaining TODOs.
 
 ---
 
-# 34. Important Rules
+# 24. Important Rules
 
-Do not rely only on frontend permissions.
+Do not remove existing complaint data.
 
-Do not leave sensitive POST/PATCH/DELETE routes unprotected.
+Do not create duplicate complaint systems if one already exists.
 
-Do not create duplicate permission names.
+Do not merge complaints into HOPC.
 
-Do not remove existing custom permissions without mapping.
+Do not force doctors to only use seeded complaints.
 
-Do not hardcode menus only by role where permission-based checks should be used.
+Do not allow claims officers to edit original clinical complaints.
 
-Do not allow disabled modules to be accessed through direct URL.
+Do not hide emergency complaints from consultation/session history.
 
-Do not allow core modules to be disabled.
+Do not break consultation, emergency, admission, medical patterns, visit preview, or claims workflows.
 
-Do not give all roles excessive permissions just to make errors disappear.
-
-Do not break existing workflows.
-
-Do not hide important admin explanations.
-
-Now inspect the current UHMS roles, permissions, modules, menus, routes, controllers, policies, seeders, and frontend UI. Produce the required gap reports, fix the authorization/module system extensively, update the UI explanations, and document all solutions.
-
-```
-```
+Now inspect the current UHMS implementation and build/seed the Complaints Catalogue and patient complaint recording workflow as described.

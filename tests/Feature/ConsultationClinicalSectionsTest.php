@@ -6,6 +6,7 @@ use App\Enums\DepartmentType;
 use App\Enums\ServiceType;
 use App\Enums\VisitStatus;
 use App\Models\Complaint;
+use App\Models\ComplaintCatalogue;
 use App\Models\Department;
 use App\Models\MedicalPattern;
 use App\Models\Patient;
@@ -17,6 +18,7 @@ use App\Services\ConsultationSessionService;
 use App\Services\ConsultationSummaryService;
 use App\Services\MedicalPatternService;
 use App\Services\VisitPreviewService;
+use Database\Seeders\ComplaintCatalogueSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -48,6 +50,10 @@ class ConsultationClinicalSectionsTest extends TestCase
             'consultation.entries.create',
             'consultation.entries.edit_own',
             'consultation.entries.delete_own',
+            'complaints.view',
+            'complaints.create',
+            'complaints.edit_own',
+            'complaints.delete_own',
             'consultation.hopc.create',
             'consultation.hopc.view',
             'consultation.examination.create',
@@ -87,6 +93,130 @@ class ConsultationClinicalSectionsTest extends TestCase
             'department_id' => $this->department->id,
         ]);
         $this->additionalDoctor->assignRole($doctorRole);
+    }
+
+    public function test_complaint_catalogue_seeder_is_idempotent_and_search_returns_active_entries(): void
+    {
+        $this->seed(ComplaintCatalogueSeeder::class);
+        $count = ComplaintCatalogue::count();
+
+        $this->seed(ComplaintCatalogueSeeder::class);
+
+        $this->assertSame($count, ComplaintCatalogue::count());
+
+        $headache = ComplaintCatalogue::where('name', 'Headache')->firstOrFail();
+        $headache->update(['is_active' => false]);
+
+        $this->actingAs($this->mainDoctor)
+            ->getJson(route('admin.complaints.search', ['q' => 'headache']))
+            ->assertOk()
+            ->assertJsonMissing(['id' => $headache->id]);
+
+        $this->actingAs($this->mainDoctor)
+            ->getJson(route('admin.complaints.search', ['q' => 'chest']))
+            ->assertOk()
+            ->assertJsonFragment(['name' => 'Chest pain']);
+    }
+
+    public function test_doctor_can_record_catalogue_and_custom_patient_complaints(): void
+    {
+        $this->seed(ComplaintCatalogueSeeder::class);
+        [$visit, $route] = $this->makeConsultingVisit();
+        $catalogue = ComplaintCatalogue::where('name', 'Chest pain')->where('category', 'Cardiovascular')->firstOrFail();
+
+        $this->actingAs($this->mainDoctor)
+            ->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
+            ->post(route('admin.consultations.complaints.store', $visit), [
+                'consultation_route_id' => $route->id,
+                'complaint_catalogue_id' => $catalogue->id,
+                'duration' => '2',
+                'duration_unit' => 'days',
+                'severity' => 'severe',
+                'notes' => 'Radiates to left arm.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('complaint.description', 'Chest pain')
+            ->assertJsonPath('complaint.complaint_catalogue_id', $catalogue->id);
+
+        $this->actingAs($this->mainDoctor)
+            ->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
+            ->post(route('admin.consultations.complaints.store', $visit), [
+                'consultation_route_id' => $route->id,
+                'description' => 'Feels unusually cold at night',
+                'duration' => '1',
+                'duration_unit' => 'weeks',
+                'severity' => 'mild',
+            ])
+            ->assertOk()
+            ->assertJsonPath('complaint.description', 'Feels unusually cold at night')
+            ->assertJsonPath('complaint.complaint_catalogue_id', null);
+
+        $this->assertDatabaseHas('complaints', [
+            'medical_record_id' => $route->medicalRecord->id,
+            'consultation_route_id' => $route->id,
+            'visit_id' => $visit->id,
+            'patient_id' => $visit->patient_id,
+            'department_id' => $this->department->id,
+            'created_by' => $this->mainDoctor->id,
+            'complaint_catalogue_id' => $catalogue->id,
+            'description' => 'Chest pain',
+            'duration' => '2',
+            'duration_unit' => 'days',
+            'severity' => 'severe',
+            'notes' => 'Radiates to left arm.',
+        ]);
+        $this->assertDatabaseHas('complaints', [
+            'medical_record_id' => $route->medicalRecord->id,
+            'description' => 'Feels unusually cold at night',
+            'complaint_catalogue_id' => null,
+        ]);
+        $this->assertDatabaseCount('history_of_presenting_complaints', 0);
+
+        $summary = app(ConsultationSummaryService::class)->forRecord($route->medicalRecord->fresh());
+        $summaryComplaint = collect($summary['sections']['complaints'])->firstWhere('content', 'Chest pain');
+
+        $this->assertSame('Chest pain', $summaryComplaint['details']['Catalogue']);
+        $this->assertSame('Cardiovascular', $summaryComplaint['details']['Category']);
+        $this->assertSame('2 days', $summaryComplaint['details']['Duration']);
+        $this->assertSame('Severe', $summaryComplaint['details']['Severity']);
+
+        $preview = app(VisitPreviewService::class)->build($visit->fresh());
+        $previewComplaint = collect($preview['timeline'])->firstWhere('source_type', 'complaint');
+
+        $this->assertSame('Chest pain', $previewComplaint['description']);
+        $this->assertSame('Chest pain', $previewComplaint['details']['Complaint']);
+        $this->assertSame('Cardiovascular', $previewComplaint['details']['Category']);
+    }
+
+    public function test_view_only_claims_user_cannot_edit_original_clinical_complaint(): void
+    {
+        [$visit, $route] = $this->makeConsultingVisit();
+        $record = app(ConsultationSessionService::class)->getOrCreateMedicalRecordForRoute($route, $this->mainDoctor);
+
+        $complaint = Complaint::create([
+            'medical_record_id' => $record->id,
+            'consultation_route_id' => $route->id,
+            'visit_id' => $visit->id,
+            'patient_id' => $visit->patient_id,
+            'department_id' => $this->department->id,
+            'doctor_id' => $this->mainDoctor->id,
+            'created_by' => $this->mainDoctor->id,
+            'description' => 'Chest pain',
+        ]);
+
+        $claimsRole = Role::findOrCreate('Claims Officer', 'web');
+        $claimsRole->givePermissionTo(Permission::findOrCreate('complaints.view', 'web'));
+        /** @var User $claimsUser */
+        $claimsUser = User::factory()->create(['department_id' => $this->department->id]);
+        $claimsUser->assignRole($claimsRole);
+
+        $this->actingAs($claimsUser)
+            ->patch(route('admin.patient-complaints.update', $complaint), [
+                'description' => 'Changed by claims',
+            ])
+            ->assertForbidden();
+
+        $this->assertSame('Chest pain', $complaint->fresh()->description);
     }
 
     public function test_consultation_page_shows_required_clinical_order(): void
@@ -224,17 +354,27 @@ class ConsultationClinicalSectionsTest extends TestCase
             'is_active' => true,
         ]);
         $pattern->items()->createMany([
+            ['type' => 'complaint', 'data' => ['description' => 'Fever', 'duration' => '2', 'duration_unit' => 'days', 'severity' => 'moderate'], 'sort_order' => 0],
             ['type' => 'history_of_presenting_complaint', 'data' => ['content' => 'Fever for two days.'], 'sort_order' => 1],
             ['type' => 'examination', 'data' => ['findings' => 'Febrile, no neck stiffness.'], 'sort_order' => 2],
             ['type' => 'task', 'data' => ['title' => 'Review after treatment', 'description' => 'Review in 48 hours.'], 'sort_order' => 3],
         ]);
 
         app(MedicalPatternService::class)->applyPattern($pattern, $record, [
+            'complaint',
             'history_of_presenting_complaint',
             'examination',
             'task',
         ], $this->additionalDoctor);
 
+        $this->assertDatabaseHas('complaints', [
+            'description' => 'Fever',
+            'duration' => '2',
+            'duration_unit' => 'days',
+            'severity' => 'moderate',
+            'created_by' => $this->additionalDoctor->id,
+            'source_pattern_id' => $pattern->id,
+        ]);
         $this->assertDatabaseHas('history_of_presenting_complaints', [
             'content' => 'Fever for two days.',
             'created_by' => $this->additionalDoctor->id,

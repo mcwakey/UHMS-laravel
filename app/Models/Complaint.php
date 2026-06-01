@@ -11,17 +11,23 @@ class Complaint extends Model
 
     protected $fillable = [
         'medical_record_id',
+        'complaint_catalogue_id',
         'consultation_route_id',
         'visit_id',
         'patient_id',
         'department_id',
         'doctor_id',
+        'emergency_case_id',
+        'emergency_session_id',
+        'admission_id',
         'created_by',
         'updated_by',
         'source_pattern_id',
         'description',
         'duration',
+        'duration_unit',
         'severity',
+        'notes',
     ];
 
     /*
@@ -33,6 +39,11 @@ class Complaint extends Model
     public function medicalRecord()
     {
         return $this->belongsTo(MedicalRecord::class);
+    }
+
+    public function complaintCatalogue()
+    {
+        return $this->belongsTo(ComplaintCatalogue::class);
     }
 
     public function consultationRoute()
@@ -78,5 +89,20 @@ class Complaint extends Model
     public function sourcePattern()
     {
         return $this->belongsTo(MedicalPattern::class, 'source_pattern_id');
+    }
+
+    public function emergencyCase()
+    {
+        return $this->belongsTo(EmergencyCase::class);
+    }
+
+    public function emergencySession()
+    {
+        return $this->belongsTo(EmergencySession::class);
+    }
+
+    public function admission()
+    {
+        return $this->belongsTo(Admission::class);
     }
 }

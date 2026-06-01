@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\Auth;
 
 class MedicalPatternService
 {
+    public function __construct(
+        protected PatientComplaintService $patientComplaints,
+    ) {}
+
     /**
      * List patterns with filters and pagination.
      */
@@ -68,7 +72,7 @@ class MedicalPatternService
     public function createFromRecord(MedicalRecord $record, string $name, ?int $doctorId = null): MedicalPattern
     {
         $record->load([
-            'complaints',
+            'complaints.complaintCatalogue',
             'historiesOfPresentingComplaint',
             'physicalExaminations',
             'diagnoses',
@@ -86,8 +90,11 @@ class MedicalPatternService
                 'type' => 'complaint',
                 'data' => [
                     'description' => $complaint->description,
+                    'complaint_catalogue_id' => $complaint->complaint_catalogue_id,
                     'duration' => $complaint->duration,
+                    'duration_unit' => $complaint->duration_unit,
                     'severity' => $complaint->severity,
+                    'notes' => $complaint->notes,
                 ],
                 'sort_order' => $sortOrder++,
             ];
@@ -306,12 +313,15 @@ class MedicalPatternService
 
             switch ($item->type) {
                 case 'complaint':
-                    $applied['complaints'][] = $record->complaints()->create([
-                        ...$context,
-                        'description' => $data['description'] ?? '',
+                    $applied['complaints'][] = $this->patientComplaints->createForRecord($record, [
+                        'description' => $data['description'] ?? $data['name'] ?? '',
+                        'complaint_catalogue_id' => $data['complaint_catalogue_id'] ?? null,
                         'duration' => $data['duration'] ?? null,
+                        'duration_unit' => $data['duration_unit'] ?? null,
                         'severity' => $data['severity'] ?? null,
-                    ]);
+                        'notes' => $data['notes'] ?? null,
+                        'source_pattern_id' => $pattern->id,
+                    ], $user);
                     break;
 
                 case 'history_of_presenting_complaint':

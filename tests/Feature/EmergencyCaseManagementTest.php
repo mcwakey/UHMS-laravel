@@ -150,6 +150,22 @@ class EmergencyCaseManagementTest extends TestCase
             'patient_id' => $case->patient_id,
             'consultation_route_id' => $route->id,
         ]);
+        $this->assertDatabaseHas('complaints', [
+            'medical_record_id' => $session->medical_record_id,
+            'consultation_route_id' => $route->id,
+            'visit_id' => $case->visit_id,
+            'patient_id' => $case->patient_id,
+            'emergency_case_id' => $case->id,
+            'emergency_session_id' => $session->id,
+            'description' => 'Road traffic accident',
+            'created_by' => $this->user->id,
+        ]);
+
+        $preview = app(VisitPreviewService::class)->build($case->visit->fresh());
+        $complaintItem = collect($preview['timeline'])->firstWhere('source_type', 'complaint');
+
+        $this->assertNotNull($complaintItem);
+        $this->assertSame('Road traffic accident', $complaintItem['description']);
     }
 
     public function test_unknown_patient_emergency_case_creates_temporary_patient(): void

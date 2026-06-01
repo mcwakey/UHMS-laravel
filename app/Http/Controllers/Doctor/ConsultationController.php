@@ -30,6 +30,7 @@ use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
 use App\Services\ClinicalService;
+use App\Services\ComplaintSearchService;
 use App\Services\ConsultationRouteService;
 use App\Services\ConsultationService;
 use App\Services\ConsultationSessionService;
@@ -47,6 +48,7 @@ use App\Services\VisitWorkflowService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 
 class ConsultationController extends Controller
 {
@@ -72,12 +74,18 @@ class ConsultationController extends Controller
 
     private function entryPayload($entry, array $relations = [])
     {
-        return $entry->fresh(array_values(array_unique(array_merge([
+        $defaultRelations = [
             'creator',
             'doctor',
             'updater',
             'sourcePattern',
-        ], $relations))));
+        ];
+
+        if ($entry instanceof Complaint) {
+            $defaultRelations[] = 'complaintCatalogue';
+        }
+
+        return $entry->fresh(array_values(array_unique(array_merge($defaultRelations, $relations))));
     }
 
     private function abortIfRouteMismatch(Visit $visit, VisitConsultationRoute $route): void
@@ -600,16 +608,19 @@ class ConsultationController extends Controller
     public function storeComplaint(Request $request, Visit $visit)
     {
         $request->validate([
-            'description' => ['required', 'string', 'max:2000'],
+            'complaint_catalogue_id' => ['nullable', Rule::exists('complaint_catalogues', 'id')->where('is_active', true)],
+            'description' => ['required_without:complaint_catalogue_id', 'nullable', 'string', 'max:2000'],
             'duration' => ['nullable', 'string', 'max:191'],
-            'severity' => ['nullable', 'in:mild,moderate,severe'],
+            'duration_unit' => ['nullable', 'in:minutes,hours,days,weeks,months,years'],
+            'severity' => ['nullable', 'in:mild,moderate,severe,critical'],
+            'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $record = $this->consultationService->getOrCreateRecord(
             $visit,
             $request->integer('consultation_route_id') ?: null,
         );
-        $complaint = $this->consultationService->addComplaint($record, $request->only('description', 'duration', 'severity'));
+        $complaint = $this->consultationService->addComplaint($record, $request->only('complaint_catalogue_id', 'description', 'duration', 'duration_unit', 'severity', 'notes'));
 
         if ($this->shouldReturnJson($request)) {
             return response()->json(['success' => true, 'complaint' => $this->entryPayload($complaint)]);
@@ -623,9 +634,12 @@ class ConsultationController extends Controller
         abort_unless(Auth::user() && $this->entryPermissions->canEdit(Auth::user(), $complaint), 403);
 
         $data = $request->validate([
-            'description' => ['required', 'string', 'max:2000'],
+            'complaint_catalogue_id' => ['nullable', Rule::exists('complaint_catalogues', 'id')->where('is_active', true)],
+            'description' => ['required_without:complaint_catalogue_id', 'nullable', 'string', 'max:2000'],
             'duration' => ['nullable', 'string', 'max:191'],
-            'severity' => ['nullable', 'in:mild,moderate,severe'],
+            'duration_unit' => ['nullable', 'in:minutes,hours,days,weeks,months,years'],
+            'severity' => ['nullable', 'in:mild,moderate,severe,critical'],
+            'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $complaint = $this->consultationService->updateComplaint($complaint, $data);
@@ -1263,23 +1277,16 @@ class ConsultationController extends Controller
     }
 
     /**
-     * Return complaint description suggestions from existing complaints.
+     * Return complaint catalogue suggestions.
      */
-    public function suggestComplaints(Request $request)
+    public function suggestComplaints(Request $request, ComplaintSearchService $complaintSearch)
     {
         $q = trim($request->input('q', ''));
         if (strlen($q) < 2) {
             return response()->json([]);
         }
 
-        $suggestions = Complaint::where('description', 'like', '%'.$q.'%')
-            ->distinct()
-            ->orderByRaw('COUNT(*) DESC')
-            ->groupBy('description')
-            ->limit(10)
-            ->pluck('description');
-
-        return response()->json($suggestions);
+        return response()->json($complaintSearch->autocompletePayload($complaintSearch->search($q, 10)));
     }
 
     /**

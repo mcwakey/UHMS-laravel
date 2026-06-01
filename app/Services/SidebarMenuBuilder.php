@@ -1132,7 +1132,7 @@ class SidebarMenuBuilder
                     [
                         'label' => 'Settings',
                         'icon' => 'ti ti-settings',
-                        'active_patterns' => ['admin.settings.*', 'admin.modules.*'],
+                        'active_patterns' => ['admin.settings.*', 'admin.modules.*', 'admin.complaints.catalogue.*'],
                         'children' => [
                             [
                                 'label' => 'Organization',
@@ -1164,6 +1164,14 @@ class SidebarMenuBuilder
                                 'route' => 'admin.settings.activity-log',
                                 'active_patterns' => ['admin.settings.activity-log'],
                                 'permission' => 'settings.manage',
+                                'module' => 'settings',
+                            ],
+                            [
+                                'label' => 'Complaint Catalogue',
+                                'icon' => 'ti ti-message-report',
+                                'route' => 'admin.complaints.catalogue.index',
+                                'active_patterns' => ['admin.complaints.catalogue.*'],
+                                'permission' => 'complaints.catalogue.view',
                                 'module' => 'settings',
                             ],
                             [

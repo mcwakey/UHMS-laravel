@@ -17,6 +17,7 @@ class ConsultationService
         protected ConsultationSessionService $sessionService,
         protected ConsultationContributorService $contributors,
         protected MedicalRecordEntryLogService $entryLogs,
+        protected PatientComplaintService $patientComplaints,
     ) {}
 
     /**
@@ -95,7 +96,7 @@ class ConsultationService
             ]),
             'record' => $record?->load([
                 'consultationRoute.contributors.user',
-                'complaints.creator', 'complaints.updater', 'complaints.sourcePattern',
+                'complaints.creator', 'complaints.updater', 'complaints.sourcePattern', 'complaints.complaintCatalogue',
                 'historiesOfPresentingComplaint.creator', 'historiesOfPresentingComplaint.updater', 'historiesOfPresentingComplaint.complaint', 'historiesOfPresentingComplaint.sourcePattern',
                 'physicalExaminations.creator', 'physicalExaminations.updater', 'physicalExaminations.sourcePattern',
                 'diagnoses.creator', 'diagnoses.updater', 'diagnoses.icdCodeEntry', 'diagnoses.sourcePattern',
@@ -119,7 +120,7 @@ class ConsultationService
             'visit.pendingConsultationRoutes.doctor',
             'consultationRoute.department',
             'consultationRoute.emergencyCase',
-            'complaints.creator',
+            'complaints.creator', 'complaints.complaintCatalogue',
             'historiesOfPresentingComplaint.creator',
             'physicalExaminations.creator',
             'diagnoses.creator',
@@ -152,12 +153,7 @@ class ConsultationService
      */
     public function addComplaint(MedicalRecord $record, array $data): Complaint
     {
-        $this->assertRecordEditable($record);
-
-        $complaint = $record->complaints()->create(array_merge($this->entryContext($record), $data));
-        $this->afterEntryCreated($record, $complaint, 'Complaint');
-
-        return $complaint->load(['creator', 'sourcePattern']);
+        return $this->patientComplaints->createForRecord($record, $data, Auth::user());
     }
 
     /**
@@ -165,13 +161,7 @@ class ConsultationService
      */
     public function updateComplaint(Complaint $complaint, array $data): Complaint
     {
-        $this->assertEntryEditable($complaint);
-
-        $old = $complaint->getOriginal();
-        $complaint->update(array_merge($data, ['updated_by' => Auth::id()]));
-        $this->entryLogs->updated($complaint, $old, Auth::user());
-
-        return $complaint;
+        return $this->patientComplaints->update($complaint, $data, Auth::user());
     }
 
     /**
@@ -179,10 +169,7 @@ class ConsultationService
      */
     public function deleteComplaint(Complaint $complaint): void
     {
-        $this->assertEntryEditable($complaint);
-
-        $this->entryLogs->deleted($complaint, Auth::user());
-        $complaint->delete();
+        $this->patientComplaints->delete($complaint, Auth::user());
     }
 
     /**

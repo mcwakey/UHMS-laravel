@@ -23,6 +23,12 @@
        class="list-group-item list-group-item-action {{ request()->routeIs('admin.settings.ward') ? 'active' : '' }}">
         <i class="ti ti-bed me-2"></i>Ward & Admissions
     </a>
+    @can('complaints.catalogue.view')
+    <a href="{{ route('admin.complaints.catalogue.index') }}"
+       class="list-group-item list-group-item-action {{ request()->routeIs('admin.complaints.catalogue.*') ? 'active' : '' }}">
+        <i class="ti ti-message-report me-2"></i>Complaint Catalogue
+    </a>
+    @endcan
 
     <div class="list-group-item bg-light fw-bold text-muted small text-uppercase mt-2">System</div>
     <a href="{{ route('admin.settings.activity-log') }}"

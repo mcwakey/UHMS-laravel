@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\CashierShiftController;
 use App\Http\Controllers\Admin\ClaimController;
+use App\Http\Controllers\Admin\ComplaintCatalogueController;
+use App\Http\Controllers\Admin\ComplaintSearchController;
 use App\Http\Controllers\Admin\ConsultationTaskController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DepartmentController;
@@ -47,6 +49,7 @@ use App\Http\Controllers\Admin\MarChartController;
 use App\Http\Controllers\Admin\ModuleController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Admin\PatientController;
+use App\Http\Controllers\Admin\PatientComplaintController;
 use App\Http\Controllers\Admin\PatientInsuranceController;
 use App\Http\Controllers\Admin\PatientMergeController;
 use App\Http\Controllers\Admin\PayrollController;
@@ -176,6 +179,22 @@ Route::middleware('auth')->group(function () {
 
         // Dashboard
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        // Complaint catalogue and patient complaint endpoints
+        Route::get('complaints/search', ComplaintSearchController::class)->name('complaints.search')->middleware('can:complaints.view');
+
+        Route::middleware('can:complaints.catalogue.view')->group(function () {
+            Route::get('complaints/catalogue', [ComplaintCatalogueController::class, 'index'])->name('complaints.catalogue.index');
+            Route::post('complaints/catalogue', [ComplaintCatalogueController::class, 'store'])->name('complaints.catalogue.store')->middleware('can:complaints.catalogue.create');
+            Route::patch('complaints/catalogue/{complaint}', [ComplaintCatalogueController::class, 'update'])->name('complaints.catalogue.update')->middleware('can:complaints.catalogue.update');
+            Route::patch('complaints/catalogue/{complaint}/toggle', [ComplaintCatalogueController::class, 'toggle'])->name('complaints.catalogue.toggle')->middleware('can:complaints.catalogue.deactivate');
+        });
+
+        Route::middleware('can:complaints.view')->group(function () {
+            Route::post('medical-records/{medicalRecord}/complaints', [PatientComplaintController::class, 'store'])->name('medical-records.complaints.store')->middleware('can:complaints.create');
+            Route::patch('patient-complaints/{complaint}', [PatientComplaintController::class, 'update'])->name('patient-complaints.update');
+            Route::delete('patient-complaints/{complaint}', [PatientComplaintController::class, 'destroy'])->name('patient-complaints.destroy');
+        });
 
         // User Management
         Route::middleware('can:users.view')->group(function () {
