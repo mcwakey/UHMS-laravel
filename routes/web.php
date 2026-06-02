@@ -81,6 +81,7 @@ use App\Http\Controllers\Admin\ServiceCatalogController;
 use App\Http\Controllers\Admin\ServiceRenderingActionController;
 use App\Http\Controllers\Admin\ServiceRenderingController;
 use App\Http\Controllers\Admin\ServiceRenderingReportController;
+use App\Http\Controllers\Admin\StatisticsController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SpecialtyController;
 use App\Http\Controllers\Admin\StockController;
@@ -946,6 +947,22 @@ Route::middleware('auth')->group(function () {
             Route::post('specialties', [SpecialtyController::class, 'store'])->name('specialties.store');
             Route::put('specialties/{specialty}', [SpecialtyController::class, 'update'])->name('specialties.update');
             Route::patch('specialties/{specialty}/toggle', [SpecialtyController::class, 'toggle'])->name('specialties.toggle');
+        });
+
+        // Statistical Reports / Analytics — per-page permission is enforced in the
+        // controller so a user holding only a single statistics.*.view (e.g.
+        // staff_performance) can still reach that page.
+        Route::middleware('module:reports')->prefix('statistics')->name('statistics.')->group(function () {
+            Route::get('/', [StatisticsController::class, 'dashboard'])->name('dashboard');
+            foreach ([
+                'activity', 'diagnoses', 'complaints', 'consultations', 'pharmacy',
+                'investigations', 'procedures', 'emergency', 'admission', 'mar',
+                'billing', 'claims', 'stock', 'blood-bank', 'staff-performance',
+            ] as $statisticReport) {
+                Route::get($statisticReport, [StatisticsController::class, 'show'])
+                    ->defaults('report', $statisticReport)
+                    ->name($statisticReport);
+            }
         });
 
         // Reports
