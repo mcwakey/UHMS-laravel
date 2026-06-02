@@ -3,8 +3,8 @@
 namespace App\Exports;
 
 use Illuminate\Support\Facades\DB;
-use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\Exportable;
+use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithTitle;
 
@@ -27,25 +27,33 @@ class StockValuationExport implements FromCollection, WithHeadings, WithTitle
                 DB::raw('COALESCE(d.name, p.name) as drug_name'),
                 'sl.name as location',
                 DB::raw('SUM(sb.quantity_on_hand) as total_qty'),
-                DB::raw('SUM(sb.quantity_on_hand * COALESCE(p.cost_price, 0)) as cost_value'),
-                DB::raw('SUM(sb.quantity_on_hand * COALESCE(p.selling_price, p.price, 0)) as retail_value')
+                DB::raw('SUM(sb.quantity_on_hand * COALESCE(p.default_cost, 0)) as cost_value'),
+                DB::raw('SUM(sb.quantity_on_hand * COALESCE(p.base_price, 0)) as retail_value')
             )
             ->groupBy('p.id', 'p.name', 'd.name', 'sl.id', 'sl.name');
 
         if (! empty($this->filters['location'])) {
-            $query->where('sl.name', $this->filters['location']);
+            $query->where('sl.id', $this->filters['location']);
+        }
+
+        if (! empty($this->filters['search'])) {
+            $query->where(function ($query) {
+                $query->where('p.name', 'like', '%'.$this->filters['search'].'%')
+                    ->orWhere('p.code', 'like', '%'.$this->filters['search'].'%');
+            });
         }
 
         return $query->orderBy('p.name')->get()->map(function ($row) {
-            $cost   = (float) $row->cost_value;
+            $cost = (float) $row->cost_value;
             $retail = (float) $row->retail_value;
+
             return [
-                'Drug/Product'      => $row->drug_name,
-                'Location'          => $row->location,
-                'Total Qty'         => $row->total_qty,
-                'Cost Value (₵)'    => number_format($cost, 2),
-                'Retail Value (₵)'  => number_format($retail, 2),
-                'Margin (₵)'        => number_format($retail - $cost, 2),
+                'Drug/Product' => $row->drug_name,
+                'Location' => $row->location,
+                'Total Qty' => $row->total_qty,
+                'Cost Value (₵)' => number_format($cost, 2),
+                'Retail Value (₵)' => number_format($retail, 2),
+                'Margin (₵)' => number_format($retail - $cost, 2),
             ];
         });
     }

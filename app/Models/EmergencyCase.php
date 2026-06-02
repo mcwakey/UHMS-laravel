@@ -236,6 +236,16 @@ class EmergencyCase extends Model
         return $this->hasMany(ServiceRendering::class);
     }
 
+    public function bloodRequests()
+    {
+        return $this->hasMany(BloodRequest::class);
+    }
+
+    public function bloodIssues()
+    {
+        return $this->hasMany(BloodIssue::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->whereNotIn('emergency_status', [

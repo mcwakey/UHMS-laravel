@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
 
             // ── Modules (feature flags) ───────────────────────────────────
             ModuleSeeder::class,
+            BloodBankSeeder::class,
 
             // ── Billing / insurance / finance reference data ─────────────
             CashAndCarrySeeder::class,

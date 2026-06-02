@@ -168,6 +168,19 @@ class VisitPreviewService
             'procedureRequests.anaesthesiaNote.anaesthetist',
             'procedureRequests.operativeNote',
             'procedureRequests.postOpNote',
+            'bloodRequests.requestedBy',
+            'bloodRequests.approvedBy',
+            'bloodRequests.department',
+            'bloodRequests.crossmatches.unit',
+            'bloodRequests.crossmatches.performedBy',
+            'bloodRequests.issues.unit',
+            'bloodRequests.issues.issuedBy',
+            'bloodRequests.issues.receivedBy',
+            'bloodRequests.issues.transfusedBy',
+            'bloodIssues.unit',
+            'bloodIssues.issuedBy',
+            'bloodIssues.receivedBy',
+            'bloodIssues.transfusedBy',
         ]);
     }
 
@@ -917,6 +930,90 @@ class VisitPreviewService
             }
         }
 
+        foreach ($visit->bloodRequests ?? [] as $bloodRequest) {
+            $items[] = $this->item(
+                $bloodRequest->requested_at ?? $bloodRequest->created_at,
+                'Blood Requested',
+                "{$bloodRequest->blood_group} {$bloodRequest->component_type} x{$bloodRequest->units_requested} requested.",
+                optional($bloodRequest->requestedBy)->full_name,
+                optional($bloodRequest->department)->name,
+                'BLOOD', 'bg-danger',
+                'blood_request', $bloodRequest->id,
+                array_filter([
+                    'Request Number' => $bloodRequest->request_number,
+                    'Priority' => $bloodRequest->priority,
+                    'Status' => $bloodRequest->status,
+                    'Indication' => $bloodRequest->indication,
+                ])
+            );
+
+            if ($bloodRequest->approved_at) {
+                $items[] = $this->item(
+                    $bloodRequest->approved_at,
+                    'Blood Request Approved',
+                    "{$bloodRequest->request_number} approved for crossmatch and issue.",
+                    optional($bloodRequest->approvedBy)->full_name,
+                    optional($bloodRequest->department)->name,
+                    'APPROVED', 'bg-success',
+                    'blood_request', $bloodRequest->id
+                );
+            }
+
+            foreach ($bloodRequest->crossmatches ?? [] as $crossmatch) {
+                $items[] = $this->item(
+                    $crossmatch->performed_at ?? $crossmatch->created_at,
+                    'Blood Crossmatch '.$this->formatStatus($crossmatch->result),
+                    'Unit '.($crossmatch->unit?->unit_number ?? $crossmatch->blood_unit_id).' crossmatched for request '.$bloodRequest->request_number.'.',
+                    optional($crossmatch->performedBy)->full_name,
+                    'Blood Bank',
+                    $crossmatch->result, $crossmatch->result === 'COMPATIBLE' ? 'bg-success' : 'bg-danger',
+                    'blood_crossmatch', $crossmatch->id,
+                    array_filter([
+                        'Unit' => $crossmatch->unit?->unit_number,
+                        'Unit Blood Group' => $crossmatch->unit?->blood_group,
+                        'Method' => $crossmatch->method,
+                        'Notes' => $crossmatch->notes,
+                    ])
+                );
+            }
+
+            foreach ($bloodRequest->issues ?? [] as $issue) {
+                $items[] = $this->item(
+                    $issue->issued_at,
+                    'Blood Unit Issued',
+                    'Unit '.($issue->unit?->unit_number ?? $issue->blood_unit_id).' issued for transfusion.',
+                    optional($issue->issuedBy)->full_name,
+                    'Blood Bank',
+                    'ISSUED', 'bg-danger',
+                    'blood_issue', $issue->id,
+                    array_filter([
+                        'Issue Number' => $issue->issue_number,
+                        'Unit' => $issue->unit?->unit_number,
+                        'Received By' => $issue->receivedBy?->full_name ?? $issue->received_by_name,
+                        'Status' => $issue->transfusion_status,
+                    ])
+                );
+
+                if ($issue->transfused_at) {
+                    $items[] = $this->item(
+                        $issue->transfused_at,
+                        'Blood Transfusion Recorded',
+                        $issue->reaction_notes ? 'Transfusion recorded with reaction notes.' : 'Blood transfusion recorded.',
+                        optional($issue->transfusedBy)->full_name,
+                        'Blood Bank',
+                        $issue->transfusion_status, $issue->reaction_notes ? 'bg-warning text-dark' : 'bg-success',
+                        'blood_issue', $issue->id,
+                        array_filter([
+                            'Issue Number' => $issue->issue_number,
+                            'Unit' => $issue->unit?->unit_number,
+                            'Reaction Notes' => $issue->reaction_notes,
+                            'Notes' => $issue->notes,
+                        ])
+                    );
+                }
+            }
+        }
+
         // 10. Admission
         if ($admission = $visit->admission) {
             $items[] = $this->item(
@@ -1001,6 +1098,8 @@ class VisitPreviewService
             'pending_service_renderings_count' => $visit->serviceRenderings
                 ->whereIn('status', ServiceRendering::ACTIVE_STATUSES)
                 ->count(),
+            'blood_requests_count' => $visit->bloodRequests->count(),
+            'blood_issues_count' => $visit->bloodIssues->count(),
             'has_admission' => $visit->admission !== null,
             'has_emergency_case' => $visit->emergencyCase !== null,
             'emergency_number' => $visit->emergencyCase?->emergency_number,

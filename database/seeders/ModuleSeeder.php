@@ -27,6 +27,8 @@ class ModuleSeeder extends Seeder
              'description' => 'Ward admissions, bed management, inpatient rounds and medication board.'],
             ['name' => 'Emergency',        'slug' => 'emergency',      'is_core' => false, 'icon' => 'ti-ambulance',      'sort_order' => 12,
              'description' => 'Emergency case management, bays, and emergency medication board.'],
+            ['name' => 'Blood Bank',       'slug' => 'blood_bank',     'is_core' => false, 'icon' => 'ti-droplet',        'sort_order' => 13,
+             'description' => 'Donors, donations, units, crossmatch, issue, transfusion and blood bank reports.'],
             ['name' => 'Insurance',        'slug' => 'insurance',      'is_core' => false, 'icon' => 'ti-shield-check',  'sort_order' => 20],
             ['name' => 'Claims',           'slug' => 'claims',         'is_core' => false, 'depends_on' => 'insurance', 'icon' => 'ti-file-dollar', 'sort_order' => 21],
             ['name' => 'Pharmacy',         'slug' => 'pharmacy',       'is_core' => false, 'icon' => 'ti-pill',          'sort_order' => 22],

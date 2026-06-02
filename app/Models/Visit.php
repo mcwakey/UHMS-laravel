@@ -165,6 +165,16 @@ class Visit extends Model
         return $this->hasMany(ServiceRendering::class);
     }
 
+    public function bloodRequests()
+    {
+        return $this->hasMany(BloodRequest::class);
+    }
+
+    public function bloodIssues()
+    {
+        return $this->hasMany(BloodIssue::class);
+    }
+
     public function latestInvoice()
     {
         return $this->hasOne(Invoice::class)->latestOfMany();

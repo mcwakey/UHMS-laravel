@@ -117,6 +117,21 @@ class Patient extends Model
         return $this->hasMany(EmergencyCase::class);
     }
 
+    public function bloodDonor()
+    {
+        return $this->hasOne(BloodDonor::class);
+    }
+
+    public function bloodRequests()
+    {
+        return $this->hasMany(BloodRequest::class);
+    }
+
+    public function bloodIssues()
+    {
+        return $this->hasMany(BloodIssue::class);
+    }
+
     public function activeVisit()
     {
         return $this->hasOne(Visit::class)->whereNotIn('status', ['completed', 'cancelled'])->latestOfMany();

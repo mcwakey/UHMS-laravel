@@ -7,6 +7,14 @@ use App\Http\Controllers\Admin\AdmissionMedicationBoardController;
 use App\Http\Controllers\Admin\AnalyzerController;
 use App\Http\Controllers\Admin\AppointmentController;
 use App\Http\Controllers\Admin\AttendanceController;
+use App\Http\Controllers\Admin\BloodBankDashboardController;
+use App\Http\Controllers\Admin\BloodBankReportController;
+use App\Http\Controllers\Admin\BloodCrossmatchController;
+use App\Http\Controllers\Admin\BloodDonationController;
+use App\Http\Controllers\Admin\BloodDonorController;
+use App\Http\Controllers\Admin\BloodIssueController;
+use App\Http\Controllers\Admin\BloodRequestController;
+use App\Http\Controllers\Admin\BloodUnitController;
 use App\Http\Controllers\Admin\CashierShiftController;
 use App\Http\Controllers\Admin\ClaimController;
 use App\Http\Controllers\Admin\ComplaintCatalogueController;
@@ -63,6 +71,7 @@ use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\LogRetentionController;
 use App\Http\Controllers\Admin\NotificationBroadcastController;
 use App\Http\Controllers\Admin\NotificationPreferenceController;
+use App\Http\Controllers\Admin\OperationalReportController;
 use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\PurchaseReturnController;
 use App\Http\Controllers\Admin\QueueController;
@@ -301,6 +310,28 @@ Route::middleware('auth')->group(function () {
                 Route::post('/{serviceRendering}/mark-not-rendered', [ServiceRenderingActionController::class, 'markNotRendered'])->name('mark-not-rendered')->middleware('can:service_rendering.mark_not_rendered');
                 Route::post('/{serviceRendering}/cancel', [ServiceRenderingActionController::class, 'cancel'])->name('cancel')->middleware('can:service_rendering.cancel');
                 Route::patch('/{serviceRendering}/notes', [ServiceRenderingActionController::class, 'updateNotes'])->name('notes')->middleware('can:service_rendering.edit_notes');
+            });
+
+        // Blood Bank
+        Route::prefix('blood-bank')
+            ->name('blood-bank.')
+            ->middleware(['module:blood_bank', 'can:blood_bank.view'])
+            ->group(function () {
+                Route::get('/', [BloodBankDashboardController::class, 'index'])->name('dashboard');
+                Route::get('donors', [BloodDonorController::class, 'index'])->name('donors.index');
+                Route::post('donors', [BloodDonorController::class, 'store'])->name('donors.store')->middleware('can:blood_bank.donors.manage');
+                Route::get('donations', [BloodDonationController::class, 'index'])->name('donations.index');
+                Route::post('donations', [BloodDonationController::class, 'store'])->name('donations.store')->middleware('can:blood_bank.donations.record');
+                Route::patch('donations/{donation}/screening', [BloodDonationController::class, 'updateScreening'])->name('donations.screening')->middleware('can:blood_bank.screening.manage');
+                Route::get('units', [BloodUnitController::class, 'index'])->name('units.index');
+                Route::patch('units/{unit}/discard', [BloodUnitController::class, 'discard'])->name('units.discard')->middleware('can:blood_bank.units.discard');
+                Route::get('requests', [BloodRequestController::class, 'index'])->name('requests.index');
+                Route::post('requests', [BloodRequestController::class, 'store'])->name('requests.store')->middleware('can:blood_bank.requests.create');
+                Route::patch('requests/{bloodRequest}/approve', [BloodRequestController::class, 'approve'])->name('requests.approve')->middleware('can:blood_bank.requests.approve');
+                Route::post('requests/{bloodRequest}/crossmatches', [BloodCrossmatchController::class, 'store'])->name('requests.crossmatches.store')->middleware('can:blood_bank.crossmatch.perform');
+                Route::post('requests/{bloodRequest}/issues', [BloodIssueController::class, 'store'])->name('requests.issues.store')->middleware('can:blood_bank.units.issue');
+                Route::patch('issues/{bloodIssue}/transfuse', [BloodIssueController::class, 'transfuse'])->name('issues.transfuse')->middleware('can:blood_bank.transfusions.record');
+                Route::get('reports', [BloodBankReportController::class, 'index'])->name('reports.index')->middleware('can:blood_bank.reports.view');
             });
 
         // Wards & Beds
@@ -910,6 +941,28 @@ Route::middleware('auth')->group(function () {
 
         // Reports
         Route::middleware(['module:reports', 'can:reports.view'])->prefix('reports')->name('reports.')->group(function () {
+            Route::get('/', [OperationalReportController::class, 'dashboard'])->name('dashboard');
+            foreach ([
+                'consultations',
+                'diagnoses',
+                'complaints',
+                'pharmacy',
+                'investigations',
+                'procedures',
+                'theatre',
+                'emergency',
+                'admission',
+                'mar',
+                'billing',
+                'stock',
+                'blood-bank',
+            ] as $operationalReport) {
+                Route::get($operationalReport, [OperationalReportController::class, 'show'])
+                    ->defaults('report', $operationalReport)
+                    ->name($operationalReport)
+                    ->middleware('can:reports.'.str_replace('-', '_', $operationalReport));
+            }
+
             Route::get('income', [ReportController::class, 'income'])->name('income');
             Route::get('patients', [ReportController::class, 'patients'])->name('patients');
             Route::get('visits', [ReportController::class, 'visits'])->name('visits');

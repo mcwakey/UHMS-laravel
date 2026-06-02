@@ -848,14 +848,33 @@ class ReportService
             ->where('quantity_on_hand', '>', 0);
 
         if (! empty($filters['location'])) {
-            $query->whereHas('location', fn ($q) => $q->where('name', $filters['location']));
+            $query->where('stock_location_id', $filters['location']);
+        }
+
+        if (! empty($filters['search'])) {
+            $query->whereHas('product', fn ($q) => $q
+                ->where('name', 'like', '%'.$filters['search'].'%')
+                ->orWhere('code', 'like', '%'.$filters['search'].'%'));
         }
 
         $stocks = $query->orderBy('product_id')->paginate(25)->withQueryString();
 
-        $totals = \App\Models\StockBalance::where('quantity_on_hand', '>', 0)
-            ->join('products', 'products.id', '=', 'stock_balances.product_id')
-            ->selectRaw('SUM(stock_balances.quantity_on_hand * COALESCE(products.cost_price, 0)) as cost_value, SUM(stock_balances.quantity_on_hand * COALESCE(products.selling_price, products.price, 0)) as sell_value')
+        $totalsQuery = \App\Models\StockBalance::where('quantity_on_hand', '>', 0)
+            ->join('products', 'products.id', '=', 'stock_balances.product_id');
+
+        if (! empty($filters['location'])) {
+            $totalsQuery->where('stock_balances.stock_location_id', $filters['location']);
+        }
+
+        if (! empty($filters['search'])) {
+            $totalsQuery->where(function ($query) use ($filters) {
+                $query->where('products.name', 'like', '%'.$filters['search'].'%')
+                    ->orWhere('products.code', 'like', '%'.$filters['search'].'%');
+            });
+        }
+
+        $totals = $totalsQuery
+            ->selectRaw('SUM(stock_balances.quantity_on_hand * COALESCE(products.default_cost, 0)) as cost_value, SUM(stock_balances.quantity_on_hand * COALESCE(products.base_price, 0)) as sell_value')
             ->first();
 
         $stats = [
@@ -863,11 +882,16 @@ class ReportService
             'sell_value'       => $totals->sell_value ?? 0,
             'total_cost_value' => $totals->cost_value ?? 0,
             'total_sell_value' => $totals->sell_value ?? 0,
-            'total_items'      => \App\Models\StockBalance::where('quantity_on_hand', '>', 0)->count(),
-            'unique_drugs'     => \App\Models\StockBalance::where('quantity_on_hand', '>', 0)->distinct('product_id')->count('product_id'),
+            'total_items'      => (clone $query)->count(),
+            'unique_drugs'     => (clone $query)->distinct('product_id')->count('product_id'),
         ];
 
-        return compact('stocks', 'stats');
+        $locations = \App\Models\StockLocation::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return compact('stocks', 'stats', 'locations');
     }
 
     /**

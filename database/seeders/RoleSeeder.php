@@ -394,6 +394,38 @@ class RoleSeeder extends Seeder
             // ── Reports ───────────────────────────────────────────────────
             'reports.view',
             'reports.generate',
+            'reports.export',
+            'reports.clinical',
+            'reports.consultation',
+            'reports.consultations',
+            'reports.diagnosis',
+            'reports.diagnoses',
+            'reports.complaints',
+            'reports.pharmacy',
+            'reports.investigations',
+            'reports.procedures',
+            'reports.theatre',
+            'reports.emergency',
+            'reports.admission',
+            'reports.mar',
+            'reports.billing',
+            'reports.claims',
+            'reports.stock',
+            'reports.blood_bank',
+            'blood_bank.view',
+            'blood_bank.donors.manage',
+            'blood_bank.donations.record',
+            'blood_bank.screening.manage',
+            'blood_bank.units.view',
+            'blood_bank.units.discard',
+            'blood_bank.requests.view',
+            'blood_bank.requests.create',
+            'blood_bank.requests.approve',
+            'blood_bank.crossmatch.perform',
+            'blood_bank.units.issue',
+            'blood_bank.transfusions.record',
+            'blood_bank.reports.view',
+            'blood_bank.settings.manage',
 
             // ── Settings ─────────────────────────────────────────────────
             'settings.view',
@@ -479,6 +511,7 @@ class RoleSeeder extends Seeder
             'service_rendering.mark_rendered', 'service_rendering.mark_not_rendered',
             'service_rendering.edit_notes', 'service_rendering.reports',
             'investigation.catalogue.view',
+            'blood_bank.view', 'blood_bank.requests.create',
             'icd.view',
             'product.view',
             'reports.view',
@@ -816,6 +849,28 @@ class RoleSeeder extends Seeder
 
         // ── Store Keeper ──────────────────────────────────────────────────
         // Only role (outside Admin) that can CREATE products and manage stock
+        $bloodBankOfficer = Role::firstOrCreate(['name' => 'Blood Bank Officer']);
+        $bloodBankOfficer->syncPermissions([
+            'patients.view',
+            'visits.view', 'visits.preview',
+            'blood_bank.view',
+            'blood_bank.donors.manage',
+            'blood_bank.donations.record',
+            'blood_bank.screening.manage',
+            'blood_bank.units.view',
+            'blood_bank.units.discard',
+            'blood_bank.requests.view',
+            'blood_bank.requests.create',
+            'blood_bank.requests.approve',
+            'blood_bank.crossmatch.perform',
+            'blood_bank.units.issue',
+            'blood_bank.transfusions.record',
+            'blood_bank.reports.view',
+            'reports.view',
+            'reports.blood_bank',
+            'notifications.view',
+        ]);
+
         $storeKeeper = Role::firstOrCreate(['name' => 'Store Keeper']);
         $storeKeeper->syncPermissions([
             'patients.view',

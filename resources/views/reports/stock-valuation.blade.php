@@ -23,7 +23,7 @@
     <div class="col-md-3">
         <div class="card border-start border-primary border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Total Batches</p>
+                <p class="text-muted mb-1 small">Stock Balances</p>
                 <h4 class="fw-bold mb-0">{{ number_format($stats['total_items']) }}</h4>
             </div>
         </div>
@@ -32,7 +32,7 @@
         <div class="card border-start border-success border-3">
             <div class="card-body py-3">
                 <p class="text-muted mb-1 small">Cost Value</p>
-                <h4 class="fw-bold mb-0 text-success">₵{{ number_format($stats['total_cost_value'], 2) }}</h4>
+                <h4 class="fw-bold mb-0 text-success">GHS {{ number_format($stats['total_cost_value'], 2) }}</h4>
             </div>
         </div>
     </div>
@@ -40,15 +40,15 @@
         <div class="card border-start border-info border-3">
             <div class="card-body py-3">
                 <p class="text-muted mb-1 small">Selling Value</p>
-                <h4 class="fw-bold mb-0 text-info">₵{{ number_format($stats['total_sell_value'], 2) }}</h4>
+                <h4 class="fw-bold mb-0 text-info">GHS {{ number_format($stats['total_sell_value'], 2) }}</h4>
             </div>
         </div>
     </div>
     <div class="col-md-3">
         <div class="card border-start border-warning border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Potential Profit</p>
-                <h4 class="fw-bold mb-0 text-warning">₵{{ number_format($stats['total_sell_value'] - $stats['total_cost_value'], 2) }}</h4>
+                <p class="text-muted mb-1 small">Potential Margin</p>
+                <h4 class="fw-bold mb-0 text-warning">GHS {{ number_format($stats['total_sell_value'] - $stats['total_cost_value'], 2) }}</h4>
             </div>
         </div>
     </div>
@@ -61,14 +61,14 @@
                 <label class="form-label">Location</label>
                 <select name="location" class="form-select">
                     <option value="">All Locations</option>
-                    @foreach(\App\Enums\StockLocation::cases() as $loc)
-                    <option value="{{ $loc->value }}" {{ ($filters['location'] ?? '') == $loc->value ? 'selected' : '' }}>{{ $loc->label() }}</option>
+                    @foreach($locations as $location)
+                    <option value="{{ $location->id }}" @selected(($filters['location'] ?? '') == $location->id)>{{ $location->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-4">
-                <label class="form-label">Search Drug</label>
-                <input type="text" name="search" class="form-control" placeholder="Drug name..." value="{{ $filters['search'] ?? '' }}">
+                <label class="form-label">Search Product</label>
+                <input type="text" name="search" class="form-control" placeholder="Product name or code..." value="{{ $filters['search'] ?? '' }}">
             </div>
             <div class="col-md-4">
                 <button class="btn btn-primary">Filter</button>
@@ -83,10 +83,9 @@
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>Drug</th>
-                    <th>Batch</th>
+                    <th>Product</th>
+                    <th>Type</th>
                     <th>Location</th>
-                    <th>Expiry</th>
                     <th class="text-end">Qty</th>
                     <th class="text-end">Cost Price</th>
                     <th class="text-end">Sell Price</th>
@@ -96,27 +95,24 @@
             </thead>
             <tbody>
                 @forelse($stocks as $stock)
+                @php
+                    $product = $stock->product;
+                    $costPrice = (float) ($product?->default_cost ?? 0);
+                    $sellPrice = (float) ($product?->base_price ?? 0);
+                    $quantity = (float) $stock->quantity_on_hand;
+                @endphp
                 <tr>
-                    <td>{{ $stock->drug?->name ?? '—' }}</td>
-                    <td><code>{{ $stock->batch_number }}</code></td>
-                    <td><span class="badge bg-light text-dark">{{ $stock->location instanceof \App\Enums\StockLocation ? $stock->location->label() : ucfirst($stock->location) }}</span></td>
-                    <td>
-                        @if($stock->expiry_date)
-                            <span class="{{ $stock->expiry_date->isPast() ? 'text-danger' : ($stock->expiry_date->diffInDays(now()) <= 90 ? 'text-warning' : '') }}">
-                                {{ $stock->expiry_date->format('d/m/Y') }}
-                            </span>
-                        @else
-                            —
-                        @endif
-                    </td>
-                    <td class="text-end">{{ number_format($stock->quantity) }}</td>
-                    <td class="text-end">₵{{ number_format($stock->cost_price, 2) }}</td>
-                    <td class="text-end">₵{{ number_format($stock->selling_price, 2) }}</td>
-                    <td class="text-end">₵{{ number_format($stock->quantity * $stock->cost_price, 2) }}</td>
-                    <td class="text-end fw-semibold">₵{{ number_format($stock->quantity * $stock->selling_price, 2) }}</td>
+                    <td>{{ $product?->name ?? '-' }}</td>
+                    <td>{{ $product?->product_type?->label() ?? '-' }}</td>
+                    <td><span class="badge bg-light text-dark">{{ $stock->location?->name ?? '-' }}</span></td>
+                    <td class="text-end">{{ number_format($quantity, 2) }}</td>
+                    <td class="text-end">GHS {{ number_format($costPrice, 2) }}</td>
+                    <td class="text-end">GHS {{ number_format($sellPrice, 2) }}</td>
+                    <td class="text-end">GHS {{ number_format($quantity * $costPrice, 2) }}</td>
+                    <td class="text-end fw-semibold">GHS {{ number_format($quantity * $sellPrice, 2) }}</td>
                 </tr>
                 @empty
-                <tr><td colspan="9" class="text-center text-muted py-4">No stock records found.</td></tr>
+                <tr><td colspan="8" class="text-center text-muted py-4">No stock records found.</td></tr>
                 @endforelse
             </tbody>
         </table>
