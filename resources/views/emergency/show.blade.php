@@ -79,7 +79,7 @@
         <h4 class="fw-bold mb-1">
             {{ $case->emergency_number }}
             <span class="badge {{ $triageClass }} ms-1">{{ $currentTriage }}</span>
-            <span class="badge bg-light text-dark ms-1">{{ str_replace('_', ' ', $case->emergency_status) }}</span>
+            <x-status-badge :status="$case->emergency_status" domain="emergency" class="ms-1" />
         </h4>
         <p class="text-muted mb-0">
             {{ $case->patient->full_name ?? 'Unknown patient' }} - {{ $case->patient->patient_number ?? 'No patient number' }} - {{ $case->visit->visit_number ?? 'No visit number' }} - arrived {{ $case->waiting_minutes }} min ago
@@ -349,7 +349,7 @@
                             <div class="border rounded p-2 mb-2">
                                 <div class="d-flex justify-content-between gap-2">
                                     <div class="fw-semibold">{{ $order->display_name }}</div>
-                                    <span class="badge bg-light text-dark">{{ $order->status }}</span>
+                                    <x-status-badge :status="$order->status" domain="med_order" />
                                 </div>
                                 <small class="text-muted">{{ $order->dose }} {{ $order->route }} {{ $order->frequency?->code }} - Qty {{ $order->quantity_ordered ?? '-' }}</small>
                                 @if($order->schedules->isNotEmpty())
@@ -400,7 +400,7 @@
                             <div class="border rounded p-2 mb-2">
                                 <div class="d-flex justify-content-between gap-2">
                                     <div class="fw-semibold">{{ $requestItems ?: $request->request_number }}</div>
-                                    <span class="badge bg-light text-dark">{{ $request->status }}</span>
+                                    <x-status-badge :status="$request->status" domain="lab" />
                                 </div>
                                 <small class="text-muted">{{ $request->targetDepartment->name ?? 'Department pending' }} - {{ $request->urgency ?? 'routine' }} - Requested by {{ $request->requestedBy->name ?? 'Unknown' }}</small>
                             </div>
@@ -447,7 +447,7 @@
                             <div class="border rounded p-2 mb-2">
                                 <div class="d-flex justify-content-between gap-2">
                                     <div class="fw-semibold">{{ $request->service?->name ?? $request->procedure_name ?? $request->request_number }}</div>
-                                    <span class="badge bg-light text-dark">{{ $request->status }}</span>
+                                    <x-status-badge :status="$request->status" domain="theatre" />
                                 </div>
                                 <small class="text-muted">{{ $request->department->name ?? 'Department pending' }} - {{ $request->priority ?? 'routine' }} - Requested by {{ $request->requestingDoctor->name ?? 'Unknown' }}</small>
                             </div>
@@ -509,7 +509,7 @@
                             <div class="border rounded p-2 mb-2">
                                 <div class="d-flex justify-content-between gap-2">
                                     <div class="fw-semibold">{{ $task->title }}</div>
-                                    <span class="badge bg-light text-dark">{{ $task->status }}</span>
+                                    <x-status-badge :status="$task->status" domain="default" />
                                 </div>
                                 <small class="text-muted">{{ $task->priority }} - {{ $task->scheduled_at?->format('d M H:i') ?: 'No schedule' }} - {{ $task->assignedUser->name ?? $task->assigned_role ?? 'Unassigned' }}</small>
                             </div>

@@ -51,7 +51,7 @@
                                 {{ $order->frequency_code ? '· '.$order->frequency_code : '' }}
                             </div>
                         </div>
-                        <span class="badge badge-soft-{{ match($order->status){'ACTIVE_ADMINISTRATION'=>'success','HELD'=>'warning','STOPPED'=>'danger','COMPLETED'=>'success',default=>'secondary'} }}">{{ str_replace('_',' ', $order->status) }}</span>
+                        <x-status-badge :status="$order->status" domain="med_order" soft />
                     </div>
                     <div class="progress my-3" style="height: 7px;">
                         <div class="progress-bar" style="width: {{ $progress['progress_percentage'] }}%"></div>
@@ -124,7 +124,7 @@
                         </td>
                         <td>{{ trim(($schedule->dose ?? $order->dose).' '.($schedule->dose_unit ?? $order->dose_unit)) }} {{ $schedule->route ? '· '.strtoupper($schedule->route) : '' }}</td>
                         <td>{{ $schedule->scheduled_at?->format('d M Y H:i') }}</td>
-                        <td><span class="badge badge-soft-{{ match($schedule->clinicalTask?->status ?? $schedule->status){'OVERDUE'=>'danger','DUE'=>'info','COMPLETED'=>'success','HELD'=>'warning','REFUSED'=>'warning','MISSED'=>'danger',default=>'secondary'} }}">{{ str_replace('_',' ', $schedule->clinicalTask?->status ?? $schedule->status) }}</span></td>
+                        <td><x-status-badge :status="$schedule->clinicalTask?->status ?? $schedule->status" domain="mar" soft /></td>
                         <td>{{ $schedule->administration->administeredBy->name ?? '—' }}</td>
                         <td class="text-end">
                             @if(!$schedule->administration && !in_array($schedule->status, ['GIVEN','CANCELLED','VOIDED'], true))

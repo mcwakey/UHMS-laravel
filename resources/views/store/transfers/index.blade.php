@@ -149,7 +149,7 @@
                         <td>{{ $transfer->transfer_date->format('d M Y') }}</td>
                         <td class="text-center"><span class="badge bg-soft-info">{{ $transfer->items_count }}</span></td>
                         <td>{{ $transfer->transferredByUser->name ?? '-' }}</td>
-                        <td><span class="badge bg-{{ $transfer->status->color() }}">{{ $transfer->status->label() }}</span></td>
+                        <td><x-status-badge :status="$transfer->status" /></td>
                         <td class="text-end">
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">

@@ -29,8 +29,8 @@
                             <td class="fw-semibold">{{ $unit->unit_number }}<div class="small text-muted">{{ $unit->donation->donation_number ?? 'Manual unit' }}</div></td>
                             <td>{{ $unit->blood_group }}</td>
                             <td>{{ str_replace('_', ' ', $unit->component_type) }}</td>
-                            <td><span class="badge bg-{{ $unit->screening_status === 'PASSED' ? 'success' : ($unit->screening_status === 'FAILED' ? 'danger' : 'warning') }}">{{ $unit->screening_status }}</span></td>
-                            <td><span class="badge bg-secondary">{{ $unit->status }}</span></td>
+                            <td><x-status-badge :status="$unit->screening_status" domain="screening" /></td>
+                            <td><x-status-badge :status="$unit->status" domain="blood_unit" /></td>
                             <td>{{ $unit->storageLocation->name ?? '—' }}</td>
                             <td class="{{ $unit->expiry_date?->isPast() ? 'text-danger fw-semibold' : '' }}">{{ $unit->expiry_date?->format('d M Y') }}</td>
                             <td class="text-end">

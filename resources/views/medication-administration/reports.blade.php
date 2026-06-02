@@ -42,7 +42,7 @@
                         <td>{{ $record->administered_at?->format('d M Y H:i') }}</td>
                         <td>{{ $record->patient->full_name ?? '—' }}</td>
                         <td>{{ $record->medicationOrder->display_name ?? 'Medication' }}</td>
-                        <td><span class="badge badge-soft-{{ match($record->status){'GIVEN'=>'success','HELD'=>'warning','REFUSED'=>'warning','MISSED'=>'danger','SKIPPED'=>'secondary',default=>'secondary'} }}">{{ $record->status }}</span></td>
+                        <td><x-status-badge :status="$record->status" domain="mar" soft /></td>
                         <td>{{ $record->administeredBy->name ?? '—' }}</td>
                         <td>{{ $record->reason_not_given ?: $record->reaction ?: $record->notes ?: '—' }}</td>
                     </tr>

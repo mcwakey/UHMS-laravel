@@ -7,7 +7,7 @@
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">
             {{ $transfer->transfer_number }}
-            <span class="badge bg-{{ $transfer->status->color() }} ms-2">{{ $transfer->status->label() }}</span>
+            <x-status-badge :status="$transfer->status" class="ms-2" />
         </h4>
     </div>
     <div class="d-flex gap-2">
@@ -70,7 +70,7 @@
                     </tr>
                     <tr>
                         <td class="text-muted">Status</td>
-                        <td><span class="badge bg-{{ $transfer->status->color() }}">{{ $transfer->status->label() }}</span></td>
+                        <td><x-status-badge :status="$transfer->status" /></td>
                     </tr>
                     <tr>
                         <td class="text-muted">From</td>

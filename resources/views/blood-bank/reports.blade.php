@@ -44,7 +44,7 @@
             <div class="card-header bg-white"><h5 class="card-title mb-0">Issue / Transfusion Report</h5></div>
             <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
                 <thead class="bg-light"><tr><th>Issue</th><th>Unit</th><th>Patient</th><th>Status</th><th>Issued</th></tr></thead>
-                <tbody>@forelse($issues as $issue)<tr><td>{{ $issue->issue_number }}</td><td>{{ $issue->unit->unit_number ?? '—' }}</td><td>{{ $issue->patient->full_name ?? '—' }}</td><td>{{ $issue->transfusion_status }}{!! $issue->is_emergency_release ? ' <span class="badge bg-dark">ER</span>' : '' !!}</td><td>{{ $issue->issued_at?->format('d M Y H:i') }}</td></tr>@empty<tr><td colspan="5" class="text-center text-muted py-4">No issues.</td></tr>@endforelse</tbody>
+                <tbody>@forelse($issues as $issue)<tr><td>{{ $issue->issue_number }}</td><td>{{ $issue->unit->unit_number ?? '—' }}</td><td>{{ $issue->patient->full_name ?? '—' }}</td><td><x-status-badge :status="$issue->transfusion_status" domain="blood_issue" size="sm" />{!! $issue->is_emergency_release ? ' <span class="badge bg-dark">ER</span>' : '' !!}</td><td>{{ $issue->issued_at?->format('d M Y H:i') }}</td></tr>@empty<tr><td colspan="5" class="text-center text-muted py-4">No issues.</td></tr>@endforelse</tbody>
             </table></div></div>
         </div>
     </div>
@@ -59,7 +59,7 @@
             <td>{{ $s->donor->full_name ?? '—' }}</td>
             <td>{{ $s->donor->donor_number ?? '—' }}</td>
             <td>{{ $s->reviewed_at?->format('d M Y H:i') ?? '—' }}</td>
-            <td><span class="badge bg-{{ $s->eligibility_decision === 'ELIGIBLE' ? 'success' : ($s->eligibility_decision === 'PERMANENTLY_DEFERRED' ? 'danger' : 'warning text-dark') }}">{{ str_replace('_',' ',$s->eligibility_decision) }}</span>@if($s->eligibility_overridden) <span class="badge bg-dark">OVERRIDE</span>@endif</td>
+            <td><x-status-badge :status="$s->eligibility_decision" domain="donor_screening" size="sm" />@if($s->eligibility_overridden) <span class="badge bg-dark">OVERRIDE</span>@endif</td>
             <td class="small">{{ $s->deferral_reason ?: '—' }}</td>
             <td>{{ $s->assessedBy->full_name ?? '—' }}</td>
             <td>{{ $s->reviewedBy->full_name ?? '—' }}</td>
@@ -77,7 +77,7 @@
             <td>{{ $t->donation->donation_number ?? '—' }}</td>
             <td>{{ $t->donation->unit->unit_number ?? '—' }}</td>
             <td>{{ $t->test_name }}</td>
-            <td><span class="badge bg-{{ in_array($t->result, ['POSITIVE','REACTIVE']) ? 'danger' : (in_array($t->result, ['NEGATIVE','NON_REACTIVE']) ? 'success' : 'secondary') }}">{{ str_replace('_',' ',$t->result) }}</span></td>
+            <td><x-status-badge :status="$t->result" domain="screening" size="sm" /></td>
             <td>{{ $t->performedBy->full_name ?? '—' }}</td>
             <td>{{ $t->verifiedBy->full_name ?? '—' }}</td>
             <td>{{ $t->performed_at?->format('d M Y') ?? '—' }}</td>
@@ -98,7 +98,7 @@
             <td>{{ $xm->unit->unit_number ?? '—' }}</td>
             <td>{{ $xm->donor_blood_group ?? ($xm->unit->blood_group ?? '—') }}</td>
             <td>{{ $xm->component_type ?? '—' }}</td>
-            <td><span class="badge bg-{{ $xm->compatibility_status === 'COMPATIBLE' ? 'success' : ($xm->compatibility_status === 'INCOMPATIBLE' ? 'danger' : 'warning text-dark') }}">{{ str_replace('_',' ',$xm->compatibility_status ?? '—') }}</span></td>
+            <td><x-status-badge :status="$xm->compatibility_status" domain="crossmatch" size="sm" /></td>
             <td>{{ $xm->result }}</td>
             <td>{{ $xm->performedBy->full_name ?? '—' }}</td>
             <td>{{ $xm->verifiedBy->full_name ?? '—' }}</td>

@@ -28,10 +28,30 @@ class UiComponentsTest extends TestCase
 
     public function test_status_badge_adds_dark_text_for_low_contrast_variants(): void
     {
-        $html = $this->render('<x-status-badge status="PARTIALLY_PAID" domain="invoice" />');
+        $html = $this->render('<x-status-badge status="HELD" domain="mar" />');
 
         $this->assertStringContainsString('bg-warning', $html);
         $this->assertStringContainsString('text-dark', $html);    // warning needs dark text
+    }
+
+    public function test_status_badge_soft_style_uses_subtle_class(): void
+    {
+        $html = $this->render('<x-status-badge status="GIVEN" domain="mar" soft />');
+
+        $this->assertStringContainsString('badge-soft-success', $html);
+        $this->assertStringNotContainsString('bg-success', $html); // solid style suppressed
+    }
+
+    public function test_status_badge_uses_backed_enum_colour_and_label(): void
+    {
+        // InvoiceStatus::PENDING => color 'warning', label 'Pending'
+        $html = $this->render(
+            '<x-status-badge :status="$s" />',
+            ['s' => \App\Enums\InvoiceStatus::PENDING]
+        );
+
+        $this->assertStringContainsString('bg-warning', $html);
+        $this->assertStringContainsString('Pending', $html);
     }
 
     public function test_status_badge_same_status_is_consistent_across_callers(): void

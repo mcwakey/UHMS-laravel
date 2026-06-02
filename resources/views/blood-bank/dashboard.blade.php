@@ -48,7 +48,7 @@
                                 <tr>
                                     <td class="fw-semibold">{{ $row->blood_group }}</td>
                                     <td>{{ str_replace('_', ' ', $row->component_type) }}</td>
-                                    <td><span class="badge bg-secondary">{{ $row->status }}</span></td>
+                                    <td><x-status-badge :status="$row->status" domain="blood_unit" /></td>
                                     <td class="text-end">{{ $row->total }}</td>
                                 </tr>
                             @empty
@@ -76,7 +76,7 @@
                                     <td>{{ $request->request_number }}</td>
                                     <td>{{ $request->patient->full_name ?? '—' }}</td>
                                     <td>{{ $request->blood_group }} {{ str_replace('_', ' ', $request->component_type) }} x{{ $request->units_requested }}</td>
-                                    <td><span class="badge bg-warning text-dark">{{ $request->status }}</span></td>
+                                    <td><x-status-badge :status="$request->status" domain="blood_request" /></td>
                                 </tr>
                             @empty
                                 <tr><td colspan="4" class="text-center text-muted py-4">No active blood requests.</td></tr>

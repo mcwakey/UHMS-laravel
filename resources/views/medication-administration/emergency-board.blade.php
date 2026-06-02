@@ -51,7 +51,7 @@
                         <td>{{ $order->display_name }} @if($order->frequency?->is_stat)<span class="badge bg-danger ms-1">STAT</span>@endif</td>
                         <td>{{ trim(($schedule->dose ?? $order->dose).' '.($schedule->dose_unit ?? $order->dose_unit)) }} {{ $schedule->route ? '· '.strtoupper($schedule->route) : '' }}</td>
                         <td>{{ $schedule->scheduled_at?->format('d M H:i') }}</td>
-                        <td><span class="badge badge-soft-{{ match($schedule->clinicalTask?->status ?? $schedule->status){'OVERDUE'=>'danger','DUE'=>'info','COMPLETED'=>'success','HELD'=>'warning','REFUSED'=>'warning','MISSED'=>'danger',default=>'secondary'} }}">{{ str_replace('_',' ', $schedule->clinicalTask?->status ?? $schedule->status) }}</span></td>
+                        <td><x-status-badge :status="$schedule->clinicalTask?->status ?? $schedule->status" domain="mar" soft /></td>
                         <td>{{ $order->prescriber->name ?? '—' }}</td>
                         <td>{{ $schedule->administration->administeredBy->name ?? '—' }}</td>
                         <td class="text-end">

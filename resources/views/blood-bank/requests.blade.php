@@ -47,8 +47,8 @@
                 <div class="d-flex flex-wrap justify-content-between gap-2 mb-2">
                     <div>
                         <span class="fw-semibold">{{ $request->request_number }}</span>
-                        <span class="badge bg-{{ $request->status === 'PENDING' ? 'warning text-dark' : ($request->status === 'COMPLETED' ? 'success' : 'secondary') }}">{{ $request->status }}</span>
-                        <span class="badge bg-light text-dark border">{{ $request->priority }}</span>
+                        <x-status-badge :status="$request->status" domain="blood_request" />
+                        <x-status-badge :status="$request->priority" domain="priority" />
                         <div class="small text-muted">{{ $request->patient->full_name ?? '—' }} · {{ $request->visit->visit_number ?? '' }} · {{ $request->requested_at?->format('d M Y H:i') }}</div>
                     </div>
                     <div class="text-end small">
@@ -81,7 +81,7 @@
                                         <td>{{ $unit->blood_group }}</td>
                                         <td>{{ str_replace('_',' ',$unit->component_type) }}</td>
                                         <td>{{ $unit->expiry_date?->format('d M Y') }}<div class="small text-muted">{{ $unit->daysToExpiry() }}d</div></td>
-                                        <td><span class="badge bg-{{ $unit->compatibility_status === 'COMPATIBLE' ? 'success' : 'warning text-dark' }}">{{ str_replace('_',' ',$unit->compatibility_status) }}</span></td>
+                                        <td><x-status-badge :status="$unit->compatibility_status" domain="crossmatch" /></td>
                                         <td class="text-nowrap">
                                             <form method="POST" action="{{ route('admin.blood-bank.requests.crossmatches.store', $request) }}" class="d-inline">@csrf<input type="hidden" name="blood_unit_id" value="{{ $unit->id }}"><button class="btn btn-sm btn-outline-primary">Crossmatch</button></form>
                                             <form method="POST" action="{{ route('admin.blood-bank.requests.issues.store', $request) }}" class="d-inline">@csrf<input type="hidden" name="blood_unit_id" value="{{ $unit->id }}"><button class="btn btn-sm btn-outline-danger">Issue</button></form>
@@ -112,7 +112,7 @@
                         <div class="small fw-semibold mb-1">Crossmatches</div>
                         @forelse($request->crossmatches as $xm)
                             <div class="small mb-1">
-                                <span class="badge bg-{{ $xm->result === 'COMPATIBLE' ? 'success' : ($xm->result === 'INCOMPATIBLE' ? 'danger' : 'warning text-dark') }}">{{ $xm->unit->unit_number ?? $xm->blood_unit_id }} {{ $xm->result }}</span>
+                                <x-status-badge :status="$xm->result" domain="crossmatch" :label="($xm->unit->unit_number ?? $xm->blood_unit_id).' '.\Illuminate\Support\Str::title(str_replace('_',' ',$xm->result))" />
                                 <span class="text-muted">{{ str_replace('_',' ',$xm->compatibility_status) }}</span>
                                 @if(!$xm->verified_at)
                                     <form method="POST" action="{{ route('admin.blood-bank.crossmatches.verify', $xm) }}" class="d-inline">@csrf @method('PATCH')<button class="btn btn-link btn-sm p-0">verify</button></form>
@@ -125,7 +125,7 @@
                         <div class="small fw-semibold mt-2 mb-1">Issued / Transfusion</div>
                         @foreach($request->issues as $issue)
                             <div class="border rounded p-2 mb-1">
-                                <div class="small">Unit {{ $issue->unit->unit_number ?? '' }} · {{ $issue->transfusion_status }}@if($issue->is_emergency_release) <span class="badge bg-dark">ER</span>@endif</div>
+                                <div class="small">Unit {{ $issue->unit->unit_number ?? '' }} · <x-status-badge :status="$issue->transfusion_status" domain="blood_issue" size="sm" />@if($issue->is_emergency_release) <span class="badge bg-dark">ER</span>@endif</div>
                                 @if(!in_array($issue->transfusion_status, ['TRANSFUSED','REACTION_RECORDED']))
                                 <form method="POST" action="{{ route('admin.blood-bank.issues.transfuse', $issue) }}" class="row g-1 mt-1">
                                     @csrf @method('PATCH')

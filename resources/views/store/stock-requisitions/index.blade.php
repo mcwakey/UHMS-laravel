@@ -74,7 +74,7 @@
                     <td>{{ $stockRequisition->requested_at?->format('d M Y H:i') ?? '-' }}</td>
                     <td>{{ $stockRequisition->requestedByUser?->name ?: '-' }}</td>
                     <td class="text-center"><span class="badge bg-info-subtle text-info">{{ $stockRequisition->items_count }}</span></td>
-                    <td><span class="badge bg-{{ $stockRequisition->status->color() }}">{{ $stockRequisition->status->label() }}</span></td>
+                    <td><x-status-badge :status="$stockRequisition->status" /></td>
                     <td class="text-end"><a href="{{ route('admin.store.stock-requisitions.show', $stockRequisition) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
                 </tr>
             @empty

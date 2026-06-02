@@ -133,7 +133,7 @@
                                 <div class="small">Dr: {{ $case->assignedDoctor->name ?? 'Unassigned' }}</div>
                                 <div class="small text-muted">Nurse: {{ $case->assignedNurse->name ?? 'Unassigned' }}</div>
                             </td>
-                            <td><span class="badge bg-light text-dark">{{ str_replace('_', ' ', $case->emergency_status) }}</span></td>
+                            <td><x-status-badge :status="$case->emergency_status" domain="emergency" /></td>
                             <td>
                                 <span class="badge rounded-pill bg-info er-alert-pill" title="Due or overdue tasks">{{ $case->due_tasks_count }}</span>
                                 <span class="badge rounded-pill bg-danger er-alert-pill" title="Medication tasks">{{ $case->active_medication_tasks_count }}</span>

@@ -89,14 +89,16 @@ return [
             'CANCELLED' => 'secondary',
         ],
 
-        // Invoices
+        // Invoices — mirrors App\Enums\InvoiceStatus::color() (enum is the runtime
+        // source of truth; this map is the fallback for plain-string statuses).
         'invoice' => [
+            'DRAFT' => 'secondary',
             'UNPAID' => 'danger',
-            'PENDING' => 'danger',
-            'PARTIALLY_PAID' => 'warning',
+            'PENDING' => 'warning',
+            'PARTIALLY_PAID' => 'info',
             'PAID' => 'success',
-            'CANCELLED' => 'secondary',
-            'REFUNDED' => 'secondary',
+            'CANCELLED' => 'danger',
+            'REFUNDED' => 'dark',
         ],
 
         // Payments
@@ -108,16 +110,35 @@ return [
             'FAILED' => 'danger',
         ],
 
-        // Medication Administration Record
+        // Medication Administration Record (dose / schedule status)
         'mar' => [
             'SCHEDULED' => 'secondary',
             'DUE' => 'info',
             'OVERDUE' => 'danger',
             'GIVEN' => 'success',
+            'PARTIALLY_GIVEN' => 'success',
             'ADMINISTERED' => 'success',
+            'COMPLETED' => 'success',
             'HELD' => 'warning',
             'MISSED' => 'danger',
             'REFUSED' => 'warning',
+            'NOT_GIVEN' => 'danger',
+            'SKIPPED' => 'secondary',
+            'CORRECTED' => 'primary',
+            'CANCELLED' => 'secondary',
+            'VOIDED' => 'dark',
+        ],
+
+        // Medication order lifecycle (distinct from dose status above)
+        'med_order' => [
+            'PENDING' => 'warning',
+            'ACTIVE' => 'info',
+            'ACTIVE_ADMINISTRATION' => 'success',
+            'HELD' => 'warning',
+            'ON_HOLD' => 'warning',
+            'STOPPED' => 'danger',
+            'DISCONTINUED' => 'secondary',
+            'COMPLETED' => 'success',
             'CANCELLED' => 'secondary',
         ],
 
@@ -257,6 +278,7 @@ return [
             'QUESTIONNAIRE_PENDING' => 'warning',
             'PHYSICAL_ASSESSMENT_PENDING' => 'warning',
             'ELIGIBLE' => 'success',
+            'NEEDS_REVIEW' => 'warning',
             'TEMPORARILY_DEFERRED' => 'warning',
             'PERMANENTLY_DEFERRED' => 'danger',
         ],

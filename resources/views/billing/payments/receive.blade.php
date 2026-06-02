@@ -147,7 +147,7 @@
                         <td>
                             <a href="{{ route('admin.billing.invoices.show', $invoice) }}" class="fw-bold text-primary">{{ $invoice->invoice_number }}</a>
                             <div class="small text-muted">{{ $invoice->created_at->format('d M Y') }}</div>
-                            <span class="badge bg-{{ $invoice->status->color() }}">{{ $invoice->status->label() }}</span>
+                            <x-status-badge :status="$invoice->status" />
                             <span class="badge bg-soft-{{ $invoice->billing_type->color() }} text-{{ $invoice->billing_type->color() }}">{{ $invoice->billing_type->label() }}</span>
                         </td>
                         <td>

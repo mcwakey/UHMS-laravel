@@ -174,7 +174,7 @@
                         <td class="text-end text-success">&#8373;{{ number_format($invoice->amount_paid, 2) }}</td>
                         <td class="text-end {{ $invoice->balance > 0 ? 'text-danger fw-bold' : '' }}">&#8373;{{ number_format($invoice->balance, 2) }}</td>
                         <td>
-                            <span class="badge bg-{{ $invoice->status->color() }}">{{ $invoice->status->label() }}</span>
+                            <x-status-badge :status="$invoice->status" />
                         </td>
                         <td>{{ $invoice->created_at->format('d M Y') }}</td>
                         <td class="text-center">

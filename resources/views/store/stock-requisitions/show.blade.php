@@ -25,7 +25,7 @@
 @if($errors->any())<div class="alert alert-danger">{{ $errors->first() }}</div>@endif
 
 <div class="row g-3 mb-3">
-    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">Status</small><span class="badge bg-{{ $stockRequisition->status->color() }}">{{ $stockRequisition->status->label() }}</span></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">Status</small><x-status-badge :status="$stockRequisition->status" /></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">Requested By</small><strong>{{ $stockRequisition->requestedByUser?->name ?: '-' }}</strong></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">Approved By</small><strong>{{ $stockRequisition->approvedByUser?->name ?: '-' }}</strong></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">Issued By</small><strong>{{ $stockRequisition->issuedByUser?->name ?: '-' }}</strong></div></div></div>

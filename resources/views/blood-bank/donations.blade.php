@@ -40,7 +40,7 @@
                             <td>{{ $donation->donation_number }}</td>
                             <td>{{ $donation->donor->full_name ?? '—' }}<div class="small text-muted">{{ $donation->blood_group }}</div></td>
                             <td>{{ $donation->unit->unit_number ?? '—' }}<div class="small text-muted">{{ $donation->unit->status ?? '' }}</div></td>
-                            <td><span class="badge bg-{{ $donation->screening_status === 'PASSED' ? 'success' : ($donation->screening_status === 'FAILED' ? 'danger' : 'warning text-dark') }}">{{ $donation->screening_status }}</span></td>
+                            <td><x-status-badge :status="$donation->screening_status" domain="screening" /></td>
                             <td>{{ $donation->donation_date?->format('d M Y H:i') }}</td>
                             <td class="text-end">
                                 <form method="POST" action="{{ route('admin.blood-bank.donations.screening', $donation) }}" class="d-inline-flex gap-1">
@@ -64,7 +64,7 @@
                                         @foreach($donation->tests as $test)
                                             <tr>
                                                 <td>{{ $test->test_name }}@if($test->mandatory) <span class="text-danger" title="mandatory">*</span>@endif</td>
-                                                <td><span class="badge bg-{{ in_array($test->result, ['POSITIVE','REACTIVE']) ? 'danger' : (in_array($test->result, ['NEGATIVE','NON_REACTIVE']) ? 'success' : 'secondary') }}">{{ str_replace('_',' ',$test->result) }}</span></td>
+                                                <td><x-status-badge :status="$test->result" domain="screening" size="sm" /></td>
                                                 <td class="small">{{ $test->performedBy->full_name ?? '—' }}</td>
                                                 <td class="small">@if($test->verified_at)<span class="text-success">✓ {{ $test->verifiedBy->full_name ?? '' }}</span>@else<form method="POST" action="{{ route('admin.blood-bank.donations.tests.verify', $test) }}" class="d-inline">@csrf @method('PATCH')<button class="btn btn-link btn-sm p-0" @disabled($test->result === 'NOT_DONE')>verify</button></form>@endif</td>
                                                 <td class="text-end">
