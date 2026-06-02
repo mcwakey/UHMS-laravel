@@ -407,9 +407,26 @@ class OperationalReportService
     protected function table(string $key, array $filters, Builder $query, array $columns, callable $map, bool $export, string $orderColumn, array $extraSummary = []): array
     {
         $totalQuery = clone $query;
-        $statusRows = $this->hasColumnStatus($key)
-            ? (clone $query)->select('status', DB::raw('COUNT(*) as total'))->groupBy('status')->limit(12)->get()
-            : collect();
+
+        // Build the status breakdown using the report's real status column (some
+        // tables use `type` / `emergency_status` / `direction`, and several cast
+        // status to a backed enum). We aggregate on the base query so enum-cast
+        // keys stay scalar and can be used as array offsets.
+        $statusColumn = $this->statusColumnFor($key);
+        $statusCounts = [];
+        if ($statusColumn) {
+            $statusRows = (clone $query)->toBase()
+                ->select($statusColumn, DB::raw('COUNT(*) as total'))
+                ->groupBy($statusColumn)
+                ->limit(12)
+                ->get();
+
+            foreach ($statusRows as $row) {
+                $value = $row->{$statusColumn};
+                $label = $value instanceof \BackedEnum ? $value->value : (string) ($value ?? '—');
+                $statusCounts[$label] = $row->total;
+            }
+        }
 
         $rows = $export
             ? $query->orderByDesc($orderColumn)->limit(5000)->get()->map($map)->values()
@@ -423,7 +440,7 @@ class OperationalReportService
             'rows' => $rows,
             'summary' => array_merge([
                 'total' => (clone $totalQuery)->count(),
-                'status_counts' => $statusRows->pluck('total', 'status')->toArray(),
+                'status_counts' => $statusCounts,
             ], $extraSummary),
         ];
     }
@@ -453,8 +470,18 @@ class OperationalReportService
         return (float) $query->sum($sumColumn);
     }
 
-    protected function hasColumnStatus(string $key): bool
+    /**
+     * The real "status" column to group the summary breakdown by, per report.
+     * Returns null when the underlying table has no groupable status column.
+     */
+    protected function statusColumnFor(string $key): ?string
     {
-        return ! in_array($key, ['stock'], true);
+        return match ($key) {
+            'diagnoses' => 'type',
+            'emergency' => 'emergency_status',
+            'stock' => 'direction',
+            'complaints', 'pharmacy' => null,
+            default => 'status',
+        };
     }
 }
