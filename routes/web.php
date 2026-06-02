@@ -320,17 +320,26 @@ Route::middleware('auth')->group(function () {
                 Route::get('/', [BloodBankDashboardController::class, 'index'])->name('dashboard');
                 Route::get('donors', [BloodDonorController::class, 'index'])->name('donors.index');
                 Route::post('donors', [BloodDonorController::class, 'store'])->name('donors.store')->middleware('can:blood_bank.donors.manage');
+                // WHO donor screening workflow
+                Route::post('donors/{donor}/screening/questionnaire', [BloodDonorController::class, 'questionnaire'])->name('donors.screening.questionnaire')->middleware('can:blood_bank.screening.perform');
+                Route::post('donors/{donor}/screening/assessment', [BloodDonorController::class, 'assessment'])->name('donors.screening.assessment')->middleware('can:blood_bank.screening.perform');
+                Route::post('donors/{donor}/screening/eligibility', [BloodDonorController::class, 'eligibility'])->name('donors.screening.eligibility')->middleware('can:blood_bank.screening.perform');
                 Route::get('donations', [BloodDonationController::class, 'index'])->name('donations.index');
                 Route::post('donations', [BloodDonationController::class, 'store'])->name('donations.store')->middleware('can:blood_bank.donations.record');
+                Route::post('donations/{donation}/tests', [BloodDonationController::class, 'recordTest'])->name('donations.tests.store')->middleware('can:blood_bank.screening.perform');
+                Route::patch('donation-tests/{test}/verify', [BloodDonationController::class, 'verifyTest'])->name('donations.tests.verify')->middleware('can:blood_bank.screening.verify');
                 Route::patch('donations/{donation}/screening', [BloodDonationController::class, 'updateScreening'])->name('donations.screening')->middleware('can:blood_bank.screening.manage');
                 Route::get('units', [BloodUnitController::class, 'index'])->name('units.index');
                 Route::patch('units/{unit}/discard', [BloodUnitController::class, 'discard'])->name('units.discard')->middleware('can:blood_bank.units.discard');
                 Route::get('requests', [BloodRequestController::class, 'index'])->name('requests.index');
                 Route::post('requests', [BloodRequestController::class, 'store'])->name('requests.store')->middleware('can:blood_bank.requests.create');
+                Route::patch('requests/{bloodRequest}/recipient', [BloodRequestController::class, 'updateRecipient'])->name('requests.recipient.update')->middleware('can:blood_bank.requests.create');
                 Route::patch('requests/{bloodRequest}/approve', [BloodRequestController::class, 'approve'])->name('requests.approve')->middleware('can:blood_bank.requests.approve');
                 Route::post('requests/{bloodRequest}/crossmatches', [BloodCrossmatchController::class, 'store'])->name('requests.crossmatches.store')->middleware('can:blood_bank.crossmatch.perform');
+                Route::patch('crossmatches/{crossmatch}/verify', [BloodCrossmatchController::class, 'verify'])->name('crossmatches.verify')->middleware('can:blood_bank.crossmatch.verify');
                 Route::post('requests/{bloodRequest}/issues', [BloodIssueController::class, 'store'])->name('requests.issues.store')->middleware('can:blood_bank.units.issue');
                 Route::patch('issues/{bloodIssue}/transfuse', [BloodIssueController::class, 'transfuse'])->name('issues.transfuse')->middleware('can:blood_bank.transfusions.record');
+                Route::patch('issues/{bloodIssue}/reaction', [BloodIssueController::class, 'reaction'])->name('issues.reaction')->middleware('can:blood_bank.transfusions.record');
                 Route::get('reports', [BloodBankReportController::class, 'index'])->name('reports.index')->middleware('can:blood_bank.reports.view');
             });
 

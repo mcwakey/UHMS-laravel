@@ -171,6 +171,7 @@ class VisitPreviewService
             'bloodRequests.requestedBy',
             'bloodRequests.approvedBy',
             'bloodRequests.department',
+            'bloodRequests.recipient',
             'bloodRequests.crossmatches.unit',
             'bloodRequests.crossmatches.performedBy',
             'bloodRequests.issues.unit',
@@ -943,7 +944,12 @@ class VisitPreviewService
                     'Request Number' => $bloodRequest->request_number,
                     'Priority' => $bloodRequest->priority,
                     'Status' => $bloodRequest->status,
-                    'Indication' => $bloodRequest->indication,
+                    'Indication' => $bloodRequest->recipient?->clinical_indication ?: $bloodRequest->indication,
+                    'Recipient Group' => $bloodRequest->recipient?->blood_group ?: $bloodRequest->blood_group,
+                    'Diagnosis' => $bloodRequest->recipient?->diagnosis ?: $bloodRequest->diagnosis,
+                    'Hb Level' => $bloodRequest->recipient?->hemoglobin_level ?: $bloodRequest->hb_level,
+                    'Prior Reaction' => $bloodRequest->recipient?->previous_transfusion_reaction ? 'Yes' : null,
+                    'Special Requirements' => $bloodRequest->recipient?->special_requirements,
                 ])
             );
 
@@ -970,7 +976,11 @@ class VisitPreviewService
                     'blood_crossmatch', $crossmatch->id,
                     array_filter([
                         'Unit' => $crossmatch->unit?->unit_number,
-                        'Unit Blood Group' => $crossmatch->unit?->blood_group,
+                        'Recipient Group' => $crossmatch->recipient_blood_group,
+                        'Donor Group' => $crossmatch->donor_blood_group ?? $crossmatch->unit?->blood_group,
+                        'Component' => $crossmatch->component_type,
+                        'Compatibility' => $crossmatch->compatibility_status ? $this->formatStatus($crossmatch->compatibility_status) : null,
+                        'Verified By' => $crossmatch->verifiedBy?->full_name,
                         'Method' => $crossmatch->method,
                         'Notes' => $crossmatch->notes,
                     ])
@@ -984,13 +994,16 @@ class VisitPreviewService
                     'Unit '.($issue->unit?->unit_number ?? $issue->blood_unit_id).' issued for transfusion.',
                     optional($issue->issuedBy)->full_name,
                     'Blood Bank',
-                    'ISSUED', 'bg-danger',
+                    $issue->is_emergency_release ? 'EMERGENCY RELEASE' : 'ISSUED', $issue->is_emergency_release ? 'bg-dark' : 'bg-danger',
                     'blood_issue', $issue->id,
                     array_filter([
                         'Issue Number' => $issue->issue_number,
                         'Unit' => $issue->unit?->unit_number,
                         'Received By' => $issue->receivedBy?->full_name ?? $issue->received_by_name,
                         'Status' => $issue->transfusion_status,
+                        'Compatibility' => $issue->compatibility_status ? $this->formatStatus($issue->compatibility_status) : null,
+                        'Emergency Release' => $issue->is_emergency_release ? $this->formatStatus((string) $issue->emergency_release_type) : null,
+                        'Release Reason' => $issue->emergency_release_reason,
                     ])
                 );
 
@@ -1001,12 +1014,15 @@ class VisitPreviewService
                         $issue->reaction_notes ? 'Transfusion recorded with reaction notes.' : 'Blood transfusion recorded.',
                         optional($issue->transfusedBy)->full_name,
                         'Blood Bank',
-                        $issue->transfusion_status, $issue->reaction_notes ? 'bg-warning text-dark' : 'bg-success',
+                        $issue->transfusion_status, $issue->reaction_occurred ? 'bg-warning text-dark' : 'bg-success',
                         'blood_issue', $issue->id,
                         array_filter([
                             'Issue Number' => $issue->issue_number,
                             'Unit' => $issue->unit?->unit_number,
+                            'Outcome' => $issue->outcome ? $this->formatStatus($issue->outcome) : null,
+                            'Reaction' => $issue->reaction_occurred ? $this->formatStatus((string) ($issue->reaction_type ?: 'Reported')) : null,
                             'Reaction Notes' => $issue->reaction_notes,
+                            'Witnessed By' => $issue->witnessedBy?->full_name,
                             'Notes' => $issue->notes,
                         ])
                     );

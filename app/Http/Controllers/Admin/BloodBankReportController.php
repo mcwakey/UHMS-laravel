@@ -12,12 +12,16 @@ class BloodBankReportController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $request->only(['date_from', 'date_to', 'status', 'blood_group', 'component_type']);
+        $filters = $request->only(['date_from', 'date_to', 'status', 'blood_group', 'component_type', 'decision', 'result']);
 
         return view('blood-bank.reports', [
             'inventory' => $this->reports->inventory($filters),
             'requests' => $this->reports->requests($filters),
             'issues' => $this->reports->issues($filters),
+            'donorScreenings' => $this->reports->donorScreenings($filters),
+            'diseaseScreenings' => $this->reports->infectiousDiseaseScreening($filters),
+            'crossmatches' => $this->reports->crossmatches($filters),
+            'reactions' => $this->reports->transfusionReactions($filters),
             'filters' => $filters,
         ]);
     }

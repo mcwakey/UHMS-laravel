@@ -17,6 +17,7 @@ enum NotificationModule: string
     case BILLING = 'BILLING';
     case CLAIMS = 'CLAIMS';
     case STOCK = 'STOCK';
+    case BLOOD_BANK = 'BLOOD_BANK';
     case PATIENTS = 'PATIENTS';
     case SYSTEM = 'SYSTEM';
 
@@ -41,6 +42,7 @@ enum NotificationModule: string
             self::BILLING => 'ti-receipt',
             self::CLAIMS => 'ti-file-invoice',
             self::STOCK => 'ti-packages',
+            self::BLOOD_BANK => 'ti-droplet',
             self::PATIENTS => 'ti-user-circle',
             self::SYSTEM => 'ti-settings',
         };

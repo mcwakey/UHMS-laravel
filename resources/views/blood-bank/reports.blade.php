@@ -44,9 +44,85 @@
             <div class="card-header bg-white"><h5 class="card-title mb-0">Issue / Transfusion Report</h5></div>
             <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
                 <thead class="bg-light"><tr><th>Issue</th><th>Unit</th><th>Patient</th><th>Status</th><th>Issued</th></tr></thead>
-                <tbody>@forelse($issues as $issue)<tr><td>{{ $issue->issue_number }}</td><td>{{ $issue->unit->unit_number ?? '—' }}</td><td>{{ $issue->patient->full_name ?? '—' }}</td><td>{{ $issue->transfusion_status }}</td><td>{{ $issue->issued_at?->format('d M Y H:i') }}</td></tr>@empty<tr><td colspan="5" class="text-center text-muted py-4">No issues.</td></tr>@endforelse</tbody>
+                <tbody>@forelse($issues as $issue)<tr><td>{{ $issue->issue_number }}</td><td>{{ $issue->unit->unit_number ?? '—' }}</td><td>{{ $issue->patient->full_name ?? '—' }}</td><td>{{ $issue->transfusion_status }}{!! $issue->is_emergency_release ? ' <span class="badge bg-dark">ER</span>' : '' !!}</td><td>{{ $issue->issued_at?->format('d M Y H:i') }}</td></tr>@empty<tr><td colspan="5" class="text-center text-muted py-4">No issues.</td></tr>@endforelse</tbody>
             </table></div></div>
         </div>
     </div>
+</div>
+
+{{-- Donor Screening Report --}}
+<div class="card mt-3">
+    <div class="card-header bg-white"><h5 class="card-title mb-0">Donor Screening Report</h5></div>
+    <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
+        <thead class="bg-light"><tr><th>Donor</th><th>Donor No.</th><th>Screening Date</th><th>Decision</th><th>Deferral Reason</th><th>Assessed By</th><th>Reviewed By</th></tr></thead>
+        <tbody>@forelse($donorScreenings as $s)<tr>
+            <td>{{ $s->donor->full_name ?? '—' }}</td>
+            <td>{{ $s->donor->donor_number ?? '—' }}</td>
+            <td>{{ $s->reviewed_at?->format('d M Y H:i') ?? '—' }}</td>
+            <td><span class="badge bg-{{ $s->eligibility_decision === 'ELIGIBLE' ? 'success' : ($s->eligibility_decision === 'PERMANENTLY_DEFERRED' ? 'danger' : 'warning text-dark') }}">{{ str_replace('_',' ',$s->eligibility_decision) }}</span>@if($s->eligibility_overridden) <span class="badge bg-dark">OVERRIDE</span>@endif</td>
+            <td class="small">{{ $s->deferral_reason ?: '—' }}</td>
+            <td>{{ $s->assessedBy->full_name ?? '—' }}</td>
+            <td>{{ $s->reviewedBy->full_name ?? '—' }}</td>
+        </tr>@empty<tr><td colspan="7" class="text-center text-muted py-4">No donor screening decisions.</td></tr>@endforelse</tbody>
+    </table></div></div>
+    @if($donorScreenings->hasPages())<div class="card-footer">{{ $donorScreenings->links() }}</div>@endif
+</div>
+
+{{-- Infectious Disease Screening Report --}}
+<div class="card mt-3">
+    <div class="card-header bg-white"><h5 class="card-title mb-0">Infectious Disease Screening Report</h5></div>
+    <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
+        <thead class="bg-light"><tr><th>Donation</th><th>Unit</th><th>Test</th><th>Result</th><th>Performed By</th><th>Verified By</th><th>Date</th></tr></thead>
+        <tbody>@forelse($diseaseScreenings as $t)<tr>
+            <td>{{ $t->donation->donation_number ?? '—' }}</td>
+            <td>{{ $t->donation->unit->unit_number ?? '—' }}</td>
+            <td>{{ $t->test_name }}</td>
+            <td><span class="badge bg-{{ in_array($t->result, ['POSITIVE','REACTIVE']) ? 'danger' : (in_array($t->result, ['NEGATIVE','NON_REACTIVE']) ? 'success' : 'secondary') }}">{{ str_replace('_',' ',$t->result) }}</span></td>
+            <td>{{ $t->performedBy->full_name ?? '—' }}</td>
+            <td>{{ $t->verifiedBy->full_name ?? '—' }}</td>
+            <td>{{ $t->performed_at?->format('d M Y') ?? '—' }}</td>
+        </tr>@empty<tr><td colspan="7" class="text-center text-muted py-4">No screening tests recorded.</td></tr>@endforelse</tbody>
+    </table></div></div>
+    @if($diseaseScreenings->hasPages())<div class="card-footer">{{ $diseaseScreenings->links() }}</div>@endif
+</div>
+
+{{-- Compatibility / Crossmatch Report --}}
+<div class="card mt-3">
+    <div class="card-header bg-white"><h5 class="card-title mb-0">Compatibility / Crossmatch Report</h5></div>
+    <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
+        <thead class="bg-light"><tr><th>Request</th><th>Patient</th><th>Recipient Group</th><th>Unit</th><th>Donor Group</th><th>Component</th><th>Compatibility</th><th>Result</th><th>Performed By</th><th>Verified By</th></tr></thead>
+        <tbody>@forelse($crossmatches as $xm)<tr>
+            <td>{{ $xm->request->request_number ?? '—' }}</td>
+            <td>{{ $xm->patient->full_name ?? '—' }}</td>
+            <td>{{ $xm->recipient_blood_group ?? '—' }}</td>
+            <td>{{ $xm->unit->unit_number ?? '—' }}</td>
+            <td>{{ $xm->donor_blood_group ?? ($xm->unit->blood_group ?? '—') }}</td>
+            <td>{{ $xm->component_type ?? '—' }}</td>
+            <td><span class="badge bg-{{ $xm->compatibility_status === 'COMPATIBLE' ? 'success' : ($xm->compatibility_status === 'INCOMPATIBLE' ? 'danger' : 'warning text-dark') }}">{{ str_replace('_',' ',$xm->compatibility_status ?? '—') }}</span></td>
+            <td>{{ $xm->result }}</td>
+            <td>{{ $xm->performedBy->full_name ?? '—' }}</td>
+            <td>{{ $xm->verifiedBy->full_name ?? '—' }}</td>
+        </tr>@empty<tr><td colspan="10" class="text-center text-muted py-4">No crossmatch records.</td></tr>@endforelse</tbody>
+    </table></div></div>
+    @if($crossmatches->hasPages())<div class="card-footer">{{ $crossmatches->links() }}</div>@endif
+</div>
+
+{{-- Transfusion Reaction Report --}}
+<div class="card mt-3">
+    <div class="card-header bg-white"><h5 class="card-title mb-0">Transfusion Reaction Report</h5></div>
+    <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
+        <thead class="bg-light"><tr><th>Patient</th><th>Unit</th><th>Component</th><th>Reaction Type</th><th>Outcome</th><th>Notes</th><th>Transfused By</th><th>Date</th></tr></thead>
+        <tbody>@forelse($reactions as $r)<tr>
+            <td>{{ $r->patient->full_name ?? '—' }}</td>
+            <td>{{ $r->unit->unit_number ?? '—' }}</td>
+            <td>{{ $r->unit->component_type ?? '—' }}</td>
+            <td><span class="badge bg-warning text-dark">{{ str_replace('_',' ',$r->reaction_type ?? 'REPORTED') }}</span></td>
+            <td>{{ str_replace('_',' ',$r->outcome ?? '—') }}</td>
+            <td class="small">{{ $r->reaction_notes ?: '—' }}</td>
+            <td>{{ $r->transfusedBy->full_name ?? '—' }}</td>
+            <td>{{ $r->transfused_at?->format('d M Y H:i') ?? '—' }}</td>
+        </tr>@empty<tr><td colspan="8" class="text-center text-muted py-4">No transfusion reactions recorded.</td></tr>@endforelse</tbody>
+    </table></div></div>
+    @if($reactions->hasPages())<div class="card-footer">{{ $reactions->links() }}</div>@endif
 </div>
 @endsection

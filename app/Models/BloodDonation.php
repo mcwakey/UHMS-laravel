@@ -65,6 +65,16 @@ class BloodDonation extends Model
         return $this->hasOne(BloodUnit::class, 'donation_id');
     }
 
+    public function tests()
+    {
+        return $this->hasMany(BloodDonationTest::class, 'donation_id');
+    }
+
+    public function screening()
+    {
+        return $this->hasOne(BloodDonorScreening::class, 'donation_id');
+    }
+
     public static function generateDonationNumber(): string
     {
         return static::generateNumber('BDN', 'blood_donations', 'donation_number');

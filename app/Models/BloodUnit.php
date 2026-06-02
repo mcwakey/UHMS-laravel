@@ -10,7 +10,11 @@ class BloodUnit extends Model
 {
     use GeneratesNumbers, HasFactory;
 
+    public const STATUS_COLLECTED = 'COLLECTED';
+
     public const STATUS_QUARANTINED = 'QUARANTINED';
+
+    public const STATUS_SCREENING_PENDING = 'SCREENING_PENDING';
 
     public const STATUS_AVAILABLE = 'AVAILABLE';
 
@@ -25,6 +29,8 @@ class BloodUnit extends Model
     public const STATUS_EXPIRED = 'EXPIRED';
 
     public const STATUS_DISCARDED = 'DISCARDED';
+
+    public const STATUS_REJECTED = 'REJECTED';
 
     public const SCREENING_PENDING = 'PENDING';
 
@@ -47,6 +53,8 @@ class BloodUnit extends Model
         'expiry_date',
         'storage_location_id',
         'screening_status',
+        'approved_by',
+        'approved_at',
         'crossmatch_status',
         'status',
         'reserved_for_request_id',
@@ -62,6 +70,7 @@ class BloodUnit extends Model
         'expiry_date' => 'date',
         'issued_at' => 'datetime',
         'discarded_at' => 'datetime',
+        'approved_at' => 'datetime',
     ];
 
     public function donation()
@@ -104,9 +113,19 @@ class BloodUnit extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
     public function isExpired(): bool
     {
         return $this->expiry_date ? $this->expiry_date->lt(today()) : false;
+    }
+
+    public function daysToExpiry(): ?int
+    {
+        return $this->expiry_date ? (int) round(today()->floatDiffInDays($this->expiry_date, false)) : null;
     }
 
     public function isIssueable(): bool
@@ -114,6 +133,15 @@ class BloodUnit extends Model
         return in_array($this->status, [self::STATUS_AVAILABLE, self::STATUS_RESERVED, self::STATUS_CROSSMATCHED], true)
             && $this->screening_status === self::SCREENING_PASSED
             && ! $this->isExpired();
+    }
+
+    /** Statuses that may never be issued, regardless of other checks. */
+    public function isBlockedForIssue(): bool
+    {
+        return in_array($this->status, [
+            self::STATUS_EXPIRED, self::STATUS_DISCARDED, self::STATUS_REJECTED,
+            self::STATUS_ISSUED, self::STATUS_TRANSFUSED,
+        ], true) || $this->isExpired();
     }
 
     public static function generateUnitNumber(): string

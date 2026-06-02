@@ -17,6 +17,19 @@ class BloodDonor extends Model
 
     public const STATUS_INACTIVE = 'INACTIVE';
 
+    // WHO screening lifecycle status
+    public const SCREENING_REGISTERED = 'REGISTERED';
+
+    public const SCREENING_QUESTIONNAIRE_PENDING = 'QUESTIONNAIRE_PENDING';
+
+    public const SCREENING_PHYSICAL_PENDING = 'PHYSICAL_ASSESSMENT_PENDING';
+
+    public const SCREENING_ELIGIBLE = 'ELIGIBLE';
+
+    public const SCREENING_TEMP_DEFERRED = 'TEMPORARILY_DEFERRED';
+
+    public const SCREENING_PERM_DEFERRED = 'PERMANENTLY_DEFERRED';
+
     protected $fillable = [
         'donor_number',
         'patient_id',
@@ -30,7 +43,9 @@ class BloodDonor extends Model
         'address',
         'last_donation_at',
         'status',
+        'screening_status',
         'deferral_reason',
+        'deferral_type',
         'deferred_until',
         'registered_by',
     ];
@@ -61,9 +76,46 @@ class BloodDonor extends Model
         return $this->hasMany(BloodUnit::class, 'donor_id');
     }
 
+    public function screenings()
+    {
+        return $this->hasMany(BloodDonorScreening::class, 'donor_id');
+    }
+
+    public function latestScreening()
+    {
+        return $this->hasOne(BloodDonorScreening::class, 'donor_id')->latestOfMany();
+    }
+
     public function getFullNameAttribute(): string
     {
         return trim($this->first_name.' '.$this->last_name);
+    }
+
+    public function getAgeAttribute(): ?int
+    {
+        return $this->date_of_birth?->age;
+    }
+
+    /** Whether a donor is currently within an active deferral window. */
+    public function isDeferred(): bool
+    {
+        if ($this->status === self::STATUS_DEFERRED) {
+            if ($this->deferred_until) {
+                return $this->deferred_until->gte(today());
+            }
+
+            return true;
+        }
+
+        return in_array($this->screening_status, [
+            self::SCREENING_TEMP_DEFERRED,
+            self::SCREENING_PERM_DEFERRED,
+        ], true);
+    }
+
+    public function canDonate(): bool
+    {
+        return $this->screening_status === self::SCREENING_ELIGIBLE && ! $this->isDeferred();
     }
 
     public static function generateDonorNumber(): string

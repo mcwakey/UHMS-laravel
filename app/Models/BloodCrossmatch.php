@@ -15,6 +15,16 @@ class BloodCrossmatch extends Model
 
     public const RESULT_INCOMPATIBLE = 'INCOMPATIBLE';
 
+    public const RESULT_CANCELLED = 'CANCELLED';
+
+    public const COMPAT_COMPATIBLE = 'COMPATIBLE';
+
+    public const COMPAT_WITH_CAUTION = 'COMPATIBLE_WITH_CAUTION';
+
+    public const COMPAT_INCOMPATIBLE = 'INCOMPATIBLE';
+
+    public const COMPAT_EMERGENCY_OVERRIDE = 'EMERGENCY_OVERRIDE';
+
     protected $fillable = [
         'blood_request_id',
         'blood_unit_id',
@@ -24,11 +34,18 @@ class BloodCrossmatch extends Model
         'performed_at',
         'result',
         'method',
+        'recipient_blood_group',
+        'donor_blood_group',
+        'component_type',
+        'compatibility_status',
+        'verified_by',
+        'verified_at',
         'notes',
     ];
 
     protected $casts = [
         'performed_at' => 'datetime',
+        'verified_at' => 'datetime',
     ];
 
     public function request()
@@ -54,5 +71,10 @@ class BloodCrossmatch extends Model
     public function performedBy()
     {
         return $this->belongsTo(User::class, 'performed_by');
+    }
+
+    public function verifiedBy()
+    {
+        return $this->belongsTo(User::class, 'verified_by');
     }
 }

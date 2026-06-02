@@ -22,6 +22,14 @@ class BloodRequest extends Model
 
     public const STATUS_CANCELLED = 'CANCELLED';
 
+    public const PRIORITY_ROUTINE = 'ROUTINE';
+
+    public const PRIORITY_URGENT = 'URGENT';
+
+    public const PRIORITY_EMERGENCY = 'EMERGENCY';
+
+    public const PRIORITY_MASSIVE = 'MASSIVE_TRANSFUSION';
+
     protected $fillable = [
         'request_number',
         'visit_id',
@@ -106,6 +114,17 @@ class BloodRequest extends Model
     public function reservedUnits()
     {
         return $this->hasMany(BloodUnit::class, 'reserved_for_request_id');
+    }
+
+    public function recipient()
+    {
+        return $this->hasOne(BloodRecipient::class, 'blood_request_id');
+    }
+
+    /** Effective recipient ABO/Rh group (recipient detail overrides request group). */
+    public function recipientGroup(): ?string
+    {
+        return $this->recipient?->blood_group ?: $this->blood_group;
     }
 
     public static function generateRequestNumber(): string
