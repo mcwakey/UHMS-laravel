@@ -2,21 +2,16 @@
 @section('title', 'Insurance Providers')
 
 @section('content')
-<!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Insurance Providers
-            <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">Total: {{ $providers->total() }}</span>
-        </h4>
-    </div>
-    <div>
+<x-page-header title="Insurance Providers" icon="ti-shield-check">
+    <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">Total: {{ $providers->total() }}</span>
+    <x-slot:actions>
         @can('claims.create')
         <button class="btn btn-primary btn-md fs-13" data-bs-toggle="modal" data-bs-target="#addProviderModal">
             <i class="ti ti-plus me-1"></i>Add Provider
         </button>
         @endcan
-    </div>
-</div>
+    </x-slot:actions>
+</x-page-header>
 
 @if(session('success'))
 <div class="alert alert-success alert-dismissible fade show">{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
@@ -137,7 +132,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="11" class="text-center text-muted py-4">No insurance providers found</td>
+                        <td colspan="11"><x-empty-state message="No insurance providers found" /></td>
                     </tr>
                     @endforelse
                 </tbody>

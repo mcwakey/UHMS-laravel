@@ -149,7 +149,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="8" class="text-center text-muted py-4">No payroll records found.</td></tr>
+                <tr><td colspan="8"><x-empty-state message="No payroll records found." /></td></tr>
                 @endforelse
             </tbody>
         </table>

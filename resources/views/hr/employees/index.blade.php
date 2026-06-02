@@ -71,7 +71,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="8" class="text-center text-muted py-4">No employees found</td></tr>
+                    <tr><td colspan="8"><x-empty-state message="No employees found" /></td></tr>
                     @endforelse
                 </tbody>
             </table>

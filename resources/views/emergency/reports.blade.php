@@ -97,7 +97,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="text-center text-muted py-4">No emergency cases match this report.</td></tr>
+                        <tr><td colspan="7"><x-empty-state message="No emergency cases match this report." /></td></tr>
                     @endforelse
                 </tbody>
             </table>

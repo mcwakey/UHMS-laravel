@@ -8,10 +8,17 @@ What Phase 1 (this pass) delivered, and the safe follow-up work. Nothing here bl
 - Docs: gap analysis, recommendation report, theme rules, component standards, implementation checklist, this file.
 - `tests/Feature/UiComponentsTest.php` (9 passing).
 
-## Rollout (mechanical, low risk)
-- [ ] Replace inline `badge bg-*` with `<x-status-badge>` across the **199** affected views — start with Blood Bank, Billing, MAR, Emergency, Stock, then the rest.
-- [ ] Replace the copy-pasted page-header `<div class="d-flex … border-bottom">` with `<x-page-header>` on list/detail pages.
-- [ ] Replace ad-hoc `…No records…` cells with `<x-empty-state>`.
+## Rollout status (Phases 2–3 + full-system readjustment)
+- [x] **Phase 2** status badges — Blood Bank, Billing, MAR, Emergency, Stock, + Claims (enum-driven). (`<x-status-badge>` now in 20 files.)
+- [x] **Phase 3** headers — Blood Bank, Statistics, Reports, Patients, Visits, Consultation, Pharmacy, Billing, Stock, Emergency, MAR, + Admissions, Wards, Insurance, Accounts (reconciliation), Service Renderings, Claims index. (`<x-page-header>` now in 28 files.)
+- [x] **Empty states** — system-wide bulk conversion of single-line `…No records…` cells. (`<x-empty-state>` now in **71 files**; 0 single-line ad-hoc cells remain.)
+
+## Remaining rollout (documented in UI_PHASE_2_3_FULL_SYSTEM_READJUSTMENT_REPORT.md)
+- [ ] **55 page headers** still on the raw pattern — core detail/create/show pages first (claims/admissions/accounts/emergency/mar/wards/store sub-pages), then ~17 vendor-template CMS pages (blogs, faq, gallery, tickets, etc.).
+- [ ] **`emergency/show`** header — needs a title-slot pattern (inline triage/status badges in the `<h4>`).
+- [ ] **~42 multi-line empty states** (icon + text on separate lines) — convert to `<x-empty-state>` (already semi-compliant).
+- [ ] Optionally route enum-driven `->status->color()` badges (lab, consultations, insurance, appointments, hr) through the enum-aware `<x-status-badge>` for markup consistency — cosmetic, zero colour change.
+- [ ] Enrich bulk-converted empty states with contextual `icon`/`title` where they currently carry only `message`.
 
 ## Components to extract (Phase 5)
 - [ ] `<x-stat-card>` from the KPI card pattern.

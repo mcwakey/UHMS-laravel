@@ -2,19 +2,15 @@
 @section('title', 'Financial Reconciliation')
 
 @section('content')
-<!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Financial Reconciliation</h4>
-    </div>
-    <div>
+<x-page-header title="Financial Reconciliation" icon="ti-scale">
+    <x-slot:actions>
         <form method="GET" action="{{ route('admin.accounts.reconciliation') }}" class="d-flex gap-2">
             <input type="date" name="from" class="form-control" value="{{ $from }}" placeholder="From">
             <input type="date" name="to" class="form-control" value="{{ $to }}" placeholder="To">
             <button type="submit" class="btn btn-primary text-nowrap"><i class="ti ti-filter me-1"></i>Filter</button>
         </form>
-    </div>
-</div>
+    </x-slot:actions>
+</x-page-header>
 
 <!-- Stats Cards -->
 <div class="row mb-3">
@@ -106,7 +102,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3" class="text-center text-muted py-3">No income records</td>
+                                <td colspan="3"><x-empty-state message="No income records" /></td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -147,7 +143,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3" class="text-center text-muted py-3">No expense records</td>
+                                <td colspan="3"><x-empty-state message="No expense records" /></td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -191,7 +187,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="4" class="text-center text-muted py-3">No revenue records</td>
+                        <td colspan="4"><x-empty-state message="No revenue records" /></td>
                     </tr>
                     @endforelse
                 </tbody>

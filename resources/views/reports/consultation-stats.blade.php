@@ -136,7 +136,7 @@
                     <td><code>{{ $record->visit?->visit_number ?? '—' }}</code></td>
                 </tr>
                 @empty
-                <tr><td colspan="6" class="text-center text-muted py-4">No consultations found.</td></tr>
+                <tr><td colspan="6"><x-empty-state message="No consultations found." /></td></tr>
                 @endforelse
             </tbody>
         </table>

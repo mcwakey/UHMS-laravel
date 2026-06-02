@@ -82,7 +82,7 @@
                     <td class="text-end"><a href="{{ route('admin.store.purchase-returns.show', $purchaseReturn) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
                 </tr>
             @empty
-                <tr><td colspan="8" class="text-center text-muted py-4">No purchase returns found.</td></tr>
+                <tr><td colspan="8"><x-empty-state message="No purchase returns found." /></td></tr>
             @endforelse
             </tbody>
         </table>

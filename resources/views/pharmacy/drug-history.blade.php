@@ -162,7 +162,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-4">No stock recorded for this drug yet.</td>
+                        <td colspan="5"><x-empty-state message="No stock recorded for this drug yet." /></td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -231,7 +231,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center text-muted py-4">No stock receipt records found.</td>
+                        <td colspan="9"><x-empty-state message="No stock receipt records found." /></td>
                     </tr>
                     @endforelse
                 </tbody>

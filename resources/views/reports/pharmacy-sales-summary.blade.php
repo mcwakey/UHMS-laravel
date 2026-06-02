@@ -60,7 +60,7 @@
                     <td class="text-end">{{ $row->patient_count }}</td>
                 </tr>
                 @empty
-                <tr><td colspan="5" class="text-center text-muted py-4">No data found.</td></tr>
+                <tr><td colspan="5"><x-empty-state message="No data found." /></td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -99,7 +99,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="4" class="text-center text-muted py-3">No insurance-covered items found.</td>
+                            <td colspan="4"><x-empty-state message="No insurance-covered items found." /></td>
                         </tr>
                         @endforelse
                     </tbody>

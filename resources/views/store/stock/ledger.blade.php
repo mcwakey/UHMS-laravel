@@ -106,7 +106,7 @@
                         <td class="small">{{ $m->notes }}</td>
                     </tr>
                     @empty
-                    <tr><td colspan="10" class="text-center text-muted py-4">No movements found.</td></tr>
+                    <tr><td colspan="10"><x-empty-state message="No movements found." /></td></tr>
                     @endforelse
                 </tbody>
             </table>

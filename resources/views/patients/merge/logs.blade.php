@@ -42,7 +42,7 @@
                         <td>{{ $log->performedBy?->name ?: '-' }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="text-center text-muted py-4">No merge logs found.</td></tr>
+                    <tr><td colspan="7"><x-empty-state message="No merge logs found." /></td></tr>
                 @endforelse
             </tbody>
         </table>

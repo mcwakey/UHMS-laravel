@@ -122,7 +122,7 @@
                         <td class="small text-muted">{{ optional($entry->creator)->name ?? '—' }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="8" class="text-center text-muted py-4">No ledger entries.</td></tr>
+                    <tr><td colspan="8"><x-empty-state message="No ledger entries." /></td></tr>
                 @endforelse
                 </tbody>
             </table>

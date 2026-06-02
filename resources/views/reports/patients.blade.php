@@ -134,7 +134,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center text-muted py-4">No patients found</td>
+                        <td colspan="8"><x-empty-state message="No patients found" /></td>
                     </tr>
                     @endforelse
                 </tbody>

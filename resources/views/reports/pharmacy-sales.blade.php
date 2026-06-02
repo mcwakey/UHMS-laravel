@@ -108,7 +108,7 @@
                     <td>{{ $record->dispensedBy?->full_name ?? '—' }}</td>
                 </tr>
                 @empty
-                <tr><td colspan="8" class="text-center text-muted py-4">No dispensing records found.</td></tr>
+                <tr><td colspan="8"><x-empty-state message="No dispensing records found." /></td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -93,7 +93,7 @@
                                     </tr>
                                 @endforeach
                             @empty
-                                <tr><td colspan="3" class="text-center text-muted py-3">No report data for the selected filters.</td></tr>
+                                <tr><td colspan="3"><x-empty-state message="No report data for the selected filters." /></td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -122,7 +122,7 @@
                                     <td class="text-end">{{ $row->total }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="2" class="text-center text-muted py-3">No rendered services yet.</td></tr>
+                                <tr><td colspan="2"><x-empty-state message="No rendered services yet." /></td></tr>
                             @endforelse
                         </tbody>
                     </table>

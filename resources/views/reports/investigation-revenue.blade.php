@@ -121,7 +121,7 @@
                     <td class="text-end fw-semibold">₵{{ number_format($req->items->sum(fn($i) => $i->labTest->price ?? 0), 2) }}</td>
                 </tr>
                 @empty
-                <tr><td colspan="6" class="text-center text-muted py-4">No completed requests found.</td></tr>
+                <tr><td colspan="6"><x-empty-state message="No completed requests found." /></td></tr>
                 @endforelse
             </tbody>
         </table>

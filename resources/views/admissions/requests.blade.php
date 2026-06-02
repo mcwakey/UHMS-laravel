@@ -2,22 +2,13 @@
 @section('title', 'Admission Requests')
 
 @section('content')
-<!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">
-            Admission Requests
-            @if($totalPending > 0)
-                <span class="badge bg-warning text-dark fw-medium border py-1 px-2 border-warning fs-13 ms-1">
-                    {{ $totalPending }} pending
-                </span>
-            @else
-                <span class="badge badge-soft-secondary fw-medium border py-1 px-2 fs-13 ms-1">0 pending</span>
-            @endif
-        </h4>
-        <p class="text-muted small mb-0 mt-1">Visits where the doctor has ordered admission and the patient is awaiting bed assignment.</p>
-    </div>
-    <div class="text-end d-flex gap-2">
+<x-page-header title="Admission Requests" icon="ti-bed" description="Visits where the doctor has ordered admission and the patient is awaiting bed assignment.">
+    @if($totalPending > 0)
+        <span class="badge bg-warning text-dark fw-medium border py-1 px-2 border-warning fs-13 ms-1">{{ $totalPending }} pending</span>
+    @else
+        <span class="badge badge-soft-secondary fw-medium border py-1 px-2 fs-13 ms-1">0 pending</span>
+    @endif
+    <x-slot:actions>
         <a href="{{ route('admin.admissions.index') }}" class="btn btn-outline-secondary btn-md fs-13">
             <i class="ti ti-bed me-1"></i>All Admissions
         </a>
@@ -26,8 +17,8 @@
             <i class="ti ti-plus me-1"></i>New Admission
         </a>
         @endcan
-    </div>
-</div>
+    </x-slot:actions>
+</x-page-header>
 
 <!-- Search Filter -->
 <div class="card mb-3">

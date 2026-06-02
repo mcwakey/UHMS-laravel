@@ -164,7 +164,7 @@
                         </tr>
                         @endcan
                     @empty
-                        <tr><td colspan="5" class="text-center text-muted py-4">No complaint catalogue entries found.</td></tr>
+                        <tr><td colspan="5"><x-empty-state message="No complaint catalogue entries found." /></td></tr>
                     @endforelse
                     </tbody>
                 </table>

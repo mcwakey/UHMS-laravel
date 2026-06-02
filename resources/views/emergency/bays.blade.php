@@ -98,7 +98,7 @@
                                     <td class="text-muted">{{ $bay->notes }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5" class="text-center text-muted py-4">No emergency bays configured.</td></tr>
+                                <tr><td colspan="5"><x-empty-state message="No emergency bays configured." /></td></tr>
                             @endforelse
                         </tbody>
                     </table>

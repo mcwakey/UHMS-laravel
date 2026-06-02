@@ -125,7 +125,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">No payment records found</td>
+                        <td colspan="7"><x-empty-state message="No payment records found" /></td>
                     </tr>
                     @endforelse
                 </tbody>

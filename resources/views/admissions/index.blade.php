@@ -2,17 +2,14 @@
 @section('title', 'Admissions')
 
 @section('content')
-<!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Admissions <span class="badge badge-soft-primary fw-medium border py-1 px-2 border-primary fs-13 ms-1">Total: {{ $admissions->total() }}</span></h4>
-    </div>
-    <div class="text-end d-flex gap-2">
+<x-page-header title="Admissions" icon="ti-bed">
+    <span class="badge badge-soft-primary fw-medium border py-1 px-2 border-primary fs-13 ms-1">Total: {{ $admissions->total() }}</span>
+    <x-slot:actions>
         @can('ward.admit')
         <a href="{{ route('admin.admissions.create') }}" class="btn btn-primary btn-md fs-13"><i class="ti ti-plus me-1"></i>New Admission</a>
         @endcan
-    </div>
-</div>
+    </x-slot:actions>
+</x-page-header>
 
 <!-- Stats Cards -->
 <div class="row mb-3">

@@ -132,7 +132,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="7" class="text-center text-muted py-4">No leave requests found.</td></tr>
+                <tr><td colspan="7"><x-empty-state message="No leave requests found." /></td></tr>
                 @endforelse
             </tbody>
         </table>

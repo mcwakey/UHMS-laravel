@@ -161,7 +161,7 @@
                                     <td>{{ $log->reason ?: $log->notes ?: '-' }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5" class="text-center text-muted py-3">No rendering log entries yet.</td></tr>
+                                <tr><td colspan="5"><x-empty-state message="No rendering log entries yet." /></td></tr>
                             @endforelse
                         </tbody>
                     </table>

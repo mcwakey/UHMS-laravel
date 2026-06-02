@@ -2059,7 +2059,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="text-center text-muted py-3">No consultation sessions routed for this visit.</td>
+                        <td colspan="6"><x-empty-state message="No consultation sessions routed for this visit." /></td>
                     </tr>
                     @endforelse
                 </tbody>

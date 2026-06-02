@@ -86,7 +86,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">No pharmacy products found.</td>
+                            <td colspan="7"><x-empty-state message="No pharmacy products found." /></td>
                         </tr>
                     @endforelse
                 </tbody>

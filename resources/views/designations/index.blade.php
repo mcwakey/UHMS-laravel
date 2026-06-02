@@ -130,7 +130,7 @@
                     </div>
                     @empty
                     <tr>
-                        <td colspan="5" class="text-center text-muted py-4">No designations found</td>
+                        <td colspan="5"><x-empty-state message="No designations found" /></td>
                     </tr>
                     @endforelse
                 </tbody>

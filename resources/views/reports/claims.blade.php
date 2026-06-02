@@ -123,7 +123,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="7" class="text-center text-muted py-4">No claims found.</td></tr>
+                <tr><td colspan="7"><x-empty-state message="No claims found." /></td></tr>
                 @endforelse
             </tbody>
         </table>

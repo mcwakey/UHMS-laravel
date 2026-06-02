@@ -137,7 +137,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">No theatre rooms found.</td>
+                            <td colspan="8"><x-empty-state message="No theatre rooms found." /></td>
                         </tr>
                     @endforelse
                 </tbody>

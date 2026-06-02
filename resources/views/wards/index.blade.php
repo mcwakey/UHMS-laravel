@@ -2,19 +2,16 @@
 @section('title', 'Wards')
 
 @section('content')
-<!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Wards <span class="badge badge-soft-primary fw-medium border py-1 px-2 border-primary fs-13 ms-1">Total: {{ $wards->total() }}</span></h4>
-    </div>
-    <div class="text-end d-flex gap-2">
+<x-page-header title="Wards" icon="ti-bed">
+    <span class="badge badge-soft-primary fw-medium border py-1 px-2 border-primary fs-13 ms-1">Total: {{ $wards->total() }}</span>
+    <x-slot:actions>
         @can('ward.manage')
         <button type="button" class="btn btn-primary btn-md fs-13" data-bs-toggle="modal" data-bs-target="#addWardModal"><i class="ti ti-plus me-1"></i>New Ward</button>
         @endcan
         <a href="{{ route('admin.wards.beds') }}" class="btn btn-outline-info btn-md fs-13"><i class="ti ti-bed me-1"></i>Manage Beds</a>
         <a href="{{ route('admin.wards.bed-map') }}" class="btn btn-outline-success btn-md fs-13"><i class="ti ti-map me-1"></i>Bed Map</a>
-    </div>
-</div>
+    </x-slot:actions>
+</x-page-header>
 
 <!-- Filters -->
 <div class="card mb-3">

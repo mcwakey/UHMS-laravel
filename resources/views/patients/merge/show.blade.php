@@ -96,7 +96,7 @@
                         <td>{{ $log->performedBy?->name ?: '-' }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="4" class="text-center text-muted py-4">No audit entries yet.</td></tr>
+                    <tr><td colspan="4"><x-empty-state message="No audit entries yet." /></td></tr>
                 @endforelse
             </tbody>
         </table>

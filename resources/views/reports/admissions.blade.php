@@ -123,7 +123,7 @@
                     <td>{{ $adm->actual_discharge_date?->format('d/m/Y') ?? '—' }}</td>
                 </tr>
                 @empty
-                <tr><td colspan="7" class="text-center text-muted py-4">No admissions found.</td></tr>
+                <tr><td colspan="7"><x-empty-state message="No admissions found." /></td></tr>
                 @endforelse
             </tbody>
         </table>

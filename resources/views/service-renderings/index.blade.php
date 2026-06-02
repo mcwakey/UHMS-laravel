@@ -2,17 +2,15 @@
 @section('title', 'Service Renderings')
 
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
-    <div>
-        <h4 class="fw-bold mb-1"><i class="ti ti-clipboard-check me-2 text-primary"></i>Service Renderings</h4>
-        <p class="text-muted mb-0">Track fulfilment of billed services that do not have a specialist workflow.</p>
-    </div>
-    @can('service_rendering.reports')
-        <a href="{{ route('admin.service-renderings.reports', request()->query()) }}" class="btn btn-outline-primary btn-sm">
-            <i class="ti ti-report-analytics me-1"></i>Reports
-        </a>
-    @endcan
-</div>
+<x-page-header title="Service Renderings" description="Track fulfilment of billed services that do not have a specialist workflow." icon="ti-clipboard-check">
+    <x-slot:actions>
+        @can('service_rendering.reports')
+            <a href="{{ route('admin.service-renderings.reports', request()->query()) }}" class="btn btn-outline-primary btn-sm">
+                <i class="ti ti-report-analytics me-1"></i>Reports
+            </a>
+        @endcan
+    </x-slot:actions>
+</x-page-header>
 
 @if(session('success'))
     <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -180,7 +178,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="text-center text-muted py-4">No service renderings found.</td></tr>
+                        <tr><td colspan="8"><x-empty-state message="No service renderings found." /></td></tr>
                     @endforelse
                 </tbody>
             </table>

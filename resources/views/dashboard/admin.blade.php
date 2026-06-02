@@ -195,7 +195,7 @@
                                 <td class="text-center text-muted small">{{ number_format($stock->reorder_level, 0) }}</td>
                             </tr>
                             @empty
-                            <tr><td colspan="3" class="text-center text-muted py-3 small">No low stock items</td></tr>
+                            <tr><td colspan="3"><x-empty-state message="No low stock items" /></td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -223,7 +223,7 @@
                                 <td class="small text-danger">{{ $stock->expiry_date?->format('M d, Y') }}</td>
                             </tr>
                             @empty
-                            <tr><td colspan="3" class="text-center text-muted py-3 small">No expired stock</td></tr>
+                            <tr><td colspan="3"><x-empty-state message="No expired stock" /></td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -304,7 +304,7 @@
                                 <td><span class="badge bg-{{ $appt->status?->color() ?? 'secondary' }}">{{ $appt->status?->label() ?? '—' }}</span></td>
                             </tr>
                             @empty
-                            <tr><td colspan="5" class="text-center text-muted py-4">No appointments today</td></tr>
+                            <tr><td colspan="5"><x-empty-state message="No appointments today" /></td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -334,7 +334,7 @@
                                 <td class="small text-muted">{{ $patient->created_at->diffForHumans() }}</td>
                             </tr>
                             @empty
-                            <tr><td colspan="3" class="text-center text-muted py-3">No patients yet</td></tr>
+                            <tr><td colspan="3"><x-empty-state message="No patients yet" /></td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -380,7 +380,7 @@
                                 <td class="text-muted small">{{ $visit->created_at->format('H:i') }}</td>
                             </tr>
                             @empty
-                            <tr><td colspan="7" class="text-center text-muted py-4">No visits today</td></tr>
+                            <tr><td colspan="7"><x-empty-state message="No visits today" /></td></tr>
                             @endforelse
                         </tbody>
                     </table>

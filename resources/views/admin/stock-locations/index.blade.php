@@ -65,7 +65,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="7" class="text-center text-muted py-4">No stock locations yet.</td></tr>
+                    <tr><td colspan="7"><x-empty-state message="No stock locations yet." /></td></tr>
                 @endforelse
                 </tbody>
             </table>

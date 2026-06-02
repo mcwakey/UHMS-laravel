@@ -116,7 +116,7 @@
                     <td class="text-end fw-bold">₵{{ number_format($entry['balance'], 2) }}</td>
                 </tr>
                 @empty
-                <tr><td colspan="5" class="text-center text-muted py-4">No transactions found.</td></tr>
+                <tr><td colspan="5"><x-empty-state message="No transactions found." /></td></tr>
                 @endforelse
             </tbody>
             @if(count($ledger))

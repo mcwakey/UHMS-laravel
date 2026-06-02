@@ -2,14 +2,9 @@
 @section('title', 'Insurance Claims')
 
 @section('content')
-<!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Insurance Claims
-            <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">Total: {{ $claims->total() }}</span>
-        </h4>
-    </div>
-    <div class="text-end d-flex gap-2">
+<x-page-header title="Insurance Claims" icon="ti-file-dollar">
+    <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">Total: {{ $claims->total() }}</span>
+    <x-slot:actions>
         <a href="{{ route('admin.claims.eligible-visits') }}" class="btn btn-outline-primary btn-md fs-13">
             <i class="ti ti-user-check me-1"></i>Eligible Visits
         </a>
@@ -26,8 +21,8 @@
             <i class="ti ti-plus me-1"></i>New Claim
         </a>
         @endcan
-    </div>
-</div>
+    </x-slot:actions>
+</x-page-header>
 
 @if(session('success'))
 <div class="alert alert-success alert-dismissible fade show">{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
@@ -189,7 +184,7 @@
                             @endif
                         </td>
                         <td><span class="badge bg-soft-info">{{ $claim->items_count }}</span></td>
-                        <td><span class="badge bg-{{ $claim->status->color() }}">{{ $claim->status->label() }}</span></td>
+                        <td><x-status-badge :status="$claim->status" /></td>
                         <td class="text-end">
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">

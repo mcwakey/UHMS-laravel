@@ -154,7 +154,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3" class="text-center text-muted py-3">No upcoming visits</td>
+                                <td colspan="3"><x-empty-state message="No upcoming visits" /></td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -191,7 +191,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3" class="text-center text-muted py-3">No completed visits</td>
+                                <td colspan="3"><x-empty-state message="No completed visits" /></td>
                             </tr>
                             @endforelse
                         </tbody>

@@ -166,7 +166,7 @@
                                                 </td>
                                             </tr>
                                         @empty
-                                            <tr><td colspan="6" class="text-center text-muted py-3">No fields yet.</td></tr>
+                                            <tr><td colspan="6"><x-empty-state message="No fields yet." /></td></tr>
                                         @endforelse
                                         </tbody>
                                     </table>
@@ -249,7 +249,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5" class="text-center text-muted py-3">No default consumables configured yet.</td></tr>
+                                <tr><td colspan="5"><x-empty-state message="No default consumables configured yet." /></td></tr>
                             @endforelse
                             </tbody>
                         </table>

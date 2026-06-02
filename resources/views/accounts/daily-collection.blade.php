@@ -94,7 +94,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3" class="text-center text-muted py-3">No payments recorded</td>
+                                <td colspan="3"><x-empty-state message="No payments recorded" /></td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -137,7 +137,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="4" class="text-center text-muted py-3">No income entries</td>
+                                <td colspan="4"><x-empty-state message="No income entries" /></td>
                             </tr>
                             @endforelse
                         </tbody>

@@ -52,7 +52,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="5" class="text-center text-muted py-4">No locations yet.</td></tr>
+                    <tr><td colspan="5"><x-empty-state message="No locations yet." /></td></tr>
                     @endforelse
                 </tbody>
             </table>

@@ -118,7 +118,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="7" class="text-center text-muted py-4">No expired or expiring stock found.</td></tr>
+                <tr><td colspan="7"><x-empty-state message="No expired or expiring stock found." /></td></tr>
                 @endforelse
             </tbody>
         </table>

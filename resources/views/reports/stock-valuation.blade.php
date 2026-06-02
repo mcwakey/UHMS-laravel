@@ -112,7 +112,7 @@
                     <td class="text-end fw-semibold">GHS {{ number_format($quantity * $sellPrice, 2) }}</td>
                 </tr>
                 @empty
-                <tr><td colspan="8" class="text-center text-muted py-4">No stock records found.</td></tr>
+                <tr><td colspan="8"><x-empty-state message="No stock records found." /></td></tr>
                 @endforelse
             </tbody>
         </table>

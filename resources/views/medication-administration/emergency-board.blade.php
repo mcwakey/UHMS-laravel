@@ -72,7 +72,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="8" class="text-center text-muted py-4">No emergency medication tasks found.</td></tr>
+                    <tr><td colspan="8"><x-empty-state message="No emergency medication tasks found." /></td></tr>
                     @endforelse
                 </tbody>
             </table>

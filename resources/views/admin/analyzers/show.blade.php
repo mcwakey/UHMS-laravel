@@ -149,9 +149,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="text-center text-muted py-3">
-                                No test mappings configured. Add mappings to enable auto-result matching.
-                            </td>
+                            <td colspan="5"><x-empty-state message="No test mappings configured. Add mappings to enable auto-result matching." /></td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -191,7 +189,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-3">No messages received yet.</td>
+                            <td colspan="6"><x-empty-state message="No messages received yet." /></td>
                         </tr>
                         @endforelse
                     </tbody>

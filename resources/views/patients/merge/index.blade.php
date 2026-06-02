@@ -180,7 +180,7 @@
                         <td class="text-end"><a href="{{ route('admin.patients.merge.requests.show', $mergeRequest) }}" class="btn btn-sm btn-outline-primary">View</a></td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="text-center text-muted py-4">No merge requests yet.</td></tr>
+                    <tr><td colspan="6"><x-empty-state message="No merge requests yet." /></td></tr>
                 @endforelse
             </tbody>
         </table>

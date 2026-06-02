@@ -124,7 +124,7 @@
                     <td class="text-end fw-semibold">₵{{ number_format($payment->amount, 2) }}</td>
                 </tr>
                 @empty
-                <tr><td colspan="7" class="text-center text-muted py-4">No payments collected on this date.</td></tr>
+                <tr><td colspan="7"><x-empty-state message="No payments collected on this date." /></td></tr>
                 @endforelse
             </tbody>
         </table>

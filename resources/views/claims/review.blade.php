@@ -7,7 +7,7 @@
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">
             Review Claim {{ $claim->claim_number }}
-            <span class="badge bg-{{ $claim->status->color() }} ms-2">{{ $claim->status->label() }}</span>
+            <x-status-badge :status="$claim->status" class="ms-2" />
         </h4>
         <small class="text-muted">
             Patient: {{ $claim->patient->first_name }} {{ $claim->patient->last_name }} |

@@ -67,7 +67,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="text-center text-muted py-4">No procedure services found.</td></tr>
+                        <tr><td colspan="6"><x-empty-state message="No procedure services found." /></td></tr>
                     @endforelse
                 </tbody>
             </table>

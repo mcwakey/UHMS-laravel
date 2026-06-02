@@ -84,7 +84,7 @@
                         <td><small class="text-muted">{{ \Illuminate\Support\Str::limit($m->notes, 50) }}</small></td>
                     </tr>
                 @empty
-                    <tr><td colspan="10" class="text-center text-muted py-4">No movements match the filters.</td></tr>
+                    <tr><td colspan="10"><x-empty-state message="No movements match the filters." /></td></tr>
                 @endforelse
                 </tbody>
             </table>
