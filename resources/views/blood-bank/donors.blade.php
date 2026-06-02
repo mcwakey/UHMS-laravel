@@ -2,10 +2,11 @@
 @section('title', 'Blood Donors')
 
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
-    <div><h4 class="fw-bold mb-1">Blood Donors</h4><p class="text-muted mb-0">Register and search blood donors.</p></div>
-    <a href="{{ route('admin.blood-bank.dashboard') }}" class="btn btn-outline-secondary btn-sm">Dashboard</a>
-</div>
+<x-page-header title="Blood Donors" description="Register, search, and screen blood donors." icon="ti-droplet">
+    <x-slot:actions>
+        <a href="{{ route('admin.blood-bank.dashboard') }}" class="btn btn-outline-secondary btn-sm">Dashboard</a>
+    </x-slot:actions>
+</x-page-header>
 
 <div class="card mb-3">
     <div class="card-header bg-white"><h5 class="card-title mb-0">Register Donor</h5></div>
@@ -46,7 +47,7 @@
                             <td>{{ $donor->donor_number }}</td>
                             <td>{{ $donor->full_name }}<div class="small text-muted">{{ $donor->phone ?? '' }}</div></td>
                             <td>{{ $donor->blood_group ?? 'Unknown' }}</td>
-                            <td><span class="badge bg-{{ $ss === 'ELIGIBLE' ? 'success' : ($ss === 'PERMANENTLY_DEFERRED' ? 'danger' : (str_contains($ss,'DEFERRED') ? 'warning text-dark' : 'secondary')) }}">{{ str_replace('_',' ',$ss) }}</span>
+                            <td><x-status-badge :status="$ss" domain="donor_screening" />
                                 @if($donor->latestScreening?->deferral_reason)<div class="small text-muted">{{ $donor->latestScreening->deferral_reason }}</div>@endif
                             </td>
                             <td>{{ $donor->last_donation_at?->format('d M Y') ?? '—' }}</td>

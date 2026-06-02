@@ -1,1540 +1,1556 @@
-```text
-You are a senior Laravel + Inertia/Vue architect working on UHMS — Ultimate Hospital Management System.
+Absolutely — this is a very important step now. UHMS has grown into a large system, so without a **UI/UX governance layer**, every new module will start looking and behaving differently.
 
-We need to implement a full Statistical Reporting / Analytics module for UHMS.
+Here is the full implementation prompt for Codex/Copilot:
 
-Normal reports already show tables and records, but statistical reports must go further by showing hospital trends, counts, rankings, percentages, KPIs, comparisons, charts, and drill-downs.
+````text
+You are a senior UI/UX architect, Laravel + Inertia/Vue frontend engineer, and design system specialist working on UHMS — Ultimate Hospital Management System.
 
-The goal is to help hospital management, doctors, nurses, pharmacists, lab staff, theatre staff, claims officers, store officers, and administrators understand what is happening across the hospital.
+We need to perform a complete UI/UX audit of the whole UHMS system and create a unified design system rule file that must guide all future UI development and edits.
 
-This module must use existing UHMS data.
+UHMS now includes many modules:
 
-Do not create parallel data systems.
-
-Do not break existing workflows.
-
-Use data from:
-
-- patients
-- visits
-- consultation sessions
-- complaints
-- diagnoses
-- prescriptions
-- pharmacy dispensing
-- investigations
-- procedures/theatre
-- emergency cases
-- admissions
-- MAR / medication administration
-- clinical tasks
-- invoices
-- invoice items
-- payments
-- claims
-- products
-- stock movements
-- stock balances
-- blood bank
-- logs where useful
-
----
-
-# 1. Main Objective
-
-Build a Statistical Reports / Analytics module that provides:
-
-1. Hospital activity statistics.
-2. Diagnosis and disease statistics.
-3. Complaint statistics.
-4. Consultation statistics.
-5. Pharmacy statistics.
-6. Investigation statistics.
-7. Procedure and Theatre statistics.
-8. Emergency statistics.
-9. Admission statistics.
-10. MAR / medication administration statistics.
-11. Billing and financial statistics.
-12. Claims statistics.
-13. Stock / inventory statistics.
-14. Blood Bank statistics.
-15. Staff performance statistics.
-16. Management KPI dashboard.
-17. Charts and trend views.
-18. Drill-down from statistics to detailed records.
-19. Export/print where available.
-
----
-
-# 2. Important Rules
-
-Do not calculate statistics from the wrong source.
-
-Do not treat prescriptions as dispensed drugs.
-
-Do not treat invoice items as diagnoses.
-
-Do not treat billing as proof of service rendered.
-
-Do not treat pharmacy billing as dispensing.
-
-Do not treat medication dispensing as administration.
-
-Do not create parallel reporting tables unless using cache/summary tables intentionally.
-
-Do not load all hospital records by default.
-
-Do not expose sensitive staff performance or financial reports to unauthorized users.
-
-Do not bypass permissions.
-
-Do not break existing reports.
-
----
-
-# 3. Suggested Menu
-
-Add menu:
-
-Reports
-    Statistical Reports
-
-or:
-
-Analytics
-    Dashboard
-    Clinical Statistics
-    Diagnosis Statistics
-    Pharmacy Statistics
-    Investigation Statistics
-    Procedure/Theatre Statistics
-    Emergency Statistics
-    Admission Statistics
-    Billing Statistics
-    Claims Statistics
-    Stock Statistics
-    Blood Bank Statistics
-    Staff Performance
-
-Use existing menu/module style.
-
----
-
-# 4. Statistical Dashboard
-
-Create a main Statistical Dashboard.
-
-It should show high-level hospital KPIs.
-
-Summary cards:
-
-- Total patients registered
-- New patients
-- Returning patients
-- Total visits
-- OPD visits
-- Emergency cases
-- Admissions
-- Discharges
-- Active admissions
-- Consultations
-- Diagnoses recorded
-- Prescriptions created
-- Drugs dispensed
-- Investigations requested
-- Procedures performed
-- Invoices created
-- Total billed
-- Total paid
-- Outstanding balance
-- Claims submitted
-- Claims paid
-- Low stock items
-- Blood units available
-
-Default period:
-
-- Today
-- This week
-- This month
-- Custom date range
-
----
-
-# 5. Global Filters
-
-All statistical pages should support common filters where applicable:
-
-- date from
-- date to
-- department
-- doctor/user
-- patient
-- visit type: OPD, Emergency, Admission
-- insurance provider
-- insurance type
-- payment type
-- status
-- gender
-- age group
-- service
-- product/drug
-- diagnosis
-- ward
-- theatre room
-- blood group
-
-Default date range should be current month or last 30 days.
-
-Do not load all-time data by default.
-
----
-
-# 6. Charts Required
-
-Use existing chart library if already installed.
-
-Do not add a new chart library without checking existing dependencies.
-
-If no chart library exists, implement summary cards and tables first, then leave chart TODO.
-
-Recommended charts:
-
-- line chart: visits over time
-- line chart: revenue over time
-- bar chart: top diagnoses
-- bar chart: top complaints
-- bar chart: most dispensed drugs
-- bar chart: most requested investigations
-- bar chart: most performed procedures
-- pie/donut chart: emergency triage categories
-- pie/donut chart: claims by status
-- bar chart: bed occupancy by ward
-- bar chart: stock consumption by department
-- bar chart: blood units by blood group
-- trend chart: admissions and discharges
-
----
-
-# 7. Drill-down Behavior
-
-Every statistic should allow drill-down where practical.
-
-Examples:
-
-Click “Malaria — 320 cases” opens detailed diagnosis list filtered by Malaria.
-
-Click “Paracetamol — 4,200 dispensed” opens pharmacy dispensing detail.
-
-Click “Emergency RED cases — 42” opens emergency case list filtered by RED.
-
-Click “Outstanding Balance” opens unpaid invoice report.
-
-Click “Low Stock Items” opens stock low list.
-
-Do not show only summary numbers without a way to inspect details.
-
----
-
-# 8. Hospital Activity Statistics
-
-Create Hospital Activity Statistics page.
-
-Show:
-
-- total visits
-- visits by day/week/month
-- OPD visits
-- emergency cases
-- admissions
-- discharges
-- deaths
-- consultations
-- investigations
-- procedures
-- prescriptions
-- invoices
-- payments
-- new vs returning patients
-
-Charts:
-
-- visits trend
-- OPD vs Emergency vs Admission
-- new vs returning patients
-- patient gender distribution
-- patient age group distribution
-
-Detailed table:
-
-- Date
-- Total Visits
-- OPD
-- Emergency
-- Admission
-- Consultations
-- Investigations
-- Procedures
-- Revenue
-
----
-
-# 9. Diagnosis Statistics
-
-Create Diagnosis Statistics page.
-
-Show:
-
-- total diagnoses recorded
-- most common diagnoses
-- diagnoses by department
-- diagnoses by doctor
-- diagnoses by age group
-- diagnoses by gender
-- diagnoses by visit type
-- primary diagnosis counts
-- provisional diagnosis counts
-- final diagnosis counts
-- top causes of death if death diagnosis exists
-
-Important:
-
-Diagnosis reports must use diagnosis/clinical diagnosis records.
-
-Do not use invoice items as diagnosis source.
-
-Example:
-
-Top Diagnoses:
-1. Malaria — 320 cases
-2. Typhoid fever — 140 cases
-3. Hypertension — 90 cases
-4. Diabetes mellitus — 70 cases
-
-Detailed drill-down columns:
-
-- Date
-- Patient
-- Visit No.
-- Diagnosis
-- ICD-10 Code if available
-- Diagnosis Type
-- Primary/Secondary
-- Doctor
-- Department
-- Visit Type
-
----
-
-# 10. Complaint Statistics
-
-Create Complaint Statistics page.
-
-Show:
-
-- most common complaints
-- complaints by department
-- complaints by doctor/user
-- complaints by age group
-- complaints by gender
-- complaints leading to emergency
-- complaints linked to diagnoses
-- complaint trends over time
-
-Examples:
-
-- Fever
-- Headache
-- Abdominal pain
-- Cough
-- Chest pain
-
-Detailed columns:
-
-- Date
-- Patient
-- Visit No.
-- Complaint
-- Duration
-- Severity
-- Doctor/User
-- Department
-- Diagnosis if linked/available
-
-Use patient complaint records / complaint catalogue data.
-
-Do not use HOPC text as primary complaint count unless no structured complaints exist.
-
----
-
-# 11. Consultation Statistics
-
-Create Consultation Statistics page.
-
-Show:
-
-- number of consultations
-- consultations by department
-- consultations by doctor
-- consultations by visit type
-- started consultations
-- completed consultations
-- pending/incomplete consultations
-- average consultation time if timestamps exist
-- patients seen per doctor
-- most active departments
-- sessions per visit
-
-Detailed columns:
-
-- Date
-- Visit No.
-- Patient
-- Department / Session
-- Doctor
-- Status
-- Started At
-- Completed At
-- Diagnosis Count
-- Investigations Requested
-- Prescriptions Created
-- Procedures Requested
-
-Emergency sessions should also appear as clinical sessions where relevant, but should be distinguishable as Emergency Session.
-
----
-
-# 12. Pharmacy Statistics
-
-Create Pharmacy Statistics page.
-
-Must clearly separate:
-
-- prescribed drugs
-- billed drugs
-- dispensed drugs
-- sold/revenue drugs
-
-Reports:
-
-## Most Prescribed Drugs
-
-Source: prescription items.
-
-Show:
-
-- drug/product
-- prescription count
-- prescribed quantity
-- prescribing doctors
-- departments
-- visit type
-
-## Most Dispensed / Sold Drugs
-
-Source: pharmacy dispensing records and invoice items where appropriate.
-
-Show:
-
-- drug/product
-- quantity dispensed
-- number of dispenses
-- total sales value
-- cash/insurance split
-- stock location used
-- department/visit type
-
-## Prescription Fulfilment
-
-Show:
-
-- prescriptions created
-- fully dispensed
-- partially dispensed
-- not dispensed
-- out-of-stock requests
-- billed but not dispensed
-
-Detailed columns:
-
-- Prescription No.
-- Patient
-- Visit No.
-- Doctor
-- Product
-- Prescribed Qty
-- Billed Qty
-- Dispensed Qty
-- Status
-- Date
-
-Important:
-
-Do not calculate dispensed quantity from product table quantity.
-
-Use dispensing records / stock movement source / pharmacy workflow records.
-
----
-
-# 13. Investigation Statistics
-
-Create Investigation Statistics page.
-
-Show:
-
-- investigation requests count
-- requests by department
-- most requested investigations
-- completed investigations
-- pending investigations
-- verified results
-- rejected/corrected results
-- emergency investigations
-- average turnaround time
-- delayed investigations
-- investigation revenue if billable
-
-Reports:
-
-## Most Requested Investigations
-
-- investigation service
-- department
-- request count
-- completed count
-- pending count
-- revenue if billable
-
-## Turnaround Time
-
-Measure:
-
-request created
-accepted
-result entered
-verified
-
-Detailed columns:
-
-- Request Date/Time
-- Accepted Date/Time
-- Result Entered At
-- Verified At
-- Turnaround Time
-- Department
-- Staff
-
-## Result Status
-
-- Patient
-- Visit No.
-- Investigation
-- Department
-- Requested By
-- Status
-- Result Status
-- Verified By
-
----
-
-# 14. Procedure / Theatre Statistics
-
-Create Procedure/Theatre Statistics page.
-
-Show:
-
-- procedures requested
-- procedures accepted
-- procedures completed
-- cancelled/postponed procedures
-- most performed procedures
-- procedures by department
-- procedures by surgeon
-- procedures by theatre room
-- emergency procedures
-- average procedure duration
-- theatre utilization
-- theatre consumables usage
-- procedure revenue
-
-Reports:
-
-## Most Performed Procedures
-
-- procedure
-- department
-- request count
-- completed count
-- cancelled count
-- revenue
-
-## Theatre Utilization
-
-- theatre room
-- scheduled cases
-- completed cases
-- total scheduled hours
-- total actual hours
-- utilization %
-- cancelled/postponed count
-
-## Procedures by Surgeon
-
-- surgeon
-- procedure count
-- completed count
-- cancelled count
-- average duration
-
----
-
-# 15. Emergency Statistics
-
-Create Emergency Statistics page.
-
-Show:
-
-- emergency cases count
-- emergency cases by triage category
-- emergency cases by arrival mode
-- emergency waiting time
-- emergency disposition statistics
-- emergency admissions
-- emergency deaths/DOA
-- emergency investigations
-- emergency medications
-- emergency procedures
-- emergency bed occupancy
-- emergency consumable usage
-
-Reports:
-
-## Emergency Triage
-
-- RED
-- ORANGE
-- YELLOW
-- GREEN
-- BLACK
-- count
-- average waiting time
-- admissions
-- deaths/DOA
-
-## Emergency Disposition
-
-Group by:
-
-- Admitted
-- Discharged
-- Transferred to OPD
-- Transferred to Theatre
-- Referred Out
-- Left Against Medical Advice
-- Absconded
-- Died
-- Dead on Arrival
-
-## Emergency Waiting Time
-
-Measure:
-
-arrival time
-triage time
-first clinical note / first doctor assessment
-disposition time
-
----
-
-# 16. Admission Statistics
-
-Create Admission Statistics page.
-
-Show:
-
-- admissions count
-- active admissions
-- discharged admissions
-- average length of stay
-- bed occupancy
-- ward occupancy
-- admission diagnoses
-- admission medications
-- admission bed charges
-- admission consumables
-- discharge outcomes
-- death rate if applicable
-- readmission rate if data supports it
-
-Reports:
-
-## Bed Occupancy
-
-- Ward
-- Total Beds
-- Occupied Beds
-- Available Beds
-- Occupancy %
-
-## Length of Stay
-
-- Patient
-- Admission No.
-- Ward
-- Admission Date
-- Discharge Date
-- Days Admitted
-- Status
-
-Formula:
-
-Average Length of Stay = total admission days / discharged admissions
-
----
-
-# 17. MAR / Medication Administration Statistics
-
-Create MAR Statistics page.
-
-Show:
-
-- scheduled doses
-- given doses
-- missed doses
-- held doses
-- refused doses
-- overdue doses
-- medication administration by nurse
-- medication administration by ward
-- adverse reactions
-- top administered medications
-
-Reports:
-
-## Nurse Administration
-
-- nurse
-- given doses
-- missed/held/refused doses
-- patients covered
-- ward
-- date
-
-## Missed Dose
-
-- patient
-- medication
-- scheduled time
-- status
-- reason
-- nurse
-- doctor
-- ward
-
-## Medication Compliance
-
-- medication order
-- total doses
-- given
-- missed
-- held
-- refused
-- completion %
-
----
-
-# 18. Billing / Financial Statistics
-
-Create Billing Statistics page.
-
-Show:
-
-- total billed
-- total paid
-- outstanding balance
-- discounts
-- refunds/reversals
-- revenue by department
-- revenue by service
-- revenue by product
-- revenue by payment method
-- revenue by insurance provider
-- unpaid invoices
-- billed but not rendered services
-- rendered but unpaid services
-- revenue trend
-
-Reports:
-
-## Revenue Summary
-
-- department
-- total billed
-- total paid
-- outstanding
-- discounts
-- refunds
-
-## Invoice Item Statistics
-
-- item/service/product
-- source
-- quantity
-- cash price total
-- insurance price total
-- selected price total
-- patient payable
-- paid amount
-- balance
-
-## Payment Method Statistics
-
-- cash
-- mobile money
-- card
-- insurance
-- bank transfer
-- other
-
-Use actual payment records.
-
-Do not assume invoice creation means payment.
-
----
-
-# 19. Claims Statistics
-
-Create Claims Statistics page.
-
-Show:
-
-- claims prepared
-- claims ready
-- claims submitted
-- claims approved
-- claims rejected
-- claims paid
-- claims outstanding
-- claims by insurance type
-- claims by provider
-- NHIA/NHIS claims
-- missing CCC/verification code
-- rejected claim reasons
-- average claim processing time
-
-Example:
-
-NHIA Claims This Month:
-- Prepared: 300
-- Submitted: 260
-- Approved: 220
-- Rejected: 25
-- Pending: 15
-
-Detailed columns:
-
-- Claim No.
-- Patient
-- Visit No.
-- Insurance Type
-- Provider
-- Claim Amount
-- Approved Amount
-- Paid Amount
-- Status
-- Submitted At
-- Paid At
-
----
-
-# 20. Stock / Inventory Statistics
-
-Create Stock Statistics page.
-
-Show:
-
-- stock balances by location
-- fast-moving products
-- slow-moving products
-- low stock
-- out of stock
-- stock consumption by department
-- stock value by location
-- purchase trend
-- supplier performance
-- stock adjustment frequency
-- expired/damaged stock
-- department requisitions
-- transfer performance
-
-Reports:
-
-## Fast Moving Products
-
-- product
-- total OUT quantity
-- departments
-- movement count
-- current stock
-
-## Slow Moving Products
-
-- product
-- opening stock
-- quantity moved
-- last movement date
-- current stock
-
-## Department Consumption
-
-- department
-- product
-- quantity used
-- usage source
-- stock location
-- date
-
-## Stock Balance Matrix
-
-- Product
-- Main Store
-- Pharmacy
-- Ward
-- Emergency
-- Lab
-- Theatre
-- Total
-- Status
-
-Do not calculate stock from product quantity field.
-
-Use stock balances / stock movements.
-
----
-
-# 21. Blood Bank Statistics
-
-Create Blood Bank Statistics page.
-
-Show:
-
-- blood units available by blood group
-- blood units by component
-- donations by month
-- donor eligibility statistics
-- deferred donor statistics
-- screening failed statistics
-- blood requests by department
-- urgent/emergency blood requests
-- crossmatch compatibility rate
-- blood issued
-- blood transfused
-- transfusion reactions
-- expired/discarded units
-- low blood stock alerts
-
-Reports:
-
-## Blood Inventory
-
-- blood group
-- component
-- available units
-- reserved units
-- issued units
-- expiring soon
-- expired
-
-## Donor Screening
-
-- eligible donors
-- temporarily deferred
-- permanently deferred
-- deferral reasons
-
-## Compatibility / Crossmatch
-
-- request no
-- patient
-- recipient group
-- unit no
-- donor group
-- component
-- compatibility status
-- crossmatch result
-
----
-
-# 22. Staff Performance Statistics
-
-Create Staff Performance page.
-
-This must be permission-protected because it is sensitive.
-
-Show:
-
-- patients seen per doctor
-- consultations completed per doctor
-- diagnoses recorded per doctor
-- medication administrations per nurse
-- missed/held doses per nurse
-- investigations verified per lab staff
-- drugs dispensed per pharmacist
-- payments recorded per cashier
-- procedures performed per surgeon
-- theatre cases by anaesthetist
-- claims processed per claims officer
-- stock movements by store officer
-
-Important:
-
-- Do not expose staff performance to normal users.
-- Use permissions.
-- Allow filtering by date range and department.
-
-Suggested permission:
-
-reports.staff_performance
-
----
-
-# 23. Statistical Formulas
-
-Implement formulas carefully.
-
-Examples:
-
-## Average Length of Stay
-
-total admission days for discharged admissions / discharged admissions count
-
-## Emergency Waiting Time
-
-triage_time - arrival_time
-
-## Investigation Turnaround Time
-
-verified_at - requested_at
-
-## Theatre Utilization
-
-total scheduled/actual theatre time / available theatre time
-
-## Payment Collection Rate
-
-total paid / total billed
-
-## Claims Approval Rate
-
-approved claims / submitted claims
-
-## Medication Administration Compliance
-
-given doses / scheduled doses
-
-## Bed Occupancy Rate
-
-occupied beds / total available beds
-
-## Blood Crossmatch Compatibility Rate
-
-compatible crossmatches / total crossmatches
-
-Document formulas in report UI tooltips where possible.
-
----
-
-# 24. Statistical Services
-
-Create or update services:
-
-StatisticsDashboardService
-HospitalActivityStatisticsService
-ClinicalStatisticsService
-DiagnosisStatisticsService
-ComplaintStatisticsService
-ConsultationStatisticsService
-PharmacyStatisticsService
-InvestigationStatisticsService
-ProcedureStatisticsService
-TheatreStatisticsService
-EmergencyStatisticsService
-AdmissionStatisticsService
-MarStatisticsService
-BillingStatisticsService
-ClaimsStatisticsService
-StockStatisticsService
-BloodBankStatisticsService
-StaffPerformanceStatisticsService
-
-Keep controllers thin.
-
-Use query builders and aggregate queries.
-
-Avoid complex logic in Vue.
-
----
-
-# 25. Controllers / Routes
-
-Create or update controllers:
-
-StatisticsDashboardController
-HospitalActivityStatisticsController
-DiagnosisStatisticsController
-ComplaintStatisticsController
-ConsultationStatisticsController
-PharmacyStatisticsController
-InvestigationStatisticsController
-ProcedureStatisticsController
-EmergencyStatisticsController
-AdmissionStatisticsController
-MarStatisticsController
-BillingStatisticsController
-ClaimsStatisticsController
-StockStatisticsController
-BloodBankStatisticsController
-StaffPerformanceStatisticsController
-
-Suggested routes:
-
-GET /admin/statistics
-GET /admin/statistics/activity
-GET /admin/statistics/diagnoses
-GET /admin/statistics/complaints
-GET /admin/statistics/consultations
-GET /admin/statistics/pharmacy
-GET /admin/statistics/investigations
-GET /admin/statistics/procedures
-GET /admin/statistics/emergency
-GET /admin/statistics/admission
-GET /admin/statistics/mar
-GET /admin/statistics/billing
-GET /admin/statistics/claims
-GET /admin/statistics/stock
-GET /admin/statistics/blood-bank
-GET /admin/statistics/staff-performance
-
-Add export routes where needed.
-
-Adapt to existing route conventions.
-
----
-
-# 26. Frontend Pages
-
-If using Inertia/Vue, create:
-
-resources/js/Pages/Statistics/Dashboard.vue
-resources/js/Pages/Statistics/Activity.vue
-resources/js/Pages/Statistics/Diagnoses.vue
-resources/js/Pages/Statistics/Complaints.vue
-resources/js/Pages/Statistics/Consultations.vue
-resources/js/Pages/Statistics/Pharmacy.vue
-resources/js/Pages/Statistics/Investigations.vue
-resources/js/Pages/Statistics/Procedures.vue
-resources/js/Pages/Statistics/Emergency.vue
-resources/js/Pages/Statistics/Admission.vue
-resources/js/Pages/Statistics/Mar.vue
-resources/js/Pages/Statistics/Billing.vue
-resources/js/Pages/Statistics/Claims.vue
-resources/js/Pages/Statistics/Stock.vue
-resources/js/Pages/Statistics/BloodBank.vue
-resources/js/Pages/Statistics/StaffPerformance.vue
-
-Reusable components:
-
-StatisticsFilterBar
-KpiCard
-TrendChart
-BarChartCard
-PieChartCard
-TopListCard
-StatisticsTable
-DrilldownTable
-ExportButtons
-DateRangePicker
-DepartmentFilter
-UserFilter
-PatientFilter
-ServiceFilter
-ProductFilter
-DiagnosisFilter
-
-Use existing UI design patterns.
-
----
-
-# 27. Export / Print
-
-Support:
-
-- print
-- CSV export
-- Excel export if project already supports it
-- PDF optional only if project already supports PDF
-
-Export must respect permissions.
-
-Export action must be logged.
-
-Do not create fake export buttons.
-
----
-
-# 28. Permissions
-
-Add or verify:
-
-statistics.view
-statistics.dashboard.view
-statistics.activity.view
-statistics.clinical.view
-statistics.diagnosis.view
-statistics.complaints.view
-statistics.consultation.view
-statistics.pharmacy.view
-statistics.investigations.view
-statistics.procedures.view
-statistics.theatre.view
-statistics.emergency.view
-statistics.admission.view
-statistics.mar.view
-statistics.billing.view
-statistics.claims.view
-statistics.stock.view
-statistics.blood_bank.view
-statistics.staff_performance.view
-statistics.export
-
-Also keep compatibility with existing report permissions:
-
-reports.view
-reports.export
-reports.clinical
-reports.pharmacy
-reports.billing
-reports.stock
-reports.blood_bank
-
-Backend and UI must enforce permissions.
-
----
-
-# 29. Module Setup
-
-Add module if module system exists:
-
-Statistics / Analytics
-
-Description:
-
-Provides hospital-wide KPI dashboards, trend analysis, clinical statistics, financial statistics, operational statistics, stock statistics, blood bank statistics, and staff performance analytics.
-
-Dependencies:
-
+- Dashboard
 - Patients
 - Visits
 - Consultation
-- Billing
-- Stock
-- Reports
-
-Optional dependencies:
-
+- Consultation Summary
 - Emergency
 - Admission
+- MAR / Medication Administration
 - Pharmacy
+- Billing
+- Insurance / Claims
 - Investigations
-- Procedures/Theatre
-- Claims
+- Procedures
+- Theatre Rooms
 - Blood Bank
-- MAR
+- Stock / Inventory
+- Procurement
+- Supplier Ledger
+- Assets
+- Reports
+- Statistics / Analytics
+- Notifications
+- Logs
+- Roles / Permissions
+- Modules
+- Settings
 
-If a dependent module is disabled, hide or disable that report section gracefully.
+Because the system has grown quickly, many pages may now have inconsistent UI patterns, layouts, forms, tables, modals, filters, buttons, badges, cards, spacing, colors, typography, status displays, and workflow actions.
 
----
+We need to inspect the whole UI, identify gaps and inconsistencies, create a full recommendation report, and define a permanent UI/UX theme rule file that future developers must follow.
 
-# 30. Performance Requirements
+Do not randomly redesign everything.
 
-Statistics can be heavy, so implement carefully.
+First inspect the current UI implementation, identify patterns that already work, then standardize and document the rules.
 
-Rules:
-
-- default date range = current month / last 30 days
-- use aggregate SQL queries
-- paginate drill-down details
-- avoid N+1 queries
-- cache expensive dashboard summaries where safe
-- do not load all records into memory
-- use database indexes
-- group by date using DB functions carefully
-- support timezone if project does
-
-Recommended indexes:
-
-- visits.created_at
-- visits.status
-- visits.patient_id
-- visits.visit_type
-- diagnoses.created_at
-- diagnoses.patient_id
-- diagnoses.visit_id
-- diagnoses.created_by
-- patient_complaints.created_at
-- prescriptions.created_at
-- prescription_items.product_id
-- pharmacy_dispensings.created_at
-- investigation_requests.created_at
-- procedure_requests.created_at
-- theatre_cases.scheduled_start_at
-- emergency_cases.arrival_time
-- admissions.admitted_at / created_at
-- medication_administrations.administered_at
-- invoice_items.created_at
-- payments.created_at
-- stock_movements.created_at
-- blood_requests.created_at
-- blood_units.status
-
-Adapt to actual table names.
+Do not break existing workflows.
 
 ---
 
-# 31. Data Accuracy Rules
+# 1. Main Objectives
 
-Use correct source of truth.
+Perform a full UI/UX audit and standardization plan.
 
-## Diagnosis statistics
+You must:
 
-Use diagnosis records.
-
-## Complaint statistics
-
-Use patient complaint records / complaint catalogue.
-
-## Prescribed drugs
-
-Use prescription items.
-
-## Dispensed drugs
-
-Use pharmacy dispensing records.
-
-## Sold drugs
-
-Use invoice items and payments where applicable.
-
-## Administered medications
-
-Use medication_administrations.
-
-## Investigation counts
-
-Use investigation requests/items.
-
-## Investigation completed
-
-Use result verified/completed statuses.
-
-## Procedure performed
-
-Use procedure/theatre completed records.
-
-## Revenue
-
-Use invoice_items/payments.
-
-## Stock usage
-
-Use stock movements.
-
-## Blood units available
-
-Use blood_units status AVAILABLE.
+1. Inspect the entire UHMS frontend.
+2. Identify UI inconsistencies across modules.
+3. Identify UX workflow gaps.
+4. Identify broken or confusing layouts.
+5. Identify inconsistent buttons, forms, tables, modals, cards, badges, filters, status labels, navigation, and spacing.
+6. Identify accessibility problems.
+7. Identify responsive/mobile issues.
+8. Identify inconsistent terminology.
+9. Identify places where actions lack confirmation, warning, validation, or feedback.
+10. Create a detailed UI/UX gap report.
+11. Create a full recommendation report.
+12. Create a theme/design rule file that future UI work must follow.
+13. Add reusable UI guidelines for new pages/components.
+14. Define guards/rules for maintaining uniform design across UHMS.
+15. Update existing UI where safe and practical.
+16. Document remaining UI refactor TODOs.
 
 ---
 
-# 32. Reports / Documentation
+# 2. Required Documentation Files
 
-Create documentation file:
+Create these files:
 
-docs/STATISTICAL_REPORTS_IMPLEMENTATION_REPORT.md
+```text
+docs/UI_UX_GAP_ANALYSIS.md
+docs/UI_UX_RECOMMENDATION_REPORT.md
+docs/UHMS_UI_THEME_RULES.md
+docs/UI_COMPONENT_STANDARDS.md
+docs/UI_UX_REMAINING_TODOS.md
+````
 
-Include:
-
-- reports implemented
-- data sources used
-- formulas used
-- permissions added
-- charts added
-- exports added
-- performance notes
-- known limitations
-- future improvements
-
-Also create:
-
-docs/STATISTICAL_REPORTS_FORMULAS.md
-
-Explain formulas:
-
-- average length of stay
-- emergency waiting time
-- investigation turnaround time
-- theatre utilization
-- payment collection rate
-- claims approval rate
-- medication compliance
-- bed occupancy
-- blood compatibility/crossmatch rate
+If the project already has a documentation folder convention, follow it.
 
 ---
 
-# 33. Tests Required
+# 3. UI_UX_GAP_ANALYSIS.md
 
-Add or update tests.
+This report must include:
 
-## Dashboard
+* current frontend framework and styling tools found
+* layout system found
+* theme/colors currently used
+* typography patterns found
+* button styles found
+* form patterns found
+* table patterns found
+* modal patterns found
+* card patterns found
+* filter/search patterns found
+* status badge patterns found
+* sidebar/menu patterns found
+* dashboard widget patterns found
+* empty state patterns found
+* loading/error patterns found
+* inconsistent UI elements
+* inconsistent UX flows
+* broken layouts
+* pages with overcrowded information
+* pages hiding important information
+* pages missing user feedback
+* pages missing confirmation dialogs
+* pages missing permissions-based action visibility
+* pages not responsive
+* pages using different spacing/style rules
+* duplicate components that should be reusable
+* UI risks by module
+* priority ranking of issues
 
-1. Statistics dashboard loads.
-2. Dashboard uses default date range.
-3. Dashboard shows visit counts.
-4. Dashboard shows revenue summary.
-5. Dashboard respects permissions.
+Group findings by module.
 
-## Diagnosis / Complaints
+Example:
 
-6. Diagnosis statistics count diagnoses correctly.
-7. Most common diagnoses are ordered correctly.
-8. Complaint statistics count complaints correctly.
-9. Complaint statistics use patient complaints, not HOPC text.
+```text
+Emergency Module
+- Triage section layout differs from Admission vitals layout.
+- Medication section does not follow Consultation prescription UI.
+- Billing and Procedure sections are visually mixed.
+- Some actions have no success/error feedback.
+Recommendation priority: HIGH.
+```
+
+---
+
+# 4. UI_UX_RECOMMENDATION_REPORT.md
+
+This report must include:
+
+* recommended global layout standard
+* recommended page structure
+* recommended color system
+* recommended typography
+* recommended spacing
+* recommended button hierarchy
+* recommended form structure
+* recommended table structure
+* recommended modal behavior
+* recommended filter/search behavior
+* recommended status badges
+* recommended clinical document layout
+* recommended dashboard cards
+* recommended print layouts
+* recommended responsive behavior
+* recommended accessibility improvements
+* recommended module-specific UI fixes
+* priority implementation roadmap
+* files/components that should be refactored first
+
+---
+
+# 5. UHMS_UI_THEME_RULES.md
+
+Create a permanent theme rule file.
+
+This file must be treated as the design law for UHMS.
+
+It should define:
+
+1. Brand personality.
+2. Color tokens.
+3. Typography rules.
+4. Spacing rules.
+5. Layout rules.
+6. Button rules.
+7. Form rules.
+8. Table rules.
+9. Modal rules.
+10. Card rules.
+11. Badge/status rules.
+12. Dashboard rules.
+13. Clinical document rules.
+14. Print rules.
+15. Mobile/responsive rules.
+16. Accessibility rules.
+17. Error/success feedback rules.
+18. Permission-based UI rules.
+19. Module layout rules.
+20. Do and Do Not rules.
+
+---
+
+# 6. UI_COMPONENT_STANDARDS.md
+
+Create component-level standards.
+
+Document how to use/create:
+
+* PageHeader
+* SectionHeader
+* ModuleCard
+* StatCard
+* DataTable
+* FilterBar
+* SearchInput
+* StatusBadge
+* PriorityBadge
+* ActionButtonGroup
+* ConfirmDialog
+* FormSection
+* FormInput
+* SelectSearch
+* DateRangePicker
+* EmptyState
+* LoadingState
+* ErrorState
+* SuccessToast
+* Modal
+* Drawer/SidePanel
+* Timeline
+* ClinicalTimeline
+* VisitPreviewBlock
+* DocumentSummaryBlock
+* PrintButton
+* ExportButton
+* PermissionGuard
+
+If equivalent components already exist, document and reuse them.
+
+If they do not exist, create or recommend them.
+
+---
+
+# 7. UI_UX_REMAINING_TODOS.md
+
+This file must include:
+
+* issues not fixed yet
+* pages needing full redesign
+* pages needing screenshot regeneration
+* components needing extraction
+* accessibility tasks
+* responsive tasks
+* print layout tasks
+* technical debt
+* recommended next prompts/tasks
+
+---
+
+# 8. Inspect Frontend Structure
+
+Inspect:
+
+```text
+resources/js
+resources/views
+resources/css
+resources/sass
+tailwind.config.js
+vite.config.js
+package.json
+layouts
+components
+pages
+partials
+blade views
+sidebar/menu components
+theme/config files
+```
+
+Search for:
+
+```text
+button
+btn
+card
+modal
+badge
+table
+datatable
+form
+input
+select
+sidebar
+layout
+dashboard
+status
+toast
+alert
+print
+theme
+colors
+```
+
+Identify repeated hardcoded classes/styles that should become reusable components.
+
+---
+
+# 9. Design Philosophy for UHMS
+
+UHMS must feel:
+
+```text
+clean
+modern
+medical
+professional
+calm
+fast
+readable
+trustworthy
+consistent
+data-rich but not chaotic
+```
+
+It should not feel:
+
+```text
+random
+overcrowded
+unfinished
+inconsistent
+too colorful
+too dark
+too flat
+too noisy
+hard to scan
+```
+
+Because UHMS is clinical software, clarity is more important than decoration.
+
+---
+
+# 10. Global Page Layout Standard
+
+Every page should follow a consistent structure:
+
+```text
+Page Header
+    - Title
+    - Short description
+    - Primary action buttons
+    - Breadcrumbs if used
+
+Summary / KPI Cards if needed
+
+Filter/Search Bar if needed
+
+Main Content
+    - Table / Form / Clinical document / Board / Timeline
+
+Secondary Content
+    - Notes / logs / supporting details
+
+Pagination / Footer Actions
+```
+
+Avoid pages where actions are randomly placed.
+
+Primary actions must be visible at the top-right of the page header where appropriate.
+
+---
+
+# 11. Page Header Rules
+
+Every major page should have a consistent page header.
+
+Required:
+
+* page title
+* short description or context
+* optional breadcrumb
+* primary action button
+* secondary actions where needed
+
+Example:
+
+```text
+Patients
+Manage patient folders, registrations, insurance records, and merge history.
+[New Patient]
+```
+
+Clinical example:
+
+```text
+Emergency Case
+ER-2026-000012 · Ama Mensah · RED · Under Emergency Care
+[Open MAR] [Disposition]
+```
+
+Do not use large inconsistent headers across pages.
+
+---
+
+# 12. Module Layout Rules
+
+Each module should have a consistent internal pattern.
+
+## Patients
+
+Use patient-folder style layout.
 
 ## Consultation
 
-10. Consultation statistics count sessions.
-11. Consultation statistics group by doctor.
-12. Emergency session is distinguishable from OPD consultation.
-
-## Pharmacy
-
-13. Most prescribed drugs use prescription items.
-14. Most dispensed drugs use dispensing records.
-15. Drug revenue uses invoice/payment data.
-16. Partially dispensed drugs are counted.
-
-## Investigations
-
-17. Investigation statistics count requests.
-18. Most requested investigations are ordered correctly.
-19. Turnaround time is calculated.
-20. Emergency investigations can be filtered.
-
-## Procedures / Theatre
-
-21. Procedure statistics count completed procedures.
-22. Theatre utilization is calculated.
-23. Cancelled/postponed cases are counted.
+Use clinical workspace layout.
 
 ## Emergency
 
-24. Emergency statistics group by triage category.
-25. Emergency disposition statistics count correctly.
-26. Emergency waiting time is calculated.
+Use emergency control-room layout.
 
 ## Admission
 
-27. Admission statistics count active admissions.
-28. Length of stay is calculated.
-29. Bed occupancy is calculated.
+Use ward/bed/patient-care layout.
 
 ## MAR
 
-30. MAR statistics count given/missed/held/refused doses.
-31. Nurse administration statistics group by nurse.
-32. Medication compliance is calculated.
+Use medication grid and task-oriented layout.
 
-## Billing / Claims
+## Pharmacy
 
-33. Billing statistics calculate billed/paid/outstanding.
-34. Payment collection rate is calculated.
-35. Claims approval rate is calculated.
+Use prescription/billing/dispensing workflow layout.
+
+## Investigations
+
+Use department request/result workflow layout.
+
+## Procedures/Theatre
+
+Use schedule/case/clinical note layout.
+
+## Billing
+
+Use invoice/payment financial layout.
 
 ## Stock
 
-36. Fast-moving products are calculated from stock movements.
-37. Stock balance matrix uses stock balances/movements.
-38. Low/out stock statistics are correct.
+Use product/location/movement matrix layout.
+
+## Reports/Statistics
+
+Use dashboard/filter/chart/table layout.
+
+## Settings/Roles/Modules
+
+Use admin configuration layout.
+
+---
+
+# 13. Color System
+
+Define a controlled color system.
+
+Use semantic colors, not random colors.
+
+Recommended semantic colors:
+
+```text
+Primary = main brand/action color
+Secondary = neutral support
+Success = completed/paid/verified/available
+Warning = pending/attention/low stock
+Danger = critical/error/overdue/out of stock
+Info = due/current/in progress
+Muted = inactive/cancelled/secondary
+Dark = high contrast text
+Light = backgrounds
+```
+
+Medical status examples:
+
+```text
+GREEN = success/completed/available/paid
+BLUE = active/in progress/due/current
+ORANGE/YELLOW = warning/pending/low/held
+RED = danger/critical/overdue/out/refused
+GRAY = inactive/cancelled/not stocked
+PURPLE = special/correction/verified if already used
+```
+
+Do not use multiple meanings for the same color.
+
+Example:
+
+Red should not mean both “completed” and “critical”.
+
+---
+
+# 14. Status Badge Rules
+
+All statuses must use a standard badge component.
+
+Create or reuse:
+
+```text
+StatusBadge
+```
+
+It should accept:
+
+```text
+status
+variant
+label
+size
+```
+
+Use consistent styling for statuses across modules.
+
+Examples:
+
+## Visit Status
+
+* REGISTERED = gray
+* WAITING_TRIAGE = warning
+* WAITING_CONSULTATION = warning
+* CONSULTING = info
+* EMERGENCY = danger
+* ADMITTED = primary/info
+* COMPLETED = success
+* CANCELLED = muted
+
+## Invoice Status
+
+* UNPAID = danger
+* PARTIALLY_PAID = warning
+* PAID = success
+* CANCELLED = muted
+
+## MAR Status
+
+* SCHEDULED = muted
+* DUE = info
+* OVERDUE = danger
+* GIVEN = success
+* HELD = warning
+* MISSED = danger
+* REFUSED = warning
+* CANCELLED = muted
+
+## Stock Status
+
+* OK = success
+* LOW = warning
+* CRITICAL = danger
+* OUT = danger
+* NOT_STOCKED = muted
+
+Document all badge mappings in `UHMS_UI_THEME_RULES.md`.
+
+---
+
+# 15. Button Rules
+
+Use a consistent button hierarchy.
+
+Button types:
+
+```text
+Primary Action
+Secondary Action
+Danger Action
+Ghost/Link Action
+Icon Action
+Disabled/Locked Action
+```
+
+Rules:
+
+* One primary action per main area.
+* Destructive actions must be danger style.
+* Destructive actions require confirmation.
+* Disabled actions must explain why.
+* Do not use random button colors.
+* Do not use different sizes for same context.
+* Buttons must have consistent icons if icons are used.
+
+Examples:
+
+```text
+[New Patient] = primary
+[Edit] = secondary
+[Delete] = danger
+[View] = ghost/link
+[Print] = secondary
+[Export] = secondary
+```
+
+---
+
+# 16. Form Rules
+
+All forms must follow consistent layout.
+
+Rules:
+
+* group related fields into sections
+* use clear labels
+* show required indicators
+* show validation errors below fields
+* keep save/cancel buttons consistent
+* use searchable selects for large lists
+* use date/time picker consistently
+* use inline helper text where useful
+* avoid very long ungrouped forms
+* show loading state while saving
+* prevent double-submit
+* show success/failure feedback
+
+Medical forms should prioritize speed and clarity.
+
+---
+
+# 17. Table Rules
+
+All data tables should have:
+
+* consistent header
+* search/filter section
+* clear columns
+* status badges
+* action column at far right
+* pagination aligned consistently
+* row hover style
+* empty state
+* loading state
+* responsive behavior
+* no broken HTML
+* no oversized columns without wrapping rules
+
+Common table action order:
+
+```text
+View
+Edit
+Print
+Cancel/Delete
+```
+
+Danger actions last.
+
+Do not put pagination on random sides. Standardize it, preferably bottom-right.
+
+---
+
+# 18. Filter/Search Rules
+
+All list pages should use a standard FilterBar.
+
+FilterBar should support:
+
+* search input
+* date range
+* department
+* status
+* patient
+* user/staff
+* reset button
+* apply button if needed
+
+Rules:
+
+* filters must preserve state
+* reset must clear filters
+* filters should not break pagination
+* search placeholder must be meaningful
+* avoid different filter styles per module
+
+---
+
+# 19. Modal Rules
+
+All modals must follow consistent behavior.
+
+Rules:
+
+* title
+* short explanation
+* form body
+* validation errors inside modal
+* cancel button
+* submit button
+* loading state
+* closes only after successful save
+* no stuck backdrop
+* reset form only after close/success
+* dangerous modals require confirmation wording/reason
+* large clinical data should use drawer/page, not tiny modal
+
+Use modals for:
+
+* simple create/edit
+* confirmation
+* quick actions
+
+Use full page/drawer for:
+
+* complex clinical notes
+* consultation summary
+* MAR chart
+* theatre case detail
+* emergency case detail
+
+---
+
+# 20. Card Rules
+
+Cards should be used for:
+
+* summary stats
+* grouped clinical sections
+* dashboards
+* patient headers
+* module summaries
+
+Rules:
+
+* consistent border/shadow
+* consistent padding
+* title at top
+* value clear if KPI
+* icon optional
+* avoid overcrowding
+* use same card heights in grids where possible
+
+---
+
+# 21. Clinical Document Layout Rules
+
+Clinical pages like Consultation Summary, Visit Preview, MAR print, Theatre notes, Emergency summary must feel like readable documents.
+
+Rules:
+
+* document-style container
+* clear patient header
+* clear section headings
+* chronological order where needed
+* authors/contributors visible
+* no hidden important clinical data
+* print-friendly
+* readable font size
+* avoid overuse of tables for narrative clinical data
+* support long text gracefully
+
+---
+
+# 22. Timeline Rules
+
+Use timelines for:
+
+* Visit Preview
+* Emergency timeline
+* Theatre timeline
+* Logs
+* Patient pathway
+* Medication administration history
+* Patient merge history
+
+Timeline items should show:
+
+* time/date
+* title
+* description
+* user/actor
+* module/source
+* status/badge if relevant
+
+Chronological order should be clear.
+
+---
+
+# 23. Dashboard Rules
+
+Dashboards should be consistent.
+
+Each dashboard should have:
+
+* KPI cards
+* trend charts if available
+* priority lists
+* action shortcuts
+* date/department filter where useful
+
+Do not overload dashboards with too many unrelated widgets.
+
+Each dashboard must answer a clear question.
+
+Examples:
+
+Emergency dashboard:
+
+```text
+Who needs urgent attention now?
+```
+
+Pharmacy dashboard:
+
+```text
+What prescriptions need billing/dispensing?
+```
+
+Stock dashboard:
+
+```text
+What stock is low, moving, or pending transfer?
+```
+
+---
+
+# 24. Navigation / Sidebar Rules
+
+Sidebar must be clean and permission-aware.
+
+Rules:
+
+* group menu items logically
+* do not show empty modules
+* do not show disabled modules
+* do not show menu items without permission
+* keep icons consistent
+* active menu item must be visually clear
+* avoid too many top-level menu items
+* use nested menus carefully
+* module names must be consistent
+
+Recommended top-level groups:
+
+```text
+Dashboard
+Patients
+Clinical
+Emergency
+Admission
+Pharmacy
+Billing
+Stock
+Blood Bank
+Reports
+Administration
+Settings
+```
+
+Adapt to existing structure.
+
+---
+
+# 25. Permission-Based UI Guards
+
+Every sensitive UI action must follow permission rules.
+
+Frontend must hide unavailable actions.
+
+Backend must enforce permissions.
+
+UI should show locked reason when helpful.
+
+Example:
+
+```text
+[Edit] hidden if user cannot edit.
+[Locked] shown if record is completed and user lacks correction permission.
+```
+
+Do not show clickable buttons that always fail with 403 unless unavoidable.
+
+---
+
+# 26. Module Disabled UI Rules
+
+If module is disabled:
+
+* hide menu
+* block direct URL
+* show clear disabled-module message if accessed
+* do not break dashboard
+* dependent modules should show warning where relevant
+
+Core modules cannot be disabled.
+
+---
+
+# 27. Notification UI Rules
+
+Notification UI must be consistent.
+
+Rules:
+
+* bell icon with unread count
+* priority badge
+* module/source label
+* time ago
+* action link
+* mark as read
+* view all
+* empty state
+
+Critical notifications should be visually distinguishable but not chaotic.
+
+---
+
+# 28. Logs UI Rules
+
+Logs must be readable.
+
+Rules:
+
+* filters at top
+* log table with module/action/user/time
+* severity badge
+* detail view for old/new values
+* hide sensitive data
+* use readable JSON/diff display
+
+---
+
+# 29. Reports / Statistics UI Rules
+
+Reports and statistics must follow:
+
+```text
+FilterBar
+Summary Cards
+Charts
+Detailed Table
+Export/Print Buttons
+```
+
+Rules:
+
+* no chart without table/drill-down
+* default date range required
+* permissions enforced
+* export buttons consistent
+* heavy reports must paginate
+* charts must be readable
+
+---
+
+# 30. Responsive Rules
+
+All pages must work on:
+
+* desktop
+* tablet
+* small laptop
+* mobile where possible
+
+Rules:
+
+* tables should scroll horizontally on small screens
+* forms should stack on mobile
+* sidebars should collapse
+* cards should wrap
+* modals should fit screen
+* no fixed-width layouts that break
+* action buttons should not overflow
+
+---
+
+# 31. Accessibility Rules
+
+Improve accessibility.
+
+Rules:
+
+* proper labels on inputs
+* visible focus states
+* sufficient color contrast
+* do not rely on color only for status
+* status badges should include text
+* buttons must have accessible text
+* icon-only buttons need title/aria-label
+* keyboard navigation where possible
+* error messages clearly linked to fields
+
+---
+
+# 32. Feedback Rules
+
+Every user action must give feedback.
+
+Use:
+
+* success toast
+* error toast
+* validation messages
+* loading spinner
+* disabled submit while saving
+* confirmation dialogs
+* empty states
+* warning banners
+
+Examples:
+
+```text
+Medication administered successfully.
+Payment recorded successfully.
+Cannot dispense: insufficient Pharmacy stock.
+This session is locked because it was completed automatically after midnight.
+```
+
+Do not fail silently.
+
+---
+
+# 33. Empty State Rules
+
+Every empty list/table should have a meaningful empty state.
+
+Examples:
+
+```text
+No emergency cases are currently active.
+No medications are due for this patient.
+No stock movements found for the selected date range.
+No claims match your filters.
+```
+
+If appropriate, include action:
+
+```text
+[Create Emergency Case]
+```
+
+only if user has permission.
+
+---
+
+# 34. Error State Rules
+
+Errors should be clear.
+
+Avoid raw technical messages like:
+
+```text
+SQLSTATE[23000]
+```
+
+Instead show:
+
+```text
+Unable to save stock movement because the product or stock location is missing.
+```
+
+Technical details can be logged, not shown to normal users.
+
+---
+
+# 35. Confirmation Rules
+
+Require confirmation for:
+
+* delete
+* cancel
+* reverse payment
+* refund
+* stock adjustment
+* patient merge
+* mark deceased
+* discharge
+* dispose emergency case
+* cancel theatre case
+* override triage
+* issue incompatible/emergency blood
+* disable module
+* assign critical permissions
+
+High-risk actions require reason.
+
+---
+
+# 36. Print Rules
+
+Print views should:
+
+* hide sidebar/navbar/buttons
+* show hospital header if available
+* show patient/visit context
+* show generated date/time
+* use readable black/white layout
+* avoid dark backgrounds
+* avoid tiny font
+* include signatures where needed
+
+Applies to:
+
+* invoice
+* receipt
+* consultation summary
+* visit preview
+* MAR chart
+* investigation result
+* theatre report
+* blood issue/transfusion report
+* claims documents
+
+---
+
+# 37. Terminology Rules
+
+Use consistent terms across the system.
+
+Examples:
+
+Use:
+
+```text
+Patient Folder
+Visit
+Emergency Case
+Admission
+Consultation Session
+Invoice
+Invoice Item
+Payment
+Balance
+Dispensed
+Administered
+Rendered
+Verified
+Completed
+Cancelled
+```
+
+Avoid mixing:
+
+```text
+folder/file/card for patient folder inconsistently
+bill/invoice randomly
+drug/item/product inconsistently
+rendered/done/served randomly
+```
+
+If local terms are needed, document them.
+
+---
+
+# 38. Status Vocabulary Rules
+
+Avoid too many random statuses.
+
+Standardize statuses per workflow and document them.
+
+Examples:
+
+Generic workflow:
+
+```text
+PENDING
+IN_PROGRESS
+COMPLETED
+CANCELLED
+ON_HOLD
+```
+
+Clinical:
+
+```text
+REQUESTED
+ACCEPTED
+VERIFIED
+COMPLETED
+```
+
+Financial:
+
+```text
+UNPAID
+PARTIALLY_PAID
+PAID
+CANCELLED
+REFUNDED
+```
+
+Stock:
+
+```text
+REQUESTED
+APPROVED
+ISSUED
+RECEIVED
+REJECTED
+```
+
+Medication:
+
+```text
+DUE
+OVERDUE
+GIVEN
+HELD
+MISSED
+REFUSED
+```
+
+---
+
+# 39. Create Theme Config File
+
+Create a theme rule/config file.
+
+Preferred:
+
+```text
+resources/js/theme/uhmsTheme.js
+```
+
+or if the project uses TypeScript:
+
+```text
+resources/js/theme/uhmsTheme.ts
+```
+
+Also document in:
+
+```text
+docs/UHMS_UI_THEME_RULES.md
+```
+
+The theme file should define:
+
+```js
+export const uhmsTheme = {
+  colors: {
+    primary: '',
+    secondary: '',
+    success: '',
+    warning: '',
+    danger: '',
+    info: '',
+    muted: '',
+    background: '',
+    surface: '',
+    border: '',
+    text: '',
+    textMuted: '',
+  },
+  statusVariants: {
+    // visit, invoice, stock, mar, emergency, theatre, blood bank
+  },
+  spacing: {
+    page: '',
+    section: '',
+    card: '',
+    form: '',
+  },
+  radius: {
+    sm: '',
+    md: '',
+    lg: '',
+  },
+  shadows: {
+    card: '',
+    modal: '',
+  },
+  typography: {
+    pageTitle: '',
+    sectionTitle: '',
+    body: '',
+    small: '',
+  }
+}
+```
+
+Adapt values to existing CSS/Tailwind/Bootstrap variables.
+
+Do not hardcode random new design values if the existing framework already has tokens.
+
+---
+
+# 40. Create UI Guard/Checklist File
+
+Create:
+
+```text
+docs/UI_IMPLEMENTATION_CHECKLIST.md
+```
+
+Every new UI page must satisfy:
+
+* has page header
+* has permission checks
+* has loading state
+* has empty state
+* has validation error display
+* has success/error feedback
+* uses standard buttons
+* uses standard badges
+* uses standard tables/forms
+* is responsive
+* has no raw SQL/error display
+* uses module theme/status rules
+* follows print rules if printable
+* includes logs/notifications where relevant
+* no hidden critical clinical data
+
+---
+
+# 41. Component Extraction Recommendations
+
+Identify duplicated UI and recommend/create reusable components.
+
+Likely reusable components:
+
+```text
+AppLayout
+PageHeader
+ModuleHeader
+SectionCard
+StatCard
+StatusBadge
+PriorityBadge
+DataTable
+FilterBar
+ActionDropdown
+ConfirmModal
+FormModal
+SearchableSelect
+DateRangePicker
+PatientSummaryHeader
+VisitSummaryHeader
+ClinicalSection
+Timeline
+PrintLayout
+EmptyState
+LoadingState
+ErrorState
+PermissionGuard
+ModuleGuard
+```
+
+Create components only if safe.
+
+Otherwise document recommended extraction in the report.
+
+---
+
+# 42. Module-Specific Audit Requirements
+
+Audit these modules individually and write findings/recommendations:
+
+## Dashboard
+
+Check KPI cards, charts, shortcuts, spacing.
+
+## Patients
+
+Check patient list, search filters, folder layout, merge UI, deceased status, documents.
+
+## Visits
+
+Check visit creation, selected services, status flow, preview, pathway timeline.
+
+## Consultation
+
+Check session list, clinical sections, ownership grouping, summary page, edit actions.
+
+## Emergency
+
+Check emergency board, triage/vitals, bay/team, medication/MAR, investigations, procedures, billing, disposition.
+
+## Admission
+
+Check admission board, bed assignment, vitals, MAR, discharge.
+
+## Pharmacy
+
+Check prescription billing, dispensing, catalogue, stock display.
+
+## Billing
+
+Check invoice view, payment flow, invoice items, discount, balance display.
+
+## Investigations
+
+Check request board, result entry, verification, print result.
+
+## Procedures/Theatre
+
+Check procedure requests, theatre rooms, schedule board, case detail, notes.
+
+## Stock
+
+Check products, stock balances matrix, stock movements, requisitions, transfers.
 
 ## Blood Bank
 
-39. Blood inventory statistics count available units.
-40. Donor deferral statistics count deferred donors.
-41. Crossmatch compatibility rate is calculated.
-42. Transfusion reactions are counted.
+Check donor screening, recipient details, compatibility, crossmatch, issue, transfusion.
 
-## Staff Performance
+## Reports/Statistics
 
-43. Staff performance requires permission.
-44. Unauthorized user cannot view staff performance.
-45. Staff performance counts staff actions correctly.
+Check filters, cards, charts, tables, exports.
 
-## Export
+## Notifications
 
-46. Export requires permission.
-47. Export respects filters.
-48. Export action is logged.
+Check dropdown, list, priority, action links.
+
+## Logs
+
+Check filters, detail display, severity, old/new values.
+
+## Roles/Permissions/Modules
+
+Check grouped permissions, module descriptions, warnings for critical actions.
 
 ---
 
-# 34. Deliverables
+# 43. UI Risk Ranking
+
+In the report, rank issues by severity:
+
+```text
+CRITICAL = causes wrong clinical/financial/stock action or unsafe workflow
+HIGH = blocks users or causes major confusion
+MEDIUM = inconsistent but usable
+LOW = visual polish
+```
+
+Example:
+
+```text
+CRITICAL: Emergency medication action has no clear stock source.
+HIGH: Pharmacy billing and dispensing buttons are visually similar.
+MEDIUM: Tables use inconsistent pagination placement.
+LOW: Some cards use slightly different border radius.
+```
+
+---
+
+# 44. Implementation Scope
+
+First, perform the audit and generate reports.
+
+Then apply safe global improvements:
+
+* standard badges
+* standard buttons
+* standard page headers
+* standard empty/loading states
+* standard filter layout
+* standard modal behavior
+* standard permission guard helper
+* standard theme file
+
+Do not attempt to redesign every page in one risky change if the system is large.
+
+Prioritize high-risk clinical/financial pages.
+
+---
+
+# 45. Tests / Verification
+
+Add or update tests where practical.
+
+UI/feature tests should verify:
+
+1. Unauthorized actions are hidden.
+2. Backend still blocks unauthorized actions.
+3. Status badges render expected labels/classes.
+4. Page header appears on key pages.
+5. Empty state appears when no data.
+6. Filters preserve state.
+7. Modals show validation errors.
+8. Confirmation appears for destructive actions.
+9. Print layout hides navigation.
+10. Sidebar respects module/permission access.
+
+If automated UI tests are not available, add manual verification checklist to report.
+
+---
+
+# 46. Required Final Reports
+
+At the end, create:
+
+## docs/UI_UX_GAP_ANALYSIS.md
+
+With module-by-module findings.
+
+## docs/UI_UX_RECOMMENDATION_REPORT.md
+
+With exact recommendations and priority plan.
+
+## docs/UHMS_UI_THEME_RULES.md
+
+With permanent design system rules.
+
+## docs/UI_COMPONENT_STANDARDS.md
+
+With reusable component rules.
+
+## docs/UI_IMPLEMENTATION_CHECKLIST.md
+
+With checklist for future UI work.
+
+## docs/UI_UX_REMAINING_TODOS.md
+
+With remaining refactors.
+
+---
+
+# 47. Deliverables
 
 Provide:
 
-1. Gap analysis of current statistics/reporting system.
-2. Statistics / Analytics module.
-3. Statistical dashboard.
-4. Hospital activity statistics.
-5. Diagnosis statistics.
-6. Complaint statistics.
-7. Consultation statistics.
-8. Pharmacy statistics.
-9. Investigation statistics.
-10. Procedure/Theatre statistics.
-11. Emergency statistics.
-12. Admission statistics.
-13. MAR statistics.
-14. Billing/financial statistics.
-15. Claims statistics.
-16. Stock statistics.
-17. Blood Bank statistics.
-18. Staff performance statistics.
-19. Charts where available.
-20. Drill-down tables.
-21. Export/print support.
-22. Permissions/menus/module setup.
-23. Documentation reports.
-24. Tests or verification notes.
-25. Files modified.
-26. Remaining TODOs.
+1. Full UI/UX gap analysis.
+2. Module-by-module UI/UX findings.
+3. Recommendation report.
+4. Theme rule file.
+5. Component standards document.
+6. UI implementation checklist.
+7. Remaining TODOs document.
+8. Reusable theme config file.
+9. Standard status badge rules.
+10. Standard button/form/table/modal rules.
+11. Permission/module UI guard recommendations or implementation.
+12. Safe UI improvements applied where practical.
+13. Files modified.
+14. Remaining risks.
 
 ---
 
-# 35. Important Rules
+# 48. Important Rules
 
-Do not use wrong data sources.
+Do not randomly redesign the system without audit.
 
-Do not expose sensitive staff/financial data without permission.
+Do not introduce a new CSS framework unless already approved.
 
-Do not add a heavy chart library without checking existing dependencies.
+Do not break working pages.
 
-Do not load all-time hospital data by default.
+Do not make clinical data harder to read.
 
-Do not make statistics mutate records.
+Do not hide important clinical/financial/stock information.
 
-Do not break existing reports.
+Do not rely only on color to communicate status.
 
-Do not break consultation, emergency, admission, pharmacy, investigations, procedures/theatre, billing, claims, stock, blood bank, MAR, or visit workflows.
+Do not show actions users cannot perform.
 
-Now inspect the current UHMS implementation and build the Statistical Reports / Analytics module according to the requirements above.
+Do not allow disabled modules to appear active.
+
+Do not leave modals with stuck backdrops.
+
+Do not show raw technical errors to users.
+
+Do not create inconsistent new components when reusable ones exist.
+
+Do not make all pages look beautiful but clinically unsafe.
+
+Now inspect the current UHMS frontend, perform a full UI/UX audit, generate the required reports, create the UHMS theme/design rule files, and apply safe standardization improvements where appropriate.
+
+```
 ```
