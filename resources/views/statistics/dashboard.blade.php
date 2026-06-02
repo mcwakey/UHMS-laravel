@@ -12,12 +12,8 @@
 @endphp
 
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
-    <div>
-        <h4 class="fw-bold mb-1"><i class="ti ti-chart-histogram me-2 text-primary"></i>Statistical Dashboard</h4>
-        <p class="text-muted mb-0">Hospital-wide KPIs for {{ $filters['from'] }} → {{ $filters['to'] }}. Click a card to drill into its statistics.</p>
-    </div>
-</div>
+<x-page-header title="Statistical Dashboard" icon="ti-chart-histogram"
+    :description="'Hospital-wide KPIs for '.$filters['from'].' → '.$filters['to'].'. Click a card to drill into its statistics.'" />
 
 @include('statistics._nav')
 

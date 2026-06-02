@@ -2,19 +2,15 @@
 @section('title', 'Invoices')
 
 @section('content')
-<!-- Page Header -->
-<div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"><i class="ti ti-file-invoice me-2"></i>Invoices</h4>
-    </div>
-    <div class="d-flex gap-2">
+<x-page-header title="Invoices" icon="ti-file-invoice">
+    <x-slot:actions>
         @can('invoices.create')
         <a href="{{ route('admin.billing.invoices.create') }}" class="btn btn-primary btn-md">
             <i class="ti ti-plus me-1"></i>New Invoice
         </a>
         @endcan
-    </div>
-</div>
+    </x-slot:actions>
+</x-page-header>
 
 @if(session('success'))
 <div class="alert alert-success alert-dismissible fade show" role="alert">

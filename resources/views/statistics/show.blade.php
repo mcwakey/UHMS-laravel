@@ -12,18 +12,15 @@
 @endphp
 
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
-    <div>
-        <h4 class="fw-bold mb-1"><i class="ti {{ $meta['icon'] ?? 'ti-chart-bar' }} me-2 text-primary"></i>{{ $title }}</h4>
-        <p class="text-muted mb-0">{{ $filters['from'] }} → {{ $filters['to'] }} · figures use the selected period.</p>
-    </div>
-    <div class="d-flex gap-2">
+<x-page-header :title="$title" :icon="$meta['icon'] ?? 'ti-chart-bar'"
+    :description="$filters['from'].' → '.$filters['to'].' · figures use the selected period.'">
+    <x-slot:actions>
         <a href="{{ route('admin.statistics.dashboard', $filters) }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-layout-dashboard me-1"></i>Dashboard</a>
         @if($canExport ?? false)
             <a href="{{ route('admin.statistics.'.$key, array_merge($filters, ['export' => 'csv'])) }}" class="btn btn-outline-success btn-sm"><i class="ti ti-download me-1"></i>Export CSV</a>
         @endif
-    </div>
-</div>
+    </x-slot:actions>
+</x-page-header>
 
 @include('statistics._nav')
 

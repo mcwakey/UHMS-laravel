@@ -2,10 +2,11 @@
 @section('title', 'Blood Requests')
 
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
-    <div><h4 class="fw-bold mb-1">Blood Requests</h4><p class="text-muted mb-0">Recipient details, compatible-unit suggestions, crossmatch, issue, and transfusion outcomes.</p></div>
-    <a href="{{ route('admin.blood-bank.units.index') }}" class="btn btn-outline-secondary btn-sm">Unit Inventory</a>
-</div>
+<x-page-header title="Blood Requests" description="Recipient details, compatible-unit suggestions, crossmatch, issue, and transfusion outcomes." icon="ti-droplet">
+    <x-slot:actions>
+        <a href="{{ route('admin.blood-bank.units.index') }}" class="btn btn-outline-secondary btn-sm">Unit Inventory</a>
+    </x-slot:actions>
+</x-page-header>
 
 <div class="card mb-3">
     <div class="card-header bg-white"><h5 class="card-title mb-0">Create Request &amp; Recipient Details</h5></div>
@@ -143,7 +144,7 @@
                 @endif
             </div>
         @empty
-            <div class="text-center text-muted py-4">No blood requests found.</div>
+            <x-empty-state icon="ti-droplet-off" title="No blood requests" message="No blood requests match your filters." />
         @endforelse
     </div>
     @if($requests->hasPages())<div class="card-footer">{{ $requests->links() }}</div>@endif

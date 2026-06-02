@@ -27,7 +27,7 @@
                 </ol>
             </nav>
         @endif
-        <h4 class="fw-bold mb-1">@if($icon)<i class="ti {{ $icon }} me-2 text-primary"></i>@endif{{ $title }}</h4>
+        <h4 class="fw-bold mb-1">@if($icon)<i class="ti {{ $icon }} me-2 text-primary"></i>@endif{{ $title }}@if(isset($slot) && ! $slot->isEmpty()) {{ $slot }}@endif</h4>
         @if($description)<p class="text-muted mb-0">{{ $description }}</p>@endif
     </div>
     @isset($actions)

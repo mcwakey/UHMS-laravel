@@ -108,7 +108,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="text-center text-muted py-4">No donors found.</td></tr>
+                        <tr><td colspan="6"><x-empty-state icon="ti-users" title="No donors" message="No blood donors match your filters." /></td></tr>
                     @endforelse
                 </tbody>
             </table>

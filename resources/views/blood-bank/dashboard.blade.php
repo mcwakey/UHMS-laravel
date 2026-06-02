@@ -2,16 +2,12 @@
 @section('title', 'Blood Bank Dashboard')
 
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
-    <div>
-        <h4 class="fw-bold mb-1"><i class="ti ti-droplet-filled text-danger me-2"></i>Blood Bank Dashboard</h4>
-        <p class="text-muted mb-0">Inventory, requests, expiring units, and issue safety at a glance.</p>
-    </div>
-    <div class="d-flex gap-2">
+<x-page-header title="Blood Bank Dashboard" description="Inventory, requests, expiring units, and issue safety at a glance." icon="ti-droplet-filled">
+    <x-slot:actions>
         <a href="{{ route('admin.blood-bank.requests.index') }}" class="btn btn-primary btn-sm"><i class="ti ti-plus me-1"></i>Request Blood</a>
         <a href="{{ route('admin.blood-bank.reports.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-report-analytics me-1"></i>Reports</a>
-    </div>
-</div>
+    </x-slot:actions>
+</x-page-header>
 
 <div class="row g-3 mb-3">
     @foreach([
@@ -52,7 +48,7 @@
                                     <td class="text-end">{{ $row->total }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="4" class="text-center text-muted py-4">No blood inventory recorded yet.</td></tr>
+                                <tr><td colspan="4"><x-empty-state icon="ti-droplet-off" message="No blood inventory recorded yet." /></td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -79,7 +75,7 @@
                                     <td><x-status-badge :status="$request->status" domain="blood_request" /></td>
                                 </tr>
                             @empty
-                                <tr><td colspan="4" class="text-center text-muted py-4">No active blood requests.</td></tr>
+                                <tr><td colspan="4"><x-empty-state icon="ti-droplet-off" message="No active blood requests." /></td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -101,7 +97,7 @@
                                     <td class="text-danger fw-semibold">{{ $unit->expiry_date?->format('d M Y') }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="4" class="text-center text-muted py-4">No units expiring in the next 7 days.</td></tr>
+                                <tr><td colspan="4"><x-empty-state icon="ti-clock-check" message="No units expiring in the next 7 days." /></td></tr>
                             @endforelse
                         </tbody>
                     </table>

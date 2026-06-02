@@ -2,12 +2,7 @@
 @section('title', 'Consultations')
 
 @section('content')
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Consultations</h4>
-        <small class="text-muted">Route-aware consultation queue</small>
-    </div>
-</div>
+<x-page-header title="Consultations" description="Route-aware consultation queue" icon="ti-stethoscope" />
 
 <div class="card mb-3">
     <div class="card-body">

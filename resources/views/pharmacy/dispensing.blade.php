@@ -2,17 +2,13 @@
 @section('title', 'Dispensing Queue')
 
 @section('content')
-<!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"><i class="ti ti-pill me-2"></i>Dispensing Queue</h4>
-    </div>
-    <div>
+<x-page-header title="Dispensing Queue" icon="ti-pill">
+    <x-slot:actions>
         <a href="{{ route('admin.pharmacy.history') }}" class="btn btn-outline-secondary btn-md">
             <i class="ti ti-history me-1"></i>Dispensing History
         </a>
-    </div>
-</div>
+    </x-slot:actions>
+</x-page-header>
 
 <!-- Stats Cards -->
 <div class="row g-3 mb-3">
@@ -134,9 +130,8 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-4">
-                            <i class="ti ti-pill fs-1 d-block mb-2"></i>
-                            No pending prescriptions to dispense.
+                        <td colspan="7">
+                            <x-empty-state icon="ti-pill" title="Nothing to dispense" message="No pending prescriptions to dispense." />
                         </td>
                     </tr>
                     @endforelse

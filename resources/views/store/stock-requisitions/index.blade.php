@@ -2,16 +2,14 @@
 @section('title', 'Stock Requisitions')
 
 @section('content')
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Department Stock Requisitions
-            <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">Total: {{ $stockRequisitions->total() }}</span>
-        </h4>
-    </div>
-    <a href="{{ route('admin.store.stock-requisitions.create') }}" class="btn btn-primary btn-md fs-13">
-        <i class="ti ti-plus me-1"></i>New Requisition
-    </a>
-</div>
+<x-page-header title="Department Stock Requisitions" icon="ti-clipboard-list">
+    <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">Total: {{ $stockRequisitions->total() }}</span>
+    <x-slot:actions>
+        <a href="{{ route('admin.store.stock-requisitions.create') }}" class="btn btn-primary btn-md fs-13">
+            <i class="ti ti-plus me-1"></i>New Requisition
+        </a>
+    </x-slot:actions>
+</x-page-header>
 
 @if(session('success'))<div class="alert alert-success alert-dismissible fade show">{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>@endif
 @if($errors->any())<div class="alert alert-danger alert-dismissible fade show">{{ $errors->first() }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>@endif
@@ -78,7 +76,7 @@
                     <td class="text-end"><a href="{{ route('admin.store.stock-requisitions.show', $stockRequisition) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
                 </tr>
             @empty
-                <tr><td colspan="7" class="text-center text-muted py-4">No stock requisitions found.</td></tr>
+                <tr><td colspan="7"><x-empty-state icon="ti-clipboard-off" title="No requisitions" message="No stock requisitions match your filters." /></td></tr>
             @endforelse
             </tbody>
         </table>

@@ -2,12 +2,8 @@
 @section('title', 'Visits / OPD')
 
 @section('content')
-<!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Visits / OPD</h4>
-    </div>
-    <div class="d-flex gap-2">
+<x-page-header title="Visits / OPD" icon="ti-stethoscope">
+    <x-slot:actions>
         @can('queue.view')
         <a href="{{ route('admin.queue.board') }}" class="btn btn-outline-info btn-md">
             <i class="ti ti-list-numbers me-1"></i>Queue Board
@@ -18,8 +14,8 @@
             <i class="ti ti-plus me-1"></i>New Visit
         </a>
         @endcan
-    </div>
-</div>
+    </x-slot:actions>
+</x-page-header>
 
 <!-- Today's Stats -->
 <div class="row mb-4">
@@ -200,9 +196,8 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="11" class="text-center text-muted py-4">
-                            <i class="ti ti-calendar-off fs-1 d-block mb-2"></i>
-                            No visits found
+                        <td colspan="11">
+                            <x-empty-state icon="ti-calendar-off" title="No visits found" message="No visits match the selected filters." />
                         </td>
                     </tr>
                     @endforelse

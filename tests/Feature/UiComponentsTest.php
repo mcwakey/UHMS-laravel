@@ -108,6 +108,18 @@ class UiComponentsTest extends TestCase
         $this->assertStringContainsString('ti-users', $html);
     }
 
+    public function test_page_header_renders_inline_title_slot(): void
+    {
+        $html = $this->render(<<<'BLADE'
+            <x-page-header title="Patients" icon="ti-users">
+                <span class="badge bg-secondary">Total: 42</span>
+            </x-page-header>
+        BLADE);
+
+        $this->assertStringContainsString('Patients', $html);
+        $this->assertStringContainsString('Total: 42', $html); // inline default slot rendered next to title
+    }
+
     public function test_empty_state_renders_message_and_action(): void
     {
         $html = $this->render(<<<'BLADE'

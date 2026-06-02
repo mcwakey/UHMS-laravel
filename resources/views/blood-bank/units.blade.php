@@ -2,10 +2,11 @@
 @section('title', 'Blood Units')
 
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
-    <div><h4 class="fw-bold mb-1">Blood Units</h4><p class="text-muted mb-0">Inventory and safety state for every unit.</p></div>
-    <a href="{{ route('admin.blood-bank.donations.index') }}" class="btn btn-outline-secondary btn-sm">Donations</a>
-</div>
+<x-page-header title="Blood Units" description="Inventory and safety state for every unit." icon="ti-droplet">
+    <x-slot:actions>
+        <a href="{{ route('admin.blood-bank.donations.index') }}" class="btn btn-outline-secondary btn-sm">Donations</a>
+    </x-slot:actions>
+</x-page-header>
 
 <div class="card mb-3">
     <div class="card-body">
@@ -47,7 +48,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="text-center text-muted py-4">No units found.</td></tr>
+                        <tr><td colspan="8"><x-empty-state icon="ti-droplet-off" title="No blood units" message="No blood units match your filters." /></td></tr>
                     @endforelse
                 </tbody>
             </table>

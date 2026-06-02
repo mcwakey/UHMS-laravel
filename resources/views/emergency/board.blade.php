@@ -14,12 +14,8 @@
 @endpush
 
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
-    <div>
-        <h4 class="fw-bold mb-1">Emergency Board</h4>
-        <p class="text-muted mb-0">Active emergency cases, triage urgency, bays, alerts, and quick actions.</p>
-    </div>
-    <div class="d-flex gap-2">
+<x-page-header title="Emergency Board" description="Active emergency cases, triage urgency, bays, alerts, and quick actions." icon="ti-ambulance">
+    <x-slot:actions>
         <button class="btn btn-outline-secondary btn-sm" type="button" onclick="(window.UhmsInertia ? window.UhmsInertia.reload({ preserveScroll: true }) : location.reload())">
             <i class="ti ti-refresh me-1"></i>Refresh
         </button>
@@ -28,8 +24,8 @@
                 <i class="ti ti-plus me-1"></i>New Emergency Case
             </a>
         @endcan
-    </div>
-</div>
+    </x-slot:actions>
+</x-page-header>
 
 <div class="row g-3 mb-3">
     <div class="col-6 col-xl-2"><div class="card border-0 bg-light"><div class="card-body py-3"><div class="text-muted small">Active</div><div class="h4 mb-0">{{ $counts['active'] ?? 0 }}</div></div></div></div>
@@ -150,7 +146,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="9" class="text-center text-muted py-4">No active emergency cases found.</td></tr>
+                        <tr><td colspan="9"><x-empty-state icon="ti-ambulance" title="No active emergencies" message="No active emergency cases found." /></td></tr>
                     @endforelse
                 </tbody>
             </table>

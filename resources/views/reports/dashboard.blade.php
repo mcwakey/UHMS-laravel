@@ -2,12 +2,8 @@
 @section('title', 'Reports Dashboard')
 
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
-    <div>
-        <h4 class="fw-bold mb-1"><i class="ti ti-chart-bar me-2 text-primary"></i>Reports Dashboard</h4>
-        <p class="text-muted mb-0">Cross-module UHMS reporting overview for clinical, operational, financial, stock, and blood-bank work.</p>
-    </div>
-</div>
+<x-page-header title="Reports Dashboard" icon="ti-chart-bar"
+    description="Cross-module UHMS reporting overview for clinical, operational, financial, stock, and blood-bank work." />
 
 <form method="GET" class="card mb-3">
     <div class="card-body">

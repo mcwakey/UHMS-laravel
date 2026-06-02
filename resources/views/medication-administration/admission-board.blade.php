@@ -2,21 +2,19 @@
 @section('title', 'Admission Medication Board')
 
 @section('content')
-<div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom">
-    <div>
-        <h4 class="fw-bold mb-1">Admission Medication Board</h4>
-        <p class="text-muted mb-0">Due, overdue, upcoming, and completed medication tasks for admitted patients.</p>
-    </div>
-    <form method="GET" class="d-flex gap-2">
-        <select name="ward_id" class="form-select form-select-sm">
-            <option value="">All wards</option>
-            @foreach($wards as $ward)
-                <option value="{{ $ward->id }}" @selected(($filters['ward_id'] ?? '') == $ward->id)>{{ $ward->name }}</option>
-            @endforeach
-        </select>
-        <button class="btn btn-outline-primary btn-sm"><i class="ti ti-filter me-1"></i>Filter</button>
-    </form>
-</div>
+<x-page-header title="Admission Medication Board" description="Due, overdue, upcoming, and completed medication tasks for admitted patients." icon="ti-pill">
+    <x-slot:actions>
+        <form method="GET" class="d-flex gap-2">
+            <select name="ward_id" class="form-select form-select-sm">
+                <option value="">All wards</option>
+                @foreach($wards as $ward)
+                    <option value="{{ $ward->id }}" @selected(($filters['ward_id'] ?? '') == $ward->id)>{{ $ward->name }}</option>
+                @endforeach
+            </select>
+            <button class="btn btn-outline-primary btn-sm"><i class="ti ti-filter me-1"></i>Filter</button>
+        </form>
+    </x-slot:actions>
+</x-page-header>
 
 <div class="card">
     <div class="card-body p-0">
@@ -66,7 +64,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center text-muted py-4">No admitted patients with medication tasks found.</td>
+                        <td colspan="8"><x-empty-state icon="ti-pill-off" title="No medication tasks" message="No admitted patients with medication tasks found." /></td>
                     </tr>
                     @endforelse
                 </tbody>

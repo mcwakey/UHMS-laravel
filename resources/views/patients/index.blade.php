@@ -2,20 +2,17 @@
 @section('title', 'Patients')
 
 @section('content')
-<!-- Page Header -->
-<div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-2">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Patients <span class="badge badge-soft-primary fw-medium border py-1 px-2 border-primary fs-13 ms-1">Total: {{ $patients->total() }}</span></h4>
-    </div>
-    <div class="text-end d-flex">
+<x-page-header title="Patients" icon="ti-users">
+    <span class="badge badge-soft-primary fw-medium border py-1 px-2 border-primary fs-13 ms-1">Total: {{ $patients->total() }}</span>
+    <x-slot:actions>
         @can('patients.merge.view')
-        <a href="{{ route('admin.patients.merge.index') }}" class="btn btn-outline-primary btn-md fs-13 me-2"><i class="ti ti-git-merge me-1"></i>Folder Merge</a>
+        <a href="{{ route('admin.patients.merge.index') }}" class="btn btn-outline-primary btn-md fs-13"><i class="ti ti-git-merge me-1"></i>Folder Merge</a>
         @endcan
         @can('patients.create')
         <a href="{{ route('admin.patients.create') }}" class="btn btn-primary btn-md fs-13"><i class="ti ti-plus me-1"></i>New Patient</a>
         @endcan
-    </div>
-</div>
+    </x-slot:actions>
+</x-page-header>
 
 <!-- Filters -->
 <div class="card mb-3">

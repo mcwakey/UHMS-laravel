@@ -2,21 +2,16 @@
 @section('title', 'Stock Transfers')
 
 @section('content')
-<!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Stock Transfers
-            <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">Total: {{ $transfers->total() }}</span>
-        </h4>
-    </div>
-    <div>
+<x-page-header title="Stock Transfers" icon="ti-arrows-exchange">
+    <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">Total: {{ $transfers->total() }}</span>
+    <x-slot:actions>
         @can('store.transfer.create')
         <a href="{{ route('admin.store.transfers.create') }}" class="btn btn-primary btn-md fs-13">
             <i class="ti ti-plus me-1"></i>New Transfer
         </a>
         @endcan
-    </div>
-</div>
+    </x-slot:actions>
+</x-page-header>
 
 @if(session('success'))
 <div class="alert alert-success alert-dismissible fade show">{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
@@ -201,9 +196,8 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center text-muted py-4">
-                            <i class="ti ti-transfer-off fs-2 d-block mb-2"></i>
-                            No transfers found
+                        <td colspan="8">
+                            <x-empty-state icon="ti-transfer-off" title="No transfers found" message="No stock transfers match your filters." />
                         </td>
                     </tr>
                     @endforelse

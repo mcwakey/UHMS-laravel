@@ -2,16 +2,12 @@
 @section('title', $meta['title'] ?? 'Operational Report')
 
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
-    <div>
-        <h4 class="fw-bold mb-1">{{ $meta['title'] }}</h4>
-        <p class="text-muted mb-0">{{ $meta['description'] }}</p>
-    </div>
-    <div class="d-flex gap-2">
+<x-page-header :title="$meta['title']" :description="$meta['description']" icon="ti-report-analytics">
+    <x-slot:actions>
         <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.reports.dashboard') }}">Reports Dashboard</a>
         <a class="btn btn-outline-primary btn-sm" href="{{ route('admin.reports.'.$key, array_merge($filters, ['export' => 'csv'])) }}"><i class="ti ti-file-type-csv me-1"></i>Export CSV</a>
-    </div>
-</div>
+    </x-slot:actions>
+</x-page-header>
 
 <form method="GET" class="card mb-3">
     <div class="card-body">

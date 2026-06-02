@@ -2,10 +2,11 @@
 @section('title', 'Blood Donations')
 
 @section('content')
-<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
-    <div><h4 class="fw-bold mb-1">Blood Donations</h4><p class="text-muted mb-0">Record collection and screening outcomes. Units stay quarantined until screening passes.</p></div>
-    <a href="{{ route('admin.blood-bank.donors.index') }}" class="btn btn-outline-secondary btn-sm">Donors</a>
-</div>
+<x-page-header title="Blood Donations" description="Record collection and screening outcomes. Units stay quarantined until screening passes." icon="ti-droplet">
+    <x-slot:actions>
+        <a href="{{ route('admin.blood-bank.donors.index') }}" class="btn btn-outline-secondary btn-sm">Donors</a>
+    </x-slot:actions>
+</x-page-header>
 
 <div class="card mb-3">
     <div class="card-header bg-white"><h5 class="card-title mb-0">Record Donation</h5></div>
@@ -85,7 +86,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="text-center text-muted py-4">No donations recorded.</td></tr>
+                        <tr><td colspan="6"><x-empty-state icon="ti-droplet-off" title="No donations" message="No donations recorded yet." /></td></tr>
                     @endforelse
                 </tbody>
             </table>

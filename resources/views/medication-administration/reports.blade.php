@@ -2,12 +2,7 @@
 @section('title', 'Medication Administration Reports')
 
 @section('content')
-<div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom">
-    <div>
-        <h4 class="fw-bold mb-1">Medication Administration Reports</h4>
-        <p class="text-muted mb-0">Administration, overdue, missed, held, refused, and nurse activity foundation.</p>
-    </div>
-</div>
+<x-page-header title="Medication Administration Reports" description="Administration, overdue, missed, held, refused, and nurse activity foundation." icon="ti-checkup-list" />
 
 <form method="GET" class="card mb-3">
     <div class="card-body">
@@ -47,7 +42,7 @@
                         <td>{{ $record->reason_not_given ?: $record->reaction ?: $record->notes ?: '—' }}</td>
                     </tr>
                     @empty
-                    <tr><td colspan="6" class="text-center text-muted py-4">No administration records found.</td></tr>
+                    <tr><td colspan="6"><x-empty-state icon="ti-checkup-list" message="No administration records found for the selected date." /></td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -74,7 +69,7 @@
                         <td><span class="badge bg-danger">{{ $task->escalation_level }}</span></td>
                     </tr>
                     @empty
-                    <tr><td colspan="5" class="text-center text-muted py-4">No overdue medication tasks.</td></tr>
+                    <tr><td colspan="5"><x-empty-state icon="ti-circle-check" message="No overdue medication tasks." /></td></tr>
                     @endforelse
                 </tbody>
             </table>
