@@ -49,9 +49,18 @@ class AnalyzerService
 
     public function getAnalyzer(Analyzer $analyzer): Analyzer
     {
-        return $analyzer->load(['testMappings.labTest', 'rawMessages' => function ($q) {
-            $q->latest()->limit(50);
-        }]);
+        $analyzer->load('testMappings.labTest');
+
+        // Load the latest raw messages with a direct LIMIT. A per-relation
+        // eager-load limit (->with(['rawMessages' => fn ($q) => $q->limit(50)]))
+        // makes Laravel emit ROW_NUMBER() OVER(...), which MariaDB 10.1 cannot
+        // parse. Querying the single parent's relation directly avoids that.
+        $analyzer->setRelation(
+            'rawMessages',
+            $analyzer->rawMessages()->latest()->limit(50)->get()
+        );
+
+        return $analyzer;
     }
 
     public function createAnalyzer(array $data): Analyzer
