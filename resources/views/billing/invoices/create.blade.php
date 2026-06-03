@@ -118,7 +118,7 @@
                                     <input type="number" name="items[{{ $i }}][nhis_approved_amount]" class="form-control form-control-sm nhis-amount" value="{{ $item['nhis_approved_amount'] ?? 0 }}" step="0.01" min="0">
                                 </td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
+                                    <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
                                 </td>
                             </tr>
                             @endforeach
@@ -153,7 +153,7 @@
                                     <input type="number" name="items[0][nhis_approved_amount]" class="form-control form-control-sm nhis-amount" value="0" step="0.01" min="0">
                                 </td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
+                                    <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
                                 </td>
                             </tr>
                         @endif
@@ -311,7 +311,7 @@ $(function() {
             <td><input type="text" class="form-control form-control-sm line-total" readonly value="0.00"></td>
             <td class="text-center"><input type="checkbox" name="items[${rowIndex}][is_nhis_covered]" class="form-check-input nhis-check" value="1"></td>
             <td><input type="number" name="items[${rowIndex}][nhis_approved_amount]" class="form-control form-control-sm nhis-amount" value="0" step="0.01" min="0"></td>
-            <td><button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
+            <td><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
         </tr>`;
         $('#itemsBody').append(row);
         rowIndex++;

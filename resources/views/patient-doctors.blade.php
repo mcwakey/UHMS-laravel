@@ -186,10 +186,10 @@
                                 30 Apr 2025
                             </td>
                             <td class="">
-                                <a href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Calendar cog" title="Calendar cog" href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-calendar-cog"></i>
                                 </a>
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -217,10 +217,10 @@
                                 15 Apr 2025
                             </td>
                             <td class="">
-                                <a href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Calendar cog" title="Calendar cog" href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-calendar-cog"></i>
                                 </a>
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -248,10 +248,10 @@
                                 02 Apr 2025
                             </td>
                             <td class="">
-                                <a href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Calendar cog" title="Calendar cog" href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-calendar-cog"></i>
                                 </a>
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -279,10 +279,10 @@
                                 27 Mar 2025
                             </td>
                             <td class="">
-                                <a href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Calendar cog" title="Calendar cog" href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-calendar-cog"></i>
                                 </a>
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -310,10 +310,10 @@
                                 12 Mar 2025
                             </td>
                             <td class="">
-                                <a href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Calendar cog" title="Calendar cog" href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-calendar-cog"></i>
                                 </a>
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -341,10 +341,10 @@
                                 05 Mar 2025
                             </td>
                             <td class="">
-                                <a href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Calendar cog" title="Calendar cog" href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-calendar-cog"></i>
                                 </a>
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -372,10 +372,10 @@
                                 30 Apr 2025
                             </td>
                             <td class="">
-                                <a href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Calendar cog" title="Calendar cog" href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-calendar-cog"></i>
                                 </a>
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -403,10 +403,10 @@
                                 16 Feb 2025
                             </td>
                             <td class="">
-                                <a href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Calendar cog" title="Calendar cog" href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-calendar-cog"></i>
                                 </a>
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -434,10 +434,10 @@
                                 01 Feb 2025
                             </td>
                             <td class="">
-                                <a href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Calendar cog" title="Calendar cog" href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-calendar-cog"></i>
                                 </a>
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -465,10 +465,10 @@
                                 25 Jan 2025
                             </td>
                             <td class="">
-                                <a href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Calendar cog" title="Calendar cog" href="{{url('patient-appointment-details')}}" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-calendar-cog"></i>
                                 </a>
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="border p-1 rounded-3 fs-13 text-body d-inline-flex align-items-center justify-content-center">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">

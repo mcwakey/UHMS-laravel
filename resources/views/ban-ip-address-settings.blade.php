@@ -49,7 +49,7 @@
                                                 <td>You can get on-demand services in order to find a nearby service.</td>
                                                 <td>30 Apr 2025</td>
                                                 <td class="action-item">
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu p-2">
@@ -67,7 +67,7 @@
                                                 <td>Extract pricing information at inventory levels.</td>
                                                 <td>15 Apr 2025</td>
                                                 <td class="action-item">
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu p-2">
@@ -85,7 +85,7 @@
                                                 <td>Fetching data for competitors to gain competitive advantage.</td>
                                                 <td>02 Apr 2025</td>
                                                 <td class="action-item">
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu p-2">
@@ -103,7 +103,7 @@
                                                 <td>Temporarily block to protect user accounts from internet fraudsters.</td>
                                                 <td>27 Mar 2025</td>
                                                 <td class="action-item">
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu p-2">

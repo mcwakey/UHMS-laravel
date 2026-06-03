@@ -66,7 +66,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <table class="table table-sm table-borderless">
+                            <div class="table-responsive"><table class="table table-sm table-borderless">
                                 <tr>
                                     <td class="text-muted" width="40%">Appointment #</td>
                                     <td class="fw-medium">{{ $appointment->appointment_number }}</td>
@@ -92,10 +92,10 @@
                                     <td class="text-muted">Status</td>
                                     <td><span class="badge bg-{{ $appointment->status->color() }} js-appointment-status-badge">{{ $appointment->status->label() }}</span></td>
                                 </tr>
-                            </table>
+                            </table></div>
                         </div>
                         <div class="col-md-6">
-                            <table class="table table-sm table-borderless">
+                            <div class="table-responsive"><table class="table table-sm table-borderless">
                                 <tr>
                                     <td class="text-muted" width="40%">Department</td>
                                     <td>{{ $appointment->department->name }}</td>
@@ -122,7 +122,7 @@
                                     </td>
                                 </tr>
                                 @endif
-                            </table>
+                            </table></div>
                         </div>
                     </div>
 
@@ -224,7 +224,7 @@
                         <h5 class="mt-2 mb-0">{{ $appointment->patient->first_name }} {{ $appointment->patient->last_name }}</h5>
                         <small class="text-muted">{{ $appointment->patient->patient_number }}</small>
                     </div>
-                    <table class="table table-sm table-borderless mb-0">
+                    <div class="table-responsive"><table class="table table-sm table-borderless mb-0">
                         <tr>
                             <td class="text-muted">Phone</td>
                             <td>{{ $appointment->patient->phone ?? '—' }}</td>
@@ -239,7 +239,7 @@
                             <td>{{ $appointment->patient->date_of_birth->age }} years</td>
                         </tr>
                         @endif
-                    </table>
+                    </table></div>
                     <div class="mt-3">
                         <a href="{{ route('admin.patients.show', $appointment->patient) }}" class="btn btn-outline-primary btn-sm w-100">
                             <i class="ti ti-external-link me-1"></i> View Patient Profile

@@ -108,7 +108,7 @@
                                                     <div class="profile-container">
                                                         <img src="{{URL::asset('build/img/logo.svg')}}" alt="Profile" class="img-fluid object-fit-contain p-1">
                                                         <div class="overlay-btn">
-                                                        <a href="javascript:void(0);" class="text-white" id="uploadTrigger">
+                                                        <a aria-label="Photo" title="Photo" href="javascript:void(0);" class="text-white" id="uploadTrigger">
                                                             <i class="ti ti-photo fs-10"></i>
                                                         </a>
                                                         </div>
@@ -132,7 +132,7 @@
                                                     <div class="profile-container">
                                                         <img src="{{URL::asset('build/img/logo-white.svg')}}" alt="Profile" class="img-fluid object-fit-contain bg-dark p-1">
                                                         <div class="overlay-btn">
-                                                        <a href="javascript:void(0);" class="text-white" id="uploadTrigger1">
+                                                        <a aria-label="Photo" title="Photo" href="javascript:void(0);" class="text-white" id="uploadTrigger1">
                                                             <i class="ti ti-photo fs-10"></i>
                                                         </a>
                                                         </div>
@@ -156,7 +156,7 @@
                                                     <div class="profile-container">
                                                         <img src="{{URL::asset('build/img/logo-small.svg')}}" alt="Profile" class="img-fluid object-fit-none">
                                                         <div class="overlay-btn">
-                                                        <a href="javascript:void(0);" class="text-white" id="uploadTrigger2">
+                                                        <a aria-label="Photo" title="Photo" href="javascript:void(0);" class="text-white" id="uploadTrigger2">
                                                             <i class="ti ti-photo fs-10"></i>
                                                         </a>
                                                         </div>
@@ -180,7 +180,7 @@
                                                     <div class="profile-container">
                                                         <img src="{{URL::asset('build/img/logo-small.svg')}}" alt="Profile" class="img-fluid object-fit-none bg-dark">
                                                         <div class="overlay-btn">
-                                                        <a href="javascript:void(0);" class="text-white" id="uploadTrigger3">
+                                                        <a aria-label="Photo" title="Photo" href="javascript:void(0);" class="text-white" id="uploadTrigger3">
                                                             <i class="ti ti-photo fs-10"></i>
                                                         </a>
                                                         </div>
@@ -204,7 +204,7 @@
                                                     <div class="profile-container">
                                                         <img src="{{URL::asset('build/img/logo-small.svg')}}" alt="Profile" class="img-fluid object-fit-none">
                                                         <div class="overlay-btn">
-                                                        <a href="javascript:void(0);" class="text-white" id="uploadTrigger4">
+                                                        <a aria-label="Photo" title="Photo" href="javascript:void(0);" class="text-white" id="uploadTrigger4">
                                                             <i class="ti ti-photo fs-10"></i>
                                                         </a>
                                                         </div>
@@ -228,7 +228,7 @@
                                                     <div class="profile-container">
                                                         <img src="{{URL::asset('build/img/logo-small.svg')}}" alt="Profile" class="img-fluid object-fit-none">
                                                         <div class="overlay-btn">
-                                                        <a href="javascript:void(0);" class="text-white" id="uploadTrigger5">
+                                                        <a aria-label="Photo" title="Photo" href="javascript:void(0);" class="text-white" id="uploadTrigger5">
                                                             <i class="ti ti-photo fs-10"></i>
                                                         </a>
                                                         </div>

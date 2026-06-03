@@ -99,7 +99,7 @@
                                                 </span>
                                             </td>
                                             <td class="action-item">
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -131,7 +131,7 @@
                                                 </span>
                                             </td>
                                             <td class="action-item">
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -163,7 +163,7 @@
                                                 </span>
                                             </td>
                                             <td class="action-item">
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -189,7 +189,7 @@
                                                 </span>
                                             </td>
                                             <td class="action-item">
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -221,7 +221,7 @@
                                                 </span>
                                             </td>
                                             <td class="action-item">
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -253,7 +253,7 @@
                                                 </span>
                                             </td>
                                             <td class="action-item">
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -285,7 +285,7 @@
                                                 </span>
                                             </td>
                                             <td class="action-item">
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -317,7 +317,7 @@
                                                 </span>
                                             </td>
                                             <td class="action-item">
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -349,7 +349,7 @@
                                                 </span>
                                             </td>
                                             <td class="action-item">
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -381,7 +381,7 @@
                                                 </span>
                                             </td>
                                             <td class="action-item">
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">

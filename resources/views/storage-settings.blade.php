@@ -59,7 +59,7 @@
                                                     <p class="text-dark fw-medium">AWS</p>
                                                 </div>
                                                 <div class="d-flex align-items-center">
-                                                    <a class="btn btn-sm btn-light border rounded-2 p-1 me-2" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#add_storage"><i class="ti ti-settings"></i></a>
+                                                    <a aria-label="Settings" title="Settings" class="btn btn-sm btn-light border rounded-2 p-1 me-2" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#add_storage"><i class="ti ti-settings"></i></a>
                                                     <div class="form-check form-switch ps-0">
                                                         <input class="form-check-input m-0" type="checkbox" checked="">
                                                     </div>

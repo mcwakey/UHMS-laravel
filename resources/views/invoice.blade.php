@@ -179,9 +179,9 @@
                                             </td>
                                             <td>
                                                 <div class="action-icon d-inline-flex">
-                                                    <a href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
-                                                    <a href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
-                                                    <a href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                                    <a aria-label="View" title="View" href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Delete" title="Delete" href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -218,9 +218,9 @@
                                             </td>
                                             <td>
                                                 <div class="action-icon d-inline-flex">
-                                                    <a href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
-                                                    <a href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
-                                                    <a href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                                    <a aria-label="View" title="View" href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Delete" title="Delete" href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -257,9 +257,9 @@
                                             </td>
                                             <td>
                                                 <div class="action-icon d-inline-flex">
-                                                    <a href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
-                                                    <a href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
-                                                    <a href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                                    <a aria-label="View" title="View" href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Delete" title="Delete" href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -296,9 +296,9 @@
                                             </td>
                                             <td>
                                                 <div class="action-icon d-inline-flex">
-                                                    <a href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
-                                                    <a href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
-                                                    <a href="#" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                                    <a aria-label="View" title="View" href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Delete" title="Delete" href="#" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -335,9 +335,9 @@
                                             </td>
                                             <td>
                                                 <div class="action-icon d-inline-flex">
-                                                    <a href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
-                                                    <a href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
-                                                    <a href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                                    <a aria-label="View" title="View" href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Delete" title="Delete" href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -374,9 +374,9 @@
                                             </td>
                                             <td>
                                                 <div class="action-icon d-inline-flex">
-                                                    <a href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
-                                                    <a href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
-                                                    <a href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                                    <a aria-label="View" title="View" href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Delete" title="Delete" href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -413,9 +413,9 @@
                                             </td>
                                             <td>
                                                 <div class="action-icon d-inline-flex">
-                                                    <a href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
-                                                    <a href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
-                                                    <a href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                                    <a aria-label="View" title="View" href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Delete" title="Delete" href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -452,9 +452,9 @@
                                             </td>
                                             <td>
                                                 <div class="action-icon d-inline-flex">
-                                                    <a href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
-                                                    <a href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
-                                                    <a href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                                    <a aria-label="View" title="View" href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Delete" title="Delete" href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -491,9 +491,9 @@
                                             </td>
                                             <td>
                                                 <div class="action-icon d-inline-flex">
-                                                    <a href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
-                                                    <a href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
-                                                    <a href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                                    <a aria-label="View" title="View" href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Delete" title="Delete" href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -530,9 +530,9 @@
                                             </td>
                                             <td>
                                                 <div class="action-icon d-inline-flex">
-                                                    <a href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
-                                                    <a href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
-                                                    <a href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                                    <a aria-label="View" title="View" href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Delete" title="Delete" href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -569,9 +569,9 @@
                                             </td>
                                             <td>
                                                 <div class="action-icon d-inline-flex">
-                                                    <a href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
-                                                    <a href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
-                                                    <a href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                                    <a aria-label="View" title="View" href="{{url('invoice-details')}}" class="me-2"><i class="ti ti-eye"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="{{url('edit-invoices')}}" class="me-2"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Delete" title="Delete" href="#delete_modal" class="" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                                 </div>
                                             </td>
                                         </tr>

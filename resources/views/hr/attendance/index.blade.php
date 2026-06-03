@@ -16,7 +16,7 @@
             </select>
             <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}" style="width:140px;">
             <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}" style="width:140px;">
-            <button type="submit" class="btn btn-outline-primary"><i class="ti ti-filter"></i></button>
+            <button aria-label="Filter" title="Filter" type="submit" class="btn btn-outline-primary"><i class="ti ti-filter"></i></button>
         </form>
         <a href="{{ route('admin.hr.attendance.summary') }}" class="btn btn-outline-info"><i class="ti ti-chart-bar me-1"></i>Summary</a>
     </div>

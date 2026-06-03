@@ -94,7 +94,7 @@
                                     </span>
                                 </small>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearPatient()">
+                            <button aria-label="Close" title="Close" type="button" class="btn btn-sm btn-outline-danger" onclick="clearPatient()">
                                 <i class="ti ti-x"></i>
                             </button>
                         </div>
@@ -1122,7 +1122,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<input type="hidden" name="services[' + idx + '][doctor_id]" value="' + (svc.doctor_id || '') + '">';
             html += '</td>';
             html += '<td class="text-end fw-medium">\u20B5' + formatNumber(lineTotal) + '</td>';
-            html += '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="' + idx + '"><i class="ti ti-trash"></i></button></td>';
+            html += '<td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="' + idx + '"><i class="ti ti-trash"></i></button></td>';
             html += '</tr>';
         });
 

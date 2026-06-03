@@ -32,8 +32,8 @@
                         </ul>
                     </div>
                     <div class="bg-white border shadow-sm rounded px-1 pb-0 text-center d-flex align-items-center justify-content-center">
-                        <a href="{{url('patients')}}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-dark"></i></a>
-                        <a href="{{url('patients-grid')}}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-layout-grid fs-14 text-body"></i> </a>
+                        <a aria-label="List" title="List" href="{{url('patients')}}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-dark"></i></a>
+                        <a aria-label="Layout grid" title="Layout grid" href="{{url('patients-grid')}}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-layout-grid fs-14 text-body"></i> </a>
                     </div>
 
                     <a href="{{ route('admin.patients.create') }}" class="btn btn-primary ms-2 fs-13 btn-md"><i class="ti ti-plus me-1"></i>New Patient</a>
@@ -386,10 +386,10 @@
                             <td><span class="badge badge-soft-success rounded text-success border border-success fs-13 fw-medium">Available</span></td>
                             <td>
                                 <div class="d-flex align-items-center gap-1">
-                                    <a href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu p-2">
@@ -432,10 +432,10 @@
                             <td><span class="badge badge-soft-danger rounded text-danger border border-danger fs-13 fw-medium">Unavailable</span></td>
                             <td>
                                 <div class="d-flex align-items-center gap-1">
-                                    <a href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu p-2">
@@ -478,10 +478,10 @@
                             <td><span class="badge badge-soft-success rounded text-success border border-success fs-13 fw-medium">Available</span></td>
                             <td>
                                 <div class="d-flex align-items-center gap-1">
-                                    <a href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu p-2">
@@ -524,10 +524,10 @@
                             <td><span class="badge badge-soft-danger rounded text-danger border border-danger fs-13 fw-medium">Unavailable</span></td>
                             <td>
                                 <div class="d-flex align-items-center gap-1">
-                                    <a href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu p-2">
@@ -570,10 +570,10 @@
                             <td><span class="badge badge-soft-success rounded text-success border border-success fs-13 fw-medium">Available</span></td>
                             <td>
                                 <div class="d-flex align-items-center gap-1">
-                                    <a href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu p-2">
@@ -616,10 +616,10 @@
                             <td><span class="badge badge-soft-danger rounded text-danger border border-danger fs-13 fw-medium">Unavailable</span></td>
                             <td>
                                 <div class="d-flex align-items-center gap-1">
-                                    <a href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu p-2">
@@ -662,10 +662,10 @@
                             <td><span class="badge badge-soft-success rounded text-success border border-success fs-13 fw-medium">Available</span></td>
                             <td>
                                 <div class="d-flex align-items-center gap-1">
-                                    <a href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu p-2">
@@ -708,10 +708,10 @@
                             <td><span class="badge badge-soft-danger rounded text-danger border border-danger fs-13 fw-medium">Unavailable</span></td>
                             <td>
                                 <div class="d-flex align-items-center gap-1">
-                                    <a href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu p-2">
@@ -754,10 +754,10 @@
                             <td><span class="badge badge-soft-success rounded text-success border border-success fs-13 fw-medium">Available</span></td>
                             <td>
                                 <div class="d-flex align-items-center gap-1">
-                                    <a href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu p-2">
@@ -800,10 +800,10 @@
                             <td><span class="badge badge-soft-danger rounded text-danger border border-danger fs-13 fw-medium">Unavailable</span></td>
                             <td>
                                 <div class="d-flex align-items-center gap-1">
-                                    <a href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointments')}}" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu p-2">

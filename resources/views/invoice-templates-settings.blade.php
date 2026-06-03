@@ -38,11 +38,11 @@
                                                 <a href="#">
                                                     <img class="w-100" src="{{URL::asset('build/img/invoice/invoice-template-01.jpg')}}" alt="invoice">
                                                 </a>
-                                                <a href="#" class="invoice-view-icon" data-bs-toggle="modal" data-bs-target="#invoice_view_1"><i class="ti ti-eye"></i></a>
+                                                <a aria-label="View" title="View" href="#" class="invoice-view-icon" data-bs-toggle="modal" data-bs-target="#invoice_view_1"><i class="ti ti-eye"></i></a>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <a href="javascript:void(0);">General Invoice 1</a>
-                                                <a href="javascript:void(0);" class="invoice-star d-flex align-items-center justify-content-center">
+                                                <a aria-label="Star" title="Star" href="javascript:void(0);" class="invoice-star d-flex align-items-center justify-content-center">
                                                     <i class="ti ti-star"></i>
                                                 </a>
                                             </div>
@@ -56,11 +56,11 @@
                                                 <a href="#">
                                                     <img class="w-100" src="{{URL::asset('build/img/invoice/invoice-template-02.jpg')}}" alt="invoice">
                                                 </a>
-                                                <a href="#" class="invoice-view-icon" data-bs-toggle="modal" data-bs-target="#invoice_view_2"><i class="ti ti-eye"></i></a>
+                                                <a aria-label="View" title="View" href="#" class="invoice-view-icon" data-bs-toggle="modal" data-bs-target="#invoice_view_2"><i class="ti ti-eye"></i></a>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <a href="javascript:void(0);">General Invoice 2</a>
-                                                <a href="javascript:void(0);" class="invoice-star d-flex align-items-center justify-content-center">
+                                                <a aria-label="Star" title="Star" href="javascript:void(0);" class="invoice-star d-flex align-items-center justify-content-center">
                                                     <i class="ti ti-star"></i>
                                                 </a>
                                             </div>
@@ -74,11 +74,11 @@
                                                 <a href="#">
                                                     <img class="w-100" src="{{URL::asset('build/img/invoice/invoice-template-03.jpg')}}" alt="invoice">
                                                 </a>
-                                                <a href="#" class="invoice-view-icon" data-bs-toggle="modal" data-bs-target="#invoice_view_3"><i class="ti ti-eye"></i></a>
+                                                <a aria-label="View" title="View" href="#" class="invoice-view-icon" data-bs-toggle="modal" data-bs-target="#invoice_view_3"><i class="ti ti-eye"></i></a>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <a href="javascript:void(0);">General Invoice 3</a>
-                                                <a href="javascript:void(0);" class="invoice-star d-flex align-items-center justify-content-center">
+                                                <a aria-label="Star" title="Star" href="javascript:void(0);" class="invoice-star d-flex align-items-center justify-content-center">
                                                     <i class="ti ti-star"></i>
                                                 </a>
                                             </div>
@@ -92,11 +92,11 @@
                                                 <a href="#">
                                                     <img class="w-100" src="{{URL::asset('build/img/invoice/invoice-template-04.jpg')}}" alt="invoice">
                                                 </a>
-                                                <a href="#" class="invoice-view-icon" data-bs-toggle="modal" data-bs-target="#invoice_view_4"><i class="ti ti-eye"></i></a>
+                                                <a aria-label="View" title="View" href="#" class="invoice-view-icon" data-bs-toggle="modal" data-bs-target="#invoice_view_4"><i class="ti ti-eye"></i></a>
                                             </div>
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <a href="javascript:void(0);">General Invoice 4</a>
-                                                <a href="javascript:void(0);" class="invoice-star d-flex align-items-center justify-content-center">
+                                                <a aria-label="Star" title="Star" href="javascript:void(0);" class="invoice-star d-flex align-items-center justify-content-center">
                                                     <i class="ti ti-star"></i>
                                                 </a>
                                             </div>

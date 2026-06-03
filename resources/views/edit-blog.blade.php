@@ -58,7 +58,7 @@
                             <div class="mb-3">
                                 <div class="selected-img">
                                     <img src="{{URL::asset('build/img/blogs/blog-img-01.jpg')}}" alt="img" class="avatar avatar-xxl img-fluid">
-                                    <a href="javascript:void(0);" class="close-img">
+                                    <a aria-label="Circle x filled" title="Circle x filled" href="javascript:void(0);" class="close-img">
                                         <i class="ti ti-circle-x-filled"></i>
                                     </a>
                                     </div>

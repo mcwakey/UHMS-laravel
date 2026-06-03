@@ -134,7 +134,7 @@
                             <td><span class="badge badge-soft-success border border-success px-2 py-1 fs-13 fw-medium">Active</span></td>
                             <td>
                                 <div class="action-item">
-                                    <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu">
@@ -155,7 +155,7 @@
                             <td><span class="badge badge-soft-danger border border-danger px-2 py-1 fs-13 fw-medium">Inactive</span></td>
                             <td>
                                 <div class="action-item">
-                                    <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu">
@@ -176,7 +176,7 @@
                             <td><span class="badge badge-soft-success border border-success px-2 py-1 fs-13 fw-medium">Active</span></td>
                             <td>
                                 <div class="action-item">
-                                    <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu">
@@ -197,7 +197,7 @@
                             <td><span class="badge badge-soft-success border border-success px-2 py-1 fs-13 fw-medium">Active</span></td>
                             <td>
                                 <div class="action-item">
-                                    <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu">
@@ -218,7 +218,7 @@
                             <td><span class="badge badge-soft-success border border-success px-2 py-1 fs-13 fw-medium">Active</span></td>
                             <td>
                                 <div class="action-item">
-                                    <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu">
@@ -239,7 +239,7 @@
                             <td><span class="badge badge-soft-success border border-success px-2 py-1 fs-13 fw-medium">Active</span></td>
                             <td>
                                 <div class="action-item">
-                                    <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu">
@@ -260,7 +260,7 @@
                             <td><span class="badge badge-soft-danger border border-danger px-2 py-1 fs-13 fw-medium">Inactive</span></td>
                             <td>
                                 <div class="action-item">
-                                    <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu">
@@ -281,7 +281,7 @@
                             <td><span class="badge badge-soft-success border border-success px-2 py-1 fs-13 fw-medium">Active</span></td>
                             <td>
                                 <div class="action-item">
-                                    <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu">
@@ -302,7 +302,7 @@
                             <td><span class="badge badge-soft-success border border-success px-2 py-1 fs-13 fw-medium">Active</span></td>
                             <td>
                                 <div class="action-item">
-                                    <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu">
@@ -323,7 +323,7 @@
                             <td><span class="badge badge-soft-success border border-success px-2 py-1 fs-13 fw-medium">Active</span></td>
                             <td>
                                 <div class="action-item">
-                                    <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu">

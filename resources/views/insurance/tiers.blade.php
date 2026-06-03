@@ -59,7 +59,7 @@
             <form method="POST" action="{{ route('admin.insurance-tiers.destroy', $tier) }}" class="d-inline"
                   onsubmit="return confirm('Delete tier \'{{ $tier->name }}\'? This cannot be undone.')">
                 @csrf @method('DELETE')
-                <button type="submit" class="btn btn-sm btn-outline-danger">
+                <button aria-label="Delete" title="Delete" type="submit" class="btn btn-sm btn-outline-danger">
                     <i class="ti ti-trash"></i>
                 </button>
             </form>

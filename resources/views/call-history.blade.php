@@ -92,8 +92,8 @@
                                 <td>14 Jan 2024, 04:27 AM </td>
                                 <td>
                                     <div class="action-icon d-inline-flex align-items-center">
-                                        <a href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
-                                        <a href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                        <a aria-label="View" title="View" href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Delete" title="Delete" href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                     </div>
                                 </td>
                             </tr>
@@ -124,8 +124,8 @@
                                 <td>21 Jan 2024, 03:19 AM</td>
                                 <td>
                                     <div class="action-icon d-inline-flex align-items-center">
-                                        <a href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
-                                        <a href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                        <a aria-label="View" title="View" href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Delete" title="Delete" href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                     </div>
                                 </td>
                             </tr>
@@ -156,8 +156,8 @@
                                 <td>20 Feb 2024, 12:15 PM</td>
                                 <td>
                                     <div class="action-icon d-inline-flex align-items-center">
-                                        <a href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
-                                        <a href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                        <a aria-label="View" title="View" href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Delete" title="Delete" href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                     </div>
                                 </td>
                             </tr>
@@ -188,8 +188,8 @@
                                 <td>15 Mar 2024, 12:11 AM</td>
                                 <td>
                                     <div class="action-icon d-inline-flex align-items-center">
-                                        <a href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
-                                        <a href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                        <a aria-label="View" title="View" href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Delete" title="Delete" href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                     </div>
                                 </td>
                             </tr>
@@ -218,8 +218,8 @@
                                 <td>12 Apr 2024, 05:48 PM</td>
                                 <td>
                                     <div class="action-icon d-inline-flex align-items-center">
-                                        <a href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
-                                        <a href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                        <a aria-label="View" title="View" href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Delete" title="Delete" href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                     </div>
                                 </td>
                             </tr>
@@ -250,8 +250,8 @@
                                 <td>20 Apr 2024, 06:11 PM</td>
                                 <td>
                                     <div class="action-icon d-inline-flex align-items-center">
-                                        <a href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
-                                        <a href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                        <a aria-label="View" title="View" href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Delete" title="Delete" href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                     </div>
                                 </td>
                             </tr>
@@ -282,8 +282,8 @@
                                 <td>06 Jul 2024, 07:15 PM</td>
                                 <td>
                                     <div class="action-icon d-inline-flex align-items-center">
-                                        <a href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
-                                        <a href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                        <a aria-label="View" title="View" href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Delete" title="Delete" href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                     </div>
                                 </td>
                             </tr>
@@ -314,8 +314,8 @@
                                 <td>02 Sep 2024, 09:21 PM</td>
                                 <td>
                                     <div class="action-icon d-inline-flex align-items-center">
-                                        <a href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
-                                        <a href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                        <a aria-label="View" title="View" href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Delete" title="Delete" href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                     </div>
                                 </td>
                             </tr>
@@ -344,8 +344,8 @@
                                 <td>15 Nov 2024, 12:44 PM</td>
                                 <td>
                                     <div class="action-icon d-inline-flex align-items-center">
-                                        <a href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
-                                        <a href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                        <a aria-label="View" title="View" href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Delete" title="Delete" href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                     </div>
                                 </td>
                             </tr>
@@ -376,8 +376,8 @@
                                 <td>10 Dec 2024, 11:23 PM</td>
                                 <td>
                                     <div class="action-icon d-inline-flex align-items-center">
-                                        <a href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
-                                        <a href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                        <a aria-label="View" title="View" href="#" class="me-2 p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#call_history"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Delete" title="Delete" href="#" class="p-1 rounded-circle d-flex" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
                                     </div>
                                 </td>
                             </tr>

@@ -193,7 +193,7 @@
                             <div class="overflow-auto">
                                 <div class="d-flex align-items-center justify-content-between mb-3">
                                     <div class="d-flex align-items-center flex-shrink-0">
-                                        <a href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
+                                        <a aria-label="File description" title="File description" href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
                                             <i class="ti ti-file-description text-body fs-20"></i>
                                         </a>
                                         <div>
@@ -202,13 +202,13 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
+                                        <a aria-label="View" title="View" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center justify-content-between mb-3">
                                     <div class="d-flex align-items-center flex-shrink-0">
-                                        <a href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
+                                        <a aria-label="File description" title="File description" href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
                                             <i class="ti ti-file-description text-body fs-20"></i>
                                         </a>
                                         <div>
@@ -217,13 +217,13 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
+                                        <a aria-label="View" title="View" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center justify-content-between mb-3">
                                     <div class="d-flex align-items-center flex-shrink-0">
-                                        <a href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
+                                        <a aria-label="File description" title="File description" href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
                                             <i class="ti ti-file-description text-body fs-20"></i>
                                         </a>
                                         <div>
@@ -232,13 +232,13 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
+                                        <a aria-label="View" title="View" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center justify-content-between mb-3">
                                     <div class="d-flex align-items-center flex-shrink-0">
-                                        <a href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
+                                        <a aria-label="File description" title="File description" href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
                                             <i class="ti ti-file-description text-body fs-20"></i>
                                         </a>
                                         <div>
@@ -247,13 +247,13 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
+                                        <a aria-label="View" title="View" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center justify-content-between mb-0">
                                     <div class="d-flex align-items-center flex-shrink-0">
-                                        <a href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
+                                        <a aria-label="File description" title="File description" href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
                                             <i class="ti ti-file-description text-body fs-20"></i>
                                         </a>
                                         <div>
@@ -262,8 +262,8 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
+                                        <a aria-label="View" title="View" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
                                     </div>
                                 </div>
                             </div>                                
@@ -634,10 +634,10 @@
                                     <td>Online</td>
                                     <td><span class="badge bg-success fw-medium">Checked Out</span></td>                                        
                                     <td>
-                                        <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                        <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                             <i class="ti ti-calendar-plus"></i>
                                         </a>
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -667,10 +667,10 @@
                                     <td>Online</td>
                                     <td><span class="badge bg-warning fw-medium">Checked in</span></td>                                        
                                     <td>
-                                        <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                        <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                             <i class="ti ti-calendar-plus"></i>
                                         </a>
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -700,10 +700,10 @@
                                     <td>In-Person</td>
                                     <td><span class="badge bg-danger fw-medium">Cancelled</span></td>                                        
                                     <td>
-                                        <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                        <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                             <i class="ti ti-calendar-plus"></i>
                                         </a>
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -733,10 +733,10 @@
                                     <td>In-Person</td>
                                     <td><span class="badge bg-info fw-medium">Schedule</span></td>                                        
                                     <td>
-                                        <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                        <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                             <i class="ti ti-calendar-plus"></i>
                                         </a>
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -766,10 +766,10 @@
                                     <td>Online</td>
                                     <td><span class="badge bg-info fw-medium">Schedule</span></td>                                        
                                     <td>
-                                        <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                        <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                             <i class="ti ti-calendar-plus"></i>
                                         </a>
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">

@@ -34,7 +34,7 @@
                                                 <img src="{{URL::asset('./build/img/users/user-08.jpg')}}" alt="img" class="position-relative z-n1">
                                                 <input type="file" class="form-control image-sign" multiple="">
                                                 <div class="position-absolute bottom-0 end-0 star-0 w-100 h-25 bg-dark d-flex align-items-center justify-content-center z-n1">
-                                                    <a href="javascript:void(0);" class="text-white d-flex align-items-center justify-content-center">
+                                                    <a aria-label="Photo" title="Photo" href="javascript:void(0);" class="text-white d-flex align-items-center justify-content-center">
                                                         <i class="ti ti-photo fs-14"></i>
                                                     </a>
                                                 </div>

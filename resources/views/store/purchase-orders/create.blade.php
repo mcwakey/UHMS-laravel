@@ -90,7 +90,7 @@
                             <td><input type="number" name="items[0][quantity_ordered]" class="form-control form-control-sm qty-input" value="1" min="1" required></td>
                             <td><input type="number" name="items[0][unit_cost]" class="form-control form-control-sm price-input" step="0.01" min="0" required></td>
                             <td class="row-total text-end align-middle fw-medium">0.00</td>
-                            <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
+                            <td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
                         </tr>
                     </tbody>
                     <tfoot>
@@ -161,7 +161,7 @@ $(document).ready(function() {
             <td><input type="number" name="items[${itemIndex}][quantity_ordered]" class="form-control form-control-sm qty-input" value="1" min="1" required></td>
             <td><input type="number" name="items[${itemIndex}][unit_cost]" class="form-control form-control-sm price-input" step="0.01" min="0" required></td>
             <td class="row-total text-end align-middle fw-medium">0.00</td>
-            <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
+            <td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
         </tr>`;
         $('#itemsBody').append(row);
         initProductSelect($('#itemsBody .product-select').last());

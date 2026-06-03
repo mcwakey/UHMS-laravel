@@ -24,7 +24,7 @@
                     <h5 class="card-title mb-0">{{ $role->name }}</h5>
                     <div class="dropdown">
                         @if(!in_array($role->name, ['Super Admin', 'Admin']))
-                        <button class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
+                        <button aria-label="Actions" title="Actions" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
                             <i class="ti ti-dots-vertical"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">

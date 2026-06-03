@@ -39,7 +39,7 @@
                             @endif
                         </div>
                         <div class="dropdown">
-                            <button class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
+                            <button aria-label="Actions" title="Actions" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
                                 <i class="ti ti-dots-vertical"></i>
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
@@ -172,7 +172,7 @@
                                 </td>
                                 <td class="text-end">
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
+                                        <button aria-label="Actions" title="Actions" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">
@@ -239,7 +239,7 @@
                                                                 <input type="text" name="criteria[{{ $criterionIndex }}][unit]" class="form-control" value="{{ $criterion->unit }}" placeholder="Unit">
                                                             </div>
                                                             <div class="col-md-1">
-                                                                <button type="button" class="btn btn-outline-danger w-100 remove-criterion-row"><i class="ti ti-x"></i></button>
+                                                                <button aria-label="Close" title="Close" type="button" class="btn btn-outline-danger w-100 remove-criterion-row"><i class="ti ti-x"></i></button>
                                                             </div>
                                                         </div>
                                                         @empty
@@ -254,7 +254,7 @@
                                                                 <input type="text" name="criteria[0][unit]" class="form-control" value="{{ $test->unit }}" placeholder="Unit">
                                                             </div>
                                                             <div class="col-md-1">
-                                                                <button type="button" class="btn btn-outline-danger w-100 remove-criterion-row"><i class="ti ti-x"></i></button>
+                                                                <button aria-label="Close" title="Close" type="button" class="btn btn-outline-danger w-100 remove-criterion-row"><i class="ti ti-x"></i></button>
                                                             </div>
                                                         </div>
                                                         @endforelse
@@ -390,7 +390,7 @@
                                     <input type="text" name="criteria[0][unit]" class="form-control" placeholder="Unit">
                                 </div>
                                 <div class="col-md-1">
-                                    <button type="button" class="btn btn-outline-danger w-100 remove-criterion-row"><i class="ti ti-x"></i></button>
+                                    <button aria-label="Close" title="Close" type="button" class="btn btn-outline-danger w-100 remove-criterion-row"><i class="ti ti-x"></i></button>
                                 </div>
                             </div>
                         </div>
@@ -449,7 +449,7 @@ function criterionRow(index) {
         + '<div class="col-md-4"><input type="text" name="criteria[' + index + '][name]" class="form-control" placeholder="e.g. Haemoglobin"></div>'
         + '<div class="col-md-4"><input type="text" name="criteria[' + index + '][normal_range]" class="form-control" placeholder="Range"></div>'
         + '<div class="col-md-3"><input type="text" name="criteria[' + index + '][unit]" class="form-control" placeholder="Unit"></div>'
-        + '<div class="col-md-1"><button type="button" class="btn btn-outline-danger w-100 remove-criterion-row"><i class="ti ti-x"></i></button></div>'
+        + '<div class="col-md-1"><button aria-label="Close" title="Close" type="button" class="btn btn-outline-danger w-100 remove-criterion-row"><i class="ti ti-x"></i></button></div>'
         + '</div>';
 }
 

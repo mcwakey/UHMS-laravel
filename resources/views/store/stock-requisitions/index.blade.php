@@ -42,9 +42,9 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-1"><button class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button></div>
+            <div class="col-md-1"><button aria-label="Search" title="Search" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button></div>
             @if(request()->hasAny(['search', 'department_id', 'status', 'product_id']))
-                <div class="col-md-1"><a href="{{ route('admin.store.stock-requisitions.index') }}" class="btn btn-outline-secondary w-100"><i class="ti ti-x"></i></a></div>
+                <div class="col-md-1"><a aria-label="Close" title="Close" href="{{ route('admin.store.stock-requisitions.index') }}" class="btn btn-outline-secondary w-100"><i class="ti ti-x"></i></a></div>
             @endif
         </form>
     </div>
@@ -73,7 +73,7 @@
                     <td>{{ $stockRequisition->requestedByUser?->name ?: '-' }}</td>
                     <td class="text-center"><span class="badge bg-info-subtle text-info">{{ $stockRequisition->items_count }}</span></td>
                     <td><x-status-badge :status="$stockRequisition->status" /></td>
-                    <td class="text-end"><a href="{{ route('admin.store.stock-requisitions.show', $stockRequisition) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
+                    <td class="text-end"><a aria-label="View" title="View" href="{{ route('admin.store.stock-requisitions.show', $stockRequisition) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
                 </tr>
             @empty
                 <tr><td colspan="7"><x-empty-state icon="ti-clipboard-off" title="No requisitions" message="No stock requisitions match your filters." /></td></tr>

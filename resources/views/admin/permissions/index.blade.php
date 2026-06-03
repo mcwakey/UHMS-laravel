@@ -141,7 +141,7 @@
                 <input type="text" id="perm-filter" class="form-control form-control-sm" style="max-width:240px;" placeholder="Filter…">
             </div>
             <div class="card-body p-0">
-                <table class="table table-sm align-middle mb-0">
+                <div class="table-responsive"><table class="table table-sm align-middle mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Module</th>
@@ -163,7 +163,7 @@
                             @endforeach
                         @endforeach
                     </tbody>
-                </table>
+                </table></div>
             </div>
         </div>
 

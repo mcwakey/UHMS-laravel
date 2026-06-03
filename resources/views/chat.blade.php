@@ -187,7 +187,7 @@
                                         <a href="{{url('voice-call')}}" class="btn btn-icon btn-light" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Voice Call"><i class="ti ti-phone"></i></a>
                                         <a href="{{url('video-call')}}" class="btn btn-icon btn-light" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Video Call"><i class="ti ti-video"></i></a>
                                         <a href="javascript:void(0);" class="btn btn-icon btn-light" data-bs-toggle="tooltip" data-bs-placement="top" aria-label="Refresh" data-bs-original-title="Info"><i class="ti ti-info-circle"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-icon btn-light close-chat d-md-none"><i class="ti ti-x"></i></a>
+                                        <a aria-label="Close" title="Close" href="javascript:void(0);" class="btn btn-icon btn-light close-chat d-md-none"><i class="ti ti-x"></i></a>
                                     </div>
                                 </div>
 
@@ -206,7 +206,7 @@
                                                             <p class="mb-0 fs-16">Hey mark! Did you check out the new logo design?</p>
                                                         </div>
                                                         <div class="ms-2">
-                                                            <a href="javascript:void(0);" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></a>
+                                                            <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></a>
                                                             <ul class="dropdown-menu p-2">
                                                                 <li><a class="dropdown-item" href="#"><i class="ti ti-heart me-1"></i>Reply</a></li>
                                                                 <li><a class="dropdown-item" href="#"><i class="ti ti-pinned me-1"></i>Forward</a></li>
@@ -231,7 +231,7 @@
                                                     </div>
                                                     <div class="d-flex align-items-center">
                                                         <div class="me-2">
-                                                            <a href="javascript:void(0);" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></a>
+                                                            <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></a>
                                                             <ul class="dropdown-menu p-2">
                                                                 <li><a class="dropdown-item" href="#"><i class="ti ti-heart me-1"></i>Reply</a></li>
                                                                 <li><a class="dropdown-item" href="#"><i class="ti ti-pinned me-1"></i>Forward</a></li>
@@ -268,7 +268,7 @@
                                                             </div>
                                                         </div>
                                                         <div class="ms-2">
-                                                            <a href="javascript:void(0);" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></a>
+                                                            <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></a>
                                                             <ul class="dropdown-menu p-2">
                                                                 <li><a class="dropdown-item" href="#"><i class="ti ti-heart me-1"></i>Reply</a></li>
                                                                 <li><a class="dropdown-item" href="#"><i class="ti ti-pinned me-1"></i>Forward</a></li>
@@ -294,7 +294,7 @@
                                                     </div>
                                                     <div class="d-flex align-items-center">
                                                         <div class="me-2">
-                                                            <a href="javascript:void(0);" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></a>
+                                                            <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></a>
                                                             <ul class="dropdown-menu p-2">
                                                                 <li><a class="dropdown-item" href="#"><i class="ti ti-heart me-1"></i>Reply</a></li>
                                                                 <li><a class="dropdown-item" href="#"><i class="ti ti-pinned me-1"></i>Forward</a></li>
@@ -327,7 +327,7 @@
                                                             <p class="mb-0 fs-16">Perfect! That layout will work great on the landing page. 👍</p>
                                                         </div>
                                                         <div class="ms-2">
-                                                            <a href="javascript:void(0);" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></a>
+                                                            <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></a>
                                                             <ul class="dropdown-menu p-2">
                                                                 <li><a class="dropdown-item" href="#"><i class="ti ti-heart me-1"></i>Reply</a></li>
                                                                 <li><a class="dropdown-item" href="#"><i class="ti ti-pinned me-1"></i>Forward</a></li>
@@ -352,7 +352,7 @@
                                                     </div>
                                                     <div class="d-flex align-items-center">
                                                         <div class="me-2">
-                                                            <a href="javascript:void(0);" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></a>
+                                                            <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></a>
                                                             <ul class="dropdown-menu p-2">
                                                                 <li><a class="dropdown-item" href="#"><i class="ti ti-heart me-1"></i>Reply</a></li>
                                                                 <li><a class="dropdown-item" href="#"><i class="ti ti-pinned me-1"></i>Forward</a></li>
@@ -385,7 +385,7 @@
                                                             <p class="mb-0 fs-16">Hey mark! Did you check out the new logo design?</p>
                                                         </div>
                                                         <div class="ms-2">
-                                                            <a href="javascript:void(0);" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></a>
+                                                            <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown"><i class="ti ti-dots-vertical"></i></a>
                                                             <ul class="dropdown-menu p-2">
                                                                 <li><a class="dropdown-item" href="#"><i class="ti ti-heart me-1"></i>Reply</a></li>
                                                                 <li><a class="dropdown-item" href="#"><i class="ti ti-pinned me-1"></i>Forward</a></li>
@@ -407,8 +407,8 @@
                                             <input type="text" class="form-control border-0" placeholder="Type Something...">
                                         </div>
                                         <div class="d-flex align-items-center gap-2">
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-light"><i class="ti ti-photo-plus"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-light"><i class="ti ti-mood-smile-beam"></i></a>
+                                            <a aria-label="Photo plus" title="Photo plus" href="javascript:void(0);" class="btn btn-icon btn-light"><i class="ti ti-photo-plus"></i></a>
+                                            <a aria-label="Mood smile beam" title="Mood smile beam" href="javascript:void(0);" class="btn btn-icon btn-light"><i class="ti ti-mood-smile-beam"></i></a>
                                             <div>
                                                 <a href="javascript:void(0);" class="btn btn-icon btn-outline-light" data-bs-toggle="dropdown" aria-label="more options"><i class="ti ti-dots-vertical"></i></a>
                                                 <ul class="dropdown-menu p-2">

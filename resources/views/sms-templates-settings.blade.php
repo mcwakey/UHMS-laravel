@@ -49,7 +49,7 @@
                                                 <td>30 Apr 2025</td>
                                                 <td><span class="badge bg-soft-success fs-13 fw-medium text-success border border-success py-1 px-2">Active</span></td>
                                                 <td class="action-item">
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu p-2">
@@ -70,7 +70,7 @@
                                                 <td>15 Apr 2025</td>
                                                 <td><span class="badge bg-soft-success fs-13 fw-medium text-success border border-success py-1 px-2">Active</span></td>
                                                 <td class="action-item">
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu p-2">
@@ -91,7 +91,7 @@
                                                 <td>02 Apr 2025</td>
                                                 <td><span class="badge bg-soft-success fs-13 fw-medium text-success border border-success py-1 px-2">Active</span></td>
                                                 <td class="action-item">
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu p-2">
@@ -112,7 +112,7 @@
                                                 <td>27 Mar 2025</td>
                                                 <td><span class="badge bg-soft-success fs-13 fw-medium text-success border border-success py-1 px-2">Active</span></td>
                                                 <td class="action-item">
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu p-2">
@@ -133,7 +133,7 @@
                                                 <td>12 Mar 2025</td>
                                                 <td><span class="badge bg-soft-success fs-13 fw-medium text-success border border-success py-1 px-2">Active</span></td>
                                                 <td class="action-item">
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu p-2">
@@ -154,7 +154,7 @@
                                                 <td>05 Mar 2025</td>
                                                 <td><span class="badge bg-soft-danger fs-13 fw-medium text-danger border border-danger py-1 px-2">Inactive</span></td>
                                                 <td class="action-item">
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu p-2">

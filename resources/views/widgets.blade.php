@@ -684,8 +684,8 @@
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center">
-                                    <a href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
-                                    <a href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
+                                    <a aria-label="Close" title="Close" href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
+                                    <a aria-label="Confirm" title="Confirm" href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
                                 </div>
                             </div>
                             <div class="d-flex justify-content-between mb-3">
@@ -701,8 +701,8 @@
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center">
-                                    <a href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
-                                    <a href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
+                                    <a aria-label="Close" title="Close" href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
+                                    <a aria-label="Confirm" title="Confirm" href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
                                 </div>
                             </div>
                             <div class="d-flex justify-content-between mb-3">
@@ -718,8 +718,8 @@
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center">
-                                    <a href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
-                                    <a href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
+                                    <a aria-label="Close" title="Close" href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
+                                    <a aria-label="Confirm" title="Confirm" href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
                                 </div>
                             </div>
                             <div class="d-flex justify-content-between mb-3">
@@ -735,8 +735,8 @@
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center">
-                                    <a href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
-                                    <a href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
+                                    <a aria-label="Close" title="Close" href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
+                                    <a aria-label="Confirm" title="Confirm" href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
                                 </div>
                             </div>
                             <div class="d-flex justify-content-between mb-0">
@@ -752,8 +752,8 @@
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center">
-                                    <a href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
-                                    <a href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
+                                    <a aria-label="Close" title="Close" href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
+                                    <a aria-label="Confirm" title="Confirm" href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
                                 </div>
                             </div>
                         </div>
@@ -981,10 +981,10 @@
                                             <td><span class="badge bg-success fw-medium">Checked Out</span></td>
                                             <td class="fw-semibold text-dark">$400</td>
                                             <td>
-                                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                                <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                                     <i class="ti ti-calendar-plus"></i>
                                                 </a>
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -1014,10 +1014,10 @@
                                             <td><span class="badge bg-warning fw-medium">Checked in</span></td>
                                             <td class="fw-semibold text-dark">$370</td>
                                             <td>
-                                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                                <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                                     <i class="ti ti-calendar-plus"></i>
                                                 </a>
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -1047,10 +1047,10 @@
                                             <td><span class="badge bg-danger fw-medium">Cancelled</span></td>
                                             <td class="fw-semibold text-dark">$450</td>
                                             <td>
-                                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                                <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                                     <i class="ti ti-calendar-plus"></i>
                                                 </a>
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -1080,10 +1080,10 @@
                                             <td><span class="badge bg-info fw-medium">Schedule</span></td>
                                             <td class="fw-semibold text-dark">$310</td>
                                             <td>
-                                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                                <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                                     <i class="ti ti-calendar-plus"></i>
                                                 </a>
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -1113,10 +1113,10 @@
                                             <td><span class="badge bg-info fw-medium">Schedule</span></td>
                                             <td class="fw-semibold text-dark">$400</td>
                                             <td>
-                                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                                <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                                     <i class="ti ti-calendar-plus"></i>
                                                 </a>
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -1507,7 +1507,7 @@
                             <div class="overflow-auto">
                                 <div class="d-flex align-items-center justify-content-between mb-3">
                                     <div class="d-flex align-items-center flex-shrink-0">
-                                        <a href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
+                                        <a aria-label="File description" title="File description" href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
                                             <i class="ti ti-file-description fs-20"></i>
                                         </a>
                                         <div>
@@ -1516,13 +1516,13 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
+                                        <a aria-label="View" title="View" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center justify-content-between mb-3">
                                     <div class="d-flex align-items-center flex-shrink-0">
-                                        <a href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
+                                        <a aria-label="File description" title="File description" href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
                                             <i class="ti ti-file-description fs-20"></i>
                                         </a>
                                         <div>
@@ -1531,13 +1531,13 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
+                                        <a aria-label="View" title="View" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center justify-content-between mb-3">
                                     <div class="d-flex align-items-center flex-shrink-0">
-                                        <a href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
+                                        <a aria-label="File description" title="File description" href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
                                             <i class="ti ti-file-description fs-20"></i>
                                         </a>
                                         <div>
@@ -1546,13 +1546,13 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
+                                        <a aria-label="View" title="View" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center justify-content-between mb-3">
                                     <div class="d-flex align-items-center flex-shrink-0">
-                                        <a href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
+                                        <a aria-label="File description" title="File description" href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
                                             <i class="ti ti-file-description fs-20"></i>
                                         </a>
                                         <div>
@@ -1561,13 +1561,13 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
+                                        <a aria-label="View" title="View" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center justify-content-between mb-0">
                                     <div class="d-flex align-items-center flex-shrink-0">
-                                        <a href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
+                                        <a aria-label="File description" title="File description" href="javascript:void(0);" class="avatar me-2 flex-shrink-0 bg-light rounded-circle text-dark">
                                             <i class="ti ti-file-description fs-20"></i>
                                         </a>
                                         <div>
@@ -1576,8 +1576,8 @@
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
+                                        <a aria-label="View" title="View" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm me-2 p-1"><i class="ti ti-eye"></i></a>
+                                        <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-outline-white d-inline-flex align-items-center shadow-sm p-1"><i class="ti ti-download"></i></a>
                                     </div>
                                 </div>
                             </div>                                
@@ -1948,10 +1948,10 @@
                                     <td>Online</td>
                                     <td><span class="badge bg-success fw-medium">Checked Out</span></td>                                        
                                     <td>
-                                        <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                        <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                             <i class="ti ti-calendar-plus"></i>
                                         </a>
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -1981,10 +1981,10 @@
                                     <td>Online</td>
                                     <td><span class="badge bg-warning fw-medium">Checked in</span></td>                                        
                                     <td>
-                                        <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                        <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                             <i class="ti ti-calendar-plus"></i>
                                         </a>
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -2014,10 +2014,10 @@
                                     <td>In-Person</td>
                                     <td><span class="badge bg-danger fw-medium">Cancelled</span></td>                                        
                                     <td>
-                                        <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                        <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                             <i class="ti ti-calendar-plus"></i>
                                         </a>
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -2047,10 +2047,10 @@
                                     <td>In-Person</td>
                                     <td><span class="badge bg-info fw-medium">Schedule</span></td>                                        
                                     <td>
-                                        <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                        <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                             <i class="ti ti-calendar-plus"></i>
                                         </a>
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -2080,10 +2080,10 @@
                                     <td>Online</td>
                                     <td><span class="badge bg-info fw-medium">Schedule</span></td>                                        
                                     <td>
-                                        <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                        <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                             <i class="ti ti-calendar-plus"></i>
                                         </a>
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -2114,7 +2114,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fs-14 fw-semibold text-truncate"><a href="{{url('doctor-details')}}">Dr. Mick Thompson</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -2131,7 +2131,7 @@
                                 <p class="mb-2 fs-13 text-truncate">Available : Mon, 20 Jan 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fs-14 fw-semibold mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $499</h6>
-                                    <a href="#" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="#" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->
@@ -2146,7 +2146,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fs-14 fw-semibold text-truncate"><a href="{{url('doctor-details')}}">Dr. Sarah Johnson</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -2163,7 +2163,7 @@
                                 <p class="mb-2 fs-13 text-truncate">Available : Wed, 22 Jan 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fw-semibold fs-14 mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $450</h6>
-                                    <a href="#" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="#" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->
@@ -2178,7 +2178,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fs-14 fw-semibold text-truncate"><a href="{{url('doctor-details')}}">Dr. Emily Carter</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -2195,7 +2195,7 @@
                                 <p class="mb-2 fs-13 text-truncate">Available : Fri, 24 Jan 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fw-semibold fs-14 mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $300</h6>
-                                    <a href="#" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="#" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->
@@ -2778,8 +2778,8 @@
                         <div class="card-body p-0">
                             <div class="position-relative rounded-top overflow-hidden">
                                 <a href="{{url('blog-details')}}" class="blog-img"><img src="{{URL::asset('build/img/blogs/blog-img-01.jpg')}}" alt="img" class="img-fluid rounded-top"></a>
-                                <a href="javascript:void(0);" class="btn btn-sm fs-16 d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"><i class="ti ti-trash"></i></a>
-                                <a href="{{url('edit-blog')}}" class="btn btn-sm fs-16 d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-sm fs-16 d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Edit" title="Edit" href="{{url('edit-blog')}}" class="btn btn-sm fs-16 d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
                             </div>
                             <div class="p-3">
                                 <span class="badge badge-soft-primary border border-primary fw-medium fs-13 py-1 px-2 mb-3">Preventive Care</span>
@@ -2795,8 +2795,8 @@
                         <div class="card-body p-0">
                             <div class="position-relative rounded-top overflow-hidden">
                                 <a href="{{url('blog-details')}}" class="blog-img"><img src="{{URL::asset('build/img/blogs/blog-img-02.jpg')}}" alt="img" class="img-fluid rounded-top"></a>
-                                <a href="javascript:void(0);" class="btn fs-16 btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"><i class="ti ti-trash"></i></a>
-                                <a href="{{url('edit-blog')}}" class="btn btn-sm fs-16 d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn fs-16 btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Edit" title="Edit" href="{{url('edit-blog')}}" class="btn btn-sm fs-16 d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
                             </div>
                             <div class="p-3">
                                 <span class="badge badge-soft-primary fw-medium border border-primary fs-13 py-1 px-2 mb-3">Nutrition</span>
@@ -2812,8 +2812,8 @@
                         <div class="card-body p-0">
                             <div class="position-relative rounded-top overflow-hidden">
                                 <a href="{{url('blog-details')}}" class="blog-img"><img src="{{URL::asset('build/img/blogs/blog-img-04.jpg')}}" alt="img" class="img-fluid rounded-top"></a>
-                                <a href="javascript:void(0);" class="btn btn-sm fs-16 d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"><i class="ti ti-trash"></i></a>
-                                <a href="{{url('edit-blog')}}" class="btn btn-sm fs-16 d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-sm fs-16 d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Edit" title="Edit" href="{{url('edit-blog')}}" class="btn btn-sm fs-16 d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
                             </div>
                             <div class="p-3">
                                 <span class="badge badge-soft-primary fw-medium border border-primary fs-13 py-1 px-2 mb-3">Health Tips</span>

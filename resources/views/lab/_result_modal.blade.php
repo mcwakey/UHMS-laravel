@@ -37,7 +37,7 @@
         @if($hCriteria->isNotEmpty())
         <div class="mb-2">
             <h6 class="small fw-bold border-bottom pb-1 mb-2">{{ $h->name }}</h6>
-            <table class="table table-sm mb-0">
+            <div class="table-responsive"><table class="table table-sm mb-0">
                 <thead><tr><th>Parameter</th><th>Value</th><th>Unit</th><th>Reference</th><th>Flag</th></tr></thead>
                 <tbody>
                 @foreach($hCriteria as $c)
@@ -51,13 +51,13 @@
                     </tr>
                 @endforeach
                 </tbody>
-            </table>
+            </table></div>
         </div>
         @endif
     @endforeach
     @php $unsorted = $serviceCriteria->whereNull('header_id'); @endphp
     @if($unsorted->isNotEmpty() || ($serviceHeaders->isEmpty() && $serviceCriteria->isEmpty()))
-    <table class="table table-sm">
+    <div class="table-responsive"><table class="table table-sm">
         <thead><tr><th>Parameter</th><th>Value</th><th>Unit</th><th>Reference</th><th>Flag</th></tr></thead>
         <tbody>
         @foreach($result->values as $v)
@@ -73,7 +73,7 @@
             @endif
         @endforeach
         </tbody>
-    </table>
+    </table></div>
     @endif
 @else
     <div class="card mb-2">

@@ -195,7 +195,7 @@
                             <label class="form-label mb-1 text-dark fs-14 fw-medium">Complaint</label>
                             <div class="input-group">
                                 <input type="text" class="form-control rounded">
-                                <a href="#" class="remove-complaint ms-3 p-2 bg-light text-danger rounded d-flex align-items-center justify-content-center"><i class="ti ti-trash fs-16"></i></a>
+                                <a aria-label="Delete" title="Delete" href="#" class="remove-complaint ms-3 p-2 bg-light text-danger rounded d-flex align-items-center justify-content-center"><i class="ti ti-trash fs-16"></i></a>
                             </div>
                         </div>
                         
@@ -203,7 +203,7 @@
                         <div class="complaint-list-item">
                             <div class="input-group">
                                 <input type="text" class="form-control rounded" value="Headache in Leftside">
-                                <a href="#" class="add-complaint ms-3 p-2 bg-light text-dark rounded d-flex align-items-center justify-content-center"><i class="ti ti-plus fs-16"></i></a>
+                                <a aria-label="Add" title="Add" href="#" class="add-complaint ms-3 p-2 bg-light text-dark rounded d-flex align-items-center justify-content-center"><i class="ti ti-plus fs-16"></i></a>
                             </div>
                         </div>
                     </div>
@@ -243,7 +243,7 @@
                                         <div class="input-group">
                                             <input type="text" class="form-control rounded">
                                             <!-- Only first row has '+' -->
-                                            <a href="#" class="add-diagnosis ms-3 p-2 bg-light text-dark rounded d-flex align-items-center justify-content-center">
+                                            <a aria-label="Add" title="Add" href="#" class="add-diagnosis ms-3 p-2 bg-light text-dark rounded d-flex align-items-center justify-content-center">
                                                 <i class="ti ti-plus fs-16"></i>
                                             </a>
                                         </div>
@@ -267,7 +267,7 @@
                                     <div class="mb-3">
                                         <div class="input-group">
                                             <input type="text" class="form-control rounded" />
-                                            <a href="#" class="remove-diagnosis ms-3 p-2 bg-light text-danger rounded d-flex align-items-center justify-content-center">
+                                            <a aria-label="Delete" title="Delete" href="#" class="remove-diagnosis ms-3 p-2 bg-light text-danger rounded d-flex align-items-center justify-content-center">
                                                 <i class="ti ti-trash fs-16"></i>
                                             </a>
                                         </div>
@@ -358,7 +358,7 @@
                             </div>
                             <div class="col-lg-1 px-xxl-3">
                                 <label class="form-label mb-1 text-dark fs-14 fw-medium"></label>
-                                <a href="#" class="remove-medication ms-3 p-2 bg-light text-danger rounded d-flex align-items-center justify-content-center"><i class="ti ti-trash fs-16"></i></a>
+                                <a aria-label="Delete" title="Delete" href="#" class="remove-medication ms-3 p-2 bg-light text-danger rounded d-flex align-items-center justify-content-center"><i class="ti ti-trash fs-16"></i></a>
                             </div>
                         </div>
                         <!-- end row -->
@@ -429,7 +429,7 @@
                             </div>
                             <div class="col-lg-1 px-xxl-3">
                                 <label class="form-label mb-1 text-dark fs-14 fw-medium"></label>
-                                <a href="#" class="add-medication ms-3 p-2 mt-1 bg-light text-dark rounded d-flex align-items-center justify-content-center"><i class="ti ti-plus fs-16"></i></a>
+                                <a aria-label="Add" title="Add" href="#" class="add-medication ms-3 p-2 mt-1 bg-light text-dark rounded d-flex align-items-center justify-content-center"><i class="ti ti-plus fs-16"></i></a>
                             </div>
                         </div>
                         <!-- end row -->
@@ -451,7 +451,7 @@
                         <label class="form-label mb-1 text-dark fs-14 fw-medium">Advice</label>
                         <div class="input-group">
                             <input type="text" class="form-control rounded">
-                            <a href="#" class="add-advices ms-3 p-2 bg-light text-dark rounded d-flex align-items-center justify-content-center"><i class="ti ti-plus fs-16"></i></a>
+                            <a aria-label="Add" title="Add" href="#" class="add-advices ms-3 p-2 bg-light text-dark rounded d-flex align-items-center justify-content-center"><i class="ti ti-plus fs-16"></i></a>
                         </div>
                     </div>
                     <!-- end row -->
@@ -473,7 +473,7 @@
                         <label class="form-label mb-1 text-dark fs-14 fw-medium">Investigation & Procedure</label>
                         <div class="input-group">
                             <input type="text" class="form-control rounded">
-                            <a href="#" class="add-invest ms-3 p-2 bg-light text-dark rounded d-flex align-items-center justify-content-center"><i class="ti ti-plus fs-16"></i></a>
+                            <a aria-label="Add" title="Add" href="#" class="add-invest ms-3 p-2 bg-light text-dark rounded d-flex align-items-center justify-content-center"><i class="ti ti-plus fs-16"></i></a>
                         </div>
                     </div>
                     <!-- end row -->
@@ -550,7 +550,7 @@
                                     <label class="form-label mb-1 text-dark fs-14 fw-medium">Amount</label>
                                     <div class="input-group">
                                         <input type="text" class="form-control rounded">
-                                        <a href="#" class="remove-invoice ms-3 p-2 bg-light text-danger rounded d-flex align-items-center justify-content-center"><i class="ti ti-trash fs-16"></i></a>
+                                        <a aria-label="Delete" title="Delete" href="#" class="remove-invoice ms-3 p-2 bg-light text-danger rounded d-flex align-items-center justify-content-center"><i class="ti ti-trash fs-16"></i></a>
                                     </div>
                                 </div>
                             </div> <!-- start row -->
@@ -576,7 +576,7 @@
                                 <div class="mb-3">
                                     <div class="input-group">
                                         <input type="text" class="form-control rounded">
-                                        <a href="#" class="add-invoice ms-3 p-2 bg-light text-dark rounded d-flex align-items-center justify-content-center"><i class="ti ti-plus fs-16"></i></a>
+                                        <a aria-label="Add" title="Add" href="#" class="add-invoice ms-3 p-2 bg-light text-dark rounded d-flex align-items-center justify-content-center"><i class="ti ti-plus fs-16"></i></a>
                                     </div>
                                 </div>
                             </div> <!-- start row -->

@@ -48,7 +48,7 @@
                                                         <div class="profile-container">
                                                             <img src="{{URL::asset('build/img/users/user-08.jpg')}}" alt="Profile">
                                                             <div class="overlay-btn">
-                                                            <a href="javascript:void(0);" class="text-white" id="uploadTrigger">
+                                                            <a aria-label="Photo" title="Photo" href="javascript:void(0);" class="text-white" id="uploadTrigger">
                                                                 <i class="ti ti-photo fs-10"></i>
                                                             </a>
                                                             </div>

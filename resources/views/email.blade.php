@@ -75,7 +75,7 @@
                         <div class="border-bottom mb-3 pb-3">
                             <div class="d-flex align-items-center justify-content-between mb-2">
                                 <h5 class="mb-0">Labels</h5>
-                                <a href="javascript:void(0);"><i class="ti ti-square-rounded-plus-filled text-primary fs-16"></i></a>
+                                <a aria-label="Square rounded plus filled" title="Square rounded plus filled" href="javascript:void(0);"><i class="ti ti-square-rounded-plus-filled text-primary fs-16"></i></a>
                             </div>
                             <div>
                                 <a href="javascript:void(0);" class="fw-medium d-flex align-items-center text-dark py-1">
@@ -108,7 +108,7 @@
                         <div>
                             <div class="d-flex align-items-center justify-content-between mb-2">
                                 <h5 class="mb-0">Folders</h5>
-                                <a href="javascript:void(0);"><i class="ti ti-square-rounded-plus-filled text-primary fs-16"></i></a>
+                                <a aria-label="Square rounded plus filled" title="Square rounded plus filled" href="javascript:void(0);"><i class="ti ti-square-rounded-plus-filled text-primary fs-16"></i></a>
                             </div>
                             <div>
                                 <a href="javascript:void(0);" class="fw-medium d-flex align-items-center text-dark py-1">
@@ -160,9 +160,9 @@
                                             <input type="text" class="form-control" placeholder="Search..." autocomplete="off">
                                         </div>
                                         <div class="d-flex align-items-center">
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-filter-edit"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-settings"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-refresh"></i></a>
+                                            <a aria-label="Filter edit" title="Filter edit" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-filter-edit"></i></a>
+                                            <a aria-label="Settings" title="Settings" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-settings"></i></a>
+                                            <a aria-label="Refresh" title="Refresh" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-refresh"></i></a>
                                         </div>
                                     </div>
                                 </div>
@@ -187,7 +187,7 @@
                                                     </div>
                                                     <div class="d-flex align-items-center">
                                                         <div class="dropdown">
-                                                            <button class="btn btn-icon btn-sm rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            <button aria-label="More actions" title="More actions" class="btn btn-icon btn-sm rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                                 <i class="ti ti-dots"></i>
                                                             </button>
                                                             <ul class="dropdown-menu dropdown-menu-end">
@@ -265,7 +265,7 @@
                                                     </div>
                                                     <div class="d-flex align-items-center">
                                                         <div class="dropdown">
-                                                            <button class="btn btn-icon btn-sm rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            <button aria-label="More actions" title="More actions" class="btn btn-icon btn-sm rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                                 <i class="ti ti-dots"></i>
                                                             </button>
                                                             <ul class="dropdown-menu dropdown-menu-end">
@@ -340,7 +340,7 @@
                                                     </div>
                                                     <div class="d-flex align-items-center">
                                                         <div class="dropdown">
-                                                            <button class="btn btn-icon btn-sm rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            <button aria-label="More actions" title="More actions" class="btn btn-icon btn-sm rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                                 <i class="ti ti-dots"></i>
                                                             </button>
                                                             <ul class="dropdown-menu dropdown-menu-end">
@@ -417,7 +417,7 @@
                                                     </div>
                                                     <div class="d-flex align-items-center">
                                                         <div class="dropdown">
-                                                            <button class="btn btn-icon btn-sm rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            <button aria-label="More actions" title="More actions" class="btn btn-icon btn-sm rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                                 <i class="ti ti-dots"></i>
                                                             </button>
                                                             <ul class="dropdown-menu dropdown-menu-end">
@@ -492,7 +492,7 @@
                                                     </div>
                                                     <div class="d-flex align-items-center">
                                                         <div class="dropdown">
-                                                            <button class="btn btn-icon btn-sm rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            <button aria-label="More actions" title="More actions" class="btn btn-icon btn-sm rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                                 <i class="ti ti-dots"></i>
                                                             </button>
                                                             <ul class="dropdown-menu dropdown-menu-end">
@@ -568,7 +568,7 @@
                                                     </div>
                                                     <div class="d-flex align-items-center">
                                                         <div class="dropdown">
-                                                            <button class="btn btn-icon btn-sm rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            <button aria-label="More actions" title="More actions" class="btn btn-icon btn-sm rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                                 <i class="ti ti-dots"></i>
                                                             </button>
                                                             <ul class="dropdown-menu dropdown-menu-end">
@@ -644,7 +644,7 @@
                                                     </div>
                                                     <div class="d-flex align-items-center">
                                                         <div class="dropdown">
-                                                            <button class="btn btn-icon btn-sm rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            <button aria-label="More actions" title="More actions" class="btn btn-icon btn-sm rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                                 <i class="ti ti-dots"></i>
                                                             </button>
                                                             <ul class="dropdown-menu dropdown-menu-end">
@@ -719,7 +719,7 @@
                                                     </div>
                                                     <div class="d-flex align-items-center">
                                                         <div class="dropdown">
-                                                            <button class="btn btn-icon btn-sm rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                            <button aria-label="More actions" title="More actions" class="btn btn-icon btn-sm rounded-circle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                                 <i class="ti ti-dots"></i>
                                                             </button>
                                                             <ul class="dropdown-menu dropdown-menu-end">

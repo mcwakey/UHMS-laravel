@@ -127,7 +127,7 @@
                             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProductModal-{{ $product->id }}"><i class="ti ti-edit"></i></button>
                             <form method="POST" action="{{ route('admin.products.toggle', $product) }}" class="d-inline">
                                 @csrf @method('PATCH')
-                                <button class="btn btn-sm btn-outline-secondary"><i class="ti ti-power"></i></button>
+                                <button aria-label="Power" title="Power" class="btn btn-sm btn-outline-secondary"><i class="ti ti-power"></i></button>
                             </form>
                         </td>
                     </tr>
@@ -206,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                 </div>
                 <div class="col-md-1 d-flex align-items-end pb-1">
-                    <button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
+                    <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
                 </div>`;
             container.appendChild(row);
             row.querySelector('.remove-row').addEventListener('click', () => row.remove());

@@ -46,7 +46,7 @@
             </div>
             <div class="col-md-auto d-flex gap-1">
                 <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-filter me-1"></i>Filter</button>
-                <a href="{{ route('admin.services.index') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-x"></i></a>
+                <a aria-label="Close" title="Close" href="{{ route('admin.services.index') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-x"></i></a>
             </div>
         </form>
     </div>
@@ -120,7 +120,7 @@
                         </td>
                         <td class="text-center">
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
+                                <button aria-label="Actions" title="Actions" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
@@ -303,7 +303,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="col-md-1 d-flex align-items-end pb-1">
-                                                    <a href="{{ route('admin.services.prices.delete', [$service, $pp]) }}"
+                                                    <a aria-label="Delete" title="Delete" href="{{ route('admin.services.prices.delete', [$service, $pp]) }}"
                                                         onclick="return confirm('Remove this price?')"
                                                         class="btn btn-sm btn-outline-danger">
                                                         <i class="ti ti-trash"></i>
@@ -472,7 +472,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                 </div>
                 <div class="col-md-1 d-flex align-items-end pb-1">
-                    <button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
+                    <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
                 </div>`;
             container.appendChild(row);
             row.querySelector('.remove-row').addEventListener('click', () => row.remove());

@@ -8,5 +8,5 @@
             @if($c->is_required) &middot; <span class="text-danger">Required</span> @endif
         </small>
     </div>
-    <button class="btn btn-xs btn-outline-danger delete-crit-btn ms-2"><i class="ti ti-trash"></i></button>
+    <button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-crit-btn ms-2"><i class="ti ti-trash"></i></button>
 </div>

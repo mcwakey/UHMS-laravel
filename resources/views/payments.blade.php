@@ -229,7 +229,7 @@
                             <td class="text-dark"> PayPal</td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success">Paid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -269,7 +269,7 @@
                             <td class="text-dark"> Debit Card </td>
                             <td> <span class="badge badge-soft-warning rounded text-warning fw-medium border border-warning">Partially Paid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -309,7 +309,7 @@
                             <td class="text-dark"> Cheque </td>
                             <td> <span class="badge badge-soft-danger rounded text-danger fw-medium border border-danger">Unpaid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -349,7 +349,7 @@
                             <td class="text-dark"> Debit Card</td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success">Paid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -389,7 +389,7 @@
                             <td class="text-dark"> PayPal</td>
                             <td> <span class="badge badge-soft-warning rounded text-warning fw-medium border border-warning">Partially Paid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -429,7 +429,7 @@
                             <td class="text-dark"> Cheque </td>
                             <td> <span class="badge badge-soft-danger rounded text-danger fw-medium border border-danger">Unpaid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -469,7 +469,7 @@
                             <td class="text-dark"> Debit Card </td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success">Paid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -509,7 +509,7 @@
                             <td class="text-dark"> Cheque </td>
                             <td> <span class="badge badge-soft-danger rounded text-danger fw-medium border border-danger">Unpaid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -549,7 +549,7 @@
                             <td class="text-dark"> Debit Card </td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success"> Paid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -589,7 +589,7 @@
                             <td class="text-dark"> PayPal</td>
                             <td> <span class="badge badge-soft-danger rounded text-danger fw-medium border border-danger">Unpaid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">

@@ -13,7 +13,7 @@
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">
-            <a href="{{ route('admin.pharmacy.dispensing.index') }}" class="text-muted me-2"><i class="ti ti-arrow-left"></i></a>
+            <a aria-label="Back" title="Back" href="{{ route('admin.pharmacy.dispensing.index') }}" class="text-muted me-2"><i class="ti ti-arrow-left"></i></a>
             Dispense: {{ $prescription->prescription_number }}
         </h4>
     </div>

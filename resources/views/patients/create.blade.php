@@ -209,7 +209,7 @@
                 <div class="ec-row border rounded p-3 mb-2" data-index="0">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="fw-medium small text-muted ec-label">Contact #1 <span class="badge bg-primary ms-1">Primary</span></span>
-                        <button type="button" class="btn btn-sm btn-outline-danger remove-ec d-none"><i class="ti ti-trash"></i></button>
+                        <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ec d-none"><i class="ti ti-trash"></i></button>
                     </div>
                     <div class="row g-2">
                         <div class="col-md-3">
@@ -268,7 +268,7 @@
                 <div class="ins-row border rounded p-3 mb-2" data-index="0">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <span class="fw-medium small text-muted ins-label">Insurance #1 <span class="badge bg-primary ms-1">Primary</span></span>
-                        <button type="button" class="btn btn-sm btn-outline-danger remove-ins d-none"><i class="ti ti-trash"></i></button>
+                        <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ins d-none"><i class="ti ti-trash"></i></button>
                     </div>
                     <div class="row g-2">
                         <div class="col-md-4">
@@ -368,7 +368,7 @@
         row.innerHTML = `
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="fw-medium small text-muted ec-label">Contact #${idx + 1}</span>
-                <button type="button" class="btn btn-sm btn-outline-danger remove-ec"><i class="ti ti-trash"></i></button>
+                <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ec"><i class="ti ti-trash"></i></button>
             </div>
             <div class="row g-2">
                 <div class="col-md-4">
@@ -561,7 +561,7 @@
         row.innerHTML = `
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="fw-medium small text-muted ins-label">Insurance #${idx + 1}</span>
-                <button type="button" class="btn btn-sm btn-outline-danger remove-ins"><i class="ti ti-trash"></i></button>
+                <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-ins"><i class="ti ti-trash"></i></button>
             </div>
             <div class="row g-2">
                 <div class="col-md-4">

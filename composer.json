@@ -68,6 +68,12 @@
         "test": [
             "@php artisan config:clear --ansi",
             "@php artisan test"
+        ],
+        "ui:audit": [
+            "@php artisan ui:audit"
+        ],
+        "ui:audit:fail": [
+            "@php artisan ui:audit --fail --json"
         ]
     },
     "extra": {

@@ -155,7 +155,7 @@
                                                         </div>
                                                         <div class="col-lg-3">
                                                             <div class="mb-3">
-                                                                <a href="#" class="add-schedule-btn p-2 bg-light btn-icon text-dark rounded d-flex align-items-center justify-content-center">
+                                                                <a aria-label="Add" title="Add" href="#" class="add-schedule-btn p-2 bg-light btn-icon text-dark rounded d-flex align-items-center justify-content-center">
                                                                     <i class="ti ti-plus fs-16"></i>
                                                                 </a>
                                                             </div>
@@ -208,7 +208,7 @@
                                                         </div>
                                                         <div class="col-lg-3">
                                                             <div class="mb-3">
-                                                                <a href="#" class="add-schedule-btn p-2 bg-light btn-icon text-dark rounded d-flex align-items-center justify-content-center">
+                                                                <a aria-label="Add" title="Add" href="#" class="add-schedule-btn p-2 bg-light btn-icon text-dark rounded d-flex align-items-center justify-content-center">
                                                                     <i class="ti ti-plus fs-16"></i>
                                                                 </a>
                                                             </div>
@@ -261,7 +261,7 @@
                                                         </div>
                                                         <div class="col-lg-3">
                                                             <div class="mb-3">
-                                                                <a href="#" class="add-schedule-btn p-2 bg-light btn-icon text-dark rounded d-flex align-items-center justify-content-center">
+                                                                <a aria-label="Add" title="Add" href="#" class="add-schedule-btn p-2 bg-light btn-icon text-dark rounded d-flex align-items-center justify-content-center">
                                                                     <i class="ti ti-plus fs-16"></i>
                                                                 </a>
                                                             </div>
@@ -314,7 +314,7 @@
                                                         </div>
                                                         <div class="col-lg-3">
                                                             <div class="mb-3">
-                                                                <a href="#" class="add-schedule-btn p-2 bg-light btn-icon text-dark rounded d-flex align-items-center justify-content-center">
+                                                                <a aria-label="Add" title="Add" href="#" class="add-schedule-btn p-2 bg-light btn-icon text-dark rounded d-flex align-items-center justify-content-center">
                                                                     <i class="ti ti-plus fs-16"></i>
                                                                 </a>
                                                             </div>
@@ -367,7 +367,7 @@
                                                         </div>
                                                         <div class="col-lg-3">
                                                             <div class="mb-3">
-                                                                <a href="#" class="add-schedule-btn p-2 bg-light btn-icon text-dark rounded d-flex align-items-center justify-content-center">
+                                                                <a aria-label="Add" title="Add" href="#" class="add-schedule-btn p-2 bg-light btn-icon text-dark rounded d-flex align-items-center justify-content-center">
                                                                     <i class="ti ti-plus fs-16"></i>
                                                                 </a>
                                                             </div>
@@ -420,7 +420,7 @@
                                                         </div>
                                                         <div class="col-lg-3">
                                                             <div class="mb-3">
-                                                                <a href="#" class="add-schedule-btn p-2 bg-light btn-icon text-dark rounded d-flex align-items-center justify-content-center">
+                                                                <a aria-label="Add" title="Add" href="#" class="add-schedule-btn p-2 bg-light btn-icon text-dark rounded d-flex align-items-center justify-content-center">
                                                                     <i class="ti ti-plus fs-16"></i>
                                                                 </a>
                                                             </div>
@@ -473,7 +473,7 @@
                                                         </div>
                                                         <div class="col-lg-3">
                                                             <div class="mb-3">
-                                                                <a href="#" class="add-schedule-btn p-2 bg-light btn-icon text-dark rounded d-flex align-items-center justify-content-center">
+                                                                <a aria-label="Add" title="Add" href="#" class="add-schedule-btn p-2 bg-light btn-icon text-dark rounded d-flex align-items-center justify-content-center">
                                                                     <i class="ti ti-plus fs-16"></i>
                                                                 </a>
                                                             </div>

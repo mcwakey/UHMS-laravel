@@ -37,6 +37,22 @@ class InertiaBridgeLeakGuardTest extends TestCase
         'resources/views/notifications/index.blade.php' => [
             'location.reload();',
         ],
+        // Already the guarded UhmsInertia ternary (bridge-aware, falls back only
+        // when the bridge is absent).
+        'resources/views/emergency/board.blade.php' => [
+            'window.UhmsInertia.reload({ preserveScroll: true }) : location.reload()',
+        ],
+        // Friendly error pages use a standalone layout with no Inertia bridge, so a
+        // hard reload is the correct "try again" affordance (Phase 4).
+        'resources/views/errors/partials/actions.blade.php' => [
+            'window.location.reload();',
+        ],
+        // Anti-clickjacking frame-breaker: hard-navigating the top frame is the
+        // entire purpose; it must not route through the SPA bridge.
+        'resources/views/layouts/partials/frame-breaker.blade.php' => [
+            'window.top.location.replace(window.location.href);',
+            'window.location.replace(window.location.href);',
+        ],
     ];
 
     /** Patterns that indicate a hard reload / page-blow-up. */

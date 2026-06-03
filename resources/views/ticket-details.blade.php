@@ -85,7 +85,7 @@
                                                 </div>
                                             </div>
                                             <div class="d-flex align-items-center">
-                                                <a href="javascript:void(0);" class="btn btn-light btn-md rounded-circle p-1"><i class="ti ti-download"></i></a>
+                                                <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-light btn-md rounded-circle p-1"><i class="ti ti-download"></i></a>
                                             </div>
                                         </div>
                                         <div class="d-flex align-items-center justify-content-between bg-light border rounded p-2">
@@ -97,7 +97,7 @@
                                                 </div>
                                             </div>
                                             <div class="d-flex align-items-center">
-                                                <a href="javascript:void(0);" class="btn btn-light btn-md rounded-circle p-1"><i class="ti ti-download"></i></a>
+                                                <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-light btn-md rounded-circle p-1"><i class="ti ti-download"></i></a>
                                             </div>
                                         </div>
                                     </div>

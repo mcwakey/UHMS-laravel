@@ -122,7 +122,7 @@
             </div>
             <div class="col-md-2 d-flex gap-1">
                 <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-filter me-1"></i>Filter</button>
-                <a href="{{ route('admin.billing.invoices.index') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-x"></i></a>
+                <a aria-label="Close" title="Close" href="{{ route('admin.billing.invoices.index') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-x"></i></a>
             </div>
         </form>
     </div>
@@ -175,7 +175,7 @@
                         <td>{{ $invoice->created_at->format('d M Y') }}</td>
                         <td class="text-center">
                             <div class="dropdown">
-                                <button type="button" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
+                                <button aria-label="Actions" title="Actions" type="button" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">

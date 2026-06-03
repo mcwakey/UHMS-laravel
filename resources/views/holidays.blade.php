@@ -40,7 +40,7 @@
                             <td>01 Jan  2025</td>
                             <td>Monday</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -58,7 +58,7 @@
                             <td>04 Jan 2025</td>
                             <td>Saturday</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -76,7 +76,7 @@
                             <td>26 Jan 2025</td>
                             <td>Sunday</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -94,7 +94,7 @@
                             <td>04 Feb 2025</td>
                             <td>Tuesday</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -112,7 +112,7 @@
                             <td>03 Mar 2025</td>
                             <td>Saturday</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -130,7 +130,7 @@
                             <td>08 May 2025</td>
                             <td>Saturday</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -148,7 +148,7 @@
                             <td>29 Mar 2025</td>
                             <td>Friday</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -166,7 +166,7 @@
                             <td>01 Apr 2025</td>
                             <td>Tuesday</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -184,7 +184,7 @@
                             <td>01 May 2025</td>
                             <td>Thursday</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -202,7 +202,7 @@
                             <td>27 May 2025</td>
                             <td>Tuesday</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">

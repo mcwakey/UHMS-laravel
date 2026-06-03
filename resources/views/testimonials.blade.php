@@ -55,7 +55,7 @@
                             <td><p class="truncate-text">I received outstanding care from start to finish. The staff was friendly, the doctor was incredibly thorough, and I finally felt like someone truly listened to me.</p></td>
                             <td>30 Apr 2025</td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -76,7 +76,7 @@
                             <td><p class="truncate-text">The appointment was quick, professional, and stress-free. I was nervous at first, but the team made me feel completely at ease.</p></td>
                             <td>15 Apr 2025</td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -97,7 +97,7 @@
                             <td><p class="truncate-text">Exceptional service! My concerns were taken seriously, and I left with a clear plan for my treatment. I highly recommend this clinic.</p></td>
                             <td>02 Apr 2025</td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -118,7 +118,7 @@
                             <td><p class="truncate-text">From the clean facility to the kind staff, everything was top-notch. This is healthcare done right.</p></td>
                             <td>27 Mar 2025</td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -139,7 +139,7 @@
                             <td><p class="truncate-text">Booking online was simple, and I didn’t have to wait long. The doctor was kind, knowledgeable, and explained things in a way I could understand.</p></td>
                             <td>30 Apr 2025</td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -160,7 +160,7 @@
                             <td><p class="truncate-text">My entire family trusts this medical center. Every visit is smooth, and the care we receive is always compassionate and professional.eceived outstanding care from start to finish. The staff was friendly, the doctor was incredibly thorough, and I finally felt like someone truly listened to me.</p></td>
                             <td>12 Mar 2025</td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -181,7 +181,7 @@
                             <td><p class="truncate-text">I was impressed by how modern and efficient everything was. You can tell the staff genuinely care about their patients’ well-being.</p></td>
                             <td>05 Mar 2025</td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -202,7 +202,7 @@
                             <td><p class="truncate-text">They diagnosed an issue other doctors had missed for years. I'm finally getting better thanks to their care.</p></td>
                             <td>24 Feb 2025</td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -223,7 +223,7 @@
                             <td><p class="truncate-text">The efficiency and modernity of everything amazed me. The staff's sincere concern for their patients' welfare is evident.</p></td>
                             <td>16 Feb 2025</td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -244,7 +244,7 @@
                             <td><p class="truncate-text">I got excellent treatment from beginning to end. I finally felt like someone actually listened to me, the doctor was very thorough, and the staff was kind.</p></td>
                             <td>01 Feb 2025</td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                     </tbody>

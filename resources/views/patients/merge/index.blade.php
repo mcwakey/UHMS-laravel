@@ -33,7 +33,7 @@
             </div>
             <div class="col-md-3 d-flex gap-2">
                 <button class="btn btn-primary flex-fill" type="submit"><i class="ti ti-search me-1"></i>Search</button>
-                <a class="btn btn-outline-secondary" href="{{ route('admin.patients.merge.index') }}"><i class="ti ti-x"></i></a>
+                <a aria-label="Close" title="Close" class="btn btn-outline-secondary" href="{{ route('admin.patients.merge.index') }}"><i class="ti ti-x"></i></a>
             </div>
         </form>
     </div>

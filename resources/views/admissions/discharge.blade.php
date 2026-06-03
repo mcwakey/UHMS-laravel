@@ -70,7 +70,7 @@
                 <h5 class="card-title mb-0">Admission Summary</h5>
             </div>
             <div class="card-body">
-                <table class="table table-sm table-borderless mb-0">
+                <div class="table-responsive"><table class="table table-sm table-borderless mb-0">
                     <tr>
                         <td class="text-muted">Admission #</td>
                         <td class="fw-medium">{{ $admission->admission_number }}</td>
@@ -91,7 +91,7 @@
                         <td class="text-muted">Ward Rounds</td>
                         <td>{{ $admission->wardRounds->count() }}</td>
                     </tr>
-                </table>
+                </table></div>
 
                 @if($admission->admitting_diagnosis)
                 <hr>
@@ -107,7 +107,7 @@
                 <h5 class="card-title mb-0"><i class="ti ti-cash me-1"></i>Estimated Bed Charges</h5>
             </div>
             <div class="card-body">
-                <table class="table table-sm table-borderless mb-0">
+                <div class="table-responsive"><table class="table table-sm table-borderless mb-0">
                     <tr>
                         <td class="text-muted">Daily Rate</td>
                         <td class="fw-medium">GH₵ {{ number_format($admission->bed->daily_rate, 2) }}</td>
@@ -120,7 +120,7 @@
                         <td class="fw-bold">Total Estimate</td>
                         <td class="fw-bold text-primary">GH₵ {{ number_format($admission->bed->daily_rate * max(1, $admission->length_of_stay), 2) }}</td>
                     </tr>
-                </table>
+                </table></div>
             </div>
         </div>
     </div>

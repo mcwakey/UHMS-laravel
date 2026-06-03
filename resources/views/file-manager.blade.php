@@ -68,7 +68,7 @@
                                     <h5 class="fs-16 ms-2 mb-0">Dropbox</h5>
                                 </div>
                                 <div class="dropdown">
-                                    <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                    <a aria-label="More actions" title="More actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots"></i>
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -104,7 +104,7 @@
                                     <h5 class="fs-16 ms-2 mb-0">Google Drive</h5>
                                 </div>
                                 <div class="dropdown">
-                                    <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                    <a aria-label="More actions" title="More actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots"></i>
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -140,7 +140,7 @@
                                     <h5 class="fs-16 ms-2 mb-0">Cloud Storage</h5>
                                 </div>
                                 <div class="dropdown">
-                                    <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                    <a aria-label="More actions" title="More actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots"></i>
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -176,7 +176,7 @@
                                     <h5 class="fs-16 ms-2 mb-0">Internal Storage</h5>
                                 </div>
                                 <div class="dropdown">
-                                    <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                    <a aria-label="More actions" title="More actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots"></i>
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -455,7 +455,7 @@
                                             </span>
                                         </div>
                                         <div class="dropdown ms-2">
-                                            <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                            <a aria-label="More actions" title="More actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                 <i class="ti ti-dots"></i>
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-end">
@@ -516,7 +516,7 @@
                                             </span>
                                         </div>
                                         <div class="dropdown ms-2">
-                                            <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                            <a aria-label="More actions" title="More actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                 <i class="ti ti-dots"></i>
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-end">
@@ -577,7 +577,7 @@
                                             </span>
                                         </div>
                                         <div class="dropdown ms-2">
-                                            <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                            <a aria-label="More actions" title="More actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                 <i class="ti ti-dots"></i>
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-end">
@@ -654,7 +654,7 @@
                                     <div class="bg-white d-flex align-items-center justify-content-between p-3 rounded-bottom">
                                         <h6 class="fw-medium mb-0"><a href="#" data-bs-toggle="offcanvas" data-bs-target="#preview">customer_data.txt</a></h6>
                                         <div class="dropdown ms-2">
-                                            <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                            <a aria-label="More actions" title="More actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                 <i class="ti ti-dots"></i>
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-end">
@@ -699,7 +699,7 @@
                                     <div class="bg-white d-flex align-items-center justify-content-between p-3 rounded-bottom">
                                         <h6 class="fw-medium text-truncate mb-0"><a href="#" data-bs-toggle="offcanvas" data-bs-target="#preview">video_player_installer_setup.rar</a></h6>
                                         <div class="dropdown ms-2">
-                                            <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                            <a aria-label="More actions" title="More actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                 <i class="ti ti-dots"></i>
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-end">
@@ -744,7 +744,7 @@
                                     <div class="bg-white d-flex align-items-center justify-content-between p-3 rounded-bottom">
                                         <h6 class="fw-medium text-truncate mb-0"><a href="#" data-bs-toggle="offcanvas" data-bs-target="#preview">recording.mp3</a></h6>
                                         <div class="dropdown ms-2">
-                                            <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                            <a aria-label="More actions" title="More actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                 <i class="ti ti-dots"></i>
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-end">
@@ -874,10 +874,10 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="rating-select me-2">
-                                                <a href="javascript:void(0);"><i class="ti ti-star"></i></a>
+                                                <a aria-label="Star" title="Star" href="javascript:void(0);"><i class="ti ti-star"></i></a>
                                             </div>
                                             <div class="dropdown">
-                                                <a href="#" class="d-flex align-items-center justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <a aria-label="More actions" title="More actions" href="#" class="d-flex align-items-center justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
                                                     <i class="ti ti-dots fs-14"></i>
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-right">
@@ -930,10 +930,10 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="rating-select me-2">
-                                                <a href="javascript:void(0);"><i class="ti ti-star"></i></a>
+                                                <a aria-label="Star" title="Star" href="javascript:void(0);"><i class="ti ti-star"></i></a>
                                             </div>
                                             <div class="dropdown">
-                                                <a href="#" class="d-flex align-items-center justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <a aria-label="More actions" title="More actions" href="#" class="d-flex align-items-center justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
                                                     <i class="ti ti-dots fs-14"></i>
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-right">
@@ -995,10 +995,10 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="rating-select me-2">
-                                                <a href="javascript:void(0);"><i class="ti ti-star"></i></a>
+                                                <a aria-label="Star" title="Star" href="javascript:void(0);"><i class="ti ti-star"></i></a>
                                             </div>
                                             <div class="dropdown">
-                                                <a href="#" class="d-flex align-items-center justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <a aria-label="More actions" title="More actions" href="#" class="d-flex align-items-center justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
                                                     <i class="ti ti-dots fs-14"></i>
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-right">
@@ -1054,10 +1054,10 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="rating-select me-2">
-                                                <a href="javascript:void(0);"><i class="ti ti-star"></i></a>
+                                                <a aria-label="Star" title="Star" href="javascript:void(0);"><i class="ti ti-star"></i></a>
                                             </div>
                                             <div class="dropdown">
-                                                <a href="#" class="d-flex align-items-center justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <a aria-label="More actions" title="More actions" href="#" class="d-flex align-items-center justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
                                                     <i class="ti ti-dots fs-14"></i>
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-right">
@@ -1116,10 +1116,10 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             <div class="rating-select me-2">
-                                                <a href="javascript:void(0);"><i class="ti ti-star"></i></a>
+                                                <a aria-label="Star" title="Star" href="javascript:void(0);"><i class="ti ti-star"></i></a>
                                             </div>
                                             <div class="dropdown">
-                                                <a href="#" class="d-flex align-items-center justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <a aria-label="More actions" title="More actions" href="#" class="d-flex align-items-center justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
                                                     <i class="ti ti-dots fs-14"></i>
                                                 </a>
                                                 <ul class="dropdown-menu dropdown-menu-right">

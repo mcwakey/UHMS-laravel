@@ -47,7 +47,7 @@
                                                 <td>patients_data_backup_2025.txt</td>
                                                 <td>30 Apr 2025</td>
                                                 <td class="action-item">
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu p-2">
@@ -64,7 +64,7 @@
                                                 <td>invoice_records_backup_2024.txt</td>
                                                 <td>15 Apr 2025</td>
                                                 <td class="action-item">
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu p-2">
@@ -81,7 +81,7 @@
                                                 <td>lab_transactions_2024.txt</td>
                                                 <td>02 Apr 2025</td>
                                                 <td class="action-item">
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu p-2">
@@ -98,7 +98,7 @@
                                                 <td>payment_transactions_2024.txt</td>
                                                 <td>27 Mar 2025</td>
                                                 <td class="action-item">
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu p-2">

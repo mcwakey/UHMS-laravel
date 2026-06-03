@@ -33,8 +33,8 @@
                         </ul>
                     </div>
                     <div class="bg-white border shadow-sm rounded px-1 pb-0 text-center d-flex align-items-center justify-content-center">
-                        <a href="{{url('patient-appointments')}}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-body"></i></a>
-                        <a href="{{url('patient-appointment-details')}}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-calendar-event fs-14 text-body"></i> </a>
+                        <a aria-label="List" title="List" href="{{url('patient-appointments')}}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-body"></i></a>
+                        <a aria-label="Calendar event" title="Calendar event" href="{{url('patient-appointment-details')}}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-calendar-event fs-14 text-body"></i> </a>
                     </div>
 
                     <a href="javascript:void(0);" class="btn btn-primary ms-2 fs-13 btn-md" data-bs-toggle="offcanvas" data-bs-target="#new_appointment"><i class="ti ti-plus me-1"></i> New Appointment </a>

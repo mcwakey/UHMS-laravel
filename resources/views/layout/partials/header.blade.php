@@ -19,11 +19,11 @@
             </a>
 
             <!-- Sidebar Mobile Button -->
-            <a id="mobile_btn" class="mobile-btn" href="#sidebar">
+            <a aria-label="Menu deep" title="Menu deep" id="mobile_btn" class="mobile-btn" href="#sidebar">
                 <i class="ti ti-menu-deep fs-24"></i>
             </a>
 
-            <button class="sidenav-toggle-btn btn border-0 p-0 active" id="toggle_btn2"> 
+            <button aria-label="Next" title="Next" class="sidenav-toggle-btn btn border-0 p-0 active" id="toggle_btn2"> 
                 <i class="ti ti-arrow-right"></i>
             </button> 
             
@@ -47,7 +47,7 @@
         
             <!-- Search for Mobile -->
             <div class="header-item d-flex d-lg-none me-2">
-                <button class="topbar-link btn btn-icon" data-bs-toggle="modal" data-bs-target="#searchModal" type="button">
+                <button aria-label="Search" title="Search" class="topbar-link btn btn-icon" data-bs-toggle="modal" data-bs-target="#searchModal" type="button">
                     <i class="ti ti-search fs-16"></i>
                 </button>
             </div>
@@ -59,7 +59,7 @@
             <!-- Appointment -->
             <div class="header-item">
                 <div class="dropdown me-2">
-                    <a href="{{url('new-appointment')}}" class="btn topbar-link"><i class="ti ti-calendar-due"></i></a>
+                    <a aria-label="Calendar due" title="Calendar due" href="{{url('new-appointment')}}" class="btn topbar-link"><i class="ti ti-calendar-due"></i></a>
                 </div>
             </div>                    
             <!-- Appointment -->
@@ -67,7 +67,7 @@
             <!-- Settings -->
             <div class="header-item">
                 <div class="dropdown me-2">
-                    <a href="{{url('profile-settings')}}" class="btn topbar-link"><i class="ti ti-settings-2"></i></a>
+                    <a aria-label="Settings 2" title="Settings 2" href="{{url('profile-settings')}}" class="btn topbar-link"><i class="ti ti-settings-2"></i></a>
                 </div> 
             </div> 
             <!-- Settings -->                   
@@ -75,7 +75,7 @@
             @if (!Route::is(['layout-dark', 'layout-mini', 'layout-hidden', 'layout-hover-view', 'layout-full-width', 'layout-rtl']))
             <!-- Light/Dark Mode Button -->
             <div class="header-item d-none d-sm-flex me-2">
-                <button class="topbar-link btn btn-icon topbar-link" id="light-dark-mode" type="button">
+                <button aria-label="Moon" title="Moon" class="topbar-link btn btn-icon topbar-link" id="light-dark-mode" type="button">
                     <i class="ti ti-moon fs-16"></i>
                 </button>
             </div>
@@ -119,7 +119,7 @@
                                             <span class="fs-12"><i class="ti ti-clock me-1"></i>4 min ago</span>
                                             <div class="notification-action d-flex align-items-center float-end gap-2">
                                                 <a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" data-bs-original-title="Make as Read" aria-label="Make as Read"></a>
-                                                <button class="btn rounded-circle p-0" data-dismissible="#notification-1">
+                                                <button aria-label="Close" title="Close" class="btn rounded-circle p-0" data-dismissible="#notification-1">
                                                     <i class="ti ti-x"></i>
                                                 </button>
                                             </div>
@@ -143,7 +143,7 @@
                                             <span class="fs-12"><i class="ti ti-clock me-1"></i>8 min ago</span>
                                             <div class="notification-action d-flex align-items-center float-end gap-2">
                                                 <a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" data-bs-original-title="Make as Read" aria-label="Make as Read"></a>
-                                                <button class="btn rounded-circle p-0" data-dismissible="#notification-2">
+                                                <button aria-label="Close" title="Close" class="btn rounded-circle p-0" data-dismissible="#notification-2">
                                                     <i class="ti ti-x"></i>
                                                 </button>
                                             </div>
@@ -167,7 +167,7 @@
                                             <span class="fs-12"><i class="ti ti-clock me-1"></i>15 min ago</span>
                                             <div class="notification-action d-flex align-items-center float-end gap-2">
                                                 <a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" data-bs-original-title="Make as Read" aria-label="Make as Read"></a>
-                                                <button class="btn rounded-circle p-0" data-dismissible="#notification-3">
+                                                <button aria-label="Close" title="Close" class="btn rounded-circle p-0" data-dismissible="#notification-3">
                                                     <i class="ti ti-x"></i>
                                                 </button>
                                             </div>
@@ -191,7 +191,7 @@
                                             <span class="fs-12"><i class="ti ti-clock me-1"></i>20 min ago</span>
                                             <div class="notification-action d-flex align-items-center float-end gap-2">
                                                 <a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" data-bs-original-title="Make as Read" aria-label="Make as Read"></a>
-                                                <button class="btn rounded-circle p-0" data-dismissible="#notification-4">
+                                                <button aria-label="Close" title="Close" class="btn rounded-circle p-0" data-dismissible="#notification-4">
                                                     <i class="ti ti-x"></i>
                                                 </button>
                                             </div>
@@ -273,7 +273,7 @@
         
             <!-- Search for Mobile -->
             <div class="header-item d-flex d-lg-none me-2">
-                <button class="topbar-link btn btn-icon" data-bs-toggle="modal" data-bs-target="#searchModal" type="button">
+                <button aria-label="Search" title="Search" class="topbar-link btn btn-icon" data-bs-toggle="modal" data-bs-target="#searchModal" type="button">
                     <i class="ti ti-search fs-16"></i>
                 </button>
             </div>
@@ -283,19 +283,19 @@
 
             <div class="header-item">
                 <div class="dropdown me-2">
-                    <a href="{{url('doctors-appointments')}}" class="btn topbar-link"><i class="ti ti-calendar-due"></i></a>
+                    <a aria-label="Calendar due" title="Calendar due" href="{{url('doctors-appointments')}}" class="btn topbar-link"><i class="ti ti-calendar-due"></i></a>
                 </div>
             </div>                    
 
             <div class="header-item">
                 <div class="dropdown me-2">
-                    <a href="{{url('doctors-profile-settings')}}" class="btn topbar-link"><i class="ti ti-settings-2"></i></a>
+                    <a aria-label="Settings 2" title="Settings 2" href="{{url('doctors-profile-settings')}}" class="btn topbar-link"><i class="ti ti-settings-2"></i></a>
                 </div> 
             </div>                    
             
             <!-- Light/Dark Mode Button -->
             <div class="header-item d-none d-sm-flex me-2">
-                <button class="topbar-link btn btn-icon topbar-link" id="light-dark-mode" type="button">
+                <button aria-label="Moon" title="Moon" class="topbar-link btn btn-icon topbar-link" id="light-dark-mode" type="button">
                     <i class="ti ti-moon fs-16"></i>
                 </button>
             </div>          
@@ -337,7 +337,7 @@
                                             <span class="fs-12"><i class="ti ti-clock me-1"></i>4 min ago</span>
                                             <div class="notification-action d-flex align-items-center float-end gap-2">
                                                 <a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" data-bs-original-title="Make as Read" aria-label="Make as Read"></a>
-                                                <button class="btn rounded-circle p-0" data-dismissible="#notification-1">
+                                                <button aria-label="Close" title="Close" class="btn rounded-circle p-0" data-dismissible="#notification-1">
                                                     <i class="ti ti-x"></i>
                                                 </button>
                                             </div>
@@ -361,7 +361,7 @@
                                             <span class="fs-12"><i class="ti ti-clock me-1"></i>8 min ago</span>
                                             <div class="notification-action d-flex align-items-center float-end gap-2">
                                                 <a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" data-bs-original-title="Make as Read" aria-label="Make as Read"></a>
-                                                <button class="btn rounded-circle p-0" data-dismissible="#notification-2">
+                                                <button aria-label="Close" title="Close" class="btn rounded-circle p-0" data-dismissible="#notification-2">
                                                     <i class="ti ti-x"></i>
                                                 </button>
                                             </div>
@@ -385,7 +385,7 @@
                                             <span class="fs-12"><i class="ti ti-clock me-1"></i>15 min ago</span>
                                             <div class="notification-action d-flex align-items-center float-end gap-2">
                                                 <a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" data-bs-original-title="Make as Read" aria-label="Make as Read"></a>
-                                                <button class="btn rounded-circle p-0" data-dismissible="#notification-3">
+                                                <button aria-label="Close" title="Close" class="btn rounded-circle p-0" data-dismissible="#notification-3">
                                                     <i class="ti ti-x"></i>
                                                 </button>
                                             </div>
@@ -409,7 +409,7 @@
                                             <span class="fs-12"><i class="ti ti-clock me-1"></i>20 min ago</span>
                                             <div class="notification-action d-flex align-items-center float-end gap-2">
                                                 <a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" data-bs-original-title="Make as Read" aria-label="Make as Read"></a>
-                                                <button class="btn rounded-circle p-0" data-dismissible="#notification-4">
+                                                <button aria-label="Close" title="Close" class="btn rounded-circle p-0" data-dismissible="#notification-4">
                                                     <i class="ti ti-x"></i>
                                                 </button>
                                             </div>
@@ -490,7 +490,7 @@
         
             <!-- Search for Mobile -->
             <div class="header-item d-flex d-lg-none me-2">
-                <button class="topbar-link btn btn-icon" data-bs-toggle="modal" data-bs-target="#searchModal" type="button">
+                <button aria-label="Search" title="Search" class="topbar-link btn btn-icon" data-bs-toggle="modal" data-bs-target="#searchModal" type="button">
                     <i class="ti ti-search fs-16"></i>
                 </button>
             </div>
@@ -500,19 +500,19 @@
 
             <div class="header-item">
                 <div class="dropdown me-2">
-                    <a href="{{url('patient-appointments')}}" class="btn topbar-link"><i class="ti ti-calendar-due"></i></a>
+                    <a aria-label="Calendar due" title="Calendar due" href="{{url('patient-appointments')}}" class="btn topbar-link"><i class="ti ti-calendar-due"></i></a>
                 </div>
             </div>                    
 
             <div class="header-item">
                 <div class="dropdown me-2">
-                    <a href="{{url('patient-profile-settings')}}" class="btn topbar-link"><i class="ti ti-settings-2"></i></a>
+                    <a aria-label="Settings 2" title="Settings 2" href="{{url('patient-profile-settings')}}" class="btn topbar-link"><i class="ti ti-settings-2"></i></a>
                 </div> 
             </div>                    
 
             <!-- Light/Dark Mode Button -->
             <div class="header-item d-none d-sm-flex me-2">
-                <button class="topbar-link btn btn-icon topbar-link" id="light-dark-mode" type="button">
+                <button aria-label="Moon" title="Moon" class="topbar-link btn btn-icon topbar-link" id="light-dark-mode" type="button">
                     <i class="ti ti-moon fs-16"></i>
                 </button>
             </div>
@@ -555,7 +555,7 @@
                                             <span class="fs-12"><i class="ti ti-clock me-1"></i>4 min ago</span>
                                             <div class="notification-action d-flex align-items-center float-end gap-2">
                                                 <a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" data-bs-original-title="Make as Read" aria-label="Make as Read"></a>
-                                                <button class="btn rounded-circle p-0" data-dismissible="#notification-1">
+                                                <button aria-label="Close" title="Close" class="btn rounded-circle p-0" data-dismissible="#notification-1">
                                                     <i class="ti ti-x"></i>
                                                 </button>
                                             </div>
@@ -579,7 +579,7 @@
                                             <span class="fs-12"><i class="ti ti-clock me-1"></i>8 min ago</span>
                                             <div class="notification-action d-flex align-items-center float-end gap-2">
                                                 <a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" data-bs-original-title="Make as Read" aria-label="Make as Read"></a>
-                                                <button class="btn rounded-circle p-0" data-dismissible="#notification-2">
+                                                <button aria-label="Close" title="Close" class="btn rounded-circle p-0" data-dismissible="#notification-2">
                                                     <i class="ti ti-x"></i>
                                                 </button>
                                             </div>
@@ -603,7 +603,7 @@
                                             <span class="fs-12"><i class="ti ti-clock me-1"></i>15 min ago</span>
                                             <div class="notification-action d-flex align-items-center float-end gap-2">
                                                 <a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" data-bs-original-title="Make as Read" aria-label="Make as Read"></a>
-                                                <button class="btn rounded-circle p-0" data-dismissible="#notification-3">
+                                                <button aria-label="Close" title="Close" class="btn rounded-circle p-0" data-dismissible="#notification-3">
                                                     <i class="ti ti-x"></i>
                                                 </button>
                                             </div>
@@ -627,7 +627,7 @@
                                             <span class="fs-12"><i class="ti ti-clock me-1"></i>20 min ago</span>
                                             <div class="notification-action d-flex align-items-center float-end gap-2">
                                                 <a href="javascript:void(0);" class="notification-read rounded-circle bg-danger" data-bs-toggle="tooltip" title="" data-bs-original-title="Make as Read" aria-label="Make as Read"></a>
-                                                <button class="btn rounded-circle p-0" data-dismissible="#notification-4">
+                                                <button aria-label="Close" title="Close" class="btn rounded-circle p-0" data-dismissible="#notification-4">
                                                     <i class="ti ti-x"></i>
                                                 </button>
                                             </div>

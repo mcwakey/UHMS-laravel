@@ -30,8 +30,8 @@
                         <div class="card-body p-0">
                             <div class="position-relative rounded-top overflow-hidden">
                                 <a href="{{url('blog-details')}}" class="blog-img"><img src="{{URL::asset('build/img/blogs/blog-img-01.jpg')}}" alt="img" class="img-fluid rounded-top"></a>
-                                <a href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
-                                <a href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Edit" title="Edit" href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
                             </div>
                             <div class="p-3">
                                 <span class="badge badge-soft-primary border border-primary fs-13 py-1 px-2 mb-3">Preventive Care</span>
@@ -47,8 +47,8 @@
                         <div class="card-body p-0">
                             <div class="position-relative rounded-top overflow-hidden">
                                 <a href="{{url('blog-details')}}" class="blog-img"><img src="{{URL::asset('build/img/blogs/blog-img-02.jpg')}}" alt="img" class="img-fluid rounded-top"></a>
-                                <a href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
-                                <a href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Edit" title="Edit" href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
                             </div>
                             <div class="p-3">
                                 <span class="badge badge-soft-primary border border-primary fs-13 py-1 px-2 mb-3">Nutrition</span>
@@ -64,8 +64,8 @@
                         <div class="card-body p-0">
                             <div class="position-relative rounded-top overflow-hidden">
                                 <a href="{{url('blog-details')}}" class="blog-img"><img src="{{URL::asset('build/img/blogs/blog-img-04.jpg')}}" alt="img" class="img-fluid rounded-top"></a>
-                                <a href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
-                                <a href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Edit" title="Edit" href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
                             </div>
                             <div class="p-3">
                                 <span class="badge badge-soft-primary border border-primary fs-13 py-1 px-2 mb-3">Health Tips</span>
@@ -81,8 +81,8 @@
                         <div class="card-body p-0">
                             <div class="position-relative rounded-top overflow-hidden">
                                 <a href="{{url('blog-details')}}" class="blog-img"><img src="{{URL::asset('build/img/blogs/blog-img-03.jpg')}}" alt="img" class="img-fluid rounded-top"></a>
-                                <a href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
-                                <a href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Edit" title="Edit" href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
                             </div>
                             <div class="p-3">
                                 <span class="badge badge-soft-primary border border-primary fs-13 py-1 px-2 mb-3">Sleep </span>
@@ -98,8 +98,8 @@
                         <div class="card-body p-0">
                             <div class="position-relative rounded-top overflow-hidden">
                                 <a href="{{url('blog-details')}}" class="blog-img"><img src="{{URL::asset('build/img/blogs/blog-img-05.jpg')}}" alt="img" class="img-fluid rounded-top"></a>
-                                <a href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
-                                <a href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Edit" title="Edit" href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
                             </div>
                             <div class="p-3">
                                 <span class="badge badge-soft-primary border border-primary fs-13 py-1 px-2 mb-3">Anxiety </span>
@@ -115,8 +115,8 @@
                         <div class="card-body p-0">
                             <div class="position-relative rounded-top overflow-hidden">
                                 <a href="{{url('blog-details')}}" class="blog-img"><img src="{{URL::asset('build/img/blogs/blog-img-06.jpg')}}" alt="img" class="img-fluid rounded-top"></a>
-                                <a href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
-                                <a href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Edit" title="Edit" href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
                             </div>
                             <div class="p-3">
                                 <span class="badge badge-soft-primary border border-primary fs-13 py-1 px-2 mb-3">Therapy </span>
@@ -132,8 +132,8 @@
                         <div class="card-body p-0">
                             <div class="position-relative rounded-top overflow-hidden">
                                 <a href="{{url('blog-details')}}" class="blog-img"><img src="{{URL::asset('build/img/blogs/blog-img-07.jpg')}}" alt="img" class="img-fluid rounded-top"></a>
-                                <a href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
-                                <a href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Edit" title="Edit" href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
                             </div>
                             <div class="p-3">
                                 <span class="badge badge-soft-primary border border-primary fs-13 py-1 px-2 mb-3">Stay Well</span>
@@ -149,8 +149,8 @@
                         <div class="card-body p-0">
                             <div class="position-relative rounded-top overflow-hidden">
                                 <a href="{{url('blog-details')}}" class="blog-img"><img src="{{URL::asset('build/img/blogs/blog-img-08.jpg')}}" alt="img" class="img-fluid rounded-top"></a>
-                                <a href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
-                                <a href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Edit" title="Edit" href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
                             </div>
                             <div class="p-3">
                                 <span class="badge badge-soft-primary border border-primary fs-13 py-1 px-2 mb-3">Health First</span>
@@ -168,8 +168,8 @@
                                 <a href="{{url('blog-details')}}" class="blog-img">
                                     <img src="{{URL::asset('build/img/blogs/blog-img-09.jpg')}}" alt="img" class="img-fluid rounded-top">
                                 </a>
-                                <a href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
-                                <a href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-delete"  data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Edit" title="Edit" href="{{url('edit-blog')}}" class="btn btn-sm d-inline-flex align-items-center justify-content-center p-2 bg-white rounded-2 blog-edit"><i class="ti ti-edit"></i></a>
                             </div>
                             <div class="p-3">
                                 <span class="badge badge-soft-primary border border-primary fs-13 py-1 px-2 mb-3">Self-Care</span>

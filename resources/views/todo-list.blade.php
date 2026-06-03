@@ -30,10 +30,10 @@
                 <a href="#" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#add_todo"><i class="ti ti-circle-plus me-1"></i>Create New</a>
                 <ul class="d-flex align-items-center flex-shrink-0 list-unstyled mb-0">
                     <li>
-                        <a href="{{url('todo')}}" class="btn btn-icon btn-sm bg-white text-dark me-2"><i class="ti ti-layout-grid"></i></a>
+                        <a aria-label="Layout grid" title="Layout grid" href="{{url('todo')}}" class="btn btn-icon btn-sm bg-white text-dark me-2"><i class="ti ti-layout-grid"></i></a>
                     </li>
                     <li>
-                        <a href="{{url('todo-list')}}" class="btn btn-icon btn-sm bg-primary text-white active me-2"><i class="ti ti-list-tree"></i></a>
+                        <a aria-label="List tree" title="List tree" href="{{url('todo-list')}}" class="btn btn-icon btn-sm bg-primary text-white active me-2"><i class="ti ti-list-tree"></i></a>
                     </li>
                 </ul>
             </div>
@@ -105,10 +105,10 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
+                                        <a aria-label="Edit" title="Edit" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
                                             <i class="ti ti-edit"></i>
                                         </a>
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
+                                        <a aria-label="Delete" title="Delete" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
                                             <i class="ti ti-trash"></i>
                                         </a>
                                     </div>
@@ -159,10 +159,10 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
+                                        <a aria-label="Edit" title="Edit" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
                                             <i class="ti ti-edit"></i>
                                         </a>
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
+                                        <a aria-label="Delete" title="Delete" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
                                             <i class="ti ti-trash"></i>
                                         </a>
                                     </div>
@@ -213,10 +213,10 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
+                                        <a aria-label="Edit" title="Edit" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
                                             <i class="ti ti-edit"></i>
                                         </a>
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
+                                        <a aria-label="Delete" title="Delete" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
                                             <i class="ti ti-trash"></i>
                                         </a>
                                     </div>
@@ -267,10 +267,10 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
+                                        <a aria-label="Edit" title="Edit" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
                                             <i class="ti ti-edit"></i>
                                         </a>
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
+                                        <a aria-label="Delete" title="Delete" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
                                             <i class="ti ti-trash"></i>
                                         </a>
                                     </div>
@@ -321,10 +321,10 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
+                                        <a aria-label="Edit" title="Edit" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
                                             <i class="ti ti-edit"></i>
                                         </a>
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
+                                        <a aria-label="Delete" title="Delete" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
                                             <i class="ti ti-trash"></i>
                                         </a>
                                     </div>
@@ -375,10 +375,10 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
+                                        <a aria-label="Edit" title="Edit" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
                                             <i class="ti ti-edit"></i>
                                         </a>
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
+                                        <a aria-label="Delete" title="Delete" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
                                             <i class="ti ti-trash"></i>
                                         </a>
                                     </div>
@@ -429,10 +429,10 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
+                                        <a aria-label="Edit" title="Edit" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
                                             <i class="ti ti-edit"></i>
                                         </a>
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
+                                        <a aria-label="Delete" title="Delete" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
                                             <i class="ti ti-trash"></i>
                                         </a>
                                     </div>
@@ -483,10 +483,10 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
+                                        <a aria-label="Edit" title="Edit" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
                                             <i class="ti ti-edit"></i>
                                         </a>
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
+                                        <a aria-label="Delete" title="Delete" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
                                             <i class="ti ti-trash"></i>
                                         </a>
                                     </div>
@@ -537,10 +537,10 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
+                                        <a aria-label="Edit" title="Edit" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
                                             <i class="ti ti-edit"></i>
                                         </a>
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
+                                        <a aria-label="Delete" title="Delete" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
                                             <i class="ti ti-trash"></i>
                                         </a>
                                     </div>
@@ -591,10 +591,10 @@
                                 </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
+                                        <a aria-label="Edit" title="Edit" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#edit_todo">
                                             <i class="ti ti-edit"></i>
                                         </a>
-                                        <a href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
+                                        <a aria-label="Delete" title="Delete" href="#" class="btn btn-sm btn-icon" data-bs-toggle="modal" data-bs-target="#delete_modal">
                                             <i class="ti ti-trash"></i>
                                         </a>
                                     </div>

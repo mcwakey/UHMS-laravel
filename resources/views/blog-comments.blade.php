@@ -64,7 +64,7 @@
                                 </div>
                             </td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -97,7 +97,7 @@
                                 </div>
                             </td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -130,7 +130,7 @@
                                 </div>
                             </td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -163,7 +163,7 @@
                                 </div>
                             </td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -196,7 +196,7 @@
                                 </div>
                             </td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -229,7 +229,7 @@
                                 </div>
                             </td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -262,7 +262,7 @@
                                 </div>
                             </td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -295,7 +295,7 @@
                                 </div>
                             </td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -328,7 +328,7 @@
                                 </div>
                             </td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                         <tr>
@@ -361,7 +361,7 @@
                                 </div>
                             </td>
                             <td>
-                                <a href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
+                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="dropdown-item d-flex align-items-center" data-bs-toggle="modal" data-bs-target="#delete_categories"><i class="ti ti-trash"></i></a>
                             </td>
                         </tr>
                     </tbody>

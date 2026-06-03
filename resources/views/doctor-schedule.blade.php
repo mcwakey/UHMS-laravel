@@ -218,10 +218,10 @@
                             </td>
                             <td>
                                 <div class="action-item d-flex align-items-center gap-2">
-                                    <a href="{{url('appointment-calendar')}}">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
+                                    <a aria-label="View" title="View" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
                                         <i class="ti ti-eye"></i>
                                     </a>
                                 </div>
@@ -275,10 +275,10 @@
                             </td>
                             <td>
                                 <div class="action-item d-flex align-items-center gap-2">
-                                    <a href="{{url('appointment-calendar')}}">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
+                                    <a aria-label="View" title="View" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
                                         <i class="ti ti-eye"></i>
                                     </a>
                                 </div>
@@ -332,10 +332,10 @@
                             </td>
                             <td>
                                 <div class="action-item d-flex align-items-center gap-2">
-                                    <a href="{{url('appointment-calendar')}}">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
+                                    <a aria-label="View" title="View" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
                                         <i class="ti ti-eye"></i>
                                     </a>
                                 </div>
@@ -389,10 +389,10 @@
                             </td>
                             <td>
                                 <div class="action-item d-flex align-items-center gap-2">
-                                    <a href="{{url('appointment-calendar')}}">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
+                                    <a aria-label="View" title="View" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
                                         <i class="ti ti-eye"></i>
                                     </a>
                                 </div>
@@ -446,10 +446,10 @@
                             </td>
                             <td>
                                 <div class="action-item d-flex align-items-center gap-2">
-                                    <a href="{{url('appointment-calendar')}}">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
+                                    <a aria-label="View" title="View" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
                                         <i class="ti ti-eye"></i>
                                     </a>
                                 </div>
@@ -503,10 +503,10 @@
                             </td>
                             <td>
                                 <div class="action-item d-flex align-items-center gap-2">
-                                    <a href="{{url('appointment-calendar')}}">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
+                                    <a aria-label="View" title="View" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
                                         <i class="ti ti-eye"></i>
                                     </a>
                                 </div>
@@ -560,10 +560,10 @@
                             </td>
                             <td>
                                 <div class="action-item d-flex align-items-center gap-2">
-                                    <a href="{{url('appointment-calendar')}}">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
+                                    <a aria-label="View" title="View" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
                                         <i class="ti ti-eye"></i>
                                     </a>
                                 </div>
@@ -617,10 +617,10 @@
                             </td>
                             <td>
                                 <div class="action-item d-flex align-items-center gap-2">
-                                    <a href="{{url('appointment-calendar')}}">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
+                                    <a aria-label="View" title="View" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
                                         <i class="ti ti-eye"></i>
                                     </a>
                                 </div>
@@ -674,10 +674,10 @@
                             </td>
                             <td>
                                 <div class="action-item d-flex align-items-center gap-2">
-                                    <a href="{{url('appointment-calendar')}}">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
+                                    <a aria-label="View" title="View" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
                                         <i class="ti ti-eye"></i>
                                     </a>
                                 </div>
@@ -731,10 +731,10 @@
                             </td>
                             <td>
                                 <div class="action-item d-flex align-items-center gap-2">
-                                    <a href="{{url('appointment-calendar')}}">
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                         <i class="ti ti-calendar-cog"></i>
                                     </a>
-                                    <a href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
+                                    <a aria-label="View" title="View" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#doctor_detil">
                                         <i class="ti ti-eye"></i>
                                     </a>
                                 </div>

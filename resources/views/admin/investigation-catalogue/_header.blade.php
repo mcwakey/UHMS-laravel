@@ -5,5 +5,5 @@
             <small class="text-muted">{{ $h->description }}</small>
         @endif
     </div>
-    <button class="btn btn-xs btn-outline-danger delete-header-btn"><i class="ti ti-trash"></i></button>
+    <button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-header-btn"><i class="ti ti-trash"></i></button>
 </div>

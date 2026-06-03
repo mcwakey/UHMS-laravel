@@ -213,7 +213,7 @@
                                 <td class="text-center">
                                     <form method="POST" action="{{ route('admin.consultations.tasks.toggle', $task) }}">
                                         @csrf @method('PATCH')
-                                        <button type="submit" class="btn btn-sm {{ $isDone?'btn-success':'btn-outline-success' }} p-1">
+                                        <button aria-label="Confirm" title="Confirm" type="submit" class="btn btn-sm {{ $isDone?'btn-success':'btn-outline-success' }} p-1">
                                             <i class="ti ti-check fs-13"></i>
                                         </button>
                                     </form>
@@ -711,7 +711,7 @@
                                     <input type="text" name="notes" class="form-control form-control-sm" placeholder="Optional" value="{{ old('notes') }}">
                                 </div>
                                 <div class="col-md-1 text-end">
-                                    <button type="submit" class="btn btn-primary btn-sm w-100"><i class="ti ti-plus"></i></button>
+                                    <button aria-label="Add" title="Add" type="submit" class="btn btn-primary btn-sm w-100"><i class="ti ti-plus"></i></button>
                                 </div>
                             </div>
                         </form>

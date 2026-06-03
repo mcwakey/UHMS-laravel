@@ -60,7 +60,7 @@
                             <div class="card h-100">
                                 <div class="card-header py-2 d-flex justify-content-between align-items-center">
                                     <strong>Sections</strong>
-                                    <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#new-section-{{ $tt }}">
+                                    <button aria-label="Add" title="Add" class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#new-section-{{ $tt }}">
                                         <i class="ti ti-plus"></i>
                                     </button>
                                 </div>
@@ -87,7 +87,7 @@
                                             <form method="POST" action="{{ route('admin.procedure-catalogue.sections.destroy', $section) }}"
                                                   onsubmit="return confirm('Delete this section? Fields will lose their grouping.')">
                                                 @csrf @method('DELETE')
-                                                <button class="btn btn-sm btn-outline-danger"><i class="ti ti-trash"></i></button>
+                                                <button aria-label="Delete" title="Delete" class="btn btn-sm btn-outline-danger"><i class="ti ti-trash"></i></button>
                                             </form>
                                         </li>
                                     @empty
@@ -102,7 +102,7 @@
                             <div class="card h-100">
                                 <div class="card-header py-2 d-flex justify-content-between align-items-center">
                                     <strong>Fields</strong>
-                                    <button class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#new-field-{{ $tt }}">
+                                    <button aria-label="Add" title="Add" class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#new-field-{{ $tt }}">
                                         <i class="ti ti-plus"></i>
                                     </button>
                                 </div>
@@ -161,7 +161,7 @@
                                                     <form method="POST" action="{{ route('admin.procedure-catalogue.fields.destroy', $field) }}"
                                                           onsubmit="return confirm('Delete this field? Existing saved values for it will become orphaned.')">
                                                         @csrf @method('DELETE')
-                                                        <button class="btn btn-sm btn-outline-danger"><i class="ti ti-trash"></i></button>
+                                                        <button aria-label="Delete" title="Delete" class="btn btn-sm btn-outline-danger"><i class="ti ti-trash"></i></button>
                                                     </form>
                                                 </td>
                                             </tr>
@@ -244,7 +244,7 @@
                                         <form method="POST" action="{{ route('admin.procedure-catalogue.consumables.destroy', [$service, $sc->product_id]) }}"
                                               onsubmit="return confirm('Remove this consumable from the service?')">
                                             @csrf @method('DELETE')
-                                            <button class="btn btn-sm btn-outline-danger"><i class="ti ti-trash"></i></button>
+                                            <button aria-label="Delete" title="Delete" class="btn btn-sm btn-outline-danger"><i class="ti ti-trash"></i></button>
                                         </form>
                                     </td>
                                 </tr>

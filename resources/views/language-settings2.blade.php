@@ -103,7 +103,7 @@
                                                 </td>
                                                 <td>
                                                     <div class="dropdown">
-                                                        <a href="javascript:void(0);" class="btn btn-outline-white rounded btn-sm d-inline-flex align-items-center p-1 justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="btn btn-outline-white rounded btn-sm d-inline-flex align-items-center p-1 justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
                                                             <i class="ti ti-dots-vertical"></i>
                                                         </a>
                                                         <ul class="dropdown-menu dropdown-menu-end p-2">
@@ -136,7 +136,7 @@
                                                 </td>
                                                 <td>
                                                     <div class="dropdown">
-                                                        <a href="javascript:void(0);" class="btn btn-outline-white rounded btn-sm d-inline-flex align-items-center p-1 justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="btn btn-outline-white rounded btn-sm d-inline-flex align-items-center p-1 justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
                                                             <i class="ti ti-dots-vertical"></i>
                                                         </a>
                                                         <ul class="dropdown-menu dropdown-menu-end p-2">
@@ -169,7 +169,7 @@
                                                 </td>
                                                 <td>
                                                     <div class="dropdown">
-                                                        <a href="javascript:void(0);" class="btn btn-outline-white rounded btn-sm d-inline-flex align-items-center p-1 justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="btn btn-outline-white rounded btn-sm d-inline-flex align-items-center p-1 justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
                                                             <i class="ti ti-dots-vertical"></i>
                                                         </a>
                                                         <ul class="dropdown-menu dropdown-menu-end p-2">
@@ -202,7 +202,7 @@
                                                 </td>
                                                 <td>
                                                     <div class="dropdown">
-                                                        <a href="javascript:void(0);" class="btn btn-outline-white rounded btn-sm d-inline-flex align-items-center p-1 justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="btn btn-outline-white rounded btn-sm d-inline-flex align-items-center p-1 justify-content-center" data-bs-toggle="dropdown" aria-expanded="false">
                                                             <i class="ti ti-dots-vertical"></i>
                                                         </a>
                                                         <ul class="dropdown-menu dropdown-menu-end p-2">

@@ -254,7 +254,7 @@
                 <h6 class="fw-bold mb-0"><i class="ti ti-info-circle me-1"></i>Score Guide</h6>
             </div>
             <div class="card-body p-0">
-                <table class="table table-sm mb-0 small">
+                <div class="table-responsive"><table class="table table-sm mb-0 small">
                     <thead class="table-light">
                         <tr>
                             <th>Score</th>
@@ -283,7 +283,7 @@
                             <td>&lt;40 / &gt;130</td>
                         </tr>
                     </tbody>
-                </table>
+                </table></div>
             </div>
         </div>
     </div>

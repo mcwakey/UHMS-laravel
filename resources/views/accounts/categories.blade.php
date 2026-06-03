@@ -18,7 +18,7 @@
                 @endforeach
             </select>
             <input type="text" name="search" class="form-control" placeholder="Search..." value="{{ request('search') }}" style="width:160px;">
-            <button type="submit" class="btn btn-outline-primary"><i class="ti ti-search"></i></button>
+            <button aria-label="Search" title="Search" type="submit" class="btn btn-outline-primary"><i class="ti ti-search"></i></button>
         </form>
         <button class="btn btn-primary btn-md fs-13" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
             <i class="ti ti-plus me-1"></i>Add Category
@@ -59,7 +59,7 @@
                         </td>
                         <td class="text-end">
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
+                                <button aria-label="Actions" title="Actions" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">

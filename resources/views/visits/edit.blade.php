@@ -426,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function () {
             html += `<div><span class="fw-medium">${escapeHtml(svc.name)}</span> <span class="badge bg-light text-dark ms-1">${escapeHtml(svc.code)}</span><div class="small text-muted">${escapeHtml(svc.category)}</div></div>`;
             html += `<div class="d-flex align-items-center gap-2">
                         <span class="fw-bold text-success">₵${formatNumber(resolveServicePrice(svc))}</span>
-                        <button type="button" class="btn btn-sm btn-outline-primary add-service-btn"
+                        <button aria-label="Add" title="Add" type="button" class="btn btn-sm btn-outline-primary add-service-btn"
                                 data-id="${svc.id}" data-name="${escapeHtml(svc.name)}">
                             <i class="ti ti-plus"></i>
                         </button>
@@ -497,7 +497,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 <td class="text-end text-muted">₵${formatNumber(svc.price)}</td>
                 <td class="text-end fw-medium">₵${formatNumber(svc.price * svc.quantity)}</td>
                 <td class="text-center">
-                    <button type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="${idx}">
+                    <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="${idx}">
                         <i class="ti ti-trash"></i>
                     </button>
                 </td>

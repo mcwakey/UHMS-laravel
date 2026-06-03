@@ -263,7 +263,7 @@
                                     <span class="visually-hidden">New alerts</span>
                                 </span>
                             </button>
-                            <button type="button" class="btn btn-light rounded-circle btn-md btn-icon position-relative">
+                            <button aria-label="Bell filled" title="Bell filled" type="button" class="btn btn-light rounded-circle btn-md btn-icon position-relative">
                                 <i class="ti ti-bell-filled  text-dark"></i>
                             </button>
                             <button type="button" class="btn btn-light rounded-circle btn-md btn-icon position-relative">

@@ -155,7 +155,7 @@
                                         <span class="badge bg-light  text-dark rounded-pill">02</span>
                                     </div>
                                     <div class="dropdown">
-                                        <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu dropdown-menu-end">
@@ -177,7 +177,7 @@
                                                     <span class="badge bg-success badge-xs d-flex align-items-center justify-content-center"><i class="fas fa-circle fs-7 me-1"></i>Low</span>
                                                 </div>
                                                 <div class="dropdown">
-                                                    <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -227,8 +227,8 @@
                                                     <a href="#" class="avatar avatar-rounded bg-primary fs-12 text-white">1+</a>
                                                 </div>
                                                 <div class="d-flex align-items-center">
-                                                    <a href="javascript:void(0);" class="d-flex align-items-center me-2"><i class="ti ti-message-circle me-1"></i></a>
-                                                    <a href="javascript:void(0);" class="d-flex align-items-center"><i class="ti ti-paperclip"></i></a>
+                                                    <a aria-label="Message circle" title="Message circle" href="javascript:void(0);" class="d-flex align-items-center me-2"><i class="ti ti-message-circle me-1"></i></a>
+                                                    <a aria-label="Paperclip" title="Paperclip" href="javascript:void(0);" class="d-flex align-items-center"><i class="ti ti-paperclip"></i></a>
                                                 </div>
                                             </div>
                                         </div><!-- end card body -->
@@ -243,7 +243,7 @@
                                                     <span class="badge bg-danger badge-xs d-flex align-items-center justify-content-center"><i class="fas fa-circle fs-7 me-1"></i>High</span>
                                                 </div>
                                                 <div class="dropdown">
-                                                    <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -293,8 +293,8 @@
                                                     <a href="#" class="avatar avatar-rounded bg-primary fs-12 text-white">1+</a>
                                                 </div>
                                                 <div class="d-flex align-items-center">
-                                                    <a href="javascript:void(0);" class="d-flex align-items-center me-2"><i class="ti ti-message-circle me-1"></i></a>
-                                                    <a href="javascript:void(0);" class="d-flex align-items-center"><i class="ti ti-paperclip"></i></a>
+                                                    <a aria-label="Message circle" title="Message circle" href="javascript:void(0);" class="d-flex align-items-center me-2"><i class="ti ti-message-circle me-1"></i></a>
+                                                    <a aria-label="Paperclip" title="Paperclip" href="javascript:void(0);" class="d-flex align-items-center"><i class="ti ti-paperclip"></i></a>
                                                 </div>
                                             </div>
                                         </div><!-- end card body -->
@@ -321,7 +321,7 @@
                                         <span class="badge bg-light  text-dark rounded-pill">13</span>
                                     </div>
                                     <div class="dropdown">
-                                        <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu dropdown-menu-end">
@@ -343,7 +343,7 @@
                                                     <span class="badge bg-danger badge-xs d-flex align-items-center justify-content-center"><i class="fas fa-circle fs-7 me-1"></i>High</span>
                                                 </div>
                                                 <div class="dropdown">
-                                                    <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -393,8 +393,8 @@
                                                     <a href="#" class="avatar avatar-rounded bg-primary fs-12 text-white">1+</a>
                                                 </div>
                                                 <div class="d-flex align-items-center">
-                                                    <a href="javascript:void(0);" class="d-flex align-items-center me-2"><i class="ti ti-message-circle me-1"></i></a>
-                                                    <a href="javascript:void(0);" class="d-flex align-items-center"><i class="ti ti-paperclip"></i></a>
+                                                    <a aria-label="Message circle" title="Message circle" href="javascript:void(0);" class="d-flex align-items-center me-2"><i class="ti ti-message-circle me-1"></i></a>
+                                                    <a aria-label="Paperclip" title="Paperclip" href="javascript:void(0);" class="d-flex align-items-center"><i class="ti ti-paperclip"></i></a>
                                                 </div>
                                             </div>
                                         </div><!-- end card body -->
@@ -409,7 +409,7 @@
                                                     <span class="badge bg-warning badge-xs d-flex align-items-center justify-content-center"><i class="fas fa-circle fs-7 me-1"></i>Medium</span>
                                                 </div>
                                                 <div class="dropdown">
-                                                    <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -459,8 +459,8 @@
                                                     <a href="#" class="avatar avatar-rounded bg-primary fs-12 text-white">1+</a>
                                                 </div>
                                                 <div class="d-flex align-items-center">
-                                                    <a href="javascript:void(0);" class="d-flex align-items-center me-2"><i class="ti ti-message-circle me-1"></i></a>
-                                                    <a href="javascript:void(0);" class="d-flex align-items-center"><i class="ti ti-paperclip"></i></a>
+                                                    <a aria-label="Message circle" title="Message circle" href="javascript:void(0);" class="d-flex align-items-center me-2"><i class="ti ti-message-circle me-1"></i></a>
+                                                    <a aria-label="Paperclip" title="Paperclip" href="javascript:void(0);" class="d-flex align-items-center"><i class="ti ti-paperclip"></i></a>
                                                 </div>
                                             </div>
                                         </div><!-- end card body -->
@@ -487,7 +487,7 @@
                                         <span class="badge bg-light text-dark rounded-pill">04</span>
                                     </div>
                                     <div class="dropdown">
-                                        <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu dropdown-menu-end">
@@ -508,7 +508,7 @@
                                                     <span class="badge bg-success badge-xs d-flex align-items-center justify-content-center"><i class="fas fa-circle fs-7 me-1"></i>Low</span>
                                                 </div>
                                                 <div class="dropdown">
-                                                    <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -558,8 +558,8 @@
                                                     <a href="#" class="avatar avatar-rounded bg-primary fs-12 text-white">1+</a>
                                                 </div>
                                                 <div class="d-flex align-items-center">
-                                                    <a href="javascript:void(0);" class="d-flex align-items-center me-2"><i class="ti ti-message-circle me-1"></i></a>
-                                                    <a href="javascript:void(0);" class="d-flex align-items-center"><i class="ti ti-paperclip"></i></a>
+                                                    <a aria-label="Message circle" title="Message circle" href="javascript:void(0);" class="d-flex align-items-center me-2"><i class="ti ti-message-circle me-1"></i></a>
+                                                    <a aria-label="Paperclip" title="Paperclip" href="javascript:void(0);" class="d-flex align-items-center"><i class="ti ti-paperclip"></i></a>
                                                 </div>
                                             </div>
                                         </div><!-- end card body -->
@@ -574,7 +574,7 @@
                                                     <span class="badge bg-success badge-xs d-flex align-items-center justify-content-center"><i class="fas fa-circle fs-7 me-1"></i>Low</span>
                                                 </div>
                                                 <div class="dropdown">
-                                                    <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -624,8 +624,8 @@
                                                     <a href="#" class="avatar avatar-rounded bg-primary fs-12 text-white">1+</a>
                                                 </div>
                                                 <div class="d-flex align-items-center">
-                                                    <a href="javascript:void(0);" class="d-flex align-items-center me-2"><i class="ti ti-message-circle me-1"></i></a>
-                                                    <a href="javascript:void(0);" class="d-flex align-items-center"><i class="ti ti-paperclip"></i></a>
+                                                    <a aria-label="Message circle" title="Message circle" href="javascript:void(0);" class="d-flex align-items-center me-2"><i class="ti ti-message-circle me-1"></i></a>
+                                                    <a aria-label="Paperclip" title="Paperclip" href="javascript:void(0);" class="d-flex align-items-center"><i class="ti ti-paperclip"></i></a>
                                                 </div>
                                             </div>
                                         </div><!-- end card body -->
@@ -652,7 +652,7 @@
                                         <span class="badge bg-light  text-dark rounded-pill">10</span>
                                     </div>
                                     <div class="dropdown">
-                                        <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu dropdown-menu-end">
@@ -674,7 +674,7 @@
                                                     <span class="badge bg-warning badge-xs d-flex align-items-center justify-content-center"><i class="fas fa-circle fs-7 me-1"></i>Medium</span>
                                                 </div>
                                                 <div class="dropdown">
-                                                    <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu dropdown-menu-end">
@@ -724,8 +724,8 @@
                                                     <a href="#" class="avatar avatar-rounded bg-primary fs-12 text-white">1+</a>
                                                 </div>
                                                 <div class="d-flex align-items-center">
-                                                    <a href="javascript:void(0);" class="d-flex align-items-center me-2"><i class="ti ti-message-circle me-1"></i></a>
-                                                    <a href="javascript:void(0);" class="d-flex align-items-center"><i class="ti ti-paperclip"></i></a>
+                                                    <a aria-label="Message circle" title="Message circle" href="javascript:void(0);" class="d-flex align-items-center me-2"><i class="ti ti-message-circle me-1"></i></a>
+                                                    <a aria-label="Paperclip" title="Paperclip" href="javascript:void(0);" class="d-flex align-items-center"><i class="ti ti-paperclip"></i></a>
                                                 </div>
                                             </div>
                                         </div><!-- end card body -->

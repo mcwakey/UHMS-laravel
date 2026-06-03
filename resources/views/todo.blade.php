@@ -30,10 +30,10 @@
                 <a href="#" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#add_todo"><i class="ti ti-circle-plus me-1"></i>Create New</a>
                 <ul class="d-flex align-items-center flex-shrink-0 list-unstyled mb-0">
                     <li>
-                        <a href="{{url('todo')}}" class="btn btn-icon btn-sm bg-primary text-white active me-2"><i class="ti ti-layout-grid"></i></a>
+                        <a aria-label="Layout grid" title="Layout grid" href="{{url('todo')}}" class="btn btn-icon btn-sm bg-primary text-white active me-2"><i class="ti ti-layout-grid"></i></a>
                     </li>
                     <li>
-                        <a href="{{url('todo-list')}}" class="btn btn-icon btn-sm bg-white text-dark me-2"><i class="ti ti-list-tree"></i></a>
+                        <a aria-label="List tree" title="List tree" href="{{url('todo-list')}}" class="btn btn-icon btn-sm bg-white text-dark me-2"><i class="ti ti-list-tree"></i></a>
                     </li>
                 </ul>
             </div>
@@ -208,7 +208,7 @@
                                                                 </span>
                                                             </div>
                                                             <div class="dropdown ms-2">
-                                                                <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                                     <i class="ti ti-dots-vertical"></i>
                                                                 </a>
                                                                 <ul class="dropdown-menu dropdown-menu-end">
@@ -267,7 +267,7 @@
                                                                 </span>
                                                             </div>
                                                             <div class="dropdown ms-2">
-                                                                <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                                     <i class="ti ti-dots-vertical"></i>
                                                                 </a>
                                                                 <ul class="dropdown-menu dropdown-menu-end">
@@ -326,7 +326,7 @@
                                                                 </span>
                                                             </div>
                                                             <div class="dropdown ms-2">
-                                                                <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                                     <i class="ti ti-dots-vertical"></i>
                                                                 </a>
                                                                 <ul class="dropdown-menu dropdown-menu-end">
@@ -428,7 +428,7 @@
                                                                 </span>
                                                             </div>
                                                             <div class="dropdown ms-2">
-                                                                <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                                     <i class="ti ti-dots-vertical"></i>
                                                                 </a>
                                                                 <ul class="dropdown-menu dropdown-menu-end">
@@ -488,7 +488,7 @@
                                                                 </span>
                                                             </div>
                                                             <div class="dropdown ms-2">
-                                                                <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                                     <i class="ti ti-dots-vertical"></i>
                                                                 </a>
                                                                 <ul class="dropdown-menu dropdown-menu-end">
@@ -590,7 +590,7 @@
                                                                 </span>
                                                             </div>
                                                             <div class="dropdown ms-2">
-                                                                <a href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
+                                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center" data-bs-toggle="dropdown">
                                                                     <i class="ti ti-dots-vertical"></i>
                                                                 </a>
                                                                 <ul class="dropdown-menu dropdown-menu-end">

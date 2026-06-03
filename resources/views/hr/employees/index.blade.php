@@ -23,7 +23,7 @@
                 @endforeach
             </select>
             <input type="text" name="search" class="form-control" placeholder="Search..." value="{{ request('search') }}" style="width:160px;">
-            <button type="submit" class="btn btn-outline-primary"><i class="ti ti-search"></i></button>
+            <button aria-label="Search" title="Search" type="submit" class="btn btn-outline-primary"><i class="ti ti-search"></i></button>
         </form>
         @can('hr.employees.create')
         <a href="{{ route('admin.hr.employees.create') }}" class="btn btn-primary btn-md fs-13">

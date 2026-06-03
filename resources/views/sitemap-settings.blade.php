@@ -47,7 +47,7 @@
                                                 <td>https://localhost/Preclinic</td>
                                                 <td>sitemap18725604.xml</td>
                                                 <td class="action-item">
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <ul class="dropdown-menu p-2">

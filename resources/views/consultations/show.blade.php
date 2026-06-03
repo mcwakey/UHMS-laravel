@@ -756,7 +756,7 @@
                                                     'notes' => $complaint->notes,
                                                 ];
                                             @endphp
-                                            <button type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                            <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
                                                     data-entry-type="complaint"
                                                     data-url="{{ route('admin.consultations.complaints.update', $complaint) }}"
                                                     data-entry='@json($editEntryPayload)'>
@@ -863,7 +863,7 @@
                                             @php
                                                 $editEntryPayload = ['content' => $hopc->content, 'complaint_id' => $hopc->complaint_id, 'onset' => $hopc->onset, 'duration' => $hopc->duration, 'location' => $hopc->location, 'severity' => $hopc->severity, 'aggravating_factors' => $hopc->aggravating_factors, 'relieving_factors' => $hopc->relieving_factors, 'associated_symptoms' => $hopc->associated_symptoms];
                                             @endphp
-                                            <button type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                            <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
                                                     data-entry-type="hopc"
                                                     data-url="{{ route('admin.consultations.hopc.update', $hopc) }}"
                                                     data-entry='@json($editEntryPayload)'>
@@ -959,7 +959,7 @@
                                             @php
                                                 $editEntryPayload = ['findings' => $exam->findings, 'general_examination' => $exam->general_examination, 'systemic_examination' => $exam->systemic_examination, 'cardiovascular' => $exam->cardiovascular, 'respiratory' => $exam->respiratory, 'gastrointestinal' => $exam->gastrointestinal, 'central_nervous_system' => $exam->central_nervous_system, 'specialty_examination' => $exam->specialty_examination, 'local_examination' => $exam->local_examination, 'notes' => $exam->notes];
                                             @endphp
-                                            <button type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                            <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
                                                     data-entry-type="examination"
                                                     data-url="{{ route('admin.consultations.examinations.update', $exam) }}"
                                                     data-entry='@json($editEntryPayload)'>
@@ -1081,7 +1081,7 @@
                                             @php
                                                 $editEntryPayload = ['description' => $diagnosis->description, 'icd_code' => $diagnosis->icd_code, 'icd_code_id' => $diagnosis->icd_code_id, 'type' => $diagnosis->type, 'notes' => $diagnosis->notes];
                                             @endphp
-                                            <button type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                            <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
                                                     data-entry-type="diagnosis"
                                                     data-url="{{ route('admin.consultations.diagnoses.update', $diagnosis) }}"
                                                     data-entry='@json($editEntryPayload)'>
@@ -1238,7 +1238,7 @@
                                                             @php
                                                                 $editEntryPayload = ['urgency' => $req->urgency, 'clinical_info' => $req->clinical_info];
                                                             @endphp
-                                                            <button type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                            <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
                                                                     data-entry-type="lab-request"
                                                                     data-url="{{ route('admin.consultations.lab-request.update', $req) }}"
                                                                     data-entry='@json($editEntryPayload)'>
@@ -1373,7 +1373,7 @@
                                             @php
                                                 $editEntryPayload = ['type' => $treatment->type, 'description' => $treatment->description];
                                             @endphp
-                                            <button type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                            <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
                                                     data-entry-type="treatment"
                                                     data-url="{{ route('admin.consultations.treatments.update', $treatment) }}"
                                                     data-entry='@json($editEntryPayload)'>
@@ -1521,7 +1521,7 @@
                                             @php
                                                 $editEntryPayload = ['notes' => $prescription->notes];
                                             @endphp
-                                            <button type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                            <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
                                                     data-entry-type="prescription"
                                                     data-url="{{ route('admin.consultations.prescriptions.update', $prescription) }}"
                                                     data-entry='@json($editEntryPayload)'>
@@ -1696,7 +1696,7 @@
                                                     @php
                                                         $editEntryPayload = ['priority' => $pr->priority, 'indication' => $pr->indication, 'notes' => $pr->notes, 'preferred_datetime' => optional($pr->preferred_datetime)->format('Y-m-d\TH:i')];
                                                     @endphp
-                                                    <button type="button" class="btn btn-sm btn-outline-primary edit-entry-btn"
+                                                    <button aria-label="Edit" title="Edit" type="button" class="btn btn-sm btn-outline-primary edit-entry-btn"
                                                             data-entry-type="procedure"
                                                             data-url="{{ route('admin.consultations.procedures.update', $pr) }}"
                                                             data-entry='@json($editEntryPayload)'>
@@ -1875,7 +1875,7 @@
                                                 @php
                                                     $editEntryPayload = ['title' => $task->title, 'description' => $task->description, 'priority' => $task->priority, 'status' => $task->status, 'assigned_to' => $task->assigned_to, 'due_date' => optional($task->due_date)->format('Y-m-d')];
                                                 @endphp
-                                                <button type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
+                                                <button aria-label="Edit" title="Edit" type="button" class="btn btn-xs btn-outline-primary edit-entry-btn"
                                                         data-entry-type="task"
                                                         data-url="{{ route('admin.consultations.tasks.update', $task) }}"
                                                         data-entry='@json($editEntryPayload)'>
@@ -1885,7 +1885,7 @@
                                                 @if($canDeleteEntry($task))
                                                 <form method="POST" action="{{ route('admin.consultations.tasks.destroy', $task) }}" class="d-inline" onsubmit="return confirm('Delete this task?') && saveTabBeforeSubmit('tasks-section')">
                                                     @csrf @method('DELETE')
-                                                    <button type="submit" class="btn btn-xs btn-outline-danger"><i class="ti ti-x"></i></button>
+                                                    <button aria-label="Close" title="Close" type="submit" class="btn btn-xs btn-outline-danger"><i class="ti ti-x"></i></button>
                                                 </form>
                                                 @endif
                                             </div>
@@ -3321,7 +3321,7 @@ function freeTextItemRow(idx) {
     return '<div class="input-group mb-1" id="freeItem' + idx + '">' +
         '<span class="input-group-text"><i class="ti ti-point"></i></span>' +
         '<input type="text" name="items[]" class="form-control" placeholder="e.g. Chest X-Ray, Abdominal Scan..." required>' +
-        (idx > 0 ? '<button type="button" class="btn btn-outline-danger" onclick="document.getElementById(\'freeItem' + idx + '\').remove()"><i class="ti ti-x"></i></button>' : '') +
+        (idx > 0 ? '<button aria-label="Close" title="Close" type="button" class="btn btn-outline-danger" onclick="document.getElementById(\'freeItem' + idx + '\').remove()"><i class="ti ti-x"></i></button>' : '') +
         '</div>';
 }
 function addFreeTextItem() {

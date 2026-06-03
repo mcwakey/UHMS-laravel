@@ -273,30 +273,30 @@
                             <p class="text-xl mb-3">Use <span class="text-secondary">btn-icon</span> class to wrap icon in button</p>
                             <div class="d-flex align-items-center flex-wrap gap-4">
                                 <div class="d-flex align-items-center flex-wrap gap-2">
-                                    <button class="btn btn-icon btn-primary">
+                                    <button aria-label="Bell" title="Bell" class="btn btn-icon btn-primary">
                                         <i class="ti ti-bell"></i>
                                     </button>
-                                    <button class="btn btn-icon btn-secondary">
+                                    <button aria-label="Mail" title="Mail" class="btn btn-icon btn-secondary">
                                         <i class="ti ti-mail"></i>
                                     </button>
-                                    <button class="btn btn-icon btn-info">
+                                    <button aria-label="Edit" title="Edit" class="btn btn-icon btn-info">
                                         <i class="ti ti-edit"></i>
                                     </button>
-                                    <button class="btn btn-icon btn-danger">
+                                    <button aria-label="Delete" title="Delete" class="btn btn-icon btn-danger">
                                         <i class="ti ti-trash"></i>
                                     </button>
                                 </div>
                                 <div class="d-flex align-items-center flex-wrap gap-2">
-                                    <button class="btn btn-icon btn-outline-primary">
+                                    <button aria-label="Bell" title="Bell" class="btn btn-icon btn-outline-primary">
                                         <i class="ti ti-bell"></i>
                                     </button>
-                                    <button class="btn btn-icon btn-outline-secondary">
+                                    <button aria-label="Mail" title="Mail" class="btn btn-icon btn-outline-secondary">
                                         <i class="ti ti-mail"></i>
                                     </button>
-                                    <button class="btn btn-icon btn-outline-info">
+                                    <button aria-label="Edit" title="Edit" class="btn btn-icon btn-outline-info">
                                         <i class="ti ti-edit"></i>
                                     </button>
-                                    <button class="btn btn-icon btn-outline-danger">
+                                    <button aria-label="Delete" title="Delete" class="btn btn-icon btn-outline-danger">
                                         <i class="ti ti-trash"></i>
                                     </button>
                                 </div>

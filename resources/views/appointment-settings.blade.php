@@ -102,8 +102,8 @@
                                                     Days Before
                                                 </span>
                                                 <div class="d-flex align-items-center">
-                                                    <a href="javascript:void(0);" class="btn btn-white p-2 border rounded-2 me-2"><i class="ti ti-edit"></i></a>
-                                                    <a href="javascript:void(0);" class="btn btn-white p-2 border rounded-2 add-reminder"><i class="ti ti-plus"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="javascript:void(0);" class="btn btn-white p-2 border rounded-2 me-2"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Add" title="Add" href="javascript:void(0);" class="btn btn-white p-2 border rounded-2 add-reminder"><i class="ti ti-plus"></i></a>
                                                 </div>
                                             </div>
                                         </div>
@@ -144,8 +144,8 @@
                                                     Days Before
                                                 </span>
                                                 <div class="d-flex align-items-center">
-                                                    <a href="javascript:void(0);" class="btn btn-white p-2 border rounded-2 me-2"><i class="ti ti-edit"></i></a>
-                                                    <a href="javascript:void(0);" class="btn btn-white p-2 border rounded-2 remove-reminder"><i class="ti ti-trash"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="javascript:void(0);" class="btn btn-white p-2 border rounded-2 me-2"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-white p-2 border rounded-2 remove-reminder"><i class="ti ti-trash"></i></a>
                                                 </div>
                                             </div>
                                         </div>
@@ -174,7 +174,7 @@
                                                         <option>Test Results Notification</option>
                                                         <option>Follow-Up Reminder</option>
                                                     </select>
-                                                    <a href="javascript:void(0);" class="btn btn-white p-2 border rounded-2 me-2"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="javascript:void(0);" class="btn btn-white p-2 border rounded-2 me-2"><i class="ti ti-edit"></i></a>
                                                 </div>
                                             </div><!-- end col -->
                                             </div>
@@ -196,7 +196,7 @@
                                                         <option>Appointment Cancelled</option>
                                                         <option>Test Result Notification</option>
                                                     </select>
-                                                    <a href="javascript:void(0);" class="btn btn-white p-2 border rounded-2 me-2"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="javascript:void(0);" class="btn btn-white p-2 border rounded-2 me-2"><i class="ti ti-edit"></i></a>
                                                 </div>
                                             </div><!-- end col -->
                                             </div>
@@ -239,7 +239,7 @@
                                                             <option>Appointment Cancelled</option>
                                                             <option>Test Result Notification</option>
                                                         </select>
-                                                        <a href="javascript:void(0);" class="btn btn-white p-2 border rounded-2 me-2"><i class="ti ti-edit"></i></a>
+                                                        <a aria-label="Edit" title="Edit" href="javascript:void(0);" class="btn btn-white p-2 border rounded-2 me-2"><i class="ti ti-edit"></i></a>
                                                     </div>
                                                 </div><!-- end col -->
                                             </div>

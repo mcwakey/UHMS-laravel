@@ -165,7 +165,7 @@
                             <td><p class="truncate-text">Unable to log into my account. Can you assist?</p></td>
                             <td>30 Apr 2025</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -192,7 +192,7 @@
                             <td><p class="truncate-text">My invoices are not being sent to clients. Please help!</p></td>
                             <td>15 Apr 2025</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -219,7 +219,7 @@
                             <td><p class="truncate-text">How do I integrate payment gateways for faster transactions?</p></td>
                             <td>02 Apr 2025</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -246,7 +246,7 @@
                             <td><p class="truncate-text">I need help generating financial reports for my business.</p></td>
                             <td>27 Mar 2025</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -273,7 +273,7 @@
                             <td><p class="truncate-text">Can I upgrade my plan without losing my existing data?</p></td>
                             <td>12 Mar 2025</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -300,7 +300,7 @@
                             <td><p class="truncate-text">How does the system calculate taxes automatically?</p></td>
                             <td>05 Mar 2025</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -327,7 +327,7 @@
                             <td><p class="truncate-text">The mobile app crashes frequently when generating invoices.</p></td>
                             <td>19 Feb 2025</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -354,7 +354,7 @@
                             <td><p class="truncate-text">How do I categorize expenses for better tracking?</p></td>
                             <td>16 Feb 2025</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -381,7 +381,7 @@
                             <td><p class="truncate-text">Can I customize invoice templates with my company branding?</p></td>
                             <td>01 Feb 2025</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -408,7 +408,7 @@
                             <td><p class="truncate-text">How can I add team members with different permission levels?</p></td>
                             <td>20 Jas 2025</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">

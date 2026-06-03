@@ -66,7 +66,7 @@
                         <td><span class="badge bg-{{ $prescription->status->color() }}">{{ $prescription->status->label() }}</span></td>
                         <td><small>{{ $prescription->created_at->format('d M Y, h:i A') }}</small></td>
                         <td>
-                            <a href="{{ route('admin.prescriptions.show', $prescription) }}" class="btn btn-sm btn-outline-primary">
+                            <a aria-label="View" title="View" href="{{ route('admin.prescriptions.show', $prescription) }}" class="btn btn-sm btn-outline-primary">
                                 <i class="ti ti-eye"></i>
                             </a>
                         </td>

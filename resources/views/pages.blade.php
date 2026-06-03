@@ -54,7 +54,7 @@
                             <td>home</td>
                             <td><span class="badge badge-soft-success fs-13 fw-medium p-1 px-2 border border-success">Active</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -72,7 +72,7 @@
                             <td>specializations</td>
                             <td><span class="badge badge-soft-success fs-13 fw-medium p-1 px-2 border border-success">Active</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -90,7 +90,7 @@
                             <td>doctors</td>
                             <td><span class="badge badge-soft-success fs-13 fw-medium p-1 px-2 border border-success">Active</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -108,7 +108,7 @@
                             <td>blog</td>
                             <td><span class="badge badge-soft-success fs-13 fw-medium p-1 px-2 border border-success">Active</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -126,7 +126,7 @@
                             <td>contact us</td>
                             <td><span class="badge badge-soft-success fs-13 fw-medium p-1 px-2 border border-success">Active</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">

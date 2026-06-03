@@ -882,8 +882,8 @@
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center">
-                                    <a href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
-                                    <a href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
+                                    <a aria-label="Close" title="Close" href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
+                                    <a aria-label="Confirm" title="Confirm" href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
                                 </div>
                             </div>
                             <div class="d-flex justify-content-between mb-3">
@@ -899,8 +899,8 @@
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center">
-                                    <a href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
-                                    <a href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
+                                    <a aria-label="Close" title="Close" href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
+                                    <a aria-label="Confirm" title="Confirm" href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
                                 </div>
                             </div>
                             <div class="d-flex justify-content-between mb-3">
@@ -916,8 +916,8 @@
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center">
-                                    <a href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
-                                    <a href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
+                                    <a aria-label="Close" title="Close" href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
+                                    <a aria-label="Confirm" title="Confirm" href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
                                 </div>
                             </div>
                             <div class="d-flex justify-content-between mb-3">
@@ -933,8 +933,8 @@
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center">
-                                    <a href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
-                                    <a href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
+                                    <a aria-label="Close" title="Close" href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
+                                    <a aria-label="Confirm" title="Confirm" href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
                                 </div>
                             </div>
                             <div class="d-flex justify-content-between mb-0">
@@ -950,8 +950,8 @@
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-center">
-                                    <a href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
-                                    <a href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
+                                    <a aria-label="Close" title="Close" href="javascript:void(0);" class="d-inline-flex bg-soft-danger text-danger p-2 rounded-circle"><i class="ti ti-x fw-bold"></i></a>
+                                    <a aria-label="Confirm" title="Confirm" href="javascript:void(0);" class="d-inline-flex ms-2 text-success p-2 bg-soft-success rounded-circle"><i class="ti ti-check fw-bold"></i></a>
                                 </div>
                             </div>
                         </div>

@@ -45,7 +45,7 @@
                             </td>
                             <td>California</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -69,7 +69,7 @@
                             </td>
                             <td>Texas</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -93,7 +93,7 @@
                             </td>
                             <td>Florida</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -117,7 +117,7 @@
                             </td>
                             <td>New York</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -141,7 +141,7 @@
                             </td>
                             <td>Illinois</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -165,7 +165,7 @@
                             </td>
                             <td>Ohio</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -189,7 +189,7 @@
                             </td>
                             <td>Washington</td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">

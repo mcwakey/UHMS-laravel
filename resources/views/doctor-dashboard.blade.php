@@ -341,10 +341,10 @@
                                             <td><span class="badge bg-success fw-medium">Checked Out</span></td>
                                             <td class="fw-semibold text-dark">$400</td>
                                             <td>
-                                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                                <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                                     <i class="ti ti-calendar-plus"></i>
                                                 </a>
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -374,10 +374,10 @@
                                             <td><span class="badge bg-warning fw-medium">Checked in</span></td>
                                             <td class="fw-semibold text-dark">$370</td>
                                             <td>
-                                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                                <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                                     <i class="ti ti-calendar-plus"></i>
                                                 </a>
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -407,10 +407,10 @@
                                             <td><span class="badge bg-danger fw-medium">Cancelled</span></td>
                                             <td class="fw-semibold text-dark">$450</td>
                                             <td>
-                                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                                <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                                     <i class="ti ti-calendar-plus"></i>
                                                 </a>
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -440,10 +440,10 @@
                                             <td><span class="badge bg-info fw-medium">Schedule</span></td>
                                             <td class="fw-semibold text-dark">$310</td>
                                             <td>
-                                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                                <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                                     <i class="ti ti-calendar-plus"></i>
                                                 </a>
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">
@@ -473,10 +473,10 @@
                                             <td><span class="badge bg-info fw-medium">Schedule</span></td>
                                             <td class="fw-semibold text-dark">$400</td>
                                             <td>
-                                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
+                                                <a aria-label="Calendar plus" title="Calendar plus" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1 me-1">
                                                     <i class="ti ti-calendar-plus"></i>
                                                 </a>
-                                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
+                                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1">
                                                     <i class="ti ti-dots-vertical"></i>
                                                 </a>
                                                 <ul class="dropdown-menu p-2">

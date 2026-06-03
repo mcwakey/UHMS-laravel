@@ -24,7 +24,7 @@
                     <td><input type="number" step="0.0001" min="0" name="consumables[{{ $i }}][quantity]" value="{{ $sc->default_quantity }}" class="form-control form-control-sm"></td>
                     <td><input type="text" name="consumables[{{ $i }}][notes]" class="form-control form-control-sm"></td>
                     <td class="text-end">
-                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove();"><i class="ti ti-x"></i></button>
+                        <button aria-label="Close" title="Close" type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove();"><i class="ti ti-x"></i></button>
                     </td>
                 </tr>
             @empty

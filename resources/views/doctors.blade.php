@@ -105,8 +105,8 @@
                         </div>
                     </div>
                     <div class="bg-white border shadow-sm rounded px-1 pb-0 text-center d-flex align-items-center justify-content-center">
-                        <a href="{{url('doctors-list')}}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-body"></i></a>
-                        <a href="{{url('doctors')}}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-layout-grid fs-14 text-body"></i> </a>
+                        <a aria-label="List" title="List" href="{{url('doctors-list')}}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-body"></i></a>
+                        <a aria-label="Layout grid" title="Layout grid" href="{{url('doctors')}}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-layout-grid fs-14 text-body"></i> </a>
                     </div>
                     <a href="{{url('add-doctor')}}" class="btn btn-primary ms-2 fs-13 btn-md"><i class="ti ti-plus me-1"></i>New Doctor</a>
                 </div>
@@ -123,7 +123,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fw-semibold"><a href="{{url('doctor-details')}}">Dr. Mick Thompson</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -140,7 +140,7 @@
                                 <p class="mb-2 fs-13">Available : Mon, 20 Jan 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fs-14 mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $499</h6>
-                                    <a href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->
@@ -155,7 +155,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fw-semibold"><a href="{{url('doctor-details')}}">Dr. Sarah Johnson</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -172,7 +172,7 @@
                                 <p class="mb-2 fs-13">Available : Wed, 22 Jan 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fs-14 mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $450</h6>
-                                    <a href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->
@@ -187,7 +187,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fw-semibold"><a href="{{url('doctor-details')}}">Dr. Emily Carter</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -204,7 +204,7 @@
                                 <p class="mb-2 fs-13">Available : Fri, 24 Jan 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fs-14 mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $300</h6>
-                                    <a href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->
@@ -219,7 +219,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fw-semibold"><a href="{{url('doctor-details')}}">Dr. David Lee</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -236,7 +236,7 @@
                                 <p class="mb-2 fs-13">Available : Tue, 21 Jan 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fs-14 mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $250</h6>
-                                    <a href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->
@@ -251,7 +251,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fw-semibold"><a href="{{url('doctor-details')}}">Dr. Anna Kim</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -268,7 +268,7 @@
                                 <p class="mb-2 fs-13">Available : Mon, 27 Jan 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fs-14 mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $350</h6>
-                                    <a href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->
@@ -283,7 +283,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fw-semibold"><a href="{{url('doctor-details')}}">Dr. John Smith</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -300,7 +300,7 @@
                                 <p class="mb-2 fs-13">Available : Thu, Jan 30, 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fs-14 mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $499</h6>
-                                    <a href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->
@@ -315,7 +315,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fw-semibold"><a href="{{url('doctor-details')}}">Dr. Lisa White</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -332,7 +332,7 @@
                                 <p class="mb-2 fs-13">Available : Sat, 25 Jan 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fs-14 mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $200</h6>
-                                    <a href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->
@@ -347,7 +347,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fw-semibold"><a href="{{url('doctor-details')}}">Dr. Patricia Brown</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -364,7 +364,7 @@
                                 <p class="mb-2 fs-13">Available : Sun, 01 Feb 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fs-14 mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $450</h6>
-                                    <a href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->
@@ -379,7 +379,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fw-semibold"><a href="{{url('doctor-details')}}">Dr. Rachel Green</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -396,7 +396,7 @@
                                 <p class="mb-2 fs-13">Available : Tue, 28 Jan 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fs-14 mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $400</h6>
-                                    <a href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->
@@ -411,7 +411,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fw-semibold"><a href="{{url('doctor-details')}}">Dr. Michael Smith</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -428,7 +428,7 @@
                                 <p class="mb-2 fs-13">Available : Thu, 05 Feb 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fs-14 mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $300</h6>
-                                    <a href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->
@@ -443,7 +443,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fw-semibold"><a href="{{url('doctor-details')}}">Dr. Sarah Johnson</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -460,7 +460,7 @@
                                 <p class="mb-2 fs-13">Available : Mon, 09 Feb 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fs-14 mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $500</h6>
-                                    <a href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->
@@ -475,7 +475,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fw-semibold"><a href="{{url('doctor-details')}}">Dr. Adrian White</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -492,7 +492,7 @@
                                 <p class="mb-2 fs-13">Available : Sat, 25 Jan 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fs-14 mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $200</h6>
-                                    <a href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->
@@ -507,7 +507,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fw-semibold"><a href="{{url('doctor-details')}}">Dr. Ken Clark</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -524,7 +524,7 @@
                                 <p class="mb-2 fs-13">Available : Wed, 12 Feb 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fs-14 mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $350</h6>
-                                    <a href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->
@@ -539,7 +539,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fw-semibold"><a href="{{url('doctor-details')}}">Dr. Oliver King</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -556,7 +556,7 @@
                                 <p class="mb-2 fs-13">Available : Fri, 14 Feb 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fs-14 mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $600</h6>
-                                    <a href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->
@@ -571,7 +571,7 @@
                                 <div class="d-flex align-items-center justify-content-between mb-1">
                                     <h6 class="mb-0 fw-semibold"><a href="{{url('doctor-details')}}">Dr. Avan Davis</a></h6>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -588,7 +588,7 @@
                                 <p class="mb-2 fs-13">Available : Tue, 17 Feb 2025</p>
                                 <div class="d-flex align-items-center justify-content-between">
                                     <h6 class="text-primary fs-14 mb-0"><span class="text-muted fs-13 fw-normal">Starts From : </span> $375</h6>
-                                    <a href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
+                                    <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}" class="avatar avatar-xs border text-muted fs-14"><i class="ti ti-calendar-cog"></i></a>
                                 </div>
                             </div>
                         </div><!-- end card body -->

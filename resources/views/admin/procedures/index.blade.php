@@ -121,7 +121,7 @@
             </div>
             <div class="col-md-2 d-flex gap-1">
                 <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-filter me-1"></i>Filter</button>
-                <a href="{{ route('admin.procedures.index') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-x"></i></a>
+                <a aria-label="Close" title="Close" href="{{ route('admin.procedures.index') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-x"></i></a>
             </div>
         </form>
     </div>

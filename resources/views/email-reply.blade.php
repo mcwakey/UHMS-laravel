@@ -75,7 +75,7 @@
                         <div class="border-bottom mb-3 pb-3">
                             <div class="d-flex align-items-center justify-content-between mb-2">
                                 <h5 class="mb-0">Labels</h5>
-                                <a href="javascript:void(0);"><i class="ti ti-square-rounded-plus-filled text-primary fs-16"></i></a>
+                                <a aria-label="Square rounded plus filled" title="Square rounded plus filled" href="javascript:void(0);"><i class="ti ti-square-rounded-plus-filled text-primary fs-16"></i></a>
                             </div>
                             <div>
                                 <a href="javascript:void(0);" class="fw-medium d-flex align-items-center text-dark py-1">
@@ -108,7 +108,7 @@
                         <div>
                             <div class="d-flex align-items-center justify-content-between mb-2">
                                 <h5 class="mb-0">Folders</h5>
-                                <a href="javascript:void(0);"><i class="ti ti-square-rounded-plus-filled text-primary fs-16"></i></a>
+                                <a aria-label="Square rounded plus filled" title="Square rounded plus filled" href="javascript:void(0);"><i class="ti ti-square-rounded-plus-filled text-primary fs-16"></i></a>
                             </div>
                             <div>
                                 <a href="javascript:void(0);" class="fw-medium d-flex align-items-center text-dark py-1">
@@ -162,14 +162,14 @@
                                 </ul>
                             </div>
                             <div class="d-flex align-items-center">
-                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-arrow-back-up"></i></a>
-                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-arrow-back-up-double"></i></a>
-                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-arrow-forward"></i></a>
-                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-bookmarks-filled"></i></a>
-                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-archive-filled"></i></a>
-                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-mail-opened-filled"></i></a>
-                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-printer"></i></a>
-                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-star-filled text-warning"></i></a>
+                                <a aria-label="Arrow back up" title="Arrow back up" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-arrow-back-up"></i></a>
+                                <a aria-label="Arrow back up double" title="Arrow back up double" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-arrow-back-up-double"></i></a>
+                                <a aria-label="Arrow forward" title="Arrow forward" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-arrow-forward"></i></a>
+                                <a aria-label="Bookmarks filled" title="Bookmarks filled" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-bookmarks-filled"></i></a>
+                                <a aria-label="Archive filled" title="Archive filled" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-archive-filled"></i></a>
+                                <a aria-label="Mail opened filled" title="Mail opened filled" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-mail-opened-filled"></i></a>
+                                <a aria-label="Print" title="Print" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-printer"></i></a>
+                                <a aria-label="Star filled" title="Star filled" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-star-filled text-warning"></i></a>
                             </div>
                         </div>
 
@@ -187,9 +187,9 @@
                                             </div>
                                             <div class="d-flex align-items-center">
                                                 <p class="me-2 mb-0">12:45 AM</p>
-                                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-arrow-back-up"></i></a>
-                                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-arrow-back-up-double"></i></a>
-                                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-printer"></i></a>
+                                                <a aria-label="Arrow back up" title="Arrow back up" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-arrow-back-up"></i></a>
+                                                <a aria-label="Arrow back up double" title="Arrow back up double" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-arrow-back-up-double"></i></a>
+                                                <a aria-label="Print" title="Print" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-printer"></i></a>
                                             </div>
                                         </div>
                                     </div>
@@ -269,9 +269,9 @@
                                                 </div>
                                                 <div class="d-flex align-items-center">
                                                     <p class="me-2 mb-0">Yesterday 01:22 AM</p>
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-arrow-back-up"></i></a>
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-arrow-back-up-double"></i></a>
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-printer"></i></a>
+                                                    <a aria-label="Arrow back up" title="Arrow back up" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-arrow-back-up"></i></a>
+                                                    <a aria-label="Arrow back up double" title="Arrow back up double" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-arrow-back-up-double"></i></a>
+                                                    <a aria-label="Print" title="Print" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-printer"></i></a>
                                                 </div>
                                             </div>
                                         </div>
@@ -301,15 +301,15 @@
                                         </div>
                                         <div class="d-flex align-items-center justify-content-between border-top p-3 flex-wrap">
                                             <div class="d-flex align-items-center">
-                                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-paperclip"></i></a>
-                                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-photo"></i></a>
-                                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-link"></i></a>
-                                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-pencil"></i></a>
-                                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-mood-smile"></i></a>
+                                                <a aria-label="Paperclip" title="Paperclip" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-paperclip"></i></a>
+                                                <a aria-label="Photo" title="Photo" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-photo"></i></a>
+                                                <a aria-label="Link" title="Link" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-link"></i></a>
+                                                <a aria-label="Edit" title="Edit" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-pencil"></i></a>
+                                                <a aria-label="Mood smile" title="Mood smile" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-mood-smile"></i></a>
                                             </div>
                                             <div class="d-flex align-items-center">
-                                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-calendar-repeat"></i></a>
-                                                <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-trash"></i></a>
+                                                <a aria-label="Calendar repeat" title="Calendar repeat" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-calendar-repeat"></i></a>
+                                                <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-trash"></i></a>
                                                 <button type="submit" class="btn btn-primary d-inline-flex align-items-center ms-2">Send <i class="ti ti-arrow-right ms-2"></i></button>
                                             </div>
                                         </div>

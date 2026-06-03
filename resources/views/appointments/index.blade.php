@@ -174,7 +174,7 @@
                             </td>
                             <td class="text-end">
                                 <div class="dropdown">
-                                    <button type="button" class="btn btn-sm btn-light" data-bs-toggle="dropdown">
+                                    <button aria-label="Actions" title="Actions" type="button" class="btn btn-sm btn-light" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">

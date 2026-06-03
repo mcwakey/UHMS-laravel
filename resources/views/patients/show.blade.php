@@ -382,7 +382,7 @@
                                 <td>—</td>
                                 <td>{{ $visit->currentConsultationDoctor()?->full_name ?? '—' }}</td>
                                 <td><span class="badge bg-{{ $visit->status->color() }}">{{ $visit->status->label() }}</span></td>
-                                <td><a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
+                                <td><a aria-label="View" title="View" href="{{ route('admin.visits.show', $visit) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
                             </tr>
                             @endforeach
                         </tbody>

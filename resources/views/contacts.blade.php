@@ -101,7 +101,7 @@
                             <td>Admin</td>
                             <td><span class="d-inline-flex align-items-center p-1 pe-2 rounded-1 badge badge-soft-success text-success fs-10"><i class="ti ti-point-filled me-1 fs-11"></i>Active</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu">
@@ -133,7 +133,7 @@
                             <td>Manager</td>
                             <td><span class="d-inline-flex align-items-center p-1 pe-2 rounded-1 badge badge-soft-success text-success fs-10"><i class="ti ti-point-filled me-1 fs-11"></i>Active</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu">
@@ -165,7 +165,7 @@
                             <td>Salesman</td>
                             <td><span class="d-inline-flex align-items-center p-1 pe-2 rounded-1 badge badge-soft-success text-success fs-10"><i class="ti ti-point-filled me-1 fs-11"></i>Active</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu">
@@ -197,7 +197,7 @@
                             <td>Supervisor</td>
                             <td><span class="d-inline-flex align-items-center p-1 pe-2 rounded-1 badge badge-soft-success text-success fs-10"><i class="ti ti-point-filled me-1 fs-11"></i>Active</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu">
@@ -229,7 +229,7 @@
                             <td>Store Keeper</td>
                             <td><span class="d-inline-flex align-items-center p-1 pe-2 rounded-1 badge badge-soft-success text-success fs-10"><i class="ti ti-point-filled me-1 fs-11"></i>Active</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu">
@@ -261,7 +261,7 @@
                             <td>Purchase</td>
                             <td><span class="d-inline-flex align-items-center p-1 pe-2 rounded-1 badge badge-soft-success text-success fs-10"><i class="ti ti-point-filled me-1 fs-11"></i>Active</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu">
@@ -293,7 +293,7 @@
                             <td>Delivery Biker</td>
                             <td><span class="d-inline-flex align-items-center p-1 pe-2 rounded-1 badge badge-soft-success text-success fs-10"><i class="ti ti-point-filled me-1 fs-11"></i>Active</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu">
@@ -325,7 +325,7 @@
                             <td>Maintenance</td>
                             <td><span class="d-inline-flex align-items-center p-1 pe-2 rounded-1 badge badge-soft-success text-success fs-10"><i class="ti ti-point-filled me-1 fs-11"></i>Active</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu">
@@ -357,7 +357,7 @@
                             <td>Quality Analyst</td>
                             <td><span class="d-inline-flex align-items-center p-1 pe-2 rounded-1 badge badge-soft-success text-success fs-10"><i class="ti ti-point-filled me-1 fs-11"></i>Active</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu">
@@ -389,7 +389,7 @@
                             <td>Accountant</td>
                             <td><span class="d-inline-flex align-items-center p-1 pe-2 rounded-1 badge badge-soft-success text-success fs-10"><i class="ti ti-point-filled me-1 fs-11"></i>Active</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu">

@@ -47,8 +47,8 @@
                                         </div> <!-- end card body -->
                                         <div class="card-footer d-flex align-items-center justify-content-between ">
                                             <div class="d-flex align-items-center">
-                                                <a class="btn btn-sm btn-light border rounded-2 p-1 me-2" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
-                                                <a class="btn btn-sm btn-light border rounded-2 p-1" href="#" data-bs-toggle="modal" data-bs-target="#google"><i class="ti ti-settings"></i></a>
+                                                <a aria-label="Delete" title="Delete" class="btn btn-sm btn-light border rounded-2 p-1 me-2" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                                <a aria-label="Settings" title="Settings" class="btn btn-sm btn-light border rounded-2 p-1" href="#" data-bs-toggle="modal" data-bs-target="#google"><i class="ti ti-settings"></i></a>
                                             </div>
                                             <div class="form-check form-switch">
                                                 <input class="form-check-input m-0" type="checkbox" checked="">
@@ -70,8 +70,8 @@
                                         </div> <!-- end card body -->
                                         <div class="card-footer d-flex align-items-center justify-content-between ">
                                             <div class="d-flex align-items-center">
-                                                <a class="btn btn-sm btn-light border rounded-2 p-1 me-2" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
-                                                <a class="btn btn-sm btn-light border rounded-2 p-1" href="#" data-bs-toggle="modal" data-bs-target="#facebook"><i class="ti ti-settings"></i></a>
+                                                <a aria-label="Delete" title="Delete" class="btn btn-sm btn-light border rounded-2 p-1 me-2" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                                <a aria-label="Settings" title="Settings" class="btn btn-sm btn-light border rounded-2 p-1" href="#" data-bs-toggle="modal" data-bs-target="#facebook"><i class="ti ti-settings"></i></a>
                                             </div>
                                             <div class="form-check form-switch">
                                                 <input class="form-check-input m-0" type="checkbox" checked="">
@@ -93,8 +93,8 @@
                                         </div> <!-- end card body -->
                                         <div class="card-footer d-flex align-items-center justify-content-between ">
                                             <div class="d-flex align-items-center">
-                                                <a class="btn btn-sm btn-light border rounded-2 p-1 me-2" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
-                                                <a class="btn btn-sm btn-light border rounded-2 p-1" href="#" data-bs-toggle="modal" data-bs-target="#php_mailer"><i class="ti ti-settings"></i></a>
+                                                <a aria-label="Delete" title="Delete" class="btn btn-sm btn-light border rounded-2 p-1 me-2" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                                <a aria-label="Settings" title="Settings" class="btn btn-sm btn-light border rounded-2 p-1" href="#" data-bs-toggle="modal" data-bs-target="#php_mailer"><i class="ti ti-settings"></i></a>
                                             </div>
                                             <div class="form-check form-switch">
                                                 <input class="form-check-input m-0" type="checkbox" checked="">
@@ -116,8 +116,8 @@
                                         </div> <!-- end card body -->
                                         <div class="card-footer d-flex align-items-center justify-content-between ">
                                             <div class="d-flex align-items-center">
-                                                <a class="btn btn-sm btn-light border rounded-2 p-1 me-2" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
-                                                <a class="btn btn-sm btn-light border rounded-2 p-1" href="#" data-bs-toggle="modal" data-bs-target="#php_mailer"><i class="ti ti-settings"></i></a>
+                                                <a aria-label="Delete" title="Delete" class="btn btn-sm btn-light border rounded-2 p-1 me-2" href="#" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="ti ti-trash"></i></a>
+                                                <a aria-label="Settings" title="Settings" class="btn btn-sm btn-light border rounded-2 p-1" href="#" data-bs-toggle="modal" data-bs-target="#php_mailer"><i class="ti ti-settings"></i></a>
                                             </div>
                                             <div class="form-check form-switch">
                                                 <input class="form-check-input m-0" type="checkbox" checked="">

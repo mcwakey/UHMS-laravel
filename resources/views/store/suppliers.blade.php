@@ -12,9 +12,9 @@
     <div class="d-flex gap-2">
         <form method="GET" action="{{ route('admin.store.suppliers.index') }}" class="d-flex gap-2">
             <input type="text" name="search" class="form-control" placeholder="Search suppliers..." value="{{ request('search') }}" style="width:200px;">
-            <button type="submit" class="btn btn-outline-primary"><i class="ti ti-search"></i></button>
+            <button aria-label="Search" title="Search" type="submit" class="btn btn-outline-primary"><i class="ti ti-search"></i></button>
             @if(request('search'))
-                <a href="{{ route('admin.store.suppliers.index') }}" class="btn btn-outline-secondary"><i class="ti ti-x"></i></a>
+                <a aria-label="Close" title="Close" href="{{ route('admin.store.suppliers.index') }}" class="btn btn-outline-secondary"><i class="ti ti-x"></i></a>
             @endif
         </form>
         @can('store.purchase.create')
@@ -63,7 +63,7 @@
                         </td>
                         <td class="text-end">
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
+                                <button aria-label="Actions" title="Actions" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">

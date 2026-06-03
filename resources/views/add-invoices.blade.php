@@ -289,7 +289,7 @@
                                                 <td><input type="number" class="form-control"></td>
                                                 <td><input type="number" class="form-control"></td>
                                                 <td><input type="text" class="form-control" readonly></td>
-                                                <td><button class="btn remove-invoices btn-sm border shadow-sm p-2 d-flex align-items-center justify-content-center rounded fs-14"> <i class="ti ti-trash"></i> </button></td>
+                                                <td><button aria-label="Delete" title="Delete" class="btn remove-invoices btn-sm border shadow-sm p-2 d-flex align-items-center justify-content-center rounded fs-14"> <i class="ti ti-trash"></i> </button></td>
                                             </tr>
                                             <tr>
                                                 <td>

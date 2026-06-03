@@ -48,7 +48,7 @@
                                                         <img src="{{URL::asset('build/img/doctors/doctor-01.jpg')}}" class="position-relative z-n1" alt="">
                                                         <input type="file" class="form-control image-sign" multiple="">
                                                         <div class="position-absolute bottom-0 end-0 star-0 w-100 h-25 bg-dark d-flex align-items-center justify-content-center z-n1">
-                                                            <a href="javascript:void(0);" class="text-white d-flex align-items-center justify-content-center">
+                                                            <a aria-label="Photo" title="Photo" href="javascript:void(0);" class="text-white d-flex align-items-center justify-content-center">
                                                                 <i class="ti ti-photo fs-14"></i>
                                                             </a>
                                                         </div>
@@ -344,7 +344,7 @@
                                                                 </div>
                                                                 <div class="col-lg-3">
                                                                     <div class="mb-3">
-                                                                        <a href="#" class="add-schedule-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
+                                                                        <a aria-label="Add" title="Add" href="#" class="add-schedule-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
                                                                             <i class="ti ti-plus fs-16"></i>
                                                                         </a>
                                                                     </div>
@@ -397,7 +397,7 @@
                                                                 </div>
                                                                 <div class="col-lg-3">
                                                                     <div class="mb-3">
-                                                                        <a href="#" class="add-schedule-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
+                                                                        <a aria-label="Add" title="Add" href="#" class="add-schedule-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
                                                                             <i class="ti ti-plus fs-16"></i>
                                                                         </a>
                                                                     </div>
@@ -450,7 +450,7 @@
                                                                 </div>
                                                                 <div class="col-lg-3">
                                                                     <div class="mb-3">
-                                                                        <a href="#" class="add-schedule-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
+                                                                        <a aria-label="Add" title="Add" href="#" class="add-schedule-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
                                                                             <i class="ti ti-plus fs-16"></i>
                                                                         </a>
                                                                     </div>
@@ -503,7 +503,7 @@
                                                                 </div>
                                                                 <div class="col-lg-3">
                                                                     <div class="mb-3">
-                                                                        <a href="#" class="add-schedule-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
+                                                                        <a aria-label="Add" title="Add" href="#" class="add-schedule-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
                                                                             <i class="ti ti-plus fs-16"></i>
                                                                         </a>
                                                                     </div>
@@ -556,7 +556,7 @@
                                                                 </div>
                                                                 <div class="col-lg-3">
                                                                     <div class="mb-3">
-                                                                        <a href="#" class="add-schedule-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
+                                                                        <a aria-label="Add" title="Add" href="#" class="add-schedule-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
                                                                             <i class="ti ti-plus fs-16"></i>
                                                                         </a>
                                                                     </div>
@@ -609,7 +609,7 @@
                                                                 </div>
                                                                 <div class="col-lg-3">
                                                                     <div class="mb-3">
-                                                                        <a href="#" class="add-schedule-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
+                                                                        <a aria-label="Add" title="Add" href="#" class="add-schedule-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
                                                                             <i class="ti ti-plus fs-16"></i>
                                                                         </a>
                                                                     </div>
@@ -662,7 +662,7 @@
                                                                 </div>
                                                                 <div class="col-lg-3">
                                                                     <div class="mb-3">
-                                                                        <a href="#" class="add-schedule-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
+                                                                        <a aria-label="Add" title="Add" href="#" class="add-schedule-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
                                                                             <i class="ti ti-plus fs-16"></i>
                                                                         </a>
                                                                     </div>
@@ -779,7 +779,7 @@
                                                 </div>
                                                 <div class="col-lg-1">
                                                     <div class="mb-3">
-                                                        <a href="#" class="add-education-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
+                                                        <a aria-label="Add" title="Add" href="#" class="add-education-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
                                                             <i class="ti ti-plus fs-16"></i>
                                                         </a>
                                                     </div>
@@ -816,7 +816,7 @@
                                                 </div>
                                                 <div class="col-lg-1">
                                                     <div class="mb-3">
-                                                        <a href="#" class="add-award-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
+                                                        <a aria-label="Add" title="Add" href="#" class="add-award-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
                                                             <i class="ti ti-plus fs-16"></i>
                                                         </a>
                                                     </div>
@@ -853,7 +853,7 @@
                                                 </div>
                                                 <div class="col-lg-1">
                                                     <div class="mb-3">
-                                                        <a href="#" class="add-certification-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
+                                                        <a aria-label="Add" title="Add" href="#" class="add-certification-btn p-2 bg-light btn-icon text-body rounded d-flex align-items-center justify-content-center">
                                                             <i class="ti ti-plus fs-16"></i>
                                                         </a>
                                                     </div>

@@ -18,7 +18,7 @@
         <i class="ti ti-package me-1"></i> Consumables Used (optional, deducts stock from lab location)
     </summary>
     <div class="mt-2">
-        <table class="table table-sm align-middle mb-1" id="consumablesTable-{{ $item->id }}">
+        <div class="table-responsive"><table class="table table-sm align-middle mb-1" id="consumablesTable-{{ $item->id }}">
             <thead>
                 <tr>
                     <th style="width:55%;">Product</th>
@@ -52,7 +52,7 @@
                 </tr>
             @endif
             </tbody>
-        </table>
+        </table></div>
         <div class="form-text">Leave blank if no consumables were used for this test.</div>
     </div>
 </details>

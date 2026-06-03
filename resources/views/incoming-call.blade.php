@@ -38,8 +38,8 @@
                             <h5>Anthony Lewis</h5>
                             <p>Calling...</p>
                             <div class="d-flex align-items-center justify-content-center">
-                                <a href="#" class="btn btn-success btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center me-3"><i class="ti ti-phone fs-20"></i></a>
-                                <a href="#" class="btn btn-danger btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center"><i class="ti ti-phone-off fs-20"></i></a>
+                                <a aria-label="Phone" title="Phone" href="#" class="btn btn-success btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center me-3"><i class="ti ti-phone fs-20"></i></a>
+                                <a aria-label="Phone off" title="Phone off" href="#" class="btn btn-danger btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center"><i class="ti ti-phone-off fs-20"></i></a>
                             </div>
                         </div><!-- end card body -->
                     </div><!-- end card -->

@@ -65,16 +65,16 @@
                                     </div>
                                 </div>
                                 <div class="d-flex flex-wrap justify-content-center align-items-center pb-3 media-btn">
-                                    <a href="javascript:void(0);" class="btn rounded-circle btn-icon btn-sm me-2 d-flex align-items-center justify-content-center">
+                                    <a aria-label="Brand facebook" title="Brand facebook" href="javascript:void(0);" class="btn rounded-circle btn-icon btn-sm me-2 d-flex align-items-center justify-content-center">
                                         <i class="ti ti-brand-facebook fs-16"></i>
                                     </a>
-                                    <a href="javascript:void(0);" class="btn rounded-circle btn-icon btn-sm me-2 d-flex align-items-center justify-content-center">
+                                    <a aria-label="Brand twitter" title="Brand twitter" href="javascript:void(0);" class="btn rounded-circle btn-icon btn-sm me-2 d-flex align-items-center justify-content-center">
                                         <i class="ti ti-brand-twitter fs-16"></i>
                                     </a>
-                                    <a href="javascript:void(0);" class="btn rounded-circle btn-icon btn-sm me-2 d-flex align-items-center justify-content-center">
+                                    <a aria-label="Brand linkedin" title="Brand linkedin" href="javascript:void(0);" class="btn rounded-circle btn-icon btn-sm me-2 d-flex align-items-center justify-content-center">
                                         <i class="ti ti-brand-linkedin fs-16"></i>
                                     </a>
-                                    <a href="javascript:void(0);" class="btn rounded-circle btn-icon btn-sm d-flex align-items-center justify-content-center">
+                                    <a aria-label="Brand instagram" title="Brand instagram" href="javascript:void(0);" class="btn rounded-circle btn-icon btn-sm d-flex align-items-center justify-content-center">
                                         <i class="ti ti-brand-instagram fs-16"></i>
                                     </a>
                                 </div>

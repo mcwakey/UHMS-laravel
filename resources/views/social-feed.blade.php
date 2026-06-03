@@ -130,18 +130,18 @@
                                     </div>
                                     <div class="d-flex align-items-center justify-content-between flex-wrap row-gap-3">
                                         <div class="d-flex align-items-center">
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-photo fs-16"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-link fs-16"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-paperclip fs-16"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-video fs-16"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-hash fs-16"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-map-pin-heart fs-16"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-mood-smile fs-16"></i></a>
+                                            <a aria-label="Photo" title="Photo" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-photo fs-16"></i></a>
+                                            <a aria-label="Link" title="Link" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-link fs-16"></i></a>
+                                            <a aria-label="Paperclip" title="Paperclip" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-paperclip fs-16"></i></a>
+                                            <a aria-label="Video" title="Video" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-video fs-16"></i></a>
+                                            <a aria-label="Hash" title="Hash" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-hash fs-16"></i></a>
+                                            <a aria-label="Map pin heart" title="Map pin heart" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-map-pin-heart fs-16"></i></a>
+                                            <a aria-label="Mood smile" title="Mood smile" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-mood-smile fs-16"></i></a>
                                         </div>
                                         <div class="d-flex align-items-center">
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-refresh fs-16"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-trash fs-16"></i></a>
-                                            <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-world fs-16"></i></a>
+                                            <a aria-label="Refresh" title="Refresh" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-refresh fs-16"></i></a>
+                                            <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-trash fs-16"></i></a>
+                                            <a aria-label="World" title="World" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-world fs-16"></i></a>
                                             <button type="submit" class="btn btn-primary d-inline-flex align-items-center ms-2"><i class="ti ti-circle-plus fs-16 me-2"></i>Share Post</button>
                                         </div>
                                     </div>
@@ -196,7 +196,7 @@
                                     <div class="d-flex align-items-center">
                                         <p class="mb-0 text-dark">About 1 hr ago</p>
                                         <div class="dropdown ms-3 me-1">
-                                            <button class="btn btn-icon bg-transparent d-flex align-items-center text-dark border-0 p-0 btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <button aria-label="World" title="World" class="btn btn-icon bg-transparent d-flex align-items-center text-dark border-0 p-0 btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                 <i class="ti ti-world pe-1"></i>
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-end">
@@ -209,7 +209,7 @@
                                             </ul>
                                         </div>
                                         <div class="dropdown">
-                                            <a href="javascript:void(0);" class="d-inline-flex align-items-center show" data-bs-toggle="dropdown" aria-expanded="true">
+                                            <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center show" data-bs-toggle="dropdown" aria-expanded="true">
                                                 <i class="ti ti-dots-vertical"></i>
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-end">
@@ -287,10 +287,10 @@
                                         </a>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-heart-filled text-danger"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-share"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-message-star"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-bookmark-filled text-warning"></i></a>
+                                        <a aria-label="Heart filled" title="Heart filled" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-heart-filled text-danger"></i></a>
+                                        <a aria-label="Share" title="Share" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-share"></i></a>
+                                        <a aria-label="Message star" title="Message star" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-message-star"></i></a>
+                                        <a aria-label="Bookmark filled" title="Bookmark filled" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-bookmark-filled text-warning"></i></a>
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-start">
@@ -316,7 +316,7 @@
                                     <div class="d-flex align-items-center">
                                         <p class="mb-0 text-dark">About 1 hr ago</p>
                                         <div class="dropdown ms-3 me-1">
-                                            <button class="btn btn-icon bg-transparent d-flex align-items-center text-dark border-0 p-0 btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <button aria-label="World" title="World" class="btn btn-icon bg-transparent d-flex align-items-center text-dark border-0 p-0 btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                 <i class="ti ti-world pe-1"></i>
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-end">
@@ -329,7 +329,7 @@
                                             </ul>
                                         </div>
                                         <div class="dropdown">
-                                            <a href="javascript:void(0);" class="d-inline-flex align-items-center show" data-bs-toggle="dropdown" aria-expanded="true">
+                                            <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center show" data-bs-toggle="dropdown" aria-expanded="true">
                                                 <i class="ti ti-dots-vertical"></i>
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-end p-3">
@@ -380,10 +380,10 @@
                                         </a>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-heart"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-share"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-message-star"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-bookmark"></i></a>
+                                        <a aria-label="Heart" title="Heart" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-heart"></i></a>
+                                        <a aria-label="Share" title="Share" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-share"></i></a>
+                                        <a aria-label="Message star" title="Message star" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-message-star"></i></a>
+                                        <a aria-label="Bookmark" title="Bookmark" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-bookmark"></i></a>
                                     </div>
                                 </div>
                             </div><!-- end card body -->
@@ -405,7 +405,7 @@
                                     <div class="d-flex align-items-center">
                                         <p class="mb-0 text-dark">About 1 hr ago</p>
                                         <div class="dropdown ms-3 me-1">
-                                            <button class="btn btn-icon bg-transparent d-flex align-items-center text-dark border-0 p-0 btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <button aria-label="World" title="World" class="btn btn-icon bg-transparent d-flex align-items-center text-dark border-0 p-0 btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                 <i class="ti ti-world pe-1"></i>
                                             </button>
                                             <ul class="dropdown-menu dropdown-menu-end">
@@ -418,7 +418,7 @@
                                             </ul>
                                         </div>
                                         <div class="dropdown">
-                                            <a href="javascript:void(0);" class="d-inline-flex align-items-center show" data-bs-toggle="dropdown" aria-expanded="true">
+                                            <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="d-inline-flex align-items-center show" data-bs-toggle="dropdown" aria-expanded="true">
                                                 <i class="ti ti-dots-vertical"></i>
                                             </a>
                                             <ul class="dropdown-menu dropdown-menu-end p-3">
@@ -463,10 +463,10 @@
                                         </a>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-heart-filled text-danger"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-share"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-message-star"></i></a>
-                                        <a href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-bookmark-filled text-warning"></i></a>
+                                        <a aria-label="Heart filled" title="Heart filled" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-heart-filled text-danger"></i></a>
+                                        <a aria-label="Share" title="Share" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-share"></i></a>
+                                        <a aria-label="Message star" title="Message star" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-message-star"></i></a>
+                                        <a aria-label="Bookmark filled" title="Bookmark filled" href="javascript:void(0);" class="btn btn-icon btn-sm rounded-circle"><i class="ti ti-bookmark-filled text-warning"></i></a>
                                     </div>
                                 </div>
                                 <div class="d-flex align-items-start mb-3">
@@ -594,7 +594,7 @@
                                                     <span class="fs-12 d-block">United States</span>
                                                 </div>
                                             </div>
-                                            <a href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
+                                            <a aria-label="User x" title="User x" href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
                                         </div>
                                         <div class="d-flex align-items-center justify-content-between mb-3">
                                             <div class="d-flex align-items-center">
@@ -608,7 +608,7 @@
                                                     <span class="fs-12 d-block">Ukrain</span>
                                                 </div>
                                             </div>
-                                            <a href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
+                                            <a aria-label="User x" title="User x" href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
                                         </div>
                                         <div class="d-flex align-items-center justify-content-between mb-3">
                                             <div class="d-flex align-items-center">
@@ -622,7 +622,7 @@
                                                     <span class="fs-12 d-block">Isreal</span>
                                                 </div>
                                             </div>
-                                            <a href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
+                                            <a aria-label="User x" title="User x" href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
                                         </div>
                                         <div class="d-flex align-items-center justify-content-between mb-3">
                                             <div class="d-flex align-items-center">
@@ -636,7 +636,7 @@
                                                     <span class="fs-12 d-block">Belgium</span>
                                                 </div>
                                             </div>
-                                            <a href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
+                                            <a aria-label="User x" title="User x" href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
                                         </div>
                                         <div class="d-flex align-items-center justify-content-between mb-3">
                                             <div class="d-flex align-items-center">
@@ -651,7 +651,7 @@
                                                     <span class="fs-12 d-block">United Kingdom</span>
                                                 </div>
                                             </div>
-                                            <a href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
+                                            <a aria-label="User x" title="User x" href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
                                         </div>
                                         <div class="d-flex align-items-center justify-content-between mb-3">
                                             <div class="d-flex align-items-center">
@@ -665,7 +665,7 @@
                                                     <span class="fs-12 d-block">Argentina</span>
                                                 </div>
                                             </div>
-                                            <a href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
+                                            <a aria-label="User x" title="User x" href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
                                         </div>
                                     </div>
                                     <div>
@@ -687,7 +687,7 @@
                                                     <span class="fs-12 d-block">United States</span>
                                                 </div>
                                             </div>
-                                            <a href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
+                                            <a aria-label="User x" title="User x" href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
                                         </div>
                                         <div class="d-flex align-items-center justify-content-between mb-3">
                                             <div class="d-flex align-items-center">
@@ -701,7 +701,7 @@
                                                     <span class="fs-12 d-block">Ukrain</span>
                                                 </div>
                                             </div>
-                                            <a href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
+                                            <a aria-label="User x" title="User x" href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
                                         </div>
                                         <div class="d-flex align-items-center justify-content-between mb-3">
                                             <div class="d-flex align-items-center">
@@ -715,7 +715,7 @@
                                                     <span class="fs-12 d-block">Isreal</span>
                                                 </div>
                                             </div>
-                                            <a href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
+                                            <a aria-label="User x" title="User x" href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
                                         </div>
                                         <div class="d-flex align-items-center justify-content-between mb-3">
                                             <div class="d-flex align-items-center">
@@ -729,7 +729,7 @@
                                                     <span class="fs-12 d-block">Belgium</span>
                                                 </div>
                                             </div>
-                                            <a href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
+                                            <a aria-label="User x" title="User x" href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
                                         </div>
                                         <div class="d-flex align-items-center justify-content-between mb-3">
                                             <div class="d-flex align-items-center">
@@ -744,7 +744,7 @@
                                                     <span class="fs-12 d-block">United Kingdom</span>
                                                 </div>
                                             </div>
-                                            <a href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
+                                            <a aria-label="User x" title="User x" href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
                                         </div>
                                         <div class="d-flex align-items-center justify-content-between mb-3">
                                             <div class="d-flex align-items-center">
@@ -758,7 +758,7 @@
                                                     <span class="fs-12 d-block">Argentina</span>
                                                 </div>
                                             </div>
-                                            <a href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
+                                            <a aria-label="User x" title="User x" href="javascript:void(0);" class="btn btn-sm btn-icon"><i class="ti ti-user-x"></i></a>
                                         </div>
                                     </div>
                                     <div>
@@ -779,7 +779,7 @@
                                         <span><img src="{{URL::asset('build/img/icons/feeds-01.svg')}}" class="me-2" alt="Img"></span>
                                         <p class="fs-13 fw-medium mb-0">World Health</p>
                                     </a>
-                                    <a href="javascript:void(0);"><i class="ti ti-bookmark-filled text-warning"></i></a>
+                                    <a aria-label="Bookmark filled" title="Bookmark filled" href="javascript:void(0);"><i class="ti ti-bookmark-filled text-warning"></i></a>
                                 </div>
                                 <p class="text-dark fw-medium mb-0"><a href="javascript:void(0);">Retail investor party continues even as</a></p>
                             </div>
@@ -790,7 +790,7 @@
                                         <span><img src="{{URL::asset('build/img/icons/feeds-02.svg')}}" class="me-2" alt="Img"></span>
                                         <p class="fs-13 fw-medium mb-0">T3 Tech</p>
                                     </a>
-                                    <a href="javascript:void(0);"><i class="ti ti-bookmark-filled text-warning"></i></a>
+                                    <a aria-label="Bookmark filled" title="Bookmark filled" href="javascript:void(0);"><i class="ti ti-bookmark-filled text-warning"></i></a>
                                 </div>
                                 <p class="text-dark fw-medium mb-0"><a href="javascript:void(0);">Ipad Air (2020) vs Samsung Galaxy Tab</a></p>
                             </div>
@@ -801,7 +801,7 @@
                                         <span><img src="{{URL::asset('build/img/icons/feeds-03.svg')}}" class="me-2" alt="Img"></span>
                                         <p class="fs-13 fw-medium mb-0">Fstoppers</p>
                                     </a>
-                                    <a href="javascript:void(0);"><i class="ti ti-bookmark-filled text-warning"></i></a>
+                                    <a aria-label="Bookmark filled" title="Bookmark filled" href="javascript:void(0);"><i class="ti ti-bookmark-filled text-warning"></i></a>
                                 </div>
                                 <p class="text-dark fw-medium mb-0"><a href="javascript:void(0);">Beyond capital gains tax! Top 50 stock</a></p>
                             </div>
@@ -812,7 +812,7 @@
                                         <span><img src="{{URL::asset('build/img/icons/feeds-04.svg')}}" class="me-2" alt="Img"></span>
                                         <p class="fs-13 fw-medium mb-0">Evernote</p>
                                     </a>
-                                    <a href="javascript:void(0);"><i class="ti ti-bookmark-filled text-warning"></i></a>
+                                    <a aria-label="Bookmark filled" title="Bookmark filled" href="javascript:void(0);"><i class="ti ti-bookmark-filled text-warning"></i></a>
                                 </div>
                                 <p class="text-dark fw-medium mb-0"><a href="javascript:void(0);">Sony Just Destroyed the Competition</a></p>
                             </div>

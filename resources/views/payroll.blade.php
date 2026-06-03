@@ -146,7 +146,7 @@
                             <td>$1200</td>
                             <td><a href="{{url('payroll-2')}}" class="btn btn-white border text-dark">Generate Slip</a></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -176,7 +176,7 @@
                             <td>$2000</td>
                             <td><a href="{{url('payroll-2')}}" class="btn btn-white border text-dark">Generate Slip</a></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -206,7 +206,7 @@
                             <td>$1500</td>
                             <td><a href="{{url('payroll-2')}}" class="btn btn-white border text-dark">Generate Slip</a></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -236,7 +236,7 @@
                             <td>$1200</td>
                             <td><a href="{{url('payroll-2')}}" class="btn btn-white border text-dark">Generate Slip</a></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -266,7 +266,7 @@
                             <td>$1500</td>
                             <td><a href="{{url('payroll-2')}}" class="btn btn-white border text-dark">Generate Slip</a></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -296,7 +296,7 @@
                             <td>$2500</td>
                             <td><a href="{{url('payroll-2')}}" class="btn btn-white border text-dark">Generate Slip</a></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -326,7 +326,7 @@
                             <td>$1000</td>
                             <td><a href="{{url('payroll-2')}}" class="btn btn-white border text-dark">Generate Slip</a></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -356,7 +356,7 @@
                             <td>$1250</td>
                             <td><a href="{{url('payroll-2')}}" class="btn btn-white border text-dark">Generate Slip</a></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -386,7 +386,7 @@
                             <td>$1550</td>
                             <td><a href="{{url('payroll-2')}}" class="btn btn-white border text-dark">Generate Slip</a></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -416,7 +416,7 @@
                             <td>$1250</td>
                             <td><a href="{{url('payroll-2')}}" class="btn btn-white border text-dark">Generate Slip</a></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">

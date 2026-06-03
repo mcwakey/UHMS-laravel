@@ -173,7 +173,7 @@
                             <td>IT Team</td>
                             <td><span class="badge fw-medium bg-soft-success text-success border border-success">Resolved</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -204,7 +204,7 @@
                             <td>Lab Technician</td>
                             <td><span class="badge fw-medium bg-soft-warning text-warning border border-warning">Inprogress</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -235,7 +235,7 @@
                             <td>System Admin</td>
                             <td><span class="badge fw-medium bg-soft-info text-info border border-info">Open</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -266,7 +266,7 @@
                             <td>EHR Support Team</td>
                             <td><span class="badge fw-medium bg-soft-danger text-danger border border-danger">Closed</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -297,7 +297,7 @@
                             <td>IT Team</td>
                             <td><span class="badge fw-medium bg-soft-success text-success border border-success">Resolved</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -328,7 +328,7 @@
                             <td>Admin Panel Support</td>
                             <td><span class="badge fw-medium bg-soft-warning text-warning border border-warning">Inprogress</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -359,7 +359,7 @@
                             <td>Communications Specialist</td>
                             <td><span class="badge fw-medium bg-soft-info text-info border border-info">Open</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -390,7 +390,7 @@
                             <td>QA Department</td>
                             <td><span class="badge fw-medium bg-soft-danger text-danger border border-danger">Closed</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -421,7 +421,7 @@
                             <td>Accountant</td>
                             <td><span class="badge fw-medium bg-soft-success text-success border border-success">Resolved</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -452,7 +452,7 @@
                             <td>Patient Portal Support</td>
                             <td><span class="badge fw-medium bg-soft-warning text-warning border border-warning">Inprogress</span></td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" class="btn p-1 btn-white border">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">

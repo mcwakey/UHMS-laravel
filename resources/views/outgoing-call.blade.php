@@ -38,11 +38,11 @@
                             <h5>Anthony Lewis</h5>
                             <p>Calling...</p>
                             <div class="d-flex align-items-center justify-content-center">
-                                <a href="javascript:void(0);" class="btn btn-light btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center me-3"><i class="ti ti-video fs-20"></i></a>
-                                <a href="javascript:void(0);" class="btn btn-light btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center me-3"><i class="ti ti-microphone fs-20"></i></a>
-                                <a href="javascript:void(0);" class="btn btn-danger btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center me-3"><i class="ti ti-phone-off fs-20"></i></a>
-                                <a href="javascript:void(0);" class="btn btn-light btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center me-3"><i class="ti ti-user-plus fs-20"></i></a>
-                                <a href="javascript:void(0);" class="btn btn-light btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center"><i class="ti ti-volume fs-20"></i></a>
+                                <a aria-label="Video" title="Video" href="javascript:void(0);" class="btn btn-light btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center me-3"><i class="ti ti-video fs-20"></i></a>
+                                <a aria-label="Microphone" title="Microphone" href="javascript:void(0);" class="btn btn-light btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center me-3"><i class="ti ti-microphone fs-20"></i></a>
+                                <a aria-label="Phone off" title="Phone off" href="javascript:void(0);" class="btn btn-danger btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center me-3"><i class="ti ti-phone-off fs-20"></i></a>
+                                <a aria-label="User plus" title="User plus" href="javascript:void(0);" class="btn btn-light btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center me-3"><i class="ti ti-user-plus fs-20"></i></a>
+                                <a aria-label="Volume" title="Volume" href="javascript:void(0);" class="btn btn-light btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center"><i class="ti ti-volume fs-20"></i></a>
                             </div>
                         </div><!-- end card body -->
                     </div><!-- end card -->

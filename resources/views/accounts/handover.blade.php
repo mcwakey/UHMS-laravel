@@ -133,7 +133,7 @@
                             @can('accounts.entries.approve')
                             <form method="POST" action="{{ route('admin.accounts.handover.verify', $shift) }}" class="d-inline">
                                 @csrf
-                                <button type="submit" class="btn btn-sm btn-outline-info" onclick="return confirm('Verify this shift?')">
+                                <button aria-label="Confirm" title="Confirm" type="submit" class="btn btn-sm btn-outline-info" onclick="return confirm('Verify this shift?')">
                                     <i class="ti ti-check"></i>
                                 </button>
                             </form>

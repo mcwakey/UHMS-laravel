@@ -294,8 +294,8 @@
                     <!-- end filter -->
                     
                     <div class="bg-white border shadow-sm rounded px-1 pb-0 text-center d-flex align-items-center justify-content-center">
-                        <a href="{{url('patients')}}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-dark"></i></a>
-                        <a href="{{url('patients-grid')}}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-layout-grid fs-14 text-body"></i> </a>
+                        <a aria-label="List" title="List" href="{{url('patients')}}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-dark"></i></a>
+                        <a aria-label="Layout grid" title="Layout grid" href="{{url('patients-grid')}}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-layout-grid fs-14 text-body"></i> </a>
                     </div>
 
                     <a href="{{ route('admin.patients.create') }}" class="btn btn-primary ms-2 fs-13 btn-md"><i class="ti ti-plus me-1"></i>New Patient</a>
@@ -316,7 +316,7 @@
                                     </a>
                                     <a href="{{url('patient-details')}}" class="text-dark fw-semibold">Alberto Ripley <span class="text-body fs-13 fw-normal d-block"> 26, Male </span>  </a>
                                 </div>
-                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -347,7 +347,7 @@
                                     </a>
                                     <a href="{{url('patient-details')}}" class="text-dark fw-semibold">Susan Babin <span class="text-body fs-13 fw-normal d-block"> 21, Female </span></a>
                                 </div>
-                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -378,7 +378,7 @@
                                     </a>
                                     <a href="{{url('patient-details')}}" class="text-dark fw-semibold">Carol Lam <span class="text-body fs-13 fw-normal d-block"> 28, Female </span></a>
                                 </div>
-                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -409,7 +409,7 @@
                                     </a>
                                     <a href="{{url('patient-details')}}" class="text-dark fw-semibold">Marsha Noland <span class="text-body fs-13 fw-normal d-block"> 25, Female </span></a>
                                 </div>
-                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -440,7 +440,7 @@
                                     </a>
                                     <a href="{{url('patient-details')}}" class="text-dark fw-semibold">Irma Armstrong <span class="text-body fs-13 fw-normal d-block"> 32, Female </span></a>
                                 </div>
-                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -471,7 +471,7 @@
                                     </a>
                                     <a href="{{url('patient-details')}}" class="text-dark fw-semibold">Jesus Adams <span class="text-body fs-13 fw-normal d-block"> 27, Male </span></a>
                                 </div>
-                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -502,7 +502,7 @@
                                     </a>
                                     <a href="{{url('patient-details')}}" class="text-dark fw-semibold">Ezra Belcher <span class="text-body fs-13 fw-normal d-block"> 28, Male</span></a>
                                 </div>
-                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -533,7 +533,7 @@
                                     </a>
                                     <a href="{{url('patient-details')}}" class="text-dark fw-semibold">Glen Lentz <span class="text-body fs-13 fw-normal d-block"> 22, Male </span></a>
                                 </div>
-                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -564,7 +564,7 @@
                                     </a>
                                     <a href="{{url('patient-details')}}" class="text-dark fw-semibold">Bernard Griffith <span class="text-body fs-13 fw-normal d-block"> 34, Male </span></a>
                                 </div>
-                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -595,7 +595,7 @@
                                     </a>
                                     <a href="{{url('patient-details')}}" class="text-dark fw-semibold">John Elsass <span class="text-body fs-13 fw-normal d-block"> 23, Male </span></a>
                                 </div>
-                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -626,7 +626,7 @@
                                     </a>
                                     <a href="{{url('patient-details')}}" class="text-dark fw-semibold">Martin Lisa <span class="text-body fs-13 fw-normal d-block"> 26, Female </span></a>
                                 </div>
-                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -657,7 +657,7 @@
                                     </a>
                                     <a href="{{url('patient-details')}}" class="text-dark fw-semibold">Ava Mitchell <span class="text-body fs-13 fw-normal d-block"> 25, Female </span></a>
                                 </div>
-                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -688,7 +688,7 @@
                                     </a>
                                     <a href="{{url('patient-details')}}" class="text-dark fw-semibold">Noah Davis <span class="text-body fs-13 fw-normal d-block"> 32, Male </span></a>
                                 </div>
-                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -719,7 +719,7 @@
                                     </a>
                                     <a href="{{url('patient-details')}}" class="text-dark fw-semibold">Emily Ross <span class="text-body fs-13 fw-normal d-block"> 29, Female </span></a>
                                 </div>
-                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -750,7 +750,7 @@
                                     </a>
                                     <a href="{{url('patient-details')}}" class="text-dark fw-semibold">Ryan Anderson <span class="text-body fs-13 fw-normal d-block"> 30, Male </span></a>
                                 </div>
-                                <a href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="shadow-sm fs-14 d-inline-flex border rounded-2 p-1" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">

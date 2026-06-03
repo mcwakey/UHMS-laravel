@@ -54,14 +54,25 @@ All six created, tested (`tests/Feature/UiPhase5ComponentsTest.php`), documented
 - [ ] Field-level validation on the remaining simple modal/inline forms (low risk).
 - [ ] (Backend, optional) persist `reason` on `modules.toggle`/`roles.destroy` if reasons wanted there.
 
-## Accessibility
-- [ ] Add `aria-label` to icon-only buttons (audit `btn` with only `<i class="ti …">`).
-- [ ] Verify contrast on `bg-warning`/`bg-info` chips (now mitigated via `text-dark`).
+## Accessibility (Phase 7 — see UI_PHASE_7_RESPONSIVE_ACCESSIBILITY_PRINT_REPORT.md)
+- [x] **~385 icon-only buttons** across **226 files** given `aria-label` + `title` (432 → 47; 89% closed).
+- [x] Contrast on `bg-warning`/`bg-info` chips mitigated via `text-dark` (config `dark_text_variants`).
+- [ ] Label the **47 remaining** icon-only buttons (unusual/dynamic markup) — tracked by `ui:audit` (`icon-only-no-label`).
 - [ ] Keyboard navigation pass on modals and dropdowns.
 
-## Responsive / print
-- [ ] Wrap all wide tables in `.table-responsive` (audit Stock matrix, MAR grid, theatre board).
-- [ ] Print stylesheet pass for clinical documents (consultation summary, MAR chart, theatre/blood reports).
+## Responsive / print (Phase 7)
+- [x] **16 data tables** in 9 files wrapped in `.table-responsive` (the real gaps; rest already wrapped).
+- [ ] Remaining `table-not-responsive` findings (partials/modals) — tracked by `ui:audit`.
+- [ ] Gradual `<x-print-layout>` adoption for the 18 `print-no-layout` views (already print-CSS compliant).
+
+## UI governance (Phase 8 — DELIVERED — see UI_PHASE_8_GOVERNANCE_LOCK_IN_REPORT.md)
+- [x] `php artisan ui:audit` command (`--json`, `--fail`, `--strict`, `--path`, `--update-baseline`); composer `ui:audit` / `ui:audit:fail` scripts.
+- [x] Detectors: forbidden patterns, component gaps, status-domain integrity, accessibility, permission-guard heuristic, print layout.
+- [x] Reports: `storage/reports/ui-audit-report.md` + `.json`; severity counts (CRITICAL→INFO).
+- [x] Baseline: `storage/app/ui-audit-baseline.json` + `docs/UI_AUDIT_BASELINE.md` (0 CRITICAL today).
+- [x] Guardrails: `UI_REVIEW_CHECKLIST.md`, `.github/copilot-instructions.md`, `docs/CODEX_UI_INSTRUCTIONS.md`.
+- [x] Tests: `tests/Feature/UiAuditCommandTest.php` (12 passing).
+- [ ] **Burn down the baseline** (priority: `raw-status-echo` 12 → `inline-workflow-badge` 146 → `destructive-no-confirm` 45), then make `--fail` a CI gate and later enable `--strict`.
 
 ## Technical debt
 - [ ] Consolidate the small Inertia/Vue footprint (18 files) — decide per-module whether to keep Vue islands or fold back into Blade for consistency.

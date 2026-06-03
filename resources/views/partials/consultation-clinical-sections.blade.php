@@ -76,7 +76,7 @@
                 <span class="fw-medium small">{{ $rx->prescription_number }}</span>
                 <span class="badge bg-{{ $rx->status->color() }}">{{ $rx->status->label() }}</span>
             </div>
-            <table class="table table-sm table-borderless mb-0" style="font-size:.8rem">
+            <div class="table-responsive"><table class="table table-sm table-borderless mb-0" style="font-size:.8rem">
                 <thead><tr class="text-muted"><th>Drug</th><th>Dosage</th><th>Frequency</th><th>Duration</th></tr></thead>
                 <tbody>
                     @foreach($rx->items as $item)
@@ -88,7 +88,7 @@
                     </tr>
                     @endforeach
                 </tbody>
-            </table>
+            </table></div>
         </div>
         @empty
         <p class="text-muted small mb-0"><i class="ti ti-minus me-1"></i>None recorded.</p>

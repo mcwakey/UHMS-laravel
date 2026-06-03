@@ -32,8 +32,8 @@
                         </ul>
                     </div>
                     <div class="bg-white border shadow-sm rounded px-1 pb-0 text-center d-flex align-items-center justify-content-center">
-                        <a href="{{url('doctors-list')}}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-dark"></i></a>
-                        <a href="{{url('doctors')}}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-layout-grid fs-14 text-body"></i> </a>
+                        <a aria-label="List" title="List" href="{{url('doctors-list')}}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-dark"></i></a>
+                        <a aria-label="Layout grid" title="Layout grid" href="{{url('doctors')}}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-layout-grid fs-14 text-body"></i> </a>
                     </div>
 
                     <a href="{{url('add-doctor')}}" class="btn btn-primary ms-2 fs-13 btn-md"><i class="ti ti-plus me-1"></i>New Doctor</a>
@@ -198,12 +198,12 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="action-item me-2">
-                                        <a href="{{url('appointment-calendar')}}">
+                                        <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                             <i class="ti ti-calendar-cog"></i>
                                         </a>
                                     </div>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -238,12 +238,12 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="action-item me-2">
-                                        <a href="{{url('appointment-calendar')}}">
+                                        <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                             <i class="ti ti-calendar-cog"></i>
                                         </a>
                                     </div>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -278,12 +278,12 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="action-item me-2">
-                                        <a href="{{url('appointment-calendar')}}">
+                                        <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                             <i class="ti ti-calendar-cog"></i>
                                         </a>
                                     </div>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -318,12 +318,12 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="action-item me-2">
-                                        <a href="{{url('appointment-calendar')}}">
+                                        <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                             <i class="ti ti-calendar-cog"></i>
                                         </a>
                                     </div>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -358,12 +358,12 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="action-item me-2">
-                                        <a href="{{url('appointment-calendar')}}">
+                                        <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                             <i class="ti ti-calendar-cog"></i>
                                         </a>
                                     </div>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -398,12 +398,12 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="action-item me-2">
-                                        <a href="{{url('appointment-calendar')}}">
+                                        <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                             <i class="ti ti-calendar-cog"></i>
                                         </a>
                                     </div>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -438,12 +438,12 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="action-item me-2">
-                                        <a href="{{url('appointment-calendar')}}">
+                                        <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                             <i class="ti ti-calendar-cog"></i>
                                         </a>
                                     </div>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -478,12 +478,12 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="action-item me-2">
-                                        <a href="{{url('appointment-calendar')}}">
+                                        <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                             <i class="ti ti-calendar-cog"></i>
                                         </a>
                                     </div>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -518,12 +518,12 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="action-item me-2">
-                                        <a href="{{url('appointment-calendar')}}">
+                                        <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                             <i class="ti ti-calendar-cog"></i>
                                         </a>
                                     </div>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">
@@ -558,12 +558,12 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="action-item me-2">
-                                        <a href="{{url('appointment-calendar')}}">
+                                        <a aria-label="Calendar cog" title="Calendar cog" href="{{url('appointment-calendar')}}">
                                             <i class="ti ti-calendar-cog"></i>
                                         </a>
                                     </div>
                                     <div class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu">

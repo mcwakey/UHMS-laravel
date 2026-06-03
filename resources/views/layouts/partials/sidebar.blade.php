@@ -14,10 +14,10 @@
                 <img src="{{ URL::asset('build/img/logo-white.svg') }}" alt="UHMS">
             </a>
         </div>
-        <button class="sidenav-toggle-btn btn border-0 p-0 active" id="toggle_btn">
+        <button aria-label="Back" title="Back" class="sidenav-toggle-btn btn border-0 p-0 active" id="toggle_btn">
             <i class="ti ti-arrow-left"></i>
         </button>
-        <button class="sidebar-close">
+        <button aria-label="Close" title="Close" class="sidebar-close">
             <i class="ti ti-x align-middle"></i>
         </button>
     </div>

@@ -64,7 +64,7 @@
                                     &bull; <span id="patientPhone">{{ $selectedPatient?->phone }}</span>
                                 </small>
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearPatient()">
+                            <button aria-label="Close" title="Close" type="button" class="btn btn-sm btn-outline-danger" onclick="clearPatient()">
                                 <i class="ti ti-x"></i>
                             </button>
                         </div>
@@ -432,7 +432,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<div class="service-item d-flex align-items-center justify-content-between py-2 px-2 border-bottom bg-white rounded mb-1" data-name="' + escapeHtml(svc.name.toLowerCase()) + '">';
             html += '<div><span class="fw-medium">' + escapeHtml(svc.name) + '</span> <span class="badge bg-light text-dark ms-1">' + escapeHtml(svc.code) + '</span><div class="small text-muted">' + escapeHtml(svc.category) + '</div></div>';
             html += '<div class="d-flex align-items-center gap-2"><span class="fw-bold text-success svc-price-display" data-svc-id="' + svc.id + '">\u20B5' + formatNumber(resolveServicePrice(svc)) + '</span>';
-            html += '<button type="button" class="btn btn-sm btn-outline-primary add-service-btn" data-id="' + svc.id + '" data-name="' + escapeHtml(svc.name) + '"><i class="ti ti-plus"></i></button></div></div>';
+            html += '<button aria-label="Add" title="Add" type="button" class="btn btn-sm btn-outline-primary add-service-btn" data-id="' + svc.id + '" data-name="' + escapeHtml(svc.name) + '"><i class="ti ti-plus"></i></button></div></div>';
         });
         document.getElementById('servicesItems').innerHTML = html;
         document.querySelectorAll('.add-service-btn').forEach(btn => btn.addEventListener('click', function() {
@@ -476,7 +476,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<tr><td>' + escapeHtml(svc.name) + '<input type="hidden" name="services[' + idx + '][service_catalog_id]" value="' + svc.service_catalog_id + '"><input type="hidden" name="services[' + idx + '][quantity]" value="' + svc.quantity + '"></td>';
             html += '<td class="text-center"><div class="input-group input-group-sm" style="width:70px;"><button type="button" class="btn btn-outline-secondary btn-xs qty-dec" data-index="' + idx + '">-</button><span class="form-control form-control-sm text-center px-1">' + svc.quantity + '</span><button type="button" class="btn btn-outline-secondary btn-xs qty-inc" data-index="' + idx + '">+</button></div></td>';
             html += '<td class="text-end text-muted">\u20B5' + formatNumber(svc.price) + '</td><td class="text-end fw-medium">\u20B5' + formatNumber(svc.price * svc.quantity) + '</td>';
-            html += '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="' + idx + '"><i class="ti ti-trash"></i></button></td></tr>';
+            html += '<td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="' + idx + '"><i class="ti ti-trash"></i></button></td></tr>';
         });
         tbody.innerHTML = html;
         tbody.querySelectorAll('.remove-service-btn').forEach(b => b.addEventListener('click', function() { removeServiceFromBilling(parseInt(this.dataset.index)); }));

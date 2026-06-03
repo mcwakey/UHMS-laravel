@@ -60,7 +60,7 @@
                                             <td><span class="badge rounded-pill badge-soft-success">Active</span></td>
                                             <td>
                                                 <div class="dropdown d-inline-block">
-                                                    <a class="dropdown-toggle drop-arrow-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" class="dropdown-toggle drop-arrow-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical fs-18 text-muted"></i>
                                                     </a>
                                                     <ul class="dropdown-menu dropdown-menu-right">
@@ -82,7 +82,7 @@
                                             <td><span class="badge rounded-pill badge-soft-danger">Inactive</span></td>
                                             <td>
                                                 <div class="dropdown d-inline-block">
-                                                    <a class="dropdown-toggle drop-arrow-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" class="dropdown-toggle drop-arrow-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical fs-18 text-muted"></i>
                                                     </a>
                                                     <ul class="dropdown-menu dropdown-menu-right">
@@ -106,7 +106,7 @@
                                             </td>
                                             <td>
                                                 <div class="dropdown d-inline-block">
-                                                    <a class="dropdown-toggle drop-arrow-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" class="dropdown-toggle drop-arrow-none" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical fs-18 text-muted"></i>
                                                     </a>
                                                     <ul class="dropdown-menu dropdown-menu-right">
@@ -155,8 +155,8 @@
                                             <td>mark@example.com</td>
                                             <td><span class="badge bg-success">Active</span></td>
                                             <td class="text-right">                                                       
-                                                <a href="#"><i class="ti ti-pencil text-success font-18"></i></a>
-                                                <a href="#"><i class="ti ti-trash text-danger font-18"></i></a>
+                                                <a aria-label="Edit" title="Edit" href="#"><i class="ti ti-pencil text-success font-18"></i></a>
+                                                <a aria-label="Delete" title="Delete" href="#"><i class="ti ti-trash text-danger font-18"></i></a>
                                             </td>
                                         </tr>
                                         <tr>
@@ -170,8 +170,8 @@
                                             <td>jacob@example.com</td>
                                             <td><span class="badge bg-danger">Inactive</span></td>
                                             <td class="text-right">                                                       
-                                                <a href="#"><i class="ti ti-pencil text-success font-18"></i></a>
-                                                <a href="#"><i class="ti ti-trash text-danger font-18"></i></a>
+                                                <a aria-label="Edit" title="Edit" href="#"><i class="ti ti-pencil text-success font-18"></i></a>
+                                                <a aria-label="Delete" title="Delete" href="#"><i class="ti ti-trash text-danger font-18"></i></a>
                                             </td>
                                         </tr>
                                         <tr>
@@ -185,8 +185,8 @@
                                             <td>larry@example.com</td>
                                             <td><span class="badge bg-success">Active</span></td>
                                             <td class="text-right">                                                       
-                                                <a href="#"><i class="ti ti-pencil text-success font-18"></i></a>
-                                                <a href="#"><i class="ti ti-trash text-danger font-18"></i></a>
+                                                <a aria-label="Edit" title="Edit" href="#"><i class="ti ti-pencil text-success font-18"></i></a>
+                                                <a aria-label="Delete" title="Delete" href="#"><i class="ti ti-trash text-danger font-18"></i></a>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -339,9 +339,9 @@
                                             <td>Otto</td>
                                             <td>
                                                 <div class="d-inline-flex gap-2">
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-success rounded-pill"><i class="ti ti-download"></i></a>
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-info rounded-pill"><i class="ti ti-edit"></i></a>
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-danger rounded-pill"><i class="ti ti-trash"></i></a>
+                                                    <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-success rounded-pill"><i class="ti ti-download"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-info rounded-pill"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-danger rounded-pill"><i class="ti ti-trash"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -351,9 +351,9 @@
                                             <td>Thornton</td>
                                             <td>
                                                 <div class="d-inline-flex gap-2">
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-success rounded-pill"><i class="ti ti-download"></i></a>
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-info rounded-pill"><i class="ti ti-edit"></i></a>
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-danger rounded-pill"><i class="ti ti-trash"></i></a>
+                                                    <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-success rounded-pill"><i class="ti ti-download"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-info rounded-pill"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-danger rounded-pill"><i class="ti ti-trash"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -363,9 +363,9 @@
                                             <td>Dooley</td>
                                             <td>
                                                 <div class="d-inline-flex gap-2">
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-success rounded-pill"><i class="ti ti-download"></i></a>
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-info rounded-pill"><i class="ti ti-edit"></i></a>
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-danger rounded-pill"><i class="ti ti-trash"></i></a>
+                                                    <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-success rounded-pill"><i class="ti ti-download"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-info rounded-pill"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-icon btn-sm btn-soft-danger rounded-pill"><i class="ti ti-trash"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -403,8 +403,8 @@
                                             <td>Otto</td>
                                             <td>
                                                 <div class="d-inline-flex gap-2">
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-light"><i class="ti ti-download"></i></a>
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-light"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-icon btn-sm btn-light"><i class="ti ti-download"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="javascript:void(0);" class="btn btn-icon btn-sm btn-light"><i class="ti ti-edit"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -414,8 +414,8 @@
                                             <td>Thornton</td>
                                             <td>
                                                 <div class="d-inline-flex gap-2">
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-light"><i class="ti ti-download"></i></a>
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-light"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-icon btn-sm btn-light"><i class="ti ti-download"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="javascript:void(0);" class="btn btn-icon btn-sm btn-light"><i class="ti ti-edit"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -425,8 +425,8 @@
                                             <td>Dooley</td>
                                             <td>
                                                 <div class="d-inline-flex gap-2">
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-light"><i class="ti ti-download"></i></a>
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-light"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-icon btn-sm btn-light"><i class="ti ti-download"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="javascript:void(0);" class="btn btn-icon btn-sm btn-light"><i class="ti ti-edit"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -470,8 +470,8 @@
                                             <td>Otto</td>
                                             <td>
                                                 <div class="d-inline-flex gap-2">
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-success"><i class="ti ti-download"></i></a>
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-info"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-icon btn-sm btn-success"><i class="ti ti-download"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="javascript:void(0);" class="btn btn-icon btn-sm btn-info"><i class="ti ti-edit"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -481,8 +481,8 @@
                                             <td>Thornton</td>
                                             <td>
                                                 <div class="d-inline-flex gap-2">
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-success"><i class="ti ti-download"></i></a>
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-info"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-icon btn-sm btn-success"><i class="ti ti-download"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="javascript:void(0);" class="btn btn-icon btn-sm btn-info"><i class="ti ti-edit"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -492,8 +492,8 @@
                                             <td>Dooley</td>
                                             <td>
                                                 <div class="d-inline-flex gap-2">
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-success"><i class="ti ti-download"></i></a>
-                                                    <a href="javascript:void(0);" class="btn btn-icon btn-sm btn-info"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Download" title="Download" href="javascript:void(0);" class="btn btn-icon btn-sm btn-success"><i class="ti ti-download"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="javascript:void(0);" class="btn btn-icon btn-sm btn-info"><i class="ti ti-edit"></i></a>
                                                 </div>
                                             </td>
                                         </tr>
@@ -726,7 +726,7 @@
                                             <td>Mark</td>
                                             <td>Otto</td>
                                             <td class="text-center text-muted">
-                                                <a href="javascript: void(0);" class="link-reset fs-20 p-1"> <i class="ti ti-trash"></i></a>
+                                                <a aria-label="Delete" title="Delete" href="javascript: void(0);" class="link-reset fs-20 p-1"> <i class="ti ti-trash"></i></a>
                                             </td>
                                         </tr>
                                         <tr>
@@ -734,7 +734,7 @@
                                             <td>Jacob</td>
                                             <td>Thornton</td>
                                             <td class="text-center text-muted">
-                                                <a href="javascript: void(0);" class="link-reset fs-20 p-1"> <i class="ti ti-trash"></i></a>
+                                                <a aria-label="Delete" title="Delete" href="javascript: void(0);" class="link-reset fs-20 p-1"> <i class="ti ti-trash"></i></a>
                                             </td>
                                         </tr>
                                         <tr>
@@ -742,7 +742,7 @@
                                             <td>Larry</td>
                                             <td>Dooley</td>
                                             <td class="text-center text-muted">
-                                                <a href="javascript: void(0);" class="link-reset fs-20 p-1"> <i class="ti ti-trash"></i></a>
+                                                <a aria-label="Delete" title="Delete" href="javascript: void(0);" class="link-reset fs-20 p-1"> <i class="ti ti-trash"></i></a>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -777,7 +777,7 @@
                                             <td>Mark</td>
                                             <td>Otto</td>
                                             <td class="text-center text-muted">
-                                                <a href="javascript: void(0);" class="link-reset fs-20 p-1"> <i class="ti ti-settings"></i></a>
+                                                <a aria-label="Settings" title="Settings" href="javascript: void(0);" class="link-reset fs-20 p-1"> <i class="ti ti-settings"></i></a>
                                             </td>
                                         </tr>
                                         <tr>
@@ -785,7 +785,7 @@
                                             <td>Jacob</td>
                                             <td>Thornton</td>
                                             <td class="text-center text-muted">
-                                                <a href="javascript: void(0);" class="link-reset fs-20 p-1"> <i class="ti ti-settings"></i></a>
+                                                <a aria-label="Settings" title="Settings" href="javascript: void(0);" class="link-reset fs-20 p-1"> <i class="ti ti-settings"></i></a>
                                             </td>
                                         </tr>
                                         <tr>
@@ -793,7 +793,7 @@
                                             <td>Larry</td>
                                             <td>Dooley</td>
                                             <td class="text-center text-muted">
-                                                <a href="javascript: void(0);" class="link-reset fs-20 p-1"> <i class="ti ti-settings"></i></a>
+                                                <a aria-label="Settings" title="Settings" href="javascript: void(0);" class="link-reset fs-20 p-1"> <i class="ti ti-settings"></i></a>
                                             </td>
                                         </tr>
                                         <tr>
@@ -801,7 +801,7 @@
                                             <td>Mark</td>
                                             <td>Otto</td>
                                             <td class="text-center text-muted">
-                                                <a href="javascript: void(0);" class="link-reset fs-20 p-1"> <i class="ti ti-settings"></i></a>
+                                                <a aria-label="Settings" title="Settings" href="javascript: void(0);" class="link-reset fs-20 p-1"> <i class="ti ti-settings"></i></a>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -974,8 +974,8 @@
                                             <td><h6 class="mb-0 fs-14 fw-semibold">Cash on Delivery</h6></td>
                                             <td><span class="badge badge-boxed  badge-outline-warning">Pending</span></td>
                                             <td>
-                                                <a href="javascript: void(0);" class="link-reset fs-18 p-1"> <i class="ti ti-pencil"></i></a>
-                                                <a href="javascript: void(0);" class="link-reset fs-18 p-1"> <i class="ti ti-trash"></i></a>
+                                                <a aria-label="Edit" title="Edit" href="javascript: void(0);" class="link-reset fs-18 p-1"> <i class="ti ti-pencil"></i></a>
+                                                <a aria-label="Delete" title="Delete" href="javascript: void(0);" class="link-reset fs-18 p-1"> <i class="ti ti-trash"></i></a>
                                             </td>
                                         </tr>
                                         <tr>
@@ -994,8 +994,8 @@
                                             <td><h6 class="mb-0 fs-14 fw-semibold">Online Payment</h6></td>
                                             <td><span class="badge badge-outline-danger">Cancelled</span></td>
                                             <td>
-                                                <a href="javascript: void(0);" class="link-reset fs-18 p-1"> <i class="ti ti-pencil"></i></a>
-                                                <a href="javascript: void(0);" class="link-reset fs-18 p-1"> <i class="ti ti-trash"></i></a>
+                                                <a aria-label="Edit" title="Edit" href="javascript: void(0);" class="link-reset fs-18 p-1"> <i class="ti ti-pencil"></i></a>
+                                                <a aria-label="Delete" title="Delete" href="javascript: void(0);" class="link-reset fs-18 p-1"> <i class="ti ti-trash"></i></a>
                                             </td>
                                         </tr>
                                         <tr>
@@ -1014,8 +1014,8 @@
                                             <td><h6 class="mb-0 fs-14 fw-semibold">Cheque</h6></td>
                                             <td><span class="badge badge-outline-success">Completed</span></td>
                                             <td>
-                                                <a href="javascript: void(0);" class="link-reset fs-18 p-1"> <i class="ti ti-pencil"></i></a>
-                                                <a href="javascript: void(0);" class="link-reset fs-18 p-1"> <i class="ti ti-trash"></i></a>
+                                                <a aria-label="Edit" title="Edit" href="javascript: void(0);" class="link-reset fs-18 p-1"> <i class="ti ti-pencil"></i></a>
+                                                <a aria-label="Delete" title="Delete" href="javascript: void(0);" class="link-reset fs-18 p-1"> <i class="ti ti-trash"></i></a>
                                             </td>
                                         </tr>
                                     </tbody>

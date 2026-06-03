@@ -174,7 +174,7 @@
                             <td class="fw-semibold text-dark"> $800</td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success">Paid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -209,7 +209,7 @@
                             <td class="fw-semibold text-dark"> $930</td>
                             <td> <span class="badge badge-soft-warning rounded text-warning fw-medium border border-warning">Partially Paid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -244,7 +244,7 @@
                             <td class="fw-semibold text-dark"> $850</td>
                             <td> <span class="badge badge-soft-danger rounded text-danger fw-medium border border-danger">Unpaid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -279,7 +279,7 @@
                             <td class="fw-semibold text-dark"> $700</td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success">Paid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -314,7 +314,7 @@
                             <td class="fw-semibold text-dark"> $650</td>
                             <td> <span class="badge badge-soft-warning rounded text-warning fw-medium border border-warning">Partially Paid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -349,7 +349,7 @@
                             <td class="fw-semibold text-dark"> $430 </td>
                             <td> <span class="badge badge-soft-danger rounded text-danger fw-medium border border-danger">Unpaid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -384,7 +384,7 @@
                             <td class="fw-semibold text-dark"> $300</td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success">Paid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -419,7 +419,7 @@
                             <td class="fw-semibold text-dark"> $450</td>
                             <td> <span class="badge badge-soft-danger rounded text-danger fw-medium border border-danger">Unpaid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -454,7 +454,7 @@
                             <td class="fw-semibold text-dark"> $570</td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success"> Paid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -489,7 +489,7 @@
                             <td class="fw-semibold text-dark"> $800</td>
                             <td> <span class="badge badge-soft-danger rounded text-danger fw-medium border border-danger">Unpaid</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">

@@ -15,11 +15,11 @@
             </a>
 
             <!-- Sidebar Mobile Button -->
-            <a id="mobile_btn" class="mobile-btn" href="#sidebar">
+            <a aria-label="Menu deep" title="Menu deep" id="mobile_btn" class="mobile-btn" href="#sidebar">
                 <i class="ti ti-menu-deep fs-24"></i>
             </a>
 
-            <button class="sidenav-toggle-btn btn border-0 p-0 active" id="toggle_btn2">
+            <button aria-label="Next" title="Next" class="sidenav-toggle-btn btn border-0 p-0 active" id="toggle_btn2">
                 <i class="ti ti-arrow-right"></i>
             </button>
 
@@ -40,14 +40,14 @@
 
             <!-- Search for Mobile -->
             <div class="header-item d-flex d-lg-none me-2">
-                <button class="topbar-link btn btn-icon" data-bs-toggle="modal" data-bs-target="#searchModal" type="button">
+                <button aria-label="Search" title="Search" class="topbar-link btn btn-icon" data-bs-toggle="modal" data-bs-target="#searchModal" type="button">
                     <i class="ti ti-search fs-16"></i>
                 </button>
             </div>
 
             <!-- Light/Dark Mode Button -->
             <div class="header-item d-none d-sm-flex me-2">
-                <button class="topbar-link btn btn-icon topbar-link" id="light-dark-mode" type="button">
+                <button aria-label="Moon" title="Moon" class="topbar-link btn btn-icon topbar-link" id="light-dark-mode" type="button">
                     <i class="ti ti-moon fs-16"></i>
                 </button>
             </div>

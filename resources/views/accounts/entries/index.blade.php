@@ -92,11 +92,11 @@
                 <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
             </div>
             <div class="col-md-1">
-                <button type="submit" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button>
+                <button aria-label="Search" title="Search" type="submit" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button>
             </div>
             @if(request()->hasAny(['search', 'category_id', 'payment_method', 'date_from']))
             <div class="col-md-1">
-                <a href="{{ route($type === 'income' ? 'admin.accounts.income.index' : 'admin.accounts.expenses.index') }}" class="btn btn-outline-secondary w-100"><i class="ti ti-x"></i></a>
+                <a aria-label="Close" title="Close" href="{{ route($type === 'income' ? 'admin.accounts.income.index' : 'admin.accounts.expenses.index') }}" class="btn btn-outline-secondary w-100"><i class="ti ti-x"></i></a>
             </div>
             @endif
         </form>
@@ -140,7 +140,7 @@
                         </td>
                         <td class="text-end">
                             <div class="dropdown">
-                                <button type="button" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
+                                <button aria-label="Actions" title="Actions" type="button" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">

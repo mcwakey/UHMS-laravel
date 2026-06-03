@@ -174,7 +174,7 @@
                                         <form method="POST" action="{{ route('admin.theatre.rooms.blocks.destroy', $block) }}" onsubmit="return confirm('Remove this room block?')">
                                             @csrf
                                             @method('DELETE')
-                                            <button class="btn btn-outline-danger btn-sm"><i class="ti ti-trash"></i></button>
+                                            <button aria-label="Delete" title="Delete" class="btn btn-outline-danger btn-sm"><i class="ti ti-trash"></i></button>
                                         </form>
                                     @endcan
                                 </td>

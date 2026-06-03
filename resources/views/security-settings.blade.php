@@ -130,56 +130,56 @@
                                                         <h6 class="fs-14 fw-semibold">Chrome - Windows</h6>
                                                         <span class="fs-13">30 Apr 2025, 11:15 AM</span>
                                                     </div>
-                                                    <a href="javascript:void(0);" class="btn btn-md bg-white border shadow-sm p-1"><i class="ti ti-logout"></i></a>
+                                                    <a aria-label="Logout" title="Logout" href="javascript:void(0);" class="btn btn-md bg-white border shadow-sm p-1"><i class="ti ti-logout"></i></a>
                                                 </div>
                                                 <div class="d-flex align-items-center justify-content-between p-2 border-bottom">
                                                     <div>
                                                         <h6 class="fs-14 fw-semibold">Safari Macos</h6>
                                                         <span class="fs-13">30 Apr 2025, 11:15 AM</span>
                                                     </div>
-                                                    <a href="javascript:void(0);" class="btn btn-md bg-white border shadow-sm p-1"><i class="ti ti-logout"></i></a>
+                                                    <a aria-label="Logout" title="Logout" href="javascript:void(0);" class="btn btn-md bg-white border shadow-sm p-1"><i class="ti ti-logout"></i></a>
                                                 </div>
                                                 <div class="d-flex align-items-center justify-content-between p-2 border-bottom">
                                                     <div>
                                                         <h6 class="fs-14 fw-semibold">Chrome - Windows</h6>
                                                         <span class="fs-13">30 Apr 2025, 11:15 AM</span>
                                                     </div>
-                                                    <a href="javascript:void(0);" class="btn btn-md bg-white border shadow-sm p-1"><i class="ti ti-logout"></i></a>
+                                                    <a aria-label="Logout" title="Logout" href="javascript:void(0);" class="btn btn-md bg-white border shadow-sm p-1"><i class="ti ti-logout"></i></a>
                                                 </div>
                                                 <div class="d-flex align-items-center justify-content-between p-2 border-bottom">
                                                     <div>
                                                         <h6 class="fs-14 fw-semibold">Chrome - Windows</h6>
                                                         <span class="fs-13">19 Mar 2025, 02:50 PM</span>
                                                     </div>
-                                                    <a href="javascript:void(0);" class="btn btn-md bg-white border shadow-sm p-1"><i class="ti ti-logout"></i></a>
+                                                    <a aria-label="Logout" title="Logout" href="javascript:void(0);" class="btn btn-md bg-white border shadow-sm p-1"><i class="ti ti-logout"></i></a>
                                                 </div>
                                                 <div class="d-flex align-items-center justify-content-between p-2 border-bottom">
                                                     <div>
                                                         <h6 class="fs-14 fw-semibold">Firefox Windows</h6>
                                                         <span class="fs-13">20 Feb 2025, 06:20 PM</span>
                                                     </div>
-                                                    <a href="javascript:void(0);" class="btn btn-md bg-white border shadow-sm p-1"><i class="ti ti-logout"></i></a>
+                                                    <a aria-label="Logout" title="Logout" href="javascript:void(0);" class="btn btn-md bg-white border shadow-sm p-1"><i class="ti ti-logout"></i></a>
                                                 </div>
                                                 <div class="d-flex align-items-center justify-content-between p-2 border-bottom">
                                                     <div>
                                                         <h6 class="fs-14 fw-semibold">Chrome - Windows</h6>
                                                         <span class="fs-13">18 Jan 2025, 03:15 PM</span>
                                                     </div>
-                                                    <a href="javascript:void(0);" class="btn btn-md bg-white border shadow-sm p-1"><i class="ti ti-logout"></i></a>
+                                                    <a aria-label="Logout" title="Logout" href="javascript:void(0);" class="btn btn-md bg-white border shadow-sm p-1"><i class="ti ti-logout"></i></a>
                                                 </div>
                                                 <div class="d-flex align-items-center justify-content-between p-2 border-bottom">
                                                     <div>
                                                         <h6 class="fs-14 fw-semibold">Safari Macos</h6>
                                                         <span class="fs-13">02 Jan 2025, 09:30 AM</span>
                                                     </div>
-                                                    <a href="javascript:void(0);" class="btn btn-md bg-white border shadow-sm p-1"><i class="ti ti-logout"></i></a>
+                                                    <a aria-label="Logout" title="Logout" href="javascript:void(0);" class="btn btn-md bg-white border shadow-sm p-1"><i class="ti ti-logout"></i></a>
                                                 </div>
                                                 <div class="d-flex align-items-center justify-content-between p-2">
                                                     <div>
                                                         <h6 class="fs-14 fw-semibold">Firefox Windows</h6>
                                                         <span class="fs-13">28 Dec 2024, 05:40 PM</span>
                                                     </div>
-                                                    <a href="javascript:void(0);" class="btn btn-md bg-white border shadow-sm p-1"><i class="ti ti-logout"></i></a>
+                                                    <a aria-label="Logout" title="Logout" href="javascript:void(0);" class="btn btn-md bg-white border shadow-sm p-1"><i class="ti ti-logout"></i></a>
                                                 </div>
                                             </div><!-- end card -->
                                         </div><!-- end card -->

@@ -25,7 +25,7 @@
                 </div>
             </div>
 
-            <table class="table table-sm" id="receiveTable">
+            <div class="table-responsive"><table class="table table-sm" id="receiveTable">
                 <thead>
                     <tr>
                         <th style="width:34%;">Product *</th>
@@ -53,7 +53,7 @@
                         <td class="text-end"><button type="button" class="btn btn-sm btn-link text-danger remove-row">×</button></td>
                     </tr>
                 </tbody>
-            </table>
+            </table></div>
 
             <button type="button" class="btn btn-sm btn-outline-primary" id="addRow"><i class="ti ti-plus"></i> Add item</button>
         </div>

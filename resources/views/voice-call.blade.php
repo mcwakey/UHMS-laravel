@@ -42,7 +42,7 @@
                                         <span class="fs-13 d-block">Online</span>
                                     </div>
                                 </div>
-                                <a href="#" class="avatar avatar-md rounded-circle bg-light text-dark">
+                                <a aria-label="User plus" title="User plus" href="#" class="avatar avatar-md rounded-circle bg-light text-dark">
                                     <i class="ti ti-user-plus fs-20"></i>
                                 </a>
                             </div>
@@ -57,9 +57,9 @@
                         </div> <!-- end card-body -->
                         <div class="card-footer">
                             <div class="d-flex align-items-center justify-content-center">
-                                <a href="#" class="btn btn-light btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center me-3"><i class="ti ti-video fs-20"></i></a>
-                                <a href="#" class="btn btn-danger btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center me-3"><i class="ti ti-phone fs-20"></i></a>
-                                <a href="#" class="btn btn-light btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center"><i class="ti ti-microphone fs-20"></i></a>
+                                <a aria-label="Video" title="Video" href="#" class="btn btn-light btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center me-3"><i class="ti ti-video fs-20"></i></a>
+                                <a aria-label="Phone" title="Phone" href="#" class="btn btn-danger btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center me-3"><i class="ti ti-phone fs-20"></i></a>
+                                <a aria-label="Microphone" title="Microphone" href="#" class="btn btn-light btn-icon rounded-circle p-0 d-flex align-items-center justify-content-center"><i class="ti ti-microphone fs-20"></i></a>
                             </div>
                         </div> <!-- end card-footer -->
                     </div> <!-- end card -->

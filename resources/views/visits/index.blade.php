@@ -102,8 +102,8 @@
                 </div>
                 <div class="col-md-1">
                     <div class="d-flex gap-1">
-                        <button type="submit" class="btn btn-primary"><i class="ti ti-filter"></i></button>
-                        <a href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary"><i class="ti ti-x"></i></a>
+                        <button aria-label="Filter" title="Filter" type="submit" class="btn btn-primary"><i class="ti ti-filter"></i></button>
+                        <a aria-label="Close" title="Close" href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary"><i class="ti ti-x"></i></a>
                     </div>
                 </div>
             </div>
@@ -164,7 +164,7 @@
                         <td>{{ $visit->duration ?? '—' }}</td>
                         <td class="text-end">
                             <div class="dropdown">
-                                <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown">
+                                <button aria-label="Actions" title="Actions" class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">

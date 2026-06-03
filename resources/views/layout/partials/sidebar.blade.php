@@ -36,12 +36,12 @@
                 <img src="{{URL::asset('build/img/logo-white.svg')}}" alt="Logo">
             </a>
         </div>
-        <button class="sidenav-toggle-btn btn border-0 p-0 active" id="toggle_btn"> 
+        <button aria-label="Back" title="Back" class="sidenav-toggle-btn btn border-0 p-0 active" id="toggle_btn"> 
             <i class="ti ti-arrow-left"></i>
         </button>
 
         <!-- Sidebar Menu Close -->
-        <button class="sidebar-close">
+        <button aria-label="Close" title="Close" class="sidebar-close">
             <i class="ti ti-x align-middle"></i>
         </button>                
     </div>
@@ -926,7 +926,7 @@
                     <h6 class="fs-14 fw-semibold mb-1">Upgrade To Pro</h6>
                     <p class="fs-13 mb-0">Check 1 min video and begin use Preclinic like a pro</p>
                 </div>
-                <a href="javascript:void(0);" class="close-icon shadow-sm"><i class="ti ti-x"></i></a>
+                <a aria-label="Close" title="Close" href="javascript:void(0);" class="close-icon shadow-sm"><i class="ti ti-x"></i></a>
             </div>
         </div>
     </div>

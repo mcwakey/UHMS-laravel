@@ -134,7 +134,7 @@
                                                 <div class="d-flex align-items-center justify-content-between">
                                                     <span class="badge badge-outline-warning d-inline-flex align-items-center"><i class="ti ti-circle-filled fs-7 me-1"></i>Medium</span>
                                                     <div>
-                                                        <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false"><i class="ti ti-dots-vertical"></i></a>
+                                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false"><i class="ti ti-dots-vertical"></i></a>
                                                         <div class="dropdown-menu notes-menu dropdown-menu-end">
                                                             <a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#edit-note-units"><span><i class="ti ti-edit me-1"></i></span>Edit</a>
                                                             <a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#delete_modal"><span><i class="ti ti-trash me-1"></i></span>Delete</a>
@@ -175,7 +175,7 @@
                                                     <span class="badge badge-outline-danger d-inline-flex align-items-center"><i
                                                         class="ti ti-circle-filled fs-7 me-1"></i>Low</span>
                                                     <div>
-                                                        <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                                                             <i class="ti ti-dots-vertical"></i>
                                                         </a>
                                                         <div class="dropdown-menu notes-menu dropdown-menu-end">
@@ -222,7 +222,7 @@
                                                     <span class="badge badge-outline-danger d-inline-flex align-items-center"><i
                                                         class="ti ti-circle-filled fs-7 me-1"></i>Low</span>
                                                     <div>
-                                                        <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                                                             <i class="ti ti-dots-vertical"></i>
                                                         </a>
                                                         <div class="dropdown-menu notes-menu dropdown-menu-end">
@@ -276,7 +276,7 @@
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <span class="badge badge-outline-success d-inline-flex align-items-center"><i class="ti ti-circle-filled fs-7 me-1"></i>High</span>
                                                 <div>
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <div class="dropdown-menu notes-menu dropdown-menu-end">
@@ -318,7 +318,7 @@
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <span class="badge badge-outline-danger d-inline-flex align-items-center"><i class="ti ti-circle-filled fs-7 me-1"></i>Low</span>
                                                 <div>
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <div class="dropdown-menu notes-menu dropdown-menu-end">
@@ -361,7 +361,7 @@
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <span class="badge badge-outline-warning d-inline-flex align-items-center"><i class="ti ti-circle-filled fs-7 me-1"></i>Medium</span>
                                                 <div>
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <div class="dropdown-menu notes-menu dropdown-menu-end">
@@ -403,7 +403,7 @@
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <span class="badge badge-outline-success d-inline-flex align-items-center"><i class="ti ti-circle-filled fs-7 me-1"></i>High</span>
                                                 <div>
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <div class="dropdown-menu notes-menu dropdown-menu-end">
@@ -445,7 +445,7 @@
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <span class="badge badge-outline-danger d-inline-flex align-items-center"><i class="ti ti-circle-filled fs-7 me-1"></i>Low</span>
                                                 <div>
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <div class="dropdown-menu notes-menu dropdown-menu-end">
@@ -487,7 +487,7 @@
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <span class="badge badge-outline-info d-inline-flex align-items-center"><i class="ti ti-circle-filled fs-7 me-1"></i>medium</span>
                                                 <div>
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <div class="dropdown-menu notes-menu dropdown-menu-end">
@@ -541,7 +541,7 @@
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <span class="badge badge-outline-success d-inline-flex align-items-center"><i class="ti ti-circle-filled fs-7 me-1"></i>High</span>
                                                 <div>
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <div class="dropdown-menu notes-menu dropdown-menu-end">
@@ -583,7 +583,7 @@
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <span class="badge badge-outline-danger d-inline-flex align-items-center"><i class="ti ti-circle-filled fs-7 me-1"></i>Low</span>
                                                 <div>
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <div class="dropdown-menu notes-menu dropdown-menu-end">
@@ -625,7 +625,7 @@
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <span class="badge badge-outline-warning d-inline-flex align-items-center"><i class="ti ti-circle-filled fs-7 me-1"></i>Medium</span>
                                                 <div>
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <div class="dropdown-menu notes-menu dropdown-menu-end">
@@ -668,7 +668,7 @@
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <span class="badge badge-outline-success d-inline-flex align-items-center"><i class="ti ti-circle-filled fs-7 me-1"></i>High</span>
                                                 <div>
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <div class="dropdown-menu notes-menu dropdown-menu-end">
@@ -711,7 +711,7 @@
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <span class="badge badge-outline-danger d-inline-flex align-items-center"><i class="ti ti-circle-filled fs-7 me-1"></i>Low</span>
                                                 <div>
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <div class="dropdown-menu notes-menu dropdown-menu-end">
@@ -754,7 +754,7 @@
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <span class="badge badge-outline-info d-inline-flex align-items-center"><i class="ti ti-circle-filled fs-7 me-1"></i>medium</span>
                                                 <div>
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <div class="dropdown-menu notes-menu dropdown-menu-end">
@@ -814,7 +814,7 @@
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <span class="badge badge-outline-success d-inline-flex align-items-center"><i class="ti ti-circle-filled fs-7 me-1"></i>High</span>
                                                 <div>
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <div class="dropdown-menu notes-menu dropdown-menu-end">
@@ -856,7 +856,7 @@
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <span class="badge badge-outline-danger d-inline-flex align-items-center"><i class="ti ti-circle-filled fs-7 me-1"></i>Low</span>
                                                 <div>
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <div class="dropdown-menu notes-menu dropdown-menu-end">
@@ -898,7 +898,7 @@
                                             <div class="d-flex align-items-center justify-content-between">
                                                 <span class="badge badge-outline-info d-inline-flex align-items-center"><i class="ti ti-circle-filled fs-7 me-1"></i>medium</span>
                                                 <div>
-                                                    <a href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown" aria-expanded="false">
                                                         <i class="ti ti-dots-vertical"></i>
                                                     </a>
                                                     <div class="dropdown-menu notes-menu dropdown-menu-end">

@@ -263,7 +263,7 @@
                 <h6 class="card-title mb-0 fw-semibold">Patient Details</h6>
             </div>
             <div class="card-body p-0">
-                <table class="table table-sm table-borderless mb-0 px-2">
+                <div class="table-responsive"><table class="table table-sm table-borderless mb-0 px-2">
                     <tr><td class="text-muted ps-3">Name</td><td class="fw-medium">{{ $preselectedVisit->patient->full_name }}</td></tr>
                     <tr><td class="text-muted ps-3">ID</td><td>{{ $preselectedVisit->patient->patient_number }}</td></tr>
                     <tr><td class="text-muted ps-3">Age / Gender</td><td>{{ $preselectedVisit->patient->age ?? 'N/A' }} / {{ $preselectedVisit->patient->gender->label() }}</td></tr>
@@ -271,7 +271,7 @@
                     @if($preselectedVisit->patient->allergies)
                     <tr><td class="text-muted ps-3">Allergies</td><td class="text-danger fw-semibold">{{ $preselectedVisit->patient->allergies }}</td></tr>
                     @endif
-                </table>
+                </table></div>
             </div>
         </div> --}}
         @else
@@ -338,7 +338,7 @@
                     @if(!$ins->is_valid)
                     <div class="alert alert-danger py-1 mb-2 small"><i class="ti ti-alert-triangle me-1"></i>Insurance is <strong>{{ $ins->is_expired ? 'expired' : 'inactive' }}</strong> — billing will be CASH</div>
                     @endif
-                    <table class="table table-sm table-borderless mb-2">
+                    <div class="table-responsive"><table class="table table-sm table-borderless mb-2">
                         <tr><td class="text-muted">Provider</td><td class="fw-semibold">{{ $insProvider->name }}</td></tr>
                         <tr><td class="text-muted">Tier</td><td>{{ $insTier?->name ?? '—' }}</td></tr>
                         <tr><td class="text-muted">Member</td><td>{{ $ins->membership_number ?? '—' }} <span class="badge bg-secondary ms-1">{{ ucfirst($memberType) }}</span></td></tr>
@@ -379,7 +379,7 @@
                         @if($insConstraints['expiry_date'] ?? false)
                         <tr><td class="text-muted">Expires</td><td>{{ $ins->expiry_date->format('d M Y') }}</td></tr>
                         @endif
-                    </table>
+                    </table></div>
                     @if($ins->is_valid && ($insConstraints['annual_limit'] ?? null) !== null && ($ins->remaining_annual_limit ?? 0) <= 0)
                     <div class="alert alert-warning py-1 small mb-0"><i class="ti ti-alert-circle me-1"></i>Annual limit exhausted — billing will be CASH</div>
                     @endif
@@ -405,7 +405,7 @@
                 <div id="billingDaysInfo" class="alert alert-light py-1 text-center mb-3 small text-muted">
                     Set expected discharge date to calculate billing
                 </div>
-                <table class="table table-sm table-borderless mb-0">
+                <div class="table-responsive"><table class="table table-sm table-borderless mb-0">
                     <thead class="table-light">
                         <tr>
                             <th>Description</th>
@@ -472,7 +472,7 @@
                             <td class="text-end text-primary" id="billingTotal">GH₵ 0.00</td>
                         </tr>
                     </tfoot>
-                </table>
+                </table></div>
                 <small class="text-muted d-block pb-2 text-center">Amounts are editable before completing admission</small>
             </div>
         </div>
@@ -483,7 +483,7 @@
                 <h6 class="card-title mb-0 fw-semibold">Available Beds</h6>
             </div>
             <div class="card-body p-0">
-                <table class="table table-sm mb-0">
+                <div class="table-responsive"><table class="table table-sm mb-0">
                     <thead class="table-light">
                         <tr><th>Ward</th><th class="text-center">Free</th></tr>
                     </thead>
@@ -498,7 +498,7 @@
                         </tr>
                         @endforeach
                     </tbody>
-                </table>
+                </table></div>
             </div>
         </div>
 

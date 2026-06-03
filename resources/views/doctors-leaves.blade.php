@@ -176,7 +176,7 @@
                             <td>01 Day</td>
                             <td>22 Apr 2025</td>
                             <td> <span class="badge badge-info badge-sm text-info border-info border rounded"> Applied </span> </td>
-                            <td class="action-item"> <a href="" class="" data-bs-toggle="modal" data-bs-target="#cancel-leave"> <i class="ti ti-x"></i> </a> </td>
+                            <td class="action-item"> <a aria-label="Close" title="Close" href="" class="" data-bs-toggle="modal" data-bs-target="#cancel-leave"> <i class="ti ti-x"></i> </a> </td>
                         </tr>
 
                         <tr>
@@ -188,7 +188,7 @@
                             <td>22 Apr 2025</td>
                             <td> <span class="badge badge-info badge-sm text-info border-info border rounded"> Applied </span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -211,7 +211,7 @@
                             <td>12 Apr 2025</td>
                             <td> <span class="badge badge-success badge-sm text-success border-success border rounded"> Approved </span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -234,7 +234,7 @@
                             <td>01 Apr 2025</td>
                             <td> <span class="badge badge-danger badge-sm text-danger border-danger border rounded"> Rejected </span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -257,7 +257,7 @@
                             <td>05 Mar 2025</td>
                             <td> <span class="badge badge-success badge-sm text-success border-success border rounded"> Approved </span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -280,7 +280,7 @@
                             <td>20 Mar 2025</td>
                             <td> <span class="badge badge-danger badge-sm text-danger border-danger border rounded"> Rejected </span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -303,7 +303,7 @@
                             <td>01 Mar 2025</td>
                             <td> <span class="badge badge-success badge-sm text-success border-success border rounded"> Approved </span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -326,7 +326,7 @@
                             <td>15 Feb 2025</td>
                             <td> <span class="badge badge-success badge-sm text-success border-success border rounded"> Approved </span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -349,7 +349,7 @@
                             <td>09 Feb 2025</td>
                             <td> <span class="badge badge-danger badge-sm text-danger border-danger border rounded"> Rejected </span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -372,7 +372,7 @@
                             <td>01 Feb 2025</td>
                             <td> <span class="badge badge-info badge-sm text-info border-info border rounded"> Applied </span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -395,7 +395,7 @@
                             <td>12 Jan 2025</td>
                             <td> <span class="badge badge-success badge-sm text-success border-success border"> Approved </span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">

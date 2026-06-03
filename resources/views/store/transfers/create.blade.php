@@ -94,7 +94,7 @@
                             <td class="available-qty text-center align-middle text-muted">-</td>
                             <td><input type="number" name="items[0][quantity]" class="form-control form-control-sm qty-input" value="1" min="1" required></td>
                             <td><input type="text" name="items[0][batch_number]" class="form-control form-control-sm" placeholder="Batch #"></td>
-                            <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
+                            <td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
                         </tr>
                     </tbody>
                 </table>
@@ -136,7 +136,7 @@ $(document).ready(function() {
             <td class="available-qty text-center align-middle text-muted">-</td>
             <td><input type="number" name="items[${itemIndex}][quantity]" class="form-control form-control-sm qty-input" value="1" min="1" required></td>
             <td><input type="text" name="items[${itemIndex}][batch_number]" class="form-control form-control-sm" placeholder="Batch #"></td>
-            <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
+            <td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
         </tr>`;
         $('#itemsBody').append(row);
         itemIndex++;

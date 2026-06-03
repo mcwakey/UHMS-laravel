@@ -41,7 +41,7 @@
                             <td><a href="{{url('permissions')}}" class="btn btn-white border text-dark"><i class="ti ti-shield-half me-1"></i>Permissions</a></td>
                             <td>
                                 <div class="action-item">
-                                    <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu p-2">
@@ -62,7 +62,7 @@
                             <td><a href="{{url('permissions')}}" class="btn btn-white border text-dark"><i class="ti ti-shield-half me-1"></i>Permissions</a></td>
                             <td>
                                 <div class="action-item">
-                                    <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu p-2">
@@ -83,7 +83,7 @@
                             <td><a href="{{url('permissions')}}" class="btn btn-white border text-dark"><i class="ti ti-shield-half me-1"></i>Permissions</a></td>
                             <td>
                                 <div class="action-item">
-                                    <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu p-2">
@@ -104,7 +104,7 @@
                             <td><a href="{{url('permissions')}}" class="btn btn-white border text-dark"><i class="ti ti-shield-half me-1"></i>Permissions</a></td>
                             <td>
                                 <div class="action-item">
-                                    <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu p-2">
@@ -125,7 +125,7 @@
                             <td><a href="{{url('permissions')}}" class="btn btn-white border text-dark"><i class="ti ti-shield-half me-1"></i>Permissions</a></td>
                             <td>
                                 <div class="action-item">
-                                    <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu p-2">
@@ -146,7 +146,7 @@
                             <td><a href="{{url('permissions')}}" class="btn btn-white border text-dark"><i class="ti ti-shield-half me-1"></i>Permissions</a></td>
                             <td>
                                 <div class="action-item">
-                                    <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu p-2">

@@ -39,7 +39,7 @@
                             <td> <a href="">Medical Supplies</a></td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success fs-13">Active</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -57,7 +57,7 @@
                             <td> <a href="">Laboratory</a></td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success fs-13">Active</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -75,7 +75,7 @@
                             <td> <a href="">Cleaning Services</a></td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success fs-13">Active</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -93,7 +93,7 @@
                             <td> <a href="">Salary</a></td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success fs-13">Active</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -111,7 +111,7 @@
                             <td> <a href="">Utilities</a></td>
                             <td> <span class="badge badge-soft-danger rounded text-danger fw-medium border border-danger fs-13">Inactive</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -129,7 +129,7 @@
                             <td> <a href="">Medical Supplies</a></td>
                             <td> <span class="badge badge-soft-danger rounded text-danger fw-medium border border-danger fs-13">Inactive</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">

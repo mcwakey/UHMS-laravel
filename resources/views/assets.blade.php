@@ -342,7 +342,7 @@
                             <td>$2587</td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success">Approved</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -375,7 +375,7 @@
                             <td>$47810</td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success">Approved</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -408,7 +408,7 @@
                             <td>$54789</td>
                             <td> <span class="badge badge-soft-danger rounded text-danger fw-medium border border-danger">Pending</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -441,7 +441,7 @@
                             <td>$21770</td>
                             <td> <span class="badge badge-soft-danger rounded text-danger fw-medium border border-danger">Pending</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -474,7 +474,7 @@
                             <td> $32580</td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success">Approved</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -507,7 +507,7 @@
                             <td> $32547</td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success">Approved</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -540,7 +540,7 @@
                             <td> $54100</td>
                             <td> <span class="badge badge-soft-warning rounded text-warning fw-medium border border-warning"> Returned</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -573,7 +573,7 @@
                             <td> $246798</td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success">Approved</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -606,7 +606,7 @@
                             <td> $12011</td>
                             <td> <span class="badge badge-soft-success rounded text-success fw-medium border border-success">Approved</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">
@@ -639,7 +639,7 @@
                             <td> $35421</td>
                             <td> <span class="badge badge-soft-danger rounded text-danger fw-medium border border-danger">Pending</span> </td>
                             <td class="action-item">
-                                <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </a>
                                 <ul class="dropdown-menu p-2">

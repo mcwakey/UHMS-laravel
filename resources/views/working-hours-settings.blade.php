@@ -238,8 +238,8 @@
                                                             <i class="ti ti-clock text-gray-7"></i>
                                                         </span>
                                                     </div>
-                                                    <a href="javascript:void(0);" class="btn btn-white p-2 border rounded-2 me-2"><i class="ti ti-edit"></i></a>
-                                                    <a href="javascript:void(0);" class="btn btn-white p-2 border rounded-2"><i class="ti ti-trash"></i></a>
+                                                    <a aria-label="Edit" title="Edit" href="javascript:void(0);" class="btn btn-white p-2 border rounded-2 me-2"><i class="ti ti-edit"></i></a>
+                                                    <a aria-label="Delete" title="Delete" href="javascript:void(0);" class="btn btn-white p-2 border rounded-2"><i class="ti ti-trash"></i></a>
                                                 </div>
                                             </div><!-- end col -->
                                             </div>

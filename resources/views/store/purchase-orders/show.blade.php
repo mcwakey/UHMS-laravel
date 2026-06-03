@@ -193,7 +193,7 @@
                                 <td class="text-end">
                                     <form method="POST" action="{{ route('admin.store.purchase-orders.remove-item', $item) }}" class="d-inline" onsubmit="return confirm('Remove this item?')">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <button aria-label="Delete" title="Delete" type="submit" class="btn btn-sm btn-outline-danger">
                                             <i class="ti ti-trash"></i>
                                         </button>
                                     </form>

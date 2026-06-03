@@ -62,7 +62,7 @@
                             </div>
                             <div class="col-auto">
                                 <!-- Button -->
-                                <a href="" class="btn btn-link btn-lg text-muted" data-dz-remove>
+                                <a aria-label="Close" title="Close" href="" class="btn btn-link btn-lg text-muted" data-dz-remove>
                                     <i class="ti ti-x"></i>
                                 </a>
                             </div>

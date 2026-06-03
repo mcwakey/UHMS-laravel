@@ -54,7 +54,7 @@
             {{-- </div> --}}
             <div class="col-md-1">
                 <button type="submit" class="btn btn-outline-primary btn-md"><i class="ti ti-filter me-1"></i>Filter</button>
-                <a href="{{ route('admin.patients.index') }}" class="btn btn-outline-secondary btn-md ms-1"><i class="ti ti-x me-1"></i></a>
+                <a aria-label="Close" title="Close" href="{{ route('admin.patients.index') }}" class="btn btn-outline-secondary btn-md ms-1"><i class="ti ti-x me-1"></i></a>
             </div>
         </form>
     </div>
@@ -142,7 +142,7 @@
                                 @endif
                                 @endcan
                                 <div class="dropdown">
-                                    <a href="javascript:void(0);" class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                                    <a aria-label="Actions" title="Actions" href="javascript:void(0);" class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
                                         <i class="ti ti-dots-vertical"></i>
                                     </a>
                                     <ul class="dropdown-menu dropdown-menu-end">

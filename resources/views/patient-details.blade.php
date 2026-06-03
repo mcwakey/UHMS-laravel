@@ -41,9 +41,9 @@
                     <div class="col-xl-3 col-lg-4">
                         <div class="p-3 text-lg-end">
                             <div class="mb-4">
-                                <a href="javascript:void(0);" class="btn btn-outline-white shadow-sm rounded-circle d-inline-flex align-items-center p-2 fs-14 me-2"><i class="ti ti-phone"></i></a>
-                                <a href="javascript:void(0);" class="btn btn-outline-white shadow-sm rounded-circle d-inline-flex align-items-center p-2 fs-14 me-2"><i class="ti ti-message-circle"></i></a>
-                                <a href="javascript:void(0);" class="btn btn-outline-white shadow-sm rounded-circle d-inline-flex align-items-center p-2 fs-14"><i class="ti ti-video"></i></a>
+                                <a aria-label="Phone" title="Phone" href="javascript:void(0);" class="btn btn-outline-white shadow-sm rounded-circle d-inline-flex align-items-center p-2 fs-14 me-2"><i class="ti ti-phone"></i></a>
+                                <a aria-label="Message circle" title="Message circle" href="javascript:void(0);" class="btn btn-outline-white shadow-sm rounded-circle d-inline-flex align-items-center p-2 fs-14 me-2"><i class="ti ti-message-circle"></i></a>
+                                <a aria-label="Video" title="Video" href="javascript:void(0);" class="btn btn-outline-white shadow-sm rounded-circle d-inline-flex align-items-center p-2 fs-14"><i class="ti ti-video"></i></a>
                             </div>
                             <a href="{{url('new-appointment')}}" class="btn btn-primary"><i class="ti ti-calendar-event me-1"></i>Book Apppointment</a>
                         </div>
@@ -532,7 +532,7 @@
                                     </td>
                                     <td> <span class="badge fs-13 badge-soft-info rounded text-info fw-medium">Checked Out</span> </td>
                                     <td class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -564,7 +564,7 @@
                                     </td>
                                     <td> <span class="badge fs-13 badge-soft-warning rounded text-warning fw-medium">Checked In</span> </td>
                                     <td class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -596,7 +596,7 @@
                                     </td>
                                     <td> <span class="badge fs-13 badge-soft-danger rounded text-danger fw-medium">Cancelled</span> </td>
                                     <td class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -628,7 +628,7 @@
                                     </td>
                                     <td> <span class="badge fs-13 badge-soft-info rounded text-info fw-medium">Schedule</span> </td>
                                     <td class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -661,7 +661,7 @@
                                     </td>
                                     <td> <span class="badge fs-13 badge-soft-success rounded text-success fw-medium">Confirmed</span> </td>
                                     <td class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -693,7 +693,7 @@
                                     </td>
                                     <td> <span class="badge fs-13 badge-soft-danger rounded text-danger fw-medium">Cancelled</span> </td>
                                     <td class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -725,7 +725,7 @@
                                     </td>
                                     <td> <span class="badge fs-13 badge-soft-success rounded text-success fw-medium">Confirmed</span> </td>
                                     <td class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -757,7 +757,7 @@
                                     </td>
                                     <td> <span class="badge fs-13 badge-soft-info rounded text-info fw-medium">Checked Out</span> </td>
                                     <td class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -789,7 +789,7 @@
                                     </td>
                                     <td> <span class="badge fs-13 badge-soft-primary rounded text-primary fw-medium">Schedule</span> </td>
                                     <td class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">
@@ -821,7 +821,7 @@
                                     </td>
                                     <td> <span class="badge fs-13 badge-soft-danger rounded text-danger fw-medium">cancelled</span> </td>
                                     <td class="action-item">
-                                        <a href="javascript:void(0);" data-bs-toggle="dropdown">
+                                        <a aria-label="Actions" title="Actions" href="javascript:void(0);" data-bs-toggle="dropdown">
                                             <i class="ti ti-dots-vertical"></i>
                                         </a>
                                         <ul class="dropdown-menu p-2">

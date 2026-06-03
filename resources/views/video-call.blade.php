@@ -46,17 +46,17 @@
                                 <div class="me-2">
                                     <span class="bg-light-subtle rounded badge text-dark p-2 d-inline-flex align-items-center"><i class="ti ti-circle-filled me-1"></i>40:12</span>
                                 </div>
-                                <a href="javascript:void(0);" class="btn p-0 avatar-sm btn-light btnFullscreen	">
+                                <a aria-label="Maximize" title="Maximize" href="javascript:void(0);" class="btn p-0 avatar-sm btn-light btnFullscreen	">
                                     <i class="ti ti-maximize"></i> 
                                 </a>
                             </div>
                             <div class="d-flex justify-content-center align-items-center flex-wrap w-100 position-absolute bottom-0 z-2 p-2">
                                 <div class="bg-light bg-opacity-50 px-3 py-2 rounded-pill d-flex justify-content-center align-items-center">
-                                    <a href="javascript:void(0);" class="bg-light btn-icon btn-sm bg-light d-flex justify-content-center align-items-center rounded me-2"><i class="ti ti-microphone"></i></a>
-                                    <a href="javascript:void(0);" class="bg-light btn-icon btn-sm bg-light d-flex justify-content-center align-items-center rounded me-2"><i class="ti ti-video"></i></a>
-                                    <a href="javascript:void(0);" class="btn btn-icon btn-lg text-white bg-danger d-flex justify-content-center align-items-center rounded"><i class="ti ti-phone"></i></a>
-                                    <a href="javascript:void(0);" class="bg-light btn-icon btn-sm bg-light d-flex justify-content-center align-items-center rounded mx-2"><i class="ti ti-volume"></i></a>                                        
-                                    <a href="javascript:void(0);" class="bg-light text-dark btn-icon btn-sm d-flex align-items-center justify-content-center rounded"><i class="ti ti-user-off"></i></a>
+                                    <a aria-label="Microphone" title="Microphone" href="javascript:void(0);" class="bg-light btn-icon btn-sm bg-light d-flex justify-content-center align-items-center rounded me-2"><i class="ti ti-microphone"></i></a>
+                                    <a aria-label="Video" title="Video" href="javascript:void(0);" class="bg-light btn-icon btn-sm bg-light d-flex justify-content-center align-items-center rounded me-2"><i class="ti ti-video"></i></a>
+                                    <a aria-label="Phone" title="Phone" href="javascript:void(0);" class="btn btn-icon btn-lg text-white bg-danger d-flex justify-content-center align-items-center rounded"><i class="ti ti-phone"></i></a>
+                                    <a aria-label="Volume" title="Volume" href="javascript:void(0);" class="bg-light btn-icon btn-sm bg-light d-flex justify-content-center align-items-center rounded mx-2"><i class="ti ti-volume"></i></a>                                        
+                                    <a aria-label="User off" title="User off" href="javascript:void(0);" class="bg-light text-dark btn-icon btn-sm d-flex align-items-center justify-content-center rounded"><i class="ti ti-user-off"></i></a>
                                 </div>
                             </div>
                         </div>

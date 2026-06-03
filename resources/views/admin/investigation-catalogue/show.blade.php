@@ -183,7 +183,7 @@
                     <input type="text" name="notes" class="form-control form-control-sm" placeholder="Notes">
                 </div>
                 <div class="col-md-1 d-grid">
-                    <button class="btn btn-primary btn-sm"><i class="ti ti-plus"></i></button>
+                    <button aria-label="Add" title="Add" class="btn btn-primary btn-sm"><i class="ti ti-plus"></i></button>
                 </div>
             </form>
         @endif
@@ -209,7 +209,7 @@
                         <td class="text-end">
                             <form method="POST" action="{{ route('admin.investigation-catalogue.consumables.destroy', [$service, $sc->product_id]) }}" onsubmit="return confirm('Remove consumable?')">
                                 @csrf @method('DELETE')
-                                <button class="btn btn-xs btn-outline-danger"><i class="ti ti-trash"></i></button>
+                                <button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger"><i class="ti ti-trash"></i></button>
                             </form>
                         </td>
                     </tr>
@@ -277,7 +277,7 @@
                     + '<div><div class="fw-medium">' + escapeHtml(h.name) + '</div>'
                     + (h.description ? '<small class="text-muted">' + escapeHtml(h.description) + '</small>' : '')
                     + '</div>'
-                    + '<button class="btn btn-xs btn-outline-danger delete-header-btn"><i class="ti ti-trash"></i></button>'
+                    + '<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-header-btn"><i class="ti ti-trash"></i></button>'
                     + '</div>';
                 var list = document.getElementById('headersList');
                 var empty = document.getElementById('headersEmpty');
@@ -393,7 +393,7 @@
         return '<div class="border rounded p-2 mb-2 d-flex justify-content-between align-items-start" data-criterion-id="' + c.id + '" data-header-id="' + (c.header_id || '') + '">'
             + '<div class="flex-grow-1"><div class="fw-medium">' + escapeHtml(c.name) + '</div>'
             + '<small class="text-muted">' + meta.join(' &middot; ') + '</small></div>'
-            + '<button class="btn btn-xs btn-outline-danger delete-crit-btn ms-2"><i class="ti ti-trash"></i></button>'
+            + '<button aria-label="Delete" title="Delete" class="btn btn-xs btn-outline-danger delete-crit-btn ms-2"><i class="ti ti-trash"></i></button>'
             + '</div>';
     }
 })();

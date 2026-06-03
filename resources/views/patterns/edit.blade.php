@@ -183,7 +183,7 @@ function buildComplaintCatalogueOptions(selected) {
 var templates = {
     complaint: function(idx) {
         return '<div class="pattern-item type-complaint" data-index="' + idx + '">' +
-            '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
+            '<button aria-label="Close" title="Close" type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
             '<input type="hidden" name="items[' + idx + '][type]" value="complaint">' +
             '<div class="d-flex align-items-center mb-2"><span class="badge bg-warning me-2">Complaint</span></div>' +
             '<div class="row g-2">' +
@@ -204,7 +204,7 @@ var templates = {
     },
     history_of_presenting_complaint: function(idx) {
         return '<div class="pattern-item type-history_of_presenting_complaint" data-index="' + idx + '">' +
-            '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
+            '<button aria-label="Close" title="Close" type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
             '<input type="hidden" name="items[' + idx + '][type]" value="history_of_presenting_complaint">' +
             '<div class="d-flex align-items-center mb-2"><span class="badge bg-warning me-2">HOPC</span></div>' +
             '<div class="row g-2">' +
@@ -217,7 +217,7 @@ var templates = {
     },
     examination: function(idx) {
         return '<div class="pattern-item type-examination" data-index="' + idx + '">' +
-            '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
+            '<button aria-label="Close" title="Close" type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
             '<input type="hidden" name="items[' + idx + '][type]" value="examination">' +
             '<div class="d-flex align-items-center mb-2"><span class="badge bg-secondary me-2">Examination</span></div>' +
             '<div class="row g-2">' +
@@ -229,7 +229,7 @@ var templates = {
     },
     diagnosis: function(idx) {
         return '<div class="pattern-item type-diagnosis" data-index="' + idx + '">' +
-            '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
+            '<button aria-label="Close" title="Close" type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
             '<input type="hidden" name="items[' + idx + '][type]" value="diagnosis">' +
             '<div class="d-flex align-items-center mb-2"><span class="badge bg-info me-2">Diagnosis</span></div>' +
             '<div class="row g-2">' +
@@ -246,7 +246,7 @@ var templates = {
     },
     treatment: function(idx) {
         return '<div class="pattern-item type-treatment" data-index="' + idx + '">' +
-            '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
+            '<button aria-label="Close" title="Close" type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
             '<input type="hidden" name="items[' + idx + '][type]" value="treatment">' +
             '<div class="d-flex align-items-center mb-2"><span class="badge bg-success me-2">Treatment</span></div>' +
             '<div class="row g-2">' +
@@ -259,7 +259,7 @@ var templates = {
     },
     investigation: function(idx) {
         return '<div class="pattern-item type-investigation" data-index="' + idx + '">' +
-            '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
+            '<button aria-label="Close" title="Close" type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
             '<input type="hidden" name="items[' + idx + '][type]" value="investigation">' +
             '<div class="d-flex align-items-center mb-2"><span class="badge bg-info me-2">Investigation Suggestion</span></div>' +
             '<div class="row g-2">' +
@@ -271,7 +271,7 @@ var templates = {
     },
     prescription_item: function(idx) {
         return '<div class="pattern-item type-prescription_item" data-index="' + idx + '">' +
-            '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
+            '<button aria-label="Close" title="Close" type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
             '<input type="hidden" name="items[' + idx + '][type]" value="prescription_item">' +
             '<div class="d-flex align-items-center mb-2"><span class="badge bg-primary me-2">Prescription Item</span></div>' +
             '<div class="row g-2">' +
@@ -296,14 +296,14 @@ var templates = {
     },
     procedure: function(idx) {
         return '<div class="pattern-item type-procedure" data-index="' + idx + '">' +
-            '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
+            '<button aria-label="Close" title="Close" type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
             '<input type="hidden" name="items[' + idx + '][type]" value="procedure">' +
             '<div class="d-flex align-items-center mb-2"><span class="badge bg-danger me-2">Procedure Suggestion</span></div>' +
             '<textarea name="items[' + idx + '][data][description]" class="form-control form-control-sm" rows="2" required placeholder="Procedure / reason..."></textarea></div>';
     },
     task: function(idx) {
         return '<div class="pattern-item type-task" data-index="' + idx + '">' +
-            '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
+            '<button aria-label="Close" title="Close" type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
             '<input type="hidden" name="items[' + idx + '][type]" value="task">' +
             '<div class="d-flex align-items-center mb-2"><span class="badge bg-dark me-2">Task / Follow-up</span></div>' +
             '<input type="text" name="items[' + idx + '][data][title]" class="form-control form-control-sm mb-2" required placeholder="Task title">' +
@@ -311,7 +311,7 @@ var templates = {
     },
     note: function(idx) {
         return '<div class="pattern-item type-note" data-index="' + idx + '">' +
-            '<button type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
+            '<button aria-label="Close" title="Close" type="button" class="btn btn-sm btn-outline-danger remove-item"><i class="ti ti-x"></i></button>' +
             '<input type="hidden" name="items[' + idx + '][type]" value="note">' +
             '<div class="d-flex align-items-center mb-2"><span class="badge bg-secondary me-2">Clinical Note</span></div>' +
             '<textarea name="items[' + idx + '][data][content]" class="form-control form-control-sm" rows="2" required placeholder="Note / summary text..."></textarea></div>';
