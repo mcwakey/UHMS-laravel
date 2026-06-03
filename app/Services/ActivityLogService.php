@@ -291,7 +291,7 @@ class ActivityLogService
             'investigation_request_id', 'investigation_result_id', 'sample_id', 'service_id',
             'procedure_request_id', 'theatre_case_id', 'theatre_room_id',
             'medication_order_id', 'medication_schedule_id', 'medication_administration_id',
-            'prescription_id', 'prescription_item_id', 'drug_id',
+            'prescription_id', 'prescription_item_id', 'dispensing_id', 'drug_id',
             'department_id', 'invoice_id', 'invoice_item_id', 'claim_id', 'payment_id',
             'product_id', 'stock_location_id', 'stock_movement_id', 'quantity', 'source_type', 'source_id',
         ];

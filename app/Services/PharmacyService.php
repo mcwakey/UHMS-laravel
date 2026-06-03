@@ -424,13 +424,15 @@ class PharmacyService
             // Deduct from pharmacy stock_balances via the movement ledger.
             // createMovement handles both the StockMovement record and balance update.
             $leftToDeduct = $quantity;
+            $stockMovementIds = [];
+            $dispenseLocationId = null;
             foreach ($productBalances as $balance) {
                 if ($leftToDeduct <= 0) {
                     break;
                 }
                 $deduct = min($leftToDeduct, (float) $balance->quantity_on_hand);
                 try {
-                    app(ProductStockMovementService::class)->createMovement([
+                    $movement = app(ProductStockMovementService::class)->createMovement([
                         'product_id'        => $drug->product_id,
                         'stock_location_id' => $balance->stock_location_id,
                         'movement_type'     => StockMovementType::PHARMACY_DISPENSED,
@@ -440,6 +442,8 @@ class PharmacyService
                         'allow_negative'    => false,
                         'notes'             => 'Dispensed for prescription '.($prescription->prescription_number ?? $prescription->id),
                     ]);
+                    $stockMovementIds[] = $movement->id;
+                    $dispenseLocationId = $balance->stock_location_id;
                 } catch (\Throwable $e) {
                     Log::warning('pharmacy.dispense.product_ledger_failed', [
                         'drug_id'    => $drug->id,
@@ -480,6 +484,29 @@ class PharmacyService
                     'description' => ($item->drug_name ?? 'Medication') . ' x ' . $quantity,
                 ]);
             }
+
+            // Pharmacy DISPENSING event (distinct from billing and MAR administration),
+            // carrying stock-deduction context (references the ledger movement ids).
+            $isPartial = $totalDispensed < (float) ($item->quantity ?? 0);
+            $drugLabel = $item->drug_name ?: $drug->display_name;
+            app(\App\Services\ActivityLogService::class)->log(
+                \App\Enums\LogModule::PHARMACY,
+                $isPartial ? 'PARTIAL_DISPENSE_COMPLETED' : 'DRUG_DISPENSED',
+                $lastRecord->toActivityContext() + array_filter([
+                    'product_id' => $drug->product_id,
+                    'drug_id' => $drug->id,
+                    'stock_location_id' => $dispenseLocationId,
+                    'stock_movement_id' => end($stockMovementIds) ?: null,
+                    'quantity' => $quantity,
+                    'metadata' => [
+                        'product' => $drugLabel,
+                        'dispensed_quantity' => $quantity,
+                        'stock_movement_ids' => $stockMovementIds,
+                    ],
+                ], fn ($v) => $v !== null),
+                $lastRecord,
+                ($isPartial ? 'Partial dispensing: ' : 'Drug dispensed: ') . $drugLabel . ' x ' . $quantity,
+            );
 
             // Track dispensed quantity in the MAR system (non-critical — do not roll back dispense on failure)
             try {

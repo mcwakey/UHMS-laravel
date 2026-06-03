@@ -134,6 +134,24 @@ class PharmacyBillingSelectionService
                     'status' => PharmacyBillingSelection::STATUS_BILLED,
                 ])->save();
 
+                // Pharmacy BILLING event (distinct from dispensing and MAR).
+                $qtyLabel = rtrim(rtrim(number_format($quantity, 2, '.', ''), '0'), '.');
+                app(\App\Services\ActivityLogService::class)->log(
+                    \App\Enums\LogModule::PHARMACY,
+                    'PRESCRIPTION_ITEMS_BILLED',
+                    $selection->toActivityContext() + array_filter([
+                        'department_id' => $pharmacyDepartment?->id,
+                        'quantity' => $quantity,
+                        'metadata' => [
+                            'product' => $product->name,
+                            'prescribed_quantity' => (float) $row['prescribed_quantity'],
+                            'billed_quantity' => (float) $quantity,
+                        ],
+                    ], fn ($v) => $v !== null),
+                    $selection,
+                    'Drug billed: ' . $product->name . ' x ' . $qtyLabel,
+                );
+
                 $created->push($selection->fresh(['invoiceItem', 'product', 'prescriptionItem']));
             }
 

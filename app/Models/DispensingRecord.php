@@ -51,4 +51,17 @@ class DispensingRecord extends Model
     {
         return $this->belongsTo(MedicationOrder::class, 'prescription_item_id', 'prescription_item_id');
     }
+
+    public function toActivityContext(): array
+    {
+        return array_filter([
+            'patient_id' => $this->patient_id,
+            'visit_id' => $this->visit_id,
+            'prescription_id' => $this->prescription_id,
+            'prescription_item_id' => $this->prescription_item_id,
+            'dispensing_id' => $this->id,
+            'source_type' => 'dispensing_record',
+            'source_id' => $this->id,
+        ], fn ($v) => $v !== null);
+    }
 }

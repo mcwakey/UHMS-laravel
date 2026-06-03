@@ -55,14 +55,27 @@ creation now routes through the funnel too. Tests: 4 in
 `MedicationAdministrationWorkflowTest`. See `docs/LOGGING_MAR_BURN_DOWN_REPORT.md`.
 Follow-ups: order-resume action, board bulk-action paths.
 
+## ✅ Done: pharmacy billing + dispensing → patient timeline
+
+`PHARMACY / PRESCRIPTION_ITEMS_BILLED` (per billed item) and `PHARMACY /
+DRUG_DISPENSED` / `PARTIAL_DISPENSE_COMPLETED` now log distinctly — billing vs
+dispensing vs MAR administration are three separate events. The dispense log
+references the stock-movement ids (no ledger duplication); the MAR
+`DISPENSED_QUANTITY_RECORDED` sync is suppressed from the timeline so pharmacy
+owns the dispense event. Context via `PharmacyBillingSelection`/`DispensingRecord`
+`toActivityContext()`. Tests: `PharmacyWorkflowTest` (+1). See
+`docs/LOGGING_PHARMACY_BURN_DOWN_REPORT.md`. Follow-ups: pharmacy review/reject,
+distinct billing-quantity-reduced, dispense cancel/correct/return (not yet
+implemented), out-of-stock event.
+
 ## Burn-down order (next, module-by-module — verify each in global + patient logs)
 
-1. ~~Consultation clinical entries~~ ✅ · 2. ~~Investigations~~ ✅ · 3. ~~MAR~~ ✅
-4. **Pharmacy** (review, bill-selection, dispense, partial, cancel/correct,
-   return) — **next up**; MAR administration is already logged, so log the
-   *dispensing* action distinctly without duplicating MAR or stock-movement logs.
-5. Procedures/Theatre · 6. Billing/Claims · 7. Emergency/Admission ·
-8. Remaining stock/admin.
+1. ~~Consultation clinical entries~~ ✅ · 2. ~~Investigations~~ ✅ · 3. ~~MAR~~ ✅ ·
+4. ~~Pharmacy~~ ✅
+5. **Procedures / Theatre** (accept/schedule/room+team assign/pre-op/anaesthesia/
+   operative/recovery notes/complete/cancel) — **next up**; avoid duplicating the
+   consultation-side procedure-request entry already logged.
+6. Billing/Claims · 7. Emergency/Admission · 8. Remaining stock/admin.
 
 Do **not** wire all 75 flagged controllers at once; one module, with a test that
 the action appears on both the global log and (where patient-related) the patient

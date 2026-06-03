@@ -58,6 +58,12 @@ class MedicationAdministrationLogService
         ?array $newValue,
         ?string $reason,
     ): void {
+        // Pharmacy-driven quantity sync: the pharmacy module logs the dispense
+        // event (PHARMACY/DRUG_DISPENSED). Don't mirror it onto the timeline too.
+        if ($action === 'DISPENSED_QUANTITY_RECORDED') {
+            return;
+        }
+
         $resolvedOrder = $order
             ?? $administration?->medicationOrder
             ?? $schedule?->medicationOrder;

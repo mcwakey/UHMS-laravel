@@ -93,4 +93,18 @@ class PharmacyBillingSelection extends Model
     {
         return max(0.0, (float) $this->billed_quantity - (float) $this->dispensed_quantity);
     }
+
+    public function toActivityContext(): array
+    {
+        return array_filter([
+            'patient_id' => $this->patient_id,
+            'visit_id' => $this->visit_id,
+            'prescription_id' => $this->prescription_id,
+            'prescription_item_id' => $this->prescription_item_id,
+            'product_id' => $this->product_id,
+            'invoice_item_id' => $this->invoice_item_id,
+            'source_type' => 'pharmacy_billing_selection',
+            'source_id' => $this->id,
+        ], fn ($v) => $v !== null);
+    }
 }

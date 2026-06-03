@@ -231,6 +231,46 @@ class PharmacyWorkflowTest extends TestCase
         return $this->prescriptionWithItems([[$drug, $quantity]]);
     }
 
+    public function test_pharmacy_billing_and_dispensing_log_distinctly_on_patient_timeline(): void
+    {
+        $this->actingAs($this->user);
+
+        $department = $this->pharmacyDepartment();
+        $location = $this->pharmacyLocation($department);
+        [$product] = $this->drugProduct($department, $location, 'TLINE', 10);
+        [$prescription, $item] = $this->prescriptionWithOneItem('TLINE', 3);
+
+        app(PharmacyBillingSelectionService::class)->billSelectedItems($prescription, [
+            $item->id => ['selected' => true, 'quantity' => 3],
+        ]);
+        app(PharmacyService::class)->dispenseItem($item->refresh(), 2, 'First pickup'); // partial 2 of 3
+
+        $patient = $prescription->patient;
+        $timeline = app(\App\Services\ActivityLogService::class)->getPatientTimeline($patient)->get();
+        $events = $timeline->pluck('event')->all();
+
+        // Billing and dispensing are DISTINCT pharmacy events (not collapsed).
+        $this->assertContains('PRESCRIPTION_ITEMS_BILLED', $events);
+        $this->assertContains('PARTIAL_DISPENSE_COMPLETED', $events);
+        $this->assertSame(1, $timeline->where('event', 'PRESCRIPTION_ITEMS_BILLED')->count());
+        $this->assertSame(1, $timeline->where('event', 'PARTIAL_DISPENSE_COMPLETED')->count());
+
+        // Billing carries product + invoice line context.
+        $billed = $timeline->firstWhere('event', 'PRESCRIPTION_ITEMS_BILLED');
+        $this->assertSame('PHARMACY', $billed->log_name);
+        $this->assertSame($product->id, (int) $billed->properties['product_id']);
+        $this->assertNotNull($billed->properties['invoice_item_id']);
+
+        // Dispensing carries stock-deduction context (references the ledger movement).
+        $dispensed = $timeline->firstWhere('event', 'PARTIAL_DISPENSE_COMPLETED');
+        $this->assertSame($location->id, (int) $dispensed->properties['stock_location_id']);
+        $this->assertNotNull($dispensed->properties['stock_movement_id']);
+        $this->assertStringContainsString('TLINE', $dispensed->description);
+
+        // Dispensing must NOT create a MAR dose-administration log.
+        $this->assertNotContains('DOSE_ADMINISTERED', $events);
+    }
+
     private function prescriptionWithItems(array $drugRows): array
     {
         $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
