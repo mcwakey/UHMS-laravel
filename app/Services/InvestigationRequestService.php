@@ -100,6 +100,14 @@ class InvestigationRequestService
                 ]);
             }
 
+            app(\App\Services\ActivityLogService::class)->log(
+                \App\Enums\LogModule::INVESTIGATION,
+                'INVESTIGATION_ACCEPTED',
+                $labRequest->toActivityContext() + ['metadata' => ['accepted_items' => count($itemIds)], 'causer' => $user],
+                $labRequest,
+                count($itemIds) . ' investigation item(s) accepted: ' . $labRequest->request_number,
+            );
+
             // Update aggregate request status: any accepted → processing.
             $labRequest->refresh()->loadMissing('items');
             $itemStatuses = $labRequest->items->pluck('status');

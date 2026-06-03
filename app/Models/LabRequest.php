@@ -185,4 +185,23 @@ class LabRequest extends Model
         $completed = $this->items->where('status', 'completed')->count();
         return (int) round(($completed / $total) * 100);
     }
+
+    /**
+     * Patient/visit/clinical context for the activity log → patient timeline.
+     */
+    public function toActivityContext(): array
+    {
+        return array_filter([
+            'patient_id' => $this->patient_id,
+            'visit_id' => $this->visit_id,
+            'medical_record_id' => $this->medical_record_id,
+            'consultation_route_id' => $this->consultation_route_id,
+            'emergency_case_id' => $this->emergency_case_id,
+            'department_id' => $this->target_department_id ?: $this->department_id,
+            'investigation_request_id' => $this->id,
+            'sample_id' => $this->sample_id,
+            'source_type' => 'lab_request',
+            'source_id' => $this->id,
+        ], fn ($v) => $v !== null);
+    }
 }

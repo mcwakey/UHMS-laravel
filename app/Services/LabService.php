@@ -231,6 +231,20 @@ class LabService
                 'description' => $request->request_number,
             ]);
 
+            // Activity log for direct OPD / emergency requests. Consultation-created
+            // requests are already logged as a CONSULTATION investigation entry, so
+            // skip those to avoid duplication.
+            if (! $request->consultation_route_id) {
+                $names = $request->items->map(fn ($i) => $i->name ?? $i->service?->name ?? $i->labTest?->name)->filter()->implode(', ');
+                app(\App\Services\ActivityLogService::class)->log(
+                    \App\Enums\LogModule::INVESTIGATION,
+                    'INVESTIGATION_REQUESTED',
+                    $request->toActivityContext() + ['metadata' => ['urgency' => $request->urgency]],
+                    $request,
+                    'Investigation requested: ' . ($names ?: $request->request_number),
+                );
+            }
+
             return $request;
         });
     }
@@ -271,6 +285,14 @@ class LabService
             ]);
         }
 
+        app(\App\Services\ActivityLogService::class)->log(
+            \App\Enums\LogModule::INVESTIGATION,
+            'INVESTIGATION_ACCEPTED',
+            $request->toActivityContext(),
+            $request,
+            'Investigation accepted: ' . $request->request_number,
+        );
+
         return $request;
     }
 
@@ -284,6 +306,14 @@ class LabService
         $request->items()
             ->whereIn('status', ['pending', 'processing'])
             ->update(['status' => 'cancelled']);
+
+        app(\App\Services\ActivityLogService::class)->log(
+            \App\Enums\LogModule::INVESTIGATION,
+            'INVESTIGATION_CANCELLED',
+            $request->toActivityContext(),
+            $request,
+            'Investigation cancelled: ' . $request->request_number,
+        );
 
         return $request;
     }
@@ -352,6 +382,24 @@ class LabService
                 ]);
             }
 
+            $testName = $item->name ?? $item->service?->name ?? $item->labTest?->name;
+            $context = ($item->labRequest?->toActivityContext() ?? []) + array_filter([
+                'investigation_result_id' => $result->id,
+                'service_id' => $item->service_id,
+                'invoice_item_id' => $item->invoice_item_id,
+            ], fn ($v) => $v !== null);
+
+            app(\App\Services\ActivityLogService::class)->log(
+                \App\Enums\LogModule::INVESTIGATION,
+                $result->wasRecentlyCreated ? 'RESULT_ENTERED' : 'RESULT_UPDATED',
+                $context + ['new_values' => array_filter([
+                    'result' => $result->result_value ?: (\Illuminate\Support\Str::limit((string) $result->result_text, 120) ?: $result->result_file_name),
+                    'is_abnormal' => $result->is_abnormal,
+                ], fn ($v) => $v !== null && $v !== '')],
+                $result,
+                ($result->wasRecentlyCreated ? 'Result entered: ' : 'Result updated: ') . ($testName ?: $item->labRequest?->request_number),
+            );
+
             return $result;
         });
     }
@@ -376,6 +424,19 @@ class LabService
                 'title' => 'Investigation result verified',
                 'description' => $request->request_number,
             ]);
+        }
+
+        if ($request) {
+            app(\App\Services\ActivityLogService::class)->log(
+                \App\Enums\LogModule::INVESTIGATION,
+                'RESULT_VERIFIED',
+                $request->toActivityContext() + array_filter([
+                    'investigation_result_id' => $result->id,
+                    'service_id' => $result->requestItem?->service_id,
+                ], fn ($v) => $v !== null),
+                $result,
+                'Result verified: ' . ($result->requestItem?->name ?: $request->request_number),
+            );
         }
 
         return $result;

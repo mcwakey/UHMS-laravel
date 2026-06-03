@@ -220,6 +220,18 @@ class LabResultController extends Controller
             abort(403, 'Only verified results can be printed.');
         }
 
+        // Official print of a verified result (not a page view) — worth auditing.
+        app(\App\Services\ActivityLogService::class)->log(
+            \App\Enums\LogModule::INVESTIGATION,
+            'RESULT_PRINTED',
+            $item->labRequest->toActivityContext() + array_filter([
+                'investigation_result_id' => $item->result?->id,
+                'service_id' => $item->service_id,
+            ], fn ($v) => $v !== null),
+            $item->result,
+            'Result printed: ' . ($item->name ?? $item->service?->name ?? $item->labTest?->name ?? $item->labRequest->request_number),
+        );
+
         return view('lab.print', ['item' => $item]);
     }
 }

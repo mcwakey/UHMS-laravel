@@ -31,13 +31,27 @@ logged too. Tests: `ConsultationClinicalLogTest` (7) + a session assertion. See
 pattern-created non-complaint records, prescription delete, clinical tasks/
 follow-up, note/summary, session lock/reopen/contributor.
 
+## ✅ Done: investigation (lab) department lifecycle → patient timeline
+
+`LabService` + `InvestigationRequestService` now write `INVESTIGATION` activity
+logs alongside the existing pathway events: `INVESTIGATION_REQUESTED` (direct/
+emergency only — consultation-created are skipped to avoid duplication),
+`INVESTIGATION_ACCEPTED` (whole request + selected items), `INVESTIGATION_CANCELLED`,
+`RESULT_ENTERED/UPDATED`, `RESULT_VERIFIED`, `RESULT_PRINTED`. Context via
+`LabRequest::toActivityContext()` (incl. emergency_case_id). Tests:
+`InvestigationLogTest` (4). See `docs/LOGGING_INVESTIGATIONS_BURN_DOWN_REPORT.md`.
+Follow-ups: sample collect/receive/reject, result reject/correction-request,
+verification reversal, radiology path (no model support yet).
+
 ## Burn-down order (next, module-by-module — verify each in global + patient logs)
 
 1. ~~Consultation clinical entries~~ ✅ done.
-2. **Investigations** (accept/reject, sample, result entered/updated/verified/
-   rejected, printed) — **next up**; avoid duplicating consultation-entry logs.
-3. MAR · 4. Pharmacy · 5. Procedures/Theatre · 6. Billing/Claims ·
-7. Emergency/Admission · 8. Remaining stock/admin.
+2. ~~Investigations~~ ✅ done.
+3. **MAR / medication administration** (administered/held/missed/refused/skipped,
+   reaction, stop, correction) — **next up**; confirm patient/visit + admission/
+   emergency context and avoid duplicating any existing MAR logs.
+4. Pharmacy · 5. Procedures/Theatre · 6. Billing/Claims · 7. Emergency/Admission ·
+8. Remaining stock/admin.
 
 Do **not** wire all 75 flagged controllers at once; one module, with a test that
 the action appears on both the global log and (where patient-related) the patient

@@ -288,7 +288,8 @@ class ActivityLogService
         $contextKeys = [
             'patient_id', 'visit_id', 'admission_id', 'emergency_case_id',
             'consultation_session_id', 'consultation_route_id', 'medical_record_id',
-            'investigation_request_id', 'procedure_request_id', 'theatre_case_id', 'theatre_room_id',
+            'investigation_request_id', 'investigation_result_id', 'sample_id', 'service_id',
+            'procedure_request_id', 'theatre_case_id', 'theatre_room_id',
             'department_id', 'invoice_id', 'invoice_item_id', 'claim_id', 'payment_id',
             'product_id', 'stock_location_id', 'quantity', 'source_type', 'source_id',
         ];
