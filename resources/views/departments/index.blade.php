@@ -84,12 +84,9 @@
                                     @endcan
                                     @can('departments.delete')
                                     <li>
-                                        <form method="POST" action="{{ route('admin.departments.destroy', $dept) }}" onsubmit="return confirm('Delete this department?')">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="dropdown-item text-danger">
-                                                <i class="ti ti-trash me-1"></i>Delete
-                                            </button>
-                                        </form>
+                                        <x-confirm-form :action="route('admin.departments.destroy', $dept)" method="DELETE"
+                                            button-label="Delete" button-class="dropdown-item text-danger" icon="ti-trash"
+                                            confirm-title="Delete this department?" confirm-text="This cannot be undone." confirm-button="Yes, delete" />
                                     </li>
                                     @endcan
                                 </ul>

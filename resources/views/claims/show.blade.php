@@ -322,12 +322,9 @@
                                 <td><span class="badge bg-{{ $item->status->color() }}">{{ $item->status->label() }}</span></td>
                                 @if($claim->is_editable)
                                 <td class="text-end">
-                                    <form method="POST" action="{{ route('admin.claims.remove-item', $item) }}" class="d-inline" onsubmit="return confirm('Remove this item?')">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">
-                                            <i class="ti ti-trash"></i>
-                                        </button>
-                                    </form>
+                                    <x-confirm-form :action="route('admin.claims.remove-item', $item)" method="DELETE"
+                                        button-label="" button-class="btn btn-sm btn-outline-danger" icon="ti-trash"
+                                        confirm-title="Remove this item?" confirm-text="The item will be removed from the claim." confirm-button="Yes, remove" />
                                 </td>
                                 @endif
                             </tr>

@@ -34,12 +34,9 @@
                                 </button>
                             </li>
                             <li>
-                                <form method="POST" action="{{ route('admin.roles.destroy', $role) }}" onsubmit="return confirm('Delete this role?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="dropdown-item text-danger">
-                                        <i class="ti ti-trash me-1"></i>Delete
-                                    </button>
-                                </form>
+                                <x-confirm-form :action="route('admin.roles.destroy', $role)" method="DELETE"
+                                    button-label="Delete" button-class="dropdown-item text-danger" icon="ti-trash"
+                                    confirm-title="Delete this role?" confirm-text="Users assigned this role will lose its permissions. This cannot be undone." confirm-button="Yes, delete" />
                             </li>
                         </ul>
                         @endif

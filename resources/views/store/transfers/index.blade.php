@@ -182,12 +182,9 @@
                                     @endif
                                     @if($transfer->is_editable || $transfer->status === \App\Enums\StockTransferStatus::APPROVED)
                                     <li>
-                                        <form method="POST" action="{{ route('admin.store.transfers.cancel', $transfer) }}" onsubmit="return confirm('Cancel this transfer?')">
-                                            @csrf
-                                            <button type="submit" class="dropdown-item text-danger">
-                                                <i class="ti ti-x me-1"></i>Cancel
-                                            </button>
-                                        </form>
+                                        <x-confirm-form :action="route('admin.store.transfers.cancel', $transfer)" method="POST"
+                                            button-label="Cancel" button-class="dropdown-item text-danger" icon="ti-x"
+                                            confirm-title="Cancel this transfer?" confirm-text="The stock transfer will be cancelled." confirm-button="Yes, cancel" />
                                     </li>
                                     @endif
                                 </ul>

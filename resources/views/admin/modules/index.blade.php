@@ -97,21 +97,13 @@
                                             <i class="ti ti-lock"></i> Locked
                                         </button>
                                     @else
-                                        <form method="POST"
-                                              action="{{ route('admin.modules.toggle', $module) }}"
-                                              class="d-inline"
-                                              onsubmit="return confirm('{{ $module->is_enabled ? 'Disable' : 'Enable' }} module \'{{ $module->name }}\'?');">
-                                            @csrf
-                                            @if($module->is_enabled)
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">
-                                                    <i class="ti ti-toggle-right"></i> Disable
-                                                </button>
-                                            @else
-                                                <button type="submit" class="btn btn-sm btn-outline-success">
-                                                    <i class="ti ti-toggle-left"></i> Enable
-                                                </button>
-                                            @endif
-                                        </form>
+                                        <x-confirm-form :action="route('admin.modules.toggle', $module)" method="POST"
+                                            :button-label="$module->is_enabled ? 'Disable' : 'Enable'"
+                                            :button-class="$module->is_enabled ? 'btn btn-sm btn-outline-danger' : 'btn btn-sm btn-outline-success'"
+                                            :icon="$module->is_enabled ? 'ti-toggle-right' : 'ti-toggle-left'"
+                                            :confirm-title="($module->is_enabled ? 'Disable' : 'Enable').' module: '.$module->name.'?'"
+                                            :confirm-text="$module->is_enabled ? 'Users will lose access to this module and its menu items.' : 'This module and its menu items will become available.'"
+                                            :confirm-button="$module->is_enabled ? 'Yes, disable' : 'Yes, enable'" />
                                     @endif
                                 </td>
                             </tr>

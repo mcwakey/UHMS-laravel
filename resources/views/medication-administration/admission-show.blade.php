@@ -70,11 +70,10 @@
                         </form>
                         @endcan
                         @can('medication_orders.stop')
-                        <form method="POST" action="{{ route('admin.medication-administration.orders.stop', $order) }}" onsubmit="return confirm('Stop this medication order and cancel future doses?')">
-                            @csrf
-                            <input type="hidden" name="reason" value="Stopped from MAR board">
-                            <button class="btn btn-sm btn-outline-danger">Stop</button>
-                        </form>
+                        <x-confirm-form :action="route('admin.medication-administration.orders.stop', $order)" method="POST"
+                            button-label="Stop" button-class="btn btn-sm btn-outline-danger" icon="ti-player-stop"
+                            confirm-title="Stop this medication order?" confirm-text="Future scheduled doses will be cancelled."
+                            confirm-button="Yes, stop" require-reason reason-placeholder="Reason for stopping the order" />
                         @endcan
                     </div>
                 </div>

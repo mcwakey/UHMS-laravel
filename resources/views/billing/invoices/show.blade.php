@@ -483,12 +483,9 @@
                 </a>
                 @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::PAID, \App\Enums\InvoiceStatus::CANCELLED]))
                 @can('invoices.edit')
-                <form method="POST" action="{{ route('admin.billing.invoices.cancel', $invoice) }}" onsubmit="return confirm('Cancel this invoice?')">
-                    @csrf @method('PATCH')
-                    <button type="submit" class="btn btn-outline-danger w-100">
-                        <i class="ti ti-x me-1"></i>Cancel Invoice
-                    </button>
-                </form>
+                <x-confirm-form :action="route('admin.billing.invoices.cancel', $invoice)" method="PATCH"
+                    button-label="Cancel Invoice" button-class="btn btn-outline-danger w-100" icon="ti-x"
+                    confirm-title="Cancel this invoice?" confirm-text="The invoice will be marked cancelled." confirm-button="Yes, cancel invoice" />
                 @endcan
                 @endif
                 <a href="{{ route('admin.visits.show', $invoice->visit) }}" class="btn btn-outline-primary">

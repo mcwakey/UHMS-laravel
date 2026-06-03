@@ -11,10 +11,10 @@
         <a href="{{ route('admin.store.purchase-returns.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>Back</a>
         @if($purchaseReturn->status === \App\Enums\PurchaseReturnStatus::DRAFT)
             <form method="POST" action="{{ route('admin.store.purchase-returns.approve', $purchaseReturn) }}">@csrf<button class="btn btn-primary btn-sm"><i class="ti ti-check me-1"></i>Approve</button></form>
-            <form method="POST" action="{{ route('admin.store.purchase-returns.cancel', $purchaseReturn) }}" onsubmit="return confirm('Cancel this return?')">@csrf<button class="btn btn-outline-danger btn-sm"><i class="ti ti-x me-1"></i>Cancel</button></form>
+            <x-confirm-form :action="route('admin.store.purchase-returns.cancel', $purchaseReturn)" method="POST" button-label="Cancel" button-class="btn btn-outline-danger btn-sm" icon="ti-x" confirm-title="Cancel this return?" confirm-text="The purchase return will be cancelled." confirm-button="Yes, cancel" />
         @elseif($purchaseReturn->status === \App\Enums\PurchaseReturnStatus::APPROVED)
-            <form method="POST" action="{{ route('admin.store.purchase-returns.post', $purchaseReturn) }}" onsubmit="return confirm('Post this return to stock and supplier ledger?')">@csrf<button class="btn btn-success btn-sm"><i class="ti ti-upload me-1"></i>Post</button></form>
-            <form method="POST" action="{{ route('admin.store.purchase-returns.cancel', $purchaseReturn) }}" onsubmit="return confirm('Cancel this return?')">@csrf<button class="btn btn-outline-danger btn-sm"><i class="ti ti-x me-1"></i>Cancel</button></form>
+            <x-confirm-form :action="route('admin.store.purchase-returns.post', $purchaseReturn)" method="POST" button-label="Post" button-class="btn btn-success btn-sm" icon="ti-upload" confirm-title="Post this return?" confirm-text="This posts the return to stock and the supplier ledger." confirm-button="Yes, post" />
+            <x-confirm-form :action="route('admin.store.purchase-returns.cancel', $purchaseReturn)" method="POST" button-label="Cancel" button-class="btn btn-outline-danger btn-sm" icon="ti-x" confirm-title="Cancel this return?" confirm-text="The purchase return will be cancelled." confirm-button="Yes, cancel" />
         @endif
     </div>
 </div>

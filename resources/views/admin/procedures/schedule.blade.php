@@ -112,10 +112,9 @@
                                 @csrf @method('PATCH')
                                 <button class="btn btn-sm btn-outline-primary" title="Start"><i class="ti ti-player-play me-1"></i>Start</button>
                             </form>
-                            <form method="POST" action="{{ route('admin.procedures.cancel', $pp) }}" class="d-inline" onsubmit="return confirm('Cancel this procedure?')">
-                                @csrf @method('PATCH')
-                                <button class="btn btn-sm btn-outline-danger" title="Cancel"><i class="ti ti-x"></i></button>
-                            </form>
+                            <x-confirm-form :action="route('admin.procedures.cancel', $pp)" method="PATCH"
+                                button-label="" button-class="btn btn-sm btn-outline-danger" icon="ti-x"
+                                confirm-title="Cancel this procedure?" confirm-text="The scheduled procedure will be cancelled." confirm-button="Yes, cancel" require-reason reason-placeholder="Reason for cancellation" />
                             @elseif($pp->status === 'in_progress')
                             <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#completeModal{{ $pp->id }}">
                                 <i class="ti ti-check me-1"></i>Complete

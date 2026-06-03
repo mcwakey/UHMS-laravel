@@ -29,13 +29,15 @@ All six created, tested (`tests/Feature/UiPhase5ComponentsTest.php`), documented
 - [x] `<x-confirm-form>` — adopted in insurance/index (provider toggle).
 - [x] `<x-print-layout>` — created + tested; adopt gradually for print views.
 
-### Phase 5 rollout (remaining adoption — mechanical, low risk)
-- [ ] `<x-stat-card>` → Blood Bank, Emergency, Admission, Stock, Billing, Reports dashboards.
-- [ ] `<x-filter-bar>` → Patients, Visits, Billing, Stock, Logs, Notifications, Roles filters.
-- [ ] `<x-data-table>` → clean list tables (Patients, Visits, Billing, Pharmacy, Stock, Logs, Notifications).
-- [ ] `<x-action-menu>` → list tables with several row actions.
-- [ ] `<x-confirm-form>` → high-risk actions replacing native `onsubmit="return confirm()"` (reverse payment, refund, stock adjustment, patient merge execute, mark deceased, discharge, dispose emergency, cancel theatre case, override triage, emergency blood release, disable module).
-- [ ] `<x-print-layout>` → printable documents, simplest first.
+### Phase 5 full-system readjustment (status) — see UI_PHASE_5_FULL_SYSTEM_READJUSTMENT_REPORT.md
+- [x] `<x-confirm-form>` rolled out to **14** destructive/high-risk actions across billing, claims, accounts, modules, icd-codes, procedures, store (purchase-returns/requisitions/transfers), roles, departments, designations, MAR (16 files total). Module-disable, procedure-cancel and MAR stop-order now confirmed (last two require a reason).
+- [ ] `<x-confirm-form>` — finish the **12 remaining** native `confirm()` forms (lab, patients/show, store/purchase-orders, theatre/rooms, admin/analyzers, admin catalogues). Skip `consultations/show` (chained JS).
+- [ ] `<x-stat-card>` — use for **new** KPI cards; do **not** retro-fit dashboard/`reports/*` cards (₵ symbol, coloured values, inline icon-subtitles → would redesign them).
+- [ ] `<x-filter-bar>` — adopt as list pages are touched (≈96 bespoke filter forms).
+- [ ] `<x-data-table>` — adopt on clean list tables as touched (skip MAR grid, theatre board, timelines, charts).
+- [ ] `<x-action-menu>` — adopt on row dropdowns (strip `<li>` wrappers per item).
+- [ ] `<x-print-layout>` — adopt for printable documents, simplest first.
+- [ ] (Backend, optional) capture the `reason` on `modules.toggle` / `roles.destroy` if reasons are wanted there.
 
 ## Feedback & errors
 - [x] **Phase 4 (done):** Friendly error pages `403/404/419/500/503` + self-contained `layouts/error.blade.php`; never expose `SQLSTATE`/stack traces (logged instead). See `docs/UI_PHASE_4_ERROR_HANDLING_REPORT.md`.

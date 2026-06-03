@@ -10,13 +10,13 @@
     <div class="d-flex gap-2">
         <a href="{{ route('admin.store.stock-requisitions.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>Back</a>
         @if(in_array($stockRequisition->status, [\App\Enums\StockRequisitionStatus::SUBMITTED, \App\Enums\StockRequisitionStatus::APPROVED, \App\Enums\StockRequisitionStatus::PARTIALLY_APPROVED], true))
-            <form method="POST" action="{{ route('admin.store.stock-requisitions.cancel', $stockRequisition) }}" onsubmit="return confirm('Cancel this requisition?')">@csrf<button class="btn btn-outline-danger btn-sm"><i class="ti ti-x me-1"></i>Cancel</button></form>
+            <x-confirm-form :action="route('admin.store.stock-requisitions.cancel', $stockRequisition)" method="POST" button-label="Cancel" button-class="btn btn-outline-danger btn-sm" icon="ti-x" confirm-title="Cancel this requisition?" confirm-text="The requisition will be cancelled." confirm-button="Yes, cancel" />
         @endif
         @if(in_array($stockRequisition->status, [\App\Enums\StockRequisitionStatus::APPROVED, \App\Enums\StockRequisitionStatus::PARTIALLY_APPROVED], true))
-            <form method="POST" action="{{ route('admin.store.stock-requisitions.issue', $stockRequisition) }}" onsubmit="return confirm('Issue approved quantities from Main Store?')">@csrf<button class="btn btn-primary btn-sm"><i class="ti ti-transfer-out me-1"></i>Issue</button></form>
+            <x-confirm-form :action="route('admin.store.stock-requisitions.issue', $stockRequisition)" method="POST" button-label="Issue" button-class="btn btn-primary btn-sm" icon="ti-transfer-out" confirm-title="Issue approved quantities?" confirm-text="Approved quantities will be issued from Main Store." confirm-button="Yes, issue" />
         @endif
         @if($stockRequisition->status === \App\Enums\StockRequisitionStatus::AWAITING_ACKNOWLEDGEMENT)
-            <form method="POST" action="{{ route('admin.store.stock-requisitions.acknowledge', $stockRequisition) }}" onsubmit="return confirm('Acknowledge receipt into department stock?')">@csrf<button class="btn btn-success btn-sm"><i class="ti ti-check me-1"></i>Acknowledge</button></form>
+            <x-confirm-form :action="route('admin.store.stock-requisitions.acknowledge', $stockRequisition)" method="POST" button-label="Acknowledge" button-class="btn btn-success btn-sm" icon="ti-check" confirm-title="Acknowledge receipt?" confirm-text="Items will be received into department stock." confirm-button="Yes, acknowledge" />
         @endif
     </div>
 </div>

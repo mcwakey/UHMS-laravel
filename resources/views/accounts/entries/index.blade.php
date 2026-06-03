@@ -157,12 +157,9 @@
                                     @endcan
                                     @can('accounts.entries.create')
                                     <li>
-                                        <form method="POST" action="{{ route('admin.accounts.entries.destroy', $entry) }}" onsubmit="return confirm('Delete this entry?')">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="dropdown-item text-danger">
-                                                <i class="ti ti-trash me-1"></i>Delete
-                                            </button>
-                                        </form>
+                                        <x-confirm-form :action="route('admin.accounts.entries.destroy', $entry)" method="DELETE"
+                                            button-label="Delete" button-class="dropdown-item text-danger" icon="ti-trash"
+                                            confirm-title="Delete this entry?" confirm-text="This accounting entry will be permanently deleted." confirm-button="Yes, delete" />
                                     </li>
                                     @endcan
                                     @endif

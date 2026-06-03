@@ -85,10 +85,9 @@
                             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editCodeModal{{ $code->id }}">
                                 <i class="ti ti-edit"></i>
                             </button>
-                            <form method="POST" action="{{ route('admin.icd-codes.destroy', $code) }}" class="d-inline" onsubmit="return confirm('Delete this ICD code?')">
-                                @csrf @method('DELETE')
-                                <button class="btn btn-sm btn-outline-danger"><i class="ti ti-trash"></i></button>
-                            </form>
+                            <x-confirm-form :action="route('admin.icd-codes.destroy', $code)" method="DELETE"
+                                button-label="" button-class="btn btn-sm btn-outline-danger" icon="ti-trash"
+                                confirm-title="Delete this ICD code?" confirm-text="This action cannot be undone." confirm-button="Yes, delete" />
                         </td>
                     </tr>
 
