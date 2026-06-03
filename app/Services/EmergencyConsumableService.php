@@ -76,6 +76,24 @@ class EmergencyConsumableService
             $this->sessions->recordContribution($case, $user, 'Consumable Use');
             $this->timeline->record($case, 'CONSUMABLE_USED', 'Emergency consumable used', $product->name.' x '.$quantity, $usage, $user);
 
+            // Audit trail: emergency consumable usage on the patient timeline.
+            app(\App\Services\ActivityLogService::class)->log(
+                \App\Enums\LogModule::STOCK,
+                'CONSUMABLE_USED',
+                $usage->toActivityContext() + [
+                    'department_id' => $location->department_id,
+                    'reason' => $data['notes'] ?? null,
+                    'metadata' => [
+                        'product' => $product->name,
+                        'stock_movement_id' => $movement->id,
+                        'emergency_session_id' => $session->id,
+                        'context' => 'emergency',
+                    ],
+                ],
+                $usage,
+                $product->name.' x'.$quantity.' used (emergency)',
+            );
+
             return $usage->fresh(['product', 'stockLocation', 'invoiceItem', 'user']);
         });
     }

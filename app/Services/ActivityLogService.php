@@ -60,6 +60,17 @@ class ActivityLogService
         $severity = $this->normaliseSeverity($data['severity'] ?? LogSeverity::INFO);
         $description = $description ?? $data['description'] ?? $action;
 
+        // Auto-attach patient/visit context from the subject so module actions
+        // surface on the patient timeline. Done BEFORE the async dispatch so the
+        // queued payload carries the resolved ids. Explicit values are preserved.
+        $context = app(ActivityContextResolver::class)->resolve($subject, $data);
+        if (! empty($context['patient_id']) && empty($data['patient_id'])) {
+            $data['patient_id'] = $context['patient_id'];
+        }
+        if (! empty($context['visit_id']) && empty($data['visit_id'])) {
+            $data['visit_id'] = $context['visit_id'];
+        }
+
         // Optional async dispatch: keep request hot-path light.
         if (
             config('audit_streaming.async_writes')
@@ -183,6 +194,87 @@ class ActivityLogService
         ]), $subject);
     }
 
+    /* ── Patient / visit convenience wrappers ───────────────────── */
+
+    public function logPatientAction(\App\Models\Patient $patient, string $action, array $data = []): void
+    {
+        $this->log(LogModule::PATIENTS, $action, $data, $patient);
+    }
+
+    public function logVisitAction(\App\Models\Visit $visit, string $action, array $data = []): void
+    {
+        $this->log('VISITS', $action, array_merge([
+            'patient_id' => $visit->patient_id,
+            'visit_id' => $visit->id,
+        ], $data), $visit);
+    }
+
+    public function logClinicalAction(Model $record, string|LogModule $module, string $action, array $data = []): void
+    {
+        $this->log($module, $action, $data, $record);
+    }
+
+    public function logFinancialAction(Model $record, string $action, array $data = []): void
+    {
+        $this->log(LogModule::BILLING, $action, $data, $record);
+    }
+
+    public function logStockAction(Model $record, string $action, array $data = []): void
+    {
+        $this->log(LogModule::STOCK, $action, $data, $record);
+    }
+
+    /* ── Patient timeline ───────────────────────────────────────── */
+
+    /**
+     * Patient ids that should appear on a patient's timeline: the patient plus
+     * any duplicate folders merged INTO this patient (so merged history shows).
+     *
+     * @return array<int>
+     */
+    public function patientIdsFor(\App\Models\Patient $patient): array
+    {
+        return \App\Models\Patient::query()
+            ->where('merged_to_patient_id', $patient->id)
+            ->pluck('id')
+            ->push($patient->id)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Every logged action connected to a patient — across ALL modules — not just
+     * actions whose subject is the Patient row. MariaDB-10.1-safe (queries the
+     * indexed patient_id column, not the JSON properties).
+     */
+    public function getPatientTimeline(\App\Models\Patient $patient, array $filters = []): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = \App\Models\ActivityLog::query()
+            ->forPatient($this->patientIdsFor($patient))
+            ->with(['causer'])
+            ->latest();
+
+        if (! empty($filters['module'])) {
+            $query->where('log_name', $filters['module']);
+        }
+        if (! empty($filters['action'])) {
+            $query->where('event', $filters['action']);
+        }
+        if (! empty($filters['user_id'])) {
+            $query->where('causer_type', \App\Models\User::class)
+                ->where('causer_id', $filters['user_id']);
+        }
+        if (! empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+        if (! empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        return $query;
+    }
+
     /* ── Internals ──────────────────────────────────────────────── */
 
     protected function buildProperties(string $module, string $action, string $severity, array $data): array
@@ -195,8 +287,10 @@ class ActivityLogService
 
         $contextKeys = [
             'patient_id', 'visit_id', 'admission_id', 'emergency_case_id',
-            'department_id', 'invoice_id', 'claim_id', 'payment_id',
-            'procedure_request_id', 'theatre_room_id',
+            'consultation_session_id', 'medical_record_id', 'investigation_request_id',
+            'procedure_request_id', 'theatre_case_id', 'theatre_room_id',
+            'department_id', 'invoice_id', 'invoice_item_id', 'claim_id', 'payment_id',
+            'product_id', 'stock_location_id', 'quantity', 'source_type', 'source_id',
         ];
         foreach ($contextKeys as $key) {
             if (array_key_exists($key, $data) && $data[$key] !== null) {

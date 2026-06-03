@@ -1,0 +1,539 @@
+{
+    "generated_at": "2026-06-03T14:55:57+00:00",
+    "controllers_flagged": 75,
+    "findings": [
+        {
+            "controller": "app/Http/Controllers/Admin/AccountCategoryController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/AdmissionController.php",
+            "unlogged_actions": [
+                "store",
+                "discharge"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/AnalyzerController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/AppointmentController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/AttendanceController.php",
+            "unlogged_actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/BloodCrossmatchController.php",
+            "unlogged_actions": [
+                "store",
+                "verify"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/BloodDonationController.php",
+            "unlogged_actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/BloodDonorController.php",
+            "unlogged_actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/BloodIssueController.php",
+            "unlogged_actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/BloodRequestController.php",
+            "unlogged_actions": [
+                "store",
+                "approve"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/CashierShiftController.php",
+            "unlogged_actions": [
+                "verify"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ClaimController.php",
+            "unlogged_actions": [
+                "store",
+                "submit"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ComplaintCatalogueController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ConsultationTaskController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/DepartmentController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/DesignationController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/DrugController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyBayController.php",
+            "unlogged_actions": [
+                "store",
+                "assign"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyCaseController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyConsumableController.php",
+            "unlogged_actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyContactController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyDispositionController.php",
+            "unlogged_actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyInvestigationController.php",
+            "unlogged_actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyMedicationController.php",
+            "unlogged_actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyNoteController.php",
+            "unlogged_actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyPatientIdentityController.php",
+            "unlogged_actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyProcedureController.php",
+            "unlogged_actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyTriageController.php",
+            "unlogged_actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyVitalsController.php",
+            "unlogged_actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmployeeController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/FinancialEntryController.php",
+            "unlogged_actions": [
+                "store",
+                "approve",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/IcdCodeController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/InsuranceProviderController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/InsuranceTierController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/InsuranceVerificationController.php",
+            "unlogged_actions": [
+                "verify"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/InvestigationItemController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/LeaveController.php",
+            "unlogged_actions": [
+                "store",
+                "approve",
+                "reject"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ModuleController.php",
+            "unlogged_actions": [
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/NotificationBroadcastController.php",
+            "unlogged_actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/NotificationController.php",
+            "unlogged_actions": [
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/NotificationPreferenceController.php",
+            "unlogged_actions": [
+                "update"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PatientComplaintController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PatientInsuranceController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PatientMergeController.php",
+            "unlogged_actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PayrollController.php",
+            "unlogged_actions": [
+                "approve"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ProcedureController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ProductController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ProductStockController.php",
+            "unlogged_actions": [
+                "transfer"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ProfileController.php",
+            "unlogged_actions": [
+                "update"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PurchaseOrderController.php",
+            "unlogged_actions": [
+                "store",
+                "submit",
+                "approve",
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PurchaseReturnController.php",
+            "unlogged_actions": [
+                "store",
+                "approve",
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/QueueController.php",
+            "unlogged_actions": [
+                "complete"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/RoleController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ServiceCatalogController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ServiceRenderingActionController.php",
+            "unlogged_actions": [
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/SpecialtyController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/StockLocationController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/StockRequisitionController.php",
+            "unlogged_actions": [
+                "store",
+                "approve",
+                "issue",
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/StockTransferController.php",
+            "unlogged_actions": [
+                "store",
+                "approve",
+                "complete",
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/SupplierController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/TriageController.php",
+            "unlogged_actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/UserController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/VisitController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/VitalController.php",
+            "unlogged_actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/WardController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Billing/CreditNoteController.php",
+            "unlogged_actions": [
+                "store",
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Billing/InvoiceController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Billing/PaymentController.php",
+            "unlogged_actions": [
+                "store",
+                "reverse"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Billing/SponsorController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Doctor/MedicalPatternController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Doctor/PrescriptionController.php",
+            "unlogged_actions": [
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Lab/LabRequestController.php",
+            "unlogged_actions": [
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Lab/LabResultController.php",
+            "unlogged_actions": [
+                "store",
+                "verify"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Theatre/TheatreController.php",
+            "unlogged_actions": [
+                "reject",
+                "complete",
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Theatre/TheatreRoomController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ]
+        }
+    ]
+}

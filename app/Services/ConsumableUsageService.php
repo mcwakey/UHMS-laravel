@@ -144,6 +144,20 @@ class ConsumableUsageService
                     'quantity'    => $qty,
                     'movement_id' => $movement->id,
                 ]);
+
+                // Audit trail: surface consumable usage on the patient timeline with
+                // full clinical/stock context (explicit — not inferred from a stock row).
+                app(\App\Services\ActivityLogService::class)->log(
+                    \App\Enums\LogModule::STOCK,
+                    'CONSUMABLE_USED',
+                    $usage->toActivityContext() + [
+                        'department_id' => $location->department_id,
+                        'reason' => $item['notes'] ?? null,
+                        'metadata' => ['product' => $product->name, 'stock_movement_id' => $movement->id],
+                    ],
+                    $usage,
+                    $product->name . ' x' . $qty . ' used',
+                );
             }
         });
 

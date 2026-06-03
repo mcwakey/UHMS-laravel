@@ -190,6 +190,11 @@ class Visit extends Model
         return $this->hasOne(Admission::class);
     }
 
+    public function billingOverrides()
+    {
+        return $this->hasMany(VisitBillingOverride::class);
+    }
+
     public function emergencyCase()
     {
         return $this->hasOne(EmergencyCase::class);

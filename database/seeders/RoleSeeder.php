@@ -130,6 +130,20 @@ class RoleSeeder extends Seeder
             'payments.create',
             'payments.void',
             'payments.refund',
+            // ── Billing payment policy / gate (context-aware) ──
+            'billing.policy.view',
+            'billing.view_payment_gate_status',
+            'billing.view_running_balance',
+            'billing.payment_gate.override',
+            'billing.override_opd_payment_gate',
+            'billing.override_opd_full_visit_settlement',
+            'billing.revoke_opd_deferred_settlement',
+            'billing.approve_credit',
+            'billing.approve_credit_balance',
+            'billing.waive_invoice_item',
+            'billing.waive_invoice',
+            'billing.complete_visit_with_balance',
+            'billing.discharge_clearance.override',
             'credit_notes.view',
             'credit_notes.create',
             'credit_notes.write_off',
@@ -313,11 +327,15 @@ class RoleSeeder extends Seeder
 
             // ── Activity / Audit Logs ─────────────────────────────────────
             'logs.view',
+            'logs.view_patient',
             'logs.view_clinical',
             'logs.view_financial',
             'logs.view_stock',
             'logs.view_security',
+            'logs.view_details',
+            'logs.view_sensitive',
             'logs.export',
+            'logs.delete',
             'logs.manage_retention',
 
             // ── Clinical Coding ───────────────────────────────────────────

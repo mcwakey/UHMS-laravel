@@ -131,10 +131,10 @@ class PatientController extends Controller
             'markedDeceasedBy',
         ]);
 
-        $activityLogs = \Spatie\Activitylog\Models\Activity::where('subject_type', Patient::class)
-            ->where('subject_id', $patient->id)
-            ->with('causer')
-            ->latest()
+        // All activity connected to this patient across EVERY module (not only
+        // actions whose subject is the Patient row) + any merged-folder history.
+        $activityLogs = app(\App\Services\ActivityLogService::class)
+            ->getPatientTimeline($patient)
             ->take(100)
             ->get();
 

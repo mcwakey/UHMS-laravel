@@ -95,4 +95,27 @@ class ConsumableUsage extends Model
     {
         return $this->belongsTo(User::class, 'used_by');
     }
+
+    /**
+     * Patient/visit/clinical context for the activity log, so consumable usage
+     * surfaces on the patient timeline with full traceability. Maps source_type
+     * → the specific clinical id where known.
+     */
+    public function toActivityContext(): array
+    {
+        return array_filter([
+            'patient_id' => $this->patient_id,
+            'visit_id' => $this->visit_id,
+            'emergency_case_id' => $this->emergency_case_id,
+            'medical_record_id' => $this->medical_record_id,
+            'product_id' => $this->product_id,
+            'stock_location_id' => $this->stock_location_id,
+            'quantity' => (float) $this->quantity_used,
+            'source_type' => $this->source_type,
+            'source_id' => $this->source_id,
+            'invoice_item_id' => $this->invoice_item_id,
+            'investigation_request_id' => $this->source_type === 'investigation_result' ? $this->source_id : null,
+            'procedure_request_id' => $this->source_type === 'procedure_request' ? $this->source_id : null,
+        ], fn ($v) => $v !== null);
+    }
 }
