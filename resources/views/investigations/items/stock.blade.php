@@ -120,7 +120,7 @@
                             </span>
                         </td>
                         <td>
-                            <span class="badge bg-{{ $stock->location->color() }}">{{ $stock->location->label() }}</span>
+                            <x-status-badge :status="$stock->location" />
                         </td>
                         <td><code>{{ $stock->batch_number ?? '—' }}</code></td>
                         <td class="text-center">
@@ -147,7 +147,7 @@
                                 data-cost="{{ $stock->unit_cost }}"
                                 data-expiry="{{ $stock->expiry_date?->format('Y-m-d') }}"
                                 data-reorder="{{ $stock->reorder_level }}"
-                                data-bs-toggle="modal" data-bs-target="#editStockModal">
+                                data-bs-toggle="modal" data-bs-target="#editStockModal" aria-label="Edit" title="Edit">
                                 <i class="ti ti-edit"></i>
                             </button>
                             @endcan

@@ -57,11 +57,9 @@
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <h6 class="fw-bold mb-0">Visit Status Flow</h6>
                     <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-{{ $visit->status->color() }} fs-14 px-3 py-2">{{ $visit->status->label() }}</span>
+                        <x-status-badge :status="$visit->status" class="fs-14 px-3 py-2" />
                         @if($visit->triage_score)
-                            <span class="badge bg-{{ $visit->triage_score->color() }} px-2 py-2">
-                                <i class="ti ti-activity me-1"></i>{{ $visit->triage_score->label() }}
-                            </span>
+                            <x-status-badge :status="$visit->triage_score" icon="ti-activity" class="px-2 py-2" />
                         @endif
                     </div>
                 </div>
@@ -169,7 +167,7 @@
                     </div>
                     <div class="col-md-3 mb-2">
                         <label class="text-muted small mb-1">Priority</label>
-                        <div><span class="badge bg-{{ $visit->priority->color() }}">{{ $visit->priority->label() }}</span></div>
+                        <div><x-status-badge :status="$visit->priority" /></div>
                     </div>
                     <div class="col-md-3 mb-2">
                         <label class="text-muted small mb-1">Visit Date</label>
@@ -208,7 +206,7 @@
             <div class="card-header d-flex align-items-center justify-content-between">
                 <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-info"></i>Triage Assessment</h6>
                 {{-- @if($triage->triage_score)
-                    <span class="badge bg-{{ $triage->triage_score->color() }}">{{ $triage->triage_score->label() }}</span>
+                    <x-status-badge :status="$triage->triage_score" />
                 @endif --}}
                 
                 <div>
@@ -305,7 +303,7 @@
                         </div>
                         <div class="col-md-2">
                             <span class="text-muted d-block">Route Status</span>
-                            <span class="badge bg-{{ $routeBadge($activeConsultationRoute->status) }}">{{ $activeConsultationRoute->status }}</span>
+                            <x-status-badge :status="$activeConsultationRoute->status" domain="consultation_route" />
                         </div>
                         <div class="col-md-2">
                             <span class="text-muted d-block">Started At</span>
@@ -343,7 +341,7 @@
                                     <td>{{ $route->department?->name ?? '-' }}</td>
                                     <td>{{ $serviceNames->implode(', ') ?: '-' }}</td>
                                     <td>{{ $route->doctor ? 'Dr. ' . $route->doctor->full_name : 'Unassigned' }}</td>
-                                    <td><span class="badge bg-{{ $routeBadge($route->status) }}">{{ $route->status }}</span></td>
+                                    <td><x-status-badge :status="$route->status" domain="consultation_route" /></td>
                                     <td>
                                         <div class="d-flex flex-wrap gap-1">
                                             <a href="{{ route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-xs btn-outline-primary">Open</a>

@@ -18,7 +18,7 @@
         </h4>
     </div>
     <div>
-        <span class="badge bg-{{ $prescription->status->color() }} px-3 py-2 fs-14">{{ $prescription->status->label() }}</span>
+        <x-status-badge :status="$prescription->status" class="px-3 py-2 fs-14" />
     </div>
 </div>
 

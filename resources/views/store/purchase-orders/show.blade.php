@@ -7,7 +7,7 @@
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">
             {{ $purchaseOrder->po_number }}
-            <span class="badge bg-{{ $purchaseOrder->status->color() }} ms-2">{{ $purchaseOrder->status->label() }}</span>
+            <x-status-badge :status="$purchaseOrder->status" class="ms-2" />
         </h4>
     </div>
     <div class="d-flex gap-2">
@@ -63,14 +63,14 @@
                 <h5 class="card-title mb-0">Order Information</h5>
             </div>
             <div class="card-body">
-                <table class="table table-borderless table-sm mb-0">
+                <div class="table-responsive"><table class="table table-borderless table-sm mb-0">
                     <tr>
                         <td class="text-muted" style="width: 40%;">PO #</td>
                         <td class="fw-medium">{{ $purchaseOrder->po_number }}</td>
                     </tr>
                     <tr>
                         <td class="text-muted">Status</td>
-                        <td><span class="badge bg-{{ $purchaseOrder->status->color() }}">{{ $purchaseOrder->status->label() }}</span></td>
+                        <td><x-status-badge :status="$purchaseOrder->status" /></td>
                     </tr>
                     <tr>
                         <td class="text-muted">Order Date</td>
@@ -106,7 +106,7 @@
                         <td class="text-muted">Created</td>
                         <td>{{ $purchaseOrder->created_at->format('d M Y H:i') }}</td>
                     </tr>
-                </table>
+                </table></div>
             </div>
         </div>
 
@@ -226,8 +226,8 @@
             <div class="card-body">
                 <form method="POST" action="{{ route('admin.store.purchase-orders.receive', $purchaseOrder) }}">
                     @csrf
-                    <div class="table-responsive mb-3">
-                        <table class="table table-bordered table-sm">
+                    <div class="mb-3">
+                        <div class="table-responsive"><table class="table table-bordered table-sm">
                             <thead class="table-light">
                                 <tr>
                                     <th>Product</th>
@@ -261,7 +261,7 @@
                                 @endif
                                 @endforeach
                             </tbody>
-                        </table>
+                        </table></div>
                     </div>
                     <button type="submit" class="btn btn-success" onclick="return confirm('Confirm receiving these items?')">
                         <i class="ti ti-package me-1"></i>Receive Items

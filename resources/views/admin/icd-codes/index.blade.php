@@ -82,7 +82,7 @@
                             @endif
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editCodeModal{{ $code->id }}">
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editCodeModal{{ $code->id }}" aria-label="Edit" title="Edit">
                                 <i class="ti ti-edit"></i>
                             </button>
                             <x-confirm-form :action="route('admin.icd-codes.destroy', $code)" method="DELETE"

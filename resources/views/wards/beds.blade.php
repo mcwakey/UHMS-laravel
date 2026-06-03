@@ -89,7 +89,7 @@
                         <td>{{ Str::limit($bed->notes, 30) ?? '—' }}</td>
                         <td class="text-end">
                             @can('beds.manage')
-                            <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#editBedModal{{ $bed->id }}">
+                            <button type="button" class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#editBedModal{{ $bed->id }}" aria-label="Edit" title="Edit">
                                 <i class="ti ti-pencil"></i>
                             </button>
                             @endcan

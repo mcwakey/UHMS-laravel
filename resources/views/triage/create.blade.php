@@ -233,7 +233,7 @@
                     </div>
                     <div class="col-6">
                         <div class="text-muted small">Priority</div>
-                        <div><span class="badge bg-{{ $visit->priority->color() }}">{{ $visit->priority->label() }}</span></div>
+                        <div><x-status-badge :status="$visit->priority" /></div>
                     </div>
                 </div>
             </div>

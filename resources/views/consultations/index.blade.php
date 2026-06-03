@@ -97,14 +97,14 @@
                             <small class="text-muted">{{ Str::limit($visit->chief_complaint, 36) ?? '-' }}</small>
                         </td>
                         <td>
-                            <span class="badge bg-{{ $visit->priority->color() }}">{{ $visit->priority->label() }}</span>
+                            <x-status-badge :status="$visit->priority" />
                             @if($visit->triage_score)
-                                <span class="badge bg-{{ $visit->triage_score->color() }} ms-1">{{ $visit->triage_score->label() }}</span>
+                                <x-status-badge :status="$visit->triage_score" class="ms-1" />
                             @endif
                         </td>
                         <td>{{ $route->doctor || $route->mainDoctor ? 'Dr. ' . ($route->doctor?->full_name ?? $route->mainDoctor?->full_name) : '-' }}</td>
                         <td>
-                            <span class="badge bg-{{ $isActive ? 'success' : 'warning' }}">{{ $route->status }}</span>
+                            <x-status-badge :status="$route->status" domain="consultation_route" />
                             <div class="small text-muted">{{ $visit->status->label() }}</div>
                         </td>
                         <td><small>{{ ($route->activated_at ?? $route->started_at ?? $route->created_at)->diffForHumans(null, true) }}</small></td>

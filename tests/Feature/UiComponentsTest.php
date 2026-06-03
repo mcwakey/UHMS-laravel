@@ -76,6 +76,17 @@ class UiComponentsTest extends TestCase
         $this->assertStringContainsString('bg-dark', $this->render('<x-status-badge status="BLACK" domain="triage" />'));
     }
 
+    public function test_consultation_route_and_session_domains_resolve(): void
+    {
+        // Added in Phase 9 to replace raw $route->status echoes with <x-status-badge>.
+        $this->assertStringContainsString('bg-success', $this->render('<x-status-badge status="ACTIVE" domain="consultation_route" />'));
+        $this->assertStringContainsString('bg-info', $this->render('<x-status-badge status="PAUSED" domain="consultation_route" />'));
+        $this->assertStringContainsString('bg-secondary', $this->render('<x-status-badge status="COMPLETED" domain="consultation_route" />'));
+        $this->assertStringContainsString('bg-warning', $this->render('<x-status-badge status="PAUSED" domain="consultation_session" />'));
+        // Human-readable label, never raw UPPER_SNAKE.
+        $this->assertStringContainsString('Active', $this->render('<x-status-badge status="ACTIVE" domain="consultation_route" />'));
+    }
+
     public function test_unknown_status_falls_back_safely(): void
     {
         $html = $this->render('<x-status-badge status="WHATEVER_NEW_STATE" />');

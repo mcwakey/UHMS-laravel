@@ -48,7 +48,7 @@
                 <h6 class="mb-0"><i class="ti ti-info-circle me-2"></i>Device Information</h6>
             </div>
             <div class="card-body">
-                <table class="table table-sm mb-0">
+                <div class="table-responsive"><table class="table table-sm mb-0">
                     <tr><th class="w-50">Name</th><td>{{ $analyzer->name }}</td></tr>
                     <tr><th>Manufacturer</th><td>{{ $analyzer->manufacturer ?: '—' }}</td></tr>
                     <tr><th>Model</th><td>{{ $analyzer->model ?: '—' }}</td></tr>
@@ -72,7 +72,7 @@
                         </td>
                     </tr>
                     <tr><th>Created</th><td>{{ $analyzer->created_at->format('d M Y') }}</td></tr>
-                </table>
+                </table></div>
             </div>
         </div>
 

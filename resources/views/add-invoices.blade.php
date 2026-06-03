@@ -270,7 +270,7 @@
                             <div class="col-lg-12 col-md-12">
 
                                 <div class="mb-3">
-                                    <table class="table invoice-table border">
+                                    <div class="table-responsive"><table class="table invoice-table border">
                                         <thead>
                                             <tr>
                                                 <th>Item</th>
@@ -302,7 +302,7 @@
                                                 <td></td>
                                             </tr>
                                         </tbody>
-                                    </table>
+                                    </table></div>
                                 </div>
                                     
                             </div> <!-- end col -->

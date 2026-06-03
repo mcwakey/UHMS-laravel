@@ -151,14 +151,14 @@
                             </span>
                         </td>
                         <td>
-                            <span class="badge bg-{{ $visit->priority->color() }}">{{ $visit->priority->label() }}</span>
+                            <x-status-badge :status="$visit->priority" />
                             @if($visit->triage_score)
-                                <span class="badge bg-{{ $visit->triage_score->color() }} ms-1">{{ $visit->triage_score->label() }}</span>
+                                <x-status-badge :status="$visit->triage_score" class="ms-1" />
                             @endif
                         </td>
                         <td>{{ $visit->currentConsultationDoctor()?->full_name ?? '—' }}</td>
                         <td>
-                            <span class="badge bg-{{ $visit->status->color() }}">{{ $visit->status->label() }}</span>
+                            <x-status-badge :status="$visit->status" />
                         </td>
                         <td>{{ $visit->visit_date->format('d M Y') }}</td>
                         <td>{{ $visit->duration ?? '—' }}</td>

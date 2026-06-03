@@ -34,6 +34,7 @@ class UiAuditCommand extends Command
         {--json : Also write a JSON report to storage/reports/ui-audit-report.json}
         {--fail : Exit non-zero when NEW critical findings exist (outside the baseline)}
         {--strict : Enable stricter heuristics that may flag valid-but-risky code}
+        {--min-severity= : With --fail, block on this severity and above (CRITICAL|HIGH|MEDIUM|LOW|INFO)}
         {--path= : Limit the scan to a path relative to the project root}
         {--update-baseline : Rewrite the UI debt baseline from this run and exit}';
 
@@ -131,12 +132,13 @@ class UiAuditCommand extends Command
 
         // ── Exit code ────────────────────────────────────────────────
         if ($this->option('fail')) {
-            $blockers = $this->newBlockers($baseline);
+            $blocking = $this->blockingSeverities();
+            $blockers = $this->newBlockers($baseline, $blocking);
             if ($blockers > 0) {
                 $this->error(sprintf(
                     'ui:audit --fail: %d new %s finding(s) outside the baseline.',
                     $blockers,
-                    $this->strict ? 'critical/high' : 'critical'
+                    strtolower(implode('/', $blocking))
                 ));
                 return self::FAILURE;
             }
@@ -543,9 +545,26 @@ class UiAuditCommand extends Command
         return array_flip($data['fingerprints'] ?? []);
     }
 
-    private function newBlockers(array $baseline): int
+    /**
+     * Severities that should fail the build under --fail. --min-severity takes
+     * precedence (block that level and everything above it); otherwise --strict
+     * adds HIGH to the default CRITICAL-only gate.
+     *
+     * @return array<int,string>
+     */
+    private function blockingSeverities(): array
     {
-        $blocking = $this->strict ? ['CRITICAL', 'HIGH'] : ['CRITICAL'];
+        $min = strtoupper((string) $this->option('min-severity'));
+        if ($min !== '' && in_array($min, self::SEVERITIES, true)) {
+            $idx = array_search($min, self::SEVERITIES, true);
+            return array_slice(self::SEVERITIES, 0, $idx + 1);
+        }
+        return $this->strict ? ['CRITICAL', 'HIGH'] : ['CRITICAL'];
+    }
+
+    private function newBlockers(array $baseline, ?array $blocking = null): int
+    {
+        $blocking ??= $this->blockingSeverities();
         $n = 0;
         foreach ($this->findings as $f) {
             if (in_array($f['severity'], $blocking, true) && ! isset($baseline[$this->fingerprint($f)])) {

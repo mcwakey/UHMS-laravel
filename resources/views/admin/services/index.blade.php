@@ -259,7 +259,7 @@
                                             @php $existing = $typeDefaults[$type->value] ?? null; @endphp
                                             <div class="col-md-3">
                                                 <label class="form-label fw-medium">
-                                                    <span class="badge bg-{{ $type->color() }}">{{ $type->label() }}</span>
+                                                    <x-status-badge :status="$type" />
                                                 </label>
                                                 <div class="input-group input-group-sm">
                                                     <span class="input-group-text">&#8373;</span>

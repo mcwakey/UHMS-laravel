@@ -74,7 +74,7 @@
         <div class="border rounded p-2 mb-2">
             <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="fw-medium small">{{ $rx->prescription_number }}</span>
-                <span class="badge bg-{{ $rx->status->color() }}">{{ $rx->status->label() }}</span>
+                <x-status-badge :status="$rx->status" />
             </div>
             <div class="table-responsive"><table class="table table-sm table-borderless mb-0" style="font-size:.8rem">
                 <thead><tr class="text-muted"><th>Drug</th><th>Dosage</th><th>Frequency</th><th>Duration</th></tr></thead>

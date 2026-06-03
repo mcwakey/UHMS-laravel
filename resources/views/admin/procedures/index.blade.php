@@ -170,7 +170,7 @@
                         </td>
                         <td>
                             @can('procedures.edit')
-                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProcedureModal{{ $procedure->id }}">
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProcedureModal{{ $procedure->id }}" aria-label="Edit" title="Edit">
                                 <i class="ti ti-edit"></i>
                             </button>
                             <form method="POST" action="{{ route('admin.procedures.toggle', $procedure) }}" class="d-inline">

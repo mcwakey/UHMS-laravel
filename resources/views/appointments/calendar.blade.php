@@ -189,7 +189,7 @@
             <div class="d-flex flex-wrap gap-3 align-items-center">
                 <small class="text-muted fw-medium">Status Legend:</small>
                 @foreach(\App\Enums\AppointmentStatus::cases() as $status)
-                <span class="badge bg-{{ $status->color() }}">{{ $status->label() }}</span>
+                <x-status-badge :status="$status" />
                 @endforeach
             </div>
         </div>

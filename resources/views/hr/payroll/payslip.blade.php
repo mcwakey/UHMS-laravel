@@ -78,7 +78,7 @@
         <div class="text-center">
             <h4>Net Pay: <span class="text-success">GH₵ {{ number_format($record->net_pay, 2) }}</span></h4>
             <small class="text-muted">
-                Status: <span class="badge bg-{{ $record->status->color() }}">{{ $record->status->label() }}</span>
+                Status: <x-status-badge :status="$record->status" />
                 @if($record->paid_at)
                     | Paid: {{ $record->paid_at->format('d M Y') }}
                 @endif

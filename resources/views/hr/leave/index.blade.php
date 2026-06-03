@@ -63,11 +63,11 @@
                     @forelse($leaves as $leave)
                     <tr>
                         <td class="fw-medium">{{ $leave->employee->full_name }}</td>
-                        <td><span class="badge bg-{{ $leave->leave_type->color() }}">{{ $leave->leave_type->label() }}</span></td>
+                        <td><x-status-badge :status="$leave->leave_type" /></td>
                         <td>{{ $leave->start_date->format('d M') }} — {{ $leave->end_date->format('d M Y') }}</td>
                         <td class="text-center">{{ $leave->days }}</td>
                         <td>{{ Str::limit($leave->reason, 40) ?? '-' }}</td>
-                        <td><span class="badge bg-{{ $leave->status->color() }}">{{ $leave->status->label() }}</span></td>
+                        <td><x-status-badge :status="$leave->status" /></td>
                         <td class="text-end">
                             @if($leave->status->value === 'pending')
                                 @can('hr.leave.approve')

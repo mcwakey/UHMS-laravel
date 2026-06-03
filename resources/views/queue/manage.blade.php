@@ -60,7 +60,7 @@
                 <div class="p-3 border-bottom">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="badge bg-primary fs-16 px-3 py-2">#{{ $entry->queue_number }}</span>
-                        <span class="badge bg-{{ $entry->visit->priority->color() }}">{{ $entry->visit->priority->label() }}</span>
+                        <x-status-badge :status="$entry->visit->priority" />
                     </div>
                     <h6 class="fw-bold mb-1">{{ $entry->visit->patient->full_name }}</h6>
                     <small class="text-muted d-block">{{ $entry->visit->patient->patient_number }}</small>
@@ -122,7 +122,7 @@
                                     <br><small class="text-muted">{{ $entry->visit->visit_type->label() }}</small>
                                 </td>
                                 <td>
-                                    <span class="badge bg-{{ $entry->priority->color() }}">{{ $entry->priority->label() }}</span>
+                                    <x-status-badge :status="$entry->priority" />
                                 </td>
                                 <td>
                                     <span class="text-muted">{{ $entry->created_at->diffForHumans() }}</span>

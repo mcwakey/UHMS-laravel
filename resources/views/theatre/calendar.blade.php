@@ -71,7 +71,7 @@
                                     <div class="border rounded p-2 bg-light">
                                         <div class="d-flex justify-content-between">
                                             <strong>{{ $block->start_at->format('H:i') }} - {{ $block->end_at->format('H:i') }}</strong>
-                                            <span class="badge bg-{{ $block->block_type->color() }}">{{ $block->block_type->label() }}</span>
+                                            <x-status-badge :status="$block->block_type" />
                                         </div>
                                         <div class="small">{{ $block->reason }}</div>
                                         @if ($block->notes)

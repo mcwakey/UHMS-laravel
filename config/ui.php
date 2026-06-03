@@ -283,6 +283,24 @@ return [
             'PERMANENTLY_DEFERRED' => 'danger',
         ],
 
+        // Consultation route lifecycle (VisitConsultationRoute::STATUS_*)
+        'consultation_route' => [
+            'PENDING' => 'warning',
+            'ACTIVE' => 'success',
+            'PAUSED' => 'info',
+            'COMPLETED' => 'secondary',
+            'CANCELLED' => 'danger',
+        ],
+
+        // Consultation session lifecycle
+        'consultation_session' => [
+            'PENDING' => 'warning',
+            'ACTIVE' => 'success',
+            'PAUSED' => 'warning',
+            'COMPLETED' => 'secondary',
+            'CANCELLED' => 'danger',
+        ],
+
         // Claims
         'claim' => [
             'DRAFT' => 'secondary',

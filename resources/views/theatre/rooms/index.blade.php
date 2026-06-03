@@ -165,7 +165,7 @@
                         @foreach ($recentBlocks as $block)
                             <tr>
                                 <td>{{ $block->theatreRoom?->name }}</td>
-                                <td><span class="badge bg-{{ $block->block_type->color() }}">{{ $block->block_type->label() }}</span></td>
+                                <td><x-status-badge :status="$block->block_type" /></td>
                                 <td>{{ $block->start_at->format('d M H:i') }} - {{ $block->end_at->format('d M H:i') }}</td>
                                 <td>{{ $block->reason }}</td>
                                 <td>{{ $block->createdBy?->name ?? '-' }}</td>

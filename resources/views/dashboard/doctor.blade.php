@@ -99,9 +99,9 @@
                                     </div>
                                 </td>
                                 <td><span class="badge bg-light text-dark">{{ $visit->visit_type->label() }}</span></td>
-                                <td><span class="badge bg-{{ $visit->priority->color() }}">{{ $visit->priority->label() }}</span></td>
+                                <td><x-status-badge :status="$visit->priority" /></td>
                                 <td>—</td>
-                                <td><span class="badge bg-{{ $visit->status->color() }}">{{ $visit->status->label() }}</span></td>
+                                <td><x-status-badge :status="$visit->status" /></td>
                                 <td>
                                     @if($visit->status->value === 'waiting' || $visit->status->value === 'consulting')
                                         <a href="{{ route('doctor.consultation.show', $visit) }}" class="btn btn-sm btn-primary">

@@ -11,7 +11,7 @@
             <div class="col">
                 <h3 class="page-title">
                     Appointment {{ $appointment->appointment_number }}
-                    <span class="badge bg-{{ $appointment->status->color() }} ms-2 js-appointment-status-badge">{{ $appointment->status->label() }}</span>
+                    <x-status-badge :status="$appointment->status" class="ms-2 js-appointment-status-badge" />
                 </h3>
             </div>
             <div class="col-auto">
@@ -90,7 +90,7 @@
                                 </tr>
                                 <tr>
                                     <td class="text-muted">Status</td>
-                                    <td><span class="badge bg-{{ $appointment->status->color() }} js-appointment-status-badge">{{ $appointment->status->label() }}</span></td>
+                                    <td><x-status-badge :status="$appointment->status" class="js-appointment-status-badge" /></td>
                                 </tr>
                             </table></div>
                         </div>

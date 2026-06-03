@@ -47,7 +47,7 @@
                                 data-active="{{ (int) $loc->is_active }}"
                                 data-notes="{{ $loc->notes }}"
                                 data-url="{{ route('admin.store.stock.locations.update', $loc) }}"
-                            ><i class="ti ti-pencil"></i></button>
+                             aria-label="Edit" title="Edit"><i class="ti ti-pencil"></i></button>
                             @endcan
                         </td>
                     </tr>

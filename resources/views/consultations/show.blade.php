@@ -143,7 +143,7 @@
             </div>
 
         <div class="d-flex flex-wrap gap-2">
-            {{-- <span class="badge bg-{{ $visit->status->color() }}">{{ $visit->status->label() }}</span>
+            {{-- <x-status-badge :status="$visit->status" />
             @if($selectedRoute)
                 <span class="badge bg-{{ $routeBadge($selectedRoute->status) }}">{{ $selectedRoute->status }}</span>
             @endif --}}
@@ -305,7 +305,7 @@
                     @forelse($emergencyCase->medicationOrders->take(4) as $order)
                         <div class="small border-bottom pb-1 mb-1">
                             <div class="fw-semibold">{{ $order->display_name }}</div>
-                            <div class="text-muted">{{ trim(($order->dose ?: '').' '.($order->dose_unit ?: '').' '.($order->route ?: '')) ?: '-' }} · {{ $order->status }}</div>
+                            <div class="text-muted">{{ trim(($order->dose ?: '').' '.($order->dose_unit ?: '').' '.($order->route ?: '')) ?: '-' }} · <x-status-badge :status="$order->status" domain="med_order" size="sm" /></div>
                         </div>
                     @empty
                         <div class="small text-muted">No emergency medications ordered.</div>
@@ -319,7 +319,7 @@
                 <div class="border rounded p-2 h-100">
                     <div class="fw-semibold small mb-2"><i class="ti ti-microscope me-1 text-info"></i>Investigations</div>
                     @forelse($emergencyCase->labRequests->take(4) as $request)
-                        <div class="small">{{ $request->items->map(fn($item) => $item->display_name ?? $item->name)->filter()->implode(', ') ?: $request->request_number }} <span class="text-muted">{{ $request->status }}</span></div>
+                        <div class="small">{{ $request->items->map(fn($item) => $item->display_name ?? $item->name)->filter()->implode(', ') ?: $request->request_number }} <x-status-badge :status="$request->status" domain="lab" size="sm" /></div>
                     @empty
                         <div class="small text-muted">No investigations requested.</div>
                     @endforelse
@@ -768,7 +768,7 @@
                                                     data-url="{{ route('admin.consultations.complaints.destroy', $complaint) }}"
                                                     data-target="#complaint-{{ $complaint->id }}"
                                                     data-badge="badge-complaints"
-                                                    data-confirm="Remove this complaint?">
+                                                    data-confirm="Remove this complaint?" aria-label="Delete" title="Delete">
                                                 <i class="ti ti-trash"></i>
                                             </button>
                                             @endif
@@ -875,7 +875,7 @@
                                                     data-url="{{ route('admin.consultations.hopc.destroy', $hopc) }}"
                                                     data-target="#hopc-{{ $hopc->id }}"
                                                     data-badge="badge-hopc"
-                                                    data-confirm="Remove this history entry?">
+                                                    data-confirm="Remove this history entry?" aria-label="Delete" title="Delete">
                                                 <i class="ti ti-trash"></i>
                                             </button>
                                             @endif
@@ -971,7 +971,7 @@
                                                     data-url="{{ route('admin.consultations.examinations.destroy', $exam) }}"
                                                     data-target="#examination-{{ $exam->id }}"
                                                     data-badge="badge-examination"
-                                                    data-confirm="Remove this examination entry?">
+                                                    data-confirm="Remove this examination entry?" aria-label="Delete" title="Delete">
                                                 <i class="ti ti-trash"></i>
                                             </button>
                                             @endif
@@ -1106,7 +1106,7 @@
                                                     data-url="{{ route('admin.consultations.diagnoses.destroy', $diagnosis) }}"
                                                     data-target="#diagnosis-{{ $diagnosis->id }}"
                                                     data-badge="badge-diagnoses"
-                                                    data-confirm="Remove this diagnosis?">
+                                                    data-confirm="Remove this diagnosis?" aria-label="Delete" title="Delete">
                                                 <i class="ti ti-trash"></i>
                                             </button>
                                             @endif
@@ -1385,7 +1385,7 @@
                                                     data-url="{{ route('admin.consultations.treatments.destroy', $treatment) }}"
                                                     data-target="#treatment-{{ $treatment->id }}"
                                                     data-badge="badge-treatments"
-                                                    data-confirm="Remove this treatment?">
+                                                    data-confirm="Remove this treatment?" aria-label="Delete" title="Delete">
                                                 <i class="ti ti-trash"></i>
                                             </button>
                                             @endif
@@ -1513,7 +1513,7 @@
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <div>
                                             <span class="fw-bold">{{ $prescription->prescription_number }}</span>
-                                            <span class="badge bg-{{ $prescription->status->color() }} ms-2">{{ $prescription->status->label() }}</span>
+                                            <x-status-badge :status="$prescription->status" class="ms-2" />
                                             @if($entryFooter($prescription))<small class="text-muted d-block">{{ $entryFooter($prescription) }}</small>@endif
                                         </div>
                                         <div class="d-flex align-items-center gap-1 entry-actions">
@@ -1954,7 +1954,7 @@
                                 </small>
                             </div>
                             <button type="button" class="btn btn-xs btn-outline-primary flex-shrink-0"
-                                    onclick="window.location='{{ route('admin.consultations.history', $pastRecord->visit) }}'">
+                                    onclick="window.location='{{ route('admin.consultations.history', $pastRecord->visit) }}'" aria-label="View" title="View">
                                 <i class="ti ti-eye"></i>
                             </button>
                         </div>
@@ -2024,7 +2024,7 @@
                             @endif
                         </td>
                         <td>{{ $session->doctor ? 'Dr. ' . $session->doctor->full_name : 'Unassigned' }}</td>
-                        <td><span class="badge bg-{{ $routeBadge($session->status) }}">{{ $session->status }}</span></td>
+                        <td><x-status-badge :status="$session->status" domain="consultation_session" /></td>
                         <td>
                             <div class="small">{{ $session->started_at?->format('d M, h:i A') ?? '—' }}</div>
                             @if($session->completed_at)<div class="small text-muted">{{ $session->completed_at->format('d M, h:i A') }}</div>@endif

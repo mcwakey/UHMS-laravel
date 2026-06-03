@@ -62,7 +62,7 @@
                         <td>{{ $emp->position }}</td>
                         <td>{{ $emp->phone }}</td>
                         <td>{{ $emp->hire_date->format('d M Y') }}</td>
-                        <td><span class="badge bg-{{ $emp->status->color() }}">{{ $emp->status->label() }}</span></td>
+                        <td><x-status-badge :status="$emp->status" /></td>
                         <td class="text-end">
                             <a href="{{ route('admin.hr.employees.show', $emp) }}" class="btn btn-sm btn-outline-info" title="View"><i class="ti ti-eye"></i></a>
                             @can('hr.employees.edit')

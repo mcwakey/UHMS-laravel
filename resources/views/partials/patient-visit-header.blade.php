@@ -44,7 +44,7 @@
             </div>
             <div class="col-md-5 text-md-end mt-2 mt-md-0">
                 @if(isset($visit->status) && $visit->status)
-                    <span class="badge bg-{{ $visit->status->color() }} px-3 py-2">{{ $visit->status->label() }}</span>
+                    <x-status-badge :status="$visit->status" class="px-3 py-2" />
                 @endif
                 @if(isset($visit->visit_type) && $visit->visit_type)
                     @php
@@ -59,7 +59,7 @@
                     </span>
                 @endif
                 @if(isset($visit->priority) && $visit->priority)
-                    <span class="badge bg-{{ $visit->priority->color() }} px-2 py-2 ms-1">{{ $visit->priority->label() }}</span>
+                    <x-status-badge :status="$visit->priority" class="px-2 py-2 ms-1" />
                 @endif
                 @if($visit->currentConsultationDoctor())
                     <div class="text-muted small mt-1">

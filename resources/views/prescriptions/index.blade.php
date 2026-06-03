@@ -63,7 +63,7 @@
                         </td>
                         <td>Dr. {{ $prescription->doctor->full_name }}</td>
                         <td><span class="badge bg-secondary">{{ $prescription->items->count() }} items</span></td>
-                        <td><span class="badge bg-{{ $prescription->status->color() }}">{{ $prescription->status->label() }}</span></td>
+                        <td><x-status-badge :status="$prescription->status" /></td>
                         <td><small>{{ $prescription->created_at->format('d M Y, h:i A') }}</small></td>
                         <td>
                             <a aria-label="View" title="View" href="{{ route('admin.prescriptions.show', $prescription) }}" class="btn btn-sm btn-outline-primary">

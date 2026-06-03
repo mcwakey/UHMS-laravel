@@ -44,8 +44,8 @@
                             <div class="text-muted" style="font-size:0.78rem;">
                                 {{ $visit->patient->patient_number }}
                                 &bull; {{ $visit->visit_number }}
-                                &bull; <span class="badge bg-{{ $visit->priority->color() }} py-0">{{ $visit->priority->label() }}</span>
-                                &bull; <span class="badge bg-{{ $visit->status->color() }} py-0">{{ $visit->status->label() }}</span>
+                                &bull; <x-status-badge :status="$visit->priority" class="py-0" />
+                                &bull; <x-status-badge :status="$visit->status" class="py-0" />
                             </div>
                             @if($visit->chief_complaint)
                                 <div class="text-muted" style="font-size:0.78rem;">{{ Str::limit($visit->chief_complaint, 60) }}</div>
@@ -82,8 +82,8 @@
                             <div class="text-muted" style="font-size:0.78rem;">
                                 {{ $visit->patient->patient_number }}
                                 &bull; {{ $visit->visit_number }}
-                                &bull; <span class="badge bg-{{ $visit->priority->color() }} py-0">{{ $visit->priority->label() }}</span>
-                                &bull; <span class="badge bg-{{ $visit->status->color() }} py-0">{{ $visit->status->label() }}</span>
+                                &bull; <x-status-badge :status="$visit->priority" class="py-0" />
+                                &bull; <x-status-badge :status="$visit->status" class="py-0" />
                             </div>
                             @if($visit->chief_complaint)
                                 <div class="text-muted" style="font-size:0.78rem;">{{ Str::limit($visit->chief_complaint, 60) }}</div>

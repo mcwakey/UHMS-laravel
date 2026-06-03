@@ -134,7 +134,7 @@
                     </small>
                 </div>
                 <div class="col-md-2 text-center">
-                    <span class="badge bg-{{ $item->status->color() }} py-1 px-2">{{ $item->status->label() }}</span>
+                    <x-status-badge :status="$item->status" class="py-1 px-2" />
                     @if($item->approved_amount !== null)
                         <div class="mt-1"><small class="text-success fw-medium">Approved: GH₵ {{ number_format($item->approved_amount, 2) }}</small></div>
                     @endif

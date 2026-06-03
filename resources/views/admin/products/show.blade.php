@@ -171,7 +171,7 @@
                             @php $existing = $typeDefaults[$type->value] ?? null; @endphp
                             <div class="col-md-3">
                                 <label class="form-label fw-medium">
-                                    <span class="badge bg-{{ $type->color() }}">{{ $type->label() }}</span>
+                                    <x-status-badge :status="$type" />
                                 </label>
                                 <div class="input-group input-group-sm">
                                     <span class="input-group-text">&#8373;</span>
@@ -231,7 +231,7 @@
                                 <div class="col-md-1 d-flex align-items-end pb-1">
                                     <a href="#"
                                        onclick="event.preventDefault(); if(confirm('Remove this price?')){ document.getElementById('delPrice-{{ $product->id }}-{{ $pp->id }}').submit(); }"
-                                       class="btn btn-sm btn-outline-danger">
+                                       class="btn btn-sm btn-outline-danger" aria-label="Delete" title="Delete">
                                         <i class="ti ti-trash"></i>
                                     </a>
                                 </div>

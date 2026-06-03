@@ -72,7 +72,7 @@
                     <tr>
                         <td class="fw-medium">{{ $provider->name }}</td>
                         <td><span class="badge bg-light text-dark">{{ $provider->short_name ?? '-' }}</span></td>
-                        <td><span class="badge bg-{{ $provider->type->color() }}">{{ $provider->type->label() }}</span></td>
+                        <td><x-status-badge :status="$provider->type" /></td>
                         <td>
                             @if($provider->insuranceType)
                                 <span class="badge bg-primary-subtle text-primary">{{ $provider->insuranceType->code }}</span>

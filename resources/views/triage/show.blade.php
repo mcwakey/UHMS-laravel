@@ -120,7 +120,7 @@
                     <h6 class="fw-bold mb-0">Visit Status</h6>
                 </div>
                 <div class="card-body text-center">
-                    <span class="badge bg-{{ $visit->status->color() }} fs-6 px-3 py-2">{{ $visit->status->label() }}</span>
+                    <x-status-badge :status="$visit->status" class="fs-6 px-3 py-2" />
                     @if($visit->currentDepartment)
                         <div class="text-muted small mt-2">at {{ $visit->currentDepartment->name }}</div>
                     @endif

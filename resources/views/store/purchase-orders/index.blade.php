@@ -175,7 +175,7 @@
                         <td>{{ $po->expected_date?->format('d M Y') ?? '-' }}</td>
                         <td class="text-center"><span class="badge bg-soft-info">{{ $po->items_count }}</span></td>
                         <td class="text-end fw-medium">GH₵ {{ number_format($po->total_amount, 2) }}</td>
-                        <td><span class="badge bg-{{ $po->status->color() }}">{{ $po->status->label() }}</span></td>
+                        <td><x-status-badge :status="$po->status" /></td>
                         <td class="text-end">
                             <div class="dropdown">
                                 <button aria-label="Actions" title="Actions" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">

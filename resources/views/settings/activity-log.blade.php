@@ -76,7 +76,7 @@
             </div>
             <div class="col-md-2 d-flex gap-2">
                 <button type="submit" class="btn btn-primary btn-sm w-100"><i class="ti ti-filter me-1"></i>Filter</button>
-                <a href="{{ url()->current() }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-x"></i></a>
+                <a href="{{ url()->current() }}" class="btn btn-outline-secondary btn-sm" aria-label="Close" title="Close"><i class="ti ti-x"></i></a>
             </div>
         </form>
     </div>

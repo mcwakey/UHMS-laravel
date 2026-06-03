@@ -116,7 +116,7 @@
                             @endif
                         </td>
                         <td>
-                            <span class="badge bg-{{ $rx->status->color() }}">{{ $rx->status->label() }}</span>
+                            <x-status-badge :status="$rx->status" />
                         </td>
                         <td>
                             <small>{{ $rx->created_at->format('d M Y') }}</small><br>

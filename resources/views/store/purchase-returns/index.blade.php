@@ -78,7 +78,7 @@
                     <td>{{ $purchaseReturn->stockLocation?->name ?? '-' }}</td>
                     <td class="text-center"><span class="badge bg-info-subtle text-info">{{ $purchaseReturn->items_count }}</span></td>
                     <td class="text-end fw-medium">GHS {{ number_format((float) $purchaseReturn->total_amount, 2) }}</td>
-                    <td><span class="badge bg-{{ $purchaseReturn->status->color() }}">{{ $purchaseReturn->status->label() }}</span></td>
+                    <td><x-status-badge :status="$purchaseReturn->status" /></td>
                     <td class="text-end"><a aria-label="View" title="View" href="{{ route('admin.store.purchase-returns.show', $purchaseReturn) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
                 </tr>
             @empty

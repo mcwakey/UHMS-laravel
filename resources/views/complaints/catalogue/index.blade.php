@@ -132,7 +132,7 @@
                             <td><span class="badge bg-{{ $complaint->is_active ? 'success' : 'secondary' }}">{{ $complaint->is_active ? 'Active' : 'Inactive' }}</span></td>
                             <td class="text-end">
                                 @can('complaints.catalogue.update')
-                                <button class="btn btn-xs btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#editComplaint{{ $complaint->id }}">
+                                <button class="btn btn-xs btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#editComplaint{{ $complaint->id }}" aria-label="Edit" title="Edit">
                                     <i class="ti ti-edit"></i>
                                 </button>
                                 @endcan

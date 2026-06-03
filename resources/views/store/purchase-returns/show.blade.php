@@ -23,7 +23,7 @@
 @if($errors->any())<div class="alert alert-danger">{{ $errors->first() }}</div>@endif
 
 <div class="row g-3 mb-3">
-    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">Status</small><span class="badge bg-{{ $purchaseReturn->status->color() }}">{{ $purchaseReturn->status->label() }}</span></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">Status</small><x-status-badge :status="$purchaseReturn->status" /></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">Return From</small><strong>{{ $purchaseReturn->stockLocation?->name ?? '-' }}</strong></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">Value</small><strong>GHS {{ number_format((float) $purchaseReturn->total_amount, 2) }}</strong></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">Purchase Order</small><strong>{{ $purchaseReturn->purchaseOrder?->po_number ?? '-' }}</strong></div></div></div>

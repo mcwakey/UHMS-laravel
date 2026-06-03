@@ -250,7 +250,7 @@
         <div class="card mb-3">
             <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-clipboard me-1"></i>Admission Details</h5></div>
             <div class="card-body">
-                <table class="table table-sm table-borderless mb-0">
+                <div class="table-responsive"><table class="table table-sm table-borderless mb-0">
                     <tr><td class="text-muted" style="width:45%">Admission #</td><td class="fw-medium">{{ $admission->admission_number }}</td></tr>
                     <tr><td class="text-muted">Visit #</td><td><a href="{{ route('admin.visits.show', $admission->visit) }}" class="text-decoration-none">{{ $admission->visit->visit_number }}</a></td></tr>
                     <tr><td class="text-muted">Ward</td><td>{{ $admission->bed->ward->name }}</td></tr>
@@ -266,7 +266,7 @@
                     <tr><td class="text-muted">Discharged On</td><td>{{ $admission->actual_discharge_date->format('d M Y, H:i') }}</td></tr>
                     <tr><td class="text-muted">Discharged By</td><td>{{ $admission->dischargedBy->name ?? '—' }}</td></tr>
                     @endif
-                </table>
+                </table></div>
             </div>
         </div>
 

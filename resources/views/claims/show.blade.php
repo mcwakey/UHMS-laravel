@@ -110,14 +110,14 @@
                 <h5 class="card-title mb-0">Claim Information</h5>
             </div>
             <div class="card-body">
-                <table class="table table-borderless table-sm mb-0">
+                <div class="table-responsive"><table class="table table-borderless table-sm mb-0">
                     <tr>
                         <td class="text-muted" style="width: 40%;">Claim #</td>
                         <td class="fw-medium">{{ $claim->claim_number }}</td>
                     </tr>
                     <tr>
                         <td class="text-muted">Status</td>
-                        <td><span class="badge bg-{{ $claim->status->color() }}">{{ $claim->status->label() }}</span></td>
+                        <td><x-status-badge :status="$claim->status" /></td>
                     </tr>
                     <tr>
                         <td class="text-muted">Claim Type</td>
@@ -178,7 +178,7 @@
                         <td class="text-muted">Created</td>
                         <td>{{ $claim->created_at->format('d M Y H:i') }}</td>
                     </tr>
-                </table>
+                </table></div>
             </div>
         </div>
 
@@ -189,7 +189,7 @@
             </div>
             <div class="card-body">
                 <h6 class="mb-1">{{ $claim->insuranceProvider->name }}</h6>
-                <span class="badge bg-{{ $claim->insuranceProvider->type->color() }} mb-2">{{ $claim->insuranceProvider->type->label() }}</span>
+                <x-status-badge :status="$claim->insuranceProvider->type" class="mb-2" />
                 @if($claim->insuranceProvider->insuranceType)
                     <span class="badge bg-primary-subtle text-primary mb-2">{{ $claim->insuranceProvider->insuranceType->code }}</span>
                     <div><small class="text-muted">Workflow: {{ $claim->insuranceProvider->insuranceType->claim_workflow ?: 'GENERIC' }}</small></div>
@@ -319,7 +319,7 @@
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td><span class="badge bg-{{ $item->status->color() }}">{{ $item->status->label() }}</span></td>
+                                <td><x-status-badge :status="$item->status" /></td>
                                 @if($claim->is_editable)
                                 <td class="text-end">
                                     <x-confirm-form :action="route('admin.claims.remove-item', $item)" method="DELETE"
@@ -364,7 +364,7 @@
                     {{ $claim->invoice->invoice_number }}
                 </a>
                 <span class="ms-2 text-muted">GH₵ {{ number_format($claim->invoice->total_amount, 2) }}</span>
-                <span class="badge bg-{{ $claim->invoice->status->color() }} ms-2">{{ $claim->invoice->status->label() }}</span>
+                <x-status-badge :status="$claim->invoice->status" class="ms-2" />
             </div>
         </div>
         @endif
@@ -375,8 +375,8 @@
             </div>
             <div class="card-body">
                 @if($claim->payments->isNotEmpty())
-                    <div class="table-responsive mb-3">
-                        <table class="table table-sm">
+                    <div class="mb-3">
+                        <div class="table-responsive"><table class="table table-sm">
                             <thead>
                                 <tr>
                                     <th>Date</th>
@@ -395,7 +395,7 @@
                                 </tr>
                                 @endforeach
                             </tbody>
-                        </table>
+                        </table></div>
                     </div>
                 @else
                     <p class="text-muted mb-3">No insurer payments recorded.</p>

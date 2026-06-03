@@ -28,7 +28,7 @@
             </div>
             <div class="card-body">
                 @if($openShift)
-                    <table class="table table-borderless table-sm mb-3">
+                    <div class="table-responsive"><table class="table table-borderless table-sm mb-3">
                         <tr>
                             <td class="text-muted" style="width:40%;">Started</td>
                             <td class="fw-medium">{{ $openShift->started_at->format('d M Y H:i') }}</td>
@@ -41,7 +41,7 @@
                             <td class="text-muted">Duration</td>
                             <td>{{ $openShift->started_at->diffForHumans(now(), true) }}</td>
                         </tr>
-                    </table>
+                    </table></div>
 
                     <form method="POST" action="{{ route('admin.accounts.handover.close', $openShift) }}">
                         @csrf
@@ -127,7 +127,7 @@
                                 -
                             @endif
                         </td>
-                        <td><span class="badge bg-{{ $shift->status->color() }}">{{ $shift->status->label() }}</span></td>
+                        <td><x-status-badge :status="$shift->status" /></td>
                         <td class="text-end">
                             @if($shift->status === \App\Enums\ShiftStatus::CLOSED)
                             @can('accounts.entries.approve')

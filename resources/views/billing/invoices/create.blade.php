@@ -70,8 +70,8 @@
 
             <!-- Invoice Items -->
             <h6 class="fw-bold mb-3"><i class="ti ti-list-details me-1"></i>Invoice Items</h6>
-            <div class="table-responsive mb-3">
-                <table class="table table-bordered" id="itemsTable">
+            <div class="mb-3">
+                <div class="table-responsive"><table class="table table-bordered" id="itemsTable">
                     <thead class="table-light">
                         <tr>
                             <th style="width:30%">Description <span class="text-danger">*</span></th>
@@ -158,7 +158,7 @@
                             </tr>
                         @endif
                     </tbody>
-                </table>
+                </table></div>
             </div>
 
             <button type="button" class="btn btn-sm btn-outline-primary mb-3" id="addItemBtn">
@@ -168,7 +168,7 @@
             <!-- Totals -->
             <div class="row justify-content-end">
                 <div class="col-md-5">
-                    <table class="table table-sm table-borderless">
+                    <div class="table-responsive"><table class="table table-sm table-borderless">
                         <tr>
                             <td class="fw-medium">Subtotal:</td>
                             <td class="text-end" id="subtotalDisplay">&#8373;0.00</td>
@@ -197,7 +197,7 @@
                             <td class="fw-bold text-danger">Patient Pays:</td>
                             <td class="text-end fw-bold text-danger" id="patientPaysDisplay">&#8373;0.00</td>
                         </tr>
-                    </table>
+                    </table></div>
                 </div>
             </div>
 

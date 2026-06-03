@@ -19,6 +19,7 @@ use App\Services\ConsultationSessionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Str;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
@@ -124,7 +125,9 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
             ->assertSee('Consultation Sessions for This Visit')
             ->assertSee($this->generalService->name)
             ->assertSee($this->dentalService->name)
-            ->assertSee(VisitConsultationRoute::STATUS_COMPLETED);
+            // Phase 9: route/session status now renders via <x-status-badge>, which shows
+            // the human label ("Completed") instead of the raw enum string ("COMPLETED").
+            ->assertSee(Str::of(VisitConsultationRoute::STATUS_COMPLETED)->replace('_', ' ')->title()->value());
 
         $this->assertDatabaseHas('medical_records', [
             'visit_id' => $visit->id,

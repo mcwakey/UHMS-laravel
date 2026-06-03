@@ -11,7 +11,7 @@
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">
             {{ $provider->name }}
-            <span class="badge bg-{{ $provider->type->color() }} ms-2">{{ $provider->type->label() }}</span>
+            <x-status-badge :status="$provider->type" class="ms-2" />
             <span class="badge badge-soft-secondary ms-1 fs-12">Tiers ({{ $tiers->count() }})</span>
         </h4>
         <small class="text-muted">Coverage rules, limits, holder/beneficiary overrides and visit intervals</small>

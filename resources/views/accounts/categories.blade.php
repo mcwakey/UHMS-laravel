@@ -49,7 +49,7 @@
                     @forelse($categories as $cat)
                     <tr>
                         <td class="fw-medium">{{ $cat->name }}</td>
-                        <td><span class="badge bg-{{ $cat->type->color() }}">{{ $cat->type->label() }}</span></td>
+                        <td><x-status-badge :status="$cat->type" /></td>
                         <td>{{ Str::limit($cat->description, 50) ?? '-' }}</td>
                         <td><span class="badge bg-soft-info">{{ $cat->entries_count }}</span></td>
                         <td>

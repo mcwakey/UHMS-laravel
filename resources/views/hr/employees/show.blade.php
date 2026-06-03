@@ -5,7 +5,7 @@
 <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">{{ $employee->full_name }}
-            <span class="badge bg-{{ $employee->status->color() }} ms-2">{{ $employee->status->label() }}</span>
+            <x-status-badge :status="$employee->status" class="ms-2" />
         </h4>
         <small class="text-muted">{{ $employee->employee_number }} &bull; {{ $employee->position }}</small>
     </div>
@@ -26,23 +26,23 @@
         <div class="card">
             <div class="card-header"><h5 class="card-title mb-0">Personal Information</h5></div>
             <div class="card-body">
-                <table class="table table-borderless table-sm mb-0">
+                <div class="table-responsive"><table class="table table-borderless table-sm mb-0">
                     <tr><td class="text-muted" width="40%">Gender</td><td>{{ $employee->gender?->label() ?? '-' }}</td></tr>
                     <tr><td class="text-muted">Date of Birth</td><td>{{ $employee->date_of_birth?->format('d M Y') ?? '-' }}</td></tr>
                     <tr><td class="text-muted">Phone</td><td>{{ $employee->phone }}</td></tr>
                     <tr><td class="text-muted">Email</td><td>{{ $employee->email ?? '-' }}</td></tr>
                     <tr><td class="text-muted">Address</td><td>{{ $employee->address ?? '-' }}</td></tr>
-                </table>
+                </table></div>
             </div>
         </div>
 
         <div class="card">
             <div class="card-header"><h5 class="card-title mb-0">Emergency Contact</h5></div>
             <div class="card-body">
-                <table class="table table-borderless table-sm mb-0">
+                <div class="table-responsive"><table class="table table-borderless table-sm mb-0">
                     <tr><td class="text-muted" width="40%">Name</td><td>{{ $employee->emergency_contact_name ?? '-' }}</td></tr>
                     <tr><td class="text-muted">Phone</td><td>{{ $employee->emergency_contact_phone ?? '-' }}</td></tr>
-                </table>
+                </table></div>
             </div>
         </div>
     </div>
@@ -51,26 +51,26 @@
         <div class="card">
             <div class="card-header"><h5 class="card-title mb-0">Employment Details</h5></div>
             <div class="card-body">
-                <table class="table table-borderless table-sm mb-0">
+                <div class="table-responsive"><table class="table table-borderless table-sm mb-0">
                     <tr><td class="text-muted" width="40%">Department</td><td>{{ $employee->department?->name ?? '-' }}</td></tr>
                     <tr><td class="text-muted">Position</td><td>{{ $employee->position }}</td></tr>
                     <tr><td class="text-muted">Hire Date</td><td>{{ $employee->hire_date->format('d M Y') }}</td></tr>
                     <tr><td class="text-muted">Basic Salary</td><td>GH₵ {{ number_format($employee->basic_salary, 2) }}</td></tr>
                     <tr><td class="text-muted">System User</td><td>{{ $employee->user?->name ?? 'Not linked' }}</td></tr>
-                </table>
+                </table></div>
             </div>
         </div>
 
         <div class="card">
             <div class="card-header"><h5 class="card-title mb-0">Bank & Tax</h5></div>
             <div class="card-body">
-                <table class="table table-borderless table-sm mb-0">
+                <div class="table-responsive"><table class="table table-borderless table-sm mb-0">
                     <tr><td class="text-muted" width="40%">Bank</td><td>{{ $employee->bank_name ?? '-' }}</td></tr>
                     <tr><td class="text-muted">Account #</td><td>{{ $employee->bank_account ?? '-' }}</td></tr>
                     <tr><td class="text-muted">Branch</td><td>{{ $employee->bank_branch ?? '-' }}</td></tr>
                     <tr><td class="text-muted">SSNIT #</td><td>{{ $employee->ssnit_number ?? '-' }}</td></tr>
                     <tr><td class="text-muted">TIN #</td><td>{{ $employee->tin_number ?? '-' }}</td></tr>
-                </table>
+                </table></div>
             </div>
         </div>
     </div>
@@ -106,9 +106,9 @@
                         <tbody>
                             @forelse($employee->leaveRequests as $leave)
                             <tr>
-                                <td><span class="badge bg-{{ $leave->leave_type->color() }}">{{ $leave->leave_type->label() }}</span></td>
+                                <td><x-status-badge :status="$leave->leave_type" /></td>
                                 <td>{{ $leave->start_date->format('d M') }} - {{ $leave->end_date->format('d M') }}</td>
-                                <td><span class="badge bg-{{ $leave->status->color() }}">{{ $leave->status->label() }}</span></td>
+                                <td><x-status-badge :status="$leave->status" /></td>
                             </tr>
                             @empty
                             <tr><td class="text-center text-muted py-3">No leave requests</td></tr>

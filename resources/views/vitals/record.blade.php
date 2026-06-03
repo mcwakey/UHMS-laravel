@@ -28,9 +28,9 @@
                                 <small class="d-block text-{{ $visit && $visit->id === $tv->id ? 'white-50' : 'muted' }}">{{ $tv->visit_number }}</small>
                             </div>
                             <div class="d-flex flex-column align-items-end gap-1">
-                                <span class="badge bg-{{ $tv->status->color() }}">{{ $tv->status->label() }}</span>
+                                <x-status-badge :status="$tv->status" />
                                 @if($tv->triage_score)
-                                    <span class="badge bg-{{ $tv->triage_score->color() }}" style="font-size:.65rem">{{ $tv->triage_score->label() }}</span>
+                                    <x-status-badge :status="$tv->triage_score" style="font-size:.65rem" />
                                 @endif
                             </div>
                         </div>
@@ -78,11 +78,9 @@
                         <small class="text-muted">{{ $visit->patient->patient_number }} &middot; {{ $visit->patient->age }}y &middot; {{ $visit->patient->gender->value }}</small>
                     </div>
                     <div class="d-flex flex-column align-items-end gap-1">
-                        <span class="badge bg-{{ $visit->status->color() }} px-3 py-2">{{ $visit->status->label() }}</span>
+                        <x-status-badge :status="$visit->status" class="px-3 py-2" />
                         @if($visit->triage_score)
-                            <span class="badge bg-{{ $visit->triage_score->color() }}">
-                                <i class="ti ti-activity me-1"></i>{{ $visit->triage_score->label() }}
-                            </span>
+                            <x-status-badge :status="$visit->triage_score" icon="ti-activity" />
                         @endif
                     </div>
                 </div>

@@ -632,7 +632,7 @@
                     @forelse($case->bayAssignments->sortByDesc('assigned_at') as $assignment)
                         <div class="small mb-2">
                             <div class="fw-semibold">{{ $assignment->ward?->name ?: 'Emergency' }} / {{ $assignment->bed?->bed_number ?: ($assignment->emergencyBay?->name ?: 'Bay') }}</div>
-                            <span class="text-muted">{{ $assignment->status }} - {{ $assignment->assigned_at?->format('d M H:i') }}</span>
+                            <x-status-badge :status="$assignment->status" size="sm" /> <span class="text-muted">{{ $assignment->assigned_at?->format('d M H:i') }}</span>
                         </div>
                     @empty
                         <div class="small text-muted">No assignment history yet.</div>

@@ -35,7 +35,7 @@
                 <div>
                     <span class="fw-bold fs-5">{{ $prescription->prescription_number }}</span>
                 </div>
-                <span class="badge bg-{{ $prescription->status->color() }} fs-14 px-3 py-2">{{ $prescription->status->label() }}</span>
+                <x-status-badge :status="$prescription->status" class="fs-14 px-3 py-2" />
             </div>
         </div>
 
@@ -130,7 +130,7 @@
             <div class="card-body">
                 <a href="{{ route('admin.visits.show', $prescription->visit) }}" class="fw-medium">{{ $prescription->visit->visit_number }}</a>
                 <small class="text-muted d-block">{{ $prescription->visit->visit_date->format('d M Y') }}</small>
-                <span class="badge bg-{{ $prescription->visit->status->color() }}">{{ $prescription->visit->status->label() }}</span>
+                <x-status-badge :status="$prescription->visit->status" />
             </div>
         </div>
 

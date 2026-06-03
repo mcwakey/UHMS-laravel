@@ -124,7 +124,7 @@
                                 data-bs-toggle="modal" data-bs-target="#productPricesModal-{{ $product->id }}">
                                 <i class="ti ti-tag"></i>
                             </button>
-                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProductModal-{{ $product->id }}"><i class="ti ti-edit"></i></button>
+                            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editProductModal-{{ $product->id }}" aria-label="Edit" title="Edit"><i class="ti ti-edit"></i></button>
                             <form method="POST" action="{{ route('admin.products.toggle', $product) }}" class="d-inline">
                                 @csrf @method('PATCH')
                                 <button aria-label="Power" title="Power" class="btn btn-sm btn-outline-secondary"><i class="ti ti-power"></i></button>

@@ -381,7 +381,7 @@
                                 <td>{{ $visit->visit_type?->label() ?? '—' }}</td>
                                 <td>—</td>
                                 <td>{{ $visit->currentConsultationDoctor()?->full_name ?? '—' }}</td>
-                                <td><span class="badge bg-{{ $visit->status->color() }}">{{ $visit->status->label() }}</span></td>
+                                <td><x-status-badge :status="$visit->status" /></td>
                                 <td><a aria-label="View" title="View" href="{{ route('admin.visits.show', $visit) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
                             </tr>
                             @endforeach
@@ -503,7 +503,7 @@
                                         data-ccc-code="{{ $ins->ccc_code }}"
                                         data-expiry="{{ $ins->expiry_date?->format('Y-m-d') }}"
                                         data-active="{{ $ins->is_active }}"
-                                        data-bs-toggle="modal" data-bs-target="#editInsuranceModal">
+                                        data-bs-toggle="modal" data-bs-target="#editInsuranceModal" aria-label="Edit" title="Edit">
                                         <i class="ti ti-edit"></i>
                                     </button>
                                     <x-confirm-form :action="route('admin.patients.insurances.destroy', [$patient, $ins])" method="DELETE"
@@ -572,7 +572,7 @@
                                         data-phone-secondary="{{ $ec->phone_secondary }}"
                                         data-relationship="{{ $ec->relationship }}"
                                         data-primary="{{ $ec->is_primary }}"
-                                        data-bs-toggle="modal" data-bs-target="#editEmergencyContactModal">
+                                        data-bs-toggle="modal" data-bs-target="#editEmergencyContactModal" aria-label="Edit" title="Edit">
                                         <i class="ti ti-edit"></i>
                                     </button>
                                     <x-confirm-form :action="route('admin.patients.emergency-contacts.destroy', [$patient, $ec])" method="DELETE"

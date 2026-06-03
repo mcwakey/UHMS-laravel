@@ -25,7 +25,7 @@
     <div class="card-header bg-white"><h5 class="card-title mb-0">Inventory Report</h5></div>
     <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
         <thead class="bg-light"><tr><th>Unit</th><th>Group</th><th>Component</th><th>Status</th><th>Screening</th><th>Expiry</th><th>Storage</th></tr></thead>
-        <tbody>@forelse($inventory as $unit)<tr><td>{{ $unit->unit_number }}</td><td>{{ $unit->blood_group }}</td><td>{{ $unit->component_type }}</td><td>{{ $unit->status }}</td><td>{{ $unit->screening_status }}</td><td>{{ $unit->expiry_date?->format('d M Y') }}</td><td>{{ $unit->storageLocation->name ?? '—' }}</td></tr>@empty<tr><td colspan="7"><x-empty-state icon="ti-droplet-off" message="No inventory records." /></td></tr>@endforelse</tbody>
+        <tbody>@forelse($inventory as $unit)<tr><td>{{ $unit->unit_number }}</td><td>{{ $unit->blood_group }}</td><td>{{ $unit->component_type }}</td><td><x-status-badge :status="$unit->status" domain="blood_unit" size="sm" /></td><td><x-status-badge :status="$unit->screening_status" domain="screening" size="sm" /></td><td>{{ $unit->expiry_date?->format('d M Y') }}</td><td>{{ $unit->storageLocation->name ?? '—' }}</td></tr>@empty<tr><td colspan="7"><x-empty-state icon="ti-droplet-off" message="No inventory records." /></td></tr>@endforelse</tbody>
     </table></div></div>
     @if($inventory->hasPages())<div class="card-footer">{{ $inventory->links() }}</div>@endif
 </div>
@@ -36,7 +36,7 @@
             <div class="card-header bg-white"><h5 class="card-title mb-0">Request Report</h5></div>
             <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
                 <thead class="bg-light"><tr><th>Request</th><th>Patient</th><th>Blood</th><th>Status</th><th>Date</th></tr></thead>
-                <tbody>@forelse($requests as $request)<tr><td>{{ $request->request_number }}</td><td>{{ $request->patient->full_name ?? '—' }}</td><td>{{ $request->blood_group }} x{{ $request->units_requested }}</td><td>{{ $request->status }}</td><td>{{ $request->requested_at?->format('d M Y') }}</td></tr>@empty<tr><td colspan="5"><x-empty-state icon="ti-droplet-off" message="No blood requests found." /></td></tr>@endforelse</tbody>
+                <tbody>@forelse($requests as $request)<tr><td>{{ $request->request_number }}</td><td>{{ $request->patient->full_name ?? '—' }}</td><td>{{ $request->blood_group }} x{{ $request->units_requested }}</td><td><x-status-badge :status="$request->status" domain="blood_request" size="sm" /></td><td>{{ $request->requested_at?->format('d M Y') }}</td></tr>@empty<tr><td colspan="5"><x-empty-state icon="ti-droplet-off" message="No blood requests found." /></td></tr>@endforelse</tbody>
             </table></div></div>
         </div>
     </div>

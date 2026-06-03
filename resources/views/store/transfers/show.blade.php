@@ -63,7 +63,7 @@
                 <h5 class="card-title mb-0">Transfer Information</h5>
             </div>
             <div class="card-body">
-                <table class="table table-borderless table-sm mb-0">
+                <div class="table-responsive"><table class="table table-borderless table-sm mb-0">
                     <tr>
                         <td class="text-muted" style="width: 40%;">Transfer #</td>
                         <td class="fw-medium">{{ $transfer->transfer_number }}</td>
@@ -74,11 +74,11 @@
                     </tr>
                     <tr>
                         <td class="text-muted">From</td>
-                        <td><span class="badge bg-{{ $transfer->from_location->color() }}">{{ $transfer->from_location->label() }}</span></td>
+                        <td><x-status-badge :status="$transfer->from_location" /></td>
                     </tr>
                     <tr>
                         <td class="text-muted">To</td>
-                        <td><span class="badge bg-{{ $transfer->to_location->color() }}">{{ $transfer->to_location->label() }}</span></td>
+                        <td><x-status-badge :status="$transfer->to_location" /></td>
                     </tr>
                     <tr>
                         <td class="text-muted">Date</td>
@@ -98,7 +98,7 @@
                         <td class="text-muted">Created</td>
                         <td>{{ $transfer->created_at->format('d M Y H:i') }}</td>
                     </tr>
-                </table>
+                </table></div>
             </div>
         </div>
 

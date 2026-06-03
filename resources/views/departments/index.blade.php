@@ -42,7 +42,7 @@
                         <td class="fw-medium">{{ $dept->name }}</td>
                         <td>
                             @if($dept->type)
-                                <span class="badge bg-{{ $dept->type->color() }}">{{ $dept->type->label() }}</span>
+                                <x-status-badge :status="$dept->type" />
                             @else
                                 <span class="text-muted small">—</span>
                             @endif

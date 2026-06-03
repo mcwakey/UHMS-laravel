@@ -148,7 +148,7 @@
                         <td class="text-end text-danger">{{ number_format($rec->tax, 2) }}</td>
                         <td class="text-end text-danger">{{ number_format($rec->other_deductions, 2) }}</td>
                         <td class="text-end fw-bold">{{ number_format($rec->net_pay, 2) }}</td>
-                        <td><span class="badge bg-{{ $rec->status->color() }}">{{ $rec->status->label() }}</span></td>
+                        <td><x-status-badge :status="$rec->status" /></td>
                         <td class="text-end">
                             <a href="{{ route('admin.hr.payroll.payslip', $rec) }}" class="btn btn-sm btn-outline-info" title="Payslip"><i class="ti ti-file-text"></i></a>
                         </td>

@@ -70,7 +70,7 @@
                             <div class="queue-number-display text-primary">#{{ $entry->queue_number }}</div>
                             <div class="queue-patient-name mt-1">{{ $entry->visit->patient->full_name }}</div>
                             @if($entry->visit->priority->value !== 'normal')
-                                <span class="badge bg-{{ $entry->visit->priority->color() }} mt-1">{{ $entry->visit->priority->label() }}</span>
+                                <x-status-badge :status="$entry->visit->priority" class="mt-1" />
                             @endif
                         </div>
                     </div>
@@ -84,7 +84,7 @@
                             <span>{{ $entry->visit->patient->full_name }}</span>
                         </div>
                         @if($entry->priority->value !== 'normal')
-                            <span class="badge bg-{{ $entry->priority->color() }} badge-sm">{{ $entry->priority->label() }}</span>
+                            <x-status-badge :status="$entry->priority" class="badge-sm" />
                         @endif
                     </div>
                     @endforeach

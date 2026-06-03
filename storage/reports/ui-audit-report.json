@@ -1,5 +1,5 @@
 {
-    "generated_at": "2026-06-03T05:07:27+00:00",
+    "generated_at": "2026-06-03T10:12:37+00:00",
     "scope": {
         "blade_views": 543,
         "vue_components": 18,
@@ -7,31 +7,13 @@
     },
     "severity_counts": {
         "CRITICAL": 0,
-        "HIGH": 203,
-        "MEDIUM": 118,
+        "HIGH": 114,
+        "MEDIUM": 83,
         "LOW": 206,
         "INFO": 18
     },
     "strict": false,
     "findings": [
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/accounts/categories.blade.php",
-            "line": 52,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/accounts/handover.blade.php",
-            "line": 130,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
         {
             "severity": "HIGH",
             "type": "inline-workflow-badge",
@@ -89,44 +71,8 @@
         {
             "severity": "HIGH",
             "type": "inline-workflow-badge",
-            "file": "resources/views/admin/products/_prices_modal.blade.php",
-            "line": 72,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/admin/products/show.blade.php",
-            "line": 174,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/admin/services/index.blade.php",
-            "line": 262,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
             "file": "resources/views/appointments/calendar.blade.php",
             "line": 147,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/appointments/calendar.blade.php",
-            "line": 192,
             "message": "Workflow status rendered with an inline Bootstrap colour.",
             "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
             "baseline": true
@@ -145,24 +91,6 @@
             "type": "inline-workflow-badge",
             "file": "resources/views/appointments/index.blade.php",
             "line": 171,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/appointments/show.blade.php",
-            "line": 14,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/appointments/show.blade.php",
-            "line": 93,
             "message": "Workflow status rendered with an inline Bootstrap colour.",
             "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
             "baseline": true
@@ -201,24 +129,6 @@
             "line": 224,
             "message": "Destructive action with no confirmation step detected.",
             "recommendation": "Use <x-confirm-form> (or a confirm modal). High-risk actions should also require a reason.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "raw-status-echo",
-            "file": "resources/views/blood-bank/reports.blade.php",
-            "line": 28,
-            "message": "Raw status value echoed directly (may render UPPER_SNAKE / enum to the user).",
-            "recommendation": "Use <x-status-badge :status=\"...\"/> or ->label() so users see human text and a colour.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "raw-status-echo",
-            "file": "resources/views/blood-bank/reports.blade.php",
-            "line": 39,
-            "message": "Raw status value echoed directly (may render UPPER_SNAKE / enum to the user).",
-            "recommendation": "Use <x-status-badge :status=\"...\"/> or ->label() so users see human text and a colour.",
             "baseline": true
         },
         {
@@ -305,118 +215,10 @@
         {
             "severity": "HIGH",
             "type": "inline-workflow-badge",
-            "file": "resources/views/claims/review.blade.php",
-            "line": 137,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/claims/show.blade.php",
-            "line": 120,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/claims/show.blade.php",
-            "line": 192,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/claims/show.blade.php",
-            "line": 322,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/claims/show.blade.php",
-            "line": 367,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/consultations/history.blade.php",
-            "line": 275,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "raw-status-echo",
-            "file": "resources/views/consultations/history.blade.php",
-            "line": 275,
-            "message": "Raw status value echoed directly (may render UPPER_SNAKE / enum to the user).",
-            "recommendation": "Use <x-status-badge :status=\"...\"/> or ->label() so users see human text and a colour.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
             "file": "resources/views/consultations/history.blade.php",
             "line": 404,
             "message": "Workflow status rendered with an inline Bootstrap colour.",
             "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/consultations/index.blade.php",
-            "line": 100,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/consultations/index.blade.php",
-            "line": 102,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "raw-status-echo",
-            "file": "resources/views/consultations/index.blade.php",
-            "line": 107,
-            "message": "Raw status value echoed directly (may render UPPER_SNAKE / enum to the user).",
-            "recommendation": "Use <x-status-badge :status=\"...\"/> or ->label() so users see human text and a colour.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "raw-status-echo",
-            "file": "resources/views/consultations/show.blade.php",
-            "line": 308,
-            "message": "Raw status value echoed directly (may render UPPER_SNAKE / enum to the user).",
-            "recommendation": "Use <x-status-badge :status=\"...\"/> or ->label() so users see human text and a colour.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "raw-status-echo",
-            "file": "resources/views/consultations/show.blade.php",
-            "line": 322,
-            "message": "Raw status value echoed directly (may render UPPER_SNAKE / enum to the user).",
-            "recommendation": "Use <x-status-badge :status=\"...\"/> or ->label() so users see human text and a colour.",
             "baseline": true
         },
         {
@@ -450,33 +252,6 @@
             "severity": "HIGH",
             "type": "inline-workflow-badge",
             "file": "resources/views/consultations/show.blade.php",
-            "line": 1516,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/consultations/show.blade.php",
-            "line": 2027,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "raw-status-echo",
-            "file": "resources/views/consultations/show.blade.php",
-            "line": 2027,
-            "message": "Raw status value echoed directly (may render UPPER_SNAKE / enum to the user).",
-            "recommendation": "Use <x-status-badge :status=\"...\"/> or ->label() so users see human text and a colour.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/consultations/show.blade.php",
             "line": 2284,
             "message": "Workflow status rendered with an inline Bootstrap colour.",
             "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
@@ -487,42 +262,6 @@
             "type": "inline-workflow-badge",
             "file": "resources/views/dashboard/admin.blade.php",
             "line": 304,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/dashboard/admin.blade.php",
-            "line": 377,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/dashboard/admin.blade.php",
-            "line": 379,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/dashboard/doctor.blade.php",
-            "line": 102,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/dashboard/doctor.blade.php",
-            "line": 104,
             "message": "Workflow status rendered with an inline Bootstrap colour.",
             "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
             "baseline": true
@@ -559,15 +298,6 @@
             "type": "inline-workflow-badge",
             "file": "resources/views/department-consumables/index.blade.php",
             "line": 112,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/departments/index.blade.php",
-            "line": 45,
             "message": "Workflow status rendered with an inline Bootstrap colour.",
             "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
             "baseline": true
@@ -700,15 +430,6 @@
         },
         {
             "severity": "HIGH",
-            "type": "raw-status-echo",
-            "file": "resources/views/emergency/show.blade.php",
-            "line": 635,
-            "message": "Raw status value echoed directly (may render UPPER_SNAKE / enum to the user).",
-            "recommendation": "Use <x-status-badge :status=\"...\"/> or ->label() so users see human text and a colour.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
             "type": "destructive-no-confirm",
             "file": "resources/views/emergency/show.blade.php",
             "line": 1082,
@@ -764,96 +485,6 @@
         {
             "severity": "HIGH",
             "type": "inline-workflow-badge",
-            "file": "resources/views/hr/employees/index.blade.php",
-            "line": 65,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/hr/employees/show.blade.php",
-            "line": 8,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/hr/employees/show.blade.php",
-            "line": 109,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/hr/employees/show.blade.php",
-            "line": 111,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/hr/leave/index.blade.php",
-            "line": 66,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/hr/leave/index.blade.php",
-            "line": 70,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/hr/payroll/index.blade.php",
-            "line": 151,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/hr/payroll/payslip.blade.php",
-            "line": 81,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/insurance/index.blade.php",
-            "line": 75,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/insurance/tiers.blade.php",
-            "line": 14,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
             "file": "resources/views/investigations/items/index.blade.php",
             "line": 107,
             "message": "Workflow status rendered with an inline Bootstrap colour.",
@@ -883,15 +514,6 @@
             "type": "inline-workflow-badge",
             "file": "resources/views/investigations/items/stock.blade.php",
             "line": 118,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/investigations/items/stock.blade.php",
-            "line": 123,
             "message": "Workflow status rendered with an inline Bootstrap colour.",
             "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
             "baseline": true
@@ -1051,33 +673,6 @@
         },
         {
             "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/partials/consultation-clinical-sections.blade.php",
-            "line": 77,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/partials/patient-visit-header.blade.php",
-            "line": 47,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/partials/patient-visit-header.blade.php",
-            "line": 62,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
             "type": "destructive-no-confirm",
             "file": "resources/views/patient-notifications.blade.php",
             "line": 38,
@@ -1098,25 +693,7 @@
             "severity": "HIGH",
             "type": "inline-workflow-badge",
             "file": "resources/views/patients/show.blade.php",
-            "line": 384,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/patients/show.blade.php",
             "line": 439,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/pharmacy/dispense.blade.php",
-            "line": 21,
             "message": "Workflow status rendered with an inline Bootstrap colour.",
             "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
             "baseline": true
@@ -1160,15 +737,6 @@
         {
             "severity": "HIGH",
             "type": "inline-workflow-badge",
-            "file": "resources/views/pharmacy/dispensing.blade.php",
-            "line": 119,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
             "file": "resources/views/pharmacy/drugs.blade.php",
             "line": 76,
             "message": "Workflow status rendered with an inline Bootstrap colour.",
@@ -1189,69 +757,6 @@
             "type": "inline-workflow-badge",
             "file": "resources/views/pharmacy/drugs.blade.php",
             "line": 84,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/prescriptions/index.blade.php",
-            "line": 66,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/prescriptions/show.blade.php",
-            "line": 38,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/prescriptions/show.blade.php",
-            "line": 133,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/queue/board.blade.php",
-            "line": 73,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/queue/board.blade.php",
-            "line": 87,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/queue/manage.blade.php",
-            "line": 63,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/queue/manage.blade.php",
-            "line": 125,
             "message": "Workflow status rendered with an inline Bootstrap colour.",
             "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
             "baseline": true
@@ -1286,35 +791,8 @@
         {
             "severity": "HIGH",
             "type": "inline-workflow-badge",
-            "file": "resources/views/reports/nhis.blade.php",
-            "line": 121,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
             "file": "resources/views/reports/payroll.blade.php",
             "line": 148,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/reports/visits.blade.php",
-            "line": 153,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/reports/visits.blade.php",
-            "line": 156,
             "message": "Workflow status rendered with an inline Bootstrap colour.",
             "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
             "baseline": true
@@ -1421,89 +899,8 @@
         {
             "severity": "HIGH",
             "type": "inline-workflow-badge",
-            "file": "resources/views/store/purchase-orders/index.blade.php",
-            "line": 178,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/store/purchase-orders/show.blade.php",
-            "line": 10,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/store/purchase-orders/show.blade.php",
-            "line": 73,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/store/purchase-returns/index.blade.php",
-            "line": 81,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/store/purchase-returns/show.blade.php",
-            "line": 26,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
             "file": "resources/views/store/stock/balances.blade.php",
             "line": 92,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/store/transfers/index.blade.php",
-            "line": 142,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/store/transfers/index.blade.php",
-            "line": 143,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/store/transfers/show.blade.php",
-            "line": 77,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/store/transfers/show.blade.php",
-            "line": 81,
             "message": "Workflow status rendered with an inline Bootstrap colour.",
             "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
             "baseline": true
@@ -1574,15 +971,6 @@
         {
             "severity": "HIGH",
             "type": "inline-workflow-badge",
-            "file": "resources/views/theatre/calendar.blade.php",
-            "line": 74,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
             "file": "resources/views/theatre/consumables/index.blade.php",
             "line": 104,
             "message": "Workflow status rendered with an inline Bootstrap colour.",
@@ -1619,69 +1007,6 @@
         {
             "severity": "HIGH",
             "type": "inline-workflow-badge",
-            "file": "resources/views/theatre/rooms/index.blade.php",
-            "line": 168,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/triage/create.blade.php",
-            "line": 236,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/triage/index.blade.php",
-            "line": 47,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/triage/index.blade.php",
-            "line": 48,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/triage/index.blade.php",
-            "line": 85,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/triage/index.blade.php",
-            "line": 86,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/triage/show.blade.php",
-            "line": 123,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
             "file": "resources/views/users/index.blade.php",
             "line": 98,
             "message": "Workflow status rendered with an inline Bootstrap colour.",
@@ -1700,26 +1025,8 @@
         {
             "severity": "HIGH",
             "type": "inline-workflow-badge",
-            "file": "resources/views/visits/index.blade.php",
-            "line": 154,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/visits/index.blade.php",
-            "line": 156,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/visits/index.blade.php",
-            "line": 161,
+            "file": "resources/views/visits/show.blade.php",
+            "line": 819,
             "message": "Workflow status rendered with an inline Bootstrap colour.",
             "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
             "baseline": true
@@ -1728,153 +1035,9 @@
             "severity": "HIGH",
             "type": "inline-workflow-badge",
             "file": "resources/views/visits/show.blade.php",
-            "line": 60,
+            "line": 908,
             "message": "Workflow status rendered with an inline Bootstrap colour.",
             "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/visits/show.blade.php",
-            "line": 62,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/visits/show.blade.php",
-            "line": 172,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/visits/show.blade.php",
-            "line": 308,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "raw-status-echo",
-            "file": "resources/views/visits/show.blade.php",
-            "line": 308,
-            "message": "Raw status value echoed directly (may render UPPER_SNAKE / enum to the user).",
-            "recommendation": "Use <x-status-badge :status=\"...\"/> or ->label() so users see human text and a colour.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/visits/show.blade.php",
-            "line": 346,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "raw-status-echo",
-            "file": "resources/views/visits/show.blade.php",
-            "line": 346,
-            "message": "Raw status value echoed directly (may render UPPER_SNAKE / enum to the user).",
-            "recommendation": "Use <x-status-badge :status=\"...\"/> or ->label() so users see human text and a colour.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/visits/show.blade.php",
-            "line": 821,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/visits/show.blade.php",
-            "line": 910,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/vitals/record.blade.php",
-            "line": 31,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/vitals/record.blade.php",
-            "line": 33,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/vitals/record.blade.php",
-            "line": 81,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "HIGH",
-            "type": "inline-workflow-badge",
-            "file": "resources/views/vitals/record.blade.php",
-            "line": 83,
-            "message": "Workflow status rendered with an inline Bootstrap colour.",
-            "recommendation": "Use <x-status-badge :status=\"$model->status\" domain=\"...\"/> so the colour is centralised in config/ui.php.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "table-not-responsive",
-            "file": "resources/views/accounts/handover.blade.php",
-            "line": 31,
-            "message": "Data table is not wrapped in a responsive container.",
-            "recommendation": "Wrap in <div class=\"table-responsive\"> or use <x-data-table>.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "table-not-responsive",
-            "file": "resources/views/add-invoices.blade.php",
-            "line": 273,
-            "message": "Data table is not wrapped in a responsive container.",
-            "recommendation": "Wrap in <div class=\"table-responsive\"> or use <x-data-table>.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "table-not-responsive",
-            "file": "resources/views/admin/analyzers/show.blade.php",
-            "line": 51,
-            "message": "Data table is not wrapped in a responsive container.",
-            "recommendation": "Wrap in <div class=\"table-responsive\"> or use <x-data-table>.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/admin/icd-codes/index.blade.php",
-            "line": 85,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
             "baseline": true
         },
         {
@@ -1924,15 +1087,6 @@
         },
         {
             "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/admin/procedures/index.blade.php",
-            "line": 173,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
             "type": "missing-page-header",
             "file": "resources/views/admin/product-stock/balances.blade.php",
             "line": 7,
@@ -1951,33 +1105,6 @@
         },
         {
             "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/admin/products/_prices_modal.blade.php",
-            "line": 127,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/admin/products/index.blade.php",
-            "line": 127,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/admin/products/show.blade.php",
-            "line": 232,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
             "type": "missing-page-header",
             "file": "resources/views/admin/stock-locations/index.blade.php",
             "line": 7,
@@ -1987,38 +1114,11 @@
         },
         {
             "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/admin/stock-locations/index.blade.php",
-            "line": 54,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
             "type": "missing-page-header",
             "file": "resources/views/admin/users/permissions.blade.php",
             "line": 8,
             "message": "Custom header bar instead of the shared page-header component.",
             "recommendation": "Use <x-page-header title=\"...\" icon=\"...\"> with an <x-slot:actions> for buttons.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "table-not-responsive",
-            "file": "resources/views/admissions/show.blade.php",
-            "line": 253,
-            "message": "Data table is not wrapped in a responsive container.",
-            "recommendation": "Wrap in <div class=\"table-responsive\"> or use <x-data-table>.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "table-not-responsive",
-            "file": "resources/views/billing/invoices/create.blade.php",
-            "line": 171,
-            "message": "Data table is not wrapped in a responsive container.",
-            "recommendation": "Wrap in <div class=\"table-responsive\"> or use <x-data-table>.",
             "baseline": true
         },
         {
@@ -2059,15 +1159,6 @@
         },
         {
             "severity": "MEDIUM",
-            "type": "table-not-responsive",
-            "file": "resources/views/claims/show.blade.php",
-            "line": 113,
-            "message": "Data table is not wrapped in a responsive container.",
-            "recommendation": "Wrap in <div class=\"table-responsive\"> or use <x-data-table>.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
             "type": "missing-page-header",
             "file": "resources/views/complaints/catalogue/index.blade.php",
             "line": 5,
@@ -2077,74 +1168,11 @@
         },
         {
             "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/complaints/catalogue/index.blade.php",
-            "line": 135,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
             "type": "missing-empty-state",
             "file": "resources/views/components/empty-state.blade.php",
             "line": 4,
             "message": "Plain empty-list message instead of the shared empty-state component.",
             "recommendation": "Use <x-empty-state icon=\"...\" title=\"...\" message=\"...\"/>.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/consultations/show.blade.php",
-            "line": 767,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/consultations/show.blade.php",
-            "line": 874,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/consultations/show.blade.php",
-            "line": 970,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/consultations/show.blade.php",
-            "line": 1105,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/consultations/show.blade.php",
-            "line": 1384,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/consultations/show.blade.php",
-            "line": 1956,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
             "baseline": true
         },
         {
@@ -2190,15 +1218,6 @@
             "line": 130,
             "message": "Icon-only button/link without aria-label or title.",
             "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "table-not-responsive",
-            "file": "resources/views/edit-invoices.blade.php",
-            "line": 273,
-            "message": "Data table is not wrapped in a responsive container.",
-            "recommendation": "Wrap in <div class=\"table-responsive\"> or use <x-data-table>.",
             "baseline": true
         },
         {
@@ -2258,42 +1277,6 @@
         {
             "severity": "MEDIUM",
             "type": "table-not-responsive",
-            "file": "resources/views/hr/employees/show.blade.php",
-            "line": 29,
-            "message": "Data table is not wrapped in a responsive container.",
-            "recommendation": "Wrap in <div class=\"table-responsive\"> or use <x-data-table>.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "table-not-responsive",
-            "file": "resources/views/hr/employees/show.blade.php",
-            "line": 42,
-            "message": "Data table is not wrapped in a responsive container.",
-            "recommendation": "Wrap in <div class=\"table-responsive\"> or use <x-data-table>.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "table-not-responsive",
-            "file": "resources/views/hr/employees/show.blade.php",
-            "line": 54,
-            "message": "Data table is not wrapped in a responsive container.",
-            "recommendation": "Wrap in <div class=\"table-responsive\"> or use <x-data-table>.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "table-not-responsive",
-            "file": "resources/views/hr/employees/show.blade.php",
-            "line": 67,
-            "message": "Data table is not wrapped in a responsive container.",
-            "recommendation": "Wrap in <div class=\"table-responsive\"> or use <x-data-table>.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "table-not-responsive",
             "file": "resources/views/hr/payroll/payslip.blade.php",
             "line": 29,
             "message": "Data table is not wrapped in a responsive container.",
@@ -2343,15 +1326,6 @@
             "line": 5,
             "message": "Custom header bar instead of the shared page-header component.",
             "recommendation": "Use <x-page-header title=\"...\" icon=\"...\"> with an <x-slot:actions> for buttons.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/investigations/items/stock.blade.php",
-            "line": 144,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
             "baseline": true
         },
         {
@@ -2428,47 +1402,11 @@
         },
         {
             "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/patients/show.blade.php",
-            "line": 494,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/patients/show.blade.php",
-            "line": 568,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
             "type": "missing-page-header",
             "file": "resources/views/patterns/index.blade.php",
             "line": 6,
             "message": "Custom header bar instead of the shared page-header component.",
             "recommendation": "Use <x-page-header title=\"...\" icon=\"...\"> with an <x-slot:actions> for buttons.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/patterns/index.blade.php",
-            "line": 92,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/patterns/index.blade.php",
-            "line": 111,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
             "baseline": true
         },
         {
@@ -2680,15 +1618,6 @@
         },
         {
             "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/settings/activity-log.blade.php",
-            "line": 79,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
             "type": "missing-page-header",
             "file": "resources/views/settings/invoice.blade.php",
             "line": 5,
@@ -2761,15 +1690,6 @@
         },
         {
             "severity": "MEDIUM",
-            "type": "table-not-responsive",
-            "file": "resources/views/store/purchase-orders/show.blade.php",
-            "line": 66,
-            "message": "Data table is not wrapped in a responsive container.",
-            "recommendation": "Wrap in <div class=\"table-responsive\"> or use <x-data-table>.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
             "type": "missing-page-header",
             "file": "resources/views/store/purchase-returns/create.blade.php",
             "line": 5,
@@ -2802,24 +1722,6 @@
             "line": 5,
             "message": "Custom header bar instead of the shared page-header component.",
             "recommendation": "Use <x-page-header title=\"...\" icon=\"...\"> with an <x-slot:actions> for buttons.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/store/stock/locations.blade.php",
-            "line": 41,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "table-not-responsive",
-            "file": "resources/views/store/transfers/show.blade.php",
-            "line": 66,
-            "message": "Data table is not wrapped in a responsive container.",
-            "recommendation": "Wrap in <div class=\"table-responsive\"> or use <x-data-table>.",
             "baseline": true
         },
         {
@@ -2869,15 +1771,6 @@
         },
         {
             "severity": "MEDIUM",
-            "type": "table-not-responsive",
-            "file": "resources/views/theatre/report.blade.php",
-            "line": 95,
-            "message": "Data table is not wrapped in a responsive container.",
-            "recommendation": "Wrap in <div class=\"table-responsive\"> or use <x-data-table>.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
             "type": "missing-page-header",
             "file": "resources/views/theatre/rooms/index.blade.php",
             "line": 23,
@@ -2892,15 +1785,6 @@
             "line": 21,
             "message": "Custom header bar instead of the shared page-header component.",
             "recommendation": "Use <x-page-header title=\"...\" icon=\"...\"> with an <x-slot:actions> for buttons.",
-            "baseline": true
-        },
-        {
-            "severity": "MEDIUM",
-            "type": "icon-only-no-label",
-            "file": "resources/views/wards/beds.blade.php",
-            "line": 92,
-            "message": "Icon-only button/link without aria-label or title.",
-            "recommendation": "Add aria-label and title describing the action (e.g. aria-label=\"Delete\").",
             "baseline": true
         },
         {
@@ -4725,7 +3609,7 @@
             "severity": "LOW",
             "type": "inline-style",
             "file": "resources/views/visits/show.blade.php",
-            "line": 229,
+            "line": 227,
             "message": "8 inline style attribute(s).",
             "recommendation": "Prefer Bootstrap utilities / UHMS design tokens. Document unavoidable print-only inline styles.",
             "baseline": true

@@ -91,7 +91,7 @@
                             <div class="btn-group">
                                 <button type="button" class="btn btn-sm btn-outline-info view-pattern-btn"
                                         data-pattern-id="{{ $pattern->id }}"
-                                        data-bs-toggle="modal" data-bs-target="#patternDetailModal">
+                                        data-bs-toggle="modal" data-bs-target="#patternDetailModal" aria-label="View" title="View">
                                     <i class="ti ti-eye"></i>
                                 </button>
                                 @can('consultations.create')
@@ -108,7 +108,7 @@
                                 <form method="POST" action="{{ route('admin.patterns.destroy', $pattern) }}" class="d-inline">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete pattern &quot;{{ $pattern->name }}&quot;?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete pattern &quot;{{ $pattern->name }}&quot;?')" aria-label="Delete" title="Delete">
                                         <i class="ti ti-trash"></i>
                                     </button>
                                 </form>

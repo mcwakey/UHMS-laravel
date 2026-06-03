@@ -71,8 +71,26 @@ All six created, tested (`tests/Feature/UiPhase5ComponentsTest.php`), documented
 - [x] Reports: `storage/reports/ui-audit-report.md` + `.json`; severity counts (CRITICAL→INFO).
 - [x] Baseline: `storage/app/ui-audit-baseline.json` + `docs/UI_AUDIT_BASELINE.md` (0 CRITICAL today).
 - [x] Guardrails: `UI_REVIEW_CHECKLIST.md`, `.github/copilot-instructions.md`, `docs/CODEX_UI_INSTRUCTIONS.md`.
-- [x] Tests: `tests/Feature/UiAuditCommandTest.php` (12 passing).
-- [ ] **Burn down the baseline** (priority: `raw-status-echo` 12 → `inline-workflow-badge` 146 → `destructive-no-confirm` 45), then make `--fail` a CI gate and later enable `--strict`.
+- [x] Tests: `tests/Feature/UiAuditCommandTest.php` (13 passing).
+
+## Baseline burn-down (Phase 9 — DELIVERED — see UI_PHASE_9_BASELINE_BURN_DOWN_REPORT.md)
+- [x] `raw-status-echo` **12 → 2** (2 left are `<option>` text).
+- [x] `inline-workflow-badge` **146 → 67** (backref-safe enum conversion; remaining are computed/accessor/icon badges).
+- [x] `icon-only-no-label` **27 → 6** (quote-aware multiline transform).
+- [x] `table-not-responsive` **23 → 9** (screen views wrapped).
+- [x] Added `consultation_route` + `consultation_session` domains to `config/ui.php` (+ tests).
+- [x] Baseline refreshed after real fixes: **676 → 610** fingerprints; total **545 → 421** (HIGH 203 → 114).
+- [ ] **`missing-page-header` (67)** — top remaining bucket; convert core pages (reports/settings/theatre/store/dashboards) to `<x-page-header>`.
+- [ ] Remaining `inline-workflow-badge` (67) — convert computed/accessor badges after verifying colour maps.
+- [ ] `destructive-no-confirm` — confirm the few **real** operational ones (ignore the ≈35 vendor demos); upgrade the 21 native `confirm()` forms to `<x-confirm-form>`.
+
+## CI gate & release readiness (Phase 10 — DELIVERED — see UI_PHASE_10_RELEASE_READINESS_REPORT.md)
+- [x] `--min-severity` option added to `ui:audit`; composer `ui:audit:critical`.
+- [x] `.github/workflows/ui-audit.yml` — advisory report + artifact + **critical-only** gate (Stage B).
+- [x] `docs/UI_SCREENSHOT_REGRESSION_CHECKLIST.md` + `docs/UI_MANUAL_REGRESSION_CHECKLIST.md`.
+- [ ] **Run** the screenshot + manual checklists on a staging build (not done in code-only env).
+- [ ] Move CI to `--min-severity=HIGH` (Stage C) once the 114 HIGH is burned down; `--strict` last.
+- [ ] Reconcile pre-existing `ModuleAccessTest`/`ModuleOverrideTest` (assert old 404/503) with Phase 4's friendly-403 contract — product decision.
 
 ## Technical debt
 - [ ] Consolidate the small Inertia/Vue footprint (18 files) — decide per-module whether to keep Vue islands or fold back into Blade for consistency.
@@ -80,10 +98,10 @@ All six created, tested (`tests/Feature/UiPhase5ComponentsTest.php`), documented
 - [ ] Consider compiling `config/ui.php` colours into CSS custom properties for the Vue islands.
 
 ## Verification still useful
-- [ ] Screenshot regression of high-traffic pages after the badge/header rollout.
-- [ ] Manual responsive pass on clinical/financial pages.
+- [ ] Execute `docs/UI_SCREENSHOT_REGRESSION_CHECKLIST.md` on a staging build.
+- [ ] Execute `docs/UI_MANUAL_REGRESSION_CHECKLIST.md` for the major workflows.
 
 ## Suggested next prompts
-1. "Roll `<x-status-badge>` into the Blood Bank, Billing and MAR views."
-2. "Add friendly 403/404/500 + disabled-module pages."
-3. "Extract `<x-stat-card>` and `<x-filter-bar>` and adopt them in Reports/Statistics."
+1. "Convert the remaining 67 raw page headers to `<x-page-header>`, core operational pages first."
+2. "Burn down the remaining inline-workflow-badges (computed/accessor) and verify colour maps in config/ui.php."
+3. "Promote the CI gate from critical-only to `--min-severity=HIGH` and refresh the baseline."

@@ -118,7 +118,7 @@
                         <td>₵{{ number_format($invoice->total_amount, 2) }}</td>
                         <td class="fw-bold text-success">₵{{ number_format($invoice->nhis_amount, 2) }}</td>
                         <td>₵{{ number_format($invoice->total_amount - $invoice->nhis_amount, 2) }}</td>
-                        <td><span class="badge bg-{{ $invoice->status->color() }}">{{ $invoice->status->label() }}</span></td>
+                        <td><x-status-badge :status="$invoice->status" /></td>
                         <td>{{ $invoice->created_at->format('d M Y') }}</td>
                     </tr>
                     @empty

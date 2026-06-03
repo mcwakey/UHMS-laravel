@@ -92,7 +92,7 @@
         <div class="card mb-3">
             <div class="card-header"><strong>Vitals</strong></div>
             <div class="card-body p-0">
-                <table class="table table-sm mb-0">
+                <div class="table-responsive"><table class="table table-sm mb-0">
                     <thead><tr><th>Stage</th><th>Temp</th><th>BP</th><th>Pulse</th><th>RR</th><th>SpO₂</th><th>Pain</th><th>By</th><th>At</th></tr></thead>
                     <tbody>
                         @foreach ($procedure->vitals as $v)
@@ -109,7 +109,7 @@
                             </tr>
                         @endforeach
                     </tbody>
-                </table>
+                </table></div>
             </div>
         </div>
     @endif

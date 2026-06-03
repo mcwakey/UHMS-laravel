@@ -139,8 +139,8 @@
                                 {{ $transfer->transfer_number }}
                             </a>
                         </td>
-                        <td><span class="badge bg-{{ $transfer->from_location->color() }}">{{ $transfer->from_location->label() }}</span></td>
-                        <td><span class="badge bg-{{ $transfer->to_location->color() }}">{{ $transfer->to_location->label() }}</span></td>
+                        <td><x-status-badge :status="$transfer->from_location" /></td>
+                        <td><x-status-badge :status="$transfer->to_location" /></td>
                         <td>{{ $transfer->transfer_date->format('d M Y') }}</td>
                         <td class="text-center"><span class="badge bg-soft-info">{{ $transfer->items_count }}</span></td>
                         <td>{{ $transfer->transferredByUser->name ?? '-' }}</td>

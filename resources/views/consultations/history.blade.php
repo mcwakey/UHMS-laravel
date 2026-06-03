@@ -272,7 +272,7 @@
                     <i class="ti {{ $isEmergencySession ? 'ti-urgent text-danger' : 'ti-stethoscope text-primary' }} me-1"></i>
                     {{ $sessionTitle }}
                     @if($session)
-                        <span class="badge bg-{{ $statusColor }} ms-1">{{ $session->status }}</span>
+                        <x-status-badge :status="$session->status" domain="consultation_session" class="ms-1" />
                     @endif
                 </h3>
                 <div class="doc-meta">

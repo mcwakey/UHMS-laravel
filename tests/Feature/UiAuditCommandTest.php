@@ -142,6 +142,19 @@ class UiAuditCommandTest extends TestCase
         $this->assertNotSame(0, $code, 'A new critical finding outside the baseline must fail the build.');
     }
 
+    public function test_min_severity_high_blocks_on_high_finding(): void
+    {
+        // An inline workflow badge is HIGH; --min-severity=HIGH must fail on it.
+        $this->fixture('high.blade.php', '<span class="badge bg-{{ $v->status->color() }}">x</span>');
+
+        [$code] = $this->audit(['--fail' => true, '--min-severity' => 'HIGH']);
+        $this->assertNotSame(0, $code);
+
+        // …but the default critical-only gate must NOT fail on a mere HIGH finding.
+        [$code2] = $this->audit(['--fail' => true, '--min-severity' => 'CRITICAL']);
+        $this->assertSame(0, $code2);
+    }
+
     public function test_clean_fixtures_pass_fail_mode(): void
     {
         $this->fixture('clean.blade.php', '<div class="card"><div class="card-body">All good.</div></div>');
