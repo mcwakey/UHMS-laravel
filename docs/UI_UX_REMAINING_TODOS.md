@@ -29,9 +29,10 @@ What Phase 1 (this pass) delivered, and the safe follow-up work. Nothing here bl
 - [ ] `<x-print-layout>` print-only chrome.
 
 ## Feedback & errors
+- [x] **Phase 4 (done):** Friendly error pages `403/404/419/500/503` + self-contained `layouts/error.blade.php`; never expose `SQLSTATE`/stack traces (logged instead). See `docs/UI_PHASE_4_ERROR_HANDLING_REPORT.md`.
+- [x] **Phase 4 (done):** Friendly **disabled-module** page (HTTP 403, name + description) wired into `EnsureModuleEnabled` (clean JSON for API).
+- [x] **Phase 4 (done):** Production `QueryException` shield in `bootstrap/app.php` — logs full detail, shows context-aware friendly message/flash, never raw SQL.
 - [ ] SweetAlert2 toast helper for async success/error (standardise over scattered usage).
-- [ ] Friendly error pages: custom `resources/views/errors/{403,404,500}.blade.php` that never expose `SQLSTATE`/stack traces to end users (log the detail).
-- [ ] Friendly **disabled-module** page when a module route is hit while disabled.
 
 ## Forms
 - [ ] Field-level validation sweep (move flash `alert-danger` validation to `@error` per field).

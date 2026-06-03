@@ -25,13 +25,22 @@ class EnsureModuleEnabled
                 return $next($request);
             }
 
+            $module = $this->modules->find($slug);
+            $name = $module?->name ?: \Illuminate\Support\Str::headline($slug);
+
+            // 403 Forbidden — the module exists but access is not permitted while
+            // it is disabled. A friendly page (web) / clean JSON (API), never a
+            // raw exception or stack trace.
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => "The {$slug} module is currently disabled.",
-                ], 503);
+                    'message' => "The {$name} module is currently disabled.",
+                ], 403);
             }
 
-            abort(404, "The {$slug} module is currently disabled.");
+            return response()->view('errors.module-disabled', [
+                'moduleName' => $name,
+                'moduleDescription' => $module?->description,
+            ], 403);
         }
 
         return $next($request);

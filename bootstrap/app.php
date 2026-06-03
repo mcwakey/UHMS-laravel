@@ -64,6 +64,49 @@ return Application::configure(basePath: dirname(__DIR__))
             return null;
         });
 
+        // Production shield for raw database errors. The full technical detail is
+        // always logged; users never see SQLSTATE, SQL, table/column names or a
+        // stack trace. In debug mode developers still get the full Laravel page.
+        $exceptions->render(function (\Illuminate\Database\QueryException $e, \Illuminate\Http\Request $request) {
+            \Illuminate\Support\Facades\Log::error('Database error shielded from user', [
+                'exception' => $e::class,
+                'message' => $e->getMessage(),
+                'sql_state' => $e->getCode(),
+                'user_id' => optional($request->user())->getAuthIdentifier(),
+                'route' => optional($request->route())->getName(),
+                'url' => $request->fullUrl(),
+                'method' => $request->method(),
+                'ip' => $request->ip(),
+                'user_agent' => substr((string) $request->userAgent(), 0, 255),
+            ]);
+
+            if (config('app.debug')) {
+                return null;
+            }
+
+            $path = $request->path();
+            $friendly = match (true) {
+                str_contains($path, 'stock') || str_contains($path, 'store') || str_contains($path, 'inventory')
+                    => 'Unable to complete this stock operation. Please check that the product and stock location are configured correctly, then try again.',
+                str_contains($path, 'billing') || str_contains($path, 'invoice') || str_contains($path, 'payment')
+                    => 'Unable to complete this billing operation. Please verify the invoice item details and try again.',
+                default
+                    => 'Unable to complete the request because some required information is missing or invalid. Please try again, or contact the system administrator if the problem continues.',
+            };
+
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $friendly], 500);
+            }
+
+            // Form submissions: keep the user in context with a friendly flash
+            // rather than a full-screen error page.
+            if (! $request->isMethod('GET') && $request->hasSession()) {
+                return back()->withInput()->with('error', $friendly);
+            }
+
+            return response()->view('errors.500', [], 500);
+        });
+
         $exceptions->respond(function ($response, \Throwable $e, \Illuminate\Http\Request $request) use ($redirectInertiaToLogin) {
             if ($request->headers->has('X-Inertia') && in_array($response->getStatusCode(), [401, 419], true)) {
                 return $redirectInertiaToLogin($request);

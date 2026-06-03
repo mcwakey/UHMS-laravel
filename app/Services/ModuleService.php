@@ -66,4 +66,12 @@ class ModuleService
     {
         return Module::query()->orderBy('sort_order')->get();
     }
+
+    /**
+     * Fetch a single module record by slug (for friendly disabled-module UI).
+     */
+    public function find(string $slug): ?Module
+    {
+        return Module::where('slug', $slug)->first();
+    }
 }

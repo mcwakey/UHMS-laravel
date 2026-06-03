@@ -1,27 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>403 - Access Denied | {{ config('app.name') }}</title>
-    <link rel="shortcut icon" href="{{ URL::asset('build/img/favicon.png') }}">
-    <link rel="stylesheet" href="{{ URL::asset('build/css/bootstrap.min.css') }}">
-    <link rel="stylesheet" href="{{ URL::asset('build/plugins/tabler-icons/tabler-icons.min.css') }}">
-    <link rel="stylesheet" href="{{ URL::asset('build/css/style.css') }}">
-</head>
-<body>
-    <div class="d-flex align-items-center justify-content-center min-vh-100 bg-light">
-        <div class="text-center">
-            <div class="mb-4">
-                <i class="ti ti-lock" style="font-size: 80px; color: #dc3545;"></i>
-            </div>
-            <h1 class="display-1 fw-bold text-danger">403</h1>
-            <h4 class="fw-bold mb-2">Access Denied</h4>
-            <p class="text-muted mb-4">{{ $exception->getMessage() ?: 'You do not have permission to access this resource.' }}</p>
-            <a href="{{ url('/') }}" class="btn btn-primary">
-                <i class="ti ti-arrow-left me-1"></i>Back to Home
-            </a>
-        </div>
-    </div>
-</body>
-</html>
+@extends('layouts.error')
+
+@section('title', 'Access denied')
+@section('variant', 'danger')
+@section('icon', 'ti-lock')
+@section('code', '403')
+@section('heading', 'Access denied')
+@section('message', 'You do not have permission to access this page or perform this action.')
+
+@section('actions')
+    @include('errors.partials.actions', ['back' => true, 'dashboard' => true])
+@endsection
+
+@php
+    // Surface a custom abort reason ONLY when it is short and free of technical
+    // markers (no SQL, paths, class names) — otherwise keep it generic.
+    $reason = isset($exception) ? trim((string) $exception->getMessage()) : '';
+    $safeReason = ($reason !== ''
+        && mb_strlen($reason) <= 160
+        && ! preg_match('/SQLSTATE|Exception|::|\\\\|\\/var\\/|\\.php|vendor|column|table/i', $reason))
+        ? $reason : null;
+@endphp
+@if($safeReason)
+    @section('support')
+        {{ $safeReason }}<br>
+        If you believe you should have access, please contact your system administrator.
+    @endsection
+@else
+    @section('support', 'If you believe you should have access, please contact your system administrator.')
+@endif
