@@ -15,7 +15,7 @@ class ModuleOverrideTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_disabled_module_returns_404_for_regular_user(): void
+    public function test_disabled_module_returns_friendly_403_for_regular_user(): void
     {
         Module::firstOrCreate(
             ['slug' => 'pharmacy'],
@@ -28,8 +28,13 @@ class ModuleOverrideTest extends TestCase
 
         $middleware = new EnsureModuleEnabled(app(ModuleService::class));
 
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
-        $middleware->handle($request, fn () => response('ok'), 'pharmacy');
+        // Phase 4 contract: the middleware does not throw — it returns a friendly 403
+        // (page for web, clean JSON for API) and never falls through to the app.
+        $response = $middleware->handle($request, fn () => response('ok'), 'pharmacy');
+
+        $this->assertSame(403, $response->getStatusCode());
+        $this->assertStringNotContainsString('ok', $response->getContent());
+        $this->assertStringContainsString('Pharmacy', $response->getContent());
     }
 
     public function test_disabled_module_passes_through_for_user_with_override(): void

@@ -6,7 +6,6 @@ use App\Models\Module;
 use App\Models\User;
 use App\Services\ModuleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
@@ -21,17 +20,14 @@ class ModuleAccessTest extends TestCase
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 
-    private function superAdmin(): User
+    /**
+     * A regular authenticated user — NOT a Super Admin, who would bypass the
+     * disabled-module gate via the `modules.override_disabled` permission
+     * (granted to Super Admin through Gate::before for incident response).
+     */
+    private function regularUser(): User
     {
-        $role = Role::firstOrCreate([
-            'name' => 'Super Admin',
-            'guard_name' => 'web',
-        ]);
-
-        $user = User::factory()->create();
-        $user->assignRole($role);
-
-        return $user;
+        return User::factory()->create();
     }
 
     private function disableModule(string $slug): void
@@ -54,10 +50,13 @@ class ModuleAccessTest extends TestCase
         $this->disableModule('pharmacy');
 
         $response = $this
-            ->actingAs($this->superAdmin())
+            ->actingAs($this->regularUser())
             ->get(route('admin.pharmacy.dispensing.index'));
 
-        $response->assertNotFound();
+        // Phase 4 contract: a disabled module returns a friendly 403 page (not a raw
+        // 404/exception) telling authenticated staff the module is off.
+        $response->assertForbidden();
+        $response->assertSee('Pharmacy', false);
     }
 
     public function test_disabled_module_blocks_direct_json_access(): void
@@ -65,13 +64,15 @@ class ModuleAccessTest extends TestCase
         $this->disableModule('pharmacy');
 
         $response = $this
-            ->actingAs($this->superAdmin())
+            ->actingAs($this->regularUser())
             ->getJson(route('admin.pharmacy.dispensing.index'));
 
+        // Clean JSON 403 (no stack trace) — see App\Http\Middleware\EnsureModuleEnabled.
         $response
-            ->assertStatus(503)
+            ->assertStatus(403)
             ->assertJson([
-                'message' => 'The pharmacy module is currently disabled.',
+                // Middleware uses the module's display name ("Pharmacy"), not the slug.
+                'message' => 'The Pharmacy module is currently disabled.',
             ]);
     }
 }

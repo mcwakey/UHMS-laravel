@@ -142,6 +142,24 @@ class VisitWorkflowService
             'description' => $notes ?? 'Invoice fully paid',
         ]);
 
+        // Settling the bill is the final step of an outpatient encounter, so a full
+        // payment closes the visit. Admission / emergency / inpatient visits are left
+        // untouched: their lifecycle terminates at discharge or disposition, not at the
+        // cashier, so paying their bill must NOT complete them.
+        $outpatientBillingStatuses = [
+            VisitStatus::ACTIVE,
+            VisitStatus::CONSULTING,
+            VisitStatus::BILLING,
+            VisitStatus::LAB,
+            VisitStatus::PHARMACY,
+            VisitStatus::WAITING_INVESTIGATION,
+        ];
+
+        if (in_array($visit->status, $outpatientBillingStatuses, true)
+            && $visit->canTransitionTo(VisitStatus::COMPLETED)) {
+            return $this->transition($visit, VisitStatus::COMPLETED, $notes ?? 'Invoice fully paid');
+        }
+
         return $visit->fresh();
     }
 
