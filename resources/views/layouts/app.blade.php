@@ -244,6 +244,51 @@
     @yield('scripts')
     <!--UHMS_LEGACY_SCRIPTS_END-->
 
+    {{-- Global double-submit protection: on a real (non-prevented) form submit,
+         disable the submit button(s) and show a spinner so a quick double-click
+         cannot create duplicate payments/dispenses/stock movements. Opt out with
+         data-no-loading on the form. A 12s safety net re-enables the button. --}}
+    <script>
+        (function () {
+            document.addEventListener('submit', function (event) {
+                var form = event.target;
+                if (event.defaultPrevented) return;                 // cancelled (confirm returned false, etc.)
+                if (!form || form.hasAttribute('data-no-loading')) return;
+
+                var buttons = form.querySelectorAll('button[type="submit"], button:not([type]), input[type="submit"]');
+                buttons.forEach(function (btn) {
+                    if (btn.dataset.uhmsLoading === '1' || btn.disabled) return;
+                    btn.dataset.uhmsLoading = '1';
+                    if (btn.tagName === 'BUTTON') {
+                        btn.dataset.uhmsOriginal = btn.innerHTML;
+                        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>'
+                            + (btn.getAttribute('data-loading-text') || 'Please wait…');
+                    }
+                    btn.disabled = true;
+                });
+
+                // Safety net: re-enable if the navigation never happens (validation blocked, etc.).
+                setTimeout(function () {
+                    buttons.forEach(function (btn) {
+                        if (btn.dataset.uhmsLoading !== '1') return;
+                        btn.disabled = false;
+                        btn.dataset.uhmsLoading = '';
+                        if (typeof btn.dataset.uhmsOriginal === 'string') btn.innerHTML = btn.dataset.uhmsOriginal;
+                    });
+                }, 12000);
+            }, false);
+
+            // bfcache restore (back button): clear any stuck loading state.
+            window.addEventListener('pageshow', function () {
+                document.querySelectorAll('[data-uhms-loading="1"]').forEach(function (btn) {
+                    btn.disabled = false;
+                    btn.dataset.uhmsLoading = '';
+                    if (typeof btn.dataset.uhmsOriginal === 'string') btn.innerHTML = btn.dataset.uhmsOriginal;
+                });
+            });
+        }());
+    </script>
+
     <script>
         (function () {
             function cleanupModalState(force) {

@@ -45,9 +45,14 @@ All six created, tested (`tests/Feature/UiPhase5ComponentsTest.php`), documented
 - [x] **Phase 4 (done):** Production `QueryException` shield in `bootstrap/app.php` — logs full detail, shows context-aware friendly message/flash, never raw SQL.
 - [ ] SweetAlert2 toast helper for async success/error (standardise over scattered usage).
 
-## Forms
-- [ ] Field-level validation sweep (move flash `alert-danger` validation to `@error` per field).
-- [ ] Confirmation + reason sweep for: delete, cancel, reverse payment, refund, stock adjustment, patient merge, mark deceased, discharge, dispose emergency case, cancel theatre case, override triage, emergency/incompatible blood release, disable module, assign critical permissions.
+## Forms (Phase 6 — see UI_PHASE_6_FORMS_CONFIRMATIONS_VALIDATION_REPORT.md)
+- [x] **Global double-submit guard** in `layouts/app.blade.php` (disables submit + spinner; opt-out `data-no-loading`).
+- [x] **Reason enforcement** — patient merge (required), triage override (conditional). Already enforced before: payment reversal, stock adjustment/return, incompatible/emergency blood release, procedure cancel, MAR stop-order.
+- [x] **Field-level validation** — major create/edit forms already use `@error`/`is-invalid`/`old()` (e.g. `patients/create`); merge reason added.
+- [x] **Confirmation sweep** — 17 destructive actions on `<x-confirm-form>` (native `confirm()` reduced 26 → 10).
+- [ ] Convert the **10 remaining** native `confirm()` forms (store/purchase-orders, theatre/rooms, admin/analyzers, admin catalogues, lab/tests). Skip `consultations/show` (chained JS).
+- [ ] Field-level validation on the remaining simple modal/inline forms (low risk).
+- [ ] (Backend, optional) persist `reason` on `modules.toggle`/`roles.destroy` if reasons wanted there.
 
 ## Accessibility
 - [ ] Add `aria-label` to icon-only buttons (audit `btn` with only `<i class="ti …">`).

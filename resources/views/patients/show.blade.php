@@ -506,10 +506,9 @@
                                         data-bs-toggle="modal" data-bs-target="#editInsuranceModal">
                                         <i class="ti ti-edit"></i>
                                     </button>
-                                    <form method="POST" action="{{ route('admin.patients.insurances.destroy', [$patient, $ins]) }}" class="d-inline" onsubmit="return confirm('Remove this insurance?')">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="ti ti-trash"></i></button>
-                                    </form>
+                                    <x-confirm-form :action="route('admin.patients.insurances.destroy', [$patient, $ins])" method="DELETE"
+                                        button-label="" button-class="btn btn-sm btn-outline-danger" icon="ti-trash"
+                                        confirm-title="Remove this insurance?" confirm-text="The insurance membership will be removed from this patient." confirm-button="Yes, remove" />
                                     @endif
                                     @endcan
                                 </td>
@@ -576,10 +575,9 @@
                                         data-bs-toggle="modal" data-bs-target="#editEmergencyContactModal">
                                         <i class="ti ti-edit"></i>
                                     </button>
-                                    <form method="POST" action="{{ route('admin.patients.emergency-contacts.destroy', [$patient, $ec]) }}" class="d-inline" onsubmit="return confirm('Remove this contact?')">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-outline-danger"><i class="ti ti-trash"></i></button>
-                                    </form>
+                                    <x-confirm-form :action="route('admin.patients.emergency-contacts.destroy', [$patient, $ec])" method="DELETE"
+                                        button-label="" button-class="btn btn-sm btn-outline-danger" icon="ti-trash"
+                                        confirm-title="Remove this contact?" confirm-text="The emergency contact will be removed." confirm-button="Yes, remove" />
                                     @endcan
                                 </td>
                             </tr>

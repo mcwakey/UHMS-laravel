@@ -43,6 +43,18 @@ class EmergencyTriageController extends Controller
             'blood_sugar' => ['nullable', 'numeric', 'min:0'],
         ]);
 
+        // Overriding the computed triage category must be justified.
+        if (
+            ! empty($data['final_triage_category'])
+            && ! empty($data['triage_category'])
+            && $data['final_triage_category'] !== $data['triage_category']
+            && empty($data['triage_override_reason'])
+        ) {
+            return back()->withInput()->withErrors([
+                'triage_override_reason' => 'Please provide a reason for overriding the triage category.',
+            ]);
+        }
+
         $this->triage->record($emergencyCase, $data, $request->user());
 
         return back()->with('success', 'Emergency triage recorded.');

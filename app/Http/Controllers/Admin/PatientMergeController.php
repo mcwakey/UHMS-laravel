@@ -67,10 +67,14 @@ class PatientMergeController extends Controller
         $data = $request->validate([
             'main_patient_number' => ['required', 'string', 'max:191', 'different:duplicate_patient_number'],
             'duplicate_patient_number' => ['required', 'string', 'max:191', 'different:main_patient_number'],
-            'reason' => ['nullable', 'string', 'max:2000'],
+            // High-risk: merging two patient folders is irreversible — a reason is mandatory.
+            'reason' => ['required', 'string', 'max:2000'],
             'field_resolution' => ['nullable', 'array'],
             'confirmed' => ['accepted'],
             'execute_now' => ['nullable', 'boolean'],
+        ], [
+            'reason.required' => 'Please document why these folders are the same patient before merging.',
+            'confirmed.accepted' => 'Please confirm you have reviewed the folders before merging.',
         ]);
 
         try {

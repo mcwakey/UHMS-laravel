@@ -106,8 +106,10 @@
     <div class="card">
         <div class="card-body">
             <div class="mb-3">
-                <label class="form-label">Merge Reason</label>
-                <textarea name="reason" class="form-control" rows="3" placeholder="Document why these folders are the same patient"></textarea>
+                <label class="form-label">Merge Reason <span class="text-danger">*</span></label>
+                <textarea name="reason" class="form-control @error('reason') is-invalid @enderror" rows="3" required
+                          placeholder="Document why these folders are the same patient">{{ old('reason') }}</textarea>
+                @error('reason')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
             <div class="form-check mb-3">
                 <input class="form-check-input" type="checkbox" name="confirmed" value="1" id="confirmed" required>

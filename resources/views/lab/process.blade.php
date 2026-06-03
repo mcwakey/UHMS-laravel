@@ -15,10 +15,9 @@
     </div>
     <div class="d-flex gap-2">
         @if(!in_array($request->status, ['completed', 'cancelled']))
-        <form method="POST" action="{{ route('admin.lab.requests.cancel', $request) }}" onsubmit="return confirm('Cancel this lab request?')">
-            @csrf @method('PATCH')
-            <button type="submit" class="btn btn-outline-danger btn-md"><i class="ti ti-x me-1"></i>Cancel</button>
-        </form>
+        <x-confirm-form :action="route('admin.lab.requests.cancel', $request)" method="PATCH"
+            button-label="Cancel" button-class="btn btn-outline-danger btn-md" icon="ti-x"
+            confirm-title="Cancel this lab request?" confirm-text="The investigation request will be cancelled." confirm-button="Yes, cancel" />
         @endif
     </div>
 </div>
