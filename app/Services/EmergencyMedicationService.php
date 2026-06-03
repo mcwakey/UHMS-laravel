@@ -78,6 +78,11 @@ class EmergencyMedicationService
             $this->sessions->recordContribution($case, $user, 'Medication Order');
             $this->timeline->record($case, 'MEDICATION_ORDERED', 'Emergency medication ordered', $order->display_name, $order, $user);
 
+            // Surface the emergency order on the patient activity timeline (the
+            // shared funnel; carries emergency_case_id from the order context).
+            app(\App\Services\MedicationAdministrationLogService::class)
+                ->record('ORDER_CREATED', $order, null, null, $user, null, $order->toArray());
+
             return $order->fresh(['frequency', 'schedules.clinicalTask']);
         });
     }

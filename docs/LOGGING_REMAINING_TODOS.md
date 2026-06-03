@@ -43,14 +43,25 @@ emergency only — consultation-created are skipped to avoid duplication),
 Follow-ups: sample collect/receive/reject, result reject/correction-request,
 verification reversal, radiology path (no model support yet).
 
+## ✅ Done: MAR / medication administration → patient timeline
+
+`MedicationAdministrationLogService` now dual-writes to the central activity log
+(module `MAR`): `DOSE_ADMINISTERED/HELD/MISSED/REFUSED/SKIPPED/CANCELLED/CORRECTED`
+(+ PRN), `MEDICATION_ORDER_CREATED/HELD/STOPPED/UPDATED`,
+`MEDICATION_SCHEDULE_GENERATED`, and a distinct `ADVERSE_REACTION_RECORDED`.
+Context incl. admission_id/emergency_case_id + stock_location_id/stock_movement_id
+(traceable to the deduction, no movement-log duplication). Emergency order
+creation now routes through the funnel too. Tests: 4 in
+`MedicationAdministrationWorkflowTest`. See `docs/LOGGING_MAR_BURN_DOWN_REPORT.md`.
+Follow-ups: order-resume action, board bulk-action paths.
+
 ## Burn-down order (next, module-by-module — verify each in global + patient logs)
 
-1. ~~Consultation clinical entries~~ ✅ done.
-2. ~~Investigations~~ ✅ done.
-3. **MAR / medication administration** (administered/held/missed/refused/skipped,
-   reaction, stop, correction) — **next up**; confirm patient/visit + admission/
-   emergency context and avoid duplicating any existing MAR logs.
-4. Pharmacy · 5. Procedures/Theatre · 6. Billing/Claims · 7. Emergency/Admission ·
+1. ~~Consultation clinical entries~~ ✅ · 2. ~~Investigations~~ ✅ · 3. ~~MAR~~ ✅
+4. **Pharmacy** (review, bill-selection, dispense, partial, cancel/correct,
+   return) — **next up**; MAR administration is already logged, so log the
+   *dispensing* action distinctly without duplicating MAR or stock-movement logs.
+5. Procedures/Theatre · 6. Billing/Claims · 7. Emergency/Admission ·
 8. Remaining stock/admin.
 
 Do **not** wire all 75 flagged controllers at once; one module, with a test that

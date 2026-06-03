@@ -515,6 +515,85 @@ class MedicationAdministrationWorkflowTest extends TestCase
         $this->assertArrayHasKey('cells', $payload['medication_rows']->first());
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | MAR audit-trail logging (patient timeline)
+    |--------------------------------------------------------------------------
+    */
+
+    private function marTimeline(): \Illuminate\Support\Collection
+    {
+        return app(\App\Services\ActivityLogService::class)->getPatientTimeline($this->patient)->get();
+    }
+
+    public function test_dose_administration_logs_to_patient_timeline_with_context(): void
+    {
+        $order = $this->makeOrder('BD', 5, 10, ['quantity_dispensed' => 10]);
+        $schedule = app(MedicationScheduleService::class)->generateForOrder($order)->first();
+
+        app(MedicationAdministrationService::class)->administerSchedule($schedule, [
+            'status' => 'GIVEN', 'dose_given' => '1g',
+            'source_stock_type' => MedicationAdministration::SOURCE_PATIENT_STOCK,
+        ], $this->user);
+
+        $this->assertDatabaseHas('activity_log', [
+            'log_name' => 'MAR', 'event' => 'DOSE_ADMINISTERED',
+            'patient_id' => $this->patient->id, 'visit_id' => $this->visit->id,
+        ]);
+
+        $log = $this->marTimeline()->firstWhere('event', 'DOSE_ADMINISTERED');
+        $this->assertNotNull($log);
+        $this->assertSame($this->admission->id, (int) $log->properties['admission_id']);
+        $this->assertSame($order->id, (int) $log->properties['medication_order_id']);
+        $this->assertStringContainsString('Ceftriaxone', $log->description);
+
+        // Exactly one timeline item for one dose action.
+        $this->assertSame(1, $this->marTimeline()->where('event', 'DOSE_ADMINISTERED')->count());
+    }
+
+    public function test_held_dose_logs_reason_on_patient_timeline(): void
+    {
+        $order = $this->makeOrder('BD', 5, 10, ['quantity_dispensed' => 10]);
+        $schedule = app(MedicationScheduleService::class)->generateForOrder($order)->first();
+
+        app(MedicationAdministrationService::class)->administerSchedule($schedule, [
+            'status' => 'HELD', 'reason_not_given' => 'Patient vomiting',
+            'source_stock_type' => MedicationAdministration::SOURCE_PATIENT_STOCK,
+        ], $this->user);
+
+        $log = $this->marTimeline()->firstWhere('event', 'DOSE_HELD');
+        $this->assertNotNull($log);
+        $this->assertSame('Patient vomiting', $log->properties['reason']);
+        $this->assertStringContainsString('vomiting', $log->description);
+    }
+
+    public function test_adverse_reaction_logs_distinct_timeline_event(): void
+    {
+        $order = $this->makeOrder('BD', 5, 10, ['quantity_dispensed' => 10]);
+        $schedule = app(MedicationScheduleService::class)->generateForOrder($order)->first();
+
+        app(MedicationAdministrationService::class)->administerSchedule($schedule, [
+            'status' => 'GIVEN', 'dose_given' => '1g', 'reaction' => 'Rash after dose',
+            'source_stock_type' => MedicationAdministration::SOURCE_PATIENT_STOCK,
+        ], $this->user);
+
+        $events = $this->marTimeline()->pluck('event')->all();
+        $this->assertContains('DOSE_ADMINISTERED', $events);
+        $this->assertContains('ADVERSE_REACTION_RECORDED', $events);
+    }
+
+    public function test_stopping_order_logs_on_patient_timeline_with_reason(): void
+    {
+        $order = $this->makeOrder('BD', 5, 10);
+
+        app(MedicationOrderService::class)->stop($order->fresh(), $this->user, 'Adverse reaction');
+
+        $log = $this->marTimeline()->firstWhere('event', 'MEDICATION_ORDER_STOPPED');
+        $this->assertNotNull($log);
+        $this->assertSame('Adverse reaction', $log->properties['reason']);
+        $this->assertSame($this->patient->id, (int) $log->patient_id);
+    }
+
     private function makeOrder(string $frequencyCode, ?int $durationDays, int $totalDoses, array $overrides = []): MedicationOrder
     {
         $frequency = MedicationFrequency::where('code', $frequencyCode)->firstOrFail();
