@@ -211,6 +211,19 @@ class ConsultationRouteService
 
             $this->consultationSessionService->getOrCreateMedicalRecordForRoute($route, $user);
 
+            app(\App\Services\ActivityLogService::class)->log(
+                \App\Enums\LogModule::CONSULTATION,
+                $action === 'resumed' ? 'SESSION_RESUMED' : 'SESSION_STARTED',
+                [
+                    'patient_id' => $visit->patient_id,
+                    'visit_id' => $visit->id,
+                    'consultation_route_id' => $route->id,
+                    'department_id' => $route->department_id,
+                ],
+                $route,
+                'Consultation session ' . $action . ($route->department?->name ? ' — ' . $route->department->name : ''),
+            );
+
             return $this->freshRoute($route);
         });
     }
@@ -232,6 +245,20 @@ class ConsultationRouteService
             ]);
 
             $this->log($route, $from, VisitConsultationRoute::STATUS_COMPLETED, 'completed', $notes, $user);
+
+            app(\App\Services\ActivityLogService::class)->log(
+                \App\Enums\LogModule::CONSULTATION,
+                'SESSION_COMPLETED',
+                [
+                    'patient_id' => $route->visit?->patient_id,
+                    'visit_id' => $route->visit_id,
+                    'consultation_route_id' => $route->id,
+                    'department_id' => $route->department_id,
+                    'reason' => $notes,
+                ],
+                $route,
+                'Consultation session completed' . ($route->department?->name ? ' — ' . $route->department->name : ''),
+            );
 
             return $this->freshRoute($route);
         });

@@ -19,12 +19,25 @@ Remaining stock-context follow-ups: MAR drug-administration stock-out (logged in
 the MAR module — confirm patient/visit context), and any future non-central
 consumable path.
 
+## ✅ Done: consultation clinical entries → patient timeline
+
+`MedicalRecordEntryLogService` now mirrors every clinical entry change
+(complaint / HOPC / examination / diagnosis / treatment / prescription /
+investigation — create/update/delete/correct) to the central activity log with
+full context + old/new values, so they appear on the patient profile timeline.
+Session lifecycle (`SESSION_STARTED/RESUMED/COMPLETED`) and `PATTERN_APPLIED` are
+logged too. Tests: `ConsultationClinicalLogTest` (7) + a session assertion. See
+`docs/LOGGING_CONSULTATION_BURN_DOWN_REPORT.md`. Follow-ups: individual
+pattern-created non-complaint records, prescription delete, clinical tasks/
+follow-up, note/summary, session lock/reopen/contributor.
+
 ## Burn-down order (next, module-by-module — verify each in global + patient logs)
 
-1. **Consultation clinical entries** (complaint/HOPC/exam/diagnosis/treatment/
-   note add/update/delete, corrections) — **next up**.
-2. Investigations · 3. MAR · 4. Pharmacy · 5. Procedures/Theatre ·
-6. Billing/Claims · 7. Emergency/Admission · 8. Remaining stock/admin.
+1. ~~Consultation clinical entries~~ ✅ done.
+2. **Investigations** (accept/reject, sample, result entered/updated/verified/
+   rejected, printed) — **next up**; avoid duplicating consultation-entry logs.
+3. MAR · 4. Pharmacy · 5. Procedures/Theatre · 6. Billing/Claims ·
+7. Emergency/Admission · 8. Remaining stock/admin.
 
 Do **not** wire all 75 flagged controllers at once; one module, with a test that
 the action appears on both the global log and (where patient-related) the patient

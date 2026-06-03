@@ -1,6 +1,6 @@
 {
-    "generated_at": "2026-06-03T14:55:57+00:00",
-    "controllers_flagged": 75,
+    "generated_at": "2026-06-03T18:01:10+00:00",
+    "controllers_flagged": 74,
     "findings": [
         {
             "controller": "app/Http/Controllers/Admin/AccountCategoryController.php",
@@ -91,14 +91,6 @@
                 "store",
                 "update",
                 "toggle"
-            ]
-        },
-        {
-            "controller": "app/Http/Controllers/Admin/ConsultationTaskController.php",
-            "unlogged_actions": [
-                "store",
-                "update",
-                "destroy"
             ]
         },
         {

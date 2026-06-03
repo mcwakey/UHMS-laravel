@@ -167,6 +167,14 @@ class ConsultationRouteSessionWorkflowTest extends TestCase
             'consultation_route_id' => $pendingRoute->id,
             'doctor_id' => $this->doctor->id,
         ]);
+
+        // Session start is on the patient activity timeline.
+        $this->assertDatabaseHas('activity_log', [
+            'log_name' => 'CONSULTATION',
+            'event' => 'SESSION_STARTED',
+            'patient_id' => $visit->patient_id,
+            'visit_id' => $visit->id,
+        ]);
     }
 
     public function test_service_based_routes_migrate_to_one_department_route_with_linked_services(): void

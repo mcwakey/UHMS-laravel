@@ -41,6 +41,8 @@ class LogsAuditCommand extends Command
         'logDeleted', 'logCorrection', 'logOverride', 'logSecurity', 'activity(',
         'logPatientAction', 'logVisitAction', 'logFinancialAction', 'logStockAction',
         'pathway->record', 'PathwayService', // workflow services that log+pathway
+        'MedicalRecordEntryLog', 'entryLogs->', // clinical-entry funnel (mirrors to activity log)
+        'timeline->record', 'TimelineService', // emergency/clinical timelines that log
     ];
 
     public function handle(): int

@@ -422,6 +422,27 @@ class MedicalPatternService
 
         $pattern->incrementUsage();
 
+        // Audit the pattern application itself (under the current user). The
+        // individual records created above are logged via their own services
+        // where those route through MedicalRecordEntryLogService.
+        app(\App\Services\ActivityLogService::class)->log(
+            \App\Enums\LogModule::CONSULTATION,
+            'PATTERN_APPLIED',
+            [
+                'patient_id' => $record->patient_id,
+                'visit_id' => $record->visit_id,
+                'medical_record_id' => $record->id,
+                'consultation_route_id' => $record->consultation_route_id,
+                'department_id' => $record->department_id,
+                'metadata' => [
+                    'pattern' => $pattern->name ?? ('#' . $pattern->id),
+                    'applied_counts' => collect($applied)->map(fn ($a) => count($a))->filter()->all(),
+                ],
+            ],
+            $pattern,
+            'Medical pattern applied: ' . ($pattern->name ?? ('#' . $pattern->id)),
+        );
+
         return $applied;
     }
 
