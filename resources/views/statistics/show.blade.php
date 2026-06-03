@@ -24,27 +24,17 @@
 
 @include('statistics._nav')
 
-<form method="GET" class="card mb-3">
-    <div class="card-body">
-        <div class="row g-2 align-items-end">
-            <div class="col-md-3"><label class="form-label">From</label><input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] }}"></div>
-            <div class="col-md-3"><label class="form-label">To</label><input type="date" name="date_to" class="form-control" value="{{ $filters['date_to'] }}"></div>
-            <div class="col-md-3"><button class="btn btn-primary w-100"><i class="ti ti-filter me-1"></i>Apply</button></div>
-            <div class="col-md-3"><a href="{{ route('admin.statistics.'.$key) }}" class="btn btn-outline-secondary w-100">Reset</a></div>
-        </div>
-    </div>
-</form>
+<x-filter-bar :reset-url="route('admin.statistics.'.$key)" apply-label="Apply">
+    <div class="col-md-3"><label class="form-label">From</label><input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] }}"></div>
+    <div class="col-md-3"><label class="form-label">To</label><input type="date" name="date_to" class="form-control" value="{{ $filters['date_to'] }}"></div>
+</x-filter-bar>
 
 {{-- KPI cards --}}
 <div class="row g-3 mb-3">
     @foreach($kpis as $kpi)
         <div class="col-6 col-xl-3">
-            @php($card = '<div class="card h-100 border-start border-'.($kpi['color'] ?? 'primary').' border-3"><div class="card-body py-3"><div class="small text-muted">'.e($kpi['label']).'</div><div class="h3 mb-0 text-dark">'.e($fmt($kpi['value'], $kpi['format'] ?? 'number')).'</div></div></div>')
-            @if(!empty($kpi['route']) && Route::has($kpi['route']))
-                <a href="{{ route($kpi['route'], $filters) }}" class="text-decoration-none">{!! $card !!}</a>
-            @else
-                {!! $card !!}
-            @endif
+            <x-stat-card :title="$kpi['label']" :value="$kpi['value']" :format="$kpi['format'] ?? 'number'" :variant="$kpi['color'] ?? 'primary'"
+                :route="(!empty($kpi['route']) && \Illuminate\Support\Facades\Route::has($kpi['route'])) ? route($kpi['route'], $filters) : null" />
         </div>
     @endforeach
 </div>
@@ -88,7 +78,7 @@
                                 @forelse($list['rows'] as $row)
                                     <tr>@foreach($row['cells'] as $i => $cell)<td class="{{ $i > 0 ? 'text-end' : '' }}">{{ $cell }}</td>@endforeach</tr>
                                 @empty
-                                    <tr><td colspan="{{ count($list['columns']) }}" class="text-center text-muted py-4">No data.</td></tr>
+                                    <tr><td colspan="{{ count($list['columns']) }}"><x-empty-state message="No data available for the selected period." /></td></tr>
                                 @endforelse
                             </tbody>
                         </table>

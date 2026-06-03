@@ -37,12 +37,8 @@
 <div class="row g-3 mb-3">
     @foreach($kpis as $kpi)
         <div class="col-6 col-md-4 col-xl-3">
-            @php($card = '<div class="card h-100 border-start border-'.($kpi['color'] ?? 'primary').' border-3"><div class="card-body py-3"><div class="small text-muted">'.e($kpi['label']).'</div><div class="h3 mb-0 text-dark">'.e($fmt($kpi['value'], $kpi['format'] ?? 'number')).'</div></div></div>')
-            @if(!empty($kpi['route']) && Route::has($kpi['route']))
-                <a href="{{ route($kpi['route'], $filters) }}" class="text-decoration-none">{!! $card !!}</a>
-            @else
-                {!! $card !!}
-            @endif
+            <x-stat-card :title="$kpi['label']" :value="$kpi['value']" :format="$kpi['format'] ?? 'number'" :variant="$kpi['color'] ?? 'primary'"
+                :route="(!empty($kpi['route']) && \Illuminate\Support\Facades\Route::has($kpi['route'])) ? route($kpi['route'], $filters) : null" />
         </div>
     @endforeach
 </div>

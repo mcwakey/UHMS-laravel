@@ -101,32 +101,24 @@
                         </td>
                         <td class="text-end">
                             @can('claims.create')
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
-                                    <i class="ti ti-dots-vertical"></i>
+                            <x-action-menu>
+                                <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editProviderModal-{{ $provider->id }}">
+                                    <i class="ti ti-edit me-2"></i>Edit
                                 </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li>
-                                        <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editProviderModal-{{ $provider->id }}">
-                                            <i class="ti ti-edit me-1"></i>Edit
-                                        </button>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('admin.insurance-providers.tiers.index', $provider) }}">
-                                            <i class="ti ti-layers me-1"></i>Manage Tiers
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <form method="POST" action="{{ route('admin.insurance-providers.toggle', $provider) }}">
-                                            @csrf @method('PATCH')
-                                            <button type="submit" class="dropdown-item">
-                                                <i class="ti ti-{{ $provider->is_active ? 'eye-off' : 'eye' }} me-1"></i>
-                                                {{ $provider->is_active ? 'Deactivate' : 'Activate' }}
-                                            </button>
-                                        </form>
-                                    </li>
-                                </ul>
-                            </div>
+                                <a class="dropdown-item" href="{{ route('admin.insurance-providers.tiers.index', $provider) }}">
+                                    <i class="ti ti-layers me-2"></i>Manage Tiers
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <x-confirm-form
+                                    :action="route('admin.insurance-providers.toggle', $provider)"
+                                    method="PATCH"
+                                    :button-label="$provider->is_active ? 'Deactivate' : 'Activate'"
+                                    button-class="dropdown-item"
+                                    :icon="$provider->is_active ? 'ti-eye-off' : 'ti-eye'"
+                                    :confirm-title="($provider->is_active ? 'Deactivate' : 'Activate').' this provider?'"
+                                    :confirm-text="$provider->is_active ? 'It will be hidden from new claims and verification.' : 'It will be available for new claims and verification.'"
+                                    :confirm-button="$provider->is_active ? 'Yes, deactivate' : 'Yes, activate'" />
+                            </x-action-menu>
                             @endcan
                         </td>
                     </tr>

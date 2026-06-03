@@ -19,12 +19,10 @@
     </div>
 </div>
 
-<div class="card">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light"><tr><th>Unit</th><th>Group</th><th>Component</th><th>Screening</th><th>Status</th><th>Storage</th><th>Expiry</th><th class="text-end">Action</th></tr></thead>
-                <tbody>
+<x-data-table :paginator="$units">
+    <x-slot:head>
+        <tr><th>Unit</th><th>Group</th><th>Component</th><th>Screening</th><th>Status</th><th>Storage</th><th>Expiry</th><th class="text-end">Action</th></tr>
+    </x-slot:head>
                     @forelse($units as $unit)
                         <tr>
                             <td class="fw-semibold">{{ $unit->unit_number }}<div class="small text-muted">{{ $unit->donation->donation_number ?? 'Manual unit' }}</div></td>
@@ -50,10 +48,5 @@
                     @empty
                         <tr><td colspan="8"><x-empty-state icon="ti-droplet-off" title="No blood units" message="No blood units match your filters." /></td></tr>
                     @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-    @if($units->hasPages())<div class="card-footer">{{ $units->links() }}</div>@endif
-</div>
+</x-data-table>
 @endsection

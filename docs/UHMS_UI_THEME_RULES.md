@@ -94,7 +94,7 @@ Each module keeps its established internal pattern (patient folder, clinical wor
 
 ## 20. Do / Do Not
 
-**Do:** reuse components, use semantic colours, confirm destructive actions, keep clinical data readable, enforce permissions, follow the layout order.
+**Do:** reuse the shared components **before hand-writing markup** — `<x-page-header>`, `<x-status-badge>`, `<x-empty-state>`, `<x-stat-card>`, `<x-filter-bar>`, `<x-data-table>`, `<x-action-menu>`, `<x-confirm-form>`, `<x-print-layout>` (see `docs/UI_COMPONENT_STANDARDS.md`); use semantic colours, confirm destructive actions, keep clinical data readable, enforce permissions, follow the layout order.
 **Do Not:** introduce a new CSS/chart framework, redesign without audit, hide critical clinical/financial/stock info, rely on colour alone, show disabled modules as active, leave stuck modal backdrops, show raw errors, duplicate components that already exist.
 
 ## Status colour reference (from `config/ui.php`)

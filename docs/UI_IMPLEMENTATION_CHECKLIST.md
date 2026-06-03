@@ -19,6 +19,14 @@ Run through this for **every new or edited page/component**. Reviewers should re
 - [ ] **`<x-empty-state>` for empty lists**
 - [ ] No hidden critical clinical/financial/stock information
 
+## Reusable components (reuse before hand-writing markup)
+- [ ] **`<x-stat-card>`** for KPI/stat cards
+- [ ] **`<x-filter-bar>`** for GET filter/search forms
+- [ ] **`<x-data-table>`** for standard list tables
+- [ ] **`<x-action-menu>`** for row actions where several actions exist
+- [ ] **`<x-confirm-form>`** for destructive/high-risk actions (with `require-reason` where high-risk)
+- [ ] **`<x-print-layout>`** for printable documents
+
 ## Forms & feedback
 - [ ] Field-level validation (`@error`) shown by the field
 - [ ] **Success/error feedback (flash alert or SweetAlert2 toast)**

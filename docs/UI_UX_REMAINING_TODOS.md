@@ -20,13 +20,22 @@ What Phase 1 (this pass) delivered, and the safe follow-up work. Nothing here bl
 - [ ] Optionally route enum-driven `->status->color()` badges (lab, consultations, insurance, appointments, hr) through the enum-aware `<x-status-badge>` for markup consistency — cosmetic, zero colour change.
 - [ ] Enrich bulk-converted empty states with contextual `icon`/`title` where they currently carry only `message`.
 
-## Components to extract (Phase 5)
-- [ ] `<x-stat-card>` from the KPI card pattern.
-- [ ] `<x-filter-bar>` from the GET-form filter card.
-- [ ] `<x-data-table>` (responsive + pagination + empty-state wrapper).
-- [ ] `<x-action-menu>` row-action dropdown (danger last).
-- [ ] `<x-confirm-form>` (POST + SweetAlert2 confirm) for destructive actions.
-- [ ] `<x-print-layout>` print-only chrome.
+## Components (Phase 5 — DELIVERED)
+All six created, tested (`tests/Feature/UiPhase5ComponentsTest.php`), documented (`docs/UI_COMPONENT_STANDARDS.md`), and adopted in representative pages. See `docs/UI_PHASE_5_COMPONENT_EXTRACTION_REPORT.md`.
+- [x] `<x-stat-card>` — adopted in statistics dashboard/show.
+- [x] `<x-filter-bar>` — adopted in statistics/show.
+- [x] `<x-data-table>` — adopted in blood-bank/units.
+- [x] `<x-action-menu>` — adopted in insurance/index.
+- [x] `<x-confirm-form>` — adopted in insurance/index (provider toggle).
+- [x] `<x-print-layout>` — created + tested; adopt gradually for print views.
+
+### Phase 5 rollout (remaining adoption — mechanical, low risk)
+- [ ] `<x-stat-card>` → Blood Bank, Emergency, Admission, Stock, Billing, Reports dashboards.
+- [ ] `<x-filter-bar>` → Patients, Visits, Billing, Stock, Logs, Notifications, Roles filters.
+- [ ] `<x-data-table>` → clean list tables (Patients, Visits, Billing, Pharmacy, Stock, Logs, Notifications).
+- [ ] `<x-action-menu>` → list tables with several row actions.
+- [ ] `<x-confirm-form>` → high-risk actions replacing native `onsubmit="return confirm()"` (reverse payment, refund, stock adjustment, patient merge execute, mark deceased, discharge, dispose emergency, cancel theatre case, override triage, emergency blood release, disable module).
+- [ ] `<x-print-layout>` → printable documents, simplest first.
 
 ## Feedback & errors
 - [x] **Phase 4 (done):** Friendly error pages `403/404/419/500/503` + self-contained `layouts/error.blade.php`; never expose `SQLSTATE`/stack traces (logged instead). See `docs/UI_PHASE_4_ERROR_HANDLING_REPORT.md`.
