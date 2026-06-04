@@ -1,5 +1,5 @@
 {
-    "generated_at": "2026-06-04T17:18:20+00:00",
+    "generated_at": "2026-06-04T17:35:39+00:00",
     "controllers_flagged": 73,
     "logging_services_detected": 66,
     "summary": {
@@ -1245,7 +1245,7 @@
             ],
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
-            "reason": "User create/update audited by UserObserver (USER_CREATED / USER_FIELD_CHANGED).",
+            "reason": "User create/update audited by UserObserver (USER_CREATED / USER_FIELD_CHANGED); role assignment audited by UserService \u2192 RolePermissionAuditService (USER_ROLES_UPDATED).",
             "services": [
                 "UserService"
             ],

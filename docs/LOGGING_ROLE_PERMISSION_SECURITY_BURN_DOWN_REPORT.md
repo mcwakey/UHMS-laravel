@@ -19,7 +19,7 @@ trail. `logs:audit` correctly flagged it as the lone CRITICAL real gap.
 | `Admin/RoleController@store/update/destroy` | unlogged | **wired** |
 | `Admin/RoleController@updatePermissions` (syncPermissions) | unlogged | **wired** |
 | `Admin/UserPermissionController@update` (direct per-user perms) | logged via an ad-hoc `activity('user-permissions')` call on a non-standard channel, no module/severity/diff | **consolidated** into the funnel |
-| `UserService::assignRole/syncRoles` (role→user assignment) | unlogged | **documented** as remaining (see below) |
+| `UserService::create` (assignRole) / `update` (syncRoles) — role→user assignment | unlogged | **wired** (follow-up below) |
 
 ## Architecture — a logging-only funnel
 
@@ -47,6 +47,9 @@ UserPermission ─┘
 | `USER_PERMISSIONS_UPDATED` | PERMISSIONS | WARNING / CRITICAL (same rule) |
 | `CRITICAL_PERMISSION_ASSIGNED` | PERMISSIONS | CRITICAL |
 | `CRITICAL_PERMISSION_REMOVED` | PERMISSIONS | CRITICAL |
+| `USER_ROLES_UPDATED` | ROLES | WARNING, **escalated to CRITICAL** if a critical role is added/removed |
+| `CRITICAL_ROLE_ASSIGNED` | ROLES | CRITICAL |
+| `CRITICAL_ROLE_REMOVED` | ROLES | CRITICAL |
 
 The umbrella `*_PERMISSIONS_UPDATED` event always fires on a change; a **separate**
 `CRITICAL_PERMISSION_ASSIGNED` / `_REMOVED` event additionally fires (listing the
@@ -118,24 +121,53 @@ now **exits 0** — there are no CRITICAL real gaps left. The gate can be enable
 CI as a regression guard (blocks only a brand-new un-funnelled CRITICAL action)
 **when you choose to** — this pass does not flip CI to blocking.
 
+## Follow-up DONE — user role assignment (`UserService`)
+
+`UserService::create` (assignRole) and `UserService::update` (syncRoles) now call
+`RolePermissionAuditService::userRolesUpdated($user, $before, $after, $reason)`.
+This logs `USER_ROLES_UPDATED` (ROLES module) with the old/new **role** sets +
+`added_roles` / `removed_roles`, and — because a role is a bundle of permissions —
+escalates to CRITICAL and emits `CRITICAL_ROLE_ASSIGNED` / `CRITICAL_ROLE_REMOVED`
+when an added/removed role carries any CRITICAL permission. Critical detection
+reuses `PermissionMeta::risk()` over the role's permission set (no hardcoding); the
+log records `critical_roles_added/removed` and the specific
+`critical_permissions_in_added_roles / _in_removed_roles` so the permission trail
+behind the role is visible. Subject is the `User` (target_user_id) — no patient
+context. Business logic (assignRole/syncRoles) is unchanged; this is a pure
+dual-write. Tests: `UserRoleAssignmentSecurityLogTest` (7).
+
+`UserController` stays `SERVICE_FUNNEL_COVERED` (it already was, via `UserObserver`
+for column changes; the config note now also records the role-assignment funnel).
+`logs:audit` remains at **0 MISSING_LOG**.
+
 ## Remaining needs-review items (unchanged, out of scope here)
 
 The 7 `NEEDS_REVIEW` controllers (financial/HR/insurance/purchase-return/theatre-
-room) still delegate to services not verified to log — surfaced, not hidden.
-Plus, newly documented:
+room) still delegate to services not verified to log — surfaced, not hidden. No
+known security role/permission write path is now unlogged.
 
-- **`UserService::assignRole` / `syncRoles`** — assigning/replacing a user's
-  *role* (distinct from role definition and direct permissions) is not yet logged;
-  `UserObserver` only catches column changes, not the role pivot. Wire a
-  `roleAssignedToUser` event into `RolePermissionAuditService` next (HIGH).
+## Stage-1 CI gate — recommended now
+
+With both the role/permission burn-down and the user-role-assignment follow-up
+landed, there is **no remaining CRITICAL real gap**. The Stage-1 gate
+`php artisan logs:audit --fail --only-real-gaps --min-severity=CRITICAL` passes
+locally and is now **recommended** to enable in CI as a regression guard (it only
+fails on a brand-new un-funnelled CRITICAL action). It is **not** flipped on in
+this change — enable it explicitly when ready (mirror the UI gate in
+`.github/workflows/ui-audit.yml`).
 
 ## Files changed
 
-- `app/Services/RolePermissionAuditService.php` — **new** logging funnel.
+- `app/Services/RolePermissionAuditService.php` — **new** logging funnel; role CRUD,
+  role/user permission sync, **and user role assignment** (`userRolesUpdated`).
 - `app/Http/Controllers/Admin/RoleController.php` — inject funnel; log
   create/update/delete/permission-sync.
 - `app/Http/Controllers/Admin/UserPermissionController.php` — replace ad-hoc
   `activity()` with the funnel (preserves `reason`).
-- `config/logging_audit.php` — register `RolePermissionAuditService`.
+- `app/Services/UserService.php` — inject funnel; log role assign (create) /
+  role sync (update).
+- `config/logging_audit.php` — register `RolePermissionAuditService`; note the
+  UserController role-assignment funnel.
 - `storage/app/logs-audit-baseline.json` — regenerated (RoleController now covered).
 - `tests/Feature/RolePermissionSecurityLogTest.php` — **new** (11 tests).
+- `tests/Feature/UserRoleAssignmentSecurityLogTest.php` — **new** (7 tests).

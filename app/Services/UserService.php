@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Storage;
 
 class UserService
 {
+    public function __construct(private RolePermissionAuditService $audit) {}
+
     public function list(array $filters = []): LengthAwarePaginator
     {
         $query = User::with(['department', 'designation', 'roles']);
@@ -52,6 +54,7 @@ class UserService
 
         if (!empty($data['role'])) {
             $user->assignRole($data['role']);
+            $this->audit->userRolesUpdated($user, [], $user->getRoleNames()->all());
         }
 
         if (isset($data['specialties'])) {
@@ -79,7 +82,9 @@ class UserService
         $user->update($data);
 
         if (isset($data['role'])) {
+            $before = $user->roles->pluck('name')->all();
             $user->syncRoles([$data['role']]);
+            $this->audit->userRolesUpdated($user, $before, $user->fresh()->getRoleNames()->all());
         }
 
         if (array_key_exists('specialties', $data)) {

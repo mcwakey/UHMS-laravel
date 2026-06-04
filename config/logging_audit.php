@@ -102,7 +102,8 @@ return [
     */
     'known_false_positive_controllers' => [
         'app/Http/Controllers/Admin/UserController.php' =>
-            'User create/update audited by UserObserver (USER_CREATED / USER_FIELD_CHANGED).',
+            'User create/update audited by UserObserver (USER_CREATED / USER_FIELD_CHANGED); '
+            . 'role assignment audited by UserService → RolePermissionAuditService (USER_ROLES_UPDATED).',
     ],
 
     /*

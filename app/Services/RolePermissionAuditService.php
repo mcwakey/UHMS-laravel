@@ -133,6 +133,110 @@ class RolePermissionAuditService
     }
 
     /**
+     * Log a change to a USER's role assignments (assignRole / syncRoles). A role
+     * counts as CRITICAL when it carries one or more CRITICAL permissions.
+     *
+     * @param  array<int,string>  $before  role names before the change
+     * @param  array<int,string>  $after   role names after the change
+     */
+    public function userRolesUpdated(Model $user, array $before, array $after, ?string $reason = null): void
+    {
+        $before = array_values(array_unique($before));
+        $after = array_values(array_unique($after));
+        $added = array_values(array_diff($after, $before));
+        $removed = array_values(array_diff($before, $after));
+
+        if ($added === [] && $removed === []) {
+            return;
+        }
+
+        [$criticalAddedRoles, $criticalPermsInAdded] = $this->criticalRoles($added);
+        [$criticalRemovedRoles, $criticalPermsInRemoved] = $this->criticalRoles($removed);
+        $hasCritical = $criticalAddedRoles !== [] || $criticalRemovedRoles !== [];
+
+        $name = $user->name ?? ('#' . $user->getKey());
+
+        $context = array_filter([
+            'target_user_id' => $user->getKey(),
+            'severity' => $hasCritical ? LogSeverity::CRITICAL : LogSeverity::WARNING,
+            'old_values' => ['roles' => $before],
+            'new_values' => ['roles' => $after],
+            'reason' => $reason,
+            'metadata' => [
+                'target_user' => $name,
+                'added_roles' => $added,
+                'removed_roles' => $removed,
+                'critical_roles_added' => $criticalAddedRoles,
+                'critical_roles_removed' => $criticalRemovedRoles,
+                'critical_permissions_in_added_roles' => $criticalPermsInAdded,
+                'critical_permissions_in_removed_roles' => $criticalPermsInRemoved,
+            ],
+            'source_type' => 'user',
+            'source_id' => $user->getKey(),
+        ], fn ($v) => $v !== null);
+
+        $this->safe(fn () => $this->log->log(LogModule::ROLES, 'USER_ROLES_UPDATED', $context, $user, 'Roles updated for user: ' . $name));
+
+        if ($criticalAddedRoles !== []) {
+            $this->logCriticalRole($user, 'CRITICAL_ROLE_ASSIGNED', $criticalAddedRoles, $criticalPermsInAdded,
+                'Critical role assigned to user ' . $name . ': ' . implode(', ', $criticalAddedRoles), $reason);
+        }
+        if ($criticalRemovedRoles !== []) {
+            $this->logCriticalRole($user, 'CRITICAL_ROLE_REMOVED', $criticalRemovedRoles, $criticalPermsInRemoved,
+                'Critical role removed from user ' . $name . ': ' . implode(', ', $criticalRemovedRoles), $reason);
+        }
+    }
+
+    /**
+     * Resolve which of the given role names are "critical" (carry ≥1 CRITICAL
+     * permission) and the distinct critical permissions across them.
+     *
+     * @param  array<int,string>  $roleNames
+     * @return array{0: array<int,string>, 1: array<int,string>} [criticalRoleNames, criticalPermissionNames]
+     */
+    private function criticalRoles(array $roleNames): array
+    {
+        if ($roleNames === []) {
+            return [[], []];
+        }
+
+        $criticalRoleNames = [];
+        $criticalPerms = [];
+
+        $roles = Role::query()->whereIn('name', $roleNames)->with('permissions:id,name')->get();
+        foreach ($roles as $role) {
+            $crit = $this->criticalOnly($role->permissions->pluck('name')->all());
+            if ($crit !== []) {
+                $criticalRoleNames[] = $role->name;
+                $criticalPerms = array_merge($criticalPerms, $crit);
+            }
+        }
+
+        return [
+            array_values(array_unique($criticalRoleNames)),
+            array_values(array_unique($criticalPerms)),
+        ];
+    }
+
+    /** @param array<int,string> $roles @param array<int,string> $permissions */
+    private function logCriticalRole(Model $user, string $event, array $roles, array $permissions, string $description, ?string $reason): void
+    {
+        $context = array_filter([
+            'target_user_id' => $user->getKey(),
+            'severity' => LogSeverity::CRITICAL,
+            'reason' => $reason,
+            'metadata' => [
+                'critical_roles' => $roles,
+                'critical_permissions' => $permissions,
+            ],
+            'source_type' => 'user',
+            'source_id' => $user->getKey(),
+        ], fn ($v) => $v !== null);
+
+        $this->safe(fn () => $this->log->log(LogModule::ROLES, $event, $context, $user, $description));
+    }
+
+    /**
      * Shared writer for both role and user permission syncs.
      *
      * @param  array<int,string>  $before

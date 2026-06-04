@@ -162,9 +162,11 @@ missing**. Tests: `LogsAuditCommandTest` (11). See
   `RolePermissionSecurityLogTest` (11). **`logs:audit` MISSING_LOG is now 0** and
   the Stage-1 gate (`--fail --only-real-gaps --min-severity=CRITICAL`) passes. See
   `docs/LOGGING_ROLE_PERMISSION_SECURITY_BURN_DOWN_REPORT.md`.
-  - **Follow-up (HIGH):** `UserService::assignRole/syncRoles` — assigning a *role*
-    to a user is still unlogged (`UserObserver` only catches column changes, not
-    the role pivot). Add a `roleAssignedToUser` event to the same funnel.
+  - **Follow-up DONE:** `UserService::create/update` (assignRole/syncRoles) now log
+    `USER_ROLES_UPDATED` + `CRITICAL_ROLE_ASSIGNED/REMOVED` via the same funnel
+    (critical role = role carrying a CRITICAL permission; old/new role sets +
+    critical-permission trail captured). Tests: `UserRoleAssignmentSecurityLogTest`
+    (7). No known security role/permission write path remains unlogged.
 
 #### 🟠 Needs review (verify the service logs, else wire) — HIGH/CRITICAL kept out of baseline
 - `Admin/FinancialEntryController` → `AccountingService` (financial — CRITICAL)
