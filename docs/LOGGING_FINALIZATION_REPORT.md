@@ -1,5 +1,11 @@
 # Logging Finalization Pass — `logs:audit` made funnel-aware
 
+> **Update (post-pass):** the one real gap below (`Admin/RoleController`) has since
+> been wired — see `docs/LOGGING_ROLE_PERMISSION_SECURITY_BURN_DOWN_REPORT.md`.
+> **`MISSING_LOG` is now 0** (SERVICE_FUNNEL_COVERED 42→43), and the Stage-1 gate
+> `logs:audit --fail --only-real-gaps --min-severity=CRITICAL` **passes**. The
+> analysis below is preserved as written at the time of the finalization pass.
+
 The eight logging burn-downs are complete, but `logs:audit` kept reporting **73**
 flagged controllers. This pass makes the audit *understand the architecture we
 actually built* (service-funnel + observer logging), classifies every finding,

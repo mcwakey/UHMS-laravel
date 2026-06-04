@@ -151,11 +151,20 @@ gaps). Of the 73: **42 covered · 22 backlog · 7 needs-review · 1 skipped · 1
 missing**. Tests: `LogsAuditCommandTest` (11). See
 `docs/LOGGING_FINALIZATION_REPORT.md`.
 
-#### 🔴 Real gap (MISSING_LOG) — do first
-- **`Admin/RoleController`** (store/update/destroy, CRITICAL/SECURITY) — role &
-  permission changes are unaudited and reach no logging service. Wire a security
-  funnel/observer → `LogModule::ROLES` / `PERMISSIONS`, severity SECURITY, with
-  old/new permission sets (mask nothing sensitive — these are names, not secrets).
+#### ✅ Real gap CLOSED — role/permission security logging
+- **`Admin/RoleController`** (store/update/destroy/updatePermissions) +
+  **`Admin/UserPermissionController`** (direct per-user perms) now log via the new
+  `RolePermissionAuditService` funnel → `LogModule::ROLES` / `PERMISSIONS`:
+  `ROLE_CREATED/UPDATED/DELETED`, `ROLE_PERMISSIONS_UPDATED`,
+  `USER_PERMISSIONS_UPDATED`, `CRITICAL_PERMISSION_ASSIGNED/REMOVED` (CRITICAL).
+  Critical detection via `PermissionMeta::risk()`; old/new permission sets +
+  added/removed in metadata; no patient context. Tests:
+  `RolePermissionSecurityLogTest` (11). **`logs:audit` MISSING_LOG is now 0** and
+  the Stage-1 gate (`--fail --only-real-gaps --min-severity=CRITICAL`) passes. See
+  `docs/LOGGING_ROLE_PERMISSION_SECURITY_BURN_DOWN_REPORT.md`.
+  - **Follow-up (HIGH):** `UserService::assignRole/syncRoles` — assigning a *role*
+    to a user is still unlogged (`UserObserver` only catches column changes, not
+    the role pivot). Add a `roleAssignedToUser` event to the same funnel.
 
 #### 🟠 Needs review (verify the service logs, else wire) — HIGH/CRITICAL kept out of baseline
 - `Admin/FinancialEntryController` → `AccountingService` (financial — CRITICAL)

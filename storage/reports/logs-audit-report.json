@@ -1,32 +1,689 @@
 {
-    "generated_at": "2026-06-04T16:55:32+00:00",
-    "controllers_flagged": 2,
-    "logging_services_detected": 33,
+    "generated_at": "2026-06-04T17:18:20+00:00",
+    "controllers_flagged": 73,
+    "logging_services_detected": 66,
     "summary": {
-        "MISSING_LOG": 1,
-        "NEEDS_REVIEW": 0,
-        "KNOWN_BACKLOG": 0,
-        "INTENTIONALLY_SKIPPED": 0,
-        "SERVICE_FUNNEL_COVERED": 1
+        "MISSING_LOG": 0,
+        "NEEDS_REVIEW": 7,
+        "KNOWN_BACKLOG": 22,
+        "INTENTIONALLY_SKIPPED": 1,
+        "SERVICE_FUNNEL_COVERED": 43
     },
-    "real_missing_logs": 1,
+    "real_missing_logs": 0,
     "findings": [
         {
-            "controller": "tests/fixtures/logs-audit/GapController.php",
+            "controller": "app/Http/Controllers/Admin/AnalyzerController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle",
+                "destroy"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "toggle",
+                "destroy"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "CRITICAL",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [
+                "AnalyzerService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/DepartmentController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "CRITICAL",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/DesignationController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "CRITICAL",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyContactController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "CRITICAL",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/FinancialEntryController.php",
+            "unlogged_actions": [
+                "store",
+                "approve",
+                "destroy"
+            ],
+            "actions": [
+                "store",
+                "approve",
+                "destroy"
+            ],
+            "classification": "NEEDS_REVIEW",
+            "severity": "CRITICAL",
+            "reason": "Delegates to AccountingService \u2014 not verified to log. Confirm or wire a funnel.",
+            "services": [
+                "AccountingService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/IcdCodeController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "CRITICAL",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/InsuranceTierController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "CRITICAL",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/NotificationController.php",
             "unlogged_actions": [
                 "destroy"
             ],
             "actions": [
                 "destroy"
             ],
-            "classification": "MISSING_LOG",
+            "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "CRITICAL",
-            "reason": "No logging funnel found in controller or any service it uses.",
+            "reason": "User changes are audited by UserObserver.",
+            "services": [
+                "NotificationService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PatientComplaintController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "CRITICAL",
+            "reason": "Delegates to PatientComplaintService (logs direct).",
+            "services": [
+                "MedicalRecordEntryPermissionService",
+                "PatientComplaintService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PatientInsuranceController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "CRITICAL",
+            "reason": "Deferred lower-priority gap (config backlog).",
             "services": [],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/RoleController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "CRITICAL",
+            "reason": "Delegates to RolePermissionAuditService (logs direct).",
+            "services": [
+                "RolePermissionAuditService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Billing/PaymentController.php",
+            "unlogged_actions": [
+                "store",
+                "reverse"
+            ],
+            "actions": [
+                "store",
+                "reverse"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "CRITICAL",
+            "reason": "Delegates to BillingService, RefundService (logs direct).",
+            "services": [
+                "AccountingService",
+                "BillingService",
+                "RefundService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Doctor/MedicalPatternController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "CRITICAL",
+            "reason": "Delegates to ConsultationService, MedicalPatternService (logs direct).",
+            "services": [
+                "ConsultationService",
+                "MedicalPatternService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/AdmissionController.php",
+            "unlogged_actions": [
+                "store",
+                "discharge"
+            ],
+            "actions": [
+                "store",
+                "discharge"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to AdmissionService, VisitService (logs direct).",
+            "services": [
+                "AdmissionMedicationBoardService",
+                "AdmissionService",
+                "ConsultationSummaryService",
+                "VisitService",
+                "WardService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/AppointmentController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "cancel"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to AppointmentService (logs transitive).",
+            "services": [
+                "AppointmentService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/BloodCrossmatchController.php",
+            "unlogged_actions": [
+                "store",
+                "verify"
+            ],
+            "actions": [
+                "store",
+                "verify"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to BloodCrossmatchService (logs direct).",
+            "services": [
+                "BloodCrossmatchService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/BloodRequestController.php",
+            "unlogged_actions": [
+                "store",
+                "approve"
+            ],
+            "actions": [
+                "store",
+                "approve"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to BloodRequestService (logs direct).",
+            "services": [
+                "BloodBankCompatibilityService",
+                "BloodRequestService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/CashierShiftController.php",
+            "unlogged_actions": [
+                "verify"
+            ],
+            "actions": [
+                "verify"
+            ],
+            "classification": "NEEDS_REVIEW",
+            "severity": "HIGH",
+            "reason": "Delegates to AccountingService \u2014 not verified to log. Confirm or wire a funnel.",
+            "services": [
+                "AccountingService"
+            ],
             "in_baseline": false
         },
         {
-            "controller": "tests/fixtures/logs-audit/CoveredController.php",
+            "controller": "app/Http/Controllers/Admin/ClaimController.php",
+            "unlogged_actions": [
+                "store",
+                "submit"
+            ],
+            "actions": [
+                "store",
+                "submit"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to ClaimService (logs direct).",
+            "services": [
+                "ClaimPreparationMirrorService",
+                "ClaimPaymentService",
+                "ClaimWorkflowManager",
+                "ClaimService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/InsuranceVerificationController.php",
+            "unlogged_actions": [
+                "verify"
+            ],
+            "actions": [
+                "verify"
+            ],
+            "classification": "NEEDS_REVIEW",
+            "severity": "HIGH",
+            "reason": "Delegates to InsuranceVerificationService, VerificationManager \u2014 not verified to log. Confirm or wire a funnel.",
+            "services": [
+                "InsuranceVerificationService",
+                "VerificationManager"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/LeaveController.php",
+            "unlogged_actions": [
+                "store",
+                "approve",
+                "reject"
+            ],
+            "actions": [
+                "store",
+                "approve",
+                "reject"
+            ],
+            "classification": "NEEDS_REVIEW",
+            "severity": "HIGH",
+            "reason": "Delegates to HRService \u2014 not verified to log. Confirm or wire a funnel.",
+            "services": [
+                "HRService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PayrollController.php",
+            "unlogged_actions": [
+                "approve"
+            ],
+            "actions": [
+                "approve"
+            ],
+            "classification": "NEEDS_REVIEW",
+            "severity": "HIGH",
+            "reason": "Delegates to PayrollService \u2014 not verified to log. Confirm or wire a funnel.",
+            "services": [
+                "PayrollService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ProductStockController.php",
+            "unlogged_actions": [
+                "transfer"
+            ],
+            "actions": [
+                "transfer"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "HIGH",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [
+                "ProductStockService",
+                "StockBalanceMatrixService",
+                "StockLocationService",
+                "ProductStockMovementService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PurchaseOrderController.php",
+            "unlogged_actions": [
+                "store",
+                "submit",
+                "approve",
+                "cancel"
+            ],
+            "actions": [
+                "store",
+                "submit",
+                "approve",
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to ProcurementService (logs direct).",
+            "services": [
+                "ProcurementService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PurchaseReturnController.php",
+            "unlogged_actions": [
+                "store",
+                "approve",
+                "cancel"
+            ],
+            "actions": [
+                "store",
+                "approve",
+                "cancel"
+            ],
+            "classification": "NEEDS_REVIEW",
+            "severity": "HIGH",
+            "reason": "Delegates to PurchaseReturnService \u2014 not verified to log. Confirm or wire a funnel.",
+            "services": [
+                "PurchaseReturnService"
+            ],
+            "in_baseline": false
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ServiceRenderingActionController.php",
+            "unlogged_actions": [
+                "cancel"
+            ],
+            "actions": [
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to ServiceRenderingService (logs direct).",
+            "services": [
+                "ServiceRenderingService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/StockRequisitionController.php",
+            "unlogged_actions": [
+                "store",
+                "approve",
+                "issue",
+                "cancel"
+            ],
+            "actions": [
+                "store",
+                "approve",
+                "issue",
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to StockRequisitionService (logs direct).",
+            "services": [
+                "StockRequisitionService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/StockTransferController.php",
+            "unlogged_actions": [
+                "store",
+                "approve",
+                "complete",
+                "cancel"
+            ],
+            "actions": [
+                "store",
+                "approve",
+                "complete",
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to StockTransferService (logs direct).",
+            "services": [
+                "StockTransferService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Billing/CreditNoteController.php",
+            "unlogged_actions": [
+                "store",
+                "cancel"
+            ],
+            "actions": [
+                "store",
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to CreditNoteService (logs direct).",
+            "services": [
+                "CreditNoteService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Billing/InvoiceController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "cancel"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to BillingService (logs direct).",
+            "services": [
+                "BillingService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Doctor/PrescriptionController.php",
+            "unlogged_actions": [
+                "cancel"
+            ],
+            "actions": [
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to PrescriptionService (logs direct).",
+            "services": [
+                "PrescriptionService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Lab/LabRequestController.php",
+            "unlogged_actions": [
+                "cancel"
+            ],
+            "actions": [
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to InvestigationRequestService, LabService (logs direct).",
+            "services": [
+                "InvestigationRequestService",
+                "LabService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Theatre/TheatreController.php",
+            "unlogged_actions": [
+                "reject",
+                "complete",
+                "cancel"
+            ],
+            "actions": [
+                "reject",
+                "complete",
+                "cancel"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "reason": "Delegates to ConsumableUsageService, ProcedureRequestService, ProcedureWorkflowService (logs direct).",
+            "services": [
+                "ConsumableUsageService",
+                "ProcedureCatalogueService",
+                "ProcedureClinicalService",
+                "ProcedureReportService",
+                "ProcedureRequestService",
+                "ProcedureScheduleService",
+                "ProcedureTemplateService",
+                "ProcedureWorkflowService",
+                "ServiceConsumableService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/AccountCategoryController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/AttendanceController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [
+                "HRService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/BloodDonationController.php",
             "unlogged_actions": [
                 "store"
             ],
@@ -35,9 +692,656 @@
             ],
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
-            "reason": "Delegates to LoggedService (logs direct).",
+            "reason": "Delegates to BloodDonationService (logs direct).",
             "services": [
-                "LoggedService"
+                "BloodDonationService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/BloodDonorController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to BloodDonorScreeningService (logs direct).",
+            "services": [
+                "BloodDonorScreeningService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/BloodIssueController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to BloodIssueService (logs direct).",
+            "services": [
+                "BloodIssueService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ComplaintCatalogueController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [
+                "ComplaintCatalogueService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/DrugController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to PharmacyService (logs direct).",
+            "services": [
+                "PharmacyService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyBayController.php",
+            "unlogged_actions": [
+                "store",
+                "assign"
+            ],
+            "actions": [
+                "store",
+                "assign"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to EmergencyBayService (logs direct).",
+            "services": [
+                "EmergencyBayService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyCaseController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ],
+            "actions": [
+                "store",
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to EmergencyCaseService, PatientComplaintService (logs direct).",
+            "services": [
+                "EmergencyCaseService",
+                "EmergencySessionService",
+                "PatientComplaintService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyConsumableController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to EmergencyConsumableService (logs direct).",
+            "services": [
+                "EmergencyConsumableService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyDispositionController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to EmergencyDispositionService (logs direct).",
+            "services": [
+                "EmergencyDispositionService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyInvestigationController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to EmergencyInvestigationService (logs direct).",
+            "services": [
+                "EmergencyInvestigationService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyMedicationController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to EmergencyMedicationService (logs direct).",
+            "services": [
+                "EmergencyMedicationService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyNoteController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to EmergencyNoteService (logs direct).",
+            "services": [
+                "EmergencyNoteService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyPatientIdentityController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to EmergencyPatientIdentityService (logs direct).",
+            "services": [
+                "EmergencyPatientIdentityService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyProcedureController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to EmergencyProcedureService (logs direct).",
+            "services": [
+                "EmergencyProcedureService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyTriageController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to EmergencyTriageService (logs direct).",
+            "services": [
+                "EmergencyTriageService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyVitalsController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to EmergencyVitalsService (logs direct).",
+            "services": [
+                "EmergencyVitalsService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmployeeController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ],
+            "actions": [
+                "store",
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "User changes are audited by UserObserver.",
+            "services": [
+                "HRService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/InsuranceProviderController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/InvestigationItemController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [
+                "ProductService",
+                "StockBalanceService",
+                "StockLocationService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ModuleController.php",
+            "unlogged_actions": [
+                "toggle"
+            ],
+            "actions": [
+                "toggle"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to ModuleService (logs direct).",
+            "services": [
+                "ModuleService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/NotificationBroadcastController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [
+                "NotificationService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/NotificationPreferenceController.php",
+            "unlogged_actions": [
+                "update"
+            ],
+            "actions": [
+                "update"
+            ],
+            "classification": "INTENTIONALLY_SKIPPED",
+            "severity": "MEDIUM",
+            "reason": "All actions excluded by config.",
+            "services": [],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PatientMergeController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to PatientMergeService (logs direct).",
+            "services": [
+                "PatientMergePreviewService",
+                "PatientMergeService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ProcedureController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [
+                "ClinicalService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ProductController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [
+                "ProductService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ProfileController.php",
+            "unlogged_actions": [
+                "update"
+            ],
+            "actions": [
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "User changes are audited by UserObserver.",
+            "services": [],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/QueueController.php",
+            "unlogged_actions": [
+                "complete"
+            ],
+            "actions": [
+                "complete"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [
+                "QueueService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ServiceCatalogController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/SpecialtyController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/StockLocationController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/SupplierController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to SupplierLedgerService (logs direct).",
+            "services": [
+                "SupplierLedgerService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/TriageController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to VisitService (logs direct).",
+            "services": [
+                "VisitService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/UserController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ],
+            "actions": [
+                "store",
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "User create/update audited by UserObserver (USER_CREATED / USER_FIELD_CHANGED).",
+            "services": [
+                "UserService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/VisitController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ],
+            "actions": [
+                "store",
+                "update"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to BillingService, VisitService, VisitWorkflowService (logs direct).",
+            "services": [
+                "BillingService",
+                "InsuranceService",
+                "QueueService",
+                "VisitService",
+                "VisitWorkflowService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/VitalController.php",
+            "unlogged_actions": [
+                "store"
+            ],
+            "actions": [
+                "store"
+            ],
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "reason": "Delegates to VisitService (logs direct).",
+            "services": [
+                "VisitService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/WardController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [
+                "WardService"
+            ],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Billing/SponsorController.php",
+            "unlogged_actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ],
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "reason": "Deferred lower-priority gap (config backlog).",
+            "services": [],
+            "in_baseline": true
+        },
+        {
+            "controller": "app/Http/Controllers/Theatre/TheatreRoomController.php",
+            "unlogged_actions": [
+                "store",
+                "update"
+            ],
+            "actions": [
+                "store",
+                "update"
+            ],
+            "classification": "NEEDS_REVIEW",
+            "severity": "MEDIUM",
+            "reason": "Delegates to TheatreRoomService \u2014 not verified to log. Confirm or wire a funnel.",
+            "services": [
+                "TheatreRoomService"
             ],
             "in_baseline": true
         }

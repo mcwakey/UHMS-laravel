@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\RolePermissionAuditService;
 use App\Support\PermissionMeta;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
@@ -10,6 +11,8 @@ use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
+    public function __construct(private RolePermissionAuditService $audit) {}
+
     public function index()
     {
         $roles = Role::withCount('permissions', 'users')->get();
@@ -23,7 +26,8 @@ class RoleController extends Controller
             'name' => 'required|string|max:255|unique:roles,name',
         ]);
 
-        Role::create($validated);
+        $role = Role::create($validated);
+        $this->audit->roleCreated($role);
 
         return redirect()->route('admin.roles.index')
             ->with('success', 'Role created successfully.');
@@ -39,7 +43,9 @@ class RoleController extends Controller
             'name' => "required|string|max:255|unique:roles,name,{$role->id}",
         ]);
 
+        $old = ['name' => $role->name, 'guard_name' => $role->guard_name];
         $role->update($validated);
+        $this->audit->roleUpdated($role, $old, ['name' => $role->name, 'guard_name' => $role->guard_name]);
 
         return redirect()->route('admin.roles.index')
             ->with('success', 'Role updated successfully.');
@@ -56,6 +62,7 @@ class RoleController extends Controller
         }
 
         $role->delete();
+        $this->audit->roleDeleted($role);
 
         return redirect()->route('admin.roles.index')
             ->with('success', 'Role deleted successfully.');
@@ -91,9 +98,11 @@ class RoleController extends Controller
         ]);
 
         $requested = $validated['permissions'] ?? [];
-        $this->authorizeCriticalPermissionChange($request, $role->permissions->pluck('name')->all(), $requested);
+        $before = $role->permissions->pluck('name')->all();
+        $this->authorizeCriticalPermissionChange($request, $before, $requested);
 
         $role->syncPermissions($requested);
+        $this->audit->rolePermissionsUpdated($role, $before, $role->fresh()->permissions->pluck('name')->all());
 
         return redirect()->route('admin.roles.permissions', $role)
             ->with('success', 'Permissions updated successfully.');

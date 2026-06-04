@@ -68,6 +68,8 @@ return [
         'ModuleService',
         'ConsumableUsageService',
         'StockMovementService',
+        // Roles / permissions (security)
+        'RolePermissionAuditService',
         // Cross-cutting
         'ServiceRenderingService',
         'PatientMergeService',

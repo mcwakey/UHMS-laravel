@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\RolePermissionAuditService;
 use App\Support\PermissionMeta;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -19,6 +20,8 @@ use Spatie\Permission\PermissionRegistrar;
  */
 class UserPermissionController extends Controller
 {
+    public function __construct(private RolePermissionAuditService $audit) {}
+
     public function edit(User $user)
     {
         Gate::authorize('permissions.assign');
@@ -62,28 +65,23 @@ class UserPermissionController extends Controller
         ]);
 
         $names = $validated['permissions'] ?? [];
-        $this->authorizeCriticalPermissionChange(
-            $request,
-            $user->permissions()->pluck('name')->all(),
-            $names
-        );
+        $before = $user->permissions()->pluck('name')->all();
+        $this->authorizeCriticalPermissionChange($request, $before, $names);
 
         // Sync only direct permissions (NOT role-inherited ones).
         $user->syncPermissions($names);
 
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Audit trail — uses Spatie ActivityLog if available
-        if (function_exists('activity')) {
-            activity('user-permissions')
-                ->causedBy($request->user())
-                ->performedOn($user)
-                ->withProperties([
-                    'reason'       => $validated['reason'],
-                    'permissions'  => $names,
-                ])
-                ->log('updated direct permissions');
-        }
+        // Security audit trail via the central funnel (replaces the old ad-hoc
+        // activity('user-permissions') call): structured ROLES/PERMISSIONS event
+        // with diff + CRITICAL-permission detection + the mandatory reason.
+        $this->audit->userPermissionsUpdated(
+            $user,
+            $before,
+            $user->fresh()->permissions->pluck('name')->all(),
+            $validated['reason'],
+        );
 
         return redirect()->route('admin.users.permissions.edit', $user)
             ->with('success', 'Direct permissions updated.');

@@ -1,10 +1,9 @@
 {
-    "generated_at": "2026-06-04T12:15:38+00:00",
+    "generated_at": "2026-06-04T17:11:10+00:00",
     "note": "Accepted logs:audit findings. High-severity MISSING_LOG is intentionally excluded so real gaps stay visible.",
-    "accepted_count": 66,
+    "accepted_count": 67,
     "refused_high_risk_gaps": [
         "app/Http/Controllers/Admin/FinancialEntryController.php",
-        "app/Http/Controllers/Admin/RoleController.php",
         "app/Http/Controllers/Admin/CashierShiftController.php",
         "app/Http/Controllers/Admin/InsuranceVerificationController.php",
         "app/Http/Controllers/Admin/LeaveController.php",
@@ -94,6 +93,16 @@
         {
             "controller": "app/Http/Controllers/Admin/PatientInsuranceController.php",
             "classification": "KNOWN_BACKLOG",
+            "severity": "CRITICAL",
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/RoleController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "CRITICAL",
             "actions": [
                 "store",
