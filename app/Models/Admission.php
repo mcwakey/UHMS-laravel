@@ -204,4 +204,16 @@ class Admission extends Model
     {
         return static::generateNumber('ADM', 'admissions', 'admission_number');
     }
+
+    public function toActivityContext(): array
+    {
+        return array_filter([
+            'patient_id' => $this->patient_id,
+            'visit_id' => $this->visit_id,
+            'admission_id' => $this->id,
+            'bed_id' => $this->bed_id,
+            'source_type' => 'admission',
+            'source_id' => $this->id,
+        ], fn ($v) => $v !== null);
+    }
 }

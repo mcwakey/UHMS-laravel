@@ -275,4 +275,17 @@ class EmergencyCase extends Model
     {
         return $this->final_triage_category ?: $this->triage_category;
     }
+
+    public function toActivityContext(): array
+    {
+        return array_filter([
+            'patient_id' => $this->patient_id,
+            'visit_id' => $this->visit_id,
+            'emergency_case_id' => $this->id,
+            'admission_id' => $this->admission_id,
+            'emergency_bay_id' => $this->emergency_bay_id,
+            'source_type' => 'emergency_case',
+            'source_id' => $this->id,
+        ], fn ($v) => $v !== null);
+    }
 }

@@ -72,6 +72,26 @@ class EmergencyTriageService
             $this->createMonitoringTask($case->fresh(), $user, $session->id);
             $this->timeline->record($case->fresh(), 'TRIAGE', 'Emergency triage completed', $finalCategory.' category', $case, $user);
 
+            // Activity log → patient timeline. An override (final differs from the
+            // automated category) is a clinically significant, reason-bearing event.
+            $isOverride = $finalCategory !== $result->category;
+            app(\App\Services\ActivityLogService::class)->log(
+                \App\Enums\LogModule::EMERGENCY,
+                $isOverride ? 'TRIAGE_OVERRIDDEN' : 'TRIAGE_RECORDED',
+                $case->toActivityContext() + array_filter([
+                    'reason' => $isOverride ? ($overrideReason ?: null) : null,
+                    'severity' => $isOverride ? \App\Enums\LogSeverity::WARNING : \App\Enums\LogSeverity::INFO,
+                    'old_values' => $isOverride ? ['triage_category' => $result->category] : null,
+                    'new_values' => ['triage_category' => $finalCategory],
+                    'metadata' => ['triage_score' => $data['triage_score'] ?? $result->score],
+                    'causer' => $user,
+                ], fn ($v) => $v !== null),
+                $case,
+                $isOverride
+                    ? "Triage overridden: {$result->category} → {$finalCategory}"
+                    : "Triage recorded: {$finalCategory}",
+            );
+
             return $case->fresh(['patient', 'visit', 'triagedBy', 'latestVitals']);
         });
     }

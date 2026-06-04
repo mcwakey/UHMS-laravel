@@ -47,8 +47,45 @@ class EmergencyDispositionService
                     : ($data['disposition_notes'] ?? $disposition),
             ]);
 
-            return $case->fresh(['visit', 'patient', 'bay', 'disposedBy']);
+            // Activity log → patient timeline. Emergency owns the disposition event;
+            // Admission owns the subsequent ADMISSION_CREATED (a separate workflow event).
+            $fresh = $case->fresh(['visit', 'patient', 'bay', 'disposedBy']);
+            [$event, $label] = $this->dispositionEvent($disposition);
+            $death = in_array($disposition, [EmergencyCase::DISPOSITION_DIED, EmergencyCase::DISPOSITION_DEAD_ON_ARRIVAL], true);
+            app(\App\Services\ActivityLogService::class)->log(
+                \App\Enums\LogModule::EMERGENCY,
+                $event,
+                $fresh->toActivityContext() + array_filter([
+                    'reason' => $data['disposition_notes'] ?? null,
+                    'severity' => $death ? \App\Enums\LogSeverity::WARNING : \App\Enums\LogSeverity::INFO,
+                    'old_values' => ['emergency_status' => EmergencyCase::STATUS_UNDER_CARE],
+                    'new_values' => ['emergency_status' => EmergencyCase::STATUS_DISPOSED, 'disposition' => $disposition],
+                    'metadata' => ['disposition' => $disposition],
+                    'causer' => $user,
+                ], fn ($v) => $v !== null),
+                $fresh,
+                $label,
+            );
+
+            return $fresh;
         });
+    }
+
+    /** @return array{0:string,1:string} [event, description] */
+    private function dispositionEvent(string $disposition): array
+    {
+        return match ($disposition) {
+            EmergencyCase::DISPOSITION_ADMITTED => ['EMERGENCY_TRANSFERRED_TO_ADMISSION', 'Emergency disposition: transferred to admission'],
+            EmergencyCase::DISPOSITION_TRANSFERRED_TO_OPD => ['EMERGENCY_TRANSFERRED_TO_OPD', 'Emergency disposition: transferred to OPD'],
+            EmergencyCase::DISPOSITION_TRANSFERRED_TO_THEATRE => ['EMERGENCY_TRANSFERRED_TO_THEATRE', 'Emergency disposition: transferred to theatre'],
+            EmergencyCase::DISPOSITION_REFERRED_OUT => ['EMERGENCY_REFERRED_OUT', 'Emergency disposition: referred out'],
+            EmergencyCase::DISPOSITION_LEFT_AGAINST_MEDICAL_ADVICE => ['EMERGENCY_LEFT_AGAINST_MEDICAL_ADVICE', 'Emergency disposition: left against medical advice'],
+            EmergencyCase::DISPOSITION_ABSCONDED => ['EMERGENCY_ABSCONDED', 'Emergency disposition: absconded'],
+            EmergencyCase::DISPOSITION_DIED => ['EMERGENCY_DEATH_RECORDED', 'Emergency death recorded'],
+            EmergencyCase::DISPOSITION_DEAD_ON_ARRIVAL => ['EMERGENCY_DOA_RECORDED', 'Dead on arrival recorded'],
+            EmergencyCase::DISPOSITION_DISCHARGED => ['EMERGENCY_DISPOSITION_COMPLETED', 'Emergency disposition completed: discharged'],
+            default => ['EMERGENCY_DISPOSITION_COMPLETED', 'Emergency disposition completed: ' . $disposition],
+        };
     }
 
     private function applyVisitDisposition(EmergencyCase $case, array $data, User $user): void

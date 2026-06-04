@@ -341,6 +341,41 @@ class EmergencyCaseManagementTest extends TestCase
         ], $this->user);
     }
 
+    public function test_triage_override_and_disposition_log_on_patient_timeline(): void
+    {
+        $this->actingAs($this->user);
+        $case = $this->makeCase();
+
+        app(EmergencyTriageService::class)->record($case, [
+            'final_triage_category' => 'RED',
+            'triage_override_reason' => 'Respiratory distress worsened',
+            'blood_pressure_systolic' => 120, 'blood_pressure_diastolic' => 80,
+            'heart_rate' => 78, 'respiratory_rate' => 16, 'temperature' => 36.8,
+            'spo2' => 98, 'avpu' => 'A', 'pain_score' => 1,
+        ], $this->user);
+
+        app(\App\Services\EmergencyDispositionService::class)->dispose($case->fresh(), [
+            'disposition' => EmergencyCase::DISPOSITION_ADMITTED,
+            'disposition_notes' => 'Needs inpatient care',
+        ], $this->user);
+
+        $timeline = app(\App\Services\ActivityLogService::class)->getPatientTimeline($this->patient)->get();
+        $events = $timeline->pluck('event')->all();
+
+        $this->assertContains('TRIAGE_OVERRIDDEN', $events);
+        $this->assertContains('EMERGENCY_TRANSFERRED_TO_ADMISSION', $events);
+
+        $triage = $timeline->firstWhere('event', 'TRIAGE_OVERRIDDEN');
+        $this->assertSame('EMERGENCY', $triage->log_name);
+        $this->assertSame($case->id, (int) $triage->properties['emergency_case_id']);
+        $this->assertSame('Respiratory distress worsened', $triage->properties['reason']);
+        $this->assertSame('RED', $triage->properties['attributes']['triage_category']);
+
+        $dispo = $timeline->firstWhere('event', 'EMERGENCY_TRANSFERRED_TO_ADMISSION');
+        $this->assertSame($this->patient->id, (int) $dispo->patient_id);
+        $this->assertSame(EmergencyCase::DISPOSITION_ADMITTED, $dispo->properties['metadata']['disposition']);
+    }
+
     public function test_emergency_session_tracks_contributors_without_replacing_primary_team(): void
     {
         $doctor = User::factory()->create(['department_id' => $this->department->id]);

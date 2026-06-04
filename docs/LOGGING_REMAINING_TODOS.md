@@ -96,16 +96,34 @@ billing). Tests: `ClaimsLogTest` (3). See `docs/LOGGING_BILLING_CLAIMS_BURN_DOWN
 Follow-ups: distinct payment-reversal event, `ClaimPayment` rows, claim-mirror
 item edits, invoice/receipt/claim print/export.
 
-## Burn-down order (next, module-by-module — verify each in global + patient logs)
+## ✅ Done: emergency / admission lifecycle → patient timeline
 
-1. ~~Consultation clinical entries~~ ✅ · 2. ~~Investigations~~ ✅ · 3. ~~MAR~~ ✅ ·
-4. ~~Pharmacy~~ ✅ · 5. ~~Procedures / Theatre~~ ✅ · 6. ~~Billing / Claims~~ ✅
-7. **Emergency / Admission** (case create/triage/disposition; admission create/bed
-   assign/transfer/discharge) — **next up**; much already flows via pathway/MAR/
-   consumables, so log the case/admission lifecycle status events that aren't yet
-   on the activity timeline, without duplicating.
-8. Remaining stock / admin (roles/permissions/modules/settings, stock movements,
-   notifications) + enable a non-blocking `logs:audit` CI step.
+Reuse-first: `EMERGENCY / CASE_CREATED` (EmergencyCaseService) and `ADMISSION /
+ADMITTED|DISCHARGED` (AdmissionService) were already logged — reused, not
+duplicated. Gaps filled: `EmergencyTriageService` → `TRIAGE_RECORDED` /
+`TRIAGE_OVERRIDDEN` (old/new + reason); `EmergencyDispositionService` →
+`EMERGENCY_TRANSFERRED_TO_ADMISSION/THEATRE/OPD`, `EMERGENCY_REFERRED_OUT`,
+`EMERGENCY_DEATH_RECORDED/DOA`, `EMERGENCY_LEFT_AGAINST_MEDICAL_ADVICE`,
+`EMERGENCY_ABSCONDED`, `EMERGENCY_DISPOSITION_COMPLETED`. The emergency timeline was
+deliberately NOT dual-written (it carries MAR/consumable/investigation events).
+Emergency→admission logs cleanly as two distinct events. Tests:
+`EmergencyCaseManagementTest` (+1). See `docs/LOGGING_EMERGENCY_ADMISSION_BURN_DOWN_REPORT.md`.
+Follow-ups: bay/bed/ward assign-transfer-release, emergency vitals, contributor,
+nursing notes, discharge summary, print.
+
+## Burn-down order — all clinical/financial modules done ✅
+
+1. ~~Consultation~~ · 2. ~~Investigations~~ · 3. ~~MAR~~ · 4. ~~Pharmacy~~ ·
+5. ~~Procedures / Theatre~~ · 6. ~~Billing / Claims~~ · 7. ~~Emergency / Admission~~
+
+### Remaining (lower priority — admin/system + polish)
+8. **Stock / admin** — stock movements (raw ledger), roles/permissions/modules/
+   settings changes, notifications; plus the per-module follow-ups noted in each
+   burn-down report (bed transfers, vitals, print/export events, payment reversal,
+   claim mirror, pattern-created records, sample collection, etc.).
+9. **Enable a non-blocking `logs:audit` CI step** and periodically re-check the
+   controller count (currently 73, mostly false positives where logging is at the
+   service funnel).
 
 Do **not** wire all 75 flagged controllers at once; one module, with a test that
 the action appears on both the global log and (where patient-related) the patient
