@@ -65,9 +65,13 @@ class ClaimService
             throw new \InvalidArgumentException('A user is required to prepare an insurance claim.');
         }
 
-        return $this->workflowManager
+        $claim = $this->workflowManager
             ->forProvider($provider)
             ->prepareFromInvoice($invoice, $provider, $user, $doctorId);
+
+        $this->logClaimEvent($claim, 'CLAIM_PREPARED', 'Claim prepared from invoice: ' . ($claim->claim_number ?? ''), ['causer' => $user]);
+
+        return $claim;
     }
 
     /**
@@ -93,8 +97,10 @@ class ClaimService
             }
 
             $claim->recalculateTotal();
+            $fresh = $claim->fresh(['items', 'insuranceProvider', 'patient']);
+            $this->logClaimEvent($fresh, 'CLAIM_PREPARED', 'Claim prepared: ' . ($fresh->claim_number ?? ''));
 
-            return $claim->fresh(['items', 'insuranceProvider', 'patient']);
+            return $fresh;
         });
     }
 
@@ -110,6 +116,10 @@ class ClaimService
         $item = ClaimItem::create($data);
         $claim->recalculateTotal();
 
+        $this->logClaimEvent($claim, 'CLAIM_ITEM_ADDED',
+            'Claim item added: ' . ($item->service_name ?: $item->description ?: 'item'),
+            ['claim_item_id' => $item->id, 'service_id' => $item->service_id, 'metadata' => ['amount' => $item->claim_amount ?: $item->total_price]]);
+
         return $item;
     }
 
@@ -119,6 +129,9 @@ class ClaimService
     public function removeItem(ClaimItem $item): void
     {
         $claim = $item->claim;
+        $this->logClaimEvent($claim, 'CLAIM_ITEM_REMOVED',
+            'Claim item removed: ' . ($item->service_name ?: $item->description ?: 'item'),
+            ['claim_item_id' => $item->id, 'severity' => \App\Enums\LogSeverity::WARNING]);
         $item->delete();
         $claim->recalculateTotal();
     }
@@ -153,7 +166,12 @@ class ClaimService
 
     public function updateVerificationCode(Claim $claim, ?string $verificationCode): Claim
     {
+        $old = $claim->verification_code;
         $claim->update(['verification_code' => $verificationCode]);
+
+        $this->logClaimEvent($claim, 'CCC_CODE_UPDATED',
+            'Verification/CCC code updated for claim: ' . ($claim->claim_number ?? ''),
+            ['old_values' => ['verification_code' => $old], 'new_values' => ['verification_code' => $verificationCode]]);
 
         return $claim->fresh();
     }
@@ -274,6 +292,25 @@ class ClaimService
                 ClaimStatus::APPROVED->value,
             ])->sum('total_amount'),
         ];
+    }
+
+    /**
+     * Emit a CLAIMS activity log for a non-status-transition action (the status
+     * transitions are logged centrally by ClaimStatusService).
+     */
+    private function logClaimEvent(Claim $claim, string $action, string $description, array $extra = []): void
+    {
+        try {
+            app(\App\Services\ActivityLogService::class)->log(
+                \App\Enums\LogModule::CLAIMS,
+                $action,
+                $claim->toActivityContext() + $extra,
+                $claim,
+                $description,
+            );
+        } catch (\Throwable $e) {
+            // Logging must never break the claim workflow.
+        }
     }
 
     /**

@@ -235,4 +235,18 @@ class Claim extends Model
             'approved_amount' => $this->items()->whereNotNull('approved_amount')->sum('approved_amount'),
         ]);
     }
+
+    public function toActivityContext(): array
+    {
+        return array_filter([
+            'patient_id' => $this->patient_id,
+            'visit_id' => $this->visit_id,
+            'invoice_id' => $this->invoice_id,
+            'claim_id' => $this->id,
+            'insurance_provider_id' => $this->insurance_provider_id,
+            'insurance_type_id' => $this->insurance_type_id,
+            'source_type' => 'claim',
+            'source_id' => $this->id,
+        ], fn ($v) => $v !== null);
+    }
 }

@@ -83,14 +83,29 @@ cancel/complete throw + roll back. Tests: `ProcedureTheatreLogTest` (3). See
 assignment, dedicated room-assign event, report printing, direct/emergency request
 initial log.
 
+## ✅ Done: billing / claims → patient timeline
+
+Billing/payment were already covered (`InvoiceObserver` → `INVOICE_CREATED/STATUS_CHANGED`,
+`PaymentObserver` → `PAYMENT_RECORDED/REFUNDED`, discount via `BillingService`,
+deferred-settlement/overrides via `VisitBillingOverrideService`) — **reused, not
+duplicated**. The gap was **Claims**: `ClaimStatusService::transition` now
+dual-writes the `CLAIMS` lifecycle (submit/review/approve/reject/paid/appeal/cancel)
+and `ClaimService` logs `CLAIM_PREPARED`, `CLAIM_ITEM_ADDED/REMOVED`, `CCC_CODE_UPDATED`.
+Generic invoice-item logging deliberately skipped (source modules already log
+billing). Tests: `ClaimsLogTest` (3). See `docs/LOGGING_BILLING_CLAIMS_BURN_DOWN_REPORT.md`.
+Follow-ups: distinct payment-reversal event, `ClaimPayment` rows, claim-mirror
+item edits, invoice/receipt/claim print/export.
+
 ## Burn-down order (next, module-by-module — verify each in global + patient logs)
 
 1. ~~Consultation clinical entries~~ ✅ · 2. ~~Investigations~~ ✅ · 3. ~~MAR~~ ✅ ·
-4. ~~Pharmacy~~ ✅ · 5. ~~Procedures / Theatre~~ ✅
-6. **Billing / Claims** (invoice item add/cancel, discount, payment recorded/reversed/
-   refunded, waiver, credit, claim prepare/submit/approve/reject/pay) — **next up**;
-   reuse the billing-policy logs already present, don't duplicate payment logs.
-7. Emergency / Admission · 8. Remaining stock / admin.
+4. ~~Pharmacy~~ ✅ · 5. ~~Procedures / Theatre~~ ✅ · 6. ~~Billing / Claims~~ ✅
+7. **Emergency / Admission** (case create/triage/disposition; admission create/bed
+   assign/transfer/discharge) — **next up**; much already flows via pathway/MAR/
+   consumables, so log the case/admission lifecycle status events that aren't yet
+   on the activity timeline, without duplicating.
+8. Remaining stock / admin (roles/permissions/modules/settings, stock movements,
+   notifications) + enable a non-blocking `logs:audit` CI step.
 
 Do **not** wire all 75 flagged controllers at once; one module, with a test that
 the action appears on both the global log and (where patient-related) the patient
