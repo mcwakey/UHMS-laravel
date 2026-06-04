@@ -116,14 +116,22 @@ nursing notes, discharge summary, print.
 1. ~~Consultation~~ · 2. ~~Investigations~~ · 3. ~~MAR~~ · 4. ~~Pharmacy~~ ·
 5. ~~Procedures / Theatre~~ · 6. ~~Billing / Claims~~ · 7. ~~Emergency / Admission~~
 
+### ✅ Done: non-blocking `logs:audit` CI guardrail
+`.github/workflows/ui-audit.yml` (now “UI & Logging Audit”) runs
+`php artisan logs:audit --json || true` (advisory, never fails the build) + uploads
+`storage/reports/logs-audit-report.json`. Composer: `logs:audit`, `logs:audit:json`,
+`logs:audit:fail` (the last not used in CI yet). Current count: **73** controllers
+(Admin 64 · Billing 4 · Doctor 2 · Theatre 2 · Lab 1 — the non-Admin ones are
+service-funnel false positives). See `docs/LOGGING_AUDIT_CI_GUARDRAIL_REPORT.md`.
+
 ### Remaining (lower priority — admin/system + polish)
 8. **Stock / admin** — stock movements (raw ledger), roles/permissions/modules/
    settings changes, notifications; plus the per-module follow-ups noted in each
    burn-down report (bed transfers, vitals, print/export events, payment reversal,
    claim mirror, pattern-created records, sample collection, etc.).
-9. **Enable a non-blocking `logs:audit` CI step** and periodically re-check the
-   controller count (currently 73, mostly false positives where logging is at the
-   service funnel).
+9. **Make `logs:audit` blocking** only after (8) lands and the command gains a
+   baseline/allowlist (like `ui:audit`) so service-funnel false positives don't
+   block builds.
 
 Do **not** wire all 75 flagged controllers at once; one module, with a test that
 the action appears on both the global log and (where patient-related) the patient

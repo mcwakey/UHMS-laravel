@@ -1,6 +1,6 @@
 {
-    "generated_at": "2026-06-03T18:01:10+00:00",
-    "controllers_flagged": 74,
+    "generated_at": "2026-06-04T11:25:35+00:00",
+    "controllers_flagged": 73,
     "findings": [
         {
             "controller": "app/Http/Controllers/Admin/AccountCategoryController.php",
@@ -503,13 +503,6 @@
             "controller": "app/Http/Controllers/Lab/LabRequestController.php",
             "unlogged_actions": [
                 "cancel"
-            ]
-        },
-        {
-            "controller": "app/Http/Controllers/Lab/LabResultController.php",
-            "unlogged_actions": [
-                "store",
-                "verify"
             ]
         },
         {

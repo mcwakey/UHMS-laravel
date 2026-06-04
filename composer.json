@@ -77,6 +77,15 @@
         ],
         "ui:audit:critical": [
             "@php artisan ui:audit --fail --min-severity=CRITICAL --json"
+        ],
+        "logs:audit": [
+            "@php artisan logs:audit"
+        ],
+        "logs:audit:json": [
+            "@php artisan logs:audit --json"
+        ],
+        "logs:audit:fail": [
+            "@php artisan logs:audit --fail"
         ]
     },
     "extra": {

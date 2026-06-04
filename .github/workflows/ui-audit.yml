@@ -1,0 +1,73 @@
+name: UI & Logging Audit
+
+# UHMS governance guardrails.
+#   UI audit   — staged gate (see docs/UI_PHASE_10_RELEASE_READINESS_REPORT.md):
+#                Stage B (current): block only on NEW CRITICAL; rest advisory.
+#                Stage C (later): --min-severity=HIGH · Stage D: --fail --strict.
+#   Logs audit — ADVISORY ONLY (non-blocking). Tracks logging-coverage regressions
+#                without failing builds (see docs/LOGGING_AUDIT_CI_GUARDRAIL_REPORT.md).
+#                Do NOT add --fail until the stock/admin burn-down is complete.
+
+on:
+  push:
+    branches: [main, beta-x]
+  pull_request:
+
+jobs:
+  ui-audit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, dom, fileinfo, sqlite3, bcmath
+          coverage: none
+
+      - name: Copy .env
+        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Generate application key
+        run: php artisan key:generate
+
+      # ── Advisory: always produce the full report (never fails the build) ──
+      - name: UI audit (advisory report)
+        run: php artisan ui:audit --json
+
+      - name: Upload UI audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-audit-report
+          path: |
+            storage/reports/ui-audit-report.md
+            storage/reports/ui-audit-report.json
+          if-no-files-found: warn
+
+      # ── Advisory: logging-coverage report (NON-BLOCKING — never fails the build) ──
+      # logs:audit returns 0 without --fail; `|| true` is a defensive belt-and-braces
+      # so this step can never break CI even if the command behaviour changes.
+      - name: Logging audit (advisory report)
+        run: php artisan logs:audit --json || true
+
+      - name: Upload logging audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-audit-report
+          path: |
+            storage/reports/logs-audit-report.json
+          if-no-files-found: warn
+
+      # ── Gate (Stage B): fail only on NEW CRITICAL findings outside the baseline ──
+      # The committed baseline (storage/app/ui-audit-baseline.json) absorbs known debt,
+      # so this blocks regressions without blocking on the existing HIGH/MEDIUM backlog.
+      - name: UI audit gate (critical-only)
+        run: php artisan ui:audit --fail --min-severity=CRITICAL
