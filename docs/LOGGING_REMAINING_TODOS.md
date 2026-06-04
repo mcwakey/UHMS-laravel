@@ -187,10 +187,15 @@ Controllers that delegate to a logging service/observer (the burn-down funnels).
 No longer reported as missing; classified `SERVICE_FUNNEL_COVERED`.
 
 #### 🔧 Governance / future
-- Promote `logs:audit` to blocking in stages (see finalization report §9): start
-  with `--fail --only-real-gaps --min-severity=CRITICAL` once RoleController lands.
-- Keep `config/logging_audit.php` current as funnels/controllers evolve; re-run
-  `composer logs:audit:baseline` after a clean burn-down to tighten `--strict`.
+- **Stage-1 CI gate ENABLED** ✅ — `.github/workflows/ui-audit.yml` now fails the
+  build on CRITICAL real missing logs (`--fail --only-real-gaps
+  --min-severity=CRITICAL`), alongside the always-on advisory report. It does not
+  block covered / backlog / needs-review / HIGH findings.
+- **Stage 2 (next):** `--min-severity=HIGH` after the 7 NEEDS_REVIEW controllers
+  (financial/HR/insurance/purchase-return/theatre-room) are confirmed or wired.
+- **Stage 3 (later):** `--fail --strict` after the backlog is burned down; re-run
+  `composer logs:audit:baseline` for a clean baseline first.
+- Keep `config/logging_audit.php` current as funnels/controllers evolve.
 
 ### Remaining (lower priority — admin/system polish + the blocking gate)
 8. **Stock / procurement core** — ✅ done (transfers, requisitions, POs, supplier

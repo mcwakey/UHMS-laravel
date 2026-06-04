@@ -67,11 +67,21 @@ always produced regardless of the UI gate outcome.
 > governance file are trackable while any other local `.github` content stays
 > ignored. Commit `.github/workflows/ui-audit.yml` for CI to take effect.
 
-## 4. Is CI non-blocking?
+## 4. Is CI blocking?
 
-**Yes.** The logging step uses the default (no `--fail`) command, which exits 0,
-plus a defensive `|| true`. It can never fail the build. The only blocking step in
-the workflow is the pre-existing **UI** critical-only gate (unrelated to logging).
+**Partly — Stage 1 is now enabled.** The workflow runs logging in two steps:
+
+1. **Advisory report** (`logs:audit --json || true`) — always runs, never fails,
+   uploads `storage/reports/logs-audit-report.json` + the baseline.
+2. **Stage-1 gate** (`logs:audit --fail --only-real-gaps --min-severity=CRITICAL`)
+   — fails the build **only** on a CRITICAL `MISSING_LOG` (an un-funnelled
+   mutating action). It does **not** block on `SERVICE_FUNNEL_COVERED`,
+   `KNOWN_BACKLOG`, `INTENTIONALLY_SKIPPED`, `NEEDS_REVIEW`, or HIGH/MEDIUM
+   findings.
+
+This was safe to enable because the eight burn-downs + the role/permission +
+user-role-assignment security logging brought **MISSING_LOG to 0**, so the gate is
+green today and acts as a pure regression guard against new critical gaps.
 
 ## 5. Current logs:audit count
 
@@ -114,13 +124,20 @@ Before finishing a feature that adds a mutating controller action, run it and
 confirm the action is logged (directly or via its service funnel), with patient/
 visit context where patient-related.
 
-## 8. When to make logs:audit blocking
+## 8. Blocking promotion path
 
-Promote to a blocking gate (`--fail`) only after:
-1. the **stock/admin** burn-down lands (cuts the 64 Admin findings), and
-2. `logs:audit` gains a **baseline/allowlist** (like `ui:audit`) so the remaining
-   service-funnel false positives don't block builds, **or** a per-controller
-   ignore marker is added for verified-OK controllers.
+The prerequisites (funnel-aware classification + baseline + 0 MISSING_LOG) are met,
+so **Stage 1 is enabled** in CI. The staged path is:
 
-Until then it stays advisory. Do not add `--fail` to CI, and do not silence
-findings to force it green.
+1. **Stage 1 — ENABLED NOW.** `--fail --only-real-gaps --min-severity=CRITICAL`.
+   Blocks only CRITICAL `MISSING_LOG`. Pure regression guard (green today).
+2. **Stage 2 — later.** `--fail --only-real-gaps --min-severity=HIGH`. Enable after
+   the 7 `NEEDS_REVIEW` controllers (financial/HR/insurance/purchase-return/theatre-
+   room) are confirmed/wired so they aren't surfaced as HIGH gaps.
+3. **Stage 3 — later.** `--fail --strict`. Enable after the `KNOWN_BACKLOG` is
+   burned down and the baseline reflects a clean state; then any new un-baselined
+   finding fails.
+
+Do **not** silence findings to force the gate green, and do **not** baseline a real
+CRITICAL/HIGH gap (the baseline writer already refuses to). Advance a stage only by
+clearing its findings, not by loosening the rule.

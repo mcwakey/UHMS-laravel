@@ -134,13 +134,20 @@ medium findings (**66**) but **refuses to baseline HIGH/CRITICAL real gaps**
 (MISSING_LOG + NEEDS_REVIEW) — the **7** financial/security/HR items above stay
 visible no matter what. This is the guard against "baselining to silence."
 
-## 8. CI status — still NON-BLOCKING
+## 8. CI status — Stage-1 gate ENABLED
 
-Unchanged for now. `.github/workflows/ui-audit.yml` runs
-`php artisan logs:audit --json || true` (advisory) and uploads the report +
-baseline. No `--fail` on logging. The UI gate remains the only blocking step.
+`.github/workflows/ui-audit.yml` now runs logging in two steps:
 
-New command capabilities (ready, not yet enforced):
+1. **Advisory report** — `logs:audit --json || true` (always runs; uploads the
+   report + baseline; never fails).
+2. **Stage-1 gate** — `logs:audit --fail --only-real-gaps --min-severity=CRITICAL`
+   — fails the build only on a CRITICAL `MISSING_LOG`. It does **not** block on
+   covered / backlog / skipped / needs-review / HIGH findings.
+
+Safe to enable because MISSING_LOG is 0 (after the role/permission + user-role
+burn-downs), so the gate is green and acts as a regression guard.
+
+Command capabilities (Stage 1 enforced; 2–3 ready, not yet enforced):
 
 ```bash
 php artisan logs:audit                                   # advisory, classified
@@ -151,19 +158,17 @@ php artisan logs:audit --write-baseline                  # snapshot accepted fin
 composer logs:audit:real-gaps                            # = --fail --only-real-gaps --min-severity=CRITICAL
 ```
 
-## 9. When to make `logs:audit` blocking — staged promotion
+## 9. Blocking — staged promotion
 
-1. **Now — advisory.** Report + artifact only. (current)
-2. **Stage 1 — `--fail --only-real-gaps --min-severity=CRITICAL`.** Blocks only on
-   CRITICAL `MISSING_LOG`. Enable after the single real gap (RoleController) is
-   wired. Effectively a regression guard for brand-new un-funnelled CRITICAL
-   actions.
+1. **Advisory.** Report + artifact only. (always on)
+2. **Stage 1 — `--fail --only-real-gaps --min-severity=CRITICAL`. ✅ ENABLED.**
+   Blocks only CRITICAL `MISSING_LOG`. Enabled once the RoleController gap (and the
+   user-role-assignment follow-up) were wired; green today, acts as a regression
+   guard for brand-new un-funnelled CRITICAL actions.
 3. **Stage 2 — `--fail --only-real-gaps --min-severity=HIGH`.** After the 7
    NEEDS_REVIEW items are confirmed/wired.
 4. **Stage 3 — `--fail --strict`.** After the backlog is burned down and the
    baseline reflects a clean state; then any new un-baselined finding fails.
-
-Mirror the UI gate's placement in the workflow when promoting.
 
 ## 10. Files modified
 
@@ -177,14 +182,15 @@ Mirror the UI gate's placement in the workflow when promoting.
 - `storage/app/.gitignore` — whitelist the logs baseline.
 - `tests/Feature/LogsAuditCommandTest.php` — **new** (11 tests).
 - `composer.json` — `logs:audit:real-gaps`, `logs:audit:baseline` scripts.
-- `.github/workflows/ui-audit.yml` — upload baseline; documented (still non-blocking)
-  promotion note.
+- `.github/workflows/ui-audit.yml` — upload baseline; **Stage-1 gate enabled**
+  (advisory report still runs).
 - `docs/LOGGING_REMAINING_TODOS.md` — separated real gaps / needs-review / backlog /
   false-positives / governance.
 
 ## 11. Guarantees honored
 
 No new logging calls were added to satisfy the tool. No business logic changed.
-`logs:audit` is **not** blocking. No real high-risk gap is hidden — the baseline
-writer actively refuses HIGH/CRITICAL real gaps. Service-funnel logging is now
+`logs:audit` blocks **only** on CRITICAL real missing logs (Stage 1) — never on
+covered / backlog / needs-review / HIGH. No real high-risk gap is hidden — the
+baseline writer actively refuses HIGH/CRITICAL real gaps. Service-funnel logging is
 recognized rather than mis-reported as missing.

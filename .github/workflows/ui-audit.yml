@@ -4,9 +4,11 @@ name: UI & Logging Audit
 #   UI audit   — staged gate (see docs/UI_PHASE_10_RELEASE_READINESS_REPORT.md):
 #                Stage B (current): block only on NEW CRITICAL; rest advisory.
 #                Stage C (later): --min-severity=HIGH · Stage D: --fail --strict.
-#   Logs audit — ADVISORY ONLY (non-blocking). Tracks logging-coverage regressions
-#                without failing builds (see docs/LOGGING_AUDIT_CI_GUARDRAIL_REPORT.md).
-#                Do NOT add --fail until the stock/admin burn-down is complete.
+#   Logs audit — advisory report + Stage-1 gate. The report always runs (artifact);
+#                the gate blocks ONLY on CRITICAL real missing logs
+#                (--only-real-gaps --min-severity=CRITICAL). It does NOT block on
+#                covered / backlog / needs-review / HIGH findings. Promotion path in
+#                docs/LOGGING_AUDIT_CI_GUARDRAIL_REPORT.md.
 
 on:
   push:
@@ -67,12 +69,18 @@ jobs:
             storage/app/logs-audit-baseline.json
           if-no-files-found: warn
 
-      # NOTE: logs:audit is intentionally NOT a blocking gate yet. The funnel-aware
-      # command can already gate on real gaps via:
-      #   php artisan logs:audit --fail --only-real-gaps --min-severity=CRITICAL
-      # Enable that (mirroring the UI gate above) only after the documented
-      # NEEDS_REVIEW / MISSING_LOG items in docs/LOGGING_FINALIZATION_REPORT.md are
-      # cleared. Until then it stays advisory.
+      # ── Gate (Stage 1): fail ONLY on CRITICAL real missing logs ──
+      # --only-real-gaps   → only MISSING_LOG classification counts (un-funnelled).
+      # --min-severity     → only CRITICAL of those counts.
+      # This blocks a brand-new un-funnelled CRITICAL action while NEVER failing on
+      # SERVICE_FUNNEL_COVERED, KNOWN_BACKLOG, INTENTIONALLY_SKIPPED, NEEDS_REVIEW,
+      # or HIGH/MEDIUM findings. Promotion path (see
+      # docs/LOGGING_AUDIT_CI_GUARDRAIL_REPORT.md):
+      #   Stage 1 (now): --only-real-gaps --min-severity=CRITICAL
+      #   Stage 2:       --only-real-gaps --min-severity=HIGH   (after NEEDS_REVIEW cleared)
+      #   Stage 3:       --strict                               (after backlog cleared)
+      - name: Logging audit gate (Stage 1 — critical real gaps only)
+        run: php artisan logs:audit --fail --only-real-gaps --min-severity=CRITICAL
 
       # ── Gate (Stage B): fail only on NEW CRITICAL findings outside the baseline ──
       # The committed baseline (storage/app/ui-audit-baseline.json) absorbs known debt,
