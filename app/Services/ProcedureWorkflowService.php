@@ -182,13 +182,7 @@ class ProcedureWorkflowService
 
             $fresh = $request->fresh();
             $this->notifyProcedureCancelled($fresh, $user, $reason);
-            $this->logger->log(LogModule::PROCEDURE, 'CANCELLED', [
-                'severity' => LogSeverity::WARNING,
-                'reason' => $reason,
-                'patient_id' => $fresh->patient_id,
-                'visit_id' => $fresh->visit_id,
-                'procedure_request_id' => $fresh->id,
-            ], $fresh, 'Procedure cancelled');
+            // Activity log is emitted by logStatusChange() above (PROCEDURE_CANCELLED).
 
             return $fresh;
         });
@@ -224,11 +218,7 @@ class ProcedureWorkflowService
                 ]);
             }
             $this->notifyProcedureCompleted($fresh, $user);
-            $this->logger->log(LogModule::PROCEDURE, 'COMPLETED', [
-                'patient_id' => $fresh->patient_id,
-                'visit_id' => $fresh->visit_id,
-                'procedure_request_id' => $fresh->id,
-            ], $fresh, 'Procedure completed');
+            // Activity log is emitted by logStatusChange() above (PROCEDURE_COMPLETED).
 
             return $fresh;
         });
@@ -238,7 +228,7 @@ class ProcedureWorkflowService
 
     protected function notifyProcedureCancelled(ProcedureRequest $request, User $actor, string $reason): void
     {
-        $request->loadMissing(['patient', 'service', 'requestedBy']);
+        $request->loadMissing(['patient', 'service', 'requestingDoctor']);
         $patient = $request->patient;
         $title = $patient ? trim($patient->first_name . ' ' . $patient->last_name) : 'patient';
         $serviceName = $request->service?->name ?? 'Procedure';
@@ -255,15 +245,15 @@ class ProcedureWorkflowService
         ];
 
         $recipients = collect();
-        if ($request->requestedBy && $request->requestedBy->id !== $actor->id) {
-            $recipients->push($request->requestedBy);
+        if ($request->requestingDoctor && $request->requestingDoctor->id !== $actor->id) {
+            $recipients->push($request->requestingDoctor);
         }
         $this->notifications->notifyUsers($recipients, $payload);
     }
 
     protected function notifyProcedureCompleted(ProcedureRequest $request, User $actor): void
     {
-        $request->loadMissing(['patient', 'service', 'requestedBy']);
+        $request->loadMissing(['patient', 'service', 'requestingDoctor']);
         $patient = $request->patient;
         $title = $patient ? trim($patient->first_name . ' ' . $patient->last_name) : 'patient';
         $serviceName = $request->service?->name ?? 'Procedure';
@@ -279,8 +269,8 @@ class ProcedureWorkflowService
             'patient_id' => $request->patient_id,
         ];
 
-        if ($request->requestedBy && $request->requestedBy->id !== $actor->id) {
-            $this->notifications->notifyUser($request->requestedBy, $payload);
+        if ($request->requestingDoctor && $request->requestingDoctor->id !== $actor->id) {
+            $this->notifications->notifyUser($request->requestingDoctor, $payload);
         }
     }
 
@@ -324,6 +314,97 @@ class ProcedureWorkflowService
             'changed_by'           => $user->id,
             'reason'               => $reason,
         ]);
+
+        // Mirror onto the central activity log → patient timeline. This single
+        // funnel covers the whole accept → schedule → surgery → complete lifecycle
+        // (ProcedureClinicalService and ProcedureScheduleService both route through
+        // it). The initial REQUESTED status is set at creation, NOT via a transition,
+        // so the consultation-side procedure-request log is never duplicated here.
+        try {
+            $request->loadMissing('service');
+            $warning = in_array($to, [ProcedureStatus::REJECTED, ProcedureStatus::CANCELLED, ProcedureStatus::ON_HOLD], true);
+            $this->logger->log(
+                $this->statusModule($to),
+                $this->statusEvent($to),
+                array_filter([
+                    'patient_id' => $request->patient_id,
+                    'visit_id' => $request->visit_id,
+                    'emergency_case_id' => $request->emergency_case_id,
+                    'medical_record_id' => $request->medical_record_id,
+                    'consultation_route_id' => $request->consultation_route_id,
+                    'department_id' => $request->department_id,
+                    'service_id' => $request->service_catalog_id,
+                    'procedure_request_id' => $request->id,
+                    'invoice_item_id' => $request->billing_item_id,
+                    'reason' => $reason,
+                    'severity' => $warning ? LogSeverity::WARNING : LogSeverity::INFO,
+                    'old_values' => $from ? ['status' => $from->value] : null,
+                    'new_values' => ['status' => $to->value],
+                    'source_type' => 'procedure_request',
+                    'source_id' => $request->id,
+                    'causer' => $user,
+                ], fn ($v) => $v !== null),
+                $request,
+                $this->statusDescription($to, $request, $reason),
+            );
+        } catch (\Throwable $e) {
+            // Logging must never break a procedure transition.
+        }
+    }
+
+    private function statusModule(ProcedureStatus $to): LogModule
+    {
+        return match ($to) {
+            ProcedureStatus::SCHEDULED, ProcedureStatus::RESCHEDULED, ProcedureStatus::PRE_OP,
+            ProcedureStatus::ANAESTHESIA, ProcedureStatus::IN_SURGERY, ProcedureStatus::SURGERY_DONE,
+            ProcedureStatus::POST_OP => LogModule::THEATRE,
+            default => LogModule::PROCEDURE,
+        };
+    }
+
+    private function statusEvent(ProcedureStatus $to): string
+    {
+        return match ($to) {
+            ProcedureStatus::ACCEPTED => 'PROCEDURE_ACCEPTED',
+            ProcedureStatus::REJECTED => 'PROCEDURE_REJECTED',
+            ProcedureStatus::BILLED => 'PROCEDURE_BILLED',
+            ProcedureStatus::SCHEDULED => 'THEATRE_CASE_SCHEDULED',
+            ProcedureStatus::RESCHEDULED => 'THEATRE_CASE_RESCHEDULED',
+            ProcedureStatus::PRE_OP => 'PREOP_CHECKLIST_UPDATED',
+            ProcedureStatus::ANAESTHESIA => 'ANAESTHESIA_NOTE_ADDED',
+            ProcedureStatus::IN_SURGERY => 'PROCEDURE_STARTED',
+            ProcedureStatus::SURGERY_DONE => 'OPERATIVE_NOTE_ADDED',
+            ProcedureStatus::POST_OP => 'RECOVERY_NOTE_ADDED',
+            ProcedureStatus::COMPLETED => 'PROCEDURE_COMPLETED',
+            ProcedureStatus::CANCELLED => 'PROCEDURE_CANCELLED',
+            ProcedureStatus::ON_HOLD => 'PROCEDURE_POSTPONED',
+            default => 'PROCEDURE_STATUS_CHANGED',
+        };
+    }
+
+    private function statusDescription(ProcedureStatus $to, ProcedureRequest $request, ?string $reason): string
+    {
+        $service = $request->service?->name ?? 'Procedure';
+        $base = match ($to) {
+            ProcedureStatus::ACCEPTED => "Procedure accepted: {$service}",
+            ProcedureStatus::REJECTED => "Procedure rejected: {$service}",
+            ProcedureStatus::BILLED => "Procedure billed: {$service}",
+            ProcedureStatus::SCHEDULED => "Procedure scheduled: {$service}",
+            ProcedureStatus::RESCHEDULED => "Procedure rescheduled: {$service}",
+            ProcedureStatus::PRE_OP => "Pre-op checklist recorded: {$service}",
+            ProcedureStatus::ANAESTHESIA => "Anaesthesia note recorded: {$service}",
+            ProcedureStatus::IN_SURGERY => "Procedure started: {$service}",
+            ProcedureStatus::SURGERY_DONE => "Operative note recorded: {$service}",
+            ProcedureStatus::POST_OP => "Recovery note recorded: {$service}",
+            ProcedureStatus::COMPLETED => "Procedure completed: {$service}",
+            ProcedureStatus::CANCELLED => "Procedure cancelled: {$service}",
+            ProcedureStatus::ON_HOLD => "Procedure postponed: {$service}",
+            default => "Procedure status changed: {$service}",
+        };
+
+        return $reason && in_array($to, [ProcedureStatus::REJECTED, ProcedureStatus::CANCELLED, ProcedureStatus::ON_HOLD], true)
+            ? "{$base} — {$reason}"
+            : $base;
     }
 
     protected function assertCurrentStatus(ProcedureRequest $request, ProcedureStatus $expected, string $action): void

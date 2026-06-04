@@ -68,14 +68,29 @@ owns the dispense event. Context via `PharmacyBillingSelection`/`DispensingRecor
 distinct billing-quantity-reduced, dispense cancel/correct/return (not yet
 implemented), out-of-stock event.
 
+## ✅ Done: procedures / theatre lifecycle → patient timeline
+
+`ProcedureWorkflowService::logStatusChange` (the universal status funnel for
+accept/reject/bill/cancel/complete + clinical notes + scheduling) now dual-writes
+to the activity log: `PROCEDURE_*` events (module PROCEDURE) and theatre-phase
+`THEATRE_CASE_SCHEDULED/RESCHEDULED`, `PREOP_CHECKLIST_UPDATED`, `ANAESTHESIA_NOTE_ADDED`,
+`PROCEDURE_STARTED`, `OPERATIVE_NOTE_ADDED`, `RECOVERY_NOTE_ADDED` (module THEATRE).
+Initial REQUESTED status isn't a transition → consultation request not duplicated;
+theatre consumables stay with `ConsumableUsageService`. Removed 2 redundant explicit
+logs. **Also fixed a latent bug** (`requestedBy` → `requestingDoctor`) that made
+cancel/complete throw + roll back. Tests: `ProcedureTheatreLogTest` (3). See
+`docs/LOGGING_PROCEDURES_THEATRE_BURN_DOWN_REPORT.md`. Follow-ups: theatre team
+assignment, dedicated room-assign event, report printing, direct/emergency request
+initial log.
+
 ## Burn-down order (next, module-by-module — verify each in global + patient logs)
 
 1. ~~Consultation clinical entries~~ ✅ · 2. ~~Investigations~~ ✅ · 3. ~~MAR~~ ✅ ·
-4. ~~Pharmacy~~ ✅
-5. **Procedures / Theatre** (accept/schedule/room+team assign/pre-op/anaesthesia/
-   operative/recovery notes/complete/cancel) — **next up**; avoid duplicating the
-   consultation-side procedure-request entry already logged.
-6. Billing/Claims · 7. Emergency/Admission · 8. Remaining stock/admin.
+4. ~~Pharmacy~~ ✅ · 5. ~~Procedures / Theatre~~ ✅
+6. **Billing / Claims** (invoice item add/cancel, discount, payment recorded/reversed/
+   refunded, waiver, credit, claim prepare/submit/approve/reject/pay) — **next up**;
+   reuse the billing-policy logs already present, don't duplicate payment logs.
+7. Emergency / Admission · 8. Remaining stock / admin.
 
 Do **not** wire all 75 flagged controllers at once; one module, with a test that
 the action appears on both the global log and (where patient-related) the patient
