@@ -23,7 +23,7 @@
     <title>@yield('title', 'Error') · {{ config('app.name', 'UHMS') }}</title>
     <link rel="shortcut icon" href="{{ URL::asset('build/img/favicon.png') }}">
     <link rel="stylesheet" href="{{ URL::asset('build/css/bootstrap.min.css') }}">
-    <link rel="stylesheet" href="{{ URL::asset('build/plugins/tabler-icons/tabler-icons.min.css') }}">
+    <link rel="stylesheet" href="{{ URL::asset('build/plugins/tabler-icons/tabler-icons.min.css') }}?v={{ filemtime(public_path('build/plugins/tabler-icons/tabler-icons.min.css')) }}">
     <link rel="stylesheet" href="{{ URL::asset('build/css/style.css') }}">
 </head>
 <body class="bg-light">

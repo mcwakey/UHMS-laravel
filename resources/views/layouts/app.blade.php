@@ -31,7 +31,7 @@
     <link rel="stylesheet" href="{{ URL::asset('build/plugins/fontawesome/css/all.min.css') }}">
 
     <!-- Tabler Icons -->
-    <link rel="stylesheet" href="{{ URL::asset('build/plugins/tabler-icons/tabler-icons.min.css') }}">
+    <link rel="stylesheet" href="{{ URL::asset('build/plugins/tabler-icons/tabler-icons.min.css') }}?v={{ filemtime(public_path('build/plugins/tabler-icons/tabler-icons.min.css')) }}">
 
     <!-- Simplebar CSS -->
     <link rel="stylesheet" href="{{ URL::asset('build/plugins/simplebar/simplebar.min.css') }}">
@@ -377,6 +377,6 @@
             document.documentElement.classList.remove('uhms-loading');
         }, 1500);
     </script>
-    <script src="{{ asset('register-sw.js') }}" defer></script>
+    <script src="{{ asset('register-sw.js') }}?v={{ filemtime(public_path('register-sw.js')) }}" defer></script>
 </body>
 </html>

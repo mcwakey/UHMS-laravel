@@ -19,7 +19,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title }} · {{ $hospital }}</title>
     <link rel="stylesheet" href="{{ URL::asset('build/css/bootstrap.min.css') }}">
-    <link rel="stylesheet" href="{{ URL::asset('build/plugins/tabler-icons/tabler-icons.min.css') }}">
+    <link rel="stylesheet" href="{{ URL::asset('build/plugins/tabler-icons/tabler-icons.min.css') }}?v={{ filemtime(public_path('build/plugins/tabler-icons/tabler-icons.min.css')) }}">
     <style>
         body { background:#fff; color:#000; font-size:13px; }
         .print-sheet { max-width: 820px; margin: 0 auto; padding: 24px; }

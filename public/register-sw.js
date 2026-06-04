@@ -1,4 +1,4 @@
-const UHMS_SW_CACHE_FIX_VERSION = '2026-05-14-legacy-form-bridge';
+const UHMS_SW_CACHE_FIX_VERSION = '2026-06-04-tabler-icons-cache';
 
 async function clearStaleUhmsCaches() {
     if (!('caches' in window)) {

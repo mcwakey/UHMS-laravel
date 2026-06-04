@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="{{ URL::asset('build/plugins/fontawesome/css/all.min.css') }}">
 
     <!-- Tabler Icons -->
-    <link rel="stylesheet" href="{{ URL::asset('build/plugins/tabler-icons/tabler-icons.min.css') }}">
+    <link rel="stylesheet" href="{{ URL::asset('build/plugins/tabler-icons/tabler-icons.min.css') }}?v={{ filemtime(public_path('build/plugins/tabler-icons/tabler-icons.min.css')) }}">
 
     <!-- Template Style -->
     <link rel="stylesheet" href="{{ URL::asset('build/css/style.css') }}">
