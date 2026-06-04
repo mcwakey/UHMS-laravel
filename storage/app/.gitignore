@@ -3,3 +3,4 @@
 !public/
 !.gitignore
 !ui-audit-baseline.json
+!logs-audit-baseline.json

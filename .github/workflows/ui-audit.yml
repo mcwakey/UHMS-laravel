@@ -64,7 +64,15 @@ jobs:
           name: logs-audit-report
           path: |
             storage/reports/logs-audit-report.json
+            storage/app/logs-audit-baseline.json
           if-no-files-found: warn
+
+      # NOTE: logs:audit is intentionally NOT a blocking gate yet. The funnel-aware
+      # command can already gate on real gaps via:
+      #   php artisan logs:audit --fail --only-real-gaps --min-severity=CRITICAL
+      # Enable that (mirroring the UI gate above) only after the documented
+      # NEEDS_REVIEW / MISSING_LOG items in docs/LOGGING_FINALIZATION_REPORT.md are
+      # cleared. Until then it stays advisory.
 
       # ── Gate (Stage B): fail only on NEW CRITICAL findings outside the baseline ──
       # The committed baseline (storage/app/ui-audit-baseline.json) absorbs known debt,

@@ -138,9 +138,48 @@ notifications.
 `.github/workflows/ui-audit.yml` (now “UI & Logging Audit”) runs
 `php artisan logs:audit --json || true` (advisory, never fails the build) + uploads
 `storage/reports/logs-audit-report.json`. Composer: `logs:audit`, `logs:audit:json`,
-`logs:audit:fail` (the last not used in CI yet). Current count: **73** controllers
-(Admin 64 · Billing 4 · Doctor 2 · Theatre 2 · Lab 1 — the non-Admin ones are
-service-funnel false positives). See `docs/LOGGING_AUDIT_CI_GUARDRAIL_REPORT.md`.
+`logs:audit:fail`, `logs:audit:real-gaps`, `logs:audit:baseline`. See
+`docs/LOGGING_AUDIT_CI_GUARDRAIL_REPORT.md`.
+
+### ✅ Done: Logging Finalization Pass (funnel-aware audit)
+`logs:audit` now builds the **transitive closure of logging services** and
+classifies every finding (`SERVICE_FUNNEL_COVERED` / `NEEDS_REVIEW` /
+`KNOWN_BACKLOG` / `INTENTIONALLY_SKIPPED` / `MISSING_LOG`) with a separate
+severity. Config: `config/logging_audit.php`. Baseline:
+`storage/app/logs-audit-baseline.json` (refuses to baseline HIGH/CRITICAL real
+gaps). Of the 73: **42 covered · 22 backlog · 7 needs-review · 1 skipped · 1 real
+missing**. Tests: `LogsAuditCommandTest` (11). See
+`docs/LOGGING_FINALIZATION_REPORT.md`.
+
+#### 🔴 Real gap (MISSING_LOG) — do first
+- **`Admin/RoleController`** (store/update/destroy, CRITICAL/SECURITY) — role &
+  permission changes are unaudited and reach no logging service. Wire a security
+  funnel/observer → `LogModule::ROLES` / `PERMISSIONS`, severity SECURITY, with
+  old/new permission sets (mask nothing sensitive — these are names, not secrets).
+
+#### 🟠 Needs review (verify the service logs, else wire) — HIGH/CRITICAL kept out of baseline
+- `Admin/FinancialEntryController` → `AccountingService` (financial — CRITICAL)
+- `Admin/CashierShiftController` → `AccountingService` (HIGH)
+- `Admin/InsuranceVerificationController` → `InsuranceVerificationService` (HIGH)
+- `Admin/LeaveController` → `HRService` (HIGH)
+- `Admin/PayrollController` → `PayrollService` (HIGH)
+- `Admin/PurchaseReturnController` → `PurchaseReturnService` (HIGH — supplier ledger + stock)
+- `Theatre/TheatreRoomController` → `TheatreRoomService` (MEDIUM)
+
+#### 🟡 Backlog (deferred, documented in config) — 22
+Catalogue/reference CRUD, HR reference, notifications, generic stock adjustments,
+emergency ancillary records, front-desk workflow, blood-bank intake. Listed in
+`config/logging_audit.php → backlog_controllers`.
+
+#### ⚪ Audit false positives (now auto-recognized) — 42
+Controllers that delegate to a logging service/observer (the burn-down funnels).
+No longer reported as missing; classified `SERVICE_FUNNEL_COVERED`.
+
+#### 🔧 Governance / future
+- Promote `logs:audit` to blocking in stages (see finalization report §9): start
+  with `--fail --only-real-gaps --min-severity=CRITICAL` once RoleController lands.
+- Keep `config/logging_audit.php` current as funnels/controllers evolve; re-run
+  `composer logs:audit:baseline` after a clean burn-down to tighten `--strict`.
 
 ### Remaining (lower priority — admin/system polish + the blocking gate)
 8. **Stock / procurement core** — ✅ done (transfers, requisitions, POs, supplier

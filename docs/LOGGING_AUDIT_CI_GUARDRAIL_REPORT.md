@@ -1,5 +1,11 @@
 # Logging Audit — CI Guardrail (Non-Blocking)
 
+> **Update:** `logs:audit` has since been made **funnel-aware** with finding
+> classification + a baseline. The flat "73 flagged" framing below is superseded
+> by `docs/LOGGING_FINALIZATION_REPORT.md` (73 → 42 covered · 22 backlog · 7
+> needs-review · 1 skipped · **1 real missing log**). This report still describes
+> the CI wiring, which remains accurate and non-blocking.
+
 A lightweight, **advisory-only** guardrail so future development can't silently
 regress logging coverage. It does **not** fail builds and changes no business or
 logging behaviour.

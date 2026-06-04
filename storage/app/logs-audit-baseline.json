@@ -1,0 +1,616 @@
+{
+    "generated_at": "2026-06-04T12:15:38+00:00",
+    "note": "Accepted logs:audit findings. High-severity MISSING_LOG is intentionally excluded so real gaps stay visible.",
+    "accepted_count": 66,
+    "refused_high_risk_gaps": [
+        "app/Http/Controllers/Admin/FinancialEntryController.php",
+        "app/Http/Controllers/Admin/RoleController.php",
+        "app/Http/Controllers/Admin/CashierShiftController.php",
+        "app/Http/Controllers/Admin/InsuranceVerificationController.php",
+        "app/Http/Controllers/Admin/LeaveController.php",
+        "app/Http/Controllers/Admin/PayrollController.php",
+        "app/Http/Controllers/Admin/PurchaseReturnController.php"
+    ],
+    "accepted": [
+        {
+            "controller": "app/Http/Controllers/Admin/AnalyzerController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "CRITICAL",
+            "actions": [
+                "store",
+                "update",
+                "toggle",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/DepartmentController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "CRITICAL",
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/DesignationController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "CRITICAL",
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyContactController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "CRITICAL",
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/IcdCodeController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "CRITICAL",
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/InsuranceTierController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "CRITICAL",
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/NotificationController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "CRITICAL",
+            "actions": [
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PatientComplaintController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "CRITICAL",
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PatientInsuranceController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "CRITICAL",
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Billing/PaymentController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "CRITICAL",
+            "actions": [
+                "store",
+                "reverse"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Doctor/MedicalPatternController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "CRITICAL",
+            "actions": [
+                "store",
+                "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/AdmissionController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "store",
+                "discharge"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/AppointmentController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "store",
+                "update",
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/BloodCrossmatchController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "store",
+                "verify"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/BloodRequestController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "store",
+                "approve"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ClaimController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "store",
+                "submit"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ProductStockController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "HIGH",
+            "actions": [
+                "transfer"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PurchaseOrderController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "store",
+                "submit",
+                "approve",
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ServiceRenderingActionController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/StockRequisitionController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "store",
+                "approve",
+                "issue",
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/StockTransferController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "store",
+                "approve",
+                "complete",
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Billing/CreditNoteController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "store",
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Billing/InvoiceController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "store",
+                "update",
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Doctor/PrescriptionController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Lab/LabRequestController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Theatre/TheatreController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "reject",
+                "complete",
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/AccountCategoryController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/AttendanceController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/BloodDonationController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/BloodDonorController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/BloodIssueController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ComplaintCatalogueController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/DrugController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyBayController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "assign"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyCaseController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyConsumableController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyDispositionController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyInvestigationController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyMedicationController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyNoteController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyPatientIdentityController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyProcedureController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyTriageController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmergencyVitalsController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/EmployeeController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/InsuranceProviderController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/InvestigationItemController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ModuleController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/NotificationBroadcastController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/NotificationPreferenceController.php",
+            "classification": "INTENTIONALLY_SKIPPED",
+            "severity": "MEDIUM",
+            "actions": [
+                "update"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PatientMergeController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ProcedureController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ProductController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ProfileController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "update"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/QueueController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "actions": [
+                "complete"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/ServiceCatalogController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/SpecialtyController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/StockLocationController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/SupplierController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/TriageController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/UserController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/VisitController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/VitalController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "MEDIUM",
+            "actions": [
+                "store"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/WardController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Billing/SponsorController.php",
+            "classification": "KNOWN_BACKLOG",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update",
+                "toggle"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Theatre/TheatreRoomController.php",
+            "classification": "NEEDS_REVIEW",
+            "severity": "MEDIUM",
+            "actions": [
+                "store",
+                "update"
+            ]
+        }
+    ]
+}

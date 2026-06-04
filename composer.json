@@ -86,6 +86,12 @@
         ],
         "logs:audit:fail": [
             "@php artisan logs:audit --fail"
+        ],
+        "logs:audit:real-gaps": [
+            "@php artisan logs:audit --fail --only-real-gaps --min-severity=CRITICAL"
+        ],
+        "logs:audit:baseline": [
+            "@php artisan logs:audit --write-baseline"
         ]
     },
     "extra": {
