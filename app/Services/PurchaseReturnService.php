@@ -89,8 +89,36 @@ class PurchaseReturnService
 
             $purchaseReturn->update(['total_amount' => $total]);
 
-            return $purchaseReturn->load(['supplier', 'items.product', 'stockLocation']);
+            $loaded = $purchaseReturn->load(['supplier', 'items.product', 'stockLocation']);
+            $this->logReturn($loaded, 'PURCHASE_RETURN_CREATED', 'Purchase return created: ' . $loaded->return_number, \App\Enums\LogSeverity::INFO);
+
+            return $loaded;
         });
+    }
+
+    private function logReturn(PurchaseReturn $return, string $event, string $description, \App\Enums\LogSeverity $severity): void
+    {
+        try {
+            app(ActivityLogService::class)->log(
+                \App\Enums\LogModule::PURCHASE_ORDERS,
+                $event,
+                [
+                    'purchase_order_id' => $return->purchase_order_id,
+                    'supplier_id' => $return->supplier_id,
+                    'severity' => $severity,
+                    'metadata' => [
+                        'return_number' => $return->return_number,
+                        'total_amount' => (float) $return->total_amount,
+                    ],
+                    'source_type' => 'purchase_return',
+                    'source_id' => $return->id,
+                ],
+                $return,
+                $description,
+            );
+        } catch (\Throwable $e) {
+            // Logging must never break a purchase-return action.
+        }
     }
 
     public function approve(PurchaseReturn $purchaseReturn): PurchaseReturn
@@ -104,7 +132,10 @@ class PurchaseReturnService
             'approved_by' => Auth::id(),
         ]);
 
-        return $purchaseReturn->refresh();
+        $purchaseReturn->refresh();
+        $this->logReturn($purchaseReturn, 'PURCHASE_RETURN_APPROVED', 'Purchase return approved: ' . $purchaseReturn->return_number, \App\Enums\LogSeverity::WARNING);
+
+        return $purchaseReturn;
     }
 
     public function post(PurchaseReturn $purchaseReturn): PurchaseReturn
@@ -159,7 +190,10 @@ class PurchaseReturnService
                 'posted_at' => now(),
             ]);
 
-            return $purchaseReturn->refresh();
+            $purchaseReturn->refresh();
+            $this->logReturn($purchaseReturn, 'PURCHASE_RETURN_POSTED', 'Purchase return posted to stock + supplier ledger: ' . $purchaseReturn->return_number, \App\Enums\LogSeverity::WARNING);
+
+            return $purchaseReturn;
         });
     }
 
@@ -170,7 +204,10 @@ class PurchaseReturnService
         }
 
         $purchaseReturn->update(['status' => PurchaseReturnStatus::CANCELLED]);
+        $purchaseReturn->refresh();
 
-        return $purchaseReturn->refresh();
+        $this->logReturn($purchaseReturn, 'PURCHASE_RETURN_CANCELLED', 'Purchase return cancelled: ' . $purchaseReturn->return_number, \App\Enums\LogSeverity::WARNING);
+
+        return $purchaseReturn;
     }
 }

@@ -2,9 +2,12 @@
 
 namespace App\Services\Insurance\Verification;
 
+use App\Enums\LogModule;
+use App\Enums\LogSeverity;
 use App\Models\InsuranceVerification;
 use App\Models\PatientInsurance;
 use App\Models\Visit;
+use App\Services\ActivityLogService;
 use App\Support\Insurance\VerificationRequest;
 use App\Support\Insurance\VerificationResult;
 use Illuminate\Support\Facades\Auth;
@@ -86,7 +89,42 @@ class InsuranceVerificationService
                 $visit->save();
             }
 
+            $this->logVerification($insurance, $visit, $verification);
+
             return $verification->fresh(['insuranceProvider', 'patientInsurance']);
         });
+    }
+
+    /**
+     * Insurance verification IS a patient-related event — it surfaces on the
+     * patient timeline (module INSURANCE) with patient/visit context.
+     */
+    private function logVerification(PatientInsurance $insurance, ?Visit $visit, InsuranceVerification $verification): void
+    {
+        try {
+            $status = $verification->status instanceof \BackedEnum ? $verification->status->value : (string) $verification->status;
+            app(ActivityLogService::class)->log(
+                LogModule::INSURANCE,
+                'INSURANCE_VERIFIED',
+                [
+                    'patient_id' => $insurance->patient_id,
+                    'visit_id' => $visit?->id,
+                    'insurance_provider_id' => $insurance->insurance_provider_id,
+                    'severity' => LogSeverity::NOTICE,
+                    'metadata' => [
+                        'driver' => $verification->driver,
+                        'status' => $status,
+                        'reference_code' => $verification->reference_code,
+                        'provider' => $insurance->insuranceProvider?->name,
+                    ],
+                    'source_type' => 'insurance_verification',
+                    'source_id' => $verification->id,
+                ],
+                $verification,
+                'Insurance verified: ' . ($insurance->insuranceProvider?->name ?? 'provider') . ' (' . $status . ')',
+            );
+        } catch (\Throwable $e) {
+            // Logging must never break insurance verification.
+        }
     }
 }

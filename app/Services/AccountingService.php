@@ -2,17 +2,38 @@
 
 namespace App\Services;
 
+use App\Enums\LogModule;
+use App\Enums\LogSeverity;
 use App\Enums\ShiftStatus;
 use App\Enums\PaymentMethod;
 use App\Models\CashierShift;
 use App\Models\FinancialEntry;
 use App\Models\Payment;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class AccountingService
 {
+    /**
+     * Dual-write a facility-level accounting event to the central activity log.
+     * Never carries patient context; never breaks the accounting action.
+     */
+    private function logAccounting(LogModule $module, string $event, Model $subject, string $sourceType, string $description, array $metadata, LogSeverity $severity): void
+    {
+        try {
+            app(ActivityLogService::class)->log($module, $event, [
+                'severity' => $severity,
+                'metadata' => $metadata,
+                'source_type' => $sourceType,
+                'source_id' => $subject->getKey(),
+            ], $subject, $description);
+        } catch (\Throwable $e) {
+            // Logging must never break an accounting action.
+        }
+    }
+
     // ── Financial Entries ──
 
     public function listEntries(array $filters = []): LengthAwarePaginator
@@ -29,7 +50,7 @@ class AccountingService
 
     public function createEntry(array $data): FinancialEntry
     {
-        return FinancialEntry::create([
+        $entry = FinancialEntry::create([
             'entry_number' => FinancialEntry::generateEntryNumber(),
             'category_id' => $data['category_id'],
             'type' => $data['type'],
@@ -41,11 +62,24 @@ class AccountingService
             'entry_date' => $data['entry_date'],
             'recorded_by' => Auth::id(),
         ]);
+
+        $type = $entry->type instanceof \BackedEnum ? $entry->type->value : (string) $entry->type;
+        $this->logAccounting(LogModule::BILLING, 'FINANCIAL_ENTRY_RECORDED', $entry, 'financial_entry',
+            ucfirst($type) . ' entry recorded: ' . $entry->entry_number,
+            ['entry_number' => $entry->entry_number, 'type' => $type, 'amount' => (float) $entry->amount, 'category_id' => $entry->category_id],
+            LogSeverity::INFO);
+
+        return $entry;
     }
 
     public function approveEntry(FinancialEntry $entry): void
     {
         $entry->update(['approved_by' => Auth::id()]);
+
+        $this->logAccounting(LogModule::BILLING, 'FINANCIAL_ENTRY_APPROVED', $entry, 'financial_entry',
+            'Financial entry approved: ' . $entry->entry_number,
+            ['entry_number' => $entry->entry_number, 'amount' => (float) $entry->amount],
+            LogSeverity::WARNING);
     }
 
     public function deleteEntry(FinancialEntry $entry): void
@@ -54,7 +88,11 @@ class AccountingService
             throw new \InvalidArgumentException('Cannot delete an approved entry.');
         }
 
+        $snapshot = ['entry_number' => $entry->entry_number, 'amount' => (float) $entry->amount];
         $entry->delete();
+
+        $this->logAccounting(LogModule::BILLING, 'FINANCIAL_ENTRY_DELETED', $entry, 'financial_entry',
+            'Financial entry deleted: ' . $snapshot['entry_number'], $snapshot, LogSeverity::WARNING);
     }
 
     // ── Cashier Shifts ──
@@ -74,13 +112,20 @@ class AccountingService
             throw new \InvalidArgumentException('You already have an open shift. Close it first.');
         }
 
-        return CashierShift::create([
+        $shift = CashierShift::create([
             'user_id' => Auth::id(),
             'shift_date' => now()->toDateString(),
             'started_at' => now(),
             'opening_balance' => $data['opening_balance'] ?? 0,
             'status' => ShiftStatus::OPEN,
         ]);
+
+        $this->logAccounting(LogModule::PAYMENTS, 'CASHIER_SHIFT_OPENED', $shift, 'cashier_shift',
+            'Cashier shift opened',
+            ['opening_balance' => (float) $shift->opening_balance],
+            LogSeverity::INFO);
+
+        return $shift;
     }
 
     public function closeShift(CashierShift $shift, array $data): void
@@ -107,6 +152,11 @@ class AccountingService
             'notes' => $data['notes'] ?? null,
             'status' => ShiftStatus::CLOSED,
         ]);
+
+        $this->logAccounting(LogModule::PAYMENTS, 'CASHIER_SHIFT_CLOSED', $shift, 'cashier_shift',
+            'Cashier shift closed' . ($variance != 0.0 ? ' with variance ' . number_format($variance, 2) : ''),
+            ['expected_closing' => (float) $expectedClosing, 'actual_closing' => (float) $actualClosing, 'variance' => (float) $variance],
+            $variance != 0.0 ? LogSeverity::WARNING : LogSeverity::NOTICE);
     }
 
     public function verifyShift(CashierShift $shift): void
@@ -119,6 +169,11 @@ class AccountingService
             'status' => ShiftStatus::VERIFIED,
             'verified_by' => Auth::id(),
         ]);
+
+        $this->logAccounting(LogModule::PAYMENTS, 'CASHIER_SHIFT_VERIFIED', $shift, 'cashier_shift',
+            'Cashier shift verified',
+            ['variance' => (float) $shift->variance],
+            LogSeverity::NOTICE);
     }
 
     // ── Dashboard / Stats ──

@@ -1,15 +1,8 @@
 {
-    "generated_at": "2026-06-04T17:11:10+00:00",
+    "generated_at": "2026-06-04T18:06:57+00:00",
     "note": "Accepted logs:audit findings. High-severity MISSING_LOG is intentionally excluded so real gaps stay visible.",
-    "accepted_count": 67,
-    "refused_high_risk_gaps": [
-        "app/Http/Controllers/Admin/FinancialEntryController.php",
-        "app/Http/Controllers/Admin/CashierShiftController.php",
-        "app/Http/Controllers/Admin/InsuranceVerificationController.php",
-        "app/Http/Controllers/Admin/LeaveController.php",
-        "app/Http/Controllers/Admin/PayrollController.php",
-        "app/Http/Controllers/Admin/PurchaseReturnController.php"
-    ],
+    "accepted_count": 73,
+    "refused_high_risk_gaps": [],
     "accepted": [
         {
             "controller": "app/Http/Controllers/Admin/AnalyzerController.php",
@@ -49,6 +42,16 @@
             "actions": [
                 "store",
                 "update",
+                "destroy"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/FinancialEntryController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "CRITICAL",
+            "actions": [
+                "store",
+                "approve",
                 "destroy"
             ]
         },
@@ -167,12 +170,46 @@
             ]
         },
         {
+            "controller": "app/Http/Controllers/Admin/CashierShiftController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "verify"
+            ]
+        },
+        {
             "controller": "app/Http/Controllers/Admin/ClaimController.php",
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
             "actions": [
                 "store",
                 "submit"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/InsuranceVerificationController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "verify"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/LeaveController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "store",
+                "approve",
+                "reject"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PayrollController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "approve"
             ]
         },
         {
@@ -190,6 +227,16 @@
             "actions": [
                 "store",
                 "submit",
+                "approve",
+                "cancel"
+            ]
+        },
+        {
+            "controller": "app/Http/Controllers/Admin/PurchaseReturnController.php",
+            "classification": "SERVICE_FUNNEL_COVERED",
+            "severity": "HIGH",
+            "actions": [
+                "store",
                 "approve",
                 "cancel"
             ]
@@ -281,7 +328,7 @@
         },
         {
             "controller": "app/Http/Controllers/Admin/AttendanceController.php",
-            "classification": "KNOWN_BACKLOG",
+            "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
             "actions": [
                 "store"
@@ -614,7 +661,7 @@
         },
         {
             "controller": "app/Http/Controllers/Theatre/TheatreRoomController.php",
-            "classification": "NEEDS_REVIEW",
+            "classification": "KNOWN_BACKLOG",
             "severity": "MEDIUM",
             "actions": [
                 "store",

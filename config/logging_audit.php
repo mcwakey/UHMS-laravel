@@ -77,6 +77,12 @@ return [
         'BloodRequestService',
         'BloodIssueService',
         'BloodCrossmatchService',
+        // Accounting / HR / procurement-returns / insurance verification (Stage-2 wiring)
+        'AccountingService',
+        'PurchaseReturnService',
+        'PayrollService',
+        'HRService',
+        'InsuranceVerificationService',
     ],
 
     /*
@@ -148,6 +154,9 @@ return [
         'app/Http/Controllers/Admin/WardController.php',
         'app/Http/Controllers/Admin/EmergencyBayController.php',
         'app/Http/Controllers/Billing/SponsorController.php',
+        // Theatre ROOMS are facility configuration (rooms + maintenance blocks),
+        // same tier as wards / stock locations above — catalogue CRUD, deferred.
+        'app/Http/Controllers/Theatre/TheatreRoomController.php',
         // Patient demographic sub-records
         'app/Http/Controllers/Admin/PatientInsuranceController.php',
         'app/Http/Controllers/Admin/EmergencyContactController.php',

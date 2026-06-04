@@ -1,13 +1,13 @@
 {
-    "generated_at": "2026-06-04T17:44:51+00:00",
+    "generated_at": "2026-06-04T18:08:22+00:00",
     "controllers_flagged": 73,
-    "logging_services_detected": 66,
+    "logging_services_detected": 71,
     "summary": {
         "MISSING_LOG": 0,
-        "NEEDS_REVIEW": 7,
+        "NEEDS_REVIEW": 0,
         "KNOWN_BACKLOG": 22,
         "INTENTIONALLY_SKIPPED": 1,
-        "SERVICE_FUNNEL_COVERED": 43
+        "SERVICE_FUNNEL_COVERED": 50
     },
     "real_missing_logs": 0,
     "findings": [
@@ -99,13 +99,13 @@
                 "approve",
                 "destroy"
             ],
-            "classification": "NEEDS_REVIEW",
+            "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "CRITICAL",
-            "reason": "Delegates to AccountingService \u2014 not verified to log. Confirm or wire a funnel.",
+            "reason": "Delegates to AccountingService (logs direct).",
             "services": [
                 "AccountingService"
             ],
-            "in_baseline": false
+            "in_baseline": true
         },
         {
             "controller": "app/Http/Controllers/Admin/IcdCodeController.php",
@@ -230,7 +230,7 @@
             ],
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "CRITICAL",
-            "reason": "Delegates to BillingService, RefundService (logs direct).",
+            "reason": "Delegates to AccountingService, BillingService, RefundService (logs direct).",
             "services": [
                 "AccountingService",
                 "BillingService",
@@ -346,13 +346,13 @@
             "actions": [
                 "verify"
             ],
-            "classification": "NEEDS_REVIEW",
+            "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
-            "reason": "Delegates to AccountingService \u2014 not verified to log. Confirm or wire a funnel.",
+            "reason": "Delegates to AccountingService (logs direct).",
             "services": [
                 "AccountingService"
             ],
-            "in_baseline": false
+            "in_baseline": true
         },
         {
             "controller": "app/Http/Controllers/Admin/ClaimController.php",
@@ -383,14 +383,14 @@
             "actions": [
                 "verify"
             ],
-            "classification": "NEEDS_REVIEW",
+            "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
-            "reason": "Delegates to InsuranceVerificationService, VerificationManager \u2014 not verified to log. Confirm or wire a funnel.",
+            "reason": "Delegates to InsuranceVerificationService (logs direct).",
             "services": [
                 "InsuranceVerificationService",
                 "VerificationManager"
             ],
-            "in_baseline": false
+            "in_baseline": true
         },
         {
             "controller": "app/Http/Controllers/Admin/LeaveController.php",
@@ -404,13 +404,13 @@
                 "approve",
                 "reject"
             ],
-            "classification": "NEEDS_REVIEW",
+            "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
-            "reason": "Delegates to HRService \u2014 not verified to log. Confirm or wire a funnel.",
+            "reason": "Delegates to HRService (logs direct).",
             "services": [
                 "HRService"
             ],
-            "in_baseline": false
+            "in_baseline": true
         },
         {
             "controller": "app/Http/Controllers/Admin/PayrollController.php",
@@ -420,13 +420,13 @@
             "actions": [
                 "approve"
             ],
-            "classification": "NEEDS_REVIEW",
+            "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
-            "reason": "Delegates to PayrollService \u2014 not verified to log. Confirm or wire a funnel.",
+            "reason": "Delegates to PayrollService (logs direct).",
             "services": [
                 "PayrollService"
             ],
-            "in_baseline": false
+            "in_baseline": true
         },
         {
             "controller": "app/Http/Controllers/Admin/ProductStockController.php",
@@ -481,13 +481,13 @@
                 "approve",
                 "cancel"
             ],
-            "classification": "NEEDS_REVIEW",
+            "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "HIGH",
-            "reason": "Delegates to PurchaseReturnService \u2014 not verified to log. Confirm or wire a funnel.",
+            "reason": "Delegates to PurchaseReturnService (logs direct).",
             "services": [
                 "PurchaseReturnService"
             ],
-            "in_baseline": false
+            "in_baseline": true
         },
         {
             "controller": "app/Http/Controllers/Admin/ServiceRenderingActionController.php",
@@ -674,9 +674,9 @@
             "actions": [
                 "store"
             ],
-            "classification": "KNOWN_BACKLOG",
+            "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
-            "reason": "Deferred lower-priority gap (config backlog).",
+            "reason": "Delegates to HRService (logs direct).",
             "services": [
                 "HRService"
             ],
@@ -964,7 +964,7 @@
             ],
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
-            "reason": "User changes are audited by UserObserver.",
+            "reason": "Delegates to HRService (logs direct).",
             "services": [
                 "HRService"
             ],
@@ -1337,9 +1337,9 @@
                 "store",
                 "update"
             ],
-            "classification": "NEEDS_REVIEW",
+            "classification": "KNOWN_BACKLOG",
             "severity": "MEDIUM",
-            "reason": "Delegates to TheatreRoomService \u2014 not verified to log. Confirm or wire a funnel.",
+            "reason": "Deferred lower-priority gap (config backlog).",
             "services": [
                 "TheatreRoomService"
             ],

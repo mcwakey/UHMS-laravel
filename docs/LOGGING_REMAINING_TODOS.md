@@ -168,33 +168,49 @@ missing**. Tests: `LogsAuditCommandTest` (11). See
     critical-permission trail captured). Tests: `UserRoleAssignmentSecurityLogTest`
     (7). No known security role/permission write path remains unlogged.
 
-#### 🟠 Needs review (verify the service logs, else wire) — HIGH/CRITICAL kept out of baseline
-- `Admin/FinancialEntryController` → `AccountingService` (financial — CRITICAL)
-- `Admin/CashierShiftController` → `AccountingService` (HIGH)
-- `Admin/InsuranceVerificationController` → `InsuranceVerificationService` (HIGH)
-- `Admin/LeaveController` → `HRService` (HIGH)
-- `Admin/PayrollController` → `PayrollService` (HIGH)
-- `Admin/PurchaseReturnController` → `PurchaseReturnService` (HIGH — supplier ledger + stock)
-- `Theatre/TheatreRoomController` → `TheatreRoomService` (MEDIUM)
+#### ✅ Needs-review RESOLVED — Stage-2 prep (NEEDS_REVIEW 7 → 0)
+All 7 reviewed; 6 wired to their service funnels, 1 reclassified as justified
+backlog. Tests: `Stage2NeedsReviewLogTest` (7). None carry patient context except
+insurance verification (which legitimately does).
+- `Admin/FinancialEntryController` → `AccountingService` — **wired**
+  `FINANCIAL_ENTRY_RECORDED/APPROVED/DELETED` (BILLING).
+- `Admin/CashierShiftController` → `AccountingService` — **wired**
+  `CASHIER_SHIFT_OPENED/CLOSED/VERIFIED` (PAYMENTS).
+- `Admin/PurchaseReturnController` → `PurchaseReturnService` — **wired**
+  `PURCHASE_RETURN_CREATED/APPROVED/POSTED/CANCELLED` (PURCHASE_ORDERS). The auto
+  supplier-ledger entry on POST is not double-logged.
+- `Admin/PayrollController` → `PayrollService` — **wired**
+  `PAYROLL_PROCESSED/APPROVED/PAID` (SYSTEM, per pay period).
+- `Admin/LeaveController` → `HRService` — **wired**
+  `LEAVE_REQUESTED/APPROVED/REJECTED` (SYSTEM).
+- `Admin/InsuranceVerificationController` → `InsuranceVerificationService` — **wired**
+  `INSURANCE_VERIFIED` (INSURANCE) — patient-related, carries patient/visit context.
+- `Theatre/TheatreRoomController` → **reclassified KNOWN_BACKLOG** — theatre rooms
+  are facility configuration (rooms + maintenance blocks), same tier as wards /
+  stock locations. Documented in `config/logging_audit.php`.
 
 #### 🟡 Backlog (deferred, documented in config) — 22
 Catalogue/reference CRUD, HR reference, notifications, generic stock adjustments,
-emergency ancillary records, front-desk workflow, blood-bank intake. Listed in
-`config/logging_audit.php → backlog_controllers`.
+emergency ancillary records, front-desk workflow, blood-bank intake, theatre-room
+configuration. Listed in `config/logging_audit.php → backlog_controllers`.
 
-#### ⚪ Audit false positives (now auto-recognized) — 42
+#### ⚪ Audit false positives (now auto-recognized) — 50
 Controllers that delegate to a logging service/observer (the burn-down funnels).
 No longer reported as missing; classified `SERVICE_FUNNEL_COVERED`.
 
+Current `logs:audit`: **MISSING_LOG 0 · NEEDS_REVIEW 0 · KNOWN_BACKLOG 22 ·
+INTENTIONALLY_SKIPPED 1 · SERVICE_FUNNEL_COVERED 50.**
+
 #### 🔧 Governance / future
-- **Stage-1 CI gate ENABLED** ✅ — `.github/workflows/ui-audit.yml` now fails the
-  build on CRITICAL real missing logs (`--fail --only-real-gaps
-  --min-severity=CRITICAL`), alongside the always-on advisory report. It does not
-  block covered / backlog / needs-review / HIGH findings.
-- **Stage 2 (next):** `--min-severity=HIGH` after the 7 NEEDS_REVIEW controllers
-  (financial/HR/insurance/purchase-return/theatre-room) are confirmed or wired.
-- **Stage 3 (later):** `--fail --strict` after the backlog is burned down; re-run
-  `composer logs:audit:baseline` for a clean baseline first.
+- **Stage-1 CI gate ENABLED** ✅ — `.github/workflows/ui-audit.yml` fails the build
+  on CRITICAL real missing logs (`--fail --only-real-gaps --min-severity=CRITICAL`),
+  alongside the always-on advisory report.
+- **Stage 2 — READY (not yet enabled in CI).** With NEEDS_REVIEW at 0, both
+  `--min-severity=HIGH` and `--min-severity=CRITICAL` pass locally. Promote the CI
+  gate to `--min-severity=HIGH` when desired (it would block any new HIGH real gap).
+- **Stage 3 (later):** `--fail --strict` after the 22 backlog items are burned down;
+  the baseline is already clean (`refused: 0`), so re-run `composer
+  logs:audit:baseline` after each backlog clear to keep `--strict` honest.
 - Keep `config/logging_audit.php` current as funnels/controllers evolve.
 
 ### Remaining (lower priority — admin/system polish + the blocking gate)

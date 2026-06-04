@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\LeaveStatus;
+use App\Enums\LogModule;
+use App\Enums\LogSeverity;
 use App\Models\Employee;
 use App\Models\EmployeeAttendance;
 use App\Models\LeaveRequest;
@@ -12,6 +14,30 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class HRService
 {
+    /**
+     * Dual-write an HR leave event to the central audit log. HR/admin-level —
+     * about an employee, never patient activity.
+     */
+    private function logLeave(LeaveRequest $leave, string $event, string $description, LogSeverity $severity): void
+    {
+        try {
+            app(ActivityLogService::class)->log(LogModule::SYSTEM, $event, [
+                'severity' => $severity,
+                'reason' => $leave->rejection_reason,
+                'metadata' => [
+                    'employee_id' => $leave->employee_id,
+                    'leave_type' => $leave->leave_type instanceof \BackedEnum ? $leave->leave_type->value : (string) $leave->leave_type,
+                    'days' => $leave->days,
+                    'start_date' => (string) $leave->start_date,
+                    'end_date' => (string) $leave->end_date,
+                ],
+                'source_type' => 'leave_request',
+                'source_id' => $leave->id,
+            ], $leave, $description);
+        } catch (\Throwable $e) {
+            // Logging must never break a leave action.
+        }
+    }
     public function listEmployees(array $filters = []): LengthAwarePaginator
     {
         return Employee::with('department')
@@ -140,7 +166,10 @@ class HRService
         $data['days'] = $start->diffInWeekdays($end) + 1;
         $data['status'] = LeaveStatus::PENDING->value;
 
-        return LeaveRequest::create($data);
+        $leave = LeaveRequest::create($data);
+        $this->logLeave($leave, 'LEAVE_REQUESTED', 'Leave requested', LogSeverity::INFO);
+
+        return $leave;
     }
 
     public function approveLeave(LeaveRequest $leave): void
@@ -154,6 +183,8 @@ class HRService
             'approved_by' => Auth::id(),
             'approved_at' => now(),
         ]);
+
+        $this->logLeave($leave->fresh(), 'LEAVE_APPROVED', 'Leave approved', LogSeverity::NOTICE);
     }
 
     public function rejectLeave(LeaveRequest $leave, string $reason): void
@@ -168,6 +199,8 @@ class HRService
             'approved_at' => now(),
             'rejection_reason' => $reason,
         ]);
+
+        $this->logLeave($leave->fresh(), 'LEAVE_REJECTED', 'Leave rejected', LogSeverity::WARNING);
     }
 
     public function getLeaveBalance(int $employeeId, int $year = null): array

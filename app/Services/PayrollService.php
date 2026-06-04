@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\EmployeeStatus;
+use App\Enums\LogModule;
+use App\Enums\LogSeverity;
 use App\Enums\PayrollStatus;
 use App\Models\Employee;
 use App\Models\PayrollRecord;
@@ -12,6 +14,23 @@ use Illuminate\Support\Collection;
 
 class PayrollService
 {
+    /**
+     * Dual-write a payroll batch event (per pay period) to the central audit log.
+     * Facility/HR-level — no patient context, no single subject.
+     */
+    private function logPayroll(string $event, string $description, string $payPeriod, array $metadata, LogSeverity $severity): void
+    {
+        try {
+            app(ActivityLogService::class)->log(LogModule::SYSTEM, $event, [
+                'severity' => $severity,
+                'metadata' => array_merge(['pay_period' => $payPeriod], $metadata),
+                'source_type' => 'payroll',
+            ], null, $description);
+        } catch (\Throwable $e) {
+            // Logging must never break a payroll action.
+        }
+    }
+
     // Ghana PAYE Tax Brackets (Annual, 2026)
     private const TAX_BRACKETS = [
         ['limit' => 4824,  'rate' => 0.00],   // First GH₵4,824 — 0%
@@ -84,6 +103,13 @@ class PayrollService
             $records->push($record);
         }
 
+        if ($records->isNotEmpty()) {
+            $this->logPayroll('PAYROLL_PROCESSED', "Payroll processed for {$records->count()} employee(s) — {$payPeriod}", $payPeriod, [
+                'employees' => $records->count(),
+                'total_net' => (float) $records->sum('net_pay'),
+            ], LogSeverity::NOTICE);
+        }
+
         return $records;
     }
 
@@ -106,19 +132,33 @@ class PayrollService
 
     public function approvePayroll(string $payPeriod): int
     {
-        return PayrollRecord::where('pay_period', $payPeriod)
+        $count = PayrollRecord::where('pay_period', $payPeriod)
             ->where('status', PayrollStatus::DRAFT)
             ->update(['status' => PayrollStatus::APPROVED->value]);
+
+        if ($count > 0) {
+            $this->logPayroll('PAYROLL_APPROVED', "Payroll approved for {$count} record(s) — {$payPeriod}", $payPeriod,
+                ['records' => $count], LogSeverity::WARNING);
+        }
+
+        return $count;
     }
 
     public function markPaid(string $payPeriod): int
     {
-        return PayrollRecord::where('pay_period', $payPeriod)
+        $count = PayrollRecord::where('pay_period', $payPeriod)
             ->where('status', PayrollStatus::APPROVED)
             ->update([
                 'status' => PayrollStatus::PAID->value,
                 'paid_at' => now(),
             ]);
+
+        if ($count > 0) {
+            $this->logPayroll('PAYROLL_PAID', "Payroll marked paid for {$count} record(s) — {$payPeriod}", $payPeriod,
+                ['records' => $count], LogSeverity::WARNING);
+        }
+
+        return $count;
     }
 
     public function getPayrollSummary(string $payPeriod): array

@@ -3,8 +3,16 @@
 > **Update (post-pass):** the one real gap below (`Admin/RoleController`) has since
 > been wired — see `docs/LOGGING_ROLE_PERMISSION_SECURITY_BURN_DOWN_REPORT.md`.
 > **`MISSING_LOG` is now 0** (SERVICE_FUNNEL_COVERED 42→43), and the Stage-1 gate
-> `logs:audit --fail --only-real-gaps --min-severity=CRITICAL` **passes**. The
-> analysis below is preserved as written at the time of the finalization pass.
+> `logs:audit --fail --only-real-gaps --min-severity=CRITICAL` **passes**.
+>
+> **Update 2 (Stage-2 prep):** the 7 `NEEDS_REVIEW` controllers have been resolved
+> (6 wired to their service funnels: accounting, cashier shifts, purchase returns,
+> payroll, HR leave, insurance verification; 1 — TheatreRoom — reclassified as
+> justified config backlog). **`NEEDS_REVIEW` is now 0**, SERVICE_FUNNEL_COVERED →
+> 50, the baseline is clean (`refused: 0`), and the Stage-2 gate
+> `--min-severity=HIGH` passes. Tests: `Stage2NeedsReviewLogTest` (7).
+>
+> The analysis below is preserved as written at the time of the finalization pass.
 
 The eight logging burn-downs are complete, but `logs:audit` kept reporting **73**
 flagged controllers. This pass makes the audit *understand the architecture we
