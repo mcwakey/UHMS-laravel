@@ -43,8 +43,13 @@ class ModuleService
 
     public function enable(string $slug): void
     {
+        $module = Module::where('slug', $slug)->first();
         Module::where('slug', $slug)->update(['is_enabled' => true]);
         $this->flush();
+
+        if ($module && ! $module->is_enabled) {
+            $this->logModuleToggle($module, true);
+        }
     }
 
     public function disable(string $slug): void
@@ -55,6 +60,30 @@ class ModuleService
         }
         $module->update(['is_enabled' => false]);
         $this->flush();
+
+        $this->logModuleToggle($module, false);
+    }
+
+    private function logModuleToggle(Module $module, bool $enabled): void
+    {
+        try {
+            app(\App\Services\ActivityLogService::class)->log(
+                \App\Enums\LogModule::SETTINGS,
+                $enabled ? 'MODULE_ENABLED' : 'MODULE_DISABLED',
+                [
+                    'module_id' => $module->id,
+                    'severity' => \App\Enums\LogSeverity::WARNING,
+                    'old_values' => ['is_enabled' => ! $enabled],
+                    'new_values' => ['is_enabled' => $enabled],
+                    'source_type' => 'module',
+                    'source_id' => $module->id,
+                ],
+                $module,
+                ($enabled ? 'Module enabled: ' : 'Module disabled: ') . ($module->name ?: $module->slug),
+            );
+        } catch (\Throwable $e) {
+            // Logging must never break module toggling.
+        }
     }
 
     public function flush(): void

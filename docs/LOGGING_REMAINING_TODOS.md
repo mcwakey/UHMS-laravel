@@ -111,10 +111,28 @@ Emergency→admission logs cleanly as two distinct events. Tests:
 Follow-ups: bay/bed/ward assign-transfer-release, emergency vitals, contributor,
 nursing notes, discharge summary, print.
 
-## Burn-down order — all clinical/financial modules done ✅
+## ✅ Done: stock / procurement / admin & system → global log (NOT patient timeline)
+
+Facility-level lifecycle now logs distinctly **without** patient/visit context:
+`StockTransferService` → `STOCK_TRANSFER_REQUESTED/APPROVED/RECEIVED/CANCELLED`;
+`StockRequisitionService` → `STOCK_REQUISITION_CREATED/APPROVED/ISSUED/RECEIVED/CANCELLED`;
+`ProcurementService` → `PURCHASE_ORDER_CREATED/SUBMITTED/APPROVED/RECEIVED/CANCELLED`
+(module `PURCHASE_ORDERS`); `SupplierLedgerService::recordManualEntry` →
+`SUPPLIER_PAYMENT_RECORDED` / `SUPPLIER_LEDGER_ADJUSTED`; `ModuleService` →
+`MODULE_ENABLED` / `MODULE_DISABLED` (module `SETTINGS`, WARNING). Raw movement
+ledger (`ProductStockMovementService`) and the auto goods-received supplier entry
+are **not** re-logged (covered by the lifecycle events). A test asserts **zero**
+stock/admin logs carry `patient_id`/`visit_id`. Sensitive values masked. Tests:
+`StockAdminLogTest` (7). See `docs/LOGGING_STOCK_ADMIN_BURN_DOWN_REPORT.md`.
+Remaining admin surface (documented, not force-wired): roles/permissions,
+settings values, catalogue CRUD, stock adjustments + purchase returns, assets,
+notifications.
+
+## Burn-down order — all 8 modules done ✅
 
 1. ~~Consultation~~ · 2. ~~Investigations~~ · 3. ~~MAR~~ · 4. ~~Pharmacy~~ ·
-5. ~~Procedures / Theatre~~ · 6. ~~Billing / Claims~~ · 7. ~~Emergency / Admission~~
+5. ~~Procedures / Theatre~~ · 6. ~~Billing / Claims~~ · 7. ~~Emergency / Admission~~ ·
+8. ~~Stock / Procurement / Admin & System~~
 
 ### ✅ Done: non-blocking `logs:audit` CI guardrail
 `.github/workflows/ui-audit.yml` (now “UI & Logging Audit”) runs
@@ -124,14 +142,17 @@ nursing notes, discharge summary, print.
 (Admin 64 · Billing 4 · Doctor 2 · Theatre 2 · Lab 1 — the non-Admin ones are
 service-funnel false positives). See `docs/LOGGING_AUDIT_CI_GUARDRAIL_REPORT.md`.
 
-### Remaining (lower priority — admin/system + polish)
-8. **Stock / admin** — stock movements (raw ledger), roles/permissions/modules/
-   settings changes, notifications; plus the per-module follow-ups noted in each
-   burn-down report (bed transfers, vitals, print/export events, payment reversal,
-   claim mirror, pattern-created records, sample collection, etc.).
-9. **Make `logs:audit` blocking** only after (8) lands and the command gains a
-   baseline/allowlist (like `ui:audit`) so service-funnel false positives don't
-   block builds.
+### Remaining (lower priority — admin/system polish + the blocking gate)
+8. **Stock / procurement core** — ✅ done (transfers, requisitions, POs, supplier
+   manual entries, module toggle). **Still open:** roles/permissions grant/revoke,
+   settings values, catalogue CRUD (services/drugs/lab tests/procedures/products),
+   stock **adjustments** + **purchase returns**, asset register, notifications;
+   plus the per-module follow-ups noted in each burn-down report (bed transfers,
+   vitals, print/export events, payment reversal, claim mirror, pattern-created
+   records, sample collection, etc.).
+9. **Make `logs:audit` blocking** only after the remaining admin items land and the
+   command gains a baseline/allowlist (like `ui:audit`) so service-funnel false
+   positives (the 73, incl. 64 Admin) don't block builds.
 
 Do **not** wire all 75 flagged controllers at once; one module, with a test that
 the action appears on both the global log and (where patient-related) the patient

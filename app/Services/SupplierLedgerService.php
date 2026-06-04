@@ -103,7 +103,7 @@ class SupplierLedgerService
         $debit = in_array($entryType, [SupplierLedgerEntry::TYPE_PAYMENT, SupplierLedgerEntry::TYPE_CREDIT_NOTE], true) ? $amount : 0.0;
         $credit = $entryType === SupplierLedgerEntry::TYPE_DEBIT_NOTE ? $amount : 0.0;
 
-        return $this->recordEntry(
+        $entry = $this->recordEntry(
             supplier: $supplier,
             entryType: $entryType,
             debit: $debit,
@@ -111,5 +111,38 @@ class SupplierLedgerService
             description: $data['description'],
             entryDate: isset($data['entry_date']) ? Carbon::parse($data['entry_date']) : null,
         );
+
+        $this->logManualEntry($supplier, $entry, $amount);
+
+        return $entry;
+    }
+
+    private function logManualEntry(Supplier $supplier, SupplierLedgerEntry $entry, float $amount): void
+    {
+        try {
+            $event = $entry->entry_type === SupplierLedgerEntry::TYPE_PAYMENT
+                ? 'SUPPLIER_PAYMENT_RECORDED'
+                : 'SUPPLIER_LEDGER_ADJUSTED';
+
+            app(\App\Services\ActivityLogService::class)->log(
+                \App\Enums\LogModule::SUPPLIER_LEDGER,
+                $event,
+                [
+                    'supplier_id' => $supplier->id,
+                    'severity' => \App\Enums\LogSeverity::NOTICE,
+                    'metadata' => [
+                        'entry_type' => $entry->entry_type,
+                        'amount' => round($amount, 2),
+                        'balance_after' => (float) $entry->balance_after,
+                    ],
+                    'source_type' => 'supplier_ledger_entry',
+                    'source_id' => $entry->id,
+                ],
+                $entry,
+                ($entry->entry_type === SupplierLedgerEntry::TYPE_PAYMENT ? 'Supplier payment recorded: ' : 'Supplier ledger adjusted: ') . $supplier->name,
+            );
+        } catch (\Throwable $e) {
+            // Logging must never break a supplier ledger entry.
+        }
     }
 }

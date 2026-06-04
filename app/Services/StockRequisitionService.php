@@ -75,8 +75,32 @@ class StockRequisitionService
                 ]);
             }
 
-            return $requisition->load(['department', 'items.product']);
+            $loaded = $requisition->load(['department', 'items.product']);
+            $this->logRequisition($loaded, 'STOCK_REQUISITION_CREATED', 'Stock requisition created: ' . $loaded->requisition_number);
+
+            return $loaded;
         });
+    }
+
+    private function logRequisition(StockRequisition $requisition, string $event, string $description, array $extra = []): void
+    {
+        try {
+            app(\App\Services\ActivityLogService::class)->log(
+                \App\Enums\LogModule::STOCK,
+                $event,
+                array_filter(array_merge([
+                    'stock_requisition_id' => $requisition->id,
+                    'department_id' => $requisition->department_id,
+                    'metadata' => ['requisition_number' => $requisition->requisition_number],
+                    'source_type' => 'stock_requisition',
+                    'source_id' => $requisition->id,
+                ], $extra), fn ($v) => $v !== null),
+                $requisition,
+                $description,
+            );
+        } catch (\Throwable $e) {
+            // Logging must never break a requisition action.
+        }
     }
 
     public function approve(StockRequisition $requisition, array $approvedItems): StockRequisition
@@ -110,7 +134,10 @@ class StockRequisitionService
                 'approved_at' => now(),
             ]);
 
-            return $requisition->refresh();
+            $requisition->refresh();
+            $this->logRequisition($requisition, 'STOCK_REQUISITION_APPROVED', 'Stock requisition approved: ' . $requisition->requisition_number);
+
+            return $requisition;
         });
     }
 
@@ -158,7 +185,10 @@ class StockRequisitionService
                 'issued_at' => now(),
             ]);
 
-            return $requisition->refresh();
+            $requisition->refresh();
+            $this->logRequisition($requisition, 'STOCK_REQUISITION_ISSUED', 'Stock requisition issued: ' . $requisition->requisition_number);
+
+            return $requisition;
         });
     }
 
@@ -206,7 +236,10 @@ class StockRequisitionService
                 'acknowledged_at' => now(),
             ]);
 
-            return $requisition->refresh();
+            $requisition->refresh();
+            $this->logRequisition($requisition, 'STOCK_REQUISITION_RECEIVED', 'Stock requisition received: ' . $requisition->requisition_number);
+
+            return $requisition;
         });
     }
 
@@ -217,7 +250,10 @@ class StockRequisitionService
         }
 
         $requisition->update(['status' => StockRequisitionStatus::CANCELLED]);
+        $requisition->refresh();
 
-        return $requisition->refresh();
+        $this->logRequisition($requisition, 'STOCK_REQUISITION_CANCELLED', 'Stock requisition cancelled: ' . $requisition->requisition_number, ['severity' => \App\Enums\LogSeverity::WARNING]);
+
+        return $requisition;
     }
 }

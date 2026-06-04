@@ -295,6 +295,8 @@ class ActivityLogService
             'department_id', 'invoice_id', 'invoice_item_id', 'claim_id', 'claim_item_id',
             'insurance_provider_id', 'insurance_type_id', 'payment_id', 'refund_id',
             'product_id', 'stock_location_id', 'stock_movement_id', 'quantity', 'source_type', 'source_id',
+            'from_stock_location_id', 'to_stock_location_id', 'stock_transfer_id', 'stock_requisition_id',
+            'purchase_order_id', 'supplier_id', 'asset_id', 'target_user_id', 'role_id', 'module_id', 'setting_key',
         ];
         foreach ($contextKeys as $key) {
             if (array_key_exists($key, $data) && $data[$key] !== null) {

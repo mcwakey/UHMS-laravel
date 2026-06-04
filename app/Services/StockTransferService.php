@@ -54,6 +54,8 @@ class StockTransferService
                 }
             }
 
+            $this->logTransfer($transfer, 'STOCK_TRANSFER_REQUESTED', 'Stock transfer requested: ' . $transfer->transfer_number);
+
             return $transfer;
         });
     }
@@ -71,6 +73,32 @@ class StockTransferService
             'status' => StockTransferStatus::APPROVED,
             'approved_by' => Auth::id(),
         ]);
+
+        $this->logTransfer($transfer->fresh(), 'STOCK_TRANSFER_APPROVED', 'Stock transfer approved: ' . $transfer->transfer_number);
+    }
+
+    private function logTransfer(StockTransfer $transfer, string $event, string $description, array $extra = []): void
+    {
+        try {
+            app(\App\Services\ActivityLogService::class)->log(
+                \App\Enums\LogModule::STOCK,
+                $event,
+                array_filter(array_merge([
+                    'stock_transfer_id' => $transfer->id,
+                    'metadata' => [
+                        'transfer_number' => $transfer->transfer_number,
+                        'from' => $transfer->from_location instanceof \BackedEnum ? $transfer->from_location->value : (string) $transfer->from_location,
+                        'to' => $transfer->to_location instanceof \BackedEnum ? $transfer->to_location->value : (string) $transfer->to_location,
+                    ],
+                    'source_type' => 'stock_transfer',
+                    'source_id' => $transfer->id,
+                ], $extra), fn ($v) => $v !== null),
+                $transfer,
+                $description,
+            );
+        } catch (\Throwable $e) {
+            // Logging must never break a stock transfer.
+        }
     }
 
     /**
@@ -124,6 +152,8 @@ class StockTransferService
 
             // Mirror to the unified movement ledger.
             $this->emitTransferMovements($transfer->fresh('items'));
+
+            $this->logTransfer($transfer->fresh(), 'STOCK_TRANSFER_RECEIVED', 'Stock transfer completed: ' . $transfer->transfer_number);
         });
     }
 
@@ -259,6 +289,8 @@ class StockTransferService
         }
 
         $transfer->update(['status' => StockTransferStatus::CANCELLED]);
+
+        $this->logTransfer($transfer->fresh(), 'STOCK_TRANSFER_CANCELLED', 'Stock transfer cancelled: ' . $transfer->transfer_number, ['severity' => \App\Enums\LogSeverity::WARNING]);
     }
 
     /**

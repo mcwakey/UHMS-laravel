@@ -85,8 +85,34 @@ class ProcurementService
                 $po->recalculateTotal();
             }
 
+            $this->logPo($po->fresh(), 'PURCHASE_ORDER_CREATED', 'Purchase order created: ' . $po->po_number);
+
             return $po;
         });
+    }
+
+    private function logPo(PurchaseOrder $po, string $event, string $description, array $metadata = [], array $extra = []): void
+    {
+        try {
+            app(\App\Services\ActivityLogService::class)->log(
+                \App\Enums\LogModule::PURCHASE_ORDERS,
+                $event,
+                array_filter(array_merge([
+                    'purchase_order_id' => $po->id,
+                    'supplier_id' => $po->supplier_id,
+                    'metadata' => array_merge([
+                        'po_number' => $po->po_number,
+                        'total_amount' => (float) $po->total_amount,
+                    ], $metadata),
+                    'source_type' => 'purchase_order',
+                    'source_id' => $po->id,
+                ], $extra), fn ($v) => $v !== null),
+                $po,
+                $description,
+            );
+        } catch (\Throwable $e) {
+            // Logging must never break a purchase-order action.
+        }
     }
 
     /**
@@ -137,6 +163,8 @@ class ProcurementService
         }
 
         $po->update(['status' => PurchaseOrderStatus::SUBMITTED]);
+
+        $this->logPo($po->fresh(), 'PURCHASE_ORDER_SUBMITTED', 'Purchase order submitted: ' . $po->po_number);
     }
 
     /**
@@ -152,6 +180,8 @@ class ProcurementService
             'status' => PurchaseOrderStatus::APPROVED,
             'approved_by' => Auth::id(),
         ]);
+
+        $this->logPo($po->fresh(), 'PURCHASE_ORDER_APPROVED', 'Purchase order approved: ' . $po->po_number);
     }
 
     /**
@@ -268,6 +298,19 @@ class ProcurementService
                     sourceId: $po->id,
                 );
             }
+
+            if ($receivedQty > 0) {
+                $this->logPo(
+                    $po->fresh(),
+                    'PURCHASE_ORDER_RECEIVED',
+                    'Goods received against PO ' . $po->po_number,
+                    [
+                        'received_quantity' => $receivedQty,
+                        'received_value' => round($receivedValue, 2),
+                        'grn_number' => $grnHasItems ? $grn->grn_number : null,
+                    ],
+                );
+            }
         });
     }
 
@@ -298,6 +341,8 @@ class ProcurementService
         }
 
         $po->update(['status' => PurchaseOrderStatus::CANCELLED]);
+
+        $this->logPo($po->fresh(), 'PURCHASE_ORDER_CANCELLED', 'Purchase order cancelled: ' . $po->po_number, [], ['severity' => \App\Enums\LogSeverity::WARNING]);
     }
 
     /**
