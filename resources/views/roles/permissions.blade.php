@@ -2,6 +2,9 @@
 @section('title', 'Permissions - ' . $role->name)
 
 @section('content')
+@php
+    $canManageCriticalPermissions = auth()->user()?->can('permissions.assign_critical') ?? false;
+@endphp
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
@@ -34,16 +37,25 @@
                     @foreach($modulePermissions as $permission)
                     @php
                         $riskMeta  = $riskLevels[$permission->meta_risk] ?? ['label' => $permission->meta_risk, 'color' => 'secondary'];
+                        $criticalLocked = $permission->meta_risk === 'CRITICAL' && ! $canManageCriticalPermissions;
+                        $isAssigned = in_array($permission->name, $rolePermissions);
                     @endphp
                     <div class="form-check mb-2 d-flex align-items-start gap-2">
+                        @if($criticalLocked && $isAssigned)
+                            <input type="hidden" name="permissions[]" value="{{ $permission->name }}">
+                        @endif
                         <input class="form-check-input perm-{{ $module }} mt-1" type="checkbox" name="permissions[]" value="{{ $permission->name }}" id="perm-{{ $permission->id }}"
-                            {{ in_array($permission->name, $rolePermissions) ? 'checked' : '' }}>
+                            {{ $isAssigned ? 'checked' : '' }}
+                            @disabled($criticalLocked)>
                         <label class="form-check-label flex-grow-1" for="perm-{{ $permission->id }}"
                             data-bs-toggle="tooltip" data-bs-placement="top"
                             title="{{ $permission->meta_description }} ({{ $permission->name }})">
                             <span class="d-flex align-items-center flex-wrap gap-1">
                                 <span>{{ ucfirst(str_replace($module . '.', '', $permission->name)) }}</span>
                                 <span class="badge bg-{{ $riskMeta['color'] }} fs-10">{{ $riskMeta['label'] }}</span>
+                                @if($criticalLocked)
+                                    <span class="badge bg-dark fs-10">locked</span>
+                                @endif
                             </span>
                             <span class="d-block text-muted fs-12 mt-1">{{ $permission->meta_description }}</span>
                             <code class="d-block fs-11 mt-1">{{ $permission->name }}</code>

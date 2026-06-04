@@ -1,6 +1,6 @@
 {
-  "_AppLayout.B1ns6cHD.js": {
-    "file": "js/AppLayout.B1ns6cHD.js",
+  "_AppLayout.Cch4IPWr.js": {
+    "file": "js/AppLayout.Cch4IPWr.js",
     "name": "AppLayout",
     "imports": [
       "resources/js/inertia.js"
@@ -20,117 +20,127 @@
     "src": "resources/img/bg/generate-bg-02.png"
   },
   "resources/js/Pages/Admissions/Index.vue": {
-    "file": "js/Index.AdyJEsOe.js",
+    "file": "js/Index.CWLHuTlS.js",
     "name": "Index",
     "src": "resources/js/Pages/Admissions/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.B1ns6cHD.js"
+      "_AppLayout.Cch4IPWr.js"
     ]
   },
   "resources/js/Pages/Billing/CreditNotes/Create.vue": {
-    "file": "js/Create.WoRccCpT.js",
+    "file": "js/Create._S2_qKnu.js",
     "name": "Create",
     "src": "resources/js/Pages/Billing/CreditNotes/Create.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.B1ns6cHD.js"
+      "_AppLayout.Cch4IPWr.js"
     ]
   },
   "resources/js/Pages/Billing/CreditNotes/Index.vue": {
-    "file": "js/Index.CyAioJTI.js",
+    "file": "js/Index.C5_r-WEz.js",
     "name": "Index",
     "src": "resources/js/Pages/Billing/CreditNotes/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.B1ns6cHD.js"
+      "_AppLayout.Cch4IPWr.js"
     ]
   },
   "resources/js/Pages/Billing/Dashboard.vue": {
-    "file": "js/Dashboard.CHLtWWX9.js",
+    "file": "js/Dashboard.sc2NOUbW.js",
     "name": "Dashboard",
     "src": "resources/js/Pages/Billing/Dashboard.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.B1ns6cHD.js"
+      "_AppLayout.Cch4IPWr.js"
     ]
   },
   "resources/js/Pages/Billing/Invoices/Edit.vue": {
-    "file": "js/Edit.CNf34aZ5.js",
+    "file": "js/Edit.DZ8GKimy.js",
     "name": "Edit",
     "src": "resources/js/Pages/Billing/Invoices/Edit.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.B1ns6cHD.js"
+      "_AppLayout.Cch4IPWr.js"
     ]
   },
   "resources/js/Pages/Billing/Invoices/Index.vue": {
-    "file": "js/Index.DLzMKZC2.js",
+    "file": "js/Index.BY5ecHzj.js",
     "name": "Index",
     "src": "resources/js/Pages/Billing/Invoices/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.B1ns6cHD.js"
+      "_AppLayout.Cch4IPWr.js"
     ]
   },
   "resources/js/Pages/Billing/Reports/Aging.vue": {
-    "file": "js/Aging.B0ITQ2NA.js",
+    "file": "js/Aging.CWUPU6h6.js",
     "name": "Aging",
     "src": "resources/js/Pages/Billing/Reports/Aging.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.B1ns6cHD.js"
+      "_AppLayout.Cch4IPWr.js"
+    ]
+  },
+  "resources/js/Pages/Billing/Reports/Discounts.vue": {
+    "file": "js/Discounts.wTlhibTK.js",
+    "name": "Discounts",
+    "src": "resources/js/Pages/Billing/Reports/Discounts.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/inertia.js",
+      "_AppLayout.Cch4IPWr.js"
     ]
   },
   "resources/js/Pages/Billing/Sponsors/Index.vue": {
-    "file": "js/Index.CpfnvdnX.js",
+    "file": "js/Index.D-PtWzXs.js",
     "name": "Index",
     "src": "resources/js/Pages/Billing/Sponsors/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.B1ns6cHD.js"
+      "_AppLayout.Cch4IPWr.js"
     ]
   },
   "resources/js/Pages/Billing/Statements/Index.vue": {
-    "file": "js/Index.DOBKQQ5E.js",
+    "file": "js/Index.Ber6H2HV.js",
     "name": "Index",
     "src": "resources/js/Pages/Billing/Statements/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.B1ns6cHD.js"
+      "_AppLayout.Cch4IPWr.js"
     ]
   },
   "resources/js/Pages/Billing/Statements/Show.vue": {
-    "file": "js/Show.B1OaYNMz.js",
+    "file": "js/Show.DRHdrX4H.js",
     "name": "Show",
     "src": "resources/js/Pages/Billing/Statements/Show.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.B1ns6cHD.js"
+      "_AppLayout.Cch4IPWr.js"
     ]
   },
   "resources/js/Pages/Lab/Requests/Index.vue": {
-    "file": "js/Index.CrixCE6S.js",
+    "file": "js/Index.DtucPlA8.js",
     "name": "Index",
     "src": "resources/js/Pages/Lab/Requests/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.B1ns6cHD.js"
+      "_AppLayout.Cch4IPWr.js"
     ]
   },
   "resources/js/Pages/Legacy/BladePage.vue": {
-    "file": "js/BladePage.D8HFOlGY.js",
+    "file": "js/BladePage.Cf6aqHAY.js",
     "name": "BladePage",
     "src": "resources/js/Pages/Legacy/BladePage.vue",
     "isDynamicEntry": true,
@@ -142,27 +152,27 @@
     ]
   },
   "resources/js/Pages/Pharmacy/Dispensing.vue": {
-    "file": "js/Dispensing.CSV3a_3u.js",
+    "file": "js/Dispensing.6b8G8JN_.js",
     "name": "Dispensing",
     "src": "resources/js/Pages/Pharmacy/Dispensing.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.B1ns6cHD.js"
+      "_AppLayout.Cch4IPWr.js"
     ]
   },
   "resources/js/Pages/Visits/Index.vue": {
-    "file": "js/Index.iUQlaFFX.js",
+    "file": "js/Index.BxEP2vqL.js",
     "name": "Index",
     "src": "resources/js/Pages/Visits/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/inertia.js",
-      "_AppLayout.B1ns6cHD.js"
+      "_AppLayout.Cch4IPWr.js"
     ]
   },
   "resources/js/inertia.js": {
-    "file": "js/inertia.B_mt2_7J.bundle.js",
+    "file": "js/inertia.C5VeC3uW.bundle.js",
     "name": "inertia",
     "src": "resources/js/inertia.js",
     "isEntry": true,
@@ -174,6 +184,7 @@
       "resources/js/Pages/Billing/Invoices/Edit.vue",
       "resources/js/Pages/Billing/Invoices/Index.vue",
       "resources/js/Pages/Billing/Reports/Aging.vue",
+      "resources/js/Pages/Billing/Reports/Discounts.vue",
       "resources/js/Pages/Billing/Sponsors/Index.vue",
       "resources/js/Pages/Billing/Statements/Index.vue",
       "resources/js/Pages/Billing/Statements/Show.vue",

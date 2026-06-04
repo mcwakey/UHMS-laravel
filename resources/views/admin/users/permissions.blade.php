@@ -3,6 +3,9 @@
 @section('title', 'User Permissions — ' . $user->name)
 
 @section('content')
+@php
+    $canManageCriticalPermissions = auth()->user()?->can('permissions.assign_critical') ?? false;
+@endphp
 <div class="page-wrapper">
     <div class="content">
         <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
@@ -49,16 +52,23 @@
                         </div>
                         <div class="card-body py-2">
                             @foreach($items as $item)
-                            @php $rm = $riskLevels[$item['risk']] ?? ['label'=>$item['risk'],'color'=>'secondary']; @endphp
+                            @php
+                                $rm = $riskLevels[$item['risk']] ?? ['label'=>$item['risk'],'color'=>'secondary'];
+                                $criticalLocked = $item['risk'] === 'CRITICAL' && ! $canManageCriticalPermissions;
+                            @endphp
                             <div class="form-check mb-2 d-flex align-items-start gap-2">
                                 @if($item['inherited'])
                                     <input class="form-check-input mt-1" type="checkbox" disabled checked
                                            title="Inherited from role — manage on the role page.">
                                 @else
+                                    @if($criticalLocked && $item['direct'])
+                                        <input type="hidden" name="permissions[]" value="{{ $item['name'] }}">
+                                    @endif
                                     <input class="form-check-input mt-1" type="checkbox"
                                            name="permissions[]" value="{{ $item['name'] }}"
                                            id="upm-{{ $item['id'] }}"
-                                           {{ $item['direct'] ? 'checked' : '' }}>
+                                           {{ $item['direct'] ? 'checked' : '' }}
+                                           @disabled($criticalLocked)>
                                 @endif
                                 <label class="form-check-label flex-grow-1"
                                        for="upm-{{ $item['id'] }}"
@@ -67,6 +77,9 @@
                                     <span class="d-flex align-items-center flex-wrap gap-1">
                                         <span>{{ ucfirst(str_replace($module . '.', '', $item['name'])) }}</span>
                                         <span class="badge bg-{{ $rm['color'] }} fs-10">{{ $rm['label'] }}</span>
+                                        @if($criticalLocked)
+                                            <span class="badge bg-dark fs-10">locked</span>
+                                        @endif
                                         @if($item['inherited'])
                                             <span class="badge bg-info-transparent text-info fs-10">via role</span>
                                         @endif

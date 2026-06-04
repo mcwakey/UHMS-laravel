@@ -90,9 +90,37 @@ class RoleController extends Controller
             'permissions.*' => 'exists:permissions,name',
         ]);
 
-        $role->syncPermissions($validated['permissions'] ?? []);
+        $requested = $validated['permissions'] ?? [];
+        $this->authorizeCriticalPermissionChange($request, $role->permissions->pluck('name')->all(), $requested);
+
+        $role->syncPermissions($requested);
 
         return redirect()->route('admin.roles.permissions', $role)
             ->with('success', 'Permissions updated successfully.');
+    }
+
+    private function authorizeCriticalPermissionChange(Request $request, array $current, array $requested): void
+    {
+        $criticalCurrent = $this->criticalPermissionNames($current);
+        $criticalRequested = $this->criticalPermissionNames($requested);
+
+        sort($criticalCurrent);
+        sort($criticalRequested);
+
+        if ($criticalCurrent !== $criticalRequested) {
+            abort_unless($request->user()?->can('permissions.assign_critical'), 403);
+        }
+    }
+
+    /**
+     * @param  array<int, string>  $permissions
+     * @return array<int, string>
+     */
+    private function criticalPermissionNames(array $permissions): array
+    {
+        return array_values(array_filter(
+            array_unique($permissions),
+            fn (string $permission) => PermissionMeta::risk($permission) === 'CRITICAL'
+        ));
     }
 }

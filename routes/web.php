@@ -217,7 +217,7 @@ Route::middleware('auth')->group(function () {
             Route::post('users', [UserController::class, 'store'])->name('users.store')->middleware('can:users.create');
             Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit')->middleware('can:users.edit');
             Route::put('users/{user}', [UserController::class, 'update'])->name('users.update')->middleware('can:users.edit');
-            Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status')->middleware('can:users.edit');
+            Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status')->middleware('can:users.disable');
         });
 
         // Roles & Permissions
@@ -883,12 +883,15 @@ Route::middleware('auth')->group(function () {
                 Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
                 Route::get('invoices/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoices.edit')->middleware('can:invoices.edit');
                 Route::put('invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update')->middleware('can:invoices.edit');
-                Route::patch('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel')->middleware('can:invoices.edit');
+                Route::patch('invoices/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('invoices.cancel')->middleware('can:invoices.void');
                 Route::get('invoices/{invoice}/print', [InvoiceController::class, 'print'])->name('invoices.print');
                 Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('invoices.pdf');
                 Route::post('invoices/{invoice}/items/{item}/discount', [InvoiceController::class, 'applyItemDiscount'])
                     ->name('invoices.items.discount')
-                    ->middleware('can:invoices.edit');
+                    ->middleware('can:billing.discount.apply');
+                Route::delete('invoices/{invoice}/items/{item}/discount', [InvoiceController::class, 'removeItemDiscount'])
+                    ->name('invoices.items.discount.remove')
+                    ->middleware('can:billing.discount.remove');
             });
 
             // Payments
@@ -920,9 +923,14 @@ Route::middleware('auth')->group(function () {
             });
 
             // Billing reports (AR aging & statements)
-            Route::middleware('can:invoices.view')->prefix('reports')->name('reports.')->group(function () {
-                Route::get('aging', [BillingReportController::class, 'aging'])->name('aging');
-                Route::get('aging/pdf', [BillingReportController::class, 'agingPdf'])->name('aging.pdf');
+            Route::prefix('reports')->name('reports.')->group(function () {
+                Route::middleware('can:invoices.view')->group(function () {
+                    Route::get('aging', [BillingReportController::class, 'aging'])->name('aging');
+                    Route::get('aging/pdf', [BillingReportController::class, 'agingPdf'])->name('aging.pdf');
+                });
+                Route::get('discounts', [BillingReportController::class, 'discounts'])
+                    ->name('discounts')
+                    ->middleware('can:billing.discount.report');
             });
             Route::middleware('can:invoices.view')->prefix('statements')->name('statements.')->group(function () {
                 Route::get('/', [BillingReportController::class, 'statements'])->name('index');
@@ -1289,11 +1297,11 @@ Route::middleware('auth')->group(function () {
 
         // Notifications
         Route::prefix('notifications')->name('notifications.')->middleware('module:notifications')->group(function () {
-            Route::get('/', [NotificationController::class, 'index'])->name('index');
-            Route::get('/recent', [NotificationController::class, 'recent'])->name('recent');
-            Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('mark-read');
-            Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
-            Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
+            Route::get('/', [NotificationController::class, 'index'])->name('index')->middleware('can:notifications.view');
+            Route::get('/recent', [NotificationController::class, 'recent'])->name('recent')->middleware('can:notifications.view');
+            Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('mark-read')->middleware('can:notifications.view');
+            Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-read')->middleware('can:notifications.view');
+            Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy')->middleware('can:notifications.delete');
 
             // Broadcast (admin)
             Route::middleware('can:notifications.broadcast')->group(function () {

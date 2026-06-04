@@ -55,8 +55,9 @@ class InvoiceController extends Controller
         $canClaimsView   = $user?->can('claims.view')   ?? false;
         $canClaimsCreate = $user?->can('claims.create') ?? false;
         $canInvoicesEdit = $user?->can('invoices.edit') ?? false;
+        $canInvoicesVoid = $user?->can('invoices.void') ?? false;
 
-        $invoicesPayload = $invoices->through(function (Invoice $invoice) use ($canClaimsView, $canClaimsCreate, $canInvoicesEdit) {
+        $invoicesPayload = $invoices->through(function (Invoice $invoice) use ($canClaimsView, $canClaimsCreate, $canInvoicesEdit, $canInvoicesVoid) {
             $claim = $invoice->claim;
             $insuranceProviderId = $invoice->visit?->visitInsurance?->insurance_provider_id;
             $canCreateInsuranceClaim = (float) $invoice->nhis_amount > 0 && ! $claim;
@@ -85,7 +86,7 @@ class InvoiceController extends Controller
                 'created_at_display' => optional($invoice->created_at)->format('d M Y'),
                 'urls' => [
                     'show'           => route('admin.billing.invoices.show', $invoice),
-                    'cancel'         => $cancellable && $canInvoicesEdit ? route('admin.billing.invoices.cancel', $invoice) : null,
+                    'cancel'         => $cancellable && $canInvoicesVoid ? route('admin.billing.invoices.cancel', $invoice) : null,
                     'view_claim'     => $claim && $canClaimsView ? route('admin.claims.show', $claim) : null,
                     'generate_claim' => $canCreateInsuranceClaim && $canClaimsCreate
                         ? ($insuranceProviderId
@@ -158,6 +159,14 @@ class InvoiceController extends Controller
      */
     public function store(StoreInvoiceRequest $request)
     {
+        if ((float) $request->input('discount_amount', 0) > 0) {
+            abort_unless($request->user()?->can('billing.discount.apply'), 403);
+
+            return back()
+                ->withInput()
+                ->with('error', 'Manual discounts must be applied to invoice items with a reason after invoice creation.');
+        }
+
         $invoice = $this->billingService->createInvoice(
             $request->only(['visit_id', 'patient_id', 'billing_type', 'tax_amount', 'discount_amount', 'due_date', 'notes']),
             $request->input('items', [])
@@ -173,7 +182,18 @@ class InvoiceController extends Controller
      */
     public function show(Invoice $invoice)
     {
-        $invoice->load(['items.serviceCatalog', 'payments.receivedBy', 'patient', 'visit.department', 'visit.visitInsurance.insuranceProvider', 'claim', 'createdBy']);
+        $invoice->load([
+            'items.serviceCatalog',
+            'items.discountEvents.performedBy',
+            'payments.receivedBy',
+            'patient',
+            'visit.department',
+            'visit.visitInsurance.insuranceProvider',
+            'claim',
+            'createdBy',
+            'discountEvents.invoiceItem',
+            'discountEvents.performedBy',
+        ]);
 
         return view('billing.invoices.show', compact('invoice'));
     }
@@ -285,7 +305,7 @@ class InvoiceController extends Controller
      * Apply a manual discount to an invoice line item.
      *
      * POST /admin/billing/invoices/{invoice}/items/{item}/discount
-     *   body: { discount_amount: numeric }
+     *   body: { discount_amount: numeric, reason: string }
      */
     public function applyItemDiscount(Request $request, Invoice $invoice, \App\Models\InvoiceItem $item)
     {
@@ -294,17 +314,42 @@ class InvoiceController extends Controller
         }
 
         $data = $request->validate([
-            'discount_amount' => ['required', 'numeric', 'min:0'],
+            'discount_amount' => ['required', 'numeric', 'min:0.01'],
+            'reason' => ['required', 'string', 'max:500'],
         ]);
 
         try {
-            $this->billingService->applyDiscount($item, (float) $data['discount_amount']);
+            $this->billingService->applyDiscount($item, (float) $data['discount_amount'], $data['reason'], $request->user());
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
-            return back()->with('error', $e->getMessage());
+            abort(403, $e->getMessage());
         }
 
         return back()->with('success', 'Discount applied successfully.');
+    }
+
+    /**
+     * Remove a manual discount from an invoice line item.
+     */
+    public function removeItemDiscount(Request $request, Invoice $invoice, \App\Models\InvoiceItem $item)
+    {
+        if ($item->invoice_id !== $invoice->id) {
+            return back()->with('error', 'Item does not belong to this invoice.');
+        }
+
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        try {
+            $this->billingService->applyDiscount($item, 0.0, $data['reason'], $request->user());
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            abort(403, $e->getMessage());
+        }
+
+        return back()->with('success', 'Discount removed successfully.');
     }
 }

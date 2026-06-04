@@ -102,6 +102,11 @@ class Invoice extends Model
         return $this->hasMany(CreditNote::class);
     }
 
+    public function discountEvents()
+    {
+        return $this->hasMany(InvoiceDiscount::class);
+    }
+
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');

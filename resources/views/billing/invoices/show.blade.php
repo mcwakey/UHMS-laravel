@@ -6,6 +6,11 @@
     $invoiceClaim = $invoice->claim;
     $invoiceInsuranceProviderId = $invoice->visit?->visitInsurance?->insurance_provider_id;
     $canCreateInsuranceClaim = (float) $invoice->nhis_amount > 0 && ! $invoiceClaim;
+    $currentUser = auth()->user();
+    $canApplyDiscount = $currentUser?->can('billing.discount.apply') ?? false;
+    $canRemoveDiscount = $currentUser?->can('billing.discount.remove') ?? false;
+    $canViewDiscountHistory = $currentUser?->can('billing.discount.view') ?? false;
+    $canDiscountActions = $canApplyDiscount || $canRemoveDiscount;
 @endphp
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
@@ -163,9 +168,9 @@
                                 <th class="text-end">Paid</th>
                                 <th class="text-end">Balance</th>
                                 <th class="text-center">Status</th>
-                                @can('invoices.edit')
+                                @if($canDiscountActions)
                                 <th class="text-center" style="width:60px;">Actions</th>
-                                @endcan
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
@@ -184,7 +189,7 @@
                             @endphp
                             @if($currentGroup !== $groupKey)
                             <tr class="table-secondary">
-                                <th colspan="{{ auth()->user()->can('invoices.edit') ? 11 : 10 }}" class="small text-uppercase">
+                                <th colspan="{{ $canDiscountActions ? 11 : 10 }}" class="small text-uppercase">
                                     <i class="ti ti-folder me-1"></i>{{ $groupLabel }}
                                 </th>
                             </tr>
@@ -234,9 +239,10 @@
                                 <td class="text-center">
                                     <span class="badge bg-{{ $payColor }} text-uppercase">{{ str_replace('_',' ', $payStatus) }}</span>
                                 </td>
-                                @can('invoices.edit')
+                                @if($canDiscountActions)
                                 <td class="text-center">
                                     @if(! in_array($payStatus, ['paid','cancelled','voided','waived']))
+                                    @if($canApplyDiscount)
                                     <button type="button"
                                             class="btn btn-sm btn-outline-warning"
                                             title="Apply Discount"
@@ -250,8 +256,18 @@
                                         <i class="ti ti-discount-2"></i>
                                     </button>
                                     @endif
-                                </td>
-                                @endcan
+                                    @if($canRemoveDiscount && (float) $item->discount_amount > 0)
+                                     <x-confirm-form :action="route('admin.billing.invoices.items.discount.remove', [$invoice, $item])" method="DELETE"
+                                         button-label="" button-class="btn btn-sm btn-outline-danger ms-1" icon="ti-x"
+                                         confirm-title="Remove this discount?"
+                                         confirm-text="This will reverse the manual discount on this invoice item."
+                                         confirm-button="Yes, remove discount"
+                                         :require-reason="true"
+                                         reason-placeholder="Reason for removing this discount" />
+                                     @endif
+                                    @endif
+                                 </td>
+                                 @endif
                             </tr>
                             @endforeach
                         </tbody>
@@ -306,6 +322,47 @@
                         </div>
                     </div>
                 </div>
+
+                @if($canViewDiscountHistory)
+                <hr>
+                <h6 class="fw-bold mb-3"><i class="ti ti-discount-2 me-1"></i>Discount History</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Item</th>
+                                <th class="text-end">Old Discount</th>
+                                <th class="text-end">New Discount</th>
+                                <th>Risk</th>
+                                <th>Reason</th>
+                                <th>User</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($invoice->discountEvents->sortByDesc('performed_at') as $event)
+                            <tr>
+                                <td>{{ $event->performed_at?->format('d M Y H:i') }}</td>
+                                <td>{{ $event->invoiceItem->description ?? 'Invoice item' }}</td>
+                                <td class="text-end">&#8373;{{ number_format($event->old_discount_amount, 2) }}</td>
+                                <td class="text-end">&#8373;{{ number_format($event->new_discount_amount, 2) }}</td>
+                                <td>
+                                    <span class="badge bg-{{ $event->is_override ? 'danger' : 'warning' }}">
+                                        {{ $event->is_override ? 'Override' : 'Manual' }}
+                                    </span>
+                                </td>
+                                <td>{{ $event->reason }}</td>
+                                <td>{{ $event->performedBy->name ?? 'System' }}</td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-3">No discount history.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                @endif
 
                 <!-- Payment History -->
                 @if($invoice->payments->count() > 0)
@@ -482,7 +539,7 @@
                     <i class="ti ti-printer me-1"></i>Print Invoice
                 </a>
                 @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::PAID, \App\Enums\InvoiceStatus::CANCELLED]))
-                @can('invoices.edit')
+                @can('invoices.void')
                 <x-confirm-form :action="route('admin.billing.invoices.cancel', $invoice)" method="PATCH"
                     button-label="Cancel Invoice" button-class="btn btn-outline-danger w-100" icon="ti-x"
                     confirm-title="Cancel this invoice?" confirm-text="The invoice will be marked cancelled." confirm-button="Yes, cancel invoice" />
@@ -499,7 +556,7 @@
     </div>
 </div>
 
-@can('invoices.edit')
+@can('billing.discount.apply')
 <!-- Apply Discount Modal -->
 <div class="modal fade" id="discountModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
@@ -516,9 +573,12 @@
                     <div class="mb-3">
                         <label class="form-label">Discount Amount (GH&#8373;) <span class="text-danger">*</span></label>
                         <input type="number" name="discount_amount" id="discountAmountInput"
-                               class="form-control" step="0.01" min="0" required>
-                        <div class="form-text">Enter <strong>0</strong> to remove an existing discount.
-                            Must not exceed the line total.</div>
+                               class="form-control" step="0.01" min="0.01" required>
+                        <div class="form-text">Must not exceed the line total. Larger discounts require override permission.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason <span class="text-danger">*</span></label>
+                        <textarea name="reason" id="discountReasonInput" class="form-control" rows="3" maxlength="500" required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -550,6 +610,8 @@ $(function() {
             const input = document.getElementById('discountAmountInput');
             input.value = current;
             input.setAttribute('max', btn.getAttribute('data-line-total') || '');
+            const reason = document.getElementById('discountReasonInput');
+            if (reason) reason.value = '';
             setTimeout(() => input.focus(), 200);
         });
     }

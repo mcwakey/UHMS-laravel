@@ -214,7 +214,7 @@
                                     @endcan
                                     @endif
                                     @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::PAID, \App\Enums\InvoiceStatus::CANCELLED]))
-                                    @can('invoices.edit')
+                                    @can('invoices.void')
                                     <li>
                                         <x-confirm-form :action="route('admin.billing.invoices.cancel', $invoice)" method="PATCH"
                                             button-label="Cancel" button-class="dropdown-item text-danger" icon="ti-x"

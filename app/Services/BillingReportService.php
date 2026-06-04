@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
+use App\Models\InvoiceDiscount;
 use App\Models\Payment;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -184,6 +185,65 @@ class BillingReportService
             'recent_payments' => $recentPayments,
             'top_debtors' => $topDebtors,
             'trend' => $trend,
+        ];
+    }
+
+    /**
+     * Manual discount event report.
+     */
+    public function discounts(array $filters = []): array
+    {
+        $query = InvoiceDiscount::query()
+            ->with([
+                'invoice:id,invoice_number,patient_id',
+                'invoice.patient:id,first_name,last_name,patient_number',
+                'invoiceItem:id,description',
+                'performedBy:id,name',
+            ]);
+
+        if (! empty($filters['date_from'])) {
+            $query->whereDate('performed_at', '>=', $filters['date_from']);
+        }
+        if (! empty($filters['date_to'])) {
+            $query->whereDate('performed_at', '<=', $filters['date_to']);
+        }
+        if (($filters['override'] ?? '') !== '') {
+            $query->where('is_override', (bool) $filters['override']);
+        }
+
+        $summaryQuery = clone $query;
+        $events = $query->latest('performed_at')->paginate(30)->withQueryString();
+
+        return [
+            'summary' => [
+                'total_events' => (int) (clone $summaryQuery)->count(),
+                'total_discount_added' => round((float) (clone $summaryQuery)
+                    ->whereColumn('new_discount_amount', '>', 'old_discount_amount')
+                    ->selectRaw('COALESCE(SUM(new_discount_amount - old_discount_amount), 0) AS total')
+                    ->value('total'), 2),
+                'total_discount_removed' => round((float) (clone $summaryQuery)
+                    ->whereColumn('old_discount_amount', '>', 'new_discount_amount')
+                    ->selectRaw('COALESCE(SUM(old_discount_amount - new_discount_amount), 0) AS total')
+                    ->value('total'), 2),
+                'override_events' => (int) (clone $summaryQuery)->where('is_override', true)->count(),
+            ],
+            'events' => $events->through(fn (InvoiceDiscount $event) => [
+                'id' => $event->id,
+                'performed_at' => optional($event->performed_at)->format('d M Y H:i'),
+                'invoice_number' => $event->invoice?->invoice_number,
+                'invoice_url' => $event->invoice ? route('admin.billing.invoices.show', $event->invoice_id) : null,
+                'patient_name' => $event->invoice?->patient
+                    ? trim($event->invoice->patient->first_name . ' ' . $event->invoice->patient->last_name)
+                    : 'N/A',
+                'patient_number' => $event->invoice?->patient?->patient_number,
+                'item' => $event->invoiceItem?->description,
+                'action' => $event->action,
+                'old_discount_amount' => (float) $event->old_discount_amount,
+                'new_discount_amount' => (float) $event->new_discount_amount,
+                'is_override' => (bool) $event->is_override,
+                'reason' => $event->reason,
+                'performed_by' => $event->performedBy?->name ?? 'System',
+            ]),
         ];
     }
 }

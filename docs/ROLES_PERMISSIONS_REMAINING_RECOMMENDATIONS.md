@@ -1,44 +1,70 @@
-# Roles, Permissions & Modules — Remaining Recommendations
+# Roles, Permissions & Modules - Remaining Recommendations
 
-_Last updated: November 2025_
+_Last updated: 2026-06-03_
 
 This document captures **future work** that was deliberately excluded from the current implementation slice (see [SOLUTION_REPORT](ROLES_PERMISSIONS_SOLUTION_REPORT.md)). Each item has a clear scope and a rough effort estimate so the team can prioritise.
 
 ---
 
-## R1 — Tighten remaining admin index routes
+## June 2026 Burn-Down Update
 
-**Status:** advisory.
-**Severity:** low (sidebar already hides them).
+The full-system permission burn-down closed the confirmed billing discount gap and several adjacent admin gaps. See [PERMISSION_GAP_BURN_DOWN_REPORT](PERMISSION_GAP_BURN_DOWN_REPORT.md).
 
-A handful of admin index routes still gate only on `auth` rather than on `can:`. The `permissions:audit` command lists them on every run — the current set includes:
+Current `php artisan permissions:audit --json` state:
 
-- `admin.visits.index`
-- `admin.appointments.index`
-- `admin.wards.index`
-- `admin.admissions.index`
-- `admin.claims.index`
-- `admin.suppliers.index`
+- Route permissions missing in DB: 0
+- Admin mutation routes without `can:` or `role:` middleware: 0
+- Remaining duplicate-name candidates: 8 pairs
 
-Add the corresponding `can:<perm>.view` middleware so direct URL access is also blocked, not just sidebar discovery.
+Added or tightened:
 
-**Effort:** ~30 minutes.
+- `billing.discount.view/apply/approve/remove/override_limit/report`
+- `modules.enable`
+- `modules.disable`
+- `permissions.assign_critical`
+- Notification mutation route guards
+- User activation/deactivation guard
+- Critical role/direct-permission assignment lock
 
 ---
 
-## R2 — Resolve duplicate permission names
+## R1 - Add Read-Route Strictness
 
-The seeder contains a few near-duplicates that diverged across feature work:
+**Status:** advisory.
+**Severity:** low/medium.
+
+The current `permissions:audit` strictness focuses on mutation routes and route permissions referenced in code. Add an optional read-route mode for sensitive index/detail GET routes so direct URL access is checked as strongly as mutation access.
+
+Suggested command option:
+
+```bash
+php artisan permissions:audit --include-read-routes
+```
+
+Flag auth-only GET routes in sensitive admin modules, especially billing, patients, clinical records, logs, reports, settings, roles, users, stock, and blood bank.
+
+**Effort:** ~1-2 hours.
+
+---
+
+## R2 - Resolve Duplicate Permission Names
+
+The audit still reports these possible duplicate pairs:
 
 | Pair | Recommendation |
 |---|---|
-| `product.link_department` ↔ `product.link_departments` | Keep the plural; alias the singular for one release; remove. |
-| `stock.location.manage` ↔ `stock_location.manage` | Keep the dot-form (`stock.location.manage`); migrate users via a one-time `php artisan` script. |
-| `procedure.catalogue.view` ↔ `procedure_catalogue.view` | Keep the dot-form; migrate. |
+| `consultation.create` / `consultations.create` | Pick one canonical consultation namespace, alias for one release, then migrate role assignments. |
+| `patients.create` / `payments.create` | Likely false positive by edit distance; keep documented unless audit scoring is refined. |
+| `patients.view` / `payments.view` | Likely false positive by edit distance; keep documented unless audit scoring is refined. |
+| `procedure.reschedule` / `procedure.schedule` | Keep both if they map to distinct workflow actions; otherwise migrate to schedule plus workflow state. |
+| `procedure.view` / `procedures.view` | Pick singular or plural procedure namespace and alias the other. |
+| `reports.consultation` / `reports.consultations` | Pick plural to match existing report grouping, then migrate. |
+| `reports.diagnoses` / `reports.diagnosis` | Pick one report namespace, then migrate. |
+| `theatre.cases.reschedule` / `theatre.cases.schedule` | Keep both if reschedule is a distinct high-risk workflow action; otherwise migrate to schedule plus workflow state. |
 
 The `permissions:audit` command surfaces these on every run.
 
-**Effort:** ~1–2 hours including a data migration that copies role assignments from old to new and deletes the orphan.
+**Effort:** ~2-4 hours including a data migration that copies role assignments from old to new and preserves aliases for one release.
 
 ---
 

@@ -52,7 +52,9 @@ class PermissionsAuditCommand extends Command
             }
 
             // Mutation routes under /admin/* should have a can: middleware
-            if ($isMutation && str_starts_with($uri, 'admin/')) {
+            $isSelfServiceMutation = str_starts_with($uri, 'admin/profile');
+
+            if ($isMutation && str_starts_with($uri, 'admin/') && ! $isSelfServiceMutation) {
                 $totalMutation++;
                 $hasCan = false;
                 foreach ($mwList as $mw) {

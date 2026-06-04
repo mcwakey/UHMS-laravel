@@ -142,6 +142,12 @@ class RoleSeeder extends Seeder
             'billing.approve_credit_balance',
             'billing.waive_invoice_item',
             'billing.waive_invoice',
+            'billing.discount.view',
+            'billing.discount.apply',
+            'billing.discount.approve',
+            'billing.discount.remove',
+            'billing.discount.override_limit',
+            'billing.discount.report',
             'billing.complete_visit_with_balance',
             'billing.discharge_clearance.override',
             'credit_notes.view',
@@ -486,6 +492,8 @@ class RoleSeeder extends Seeder
 
             // ── Modules ───────────────────────────────────────────────────
             'modules.manage',
+            'modules.enable',
+            'modules.disable',
             'modules.override_disabled',
 
             // ── Roles & permissions admin ────────────────────────────────
@@ -495,6 +503,7 @@ class RoleSeeder extends Seeder
             'roles.delete',
             'permissions.view',
             'permissions.assign',
+            'permissions.assign_critical',
 
             // ── User account admin (extra) ───────────────────────────────
             'users.disable',
@@ -785,6 +794,7 @@ class RoleSeeder extends Seeder
             'patients.view',
             'visits.view', 'visits.preview',
             'invoices.view',
+            'billing.discount.view', 'billing.discount.apply',
             'payments.view', 'payments.create',
             'accounts.cashier',
             'notifications.view',
@@ -872,6 +882,7 @@ class RoleSeeder extends Seeder
             'patients.view',
             'visits.view',
             'invoices.view', 'invoices.create', 'invoices.edit', 'invoices.void',
+            'billing.discount.view', 'billing.discount.apply', 'billing.discount.approve', 'billing.discount.report',
             'payments.view', 'payments.create', 'payments.void', 'payments.refund',
             'credit_notes.view', 'credit_notes.create', 'credit_notes.write_off',
             'sponsors.manage',

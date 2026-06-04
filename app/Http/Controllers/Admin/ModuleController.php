@@ -36,6 +36,8 @@ class ModuleController extends Controller
         }
 
         if ($module->is_enabled) {
+            abort_unless($request->user()?->can('modules.disable'), 403);
+
             // About to disable — check for enabled dependents
             $dependents = Module::where('depends_on', $module->slug)
                 ->where('is_enabled', true)
@@ -52,6 +54,8 @@ class ModuleController extends Controller
             $this->modules->disable($module->slug);
             $msg = "Module '{$module->name}' disabled.";
         } else {
+            abort_unless($request->user()?->can('modules.enable'), 403);
+
             // About to enable — check parent dependency is enabled
             if ($module->depends_on) {
                 $parent = Module::where('slug', $module->depends_on)->first();

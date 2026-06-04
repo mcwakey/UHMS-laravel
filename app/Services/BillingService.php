@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Enums\InvoiceStatus;
 use App\Enums\LogModule;
+use App\Enums\LogSeverity;
 use App\Models\Invoice;
+use App\Models\InvoiceDiscount;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
 use App\Models\Product;
@@ -203,19 +205,34 @@ class BillingService
      * @throws \InvalidArgumentException on validation failure
      * @throws AuthorizationException when user lacks permission
      */
-    public function applyDiscount(InvoiceItem $item, float $discountAmount, ?User $user = null): InvoiceItem
+    public function applyDiscount(InvoiceItem $item, float $discountAmount, string $reason, ?User $user = null): InvoiceItem
     {
         $user ??= Auth::user();
 
-        // Authorization: caller must have invoices.edit (or invoices.discount) permission.
-        if ($user && method_exists($user, 'can')) {
-            if (! ($user->can('invoices.discount') || $user->can('invoices.edit'))) {
-                throw new AuthorizationException('Not authorized to apply discounts.');
-            }
-        }
-
         if ($discountAmount < 0) {
             throw new \InvalidArgumentException('Discount amount must be >= 0.');
+        }
+
+        $reason = trim($reason);
+        if ($reason === '') {
+            throw new \InvalidArgumentException('A reason is required for discount changes.');
+        }
+
+        if (in_array((string) $item->payment_status, ['paid', 'cancelled', 'voided', 'waived'], true)) {
+            throw new \InvalidArgumentException('Discounts cannot be changed on paid, cancelled, voided, or waived items.');
+        }
+
+        $oldDiscount = round((float) $item->discount_amount, 2);
+        $isRemoval = $discountAmount <= 0.0 && $oldDiscount > 0.0;
+
+        if ($user && method_exists($user, 'can')) {
+            if ($isRemoval) {
+                if (! $user->can('billing.discount.remove')) {
+                    throw new AuthorizationException('Not authorized to remove discounts.');
+                }
+            } elseif (! ($user->can('billing.discount.apply') || $user->can('invoices.discount'))) {
+                throw new AuthorizationException('Not authorized to apply discounts.');
+            }
         }
 
         $lineTotal = round((float) $item->selected_price * (int) $item->quantity, 2);
@@ -223,7 +240,27 @@ class BillingService
             throw new \InvalidArgumentException("Discount (₵{$discountAmount}) cannot exceed line total (₵{$lineTotal}).");
         }
 
-        return DB::transaction(function () use ($item, $discountAmount, $lineTotal, $user) {
+        if (! $isRemoval && $discountAmount <= 0.0) {
+            throw new \InvalidArgumentException('Discount amount must be greater than 0.');
+        }
+
+        $allowedPercent = (float) config('billing.discount.max_without_override_percent', 10);
+        $allowedAmount = round($lineTotal * max(0.0, $allowedPercent) / 100, 2);
+        $isOverride = ! $isRemoval && $discountAmount > $allowedAmount + 0.001;
+        if ($isOverride && $user && method_exists($user, 'can') && ! $user->can('billing.discount.override_limit')) {
+            throw new AuthorizationException(
+                "Discount exceeds the configured {$allowedPercent}% limit and requires override permission."
+            );
+        }
+
+        return DB::transaction(function () use ($item, $discountAmount, $lineTotal, $user, $reason, $isRemoval, $isOverride) {
+            $item->refresh();
+            $oldValues = [
+                'discount_amount' => round((float) $item->discount_amount, 2),
+                'patient_payable' => round((float) $item->patient_payable, 2),
+                'balance' => round((float) $item->balance, 2),
+            ];
+
             $paid = (float) $item->paid_amount;
             $patientPayable = max(0.0, round($lineTotal - $discountAmount, 2));
             $balance = max(0.0, round($patientPayable - $paid, 2));
@@ -242,24 +279,55 @@ class BillingService
                 'payment_status' => $status,
             ])->save();
 
+            InvoiceDiscount::create([
+                'invoice_id' => $item->invoice_id,
+                'invoice_item_id' => $item->id,
+                'action' => $isRemoval ? InvoiceDiscount::ACTION_REMOVED : InvoiceDiscount::ACTION_APPLIED,
+                'line_total' => $lineTotal,
+                'old_discount_amount' => $oldValues['discount_amount'],
+                'new_discount_amount' => round($discountAmount, 2),
+                'old_patient_payable' => $oldValues['patient_payable'],
+                'new_patient_payable' => $patientPayable,
+                'old_balance' => $oldValues['balance'],
+                'new_balance' => $balance,
+                'is_override' => $isOverride,
+                'reason' => $reason,
+                'performed_by' => $user?->id,
+                'performed_at' => now(),
+            ]);
+
             Log::info('Invoice item discount applied', [
                 'invoice_item_id' => $item->id,
                 'invoice_id' => $item->invoice_id,
                 'amount' => $discountAmount,
                 'applied_by' => $user?->id,
+                'is_override' => $isOverride,
             ]);
 
-            $this->logger?->logCorrection(
-                $item,
+            $this->logger?->log(
                 LogModule::BILLING,
-                ['discount_amount' => (float) $item->getOriginal('discount_amount')],
-                ['discount_amount' => round($discountAmount, 2)],
-                'Discount applied to invoice item',
+                $isRemoval ? 'DISCOUNT_REMOVED' : ($isOverride ? 'DISCOUNT_OVERRIDE_APPLIED' : 'DISCOUNT_APPLIED'),
                 [
+                    'old_values' => $oldValues,
+                    'new_values' => [
+                        'discount_amount' => round($discountAmount, 2),
+                        'patient_payable' => $patientPayable,
+                        'balance' => $balance,
+                    ],
+                    'reason' => $reason,
+                    'severity' => $isOverride || $isRemoval ? LogSeverity::CRITICAL : LogSeverity::WARNING,
                     'invoice_id' => $item->invoice_id,
+                    'invoice_item_id' => $item->id,
                     'patient_id' => $item->patient_id,
-                    'metadata' => ['amount' => $discountAmount],
-                ]
+                    'visit_id' => $item->visit_id,
+                    'metadata' => [
+                        'line_total' => $lineTotal,
+                        'amount' => round($discountAmount, 2),
+                        'is_override' => $isOverride,
+                    ],
+                ],
+                $item,
+                $isRemoval ? 'Discount removed from invoice item' : 'Discount applied to invoice item'
             );
 
             // Refresh invoice header totals + status.
@@ -433,6 +501,9 @@ class BillingService
 
             $taxAmount = $data['tax_amount'] ?? 0;
             $discountAmount = $data['discount_amount'] ?? 0;
+            if ((float) $discountAmount > 0) {
+                throw new \RuntimeException('Manual header discounts are not allowed. Apply item discounts with a reason.');
+            }
             $totalAmount = $subtotal + $taxAmount - $discountAmount;
             $balance = $totalAmount - $insuranceAmount;
 

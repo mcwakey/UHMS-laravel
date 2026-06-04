@@ -888,6 +888,14 @@ class SidebarMenuBuilder
                         'module' => 'billing',
                     ],
                     [
+                        'label' => 'Discount Report',
+                        'icon' => 'ti ti-discount-2',
+                        'route' => 'admin.billing.reports.discounts',
+                        'active_patterns' => ['admin.billing.reports.discounts'],
+                        'permission' => 'billing.discount.report',
+                        'module' => 'billing',
+                    ],
+                    [
                         'label' => 'Patient Statements',
                         'icon' => 'ti ti-file-text',
                         'route' => 'admin.billing.statements.index',

@@ -112,7 +112,7 @@
                                         </a>
                                     </li>
                                     @endcan
-                                    @can('users.edit')
+                                    @can('users.disable')
                                     <li>
                                         <form method="POST" action="{{ route('admin.users.toggle-status', $user) }}">
                                             @csrf

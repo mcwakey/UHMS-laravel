@@ -179,7 +179,7 @@
                                 <input type="number" name="tax_amount" class="form-control form-control-sm text-end" id="taxInput" value="0" step="0.01" min="0" style="max-width:150px;margin-left:auto;">
                             </td>
                         </tr>
-                        <tr>
+                        <tr class="d-none">
                             <td class="fw-medium">Discount (&#8373;):</td>
                             <td class="text-end">
                                 <input type="number" name="discount_amount" class="form-control form-control-sm text-end" id="discountInput" value="0" step="0.01" min="0" style="max-width:150px;margin-left:auto;">

@@ -161,6 +161,11 @@ class InvoiceItem extends Model
         return $this->hasMany(PaymentAllocation::class);
     }
 
+    public function discountEvents()
+    {
+        return $this->hasMany(InvoiceDiscount::class);
+    }
+
     /**
      * Alias of allocations() to match spec naming.
      */

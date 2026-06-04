@@ -62,6 +62,11 @@ class UserPermissionController extends Controller
         ]);
 
         $names = $validated['permissions'] ?? [];
+        $this->authorizeCriticalPermissionChange(
+            $request,
+            $user->permissions()->pluck('name')->all(),
+            $names
+        );
 
         // Sync only direct permissions (NOT role-inherited ones).
         $user->syncPermissions($names);
@@ -82,5 +87,30 @@ class UserPermissionController extends Controller
 
         return redirect()->route('admin.users.permissions.edit', $user)
             ->with('success', 'Direct permissions updated.');
+    }
+
+    private function authorizeCriticalPermissionChange(Request $request, array $current, array $requested): void
+    {
+        $criticalCurrent = $this->criticalPermissionNames($current);
+        $criticalRequested = $this->criticalPermissionNames($requested);
+
+        sort($criticalCurrent);
+        sort($criticalRequested);
+
+        if ($criticalCurrent !== $criticalRequested) {
+            abort_unless($request->user()?->can('permissions.assign_critical'), 403);
+        }
+    }
+
+    /**
+     * @param  array<int, string>  $permissions
+     * @return array<int, string>
+     */
+    private function criticalPermissionNames(array $permissions): array
+    {
+        return array_values(array_filter(
+            array_unique($permissions),
+            fn (string $permission) => PermissionMeta::risk($permission) === 'CRITICAL'
+        ));
     }
 }

@@ -62,6 +62,19 @@ class BillingReportController extends Controller
         return $pdf->download('ar-aging-' . now()->format('Ymd') . '.pdf');
     }
 
+    public function discounts(Request $request)
+    {
+        $filters = $request->only(['date_from', 'date_to', 'override']);
+
+        return Inertia::render('Billing/Reports/Discounts', [
+            'report' => $this->reportService->discounts($filters),
+            'filters' => $filters,
+            'routes' => [
+                'discounts' => route('admin.billing.reports.discounts'),
+            ],
+        ]);
+    }
+
     public function statements(Request $request)
     {
         $patients = [];
