@@ -80,6 +80,9 @@ class RoleSeeder extends Seeder
             'consultation.tasks.create',
             'consultation.tasks.view',
             'consultation.tasks.update',
+            'consultation.followup.create',
+            'consultation.followup.update',
+            'consultation.followup.cancel',
             'medical_patterns.view',
             'medical_patterns.create',
             'medical_patterns.update',
@@ -185,6 +188,8 @@ class RoleSeeder extends Seeder
             'appointments.view',
             'appointments.create',
             'appointments.edit',
+            'appointments.update',
+            'appointments.cancel',
             'appointments.delete',
 
             // ── Claims & Insurance ────────────────────────────────────────
@@ -543,6 +548,7 @@ class RoleSeeder extends Seeder
             'consultation.hopc.create', 'consultation.hopc.view', 'consultation.hopc.edit',
             'consultation.examination.create', 'consultation.examination.view',
             'consultation.tasks.create', 'consultation.tasks.view', 'consultation.tasks.update',
+            'consultation.followup.create', 'consultation.followup.update', 'consultation.followup.cancel',
             'medical_patterns.view', 'medical_patterns.create', 'medical_patterns.update', 'medical_patterns.apply',
             'vitals.view',
             'prescriptions.view', 'prescriptions.create', 'prescriptions.edit',
@@ -562,7 +568,7 @@ class RoleSeeder extends Seeder
             'lab.results.view',
             'queue.view',
             'ward.view', 'ward.admit', 'ward.discharge',
-            'appointments.view', 'appointments.create', 'appointments.edit',
+            'appointments.view', 'appointments.create', 'appointments.edit', 'appointments.update', 'appointments.cancel',
             'notifications.view',
             'procedures.view', 'procedures.create',
             'procedure.request', 'procedure.view', 'procedure.view_report',
@@ -601,6 +607,7 @@ class RoleSeeder extends Seeder
             'consultation.refer', 'consultation.prescribe',
             'consultation.request_lab', 'consultation.request_procedure',
             'consultation.view_results', 'consultation.view_patient',
+            'consultation.followup.create',
             'vitals.view',
             'prescriptions.view', 'prescriptions.create',
             'lab.requests.view', 'lab.requests.create',
@@ -783,7 +790,7 @@ class RoleSeeder extends Seeder
             'visits.view', 'visits.create', 'visits.edit', 'visits.transition', 'visits.preview',
             'queue.view', 'queue.manage',
             'invoices.view',
-            'appointments.view', 'appointments.create', 'appointments.edit',
+            'appointments.view', 'appointments.create', 'appointments.edit', 'appointments.update', 'appointments.cancel',
             'notifications.view',
         ]);
 

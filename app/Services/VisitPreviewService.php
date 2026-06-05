@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AppointmentStatus;
 use App\Models\ServiceRendering;
 use App\Models\Visit;
 use Illuminate\Support\Carbon;
@@ -136,6 +137,11 @@ class VisitPreviewService
             'consultationRoutes.emergencySession',
             'consultationRoutes.routedBy',
             'consultationRoutes.logs.performedBy',
+            'appointments.department',
+            'appointments.doctor',
+            'appointments.services',
+            'appointments.createdBy',
+            'appointments.consultationRoute.department',
             'labRequests.requestedBy',
             'labRequests.department',
             'labRequests.items',
@@ -494,6 +500,46 @@ class VisitPreviewService
                     ])
                 );
             }
+        }
+
+        foreach ($visit->appointments ?? [] as $appointment) {
+            $appointmentDate = $appointment->appointment_date?->format('d M Y');
+            $appointmentTime = $appointment->start_time ? Carbon::parse($appointment->start_time)->format('h:i A') : null;
+            $departmentName = $appointment->department?->name ?? $appointment->consultationRoute?->department?->name;
+            $serviceList = $appointment->services?->map(fn ($service) => $service->name)->filter()->implode(', ');
+            $status = $appointment->status;
+            $title = $status === AppointmentStatus::CANCELLED
+                ? 'Next Appointment Cancelled'
+                : 'Next Appointment Set';
+            $badgeClass = match ($status) {
+                AppointmentStatus::CANCELLED => 'bg-danger',
+                AppointmentStatus::COMPLETED => 'bg-success',
+                AppointmentStatus::NO_SHOW => 'bg-dark',
+                default => 'bg-info',
+            };
+
+            $items[] = $this->item(
+                $appointment->created_at,
+                $title,
+                'Next appointment set: '.collect([$appointmentDate, $appointmentTime, $departmentName])->filter()->implode(', '),
+                optional($appointment->createdBy)->full_name,
+                $departmentName,
+                'FOLLOW-UP',
+                $badgeClass,
+                'appointment',
+                $appointment->id,
+                array_filter([
+                    'Appointment No.' => $appointment->appointment_number,
+                    'Date' => $appointmentDate,
+                    'Time' => $appointmentTime,
+                    'Department' => $departmentName,
+                    'Service' => $serviceList,
+                    'Doctor' => $appointment->doctor?->full_name ? 'Dr. '.$appointment->doctor->full_name : null,
+                    'Priority' => $appointment->priority ? $this->formatStatus($appointment->priority) : null,
+                    'Status' => $status?->label(),
+                    'Reason' => $appointment->reason,
+                ])
+            );
         }
 
         // 6. Medical records / consultation sessions
@@ -1100,6 +1146,28 @@ class VisitPreviewService
         $chiefComplaint = $visit->chief_complaint
             ?: $complaints->first()?->complaint
             ?: $complaints->first()?->description;
+        $nextAppointment = $visit->appointments
+            ->filter(fn ($appointment) => ! in_array($appointment->status, [
+                AppointmentStatus::COMPLETED,
+                AppointmentStatus::CANCELLED,
+                AppointmentStatus::NO_SHOW,
+            ], true))
+            ->sortBy(fn ($appointment) => trim(($appointment->appointment_date?->format('Y-m-d') ?? '9999-12-31').' '.($appointment->start_time ?: '23:59')))
+            ->first();
+        $nextAppointmentSummary = null;
+
+        if ($nextAppointment) {
+            $nextAppointmentSummary = [
+                'date' => $nextAppointment->appointment_date?->format('d M Y'),
+                'time' => $nextAppointment->start_time ? Carbon::parse($nextAppointment->start_time)->format('h:i A') : null,
+                'department' => $nextAppointment->department?->name,
+                'service' => $nextAppointment->services?->map(fn ($service) => $service->name)->filter()->implode(', '),
+                'doctor' => $nextAppointment->doctor?->full_name ? 'Dr. '.$nextAppointment->doctor->full_name : null,
+                'reason' => $nextAppointment->reason,
+                'priority' => $nextAppointment->priority ? $this->formatStatus($nextAppointment->priority) : null,
+                'status' => $nextAppointment->status?->label(),
+            ];
+        }
 
         return [
             'chief_complaint' => $chiefComplaint ?: '—',
@@ -1126,6 +1194,7 @@ class VisitPreviewService
                 : ($visit->invoices->last()?->status?->label() ?? 'Unknown'),
             'total_billed' => $visit->invoices->sum('total_amount'),
             'total_paid' => $visit->invoices->sum('amount_paid'),
+            'next_appointment' => $nextAppointmentSummary,
         ];
     }
 

@@ -682,6 +682,11 @@ Route::middleware('auth')->group(function () {
             Route::post('consultations/{visit}/routes/{route}/activate', [ConsultationController::class, 'activateRoute'])->name('consultations.routes.activate')->middleware('can:consultations.create');
             Route::post('consultations/{visit}/routes/{route}/complete', [ConsultationController::class, 'completeRoute'])->name('consultations.routes.complete')->middleware('can:consultations.create');
             Route::post('consultations/{visit}/routes/{route}/cancel', [ConsultationController::class, 'cancelRoute'])->name('consultations.routes.cancel')->middleware('can:consultations.create');
+            Route::post('consultations/{visit}/routes/{route}/follow-up-appointments', [ConsultationController::class, 'storeFollowUpAppointment'])->name('consultations.routes.follow-up.store')->middleware('can:consultation.followup.create');
+            Route::put('consultations/{visit}/routes/{route}/follow-up-appointments/{appointment}', [ConsultationController::class, 'updateFollowUpAppointment'])->name('consultations.routes.follow-up.update')->middleware('can:consultation.followup.update');
+            Route::post('consultations/{visit}/routes/{route}/follow-up-appointments/{appointment}/cancel', [ConsultationController::class, 'cancelFollowUpAppointment'])->name('consultations.routes.follow-up.cancel')->middleware('can:consultation.followup.cancel');
+            Route::post('consultations/{visit}/routes/{route}/next-patient/open', [ConsultationController::class, 'openNextPatient'])->name('consultations.routes.next-patient.open')->middleware('can:consultations.create');
+            Route::post('consultations/{visit}/routes/{route}/next-patient/complete-and-open', [ConsultationController::class, 'completeAndOpenNextPatient'])->name('consultations.routes.next-patient.complete-open')->middleware('can:consultations.create');
 
             // Referral to another department
             Route::post('consultations/{visit}/refer', [ConsultationController::class, 'refer'])->name('consultations.refer')->middleware('can:consultations.create');

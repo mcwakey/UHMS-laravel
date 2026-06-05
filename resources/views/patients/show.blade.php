@@ -315,6 +315,50 @@
 <div class="tab-content">
     <!-- Visit History Tab -->
     <div class="tab-pane show active" id="visits">
+        @if(($upcomingAppointments ?? collect())->isNotEmpty())
+        <div class="card border-info mb-3">
+            <div class="card-header bg-info bg-opacity-10">
+                <h6 class="fw-bold mb-0 text-info"><i class="ti ti-calendar-plus me-1"></i>Upcoming Follow-up Appointments</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Department</th>
+                                <th>Doctor</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($upcomingAppointments as $appointment)
+                            <tr>
+                                <td>
+                                    <span class="fw-medium">{{ $appointment->appointment_date?->format('d M Y') ?? '-' }}</span>
+                                    @if($appointment->start_time)
+                                        <small class="text-muted d-block">{{ \Carbon\Carbon::parse($appointment->start_time)->format('h:i A') }}</small>
+                                    @endif
+                                </td>
+                                <td>
+                                    {{ $appointment->department?->name ?? '-' }}
+                                    @if($appointment->services->isNotEmpty())
+                                        <small class="text-muted d-block">{{ $appointment->services->pluck('name')->implode(', ') }}</small>
+                                    @endif
+                                </td>
+                                <td>{{ $appointment->doctor?->full_name ? 'Dr. '.$appointment->doctor->full_name : '-' }}</td>
+                                <td>{{ Str::limit($appointment->reason ?: $appointment->notes ?: '-', 80) }}</td>
+                                <td><span class="badge bg-{{ $appointment->status?->color() ?? 'secondary' }}">{{ $appointment->status?->label() ?? '-' }}</span></td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        @endif
+
         {{-- Upcoming Scheduled Visits --}}
         @if($upcomingVisits->isNotEmpty())
         <div class="card border-primary mb-3">

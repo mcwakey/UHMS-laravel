@@ -35,6 +35,8 @@ class Appointment extends Model
         'visit_insurance_id',
         'status',
         'visit_id',
+        'consultation_route_id',
+        'medical_record_id',
         'created_by',
         'cancelled_by',
         'cancellation_reason',
@@ -74,6 +76,21 @@ class Appointment extends Model
     public function visit(): BelongsTo
     {
         return $this->belongsTo(Visit::class);
+    }
+
+    public function consultationRoute(): BelongsTo
+    {
+        return $this->belongsTo(VisitConsultationRoute::class, 'consultation_route_id');
+    }
+
+    public function medicalRecord(): BelongsTo
+    {
+        return $this->belongsTo(MedicalRecord::class, 'medical_record_id');
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function createdByUser(): BelongsTo

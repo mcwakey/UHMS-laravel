@@ -186,6 +186,7 @@ class PermissionMeta
             'consultation' => 'consultation workspace',
             'consultation.entries' => 'consultation entries',
             'consultation.examination' => 'clinical examination notes',
+            'consultation.followup' => 'consultation follow-up appointments',
             'consultation.hopc' => 'history of presenting complaint notes',
             'consultation.routes' => 'consultation route workflows',
             'consultation.sessions' => 'consultation sessions',

@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Doctor;
 
 use App\Enums\DepartmentType;
+use App\Enums\AppointmentStatus;
+use App\Enums\Priority;
 use App\Enums\ProcedureStatus;
 use App\Enums\ResultType;
+use App\Enums\ServiceType;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePrescriptionRequest;
+use App\Models\Appointment;
 use App\Models\Complaint;
 use App\Models\Department;
 use App\Models\Diagnosis;
@@ -24,6 +28,7 @@ use App\Models\PhysicalExamination;
 use App\Models\Prescription;
 use App\Models\Procedure;
 use App\Models\ProcedureRequest;
+use App\Models\QueueEntry;
 use App\Models\ServiceCatalog;
 use App\Models\Treatment;
 use App\Models\User;
@@ -32,6 +37,8 @@ use App\Models\VisitConsultationRoute;
 use App\Services\ClinicalService;
 use App\Services\ComplaintSearchService;
 use App\Services\ConsultationRouteService;
+use App\Services\ConsultationFollowUpService;
+use App\Services\ConsultationNextPatientService;
 use App\Services\ConsultationService;
 use App\Services\ConsultationSessionService;
 use App\Services\ConsultationSummaryService;
@@ -197,7 +204,28 @@ class ConsultationController extends Controller
             $filters['date_range'] = $filters['date_from'].' to '.$filters['date_to'];
         }
 
+        $routeTable = (new VisitConsultationRoute)->getTable();
+        $queueNumberSubquery = QueueEntry::query()
+            ->select('queue_number')
+            ->whereColumn('visit_id', "{$routeTable}.visit_id")
+            ->whereColumn('department_id', "{$routeTable}.department_id")
+            ->where('status', 'waiting')
+            ->orderBy('queue_number')
+            ->limit(1);
+        $queueCreatedSubquery = QueueEntry::query()
+            ->select('created_at')
+            ->whereColumn('visit_id', "{$routeTable}.visit_id")
+            ->whereColumn('department_id', "{$routeTable}.department_id")
+            ->where('status', 'waiting')
+            ->orderBy('queue_number')
+            ->limit(1);
+
         $query = VisitConsultationRoute::query()
+            ->select("{$routeTable}.*")
+            ->addSelect([
+                'consultation_queue_number' => $queueNumberSubquery,
+                'consultation_queue_created_at' => $queueCreatedSubquery,
+            ])
             ->with([
                 'visit.patient',
                 'visit.medicalRecord',
@@ -278,7 +306,11 @@ class ConsultationController extends Controller
         }
 
         $routes = $query
-            ->latest()
+            ->orderByRaw("CASE {$routeTable}.status WHEN 'PENDING' THEN 0 WHEN 'ACTIVE' THEN 1 WHEN 'PAUSED' THEN 2 ELSE 3 END")
+            ->orderByRaw('consultation_queue_number IS NULL')
+            ->orderBy('consultation_queue_number')
+            ->orderBy('consultation_queue_created_at')
+            ->orderBy("{$routeTable}.created_at")
             ->paginate(15);
 
         return view('consultations.index', compact('routes', 'filters'));
@@ -379,6 +411,28 @@ class ConsultationController extends Controller
             ->where('type', DepartmentType::CONSULTATION->value)
             ->orderBy('name')
             ->get(['id', 'name', 'type']);
+        $consultationServices = ServiceCatalog::active()
+            ->with('department')
+            ->where(function ($query) {
+                $query->where('category', ServiceType::CONSULTATION->value)
+                    ->orWhereHas('department', fn ($departmentQuery) => $departmentQuery->where('type', DepartmentType::CONSULTATION->value));
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'department_id', 'category']);
+        $followUpAppointment = $selectedRoute
+            ? Appointment::with(['department', 'doctor', 'services', 'createdByUser'])
+                ->where('consultation_route_id', $selectedRoute->id)
+                ->whereNotIn('status', [
+                    AppointmentStatus::CANCELLED->value,
+                    AppointmentStatus::NO_SHOW->value,
+                ])
+                ->orderByDesc('appointment_date')
+                ->orderByDesc('id')
+                ->first()
+            : null;
+        $nextPatientInLine = ($selectedRoute && Auth::user()?->can('consultations.create'))
+            ? app(ConsultationNextPatientService::class)->preview($selectedRoute, Auth::user())
+            : null;
 
         return view('consultations.show', [
             'visit' => $data['visit'],
@@ -399,6 +453,9 @@ class ConsultationController extends Controller
             'procedureRequests' => $procedureRequests,
             'procedureDepartments' => $procedureDepartments,
             'consultationDepartments' => $consultationDepartments,
+            'consultationServices' => $consultationServices,
+            'followUpAppointment' => $followUpAppointment,
+            'nextPatientInLine' => $nextPatientInLine,
             'consultationSummary' => $consultationSummary,
             'entryPermissions' => $this->entryPermissions,
         ]);
@@ -631,6 +688,129 @@ class ConsultationController extends Controller
         return redirect()
             ->route('admin.consultations.routes.show', [$visit, $route])
             ->with('success', 'Consultation session cancelled.');
+    }
+
+    public function storeFollowUpAppointment(
+        Request $request,
+        Visit $visit,
+        VisitConsultationRoute $route,
+        ConsultationFollowUpService $followUps,
+    ) {
+        $this->abortIfRouteMismatch($visit, $route);
+
+        $data = $this->validateFollowUpAppointment($request);
+        $record = $this->consultationSessionService->getOrCreateMedicalRecordForRoute($route, Auth::user());
+
+        try {
+            $followUps->create($visit, $route, $record, $data, Auth::user());
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('admin.consultations.routes.show', [$visit, $route])
+            ->with('success', 'Next appointment / follow-up saved.');
+    }
+
+    public function updateFollowUpAppointment(
+        Request $request,
+        Visit $visit,
+        VisitConsultationRoute $route,
+        Appointment $appointment,
+        ConsultationFollowUpService $followUps,
+    ) {
+        $this->abortIfRouteMismatch($visit, $route);
+
+        $data = $this->validateFollowUpAppointment($request);
+        $record = $this->consultationSessionService->getOrCreateMedicalRecordForRoute($route, Auth::user());
+
+        try {
+            $followUps->update($appointment, $visit, $route, $record, $data, Auth::user());
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('admin.consultations.routes.show', [$visit, $route])
+            ->with('success', 'Next appointment / follow-up updated.');
+    }
+
+    public function cancelFollowUpAppointment(
+        Request $request,
+        Visit $visit,
+        VisitConsultationRoute $route,
+        Appointment $appointment,
+        ConsultationFollowUpService $followUps,
+    ) {
+        $this->abortIfRouteMismatch($visit, $route);
+
+        $data = $request->validate([
+            'reason' => ['required', 'string', 'max:1000'],
+        ]);
+
+        try {
+            $followUps->cancel($appointment, $visit, $route, $data['reason'], Auth::user());
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('admin.consultations.routes.show', [$visit, $route])
+            ->with('success', 'Next appointment / follow-up cancelled.');
+    }
+
+    public function openNextPatient(
+        Request $request,
+        Visit $visit,
+        VisitConsultationRoute $route,
+        ConsultationNextPatientService $nextPatients,
+    ) {
+        $this->abortIfRouteMismatch($visit, $route);
+
+        try {
+            $nextRoute = $nextPatients->openNext($route, Auth::user(), false);
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('admin.consultations.routes.show', [$nextRoute->visit, $nextRoute])
+            ->with('success', 'Next patient opened.');
+    }
+
+    public function completeAndOpenNextPatient(
+        Request $request,
+        Visit $visit,
+        VisitConsultationRoute $route,
+        ConsultationNextPatientService $nextPatients,
+    ) {
+        $this->abortIfRouteMismatch($visit, $route);
+
+        try {
+            $nextRoute = $nextPatients->openNext($route, Auth::user(), true);
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('admin.consultations.routes.show', [$nextRoute->visit, $nextRoute])
+            ->with('success', 'Consultation completed and next patient opened.');
+    }
+
+    private function validateFollowUpAppointment(Request $request): array
+    {
+        return $request->validate([
+            'appointment_date' => ['required', 'date', 'after_or_equal:today'],
+            'start_time' => ['nullable', 'date_format:H:i'],
+            'end_time' => ['nullable', 'date_format:H:i', 'after:start_time'],
+            'department_id' => ['required', 'exists:departments,id'],
+            'service_id' => ['nullable', 'exists:service_catalog,id'],
+            'doctor_id' => ['nullable', 'exists:users,id'],
+            'reason' => ['required', 'string', 'max:2000'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+            'priority' => ['nullable', Rule::enum(Priority::class)],
+            'notify_patient' => ['nullable', 'boolean'],
+        ]);
     }
 
     /*

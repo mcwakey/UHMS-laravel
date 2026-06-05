@@ -579,6 +579,12 @@
                     <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
                         <i class="ti ti-eye me-1"></i>View Visit
                     </a>
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#followUpAppointmentModal" @disabled(! $selectedRoute) title="{{ $selectedRoute ? 'Set next appointment' : 'Select a consultation session first' }}">
+                        <i class="ti ti-calendar-plus me-1"></i>{{ $followUpAppointment ? 'Update Next Appointment' : 'Next Appointment' }}
+                        @if($followUpAppointment)
+                            <span class="badge bg-primary-subtle text-primary ms-1">Set</span>
+                        @endif
+                    </button>
                     @can('consultations.create')
                     <button type="button" class="btn btn-outline-purple btn-sm" data-bs-toggle="modal" data-bs-target="#savePatternModal">
                         <i class="ti ti-template me-1"></i>Save Pattern
@@ -1915,6 +1921,167 @@
                 </div>
             </div>
 
+            {{-- ========================= NEXT APPOINTMENT / FOLLOW-UP MODAL ========================= --}}
+            <div class="modal fade" id="followUpAppointmentModal" tabindex="-1" aria-labelledby="followUpAppointmentModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div>
+                                <h5 class="modal-title" id="followUpAppointmentModalLabel"><i class="ti ti-calendar-plus me-1"></i>Next Appointment / Follow-up</h5>
+                                @if($followUpAppointment)
+                                    <small class="text-muted">Current status: {{ $followUpAppointment->status?->label() ?? ucfirst((string) $followUpAppointment->status) }}</small>
+                                @endif
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                        @if(! $selectedRoute)
+                            <x-empty-state icon="ti-route-off" title="No active consultation session" message="Select a consultation session before setting a follow-up appointment." />
+                        @else
+                            @php
+                                $followUpDepartmentId = (string) old('department_id', $followUpAppointment?->department_id ?? $selectedRoute?->department_id);
+                                $followUpServiceId = (string) old('service_id', $followUpAppointment?->services?->first()?->id);
+                                $followUpDoctorId = (string) old('doctor_id', $followUpAppointment?->doctor_id ?? $selectedRoute?->doctor_id);
+                                $followUpPriority = (string) old('priority', $followUpAppointment?->priority ?? 'normal');
+                                $canManageFollowUp = $followUpAppointment
+                                    ? auth()->user()?->can('consultation.followup.update')
+                                    : auth()->user()?->can('consultation.followup.create');
+                                $followUpAction = $followUpAppointment
+                                    ? route('admin.consultations.routes.follow-up.update', [$visit, $selectedRoute, $followUpAppointment])
+                                    : route('admin.consultations.routes.follow-up.store', [$visit, $selectedRoute]);
+                            @endphp
+
+                            @if($followUpAppointment)
+                                <div class="alert alert-light border d-flex flex-wrap gap-3 align-items-center mb-3">
+                                    <div>
+                                        <div class="text-muted small">Current follow-up</div>
+                                        <div class="fw-semibold">
+                                            {{ $followUpAppointment->appointment_date?->format('d M Y') }}
+                                            @if($followUpAppointment->start_time)
+                                                &middot; {{ \Carbon\Carbon::parse($followUpAppointment->start_time)->format('h:i A') }}
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Department</div>
+                                        <div class="fw-semibold">{{ $followUpAppointment->department?->name ?? '-' }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-muted small">Doctor</div>
+                                        <div class="fw-semibold">{{ $followUpAppointment->doctor?->full_name ?? 'Unassigned' }}</div>
+                                    </div>
+                                    @can('consultation.followup.cancel')
+                                        <div class="ms-auto">
+                                            <x-confirm-form
+                                                :action="route('admin.consultations.routes.follow-up.cancel', [$visit, $selectedRoute, $followUpAppointment])"
+                                                method="POST"
+                                                button-label="Cancel Follow-up"
+                                                button-class="btn btn-outline-danger btn-sm"
+                                                icon="ti-x"
+                                                confirm-title="Cancel this follow-up appointment?"
+                                                confirm-text="A cancellation reason is required and will be recorded in the patient timeline."
+                                                confirm-button="Yes, cancel"
+                                                :require-reason="true"
+                                                reason-name="reason"
+                                                reason-placeholder="Reason for cancelling this follow-up"
+                                            />
+                                        </div>
+                                    @endcan
+                                </div>
+                            @endif
+
+                            @if($canManageFollowUp)
+                                <form method="POST" action="{{ $followUpAction }}">
+                                    @csrf
+                                    @if($followUpAppointment)
+                                        @method('PUT')
+                                    @endif
+
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Next Appointment Date <span class="text-danger">*</span></label>
+                                            <input type="date" name="appointment_date" class="form-control @error('appointment_date') is-invalid @enderror" required value="{{ old('appointment_date', $followUpAppointment?->appointment_date?->toDateString()) }}">
+                                            @error('appointment_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Next Appointment Time</label>
+                                            <input type="time" name="start_time" class="form-control @error('start_time') is-invalid @enderror" value="{{ old('start_time', $followUpAppointment?->start_time ? substr((string) $followUpAppointment->start_time, 0, 5) : '') }}">
+                                            @error('start_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Priority</label>
+                                            <select name="priority" class="form-select @error('priority') is-invalid @enderror">
+                                                @foreach(\App\Enums\Priority::cases() as $priority)
+                                                    <option value="{{ $priority->value }}" @selected($followUpPriority === $priority->value)>{{ $priority->label() }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('priority')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Department <span class="text-danger">*</span></label>
+                                            <select name="department_id" id="followUpDepartmentSelect" class="form-select @error('department_id') is-invalid @enderror" required>
+                                                @foreach($consultationDepartments as $department)
+                                                    <option value="{{ $department->id }}" @selected($followUpDepartmentId === (string) $department->id)>{{ $department->name }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Service</label>
+                                            <select name="service_id" id="followUpServiceSelect" class="form-select @error('service_id') is-invalid @enderror">
+                                                <option value="">No specific service</option>
+                                                @foreach($consultationServices as $service)
+                                                    <option value="{{ $service->id }}" data-department-id="{{ $service->department_id }}" @selected($followUpServiceId === (string) $service->id)>
+                                                        {{ $service->name }}{{ $service->department?->name ? ' - '.$service->department->name : '' }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @error('service_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Doctor</label>
+                                            <select name="doctor_id" class="form-select @error('doctor_id') is-invalid @enderror">
+                                                <option value="">Unassigned</option>
+                                                @foreach($doctors as $doc)
+                                                    <option value="{{ $doc->id }}" @selected($followUpDoctorId === (string) $doc->id)>Dr. {{ $doc->full_name }}</option>
+                                                @endforeach
+                                            </select>
+                                            @error('doctor_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Reason / Follow-up Note <span class="text-danger">*</span></label>
+                                            <textarea name="reason" class="form-control @error('reason') is-invalid @enderror" rows="2" required placeholder="Reason for review, e.g. Review lab results and blood pressure control">{{ old('reason', $followUpAppointment?->reason) }}</textarea>
+                                            @error('reason')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Clinical Instruction / Note</label>
+                                            <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" rows="2" placeholder="Patient instructions, preparation, warning signs, or documents to bring">{{ old('notes', $followUpAppointment?->notes) }}</textarea>
+                                            @error('notes')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                                        </div>
+                                        <div class="col-12">
+                                            <div class="form-check">
+                                                <input type="checkbox" name="notify_patient" value="1" id="notifyPatientFollowUp" class="form-check-input" @checked(old('notify_patient'))>
+                                                <label class="form-check-label" for="notifyPatientFollowUp">Notify patient when reminder channels are configured</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 d-flex justify-content-end">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="ti ti-calendar-check me-1"></i>{{ $followUpAppointment ? 'Update Follow-up' : 'Set Follow-up' }}
+                                        </button>
+                                    </div>
+                                </form>
+                            @else
+                                <div class="alert alert-secondary mb-0">
+                                    <i class="ti ti-lock me-1"></i>You do not have permission to {{ $followUpAppointment ? 'update' : 'create' }} consultation follow-up appointments.
+                                </div>
+                            @endif
+                        @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {{-- ========================= NOTES / SUMMARY ========================= --}}
             <div class="tab-pane fade" id="summary-section" role="tabpanel">
                 <div class="card">
@@ -1932,6 +2099,76 @@
 
     {{-- =================== RIGHT PANEL — PREVIOUS VISITS =================== --}}
     <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header py-2 d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold mb-0 small"><i class="ti ti-user-forward me-1"></i>Next Patient in Line</h6>
+                @if($nextPatientInLine)
+                    <span class="badge bg-{{ $nextPatientInLine['priority_color'] ?? 'secondary' }}">{{ $nextPatientInLine['priority'] ?? 'Normal' }}</span>
+                @endif
+            </div>
+            <div class="card-body p-3">
+                @if($nextPatientInLine)
+                    <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                        <div class="fw-semibold">{{ $nextPatientInLine['patient_name'] }}</div>
+                        <span class="badge bg-soft-primary text-primary flex-shrink-0">Queue #{{ $nextPatientInLine['queue_number'] }}</span>
+                    </div>
+                    <div class="small text-muted mb-2">
+                        {{ $nextPatientInLine['patient_number'] ?: 'No patient number' }}
+                        @if($nextPatientInLine['visit_number'])
+                            &middot; {{ $nextPatientInLine['visit_number'] }}
+                        @endif
+                    </div>
+                    <div class="small mb-2">
+                        @if($nextPatientInLine['age'])
+                            <span class="badge bg-light text-dark border">Age {{ $nextPatientInLine['age'] }}</span>
+                        @endif
+                        @if($nextPatientInLine['gender'])
+                            <span class="badge bg-light text-dark border">{{ ucfirst($nextPatientInLine['gender']) }}</span>
+                        @endif
+                    </div>
+                    <div class="small text-muted">
+                        <div><i class="ti ti-clock me-1"></i>Waiting: {{ $nextPatientInLine['waiting_minutes'] ?? 0 }} minutes</div>
+                        <div><i class="ti ti-building-hospital me-1"></i>{{ $nextPatientInLine['department'] ?: 'Consultation department' }}</div>
+                        @if(! empty($nextPatientInLine['services']))
+                            <div><i class="ti ti-stethoscope me-1"></i>{{ implode(', ', $nextPatientInLine['services']) }}</div>
+                        @endif
+                        @if($nextPatientInLine['doctor'])
+                            <div><i class="ti ti-user-heart me-1"></i>Assigned: Dr. {{ $nextPatientInLine['doctor'] }}</div>
+                        @endif
+                    </div>
+                    <div class="mt-2">
+                        <span class="badge bg-{{ $nextPatientInLine['payment_allowed'] ? 'success' : 'warning text-dark' }}">
+                            <i class="ti ti-credit-card me-1"></i>{{ $nextPatientInLine['payment_message'] }}
+                        </span>
+                    </div>
+                    @can('consultations.create')
+                        <div class="d-grid gap-2 mt-3">
+                            <form method="POST" action="{{ route('admin.consultations.routes.next-patient.open', [$visit, $selectedRoute]) }}">
+                                @csrf
+                                <button type="submit" class="btn btn-outline-primary btn-sm w-100" @disabled(! $nextPatientInLine['payment_allowed']) title="{{ $nextPatientInLine['payment_allowed'] ? 'Open next patient' : $nextPatientInLine['payment_message'] }}">
+                                    <i class="ti ti-arrow-right me-1"></i>Open Next Patient
+                                </button>
+                            </form>
+                            <x-confirm-form
+                                :action="route('admin.consultations.routes.next-patient.complete-open', [$visit, $selectedRoute])"
+                                method="POST"
+                                button-label="Complete & Open Next"
+                                button-class="btn btn-success btn-sm w-100"
+                                icon="ti-check"
+                                confirm-title="Complete this consultation and open next patient?"
+                                confirm-text="The current consultation session will be completed before the next patient is opened."
+                                confirm-button="Complete and open"
+                                :disabled="! $nextPatientInLine['payment_allowed']"
+                                :disabled-reason="$nextPatientInLine['payment_message']"
+                            />
+                        </div>
+                    @endcan
+                @else
+                    <x-empty-state icon="ti-users-off" title="No patient waiting" message="No patient is currently waiting in this consultation queue." />
+                @endif
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header py-2">
                 <h6 class="fw-bold mb-0 small"><i class="ti ti-clock-history me-1"></i>Previous Visits
@@ -3773,6 +4010,38 @@ $(document).ready(function () {
             $('#icd_code_manual').val('');
         });
     }
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    var dept = document.getElementById('followUpDepartmentSelect');
+    var service = document.getElementById('followUpServiceSelect');
+    if (!dept || !service) return;
+
+    function syncFollowUpServices() {
+        var selectedDepartment = dept.value;
+        Array.prototype.forEach.call(service.options, function (option) {
+            if (!option.value) {
+                option.hidden = false;
+                return;
+            }
+
+            var matches = !selectedDepartment || option.dataset.departmentId === selectedDepartment;
+            option.hidden = !matches;
+            if (!matches && option.selected) {
+                service.value = '';
+            }
+        });
+    }
+
+    dept.addEventListener('change', syncFollowUpServices);
+    syncFollowUpServices();
+
+    @if($errors->has('appointment_date') || $errors->has('start_time') || $errors->has('end_time') || $errors->has('department_id') || $errors->has('service_id') || $errors->has('doctor_id') || $errors->has('reason') || $errors->has('notes') || $errors->has('priority'))
+        var modal = document.getElementById('followUpAppointmentModal');
+        if (modal && window.bootstrap && window.bootstrap.Modal) {
+            window.bootstrap.Modal.getOrCreateInstance(modal).show();
+        }
+    @endif
 });
 
 /* ================================================================

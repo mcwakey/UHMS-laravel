@@ -26,10 +26,13 @@ consumable path.
 investigation — create/update/delete/correct) to the central activity log with
 full context + old/new values, so they appear on the patient profile timeline.
 Session lifecycle (`SESSION_STARTED/RESUMED/COMPLETED`) and `PATTERN_APPLIED` are
-logged too. Tests: `ConsultationClinicalLogTest` (7) + a session assertion. See
-`docs/LOGGING_CONSULTATION_BURN_DOWN_REPORT.md`. Follow-ups: individual
-pattern-created non-complaint records, prescription delete, clinical tasks/
-follow-up, note/summary, session lock/reopen/contributor.
+logged too. Consultation follow-up appointment create/update/cancel is now logged
+through `ConsultationFollowUpService`. Tests: `ConsultationClinicalLogTest` (7)
+and a session assertion, plus `ConsultationFollowUpAndNextPatientTest` (6). See
+`docs/LOGGING_CONSULTATION_BURN_DOWN_REPORT.md` and
+`docs/CONSULTATION_NEXT_APPOINTMENT_AND_QUEUE_REPORT.md`. Follow-ups: individual
+pattern-created non-complaint records, prescription delete, clinical tasks,
+note/summary, session lock/reopen/contributor.
 
 ## ✅ Done: investigation (lab) department lifecycle → patient timeline
 

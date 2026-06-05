@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\AppointmentStatus;
 use App\Models\MedicalRecord;
 use App\Models\Visit;
+use Carbon\Carbon;
 
 class ConsultationSummaryService
 {
@@ -19,6 +21,10 @@ class ConsultationSummaryService
             'consultationRoute.mainDoctor',
             'consultationRoute.contributors.user',
             'consultationRoute.routeServices.service',
+            'consultationRoute.followUpAppointments.department',
+            'consultationRoute.followUpAppointments.doctor',
+            'consultationRoute.followUpAppointments.services',
+            'consultationRoute.followUpAppointments.createdBy',
             'consultationRoute.emergencyCase.triagedBy',
             'consultationRoute.emergencyCase.notes.creator',
             'consultationRoute.emergencyCase.vitals.recordedBy',
@@ -141,6 +147,39 @@ class ConsultationSummaryService
             ]);
         }
 
+        foreach ($record->consultationRoute?->followUpAppointments ?? [] as $appointment) {
+            if (in_array($appointment->status, [AppointmentStatus::CANCELLED, AppointmentStatus::NO_SHOW], true)) {
+                continue;
+            }
+
+            $appointmentDate = $appointment->appointment_date?->format('d M Y');
+            $appointmentTime = $appointment->start_time ? Carbon::parse($appointment->start_time)->format('h:i A') : null;
+            $serviceList = $appointment->services?->map(fn ($service) => $service->name)->filter()->implode(', ');
+            $departmentName = $appointment->department?->name;
+
+            $summary['sections']['follow_up_appointments'][] = $this->entry(
+                'Next Appointment',
+                collect([
+                    'Next appointment',
+                    $appointmentDate,
+                    $appointmentTime,
+                    $departmentName,
+                ])->filter()->implode(' - '),
+                $appointment,
+                [
+                    'Date' => $appointmentDate,
+                    'Time' => $appointmentTime,
+                    'Department' => $departmentName,
+                    'Service' => $serviceList,
+                    'Doctor' => $appointment->doctor?->full_name ? 'Dr. '.$appointment->doctor->full_name : null,
+                    'Priority' => ucfirst((string) $appointment->priority),
+                    'Status' => $appointment->status?->label() ?? null,
+                    'Reason' => $appointment->reason,
+                    'Instruction' => $appointment->notes,
+                ]
+            );
+        }
+
         if ($record->consultationRoute?->isEmergencySession() && $record->consultationRoute->emergencyCase) {
             $this->appendEmergencySections($summary, $record->consultationRoute->emergencyCase);
         }
@@ -239,6 +278,7 @@ class ConsultationSummaryService
                 'prescriptions' => [],
                 'procedures' => [],
                 'tasks' => [],
+                'follow_up_appointments' => [],
                 'notes' => [],
             ],
         ];

@@ -18,6 +18,7 @@
         'prescriptions' => 'Prescriptions',
         'procedures' => 'Procedures',
         'tasks' => 'Tasks / Follow-up / Instructions',
+        'follow_up_appointments' => 'Next Appointment / Follow-up',
         'notes' => 'Notes',
     ];
 @endphp

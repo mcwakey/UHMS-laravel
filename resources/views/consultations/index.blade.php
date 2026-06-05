@@ -98,9 +98,9 @@
                         $queueEntries = $visit->queueEntries ?? collect();
                         $queueEntry = $queueEntries
                             ->filter(fn ($entry) => $route->department_id && (int) $entry->department_id === (int) $route->department_id)
-                            ->sortByDesc('created_at')
-                            ->first()
-                            ?? $queueEntries->sortByDesc('created_at')->first();
+                            ->filter(fn ($entry) => $entry->status === 'waiting')
+                            ->sortBy('queue_number')
+                            ->first();
                     @endphp
                     <tr>
                         <td>

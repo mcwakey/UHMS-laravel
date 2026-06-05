@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AppointmentStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -178,6 +179,21 @@ class VisitConsultationRoute extends Model
     public function medicalRecords(): HasMany
     {
         return $this->hasMany(MedicalRecord::class, 'consultation_route_id');
+    }
+
+    public function followUpAppointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class, 'consultation_route_id')
+            ->orderBy('appointment_date')
+            ->orderBy('start_time');
+    }
+
+    public function activeFollowUpAppointments(): HasMany
+    {
+        return $this->followUpAppointments()->whereNotIn('status', [
+            AppointmentStatus::CANCELLED->value,
+            AppointmentStatus::NO_SHOW->value,
+        ]);
     }
 
     public function contributors(): HasMany

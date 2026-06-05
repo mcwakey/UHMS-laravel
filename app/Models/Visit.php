@@ -180,6 +180,11 @@ class Visit extends Model
         return $this->hasOne(Invoice::class)->latestOfMany();
     }
 
+    public function appointments()
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
     public function pathwayEvents()
     {
         return $this->hasMany(VisitPathwayEvent::class)->orderBy('started_at')->orderBy('id');

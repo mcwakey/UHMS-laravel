@@ -128,6 +128,32 @@
 </div>
 
 {{-- ── Timeline ─────────────────────────────────────────────────── --}}
+@if(!empty($summary['next_appointment']))
+@php $nextAppointment = $summary['next_appointment']; @endphp
+<div class="alert alert-info border-0 mb-4">
+    <div class="d-flex align-items-start gap-2">
+        <i class="ti ti-calendar-plus fs-4 mt-1"></i>
+        <div>
+            <h6 class="fw-semibold mb-1">Next Appointment</h6>
+            <div class="small">
+                <span class="fw-medium">{{ $nextAppointment['date'] ?? 'Date not set' }}</span>
+                @if(!empty($nextAppointment['time']))
+                    <span class="text-muted ms-1">{{ $nextAppointment['time'] }}</span>
+                @endif
+                @if(!empty($nextAppointment['department']))
+                    <span class="text-muted ms-1">- {{ $nextAppointment['department'] }}</span>
+                @endif
+            </div>
+            <div class="small text-muted">
+                @if(!empty($nextAppointment['doctor'])){{ $nextAppointment['doctor'] }}@endif
+                @if(!empty($nextAppointment['service'])){{ !empty($nextAppointment['doctor']) ? ' - ' : '' }}{{ $nextAppointment['service'] }}@endif
+                @if(!empty($nextAppointment['reason'])){{ (!empty($nextAppointment['doctor']) || !empty($nextAppointment['service'])) ? ' - ' : '' }}{{ $nextAppointment['reason'] }}@endif
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 <div class="card mb-0">
     <div class="card-header bg-transparent border-bottom-0 pb-0">
         <h6 class="fw-semibold mb-0"><i class="ti ti-timeline me-2"></i>Clinical Timeline</h6>

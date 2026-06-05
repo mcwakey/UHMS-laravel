@@ -155,8 +155,15 @@ class PatientController extends Controller
 
         $insuranceProviders = InsuranceProvider::where('is_active', true)->orderBy('name')->get();
         $upcomingVisits = app(VisitService::class)->upcomingForPatient($patient->id);
+        $upcomingAppointments = \App\Models\Appointment::with(['department', 'doctor', 'services'])
+            ->where('patient_id', $patient->id)
+            ->upcoming()
+            ->orderBy('appointment_date')
+            ->orderBy('start_time')
+            ->take(10)
+            ->get();
 
-        return view('patients.show', compact('patient', 'insuranceProviders', 'upcomingVisits', 'activityLogs'));
+        return view('patients.show', compact('patient', 'insuranceProviders', 'upcomingVisits', 'upcomingAppointments', 'activityLogs'));
     }
 
     public function edit(Patient $patient)
