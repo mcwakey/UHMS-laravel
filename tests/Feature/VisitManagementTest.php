@@ -9,6 +9,7 @@ use App\Models\Department;
 use App\Models\Patient;
 use App\Models\User;
 use App\Models\Visit;
+use App\Services\VisitService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -138,5 +139,35 @@ class VisitManagementTest extends TestCase
             ->get(route('admin.visits.index', ['date' => now()->toDateString()]));
 
         $response->assertStatus(200);
+    }
+
+    public function test_visit_list_uses_first_come_first_served_order(): void
+    {
+        $firstPatient = Patient::factory()->create(['registered_by' => $this->user->id]);
+        $secondPatient = Patient::factory()->create(['registered_by' => $this->user->id]);
+
+        $firstVisit = Visit::factory()->create([
+            'patient_id' => $firstPatient->id,
+            'current_department_id' => $this->department->id,
+            'created_by' => $this->user->id,
+            'visit_date' => today(),
+            'checked_in_at' => now()->subMinutes(30),
+            'created_at' => now()->subMinutes(30),
+        ]);
+        $secondVisit = Visit::factory()->create([
+            'patient_id' => $secondPatient->id,
+            'current_department_id' => $this->department->id,
+            'created_by' => $this->user->id,
+            'visit_date' => today(),
+            'checked_in_at' => now()->subMinutes(5),
+            'created_at' => now()->subMinutes(5),
+        ]);
+
+        $visits = app(VisitService::class)->list([
+            'date_from' => today()->toDateString(),
+            'date_to' => today()->toDateString(),
+        ]);
+
+        $this->assertSame([$firstVisit->id, $secondVisit->id], $visits->pluck('id')->take(2)->all());
     }
 }

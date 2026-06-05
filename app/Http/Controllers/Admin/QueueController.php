@@ -38,15 +38,22 @@ class QueueController extends Controller
     {
         $departments = Department::active()->orderBy('name')->get();
 
-        $queues = QueueEntry::with(['visit.patient', 'department'])
+        $entries = QueueEntry::with(['visit.patient', 'department'])
             ->today()
             ->whereIn('status', ['waiting', 'serving'])
-            ->orderByRaw("FIELD(priority, 'emergency', 'urgent', 'normal')")
             ->orderBy('queue_number')
-            ->get()
+            ->orderBy('created_at')
+            ->get();
+
+        $triageQueue = $entries
+            ->filter(fn (QueueEntry $entry) => $entry->department_id === null)
+            ->values();
+
+        $queues = $entries
+            ->filter(fn (QueueEntry $entry) => $entry->department_id !== null)
             ->groupBy('department_id');
 
-        return view('queue.board', compact('departments', 'queues'));
+        return view('queue.board', compact('departments', 'queues', 'triageQueue'));
     }
 
     public function callNext(Request $request)

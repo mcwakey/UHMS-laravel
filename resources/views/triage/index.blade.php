@@ -38,7 +38,16 @@
             </div>
             <div class="card-body p-0">
                 @forelse($waiting as $visit)
+                    @php $queueEntry = $visit->queueEntries->first(); @endphp
                     <div class="d-flex align-items-center px-3 py-2 border-bottom hover-bg-light">
+                        <div class="flex-shrink-0 text-center me-3">
+                            @if($queueEntry)
+                                <span class="badge bg-warning text-dark fs-6">#{{ $queueEntry->queue_number }}</span>
+                                <div class="text-muted" style="font-size:0.7rem;">Queue</div>
+                            @else
+                                <span class="badge bg-light text-muted">-</span>
+                            @endif
+                        </div>
                         <div class="flex-grow-1">
                             <div class="fw-semibold small">{{ $visit->patient->full_name }}</div>
                             <div class="text-muted" style="font-size:0.78rem;">
@@ -76,7 +85,16 @@
             </div>
             <div class="card-body p-0">
                 @forelse($onAssessment as $visit)
+                    @php $queueEntry = $visit->queueEntries->first(); @endphp
                     <div class="d-flex align-items-center px-3 py-2 border-bottom hover-bg-light">
+                        <div class="flex-shrink-0 text-center me-3">
+                            @if($queueEntry)
+                                <span class="badge bg-info fs-6">#{{ $queueEntry->queue_number }}</span>
+                                <div class="text-muted" style="font-size:0.7rem;">Queue</div>
+                            @else
+                                <span class="badge bg-light text-muted">-</span>
+                            @endif
+                        </div>
                         <div class="flex-grow-1">
                             <div class="fw-semibold small">{{ $visit->patient->full_name }}</div>
                             <div class="text-muted" style="font-size:0.78rem;">

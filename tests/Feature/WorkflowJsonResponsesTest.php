@@ -59,6 +59,33 @@ class WorkflowJsonResponsesTest extends TestCase
         ]);
     }
 
+    private function settleRouteServices(VisitConsultationRoute $route): void
+    {
+        $route->loadMissing('routeServices.invoiceItem.invoice');
+
+        foreach ($route->routeServices as $routeService) {
+            $item = $routeService->invoiceItem;
+            if (! $item) {
+                continue;
+            }
+
+            $payable = (float) $item->patient_payable;
+            $item->forceFill([
+                'paid_amount' => $payable,
+                'balance' => 0,
+                'payment_status' => 'paid',
+            ])->save();
+
+            if ($item->invoice) {
+                $item->invoice->forceFill([
+                    'amount_paid' => (float) $item->invoice->items()->sum('paid_amount'),
+                    'balance' => max(0, (float) $item->invoice->items()->sum('balance')),
+                    'status' => InvoiceStatus::PAID,
+                ])->save();
+            }
+        }
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -126,6 +153,7 @@ class WorkflowJsonResponsesTest extends TestCase
             'patient_id' => $patient->id,
             'created_by' => $this->user->id,
             'current_department_id' => null,
+            'visit_type' => VisitType::OUTPATIENT,
             'status' => VisitStatus::TRIAGE,
         ]);
         $service = $this->createService($this->department, 'General Consultation');
@@ -134,6 +162,7 @@ class WorkflowJsonResponsesTest extends TestCase
             'quantity' => 1,
         ]]);
         $route = $visit->pendingConsultationRoutes()->firstOrFail();
+        $this->settleRouteServices($route);
 
         $response = $this->actingAs($this->user)->postJson(route('admin.triage.store', $visit), [
             'blood_pressure_systolic' => 120,
@@ -173,6 +202,45 @@ class WorkflowJsonResponsesTest extends TestCase
             'heart_rate' => 78,
             'spo2' => 98,
         ]);
+    }
+
+    public function test_triage_completion_requires_selected_consultation_service_bill_to_be_settled(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
+        $visit = Visit::factory()->create([
+            'patient_id' => $patient->id,
+            'created_by' => $this->user->id,
+            'current_department_id' => null,
+            'visit_type' => VisitType::OUTPATIENT,
+            'status' => VisitStatus::TRIAGE,
+        ]);
+        $service = $this->createService($this->department, 'Unpaid General Consultation');
+        app(VisitService::class)->attachServices($visit, [[
+            'service_catalog_id' => $service->id,
+            'quantity' => 1,
+        ]]);
+        $route = $visit->pendingConsultationRoutes()->firstOrFail();
+
+        $response = $this->actingAs($this->user)->postJson(route('admin.triage.store', $visit), [
+            'blood_pressure_systolic' => 120,
+            'blood_pressure_diastolic' => 80,
+            'heart_rate' => 78,
+            'temperature' => 36.9,
+            'respiratory_rate' => 16,
+            'spo2' => 98,
+            'consultation_route_id' => $route->id,
+            'notes' => 'Stable vitals',
+        ]);
+
+        $response->assertUnprocessable()
+            ->assertJsonFragment(['message' => 'Please settle the bill before this service can be rendered.']);
+
+        $this->assertSame(VisitStatus::TRIAGE, $visit->fresh()->status);
+        $this->assertSame(VisitConsultationRoute::STATUS_PENDING, $route->fresh()->status);
+        $this->assertSame(0, QueueEntry::where('visit_id', $visit->id)
+            ->where('department_id', $this->department->id)
+            ->where('status', 'waiting')
+            ->count());
     }
 
     public function test_triage_assessment_only_lists_billed_consultation_departments(): void

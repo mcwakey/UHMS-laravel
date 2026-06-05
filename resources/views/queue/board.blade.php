@@ -48,6 +48,54 @@
 </div>
 
 <div class="row queue-board">
+    @php
+        $triageQueue = $triageQueue ?? collect();
+        $triageServing = $triageQueue->where('status', 'serving');
+        $triageWaiting = $triageQueue->where('status', 'waiting');
+    @endphp
+    @if($triageQueue->isNotEmpty())
+    <div class="col-xl-4 col-lg-6 mb-4">
+        <div class="card department-card h-100">
+            <div class="card-header bg-info text-white d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold mb-0 text-white"><i class="ti ti-stethoscope me-1"></i>Triage / Assessment</h6>
+                <span class="badge bg-light text-dark">{{ $triageWaiting->count() }} waiting</span>
+            </div>
+            <div class="card-body p-0">
+                @foreach($triageServing as $entry)
+                <div class="p-3 bg-info bg-opacity-10 border-bottom serving-card">
+                    <div class="text-center">
+                        <small class="text-info fw-bold text-uppercase">Now Assessing</small>
+                        <div class="queue-number-display text-info">#{{ $entry->queue_number }}</div>
+                        <div class="queue-patient-name mt-1">{{ $entry->visit?->patient?->full_name ?? 'Patient' }}</div>
+                        @if($entry->priority->value !== 'normal')
+                            <x-status-badge :status="$entry->priority" class="mt-1" />
+                        @endif
+                    </div>
+                </div>
+                @endforeach
+
+                @foreach($triageWaiting->take(8) as $entry)
+                <div class="p-2 px-3 border-bottom d-flex align-items-center justify-content-between priority-{{ $entry->priority->value }}">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold fs-16">#{{ $entry->queue_number }}</span>
+                        <span>{{ $entry->visit?->patient?->full_name ?? 'Patient' }}</span>
+                    </div>
+                    @if($entry->priority->value !== 'normal')
+                        <x-status-badge :status="$entry->priority" class="badge-sm" />
+                    @endif
+                </div>
+                @endforeach
+
+                @if($triageWaiting->count() > 8)
+                <div class="p-2 text-center text-muted small">
+                    +{{ $triageWaiting->count() - 8 }} more waiting
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+    @endif
+
     @foreach($departments as $dept)
         @php
             $deptQueue = $queues->get($dept->id, collect());
@@ -58,7 +106,7 @@
         <div class="col-xl-4 col-lg-6 mb-4">
             <div class="card department-card h-100">
                 <div class="card-header bg-dark text-white d-flex align-items-center justify-content-between">
-                    <h6 class="fw-bold mb-0">{{ $dept->name }}</h6>
+                    <h6 class="fw-bold mb-0 text-white">{{ $dept->name }}</h6>
                     <span class="badge bg-light text-dark">{{ $waitingNow->count() }} waiting</span>
                 </div>
                 <div class="card-body p-0">
@@ -104,7 +152,7 @@
         @endif
     @endforeach
 
-    @if($queues->isEmpty())
+    @if($queues->isEmpty() && $triageQueue->isEmpty())
     <div class="col-12">
         <div class="text-center py-5">
             <i class="ti ti-mood-happy fs-1 text-muted d-block mb-3"></i>
@@ -118,13 +166,26 @@
 
 @push('scripts')
 <script>
-// Auto-refresh every 30 seconds via Inertia (preserves scroll/state when possible)
-setTimeout(function () {
-    if (window.UhmsInertia) {
-        window.UhmsInertia.reload({ preserveScroll: true });
-    } else {
-        location.reload();
+(function () {
+    var refreshMs = 30000;
+
+    if (window.UhmsQueueBoardRefreshTimer) {
+        clearInterval(window.UhmsQueueBoardRefreshTimer);
     }
-}, 30000);
+
+    function refreshQueueBoard() {
+        if (document.hidden) {
+            return;
+        }
+
+        if (window.UhmsInertia) {
+            window.UhmsInertia.reload({ preserveScroll: true, preserveState: true });
+        } else {
+            location.reload();
+        }
+    }
+
+    window.UhmsQueueBoardRefreshTimer = setInterval(refreshQueueBoard, refreshMs);
+})();
 </script>
 @endpush

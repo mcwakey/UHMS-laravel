@@ -221,6 +221,29 @@ class ConsultationFollowUpAndNextPatientTest extends TestCase
         $this->assertSame(VisitStatus::CONSULTING, $nextVisit->fresh()->status);
     }
 
+    public function test_open_next_patient_can_use_active_route_that_is_still_waiting_in_queue(): void
+    {
+        [$visit, $route] = $this->makeConsultingVisit();
+        [$nextVisit, $nextRoute] = $this->makeQueuedVisit('Akua', 'Boateng', 1);
+        $nextRoute->update([
+            'status' => VisitConsultationRoute::STATUS_ACTIVE,
+            'activated_at' => now(),
+        ]);
+
+        $this->actingAs($this->doctor)
+            ->get(route('admin.consultations.routes.show', [$visit, $route]))
+            ->assertOk()
+            ->assertSee($nextVisit->patient->full_name)
+            ->assertSee('Queue #1');
+
+        $this->actingAs($this->doctor)
+            ->post(route('admin.consultations.routes.next-patient.open', [$visit, $route]))
+            ->assertRedirect(route('admin.consultations.routes.show', [$nextVisit, $nextRoute]));
+
+        $this->assertSame(VisitConsultationRoute::STATUS_ACTIVE, $nextRoute->fresh()->status);
+        $this->assertSame(VisitStatus::CONSULTING, $nextVisit->fresh()->status);
+    }
+
     public function test_complete_and_open_next_patient_completes_current_route_then_opens_next(): void
     {
         [$visit, $route] = $this->makeConsultingVisit();

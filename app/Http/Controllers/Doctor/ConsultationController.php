@@ -306,10 +306,10 @@ class ConsultationController extends Controller
         }
 
         $routes = $query
-            ->orderByRaw("CASE {$routeTable}.status WHEN 'PENDING' THEN 0 WHEN 'ACTIVE' THEN 1 WHEN 'PAUSED' THEN 2 ELSE 3 END")
             ->orderByRaw('consultation_queue_number IS NULL')
             ->orderBy('consultation_queue_number')
             ->orderBy('consultation_queue_created_at')
+            ->orderByRaw("CASE {$routeTable}.status WHEN 'PENDING' THEN 0 WHEN 'ACTIVE' THEN 1 WHEN 'PAUSED' THEN 2 ELSE 3 END")
             ->orderBy("{$routeTable}.created_at")
             ->paginate(15);
 
@@ -655,7 +655,7 @@ class ConsultationController extends Controller
 
                 return redirect()
                     ->route('admin.visits.show', $visit)
-                    ->with('success', 'Consultation route activated.');
+                    ->with('success', 'Consultation route activated and queued.');
             }
 
             $route = $this->consultationRouteService->activateRoute($route, Auth::user());

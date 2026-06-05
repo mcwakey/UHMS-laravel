@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\NotificationModule;
 use App\Enums\NotificationPriority;
 use App\Models\QueueEntry;
+use App\Models\User;
 use App\Models\Visit;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -58,6 +59,31 @@ class QueueService
         ]);
     }
 
+    /**
+     * Return today's waiting queue entry for this visit/department or create it.
+     */
+    public function ensureForDepartment(Visit $visit, int $departmentId, bool $notifyConsultation = false): QueueEntry
+    {
+        $entry = $visit->queueEntries()
+            ->where('department_id', $departmentId)
+            ->where('status', 'waiting')
+            ->whereDate('created_at', today())
+            ->orderBy('queue_number')
+            ->first();
+
+        if (! $entry) {
+            $entry = $this->addForDepartment($visit, $departmentId);
+        }
+
+        $entry = $entry->fresh(['visit.patient', 'department']);
+
+        if ($notifyConsultation) {
+            $this->notifyConsultationWaiting($entry);
+        }
+
+        return $entry;
+    }
+
     public function getDepartmentQueue(int $departmentId): Collection
     {
         return QueueEntry::with([
@@ -69,8 +95,8 @@ class QueueService
             ->forDepartment($departmentId)
             ->today()
             ->waiting()
-            ->orderByRaw("FIELD(priority, 'emergency', 'urgent', 'normal')")
             ->orderBy('queue_number')
+            ->orderBy('created_at')
             ->get();
     }
 
@@ -79,8 +105,8 @@ class QueueService
         return QueueEntry::with(['visit.patient', 'department'])
             ->today()
             ->waiting()
-            ->orderByRaw("FIELD(priority, 'emergency', 'urgent', 'normal')")
             ->orderBy('queue_number')
+            ->orderBy('created_at')
             ->get();
     }
 
@@ -89,8 +115,8 @@ class QueueService
         $entry = QueueEntry::forDepartment($departmentId)
             ->today()
             ->waiting()
-            ->orderByRaw("FIELD(priority, 'emergency', 'urgent', 'normal')")
             ->orderBy('queue_number')
+            ->orderBy('created_at')
             ->first();
 
         if ($entry) {
@@ -163,8 +189,8 @@ class QueueService
         $queues = QueueEntry::with(['visit.patient', 'department'])
             ->today()
             ->whereIn('status', ['waiting', 'serving'])
-            ->orderByRaw("FIELD(priority, 'emergency', 'urgent', 'normal')")
             ->orderBy('queue_number')
+            ->orderBy('created_at')
             ->get()
             ->groupBy('department_id');
 
@@ -205,6 +231,52 @@ class QueueService
             Log::warning('QueueService.notifyTriageWaiting failed', [
                 'queue_entry_id' => $entry->id,
                 'visit_id' => $entry->visit_id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    private function notifyConsultationWaiting(QueueEntry $entry): void
+    {
+        try {
+            $entry->loadMissing(['visit.patient', 'department']);
+            $visit = $entry->visit;
+
+            if (! $visit || ! $entry->department_id) {
+                return;
+            }
+
+            $patientName = $visit->patient?->full_name ?? 'Patient #'.$visit->patient_id;
+            $departmentName = $entry->department?->name ?? 'the consultation department';
+            $payload = [
+                'module' => NotificationModule::CONSULTATION,
+                'priority' => NotificationPriority::HIGH,
+                'title' => 'Patient waiting for consultation',
+                'message' => $patientName.' is waiting for consultation in '.$departmentName.'.',
+                'url' => url('/admin/consultations'),
+                'source_type' => 'consultation_queue',
+                'source_id' => $entry->id,
+                'visit_id' => $visit->id,
+                'patient_id' => $visit->patient_id,
+                'department_id' => $entry->department_id,
+                'queue_entry_id' => $entry->id,
+                'queue_number' => $entry->queue_number,
+            ];
+
+            $sent = $this->notifications->notifyDepartment($entry->department_id, $payload);
+
+            if ($sent === 0) {
+                $sent = $this->notifications->notifyPermission('consultations.create', $payload);
+            }
+
+            if ($sent === 0) {
+                $this->notifications->notifyRole(User::CONSULTATION_ROLES, $payload);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('QueueService.notifyConsultationWaiting failed', [
+                'queue_entry_id' => $entry->id,
+                'visit_id' => $entry->visit_id,
+                'department_id' => $entry->department_id,
                 'error' => $e->getMessage(),
             ]);
         }

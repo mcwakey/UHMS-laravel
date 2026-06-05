@@ -80,7 +80,7 @@ class ConsultationNextPatientService
                 ->lockForUpdate()
                 ->first();
 
-            if (! $nextRoute || $nextRoute->status !== VisitConsultationRoute::STATUS_PENDING) {
+            if (! $nextRoute || ! in_array($nextRoute->status, [VisitConsultationRoute::STATUS_PENDING, VisitConsultationRoute::STATUS_ACTIVE], true)) {
                 throw new \RuntimeException('The next patient is no longer available. Please refresh the queue.');
             }
 
@@ -136,7 +136,7 @@ class ConsultationNextPatientService
         $routeConstraint = function ($routeQuery) use ($currentRoute, $user) {
             $routeQuery
                 ->where('department_id', $currentRoute->department_id)
-                ->where('status', VisitConsultationRoute::STATUS_PENDING)
+                ->whereIn('status', [VisitConsultationRoute::STATUS_PENDING, VisitConsultationRoute::STATUS_ACTIVE])
                 ->where('visit_id', '!=', $currentRoute->visit_id)
                 ->where(function ($doctorQuery) use ($user) {
                     $doctorQuery->whereNull('doctor_id')
@@ -166,7 +166,6 @@ class ConsultationNextPatientService
                     ->where('status', VisitStatus::WAITING_CONSULTATION->value);
             })
             ->whereHas('visit.consultationRoutes', $routeConstraint)
-            ->orderByRaw("CASE priority WHEN 'emergency' THEN 0 WHEN 'urgent' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END")
             ->orderBy('queue_number')
             ->orderBy('created_at')
             ->limit(50)

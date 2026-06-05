@@ -6,8 +6,10 @@ use App\Enums\DepartmentType;
 use App\Enums\VisitStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
+use App\Models\QueueEntry;
 use App\Models\Visit;
 use App\Services\ConsultationRouteService;
+use App\Services\Billing\BillingPolicyService;
 use App\Services\VisitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -64,7 +66,7 @@ class TriageController extends Controller
     /**
      * Save triage record and transition the visit.
      */
-    public function store(Request $request, Visit $visit, ConsultationRouteService $consultationRoutes)
+    public function store(Request $request, Visit $visit, ConsultationRouteService $consultationRoutes, BillingPolicyService $billingPolicy)
     {
         if ($visit->status !== VisitStatus::TRIAGE) {
             if ($request->expectsJson()) {
@@ -121,12 +123,24 @@ class TriageController extends Controller
         }
 
         try {
+            if ($selectedRoute) {
+                $this->assertRouteServicesSettled($selectedRoute->fresh(), $billingPolicy, $request->user());
+            }
+
             $visit = $this->visitService->processTriage($visit, $validated);
             if ($selectedRoute) {
                 $consultationRoutes->activateRouteOnly($selectedRoute->fresh(), $request->user());
                 $visit = $visit->fresh(['currentDepartment']);
             }
         } catch (\InvalidArgumentException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
+            return back()->withInput()->with('error', $e->getMessage());
+        } catch (\RuntimeException $e) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'message' => $e->getMessage(),
@@ -173,10 +187,32 @@ class TriageController extends Controller
      */
     public function index(Request $request)
     {
-        $visits = Visit::with(['patient', 'triage', 'currentDepartment'])
+        $triageQueueNumber = QueueEntry::query()
+            ->select('queue_number')
+            ->whereColumn('visit_id', 'visits.id')
+            ->whereNull('department_id')
+            ->whereIn('status', ['waiting', 'serving'])
+            ->whereDate('created_at', today())
+            ->orderBy('queue_number')
+            ->limit(1);
+
+        $visits = Visit::with([
+            'patient',
+            'triage',
+            'currentDepartment',
+            'queueEntries' => fn ($query) => $query
+                ->whereNull('department_id')
+                ->today()
+                ->whereIn('status', ['waiting', 'serving'])
+                ->orderBy('queue_number'),
+        ])
+            ->addSelect(['triage_queue_number' => $triageQueueNumber])
             ->whereIn('status', [VisitStatus::WAITING->value, VisitStatus::TRIAGE->value])
             ->today()
+            ->orderByRaw('triage_queue_number IS NULL')
+            ->orderBy('triage_queue_number')
             ->orderBy('checked_in_at')
+            ->orderBy('id')
             ->get();
 
         return view('triage.index', compact('visits'));
@@ -194,5 +230,34 @@ class TriageController extends Controller
             ->unique('id')
             ->sortBy('name')
             ->values();
+    }
+
+    private function assertRouteServicesSettled($route, BillingPolicyService $billingPolicy, $user): void
+    {
+        $route->loadMissing([
+            'routeServices.service',
+            'routeServices.invoiceItem.visit.admission',
+            'routeServices.invoiceItem.visit.emergencyCase',
+        ]);
+
+        foreach ($route->routeServices as $routeService) {
+            $service = $routeService->service;
+            $serviceName = $service?->name ?? 'Consultation service';
+            $isBillable = ! $service || ! array_key_exists('is_billable', $service->getAttributes()) || $service->is_billable !== false;
+            $hasCharge = ! $service || (float) ($service->price ?? 0) > 0;
+
+            if (! $routeService->invoiceItem) {
+                if ($isBillable && $hasCharge) {
+                    throw new \RuntimeException("{$serviceName} has not been billed. Please bill and settle it before completing triage.");
+                }
+
+                continue;
+            }
+
+            $decision = $billingPolicy->getInvoiceItemPolicy($routeService->invoiceItem, $user);
+            if (! $decision->allowed) {
+                throw new \RuntimeException($decision->message ?: "{$serviceName} bill has not been settled.");
+            }
+        }
     }
 }

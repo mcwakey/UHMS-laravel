@@ -2228,7 +2228,7 @@
 {{-- CONSULTATION SESSIONS — STICKY-BOTTOM DRAWER --}}
 {{-- ============================================================ --}}
 <div id="sessionsDrawer" class="is-collapsed">
-    <div id="sessionsDrawerHandle" role="button" aria-expanded="false" aria-controls="sessionsDrawerBody" onclick="toggleSessionsDrawer()">
+    <div id="sessionsDrawerHandle" role="button" aria-expanded="false" aria-controls="sessionsDrawerBody" data-sessions-drawer-toggle>
         <i class="ti ti-route fs-5"></i>
         <span class="fw-semibold small">Consultation Sessions for This Visit</span>
         <span class="badge bg-white text-primary rounded-pill ms-1">{{ $sessions->count() }}</span>
@@ -2489,6 +2489,13 @@
                             ->orderBy('name')
                             ->get()
                             ->groupBy('department_id');
+                        $referralServicesPayloadByDept = $referralServicesByDept
+                            ->map(fn ($services) => $services->map(fn ($service) => [
+                                'id' => $service->id,
+                                'name' => $service->name,
+                                'category' => $service->category,
+                            ])->values())
+                            ->all();
                     @endphp
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Target Consultation Department <span class="text-danger">*</span></label>
@@ -2745,6 +2752,7 @@ window.currentConsultationRouteId = @json($selectedRoute?->id);
 window.currentUser = @json(auth()->user() ? ['id' => auth()->id(), 'full_name' => auth()->user()->full_name, 'roles' => auth()->user()->getRoleNames()->values()] : null);
 window.summaryFragmentUrl = '{{ route('admin.consultations.summary-fragment', $visit) }}';
 window.taskAssignableUsers = @json($doctors->map(fn($doctor) => ['id' => $doctor->id, 'name' => 'Dr. '.$doctor->full_name])->values());
+window.sendSessionServicesByDept = @json($referralServicesPayloadByDept ?? []);
 
 /* ── Sessions drawer: always-visible, anchored to col-lg-10 ──── */
 function positionSessionsDrawer() {
@@ -2764,15 +2772,26 @@ function toggleSessionsDrawer() {
     if (handle) handle.setAttribute('aria-expanded', String(!collapsed));
 }
 window.toggleSessionsDrawer = toggleSessionsDrawer;
-document.addEventListener('DOMContentLoaded', function () {
+
+function bindSessionsDrawer() {
+    const drawer = document.getElementById('sessionsDrawer');
+    const handle = document.getElementById('sessionsDrawerHandle');
+    if (!drawer || !handle) return;
+
     document.body.classList.add('has-sessions-drawer');
     positionSessionsDrawer();
-    if (window.ResizeObserver) {
+    if (handle.dataset.uhmsBound !== '1') {
+        handle.dataset.uhmsBound = '1';
+        handle.addEventListener('click', toggleSessionsDrawer);
+    }
+    if (window.ResizeObserver && drawer.dataset.uhmsObserved !== '1') {
+        drawer.dataset.uhmsObserved = '1';
         new ResizeObserver(positionSessionsDrawer).observe(document.documentElement);
-    } else {
+    } else if (!window.ResizeObserver && drawer.dataset.uhmsResizeBound !== '1') {
+        drawer.dataset.uhmsResizeBound = '1';
         window.addEventListener('resize', positionSessionsDrawer);
     }
-});
+}
 /* ────────────────────────────────────────────────────────────── */
 
 function openSendSessionModalFallback() {
@@ -2811,12 +2830,28 @@ function initSendSessionPicker() {
     if (!deptSel || !svcSel || !doctorSel || deptSel.dataset.uhmsBound === '1') return;
     deptSel.dataset.uhmsBound = '1';
 
-    function setOptions(select, placeholder, list, labelFn) {
+    function setOptions(select, placeholder, list, labelFn, placeholderDisabled = false) {
         select.innerHTML = '';
-        select.insertAdjacentHTML('beforeend', '<option value="">' + placeholder + '</option>');
+        select.insertAdjacentHTML('beforeend', '<option value=""' + (placeholderDisabled ? ' disabled' : '') + '>' + placeholder + '</option>');
         list.forEach(function (item) {
             select.insertAdjacentHTML('beforeend', '<option value="' + item.id + '">' + labelFn(item) + '</option>');
         });
+    }
+
+    function preloadedServicesFor(departmentId) {
+        const grouped = window.sendSessionServicesByDept || {};
+        return grouped[String(departmentId)] || grouped[departmentId] || [];
+    }
+
+    function showServices(services) {
+        svcSel.disabled = services.length === 0;
+        setOptions(
+            svcSel,
+            services.length ? 'Optional services to link/bill' : 'No consultation services available',
+            services,
+            function (s) { return s.name; },
+            true
+        );
     }
 
     deptSel.addEventListener('change', async function () {
@@ -2829,31 +2864,59 @@ function initSendSessionPicker() {
             doctorSel.innerHTML = '<option value="">Select department first</option>';
             return;
         }
+        const fallbackServices = preloadedServicesFor(this.value);
         svcSel.disabled = true;
         doctorSel.disabled = true;
         svcSel.innerHTML = '<option value="">Loading services...</option>';
         doctorSel.innerHTML = '<option value="">Loading doctors...</option>';
+        if (fallbackServices.length) {
+            showServices(fallbackServices);
+        }
         try {
             const res = await fetch(endpointTemplate.replace('__ID__', this.value), {
                 headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
             });
+            if (!res.ok) {
+                throw new Error('Options request failed');
+            }
             const payload = await res.json();
-            const services = payload.services || [];
+            const services = (payload.services || []).filter(function (service) {
+                return service.category === 'consultation';
+            });
             const doctors = payload.doctors || [];
-            svcSel.disabled = false;
             doctorSel.disabled = false;
-            setOptions(svcSel, services.length ? 'Optional services to link/bill' : 'No consultation services available', services, function (s) { return s.name; });
+            showServices(services.length ? services : fallbackServices);
             setOptions(doctorSel, doctors.length ? 'Optional doctor' : 'No doctor linked through specialty', doctors, function (d) { return d.name; });
         } catch (error) {
-            svcSel.disabled = true;
+            showServices(fallbackServices);
             doctorSel.disabled = true;
             svcSel.innerHTML = '<option value="">Unable to load services</option>';
+            if (fallbackServices.length) {
+                showServices(fallbackServices);
+            }
             doctorSel.innerHTML = '<option value="">Unable to load doctors</option>';
         }
     });
 }
 
-document.addEventListener('DOMContentLoaded', initSendSessionPicker);
+function bindSendSessionModalEvents() {
+    const modal = document.getElementById('sendSessionModal');
+    if (!modal || modal.dataset.uhmsBound === '1') return;
+    modal.dataset.uhmsBound = '1';
+    modal.addEventListener('shown.bs.modal', initSendSessionPicker);
+}
+
+function initConsultationSessionUi() {
+    bindSessionsDrawer();
+    bindSendSessionModalEvents();
+    initSendSessionPicker();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initConsultationSessionUi);
+} else {
+    initConsultationSessionUi();
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const routeId = window.currentConsultationRouteId;
@@ -2870,10 +2933,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener('click', (e) => {
     const openBtn = e.target.closest('[data-bs-target="#sendSessionModal"]');
-    if (openBtn && openSendSessionModalFallback()) {
-        e.preventDefault();
+    if (openBtn) {
         initSendSessionPicker();
-        return;
+        if (openSendSessionModalFallback()) {
+            e.preventDefault();
+            return;
+        }
     }
 
     if (e.target.closest('#sendSessionModal [data-bs-dismiss="modal"]') || e.target.matches('#sendSessionModal')) {

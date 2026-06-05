@@ -13,6 +13,7 @@ use App\Models\InsuranceProvider;
 use App\Models\InvoiceItem;
 use App\Models\Patient;
 use App\Models\PatientInsurance;
+use App\Models\QueueEntry;
 use App\Models\ServiceCatalog;
 use App\Models\Specialty;
 use App\Models\User;
@@ -404,7 +405,7 @@ class VisitConsultationRoutingTest extends TestCase
         $this->assertSame(VisitStatus::CONSULTING, $visit->fresh()->status);
     }
 
-    public function test_visit_page_route_activation_only_changes_the_route_status(): void
+    public function test_visit_page_route_activation_only_changes_route_status_and_queues_consultation(): void
     {
         $patient = Patient::factory()->create(['registered_by' => $this->admin->id]);
         $service = $this->makeService($this->department);
@@ -434,6 +435,114 @@ class VisitConsultationRoutingTest extends TestCase
 
         $this->assertSame(VisitConsultationRoute::STATUS_ACTIVE, $route->fresh()->status);
         $this->assertSame(VisitStatus::WAITING_CONSULTATION, $visit->fresh()->status);
+        $this->assertSame($this->doctor->id, $route->fresh()->doctor_id);
+        $this->assertSame(1, QueueEntry::where('visit_id', $visit->id)
+            ->where('department_id', $this->department->id)
+            ->where('status', 'waiting')
+            ->count());
+
+        $notification = $this->admin->notifications()->first();
+
+        $this->assertNotNull($notification);
+        $this->assertSame('Patient waiting for consultation', $notification->data['title'] ?? null);
+        $this->assertSame('CONSULTATION', $notification->data['module'] ?? null);
+        $this->assertSame('consultation_queue', $notification->data['source_type'] ?? null);
+        $this->assertSame($visit->id, $notification->data['visit_id'] ?? null);
+        $this->assertSame($this->department->id, $notification->data['department_id'] ?? null);
+    }
+
+    public function test_switching_active_consultation_route_only_queues_pending_route_becoming_active(): void
+    {
+        $secondDepartment = Department::factory()->create([
+            'name' => 'Eye Clinic',
+            'type' => DepartmentType::CONSULTATION->value,
+        ]);
+        $patient = Patient::factory()->create(['registered_by' => $this->admin->id]);
+        $firstService = $this->makeService($this->department);
+        $secondService = $this->makeService($secondDepartment);
+        $visit = Visit::factory()->create([
+            'patient_id' => $patient->id,
+            'created_by' => $this->admin->id,
+            'visit_type' => VisitType::OUTPATIENT,
+            'status' => VisitStatus::CONSULTING,
+            'current_department_id' => $this->department->id,
+        ]);
+
+        $firstRoute = VisitConsultationRoute::create([
+            'visit_id' => $visit->id,
+            'patient_id' => $patient->id,
+            'department_id' => $this->department->id,
+            'service_id' => $firstService->id,
+            'doctor_id' => $this->doctor->id,
+            'status' => VisitConsultationRoute::STATUS_ACTIVE,
+            'routed_by' => $this->admin->id,
+            'activated_at' => now(),
+        ]);
+        $secondRoute = VisitConsultationRoute::create([
+            'visit_id' => $visit->id,
+            'patient_id' => $patient->id,
+            'department_id' => $secondDepartment->id,
+            'service_id' => $secondService->id,
+            'doctor_id' => null,
+            'status' => VisitConsultationRoute::STATUS_PENDING,
+            'routed_by' => $this->admin->id,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.consultations.routes.activate', [$visit, $secondRoute]), [
+                'route_only' => '1',
+            ])
+            ->assertRedirect(route('admin.visits.show', $visit));
+
+        $this->assertSame(VisitConsultationRoute::STATUS_PAUSED, $firstRoute->fresh()->status);
+        $this->assertSame(VisitConsultationRoute::STATUS_ACTIVE, $secondRoute->fresh()->status);
+        $this->assertSame(VisitStatus::CONSULTING, $visit->fresh()->status);
+        $this->assertSame(0, QueueEntry::where('visit_id', $visit->id)
+            ->where('department_id', $this->department->id)
+            ->where('status', 'waiting')
+            ->count());
+        $this->assertDatabaseHas('queue_entries', [
+            'visit_id' => $visit->id,
+            'department_id' => $secondDepartment->id,
+            'status' => 'waiting',
+        ]);
+    }
+
+    public function test_resuming_paused_consultation_route_does_not_queue_again(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->admin->id]);
+        $service = $this->makeService($this->department);
+        $visit = Visit::factory()->create([
+            'patient_id' => $patient->id,
+            'created_by' => $this->admin->id,
+            'visit_type' => VisitType::OUTPATIENT,
+            'status' => VisitStatus::CONSULTING,
+            'current_department_id' => $this->department->id,
+        ]);
+
+        $route = VisitConsultationRoute::create([
+            'visit_id' => $visit->id,
+            'patient_id' => $patient->id,
+            'department_id' => $this->department->id,
+            'service_id' => $service->id,
+            'doctor_id' => $this->doctor->id,
+            'status' => VisitConsultationRoute::STATUS_PAUSED,
+            'routed_by' => $this->admin->id,
+            'paused_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.consultations.routes.activate', [$visit, $route]), [
+                'route_only' => '1',
+            ])
+            ->assertRedirect(route('admin.visits.show', $visit));
+
+        $this->assertSame(VisitConsultationRoute::STATUS_ACTIVE, $route->fresh()->status);
+        $this->assertSame(0, QueueEntry::where('visit_id', $visit->id)
+            ->where('department_id', $this->department->id)
+            ->where('status', 'waiting')
+            ->count());
+        $this->assertNull($this->admin->notifications()->first());
     }
 
     private function makeService(Department $department, DepartmentType $type = DepartmentType::CONSULTATION): ServiceCatalog

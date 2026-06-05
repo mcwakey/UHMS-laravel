@@ -104,7 +104,11 @@ class VisitService
             });
         }
 
-        return $query->latest()->paginate($filters['per_page'] ?? 15);
+        return $query
+            ->orderBy('visit_date')
+            ->orderByRaw('COALESCE(checked_in_at, created_at) asc')
+            ->orderBy('id')
+            ->paginate($filters['per_page'] ?? 15);
     }
 
     public function create(array $data): Visit

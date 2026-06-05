@@ -185,13 +185,16 @@ class ConsultationRouteService
 
             $route->forceFill([
                 'status' => VisitConsultationRoute::STATUS_ACTIVE,
-                'doctor_id' => $route->doctor_id ?: $user->id,
                 'activated_at' => now(),
             ])->save();
 
             $action = $fromStatus === VisitConsultationRoute::STATUS_PAUSED ? 'resumed' : 'activated';
             if ($fromStatus !== VisitConsultationRoute::STATUS_ACTIVE) {
                 $this->log($route, $fromStatus, VisitConsultationRoute::STATUS_ACTIVE, $action, null, $user);
+            }
+
+            if ($fromStatus === VisitConsultationRoute::STATUS_PENDING) {
+                $this->queueService->ensureForDepartment($visit->fresh(), $route->department_id, true);
             }
 
             return $this->freshRoute($route);
