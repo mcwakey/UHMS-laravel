@@ -190,7 +190,10 @@ class VisitController extends Controller
 
     public function create(Request $request)
     {
-        $departments = Department::active()->orderBy('name')->get();
+        $departments = Department::active()
+            ->where('type', DepartmentType::CONSULTATION->value)
+            ->orderBy('name')
+            ->get();
         $selectedPatient = null;
 
         if ($request->has('patient_id')) {

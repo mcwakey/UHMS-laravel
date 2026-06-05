@@ -345,6 +345,21 @@ class VisitConsultationRoutingTest extends TestCase
         $this->assertStringNotContainsString('assigned_staff_id', $content);
     }
 
+    public function test_create_visit_page_only_lists_consultation_type_departments(): void
+    {
+        Department::factory()->create([
+            'name' => 'Main Laboratory',
+            'type' => DepartmentType::INVESTIGATION->value,
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(route('admin.visits.create'));
+        $content = $response->getContent();
+
+        $response->assertOk();
+        $this->assertStringContainsString('General Medicine', $content);
+        $this->assertStringNotContainsString('Main Laboratory', $content);
+    }
+
     public function test_consultation_queue_displays_route_doctor(): void
     {
         $patient = Patient::factory()->create(['registered_by' => $this->admin->id]);
