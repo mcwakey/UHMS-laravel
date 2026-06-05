@@ -4,14 +4,17 @@
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Register New Patient</h4>
-    </div>
-    <div>
+    <h6 class="fw-bold mb-0 d-flex align-items-center">
+        <a href="{{ route('admin.patients.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>Register New Patient</a>
+    </h6>
+    {{-- <div class="flex-grow-1">
+        <h4 class="fw-bold mb-0"></h4>
+    </div> --}}
+    {{-- <div>
         <a href="{{ route('admin.patients.index') }}" class="btn btn-outline-secondary btn-md">
             <i class="ti ti-arrow-left me-1"></i>Back to Patients
         </a>
-    </div>
+    </div> --}}
 </div>
 
 <form method="POST" action="{{ route('admin.patients.store') }}" enctype="multipart/form-data">

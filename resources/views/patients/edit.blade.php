@@ -4,14 +4,17 @@
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
-    <div class="flex-grow-1">
+    <h6 class="fw-bold mb-0 d-flex align-items-center">
+        <a href="{{ route('admin.patients.show', $patient) }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>Edit Patient</a>
+    </h6>
+    {{-- <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">Edit Patient <span class="text-muted fs-14 ms-1">{{ $patient->patient_number }}</span></h4>
     </div>
     <div>
         <a href="{{ route('admin.patients.show', $patient) }}" class="btn btn-outline-secondary btn-md">
             <i class="ti ti-arrow-left me-1"></i>Back to Profile
         </a>
-    </div>
+    </div> --}}
 </div>
 
 <form method="POST" action="{{ route('admin.patients.update', $patient) }}" enctype="multipart/form-data">

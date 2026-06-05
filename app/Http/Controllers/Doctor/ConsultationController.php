@@ -172,17 +172,36 @@ class ConsultationController extends Controller
     {
         $filters = $request->all();
 
-        // Default: outpatient visits for today
-        if (! $request->hasAny(['search', 'visit_type', 'date_from'])) {
-            $filters['visit_type'] = $filters['visit_type'] ?? VisitType::OUTPATIENT->value;
+        $dateRange = trim((string) ($filters['date_range'] ?? ''));
+        if ($dateRange !== '') {
+            $parts = preg_split('/\s+(?:to|-)\s+/', $dateRange);
+            $filters['date_from'] = $parts[0] ?? null;
+            $filters['date_to'] = $parts[1] ?? ($parts[0] ?? null);
+        }
+
+        // Default: today's active consultable routes across visit types.
+        if (! $request->hasAny(['search', 'visit_type', 'date_from', 'date_to', 'date_range', 'my_patients'])) {
             $filters['date_from'] = $filters['date_from'] ?? today()->toDateString();
             $filters['date_to'] = $filters['date_to'] ?? today()->toDateString();
+        }
+
+        if (! empty($filters['date_from']) && empty($filters['date_to'])) {
+            $filters['date_to'] = $filters['date_from'];
+        }
+
+        if (! empty($filters['date_to']) && empty($filters['date_from'])) {
+            $filters['date_from'] = $filters['date_to'];
+        }
+
+        if (! empty($filters['date_from']) && ! empty($filters['date_to'])) {
+            $filters['date_range'] = $filters['date_from'].' to '.$filters['date_to'];
         }
 
         $query = VisitConsultationRoute::query()
             ->with([
                 'visit.patient',
                 'visit.medicalRecord',
+                'visit.queueEntries.department',
                 'department',
                 'service',
                 'routeServices.service',
@@ -205,12 +224,27 @@ class ConsultationController extends Controller
                     });
             })
             ->whereHas('visit', function ($visitQuery) {
-                $visitQuery->whereIn('status', [
-                    VisitStatus::WAITING_CONSULTATION->value,
-                    VisitStatus::ACTIVE->value,
-                    VisitStatus::CONSULTING->value,
-                    VisitStatus::EMERGENCY->value,
-                ]);
+                $visitQuery->where(function ($statusQuery) {
+                    $statusQuery
+                        ->where(function ($outpatientQuery) {
+                            $outpatientQuery
+                                ->where('visit_type', VisitType::OUTPATIENT->value)
+                                ->whereIn('status', [
+                                    VisitStatus::WAITING_CONSULTATION->value,
+                                    VisitStatus::ACTIVE->value,
+                                    VisitStatus::CONSULTING->value,
+                                    VisitStatus::EMERGENCY->value,
+                                ]);
+                        })
+                        ->orWhere(function ($nonOpdQuery) {
+                            $nonOpdQuery
+                                ->whereIn('visit_type', [
+                                    VisitType::INPATIENT->value,
+                                    VisitType::EMERGENCY->value,
+                                ])
+                                ->where('status', '!=', VisitStatus::DISCHARGED->value);
+                        });
+                });
             });
 
         /** @var User|null $user */
@@ -504,8 +538,8 @@ class ConsultationController extends Controller
         $data = $request->validate([
             'department_id' => ['required', 'exists:departments,id'],
             'service_id' => ['nullable', 'exists:service_catalog,id'],
-            'service_ids' => ['nullable', 'array'],
-            'service_ids.*' => ['exists:service_catalog,id'],
+            'service_ids' => ['required_without:service_id', 'array', 'min:1'],
+            'service_ids.*' => ['required', 'exists:service_catalog,id'],
             'doctor_id' => ['nullable', 'exists:users,id'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'activate_now' => ['nullable', 'boolean'],

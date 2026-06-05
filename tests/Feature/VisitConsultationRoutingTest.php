@@ -3,19 +3,23 @@
 namespace Tests\Feature;
 
 use App\Enums\DepartmentType;
+use App\Enums\InsuranceType;
 use App\Enums\Priority;
 use App\Enums\ServiceType;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Models\Department;
+use App\Models\InsuranceProvider;
 use App\Models\InvoiceItem;
 use App\Models\Patient;
+use App\Models\PatientInsurance;
 use App\Models\ServiceCatalog;
 use App\Models\Specialty;
 use App\Models\User;
 use App\Models\Visit;
 use App\Models\VisitConsultationRoute;
 use App\Models\VisitConsultationRouteService;
+use App\Services\BillingService;
 use App\Services\VisitWorkflowService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -56,7 +60,7 @@ class VisitConsultationRoutingTest extends TestCase
         ]);
 
         $adminRole = Role::findOrCreate('Admin', 'web');
-        foreach (['visits.view', 'visits.create', 'consultations.view', 'consultations.create'] as $permission) {
+        foreach (['visits.view', 'visits.create', 'visits.edit', 'consultations.view', 'consultations.create'] as $permission) {
             $adminRole->givePermissionTo(Permission::findOrCreate($permission, 'web'));
         }
 
@@ -139,6 +143,113 @@ class VisitConsultationRoutingTest extends TestCase
             'service_id' => $service->id,
         ]);
         $this->assertSame(1, InvoiceItem::where('visit_id', $visit->id)->where('service_catalog_id', $service->id)->count());
+    }
+
+    public function test_create_visit_notifies_vitals_users_that_patient_is_waiting_for_triage(): void
+    {
+        $triageRole = Role::findOrCreate('Triage Nurse', 'web');
+        $triageRole->givePermissionTo(Permission::findOrCreate('vitals.create', 'web'));
+        $triageUser = User::factory()->create(['department_id' => $this->department->id]);
+        $triageUser->assignRole($triageRole);
+
+        $patient = Patient::factory()->create(['registered_by' => $this->admin->id]);
+        $service = $this->makeService($this->department);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.visits.store'), $this->visitPayload($patient, [[
+                'service_catalog_id' => $service->id,
+                'department_id' => $this->department->id,
+                'quantity' => 1,
+            ]]))
+            ->assertRedirect();
+
+        $visit = Visit::where('patient_id', $patient->id)->firstOrFail();
+        $notification = $triageUser->notifications()->first();
+
+        $this->assertNotNull($notification);
+        $this->assertSame('Patient waiting for triage', $notification->data['title'] ?? null);
+        $this->assertSame('CONSULTATION', $notification->data['module'] ?? null);
+        $this->assertSame('triage_queue', $notification->data['source_type'] ?? null);
+        $this->assertSame($visit->id, $notification->data['source_id'] ?? null);
+        $this->assertSame($visit->id, $notification->data['visit_id'] ?? null);
+        $this->assertStringContainsString('/admin/triage/'.$visit->id, $notification->data['url'] ?? '');
+    }
+
+    public function test_visit_insurance_change_only_affects_future_billed_items(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->admin->id]);
+        $oldProvider = InsuranceProvider::create([
+            'name' => 'Old Health Cover',
+            'short_name' => 'OLD',
+            'type' => InsuranceType::PRIVATE,
+            'is_active' => true,
+            'is_default' => false,
+        ]);
+        $newProvider = InsuranceProvider::create([
+            'name' => 'New Health Cover',
+            'short_name' => 'NEW',
+            'type' => InsuranceType::CORPORATE,
+            'is_active' => true,
+            'is_default' => false,
+        ]);
+        $oldInsurance = PatientInsurance::create([
+            'patient_id' => $patient->id,
+            'insurance_provider_id' => $oldProvider->id,
+            'member_type' => 'holder',
+            'is_primary' => true,
+            'is_active' => true,
+        ]);
+        $newInsurance = PatientInsurance::create([
+            'patient_id' => $patient->id,
+            'insurance_provider_id' => $newProvider->id,
+            'member_type' => 'holder',
+            'is_primary' => false,
+            'is_active' => true,
+        ]);
+        $firstService = $this->makeService($this->department);
+        $secondService = $this->makeService($this->department);
+
+        $payload = $this->visitPayload($patient, [[
+            'service_catalog_id' => $firstService->id,
+            'department_id' => $this->department->id,
+            'quantity' => 1,
+        ]]);
+        $payload['visit_insurance_id'] = $oldInsurance->id;
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.visits.store'), $payload)
+            ->assertRedirect();
+
+        $visit = Visit::where('patient_id', $patient->id)->firstOrFail();
+        $firstItem = InvoiceItem::where('visit_id', $visit->id)
+            ->where('service_catalog_id', $firstService->id)
+            ->firstOrFail();
+
+        $this->assertSame($oldInsurance->id, $firstItem->patient_insurance_id);
+
+        $this->actingAs($this->admin)
+            ->patch(route('admin.visits.insurance.update', $visit), [
+                'visit_insurance_id' => $newInsurance->id,
+            ])
+            ->assertRedirect();
+
+        $this->assertSame($newInsurance->id, $visit->fresh()->visit_insurance_id);
+        $this->assertSame($oldInsurance->id, $firstItem->fresh()->patient_insurance_id);
+
+        app(BillingService::class)->addItemToVisitInvoice(
+            visit: $visit->fresh(),
+            service: $secondService,
+            sourceType: 'future_visit_service',
+            sourceId: $secondService->id,
+            departmentId: $this->department->id,
+        );
+
+        $secondItem = InvoiceItem::where('visit_id', $visit->id)
+            ->where('service_catalog_id', $secondService->id)
+            ->firstOrFail();
+
+        $this->assertSame($newInsurance->id, $secondItem->patient_insurance_id);
+        $this->assertSame($newProvider->id, $secondItem->insurance_provider_id);
     }
 
     public function test_multiple_consultation_services_in_same_department_create_one_department_route(): void

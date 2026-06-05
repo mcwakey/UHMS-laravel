@@ -27,17 +27,17 @@
 @endif
 
 <div class="row g-3 mb-3">
-    <div class="col-6 col-xl-2"><div class="card border-0 bg-light"><div class="card-body py-3"><div class="text-muted small">Total</div><div class="h4 mb-0">{{ $summary['total'] ?? 0 }}</div></div></div></div>
-    <div class="col-6 col-xl-2"><div class="card border-0 bg-warning-subtle"><div class="card-body py-3"><div class="text-warning small">Pending</div><div class="h4 mb-0">{{ $summary['pending'] ?? 0 }}</div></div></div></div>
-    <div class="col-6 col-xl-2"><div class="card border-0 bg-info-subtle"><div class="card-body py-3"><div class="text-info small">In Progress</div><div class="h4 mb-0">{{ $summary['in_progress'] ?? 0 }}</div></div></div></div>
-    <div class="col-6 col-xl-2"><div class="card border-0 bg-success-subtle"><div class="card-body py-3"><div class="text-success small">Rendered</div><div class="h4 mb-0">{{ $summary['rendered'] ?? 0 }}</div></div></div></div>
-    <div class="col-6 col-xl-2"><div class="card border-0 bg-danger-subtle"><div class="card-body py-3"><div class="text-danger small">Not Rendered</div><div class="h4 mb-0">{{ $summary['not_rendered'] ?? 0 }}</div></div></div></div>
-    <div class="col-6 col-xl-2"><div class="card border-0 bg-secondary-subtle"><div class="card-body py-3"><div class="text-secondary small">Cancelled</div><div class="h4 mb-0">{{ $summary['cancelled'] ?? 0 }}</div></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card"><div class="card-body text-center"><h3 class="mb-1">{{ $summary['total'] ?? 0 }}</h3><p class="text-muted mb-0">Total</p></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card"><div class="card-body text-center"><h3 class="mb-1 text-warning">{{ $summary['pending'] ?? 0 }}</h3><p class="text-muted mb-0">Pending</p></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card"><div class="card-body text-center"><h3 class="mb-1 text-info">{{ $summary['in_progress'] ?? 0 }}</h3><p class="text-muted mb-0">In Progress</p></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card"><div class="card-body text-center"><h3 class="mb-1 text-success">{{ $summary['rendered'] ?? 0 }}</h3><p class="text-muted mb-0">Rendered</p></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card"><div class="card-body text-center"><h3 class="mb-1 text-danger">{{ $summary['not_rendered'] ?? 0 }}</h3><p class="text-muted mb-0">Not Rendered</p></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card"><div class="card-body text-center"><h3 class="mb-1 text-secondary">{{ $summary['cancelled'] ?? 0 }}</h3><p class="text-muted mb-0">Cancelled</p></div></div></div>
 </div>
 
 <div class="card mb-3">
     <div class="card-body">
-        <form method="GET" action="{{ route('admin.service-renderings.index') }}" class="row g-2 align-items-end">
+        <form method="GET" action="{{ route('admin.service-renderings.index') }}" class="row g-2 align-items-end" data-auto-filter-form="service-renderings-index">
             <div class="col-md-3">
                 <label class="form-label small">Search</label>
                 <input class="form-control form-control-sm" name="search" value="{{ $filters['search'] ?? '' }}" placeholder="Patient, visit, invoice, service">
@@ -61,54 +61,18 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label small">Payment</label>
-                <select class="form-select form-select-sm" name="payment_status">
-                    <option value="">All</option>
-                    @foreach(['unpaid', 'partially_paid', 'paid', 'waived', 'cancelled', 'voided'] as $status)
-                        <option value="{{ $status }}" @selected(($filters['payment_status'] ?? '') === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
-                    @endforeach
-                </select>
+                @include('partials.date-range-filter', [
+                    'id' => 'serviceRenderingDateRangePicker',
+                    'value' => $filters['date_range'] ?? '',
+                    'labelClass' => 'small',
+                    'submitOnApply' => true,
+                ])
             </div>
-            <div class="col-md-2">
-                <label class="form-label small">Source</label>
-                <select class="form-select form-select-sm" name="source">
-                    <option value="">All</option>
-                    @foreach(['opd' => 'OPD / Visit', 'emergency' => 'Emergency', 'admission' => 'Admission', 'consultation' => 'Consultation'] as $value => $label)
-                        <option value="{{ $value }}" @selected(($filters['source'] ?? '') === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-1 d-flex gap-2">
-                <button class="btn btn-primary btn-sm w-100" type="submit">Filter</button>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">From</label>
-                <input class="form-control form-control-sm" type="date" name="date_from" value="{{ $filters['date_from'] ?? '' }}">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">To</label>
-                <input class="form-control form-control-sm" type="date" name="date_to" value="{{ $filters['date_to'] ?? '' }}">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">Rendered By</label>
-                <select class="form-select form-select-sm" name="rendered_by">
-                    <option value="">Anyone</option>
-                    @foreach($staff as $person)
-                        <option value="{{ $person->id }}" @selected((string)($filters['rendered_by'] ?? '') === (string)$person->id)>{{ trim($person->first_name . ' ' . $person->last_name) }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">Service</label>
-                <select class="form-select form-select-sm" name="service_id">
-                    <option value="">All services</option>
-                    @foreach($services as $service)
-                        <option value="{{ $service->id }}" @selected((string)($filters['service_id'] ?? '') === (string)$service->id)>{{ $service->name }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <a class="btn btn-outline-secondary btn-sm w-100" href="{{ route('admin.service-renderings.index') }}">Clear</a>
+            <div class="col-md-auto">
+                <div class="d-flex gap-1">
+                    <button class="btn btn-primary btn-sm" type="submit"><i class="ti ti-filter me-1"></i>Filter</button>
+                    <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.service-renderings.index') }}"><i class="ti ti-x"></i></a>
+                </div>
             </div>
         </form>
     </div>
@@ -189,3 +153,33 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+    @include('partials.date-range-filter-scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const filterForm = document.querySelector('[data-auto-filter-form="service-renderings-index"]');
+            if (!filterForm) {
+                return;
+            }
+
+            let searchTimer = null;
+            const searchInput = filterForm.querySelector('input[name="search"]');
+
+            filterForm.querySelectorAll('select').forEach(function (select) {
+                select.addEventListener('change', function () {
+                    filterForm.requestSubmit();
+                });
+            });
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    window.clearTimeout(searchTimer);
+                    searchTimer = window.setTimeout(function () {
+                        filterForm.requestSubmit();
+                    }, 400);
+                });
+            }
+        });
+    </script>
+@endpush

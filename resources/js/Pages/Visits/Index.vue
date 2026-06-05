@@ -13,7 +13,7 @@
  * - All permission gates received as a `can: {...}` prop.
  * - All enum metadata (labels, colors) baked into the props by the controller.
  */
-import { reactive, watch } from 'vue';
+import { onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { Link, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '../../Layouts/AppLayout.vue';
 
@@ -22,8 +22,8 @@ const props = defineProps({
     stats: { type: Object, required: true },
     doctors: { type: Array, default: () => [] },
     filters: { type: Object, default: () => ({}) },
-    statusOptions: { type: Array, default: () => [] },
     visitTypeOptions: { type: Array, default: () => [] },
+    insuranceProviderOptions: { type: Array, default: () => [] },
     routes: { type: Object, default: () => ({}) },
     can: { type: Object, default: () => ({}) },
 });
@@ -31,10 +31,12 @@ const props = defineProps({
 // Local reactive copy of the filter values (two-way bound to inputs).
 const form = reactive({
     search: props.filters.search ?? '',
-    status: props.filters.status ?? '',
     visit_type: props.filters.visit_type ?? '',
-    date_from: props.filters.date_from ?? '',
+    insurance_provider_id: props.filters.insurance_provider_id ?? '',
+    date_range: props.filters.date_range ?? '',
 });
+const dateRangePicker = ref(null);
+const dateRangeLabel = ref('Select date range');
 
 function applyFilters() {
     router.get(props.routes.index, form, {
@@ -46,9 +48,9 @@ function applyFilters() {
 
 function clearFilters() {
     form.search = '';
-    form.status = '';
     form.visit_type = '';
-    form.date_from = '';
+    form.insurance_provider_id = '';
+    form.date_range = '';
     router.get(props.routes.index, {}, {
         preserveState: false,
         preserveScroll: true,
@@ -61,6 +63,113 @@ watch(() => form.search, () => {
     if (searchTimer) clearTimeout(searchTimer);
     searchTimer = setTimeout(applyFilters, 350);
 });
+
+onMounted(() => {
+    initDateRangePicker();
+});
+
+onBeforeUnmount(() => {
+    destroyDateRangePicker();
+});
+
+function parseDateRange(value) {
+    if (!value || !window.moment) return null;
+
+    const parts = String(value).split(/\s+(?:to|-)\s+/).filter(Boolean);
+    if (!parts.length) return null;
+
+    const start = window.moment(parts[0], 'YYYY-MM-DD', true);
+    const end = window.moment(parts[1] || parts[0], 'YYYY-MM-DD', true);
+
+    return start.isValid() && end.isValid() ? { start, end } : null;
+}
+
+function setDateRange(start, end) {
+    form.date_range = `${start.format('YYYY-MM-DD')} to ${end.format('YYYY-MM-DD')}`;
+    dateRangeLabel.value = `${start.format('D MMM YY')} - ${end.format('D MMM YY')}`;
+}
+
+function initDateRangePicker() {
+    const $ = window.jQuery;
+    const moment = window.moment;
+    if (!dateRangePicker.value || !moment || !$?.fn?.daterangepicker) {
+        const parsed = parseDateRange(form.date_range);
+        if (parsed) {
+            dateRangeLabel.value = `${parsed.start.format('D MMM YY')} - ${parsed.end.format('D MMM YY')}`;
+        }
+        return;
+    }
+
+    const parsed = parseDateRange(form.date_range);
+    const start = parsed?.start ?? moment();
+    const end = parsed?.end ?? moment();
+    if (parsed) {
+        dateRangeLabel.value = `${start.format('D MMM YY')} - ${end.format('D MMM YY')}`;
+    }
+
+    const $picker = $(dateRangePicker.value);
+    $picker.daterangepicker({
+        startDate: start,
+        endDate: end,
+        autoUpdateInput: false,
+        opens: 'left',
+        ranges: {
+            Today: [moment(), moment()],
+            Yesterday: [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+            'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+            'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+            'This Month': [moment().startOf('month'), moment().endOf('month')],
+            'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+        },
+        locale: {
+            cancelLabel: 'Clear',
+        },
+    });
+
+    $picker.on('apply.daterangepicker', (_event, picker) => {
+        setDateRange(picker.startDate, picker.endDate);
+        applyFilters();
+    });
+
+    $picker.on('cancel.daterangepicker', () => {
+        form.date_range = '';
+        dateRangeLabel.value = 'Select date range';
+        applyFilters();
+    });
+}
+
+function destroyDateRangePicker() {
+    const $ = window.jQuery;
+    if (!dateRangePicker.value || !$) return;
+
+    const $picker = $(dateRangePicker.value);
+    const instance = $picker.data('daterangepicker');
+    $picker.off('.daterangepicker');
+    instance?.remove();
+}
+
+function openDateRangePicker() {
+    const $ = window.jQuery;
+    if (!dateRangePicker.value || !$) return;
+
+    $(dateRangePicker.value).trigger('click');
+}
+
+function filteredPageUrl(url) {
+    if (!url) return '';
+
+    const next = new URL(url, window.location.origin);
+
+    Object.entries(form).forEach(([key, value]) => {
+        if (value) {
+            next.searchParams.set(key, value);
+        } else {
+            next.searchParams.delete(key);
+        }
+    });
+
+    return `${next.pathname}${next.search}${next.hash}`;
+}
 
 function transitionVisit(visitId, nextStatusValue) {
     const url = props.routes.transition.replace('__ID__', String(visitId));
@@ -101,37 +210,29 @@ function transitionVisit(visitId, nextStatusValue) {
             </div>
         </div>
 
-        <!-- Today's Stats -->
+        <!-- Visit Stats -->
         <div class="row mb-4">
             <div class="col-xl-2 col-md-4 col-6">
                 <div class="card border-start border-primary border-3">
                     <div class="card-body py-3 px-3">
-                        <p class="text-muted mb-1 small">Today's Total</p>
+                        <p class="text-muted mb-1 small">Range Total</p>
                         <h4 class="fw-bold mb-0">{{ stats.total }}</h4>
                     </div>
                 </div>
             </div>
             <div class="col-xl-2 col-md-4 col-6">
-                <div class="card border-start border-warning border-3">
+                <div class="card border-start border-secondary border-3">
                     <div class="card-body py-3 px-3">
-                        <p class="text-muted mb-1 small">Waiting</p>
-                        <h4 class="fw-bold mb-0">{{ stats.waiting }}</h4>
+                        <p class="text-muted mb-1 small">Outpatients</p>
+                        <h4 class="fw-bold mb-0">{{ stats.outpatient }}</h4>
                     </div>
                 </div>
             </div>
             <div class="col-xl-2 col-md-4 col-6">
                 <div class="card border-start border-info border-3">
                     <div class="card-body py-3 px-3">
-                        <p class="text-muted mb-1 small">Consulting</p>
-                        <h4 class="fw-bold mb-0">{{ stats.consulting }}</h4>
-                    </div>
-                </div>
-            </div>
-            <div class="col-xl-2 col-md-4 col-6">
-                <div class="card border-start border-success border-3">
-                    <div class="card-body py-3 px-3">
-                        <p class="text-muted mb-1 small">Completed</p>
-                        <h4 class="fw-bold mb-0">{{ stats.completed }}</h4>
+                        <p class="text-muted mb-1 small">Inpatients</p>
+                        <h4 class="fw-bold mb-0">{{ stats.inpatient }}</h4>
                     </div>
                 </div>
             </div>
@@ -144,10 +245,18 @@ function transitionVisit(visitId, nextStatusValue) {
                 </div>
             </div>
             <div class="col-xl-2 col-md-4 col-6">
-                <div class="card border-start border-secondary border-3">
+                <div class="card border-start border-warning border-3">
                     <div class="card-body py-3 px-3">
-                        <p class="text-muted mb-1 small">Cancelled</p>
-                        <h4 class="fw-bold mb-0">{{ stats.cancelled }}</h4>
+                        <p class="text-muted mb-1 small">Waiting / Consulting</p>
+                        <h4 class="fw-bold mb-0">{{ stats.waiting_consulting }}</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2 col-md-4 col-6">
+                <div class="card border-start border-success border-3">
+                    <div class="card-body py-3 px-3">
+                        <p class="text-muted mb-1 small">Completed / Cancelled</p>
+                        <h4 class="fw-bold mb-0">{{ stats.completed_cancelled }}</h4>
                     </div>
                 </div>
             </div>
@@ -168,17 +277,6 @@ function transitionVisit(visitId, nextStatusValue) {
                             >
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label">Status</label>
-                            <select v-model="form.status" class="form-select" @change="applyFilters">
-                                <option value="">All Statuses</option>
-                                <option
-                                    v-for="opt in statusOptions"
-                                    :key="opt.value"
-                                    :value="opt.value"
-                                >{{ opt.label }}</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
                             <label class="form-label">Visit Type</label>
                             <select v-model="form.visit_type" class="form-select" @change="applyFilters">
                                 <option value="">All Types</option>
@@ -189,14 +287,33 @@ function transitionVisit(visitId, nextStatusValue) {
                                 >{{ opt.label }}</option>
                             </select>
                         </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Date From</label>
-                            <input
-                                v-model="form.date_from"
-                                type="date"
-                                class="form-control"
-                                @change="applyFilters"
+                        <div class="col-md-3">
+                            <label class="form-label">Active Insurance</label>
+                            <select v-model="form.insurance_provider_id" class="form-select" @change="applyFilters">
+                                <option value="">All Insurance</option>
+                                <option
+                                    v-for="opt in insuranceProviderOptions"
+                                    :key="opt.value"
+                                    :value="opt.value"
+                                >{{ opt.label }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Date Range</label>
+                            <div
+                                ref="dateRangePicker"
+                                class="reportrange-picker d-flex align-items-center justify-content-between w-100"
+                                role="button"
+                                tabindex="0"
+                                @keydown.enter.prevent="openDateRangePicker"
+                                @keydown.space.prevent="openDateRangePicker"
                             >
+                                <span class="d-flex align-items-center text-nowrap overflow-hidden">
+                                    <i class="ti ti-calendar text-gray-5 fs-14 me-1"></i>
+                                    <span class="reportrange-picker-field text-truncate">{{ dateRangeLabel }}</span>
+                                </span>
+                                <i class="ti ti-chevron-down text-gray-5 ms-2"></i>
+                            </div>
                         </div>
                         <div class="col-md-1">
                             <div class="d-flex gap-1">
@@ -220,6 +337,7 @@ function transitionVisit(visitId, nextStatusValue) {
                             <tr>
                                 <th>Visit #</th>
                                 <th>Patient</th>
+                                <th>Active Insurance</th>
                                 <th>Age</th>
                                 <th>Type</th>
                                 <th>Priority</th>
@@ -246,6 +364,19 @@ function transitionVisit(visitId, nextStatusValue) {
                                         >{{ visit.patient.full_name }}</Link>
                                         <br><small class="text-muted">{{ visit.patient.patient_number }}</small>
                                     </div>
+                                </td>
+                                <td>
+                                    <span
+                                        :class="`badge bg-${visit.active_insurance.color}`"
+                                        class="d-inline-flex align-items-center"
+                                    >
+                                        <i :class="`ti ti-${visit.active_insurance.is_cash ? 'cash' : 'shield-check'} me-1`"></i>
+                                        {{ visit.active_insurance.label }}
+                                    </span>
+                                    <small
+                                        v-if="visit.active_insurance.tier"
+                                        class="text-muted d-block mt-1"
+                                    >{{ visit.active_insurance.tier }}</small>
                                 </td>
                                 <td>{{ visit.age_display }}y</td>
                                 <td>
@@ -308,7 +439,7 @@ function transitionVisit(visitId, nextStatusValue) {
                                 </td>
                             </tr>
                             <tr v-if="!visits.data.length">
-                                <td colspan="10" class="text-center text-muted py-4">
+                                <td colspan="11" class="text-center text-muted py-4">
                                     <i class="ti ti-calendar-off fs-1 d-block mb-2"></i>
                                     No visits found
                                 </td>
@@ -328,9 +459,10 @@ function transitionVisit(visitId, nextStatusValue) {
                         >
                             <Link
                                 v-if="link.url"
-                                :href="link.url"
+                                :href="filteredPageUrl(link.url)"
                                 class="page-link"
                                 preserve-scroll
+                                preserve-state
                                 v-html="link.label"
                             />
                             <span v-else class="page-link" v-html="link.label" />

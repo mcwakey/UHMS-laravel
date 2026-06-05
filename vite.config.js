@@ -72,7 +72,18 @@ export default defineConfig({
             },
             workbox: {
                 // Cache only static, non-sensitive app shell assets.
-                globPatterns: ['**/*.{js,css,ico,png,svg,woff,woff2,ttf,eot}'],
+                globPatterns: [
+                    '*.{js,css,ico,png,svg,webmanifest}',
+                    'js/**/*.{js,css}',
+                    'css/*.css',
+                ],
+                globIgnores: [
+                    '**/plugins/**',
+                    '**/plugins/tabler-icons/**/*.ttf',
+                    '**/plugins/tabler-icons/**/*.eot',
+                    '**/plugins/icons/remix/remixicon.svg',
+                    '**/img/blogs/blog-details-img-01.svg',
+                ],
                 navigateFallback: null,
                 // Sensitive routes must NEVER be served from cache.
                 navigateFallbackDenylist: [

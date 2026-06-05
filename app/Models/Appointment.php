@@ -151,7 +151,9 @@ class Appointment extends Model
               ->orWhereHas('patient', function ($pq) use ($search) {
                   $pq->where('first_name', 'like', "%{$search}%")
                      ->orWhere('last_name', 'like', "%{$search}%")
-                     ->orWhere('patient_number', 'like', "%{$search}%");
+                     ->orWhere('patient_number', 'like', "%{$search}%")
+                     ->orWhere('phone', 'like', "%{$search}%")
+                     ->orWhere('phone_secondary', 'like', "%{$search}%");
               });
         });
     }

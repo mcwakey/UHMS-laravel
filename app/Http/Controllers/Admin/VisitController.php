@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\BillingType;
 use App\Enums\DepartmentType;
+use App\Enums\LogModule;
+use App\Enums\LogSeverity;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Http\Controllers\Controller;
@@ -40,15 +42,32 @@ class VisitController extends Controller
     public function index(Request $request)
     {
         $filters = $request->all();
+        unset($filters['status']);
 
-        // Default to today's visits if no date filter is set
-        if (empty($filters['date_from']) && empty($filters['search'])) {
+        $dateRange = trim((string) ($filters['date_range'] ?? ''));
+        if ($dateRange !== '') {
+            $parts = preg_split('/\s+to\s+|\s+-\s+/', $dateRange);
+            $filters['date_from'] = $parts[0] ?? null;
+            $filters['date_to'] = $parts[1] ?? ($parts[0] ?? null);
+        }
+
+        // Default to today's visits if no date filter is set.
+        if (empty($filters['date_from']) && empty($filters['date_to']) && empty($filters['search'])) {
             $filters['date_from'] = today()->toDateString();
             $filters['date_to'] = today()->toDateString();
         }
+        if (! empty($filters['date_from']) && empty($filters['date_to'])) {
+            $filters['date_to'] = $filters['date_from'];
+        }
+        if (! empty($filters['date_to']) && empty($filters['date_from'])) {
+            $filters['date_from'] = $filters['date_to'];
+        }
+        if (! empty($filters['date_from']) && ! empty($filters['date_to'])) {
+            $filters['date_range'] = $filters['date_from'].' to '.$filters['date_to'];
+        }
 
         $visits = $this->visitService->list($filters);
-        $stats = $this->visitService->todayStats();
+        $stats = $this->visitService->todayStats($filters);
         $doctors = User::whereHas('roles', fn ($query) => $query->whereIn('name', User::CONSULTATION_ROLES))
             ->where('status', 'active')
             ->orderBy('first_name')
@@ -64,6 +83,14 @@ class VisitController extends Controller
         };
 
         $visitsPayload = $visits->through(function (Visit $visit) use ($visitTypeColor) {
+            $visitInsurance = $visit->visitInsurance;
+            $insuranceProvider = $visitInsurance?->insuranceProvider;
+            $hasInsurance = $visitInsurance
+                && $visitInsurance->is_active
+                && ! $visitInsurance->is_expired
+                && $insuranceProvider
+                && ! $insuranceProvider->is_default;
+
             return [
                 'id' => $visit->id,
                 'visit_number' => $visit->visit_number,
@@ -76,6 +103,14 @@ class VisitController extends Controller
                     'full_name' => $visit->patient->full_name,
                     'patient_number' => $visit->patient->patient_number,
                 ] : null,
+                'active_insurance' => [
+                    'provider_id' => $insuranceProvider?->id,
+                    'label' => $hasInsurance ? $insuranceProvider->name : ($insuranceProvider?->name ?? 'Cash & Carry'),
+                    'tier' => $hasInsurance ? $visitInsurance->insuranceTier?->name : null,
+                    'is_cash' => ! $hasInsurance,
+                    'is_expired' => (bool) ($visitInsurance?->is_expired ?? false),
+                    'color' => $hasInsurance ? ($insuranceProvider->type?->color() ?? 'info') : 'secondary',
+                ],
                 'visit_type' => $visit->visit_type ? [
                     'value' => $visit->visit_type->value,
                     'label' => $visit->visit_type->label(),
@@ -109,6 +144,22 @@ class VisitController extends Controller
             ];
         });
 
+        $insuranceProviderOptions = collect([[
+            'value' => 'cash',
+            'label' => 'Cash & Carry',
+        ]])->merge(
+            InsuranceProvider::active()
+                ->where(function ($query) {
+                    $query->where('is_default', false)->orWhereNull('is_default');
+                })
+                ->orderBy('name')
+                ->get()
+                ->map(fn (InsuranceProvider $provider) => [
+                    'value' => (string) $provider->id,
+                    'label' => $provider->name,
+                ])
+        )->values();
+
         return Inertia::render('Visits/Index', [
             'visits' => $visitsPayload,
             'stats' => $stats,
@@ -117,14 +168,11 @@ class VisitController extends Controller
                 'full_name' => $d->full_name,
             ])->values(),
             'filters' => $filters,
-            'statusOptions' => collect(VisitStatus::cases())->map(fn ($c) => [
-                'value' => $c->value,
-                'label' => $c->label(),
-            ])->values(),
             'visitTypeOptions' => collect(VisitType::cases())->map(fn ($c) => [
                 'value' => $c->value,
                 'label' => $c->label(),
             ])->values(),
+            'insuranceProviderOptions' => $insuranceProviderOptions,
             'routes' => [
                 'index' => route('admin.visits.index'),
                 'create' => route('admin.visits.create'),
@@ -338,7 +386,69 @@ class VisitController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'type']);
 
-        return view('visits.show', compact('visit', 'insuranceInfo', 'consultationDepartments'));
+        $patientInsuranceOptions = $this->insuranceService->getPatientInsurances($visit->patient);
+
+        return view('visits.show', compact('visit', 'insuranceInfo', 'consultationDepartments', 'patientInsuranceOptions'));
+    }
+
+    public function updateInsurance(Request $request, Visit $visit)
+    {
+        $data = $request->validate([
+            'visit_insurance_id' => ['required', 'integer', 'exists:patient_insurances,id'],
+        ]);
+
+        $newInsurance = PatientInsurance::with(['insuranceProvider', 'insuranceTier'])
+            ->whereKey($data['visit_insurance_id'])
+            ->where('patient_id', $visit->patient_id)
+            ->first();
+
+        if (! $newInsurance) {
+            return back()
+                ->withErrors(['visit_insurance_id' => 'Selected insurance does not belong to this patient.'])
+                ->withInput();
+        }
+
+        if (! $newInsurance->is_valid) {
+            return back()
+                ->withErrors(['visit_insurance_id' => 'Selected insurance is inactive or expired.'])
+                ->withInput();
+        }
+
+        $visit->loadMissing('visitInsurance.insuranceProvider');
+        $oldInsurance = $visit->visitInsurance;
+
+        if ((int) $oldInsurance?->id === (int) $newInsurance->id) {
+            return back()->with('success', 'Visit insurance is already set to the selected option.');
+        }
+
+        DB::transaction(function () use ($visit, $oldInsurance, $newInsurance) {
+            $visit->forceFill(['visit_insurance_id' => $newInsurance->id])->save();
+
+            app(\App\Services\ActivityLogService::class)->log(
+                LogModule::INSURANCE,
+                'VISIT_INSURANCE_CHANGED',
+                [
+                    'severity' => LogSeverity::NOTICE,
+                    'patient_id' => $visit->patient_id,
+                    'visit_id' => $visit->id,
+                    'old_values' => [
+                        'visit_insurance_id' => $oldInsurance?->id,
+                        'provider' => $oldInsurance?->insuranceProvider?->name,
+                    ],
+                    'new_values' => [
+                        'visit_insurance_id' => $newInsurance->id,
+                        'provider' => $newInsurance->insuranceProvider?->name,
+                    ],
+                    'description' => 'Visit active insurance changed for future billed items only.',
+                ],
+                $visit,
+                'Visit active insurance changed'
+            );
+        });
+
+        $providerName = $newInsurance->insuranceProvider?->name ?? 'Cash & Carry';
+
+        return back()->with('success', "Visit insurance changed to {$providerName}. Existing billed items were not changed.");
     }
 
     public function transition(Request $request, Visit $visit)

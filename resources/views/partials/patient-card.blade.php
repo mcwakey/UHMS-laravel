@@ -87,6 +87,7 @@
     </div>
     @endif
 
+                        @module('insurance')
     @if($visit)
     <div class="patient-card__insurance">
         @if($hasRealIns)
@@ -103,11 +104,19 @@
                             <span class="badge bg-success fs-11">Active</span>
                         @endif
                     </div>
+                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
                     <small class="text-muted d-block">
                         @if($vTier?->name){{ $vTier->name }}@endif
-                        @if($vTier?->coverage_percentage) · {{ $vTier->coverage_percentage }}% coverage @endif
-                        @if($vIns->policy_number) · #{{ $vIns->policy_number }} @endif
+                        {{-- @if($vTier?->coverage_percentage) · {{ $vTier->coverage_percentage }}% coverage @endif --}}
+                        @if($vIns->membership_number) · #{{ $vIns->membership_number }} @endif
                     </small>
+                        @can('visits.edit')
+                        <button type="button" class="btn btn-outline-primary btn-xs" data-bs-toggle="modal" data-bs-target="#changeVisitInsuranceModal">
+                            <i class="ti ti-switch-horizontal me-1"></i>
+                        </button>
+                        @endcan
+                        {{-- <span class="fw-semibold text-truncate">{{ $vProvider->name }}</span> --}}
+                    </div>
                 </div>
             </div>
         @else
@@ -123,6 +132,7 @@
         @endif
     </div>
     @endif
+                        @endmodule
 </div>
 @endif
 

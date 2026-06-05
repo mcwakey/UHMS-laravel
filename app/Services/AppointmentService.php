@@ -27,8 +27,8 @@ class AppointmentService
             ->when($filters['doctor_id'] ?? null, fn ($q, $d) => $q->byDoctor($d))
             ->when($filters['department_id'] ?? null, fn ($q, $d) => $q->byDepartment($d))
             ->when($filters['date'] ?? null, fn ($q, $d) => $q->whereDate('appointment_date', $d))
-            ->when($filters['date_from'] ?? null, fn ($q, $d) => $q->where('appointment_date', '>=', $d))
-            ->when($filters['date_to'] ?? null, fn ($q, $d) => $q->where('appointment_date', '<=', $d))
+            ->when($filters['date_from'] ?? null, fn ($q, $d) => $q->whereDate('appointment_date', '>=', $d))
+            ->when($filters['date_to'] ?? null, fn ($q, $d) => $q->whereDate('appointment_date', '<=', $d))
             ->orderBy('appointment_date')
             ->orderBy('start_time')
             ->paginate($filters['per_page'] ?? 15);
@@ -210,16 +210,19 @@ class AppointmentService
     public function getStats(array $filters = []): array
     {
         $baseQuery = Appointment::query()
-            ->when($filters['date'] ?? null, fn ($q, $d) => $q->whereDate('appointment_date', $d))
-            ->when($filters['doctor_id'] ?? null, fn ($q, $d) => $q->byDoctor($d));
+            ->when($filters['search'] ?? null, fn ($q, $s) => $q->search($s))
+            ->when($filters['date_from'] ?? null, fn ($q, $d) => $q->whereDate('appointment_date', '>=', $d))
+            ->when($filters['date_to'] ?? null, fn ($q, $d) => $q->whereDate('appointment_date', '<=', $d))
+            ->when($filters['doctor_id'] ?? null, fn ($q, $d) => $q->byDoctor($d))
+            ->when($filters['department_id'] ?? null, fn ($q, $d) => $q->byDepartment($d));
 
         return [
-            'total_today' => (clone $baseQuery)->today()->count(),
-            'scheduled_today' => (clone $baseQuery)->today()->where('status', AppointmentStatus::SCHEDULED)->count(),
-            'confirmed_today' => (clone $baseQuery)->today()->where('status', AppointmentStatus::CONFIRMED)->count(),
-            'checked_in_today' => (clone $baseQuery)->today()->where('status', AppointmentStatus::CHECKED_IN)->count(),
-            'completed_today' => (clone $baseQuery)->today()->where('status', AppointmentStatus::COMPLETED)->count(),
-            'no_show_today' => (clone $baseQuery)->today()->where('status', AppointmentStatus::NO_SHOW)->count(),
+            'total_today' => (clone $baseQuery)->count(),
+            'scheduled_today' => (clone $baseQuery)->where('status', AppointmentStatus::SCHEDULED)->count(),
+            'confirmed_today' => (clone $baseQuery)->where('status', AppointmentStatus::CONFIRMED)->count(),
+            'checked_in_today' => (clone $baseQuery)->where('status', AppointmentStatus::CHECKED_IN)->count(),
+            'completed_today' => (clone $baseQuery)->where('status', AppointmentStatus::COMPLETED)->count(),
+            'no_show_today' => (clone $baseQuery)->where('status', AppointmentStatus::NO_SHOW)->count(),
             'upcoming' => Appointment::upcoming()->count(),
         ];
     }

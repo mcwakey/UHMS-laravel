@@ -3,15 +3,18 @@
 
 @section('content')
 <!-- Page Header -->
-<div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Create New Visit</h4>
-    </div>
-    <div>
+<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
+    <h6 class="fw-bold mb-0 d-flex align-items-center">
+        <a href="{{ route('admin.visits.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>Create New Visit</a>
+    </h6>
+    {{-- <div class="flex-grow-1">
+        <h4 class="fw-bold mb-0"></h4>
+    </div> --}}
+    {{-- <div>
         <a href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary btn-md">
             <i class="ti ti-arrow-left me-1"></i>Back to Visits
         </a>
-    </div>
+    </div> --}}
 </div>
 
 @if(session('error'))
@@ -35,15 +38,19 @@
                     <h5 class="fw-bold mb-0"><i class="ti ti-search me-1"></i>Select Patient</h5>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3 position-relative">
+                    <div class="mb-3">
                         <label class="form-label">Search Patient <span class="text-danger">*</span></label>
-                        <input type="text" id="patientSearch" class="form-control form-control-lg @error('patient_id') is-invalid @enderror"
-                               placeholder="Type patient name, ID, phone, or Ghana Card number..."
-                               value="{{ $selectedPatient ? $selectedPatient->patient_number . ' - ' . $selectedPatient->full_name : '' }}"
-                               autocomplete="off">
+                        <select id="patientSearch"
+                                class="form-select form-select-lg @error('patient_id') is-invalid @enderror"
+                                data-placeholder="Type patient name, ID, phone, or Ghana Card number..."
+                                style="width:100%">
+                            <option value=""></option>
+                            @if($selectedPatient)
+                                <option value="{{ $selectedPatient->id }}" selected>{{ $selectedPatient->patient_number }} - {{ $selectedPatient->full_name }}</option>
+                            @endif
+                        </select>
                         <input type="hidden" name="patient_id" id="patientId" value="{{ $selectedPatient?->id ?? old('patient_id') }}">
                         @error('patient_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                        <div id="patientResults" class="list-group position-absolute w-100 shadow-sm d-none" style="z-index: 999; max-height: 300px; overflow-y: auto;"></div>
                     </div>
 
                     <!-- Selected Patient Info Card -->
@@ -108,9 +115,11 @@
                     <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Insurance</h5>
                     <div class="d-flex align-items-center gap-2">
                         <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">Default expired - using Cash &amp; Carry</span>
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="addInsuranceBtn">
-                            <i class="ti ti-plus me-1"></i>Add Insurance
-                        </button>
+                        @can('patients.edit')
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="addInsuranceBtn">
+                                <i class="ti ti-plus me-1"></i>Add Insurance
+                            </button>
+                        @endcan
                     </div>
                 </div>
                 <div class="card-body">
@@ -245,7 +254,7 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Department <small class="text-muted">(filters services)</small></label>
-                            <select id="departmentSelect" class="form-select @error('department_id') is-invalid @enderror">
+                            <select id="departmentSelect" class="form-select @error('department_id') is-invalid @enderror" data-placeholder="Search department..." style="width:100%">
                                 <option value="">Select Department</option>
                                 @foreach($departments as $dept)
                                     <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
@@ -254,16 +263,22 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Assign Doctor/Staff <small class="text-muted">(optional)</small></label>
-                            <select id="doctorSelect" class="form-select" disabled>
+                            <select id="doctorSelect" class="form-select" data-placeholder="Search doctor/staff..." style="width:100%" disabled>
                                 <option value="">Select department first</option>
                             </select>
-                            <div id="doctorSelectHelp" class="form-text">Doctors load from specialties linked to the selected department.</div>
+                            {{-- <div id="doctorSelectHelp" class="form-text">Doctors load from specialties linked to the selected department.</div> --}}
                         </div>
                     </div>
 
                     <!-- Service Selection -->
                     <div class="mb-3">
-                        <label class="form-label">Available Services</label>
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">
+                            <label class="form-label mb-0">Available Services</label>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" role="switch" id="showExtraServices">
+                                <label class="form-check-label small text-muted" for="showExtraServices">Show other services</label>
+                            </div>
+                        </div>
                         <div id="servicesList" class="border rounded p-3 bg-light">
                             <div class="text-muted text-center py-3" id="servicesPlaceholder">
                                 <i class="ti ti-list-search me-1"></i>Select a department to load services and route doctors
@@ -286,7 +301,6 @@
                             <table class="table table-sm table-hover table-bordered mb-0" id="billingTable">
                                 <thead class="table-light">
                                     <tr>
-                                        <th style="width: 140px;">Department Session</th>
                                         <th>Service</th>
                                         <th class="text-end" style="width: 120px;">Price</th>
                                         <th class="text-center" style="width: 50px;">Action</th>
@@ -295,7 +309,7 @@
                                 <tbody id="billingBody"></tbody>
                                 <tfoot>
                                     <tr class="table-light fw-bold">
-                                        <td colspan="2" class="text-end text-primary">Overall Total:</td>
+                                        <td class="text-end text-primary">Overall Total:</td>
                                         <td class="text-end text-primary" id="totalAmount">&#8373;0.00</td>
                                         <td></td>
                                     </tr>
@@ -342,6 +356,17 @@
 {{-- ──────────────────────────────────────────────────────────────────────
      Add / Edit / Renew Patient Insurance Modal — SPA: no full reload
 ──────────────────────────────────────────────────────────────────────── --}}
+@can('patients.edit')
+@include('patients.partials.insurance-add-modal', [
+    'patient' => null,
+    'insuranceProviders' => $insuranceProviders,
+    'formAction' => '#',
+])
+@include('patients.partials.insurance-edit-modal', [
+    'patient' => null,
+    'formAction' => '#',
+])
+
 <div class="modal fade" id="insuranceModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -427,13 +452,15 @@
         </div>
     </div>
 </div>
+@endcan
 @endsection
 
 @push('scripts')
+@include('patients.partials.insurance-add-modal-scripts')
+@include('patients.partials.insurance-edit-modal-scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('patientSearch');
-    const resultsDiv = document.getElementById('patientResults');
     const patientIdInput = document.getElementById('patientId');
     const patientInfo = document.getElementById('patientInfo');
     const visitDateInput = document.getElementById('visitDate');
@@ -450,15 +477,57 @@ document.addEventListener('DOMContentLoaded', function() {
     const insuranceCard = document.getElementById('insuranceCard');
     const selectedServicesCard = document.getElementById('selectedServicesCard');
     const serviceFilterInput = document.getElementById('serviceFilter');
+    const showExtraServicesInput = document.getElementById('showExtraServices');
     const defaultVisitDate = new Date().toISOString().split('T')[0];
     const visitOptionsUrlTemplate = @json(route('admin.departments.visit-options', ['department' => '__DEPARTMENT__']));
+    const canManagePatientInsurance = @json(auth()->check() && auth()->user()->can('patients.edit'));
 
-    let debounceTimer;
     let patientInsurances = [];
     let selectedInsurance = null;
     let availableServices = [];
     let availableDoctors = [];
     let selectedServices = []; // [{service_catalog_id, department_id, doctor_id, name, price, quantity}]
+    let lastHandledDepartmentValue = departmentSelect.value;
+    let lastHandledDepartmentAt = 0;
+
+    function hasSelect2() {
+        return window.jQuery && jQuery.fn && jQuery.fn.select2;
+    }
+
+    function refreshVisitSelect2(select) {
+        if (!hasSelect2()) return;
+
+        const $select = jQuery(select);
+        if ($select.hasClass('select2-hidden-accessible')) {
+            $select.prop('disabled', select.disabled).trigger('change.select2');
+        }
+    }
+
+    function initSearchableVisitSelects() {
+        if (!hasSelect2()) return;
+
+        const searchableOptions = function(select, fallbackPlaceholder) {
+            return {
+                placeholder: select.dataset.placeholder || fallbackPlaceholder,
+                allowClear: true,
+                minimumResultsForSearch: 0,
+                width: '100%',
+            };
+        };
+
+        const $department = jQuery(departmentSelect);
+        if (!$department.hasClass('select2-hidden-accessible')) {
+            $department.select2(searchableOptions(departmentSelect, 'Search department...'));
+            $department.on('select2:select select2:clear', function() {
+                window.setTimeout(handleDepartmentChange, 0);
+            });
+        }
+
+        const $doctor = jQuery(doctorSelect);
+        if (!$doctor.hasClass('select2-hidden-accessible')) {
+            $doctor.select2(searchableOptions(doctorSelect, 'Search doctor/staff...'));
+        }
+    }
 
     // ==========================================
     // Scheduling toggle based on date
@@ -490,6 +559,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function clearValidationErrors() {
         visitForm.querySelectorAll('.is-invalid').forEach(function(element) {
+            element.classList.remove('is-invalid');
+        });
+
+        visitForm.querySelectorAll('.select2-selection.is-invalid').forEach(function(element) {
             element.classList.remove('is-invalid');
         });
 
@@ -528,7 +601,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
         fieldElement.classList.add('is-invalid');
 
-        const anchor = fieldElement.closest('.input-group') || fieldElement;
+        let anchor = fieldElement.closest('.input-group') || fieldElement;
+        if (fieldElement.classList.contains('select2-hidden-accessible')) {
+            const container = fieldElement.nextElementSibling;
+            if (container && container.classList.contains('select2-container')) {
+                anchor = container;
+                const selection = container.querySelector('.select2-selection');
+                if (selection) selection.classList.add('is-invalid');
+            }
+        }
+
         const feedback = document.createElement('div');
         feedback.className = 'invalid-feedback d-block dynamic-invalid-feedback';
         feedback.textContent = message;
@@ -578,15 +660,18 @@ document.addEventListener('DOMContentLoaded', function() {
         patientInsurances = [];
         selectedInsurance = null;
 
-        resultsDiv.innerHTML = '';
-        resultsDiv.classList.add('d-none');
         document.getElementById('insuranceList').innerHTML = '<div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>Loading patient insurances...</div>';
         document.getElementById('insuranceFallbackBadge').style.display = 'none';
         document.getElementById('visitInsuranceId').value = '';
 
         departmentSelect.value = '';
+        lastHandledDepartmentValue = departmentSelect.value;
+        refreshVisitSelect2(departmentSelect);
         availableDoctors = [];
         repopulateDoctorSelect([]);
+        if (showExtraServicesInput) {
+            showExtraServicesInput.checked = false;
+        }
         showServicesPlaceholder();
         renderBillingTable();
 
@@ -635,7 +720,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (createAnotherBtn) {
                     createAnotherBtn.addEventListener('click', function() {
                         clearFormFeedback();
-                        searchInput.focus();
+                        if (hasSelect2() && jQuery(searchInput).hasClass('select2-hidden-accessible')) {
+                            jQuery(searchInput).select2('open');
+                        } else {
+                            searchInput.focus();
+                        }
                     });
                 }
 
@@ -659,48 +748,93 @@ document.addEventListener('DOMContentLoaded', function() {
     // ==========================================
     // Patient search
     // ==========================================
-    searchInput.addEventListener('input', function() {
-        clearTimeout(debounceTimer);
-        const query = this.value.trim();
-        if (query.length < 2) { resultsDiv.classList.add('d-none'); return; }
+    function patientDisplayText(patient) {
+        if (!patient) return '';
+        return [patient.patient_number, patient.full_name].filter(Boolean).join(' - ') || patient.text || '';
+    }
 
-        debounceTimer = setTimeout(function() {
-            fetch('{{ route("admin.visits.patient-search") }}?q=' + encodeURIComponent(query))
-                .then(r => r.json())
-                .then(data => {
-                    resultsDiv.innerHTML = '';
-                    if (data.length === 0) {
-                        resultsDiv.innerHTML = '<div class="list-group-item text-muted">No patients found</div>';
-                    } else {
-                        data.forEach(function(patient) {
-                            const item = document.createElement('a');
-                            item.href = '#';
-                            item.className = 'list-group-item list-group-item-action';
-                            let info = escapeHtml(patient.patient_number) + ' &bull; ' + escapeHtml(patient.phone || 'No phone');
-                            if (patient.last_visit_date) {
-                                info += ' &bull; Last visit: <strong>' + escapeHtml(patient.last_visit_date) + '</strong>';
-                            }
-                            item.innerHTML = '<div class="fw-medium">' + escapeHtml(patient.full_name) + '</div>' +
-                                '<small class="text-muted">' + info + '</small>';
-                            item.addEventListener('click', function(e) {
-                                e.preventDefault();
-                                selectPatient(patient);
-                            });
-                            resultsDiv.appendChild(item);
-                        });
-                    }
-                    resultsDiv.classList.remove('d-none');
-                });
-        }, 300);
-    });
+    function syncPatientSelectOption(patient) {
+        if (!patient || !patient.id) return;
 
-    searchInput.addEventListener('blur', function() {
-        setTimeout(function() { resultsDiv.classList.add('d-none'); }, 200);
-    });
+        const id = String(patient.id);
+        const text = patientDisplayText(patient);
+        let option = Array.from(searchInput.options).find(function(opt) {
+            return String(opt.value) === id;
+        });
+
+        if (!option) {
+            option = new Option(text, id, true, true);
+            searchInput.appendChild(option);
+        } else {
+            option.textContent = text;
+            option.selected = true;
+        }
+
+        if (hasSelect2()) {
+            jQuery(searchInput).trigger('change.select2');
+        }
+    }
+
+    function initPatientSearchSelect2() {
+        if (!hasSelect2()) return;
+
+        const $patient = jQuery(searchInput);
+        if ($patient.hasClass('select2-hidden-accessible')) return;
+
+        $patient.select2({
+            placeholder: searchInput.dataset.placeholder || 'Type patient name, ID, phone, or Ghana Card number...',
+            allowClear: true,
+            minimumInputLength: 2,
+            width: '100%',
+            ajax: {
+                url: '{{ route("admin.visits.patient-search") }}',
+                dataType: 'json',
+                delay: 300,
+                data: function(params) {
+                    return { q: params.term };
+                },
+                processResults: function(data) {
+                    return {
+                        results: (data || []).map(function(patient) {
+                            patient.id = String(patient.id);
+                            patient.text = patientDisplayText(patient);
+                            return patient;
+                        }),
+                    };
+                },
+                cache: true,
+            },
+            templateResult: function(patient) {
+                if (patient.loading) return patient.text;
+
+                const meta = [
+                    patient.patient_number || '',
+                    patient.phone || 'No phone',
+                ].filter(Boolean);
+                if (patient.last_visit_date) {
+                    meta.push('Last visit: ' + patient.last_visit_date);
+                }
+
+                return jQuery('<span>').html(
+                    '<span class="fw-medium">' + escapeHtml(patient.full_name || patient.text || '') + '</span>' +
+                    '<small class="text-muted d-block">' + meta.map(escapeHtml).join(' &bull; ') + '</small>'
+                );
+            },
+            templateSelection: function(patient) {
+                return patientDisplayText(patient);
+            },
+        }).on('select2:select', function(event) {
+            selectPatient(event.params.data);
+        }).on('select2:clear', function() {
+            clearPatient({ keepSelect: true });
+        });
+    }
+
+    initPatientSearchSelect2();
 
     window.selectPatient = function(patient) {
         patientIdInput.value = patient.id;
-        searchInput.value = patient.patient_number + ' \u2014 ' + patient.full_name;
+        syncPatientSelectOption(patient);
         document.getElementById('patientInitial').textContent = patient.full_name.charAt(0).toUpperCase();
         document.getElementById('patientName').textContent = patient.full_name;
         document.getElementById('patientNumber').textContent = patient.patient_number;
@@ -742,14 +876,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         patientInfo.classList.remove('d-none');
-        resultsDiv.classList.add('d-none');
 
         loadPatientInsurances(patient.id);
     };
 
-    window.clearPatient = function() {
+    window.clearPatient = function(options) {
+        options = options || {};
         patientIdInput.value = '';
-        searchInput.value = '';
+        if (!options.keepSelect) {
+            searchInput.value = '';
+            if (hasSelect2()) {
+                jQuery(searchInput).val(null).trigger('change.select2');
+            }
+        }
         patientInfo.classList.add('d-none');
         document.getElementById('activeAdmissionWarning').classList.add('d-none');
         const overrideReason = document.getElementById('admissionOverrideReason');
@@ -830,10 +969,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (ins.coverage_percentage != null) {
                         html += '<div class="small text-muted mt-1">' + ins.coverage_percentage + '% coverage</div>';
                     }
-                    if (!ins.is_default) {
+                    if (!ins.is_default && canManagePatientInsurance) {
                         const editLabel = ins.is_expired ? 'Renew' : 'Edit';
                         const editIcon  = ins.is_expired ? 'ti-refresh' : 'ti-pencil';
-                        html += '<button type="button" class="btn btn-link btn-sm p-0 mt-1 edit-insurance-btn" data-ins-id="' + ins.id + '">'
+                        html += '<button type="button" class="btn btn-link btn-sm p-0 mt-1 edit-insurance-btn"'
+                              + ' data-id="' + ins.id + '"'
+                              + ' data-ins-id="' + ins.id + '"'
+                              + ' data-patient-id="' + patientId + '"'
+                              + ' data-provider="' + (ins.provider_id || '') + '"'
+                              + ' data-provider-name="' + escapeAttribute(ins.provider_name || '') + '"'
+                              + ' data-tier="' + (ins.tier_id || '') + '"'
+                              + ' data-tier-name="' + escapeAttribute(ins.tier_name || '') + '"'
+                              + ' data-member-type="' + escapeAttribute(ins.member_type || 'holder') + '"'
+                              + ' data-card-holder="' + (ins.card_holder_insurance_id || '') + '"'
+                              + ' data-membership="' + escapeAttribute(ins.membership_number || '') + '"'
+                              + ' data-policy="' + escapeAttribute(ins.policy_number || '') + '"'
+                              + ' data-expiry="' + escapeAttribute(ins.expiry_date || '') + '"'
+                              + ' data-active="' + (ins.is_active ? '1' : '0') + '">'
                               + '<i class="ti ' + editIcon + ' me-1"></i>' + editLabel
                               + '</button>';
                     }
@@ -857,7 +1009,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 btn.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
-                    openInsuranceModal('edit', parseInt(this.dataset.insId));
+                    if (window.openPatientInsuranceEditModal) {
+                        window.openPatientInsuranceEditModal(this);
+                    } else {
+                        openInsuranceModal('edit', parseInt(this.dataset.insId));
+                    }
                 });
             });
 
@@ -924,17 +1080,33 @@ document.addEventListener('DOMContentLoaded', function() {
     // ==========================================
     // Department â†’ Services loading
     // ==========================================
-    departmentSelect.addEventListener('change', function() {
-        const deptId = this.value;
+    function handleDepartmentChange() {
+        const deptId = departmentSelect.value;
+        const now = Date.now();
+        if (deptId === lastHandledDepartmentValue && now - lastHandledDepartmentAt < 100) {
+            return;
+        }
+        lastHandledDepartmentValue = deptId;
+        lastHandledDepartmentAt = now;
+
         if (!deptId) {
             availableServices = [];
             availableDoctors = [];
             repopulateDoctorSelect([]);
+            if (showExtraServicesInput) {
+                showExtraServicesInput.checked = false;
+            }
             showServicesPlaceholder();
             return;
         }
+        if (showExtraServicesInput) {
+            showExtraServicesInput.checked = false;
+        }
         loadVisitOptionsForDepartment(deptId);
-    });
+    }
+
+    departmentSelect.addEventListener('change', handleDepartmentChange);
+    initSearchableVisitSelects();
 
     function loadVisitOptionsForDepartment(deptId) {
         showVisitOptionsLoading();
@@ -960,11 +1132,38 @@ document.addEventListener('DOMContentLoaded', function() {
     // ==========================================
     // Services rendering and selection
     // ==========================================
+    function isConsultationService(svc) {
+        return String(svc?.category || '').toLowerCase() === 'consultation';
+    }
+
+    function getVisibleAvailableServices() {
+        if (showExtraServicesInput && showExtraServicesInput.checked) {
+            return availableServices;
+        }
+
+        return availableServices.filter(isConsultationService);
+    }
+
     function renderServicesList() {
         if (availableServices.length === 0) {
             document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-info-circle me-1 text-muted"></i>No services are available for this department';
             document.getElementById('servicesPlaceholder').classList.remove('d-none');
             document.getElementById('servicesContent').classList.add('d-none');
+            document.getElementById('servicesItems').innerHTML = '';
+            return;
+        }
+
+        const visibleServices = getVisibleAvailableServices();
+        const extraServicesCount = availableServices.filter(function(svc) {
+            return !isConsultationService(svc);
+        }).length;
+
+        if (visibleServices.length === 0) {
+            document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-info-circle me-1 text-muted"></i>No consultation services are available for this department'
+                + (extraServicesCount ? '. Enable "Show other services" to load extra services.' : '.');
+            document.getElementById('servicesPlaceholder').classList.remove('d-none');
+            document.getElementById('servicesContent').classList.add('d-none');
+            document.getElementById('servicesItems').innerHTML = '';
             return;
         }
 
@@ -973,7 +1172,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const container = document.getElementById('servicesItems');
         let html = '';
-        availableServices.forEach(function(svc) {
+        visibleServices.forEach(function(svc) {
             const displayPrice = resolveServicePrice(svc);
             const fmtPrice = '\u20B5' + formatNumber(displayPrice);
 
@@ -1010,6 +1209,15 @@ document.addEventListener('DOMContentLoaded', function() {
             item.style.display = item.dataset.name.includes(filter) ? '' : 'none';
         });
     });
+
+    if (showExtraServicesInput) {
+        showExtraServicesInput.addEventListener('change', function() {
+            if (serviceFilterInput) {
+                serviceFilterInput.value = '';
+            }
+            renderServicesList();
+        });
+    }
 
     function showServicesPlaceholder() {
         document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-list-search me-1"></i>Select a department to load services and route doctors';
@@ -1099,12 +1307,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 0);
 
                 html += '<tr class="table-light">';
-                html += '<td colspan="4">';
+                html += '<td colspan="3">';
                 html += '<div class="d-flex flex-wrap justify-content-between gap-2">';
-                html += '<span class="fw-semibold">' + escapeHtml(group.departmentName || 'Department') + ' Department Session</span>';
+                html += '<span class="fw-semibold text-dark">' + escapeHtml(group.departmentName || 'Department') + ' Department Session</span>';
                 html += '<span class="text-muted small">';
                 html += group.doctorName ? 'Doctor: ' + escapeHtml(group.doctorName) : 'Doctor: Unassigned';
-                html += ' &middot; Department total: \\u20B5' + formatNumber(groupTotal);
+                html += ' &middot; Department total: ₵' + formatNumber(groupTotal);
                 html += '</span></div></td></tr>';
                 renderedDepartments[groupKey] = true;
             }
@@ -1114,7 +1322,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const lineTotal = svc.price * qty;
 
             html += '<tr>';
-            html += '<td class="text-muted small">Linked service</td>';
             html += '<td>' + escapeHtml(svc.name);
             html += '<input type="hidden" name="services[' + idx + '][service_catalog_id]" value="' + svc.service_catalog_id + '">';
             html += '<input type="hidden" name="services[' + idx + '][department_id]" value="' + (svc.department_id || '') + '">';
@@ -1201,7 +1408,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!departmentSelect.value) {
             doctorSelect.disabled = true;
             doctorSelect.innerHTML = '<option value="">Select department first</option>';
-            doctorSelectHelp.textContent = 'Doctors load from specialties linked to the selected department.';
+            // doctorSelectHelp.textContent = 'Doctors load from specialties linked to the selected department.';
+            refreshVisitSelect2(doctorSelect);
             return;
         }
 
@@ -1218,9 +1426,10 @@ document.addEventListener('DOMContentLoaded', function() {
             doctorSelect.appendChild(opt);
         });
 
-        doctorSelectHelp.textContent = doctors.length
-            ? 'Doctor is stored on the department consultation session when you add a consultation service.'
-            : 'No doctor linked to this department through specialty.';
+        // doctorSelectHelp.textContent = doctors.length
+        //     ? 'Doctor is stored on the department consultation session when you add a consultation service.'
+        //     : 'No doctor linked to this department through specialty.';
+        refreshVisitSelect2(doctorSelect);
     }
 
     // ==========================================
@@ -1238,6 +1447,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const div = document.createElement('div');
         div.appendChild(document.createTextNode(text));
         return div.innerHTML;
+    }
+
+    function escapeAttribute(text) {
+        return escapeHtml(text).replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
     function formatNumber(num) {
@@ -1276,9 +1489,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const parts = [];
         if (data.message)        parts.push('<div>' + escapeHtml(data.message) + '</div>');
-        if (data.member_name)    parts.push('<div><strong>Member:</strong> ' + escapeHtml(data.member_name) + '</div>');
+        // if (data.member_name)    parts.push('<div><strong>Member:</strong> ' + escapeHtml(data.member_name) + '</div>');
         if (data.reference_code) parts.push('<div><strong>Reference:</strong> <code>' + escapeHtml(data.reference_code) + '</code></div>');
-        if (data.expires_at)     parts.push('<div><strong>Expires:</strong> ' + escapeHtml(data.expires_at) + '</div>');
+        // if (data.expires_at)     parts.push('<div><strong>Expires:</strong> ' + escapeHtml(data.expires_at) + '</div>');
         document.getElementById('verificationFeedback').innerHTML = parts.join('');
 
         if (data.acceptable && data.verification_id) {
@@ -1351,6 +1564,235 @@ document.addEventListener('DOMContentLoaded', function() {
     // ==========================================
     // Insurance Add/Edit/Renew Modal (SPA)
     // ==========================================
+    const sharedAddInsuranceModalEl = document.getElementById('addInsuranceModal');
+    const sharedAddInsuranceModal = sharedAddInsuranceModalEl ? new bootstrap.Modal(sharedAddInsuranceModalEl) : null;
+    const sharedAddInsuranceForm = document.getElementById('addInsuranceForm');
+    const sharedAddInsuranceFeedback = document.getElementById('addInsuranceFormFeedback');
+    const sharedAddInsuranceSubmit = document.getElementById('addInsuranceSubmitBtn');
+    const sharedEditInsuranceModalEl = document.getElementById('editInsuranceModal');
+    const sharedEditInsuranceForm = document.getElementById('editInsuranceForm');
+    const sharedEditInsuranceFeedback = document.getElementById('editInsuranceFormFeedback');
+    const sharedEditInsuranceSubmit = document.getElementById('editInsuranceSubmitBtn');
+
+    function resetSharedAddInsuranceForm() {
+        if (!sharedAddInsuranceForm) return;
+
+        sharedAddInsuranceForm.reset();
+        sharedAddInsuranceForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        sharedAddInsuranceForm.querySelectorAll('.dynamic-invalid-feedback').forEach(el => el.remove());
+
+        if (sharedAddInsuranceFeedback) {
+            sharedAddInsuranceFeedback.className = 'alert d-none';
+            sharedAddInsuranceFeedback.innerHTML = '';
+        }
+
+        const provider = document.getElementById('addInsProvider');
+        const tier = document.getElementById('addInsTier');
+        const tierInfo = document.getElementById('addInsTierInfo');
+
+        if (provider) {
+            provider.innerHTML = '<option value="">Select type first</option>';
+            provider.disabled = true;
+        }
+
+        if (tier) {
+            tier.innerHTML = '<option value="">Select provider first</option>';
+            tier.disabled = true;
+        }
+
+        if (tierInfo) {
+            tierInfo.textContent = "If no tier is chosen, the provider's default tier will be used.";
+        }
+    }
+
+    function showSharedAddInsuranceFeedback(type, text) {
+        if (!sharedAddInsuranceFeedback) return;
+
+        sharedAddInsuranceFeedback.className = 'alert alert-' + type;
+        sharedAddInsuranceFeedback.innerHTML = text;
+        sharedAddInsuranceFeedback.classList.remove('d-none');
+    }
+
+    function applySharedAddInsuranceErrors(errors) {
+        Object.entries(errors || {}).forEach(([field, msgs]) => {
+            const el = sharedAddInsuranceForm.querySelector('[name="' + field + '"]');
+            if (!el) return;
+
+            el.classList.add('is-invalid');
+            const fb = document.createElement('div');
+            fb.className = 'invalid-feedback d-block dynamic-invalid-feedback';
+            fb.textContent = Array.isArray(msgs) ? msgs[0] : msgs;
+            el.insertAdjacentElement('afterend', fb);
+        });
+    }
+
+    function openSharedAddInsuranceModal() {
+        if (!sharedAddInsuranceModal || !sharedAddInsuranceForm) return;
+
+        const patientId = patientIdInput.value;
+        if (!patientId) {
+            alert('Please select a patient first.');
+            return;
+        }
+
+        resetSharedAddInsuranceForm();
+        sharedAddInsuranceForm.action = '{{ url("/admin/patients") }}/' + patientId + '/insurances';
+        sharedAddInsuranceModal.show();
+    }
+
+    if (sharedAddInsuranceForm) {
+        sharedAddInsuranceForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const patientId = patientIdInput.value;
+            if (!patientId) {
+                showSharedAddInsuranceFeedback('danger', 'Please select a patient first.');
+                return;
+            }
+
+            sharedAddInsuranceForm.action = '{{ url("/admin/patients") }}/' + patientId + '/insurances';
+            sharedAddInsuranceForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            sharedAddInsuranceForm.querySelectorAll('.dynamic-invalid-feedback').forEach(el => el.remove());
+            if (sharedAddInsuranceFeedback) {
+                sharedAddInsuranceFeedback.classList.add('d-none');
+                sharedAddInsuranceFeedback.innerHTML = '';
+            }
+
+            const originalLabel = sharedAddInsuranceSubmit ? sharedAddInsuranceSubmit.innerHTML : '';
+            if (sharedAddInsuranceSubmit) {
+                sharedAddInsuranceSubmit.disabled = true;
+                sharedAddInsuranceSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+            }
+
+            try {
+                const resp = await fetch(sharedAddInsuranceForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    body: new FormData(sharedAddInsuranceForm),
+                });
+
+                const ct = resp.headers.get('content-type') || '';
+                const data = ct.includes('application/json') ? await resp.json() : {};
+
+                if (resp.ok) {
+                    showSharedAddInsuranceFeedback('success', data.message || 'Insurance saved.');
+                    await reloadInsuranceListAndSelect(data.insurance_id || null);
+                    setTimeout(() => sharedAddInsuranceModal.hide(), 600);
+                    return;
+                }
+
+                if (resp.status === 422 && data.errors) {
+                    applySharedAddInsuranceErrors(data.errors);
+                    showSharedAddInsuranceFeedback('danger', data.message || 'Please correct the highlighted fields.');
+                    return;
+                }
+
+                showSharedAddInsuranceFeedback('danger', data.message || 'Failed to save insurance. Please try again.');
+            } catch (err) {
+                showSharedAddInsuranceFeedback('danger', 'Network error while saving insurance.');
+            } finally {
+                if (sharedAddInsuranceSubmit) {
+                    sharedAddInsuranceSubmit.disabled = false;
+                    sharedAddInsuranceSubmit.innerHTML = originalLabel;
+                }
+            }
+        });
+    }
+
+    function showSharedEditInsuranceFeedback(type, text) {
+        if (!sharedEditInsuranceFeedback) return;
+
+        sharedEditInsuranceFeedback.className = 'alert alert-' + type;
+        sharedEditInsuranceFeedback.innerHTML = text;
+        sharedEditInsuranceFeedback.classList.remove('d-none');
+    }
+
+    function applySharedEditInsuranceErrors(errors) {
+        Object.entries(errors || {}).forEach(([field, msgs]) => {
+            const el = sharedEditInsuranceForm.querySelector('[name="' + field + '"]');
+            if (!el) return;
+
+            el.classList.add('is-invalid');
+            const fb = document.createElement('div');
+            fb.className = 'invalid-feedback d-block dynamic-invalid-feedback';
+            fb.textContent = Array.isArray(msgs) ? msgs[0] : msgs;
+            el.insertAdjacentElement('afterend', fb);
+        });
+    }
+
+    if (sharedEditInsuranceForm) {
+        sharedEditInsuranceForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const patientId = patientIdInput.value || sharedEditInsuranceForm.dataset.patientId;
+            const insuranceId = sharedEditInsuranceForm.dataset.insuranceId;
+            if (!patientId || !insuranceId) {
+                showSharedEditInsuranceFeedback('danger', 'Please select a patient insurance to update.');
+                return;
+            }
+
+            if (!sharedEditInsuranceForm.action || sharedEditInsuranceForm.action.endsWith('#')) {
+                sharedEditInsuranceForm.action = '{{ url("/admin/patients") }}/' + patientId + '/insurances/' + insuranceId;
+            }
+
+            sharedEditInsuranceForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            sharedEditInsuranceForm.querySelectorAll('.dynamic-invalid-feedback').forEach(el => el.remove());
+            if (sharedEditInsuranceFeedback) {
+                sharedEditInsuranceFeedback.classList.add('d-none');
+                sharedEditInsuranceFeedback.innerHTML = '';
+            }
+
+            const originalLabel = sharedEditInsuranceSubmit ? sharedEditInsuranceSubmit.innerHTML : '';
+            if (sharedEditInsuranceSubmit) {
+                sharedEditInsuranceSubmit.disabled = true;
+                sharedEditInsuranceSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+            }
+
+            try {
+                const resp = await fetch(sharedEditInsuranceForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                    },
+                    body: new FormData(sharedEditInsuranceForm),
+                });
+
+                const ct = resp.headers.get('content-type') || '';
+                const data = ct.includes('application/json') ? await resp.json() : {};
+
+                if (resp.ok) {
+                    showSharedEditInsuranceFeedback('success', data.message || 'Insurance updated.');
+                    await reloadInsuranceListAndSelect(data.insurance_id || parseInt(insuranceId));
+                    if (sharedEditInsuranceModalEl) {
+                        setTimeout(() => bootstrap.Modal.getOrCreateInstance(sharedEditInsuranceModalEl).hide(), 600);
+                    }
+                    return;
+                }
+
+                if (resp.status === 422 && data.errors) {
+                    applySharedEditInsuranceErrors(data.errors);
+                    showSharedEditInsuranceFeedback('danger', data.message || 'Please correct the highlighted fields.');
+                    return;
+                }
+
+                showSharedEditInsuranceFeedback('danger', data.message || 'Failed to update insurance. Please try again.');
+            } catch (err) {
+                showSharedEditInsuranceFeedback('danger', 'Network error while updating insurance.');
+            } finally {
+                if (sharedEditInsuranceSubmit) {
+                    sharedEditInsuranceSubmit.disabled = false;
+                    sharedEditInsuranceSubmit.innerHTML = originalLabel;
+                }
+            }
+        });
+    }
+
     const insuranceModalEl   = document.getElementById('insuranceModal');
     const insuranceModal     = insuranceModalEl ? new bootstrap.Modal(insuranceModalEl) : null;
     const insuranceForm      = document.getElementById('insuranceForm');
@@ -1424,9 +1866,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const addInsBtn = document.getElementById('addInsuranceBtn');
     if (addInsBtn) {
-        addInsBtn.addEventListener('click', function() {
-            openInsuranceModal('add', null);
-        });
+        addInsBtn.addEventListener('click', openSharedAddInsuranceModal);
     }
 
     function showInsuranceFb(type, text) {

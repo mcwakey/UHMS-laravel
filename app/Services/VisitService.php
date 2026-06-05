@@ -3,11 +3,15 @@
 namespace App\Services;
 
 use App\Enums\DepartmentType;
+use App\Enums\AdmissionStatus;
 use App\Enums\ServiceType;
 use App\Enums\TriageScore;
 use App\Enums\UserStatus;
 use App\Enums\VisitStatus;
+use App\Enums\VisitType;
+use App\Models\Admission;
 use App\Models\Department;
+use App\Models\EmergencyCase;
 use App\Models\InvoiceItem;
 use App\Models\ServiceCatalog;
 use App\Models\Triage;
@@ -43,6 +47,8 @@ class VisitService
         $query = Visit::with([
             'patient',
             'createdBy',
+            'visitInsurance.insuranceProvider',
+            'visitInsurance.insuranceTier',
             'activeConsultationRoute.doctor',
             'pendingConsultationRoutes.doctor',
         ]);
@@ -57,6 +63,18 @@ class VisitService
 
         if (! empty($filters['visit_type'])) {
             $query->where('visit_type', $filters['visit_type']);
+        }
+
+        if (! empty($filters['insurance_provider_id'])) {
+            $insuranceProviderId = (string) $filters['insurance_provider_id'];
+            if ($insuranceProviderId === 'cash') {
+                $query->where(function ($q) {
+                    $q->whereNull('visit_insurance_id')
+                        ->orWhereHas('visitInsurance.insuranceProvider', fn ($providerQuery) => $providerQuery->where('is_default', true));
+                });
+            } else {
+                $query->whereHas('visitInsurance', fn ($q) => $q->where('insurance_provider_id', $insuranceProviderId));
+            }
         }
 
         if (! empty($filters['priority'])) {
@@ -887,17 +905,50 @@ class VisitService
         }
     }
 
-    public function todayStats(): array
+    public function todayStats(array $filters = []): array
     {
-        $today = Visit::today();
+        $hasFilters = ! empty(array_filter($filters, fn ($value) => $value !== null && $value !== ''));
+        $from = $filters['date_from'] ?? ($hasFilters ? null : today()->toDateString());
+        $to = $filters['date_to'] ?? ($hasFilters ? null : today()->toDateString());
+
+        if ($from && ! $to) {
+            $to = $from;
+        }
+
+        if ($to && ! $from) {
+            $from = $to;
+        }
+
+        $visitQuery = Visit::query()
+            ->when($from, fn ($query) => $query->whereDate('visit_date', '>=', $from))
+            ->when($to, fn ($query) => $query->whereDate('visit_date', '<=', $to));
+
+        $activeAdmissions = Admission::query()
+            ->where('status', '!=', AdmissionStatus::DISCHARGED->value)
+            ->when($from, fn ($query) => $query->whereDate('admission_date', '>=', $from))
+            ->when($to, fn ($query) => $query->whereDate('admission_date', '<=', $to));
+
+        $activeEmergencyCases = EmergencyCase::query()
+            ->active()
+            ->when($from, fn ($query) => $query->whereDate('arrival_time', '>=', $from))
+            ->when($to, fn ($query) => $query->whereDate('arrival_time', '<=', $to));
 
         return [
-            'total' => (clone $today)->count(),
-            'waiting' => (clone $today)->byStatus(VisitStatus::WAITING)->count(),
-            'consulting' => (clone $today)->byStatus(VisitStatus::CONSULTING)->count(),
-            'completed' => (clone $today)->byStatus(VisitStatus::COMPLETED)->count(),
-            'cancelled' => (clone $today)->byStatus(VisitStatus::CANCELLED)->count(),
-            'emergency' => (clone $today)->where('priority', 'emergency')->count(),
+            'total' => (clone $visitQuery)->count(),
+            'outpatient' => (clone $visitQuery)->where('visit_type', VisitType::OUTPATIENT->value)->count(),
+            'inpatient' => (clone $activeAdmissions)->count(),
+            'emergency' => (clone $activeEmergencyCases)->count(),
+            'waiting_consulting' => (clone $visitQuery)->whereIn('status', [
+                VisitStatus::WAITING->value,
+                VisitStatus::TRIAGE->value,
+                VisitStatus::WAITING_CONSULTATION->value,
+                VisitStatus::ACTIVE->value,
+                VisitStatus::CONSULTING->value,
+            ])->count(),
+            'completed_cancelled' => (clone $visitQuery)->whereIn('status', [
+                VisitStatus::COMPLETED->value,
+                VisitStatus::CANCELLED->value,
+            ])->count(),
         ];
     }
 

@@ -11,6 +11,7 @@ use App\Models\Department;
 use App\Models\Patient;
 use App\Models\User;
 use App\Services\AppointmentService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -25,14 +26,15 @@ class AppointmentController extends Controller
      */
     public function index(Request $request)
     {
-        $stats = $this->appointmentService->getStats();
-        $appointments = $this->appointmentService->list($request->all());
+        $filters = $this->normalizedDateFilters($request);
+        $stats = $this->appointmentService->getStats($filters);
+        $appointments = $this->appointmentService->list($filters);
         $doctors = User::role('Doctor')->orderBy('first_name')->get();
         $departments = Department::active()->orderBy('name')->get();
         $statuses = AppointmentStatus::cases();
 
         return view('appointments.index', compact(
-            'appointments', 'stats', 'doctors', 'departments', 'statuses'
+            'appointments', 'stats', 'doctors', 'departments', 'statuses', 'filters'
         ));
     }
 
@@ -242,10 +244,11 @@ class AppointmentController extends Controller
      */
     public function calendar(Request $request)
     {
-        $from = $request->get('from', now()->startOfWeek()->toDateString());
-        $to = \Carbon\Carbon::parse($from)->addDays(13)->toDateString();
+        $filters = $this->normalizedDateFilters($request);
+        $from = $filters['date_from'];
+        $to = $filters['date_to'];
 
-        $calendarData = $this->appointmentService->getCalendarData($from, $to, $request->all());
+        $calendarData = $this->appointmentService->getCalendarData($from, $to, $filters);
 
         if ($request->ajax() && ! $request->headers->has('X-Inertia')) {
             return response()->json($calendarData);
@@ -254,6 +257,62 @@ class AppointmentController extends Controller
         $doctors = User::role('Doctor')->orderBy('first_name')->get();
         $departments = Department::active()->orderBy('name')->get();
 
-        return view('appointments.calendar', compact('calendarData', 'from', 'to', 'doctors', 'departments'));
+        return view('appointments.calendar', compact('calendarData', 'from', 'to', 'doctors', 'departments', 'filters'));
+    }
+
+    private function normalizedDateFilters(Request $request): array
+    {
+        $filters = $request->all();
+        $dateRange = trim((string) ($filters['date_range'] ?? ''));
+
+        if ($dateRange !== '') {
+            $parts = preg_split('/\s+(?:to|-)\s+/', $dateRange);
+            $filters['date_from'] = $parts[0] ?? null;
+            $filters['date_to'] = $parts[1] ?? ($parts[0] ?? null);
+        } elseif (! empty($filters['from'])) {
+            $filters['date_from'] = $filters['from'];
+            $filters['date_to'] = $filters['to'] ?? $filters['from'];
+        } elseif (! empty($filters['date'])) {
+            $filters['date_from'] = $filters['date'];
+            $filters['date_to'] = $filters['date'];
+        }
+
+        $filters['date_from'] = $this->normalizeDateValue($filters['date_from'] ?? null);
+        $filters['date_to'] = $this->normalizeDateValue($filters['date_to'] ?? null);
+
+        if (empty($filters['date_from']) && empty($filters['date_to'])) {
+            $filters['date_from'] = today()->toDateString();
+            $filters['date_to'] = today()->toDateString();
+        }
+
+        if (! empty($filters['date_from']) && empty($filters['date_to'])) {
+            $filters['date_to'] = $filters['date_from'];
+        }
+
+        if (! empty($filters['date_to']) && empty($filters['date_from'])) {
+            $filters['date_from'] = $filters['date_to'];
+        }
+
+        if (Carbon::parse($filters['date_from'])->gt(Carbon::parse($filters['date_to']))) {
+            [$filters['date_from'], $filters['date_to']] = [$filters['date_to'], $filters['date_from']];
+        }
+
+        $filters['date_range'] = $filters['date_from'].' to '.$filters['date_to'];
+        unset($filters['date'], $filters['from'], $filters['to']);
+
+        return $filters;
+    }
+
+    private function normalizeDateValue(?string $value): ?string
+    {
+        if (! $value) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value)->toDateString();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

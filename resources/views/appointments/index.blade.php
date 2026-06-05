@@ -9,11 +9,15 @@
                 <h3 class="page-title">Appointments <span class="badge bg-primary ms-2">{{ $appointments->total() }}</span></h3>
             </div>
             <div class="col-sm-6 text-sm-end">
-                @can('appointments.view')
+                <div class="bg-white border shadow-sm rounded px-1 pb-0 text-center d-flex align-items-center justify-content-center">
+                    <a aria-label="List" title="List" href="{{ route('admin.appointments.index') }}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-body"></i></a>
+                    <a aria-label="Calendar event" title="Calendar event" href="{{ route('admin.appointments.calendar') }}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-calendar-event fs-14 text-body"></i> </a>
+                </div>
+                {{-- @can('appointments.view')
                 <a href="{{ route('admin.appointments.calendar') }}" class="btn btn-outline-info me-2">
                     <i class="ti ti-calendar me-1"></i> Calendar
                 </a>
-                @endcan
+                @endcan --}}
                 @can('appointments.create')
                 <a href="{{ route('admin.appointments.create') }}" class="btn btn-primary">
                     <i class="ti ti-plus me-1"></i> New Appointment
@@ -29,7 +33,7 @@
             <div class="card">
                 <div class="card-body text-center">
                     <h3 class="mb-1">{{ $stats['total_today'] }}</h3>
-                    <p class="text-muted mb-0">Today Total</p>
+                    <p class="text-muted mb-0">Range Total</p>
                 </div>
             </div>
         </div>
@@ -78,17 +82,17 @@
     {{-- Filters --}}
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ route('admin.appointments.index') }}" class="row g-3">
+            <form method="GET" action="{{ route('admin.appointments.index') }}" class="row g-3 align-items-end" data-auto-filter-form="appointments-index">
                 <div class="col-md-3">
                     <label class="form-label small">Search</label>
-                    <input type="text" name="search" class="form-control" placeholder="Search patient or apt#..." value="{{ request('search') }}">
+                    <input type="text" name="search" class="form-control" placeholder="Search patient, phone, or apt#..." value="{{ $filters['search'] ?? '' }}">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small">Status</label>
                     <select name="status" class="form-select">
                         <option value="">All Statuses</option>
                         @foreach($statuses as $status)
-                            <option value="{{ $status->value }}" {{ request('status') == $status->value ? 'selected' : '' }}>
+                            <option value="{{ $status->value }}" {{ ($filters['status'] ?? '') == $status->value ? 'selected' : '' }}>
                                 {{ $status->label() }}
                             </option>
                         @endforeach
@@ -99,22 +103,37 @@
                     <select name="doctor_id" class="form-select">
                         <option value="">All Doctors</option>
                         @foreach($doctors as $doctor)
-                            <option value="{{ $doctor->id }}" {{ request('doctor_id') == $doctor->id ? 'selected' : '' }}>
+                            <option value="{{ $doctor->id }}" {{ ($filters['doctor_id'] ?? '') == $doctor->id ? 'selected' : '' }}>
                                 {{ $doctor->name }}
                             </option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small">Date</label>
-                    <input type="date" name="date" class="form-control" value="{{ request('date') }}" placeholder="Date">
+                    <label class="form-label small">Department</label>
+                    <select name="department_id" class="form-select">
+                        <option value="">All Departments</option>
+                        @foreach($departments as $dept)
+                            <option value="{{ $dept->id }}" {{ ($filters['department_id'] ?? '') == $dept->id ? 'selected' : '' }}>
+                                {{ $dept->name }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
+                    @include('partials.date-range-filter', [
+                        'id' => 'appointmentIndexDateRangePicker',
+                        'value' => $filters['date_range'] ?? '',
+                        'labelClass' => 'small',
+                        'submitOnApply' => true,
+                    ])
+                </div>
+                <div class="col-md-auto">
                     <button type="submit" class="btn btn-primary me-2">
                         <i class="ti ti-filter me-1"></i> Filter
                     </button>
                     <a href="{{ route('admin.appointments.index') }}" class="btn btn-outline-secondary">
-                        <i class="ti ti-x me-1"></i> Clear
+                        <i class="ti ti-x me-1"></i>
                     </a>
                 </div>
             </form>
@@ -136,8 +155,6 @@
                             <th>Doctor</th>
                             <th>Department</th>
                             <th>Date</th>
-                            <th>Time</th>
-                            <th>Type</th>
                             <th>Status</th>
                             <th class="text-end">Actions</th>
                         </tr>
@@ -154,18 +171,29 @@
                                 <a href="{{ route('admin.patients.show', $appointment->patient) }}">
                                     {{ $appointment->patient->full_name ?? $appointment->patient->first_name . ' ' . $appointment->patient->last_name }}
                                 </a>
+                                <div class="small text-muted">{{ $appointment->patient->patient_number }}</div>
+                                @php
+                                    $patientPhones = collect([
+                                        $appointment->patient?->phone,
+                                        $appointment->patient?->phone_secondary,
+                                    ])->filter()->unique();
+                                @endphp
+                                @if($patientPhones->isNotEmpty())
+                                    <div class="small text-muted">
+                                        <i class="ti ti-phone me-1"></i>{{ $patientPhones->implode(' / ') }}
+                                    </div>
+                                @endif
                             </td>
                             <td>{{ $appointment->doctor?->name ?? '—' }}</td>
                             <td>{{ $appointment->department->name }}</td>
-                            <td>{{ $appointment->appointment_date->format('d M Y') }}</td>
                             <td>
-                                {{ \Carbon\Carbon::parse($appointment->start_time)->format('h:i A') }}
-                                @if($appointment->end_time)
-                                    – {{ \Carbon\Carbon::parse($appointment->end_time)->format('h:i A') }}
-                                @endif
-                            </td>
-                            <td>
-                                <span class="badge bg-outline-primary">{{ $appointment->visit_type->label() }}</span>
+                                {{ $appointment->appointment_date->format('d M Y') }}
+                                <div class="small text-muted">
+                                    <i class="ti ti-clock me-1"></i>{{ \Carbon\Carbon::parse($appointment->start_time)->format('h:i A') }}
+                                    @if($appointment->end_time)
+                                        - {{ \Carbon\Carbon::parse($appointment->end_time)->format('h:i A') }}
+                                    @endif
+                                </div>
                             </td>
                             <td>
                                 <span class="badge bg-{{ $appointment->status->color() }} js-appointment-status-badge">
@@ -265,7 +293,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="9" class="text-center py-4 text-muted">
+                            <td colspan="7" class="text-center py-4 text-muted">
                                 <i class="ti ti-calendar-off fs-1 d-block mb-2"></i>
                                 No appointments found.
                             </td>
@@ -285,8 +313,30 @@
 @endsection
 
 @push('scripts')
+@include('partials.date-range-filter-scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const filterForm = document.querySelector('[data-auto-filter-form="appointments-index"]');
+    if (filterForm) {
+        let filterTimer = null;
+        const searchInput = filterForm.querySelector('input[name="search"]');
+
+        filterForm.querySelectorAll('select').forEach(function (select) {
+            select.addEventListener('change', function () {
+                filterForm.requestSubmit();
+            });
+        });
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                window.clearTimeout(filterTimer);
+                filterTimer = window.setTimeout(function () {
+                    filterForm.requestSubmit();
+                }, 400);
+            });
+        }
+    }
+
     const feedback = document.getElementById('appointmentIndexActionFeedback');
     const forms = document.querySelectorAll('.js-appointment-action-form');
     const statusColors = {

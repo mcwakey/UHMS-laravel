@@ -9,30 +9,19 @@
 
 @section('content')
 <!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
+<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
+    <h6 class="fw-bold mb-0 d-flex align-items-center">
+        <a href="{{ route('admin.visits.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i> </a>
+    </h6>
     <div class="flex-grow-1">
+        {{-- <a href="{{ route('admin.visits.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>Create New Visit</a> --}}
         <h4 class="fw-bold mb-0">Visit {{ $visit->visit_number }}</h4>
         <small class="text-muted">Created {{ $visit->created_at->format('d M Y, h:i A') }} by {{ $visit->createdBy?->full_name }}</small>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary btn-md">
+        {{-- <a href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary btn-md">
             <i class="ti ti-arrow-left me-1"></i>Back to Visits
-        </a>
-        @can('visits.preview')
-        <a href="{{ route('admin.visits.preview', $visit) }}" class="btn btn-outline-info btn-md">
-            <i class="ti ti-eye-search me-1"></i>Preview Visit
-        </a>
-        @endcan
-        @can('visits.edit')
-        <a href="{{ route('admin.visits.edit', $visit) }}" class="btn btn-outline-warning btn-md">
-            <i class="ti ti-pencil me-1"></i>Edit Visit
-        </a>
-        @endcan
-        @can('visits.create')
-        <a href="{{ route('admin.visits.create', ['patient_id' => $visit->patient_id]) }}" class="btn btn-outline-primary btn-md">
-            <i class="ti ti-plus me-1"></i>New Visit for Patient
-        </a>
-        @endcan
+        </a> --}}
         @can('emergency.case.create')
         @if(!in_array($visit->status, [\App\Enums\VisitStatus::COMPLETED, \App\Enums\VisitStatus::CANCELLED, \App\Enums\VisitStatus::NO_SHOW], true))
         <a href="{{ route('admin.emergency.cases.create', ['visit_id' => $visit->id]) }}" class="btn btn-outline-danger btn-md">
@@ -40,11 +29,21 @@
         </a>
         @endif
         @endcan
-        @can('invoices.create')
+        @can('visits.create')
+        <a href="{{ route('admin.visits.create', ['patient_id' => $visit->patient_id]) }}" class="btn btn-outline-primary btn-md">
+            <i class="ti ti-plus me-1"></i>New Visit
+        </a>
+        @endcan
+        {{-- @can('visits.edit')
+        <a href="{{ route('admin.visits.edit', $visit) }}" class="btn btn-outline-warning btn-md">
+            <i class="ti ti-pencil me-1"></i>Edit Visit
+        </a>
+        @endcan --}}
+        {{-- @can('invoices.create')
         <a href="{{ route('admin.billing.invoices.create', ['visit_id' => $visit->id]) }}" class="btn btn-success btn-md">
             <i class="ti ti-file-invoice me-1"></i>Bill Visit
         </a>
-        @endcan
+        @endcan --}}
     </div>
 </div>
 
@@ -152,8 +151,14 @@
 
         <!-- Visit Details Card -->
         <div class="card mb-3">
-            <div class="card-header">
+            <div class="card-header d-flex align-items-center justify-content-between">
                 <h6 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>Visit Details</h6>
+                
+                @can('visits.preview')
+                <a href="{{ route('admin.visits.preview', $visit) }}" class="btn btn-outline-info btn-md">
+                    <i class="ti ti-eye-search me-1"></i>Preview Visit
+                </a>
+                @endcan
             </div>
             <div class="card-body">
                 <div class="row">
@@ -389,10 +394,14 @@
                                     <option value="{{ $department->id }}">{{ $department->name }}</option>
                                 @endforeach
                             </select>
+                            <div class="form-check mt-1">
+                                <input class="form-check-input" type="checkbox" id="visitRouteShowOtherServices" disabled>
+                                <label class="form-check-label small text-muted" for="visitRouteShowOtherServices">Show other services</label>
+                            </div>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small">Services to add/bill</label>
-                            <select name="service_ids[]" id="visitRouteServiceSelect" class="form-select form-select-sm" disabled multiple size="2">
+                            {{-- <label class="form-label small">Services to add/bill</label> --}}
+                            <select name="service_ids[]" id="visitRouteServiceSelect" class="form-select form-select-sm" disabled multiple size="3" required>
                                 <option value="">Select department first</option>
                             </select>
                         </div>
@@ -548,16 +557,46 @@
                 'base_price'             => ['Base Price',      'light text-dark'],
                 'drug_price'             => ['Drug Price',      'light text-dark'],
             ];
-            $sourceTypeLabels = [
-                'visit_service'     => 'Consultation / Visit Services',
-                'lab_request_item'  => 'Investigations',
-                'prescription_item' => 'Pharmacy',
-                'ward_charge'       => 'Ward / Admission',
-                'scan_request_item' => 'Scans',
-                'xray_request_item' => 'X-Ray',
-                'procedure'         => 'Procedures',
+            $sourceTypeGroups = [
+                'visit_service'                     => 'consultation_visit_services',
+                'service_catalog'                   => 'consultation_visit_services',
+                'consultation_service'              => 'consultation_visit_services',
+                'visit_consultation_route_service'  => 'consultation_visit_services',
             ];
-            $groupedItems = $visitInvoice->items->sortBy(['source_type', 'id']);
+            $sourceTypeLabels = [
+                'consultation_visit_services'              => 'Consultation / Visit Services',
+                'visit_service'                            => 'Consultation / Visit Services',
+                'service_catalog'                          => 'Consultation / Visit Services',
+                'consultation_service'                     => 'Consultation / Visit Services',
+                'visit_consultation_route_service'         => 'Consultation / Visit Services',
+                'lab_request_item'                         => 'Investigations',
+                'investigation_service'                    => 'Investigations',
+                'investigation_consumable'                 => 'Investigation Consumables',
+                'prescription_item'                        => 'Pharmacy',
+                'pharmacy_product'                         => 'Pharmacy',
+                'pharmacy_billing_selection'               => 'Pharmacy',
+                'ward_charge'                              => 'Ward / Admission',
+                'ward_consumable'                          => 'Ward / Admission',
+                'admission_fee'                            => 'Ward / Admission',
+                'admission_bed_charge'                     => 'Ward / Admission',
+                'admission_daily_consumable_charge'        => 'Ward / Admission',
+                'scan_request_item'                        => 'Scans',
+                'xray_request_item'                        => 'X-Ray',
+                'procedure'                                => 'Procedures',
+                'procedure_service'                        => 'Procedures',
+                'procedure_consumable'                     => 'Procedure Consumables',
+                'emergency_consumable'                     => 'Emergency',
+                'emergency_bed_charge'                     => 'Emergency',
+                'emergency_daily_consumable_charge'        => 'Emergency',
+            ];
+            $visitInvoiceSourceKey = fn ($item) => $sourceTypeGroups[
+                $item->source_type ?: ($item->service_catalog_id ? 'service_catalog' : 'other')
+            ] ?? ($item->source_type ?: ($item->service_catalog_id ? 'service_catalog' : 'other'));
+            $groupedItems = $visitInvoice->items->sortBy(fn ($item) => implode('|', [
+                $visitInvoiceSourceKey($item),
+                $item->department?->name ?? 'zz_unassigned',
+                str_pad((string) $item->id, 10, '0', STR_PAD_LEFT),
+            ]));
             $currentGroup = null;
         @endphp
         <div class="card mb-3">
@@ -593,14 +632,19 @@
                                 $src       = $item->pricing_source ?? 'cash_and_carry';
                                 $meta      = $sourceLabels[$src] ?? [ucfirst(str_replace('_',' ',$src)), 'light text-dark'];
                                 $payer     = $item->payer_type ?? 'cash';
-                                $groupKey  = $item->source_type ?: 'other';
-                                $groupLabel = $sourceTypeLabels[$groupKey] ?? ucfirst(str_replace('_',' ',$groupKey));
+                                $rawSourceKey  = $item->source_type ?: ($item->service_catalog_id ? 'service_catalog' : 'other');
+                                $sourceKey  = $sourceTypeGroups[$rawSourceKey] ?? $rawSourceKey;
+                                $departmentKey = $item->department_id ? 'department_'.$item->department_id : 'department_none';
+                                $groupKey  = $sourceKey.'|'.$departmentKey;
+                                $groupLabel = $sourceTypeLabels[$sourceKey] ?? ucfirst(str_replace('_',' ',$sourceKey));
+                                $departmentLabel = $item->department?->name ?? 'Unassigned Department';
                                 $selectedPrice = $item->selected_price !== null ? (float) $item->selected_price : (float) ($item->unit_price ?? 0);
                             @endphp
                             @if($currentGroup !== $groupKey)
                             <tr class="table-secondary">
                                 <th colspan="6" class="small text-uppercase">
                                     <i class="ti ti-folder me-1"></i>{{ $groupLabel }}
+                                    <span class="badge bg-light text-dark ms-2">{{ $departmentLabel }}</span>
                                 </th>
                             </tr>
                             @php $currentGroup = $groupKey; @endphp
@@ -672,7 +716,56 @@
         @include('partials.patient-card', [
             'patient' => $visit->patient,
             'visit'   => $visit,
+            // 'ins'   => $true,
         ])
+
+        @php
+            $activeVisitInsurance = $visit->visitInsurance;
+            $activeInsuranceProvider = $activeVisitInsurance?->insuranceProvider;
+            $activeInsuranceTier = $activeVisitInsurance?->insuranceTier;
+            $activeInsuranceIsReal = $activeVisitInsurance
+                && $activeVisitInsurance->is_active
+                && $activeInsuranceProvider
+                && ! $activeInsuranceProvider->is_default;
+        @endphp
+        {{-- <div class="card mb-3">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <h6 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Visit Insurance</h6>
+                @module('insurance')
+                @can('visits.edit')
+                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#changeVisitInsuranceModal">
+                    <i class="ti ti-switch-horizontal me-1"></i>Change
+                </button>
+                @endcan
+                @endmodule
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-start gap-2">
+                    <span class="avatar avatar-sm rounded bg-{{ $activeInsuranceIsReal ? 'success' : 'secondary' }}-subtle text-{{ $activeInsuranceIsReal ? 'success' : 'secondary' }} flex-shrink-0">
+                        <i class="ti ti-{{ $activeInsuranceIsReal ? 'shield-check' : 'cash' }}"></i>
+                    </span>
+                    <div class="min-w-0">
+                        <div class="fw-semibold">{{ $activeInsuranceProvider?->name ?? 'Cash & Carry' }}</div>
+                        @if($activeInsuranceIsReal)
+                            <div class="small text-muted">
+                                {{ $activeInsuranceTier?->name ?? 'No tier' }}
+                                @if($activeVisitInsurance?->membership_number)
+                                    <span class="mx-1">/</span>{{ $activeVisitInsurance->membership_number }}
+                                @endif
+                            </div>
+                            <span class="badge bg-{{ $activeInsuranceProvider->type?->color() ?? 'secondary' }} mt-1">
+                                {{ $activeInsuranceProvider->type?->label() ?? ucfirst((string) $activeInsuranceProvider->type) }}
+                            </span>
+                        @else
+                            <div class="small text-muted">New billed items use cash pricing.</div>
+                        @endif
+                    </div>
+                </div>
+                <div class="alert alert-light border small mt-3 mb-0">
+                    Existing billed items keep the insurance snapshot they were created with. Changes here apply only to new billed items.
+                </div>
+            </div>
+        </div> --}}
         {{-- <div class="card mb-3">
             <div class="card-header">
                 <h6 class="fw-bold mb-0"><i class="ti ti-user me-1"></i>Patient</h6>
@@ -823,7 +916,7 @@
                         </tbody>
                     </table>
                 </div>
-                @if($visitInvoice && $visitInvoice->items->isNotEmpty())
+                {{-- @if($visitInvoice && $visitInvoice->items->isNotEmpty())
                 <div class="border-top px-3 py-2">
                     <p class="text-muted small fw-bold mb-1">Invoice Items</p>
                     <div class="d-flex flex-column gap-1">
@@ -858,7 +951,7 @@
                         <span>&#8373;{{ number_format($visitPatient, 2) }}</span>
                     </div>
                 </div>
-                @endif
+                @endif --}}
             </div>
         </div>
         @endif
@@ -921,31 +1014,113 @@
         </div>
     </div>
 </div>
+
+@module('insurance')
+@can('visits.edit')
+<div class="modal fade" id="changeVisitInsuranceModal" tabindex="-1" aria-labelledby="changeVisitInsuranceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form method="POST" action="{{ route('admin.visits.insurance.update', $visit) }}" class="modal-content">
+            @csrf
+            @method('PATCH')
+            <div class="modal-header">
+                <h5 class="modal-title" id="changeVisitInsuranceModalLabel">
+                    <i class="ti ti-shield-check me-1"></i>Change Visit Insurance
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning small">
+                    This changes the payer used for future billed items only. Existing invoice items keep their original insurance snapshot.
+                </div>
+
+                <label for="visitInsuranceChangeSelect" class="form-label">Active insurance for new billed items</label>
+                <select name="visit_insurance_id" id="visitInsuranceChangeSelect" class="form-select @error('visit_insurance_id') is-invalid @enderror" required>
+                    @foreach(($patientInsuranceOptions ?? []) as $option)
+                        @php
+                            $optionValid = (bool) ($option['is_valid'] ?? false);
+                            $optionLabel = $option['provider_name'] ?? 'Insurance';
+                            $optionDetails = collect([
+                                $option['type_label'] ?? null,
+                                $option['tier_name'] ?? null,
+                                $option['membership_number'] ? '#'.$option['membership_number'] : null,
+                                ! $optionValid ? 'inactive/expired' : null,
+                            ])->filter()->implode(' - ');
+                        @endphp
+                        <option value="{{ $option['id'] }}"
+                            @selected((int) old('visit_insurance_id', $visit->visit_insurance_id) === (int) $option['id'])
+                            @disabled(! $optionValid)>
+                            {{ $optionLabel }}{{ $optionDetails ? ' - '.$optionDetails : '' }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('visit_insurance_id')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="ti ti-device-floppy me-1"></i>Save Insurance
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@endcan
+@endmodule
+
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const deptSelect = document.getElementById('visitRouteDeptSelect');
     const serviceSelect = document.getElementById('visitRouteServiceSelect');
+    const showOtherServices = document.getElementById('visitRouteShowOtherServices');
     const doctorSelect = document.getElementById('visitRouteDoctorSelect');
     if (!deptSelect || !serviceSelect || !doctorSelect) return;
 
     const endpointTemplate = @json(route('admin.departments.visit-options', ['department' => '__ID__']));
+    let routeServices = [];
 
-    function optionList(select, placeholder, rows, labelFn) {
+    function optionList(select, placeholder, rows, labelFn, includePlaceholder = true) {
         select.innerHTML = '';
-        select.insertAdjacentHTML('beforeend', '<option value="">' + placeholder + '</option>');
+        if (includePlaceholder) {
+            select.insertAdjacentHTML('beforeend', '<option value="">' + placeholder + '</option>');
+        }
         rows.forEach(row => {
             select.insertAdjacentHTML('beforeend', '<option value="' + row.id + '">' + labelFn(row) + '</option>');
         });
     }
 
+    function isConsultationService(service) {
+        return String(service?.category || '').toLowerCase() === 'consultation';
+    }
+
+    function visibleRouteServices() {
+        if (showOtherServices && showOtherServices.checked) {
+            return routeServices;
+        }
+
+        return routeServices.filter(isConsultationService);
+    }
+
+    function renderRouteServices() {
+        const visibleServices = visibleRouteServices();
+
+        optionList(serviceSelect, '', visibleServices, row => row.name, false);
+    }
+
     deptSelect.addEventListener('change', async () => {
         serviceSelect.disabled = true;
         doctorSelect.disabled = true;
+        if (showOtherServices) {
+            showOtherServices.checked = false;
+            showOtherServices.disabled = true;
+        }
         serviceSelect.innerHTML = '<option value="">Loading services...</option>';
         doctorSelect.innerHTML = '<option value="">Loading doctors...</option>';
 
         if (!deptSelect.value) {
+            routeServices = [];
             serviceSelect.innerHTML = '<option value="">Select department first</option>';
             doctorSelect.innerHTML = '<option value="">Select department first</option>';
             return;
@@ -955,15 +1130,32 @@ document.addEventListener('DOMContentLoaded', () => {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         });
         const payload = await response.json();
-        const services = payload.services || [];
+        routeServices = payload.services || [];
         const doctors = payload.doctors || [];
 
         serviceSelect.disabled = false;
         doctorSelect.disabled = false;
-        optionList(serviceSelect, services.length ? 'Optional services to link/bill' : 'No consultation services available', services, row => row.name);
-        optionList(doctorSelect, doctors.length ? 'Optional doctor' : 'No doctor linked through specialty', doctors, row => row.name);
+        if (showOtherServices) {
+            showOtherServices.disabled = !routeServices.some(service => !isConsultationService(service));
+        }
+        renderRouteServices();
+        optionList(doctorSelect, doctors.length ? 'Select doctor' : 'No doctor linked through specialty', doctors, row => row.name);
     });
+
+    if (showOtherServices) {
+        showOtherServices.addEventListener('change', renderRouteServices);
+    }
 });
 </script>
+@if($errors->has('visit_insurance_id'))
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('changeVisitInsuranceModal');
+    if (modal && window.bootstrap) {
+        window.bootstrap.Modal.getOrCreateInstance(modal).show();
+    }
+});
+</script>
+@endif
 @endpush
 @endsection

@@ -184,6 +184,7 @@ class InvoiceController extends Controller
     {
         $invoice->load([
             'items.serviceCatalog',
+            'items.department',
             'items.discountEvents.performedBy',
             'payments.receivedBy',
             'patient',

@@ -2,13 +2,20 @@
 
 namespace App\Services;
 
+use App\Enums\NotificationModule;
+use App\Enums\NotificationPriority;
 use App\Models\QueueEntry;
 use App\Models\Visit;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class QueueService
 {
+    public function __construct(
+        protected NotificationService $notifications,
+    ) {}
+
     public function addToQueue(Visit $visit): void
     {
         // No-op: queue entries are now created explicitly per stage
@@ -22,13 +29,17 @@ class QueueService
     {
         $queueNumber = QueueEntry::nextQueueNumber(null);
 
-        return QueueEntry::create([
+        $entry = QueueEntry::create([
             'visit_id'      => $visit->id,
             'department_id' => null,
             'queue_number'  => $queueNumber,
             'priority'      => $visit->priority->value,
             'status'        => 'waiting',
         ]);
+
+        $this->notifyTriageWaiting($entry);
+
+        return $entry;
     }
 
     /**
@@ -158,5 +169,44 @@ class QueueService
             ->groupBy('department_id');
 
         return $queues->toArray();
+    }
+
+    private function notifyTriageWaiting(QueueEntry $entry): void
+    {
+        try {
+            $entry->loadMissing('visit.patient');
+            $visit = $entry->visit;
+
+            if (! $visit) {
+                return;
+            }
+
+            $patientName = $visit->patient?->full_name ?? 'Patient #'.$visit->patient_id;
+            $payload = [
+                'module' => NotificationModule::CONSULTATION,
+                'priority' => NotificationPriority::HIGH,
+                'title' => 'Patient waiting for triage',
+                'message' => $patientName.' is waiting for triage/assessment.',
+                'url' => url("/admin/triage/{$visit->id}"),
+                'source_type' => 'triage_queue',
+                'source_id' => $visit->id,
+                'visit_id' => $visit->id,
+                'patient_id' => $visit->patient_id,
+                'queue_entry_id' => $entry->id,
+                'queue_number' => $entry->queue_number,
+            ];
+
+            $sent = $this->notifications->notifyPermission('vitals.create', $payload);
+
+            if ($sent === 0) {
+                $this->notifications->notifyRole(['Triage Nurse', 'Nurse'], $payload);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('QueueService.notifyTriageWaiting failed', [
+                'queue_entry_id' => $entry->id,
+                'visit_id' => $entry->visit_id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

@@ -134,14 +134,37 @@
                         'insurance_type_default' => ['Insurance Type',  'info'],
                         'base_price'             => ['Base Price',      'light text-dark'],
                     ];
+                    $sourceTypeGroups = [
+                        'visit_service'                     => 'consultation_visit_services',
+                        'service_catalog'                   => 'consultation_visit_services',
+                        'consultation_service'              => 'consultation_visit_services',
+                        'visit_consultation_route_service'  => 'consultation_visit_services',
+                    ];
                     $sourceTypeLabels = [
-                        'visit_service'     => 'Consultation / Visit Services',
-                        'lab_request_item'  => 'Investigations',
-                        'prescription_item' => 'Pharmacy',
-                        'ward_charge'       => 'Ward / Admission',
-                        'scan_request_item' => 'Scans',
-                        'xray_request_item' => 'X-Ray',
-                        'procedure'         => 'Procedures',
+                        'consultation_visit_services'              => 'Consultation / Visit Services',
+                        'visit_service'                            => 'Consultation / Visit Services',
+                        'service_catalog'                          => 'Consultation / Visit Services',
+                        'consultation_service'                     => 'Consultation / Visit Services',
+                        'visit_consultation_route_service'         => 'Consultation / Visit Services',
+                        'lab_request_item'                         => 'Investigations',
+                        'investigation_service'                    => 'Investigations',
+                        'investigation_consumable'                 => 'Investigation Consumables',
+                        'prescription_item'                        => 'Pharmacy',
+                        'pharmacy_product'                         => 'Pharmacy',
+                        'pharmacy_billing_selection'               => 'Pharmacy',
+                        'ward_charge'                              => 'Ward / Admission',
+                        'ward_consumable'                          => 'Ward / Admission',
+                        'admission_fee'                            => 'Ward / Admission',
+                        'admission_bed_charge'                     => 'Ward / Admission',
+                        'admission_daily_consumable_charge'        => 'Ward / Admission',
+                        'scan_request_item'                        => 'Scans',
+                        'xray_request_item'                        => 'X-Ray',
+                        'procedure'                                => 'Procedures',
+                        'procedure_service'                        => 'Procedures',
+                        'procedure_consumable'                     => 'Procedure Consumables',
+                        'emergency_consumable'                     => 'Emergency',
+                        'emergency_bed_charge'                     => 'Emergency',
+                        'emergency_daily_consumable_charge'        => 'Emergency',
                     ];
                     $statusBadge = [
                         'paid'           => 'success',
@@ -151,7 +174,14 @@
                         'cancelled'      => 'secondary',
                         'voided'         => 'secondary',
                     ];
-                    $groupedItems = $invoice->items->sortBy(['source_type', 'id']);
+                    $invoiceSourceKey = fn ($item) => $sourceTypeGroups[
+                        $item->source_type ?: ($item->service_catalog_id ? 'service_catalog' : 'other')
+                    ] ?? ($item->source_type ?: ($item->service_catalog_id ? 'service_catalog' : 'other'));
+                    $groupedItems = $invoice->items->sortBy(fn ($item) => implode('|', [
+                        $invoiceSourceKey($item),
+                        $item->department?->name ?? 'zz_unassigned',
+                        str_pad((string) $item->id, 10, '0', STR_PAD_LEFT),
+                    ]));
                     $currentGroup = null;
                 @endphp
                 <div class="table-responsive mb-4">
@@ -182,8 +212,12 @@
                                 $src       = $item->pricing_source ?? 'cash_and_carry';
                                 $meta      = $sourceLabels[$src] ?? [ucfirst(str_replace('_',' ',$src)), 'light text-dark'];
                                 $payer     = $item->payer_type ?? 'cash';
-                                $groupKey  = $item->source_type ?: 'other';
-                                $groupLabel = $sourceTypeLabels[$groupKey] ?? ucfirst(str_replace('_',' ',$groupKey));
+                                $rawSourceKey  = $item->source_type ?: ($item->service_catalog_id ? 'service_catalog' : 'other');
+                                $sourceKey  = $sourceTypeGroups[$rawSourceKey] ?? $rawSourceKey;
+                                $departmentKey = $item->department_id ? 'department_'.$item->department_id : 'department_none';
+                                $groupKey  = $sourceKey.'|'.$departmentKey;
+                                $groupLabel = $sourceTypeLabels[$sourceKey] ?? ucfirst(str_replace('_',' ',$sourceKey));
+                                $departmentLabel = $item->department?->name ?? 'Unassigned Department';
                                 $payStatus  = $item->payment_status ?: 'unpaid';
                                 $payColor   = $statusBadge[$payStatus] ?? 'secondary';
                             @endphp
@@ -191,6 +225,7 @@
                             <tr class="table-secondary">
                                 <th colspan="{{ $canDiscountActions ? 11 : 10 }}" class="small text-uppercase">
                                     <i class="ti ti-folder me-1"></i>{{ $groupLabel }}
+                                    <span class="badge bg-light text-dark ms-2">{{ $departmentLabel }}</span>
                                 </th>
                             </tr>
                             @php $currentGroup = $groupKey; @endphp

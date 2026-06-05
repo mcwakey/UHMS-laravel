@@ -17,37 +17,29 @@
     </x-slot:actions>
 </x-page-header>
 
-<!-- Today's Stats -->
+<!-- Visit Stats -->
 <div class="row mb-4">
     <div class="col-xl-2 col-md-4 col-6">
         <div class="card border-start border-primary border-3">
             <div class="card-body py-3 px-3">
-                <p class="text-muted mb-1 small">Today's Total</p>
+                <p class="text-muted mb-1 small">Range Total</p>
                 <h4 class="fw-bold mb-0">{{ $stats['total'] }}</h4>
             </div>
         </div>
     </div>
     <div class="col-xl-2 col-md-4 col-6">
-        <div class="card border-start border-warning border-3">
+        <div class="card border-start border-secondary border-3">
             <div class="card-body py-3 px-3">
-                <p class="text-muted mb-1 small">Waiting</p>
-                <h4 class="fw-bold mb-0">{{ $stats['waiting'] }}</h4>
+                <p class="text-muted mb-1 small">Outpatients</p>
+                <h4 class="fw-bold mb-0">{{ $stats['outpatient'] ?? 0 }}</h4>
             </div>
         </div>
     </div>
     <div class="col-xl-2 col-md-4 col-6">
         <div class="card border-start border-info border-3">
             <div class="card-body py-3 px-3">
-                <p class="text-muted mb-1 small">Consulting</p>
-                <h4 class="fw-bold mb-0">{{ $stats['consulting'] }}</h4>
-            </div>
-        </div>
-    </div>
-    <div class="col-xl-2 col-md-4 col-6">
-        <div class="card border-start border-success border-3">
-            <div class="card-body py-3 px-3">
-                <p class="text-muted mb-1 small">Completed</p>
-                <h4 class="fw-bold mb-0">{{ $stats['completed'] }}</h4>
+                <p class="text-muted mb-1 small">Inpatients</p>
+                <h4 class="fw-bold mb-0">{{ $stats['inpatient'] ?? 0 }}</h4>
             </div>
         </div>
     </div>
@@ -60,10 +52,18 @@
         </div>
     </div>
     <div class="col-xl-2 col-md-4 col-6">
-        <div class="card border-start border-secondary border-3">
+        <div class="card border-start border-warning border-3">
             <div class="card-body py-3 px-3">
-                <p class="text-muted mb-1 small">Cancelled</p>
-                <h4 class="fw-bold mb-0">{{ $stats['cancelled'] }}</h4>
+                <p class="text-muted mb-1 small">Waiting / Consulting</p>
+                <h4 class="fw-bold mb-0">{{ $stats['waiting_consulting'] ?? 0 }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-md-4 col-6">
+        <div class="card border-start border-success border-3">
+            <div class="card-body py-3 px-3">
+                <p class="text-muted mb-1 small">Completed / Cancelled</p>
+                <h4 class="fw-bold mb-0">{{ $stats['completed_cancelled'] ?? 0 }}</h4>
             </div>
         </div>
     </div>
@@ -79,15 +79,6 @@
                     <input type="text" name="search" class="form-control" placeholder="Visit #, patient name, phone..." value="{{ $filters['search'] ?? '' }}">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">Status</label>
-                    <select name="status" class="form-select">
-                        <option value="">All Statuses</option>
-                        @foreach(collect(\App\Enums\VisitStatus::cases())->reject(fn($status) => $status->isDepartmentMovementStatus()) as $status)
-                            <option value="{{ $status->value }}" {{ ($filters['status'] ?? '') == $status->value ? 'selected' : '' }}>{{ $status->label() }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2">
                     <label class="form-label">Visit Type</label>
                     <select name="visit_type" class="form-select">
                         <option value="">All Types</option>
@@ -96,13 +87,29 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label">Date From</label>
-                    <input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}">
+                <div class="col-md-3">
+                    <label class="form-label">Active Insurance</label>
+                    <select name="insurance_provider_id" class="form-select">
+                        <option value="">All Insurance</option>
+                        @php
+                            $legacyInsuranceOptions = collect($insuranceProviderOptions ?? [['value' => 'cash', 'label' => 'Cash & Carry']]);
+                        @endphp
+                        @foreach($legacyInsuranceOptions as $provider)
+                            <option value="{{ $provider['value'] }}" {{ (string) ($filters['insurance_provider_id'] ?? '') === (string) $provider['value'] ? 'selected' : '' }}>
+                                {{ $provider['label'] }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
-                <div class="col-md-1">
+                <div class="col-md-2">
+                    @include('partials.date-range-filter', [
+                        'id' => 'visitDateRangePicker',
+                        'value' => $filters['date_range'] ?? '',
+                    ])
+                </div>
+                <div class="col-md-auto">
                     <div class="d-flex gap-1">
-                        <button aria-label="Filter" title="Filter" type="submit" class="btn btn-primary"><i class="ti ti-filter"></i></button>
+                        <button aria-label="Filter" title="Filter" type="submit" class="btn btn-primary"><i class="ti ti-filter"></i> Filter</button>
                         <a aria-label="Close" title="Close" href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary"><i class="ti ti-x"></i></a>
                     </div>
                 </div>
@@ -120,6 +127,7 @@
                     <tr>
                         <th>Visit #</th>
                         <th>Patient</th>
+                        <th>Active Insurance</th>
                         <th>Age</th>
                         <th>Type</th>
                         <th>Priority</th>
@@ -143,6 +151,23 @@
                                 <a href="{{ route('admin.patients.show', $visit->patient) }}" class="fw-medium">{{ $visit->patient->full_name }}</a>
                                 <br><small class="text-muted">{{ $visit->patient->patient_number }}</small>
                             </div>
+                        </td>
+                        <td>
+                            @php
+                                $visitInsurance = $visit->visitInsurance;
+                                $provider = $visitInsurance?->insuranceProvider;
+                                $hasInsurance = $visitInsurance
+                                    && $visitInsurance->is_active
+                                    && ! $visitInsurance->is_expired
+                                    && $provider
+                                    && ! $provider->is_default;
+                            @endphp
+                            <span class="badge bg-{{ $hasInsurance ? ($provider->type?->color() ?? 'info') : 'secondary' }}">
+                                <i class="ti ti-{{ $hasInsurance ? 'shield-check' : 'cash' }} me-1"></i>{{ $hasInsurance ? $provider->name : ($provider?->name ?? 'Cash & Carry') }}
+                            </span>
+                            @if($hasInsurance && $visitInsurance->insuranceTier?->name)
+                                <small class="text-muted d-block mt-1">{{ $visitInsurance->insuranceTier->name }}</small>
+                            @endif
                         </td>
                         <td>{{ $visit->patient_age ?? $visit->patient->age }}y</td>
                         <td>
@@ -172,9 +197,9 @@
                                     @can('visits.preview')
                                     <li><a class="dropdown-item" href="{{ route('admin.visits.preview', $visit) }}"><i class="ti ti-eye-search me-2"></i>Preview Visit</a></li>
                                     @endcan
-                                    @can('visits.edit')
+                                    {{-- @can('visits.edit')
                                     <li><a class="dropdown-item" href="{{ route('admin.visits.edit', $visit) }}"><i class="ti ti-pencil me-2"></i>Edit Visit</a></li>
-                                    @endcan
+                                    @endcan --}}
                                     @if($visit->status->allowedTransitions())
                                     <li><hr class="dropdown-divider"></li>
                                     @foreach($visit->status->allowedTransitions() as $nextStatus)
@@ -212,3 +237,7 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+    @include('partials.date-range-filter-scripts')
+@endpush

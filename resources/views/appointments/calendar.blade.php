@@ -9,9 +9,13 @@
                 <h3 class="page-title">Appointment Calendar</h3>
             </div>
             <div class="col-sm-6 text-sm-end">
-                <a href="{{ route('admin.appointments.index') }}" class="btn btn-outline-secondary me-2">
+                <div class="bg-white border shadow-sm rounded px-1 pb-0 text-center d-flex align-items-center justify-content-center">
+                    <a aria-label="List" title="List" href="{{ route('admin.appointments.index') }}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-body"></i></a>
+                    <a aria-label="Calendar event" title="Calendar event" href="{{ route('admin.appointments.calendar') }}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-calendar-event fs-14 text-body"></i> </a>
+                </div>
+                {{-- <a href="{{ route('admin.appointments.index') }}" class="btn btn-outline-secondary me-2">
                     <i class="ti ti-list me-1"></i> List View
-                </a>
+                </a> --}}
                 @can('appointments.create')
                 <a href="{{ route('admin.appointments.create') }}" class="btn btn-primary">
                     <i class="ti ti-plus me-1"></i> New Appointment
@@ -24,17 +28,20 @@
     {{-- Filters --}}
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ route('admin.appointments.calendar') }}" class="row g-3 align-items-end">
+            <form method="GET" action="{{ route('admin.appointments.calendar') }}" class="row g-3 align-items-end" data-auto-filter-form="appointments-calendar">
                 <div class="col-md-3">
-                    <label class="form-label">Week Starting</label>
-                    <input type="date" name="from" class="form-control" value="{{ $from }}" id="weekStart">
+                    @include('partials.date-range-filter', [
+                        'id' => 'appointmentCalendarDateRangePicker',
+                        'value' => $filters['date_range'] ?? '',
+                        'submitOnApply' => true,
+                    ])
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Doctor</label>
                     <select name="doctor_id" class="form-select">
                         <option value="">All Doctors</option>
                         @foreach($doctors as $doctor)
-                            <option value="{{ $doctor->id }}" {{ request('doctor_id') == $doctor->id ? 'selected' : '' }}>
+                            <option value="{{ $doctor->id }}" {{ ($filters['doctor_id'] ?? '') == $doctor->id ? 'selected' : '' }}>
                                 Dr. {{ $doctor->name }}
                             </option>
                         @endforeach
@@ -45,7 +52,7 @@
                     <select name="department_id" class="form-select">
                         <option value="">All Departments</option>
                         @foreach($departments as $dept)
-                            <option value="{{ $dept->id }}" {{ request('department_id') == $dept->id ? 'selected' : '' }}>
+                            <option value="{{ $dept->id }}" {{ ($filters['department_id'] ?? '') == $dept->id ? 'selected' : '' }}>
                                 {{ $dept->name }}
                             </option>
                         @endforeach
@@ -56,67 +63,71 @@
                         <i class="ti ti-filter me-1"></i> Filter
                     </button>
                     <a href="{{ route('admin.appointments.calendar') }}" class="btn btn-outline-secondary">
-                        <i class="ti ti-x me-1"></i> Clear
+                        <i class="ti ti-x me-1"></i>
                     </a>
                 </div>
             </form>
         </div>
     </div>
 
-    {{-- Week Navigation --}}
+    {{-- Range Navigation --}}
     <div class="d-flex justify-content-between align-items-center mb-3">
         @php
-            $prevWeek = \Carbon\Carbon::parse($from)->subWeek()->toDateString();
-            $nextWeek = \Carbon\Carbon::parse($from)->addWeek()->toDateString();
-            $todayWeek = now()->startOfWeek()->toDateString();
+            $rangeStart = \Carbon\Carbon::parse($from);
+            $rangeEnd = \Carbon\Carbon::parse($to);
+            $rangeDays = max(1, (int) $rangeStart->diffInDays($rangeEnd) + 1);
+            $prevStart = $rangeStart->copy()->subDays($rangeDays);
+            $prevEnd = $rangeEnd->copy()->subDays($rangeDays);
+            $nextStart = $rangeStart->copy()->addDays($rangeDays);
+            $nextEnd = $rangeEnd->copy()->addDays($rangeDays);
+            $rangeQuery = request()->except(['date_range', 'date_from', 'date_to', 'from', 'to']);
         @endphp
-        <a href="{{ route('admin.appointments.calendar', array_merge(request()->except('from'), ['from' => $prevWeek])) }}" class="btn btn-outline-secondary btn-sm">
-            <i class="ti ti-chevron-left me-1"></i> Previous Week
+        <a href="{{ route('admin.appointments.calendar', array_merge($rangeQuery, ['date_range' => $prevStart->toDateString().' to '.$prevEnd->toDateString()])) }}" class="btn btn-outline-secondary btn-sm">
+            <i class="ti ti-chevron-left me-1"></i> Previous Range
         </a>
         <div>
             <h5 class="mb-0">
-                {{ \Carbon\Carbon::parse($from)->format('d M') }} — {{ \Carbon\Carbon::parse($to)->format('d M Y') }}
+                {{ $rangeStart->format('d M') }} - {{ $rangeEnd->format('d M Y') }}
             </h5>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('admin.appointments.calendar', array_merge(request()->except('from'), ['from' => $todayWeek])) }}" class="btn btn-outline-primary btn-sm">
+            <a href="{{ route('admin.appointments.calendar', $rangeQuery) }}" class="btn btn-outline-primary btn-sm">
                 Today
             </a>
-            <a href="{{ route('admin.appointments.calendar', array_merge(request()->except('from'), ['from' => $nextWeek])) }}" class="btn btn-outline-secondary btn-sm">
-                Next Week <i class="ti ti-chevron-right ms-1"></i>
+            <a href="{{ route('admin.appointments.calendar', array_merge($rangeQuery, ['date_range' => $nextStart->toDateString().' to '.$nextEnd->toDateString()])) }}" class="btn btn-outline-secondary btn-sm">
+                Next Range <i class="ti ti-chevron-right ms-1"></i>
             </a>
         </div>
     </div>
 
     {{-- Calendar Grid --}}
     @php
-        $calendarWeeks = [
-            ['label' => 'Selected Week', 'start' => \Carbon\Carbon::parse($from)],
-            ['label' => 'Next Week', 'start' => \Carbon\Carbon::parse($from)->addWeek()],
-        ];
+        $calendarDays = collect(iterator_to_array(\Carbon\CarbonPeriod::create($from, $to)))
+            ->map(fn ($day) => $day->copy());
+        $calendarWeeks = $calendarDays->chunk(7)->values();
     @endphp
 
     @foreach($calendarWeeks as $weekIndex => $calendarWeek)
     @php
-        $weekStart = $calendarWeek['start']->copy();
-        $weekEnd = $weekStart->copy()->addDays(6);
+        $weekStart = $calendarWeek->first()->copy();
+        $weekEnd = $calendarWeek->last()->copy();
+        $columnWidth = round(100 / max(1, $calendarWeek->count()), 2);
     @endphp
     <div class="card uhms-calendar-week {{ $weekIndex > 0 ? 'mt-3' : '' }}">
         <div class="card-header d-flex align-items-center justify-content-between">
-            <h5 class="card-title mb-0">{{ $calendarWeek['label'] }}</h5>
-            <span class="text-muted fw-medium">{{ $weekStart->format('d M') }} — {{ $weekEnd->format('d M Y') }}</span>
+            <h5 class="card-title mb-0">{{ $calendarWeeks->count() > 1 ? 'Range '.($weekIndex + 1) : 'Selected Range' }}</h5>
+            <span class="text-muted fw-medium">{{ $weekStart->format('d M') }} - {{ $weekEnd->format('d M Y') }}</span>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-bordered mb-0">
                     <thead class="table-light">
                         <tr>
-                            @for($i = 0; $i < 7; $i++)
+                            @foreach($calendarWeek as $day)
                                 @php
-                                    $day = $weekStart->copy()->addDays($i);
                                     $isToday = $day->isToday();
                                 @endphp
-                                <th class="text-center {{ $isToday ? 'bg-primary bg-opacity-10' : '' }}" style="width: 14.28%; min-width: 150px;">
+                                <th class="text-center {{ $isToday ? 'bg-primary bg-opacity-10' : '' }}" style="width: {{ $columnWidth }}%; min-width: 150px;">
                                     <div class="{{ $isToday ? 'text-primary fw-bold' : '' }}">
                                         {{ $day->format('l') }}
                                     </div>
@@ -124,14 +135,13 @@
                                         {{ $day->format('d M') }}
                                     </div>
                                 </th>
-                            @endfor
+                            @endforeach
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            @for($i = 0; $i < 7; $i++)
+                            @foreach($calendarWeek as $day)
                                 @php
-                                    $day = $weekStart->copy()->addDays($i);
                                     $dayKey = $day->format('Y-m-d');
                                     $dayAppointments = $calendarData[$dayKey] ?? collect();
                                     $isToday = $day->isToday();
@@ -174,7 +184,7 @@
                                     @endif
                                     @endcan
                                 </td>
-                            @endfor
+                            @endforeach
                         </tr>
                     </tbody>
                 </table>
@@ -195,3 +205,21 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+@include('partials.date-range-filter-scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const filterForm = document.querySelector('[data-auto-filter-form="appointments-calendar"]');
+    if (!filterForm) {
+        return;
+    }
+
+    filterForm.querySelectorAll('select').forEach(function (select) {
+        select.addEventListener('change', function () {
+            filterForm.requestSubmit();
+        });
+    });
+});
+</script>
+@endpush

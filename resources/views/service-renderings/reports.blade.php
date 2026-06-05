@@ -13,17 +13,17 @@
 </div>
 
 <div class="row g-3 mb-3">
-    <div class="col-6 col-xl-2"><div class="card border-0 bg-light"><div class="card-body py-3"><div class="text-muted small">Total</div><div class="h4 mb-0">{{ $summary['total'] ?? 0 }}</div></div></div></div>
-    <div class="col-6 col-xl-2"><div class="card border-0 bg-warning-subtle"><div class="card-body py-3"><div class="text-warning small">Pending</div><div class="h4 mb-0">{{ $summary['pending'] ?? 0 }}</div></div></div></div>
-    <div class="col-6 col-xl-2"><div class="card border-0 bg-info-subtle"><div class="card-body py-3"><div class="text-info small">In Progress</div><div class="h4 mb-0">{{ $summary['in_progress'] ?? 0 }}</div></div></div></div>
-    <div class="col-6 col-xl-2"><div class="card border-0 bg-success-subtle"><div class="card-body py-3"><div class="text-success small">Rendered</div><div class="h4 mb-0">{{ $summary['rendered'] ?? 0 }}</div></div></div></div>
-    <div class="col-6 col-xl-2"><div class="card border-0 bg-danger-subtle"><div class="card-body py-3"><div class="text-danger small">Not Rendered</div><div class="h4 mb-0">{{ $summary['not_rendered'] ?? 0 }}</div></div></div></div>
-    <div class="col-6 col-xl-2"><div class="card border-0 bg-secondary-subtle"><div class="card-body py-3"><div class="text-secondary small">Cancelled</div><div class="h4 mb-0">{{ $summary['cancelled'] ?? 0 }}</div></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card"><div class="card-body text-center"><h3 class="mb-1">{{ $summary['total'] ?? 0 }}</h3><p class="text-muted mb-0">Total</p></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card"><div class="card-body text-center"><h3 class="mb-1 text-warning">{{ $summary['pending'] ?? 0 }}</h3><p class="text-muted mb-0">Pending</p></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card"><div class="card-body text-center"><h3 class="mb-1 text-info">{{ $summary['in_progress'] ?? 0 }}</h3><p class="text-muted mb-0">In Progress</p></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card"><div class="card-body text-center"><h3 class="mb-1 text-success">{{ $summary['rendered'] ?? 0 }}</h3><p class="text-muted mb-0">Rendered</p></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card"><div class="card-body text-center"><h3 class="mb-1 text-danger">{{ $summary['not_rendered'] ?? 0 }}</h3><p class="text-muted mb-0">Not Rendered</p></div></div></div>
+    <div class="col-6 col-xl-2"><div class="card"><div class="card-body text-center"><h3 class="mb-1 text-secondary">{{ $summary['cancelled'] ?? 0 }}</h3><p class="text-muted mb-0">Cancelled</p></div></div></div>
 </div>
 
 <div class="card mb-3">
     <div class="card-body">
-        <form method="GET" action="{{ route('admin.service-renderings.reports') }}" class="row g-2 align-items-end">
+        <form method="GET" action="{{ route('admin.service-renderings.reports') }}" class="row g-2 align-items-end" data-auto-filter-form="service-renderings-reports">
             <div class="col-md-2">
                 <label class="form-label small">Status</label>
                 <select class="form-select form-select-sm" name="status">
@@ -34,34 +34,27 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label small">Payment</label>
-                <select class="form-select form-select-sm" name="payment_status">
+                <label class="form-label small">Department</label>
+                <select class="form-select form-select-sm" name="department_id">
                     <option value="">All</option>
-                    @foreach(['unpaid', 'partially_paid', 'paid', 'waived', 'cancelled', 'voided'] as $status)
-                        <option value="{{ $status }}" @selected(($filters['payment_status'] ?? '') === $status)>{{ ucwords(str_replace('_', ' ', $status)) }}</option>
+                    @foreach($departments as $department)
+                        <option value="{{ $department->id }}" @selected((string)($filters['department_id'] ?? '') === (string)$department->id)>{{ $department->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label small">Source</label>
-                <select class="form-select form-select-sm" name="source">
-                    <option value="">All</option>
-                    @foreach(['opd' => 'OPD / Visit', 'emergency' => 'Emergency', 'admission' => 'Admission', 'consultation' => 'Consultation'] as $value => $label)
-                        <option value="{{ $value }}" @selected(($filters['source'] ?? '') === $value)>{{ $label }}</option>
-                    @endforeach
-                </select>
+                @include('partials.date-range-filter', [
+                    'id' => 'serviceRenderingReportDateRangePicker',
+                    'value' => $filters['date_range'] ?? '',
+                    'labelClass' => 'small',
+                    'submitOnApply' => true,
+                ])
             </div>
-            <div class="col-md-2">
-                <label class="form-label small">From</label>
-                <input class="form-control form-control-sm" type="date" name="date_from" value="{{ $filters['date_from'] ?? '' }}">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">To</label>
-                <input class="form-control form-control-sm" type="date" name="date_to" value="{{ $filters['date_to'] ?? '' }}">
-            </div>
-            <div class="col-md-2 d-flex gap-2">
-                <button class="btn btn-primary btn-sm w-100" type="submit">Apply</button>
-                <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.service-renderings.reports') }}">Clear</a>
+            <div class="col-md-auto">
+                <div class="d-flex gap-1">
+                    <button class="btn btn-primary btn-sm" type="submit"><i class="ti ti-filter me-1"></i>Apply</button>
+                    <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.service-renderings.reports') }}"><i class="ti ti-x"></i></a>
+                </div>
             </div>
         </form>
     </div>
@@ -132,3 +125,21 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+    @include('partials.date-range-filter-scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const filterForm = document.querySelector('[data-auto-filter-form="service-renderings-reports"]');
+            if (!filterForm) {
+                return;
+            }
+
+            filterForm.querySelectorAll('select').forEach(function (select) {
+                select.addEventListener('change', function () {
+                    filterForm.requestSubmit();
+                });
+            });
+        });
+    </script>
+@endpush

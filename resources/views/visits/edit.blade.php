@@ -3,15 +3,18 @@
 
 @section('content')
 <!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
-    <div class="flex-grow-1">
+<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
+    <h6 class="fw-bold mb-0 d-flex align-items-center">
+        <a href="{{ route('admin.visits.show', $visit) }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>Edit Visit</a>
+    </h6>
+    {{-- <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">Edit Visit <span class="text-muted fw-normal fs-5">{{ $visit->visit_number }}</span></h4>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-md">
             <i class="ti ti-arrow-left me-1"></i>Back to Visit
         </a>
-    </div>
+    </div> --}}
 </div>
 
 @if(session('error'))
