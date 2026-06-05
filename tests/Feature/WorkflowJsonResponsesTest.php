@@ -365,7 +365,7 @@ class WorkflowJsonResponsesTest extends TestCase
         $this->assertSame(AppointmentStatus::CONFIRMED, $appointment->status);
     }
 
-    public function test_payment_store_returns_json_and_completes_billed_visit_when_fully_paid(): void
+    public function test_payment_store_returns_json_without_completing_visit_or_consultation_route_when_fully_paid(): void
     {
         $patient = Patient::factory()->create(['registered_by' => $this->user->id]);
         $visit = Visit::factory()->create([
@@ -373,6 +373,17 @@ class WorkflowJsonResponsesTest extends TestCase
             'created_by' => $this->user->id,
             'status' => VisitStatus::BILLING,
             'checked_in_at' => now(),
+        ]);
+        $route = VisitConsultationRoute::create([
+            'visit_id' => $visit->id,
+            'patient_id' => $patient->id,
+            'department_id' => $this->department->id,
+            'doctor_id' => $this->user->id,
+            'status' => VisitConsultationRoute::STATUS_ACTIVE,
+            'routed_by' => $this->user->id,
+            'started_by' => $this->user->id,
+            'started_at' => now(),
+            'activated_at' => now(),
         ]);
 
         $invoice = Invoice::create([
@@ -413,11 +424,12 @@ class WorkflowJsonResponsesTest extends TestCase
             ->assertJsonPath('invoice_id', $invoice->id)
             ->assertJsonPath('invoice_status', InvoiceStatus::PAID->value)
             ->assertJsonPath('visit_id', $visit->id)
-            ->assertJsonPath('visit_status', VisitStatus::COMPLETED->value)
+            ->assertJsonPath('visit_status', VisitStatus::BILLING->value)
             ->assertJsonPath('redirect_url', route('admin.billing.invoices.show', $invoice));
 
         $this->assertSame(InvoiceStatus::PAID, $invoice->status);
-        $this->assertSame(VisitStatus::COMPLETED, $visit->status);
+        $this->assertSame(VisitStatus::BILLING, $visit->status);
+        $this->assertSame(VisitConsultationRoute::STATUS_ACTIVE, $route->fresh()->status);
     }
 
     public function test_invoice_store_accepts_service_selected_rows_without_manual_description(): void

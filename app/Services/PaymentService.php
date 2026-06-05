@@ -114,11 +114,12 @@ class PaymentService
             $this->invoiceService->recalculateTotals($invoice);
             $invoice->refresh();
 
-            // Complete visit if fully paid.
+            // Payment settlement is a billing event only; clinical visit/session
+            // completion must remain an explicit workflow action.
             if (($invoice->status?->value ?? $invoice->status) === InvoiceStatus::PAID->value) {
                 $visit = $invoice->visit;
                 if ($visit) {
-                    $this->visitWorkflowService->completeAfterPayment($visit);
+                    $this->visitWorkflowService->recordPaymentCompleted($visit);
                 }
             }
 

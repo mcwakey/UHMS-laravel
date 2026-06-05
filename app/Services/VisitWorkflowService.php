@@ -135,32 +135,19 @@ class VisitWorkflowService
         return $visit->fresh();
     }
 
-    public function completeAfterPayment(Visit $visit, ?string $notes = null): Visit
+    public function recordPaymentCompleted(Visit $visit, ?string $notes = null): Visit
     {
         $this->pathway->record($visit, 'PAYMENT_COMPLETED', [
             'title' => 'Payment completed',
             'description' => $notes ?? 'Invoice fully paid',
         ]);
 
-        // Settling the bill is the final step of an outpatient encounter, so a full
-        // payment closes the visit. Admission / emergency / inpatient visits are left
-        // untouched: their lifecycle terminates at discharge or disposition, not at the
-        // cashier, so paying their bill must NOT complete them.
-        $outpatientBillingStatuses = [
-            VisitStatus::ACTIVE,
-            VisitStatus::CONSULTING,
-            VisitStatus::BILLING,
-            VisitStatus::LAB,
-            VisitStatus::PHARMACY,
-            VisitStatus::WAITING_INVESTIGATION,
-        ];
-
-        if (in_array($visit->status, $outpatientBillingStatuses, true)
-            && $visit->canTransitionTo(VisitStatus::COMPLETED)) {
-            return $this->transition($visit, VisitStatus::COMPLETED, $notes ?? 'Invoice fully paid');
-        }
-
         return $visit->fresh();
+    }
+
+    public function completeAfterPayment(Visit $visit, ?string $notes = null): Visit
+    {
+        return $this->recordPaymentCompleted($visit, $notes);
     }
 
     public function transition(Visit $visit, VisitStatus $newStatus, ?string $notes = null): Visit
