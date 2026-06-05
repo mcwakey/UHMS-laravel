@@ -147,13 +147,13 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label class="form-label">Assign to Consultation Route <span class="text-muted small">(optional but recommended)</span></label>
+                        <label class="form-label">Assign to Consultation Route <span class="text-danger">*</span></label>
                         @if($pendingRoutes->isEmpty())
                             <div class="alert alert-warning py-2 mb-2 small">
                                 No pending consultation routes for this visit. Triage will be recorded without assigning a destination.
                             </div>
                         @else
-                            @php $selectedRouteId = old('consultation_route_id'); @endphp
+                            @php $selectedRouteId = old('consultation_route_id', $pendingRoutes->first()?->id); @endphp
                             <div class="list-group">
                                 @foreach($pendingRoutes as $route)
                                     @php
@@ -181,7 +181,7 @@
                                 @endforeach
                             </div>
                             @error('consultation_route_id')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                            <div class="form-text">One radio per consultation department session. Linked services stay attached for billing and reporting.</div>
+                            <div class="form-text">The selected route will be activated and queued for consultation as soon as triage is completed.</div>
                         @endif
                     </div>
 
@@ -520,7 +520,7 @@
                         + '</div>'
                         + '<div class="d-flex gap-2">'
                         + '<a href="' + escapeHtml(payload.redirect_url || '#') + '" class="btn btn-sm btn-success">View Visit</a>'
-                        + '<a href="' + escapeHtml(payload.queue_url || '#') + '" class="btn btn-sm btn-outline-success">Open Triage Queue</a>'
+                        + '<a href="' + escapeHtml(payload.queue_url || '#') + '" class="btn btn-sm btn-outline-success">Open Consultation Queue</a>'
                         + '</div>'
                         + '</div>'
                 );

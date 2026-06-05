@@ -650,6 +650,14 @@ class ConsultationController extends Controller
         $this->abortIfRouteMismatch($visit, $route);
 
         try {
+            if ($request->boolean('route_only')) {
+                $route = $this->consultationRouteService->activateRouteOnly($route, Auth::user());
+
+                return redirect()
+                    ->route('admin.visits.show', $visit)
+                    ->with('success', 'Consultation route activated.');
+            }
+
             $route = $this->consultationRouteService->activateRoute($route, Auth::user());
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());

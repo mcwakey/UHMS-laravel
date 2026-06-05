@@ -404,6 +404,38 @@ class VisitConsultationRoutingTest extends TestCase
         $this->assertSame(VisitStatus::CONSULTING, $visit->fresh()->status);
     }
 
+    public function test_visit_page_route_activation_only_changes_the_route_status(): void
+    {
+        $patient = Patient::factory()->create(['registered_by' => $this->admin->id]);
+        $service = $this->makeService($this->department);
+        $visit = Visit::factory()->create([
+            'patient_id' => $patient->id,
+            'created_by' => $this->admin->id,
+            'visit_type' => VisitType::OUTPATIENT,
+            'status' => VisitStatus::WAITING_CONSULTATION,
+            'current_department_id' => $this->department->id,
+        ]);
+
+        $route = VisitConsultationRoute::create([
+            'visit_id' => $visit->id,
+            'patient_id' => $patient->id,
+            'department_id' => $this->department->id,
+            'service_id' => $service->id,
+            'doctor_id' => $this->doctor->id,
+            'status' => VisitConsultationRoute::STATUS_PENDING,
+            'routed_by' => $this->admin->id,
+        ]);
+
+        $this->actingAs($this->admin)
+            ->post(route('admin.consultations.routes.activate', [$visit, $route]), [
+                'route_only' => '1',
+            ])
+            ->assertRedirect(route('admin.visits.show', $visit));
+
+        $this->assertSame(VisitConsultationRoute::STATUS_ACTIVE, $route->fresh()->status);
+        $this->assertSame(VisitStatus::WAITING_CONSULTATION, $visit->fresh()->status);
+    }
+
     private function makeService(Department $department, DepartmentType $type = DepartmentType::CONSULTATION): ServiceCatalog
     {
         return ServiceCatalog::create([

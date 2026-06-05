@@ -16,9 +16,11 @@ use App\Models\Department;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Patient;
+use App\Models\QueueEntry;
 use App\Models\ServiceCatalog;
 use App\Models\User;
 use App\Models\Visit;
+use App\Models\VisitConsultationRoute;
 use App\Services\VisitService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
@@ -131,6 +133,7 @@ class WorkflowJsonResponsesTest extends TestCase
             'service_catalog_id' => $service->id,
             'quantity' => 1,
         ]]);
+        $route = $visit->pendingConsultationRoutes()->firstOrFail();
 
         $response = $this->actingAs($this->user)->postJson(route('admin.triage.store', $visit), [
             'blood_pressure_systolic' => 120,
@@ -139,7 +142,7 @@ class WorkflowJsonResponsesTest extends TestCase
             'temperature' => 36.9,
             'respiratory_rate' => 16,
             'spo2' => 98,
-            'department_id' => $this->department->id,
+            'consultation_route_id' => $route->id,
             'notes' => 'Stable vitals',
         ]);
 
@@ -148,9 +151,20 @@ class WorkflowJsonResponsesTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('visit_id', $visit->id)
             ->assertJsonPath('status', VisitStatus::WAITING_CONSULTATION->value)
-            ->assertJsonPath('redirect_url', route('admin.visits.show', $visit));
+            ->assertJsonPath('redirect_url', route('admin.visits.show', $visit))
+            ->assertJsonPath('queue_url', route('admin.consultations.index'));
 
         $this->assertSame(VisitStatus::WAITING_CONSULTATION, $visit->status);
+        $this->assertSame(VisitConsultationRoute::STATUS_ACTIVE, $route->fresh()->status);
+        $this->assertDatabaseHas('queue_entries', [
+            'visit_id' => $visit->id,
+            'department_id' => $this->department->id,
+            'status' => 'waiting',
+        ]);
+        $this->assertSame(1, QueueEntry::where('visit_id', $visit->id)
+            ->where('department_id', $this->department->id)
+            ->where('status', 'waiting')
+            ->count());
         $this->assertDatabaseHas('vitals', [
             'visit_id' => $visit->id,
             'patient_id' => $patient->id,

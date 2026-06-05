@@ -354,6 +354,7 @@
                                             @if(in_array($route->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
                                             <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $route]) }}">
                                                 @csrf
+                                                <input type="hidden" name="route_only" value="1">
                                                 <button type="submit" class="btn btn-xs btn-primary">Activate</button>
                                             </form>
                                             @endif

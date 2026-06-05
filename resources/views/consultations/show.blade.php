@@ -455,10 +455,19 @@
         && $selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE
         && (! $isSelectedRouteLocked || $canCorrectLocked);
     $needsStart = $selectedRoute
-        && in_array($selectedRoute->status, [
-            \App\Models\VisitConsultationRoute::STATUS_PENDING,
-            \App\Models\VisitConsultationRoute::STATUS_PAUSED,
-        ], true);
+        && (
+            in_array($selectedRoute->status, [
+                \App\Models\VisitConsultationRoute::STATUS_PENDING,
+                \App\Models\VisitConsultationRoute::STATUS_PAUSED,
+            ], true)
+            || (
+                $selectedRoute->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE
+                && in_array($visit->status, [
+                    \App\Enums\VisitStatus::WAITING_CONSULTATION,
+                    \App\Enums\VisitStatus::ACTIVE,
+                ], true)
+            )
+        );
 @endphp
 @if($needsStart)
 <div class="card border-warning mb-3">

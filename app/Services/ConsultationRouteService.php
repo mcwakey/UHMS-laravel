@@ -159,7 +159,7 @@ class ConsultationRouteService
         return $routeService->fresh(['service', 'invoiceItem']);
     }
 
-    public function activateRoute(VisitConsultationRoute $route, User $user): VisitConsultationRoute
+    public function activateRouteOnly(VisitConsultationRoute $route, User $user): VisitConsultationRoute
     {
         $route->loadMissing(['visit', 'department', 'routeServices.service', 'doctor']);
         $visit = $route->visit;
@@ -183,33 +183,58 @@ class ConsultationRouteService
 
             $fromStatus = $route->status;
 
-            $workflowStarted = false;
-            if ($visit->status === VisitStatus::WAITING_CONSULTATION) {
-                $this->visitWorkflowService->startConsultation($visit, $user, $route->id);
-                $route->refresh();
-                $workflowStarted = true;
-            } elseif ($visit->status !== VisitStatus::CONSULTING) {
-                throw new \InvalidArgumentException('Route can only be activated when the visit is waiting consultation or consulting.');
+            $route->forceFill([
+                'status' => VisitConsultationRoute::STATUS_ACTIVE,
+                'doctor_id' => $route->doctor_id ?: $user->id,
+                'activated_at' => now(),
+            ])->save();
+
+            $action = $fromStatus === VisitConsultationRoute::STATUS_PAUSED ? 'resumed' : 'activated';
+            if ($fromStatus !== VisitConsultationRoute::STATUS_ACTIVE) {
+                $this->log($route, $fromStatus, VisitConsultationRoute::STATUS_ACTIVE, $action, null, $user);
+            }
+
+            return $this->freshRoute($route);
+        });
+    }
+
+    public function activateRoute(VisitConsultationRoute $route, User $user): VisitConsultationRoute
+    {
+        $route->loadMissing(['visit', 'department', 'routeServices.service', 'doctor']);
+        $visit = $route->visit;
+
+        if (! in_array($visit->status, [
+            VisitStatus::WAITING_CONSULTATION,
+            VisitStatus::ACTIVE,
+            VisitStatus::CONSULTING,
+            VisitStatus::EMERGENCY,
+        ], true)) {
+            throw new \InvalidArgumentException('Route can only be started when the visit is waiting consultation, active, consulting, or emergency.');
+        }
+
+        return DB::transaction(function () use ($route, $visit, $user) {
+            $fromStatus = $route->status;
+            $route = $this->activateRouteOnly($route, $user);
+            $route->loadMissing(['visit', 'department']);
+            $visit = $route->visit;
+            $visit->forceFill(['current_department_id' => $route->department_id])->save();
+
+            if (in_array($visit->status, [VisitStatus::WAITING_CONSULTATION, VisitStatus::ACTIVE], true)) {
+                $this->queueService->completeCurrentEntry($visit);
+                $this->visitWorkflowService->transition($visit->fresh(), VisitStatus::CONSULTING, 'Consultation started');
+                $visit = $visit->fresh();
             }
 
             $route->forceFill([
-                'status' => VisitConsultationRoute::STATUS_ACTIVE,
                 'doctor_id' => $route->doctor_id ?: $user->id,
                 'started_by' => $route->started_by ?: $user->id,
                 'started_at' => $route->started_at ?: now(),
                 'activated_at' => now(),
             ])->save();
 
-            $visit->forceFill(['current_department_id' => $route->department_id])->save();
-            $this->queueService->completeCurrentEntry($visit);
-            $this->queueService->addForDepartment($visit->fresh(), $route->department_id);
+            $this->consultationSessionService->getOrCreateMedicalRecordForRoute($route, $user);
 
             $action = $fromStatus === VisitConsultationRoute::STATUS_PAUSED ? 'resumed' : 'activated';
-            if (! $workflowStarted) {
-                $this->log($route, $fromStatus, VisitConsultationRoute::STATUS_ACTIVE, $action, null, $user);
-            }
-
-            $this->consultationSessionService->getOrCreateMedicalRecordForRoute($route, $user);
 
             app(\App\Services\ActivityLogService::class)->log(
                 \App\Enums\LogModule::CONSULTATION,

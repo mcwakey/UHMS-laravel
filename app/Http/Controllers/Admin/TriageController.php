@@ -7,6 +7,7 @@ use App\Enums\VisitStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Visit;
+use App\Services\ConsultationRouteService;
 use App\Services\VisitService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -63,7 +64,7 @@ class TriageController extends Controller
     /**
      * Save triage record and transition the visit.
      */
-    public function store(Request $request, Visit $visit)
+    public function store(Request $request, Visit $visit, ConsultationRouteService $consultationRoutes)
     {
         if ($visit->status !== VisitStatus::TRIAGE) {
             if ($request->expectsJson()) {
@@ -90,22 +91,24 @@ class TriageController extends Controller
             'spo2' => ['nullable', 'integer', 'min:50', 'max:100'],
             'weight' => ['nullable', 'numeric', 'min:0.5', 'max:500'],
             'height' => ['nullable', 'numeric', 'min:20', 'max:250'],
-            'consultation_route_id' => ['nullable', Rule::in($pendingRouteIds)],
+            'consultation_route_id' => [Rule::requiredIf(! empty($pendingRouteIds)), Rule::in($pendingRouteIds)],
             'department_id' => ['nullable', Rule::in($consultationDeptIds)],
             'notes' => ['nullable', 'string', 'max:1000'],
         ], [
+            'consultation_route_id.required' => 'Select the consultation route to queue after triage.',
             'consultation_route_id.in' => 'Select one of the pending consultation routes for this visit.',
             'department_id.in' => 'Select one of the consultation departments billed on this visit.',
         ]);
 
         // Resolve route → department_id so processTriage() does not need to
         // know about routes specifically.
+        $selectedRoute = null;
         if (! empty($validated['consultation_route_id'])) {
-            $route = $visit->pendingConsultationRoutes()
+            $selectedRoute = $visit->pendingConsultationRoutes()
                 ->where('id', $validated['consultation_route_id'])
                 ->first();
-            if ($route) {
-                $validated['department_id'] = $route->department_id;
+            if ($selectedRoute) {
+                $validated['department_id'] = $selectedRoute->department_id;
             }
         }
 
@@ -119,6 +122,10 @@ class TriageController extends Controller
 
         try {
             $visit = $this->visitService->processTriage($visit, $validated);
+            if ($selectedRoute) {
+                $consultationRoutes->activateRouteOnly($selectedRoute->fresh(), $request->user());
+                $visit = $visit->fresh(['currentDepartment']);
+            }
         } catch (\InvalidArgumentException $e) {
             if ($request->expectsJson()) {
                 return response()->json([
@@ -142,7 +149,7 @@ class TriageController extends Controller
                 'triage_score_label' => $visit->triage_score?->label(),
                 'department' => $visit->currentDepartment?->name,
                 'redirect_url' => route('admin.visits.show', $visit),
-                'queue_url' => route('admin.triage.index'),
+                'queue_url' => route('admin.consultations.index'),
             ]);
         }
 
