@@ -90,6 +90,9 @@
         "logs:audit:real-gaps": [
             "@php artisan logs:audit --fail --only-real-gaps --min-severity=CRITICAL"
         ],
+        "logs:audit:stage2": [
+            "@php artisan logs:audit --fail --only-real-gaps --min-severity=HIGH"
+        ],
         "logs:audit:baseline": [
             "@php artisan logs:audit --write-baseline"
         ]

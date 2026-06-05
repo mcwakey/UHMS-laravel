@@ -69,19 +69,21 @@ always produced regardless of the UI gate outcome.
 
 ## 4. Is CI blocking?
 
-**Partly — Stage 1 is now enabled.** The workflow runs logging in two steps:
+**Partly — Stage 2 is now enabled.** The workflow runs logging in two steps:
 
 1. **Advisory report** (`logs:audit --json || true`) — always runs, never fails,
    uploads `storage/reports/logs-audit-report.json` + the baseline.
-2. **Stage-1 gate** (`logs:audit --fail --only-real-gaps --min-severity=CRITICAL`)
-   — fails the build **only** on a CRITICAL `MISSING_LOG` (an un-funnelled
+2. **Stage-2 gate** (`logs:audit --fail --only-real-gaps --min-severity=HIGH`)
+   — fails the build on a **HIGH or CRITICAL** `MISSING_LOG` (an un-funnelled
    mutating action). It does **not** block on `SERVICE_FUNNEL_COVERED`,
-   `KNOWN_BACKLOG`, `INTENTIONALLY_SKIPPED`, `NEEDS_REVIEW`, or HIGH/MEDIUM
+   `KNOWN_BACKLOG`, `INTENTIONALLY_SKIPPED`, `NEEDS_REVIEW`, or MEDIUM/LOW
    findings.
 
-This was safe to enable because the eight burn-downs + the role/permission +
-user-role-assignment security logging brought **MISSING_LOG to 0**, so the gate is
-green today and acts as a pure regression guard against new critical gaps.
+Safe to enable because the eight burn-downs + role/permission + user-role
+security logging + the Stage-2 prep (accounting, cashier shifts, purchase returns,
+payroll, HR leave, insurance verification) brought **MISSING_LOG and NEEDS_REVIEW
+both to 0**. The gate is green today and acts as a regression guard against new
+HIGH/CRITICAL gaps.
 
 ## 5. Current logs:audit count
 
@@ -126,18 +128,20 @@ visit context where patient-related.
 
 ## 8. Blocking promotion path
 
-The prerequisites (funnel-aware classification + baseline + 0 MISSING_LOG) are met,
-so **Stage 1 is enabled** in CI. The staged path is:
+The prerequisites are met (funnel-aware classification + clean baseline +
+MISSING_LOG 0 + NEEDS_REVIEW 0), so **Stage 2 is enabled** in CI. The staged path:
 
-1. **Stage 1 — ENABLED NOW.** `--fail --only-real-gaps --min-severity=CRITICAL`.
-   Blocks only CRITICAL `MISSING_LOG`. Pure regression guard (green today).
-2. **Stage 2 — later.** `--fail --only-real-gaps --min-severity=HIGH`. Enable after
-   the 7 `NEEDS_REVIEW` controllers (financial/HR/insurance/purchase-return/theatre-
-   room) are confirmed/wired so they aren't surfaced as HIGH gaps.
-3. **Stage 3 — later.** `--fail --strict`. Enable after the `KNOWN_BACKLOG` is
-   burned down and the baseline reflects a clean state; then any new un-baselined
-   finding fails.
+1. **Stage 1 — done.** `--fail --only-real-gaps --min-severity=CRITICAL`. Blocked
+   only CRITICAL `MISSING_LOG`.
+2. **Stage 2 — ENABLED NOW.** `--fail --only-real-gaps --min-severity=HIGH`. Blocks
+   HIGH + CRITICAL `MISSING_LOG`. Green today (the 7 NEEDS_REVIEW controllers were
+   wired/justified in the Stage-2 prep, so no HIGH gap remains). Regression guard
+   against any new un-funnelled HIGH/CRITICAL action.
+3. **Stage 3 — later.** `--fail --strict`. Enable after the 22 `KNOWN_BACKLOG` items
+   are burned down and the baseline reflects a clean state; then any new
+   un-baselined finding fails. Re-run `composer logs:audit:baseline` after each
+   backlog clear so `--strict` stays honest.
 
 Do **not** silence findings to force the gate green, and do **not** baseline a real
-CRITICAL/HIGH gap (the baseline writer already refuses to). Advance a stage only by
+HIGH/CRITICAL gap (the baseline writer already refuses to). Advance a stage only by
 clearing its findings, not by loosening the rule.

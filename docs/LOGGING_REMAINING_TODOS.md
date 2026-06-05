@@ -205,15 +205,15 @@ Current `logs:audit`: **MISSING_LOG 0 · NEEDS_REVIEW 0 · KNOWN_BACKLOG 22 ·
 INTENTIONALLY_SKIPPED 1 · SERVICE_FUNNEL_COVERED 50.**
 
 #### 🔧 Governance / future
-- **Stage-1 CI gate ENABLED** ✅ — `.github/workflows/ui-audit.yml` fails the build
-  on CRITICAL real missing logs (`--fail --only-real-gaps --min-severity=CRITICAL`),
-  alongside the always-on advisory report.
-- **Stage 2 — READY (not yet enabled in CI).** With NEEDS_REVIEW at 0, both
-  `--min-severity=HIGH` and `--min-severity=CRITICAL` pass locally. Promote the CI
-  gate to `--min-severity=HIGH` when desired (it would block any new HIGH real gap).
-- **Stage 3 (later):** `--fail --strict` after the 22 backlog items are burned down;
-  the baseline is already clean (`refused: 0`), so re-run `composer
-  logs:audit:baseline` after each backlog clear to keep `--strict` honest.
+- **Stage-2 CI gate ENABLED** ✅ — `.github/workflows/ui-audit.yml` fails the build
+  on **HIGH + CRITICAL** real missing logs (`--fail --only-real-gaps
+  --min-severity=HIGH`), alongside the always-on advisory report. It does not block
+  covered / backlog / needs-review / skipped / MEDIUM findings. Composer:
+  `composer logs:audit:stage2` (= the same command); `logs:audit:real-gaps` remains
+  the Stage-1 (CRITICAL-only) script.
+- **Stage 3 (next):** `--fail --strict` after the 22 KNOWN_BACKLOG items are burned
+  down; the baseline is already clean (`refused: 0`), so re-run
+  `composer logs:audit:baseline` after each backlog clear to keep `--strict` honest.
 - Keep `config/logging_audit.php` current as funnels/controllers evolve.
 
 ### Remaining (lower priority — admin/system polish + the blocking gate)

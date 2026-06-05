@@ -142,20 +142,21 @@ medium findings (**66**) but **refuses to baseline HIGH/CRITICAL real gaps**
 (MISSING_LOG + NEEDS_REVIEW) — the **7** financial/security/HR items above stay
 visible no matter what. This is the guard against "baselining to silence."
 
-## 8. CI status — Stage-1 gate ENABLED
+## 8. CI status — Stage-2 gate ENABLED
 
 `.github/workflows/ui-audit.yml` now runs logging in two steps:
 
 1. **Advisory report** — `logs:audit --json || true` (always runs; uploads the
    report + baseline; never fails).
-2. **Stage-1 gate** — `logs:audit --fail --only-real-gaps --min-severity=CRITICAL`
-   — fails the build only on a CRITICAL `MISSING_LOG`. It does **not** block on
-   covered / backlog / skipped / needs-review / HIGH findings.
+2. **Stage-2 gate** — `logs:audit --fail --only-real-gaps --min-severity=HIGH`
+   — fails the build on a **HIGH or CRITICAL** `MISSING_LOG`. It does **not** block
+   on covered / backlog / skipped / needs-review / MEDIUM findings.
 
-Safe to enable because MISSING_LOG is 0 (after the role/permission + user-role
-burn-downs), so the gate is green and acts as a regression guard.
+Safe to enable because MISSING_LOG **and** NEEDS_REVIEW are both 0 (after the
+role/permission + user-role + Stage-2 prep burn-downs), so the gate is green and
+acts as a regression guard against new HIGH/CRITICAL gaps.
 
-Command capabilities (Stage 1 enforced; 2–3 ready, not yet enforced):
+Command capabilities (Stage 2 enforced; Stage 3 ready, not yet enforced):
 
 ```bash
 php artisan logs:audit                                   # advisory, classified
@@ -169,14 +170,14 @@ composer logs:audit:real-gaps                            # = --fail --only-real-
 ## 9. Blocking — staged promotion
 
 1. **Advisory.** Report + artifact only. (always on)
-2. **Stage 1 — `--fail --only-real-gaps --min-severity=CRITICAL`. ✅ ENABLED.**
-   Blocks only CRITICAL `MISSING_LOG`. Enabled once the RoleController gap (and the
-   user-role-assignment follow-up) were wired; green today, acts as a regression
-   guard for brand-new un-funnelled CRITICAL actions.
-3. **Stage 2 — `--fail --only-real-gaps --min-severity=HIGH`.** After the 7
-   NEEDS_REVIEW items are confirmed/wired.
-4. **Stage 3 — `--fail --strict`.** After the backlog is burned down and the
-   baseline reflects a clean state; then any new un-baselined finding fails.
+2. **Stage 1 — `--fail --only-real-gaps --min-severity=CRITICAL`. (done)** Blocked
+   only CRITICAL `MISSING_LOG`. Enabled once the RoleController gap + user-role
+   follow-up were wired.
+3. **Stage 2 — `--fail --only-real-gaps --min-severity=HIGH`. ✅ ENABLED.** Blocks
+   HIGH + CRITICAL `MISSING_LOG`. Enabled after the 7 NEEDS_REVIEW controllers were
+   wired/justified; green today (MISSING_LOG 0, NEEDS_REVIEW 0).
+4. **Stage 3 — `--fail --strict`.** After the 22 KNOWN_BACKLOG items are burned down
+   and the baseline reflects a clean state; then any new un-baselined finding fails.
 
 ## 10. Files modified
 

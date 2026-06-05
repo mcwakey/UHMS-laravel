@@ -1,13 +1,13 @@
 {
-    "generated_at": "2026-06-04T18:08:22+00:00",
-    "controllers_flagged": 73,
-    "logging_services_detected": 71,
+    "generated_at": "2026-06-05T17:00:23+00:00",
+    "controllers_flagged": 72,
+    "logging_services_detected": 73,
     "summary": {
         "MISSING_LOG": 0,
         "NEEDS_REVIEW": 0,
         "KNOWN_BACKLOG": 22,
         "INTENTIONALLY_SKIPPED": 1,
-        "SERVICE_FUNNEL_COVERED": 50
+        "SERVICE_FUNNEL_COVERED": 49
     },
     "real_missing_logs": 0,
     "findings": [
@@ -1227,8 +1227,10 @@
             ],
             "classification": "SERVICE_FUNNEL_COVERED",
             "severity": "MEDIUM",
-            "reason": "Delegates to VisitService (logs direct).",
+            "reason": "Delegates to ConsultationRouteService, VisitService (logs direct).",
             "services": [
+                "ConsultationRouteService",
+                "BillingPolicyService",
                 "VisitService"
             ],
             "in_baseline": true
@@ -1248,28 +1250,6 @@
             "reason": "User create/update audited by UserObserver (USER_CREATED / USER_FIELD_CHANGED); role assignment audited by UserService \u2192 RolePermissionAuditService (USER_ROLES_UPDATED).",
             "services": [
                 "UserService"
-            ],
-            "in_baseline": true
-        },
-        {
-            "controller": "app/Http/Controllers/Admin/VisitController.php",
-            "unlogged_actions": [
-                "store",
-                "update"
-            ],
-            "actions": [
-                "store",
-                "update"
-            ],
-            "classification": "SERVICE_FUNNEL_COVERED",
-            "severity": "MEDIUM",
-            "reason": "Delegates to BillingService, VisitService, VisitWorkflowService (logs direct).",
-            "services": [
-                "BillingService",
-                "InsuranceService",
-                "QueueService",
-                "VisitService",
-                "VisitWorkflowService"
             ],
             "in_baseline": true
         },
