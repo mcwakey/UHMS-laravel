@@ -20,14 +20,14 @@
         <form method="GET" action="{{ route('admin.patients.index') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
                 <label class="form-label small">Search</label>
-                <input type="text" name="search" class="form-control" placeholder="Search by name, phone, Ghana Card, insurance card, or emergency contact..." value="{{ request('search') }}">
+                <input type="text" name="search" class="form-control" placeholder="Search by name, phone, Ghana Card, insurance card, or emergency contact..." value="{{ $filters['search'] ?? '' }}">
             </div>
             <div class="col-md-2">
                 <label class="form-label small">Insurance Provider</label>
                 <select name="insurance_provider_id" class="form-select">
                     <option value="">All Insurances</option>
                     @foreach($insuranceProviders as $provider)
-                        <option value="{{ $provider->id }}" {{ request('insurance_provider_id') == $provider->id ? 'selected' : '' }}>{{ $provider->name }}</option>
+                        <option value="{{ $provider->id }}" {{ ($filters['insurance_provider_id'] ?? '') == $provider->id ? 'selected' : '' }}>{{ $provider->name }}</option>
                     @endforeach
                 </select>
             </div>
@@ -35,24 +35,21 @@
                 <label class="form-label small">Status</label>
                 <select name="status" class="form-select">
                     <option value="">All Status</option>
-                    <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Active</option>
-                    <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                    <option value="deceased" {{ request('status') == 'deceased' ? 'selected' : '' }}>Deceased</option>
+                    <option value="active" {{ ($filters['status'] ?? '') == 'active' ? 'selected' : '' }}>Active</option>
+                    <option value="inactive" {{ ($filters['status'] ?? '') == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                    <option value="deceased" {{ ($filters['status'] ?? '') == 'deceased' ? 'selected' : '' }}>Deceased</option>
                 </select>
             </div>
-            {{-- <div class="d-flex align-items-center col-md-3"> --}}
-                <div class="col-md-2">
-                    <label class="form-label small">Last Visit From</label>
-                    <input type="date" name="visit_from" class="form-control" value="{{ request('visit_from') }}">
-                </div>
-                {{-- <div class="col-md-1">
-                </div> --}}
-                <div class="col-md-2">
-                    <label class="form-label small">Last Visit To</label>
-                    <input type="date" name="visit_to" class="form-control" value="{{ request('visit_to') }}">
-                </div>
-            {{-- </div> --}}
-            <div class="col-md-1">
+            <div class="col-md-3">
+                @include('partials.date-range-filter', [
+                    'id' => 'patientLastVisitDateRangePicker',
+                    'value' => $filters['date_range'] ?? '',
+                    'label' => 'Last Visit Range',
+                    'labelClass' => 'small',
+                    'submitOnApply' => true,
+                ])
+            </div>
+            <div class="col-md-auto">
                 <button type="submit" class="btn btn-outline-primary btn-md"><i class="ti ti-filter me-1"></i>Filter</button>
                 <a aria-label="Close" title="Close" href="{{ route('admin.patients.index') }}" class="btn btn-outline-secondary btn-md ms-1"><i class="ti ti-x me-1"></i></a>
             </div>
@@ -190,3 +187,7 @@
 </div>
 @endif
 @endsection
+
+@push('scripts')
+    @include('partials.date-range-filter-scripts')
+@endpush

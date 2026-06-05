@@ -11,6 +11,7 @@ use App\Models\InsuranceTier;
 use App\Models\Patient;
 use App\Services\PatientService;
 use App\Services\VisitService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class PatientController extends Controller
@@ -21,14 +22,54 @@ class PatientController extends Controller
 
     public function index(Request $request)
     {
-        $patients = $this->patientService->list($request->all());
+        $filters = $request->all();
+        $dateRange = trim((string) ($filters['date_range'] ?? ''));
+        if ($dateRange !== '') {
+            $parts = preg_split('/\s+(?:to|-)\s+/', $dateRange);
+            $filters['visit_from'] = $this->normalizeDateValue($parts[0] ?? null);
+            $filters['visit_to'] = $this->normalizeDateValue($parts[1] ?? ($parts[0] ?? null));
+        } else {
+            $filters['visit_from'] = $this->normalizeDateValue($filters['visit_from'] ?? null);
+            $filters['visit_to'] = $this->normalizeDateValue($filters['visit_to'] ?? null);
+        }
+
+        if (! empty($filters['visit_from']) && empty($filters['visit_to'])) {
+            $filters['visit_to'] = $filters['visit_from'];
+        }
+
+        if (! empty($filters['visit_to']) && empty($filters['visit_from'])) {
+            $filters['visit_from'] = $filters['visit_to'];
+        }
+
+        if (! empty($filters['visit_from']) && ! empty($filters['visit_to'])) {
+            if (Carbon::parse($filters['visit_from'])->gt(Carbon::parse($filters['visit_to']))) {
+                [$filters['visit_from'], $filters['visit_to']] = [$filters['visit_to'], $filters['visit_from']];
+            }
+
+            $filters['date_range'] = $filters['visit_from'].' to '.$filters['visit_to'];
+        }
+
+        $patients = $this->patientService->list($filters);
 
         $insuranceProviders = InsuranceProvider::where('is_active', true)
             ->where('is_default', false)
             ->orderBy('name')
             ->get();
 
-        return view('patients.index', compact('patients', 'insuranceProviders'));
+        return view('patients.index', compact('patients', 'insuranceProviders', 'filters'));
+    }
+
+    private function normalizeDateValue(?string $value): ?string
+    {
+        if (! $value) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value)->toDateString();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     public function create()

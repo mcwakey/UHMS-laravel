@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasColumn('patients', 'is_deceased')) {
+        if ($this->columnExists('patients', 'is_deceased')) {
             return; // Already migrated
         }
 
@@ -42,7 +42,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (!Schema::hasColumn('patients', 'is_deceased')) {
+        if (! $this->columnExists('patients', 'is_deceased')) {
             return;
         }
 
@@ -70,5 +70,26 @@ return new class extends Migration
             DROP COLUMN `deceased_notes`,
             DROP COLUMN `marked_deceased_by`
         ");
+    }
+
+    private function columnExists(string $table, string $column): bool
+    {
+        $driver = DB::connection()->getDriverName();
+
+        if ($driver === 'sqlite') {
+            return collect(DB::select('PRAGMA table_info('.$table.')'))
+                ->contains(fn ($definition) => ($definition->name ?? null) === $column);
+        }
+
+        if (! in_array($driver, ['mysql', 'mariadb'], true)) {
+            return Schema::hasColumn($table, $column);
+        }
+
+        $result = DB::selectOne(
+            'select count(*) as aggregate from information_schema.columns where table_schema = database() and table_name = ? and column_name = ?',
+            [$table, $column],
+        );
+
+        return (int) ($result->aggregate ?? 0) > 0;
     }
 };
