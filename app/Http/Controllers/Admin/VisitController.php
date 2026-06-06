@@ -37,6 +37,7 @@ class VisitController extends Controller
         protected QueueService $queueService,
         protected BillingService $billingService,
         protected VisitWorkflowService $visitWorkflowService,
+        protected \App\Services\EmergencyCaseService $emergencyCaseService,
     ) {}
 
     public function index(Request $request)
@@ -246,12 +247,32 @@ class VisitController extends Controller
                     $this->visitService->attachServices($v, $services);
                 }
 
+                $v = $v->fresh();
+
+                // Emergency visit type → treat as an Emergency / Casualty clinical
+                // session: create the emergency case (which activates the emergency
+                // consultation session + bills the emergency consultation under the
+                // running-bill policy). This overrides normal OPD triage — even when
+                // a consultation service was also selected (Case B), the visit is
+                // still an emergency. Idempotent: EmergencyCaseService guards against
+                // a duplicate active case for the visit.
+                if ($v->visit_type === VisitType::EMERGENCY && $v->status !== VisitStatus::SCHEDULED) {
+                    $this->emergencyCaseService->create([
+                        'visit_id' => $v->id,
+                        'arrival_mode' => $request->input('arrival_mode', 'WALK_IN'),
+                        'arrival_time' => now(),
+                        'chief_complaint' => $v->chief_complaint,
+                        'initial_condition' => $v->notes,
+                    ], $request->user());
+
+                    return $v->fresh();
+                }
+
                 // Triage is only meaningful for patients who will see a doctor
                 // for a consultation. Visits that only contain lab, pharmacy,
                 // procedure or billing-only items skip triage entirely and stay
                 // at REGISTERED status (the relevant department picks them up
                 // from its own queue).
-                $v = $v->fresh();
                 if ($v->status !== VisitStatus::SCHEDULED
                     && $v->pendingConsultationRoutes()->exists()) {
                     $v = $this->visitWorkflowService->queueForTriage($v);

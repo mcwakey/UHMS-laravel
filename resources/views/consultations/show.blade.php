@@ -268,7 +268,7 @@
         </div>
 
         <div class="row g-3">
-            <div class="col-lg-4">
+            {{-- <div class="col-lg-4">
                 <div class="border rounded p-2 h-100">
                     <div class="fw-semibold small mb-2"><i class="ti ti-heartbeat me-1 text-danger"></i>Triage & Vitals</div>
                     @php $latestEmergencyVitals = $emergencyCase->latestVitals; @endphp
@@ -284,8 +284,8 @@
                         </div>
                     @endif
                 </div>
-            </div>
-            <div class="col-lg-4">
+            </div> --}}
+            <div class="col-lg-12">
                 <div class="border rounded p-2 h-100">
                     <div class="fw-semibold small mb-2"><i class="ti ti-notes me-1 text-primary"></i>Emergency Notes</div>
                     @forelse($emergencyCase->notes->take(3) as $note)
@@ -299,6 +299,9 @@
                     @endforelse
                 </div>
             </div>
+        </div>
+
+        <div class="row g-3 mt-0">
             <div class="col-lg-4">
                 <div class="border rounded p-2 h-100">
                     <div class="fw-semibold small mb-2"><i class="ti ti-pill me-1 text-success"></i>Medication / MAR</div>
@@ -312,9 +315,6 @@
                     @endforelse
                 </div>
             </div>
-        </div>
-
-        <div class="row g-3 mt-0">
             <div class="col-lg-4">
                 <div class="border rounded p-2 h-100">
                     <div class="fw-semibold small mb-2"><i class="ti ti-microscope me-1 text-info"></i>Investigations</div>
@@ -335,7 +335,7 @@
                     @endforelse
                 </div>
             </div>
-            <div class="col-lg-4">
+            {{-- <div class="col-lg-4">
                 <div class="border rounded p-2 h-100">
                     <div class="fw-semibold small mb-2"><i class="ti ti-package me-1 text-secondary"></i>Consumables</div>
                     @forelse($emergencyCase->consumableUsages->take(4) as $usage)
@@ -344,7 +344,7 @@
                         <div class="small text-muted">No consumables used.</div>
                     @endforelse
                 </div>
-            </div>
+            </div> --}}
         </div>
 
         <div class="mt-3">
@@ -2176,6 +2176,16 @@
                     <x-empty-state icon="ti-users-off" title="No patient waiting" message="No patient is currently waiting in this consultation queue." />
                 @endif
             </div>
+        </div>
+
+        {{-- todo: next appointment card should also show up here if set, with option to cancel or reschedule if user has permission --}}
+        <div class="card">
+            <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#followUpAppointmentModal" @disabled(! $selectedRoute) title="{{ $selectedRoute ? 'Set next appointment' : 'Select a consultation session first' }}">
+                <i class="ti ti-calendar-plus me-1"></i>{{ $followUpAppointment ? 'Update Next Appointment' : 'Next Appointment' }}
+                @if($followUpAppointment)
+                    <span class="badge bg-primary-subtle text-primary ms-1">Set</span>
+                @endif
+            </button>
         </div>
 
         <div class="card">

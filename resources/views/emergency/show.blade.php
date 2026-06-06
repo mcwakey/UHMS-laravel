@@ -576,9 +576,11 @@
                     <span class="badge {{ $triageClass }}">{{ $currentTriage }}</span>
                     <span class="small text-muted">Score {{ $case->triage_score ?? '-' }}</span>
                 </div>
-                <div class="small mb-1">Auto: <span class="fw-semibold">{{ $case->auto_triage_category ?: 'Pending' }}</span></div>
-                <div class="small mb-1">AVPU: <span class="fw-semibold">{{ $case->avpu ?: 'Not recorded' }}</span></div>
-                <div class="small mb-2">Pain: <span class="fw-semibold">{{ $case->pain_score ?? 'Not recorded' }}</span></div>
+                <div class="small mb-2 d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <span>Auto: <span class="fw-semibold">{{ $case->auto_triage_category ?: 'Pending' }}</span></span>
+                    <span>AVPU: <span class="fw-semibold">{{ $case->avpu ?: 'Not recorded' }}</span></span>
+                    <span>Pain: <span class="fw-semibold">{{ $case->pain_score ?? 'Not recorded' }}</span></span>
+                </div>
                 @if($case->triage_reasons)
                     <div class="border rounded p-2 small">
                         <div class="fw-semibold text-danger mb-1">Automated reasons</div>

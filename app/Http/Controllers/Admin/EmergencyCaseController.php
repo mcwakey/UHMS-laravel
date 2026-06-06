@@ -36,21 +36,17 @@ class EmergencyCaseController extends Controller
             ? Visit::with('patient')->find($request->query('visit_id'))
             : null;
 
-        $patients = Patient::query()
-            ->when($request->query('search'), fn ($q, $search) => $q->search($search))
-            ->latest()
-            ->limit(20)
-            ->get();
-
-        if ($existingVisit?->patient && ! $patients->contains('id', $existingVisit->patient_id)) {
-            $patients->prepend($existingVisit->patient);
-        }
+        // Pre-selected patient for the shared AJAX search (existing-visit context
+        // or repopulation after a validation error). The live search itself runs
+        // against the shared admin.visits.patient-search endpoint.
+        $selectedPatient = $existingVisit?->patient
+            ?? (old('patient_id') ? Patient::find(old('patient_id')) : null);
 
         return view('emergency.create', [
-            'patients' => $patients,
             'bays' => EmergencyBay::available()->orderBy('name')->get(),
             'users' => User::where('status', 'active')->orderBy('first_name')->get(),
             'existingVisit' => $existingVisit,
+            'selectedPatient' => $selectedPatient,
         ]);
     }
 

@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\ServiceType;
 use App\Models\ConsultationSessionContributor;
 use App\Models\Department;
 use App\Models\EmergencyCase;
 use App\Models\EmergencySession;
 use App\Models\MedicalRecord;
+use App\Models\ServiceCatalog;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\VisitConsultationRoute;
 use App\Models\VisitConsultationRouteLog;
@@ -14,6 +17,38 @@ use Illuminate\Support\Facades\DB;
 
 class EmergencySessionService
 {
+    /**
+     * Resolve the billable service that represents the Emergency / Casualty
+     * consultation for a case. Resolution order:
+     *   1. The configured `emergency.default_consultation_service_id` setting.
+     *   2. A CONSULTATION-category active service in the emergency department.
+     * Returns null only if neither exists.
+     */
+    public function defaultConsultationService(EmergencyCase $case): ?ServiceCatalog
+    {
+        return $this->resolveConsultationService($this->resolveEmergencyDepartmentId($case));
+    }
+
+    private function resolveConsultationService(?int $departmentId): ?ServiceCatalog
+    {
+        $configuredId = Setting::getValue('emergency', 'default_consultation_service_id');
+        if ($configuredId) {
+            $service = ServiceCatalog::whereKey($configuredId)->where('is_active', true)->first();
+            if ($service) {
+                return $service;
+            }
+        }
+
+        if ($departmentId) {
+            return ServiceCatalog::where('department_id', $departmentId)
+                ->where('category', ServiceType::CONSULTATION->value)
+                ->where('is_active', true)
+                ->orderBy('id')
+                ->first();
+        }
+
+        return null;
+    }
     public function getOrCreateForCase(EmergencyCase $case, ?User $user = null): EmergencySession
     {
         $case->loadMissing(['visit', 'assignedDoctor', 'assignedNurse']);
@@ -187,6 +222,7 @@ class EmergencySessionService
 
         $startedAt = $case->arrival_time ?? now();
         $status = $this->consultationRouteStatusForCase($case);
+        $serviceId = $this->resolveConsultationService($departmentId)?->id;
 
         if (! $route) {
             $route = VisitConsultationRoute::create([
@@ -194,7 +230,7 @@ class EmergencySessionService
                 'patient_id' => $case->patient_id,
                 'emergency_case_id' => $case->id,
                 'department_id' => $departmentId,
-                'service_id' => null,
+                'service_id' => $serviceId,
                 'doctor_id' => $case->assigned_doctor_id,
                 'main_doctor_id' => $case->assigned_doctor_id,
                 'primary_nurse_id' => $case->assigned_nurse_id,
@@ -219,6 +255,7 @@ class EmergencySessionService
             'patient_id' => $case->patient_id,
             'emergency_case_id' => $case->id,
             'department_id' => $departmentId ?: $route->department_id,
+            'service_id' => $route->service_id ?: $serviceId,
             'session_type' => VisitConsultationRoute::SESSION_TYPE_EMERGENCY,
             'doctor_id' => $case->assigned_doctor_id ?: $route->doctor_id,
             'main_doctor_id' => $case->assigned_doctor_id,

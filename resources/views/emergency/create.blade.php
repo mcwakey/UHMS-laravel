@@ -21,20 +21,6 @@
     </div>
 @endif
 
-<div class="card mb-3">
-    <div class="card-body">
-        <form class="row g-2 align-items-end" method="GET" action="{{ route('admin.emergency.cases.create') }}">
-            <div class="col-md-10">
-                <label class="form-label">Find Existing Patient</label>
-                <input type="text" name="search" class="form-control" value="{{ request('search') }}" placeholder="Search by patient name, number, or phone">
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-outline-primary w-100" type="submit">Search</button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <form method="POST" action="{{ route('admin.emergency.cases.store') }}">
     @csrf
     @if(!empty($existingVisit))
@@ -53,23 +39,26 @@
                     <h5 class="card-title mb-0">Patient Identity</h5>
                 </div>
                 <div class="card-body">
-                    <div class="mb-3">
-                        <label class="form-label">Existing Patient</label>
-                        <select class="form-select" name="patient_id" @disabled(!empty($existingVisit))>
-                            <option value="">Create temporary emergency patient</option>
-                            @foreach($patients as $patient)
-                                <option value="{{ $patient->id }}" @selected(old('patient_id', $existingVisit?->patient_id ?? null) == $patient->id)>
-                                    {{ $patient->full_name }} - {{ $patient->patient_number }}{{ $patient->phone ? ' - '.$patient->phone : '' }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @if(!empty($existingVisit))
-                            <input type="hidden" name="patient_id" value="{{ $existingVisit->patient_id }}">
-                        @endif
-                        <small class="text-muted">Leave blank when the patient is unknown or cannot be identified yet.</small>
-                    </div>
+                    @if(!empty($existingVisit))
+                        <input type="hidden" name="patient_id" value="{{ $existingVisit->patient_id }}">
+                        <div class="mb-3">
+                            <label class="form-label">Existing Patient</label>
+                            <div class="form-control-plaintext fw-medium">
+                                {{ $existingVisit->patient?->patient_number }} - {{ $existingVisit->patient?->full_name }}
+                            </div>
+                        </div>
+                    @else
+                        @include('patients.partials.patient-search-select', [
+                            'id' => 'emergencyPatientSearch',
+                            'name' => 'patient_id',
+                            'label' => 'Find Existing Patient',
+                            'emptyOption' => 'Create temporary emergency patient',
+                            'selected' => $selectedPatient ?? null,
+                        ])
+                        <small class="text-muted d-block mb-3">Leave blank when the patient is unknown or cannot be identified yet — a temporary emergency folder will be created.</small>
+                    @endif
 
-                    <div class="border rounded p-3 bg-light">
+                    <div id="emergencyTemporaryDetails" class="border rounded p-3 bg-light">
                         <div class="fw-semibold mb-2">Temporary Patient Details</div>
                         <div class="row g-3">
                             <div class="col-md-6">
@@ -184,3 +173,19 @@
     </div>
 </form>
 @endsection
+
+@push('scripts')
+    @include('patients.partials.patient-search-select-scripts', ['id' => 'emergencyPatientSearch'])
+    <script>
+        // When a known patient is chosen, soften the temporary-patient block;
+        // restore it when the selection is cleared (unknown patient flow).
+        window.emergencyPatientSearchOnSelect = function () {
+            var box = document.getElementById('emergencyTemporaryDetails');
+            if (box) { box.classList.add('opacity-50'); }
+        };
+        window.emergencyPatientSearchOnClear = function () {
+            var box = document.getElementById('emergencyTemporaryDetails');
+            if (box) { box.classList.remove('opacity-50'); }
+        };
+    </script>
+@endpush

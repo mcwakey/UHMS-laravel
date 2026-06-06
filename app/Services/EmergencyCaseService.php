@@ -7,9 +7,12 @@ use App\Enums\Priority;
 use App\Enums\VisitStatus;
 use App\Enums\VisitType;
 use App\Models\EmergencyCase;
+use App\Models\InvoiceItem;
 use App\Models\Patient;
 use App\Models\User;
 use App\Models\Visit;
+use App\Models\VisitConsultationRoute;
+use App\Models\VisitConsultationRouteService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -23,6 +26,7 @@ class EmergencyCaseService
         private EmergencySessionService $sessions,
         private PatientComplaintService $patientComplaints,
         private VisitPathwayService $pathway,
+        private BillingService $billing,
         private ?\App\Services\ActivityLogService $logger = null,
     ) {
         $this->logger = $this->logger ?: app(\App\Services\ActivityLogService::class);
@@ -112,6 +116,10 @@ class EmergencyCaseService
                 $this->patientComplaints->syncEmergencyChiefComplaint($case, $session->medicalRecord, $user);
             }
 
+            // Bill the Emergency / Casualty consultation under the running-bill
+            // policy (idempotent — never blocks care for non-payment).
+            $this->ensureEmergencyConsultationBilling($case);
+
             $this->pathway->record($visit->fresh(), 'EMERGENCY_SESSION_CREATED', [
                 'source' => $case,
                 'title' => 'Emergency Session created',
@@ -135,6 +143,62 @@ class EmergencyCaseService
 
             return $case->fresh(['patient', 'visit', 'bay', 'assignedDoctor', 'assignedNurse', 'activeEmergencySession']);
         });
+    }
+
+    /**
+     * Attach + bill the default Emergency / Casualty consultation service for the
+     * case's visit and link it to the emergency consultation route. Idempotent:
+     * the billing funnel prevents duplicate invoice items, and the route↔service
+     * link is an updateOrCreate. Running-bill policy — does NOT require payment.
+     */
+    private function ensureEmergencyConsultationBilling(EmergencyCase $case): void
+    {
+        if ($case->emergency_status === EmergencyCase::STATUS_CANCELLED) {
+            return;
+        }
+
+        $service = $this->sessions->defaultConsultationService($case);
+        $visit = $case->visit;
+        if (! $service || ! $visit) {
+            return;
+        }
+
+        $invoiceItem = null;
+        try {
+            $invoiceItem = $this->billing->addItemToVisitInvoice(
+                visit: $visit,
+                service: $service,
+                sourceType: 'emergency_service',
+                sourceId: $service->id,
+                quantity: 1,
+                departmentId: $service->department_id,
+                description: $service->name,
+            );
+        } catch (\RuntimeException $e) {
+            // Already billed (duplicate guard) → reuse the existing item; any other
+            // billing error must NOT break emergency case creation.
+            if (! str_contains($e->getMessage(), 'Duplicate billing prevented')) {
+                return;
+            }
+            $invoiceItem = InvoiceItem::where('visit_id', $visit->id)
+                ->where('service_catalog_id', $service->id)
+                ->whereIn('source_type', ['emergency_service', 'service_catalog'])
+                ->orderBy('id')
+                ->first();
+        } catch (\Throwable $e) {
+            return;
+        }
+
+        $route = VisitConsultationRoute::where('emergency_case_id', $case->id)
+            ->oldest('id')
+            ->first();
+
+        if ($route) {
+            VisitConsultationRouteService::updateOrCreate(
+                ['visit_consultation_route_id' => $route->id, 'service_id' => $service->id],
+                ['visit_id' => $visit->id, 'invoice_item_id' => $invoiceItem?->id],
+            );
+        }
     }
 
     private function createTemporaryPatient(array $data, User $user): Patient
