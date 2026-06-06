@@ -67,9 +67,20 @@
     .emergency-kpi { border-left: 4px solid rgba(220, 53, 69, .65); }
     .vitals-val { font-size: 1.1rem; font-weight: 700; }
     .vitals-label { font-size: .68rem; color: #6c757d; }
-    .er-section-title { font-size: .88rem; letter-spacing: 0; text-transform: uppercase; color: #6c757d; }
+    .er-section-title { font-size: .78rem; letter-spacing: .02em; text-transform: uppercase; color: #6c757d; font-weight: 600; }
     .er-scroll { max-height: 360px; overflow: auto; }
     .er-chart-wrap { position: relative; height: 190px; min-height: 190px; }
+    /* Make select2 single selects match Bootstrap form-select sizing on this page. */
+    .select2-container { width: 100% !important; }
+    .select2-container--default .select2-selection--single {
+        height: calc(1.5em + .75rem + 2px);
+        border: 1px solid var(--bs-border-color, #ced4da);
+        border-radius: .375rem;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: calc(1.5em + .75rem); padding-left: .75rem; color: #212529;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { height: calc(1.5em + .75rem); }
 </style>
 @endpush
 
@@ -311,8 +322,7 @@
                         <form method="POST" action="{{ route('admin.emergency.medications.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-12">
-                                <input class="form-control form-control-sm mb-1" data-filter-target="medicationProductSelect" placeholder="Search medication">
-                                <select class="form-select" name="product_id" id="medicationProductSelect" required>
+                                <select class="form-select" name="product_id" id="medicationProductSelect" data-er-select2 data-placeholder="Search medication/product…" required>
                                     <option value="">Select medication/product</option>
                                     @foreach($products as $product)
                                         <option value="{{ $product->id }}" data-emergency-stock="{{ $product->emergency_available_quantity ?? 0 }}" data-pharmacy-stock="{{ $product->pharmacy_available_quantity ?? 0 }}">
@@ -381,8 +391,7 @@
                                 </select>
                             </div>
                             <div class="col-12">
-                                <select class="form-select" name="service_id" id="emergencyInvestigationService" data-old-value="{{ old('service_id') }}" required disabled>
-                                    <option value="">Select department first</option>
+                                <select class="form-select" name="service_id[]" id="emergencyInvestigationService" multiple data-placeholder="Select one or more investigations" required disabled>
                                 </select>
                             </div>
                             <div class="col-12">
@@ -429,8 +438,7 @@
                                 </select>
                             </div>
                             <div class="col-12">
-                                <select class="form-select" name="service_catalog_id" id="emergencyProcedureService" data-old-value="{{ old('service_catalog_id') }}" required disabled>
-                                    <option value="">Select department first</option>
+                                <select class="form-select" name="service_catalog_id[]" id="emergencyProcedureService" multiple data-placeholder="Select one or more procedures" required disabled>
                                 </select>
                             </div>
                             <div class="col-12">
@@ -505,13 +513,45 @@
                         <span class="badge bg-light text-dark">{{ $pendingTasks->count() }} pending</span>
                     </div>
                     <div class="card-body er-scroll">
+                        <form method="POST" action="{{ route('admin.emergency.tasks.store', $case) }}" class="row g-2 mb-3">
+                            @csrf
+                            <div class="col-12"><input class="form-control form-control-sm" name="title" placeholder="Task (e.g. Recheck vitals, Reposition patient)" maxlength="255" required></div>
+                            <div class="col-6">
+                                <select class="form-select form-select-sm" name="priority">
+                                    <option value="normal">Normal</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                    <option value="low">Low</option>
+                                </select>
+                            </div>
+                            <div class="col-6"><input class="form-control form-control-sm" type="datetime-local" name="scheduled_at"></div>
+                            <div class="col-12">
+                                <select class="form-select form-select-sm" name="assigned_to" data-er-select2 data-placeholder="Assign to (optional)">
+                                    <option value="">Assign to (optional) — defaults to Emergency Nurse</option>
+                                    @foreach($users as $user)
+                                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-12"><button class="btn btn-sm btn-outline-primary w-100" type="submit">Add Monitoring Task</button></div>
+                        </form>
                         @forelse($case->clinicalTasks->sortByDesc('scheduled_at') as $task)
-                            <div class="border rounded p-2 mb-2">
+                            @php $taskDone = in_array($task->status, ['COMPLETED', 'CANCELLED'], true); $isMedTask = $task->task_type === \App\Models\ClinicalTask::TYPE_MEDICATION_ADMINISTRATION; @endphp
+                            <div class="border rounded p-2 mb-2 {{ $taskDone ? 'bg-light' : '' }}">
                                 <div class="d-flex justify-content-between gap-2">
-                                    <div class="fw-semibold">{{ $task->title }}</div>
+                                    <div class="fw-semibold {{ $taskDone ? 'text-decoration-line-through text-muted' : '' }}">{{ $task->title }}</div>
                                     <x-status-badge :status="$task->status" domain="default" />
                                 </div>
                                 <small class="text-muted">{{ $task->priority }} - {{ $task->scheduled_at?->format('d M H:i') ?: 'No schedule' }} - {{ $task->assignedUser->name ?? $task->assigned_role ?? 'Unassigned' }}</small>
+                                @unless($isMedTask)
+                                    <form method="POST" action="{{ route('admin.emergency.tasks.complete', [$case, $task]) }}" class="mt-1">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button class="btn btn-sm {{ $taskDone ? 'btn-outline-secondary' : 'btn-outline-success' }} w-100" type="submit">
+                                            <i class="ti {{ $taskDone ? 'ti-rotate' : 'ti-check' }} me-1"></i>{{ $taskDone ? 'Reopen' : 'Mark Complete' }}
+                                        </button>
+                                    </form>
+                                @endunless
                             </div>
                         @empty
                             <div class="text-muted">No emergency monitoring tasks yet.</div>
@@ -531,7 +571,7 @@
                         <form method="POST" action="{{ route('admin.emergency.services.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-8">
-                                <select class="form-select" name="service_catalog_id" required>
+                                <select class="form-select" name="service_catalog_id" data-er-select2 data-placeholder="Add billable emergency service" required>
                                     <option value="">Add billable emergency service</option>
                                     @foreach($services as $service)
                                         <option value="{{ $service->id }}">{{ $service->name }} - {{ $service->formatted_price }}</option>
@@ -548,7 +588,7 @@
                                     @foreach($items as $item)
                                         <div class="d-flex justify-content-between small border-bottom py-1">
                                             <span>{{ $item->description }}</span>
-                                            <span>{{ number_format((float) $item->total, 2) }}</span>
+                                            <span>{{ number_format((float) $item->total_price, 2) }}</span>
                                         </div>
                                     @endforeach
                                 </div>
@@ -601,14 +641,29 @@
             <div class="card-body">
                 <form method="POST" action="{{ route('admin.emergency.bay.assign', $case) }}" class="mb-3">
                     @csrf
-                    <label class="form-label">Assign Ward / Bed / Bay</label>
-                    <select class="form-select mb-2" name="ward_id">
+                    <div class="er-section-title mb-1">Emergency Bay</div>
+                    <select class="form-select mb-2" name="emergency_bay_id" data-er-select2 data-placeholder="Select bay…" required>
+                        @foreach($bays as $bay)
+                            <option value="{{ $bay->id }}" @selected($case->emergency_bay_id === $bay->id)>{{ $bay->name }} - {{ $bay->status }}{{ $bay->bed?->bed_number ? ' - '.$bay->bed->bed_number : '' }}</option>
+                        @endforeach
+                    </select>
+                    <div class="form-check small mb-2">
+                        <input class="form-check-input" type="checkbox" name="override" value="1" id="overrideBay">
+                        <label class="form-check-label" for="overrideBay">Override occupied bay when clinically required</label>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary w-100" type="submit"><i class="ti ti-bed me-1"></i>Assign Bay</button>
+                </form>
+
+                <form method="POST" action="{{ route('admin.emergency.bay.assign-ward-bed', $case) }}" class="mb-3 border-top pt-3">
+                    @csrf
+                    <div class="er-section-title mb-1">Ward / Bed</div>
+                    <select class="form-select mb-2" name="ward_id" data-er-select2 data-placeholder="No ward link">
                         <option value="">No ward link</option>
                         @foreach($wards as $ward)
                             <option value="{{ $ward->id }}" @selected($case->activeBayAssignment?->ward_id === $ward->id)>{{ $ward->name }}</option>
                         @endforeach
                     </select>
-                    <select class="form-select mb-2" name="bed_id">
+                    <select class="form-select mb-2" name="bed_id" data-er-select2 data-placeholder="No bed link">
                         <option value="">No bed link</option>
                         @foreach($wards as $ward)
                             @foreach($ward->beds as $bed)
@@ -616,36 +671,37 @@
                             @endforeach
                         @endforeach
                     </select>
-                    <div class="input-group mb-2">
-                        <select class="form-select" name="emergency_bay_id" required>
-                            @foreach($bays as $bay)
-                                <option value="{{ $bay->id }}" @selected($case->emergency_bay_id === $bay->id)>{{ $bay->name }} - {{ $bay->status }}{{ $bay->bed?->bed_number ? ' - '.$bay->bed->bed_number : '' }}</option>
-                            @endforeach
-                        </select>
-                        <button class="btn btn-outline-primary" type="submit">Assign</button>
+                    <div class="form-check small mb-2">
+                        <input class="form-check-input" type="checkbox" name="override" value="1" id="overrideBed">
+                        <label class="form-check-label" for="overrideBed">Override occupied bed when clinically required</label>
                     </div>
-                    <div class="form-check small">
-                        <input class="form-check-input" type="checkbox" name="override" value="1" id="overrideBay">
-                        <label class="form-check-label" for="overrideBay">Override occupied bed/bay when clinically required</label>
-                    </div>
+                    <button class="btn btn-sm btn-outline-secondary w-100" type="submit" @disabled(! $case->emergency_bay_id)><i class="ti ti-link me-1"></i>Link Ward / Bed</button>
+                    @unless($case->emergency_bay_id)
+                        <div class="small text-muted mt-1"><i class="ti ti-info-circle me-1"></i>Assign an emergency bay first, then link a ward/bed.</div>
+                    @endunless
                 </form>
-                <div class="border-top pt-2 mb-3">
+                <div class="border-top pt-3 mb-3">
                     <div class="er-section-title mb-2">Assignment History</div>
                     @forelse($case->bayAssignments->sortByDesc('assigned_at') as $assignment)
-                        <div class="small mb-2">
-                            <div class="fw-semibold">{{ $assignment->ward?->name ?: 'Emergency' }} / {{ $assignment->bed?->bed_number ?: ($assignment->emergencyBay?->name ?: 'Bay') }}</div>
-                            <x-status-badge :status="$assignment->status" size="sm" /> <span class="text-muted">{{ $assignment->assigned_at?->format('d M H:i') }}</span>
+                        <div class="d-flex align-items-start justify-content-between gap-2 small mb-2">
+                            <div>
+                                <div class="fw-semibold">{{ $assignment->ward?->name ?: 'Emergency' }} &middot; {{ $assignment->bed?->bed_number ?: ($assignment->emergencyBay?->name ?: 'Bay') }}</div>
+                                <span class="text-muted">{{ $assignment->assigned_at?->format('d M H:i') }}</span>
+                            </div>
+                            <x-status-badge :status="$assignment->status" size="sm" />
                         </div>
                     @empty
                         <div class="small text-muted">No assignment history yet.</div>
                     @endforelse
                 </div>
-                <form method="POST" action="{{ route('admin.emergency.cases.update', $case) }}">
+
+                <form method="POST" action="{{ route('admin.emergency.cases.update', $case) }}" class="border-top pt-3">
                     @csrf
                     @method('PATCH')
+                    <div class="er-section-title mb-2">Care Team &amp; Status</div>
                     <div class="mb-2">
-                        <label class="form-label">Doctor</label>
-                        <select class="form-select" name="assigned_doctor_id">
+                        <label class="form-label small mb-1">Doctor</label>
+                        <select class="form-select" name="assigned_doctor_id" data-er-select2 data-placeholder="Unassigned">
                             <option value="">Unassigned</option>
                             @foreach($users as $user)
                                 <option value="{{ $user->id }}" @selected($case->assigned_doctor_id === $user->id)>{{ $user->name }}</option>
@@ -653,8 +709,8 @@
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label">Nurse</label>
-                        <select class="form-select" name="assigned_nurse_id">
+                        <label class="form-label small mb-1">Nurse</label>
+                        <select class="form-select" name="assigned_nurse_id" data-er-select2 data-placeholder="Unassigned">
                             <option value="">Unassigned</option>
                             @foreach($users as $user)
                                 <option value="{{ $user->id }}" @selected($case->assigned_nurse_id === $user->id)>{{ $user->name }}</option>
@@ -662,14 +718,14 @@
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label">Emergency Status</label>
+                        <label class="form-label small mb-1">Emergency Status</label>
                         <select class="form-select" name="emergency_status">
                             @foreach(['WAITING_TRIAGE','TRIAGED','UNDER_EMERGENCY_CARE','OBSERVATION','READY_FOR_DISPOSITION','CANCELLED'] as $status)
                                 <option value="{{ $status }}" @selected($case->emergency_status === $status)>{{ str_replace('_', ' ', $status) }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <button class="btn btn-outline-primary w-100" type="submit">Update Case</button>
+                    <button class="btn btn-sm btn-primary w-100" type="submit"><i class="ti ti-device-floppy me-1"></i>Update Case</button>
                 </form>
             </div>
         </div>
@@ -682,7 +738,7 @@
                         <div class="text-muted small" style="min-width: 110px;">{{ $log->created_at?->format('d M H:i') }}</div>
                         <div>
                             <div class="fw-semibold">{{ $log->title }}</div>
-                            @if($log->description)<div class="small">{{ $log->description }}</div>@endif
+                            @if($log->description)<div class="small">{{ Str::limit($log->description, 15) }}</div>@endif
                             <small class="text-muted">{{ $log->action }} by {{ $log->performedBy->name ?? 'System' }}</small>
                         </div>
                     </div>
@@ -937,6 +993,26 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    function hasSelect2() {
+        return window.jQuery && jQuery.fn && jQuery.fn.select2;
+    }
+
+    function applySelect2(el, placeholder) {
+        if (!hasSelect2() || !el) return;
+        var $el = jQuery(el);
+        if ($el.hasClass('select2-hidden-accessible')) {
+            $el.select2('destroy');
+        }
+        $el.select2({
+            width: '100%',
+            placeholder: el.dataset.placeholder || placeholder || 'Select…',
+            allowClear: !el.multiple,
+        });
+    }
+
+    // Generic searchable selects (drug picker, bay, ward, bed, billable service…).
+    document.querySelectorAll('[data-er-select2]').forEach(function (el) { applySelect2(el); });
+
     function formatEmergencyServiceLabel(service) {
         var parts = [service.name];
         if (service.code) parts.push('[' + service.code + ']');
@@ -949,14 +1025,18 @@ document.addEventListener('DOMContentLoaded', function () {
         var serviceSelect = document.getElementById(serviceSelectId);
         if (!departmentSelect || !serviceSelect) return;
 
-        var oldValue = serviceSelect.dataset.oldValue || '';
+        var isMulti = serviceSelect.multiple;
         function renderServices() {
             var departmentId = departmentSelect.value;
+            if (hasSelect2() && jQuery(serviceSelect).hasClass('select2-hidden-accessible')) {
+                jQuery(serviceSelect).select2('destroy');
+            }
             serviceSelect.innerHTML = '';
 
             if (!departmentId) {
                 serviceSelect.disabled = true;
-                serviceSelect.append(new Option(emptyDepartmentLabel, ''));
+                if (!isMulti) serviceSelect.append(new Option(emptyDepartmentLabel, ''));
+                applySelect2(serviceSelect, emptyDepartmentLabel);
                 return;
             }
 
@@ -965,19 +1045,15 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
             serviceSelect.disabled = matches.length === 0;
-            serviceSelect.append(new Option(matches.length ? selectServiceLabel : emptyServiceLabel, ''));
+            if (!isMulti) serviceSelect.append(new Option(matches.length ? selectServiceLabel : emptyServiceLabel, ''));
 
             matches.forEach(function (service) {
-                var option = new Option(formatEmergencyServiceLabel(service), service.id);
-                option.selected = oldValue && String(oldValue) === String(service.id);
-                serviceSelect.append(option);
+                serviceSelect.append(new Option(formatEmergencyServiceLabel(service), service.id));
             });
+            applySelect2(serviceSelect, matches.length ? selectServiceLabel : emptyServiceLabel);
         }
 
-        departmentSelect.addEventListener('change', function () {
-            oldValue = '';
-            renderServices();
-        });
+        departmentSelect.addEventListener('change', renderServices);
         renderServices();
     }
 
