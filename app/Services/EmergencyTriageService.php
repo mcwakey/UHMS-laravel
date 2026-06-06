@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\TriageScore;
 use App\Models\ClinicalTask;
 use App\Models\EmergencyCase;
+use App\Models\Triage;
 use App\Models\User;
 use App\Models\Vital;
 use Illuminate\Support\Facades\DB;
@@ -68,6 +70,11 @@ class EmergencyTriageService
                 $this->timeline->record($case, 'VITALS_RECORDED', 'Emergency triage vitals recorded', $vital->blood_pressure ?: null, $vital, $user);
             }
 
+            // Mirror the triage onto the visit's Triage record so it surfaces in the
+            // "Triage Assessment" card on the visit/consultation page, exactly like a
+            // normal OPD triage (VisitService::processTriage).
+            $this->syncVisitTriage($case, $data, $user, $finalCategory);
+
             $this->sessions->recordContribution($case, $user, 'Triage');
             $this->createMonitoringTask($case->fresh(), $user, $session->id);
             $this->timeline->record($case->fresh(), 'TRIAGE', 'Emergency triage completed', $finalCategory.' category', $case, $user);
@@ -94,6 +101,58 @@ class EmergencyTriageService
 
             return $case->fresh(['patient', 'visit', 'triagedBy', 'latestVitals']);
         });
+    }
+
+    /**
+     * Create/update the visit-level Triage record (and visit triage_score) so the
+     * emergency triage shows in the visit page's "Triage Assessment" card, just
+     * like a consultation-flow triage.
+     */
+    private function syncVisitTriage(EmergencyCase $case, array $data, User $user, string $finalCategory): void
+    {
+        $visit = $case->visit;
+        if (! $visit) {
+            return;
+        }
+
+        $vitals = $this->vitalPayload($data);
+        $weight = $vitals['weight'] ?: null;
+        $height = $vitals['height'] ?: null;
+        $bmi = ($weight && $height) ? round((float) $weight / (((float) $height / 100) ** 2), 1) : null;
+        $mappedScore = $this->mapCategoryToTriageScore($finalCategory);
+        $departmentId = $case->activeEmergencySession?->department_id ?: $visit->current_department_id;
+
+        Triage::updateOrCreate(
+            ['visit_id' => $visit->id],
+            [
+                'patient_id' => $case->patient_id,
+                'blood_pressure_systolic' => $vitals['blood_pressure_systolic'] ?: null,
+                'blood_pressure_diastolic' => $vitals['blood_pressure_diastolic'] ?: null,
+                'heart_rate' => $vitals['heart_rate'] ?: null,
+                'temperature' => $vitals['temperature'] ?: null,
+                'respiratory_rate' => $vitals['respiratory_rate'] ?: null,
+                'spo2' => $vitals['spo2'] ?: null,
+                'weight' => $weight,
+                'height' => $height,
+                'bmi' => $bmi,
+                'triage_score' => $mappedScore,
+                'department_id' => $departmentId,
+                'notes' => $data['triage_notes'] ?? null,
+                'triaged_by' => $user->id,
+                'triaged_at' => now(),
+            ],
+        );
+
+        $visit->update(['triage_score' => $mappedScore]);
+    }
+
+    private function mapCategoryToTriageScore(string $category): string
+    {
+        return match ($category) {
+            EmergencyCase::TRIAGE_GREEN => TriageScore::ROUTINE->value,
+            EmergencyCase::TRIAGE_YELLOW => TriageScore::URGENT->value,
+            default => TriageScore::EMERGENCY->value, // RED / ORANGE / BLACK
+        };
     }
 
     private function createMonitoringTask(EmergencyCase $case, User $user, ?int $sessionId = null): void

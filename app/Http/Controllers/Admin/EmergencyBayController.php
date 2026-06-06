@@ -54,4 +54,23 @@ class EmergencyBayController extends Controller
 
         return back()->with('success', 'Emergency bay assigned.');
     }
+
+    public function assignWardBed(Request $request, EmergencyCase $emergencyCase)
+    {
+        $data = $request->validate([
+            'ward_id' => ['nullable', 'exists:wards,id'],
+            'bed_id' => ['nullable', 'exists:beds,id'],
+            'override' => ['nullable', 'boolean'],
+        ]);
+
+        $this->bays->assignWardBed(
+            $emergencyCase,
+            isset($data['ward_id']) ? (int) $data['ward_id'] : null,
+            isset($data['bed_id']) ? (int) $data['bed_id'] : null,
+            $request->user(),
+            (bool) ($data['override'] ?? false),
+        );
+
+        return back()->with('success', 'Ward / bed updated.');
+    }
 }

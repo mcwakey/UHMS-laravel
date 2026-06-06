@@ -41,6 +41,7 @@ use App\Http\Controllers\Admin\EmergencyProcedureController;
 use App\Http\Controllers\Admin\EmergencyReportController;
 use App\Http\Controllers\Admin\EmergencyTriageController;
 use App\Http\Controllers\Admin\EmergencyVitalsController;
+use App\Http\Controllers\Admin\EmergencyTaskController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\FinancialEntryController;
 use App\Http\Controllers\Admin\IcdCodeController;
@@ -400,6 +401,7 @@ Route::middleware('auth')->group(function () {
             Route::get('cases/{emergencyCase}/triage', fn (\App\Models\EmergencyCase $emergencyCase) => redirect()->route('admin.emergency.cases.show', $emergencyCase))->name('triage.show');
             Route::post('cases/{emergencyCase}/triage', [EmergencyTriageController::class, 'store'])->name('triage.store')->middleware('can:emergency.triage.perform');
             Route::post('cases/{emergencyCase}/assign-bay', [EmergencyBayController::class, 'assign'])->name('bay.assign')->middleware('can:emergency.bay.assign');
+            Route::post('cases/{emergencyCase}/assign-ward-bed', [EmergencyBayController::class, 'assignWardBed'])->name('bay.assign-ward-bed')->middleware('can:emergency.bay.assign');
             Route::post('cases/{emergencyCase}/vitals', [EmergencyVitalsController::class, 'store'])->name('vitals.store')->middleware('can:emergency.vitals.record');
             Route::post('cases/{emergencyCase}/notes', [EmergencyNoteController::class, 'store'])->name('notes.store')->middleware('can:emergency.notes.create');
             Route::post('cases/{emergencyCase}/medications', [EmergencyMedicationController::class, 'store'])->name('medications.store')->middleware('can:emergency.medication.administer');
@@ -408,6 +410,8 @@ Route::middleware('auth')->group(function () {
             Route::post('cases/{emergencyCase}/consumables', [EmergencyConsumableController::class, 'store'])->name('consumables.store')->middleware('can:emergency.consumables.use');
             Route::post('cases/{emergencyCase}/services', [EmergencyBillingController::class, 'storeService'])->name('services.store')->middleware('can:invoices.create');
             Route::post('cases/{emergencyCase}/disposition', [EmergencyDispositionController::class, 'store'])->name('disposition.store')->middleware('can:emergency.disposition.manage');
+            Route::post('cases/{emergencyCase}/tasks', [EmergencyTaskController::class, 'store'])->name('tasks.store')->middleware('can:emergency.case.update');
+            Route::patch('cases/{emergencyCase}/tasks/{task}/complete', [EmergencyTaskController::class, 'complete'])->name('tasks.complete')->middleware('can:emergency.case.update');
 
             Route::get('bays', [EmergencyBayController::class, 'index'])->name('bays.index')->middleware('can:emergency.settings.manage');
             Route::post('bays', [EmergencyBayController::class, 'store'])->name('bays.store')->middleware('can:emergency.settings.manage');

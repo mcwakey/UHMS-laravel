@@ -75,6 +75,21 @@ class ClinicalTaskService
         return $task;
     }
 
+    /**
+     * Generic task completion (monitoring / nursing tasks, etc.).
+     */
+    public function completeTask(ClinicalTask $task, User $user, string $status = ClinicalTask::STATUS_COMPLETED, ?string $notes = null): ClinicalTask
+    {
+        $task->update([
+            'status' => $status,
+            'completed_by' => $user->id,
+            'completed_at' => now(),
+            'notes' => $notes ?? $task->notes,
+        ]);
+
+        return $task;
+    }
+
     public function completeMedicationTask(ClinicalTask $task, User $user, string $status = ClinicalTask::STATUS_COMPLETED, ?string $notes = null): ClinicalTask
     {
         $task->update([

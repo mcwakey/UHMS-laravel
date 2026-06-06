@@ -14,10 +14,18 @@ class EmergencyProcedureController extends Controller
 
     public function store(Request $request, EmergencyCase $emergencyCase)
     {
+        // Accept a single service_catalog_id or an array (multi-select) interchangeably.
+        $request->merge([
+            'service_catalog_id' => array_values(array_filter(
+                \Illuminate\Support\Arr::wrap($request->input('service_catalog_id')),
+                fn ($v) => $v !== null && $v !== '',
+            )),
+        ]);
+
         $data = $request->validate([
             'department_id' => ['required', 'exists:departments,id'],
-            'service_catalog_id' => [
-                'required',
+            'service_catalog_id' => ['required', 'array', 'min:1'],
+            'service_catalog_id.*' => [
                 Rule::exists('service_catalog', 'id')->where(fn ($query) => $query
                     ->where('is_active', true)
                     ->where('department_id', $request->input('department_id'))),
@@ -28,8 +36,15 @@ class EmergencyProcedureController extends Controller
             'preferred_datetime' => ['nullable', 'date'],
         ]);
 
-        $this->procedures->request($emergencyCase, $data, $request->user());
+        // Each selected procedure is its own request.
+        foreach (array_unique($data['service_catalog_id']) as $serviceCatalogId) {
+            $this->procedures->request(
+                $emergencyCase,
+                array_merge($data, ['service_catalog_id' => $serviceCatalogId]),
+                $request->user(),
+            );
+        }
 
-        return back()->with('success', 'Emergency procedure requested.');
+        return back()->with('success', 'Emergency procedure(s) requested.');
     }
 }

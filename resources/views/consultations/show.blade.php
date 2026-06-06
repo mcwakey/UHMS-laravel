@@ -287,16 +287,20 @@
             </div> --}}
             <div class="col-lg-12">
                 <div class="border rounded p-2 h-100">
-                    <div class="fw-semibold small mb-2"><i class="ti ti-notes me-1 text-primary"></i>Emergency Notes</div>
-                    @forelse($emergencyCase->notes->take(3) as $note)
-                        <div class="small border-bottom pb-1 mb-1">
-                            <span class="badge bg-light text-dark">{{ str_replace('_', ' ', $note->note_type) }}</span>
-                            {{ Str::limit($note->content, 120) }}
-                            <div class="text-muted">{{ $note->creator?->full_name ?? 'Unknown user' }} · {{ $note->created_at?->format('d M, h:i A') }}</div>
+                    <div class="d-flex fw-semibold small mb-2"><i class="ti ti-notes me-1 text-primary"></i>Emergency Notes</div>
+                    <div class="row g-2">
+                        @forelse($emergencyCase->notes->take(3) as $note)
+                        <div class="col-lg-6">
+                            <div class="small border-bottom pb-1 mb-1 h-100">
+                                <span class="badge bg-light text-dark">{{ str_replace('_', ' ', $note->note_type) }}</span>
+                                {{ Str::limit($note->content, 90) }}
+                                <div class="text-muted">{{ $note->creator?->full_name ?? 'Unknown user' }} · {{ $note->created_at?->format('d M, h:i A') }}</div>
+                            </div>
                         </div>
-                    @empty
-                        <div class="small text-muted">No emergency notes recorded.</div>
-                    @endforelse
+                        @empty
+                        <div class="col-12 small text-muted">No emergency notes recorded.</div>
+                        @endforelse
+                    </div>
                 </div>
             </div>
         </div>
@@ -2928,18 +2932,26 @@ if (document.readyState === 'loading') {
     initConsultationSessionUi();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function ensureCurrentRouteInput(form) {
     const routeId = window.currentConsultationRouteId;
-    if (!routeId) return;
-    document.querySelectorAll('form[action*="/consultations/{{ $visit->id }}"]').forEach(form => {
-        if (form.querySelector('input[name="consultation_route_id"]')) return;
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'consultation_route_id';
-        input.value = routeId;
-        form.appendChild(input);
-    });
-});
+    if (!routeId || !form || form.querySelector('input[name="consultation_route_id"]')) return;
+
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'consultation_route_id';
+    input.value = routeId;
+    form.appendChild(input);
+}
+
+function bindCurrentRouteInputs() {
+    document.querySelectorAll('form[action*="/consultations/{{ $visit->id }}"], form[data-ajax-form]').forEach(ensureCurrentRouteInput);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindCurrentRouteInputs);
+} else {
+    bindCurrentRouteInputs();
+}
 
 document.addEventListener('click', (e) => {
     const openBtn = e.target.closest('[data-bs-target="#sendSessionModal"]');
@@ -3058,7 +3070,24 @@ function currentPageUrl() {
     if (window.currentConsultationRouteId) {
         url.searchParams.set('consultation_route_id', window.currentConsultationRouteId);
     }
+    url.searchParams.set('_refresh', Date.now());
     return url.toString();
+}
+
+function parseConsultationRefreshDocument(html) {
+    var doc = new DOMParser().parseFromString(html, 'text/html');
+    var inertiaPage = doc.querySelector('script[data-page="app"][type="application/json"]');
+
+    if (inertiaPage && inertiaPage.textContent) {
+        try {
+            var payload = JSON.parse(inertiaPage.textContent);
+            if (payload && payload.props && payload.props.html) {
+                return new DOMParser().parseFromString(payload.props.html, 'text/html');
+            }
+        } catch (e) {}
+    }
+
+    return doc;
 }
 
 function refreshConsultationSection(section) {
@@ -3066,11 +3095,12 @@ function refreshConsultationSection(section) {
     if (!target) return Promise.resolve();
 
     return fetch(currentPageUrl(), {
+        cache: 'no-store',
         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
     })
     .then(function (r) { return r.text(); })
     .then(function (html) {
-        var doc = new DOMParser().parseFromString(html, 'text/html');
+        var doc = parseConsultationRefreshDocument(html);
         var fresh = doc.getElementById(section + '-list');
         if (fresh) target.innerHTML = fresh.innerHTML;
 
@@ -3092,8 +3122,10 @@ function refreshConsultationSummary() {
     if (window.currentConsultationRouteId) {
         url.searchParams.set('consultation_route_id', window.currentConsultationRouteId);
     }
+    url.searchParams.set('_refresh', Date.now());
 
     return fetch(url.toString(), {
+        cache: 'no-store',
         headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
     })
     .then(function (r) { return r.text(); })
@@ -3338,6 +3370,7 @@ document.querySelectorAll('[data-ajax-form]').forEach(function (form) {
     form.addEventListener('submit', function (e) {
         e.preventDefault();
         var section  = form.dataset.ajaxForm;
+        ensureCurrentRouteInput(form);
         localStorage.setItem(tabStorageKey, '#' + section + '-section');
         var btn      = form.querySelector('[type="submit"]');
         var origHtml = btn ? btn.innerHTML : '';

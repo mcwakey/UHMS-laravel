@@ -93,6 +93,54 @@ class EmergencyBayService
         });
     }
 
+    /**
+     * Link / change the ward + bed for the case's CURRENT bay assignment, without
+     * choosing a new bay. Kept separate from bay assignment so ward/bed can be set
+     * independently. Does not create a new assignment or restart bed billing.
+     */
+    public function assignWardBed(EmergencyCase $case, ?int $wardId, ?int $bedId, User $user, bool $override = false): EmergencyCase
+    {
+        return DB::transaction(function () use ($case, $wardId, $bedId, $user, $override) {
+            $assignment = $case->activeBayAssignment()->with(['bed', 'emergencyBay'])->first();
+            if (! $assignment) {
+                throw ValidationException::withMessages([
+                    'bed_id' => 'Assign an emergency bay first, then link a ward/bed.',
+                ]);
+            }
+
+            $newBed = $bedId ? Bed::query()->lockForUpdate()->findOrFail($bedId) : null;
+
+            if ($newBed && ! $override
+                && $this->bedStatus($newBed) !== BedStatus::AVAILABLE->value
+                && (int) $assignment->bed_id !== (int) $newBed->id) {
+                throw ValidationException::withMessages(['bed_id' => 'Selected bed is not available.']);
+            }
+
+            // Free the previously linked bed if it is being changed/removed.
+            if ($assignment->bed_id && (int) $assignment->bed_id !== (int) ($newBed?->id)) {
+                $assignment->bed?->markAvailable();
+            }
+
+            $wardResolved = $wardId ?: $newBed?->ward_id ?: $assignment->ward_id;
+
+            $assignment->update(['ward_id' => $wardResolved, 'bed_id' => $newBed?->id]);
+            $case->bay?->update(['ward_id' => $wardResolved, 'bed_id' => $newBed?->id]);
+            $newBed?->markOccupied();
+
+            $this->sessions()->recordContribution($case, $user, 'Ward/Bed Assignment');
+            $this->timeline()?->record(
+                $case->fresh('bay'),
+                'WARD_BED_ASSIGNED',
+                'Ward/bed updated',
+                $newBed?->bed_number ?: 'Ward link updated',
+                $assignment,
+                $user,
+            );
+
+            return $case->fresh(['bay', 'activeBayAssignment']);
+        });
+    }
+
     public function release(EmergencyCase $case, string $bayStatus = EmergencyBay::STATUS_AVAILABLE, ?User $user = null): void
     {
         if (! $case->emergency_bay_id) {

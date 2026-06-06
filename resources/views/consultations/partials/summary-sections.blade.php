@@ -21,16 +21,18 @@
         'follow_up_appointments' => 'Next Appointment / Follow-up',
         'notes' => 'Notes',
     ];
+    $visibleSummarySections = collect($summaryLabels)
+        ->filter(fn ($label, $key) => collect($consultationSummary['sections'][$key] ?? [])->isNotEmpty());
 @endphp
 
-@foreach($summaryLabels as $key => $label)
+@forelse($visibleSummarySections as $key => $label)
     <div class="mb-3">
         <h6 class="small fw-bold text-muted border-bottom pb-1">{{ $label }}</h6>
         @php
             $entries = collect($consultationSummary['sections'][$key] ?? []);
             $groups = $entries->groupBy(fn ($entry) => $entry['owner_key'] ?? (($entry['entered_by'] ?? null) ? 'name-'.$entry['entered_by'] : 'unknown'));
         @endphp
-        @forelse($groups as $groupEntries)
+        @foreach($groups as $groupEntries)
             @php
                 $first = $groupEntries->first();
                 $ownerName = $first['entered_by'] ?? 'Unknown user';
@@ -69,8 +71,8 @@
                     </div>
                 @endforeach
             </div>
-        @empty
-            <p class="text-muted small mb-2">None recorded.</p>
-        @endforelse
+        @endforeach
     </div>
-@endforeach
+@empty
+    <div class="text-muted small">No consultation summary records yet.</div>
+@endforelse
