@@ -2739,8 +2739,8 @@ $visitHistoryJson = $history['records']->map(function($r) {
 <script>
 /* ================================================================
    PAGE GLOBALS
-   The Inertia legacy bridge re-injects scripts from the @stack('scripts')
-   region (the body's <script> tags inside v-html are NOT executed),
+   The Inertia legacy bridge re-injects scripts from the pushed
+   scripts region (body script tags inside v-html are NOT executed),
    so all page-scoped state must live here.
    ================================================================ */
 window.visitHistoryData = @json($visitHistoryJson);
@@ -2768,6 +2768,50 @@ window.summaryFragmentUrl = '{{ route('admin.consultations.summary-fragment', $v
 window.taskAssignableUsers = @json($doctors->map(fn($doctor) => ['id' => $doctor->id, 'name' => 'Dr. '.$doctor->full_name])->values());
 window.sendSessionServicesByDept = @json($referralServicesPayloadByDept ?? []);
 
+if (window.uhmsConsultationPageAbortController) {
+    window.uhmsConsultationPageAbortController.abort();
+}
+if (window.uhmsConsultationDrawerResizeObserver) {
+    window.uhmsConsultationDrawerResizeObserver.disconnect();
+    window.uhmsConsultationDrawerResizeObserver = null;
+}
+window.uhmsConsultationPageAbortController = new AbortController();
+var consultationPageSignal = window.uhmsConsultationPageAbortController.signal;
+var consultationPageBindCycle = Date.now().toString(36) + Math.random().toString(36).slice(2);
+
+function addConsultationListener(target, event, handler, options) {
+    if (!target) return;
+    var opts = Object.assign({}, options || {}, { signal: consultationPageSignal });
+    target.addEventListener(event, handler, opts);
+}
+
+function hasConsultationBinding(target, key) {
+    if (!target) return false;
+    if (target.__uhmsConsultationBindings && target.__uhmsConsultationBindings[key] === consultationPageBindCycle) return true;
+    return !!(target.dataset && target.dataset[key] === consultationPageBindCycle);
+}
+
+function markConsultationBinding(target, key) {
+    if (!target) return;
+    target.__uhmsConsultationBindings = target.__uhmsConsultationBindings || {};
+    target.__uhmsConsultationBindings[key] = consultationPageBindCycle;
+    if (target.dataset) target.dataset[key] = consultationPageBindCycle;
+}
+
+function addConsultationListenerOnce(target, key, event, handler, options) {
+    if (!target || hasConsultationBinding(target, key)) return;
+    markConsultationBinding(target, key);
+    addConsultationListener(target, event, handler, options);
+}
+
+function runWhenConsultationReady(callback) {
+    if (document.readyState === 'loading') {
+        addConsultationListener(document, 'DOMContentLoaded', callback);
+    } else {
+        callback();
+    }
+}
+
 /* ── Sessions drawer: always-visible, anchored to col-lg-10 ──── */
 function positionSessionsDrawer() {
     const col = document.querySelector('.col-lg-10');
@@ -2794,16 +2838,12 @@ function bindSessionsDrawer() {
 
     document.body.classList.add('has-sessions-drawer');
     positionSessionsDrawer();
-    if (handle.dataset.uhmsBound !== '1') {
-        handle.dataset.uhmsBound = '1';
-        handle.addEventListener('click', toggleSessionsDrawer);
-    }
-    if (window.ResizeObserver && drawer.dataset.uhmsObserved !== '1') {
-        drawer.dataset.uhmsObserved = '1';
-        new ResizeObserver(positionSessionsDrawer).observe(document.documentElement);
-    } else if (!window.ResizeObserver && drawer.dataset.uhmsResizeBound !== '1') {
-        drawer.dataset.uhmsResizeBound = '1';
-        window.addEventListener('resize', positionSessionsDrawer);
+    addConsultationListenerOnce(handle, 'uhmsBound', 'click', toggleSessionsDrawer);
+    if (window.ResizeObserver && !window.uhmsConsultationDrawerResizeObserver) {
+        window.uhmsConsultationDrawerResizeObserver = new ResizeObserver(positionSessionsDrawer);
+        window.uhmsConsultationDrawerResizeObserver.observe(document.documentElement);
+    } else if (!window.ResizeObserver) {
+        addConsultationListenerOnce(window, 'uhmsResizeBound', 'resize', positionSessionsDrawer);
     }
 }
 /* ────────────────────────────────────────────────────────────── */
@@ -2841,8 +2881,8 @@ function initSendSessionPicker() {
     const deptSel = document.getElementById('sendSessionDeptSelect');
     const svcSel = document.getElementById('sendSessionServiceSelect');
     const doctorSel = document.getElementById('sendSessionDoctorSelect');
-    if (!deptSel || !svcSel || !doctorSel || deptSel.dataset.uhmsBound === '1') return;
-    deptSel.dataset.uhmsBound = '1';
+    if (!deptSel || !svcSel || !doctorSel || hasConsultationBinding(deptSel, 'uhmsBound')) return;
+    markConsultationBinding(deptSel, 'uhmsBound');
 
     function setOptions(select, placeholder, list, labelFn, placeholderDisabled = false) {
         select.innerHTML = '';
@@ -2868,7 +2908,7 @@ function initSendSessionPicker() {
         );
     }
 
-    deptSel.addEventListener('change', async function () {
+    addConsultationListener(deptSel, 'change', async function () {
         svcSel.innerHTML = '';
         doctorSel.innerHTML = '';
         if (!this.value) {
@@ -2915,9 +2955,7 @@ function initSendSessionPicker() {
 
 function bindSendSessionModalEvents() {
     const modal = document.getElementById('sendSessionModal');
-    if (!modal || modal.dataset.uhmsBound === '1') return;
-    modal.dataset.uhmsBound = '1';
-    modal.addEventListener('shown.bs.modal', initSendSessionPicker);
+    addConsultationListenerOnce(modal, 'uhmsBound', 'shown.bs.modal', initSendSessionPicker);
 }
 
 function initConsultationSessionUi() {
@@ -2926,11 +2964,7 @@ function initConsultationSessionUi() {
     initSendSessionPicker();
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initConsultationSessionUi);
-} else {
-    initConsultationSessionUi();
-}
+runWhenConsultationReady(initConsultationSessionUi);
 
 function ensureCurrentRouteInput(form) {
     const routeId = window.currentConsultationRouteId;
@@ -2947,13 +2981,9 @@ function bindCurrentRouteInputs() {
     document.querySelectorAll('form[action*="/consultations/{{ $visit->id }}"], form[data-ajax-form]').forEach(ensureCurrentRouteInput);
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bindCurrentRouteInputs);
-} else {
-    bindCurrentRouteInputs();
-}
+runWhenConsultationReady(bindCurrentRouteInputs);
 
-document.addEventListener('click', (e) => {
+addConsultationListener(document, 'click', (e) => {
     const openBtn = e.target.closest('[data-bs-target="#sendSessionModal"]');
     if (openBtn) {
         initSendSessionPicker();
@@ -2971,7 +3001,7 @@ document.addEventListener('click', (e) => {
     }
 });
 @if(!$canEdit)
-document.addEventListener('DOMContentLoaded', () => {
+runWhenConsultationReady(() => {
     // Disable all clinical entry forms until consultation is started
     document.querySelectorAll('[data-ajax-form]').forEach(form => {
         form.querySelectorAll('input, select, textarea, button').forEach(el => { el.disabled = true; });
@@ -2985,7 +3015,7 @@ document.addEventListener('DOMContentLoaded', () => {
 @endif
 
 /* View Investigation Result modal loader */
-document.addEventListener('click', async (e) => {
+addConsultationListener(document, 'click', async (e) => {
     const btn = e.target.closest('.viewResultBtn');
     if (!btn) return;
     const modalEl = document.getElementById('viewResultModal');
@@ -3023,7 +3053,7 @@ var summaryFragmentUrl = window.summaryFragmentUrl;
     if (saved) activateConsultationTab(saved);
 
     document.querySelectorAll('#consultationTabs .nav-link').forEach(function (link) {
-        link.addEventListener('shown.bs.tab', function (e) {
+        addConsultationListenerOnce(link, 'uhmsTabBound', 'shown.bs.tab', function (e) {
             localStorage.setItem(tabStorageKey, e.target.getAttribute('href'));
         });
     });
@@ -3250,9 +3280,8 @@ function sectionForEntryType(type) {
 }
 
 function bindEditEntryButtons() {
-    document.querySelectorAll('.edit-entry-btn:not([data-bound])').forEach(function (btn) {
-        btn.setAttribute('data-bound', '1');
-        btn.addEventListener('click', function () {
+    document.querySelectorAll('.edit-entry-btn').forEach(function (btn) {
+        addConsultationListenerOnce(btn, 'uhmsBound', 'click', function () {
             var modalEl = document.getElementById('editEntryModal');
             var form = document.getElementById('editEntryForm');
             var fields = document.getElementById('editEntryFields');
@@ -3276,8 +3305,9 @@ function bindEditEntryButtons() {
 }
 
 var editEntryForm = document.getElementById('editEntryForm');
-if (editEntryForm) {
-    editEntryForm.addEventListener('submit', function (e) {
+if (editEntryForm && !hasConsultationBinding(editEntryForm, 'uhmsSubmitBound')) {
+    markConsultationBinding(editEntryForm, 'uhmsSubmitBound');
+    addConsultationListener(editEntryForm, 'submit', function (e) {
         e.preventDefault();
         var form = this;
         var section = sectionForEntryType(form.dataset.entryType);
@@ -3325,9 +3355,8 @@ bindEditEntryButtons();
    AJAX DELETE
    ================================================================ */
 function bindDeleteButtons() {
-    document.querySelectorAll('.ajax-delete:not([data-bound])').forEach(function (btn) {
-        btn.setAttribute('data-bound', '1');
-        btn.addEventListener('click', function () {
+    document.querySelectorAll('.ajax-delete').forEach(function (btn) {
+        addConsultationListenerOnce(btn, 'uhmsBound', 'click', function () {
             if (!confirm(this.dataset.confirm || 'Remove this item?')) return;
             var url    = this.dataset.url;
             var target = this.dataset.target;
@@ -3367,7 +3396,9 @@ bindDeleteButtons();
    AJAX FORM SUBMISSIONS (complaints, diagnoses, investigations, treatments)
    ================================================================ */
 document.querySelectorAll('[data-ajax-form]').forEach(function (form) {
-    form.addEventListener('submit', function (e) {
+    if (hasConsultationBinding(form, 'uhmsSubmitBound')) return;
+    markConsultationBinding(form, 'uhmsSubmitBound');
+    addConsultationListener(form, 'submit', function (e) {
         e.preventDefault();
         var section  = form.dataset.ajaxForm;
         ensureCurrentRouteInput(form);
@@ -3425,9 +3456,8 @@ function onFormSuccess(section, data, form) {
    DIAGNOSIS — TYPE TOGGLE & SET PRIMARY
    ================================================================ */
 function bindDiagnosisButtons() {
-    document.querySelectorAll('.toggle-type-btn:not([data-bound])').forEach(function (btn) {
-        btn.setAttribute('data-bound', '1');
-        btn.addEventListener('click', function () {
+    document.querySelectorAll('.toggle-type-btn').forEach(function (btn) {
+        addConsultationListenerOnce(btn, 'uhmsBound', 'click', function () {
             var id      = this.dataset.id;
             var current = this.dataset.current;
             var newType = current === 'provisional' ? 'final' : 'provisional';
@@ -3463,9 +3493,8 @@ function bindDiagnosisButtons() {
         });
     });
 
-    document.querySelectorAll('.set-primary-btn:not([data-bound])').forEach(function (btn) {
-        btn.setAttribute('data-bound', '1');
-        btn.addEventListener('click', function () {
+    document.querySelectorAll('.set-primary-btn').forEach(function (btn) {
+        addConsultationListenerOnce(btn, 'uhmsBound', 'click', function () {
             var id   = this.dataset.id;
             var self = this;
             self.disabled = true;
@@ -3579,9 +3608,10 @@ function loadProcedureServices(deptId) {
    ================================================================ */
 (function () {
     var form = document.getElementById('labRequestForm');
-    if (!form) return;
+    if (!form || hasConsultationBinding(form, 'uhmsSubmitBound')) return;
+    markConsultationBinding(form, 'uhmsSubmitBound');
 
-    form.addEventListener('submit', function (e) {
+    addConsultationListener(form, 'submit', function (e) {
         e.preventDefault();
 
         var errBox = document.getElementById('labReqErrors');
@@ -3590,6 +3620,7 @@ function loadProcedureServices(deptId) {
 
         if (errBox) errBox.classList.add('d-none');
         if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Sending...'; }
+        ensureCurrentRouteInput(form);
 
         fetch(form.action, {
             method: 'POST',
@@ -3609,6 +3640,13 @@ function loadProcedureServices(deptId) {
                 // Reset form for next use
                 form.reset();
                 document.getElementById('labReqItemsContainer').classList.add('d-none');
+                // Refresh the investigations list and summary
+                Promise.all([
+                    refreshConsultationSection('investigations'),
+                    refreshConsultationSummary()
+                ]).then(function () {
+                    activateConsultationTab('#investigations-section');
+                });
             }
         })
         .catch(function (err) {
@@ -3689,9 +3727,10 @@ function addFreeTextItem() {
    ================================================================ */
 (function () {
     var form = document.getElementById('routeInvestigationForm');
-    if (!form) return;
+    if (!form || hasConsultationBinding(form, 'uhmsSubmitBound')) return;
+    markConsultationBinding(form, 'uhmsSubmitBound');
 
-    form.addEventListener('submit', function (e) {
+    addConsultationListener(form, 'submit', function (e) {
         e.preventDefault();
 
         var errBox = document.getElementById('investRouteErrors');
@@ -3707,6 +3746,7 @@ function addFreeTextItem() {
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Routing...';
         }
+        ensureCurrentRouteInput(form);
 
         fetch(form.action, {
             method: 'POST',
@@ -3720,13 +3760,19 @@ function addFreeTextItem() {
         .then(function (data) {
             if (!data.success) return;
 
-            localStorage.setItem(tabStorageKey, '#investigations-section');
-
             var modal = bootstrap.Modal.getInstance(document.getElementById('investigationModal'));
             if (modal) modal.hide();
 
             form.reset();
             showToast(data.message || 'Patient routed successfully.');
+
+            // Refresh the investigations list and summary
+            Promise.all([
+                refreshConsultationSection('investigations'),
+                refreshConsultationSummary()
+            ]).then(function () {
+                activateConsultationTab('#investigations-section');
+            });
         })
         .catch(function (err) {
             var msg = 'Failed to route patient.';
@@ -3756,7 +3802,14 @@ function addFreeTextItem() {
    PRESCRIPTIONS — DYNAMIC DRUG ROWS
    ================================================================ */
 function initDrugSelect(select) {
-    $(select).select2({
+    if (!select || !window.jQuery || !window.jQuery.fn.select2) return;
+    var selectedValue = select.value;
+    var $select = window.jQuery(select);
+    if ($select.hasClass('select2-hidden-accessible')) {
+        $select.select2('destroy');
+    }
+    select.value = selectedValue;
+    $select.select2({
         theme: 'default',
         width: '100%',
         placeholder: '-- Search drug --',
@@ -3773,7 +3826,9 @@ function syncDrugName(row) {
     hidden.value = selected && selected.value ? (selected.getAttribute('data-name') || selected.textContent.trim()) : '';
 }
 
-$('.drug-select').each(function () { initDrugSelect(this); });
+if (window.jQuery) {
+    window.jQuery('.drug-select').each(function () { initDrugSelect(this); });
+}
 
 /* ----------------------------------------------------------------
    AUTO-CALCULATE QUANTITY
@@ -3842,13 +3897,18 @@ function calcQty(row) {
 }
 
 function bindRxCalc(row) {
+    if (!row || hasConsultationBinding(row, 'uhmsRxCalcBound')) return;
+    markConsultationBinding(row, 'uhmsRxCalcBound');
+
     ['change','input'].forEach(function(evt) {
-        row.querySelector('[name$="[dosage]"]')?.addEventListener(evt, function(){ calcQty(row); });
-        row.querySelector('[name$="[duration]"]')?.addEventListener(evt, function(){ calcQty(row); });
+        addConsultationListener(row.querySelector('[name$="[dosage]"]'), evt, function(){ calcQty(row); });
+        addConsultationListener(row.querySelector('[name$="[duration]"]'), evt, function(){ calcQty(row); });
     });
-    row.querySelector('[name$="[frequency]"]')?.addEventListener('change', function(){ calcQty(row); });
+    addConsultationListener(row.querySelector('[name$="[frequency]"]'), 'change', function(){ calcQty(row); });
     // Select2 fires a jQuery event
-    $(row).find('.drug-select').on('select2:select select2:clear change', function(){ syncDrugName(row); calcQty(row); });
+    if (window.jQuery) {
+        window.jQuery(row).find('.drug-select').off('.uhmsRxCalc').on('select2:select.uhmsRxCalc select2:clear.uhmsRxCalc change.uhmsRxCalc', function(){ syncDrugName(row); calcQty(row); });
+    }
 }
 
 /* Bind on the first (pre-rendered) row */
@@ -3858,9 +3918,12 @@ function bindRxCalc(row) {
 })();
 
 var rxIdx = 1;
-document.getElementById('addItemBtn')?.addEventListener('click', function () {
+addConsultationListenerOnce(document.getElementById('addItemBtn'), 'uhmsBound', 'click', function () {
     var cont = document.getElementById('prescriptionItems');
-    var tpl  = cont.querySelector('.prescription-item').cloneNode(true);
+    if (!cont) return;
+    var source = cont.querySelector('.prescription-item');
+    if (!source) return;
+    var tpl  = source.cloneNode(true);
 
     tpl.querySelectorAll('.select2-container').forEach(function (container) { container.remove(); });
 
@@ -3883,7 +3946,9 @@ document.getElementById('addItemBtn')?.addEventListener('click', function () {
     tpl.appendChild(rm);
     cont.appendChild(tpl);
     /* Init Select2 on the new drug dropdown */
-    $(tpl).find('.drug-select').each(function () { initDrugSelect(this); });
+    if (window.jQuery) {
+        window.jQuery(tpl).find('.drug-select').each(function () { initDrugSelect(this); });
+    }
     /* Bind auto-calc on the new row */
     bindRxCalc(tpl);
     rxIdx++;
@@ -3960,9 +4025,8 @@ function previewVisit(index) {
    PATTERN SEARCH & APPLY
    ================================================================ */
 function bindApplyButtons() {
-    document.querySelectorAll('.apply-pattern-btn:not([data-bound])').forEach(function (btn) {
-        btn.setAttribute('data-bound', '1');
-        btn.addEventListener('click', function () {
+    document.querySelectorAll('.apply-pattern-btn').forEach(function (btn) {
+        addConsultationListenerOnce(btn, 'uhmsBound', 'click', function () {
             var pid  = this.dataset.patternId;
             var pnm  = this.dataset.patternName;
             var available = (this.dataset.patternTypes || '').split(',').filter(Boolean);
@@ -4006,8 +4070,8 @@ bindApplyButtons();
 var psBtn = document.getElementById('patternSearchBtn');
 var psInp = document.getElementById('patternSearchInput');
 var psRes = document.getElementById('patternSearchResults');
-if (psBtn) {
-    psBtn.addEventListener('click', function () {
+if (psBtn && psInp && psRes) {
+    addConsultationListenerOnce(psBtn, 'uhmsBound', 'click', function () {
         var q = psInp.value.trim();
         if (q.length < 3) { psRes.innerHTML = '<div class="alert alert-warning py-2">Enter at least 3 characters.</div>'; psRes.style.display = 'block'; return; }
         psRes.innerHTML = '<div class="text-center py-2"><span class="spinner-border spinner-border-sm text-primary"></span></div>';
@@ -4032,7 +4096,7 @@ if (psBtn) {
         })
         .catch(function () { psRes.innerHTML = '<div class="alert alert-danger py-2 mb-0">Search failed.</div>'; });
     });
-    psInp.addEventListener('keypress', function (e) { if (e.key === 'Enter') { e.preventDefault(); psBtn.click(); } });
+    addConsultationListenerOnce(psInp, 'uhmsBound', 'keypress', function (e) { if (e.key === 'Enter') { e.preventDefault(); psBtn.click(); } });
 }
 
 /* ================================================================
@@ -4057,7 +4121,10 @@ if (psBtn) {
         var inp = document.getElementById(inputId);
         var dl  = document.getElementById(datalistId);
         if (!inp || !dl) return;
-        inp.addEventListener('input', function () {
+        if (hasConsultationBinding(inp, 'uhms' + capFirst(type) + 'SuggestBound')) return;
+        markConsultationBinding(inp, 'uhms' + capFirst(type) + 'SuggestBound');
+
+        addConsultationListener(inp, 'input', function () {
             var q = this.value.trim();
             clearTimeout(timers[type]);
             if (q.length < 2) { dl.innerHTML = ''; return; }
@@ -4085,8 +4152,8 @@ if (psBtn) {
             }, 280);
         });
         if (type === 'complaint') {
-            inp.addEventListener('change', function () { syncComplaintCatalogueId(this.value); });
-            inp.addEventListener('blur', function () { syncComplaintCatalogueId(this.value); });
+            addConsultationListener(inp, 'change', function () { syncComplaintCatalogueId(this.value); });
+            addConsultationListener(inp, 'blur', function () { syncComplaintCatalogueId(this.value); });
         }
     }
 
@@ -4097,9 +4164,14 @@ if (psBtn) {
 /* ================================================================
    ICD-10 AUTOCOMPLETE
    ================================================================ */
-$(document).ready(function () {
-    if ($('#icd_code_select').length && $.fn.select2) {
-        $('#icd_code_select').select2({
+runWhenConsultationReady(function () {
+    var $jq = window.jQuery;
+    if ($jq && $jq('#icd_code_select').length && $jq.fn.select2) {
+        var $icdSelect = $jq('#icd_code_select');
+        if ($icdSelect.hasClass('select2-hidden-accessible')) {
+            $icdSelect.select2('destroy');
+        }
+        $icdSelect.off('.uhmsIcd').select2({
             placeholder: 'Type to search ICD-10 codes...',
             allowClear: true,
             minimumInputLength: 2,
@@ -4113,23 +4185,23 @@ $(document).ready(function () {
             },
             templateResult: function (i) {
                 if (i.loading) return i.text;
-                return $('<span>').html('<strong>' + escapeHtml(i.code) + '</strong> — ' + escapeHtml(i.description));
+                return $jq('<span>').html('<strong>' + escapeHtml(i.code) + '</strong> — ' + escapeHtml(i.description));
             },
             templateSelection: function (i) { return i.text || i.code; }
-        }).on('select2:select', function (e) {
+        }).on('select2:select.uhmsIcd', function (e) {
             var d = e.params.data;
-            $('#icd_code_id').val(d.id);
-            $('#icd_code_manual').val(d.code);
-            var desc = $('#diagnosis_description');
+            $jq('#icd_code_id').val(d.id);
+            $jq('#icd_code_manual').val(d.code);
+            var desc = $jq('#diagnosis_description');
             if (!desc.val().trim()) desc.val(d.description);
-        }).on('select2:clear', function () {
-            $('#icd_code_id').val('');
-            $('#icd_code_manual').val('');
+        }).on('select2:clear.uhmsIcd', function () {
+            $jq('#icd_code_id').val('');
+            $jq('#icd_code_manual').val('');
         });
     }
 });
 
-document.addEventListener('DOMContentLoaded', function () {
+runWhenConsultationReady(function () {
     var dept = document.getElementById('followUpDepartmentSelect');
     var service = document.getElementById('followUpServiceSelect');
     if (!dept || !service) return;
@@ -4150,7 +4222,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    dept.addEventListener('change', syncFollowUpServices);
+    addConsultationListenerOnce(dept, 'uhmsFollowUpBound', 'change', syncFollowUpServices);
     syncFollowUpServices();
 
     @if($errors->has('appointment_date') || $errors->has('start_time') || $errors->has('end_time') || $errors->has('department_id') || $errors->has('service_id') || $errors->has('doctor_id') || $errors->has('reason') || $errors->has('notes') || $errors->has('priority'))
@@ -4163,7 +4235,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 /* ================================================================
    EXPOSE TO GLOBAL SCOPE
-   The Inertia legacy bridge wraps each <script> tag in its own
+   The Inertia legacy bridge wraps each script block in its own
    function context, so top-level `function` and `var` declarations
    are NOT global. Inline event handlers (onclick / onchange /
    onsubmit) resolve identifiers against window. Map them here so

@@ -159,6 +159,7 @@ class ConsultationNextPatientService
             ])
             ->where('department_id', $currentRoute->department_id)
             ->where('status', 'waiting')
+            ->whereDate('created_at', today())
             ->whereHas('visit', function ($visitQuery) use ($currentRoute) {
                 $visitQuery
                     ->where('id', '!=', $currentRoute->visit_id)
