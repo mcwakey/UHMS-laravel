@@ -24,6 +24,7 @@ class BillingReportController extends Controller
             'metrics' => $this->reportService->dashboard(),
             'routes' => [
                 'invoices' => route('admin.billing.invoices.index'),
+                'counterSale' => route('admin.billing.counter-sale.create'),
                 'aging' => route('admin.billing.reports.aging'),
                 'receive' => route('admin.billing.payments.receive'),
                 'creditNotes' => route('admin.billing.credit-notes.index'),

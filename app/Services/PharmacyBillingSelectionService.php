@@ -196,6 +196,26 @@ class PharmacyBillingSelectionService
             ->sum('dispensed_quantity');
     }
 
+    /**
+     * Whether the billed-but-not-yet-dispensed charges for this item are fully
+     * settled (paid). Dispensing is only permitted once the bill is settled.
+     */
+    public function isItemSettled(PrescriptionItem $item): bool
+    {
+        $selections = PharmacyBillingSelection::query()
+            ->where('prescription_item_id', $item->id)
+            ->where('status', '!=', PharmacyBillingSelection::STATUS_CANCELLED)
+            ->whereColumn('dispensed_quantity', '<', 'billed_quantity')
+            ->with('invoiceItem')
+            ->get();
+
+        if ($selections->isEmpty()) {
+            return false; // nothing billed/outstanding to dispense
+        }
+
+        return $selections->every(fn (PharmacyBillingSelection $s) => $s->invoiceItem && $s->invoiceItem->isPaid());
+    }
+
     public function recordDispensed(PrescriptionItem $item, float $quantity, ?int $userId = null): void
     {
         if ($quantity <= 0) {

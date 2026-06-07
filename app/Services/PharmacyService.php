@@ -356,6 +356,11 @@ class PharmacyService
             $item->main_store_quantity = $mainQty;
             $item->pharmacy_stock_status = $this->stockBalances->stockStatus($pharmacyQty, $product);
             $item->main_stock_status = $this->stockBalances->stockStatus($mainQty, $product);
+
+            // Pay-before-dispense: billed-but-undispensed charges must be fully paid.
+            $undispensed = $activeSelections->filter(fn ($s) => (float) $s->dispensed_quantity < (float) $s->billed_quantity);
+            $item->is_settled = $undispensed->isNotEmpty()
+                && $undispensed->every(fn ($s) => $s->invoiceItem && $s->invoiceItem->isPaid());
         });
 
         $prescription->setRelation(
@@ -392,6 +397,11 @@ class PharmacyService
             $remainingBilled = $this->billingSelections->remainingBilledQuantityForItem($item);
             if ($remainingBilled <= 0) {
                 throw new \RuntimeException('This prescription item has not been billed or has already been fully dispensed.');
+            }
+
+            // Pay-before-dispense: the bill must be settled before the drug is released.
+            if (! $this->billingSelections->isItemSettled($item)) {
+                throw new \RuntimeException('This item cannot be dispensed until its bill is settled (paid).');
             }
 
             if ($quantity > $remainingBilled) {

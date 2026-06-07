@@ -5,6 +5,9 @@
 <x-page-header title="Invoices" icon="ti-file-invoice">
     <x-slot:actions>
         @can('invoices.create')
+        <a href="{{ route('admin.billing.counter-sale.create') }}" class="btn btn-outline-primary btn-md">
+            <i class="ti ti-cash-register me-1"></i>Counter Sale
+        </a>
         <a href="{{ route('admin.billing.invoices.create') }}" class="btn btn-primary btn-md">
             <i class="ti ti-plus me-1"></i>New Invoice
         </a>

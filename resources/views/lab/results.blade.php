@@ -58,8 +58,8 @@
                             </a>
                         </td>
                         <td>
-                            <div class="fw-medium">{{ $result->labRequest->patient->full_name ?? '-' }}</div>
-                            <small class="text-muted">{{ $result->labRequest->patient->patient_number ?? '' }}</small>
+                            <div class="fw-medium">{{ $result->labRequest->patient?->full_name ?? $result->labRequest->external_party_name ?? '-' }}</div>
+                            <small class="text-muted">{{ $result->labRequest->patient?->patient_number ?? ($result->labRequest->external_party_name ? 'Walk-in' : '') }}</small>
                         </td>
                         <td>
                             <span class="fw-medium">{{ $result->requestItem->labTest->name ?? '-' }}</span>

@@ -76,27 +76,6 @@ class DispensingController extends Controller
     }
 
     /**
-     * Bill selected prescription items before dispensing.
-     */
-    public function billSelected(Request $request, Prescription $prescription)
-    {
-        $validated = $request->validate([
-            'items' => 'required|array',
-            'items.*.selected' => 'nullable|boolean',
-            'items.*.quantity' => 'nullable|integer|min:0',
-            'items.*.notes' => 'nullable|string|max:1000',
-        ]);
-
-        try {
-            $created = $this->billingSelections->billSelectedItems($prescription, $validated['items']);
-
-            return back()->with('success', $created->count().' item(s) billed and made available for dispensing.');
-        } catch (\RuntimeException $e) {
-            return back()->withInput()->with('error', $e->getMessage());
-        }
-    }
-
-    /**
      * Dispense a single prescription item.
      */
     public function dispenseItem(Request $request, PrescriptionItem $item)

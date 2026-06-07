@@ -41,6 +41,7 @@ class LabRequestController extends Controller
                     'full_name'      => $req->patient->full_name,
                     'patient_number' => $req->patient->patient_number,
                 ] : null,
+                'external_party_name' => $req->external_party_name,
                 'target_department_name' => optional($req->targetDepartment)->name,
                 'result_type' => ($resultType && $resultType->value !== 'none') ? [
                     'value' => $resultType->value,

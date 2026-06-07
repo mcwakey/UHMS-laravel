@@ -26,6 +26,19 @@
     </div>
 </div>
 
+@if(session('success'))
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="ti ti-check me-1"></i>{{ session('success') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+@endif
+@if(session('error'))
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="ti ti-alert-circle me-1"></i>{{ session('error') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+@endif
+
 <div class="row">
     <!-- Main Info -->
     <div class="col-lg-8">
@@ -89,6 +102,73 @@
                 </div>
             </div>
         </div>
+
+        <!-- Pharmacy Billing (moved here from dispensing; dispense only after settlement) -->
+        @can('pharmacy.dispensing.create')
+        @php
+            $formatQty = fn ($qty) => rtrim(rtrim(number_format((float) $qty, 4, '.', ''), '0'), '.') ?: '0';
+            $billableItems = $prescription->items->filter(fn ($item) => ($item->remaining_prescribed_to_bill ?? 0) > 0 && $item->drug?->product_id);
+        @endphp
+        <div class="card mb-3">
+            <div class="card-header  bg-primary-subtle d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0"><i class="ti ti-receipt me-1"></i>Bill for Dispensing</h6>
+                <span class="badge bg-light text-dark">Patient pays before the pharmacy dispenses</span>
+            </div>
+            <div class="card-body">
+                @if(!empty($billingError))
+                    <div class="alert alert-warning mb-0 py-2"><i class="ti ti-alert-triangle me-1"></i>{{ $billingError }}</div>
+                @elseif($billableItems->isEmpty())
+                    <p class="text-muted mb-0">All prescribed items have been billed. Once payment is settled, they can be dispensed at the pharmacy.</p>
+                @else
+                <form method="POST" action="{{ route('admin.prescriptions.bill', $prescription) }}">
+                    @csrf
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width:48px">Bill</th>
+                                    <th>Drug</th>
+                                    <th class="text-end">Prescribed</th>
+                                    <th class="text-end">Billed</th>
+                                    <th class="text-end">Remaining</th>
+                                    <th class="text-end">Pharmacy Qty</th>
+                                    <th style="width:130px">Selected Qty</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($billableItems as $item)
+                                    @php
+                                        $remainingToBill = (float) ($item->remaining_prescribed_to_bill ?? 0);
+                                        $pharmacyQty = (float) ($item->pharmacy_available_quantity ?? 0);
+                                        $defaultQty = min($remainingToBill, $pharmacyQty);
+                                        $pharmacyStatus = $item->pharmacy_stock_status ?? ['label' => 'OUT', 'class' => 'danger'];
+                                    @endphp
+                                    <tr>
+                                        <td><input type="checkbox" class="form-check-input" name="items[{{ $item->id }}][selected]" value="1" {{ $defaultQty > 0 ? '' : 'disabled' }}></td>
+                                        <td>
+                                            <span class="fw-medium">{{ $item->drug_name }}</span>
+                                            @if($item->drug)<br><small class="text-muted">{{ $item->drug->dosage_form }} {{ $item->drug->strength }}</small>@endif
+                                        </td>
+                                        <td class="text-end">{{ $formatQty($item->quantity) }}</td>
+                                        <td class="text-end">{{ $formatQty($item->billed_quantity ?? 0) }}</td>
+                                        <td class="text-end fw-semibold text-primary">{{ $formatQty($remainingToBill) }}</td>
+                                        <td class="text-end">{{ $formatQty($pharmacyQty) }} <span class="badge bg-{{ $pharmacyStatus['class'] }} ms-1">{{ $pharmacyStatus['label'] }}</span></td>
+                                        <td><input type="number" name="items[{{ $item->id }}][quantity]" class="form-control form-control-sm" value="{{ $formatQty($defaultQty) }}" min="0" max="{{ $formatQty($defaultQty) }}"></td>
+                                        <td><input type="text" name="items[{{ $item->id }}][notes]" class="form-control form-control-sm" placeholder="Optional"></td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3 d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary"><i class="ti ti-receipt me-1"></i>Bill Selected</button>
+                    </div>
+                </form>
+                @endif
+            </div>
+        </div>
+        @endcan
 
         <!-- Notes -->
         @if($prescription->notes)

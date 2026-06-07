@@ -22,175 +22,33 @@
     </div>
 </div>
 
-@if($request->status === 'pending')
-{{-- ===================== SELECTIVE ACCEPTANCE ===================== --}}
-<div class="card mb-3 border-primary">
-    <div class="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
-        <h6 class="fw-bold mb-0"><i class="ti ti-list-check me-1"></i>Select Items to Accept &amp; Bill</h6>
-        <small class="text-muted"><span id="selCount">0</span> of {{ $request->items->where('status','pending')->count() }} selected</small>
-    </div>
-    <div class="card-body">
-        <form id="acceptSelectedForm" method="POST" action="{{ route('admin.lab.requests.accept-selected', $request) }}">
-            @csrf
-            <div id="acceptSelectedErrors" class="alert alert-danger d-none small py-2 mb-2"></div>
-            <div class="table-responsive">
-                <table class="table table-sm align-middle mb-2">
-                    <thead class="table-light">
-                        <tr>
-                            <th style="width:36px;"><input type="checkbox" id="selectAllItems" class="form-check-input"></th>
-                            <th>Item</th>
-                            <th>Status</th>
-                            <th class="text-end">Price</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    @foreach($request->items as $it)
-                        @php
-                            $price = $it->service?->price ?? null;
-                        @endphp
-                        <tr class="{{ $it->status !== 'pending' ? 'text-muted' : '' }}">
-                            <td>
-                                @if($it->status === 'pending')
-                                    <input type="checkbox" name="item_ids[]" value="{{ $it->id }}" class="form-check-input acceptSelectedCb">
-                                @else
-                                    <i class="ti ti-lock text-muted"></i>
-                                @endif
-                            </td>
-                            <td>
-                                <span class="fw-medium">{{ $it->display_name }}</span>
-                                @if($it->service)<small class="text-muted d-block">{{ $it->service->code ?? '' }}</small>@endif
-                            </td>
-                            <td><span class="badge bg-{{ $it->status_color }}">{{ ucfirst($it->status) }}</span></td>
-                            <td class="text-end">{{ $price !== null ? number_format($price, 2) : '—' }}</td>
-                        </tr>
-                    @endforeach
-                    </tbody>
-                </table>
-            </div>
-            <div class="d-flex justify-content-between align-items-center">
-                <small class="text-muted"><i class="ti ti-info-circle me-1"></i>Only selected items are accepted &amp; invoiced. Unselected items remain pending.</small>
-                <button type="submit" id="acceptSelectedBtn" class="btn btn-success" disabled>
-                    <i class="ti ti-check me-1"></i>Accept Selected &amp; Generate Invoice
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-@push('scripts')
-<script>
-(function() {
-    const form = document.getElementById('acceptSelectedForm');
-    if (!form) return;
-    const cbs   = form.querySelectorAll('.acceptSelectedCb');
-    const all   = document.getElementById('selectAllItems');
-    const cnt   = document.getElementById('selCount');
-    const btn   = document.getElementById('acceptSelectedBtn');
-    const errs  = document.getElementById('acceptSelectedErrors');
-    const sync = () => {
-        const checked = [...cbs].filter(c => c.checked).length;
-        cnt.textContent = checked;
-        btn.disabled = checked === 0;
-        all.checked = checked === cbs.length && cbs.length > 0;
-        all.indeterminate = checked > 0 && checked < cbs.length;
-    };
-    all.addEventListener('change', () => { cbs.forEach(c => c.checked = all.checked); sync(); });
-    cbs.forEach(c => c.addEventListener('change', sync));
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        errs.classList.add('d-none');
-        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing…';
-        try {
-            const fd = new FormData(form);
-            const r = await fetch(form.action, {
-                method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
-                body: fd
-            });
-            const data = await r.json().catch(() => ({}));
-            if (!r.ok) {
-                errs.textContent = data.error || ('Error ' + r.status);
-                errs.classList.remove('d-none');
-                btn.disabled = false; btn.innerHTML = '<i class="ti ti-check me-1"></i>Accept Selected &amp; Generate Invoice';
-                return;
-            }
-            const target = data.redirect || window.location.href;
-            if (window.UhmsInertia && data.redirect) {
-                window.UhmsInertia.visit(target, { preserveScroll: true });
-            } else {
-                window.location.href = target;
-            }
-        } catch (err) {
-            errs.textContent = err.message;
-            errs.classList.remove('d-none');
-            btn.disabled = false; btn.innerHTML = '<i class="ti ti-check me-1"></i>Accept Selected &amp; Generate Invoice';
-        }
-    });
-})();
-</script>
-@endpush
+@if(session('success'))
+<div class="alert alert-success alert-dismissible fade show" role="alert"><i class="ti ti-check me-1"></i>{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+@endif
+@if(session('error'))
+<div class="alert alert-danger alert-dismissible fade show" role="alert"><i class="ti ti-alert-circle me-1"></i>{{ session('error') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
 @endif
 
-<!-- Request Info -->
-<div class="row g-3 mb-3">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-info-circle me-1"></i>Request Details</h6>
-            </div>
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <small class="text-muted d-block">Patient</small>
-                        <span class="fw-medium">{{ $request->patient->full_name }}</span>
-                        <small class="text-muted d-block">{{ $request->patient->patient_number }} &middot; {{ $request->patient->age }}y &middot; {{ $request->patient->gender->value }}</small>
-                    </div>
-                    <div class="col-md-3">
-                        <small class="text-muted d-block">Status</small>
-                        <span class="badge bg-{{ $request->status_color }} px-3 py-2">{{ $request->status_label }}</span>
-                    </div>
-                    <div class="col-md-3">
-                        <small class="text-muted d-block">Urgency</small>
-                        <span class="badge bg-{{ $request->urgency_color }} px-3 py-2">{{ ucfirst($request->urgency) }}</span>
-                    </div>
-                    <div class="col-md-6">
-                        <small class="text-muted d-block">Requested By</small>
-                        <span>{{ $request->requestedBy->name ?? '-' }}</span>
-                    </div>
-                    <div class="col-md-3">
-                        <small class="text-muted d-block">Requesting Dept</small>
-                        <span>{{ $request->department->name ?? '-' }}</span>
-                    </div>
-                    <div class="col-md-3">
-                        <small class="text-muted d-block">Date</small>
-                        <span>{{ $request->created_at->format('d M Y H:i') }}</span>
-                    </div>
-                    @if($request->clinical_info)
-                    <div class="col-12">
-                        <small class="text-muted d-block">Clinical Information</small>
-                        <p class="mb-0">{{ $request->clinical_info }}</p>
-                    </div>
-                    @endif
+@php $pendingItems = $request->items->where('status', 'pending'); @endphp
+
+<div class="row">
+    <!-- Main column -->
+    <div class="col-lg-8">
+        <!-- Status -->
+        <div class="card mb-3">
+            <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <span class="fw-bold fs-5">{{ $request->request_number }}</span>
+                    @if($request->targetDepartment)<small class="text-muted d-block">{{ $request->targetDepartment->name }}</small>@endif
+                </div>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-{{ $request->status_color }} px-3 py-2">{{ $request->status_label }}</span>
+                    <span class="badge bg-{{ $request->urgency_color }} px-3 py-2">{{ ucfirst($request->urgency) }}</span>
                 </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-chart-bar me-1"></i>Progress</h6>
-            </div>
-            <div class="card-body text-center">
-                <h1 class="mb-1 {{ $request->completion_percentage === 100 ? 'text-success' : 'text-primary' }}">{{ $request->completion_percentage }}%</h1>
-                <div class="progress mb-2" style="height: 10px;">
-                    <div class="progress-bar bg-success" style="width: {{ $request->completion_percentage }}%"></div>
-                </div>
-                <small class="text-muted">
-                    {{ $request->items->where('status', 'completed')->count() }} of {{ $request->items->count() }} tests completed
-                </small>
-            </div>
-        </div>
-    </div>
-</div>
+
+{{-- Patient / Visit / Doctor / Progress moved to the right sidebar below --}}
 
 <!-- Investigation Items & Results -->
 @if($resultType === \App\Enums\ResultType::PARAMETERS)
@@ -437,6 +295,121 @@
 @endif
 @endforeach
 
+{{-- ===================== SELECTIVE ACCEPTANCE (persists while any item is still pending) ===================== --}}
+{{-- @if($pendingItems->count() > 0) --}}
+<div class="card mb-3">
+    <div class="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
+        <h6 class="fw-bold mb-0"><i class="ti ti-list-check me-1"></i>Select Items to Accept &amp; Bill</h6>
+        <small class="text-muted"><span id="selCount">0</span> of {{ $pendingItems->count() }} selected</small>
+    </div>
+    <div class="card-body">
+        <form id="acceptSelectedForm" method="POST" action="{{ route('admin.lab.requests.accept-selected', $request) }}">
+            @csrf
+            <div id="acceptSelectedErrors" class="alert alert-danger d-none small py-2 mb-2"></div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-2">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:36px;"><input type="checkbox" id="selectAllItems" class="form-check-input"></th>
+                            <th>Item</th>
+                            <th>Status</th>
+                            <th class="text-end">Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach($request->items as $it)
+                                @if($it->status === 'pending')
+                        @php
+                            $price = $it->service?->price ?? null;
+                        @endphp
+                        <tr class="{{ $it->status !== 'pending' ? 'text-muted' : '' }}">
+                            <td>
+                                    <input type="checkbox" name="item_ids[]" value="{{ $it->id }}" class="form-check-input acceptSelectedCb">
+                               
+                            </td>
+                            <td>
+                                <span class="fw-medium">{{ $it->display_name }}</span>
+                                @if($it->service)<small class="text-muted d-block">{{ $it->service->code ?? '' }}</small>@endif
+                            </td>
+                            <td><span class="badge bg-{{ $it->status_color }}">{{ ucfirst($it->status) }}</span></td>
+                            <td class="text-end">{{ $price !== null ? number_format($price, 2) : '—' }}</td>
+                        </tr> 
+                        {{-- @else
+                                    <p class="text-muted mb-0">All prescribed items have been billed. Once payment is settled, they can be dispensed at the pharmacy.</p> --}}
+                                @endif
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                {{-- <small class="text-muted"><i class="ti ti-info-circle me-1"></i>Only selected items are accepted &amp; invoiced. Unselected items stay pending here and can be billed later when the patient returns.</small> --}}
+                
+                                @if($it->status === 'pending')
+                                <button type="submit" id="acceptSelectedBtn" class="btn btn-success" disabled>
+                    <i class="ti ti-check me-1"></i>Bill Selected
+                </button>
+                @else
+                                    <p class="py-2 text-muted mb-0">All requested items have been billed. Once payment is settled, the results can be entered.</p>
+                               
+            @endif
+                   </div>
+        </form>
+    </div>
+</div>
+@push('scripts')
+<script>
+(function() {
+    const form = document.getElementById('acceptSelectedForm');
+    if (!form) return;
+    const cbs   = form.querySelectorAll('.acceptSelectedCb');
+    const all   = document.getElementById('selectAllItems');
+    const cnt   = document.getElementById('selCount');
+    const btn   = document.getElementById('acceptSelectedBtn');
+    const errs  = document.getElementById('acceptSelectedErrors');
+    const sync = () => {
+        const checked = [...cbs].filter(c => c.checked).length;
+        cnt.textContent = checked;
+        btn.disabled = checked === 0;
+        all.checked = checked === cbs.length && cbs.length > 0;
+        all.indeterminate = checked > 0 && checked < cbs.length;
+    };
+    all.addEventListener('change', () => { cbs.forEach(c => c.checked = all.checked); sync(); });
+    cbs.forEach(c => c.addEventListener('change', sync));
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errs.classList.add('d-none');
+        btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing…';
+        try {
+            const fd = new FormData(form);
+            const r = await fetch(form.action, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                body: fd
+            });
+            const data = await r.json().catch(() => ({}));
+            if (!r.ok) {
+                errs.textContent = data.error || ('Error ' + r.status);
+                errs.classList.remove('d-none');
+                btn.disabled = false; btn.innerHTML = '<i class="ti ti-check me-1"></i>Accept Selected &amp; Generate Invoice';
+                return;
+            }
+            const target = data.redirect || window.location.href;
+            if (window.UhmsInertia && data.redirect) {
+                window.UhmsInertia.visit(target, { preserveScroll: true });
+            } else {
+                window.location.href = target;
+            }
+        } catch (err) {
+            errs.textContent = err.message;
+            errs.classList.remove('d-none');
+            btn.disabled = false; btn.innerHTML = '<i class="ti ti-check me-1"></i>Accept Selected &amp; Generate Invoice';
+        }
+    });
+})();
+</script>
+@endpush
+{{-- @endif --}}
+
 @elseif($resultType === \App\Enums\ResultType::RICHTEXT)
 {{-- ======================= RICHTEXT (Scan/Radiology Report) ======================= --}}
 <div class="card">
@@ -636,6 +609,70 @@
 @endif
 @endforeach
 @endif
+    </div>{{-- /col-lg-8 --}}
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Patient / Recipient -->
+        <div class="card mb-3">
+            <div class="card-header"><h6 class="fw-bold mb-0"><i class="ti ti-user me-1"></i>{{ $request->patient ? 'Patient' : 'Recipient' }}</h6></div>
+            <div class="card-body">
+                @if($request->patient)
+                    <h6 class="fw-bold">{{ $request->patient->full_name }}</h6>
+                    <small class="text-muted d-block">{{ $request->patient->patient_number }}</small>
+                    <small class="text-muted d-block">{{ $request->patient->age }}y &middot; {{ $request->patient->gender?->value }}</small>
+                    @if($request->patient->allergies)
+                    <div class="alert alert-danger py-1 mt-2 mb-0"><small><strong>Allergies:</strong> {{ $request->patient->allergies }}</small></div>
+                    @endif
+                @else
+                    <h6 class="fw-bold">{{ $request->external_party_name ?? '—' }}</h6>
+                    <small class="text-muted d-block">External / walk-in</small>
+                    @if($request->external_party_contact)<small class="text-muted d-block">{{ $request->external_party_contact }}</small>@endif
+                @endif
+            </div>
+        </div>
+
+        <!-- Visit -->
+        @if($request->visit)
+        <div class="card mb-3">
+            <div class="card-header"><h6 class="fw-bold mb-0"><i class="ti ti-calendar-check me-1"></i>Visit</h6></div>
+            <div class="card-body">
+                <a href="{{ route('admin.visits.show', $request->visit) }}" class="fw-medium">{{ $request->visit->visit_number }}</a>
+                <small class="text-muted d-block">{{ $request->visit->visit_date?->format('d M Y') }}</small>
+                <x-status-badge :status="$request->visit->status" />
+            </div>
+        </div>
+        @endif
+
+        <!-- Requested By -->
+        <div class="card mb-3">
+            <div class="card-header"><h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1"></i>Requested By</h6></div>
+            <div class="card-body">
+                <h6 class="fw-medium mb-0">{{ $request->requestedBy->name ?? '—' }}</h6>
+                <small class="text-muted">{{ $request->department->name ?? '—' }}</small>
+                <small class="text-muted d-block mt-1"><i class="ti ti-clock me-1"></i>{{ $request->created_at->format('d M Y H:i') }}</small>
+            </div>
+        </div>
+
+        <!-- Progress -->
+        <div class="card mb-3">
+            <div class="card-header"><h6 class="fw-bold mb-0"><i class="ti ti-chart-bar me-1"></i>Progress</h6></div>
+            <div class="card-body text-center">
+                <h1 class="mb-1 {{ $request->completion_percentage === 100 ? 'text-success' : 'text-primary' }}">{{ $request->completion_percentage }}%</h1>
+                <div class="progress mb-2" style="height: 10px;"><div class="progress-bar bg-success" style="width: {{ $request->completion_percentage }}%"></div></div>
+                <small class="text-muted">{{ $request->items->where('status', 'completed')->count() }} of {{ $request->items->count() }} tests completed</small>
+            </div>
+        </div>
+
+        @if($request->clinical_info)
+        <!-- Clinical Information -->
+        <div class="card mb-3">
+            <div class="card-header"><h6 class="fw-bold mb-0"><i class="ti ti-notes me-1"></i>Clinical Information</h6></div>
+            <div class="card-body"><p class="mb-0">{{ $request->clinical_info }}</p></div>
+        </div>
+        @endif
+    </div>{{-- /col-lg-4 --}}
+</div>{{-- /row --}}
 
 {{-- View Result Modal (lazy-loaded via fetch) --}}
 <div class="modal fade" id="viewResultModal" tabindex="-1">

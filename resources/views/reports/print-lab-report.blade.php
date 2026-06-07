@@ -34,7 +34,7 @@
         <table>
             <tr>
                 <td class="lbl">Patient Name:</td>
-                <td>{{ $labRequest->patient?->full_name ?? '—' }}</td>
+                <td>{{ $labRequest->patient?->full_name ?? $labRequest->external_party_name ?? '—' }}</td>
                 <td class="lbl">Patient ID:</td>
                 <td>{{ $labRequest->patient?->patient_number ?? '—' }}</td>
             </tr>

@@ -5,6 +5,7 @@
 @php
     $allItems = $prescription->items ?? collect();
     $dispensableItems = $prescription->dispensableItems ?? collect();
+    $settledDispensable = $dispensableItems->filter(fn ($item) => $item->is_settled ?? false);
     $billableItems = $allItems->filter(fn ($item) => ($item->remaining_prescribed_to_bill ?? 0) > 0 && $item->drug?->product_id);
     $formatQty = fn ($qty) => rtrim(rtrim(number_format((float) $qty, 4, '.', ''), '0'), '.') ?: '0';
 @endphp
@@ -89,76 +90,11 @@
     </div>
 </div>
 
-<!-- Billing Selection Form -->
+<!-- Billing moved to the prescription page -->
 @if($billableItems->count() > 0)
-<div class="card mb-3">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h6 class="fw-bold mb-0"><i class="ti ti-receipt me-1"></i>Bill Selected Items</h6>
-        <span class="badge bg-light text-dark">Stock is not deducted here</span>
-    </div>
-    <div class="card-body">
-        <form method="POST" action="{{ route('admin.pharmacy.dispensing.bill-selected', $prescription) }}">
-            @csrf
-            <div class="table-responsive">
-                <table class="table table-sm align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th style="width: 48px;">Bill</th>
-                            <th>Drug</th>
-                            <th class="text-end">Prescribed</th>
-                            <th class="text-end">Already Billed</th>
-                            <th class="text-end">Remaining</th>
-                            <th class="text-end">Pharmacy Qty</th>
-                            <th class="text-end">Main Store Qty</th>
-                            <th style="width: 140px;">Selected Qty</th>
-                            <th>Notes</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($billableItems as $item)
-                            @php
-                                $remainingToBill = (float) ($item->remaining_prescribed_to_bill ?? 0);
-                                $pharmacyQty = (float) ($item->pharmacy_available_quantity ?? 0);
-                                $defaultQty = min($remainingToBill, $pharmacyQty);
-                                $pharmacyStatus = $item->pharmacy_stock_status ?? ['label' => 'OUT', 'class' => 'danger'];
-                                $mainStatus = $item->main_stock_status ?? ['label' => 'OUT', 'class' => 'danger'];
-                            @endphp
-                            <tr>
-                                <td>
-                                    <input type="checkbox" class="form-check-input" name="items[{{ $item->id }}][selected]" value="1" {{ $defaultQty > 0 ? '' : 'disabled' }}>
-                                </td>
-                                <td>
-                                    <span class="fw-medium">{{ $item->drug_name }}</span>
-                                    @if($item->drug)
-                                        <br><small class="text-muted">{{ $item->drug->dosage_form }} {{ $item->drug->strength }}</small>
-                                    @endif
-                                </td>
-                                <td class="text-end">{{ $formatQty($item->quantity) }}</td>
-                                <td class="text-end">{{ $formatQty($item->billed_quantity ?? 0) }}</td>
-                                <td class="text-end fw-semibold text-primary">{{ $formatQty($remainingToBill) }}</td>
-                                <td class="text-end">
-                                    {{ $formatQty($pharmacyQty) }}
-                                    <span class="badge bg-{{ $pharmacyStatus['class'] }} ms-1">{{ $pharmacyStatus['label'] }}</span>
-                                </td>
-                                <td class="text-end">
-                                    {{ $formatQty($item->main_store_quantity ?? 0) }}
-                                    <span class="badge bg-{{ $mainStatus['class'] }} ms-1">{{ $mainStatus['label'] }}</span>
-                                </td>
-                                <td>
-                                    <input type="number" name="items[{{ $item->id }}][quantity]" class="form-control form-control-sm"
-                                        value="{{ $formatQty($defaultQty) }}" min="0" max="{{ $formatQty(min($remainingToBill, $pharmacyQty)) }}">
-                                </td>
-                                <td><input type="text" name="items[{{ $item->id }}][notes]" class="form-control form-control-sm" placeholder="Optional"></td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-            <div class="mt-3 d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary"><i class="ti ti-receipt me-1"></i>Bill Selected</button>
-            </div>
-        </form>
-    </div>
+<div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div><i class="ti ti-receipt me-1"></i><strong>{{ $billableItems->count() }} item(s)</strong> still need billing. Pharmacy billing now happens on the prescription page, and items can only be dispensed after the bill is settled.</div>
+    <a href="{{ route('admin.prescriptions.show', $prescription) }}" class="btn btn-sm btn-primary"><i class="ti ti-external-link me-1"></i>Bill on Prescription</a>
 </div>
 @endif
 
@@ -191,7 +127,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($dispensableItems as $item)
+                                @foreach($settledDispensable as $item)
                                 <tr>
                                     <td class="fw-medium">
                                         {{ $item->drug_name }}
@@ -281,14 +217,21 @@
                             @endif
                         </td>
                         <td>
-                            <span class="badge bg-primary">Ready</span>
-                            <small class="d-block text-muted">Remaining {{ $formatQty($item->remaining_billed_to_dispense ?? 0) }}</small>
+                            @if($item->is_settled ?? false)
+                                <span class="badge bg-primary">Ready</span>
+                                <small class="d-block text-muted">Remaining {{ $formatQty($item->remaining_billed_to_dispense ?? 0) }}</small>
+                            @else
+                                <span class="badge bg-warning text-dark"><i class="ti ti-clock-dollar me-1"></i>Awaiting payment</span>
+                                <small class="d-block text-muted">Dispense after the bill is settled</small>
+                            @endif
                         </td>
                         <td class="text-end">
-                            @if($item->drug)
+                            @if($item->drug && ($item->is_settled ?? false))
                             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dispenseModal-{{ $item->id }}">
                                 <i class="ti ti-pill me-1"></i>Dispense
                             </button>
+                            @else
+                            <span class="text-muted small">—</span>
                             @endif
                         </td>
                     </tr>

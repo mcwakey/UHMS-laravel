@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\BloodIssueController;
 use App\Http\Controllers\Admin\BloodRequestController;
 use App\Http\Controllers\Admin\BloodStorageLocationController;
 use App\Http\Controllers\Admin\BloodUnitController;
+use App\Http\Controllers\Admin\CounterSaleController;
 use App\Http\Controllers\Admin\CashierShiftController;
 use App\Http\Controllers\Admin\ClaimController;
 use App\Http\Controllers\Admin\ComplaintCatalogueController;
@@ -783,6 +784,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware('can:prescriptions.view')->group(function () {
             Route::get('prescriptions', [PrescriptionController::class, 'index'])->name('prescriptions.index');
             Route::get('prescriptions/{prescription}', [PrescriptionController::class, 'show'])->name('prescriptions.show');
+            Route::post('prescriptions/{prescription}/bill', [PrescriptionController::class, 'bill'])->name('prescriptions.bill')->middleware('can:pharmacy.dispensing.create');
             Route::patch('prescriptions/{prescription}/cancel', [PrescriptionController::class, 'cancel'])->name('prescriptions.cancel')->middleware('can:prescriptions.create');
         });
 
@@ -862,7 +864,6 @@ Route::middleware('auth')->group(function () {
             Route::middleware('can:pharmacy.dispensing.view')->group(function () {
                 Route::get('dispensing', [DispensingController::class, 'index'])->name('dispensing.index');
                 Route::get('dispensing/{prescription}', [DispensingController::class, 'show'])->name('dispensing.show');
-                Route::post('dispensing/{prescription}/bill-selected', [DispensingController::class, 'billSelected'])->name('dispensing.bill-selected')->middleware('can:pharmacy.dispensing.create');
                 Route::post('dispensing/{item}/dispense', [DispensingController::class, 'dispenseItem'])->name('dispensing.dispense-item')->middleware('can:pharmacy.dispensing.create');
                 Route::post('dispensing/{prescription}/batch', [DispensingController::class, 'batchDispense'])->name('dispensing.batch')->middleware('can:pharmacy.dispensing.create');
                 Route::get('history', [DispensingController::class, 'history'])->name('history');
@@ -893,6 +894,14 @@ Route::middleware('auth')->group(function () {
             // Billing dashboard
             Route::get('dashboard', [BillingReportController::class, 'dashboard'])
                 ->name('dashboard')->middleware('can:invoices.view');
+
+            // Walk-in counter sale (drugs + investigations, no visit)
+            Route::middleware('can:invoices.create')->group(function () {
+                Route::get('counter-sale', [CounterSaleController::class, 'create'])->name('counter-sale.create');
+                Route::post('counter-sale', [CounterSaleController::class, 'store'])->name('counter-sale.store');
+                Route::get('counter-sale/drug-search', [CounterSaleController::class, 'drugSearch'])->name('counter-sale.drug-search');
+                Route::get('counter-sale/service-search', [CounterSaleController::class, 'serviceSearch'])->name('counter-sale.service-search');
+            });
 
             // Invoices
             Route::middleware('can:invoices.view')->group(function () {

@@ -4,6 +4,11 @@
 @section('content')
 <x-page-header title="Dispensing Queue" icon="ti-pill">
     <x-slot:actions>
+        @can('invoices.create')
+        <a href="{{ route('admin.billing.counter-sale.create') }}" class="btn btn-primary btn-md">
+            <i class="ti ti-cash-register me-1"></i>Counter Sale
+        </a>
+        @endcan
         <a href="{{ route('admin.pharmacy.history') }}" class="btn btn-outline-secondary btn-md">
             <i class="ti ti-history me-1"></i>Dispensing History
         </a>

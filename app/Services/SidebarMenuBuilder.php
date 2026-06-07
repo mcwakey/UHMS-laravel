@@ -909,6 +909,14 @@ class SidebarMenuBuilder
                         'module' => 'billing',
                     ],
                     [
+                        'label' => 'Counter Sale',
+                        'icon' => 'ti ti-cash-register',
+                        'route' => 'admin.billing.counter-sale.create',
+                        'active_patterns' => ['admin.billing.counter-sale.*'],
+                        'permission' => 'invoices.create',
+                        'module' => 'billing',
+                    ],
+                    [
                         'label' => 'Payments',
                         'icon' => 'ti ti-cash',
                         'route' => 'admin.billing.payments.index',

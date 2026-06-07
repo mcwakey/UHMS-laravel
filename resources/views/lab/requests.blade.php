@@ -124,8 +124,8 @@
                             </a>
                         </td>
                         <td>
-                            <div class="fw-medium">{{ $req->patient->full_name }}</div>
-                            <small class="text-muted">{{ $req->patient->patient_number }}</small>
+                            <div class="fw-medium">{{ $req->patient?->full_name ?? $req->external_party_name ?? '—' }}</div>
+                            <small class="text-muted">{{ $req->patient?->patient_number ?? ($req->external_party_name ? 'Walk-in' : '') }}</small>
                         </td>
                         <td>
                             @if($req->targetDepartment)

@@ -54,10 +54,10 @@
 
 <div class="grid">
     <div>
-        <span class="label">Patient</span><br>
-        <span class="value">{{ $patient->full_name ?? '—' }}</span><br>
+        <span class="label">{{ $patient ? 'Patient' : 'Recipient' }}</span><br>
+        <span class="value">{{ $patient?->full_name ?? $request->external_party_name ?? '—' }}</span><br>
         <span style="font-size:11px;color:#555;">
-            {{ $patient->patient_number ?? '' }}
+            {{ $patient?->patient_number ?? ($request->external_party_name ? 'Walk-in' : '') }}
             @if($patient?->age) &middot; {{ $patient->age }}y @endif
             @if($patient?->gender) &middot; {{ ucfirst($patient->gender->value ?? $patient->gender) }} @endif
         </span>

@@ -141,6 +141,8 @@ class PharmacyWorkflowTest extends TestCase
 
         $this->assertSame(10.0, $this->quantityFor($product, $location));
 
+        // Pay-before-dispense: settle the bill, then dispense.
+        $this->settleBilledItems($prescription);
         app(PharmacyService::class)->dispenseItem($item->refresh(), 2, 'First pickup');
 
         $selection = PharmacyBillingSelection::query()->where('prescription_item_id', $item->id)->firstOrFail();
@@ -243,6 +245,7 @@ class PharmacyWorkflowTest extends TestCase
         app(PharmacyBillingSelectionService::class)->billSelectedItems($prescription, [
             $item->id => ['selected' => true, 'quantity' => 3],
         ]);
+        $this->settleBilledItems($prescription);
         app(PharmacyService::class)->dispenseItem($item->refresh(), 2, 'First pickup'); // partial 2 of 3
 
         $patient = $prescription->patient;
@@ -308,6 +311,21 @@ class PharmacyWorkflowTest extends TestCase
         })->values();
 
         return array_merge([$prescription], $items->all());
+    }
+
+    /** Mark the invoice lines created for this prescription's billing as fully paid. */
+    private function settleBilledItems(Prescription $prescription): void
+    {
+        $itemIds = PharmacyBillingSelection::where('prescription_id', $prescription->id)
+            ->pluck('invoice_item_id')->filter();
+
+        InvoiceItem::whereIn('id', $itemIds)->get()->each(function (InvoiceItem $i) {
+            $i->forceFill([
+                'paid_amount' => $i->patient_payable,
+                'balance' => 0,
+                'payment_status' => 'paid',
+            ])->save();
+        });
     }
 
     private function quantityFor(Product $product, StockLocation $location): float

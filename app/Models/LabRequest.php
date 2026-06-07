@@ -21,6 +21,8 @@ class LabRequest extends Model
         'medical_record_id',
         'consultation_route_id',
         'patient_id',
+        'external_party_name',
+        'external_party_contact',
         'requested_by',
         'department_id',
         'target_department_id',
@@ -150,6 +152,12 @@ class LabRequest extends Model
     public static function generateRequestNumber(): string
     {
         return static::generateNumber('INV', 'lab_requests', 'request_number');
+    }
+
+    /** Display name for the subject — facility patient or external / walk-in party. */
+    public function partyName(): string
+    {
+        return $this->patient?->full_name ?: ($this->external_party_name ?: 'Unknown');
     }
 
     public function getStatusColorAttribute(): string
