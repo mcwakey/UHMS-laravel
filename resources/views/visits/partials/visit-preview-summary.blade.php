@@ -13,6 +13,34 @@
 @php
     $timeline = $preview['timeline'] ?? [];
     $summary  = $preview['summary'] ?? [];
+
+    // Bucket each timeline event into a filterable category from its source_type.
+    $previewCategoryOf = function (?string $sourceType): string {
+        $s = strtolower((string) $sourceType);
+        return match (true) {
+            str_contains($s, 'invoice') || str_contains($s, 'payment') || str_contains($s, 'billing') || str_contains($s, 'claim') || str_contains($s, 'refund') => 'billing',
+            str_contains($s, 'prescription') || str_contains($s, 'medication') || str_contains($s, 'mar') || str_contains($s, 'dispens') || str_contains($s, 'drug') || str_contains($s, 'administration') => 'medications',
+            str_contains($s, 'investigation') || str_contains($s, 'lab') || str_contains($s, 'result') || str_contains($s, 'sample') || str_contains($s, 'radiology') => 'investigations',
+            str_contains($s, 'procedure') || str_contains($s, 'theatre') || str_contains($s, 'service_render') => 'procedures',
+            str_contains($s, 'complaint') || str_contains($s, 'hopc') || str_contains($s, 'exam') || str_contains($s, 'diagnos') || str_contains($s, 'treatment') || str_contains($s, 'consult') || str_contains($s, 'note') || str_contains($s, 'triage') || str_contains($s, 'vital') || str_contains($s, 'clinical') || str_contains($s, 'session') => 'clinical',
+            default => 'other',
+        };
+    };
+
+    $previewCategoryMeta = [
+        'clinical'       => ['label' => 'Clinical',       'icon' => 'ti-stethoscope'],
+        'investigations' => ['label' => 'Investigations', 'icon' => 'ti-test-pipe'],
+        'procedures'     => ['label' => 'Procedures',     'icon' => 'ti-activity'],
+        'medications'    => ['label' => 'Medications',    'icon' => 'ti-pill'],
+        'billing'        => ['label' => 'Billing',        'icon' => 'ti-receipt'],
+        'other'          => ['label' => 'Other',          'icon' => 'ti-dots-circle-horizontal'],
+    ];
+
+    $previewCategoryCounts = [];
+    foreach ($timeline as $previewItem) {
+        $c = $previewCategoryOf($previewItem['source_type'] ?? '');
+        $previewCategoryCounts[$c] = ($previewCategoryCounts[$c] ?? 0) + 1;
+    }
 @endphp
 
 {{-- ── Quick Summary Cards ──────────────────────────────────────── --}}
@@ -156,7 +184,22 @@
 
 <div class="card mb-0">
     <div class="card-header bg-transparent border-bottom-0 pb-0">
-        <h6 class="fw-semibold mb-0"><i class="ti ti-timeline me-2"></i>Clinical Timeline</h6>
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <h6 class="fw-semibold mb-0"><i class="ti ti-timeline me-2"></i>Clinical Timeline</h6>
+            @if(!empty($timeline))
+                <div class="d-flex flex-wrap gap-1 d-print-none" id="previewTimelineFilters" role="group" aria-label="Filter timeline by category">
+                    <button type="button" class="btn btn-sm btn-primary" data-preview-filter="all">All <span class="badge bg-white text-dark ms-1">{{ count($timeline) }}</span></button>
+                    @foreach($previewCategoryMeta as $key => $meta)
+                        @if(($previewCategoryCounts[$key] ?? 0) > 0)
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-preview-filter="{{ $key }}">
+                                <i class="ti {{ $meta['icon'] }} me-1"></i>{{ $meta['label'] }}
+                                <span class="badge bg-light text-dark ms-1">{{ $previewCategoryCounts[$key] }}</span>
+                            </button>
+                        @endif
+                    @endforeach
+                </div>
+            @endif
+        </div>
     </div>
     <div class="card-body">
         @if(empty($timeline))
@@ -166,8 +209,52 @@
             </div>
         @else
             @foreach($timeline as $item)
-                @include('visits.partials.visit-preview-timeline', ['item' => $item])
+                @include('visits.partials.visit-preview-timeline', ['item' => $item, 'category' => $previewCategoryOf($item['source_type'] ?? '')])
             @endforeach
+            <div class="text-center py-4 text-muted d-none" id="previewTimelineEmptyFilter">
+                <i class="ti ti-filter-off fs-3 d-block mb-2"></i>No events in this category.
+            </div>
         @endif
     </div>
 </div>
+
+@push('styles')
+<style>
+    #previewTimelineFilters .btn { --bs-btn-padding-y: .2rem; --bs-btn-padding-x: .55rem; }
+    @media print {
+        #previewTimelineFilters { display: none !important; }
+        .preview-timeline-item.d-none { display: flex !important; }
+    }
+</style>
+@endpush
+
+@push('scripts')
+<script>
+(function () {
+    var group = document.getElementById('previewTimelineFilters');
+    if (!group) return;
+    var rows = Array.prototype.slice.call(document.querySelectorAll('.preview-timeline-item'));
+    var emptyMsg = document.getElementById('previewTimelineEmptyFilter');
+
+    group.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-preview-filter]');
+        if (!btn) return;
+        var filter = btn.getAttribute('data-preview-filter');
+
+        group.querySelectorAll('[data-preview-filter]').forEach(function (b) {
+            var active = b === btn;
+            b.classList.toggle('btn-primary', active);
+            b.classList.toggle('btn-outline-secondary', !active);
+        });
+
+        var shown = 0;
+        rows.forEach(function (row) {
+            var show = filter === 'all' || row.getAttribute('data-preview-category') === filter;
+            row.classList.toggle('d-none', !show);
+            if (show) shown++;
+        });
+        if (emptyMsg) emptyMsg.classList.toggle('d-none', shown > 0);
+    });
+})();
+</script>
+@endpush

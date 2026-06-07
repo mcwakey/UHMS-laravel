@@ -6,7 +6,7 @@
         date_label, time_label, title, description,
         entered_by, department, badge, badge_class, details, source_type
 --}}
-<div class="d-flex align-items-start">
+<div class="d-flex align-items-start preview-timeline-item" data-preview-category="{{ $category ?? 'other' }}">
     <p class="text-dark me-4 mb-0 timeline-date flex-shrink-0">
         {{ $item['date_label'] ?? '—' }}
         @if(!empty($item['time_label']))

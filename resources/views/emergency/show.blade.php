@@ -305,14 +305,55 @@
             </div>
         </div>
 
-        <div class="row g-3">
-            <div class="col-xl-4">
-                <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Medication / MAR</h5>
-                        <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.emergency.mar-chart', $case->visit) }}">Open MAR</a>
-                    </div>
-                    <div class="card-body">
+        {{-- Action area: tabbed (medication · investigations · procedures · consumables · tasks · billing) --}}
+        <div class="card mb-3">
+            <div class="card-header bg-white pt-2 px-2 pb-0">
+                <ul class="nav nav-tabs card-header-tabs flex-nowrap overflow-auto" id="erActionTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabMedication" type="button" role="tab">
+                            <i class="ti ti-pill me-1"></i>Medication
+                            @if($case->medicationOrders->count())<span class="badge rounded-pill bg-danger-subtle text-danger ms-1">{{ $case->medicationOrders->count() }}</span>@endif
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabInvestigations" type="button" role="tab">
+                            <i class="ti ti-test-pipe me-1"></i>Investigations
+                            @if($case->labRequests->count())<span class="badge rounded-pill bg-secondary ms-1">{{ $case->labRequests->count() }}</span>@endif
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabProcedures" type="button" role="tab">
+                            <i class="ti ti-stethoscope me-1"></i>Procedures
+                            @if($case->procedureRequests->count())<span class="badge rounded-pill bg-secondary ms-1">{{ $case->procedureRequests->count() }}</span>@endif
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabConsumables" type="button" role="tab">
+                            <i class="ti ti-box me-1"></i>Consumables
+                            @if($case->consumableUsages->count())<span class="badge rounded-pill bg-secondary ms-1">{{ $case->consumableUsages->count() }}</span>@endif
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabTasks" type="button" role="tab">
+                            <i class="ti ti-checklist me-1"></i>Tasks
+                            @if($pendingTasks->count())<span class="badge rounded-pill bg-warning text-dark ms-1">{{ $pendingTasks->count() }}</span>@endif
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabBilling" type="button" role="tab">
+                            <i class="ti ti-receipt me-1"></i>Billing
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    {{-- Medication / MAR --}}
+                    <div class="tab-pane fade show active" id="erTabMedication" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0">Medication / MAR</h6>
+                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.emergency.mar-chart', $case->visit) }}"><i class="ti ti-external-link me-1"></i>Open MAR</a>
+                        </div>
                         <div class="row g-2 text-center mb-3">
                             <div class="col-3"><div class="fw-bold text-danger">{{ $medCounts['due_now'] }}</div><small class="text-muted">Due</small></div>
                             <div class="col-3"><div class="fw-bold text-warning">{{ $medCounts['overdue'] }}</div><small class="text-muted">Late</small></div>
@@ -355,6 +396,7 @@
                             <div class="col-12"><textarea class="form-control" name="instructions" rows="2" placeholder="Instructions"></textarea></div>
                             <div class="col-12"><button class="btn btn-outline-danger w-100" type="submit">Order Emergency Medication</button></div>
                         </form>
+                        <div class="er-scroll">
                         @forelse($case->medicationOrders as $order)
                             <div class="border rounded p-2 mb-2">
                                 <div class="d-flex justify-content-between gap-2">
@@ -369,17 +411,12 @@
                         @empty
                             <div class="text-muted">No emergency medication orders yet.</div>
                         @endforelse
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="col-xl-4">
-                <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Investigations</h5>
-                        <span class="badge bg-light text-dark">{{ $case->labRequests->count() }}</span>
-                    </div>
-                    <div class="card-body">
+                    {{-- Investigations --}}
+                    <div class="tab-pane fade" id="erTabInvestigations" role="tabpanel">
+                        <h6 class="fw-bold mb-3">Investigations</h6>
                         <form method="POST" action="{{ route('admin.emergency.investigations.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-12">
@@ -404,6 +441,7 @@
                             <div class="col-12"><textarea class="form-control" name="clinical_info" rows="2" placeholder="Clinical information">{{ old('clinical_info') }}</textarea></div>
                             <div class="col-12"><button class="btn btn-outline-primary w-100" type="submit">Request Investigation</button></div>
                         </form>
+                        <div class="er-scroll">
                         @forelse($case->labRequests as $request)
                             @php $requestItems = $request->items->map(fn ($item) => $item->display_name ?? $item->name ?? $item->labTest?->name)->filter()->implode(', '); @endphp
                             <div class="border rounded p-2 mb-2">
@@ -416,17 +454,12 @@
                         @empty
                             <div class="text-muted">No emergency investigations yet.</div>
                         @endforelse
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="col-xl-4">
-                <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Procedures</h5>
-                        <span class="badge bg-light text-dark">{{ $case->procedureRequests->count() }}</span>
-                    </div>
-                    <div class="card-body">
+                    {{-- Procedures --}}
+                    <div class="tab-pane fade" id="erTabProcedures" role="tabpanel">
+                        <h6 class="fw-bold mb-3">Procedures</h6>
                         <form method="POST" action="{{ route('admin.emergency.procedures.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-12">
@@ -451,6 +484,7 @@
                             <div class="col-12"><textarea class="form-control" name="indication" rows="2" placeholder="Indication" required>{{ old('indication') }}</textarea></div>
                             <div class="col-12"><button class="btn btn-outline-primary w-100" type="submit">Request Procedure</button></div>
                         </form>
+                        <div class="er-scroll">
                         @forelse($case->procedureRequests as $request)
                             <div class="border rounded p-2 mb-2">
                                 <div class="d-flex justify-content-between gap-2">
@@ -462,24 +496,19 @@
                         @empty
                             <div class="text-muted">No emergency procedures yet.</div>
                         @endforelse
+                        </div>
                     </div>
-                </div>
-            </div>
-        </div>
 
-        <div class="row g-3 mt-1">
-            <div class="col-xl-4">
-                <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Consumables</h5>
-                        <span class="badge bg-light text-dark">Emergency stock</span>
-                    </div>
-                    <div class="card-body">
+                    {{-- Consumables --}}
+                    <div class="tab-pane fade" id="erTabConsumables" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0">Consumables</h6>
+                            <span class="badge bg-light text-dark">Emergency stock</span>
+                        </div>
                         <form method="POST" action="{{ route('admin.emergency.consumables.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-12">
-                                <input class="form-control form-control-sm mb-1" data-filter-target="emergencyConsumableSelect" placeholder="Search consumable">
-                                <select class="form-select" name="product_id" id="emergencyConsumableSelect" required>
+                                <select class="form-select" name="product_id" id="emergencyConsumableSelect" data-er-select2 data-placeholder="Search consumable…" required>
                                     <option value="">Select consumable</option>
                                     @foreach($consumableProducts as $product)
                                         <option value="{{ $product->id }}">{{ $product->name }} - ER {{ number_format($product->emergency_available_quantity ?? 0, 0) }}</option>
@@ -504,15 +533,13 @@
                             @endforelse
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="col-xl-4">
-                <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Tasks and Monitoring</h5>
-                        <span class="badge bg-light text-dark">{{ $pendingTasks->count() }} pending</span>
-                    </div>
-                    <div class="card-body er-scroll">
+
+                    {{-- Tasks & Monitoring --}}
+                    <div class="tab-pane fade" id="erTabTasks" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0">Tasks &amp; Monitoring</h6>
+                            <span class="badge bg-light text-dark">{{ $pendingTasks->count() }} pending</span>
+                        </div>
                         <form method="POST" action="{{ route('admin.emergency.tasks.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-12"><input class="form-control form-control-sm" name="title" placeholder="Task (e.g. Recheck vitals, Reposition patient)" maxlength="255" required></div>
@@ -535,6 +562,7 @@
                             </div>
                             <div class="col-12"><button class="btn btn-sm btn-outline-primary w-100" type="submit">Add Monitoring Task</button></div>
                         </form>
+                        <div class="er-scroll">
                         @forelse($case->clinicalTasks->sortByDesc('scheduled_at') as $task)
                             @php $taskDone = in_array($task->status, ['COMPLETED', 'CANCELLED'], true); $isMedTask = $task->task_type === \App\Models\ClinicalTask::TYPE_MEDICATION_ADMINISTRATION; @endphp
                             <div class="border rounded p-2 mb-2 {{ $taskDone ? 'bg-light' : '' }}">
@@ -556,18 +584,17 @@
                         @empty
                             <div class="text-muted">No emergency monitoring tasks yet.</div>
                         @endforelse
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class="col-xl-4">
-                <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">Billing</h5>
-                        @if($activeInvoice)
-                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.billing.invoices.show', $activeInvoice) }}">Invoice</a>
-                        @endif
-                    </div>
-                    <div class="card-body">
+
+                    {{-- Billing --}}
+                    <div class="tab-pane fade" id="erTabBilling" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="fw-bold mb-0">Billing</h6>
+                            @if($activeInvoice)
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.billing.invoices.show', $activeInvoice) }}"><i class="ti ti-file-invoice me-1"></i>Open Invoice</a>
+                            @endif
+                        </div>
                         <form method="POST" action="{{ route('admin.emergency.services.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-8">
@@ -581,6 +608,7 @@
                             <div class="col-4"><input class="form-control" type="number" name="quantity" min="1" value="1"></div>
                             <div class="col-12"><button class="btn btn-outline-success w-100" type="submit">Add to Invoice</button></div>
                         </form>
+                        <div class="er-scroll">
                         @if($billingGroups)
                             @foreach($billingGroups as $group => $items)
                                 <div class="mb-2">
@@ -596,6 +624,7 @@
                         @else
                             <div class="text-muted">No emergency invoice items yet.</div>
                         @endif
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1012,6 +1041,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Generic searchable selects (drug picker, bay, ward, bed, billable service…).
     document.querySelectorAll('[data-er-select2]').forEach(function (el) { applySelect2(el); });
+
+    // select2 initialised inside a hidden tab pane can render with the wrong
+    // width; re-trigger it when its tab becomes visible.
+    document.querySelectorAll('#erActionTabs button[data-bs-toggle="tab"]').forEach(function (btn) {
+        btn.addEventListener('shown.bs.tab', function (e) {
+            var pane = document.querySelector(e.target.getAttribute('data-bs-target'));
+            if (pane && window.jQuery) {
+                jQuery(pane).find('.select2-hidden-accessible').trigger('change.select2');
+            }
+        });
+    });
 
     function formatEmergencyServiceLabel(service) {
         var parts = [service.name];
