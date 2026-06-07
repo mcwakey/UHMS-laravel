@@ -17,20 +17,34 @@ class BloodRequestService
         private NotificationService $notifier,
     ) {}
 
+    /** Create a request tied to a facility visit/patient. */
     public function createForVisit(Visit $visit, array $data, User $user): BloodRequest
     {
+        return $this->persist($visit, $data, $user);
+    }
+
+    /** Create a request for an external (referral / walk-in / not-in-attendance) recipient. */
+    public function createExternal(array $data, User $user): BloodRequest
+    {
+        return $this->persist(null, $data, $user);
+    }
+
+    protected function persist(?Visit $visit, array $data, User $user): BloodRequest
+    {
         return DB::transaction(function () use ($visit, $data, $user) {
+            $isExternal = $visit === null;
             $priority = strtoupper($data['priority'] ?? $data['urgency'] ?? 'ROUTINE');
             $component = strtoupper($data['component_type'] ?? 'WHOLE_BLOOD');
             $bloodGroup = $data['blood_group'];
 
             $request = BloodRequest::create([
                 'request_number' => BloodRequest::generateRequestNumber(),
-                'visit_id' => $visit->id,
-                'patient_id' => $visit->patient_id,
-                'admission_id' => $data['admission_id'] ?? $visit->admission?->id,
-                'emergency_case_id' => $data['emergency_case_id'] ?? $visit->emergencyCase?->id,
-                'department_id' => $data['department_id'] ?? $visit->current_department_id,
+                'visit_id' => $visit?->id,
+                'patient_id' => $visit?->patient_id,
+                'recipient_type' => $isExternal ? BloodRequest::RECIPIENT_EXTERNAL : BloodRequest::RECIPIENT_PATIENT,
+                'admission_id' => $data['admission_id'] ?? $visit?->admission?->id,
+                'emergency_case_id' => $data['emergency_case_id'] ?? $visit?->emergencyCase?->id,
+                'department_id' => $data['department_id'] ?? $visit?->current_department_id,
                 'requested_by' => $user->id,
                 'requested_at' => $data['requested_at'] ?? now(),
                 'needed_at' => $data['needed_at'] ?? null,
@@ -47,8 +61,9 @@ class BloodRequestService
 
             $this->upsertRecipient($request, $visit, $data, $user);
 
+            $who = $isExternal ? ' [external recipient]' : '';
             $this->log->log(LogModule::BLOOD_BANK, 'BLOOD_REQUEST_CREATED', [
-                'description' => "Blood request {$request->request_number}: {$bloodGroup} {$component} x{$request->units_requested} ({$priority}).",
+                'description' => "Blood request {$request->request_number}: {$bloodGroup} {$component} x{$request->units_requested} ({$priority}){$who}.",
                 'causer' => $user,
                 'patient_id' => $request->patient_id,
                 'visit_id' => $request->visit_id,
@@ -69,6 +84,7 @@ class BloodRequestService
         [$abo, $rh] = $this->splitGroup($group);
 
         $before = $request->recipient?->getAttributes();
+        $isExternal = $request->recipient_type === BloodRequest::RECIPIENT_EXTERNAL;
 
         $request->recipient()->updateOrCreate(
             ['blood_request_id' => $request->id],
@@ -77,6 +93,13 @@ class BloodRequestService
                 'visit_id' => $request->visit_id,
                 'admission_id' => $request->admission_id,
                 'emergency_case_id' => $request->emergency_case_id,
+                'recipient_type' => $request->recipient_type ?? BloodRequest::RECIPIENT_PATIENT,
+                'external_name' => $isExternal ? ($data['external_name'] ?? null) : null,
+                'external_sex' => $isExternal ? ($data['external_sex'] ?? null) : null,
+                'external_age' => $isExternal ? ($data['external_age'] ?? null) : null,
+                'external_facility' => $isExternal ? ($data['external_facility'] ?? null) : null,
+                'external_contact' => $isExternal ? ($data['external_contact'] ?? null) : null,
+                'external_reference' => $isExternal ? ($data['external_reference'] ?? null) : null,
                 'patient_blood_group' => $abo ? $abo.$rh : $group,
                 'patient_rh_factor' => $data['patient_rh_factor'] ?? ($rh === '-' ? 'NEGATIVE' : 'POSITIVE'),
                 'diagnosis' => $data['diagnosis'] ?? $request->diagnosis,

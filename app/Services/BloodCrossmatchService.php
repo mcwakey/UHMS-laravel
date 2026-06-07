@@ -58,7 +58,7 @@ class BloodCrossmatchService
         if ($eval['status'] === BloodBankCompatibilityService::INCOMPATIBLE) {
             if (! $emergencyOverride) {
                 // Still record the incompatible crossmatch (do not silently drop it).
-                $crossmatch = $this->store($request, $unit, $user, $method, $notes, $recipientGroup, $component, BloodCrossmatch::RESULT_INCOMPATIBLE, BloodCrossmatch::COMPAT_INCOMPATIBLE);
+                $crossmatch = $this->store($request, $unit, $user, $method, $notes, $recipientGroup, $component, BloodCrossmatch::RESULT_INCOMPATIBLE, BloodCrossmatch::COMPAT_INCOMPATIBLE, $eval['reason']);
                 $unit->update(['crossmatch_status' => BloodUnit::CROSSMATCH_INCOMPATIBLE]);
 
                 $this->log->log(LogModule::BLOOD_BANK, 'CROSSMATCH_INCOMPATIBLE', [
@@ -90,7 +90,8 @@ class BloodCrossmatchService
             $crossmatch = $this->store(
                 $request, $unit, $user, $method,
                 $emergencyOverride ? trim(($notes ? $notes.' ' : '').'[EMERGENCY OVERRIDE: '.$overrideReason.']') : $notes,
-                $recipientGroup, $component, $result, $compatStatus
+                $recipientGroup, $component, $result, $compatStatus,
+                $emergencyOverride ? $eval['reason'].' Released under emergency override.' : $eval['reason']
             );
 
             $unit->update([
@@ -136,7 +137,8 @@ class BloodCrossmatchService
 
     protected function store(
         BloodRequest $request, BloodUnit $unit, User $user, ?string $method, ?string $notes,
-        string $recipientGroup, string $component, string $result, string $compatStatus
+        string $recipientGroup, string $component, string $result, string $compatStatus,
+        ?string $reason = null
     ): BloodCrossmatch {
         return BloodCrossmatch::updateOrCreate(
             ['blood_request_id' => $request->id, 'blood_unit_id' => $unit->id],
@@ -151,6 +153,7 @@ class BloodCrossmatchService
                 'donor_blood_group' => $unit->blood_group,
                 'component_type' => $component,
                 'compatibility_status' => $compatStatus,
+                'compatibility_reason' => $reason,
                 'notes' => $notes,
             ]
         );

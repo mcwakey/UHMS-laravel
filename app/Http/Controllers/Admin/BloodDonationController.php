@@ -22,11 +22,31 @@ class BloodDonationController extends Controller
                 ->latest('donation_date')
                 ->paginate(30)
                 ->withQueryString(),
-            'donors' => BloodDonor::where('screening_status', BloodDonor::SCREENING_ELIGIBLE)
-                ->orderBy('first_name')->limit(100)->get(),
+            // All non-inactive donors are listed (eligible first) so that an
+            // authorised user can collect from a non-eligible donor via override.
+            'donors' => BloodDonor::query()
+                ->where('status', '!=', BloodDonor::STATUS_INACTIVE)
+                ->orderByRaw('CASE WHEN screening_status = ? THEN 0 ELSE 1 END', [BloodDonor::SCREENING_ELIGIBLE])
+                ->orderBy('first_name')
+                ->limit(300)
+                ->get(),
             'locations' => BloodStorageLocation::active()->orderBy('name')->get(),
             'screeningTests' => config('blood_bank.screening_tests'),
             'filters' => $request->only(['screening_status']),
+        ]);
+    }
+
+    /** Donation detail + decoupled infectious-disease screening panel. */
+    public function show(BloodDonation $donation)
+    {
+        $donation->load([
+            'donor', 'unit.storageLocation', 'collectedBy', 'screenedBy',
+            'tests.performedBy', 'tests.verifiedBy',
+        ]);
+
+        return view('blood-bank.donation-view', [
+            'donation' => $donation,
+            'locations' => BloodStorageLocation::active()->orderBy('name')->get(),
         ]);
     }
 

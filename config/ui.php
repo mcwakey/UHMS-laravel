@@ -277,6 +277,7 @@ return [
             'REGISTERED' => 'secondary',
             'QUESTIONNAIRE_PENDING' => 'warning',
             'PHYSICAL_ASSESSMENT_PENDING' => 'warning',
+            'ELIGIBILITY_PENDING' => 'info',
             'ELIGIBLE' => 'success',
             'NEEDS_REVIEW' => 'warning',
             'TEMPORARILY_DEFERRED' => 'warning',

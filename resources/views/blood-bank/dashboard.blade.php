@@ -5,6 +5,11 @@
 <x-page-header title="Blood Bank Dashboard" description="Inventory, requests, expiring units, and issue safety at a glance." icon="ti-droplet-filled">
     <x-slot:actions>
         <a href="{{ route('admin.blood-bank.requests.index') }}" class="btn btn-primary btn-sm"><i class="ti ti-plus me-1"></i>Request Blood</a>
+        <a href="{{ route('admin.blood-bank.donors.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-users me-1"></i>Donors</a>
+        <a href="{{ route('admin.blood-bank.donations.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-droplet me-1"></i>Donations</a>
+        @can('blood_bank.settings.manage')
+            <a href="{{ route('admin.blood-bank.storage.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-fridge me-1"></i>Storage</a>
+        @endcan
         <a href="{{ route('admin.blood-bank.reports.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-report-analytics me-1"></i>Reports</a>
     </x-slot:actions>
 </x-page-header>

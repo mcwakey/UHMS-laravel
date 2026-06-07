@@ -11,6 +11,8 @@ class BloodRecipient extends Model
 
     protected $fillable = [
         'blood_request_id', 'patient_id', 'visit_id', 'admission_id', 'emergency_case_id',
+        'recipient_type', 'external_name', 'external_sex', 'external_age',
+        'external_facility', 'external_contact', 'external_reference',
         'patient_blood_group', 'patient_rh_factor', 'diagnosis', 'clinical_indication',
         'hemoglobin_level', 'pregnancy_status', 'previous_transfusion_reaction',
         'previous_transfusion_reaction_notes', 'transfusion_history', 'special_requirements',
@@ -19,7 +21,14 @@ class BloodRecipient extends Model
 
     protected $casts = [
         'previous_transfusion_reaction' => 'boolean',
+        'external_age' => 'integer',
     ];
+
+    /** Recipient display name — facility patient or external/referral identity. */
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->patient?->full_name ?: ($this->external_name ?: 'Unknown recipient');
+    }
 
     public function request()
     {

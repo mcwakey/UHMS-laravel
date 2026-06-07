@@ -30,10 +30,15 @@ class BloodRequest extends Model
 
     public const PRIORITY_MASSIVE = 'MASSIVE_TRANSFUSION';
 
+    public const RECIPIENT_PATIENT = 'PATIENT';
+
+    public const RECIPIENT_EXTERNAL = 'EXTERNAL';
+
     protected $fillable = [
         'request_number',
         'visit_id',
         'patient_id',
+        'recipient_type',
         'admission_id',
         'emergency_case_id',
         'department_id',
@@ -125,6 +130,20 @@ class BloodRequest extends Model
     public function recipientGroup(): ?string
     {
         return $this->recipient?->blood_group ?: $this->blood_group;
+    }
+
+    /** Whether this request is for a non-facility (referral / walk-in) recipient. */
+    public function isExternal(): bool
+    {
+        return $this->recipient_type === self::RECIPIENT_EXTERNAL || (! $this->patient_id && $this->recipient?->external_name);
+    }
+
+    /** Display name for the recipient, whether a facility patient or external. */
+    public function recipientName(): string
+    {
+        return $this->patient?->full_name
+            ?: $this->recipient?->external_name
+            ?: 'Unknown recipient';
     }
 
     public static function generateRequestNumber(): string

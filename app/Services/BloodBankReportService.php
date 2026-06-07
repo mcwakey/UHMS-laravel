@@ -11,6 +11,24 @@ use App\Models\BloodUnit;
 
 class BloodBankReportService
 {
+    /** Headline KPIs for the report dashboard. */
+    public function summary(): array
+    {
+        return [
+            'available_units' => BloodUnit::where('status', BloodUnit::STATUS_AVAILABLE)->count(),
+            'quarantined_units' => BloodUnit::where('status', BloodUnit::STATUS_QUARANTINED)->count(),
+            'expiring_units' => BloodUnit::whereIn('status', [BloodUnit::STATUS_AVAILABLE, BloodUnit::STATUS_RESERVED])
+                ->whereBetween('expiry_date', [today(), today()->copy()->addDays(7)])->count(),
+            'expired_units' => BloodUnit::where('expiry_date', '<', today())
+                ->whereNotIn('status', [BloodUnit::STATUS_ISSUED, BloodUnit::STATUS_TRANSFUSED, BloodUnit::STATUS_DISCARDED])->count(),
+            'pending_requests' => BloodRequest::whereIn('status', [
+                BloodRequest::STATUS_PENDING, BloodRequest::STATUS_APPROVED, BloodRequest::STATUS_PARTIALLY_ISSUED,
+            ])->count(),
+            'reactions' => BloodIssue::where('reaction_occurred', true)->count(),
+            'incompatible_crossmatches' => BloodCrossmatch::where('compatibility_status', 'INCOMPATIBLE')->count(),
+        ];
+    }
+
     public function inventory(array $filters = [])
     {
         return BloodUnit::query()

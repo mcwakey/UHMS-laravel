@@ -15,6 +15,7 @@ class BloodBankReportController extends Controller
         $filters = $request->only(['date_from', 'date_to', 'status', 'blood_group', 'component_type', 'decision', 'result']);
 
         return view('blood-bank.reports', [
+            'summary' => $this->reports->summary(),
             'inventory' => $this->reports->inventory($filters),
             'requests' => $this->reports->requests($filters),
             'issues' => $this->reports->issues($filters),

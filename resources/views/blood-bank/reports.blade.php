@@ -2,13 +2,35 @@
 @section('title', 'Blood Bank Reports')
 
 @section('content')
-<x-page-header title="Blood Bank Reports" description="Inventory, request, issue, transfusion, expiry, and wastage foundation." icon="ti-report-analytics">
+<x-page-header title="Blood Bank Reports" description="Inventory, requests, issues, transfusion safety, screening, and compatibility." icon="ti-report-analytics">
     <x-slot:actions>
-        <a href="{{ route('admin.blood-bank.dashboard') }}" class="btn btn-outline-secondary btn-sm">Dashboard</a>
+        <button type="button" class="btn btn-outline-primary btn-sm d-print-none" onclick="window.print()"><i class="ti ti-printer me-1"></i>Print</button>
+        <a href="{{ route('admin.blood-bank.dashboard') }}" class="btn btn-outline-secondary btn-sm d-print-none"><i class="ti ti-layout-dashboard me-1"></i>Dashboard</a>
     </x-slot:actions>
 </x-page-header>
 
-<div class="card mb-3">
+<div class="row g-2 mb-3">
+    @foreach([
+        ['Available', $summary['available_units'] ?? 0, 'success', 'ti-droplet'],
+        ['Quarantined', $summary['quarantined_units'] ?? 0, 'warning', 'ti-lock'],
+        ['Expiring ≤7d', $summary['expiring_units'] ?? 0, 'danger', 'ti-clock-exclamation'],
+        ['Expired', $summary['expired_units'] ?? 0, 'secondary', 'ti-droplet-off'],
+        ['Active Requests', $summary['pending_requests'] ?? 0, 'primary', 'ti-clipboard-list'],
+        ['Reactions', $summary['reactions'] ?? 0, 'danger', 'ti-alert-triangle'],
+        ['Incompatible XM', $summary['incompatible_crossmatches'] ?? 0, 'danger', 'ti-x'],
+    ] as [$label, $value, $color, $icon])
+        <div class="col-6 col-md-4 col-xl">
+            <div class="card border-start border-{{ $color }} border-3 h-100">
+                <div class="card-body py-2 px-3">
+                    <div class="small text-muted"><i class="ti {{ $icon }} me-1"></i>{{ $label }}</div>
+                    <div class="h4 mb-0">{{ $value }}</div>
+                </div>
+            </div>
+        </div>
+    @endforeach
+</div>
+
+<div class="card mb-3 d-print-none">
     <div class="card-body">
         <form class="row g-2 align-items-end">
             <div class="col-md-2"><label class="form-label">From</label><input type="date" name="date_from" value="{{ $filters['date_from'] ?? '' }}" class="form-control"></div>
@@ -91,18 +113,18 @@
 <div class="card mt-3">
     <div class="card-header bg-white"><h5 class="card-title mb-0">Compatibility / Crossmatch Report</h5></div>
     <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
-        <thead class="bg-light"><tr><th>Request</th><th>Patient</th><th>Recipient Group</th><th>Unit</th><th>Donor Group</th><th>Component</th><th>Compatibility</th><th>Result</th><th>Performed By</th><th>Verified By</th></tr></thead>
+        <thead class="bg-light"><tr><th>Request</th><th>Patient</th><th>Recipient</th><th>Unit</th><th>Donor</th><th>Component</th><th>Compatibility</th><th>Reasoning</th><th>Result</th><th>By</th></tr></thead>
         <tbody>@forelse($crossmatches as $xm)<tr>
             <td>{{ $xm->request->request_number ?? '—' }}</td>
-            <td>{{ $xm->patient->full_name ?? '—' }}</td>
+            <td>{{ $xm->patient->full_name ?? ($xm->request?->recipientName() ?? '—') }}</td>
             <td>{{ $xm->recipient_blood_group ?? '—' }}</td>
             <td>{{ $xm->unit->unit_number ?? '—' }}</td>
             <td>{{ $xm->donor_blood_group ?? ($xm->unit->blood_group ?? '—') }}</td>
             <td>{{ $xm->component_type ?? '—' }}</td>
             <td><x-status-badge :status="$xm->compatibility_status" domain="crossmatch" size="sm" /></td>
+            <td class="small text-muted" style="max-width:280px">{{ $xm->compatibility_reason ?? '—' }}</td>
             <td>{{ $xm->result }}</td>
-            <td>{{ $xm->performedBy->full_name ?? '—' }}</td>
-            <td>{{ $xm->verifiedBy->full_name ?? '—' }}</td>
+            <td class="small">{{ $xm->performedBy->full_name ?? '—' }}@if($xm->verifiedBy)<div class="text-success">✓ {{ $xm->verifiedBy->full_name }}</div>@endif</td>
         </tr>@empty<tr><td colspan="10"><x-empty-state icon="ti-droplet-off" message="No crossmatch records." /></td></tr>@endforelse</tbody>
     </table></div></div>
     @if($crossmatches->hasPages())<div class="card-footer">{{ $crossmatches->links() }}</div>@endif

@@ -38,6 +38,7 @@ class BloodCrossmatch extends Model
         'donor_blood_group',
         'component_type',
         'compatibility_status',
+        'compatibility_reason',
         'verified_by',
         'verified_at',
         'notes',

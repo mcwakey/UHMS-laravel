@@ -8,6 +8,7 @@ use App\Models\Visit;
 use App\Services\BloodBankCompatibilityService;
 use App\Services\BloodRequestService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class BloodRequestController extends Controller
 {
@@ -49,8 +50,18 @@ class BloodRequestController extends Controller
 
     public function store(Request $request)
     {
+        $isExternal = $request->input('recipient_type') === BloodRequest::RECIPIENT_EXTERNAL;
+
         $data = $request->validate([
-            'visit_id' => ['required', 'exists:visits,id'],
+            'recipient_type' => ['nullable', 'in:PATIENT,EXTERNAL'],
+            'visit_id' => [Rule::requiredIf(! $isExternal), 'nullable', 'exists:visits,id'],
+            // External (referral / walk-in / not-in-attendance) recipient identity.
+            'external_name' => [Rule::requiredIf($isExternal), 'nullable', 'string', 'max:255'],
+            'external_sex' => ['nullable', 'string', 'max:20'],
+            'external_age' => ['nullable', 'integer', 'min:0', 'max:150'],
+            'external_facility' => ['nullable', 'string', 'max:255'],
+            'external_contact' => ['nullable', 'string', 'max:100'],
+            'external_reference' => ['nullable', 'string', 'max:100'],
             'blood_group' => ['required', 'string', 'max:5'],
             'component_type' => ['nullable', 'string', 'max:50'],
             'units_requested' => ['required', 'integer', 'min:1'],
@@ -70,9 +81,46 @@ class BloodRequestController extends Controller
             'special_requirements' => ['nullable', 'string'],
         ]);
 
-        $this->requests->createForVisit(Visit::findOrFail($data['visit_id']), $data, $request->user());
+        if ($isExternal) {
+            $this->requests->createExternal($data, $request->user());
+        } else {
+            $this->requests->createForVisit(Visit::findOrFail($data['visit_id']), $data, $request->user());
+        }
 
         return back()->with('success', 'Blood request and recipient details created.');
+    }
+
+    /** Searchable visit lookup for the request select2 (visit number / patient). */
+    public function visitSearch(Request $request)
+    {
+        $q = trim((string) $request->get('q', ''));
+
+        $visits = Visit::query()
+            ->with('patient:id,patient_number,first_name,last_name,blood_group')
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where('visit_number', 'like', "%{$q}%")
+                    ->orWhereHas('patient', function ($p) use ($q) {
+                        $p->where('first_name', 'like', "%{$q}%")
+                            ->orWhere('last_name', 'like', "%{$q}%")
+                            ->orWhere('patient_number', 'like', "%{$q}%");
+                    });
+            })
+            ->latest('visit_date')
+            ->limit(20)
+            ->get();
+
+        return response()->json($visits->map(function ($v) {
+            $group = $v->patient?->blood_group;
+
+            return [
+                'id' => $v->id,
+                'visit_number' => $v->visit_number,
+                'patient_name' => $v->patient?->full_name,
+                'patient_number' => $v->patient?->patient_number,
+                'blood_group' => $group instanceof \BackedEnum ? $group->value : $group,
+                'visit_date' => $v->visit_date?->format('d M Y'),
+            ];
+        }));
     }
 
     public function updateRecipient(Request $request, BloodRequest $bloodRequest)

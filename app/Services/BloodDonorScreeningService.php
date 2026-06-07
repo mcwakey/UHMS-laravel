@@ -83,6 +83,18 @@ class BloodDonorScreeningService
                 'hemoglobin', 'general_appearance', 'venous_access', 'fitness_notes',
             ]))));
 
+            // Advance the donor lifecycle: physical done → awaiting the eligibility
+            // decision. Only move forward from a pre-decision state so a re-assessment
+            // never silently regresses an already eligible/deferred donor.
+            if (in_array($screening->donor->screening_status, [
+                BloodDonor::SCREENING_REGISTERED,
+                BloodDonor::SCREENING_QUESTIONNAIRE_PENDING,
+                BloodDonor::SCREENING_PHYSICAL_PENDING,
+                null,
+            ], true)) {
+                $screening->donor->update(['screening_status' => BloodDonor::SCREENING_ELIGIBILITY_PENDING]);
+            }
+
             $this->log->log(LogModule::BLOOD_BANK, 'DONOR_PHYSICAL_ASSESSMENT_COMPLETED', [
                 'description' => "Physical assessment recorded for {$screening->donor->donor_number}",
                 'causer' => $user,
@@ -230,7 +242,7 @@ class BloodDonorScreeningService
                 BloodDonorScreening::DECISION_ELIGIBLE => BloodDonor::SCREENING_ELIGIBLE,
                 BloodDonorScreening::DECISION_TEMP_DEFERRED => BloodDonor::SCREENING_TEMP_DEFERRED,
                 BloodDonorScreening::DECISION_PERM_DEFERRED => BloodDonor::SCREENING_PERM_DEFERRED,
-                default => BloodDonor::SCREENING_PHYSICAL_PENDING,
+                default => BloodDonor::SCREENING_ELIGIBILITY_PENDING,
             };
 
             $screening->donor->update([

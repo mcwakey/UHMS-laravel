@@ -38,6 +38,28 @@ class BloodDonorController extends Controller
         ]);
     }
 
+    /** Donor profile + WHO screening workspace (questionnaire / assessment / eligibility). */
+    public function show(BloodDonor $donor)
+    {
+        $donor->load([
+            'latestScreening.assessedBy', 'latestScreening.reviewedBy', 'latestScreening.questionnaireBy',
+            'registeredBy', 'donations' => fn ($q) => $q->with('unit')->latest('donation_date'),
+        ]);
+
+        $screening = $donor->latestScreening;
+        $suggestion = $screening
+            ? $this->screening->suggestEligibility($screening)
+            : ['decision' => null, 'flags' => []];
+
+        return view('blood-bank.donor-profile', [
+            'donor' => $donor,
+            'screening' => $screening,
+            'suggestion' => $suggestion,
+            'questionnaireRisk' => config('blood_bank.questionnaire_risk'),
+            'donorConfig' => config('blood_bank.donor'),
+        ]);
+    }
+
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -65,14 +87,16 @@ class BloodDonorController extends Controller
     public function questionnaire(Request $request, BloodDonor $donor)
     {
         $data = $request->validate([
-            'questionnaire' => ['required', 'array'],
+            // Nullable, not required: unticking every box (a donor with no risk
+            // factors) is valid and must be allowed to save.
+            'questionnaire' => ['nullable', 'array'],
             'consent_donate' => ['nullable', 'boolean'],
             'consent_testing' => ['nullable', 'boolean'],
             'consent_contact' => ['nullable', 'boolean'],
         ]);
 
-        // Normalise checkbox values to booleans.
-        $answers = collect($data['questionnaire'])->map(fn ($v) => filter_var($v, FILTER_VALIDATE_BOOLEAN))->all();
+        // Normalise checkbox values to booleans (empty when nothing is ticked).
+        $answers = collect($data['questionnaire'] ?? [])->map(fn ($v) => filter_var($v, FILTER_VALIDATE_BOOLEAN))->all();
 
         $screening = $this->screening->startScreening($donor, $request->user());
         $this->screening->recordQuestionnaire($screening, $answers, $request->user(), [
