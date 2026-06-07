@@ -109,16 +109,26 @@
                         <p class="mb-0 text-muted">Type: <span class="badge bg-soft-{{ $invoice->billing_type->color() }}">{{ $invoice->billing_type->label() }}</span></p>
                     </div>
                     <div class="col-md-4">
-                        <h6 class="fw-bold mb-2">Patient</h6>
-                        <p class="fw-medium mb-1">{{ $invoice->patient->full_name }}</p>
-                        <p class="text-muted mb-1">{{ $invoice->patient->patient_number }}</p>
-                        <p class="text-muted mb-1">{{ $invoice->patient->phone }}</p>
+                        <h6 class="fw-bold mb-2">{{ $invoice->patient ? 'Patient' : 'Recipient' }}</h6>
+                        @if($invoice->patient)
+                            <p class="fw-medium mb-1">{{ $invoice->patient->full_name }}</p>
+                            <p class="text-muted mb-1">{{ $invoice->patient->patient_number }}</p>
+                            <p class="text-muted mb-1">{{ $invoice->patient->phone }}</p>
+                        @else
+                            <p class="fw-medium mb-1">{{ $invoice->external_party_name ?? 'External recipient' }}</p>
+                            <p class="text-muted mb-1"><span class="badge bg-purple-lt">External / referral</span></p>
+                            @if($invoice->bloodRequest)<p class="text-muted mb-1">Blood request {{ $invoice->bloodRequest->request_number }}</p>@endif
+                        @endif
                     </div>
                     <div class="col-md-4 text-md-end">
                         <h6 class="fw-bold mb-2">Visit</h6>
-                        <p class="text-muted mb-1">{{ $invoice->visit->visit_number }}</p>
-                        <p id="invoiceVisitStatusLabel" class="text-muted mb-1">{{ $invoice->visit->status->label() }}</p>
-                        <p class="text-muted mb-0">{{ $invoice->visit->visit_date->format('d M Y') }}</p>
+                        @if($invoice->visit)
+                            <p class="text-muted mb-1">{{ $invoice->visit->visit_number }}</p>
+                            <p id="invoiceVisitStatusLabel" class="text-muted mb-1">{{ $invoice->visit->status->label() }}</p>
+                            <p class="text-muted mb-0">{{ $invoice->visit->visit_date->format('d M Y') }}</p>
+                        @else
+                            <p class="text-muted mb-0">—</p>
+                        @endif
                     </div>
                 </div>
 
@@ -580,12 +590,20 @@
                     confirm-title="Cancel this invoice?" confirm-text="The invoice will be marked cancelled." confirm-button="Yes, cancel invoice" />
                 @endcan
                 @endif
+                @if($invoice->visit)
                 <a href="{{ route('admin.visits.show', $invoice->visit) }}" class="btn btn-outline-primary">
                     <i class="ti ti-calendar-check me-1"></i>View Visit
                 </a>
+                @endif
+                @if($invoice->patient)
                 <a href="{{ route('admin.patients.show', $invoice->patient) }}" class="btn btn-outline-info">
                     <i class="ti ti-user me-1"></i>View Patient
                 </a>
+                @elseif($invoice->bloodRequest)
+                <a href="{{ route('admin.blood-bank.requests.index') }}" class="btn btn-outline-info">
+                    <i class="ti ti-droplet me-1"></i>Blood Requests
+                </a>
+                @endif
             </div>
         </div>
     </div>

@@ -41,6 +41,8 @@ class InvoiceItem extends Model
 
     public const SOURCE_PROCEDURE_CONSUMABLE = 'procedure_consumable';
 
+    public const SOURCE_BLOOD_UNIT = 'blood_unit';
+
     public static function sourceTypes(): array
     {
         return [
@@ -58,6 +60,7 @@ class InvoiceItem extends Model
             self::SOURCE_ADMISSION_DAILY_CONSUMABLE_CHARGE,
             self::SOURCE_INVESTIGATION_CONSUMABLE,
             self::SOURCE_PROCEDURE_CONSUMABLE,
+            self::SOURCE_BLOOD_UNIT,
         ];
     }
 

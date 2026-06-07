@@ -67,10 +67,16 @@
                 @endif
             </td>
             <td>
-                <h5>Patient</h5>
-                <p style="font-weight:bold;">{{ $invoice->patient->full_name }}</p>
-                <p>{{ $invoice->patient->patient_number }}</p>
-                <p>{{ $invoice->patient->phone }}</p>
+                <h5>{{ $invoice->patient ? 'Patient' : 'Recipient' }}</h5>
+                @if($invoice->patient)
+                    <p style="font-weight:bold;">{{ $invoice->patient->full_name }}</p>
+                    <p>{{ $invoice->patient->patient_number }}</p>
+                    <p>{{ $invoice->patient->phone }}</p>
+                @else
+                    <p style="font-weight:bold;">{{ $invoice->external_party_name ?? 'External recipient' }}</p>
+                    <p>External / referral</p>
+                    @if($invoice->bloodRequest)<p>{{ $invoice->bloodRequest->request_number }}</p>@endif
+                @endif
             </td>
             <td>
                 <h5>Visit</h5>

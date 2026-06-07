@@ -160,8 +160,8 @@
                             </a>
                         </td>
                         <td>
-                            <div class="fw-medium">{{ $invoice->patient->full_name }}</div>
-                            <small class="text-muted">{{ $invoice->patient->patient_number }}</small>
+                            <div class="fw-medium">{{ $invoice->patient?->full_name ?? $invoice->external_party_name ?? '—' }}</div>
+                            <small class="text-muted">{{ $invoice->patient?->patient_number ?? 'External / referral' }}</small>
                         </td>
                         <td>
                             <span class="badge bg-soft-{{ $invoice->billing_type->color() }}">{{ $invoice->billing_type->label() }}</span>

@@ -130,8 +130,8 @@
                             @endif
                         </td>
                         <td>
-                            <div class="fw-medium">{{ $payment->patient->full_name }}</div>
-                            <small class="text-muted">{{ $payment->patient->patient_number }}</small>
+                            <div class="fw-medium">{{ $payment->patient?->full_name ?? $payment->invoice?->external_party_name ?? '—' }}</div>
+                            <small class="text-muted">{{ $payment->patient?->patient_number ?? 'External / referral' }}</small>
                         </td>
                         <td>
                             <a href="{{ route('admin.billing.invoices.show', $payment->invoice) }}" class="text-primary">

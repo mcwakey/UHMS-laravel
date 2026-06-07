@@ -49,6 +49,20 @@
                     </div>
                 </div>
 
+                @if($request->isExternal() && $request->bloodInvoice)
+                    @php($inv = $request->bloodInvoice)
+                    <div class="alert {{ $inv->is_paid ? 'alert-success' : 'alert-warning' }} d-flex flex-wrap justify-content-between align-items-center gap-2 py-2 mb-2">
+                        <div class="small">
+                            <i class="ti ti-cash-register me-1"></i><strong>Cash invoice {{ $inv->invoice_number }}</strong>
+                            · Total {{ $inv->formatted_total }} · Balance {{ $inv->formatted_balance }}
+                            · <span class="badge {{ $inv->is_paid ? 'bg-success' : 'bg-warning text-dark' }}">{{ $inv->is_paid ? 'PAID' : 'UNPAID' }}</span>
+                        </div>
+                        @can('invoices.view')
+                            <a href="{{ route('admin.billing.invoices.show', $inv) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-receipt me-1"></i>View / Collect Payment</a>
+                        @endcan
+                    </div>
+                @endif
+
                 @if($request->status === 'PENDING')
                     <form method="POST" action="{{ route('admin.blood-bank.requests.approve', $request) }}" class="d-inline">@csrf @method('PATCH')<button class="btn btn-sm btn-outline-success"><i class="ti ti-check me-1"></i>Approve Request</button></form>
                 @endif
@@ -185,6 +199,7 @@
                         <div class="col-md-6"><label class="form-label">Referring Facility / Ward</label><input name="external_facility" class="form-control" value="{{ old('external_facility') }}"></div>
                         <div class="col-md-3"><label class="form-label">Contact</label><input name="external_contact" class="form-control" value="{{ old('external_contact') }}"></div>
                         <div class="col-md-3"><label class="form-label">External Ref</label><input name="external_reference" class="form-control" value="{{ old('external_reference') }}"></div>
+                        <div class="col-12"><div class="small text-muted"><i class="ti ti-cash-register me-1"></i>A cash invoice is raised automatically for external recipients (priced per unit by component), payable at the cash desk.</div></div>
                     </div>
 
                     <hr>

@@ -21,7 +21,7 @@ class BloodRequestController extends Controller
     {
         $requests = BloodRequest::with([
             'patient', 'visit', 'admission', 'emergencyCase', 'requestedBy', 'approvedBy',
-            'recipient', 'crossmatches.unit', 'crossmatches.performedBy', 'issues.unit',
+            'recipient', 'crossmatches.unit', 'crossmatches.performedBy', 'issues.unit', 'bloodInvoice',
         ])
             ->when($request->status, fn ($q, $v) => $q->where('status', strtoupper($v)))
             ->when($request->blood_group, fn ($q, $v) => $q->where('blood_group', $v))
@@ -93,7 +93,7 @@ class BloodRequestController extends Controller
     /** Searchable visit lookup for the request select2 (visit number / patient). */
     public function visitSearch(Request $request)
     {
-        $q = trim((string) $request->get('q', ''));
+        $q = trim((string) $request->query('q', ''));
 
         $visits = Visit::query()
             ->with('patient:id,patient_number,first_name,last_name,blood_group')

@@ -151,8 +151,8 @@
                             <span class="badge bg-soft-{{ $invoice->billing_type->color() }} text-{{ $invoice->billing_type->color() }}">{{ $invoice->billing_type->label() }}</span>
                         </td>
                         <td>
-                            <div class="fw-medium">{{ $invoice->patient->full_name }}</div>
-                            <small class="text-muted">{{ $invoice->patient->patient_number }}{{ $invoice->patient->phone ? ' | ' . $invoice->patient->phone : '' }}</small>
+                            <div class="fw-medium">{{ $invoice->patient?->full_name ?? $invoice->external_party_name ?? '—' }}</div>
+                            <small class="text-muted">{{ $invoice->patient?->patient_number ?? 'External / referral' }}{{ $invoice->patient?->phone ? ' | ' . $invoice->patient->phone : '' }}</small>
                         </td>
                         <td>
                             <div>{{ $invoice->visit?->visit_number ?? 'Direct invoice' }}</div>

@@ -106,6 +106,12 @@ class BloodRequest extends Model
         return $this->belongsTo(InvoiceItem::class);
     }
 
+    /** Standalone cash invoice raised for an external recipient (if any). */
+    public function bloodInvoice()
+    {
+        return $this->hasOne(Invoice::class, 'blood_request_id');
+    }
+
     public function crossmatches()
     {
         return $this->hasMany(BloodCrossmatch::class, 'blood_request_id');

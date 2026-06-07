@@ -192,6 +192,27 @@ return [
         'EMERGENCY_INCOMPATIBLE_OVERRIDE',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | External recipient billing (per-unit blood charge by component)
+    |--------------------------------------------------------------------------
+    | Used to raise a standalone cash invoice for an external / referral
+    | recipient (no facility visit). Charge = component price × units. Tune to
+    | local cost-recovery / processing-fee policy.
+    */
+    'component_prices' => [
+        'WHOLE_BLOOD' => 150,
+        'PRBC' => 180,
+        'PACKED_RED_CELLS' => 180,
+        'RED_CELLS' => 180,
+        'PLASMA' => 120,
+        'FRESH_FROZEN_PLASMA' => 120,
+        'FFP' => 120,
+        'PLATELETS' => 200,
+        'CRYOPRECIPITATE' => 100,
+    ],
+    'default_component_price' => 150,
+
     // Clinical indication catalogue (suggestions only).
     'clinical_indications' => [
         'Severe anemia', 'Acute bleeding', 'Surgery preparation',

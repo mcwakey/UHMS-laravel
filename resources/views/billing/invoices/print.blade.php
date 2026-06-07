@@ -80,16 +80,26 @@
                 <p><span class="label">Billing Type:</span> {{ $invoice->billing_type->label() }}</p>
             </div>
             <div class="info-col">
-                <h5>Patient</h5>
-                <p style="font-weight:bold;">{{ $invoice->patient->full_name }}</p>
-                <p>{{ $invoice->patient->patient_number }}</p>
-                <p>{{ $invoice->patient->phone }}</p>
+                <h5>{{ $invoice->patient ? 'Patient' : 'Recipient' }}</h5>
+                @if($invoice->patient)
+                    <p style="font-weight:bold;">{{ $invoice->patient->full_name }}</p>
+                    <p>{{ $invoice->patient->patient_number }}</p>
+                    <p>{{ $invoice->patient->phone }}</p>
+                @else
+                    <p style="font-weight:bold;">{{ $invoice->external_party_name ?? 'External recipient' }}</p>
+                    <p>External / referral</p>
+                    @if($invoice->bloodRequest)<p>{{ $invoice->bloodRequest->request_number }}</p>@endif
+                @endif
             </div>
             <div class="info-col" style="text-align:right;">
                 <h5>Visit</h5>
-                <p>{{ $invoice->visit->visit_number }}</p>
-                <p>{{ $invoice->visit->status->label() }}</p>
-                <p>{{ $invoice->visit->visit_date->format('d M Y') }}</p>
+                @if($invoice->visit)
+                    <p>{{ $invoice->visit->visit_number }}</p>
+                    <p>{{ $invoice->visit->status->label() }}</p>
+                    <p>{{ $invoice->visit->visit_date->format('d M Y') }}</p>
+                @else
+                    <p>—</p>
+                @endif
             </div>
         </div>
 

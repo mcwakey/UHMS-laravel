@@ -2,10 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\BillingType;
+use App\Enums\InvoiceStatus;
 use App\Enums\LogModule;
 use App\Enums\NotificationModule;
 use App\Enums\NotificationPriority;
 use App\Models\BloodRequest;
+use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\User;
 use App\Models\Visit;
 use Illuminate\Support\Facades\DB;
@@ -60,6 +64,11 @@ class BloodRequestService
             ]);
 
             $this->upsertRecipient($request, $visit, $data, $user);
+
+            // External recipients have no patient ledger — raise a standalone cash invoice.
+            if ($isExternal) {
+                $this->createExternalInvoice($request->refresh(), $user);
+            }
 
             $who = $isExternal ? ' [external recipient]' : '';
             $this->log->log(LogModule::BLOOD_BANK, 'BLOOD_REQUEST_CREATED', [
@@ -141,6 +150,79 @@ class BloodRequestService
         ], $request);
 
         return $request->refresh();
+    }
+
+    /**
+     * Raise a standalone cash invoice for an external (non-facility) recipient.
+     * Charge = configured per-component price × units requested. Idempotent.
+     */
+    protected function createExternalInvoice(BloodRequest $request, User $user): void
+    {
+        // Query (not the relation) so we never cache a null bloodInvoice on the model.
+        if (Invoice::where('blood_request_id', $request->id)->exists()) {
+            return; // never double-bill a request
+        }
+
+        $component = strtoupper($request->component_type ?: 'WHOLE_BLOOD');
+        $qty = (int) max(1, $request->units_requested);
+        $unitPrice = (float) (config("blood_bank.component_prices.{$component}")
+            ?? config('blood_bank.default_component_price', 0));
+
+        if ($unitPrice <= 0) {
+            return; // nothing to bill if no price is configured
+        }
+
+        $lineTotal = round($unitPrice * $qty, 2);
+        $recipientName = $request->recipient?->external_name ?: $request->recipientName();
+
+        $invoice = Invoice::create([
+            'invoice_number' => Invoice::generateNumber('INV', 'invoices', 'invoice_number'),
+            'visit_id' => null,
+            'patient_id' => null,
+            'external_party_name' => $recipientName,
+            'blood_request_id' => $request->id,
+            'billing_type' => BillingType::CASH->value,
+            'subtotal' => $lineTotal,
+            'tax_amount' => 0,
+            'discount_amount' => 0,
+            'nhis_amount' => 0,
+            'total_amount' => $lineTotal,
+            'amount_paid' => 0,
+            'balance' => $lineTotal,
+            'status' => InvoiceStatus::PENDING->value,
+            'due_date' => now()->addDays(7),
+            'notes' => "External blood request {$request->request_number} — {$recipientName}",
+            'created_by' => $user->id,
+        ]);
+
+        $item = InvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'visit_id' => null,
+            'patient_id' => null,
+            'source_type' => InvoiceItem::SOURCE_BLOOD_UNIT,
+            'source_id' => $request->id,
+            'description' => str_replace('_', ' ', $component)." × {$qty} unit(s) — {$request->request_number}",
+            'quantity' => $qty,
+            'unit_price' => $unitPrice,
+            'cash_price' => $unitPrice,
+            'selected_price' => $unitPrice,
+            'insurance_covered' => 0,
+            'discount_amount' => 0,
+            'patient_payable' => $lineTotal,
+            'paid_amount' => 0,
+            'balance' => $lineTotal,
+            'payment_status' => 'unpaid',
+            'total_price' => $lineTotal,
+            'payer_type' => 'cash',
+            'created_by' => $user->id,
+        ]);
+
+        $request->update(['invoice_item_id' => $item->id]);
+
+        $this->log->log(LogModule::BLOOD_BANK, 'BLOOD_EXTERNAL_INVOICE_RAISED', [
+            'description' => "Cash invoice {$invoice->invoice_number} raised for external blood request {$request->request_number} (₵{$lineTotal}).",
+            'causer' => $user,
+        ], $invoice);
     }
 
     protected function notifyRequest(BloodRequest $request): void

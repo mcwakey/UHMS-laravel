@@ -73,9 +73,14 @@
         <div class="info-grid">
             <div class="col">
                 <h5>Received From</h5>
-                <p style="font-weight:bold;">{{ $payment->patient->full_name }}</p>
-                <p>{{ $payment->patient->patient_number }}</p>
-                <p>{{ $payment->patient->phone }}</p>
+                @if($payment->patient)
+                    <p style="font-weight:bold;">{{ $payment->patient->full_name }}</p>
+                    <p>{{ $payment->patient->patient_number }}</p>
+                    <p>{{ $payment->patient->phone }}</p>
+                @else
+                    <p style="font-weight:bold;">{{ $payment->invoice?->external_party_name ?? 'External recipient' }}</p>
+                    <p>External / referral</p>
+                @endif
             </div>
             <div class="col">
                 <h5>Payment Details</h5>

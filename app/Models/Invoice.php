@@ -28,6 +28,8 @@ class Invoice extends Model
         'invoice_number',
         'visit_id',
         'patient_id',
+        'external_party_name',
+        'blood_request_id',
         'sponsor_id',
         'billing_type',
         'subtotal',
@@ -75,6 +77,17 @@ class Invoice extends Model
     public function patient()
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function bloodRequest()
+    {
+        return $this->belongsTo(BloodRequest::class, 'blood_request_id');
+    }
+
+    /** Display name for the bill-to party — facility patient or external recipient. */
+    public function getBillToNameAttribute(): string
+    {
+        return $this->patient?->full_name ?: ($this->external_party_name ?: 'Unknown');
     }
 
     public function sponsor()

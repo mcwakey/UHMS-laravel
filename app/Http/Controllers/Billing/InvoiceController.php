@@ -70,6 +70,7 @@ class InvoiceController extends Controller
                     'full_name'      => $invoice->patient->full_name,
                     'patient_number' => $invoice->patient->patient_number,
                 ] : null,
+                'external_party_name' => $invoice->external_party_name,
                 'billing_type' => $invoice->billing_type ? [
                     'value' => $invoice->billing_type->value,
                     'label' => $invoice->billing_type->label(),
