@@ -817,11 +817,12 @@ Route::middleware('auth')->group(function () {
             // Lab Results
             Route::middleware('can:lab.results.view')->group(function () {
                 Route::get('results', [LabResultController::class, 'index'])->name('results.index');
-                Route::post('results/{item}', [LabResultController::class, 'store'])->name('results.store')->middleware('can:lab.results.create');
+                Route::get('results/requests/{labRequest}', [LabResultController::class, 'showRequest'])->name('results.show');
                 Route::post('results/batch/{labRequest}', [LabResultController::class, 'batchStore'])->name('results.batch')->middleware('can:lab.results.create');
                 Route::patch('results/{result}/verify', [LabResultController::class, 'verify'])->name('results.verify')->middleware('can:lab.results.verify');
                 Route::get('results/{item}/view', [LabResultController::class, 'view'])->name('results.view');
                 Route::get('results/{item}/print', [LabResultController::class, 'print'])->name('results.print');
+                Route::post('results/{item}', [LabResultController::class, 'store'])->name('results.store')->middleware('can:lab.results.create');
             });
 
             // Lab Test Catalog Management

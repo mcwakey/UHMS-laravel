@@ -7,7 +7,7 @@
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">
-            <a aria-label="Back" title="Back" href="{{ route('admin.lab.requests.index') }}" class="text-muted me-2"><i class="ti ti-arrow-left"></i></a>
+            <a aria-label="Back" title="Back" href="{{ $backRoute ?? route('admin.lab.requests.index') }}" class="text-muted me-2"><i class="ti ti-arrow-left"></i></a>
             {{ $request->request_number }}
             <span class="badge bg-{{ $resultType->color() }} ms-2"><i class="ti {{ $resultType->icon() }} me-1"></i>{{ $resultType->label() }}</span>
         </h4>
@@ -295,8 +295,8 @@
 @endif
 @endforeach
 
-{{-- ===================== SELECTIVE ACCEPTANCE (persists while any item is still pending) ===================== --}}
-{{-- @if($pendingItems->count() > 0) --}}
+{{-- ===================== SELECTIVE ACCEPTANCE ===================== --}}
+@if(($showBillingAcceptance ?? true) && $pendingItems->count() > 0)
 <div class="card mb-3">
     <div class="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
         <h6 class="fw-bold mb-0"><i class="ti ti-list-check me-1"></i>Select Items to Accept &amp; Bill</h6>
@@ -318,14 +318,13 @@
                     </thead>
                     <tbody>
                     @foreach($request->items as $it)
-                                @if($it->status === 'pending')
+                        @if($it->status === 'pending')
                         @php
                             $price = $it->service?->price ?? null;
                         @endphp
-                        <tr class="{{ $it->status !== 'pending' ? 'text-muted' : '' }}">
+                        <tr>
                             <td>
-                                    <input type="checkbox" name="item_ids[]" value="{{ $it->id }}" class="form-check-input acceptSelectedCb">
-                               
+                                <input type="checkbox" name="item_ids[]" value="{{ $it->id }}" class="form-check-input acceptSelectedCb">
                             </td>
                             <td>
                                 <span class="fw-medium">{{ $it->display_name }}</span>
@@ -333,29 +332,22 @@
                             </td>
                             <td><span class="badge bg-{{ $it->status_color }}">{{ ucfirst($it->status) }}</span></td>
                             <td class="text-end">{{ $price !== null ? number_format($price, 2) : '—' }}</td>
-                        </tr> 
-                        {{-- @else
-                                    <p class="text-muted mb-0">All prescribed items have been billed. Once payment is settled, they can be dispensed at the pharmacy.</p> --}}
-                                @endif
+                        </tr>
+                        @endif
                     @endforeach
                     </tbody>
                 </table>
             </div>
             <div class="d-flex justify-content-between align-items-center">
-                {{-- <small class="text-muted"><i class="ti ti-info-circle me-1"></i>Only selected items are accepted &amp; invoiced. Unselected items stay pending here and can be billed later when the patient returns.</small> --}}
-                
-                                @if($it->status === 'pending')
-                                <button type="submit" id="acceptSelectedBtn" class="btn btn-success" disabled>
+                <small class="text-muted"><i class="ti ti-info-circle me-1"></i>Only selected items are accepted and invoiced. After billing, use Investigation Results to enter results.</small>
+                <button type="submit" id="acceptSelectedBtn" class="btn btn-success" disabled>
                     <i class="ti ti-check me-1"></i>Bill Selected
                 </button>
-                @else
-                                    <p class="py-2 text-muted mb-0">All requested items have been billed. Once payment is settled, the results can be entered.</p>
-                               
-            @endif
-                   </div>
+            </div>
         </form>
     </div>
 </div>
+@endif
 @push('scripts')
 <script>
 (function() {
@@ -408,7 +400,6 @@
 })();
 </script>
 @endpush
-{{-- @endif --}}
 
 @elseif($resultType === \App\Enums\ResultType::RICHTEXT)
 {{-- ======================= RICHTEXT (Scan/Radiology Report) ======================= --}}

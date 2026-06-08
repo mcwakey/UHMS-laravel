@@ -19,16 +19,49 @@ class LabResultController extends Controller
     ) {}
 
     /**
-     * List all lab results.
+     * Billed/accepted investigation requests ready for result entry.
      */
     public function index(Request $request)
     {
-        $results = $this->labService->getResults([
-            'verified' => $request->verified,
-            'search' => $request->search,
-        ]);
+        $filters = $request->only(['status', 'urgency', 'search', 'date_from', 'date_to', 'department_id']);
 
-        return view('lab.results', compact('results'));
+        if (!empty($filters['department_id'])) {
+            $filters['target_department_id'] = $filters['department_id'];
+        }
+
+        $requests = $this->labService->getResultRequests([
+            'status' => $filters['status'] ?? null,
+            'urgency' => $filters['urgency'] ?? null,
+            'search' => $filters['search'] ?? null,
+            'date_from' => $filters['date_from'] ?? null,
+            'date_to' => $filters['date_to'] ?? null,
+            'target_department_id' => $filters['target_department_id'] ?? null,
+        ]);
+        $departments = $this->labService->getInvestigationDepartments();
+
+        return view('lab.results', compact('requests', 'departments'));
+    }
+
+    /**
+     * Open a billed/accepted investigation request for result entry.
+     */
+    public function showRequest(LabRequest $labRequest)
+    {
+        $request = $this->labService->getRequestDetails($labRequest);
+        $hasAcceptedOrBilledItems = $request->items->contains(
+            fn ($item) => $item->isAccepted() || $item->billed_at || $item->invoice_item_id
+        );
+
+        if (! $hasAcceptedOrBilledItems) {
+            return redirect()
+                ->route('admin.lab.requests.show', $request)
+                ->with('error', 'Accept and bill investigation items before entering results.');
+        }
+
+        $backRoute = route('admin.lab.results.index');
+        $showBillingAcceptance = false;
+
+        return view('lab.process', compact('request', 'backRoute', 'showBillingAcceptance'));
     }
 
     /**

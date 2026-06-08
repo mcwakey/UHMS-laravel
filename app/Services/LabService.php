@@ -480,6 +480,66 @@ class LabService
         return $query->paginate($perPage)->withQueryString();
     }
 
+    public function getResultRequests(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
+        $acceptedStatuses = ['accepted', 'processing', 'completed', 'verified'];
+
+        $query = LabRequest::with([
+            'patient',
+            'requestedBy',
+            'targetDepartment',
+            'items.labTest',
+            'items.service',
+            'items.result.verifiedBy',
+        ])
+            ->whereHas('items', function ($q) use ($acceptedStatuses) {
+                $q->whereIn('status', $acceptedStatuses)
+                    ->orWhereNotNull('accepted_at')
+                    ->orWhereNotNull('billed_at')
+                    ->orWhereNotNull('invoice_item_id');
+            })
+            ->where('status', '!=', 'cancelled')
+            ->latest('updated_at');
+
+        if (!empty($filters['status'])) {
+            if ($filters['status'] === 'pending_result') {
+                $query->whereHas('items', function ($q) {
+                    $q->whereIn('status', ['accepted', 'processing'])
+                        ->whereDoesntHave('result');
+                });
+            } elseif ($filters['status'] === 'entered') {
+                $query->whereHas('items.result')
+                    ->whereHas('items', function ($q) {
+                        $q->whereIn('status', ['accepted', 'processing', 'completed', 'verified']);
+                    });
+            } else {
+                $query->byStatus($filters['status']);
+            }
+        }
+
+        if (!empty($filters['urgency'])) {
+            $query->where('urgency', $filters['urgency']);
+        }
+
+        if (!empty($filters['target_department_id'])) {
+            $query->where('target_department_id', $filters['target_department_id']);
+        }
+
+        if (!empty($filters['search'])) {
+            $query->search($filters['search']);
+        }
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        return $query->paginate($perPage)->withQueryString();
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Helpers

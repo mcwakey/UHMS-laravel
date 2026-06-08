@@ -119,7 +119,7 @@
                     @forelse($requests as $req)
                     <tr>
                         <td>
-                            <a href="{{ route('admin.lab.requests.show', $req) }}" class="fw-medium text-primary">
+                            <a href="{{ $req->status === 'pending' ? route('admin.lab.requests.show', $req) : route('admin.lab.results.show', $req) }}" class="fw-medium text-primary">
                                 {{ $req->request_number }}
                             </a>
                         </td>
@@ -151,9 +151,15 @@
                             <small class="text-muted">{{ $req->created_at->format('H:i') }}</small>
                         </td>
                         <td class="text-end">
+                            @if($req->status === 'pending')
                             <a href="{{ route('admin.lab.requests.show', $req) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="ti ti-eye me-1"></i>View
+                                <i class="ti ti-receipt me-1"></i>Bill
                             </a>
+                            @else
+                            <a href="{{ route('admin.lab.results.show', $req) }}" class="btn btn-sm btn-outline-success">
+                                <i class="ti ti-report-medical me-1"></i>Results
+                            </a>
+                            @endif
                         </td>
                     </tr>
                     @empty

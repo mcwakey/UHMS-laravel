@@ -611,7 +611,7 @@ class SidebarMenuBuilder
                 'title' => 'Investigations',
                 'items' => [
                     [
-                        'label' => 'Investigation Requests',
+                        'label' => 'Tests',
                         'icon' => 'ti ti-test-pipe',
                         'route' => 'admin.lab.requests.index',
                         'active_patterns' => ['admin.lab.requests.*'],
@@ -619,7 +619,7 @@ class SidebarMenuBuilder
                         'module' => 'investigations',
                     ],
                     [
-                        'label' => 'Investigation Results',
+                        'label' => 'Results',
                         'icon' => 'ti ti-report-medical',
                         'route' => 'admin.lab.results.index',
                         'active_patterns' => ['admin.lab.results.*'],
@@ -627,7 +627,7 @@ class SidebarMenuBuilder
                         'module' => 'investigations',
                     ],
                     [
-                        'label' => 'Investigation Catalogue',
+                        'label' => 'Tests Catalogue',
                         'icon' => 'ti ti-flask',
                         'route' => 'admin.investigation-catalogue.index',
                         'active_patterns' => ['admin.investigation-catalogue.*'],
@@ -635,7 +635,7 @@ class SidebarMenuBuilder
                         'module' => 'investigations',
                     ],
                     [
-                        'label' => 'Investigation Consumables',
+                        'label' => 'Items Usage',
                         'icon' => 'ti ti-microscope',
                         'route' => 'admin.investigations.items.index',
                         'active_patterns' => ['admin.investigations.items.*'],
@@ -671,14 +671,6 @@ class SidebarMenuBuilder
                         'permission' => 'procedure.view',
                         'module' => 'procedure',
                     ],
-                    [
-                        'label' => 'Theatre Rooms',
-                        'icon' => 'ti ti-door',
-                        'route' => 'admin.theatre.rooms.index',
-                        'active_patterns' => ['admin.theatre.rooms.*'],
-                        'permission' => 'theatre.rooms.view',
-                        'module' => 'procedure',
-                    ],
                     // [
                     //     'label' => 'Investigation Results',
                     //     'icon' => 'ti ti-report-medical',
@@ -701,6 +693,14 @@ class SidebarMenuBuilder
                         'route' => 'admin.theatre.consumables.index',
                         'active_patterns' => ['admin.theatre.consumables.*'],
                         'permission' => 'procedure.view',
+                        'module' => 'procedure',
+                    ],
+                    [
+                        'label' => 'Theatre Rooms',
+                        'icon' => 'ti ti-door',
+                        'route' => 'admin.theatre.rooms.index',
+                        'active_patterns' => ['admin.theatre.rooms.*'],
+                        'permission' => 'theatre.rooms.view',
                         'module' => 'procedure',
                     ],
                     // [

@@ -30,6 +30,9 @@ const trendMax = computed(() => {
                 <h4 class="fw-bold mb-0"><i class="ti ti-chart-bar me-2"></i>Billing Dashboard</h4>
             </div>
             <div class="d-flex gap-2">
+                <Link v-if="routes.counterSale" :href="routes.counterSale" class="btn btn-outline-primary btn-md">
+                    <i class="ti ti-cash-register me-1"></i>Counter Sale
+                </Link>
                 <Link :href="routes.receive" class="btn btn-primary btn-md">
                     <i class="ti ti-cash me-1"></i>Receive Payment
                 </Link>

@@ -60,6 +60,7 @@ class LabRequestController extends Controller
                 'created_at_time' => optional($req->created_at)->format('H:i'),
                 'urls' => [
                     'show' => route('admin.lab.requests.show', $req),
+                    'results' => route('admin.lab.results.show', $req),
                 ],
             ];
         });
@@ -92,7 +93,9 @@ class LabRequestController extends Controller
     {
         try {
             $this->labService->acceptRequest($labRequest);
-            return back()->with('success', 'Lab request accepted and is now being processed.');
+            return redirect()
+                ->route('admin.lab.results.index', ['search' => $labRequest->request_number])
+                ->with('success', 'Lab request accepted and is now ready for result entry.');
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -129,11 +132,13 @@ class LabRequestController extends Controller
             return response()->json([
                 'success' => $msg,
                 'invoice' => $invoice?->only(['id', 'invoice_number', 'total_amount', 'status']),
-                'redirect' => route('admin.lab.requests.show', $labRequest),
+                'redirect' => route('admin.lab.results.index', ['search' => $labRequest->request_number]),
             ]);
         }
 
-        return redirect()->route('admin.lab.requests.show', $labRequest)->with('success', $msg);
+        return redirect()
+            ->route('admin.lab.results.index', ['search' => $labRequest->request_number])
+            ->with('success', $msg . ' Open the request here to enter results.');
     }
 
     /**

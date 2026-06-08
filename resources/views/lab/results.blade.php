@@ -1,37 +1,78 @@
 @extends('layouts.app')
-@section('title', 'Lab Results')
+@section('title', 'Investigation Results')
 
 @section('content')
-<!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"><i class="ti ti-report-medical me-2"></i>Lab Results</h4>
+        <h4 class="fw-bold mb-0"><i class="ti ti-report-medical me-2"></i>Investigation Results</h4>
+        <small class="text-muted">Billed or accepted investigation requests ready for result entry.</small>
     </div>
 </div>
 
-<!-- Filters -->
+@if(session('success'))
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="ti ti-check me-1"></i>{{ session('success') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+@endif
+@if(session('error'))
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="ti ti-alert-circle me-1"></i>{{ session('error') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+@endif
+
 <div class="card mb-3">
     <div class="card-body py-2">
         <form method="GET" class="row g-2 align-items-end">
-            <div class="col-md-4">
+            <div class="col-md-3">
+                <label class="form-label small">Search</label>
                 <input type="text" name="search" class="form-control" placeholder="Search patient, request #..." value="{{ request('search') }}">
             </div>
-            <div class="col-md-3">
-                <select name="verified" class="form-select">
-                    <option value="">All Results</option>
-                    <option value="yes" {{ request('verified') === 'yes' ? 'selected' : '' }}>Verified</option>
-                    <option value="no" {{ request('verified') === 'no' ? 'selected' : '' }}>Unverified</option>
+            <div class="col-md-2">
+                <label class="form-label small">Result State</label>
+                <select name="status" class="form-select">
+                    <option value="">All Billed</option>
+                    <option value="pending_result" {{ request('status') === 'pending_result' ? 'selected' : '' }}>Pending Result</option>
+                    <option value="entered" {{ request('status') === 'entered' ? 'selected' : '' }}>Result Entered</option>
+                    <option value="processing" {{ request('status') === 'processing' ? 'selected' : '' }}>Processing</option>
+                    <option value="completed" {{ request('status') === 'completed' ? 'selected' : '' }}>Completed</option>
                 </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Department</label>
+                <select name="department_id" class="form-select">
+                    <option value="">All Departments</option>
+                    @foreach($departments as $department)
+                    <option value="{{ $department->id }}" {{ request('department_id') == $department->id ? 'selected' : '' }}>{{ $department->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Urgency</label>
+                <select name="urgency" class="form-select">
+                    <option value="">All Urgency</option>
+                    <option value="routine" {{ request('urgency') === 'routine' ? 'selected' : '' }}>Routine</option>
+                    <option value="urgent" {{ request('urgency') === 'urgent' ? 'selected' : '' }}>Urgent</option>
+                    <option value="emergency" {{ request('urgency') === 'emergency' ? 'selected' : '' }}>Emergency</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">From</label>
+                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">To</label>
+                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-primary btn-md"><i class="ti ti-search me-1"></i>Filter</button>
-                <a href="{{ route('admin.lab.results.index') }}" class="btn btn-outline-secondary btn-md">Clear</a>
+                <a href="{{ route('admin.lab.results.index') }}" class="btn btn-outline-secondary btn-md"><i class="ti ti-x me-1"></i>Clear</a>
             </div>
         </form>
     </div>
 </div>
 
-<!-- Results Table -->
 <div class="card">
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -40,77 +81,66 @@
                     <tr>
                         <th>Request #</th>
                         <th>Patient</th>
-                        <th>Test</th>
-                        <th>Result</th>
-                        <th>Normal Range</th>
+                        <th>Department</th>
+                        <th>Items</th>
+                        <th>Progress</th>
+                        <th>Urgency</th>
                         <th>Status</th>
-                        <th>Performed By</th>
-                        <th>Performed At</th>
+                        <th>Date</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($results as $result)
-                    <tr class="{{ $result->is_abnormal ? 'table-danger' : '' }}">
+                    @forelse($requests as $labRequest)
+                    @php
+                        $acceptedItems = $labRequest->items->filter(fn ($item) => $item->isAccepted());
+                        $billedCount = $acceptedItems->filter(fn ($item) => $item->billed_at || $item->invoice_item_id)->count();
+                        $resultCount = $acceptedItems->filter(fn ($item) => $item->result)->count();
+                        $verifiedCount = $acceptedItems->filter(fn ($item) => $item->result?->is_verified)->count();
+                        $pendingResultCount = $acceptedItems
+                            ->filter(fn ($item) => in_array($item->status, ['accepted', 'processing']) && ! $item->result)
+                            ->count();
+                    @endphp
+                    <tr>
                         <td>
-                            <a href="{{ route('admin.lab.requests.show', $result->lab_request_id) }}" class="fw-medium text-primary">
-                                {{ $result->labRequest->request_number }}
+                            <a href="{{ route('admin.lab.results.show', $labRequest) }}" class="fw-medium text-primary">
+                                {{ $labRequest->request_number }}
                             </a>
                         </td>
                         <td>
-                            <div class="fw-medium">{{ $result->labRequest->patient?->full_name ?? $result->labRequest->external_party_name ?? '-' }}</div>
-                            <small class="text-muted">{{ $result->labRequest->patient?->patient_number ?? ($result->labRequest->external_party_name ? 'Walk-in' : '') }}</small>
+                            <div class="fw-medium">{{ $labRequest->patient?->full_name ?? $labRequest->external_party_name ?? 'Unknown' }}</div>
+                            <small class="text-muted">{{ $labRequest->patient?->patient_number ?? ($labRequest->external_party_name ? 'Walk-in' : '') }}</small>
                         </td>
                         <td>
-                            <span class="fw-medium">{{ $result->requestItem->labTest->name ?? '-' }}</span>
-                            <br><small class="text-muted">{{ $result->requestItem->labTest->code ?? '' }}</small>
-                        </td>
-                        <td>
-                            <span class="{{ $result->is_abnormal ? 'text-danger fw-bold' : '' }}">
-                                {{ $result->result_value }}
-                            </span>
-                            @if($result->is_abnormal)
-                                <i class="ti ti-alert-triangle text-danger ms-1"></i>
-                            @endif
-                            @if($result->remarks)
-                                <br><small class="text-muted">{{ $result->remarks }}</small>
-                            @endif
-                        </td>
-                        <td>
-                            @if($result->requestItem->labTest?->criteria?->isNotEmpty())
-                                @foreach($result->requestItem->labTest->criteria as $criterion)
-                                    <div><small><strong>{{ $criterion->name }}:</strong> {{ $criterion->normal_range ?? '-' }} {{ $criterion->unit ?? '' }}</small></div>
-                                @endforeach
+                            @if($labRequest->targetDepartment)
+                                <span class="fw-medium">{{ $labRequest->targetDepartment->name }}</span>
                             @else
-                                <small>{{ $result->requestItem->labTest->normal_range ?? '-' }} {{ $result->requestItem->labTest->unit ?? '' }}</small>
+                                <span class="text-muted">&mdash;</span>
                             @endif
                         </td>
                         <td>
-                            @if($result->is_verified)
-                                <span class="badge bg-success"><i class="ti ti-check me-1"></i>Verified</span>
-                                <br><small class="text-muted">{{ $result->verifiedBy->name ?? '' }}</small>
-                            @else
-                                <span class="badge bg-warning">Unverified</span>
-                            @endif
+                            <div class="small">
+                                <span class="badge bg-primary-subtle text-primary">{{ $acceptedItems->count() }} accepted</span>
+                                <span class="badge bg-info-subtle text-info">{{ $billedCount }} billed</span>
+                                <span class="badge bg-warning-subtle text-warning">{{ $pendingResultCount }} pending</span>
+                            </div>
+                            <small class="text-muted">{{ $resultCount }} entered, {{ $verifiedCount }} verified</small>
                         </td>
-                        <td>{{ $result->performedBy->name ?? '-' }}</td>
                         <td>
-                            <small>{{ $result->performed_at?->format('d M Y') }}</small><br>
-                            <small class="text-muted">{{ $result->performed_at?->format('H:i') }}</small>
+                            <div class="progress" style="height: 6px; width: 100px;">
+                                <div class="progress-bar bg-success" style="width: {{ $labRequest->completion_percentage }}%"></div>
+                            </div>
+                            <small class="text-muted">{{ $labRequest->completion_percentage }}%</small>
+                        </td>
+                        <td><span class="badge bg-{{ $labRequest->urgency_color }}">{{ ucfirst($labRequest->urgency) }}</span></td>
+                        <td><span class="badge bg-{{ $labRequest->status_color }}">{{ $labRequest->status_label }}</span></td>
+                        <td>
+                            <small>{{ $labRequest->created_at?->format('d M Y') }}</small><br>
+                            <small class="text-muted">{{ $labRequest->created_at?->format('H:i') }}</small>
                         </td>
                         <td class="text-end">
-                            @if(!$result->is_verified)
-                            @can('lab.results.create')
-                            <form method="POST" action="{{ route('admin.lab.results.verify', $result) }}" class="d-inline">
-                                @csrf @method('PATCH')
-                                <button type="submit" class="btn btn-sm btn-outline-success" title="Verify Result">
-                                    <i class="ti ti-check me-1"></i>Verify
-                                </button>
-                            </form>
-                            @endcan
-                            @endif
-                            <a href="{{ route('admin.lab.requests.show', $result->lab_request_id) }}" class="btn btn-sm btn-outline-primary" title="View Request">
-                                <i class="ti ti-eye"></i>
+                            <a href="{{ route('admin.lab.results.show', $labRequest) }}" class="btn btn-sm {{ $pendingResultCount ? 'btn-outline-primary' : 'btn-outline-secondary' }}">
+                                <i class="ti {{ $pendingResultCount ? 'ti-edit' : 'ti-eye' }} me-1"></i>{{ $pendingResultCount ? 'Enter Results' : 'View Results' }}
                             </a>
                         </td>
                     </tr>
@@ -118,7 +148,7 @@
                     <tr>
                         <td colspan="9" class="text-center text-muted py-4">
                             <i class="ti ti-report-medical fs-1 d-block mb-2"></i>
-                            No lab results found.
+                            No billed investigation requests found.
                         </td>
                     </tr>
                     @endforelse
@@ -128,9 +158,9 @@
     </div>
 </div>
 
-@if($results->hasPages())
+@if($requests->hasPages())
 <div class="d-flex justify-content-end mt-3">
-    {{ $results->links() }}
+    {{ $requests->links() }}
 </div>
 @endif
 @endsection

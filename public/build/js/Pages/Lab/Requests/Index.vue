@@ -147,7 +147,12 @@ watch(() => form.search, () => {
                         <tbody>
                             <tr v-for="req in requests.data" :key="req.id">
                                 <td>
-                                    <Link :href="req.urls.show" class="fw-medium text-primary">{{ req.request_number }}</Link>
+                                    <Link
+                                        :href="req.status === 'pending' ? req.urls.show : req.urls.results"
+                                        class="fw-medium text-primary"
+                                    >
+                                        {{ req.request_number }}
+                                    </Link>
                                 </td>
                                 <td>
                                     <div class="fw-medium">{{ req.patient?.full_name }}</div>
@@ -176,8 +181,19 @@ watch(() => form.search, () => {
                                     <small class="text-muted">{{ req.created_at_time }}</small>
                                 </td>
                                 <td class="text-end">
-                                    <Link :href="req.urls.show" class="btn btn-sm btn-outline-primary">
-                                        <i class="ti ti-eye me-1"></i>View
+                                    <Link
+                                        v-if="req.status === 'pending'"
+                                        :href="req.urls.show"
+                                        class="btn btn-sm btn-outline-primary"
+                                    >
+                                        <i class="ti ti-receipt me-1"></i>Bill
+                                    </Link>
+                                    <Link
+                                        v-else
+                                        :href="req.urls.results"
+                                        class="btn btn-sm btn-outline-success"
+                                    >
+                                        <i class="ti ti-report-medical me-1"></i>Results
                                     </Link>
                                 </td>
                             </tr>
