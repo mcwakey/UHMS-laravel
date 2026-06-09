@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\StockMovementType;
 use App\Enums\StockTransferStatus;
 use App\Models\InvestigationItemStock;
 use App\Models\StockLocation;
@@ -194,7 +195,6 @@ class StockTransferService
             return; // Locations not mapped — skip ledger writes silently.
         }
 
-        $svc = app(StockMovementService::class);
         $productSvc = app(ProductStockMovementService::class);
 
         foreach ($transfer->items as $item) {
@@ -206,41 +206,36 @@ class StockTransferService
                 'notes'       => 'Stock transfer ' . $transfer->transfer_number,
             ];
 
-            // ---- Drug item: legacy drug ledger + (mirror) product ledger ----
+            // ---- Drug item: write to the unified product ledger ----
             if ($item->item_type === 'drug' && $item->drug_id) {
-                $drugShared = array_merge($shared, ['drug_id' => $item->drug_id]);
-
-                $svc->createMovement(array_merge($drugShared, [
-                    'stock_location_id' => $fromLoc->id,
-                    'movement_type'     => StockMovementType::TRANSFER_OUT,
-                    'allow_negative'    => true,
-                ]));
-                $svc->createMovement(array_merge($drugShared, [
-                    'stock_location_id' => $toLoc->id,
-                    'movement_type'     => StockMovementType::TRANSFER_IN,
-                ]));
-
                 $linkedProductId = $item->drug?->product_id;
-                if ($linkedProductId) {
-                    $productShared = array_merge($shared, ['product_id' => $linkedProductId]);
-                    try {
-                        $productSvc->createMovement(array_merge($productShared, [
-                            'stock_location_id' => $fromLoc->id,
-                            'movement_type'     => StockMovementType::TRANSFER_OUT,
-                            'allow_negative'    => true,
-                        ]));
-                        $productSvc->createMovement(array_merge($productShared, [
-                            'stock_location_id' => $toLoc->id,
-                            'movement_type'     => StockMovementType::TRANSFER_IN,
-                        ]));
-                    } catch (\Throwable $e) {
-                        \Illuminate\Support\Facades\Log::warning('stock_transfer.product_ledger_failed', [
-                            'transfer_id' => $transfer->id,
-                            'drug_id'     => $item->drug_id,
-                            'product_id'  => $linkedProductId,
-                            'error'       => $e->getMessage(),
-                        ]);
-                    }
+                if (! $linkedProductId) {
+                    \Illuminate\Support\Facades\Log::warning('stock_transfer.drug_item_unlinked', [
+                        'transfer_id' => $transfer->id,
+                        'drug_id'     => $item->drug_id,
+                        'hint'        => 'Run inventory:link-drugs-to-products',
+                    ]);
+                    continue;
+                }
+
+                $productShared = array_merge($shared, ['drug_id' => $item->drug_id, 'product_id' => $linkedProductId]);
+                try {
+                    $productSvc->createMovement(array_merge($productShared, [
+                        'stock_location_id' => $fromLoc->id,
+                        'movement_type'     => StockMovementType::TRANSFER_OUT,
+                        'allow_negative'    => true,
+                    ]));
+                    $productSvc->createMovement(array_merge($productShared, [
+                        'stock_location_id' => $toLoc->id,
+                        'movement_type'     => StockMovementType::TRANSFER_IN,
+                    ]));
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('stock_transfer.product_ledger_failed', [
+                        'transfer_id' => $transfer->id,
+                        'drug_id'     => $item->drug_id,
+                        'product_id'  => $linkedProductId,
+                        'error'       => $e->getMessage(),
+                    ]);
                 }
                 continue;
             }
@@ -323,12 +318,18 @@ class StockTransferService
 
     /**
      * Get available stock at a location for a drug.
-     * Reads from the new stock_balances source of truth, matched by location name OR type.
+     * Reads from the unified product-keyed stock_balances source of truth,
+     * resolving the drug's linked product, matched by location name OR type.
      */
     public function getAvailableStock(int $drugId, string $location = 'store'): int
     {
+        $productId = \App\Models\Drug::whereKey($drugId)->value('product_id');
+        if (! $productId) {
+            return 0;
+        }
+
         return (int) \App\Models\StockBalance::query()
-            ->where('drug_id', $drugId)
+            ->where('product_id', $productId)
             ->whereHas('location', function ($q) use ($location) {
                 $q->where('type', $location)->orWhere('name', $location);
             })

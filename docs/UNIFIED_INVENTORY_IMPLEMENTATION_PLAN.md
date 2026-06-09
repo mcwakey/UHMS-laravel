@@ -191,9 +191,32 @@ seeding opening balances for pre-Phase-2 pharmacy stock. The next phase
 ### Phase 4 — deferred (still to do)
 
 - [ ] StockTransferService location-FK refactor: replace `from_location` / `to_location` string columns (currently cast as the `StockLocation` *enum*) with `from_location_id` / `to_location_id` FKs to the `stock_locations` table; add `product_id` to `stock_transfer_items`; enforce Main↔Department-only flows via `StockLocationService::isMainStore`. Touches the transfer UI.
-- [ ] Legacy writer purge: remove `DrugStock::create` from `PharmacyService::addStock`, `ProcurementService::receiveItems`, and `StockTransferService::complete`; switch dispense UI reads from `DrugStock` to `ProductStockBalance`.
-- [ ] Flip the drug-ledger dispense `allow_negative` flag once dispense UI reads from product balances.
-- [ ] Add `product_id` to `drug_stock` so on-hand caches converge schema-wise.
+
+### Phase 5 — Legacy drug-keyed ledger removal (2026-06-09) ✅
+
+The drug-keyed write/read paths on the shared `stock_movements` / `stock_balances`
+tables were the source of "product shows 0 stock" confusion (the cached balance rows
+are all `product_id`-keyed with `drug_id = NULL`, so any `WHERE drug_id = ?` query
+returned nothing). Removed entirely:
+
+- [x] Deleted `app/Services/StockMovementService.php` (the drug-keyed writer).
+- [x] Rewired its callers to the unified product ledger (`ProductStockMovementService`),
+      resolving `drug.product_id` first: `StockReturnService`, `StockAdjustmentService`,
+      `PharmacyService::storeDrug` opening stock.
+- [x] `StockTransferService::emitTransferMovements` drug branch no longer dual-writes a
+      drug-keyed row + a product-keyed row (which double-counted); it now writes the
+      product ledger only.
+- [x] Fixed `StockTransferService::getAvailableStock` — was `WHERE drug_id = ?`
+      (always 0 post-migration); now resolves `product_id` and queries by it.
+- [x] Removed the dead drug-keyed methods from `StockBalanceService`
+      (`getCurrentStock`, `increase`, `decrease`, `adjust`, `rebuildBalance`,
+      `rebuildAllBalances`); product-native methods remain.
+- [x] `stock:audit` and `stock:rebuild-balances` no longer rebuild a drug ledger.
+- Note: the `DrugStock` model + `drug_stock` table are intentionally retained as a
+      guarded-empty legacy artifact (`UnifiedInventoryWorkflowTest` asserts the table
+      stays empty); they hold no live stock.
+- [x] Validation: `UnifiedInventoryWorkflowTest`, `StockAdminLogTest`,
+      `PharmacyWorkflowTest` — 26 passed.
 
 ---
 

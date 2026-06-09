@@ -129,8 +129,8 @@
                         @forelse($product->stockBalances as $bal)
                             <tr>
                                 <td>{{ $bal->stockLocation?->name ?? '—' }}</td>
-                                <td class="text-end @if($bal->quantity <= ($product->reorder_level ?? 0)) text-danger fw-semibold @endif">
-                                    {{ number_format($bal->quantity, 2) }}
+                                <td class="text-end @if($bal->quantity_on_hand <= ($product->reorder_level ?? 0)) text-danger fw-semibold @endif">
+                                    {{ number_format($bal->quantity_on_hand, 2) }}
                                 </td>
                                 <td>{{ $product->unit ?? '' }}</td>
                             </tr>

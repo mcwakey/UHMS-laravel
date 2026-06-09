@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\StockMovementType;
+use App\Models\Drug;
 use App\Models\StockMovement;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -11,7 +12,7 @@ use InvalidArgumentException;
 class StockReturnService
 {
     public function __construct(
-        private StockMovementService $movements,
+        private ProductStockMovementService $movements,
     ) {}
 
     /**
@@ -79,8 +80,15 @@ class StockReturnService
         $notes = $data['notes'] ?? null;
         $combinedNotes = $reason . ($notes ? ' — ' . $notes : '');
 
+        $drugId    = (int) ($data['drug_id'] ?? 0);
+        $productId = $data['product_id'] ?? ($drugId > 0 ? Drug::whereKey($drugId)->value('product_id') : null);
+        if (! $productId) {
+            throw new InvalidArgumentException('This drug is not linked to a stock product, so it cannot be returned.');
+        }
+
         return $this->movements->createMovement([
-            'drug_id'           => $data['drug_id'],
+            'drug_id'           => $drugId ?: null,
+            'product_id'        => $productId,
             'stock_location_id' => $data['stock_location_id'],
             'movement_type'     => $type,
             'quantity'          => $data['quantity'],

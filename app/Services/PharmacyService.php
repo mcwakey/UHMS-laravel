@@ -135,7 +135,7 @@ class PharmacyService
             $opening = (float) ($data['opening_stock'] ?? 0);
             $drug = Drug::create($data);
 
-            if ($opening > 0) {
+            if ($opening > 0 && $drug->product_id) {
                 $store = StockLocation::query()
                     ->where('name', 'Main Store')
                     ->orWhere('type', 'store')
@@ -143,8 +143,9 @@ class PharmacyService
                     ->first();
 
                 if ($store) {
-                    app(StockMovementService::class)->createMovement([
+                    app(ProductStockMovementService::class)->createMovement([
                         'drug_id' => $drug->id,
+                        'product_id' => $drug->product_id,
                         'stock_location_id' => $store->id,
                         'movement_type' => StockMovementType::OPENING_STOCK,
                         'quantity' => $opening,
@@ -152,6 +153,11 @@ class PharmacyService
                         'notes' => 'Opening stock when drug was created.',
                     ]);
                 }
+            } elseif ($opening > 0) {
+                Log::warning('pharmacy.store_drug.opening_stock_skipped', [
+                    'drug_id' => $drug->id,
+                    'reason'  => 'Drug is not linked to a stock product; opening stock cannot be posted to the product ledger.',
+                ]);
             }
 
             return $drug;

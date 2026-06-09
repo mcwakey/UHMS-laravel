@@ -45,6 +45,60 @@ let scriptRunId = 0;
 let styleRunId = 0;
 const legacyRoot = ref(null);
 
+// ── Sidebar scroll persistence ───────────────────────────────────────────────
+// The whole legacy layout (including the sidebar) is re-rendered via v-html on
+// every Inertia navigation, and initialiseLegacyShell() re-creates SimpleBar
+// from scratch — which resets the sidebar scroll to the top. We capture the
+// sidebar scroll position before each visit and restore it after the new
+// SimpleBar instance is built, so the active menu item stays in view.
+const SIDEBAR_SCROLL_KEY = 'uhms:sidebarScroll';
+
+function getSidebarScrollEl() {
+    const inner = document.querySelector('.sidebar-inner');
+    if (!inner) return null;
+    // SimpleBar moves the scrollable content into .simplebar-content-wrapper;
+    // fall back to the element itself if SimpleBar hasn't initialised yet.
+    return inner.querySelector('.simplebar-content-wrapper') || inner;
+}
+
+function saveSidebarScroll() {
+    const el = getSidebarScrollEl();
+    if (!el) return;
+    try {
+        window.sessionStorage.setItem(SIDEBAR_SCROLL_KEY, String(el.scrollTop || 0));
+    } catch (_) {
+        /* sessionStorage unavailable — ignore */
+    }
+}
+
+function restoreSidebarScroll() {
+    let saved = 0;
+    try {
+        saved = parseInt(window.sessionStorage.getItem(SIDEBAR_SCROLL_KEY) || '0', 10) || 0;
+    } catch (_) {
+        saved = 0;
+    }
+    if (saved <= 0) return;
+    const apply = () => {
+        const el = getSidebarScrollEl();
+        if (el) {
+            el.scrollTop = saved;
+        }
+    };
+    // Apply immediately and again on the next frame, since SimpleBar may finish
+    // laying out its content wrapper a tick after construction.
+    apply();
+    window.requestAnimationFrame(apply);
+}
+
+let sidebarScrollPersistenceBound = false;
+function bindSidebarScrollPersistence() {
+    if (sidebarScrollPersistenceBound) return;
+    sidebarScrollPersistenceBound = true;
+    // Fires while the OLD sidebar DOM is still present, before the request runs.
+    router.on('before', saveSidebarScroll);
+}
+
 function decodedLegacyScripts() {
     if (!props.scriptsEncoded) {
         return props.scripts;
@@ -435,6 +489,10 @@ function initialiseLegacyShell() {
             }
         });
     }
+
+    // Restore the sidebar scroll position now that SimpleBar has rebuilt its
+    // scroll container for the freshly-rendered sidebar.
+    restoreSidebarScroll();
 }
 
 // Patch every <form> inside the legacy HTML so that programmatic
@@ -473,6 +531,7 @@ async function afterPageSwap() {
 }
 
 onMounted(afterPageSwap);
+onMounted(bindSidebarScrollPersistence);
 onUnmounted(() => {
     cleanupBootstrapModals();
     document

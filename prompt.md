@@ -1,69 +1,66 @@
-Next is **Accounting Phase 4: Sponsors, Insurance, Corporate Receivables & AR Aging**.
+Next is **Accounting Phase 5: Procurement, Supplier Ledger, Accounts Payable & AP Aging**.
 
-This phase answers the big question:
+This phase handles the other side of accounting: **what the hospital owes suppliers**.
 
-```text
-Who owes the hospital money — patient, insurance, sponsor, or corporate client — and for how long?
-```
 
 You are working on UHMS — Ultimate Hospital Management System.
 
 Accounting Phase 1 Foundation is complete.
 Accounting Phase 2 Billing → Accounting Posting is complete.
 Accounting Phase 3 Payments, Discounts, Credit Notes, Write-offs, Refunds & Reversals is complete.
+Accounting Phase 4 Sponsors, Insurance, Corporate Receivables & AR Aging is complete.
 
-Now proceed with Accounting Phase 4:
+Now proceed with Accounting Phase 5:
 
-Sponsors, Insurance, Corporate Receivables & AR Aging
+Procurement, Supplier Ledger, Accounts Payable & AP Aging
 
 Goal:
-Implement payer-based receivables management so UHMS can clearly track what is owed by:
+Implement full supplier-side accounting so UHMS can track:
 
-1. Patients
-2. Insurance providers
-3. Sponsors
-4. Corporate clients
+1. Purchase orders
+2. Goods receiving
+3. Supplier invoices
+4. Supplier payables
+5. Supplier payments
+6. Supplier returns
+7. Supplier credit/debit adjustments
+8. Accounts Payable aging
+9. Supplier ledger accounting integration
 
-This phase must also introduce AR Aging so the hospital can know who owes money, how much, and for how long.
-
-Do not replace existing invoices.
-Do not replace existing insurance workflows.
-Do not hardcode NHIS.
-Do not treat sponsors as discounts.
-Do not treat insurance as sponsors.
-Do not treat write-offs as payments.
+Do not replace the existing procurement system.
+Do not replace stock movements.
+Do not replace supplier ledger records.
+Do not automatically treat purchase orders as accounting liabilities.
 Do not write the full automated test suite yet. Full tests will be written after the full accounting implementation is complete.
 
 Important rule:
 
-Invoice = operational billing document.
-Receivable = who owes the hospital.
-Journal entry = accounting impact.
-AR aging = reporting/control over unpaid receivables.
+Purchase Order = procurement request/commitment, not yet accounting liability.
+Goods Received / Supplier Invoice = accounting liability.
+Supplier Payment = settlement of supplier liability.
+Supplier Return / Credit Note = reduction of supplier liability or inventory.
 
 ---
 
 # 1. Main Objective
 
-Implement payer-based receivables.
+Implement supplier-side accounting and AP aging.
 
 The system must support:
 
-- patient receivables
-- insurance receivables
-- sponsor receivables
-- corporate receivables
-- split invoice responsibility
-- sponsor allocation
-- insurance allocation
-- corporate allocation
-- payer-specific balances
-- payer-specific payments
-- AR aging by payer
-- AR aging by invoice
-- AR aging summary reports
+- supplier payables
+- supplier invoices
+- goods receiving accounting
+- supplier payment accounting
+- supplier returns accounting
+- supplier ledger integration
+- AP aging report
+- supplier statement
+- supplier balance
+- accounting posting status
 - activity logs
-- accounting posting integration
+- permissions
+- manual verification notes
 
 ---
 
@@ -72,89 +69,263 @@ The system must support:
 Use these meanings consistently:
 
 ```text
-Patient receivable = amount patient personally owes
-Insurance receivable = amount insurance provider owes
-Sponsor receivable = amount sponsor owes
-Corporate receivable = amount company/employer/client owes
+Purchase Order = request/approval to buy; no accounting posting by default
+Goods Receiving = goods physically received; may create inventory and payable
+Supplier Invoice = supplier’s official billing document
+Supplier Payable = amount hospital owes supplier
+Supplier Payment = money paid to supplier
+Supplier Return = goods returned to supplier
+Supplier Credit Note = supplier reduces amount owed
+AP Aging = unpaid supplier balances grouped by age
 ````
 
-Sponsor is not a discount.
+Do not confuse purchase order approval with supplier debt.
 
-Insurance is not a sponsor.
-
-Corporate billing is not a write-off.
+A PO should not increase liabilities until goods/invoice are received according to the hospital’s accounting rule.
 
 ---
 
-# 3. Payer Responsibility Rule
+# 3. Accounting Rules
 
-An invoice can have one or more responsible payers.
+## A. Purchase Order Created / Approved
+
+Operational only.
+
+No accounting journal entry by default.
+
+Log procurement activity, but do not post:
+
+```text
+No debit
+No credit
+```
+
+Reason:
+
+The hospital has not yet received goods or incurred a liability.
+
+---
+
+## B. Goods Received
+
+When goods are received and supplier liability should be recognized:
+
+```text
+Dr Inventory / Expense
+Cr Supplier Payables
+```
 
 Example:
 
-Invoice total = GHS 1,000
-
 ```text
-Patient responsible:   GHS 200
-Insurance responsible: GHS 500
-Sponsor responsible:   GHS 300
+Dr Pharmacy Inventory        2,000
+Cr Supplier Payables         2,000
 ```
 
-The invoice total remains GHS 1,000.
-
-The system should track balances separately:
+If the received item is not stock/inventory but an expense:
 
 ```text
-Patient balance:   GHS 200
-Insurance balance: GHS 500
-Sponsor balance:   GHS 300
+Dr Maintenance Expense       500
+Cr Supplier Payables         500
 ```
 
-Payments should reduce the correct payer balance.
+Use product/category/account mapping.
+
+---
+
+## C. Supplier Invoice Recorded
+
+If UHMS separates goods receiving from supplier invoice:
+
+Option 1 — Liability recognized on goods receiving:
+
+```text
+Goods receiving already posted:
+Dr Inventory
+Cr Supplier Payables
+```
+
+Supplier invoice only confirms/updates payable.
+
+Option 2 — Liability recognized on supplier invoice:
+
+```text
+Dr Inventory / Expense
+Cr Supplier Payables
+```
+
+Choose one rule and document it.
+
+Recommended for UHMS:
+
+Recognize liability on goods receiving when goods are accepted into stock.
+
+Avoid duplicate liability when supplier invoice is later attached.
+
+---
+
+## D. Supplier Payment
+
+When paying supplier:
+
+```text
+Dr Supplier Payables
+Cr Cash / Bank / Mobile Money
+```
+
+Example:
+
+```text
+Dr Supplier Payables         1,000
+Cr Bank Account              1,000
+```
+
+Payment reduces AP.
+
+Payment must not be treated as expense again.
+
+---
+
+## E. Supplier Return
+
+When goods are returned to supplier after receiving:
+
+If payable is still outstanding:
+
+```text
+Dr Supplier Payables
+Cr Inventory
+```
+
+If supplier already paid and refund expected:
+
+```text
+Dr Supplier Refund Receivable
+Cr Inventory
+```
+
+For Phase 5, if supplier refund receivable is not implemented, reduce supplier payable where possible and document refund receivable as TODO.
+
+---
+
+## F. Supplier Credit Note
+
+When supplier issues credit note:
+
+```text
+Dr Supplier Payables
+Cr Inventory / Expense Adjustment
+```
+
+or if linked to returned goods:
+
+```text
+Dr Supplier Payables
+Cr Inventory
+```
+
+Use project’s inventory/expense treatment.
+
+---
+
+## G. Supplier Debit Note
+
+If hospital owes more due to adjustment:
+
+```text
+Dr Inventory / Expense
+Cr Supplier Payables
+```
+
+Only implement if existing supplier ledger supports debit notes.
 
 ---
 
 # 4. Required Data Model
 
-Create or update a payer receivables structure.
+Inspect current procurement and supplier tables first.
 
-Recommended table:
+Search for:
 
 ```text
-invoice_receivables
+suppliers
+supplier_ledger_entries
+purchase_orders
+purchase_order_items
+goods_receipts
+goods_receipt_items
+supplier_payments
+supplier_returns
+purchase_returns
+stock_movements
+product_stock_movements
+stock_balances
+accounts
+journal_entries
+```
+
+Use existing tables where possible.
+
+Add accounting fields if missing:
+
+```text
+journal_entry_id nullable
+accounting_status nullable: pending/posted/failed/reversed
+accounting_posted_at nullable
+accounting_error nullable
+reversal_journal_entry_id nullable
+reversed_at nullable
+reversed_by nullable
+reversal_reason nullable
+```
+
+Possible tables:
+
+* goods_receipts
+* purchase_receipts
+* supplier_invoices
+* supplier_ledger_entries
+* supplier_payments
+* supplier_returns
+* purchase_returns
+
+Do not duplicate supplier ledger if already exists.
+
+---
+
+# 5. Supplier Payables Structure
+
+If supplier ledger already tracks balance, keep it.
+
+But accounting must also support AP aging.
+
+Recommended table if missing:
+
+```text
+supplier_payables
 ```
 
 Fields:
 
 ```text
 id
-invoice_id
-patient_id nullable
-visit_id nullable
-
-payer_type enum: patient, insurance, sponsor, corporate
-payer_id nullable
+supplier_id
+purchase_order_id nullable
+goods_receipt_id nullable
+supplier_invoice_id nullable
+supplier_ledger_entry_id nullable
 
 original_amount decimal
-allocated_amount decimal
 paid_amount decimal default 0
-discount_amount decimal default 0
 credit_note_amount decimal default 0
-write_off_amount decimal default 0
-refund_amount decimal default 0
+return_amount decimal default 0
+adjustment_amount decimal default 0
 balance decimal
 
+invoice_date nullable
 aging_start_date date
 due_date nullable
-status enum: pending, partially_paid, paid, overdue, written_off, cancelled
-
-insurance_provider_id nullable
-sponsor_id nullable
-corporate_client_id nullable
-
-claim_id nullable
-sponsor_authorization_id nullable
-corporate_account_id nullable
+status enum: pending, partially_paid, paid, overdue, cancelled, written_off
 
 journal_entry_id nullable
 accounting_status nullable
@@ -168,294 +339,214 @@ timestamps
 
 Rules:
 
-* total allocated receivables must not exceed invoice net amount
-* payer balances must reconcile with invoice balance
-* write-off reduces collectible balance
-* refund increases balance or reduces deposit liability depending source
-* cancelled receivables must not appear as collectible AR
-* paid receivables should not appear as outstanding AR
+* supplier payable balance must reconcile with supplier ledger
+* paid supplier payables should not appear as outstanding AP
+* cancelled supplier payables should not appear as outstanding AP
+* supplier returns reduce payable balance
+* supplier payments reduce payable balance
 
-Use existing tables if similar structure already exists.
-
-Do not create duplicate payer tracking if one already exists.
+If existing supplier ledger already has enough structure, avoid adding duplicate tables and instead derive AP aging from it.
 
 ---
 
-# 5. Sponsor Module
+# 6. Supplier Ledger Integration
 
-If sponsor module does not exist, create a simple one.
-
-Recommended tables:
+Supplier ledger must clearly show:
 
 ```text
-sponsors
-sponsor_authorizations
+Date
+Supplier
+Type
+Description
+Debit
+Credit
+Balance
+Source
+Journal Entry
+Created By
 ```
 
-## sponsors
-
-Fields:
+Recommended convention:
 
 ```text
-id
-name
-type enum: individual, company, ngo, church, government, charity, hospital_welfare, other
-contact_person nullable
-phone nullable
-email nullable
-address nullable
-status active/inactive
-created_by nullable
-timestamps
+Credit = amount hospital owes supplier
+Debit = amount paid/reduced
+Balance = Credits - Debits
 ```
 
-## sponsor_authorizations
+Examples:
 
-Fields:
+Goods received worth 5,000:
 
 ```text
-id
-sponsor_id
-patient_id
-visit_id nullable
-invoice_id nullable
-authorization_number nullable
-approved_amount decimal nullable
-coverage_percentage decimal nullable
-valid_from nullable
-valid_to nullable
-notes nullable
-status pending/approved/rejected/expired/cancelled
-approved_by nullable
-approved_at nullable
-created_by nullable
-timestamps
+Credit = 5,000
 ```
 
-Sponsor behavior:
+Supplier payment of 2,000:
 
-* sponsor can cover full or partial invoice
-* sponsor allocation creates sponsor receivable
-* sponsor payment reduces sponsor receivable
-* sponsor does not reduce invoice total
-* sponsor payment is not discount
-* sponsor unpaid balance appears in sponsor AR aging
+```text
+Debit = 2,000
+```
+
+Return to supplier worth 500:
+
+```text
+Debit = 500
+```
+
+Outstanding balance:
+
+```text
+Credits - Debits
+```
 
 ---
 
-# 6. Insurance Receivables
+# 7. Inventory / Expense Account Mapping
 
-Use existing insurance provider and claims workflow.
-
-Do not hardcode NHIS.
-
-When insurance is responsible for invoice amount:
-
-* create insurance receivable
-* link to insurance provider
-* link to claim if claim exists
-* track submitted/approved/paid/rejected statuses
-* insurance payment reduces insurance receivable
-* rejected claim amount should be reassigned to patient or written off depending workflow
-
-Insurance receivable statuses:
+Create or update:
 
 ```text
-pending_claim
-claim_submitted
-approved
-partially_paid
-paid
-rejected
-appealed
-written_off
-cancelled
+ProcurementAccountingPostingService
+SupplierAccountingPostingService
+InventoryAccountResolver
+ExpenseAccountResolver
+SupplierPayableAccountResolver
+PaymentAccountResolver
 ```
 
-If claims module already handles statuses, do not duplicate statuses unnecessarily; map them cleanly.
+Inventory account resolution priority:
+
+```text
+1. Product-specific inventory account
+2. Product category/type inventory account
+3. Department/location inventory account
+4. Accounting settings inventory account
+5. Accounting settings default inventory account
+```
+
+Expense account resolution priority:
+
+```text
+1. Expense category account
+2. Supplier invoice line account
+3. Department expense account
+4. Accounting settings default expense account
+```
+
+Supplier payable account:
+
+```text
+supplier_payable_account_id
+```
+
+Payment account:
+
+* Cash → default_cash_account_id
+* Bank → default_bank_account_id
+* Mobile Money → default_mobile_money_account_id
+
+Fail clearly if required account is missing.
+
+Do not silently post to random accounts.
 
 ---
 
-# 7. Corporate Receivables
+# 8. Goods Receiving Posting
 
-Add support for corporate clients if not already present.
+When goods are received:
 
-Possible corporate payers:
+Operational actions:
 
-* employer
-* company
-* school
-* organization
-* contracted client
+* create goods receipt
+* create stock movement IN
+* update stock balance
+* create supplier ledger credit
+* create or update supplier payable
 
-Recommended table if missing:
-
-```text
-corporate_clients
-```
-
-Fields:
+Accounting posting:
 
 ```text
-id
-name
-contact_person nullable
-phone nullable
-email nullable
-address nullable
-billing_terms nullable
-credit_limit nullable
-status active/inactive
-created_by nullable
-timestamps
+Dr Inventory
+Cr Supplier Payables
 ```
 
-Corporate receivable behavior:
+If multiple product categories map to different inventory accounts:
 
-* corporate client can be responsible for patient invoice
-* corporate payment reduces corporate receivable
-* corporate balance appears in corporate AR aging
-* corporate statement can be generated later
+```text
+Dr Pharmacy Inventory              1,200
+Dr Medical Consumables Inventory     800
+Cr Supplier Payables               2,000
+```
 
-Do not confuse corporate receivable with sponsor unless project intentionally treats them together.
+Do not duplicate posting if stock movement retries.
+
+Use the goods receipt / supplier ledger source as the accounting source.
 
 ---
 
-# 8. Allocation Workflow
+# 9. Supplier Payment Posting
 
-Create service:
+When supplier payment is recorded:
+
+Operational actions:
+
+* create supplier payment
+* create supplier ledger debit
+* reduce supplier payable balance
+
+Accounting posting:
 
 ```text
-ReceivableAllocationService
-```
-
-Methods:
-
-```php
-allocatePatientResponsibility(Invoice $invoice, float $amount, array $meta = []): InvoiceReceivable
-allocateInsuranceResponsibility(Invoice $invoice, InsuranceProvider $provider, float $amount, array $meta = []): InvoiceReceivable
-allocateSponsorResponsibility(Invoice $invoice, Sponsor $sponsor, float $amount, array $meta = []): InvoiceReceivable
-allocateCorporateResponsibility(Invoice $invoice, CorporateClient $client, float $amount, array $meta = []): InvoiceReceivable
-reallocateResponsibility(InvoiceReceivable $from, string $toPayerType, ?Model $payer, float $amount, string $reason): void
+Dr Supplier Payables
+Cr Bank / Cash / Mobile Money
 ```
 
 Rules:
 
-* allocations must not exceed invoice net total
-* reallocation must be auditable
-* reallocation may create accounting journal entries
-* reallocation must not duplicate receivable rows
-* allocation should update invoice receivable summary
+* payment amount must be greater than zero
+* payment cannot exceed supplier outstanding balance unless supplier advance workflow exists
+* supplier advance/prepayment can be documented as TODO if not supported
+* payment must be idempotently posted once
 
 ---
 
-# 9. Accounting Posting for Receivable Allocation
+# 10. Purchase Return / Supplier Return Posting
 
-When invoice is first posted:
+When goods are returned to supplier:
 
-Option A — if payer split is known at invoice finalization:
+Operational actions:
 
-```text
-Dr Patient Receivables
-Dr Insurance Receivables
-Dr Sponsor Receivables
-Dr Corporate Receivables
-Cr Revenue
-```
+* create purchase return
+* create stock movement OUT
+* reduce stock balance
+* create supplier ledger debit or credit note
+* reduce supplier payable balance
 
-Option B — if invoice was first posted to patient receivable, then later reallocated:
+Accounting posting:
 
 ```text
-Dr Insurance Receivables
-Cr Patient Receivables
+Dr Supplier Payables
+Cr Inventory
 ```
 
-or:
+If goods were already paid and supplier owes refund:
 
-```text
-Dr Sponsor Receivables
-Cr Patient Receivables
-```
+* either create supplier refund receivable if supported
+* or document as TODO
 
-or:
+Rules:
 
-```text
-Dr Corporate Receivables
-Cr Patient Receivables
-```
-
-Use the option that matches existing Phase 2 implementation.
-
-Do not double-recognize revenue.
-
-Revenue should not be credited again during reallocation.
+* returned quantity cannot exceed received/available quantity
+* do not post return twice
+* do not create duplicate stock movements
+* do not duplicate supplier ledger entry
 
 ---
 
-# 10. Payments by Payer
+# 11. AP Aging
 
-Payment must identify payer type.
-
-Payment payer types:
-
-```text
-patient
-insurance
-sponsor
-corporate
-```
-
-When payer pays:
-
-## Patient payment
-
-```text
-Dr Cash / Bank / Mobile Money
-Cr Patient Receivables
-```
-
-## Insurance payment
-
-```text
-Dr Bank
-Cr Insurance Receivables
-```
-
-## Sponsor payment
-
-```text
-Dr Bank / Cash
-Cr Sponsor Receivables
-```
-
-## Corporate payment
-
-```text
-Dr Bank
-Cr Corporate Receivables
-```
-
-Do not let sponsor payment reduce patient receivable unless there is an allocation/reallocation record.
-
-Do not let insurance payment reduce sponsor receivable.
-
----
-
-# 11. AR Aging
-
-Implement AR Aging report.
-
-AR aging should be payer-based.
-
-Required reports:
-
-```text
-Overall AR Aging
-Patient AR Aging
-Insurance AR Aging
-Sponsor AR Aging
-Corporate AR Aging
-```
+Implement Accounts Payable Aging report.
 
 Aging buckets:
 
@@ -468,25 +559,16 @@ Current / Not Due
 120+ days
 ```
 
-or if project uses simpler buckets:
+AP Aging should show:
 
 ```text
-0–30
-31–60
-61–90
-90+
-```
-
-Each report should show:
-
-```text
-Payer
-Invoice Number
-Patient
-Visit
+Supplier
+Reference
+Purchase Order
+Goods Receipt / Supplier Invoice
 Original Amount
 Paid
-Adjustments
+Returns / Credits
 Balance
 Aging Start Date
 Due Date
@@ -495,266 +577,225 @@ Bucket
 Status
 ```
 
-Summary should show totals by bucket.
-
-Example:
+Summary:
 
 ```text
-0–30:   GHS 4,000
-31–60:  GHS 2,500
-61–90:  GHS 900
-90+:    GHS 7,200
-Total:  GHS 14,600
+0–30
+31–60
+61–90
+91–120
+120+
+Total
 ```
+
+Rules:
+
+* include only unpaid supplier payables
+* exclude paid/cancelled fully settled records
+* due date should come from supplier terms or invoice date + default payment terms
+* if no due date, age from aging_start_date
 
 ---
 
-# 12. Aging Start Date Rules
+# 12. Supplier Statement
 
-Use consistent aging start dates.
+Add supplier statement view/report.
+
+Supplier statement should show:
+
+```text
+Opening Balance
+Goods Received / Supplier Invoices
+Payments
+Returns
+Credit Notes
+Debit Notes
+Closing Balance
+```
+
+With date filters.
+
+This can use supplier ledger entries.
+
+---
+
+# 13. UI Updates
+
+Add or update menu under Store / Procurement and Accounts & Finance.
 
 Recommended:
 
 ```text
-Patient receivable = invoice finalized date or discharge date
-Insurance receivable = claim submission date or insurance allocation date
-Sponsor receivable = sponsor approval/allocation date
-Corporate receivable = invoice issue/allocation date
+Accounts & Finance
+├── Accounts Payable
+│   ├── Supplier Payables
+│   ├── Supplier Payments
+│   ├── Supplier Statements
+│   └── AP Aging
 ```
 
-If discharge/finalization matters for emergency/admission:
+Supplier details page should show:
 
-* emergency/admission patient balance should age from invoice finalization or discharge
-* not necessarily from the emergency case start date
-
-Document the rule clearly.
-
----
-
-# 13. Due Dates
-
-Support due dates.
-
-Default due dates may come from:
-
-* invoice due date
-* insurance provider payment terms
-* sponsor authorization terms
-* corporate client billing terms
-* system default receivable terms
-
-If no due date exists, aging can still use aging_start_date.
-
-Status overdue should be based on due_date when available.
-
----
-
-# 14. Invoice Detail UI
-
-Update invoice detail page.
-
-Add section:
-
-```text
-Payer Responsibility / Receivables
-```
-
-Show:
-
-```text
-Payer Type
-Payer Name
-Allocated Amount
-Paid Amount
-Adjustments
-Balance
-Status
-Aging
-Due Date
-```
-
-Example:
-
-```text
-Patient: Emmanuel Wakey     GHS 200 allocated · GHS 100 paid · GHS 100 balance
-Insurance: NHIS             GHS 500 allocated · GHS 0 paid · GHS 500 balance
-Sponsor: Church Welfare     GHS 300 allocated · GHS 300 paid · GHS 0 balance
-```
-
-Also show journal entry links if posted.
-
----
-
-# 15. Sponsor UI
-
-Add UI under Billing or Accounts & Finance:
-
-```text
-Sponsors
-├── Sponsor List
-├── Create Sponsor
-├── Sponsor Details
-├── Sponsor Authorizations
-├── Sponsor Receivables
-├── Sponsor Payments
-└── Sponsor AR Aging
-```
-
-Sponsor detail should show:
-
-* sponsor profile
-* active authorizations
-* patients covered
-* invoices allocated
-* payments received
-* outstanding balance
-* AR aging
-
----
-
-# 16. Insurance AR UI
-
-Insurance provider detail should show:
-
-* invoices/claims pending
-* approved claims
-* rejected claims
-* payments received
-* outstanding receivable
-* AR aging
-
-If claims already has this, integrate rather than duplicate.
-
----
-
-# 17. Corporate AR UI
-
-Corporate client detail should show:
-
-* patients/invoices covered
-* payment terms
+* profile
+* purchase orders
+* goods received
+* ledger
 * payments
+* returns
 * outstanding balance
-* AR aging
-* statement later if supported
+* AP aging
+* journal entries
 
-Corporate statements can be documented as future TODO if not implemented now.
-
----
-
-# 18. Services to Create / Update
-
-Create or update:
+Goods receipt detail should show:
 
 ```text
-InvoiceReceivableService
-ReceivableAllocationService
-SponsorService
-SponsorAuthorizationService
-SponsorPaymentService
-InsuranceReceivableService
-CorporateClientService
-CorporateReceivableService
-ARAgingService
-ReceivablePaymentService
-ReceivableAccountingPostingService
-InvoiceBalanceService
+Accounting Status
+Journal Entry
+Supplier Payable Status
 ```
 
-Use existing services if already present.
+Supplier payment detail should show:
 
-Controllers must remain thin.
+```text
+Accounting Status
+Journal Entry
+```
 
-Accounting logic must remain inside services.
+Purchase return detail should show:
+
+```text
+Accounting Status
+Journal Entry
+```
 
 ---
 
-# 19. Activity Logs
+# 14. Activity Logs
 
 Use ActivityLogService.
 
-Log:
+Do not create a separate audit system.
+
+Operational events:
 
 ```text
-RECEIVABLE_ALLOCATED
-RECEIVABLE_REALLOCATED
-PATIENT_RECEIVABLE_CREATED
-INSURANCE_RECEIVABLE_CREATED
-SPONSOR_RECEIVABLE_CREATED
-CORPORATE_RECEIVABLE_CREATED
+GOODS_RECEIVED
+SUPPLIER_PAYABLE_CREATED
+SUPPLIER_PAYMENT_RECORDED
+SUPPLIER_PAYMENT_REVERSED
+PURCHASE_RETURN_CREATED
+PURCHASE_RETURN_APPROVED
+PURCHASE_RETURN_POSTED
+SUPPLIER_CREDIT_NOTE_RECORDED
+SUPPLIER_DEBIT_NOTE_RECORDED
+```
 
-SPONSOR_CREATED
-SPONSOR_UPDATED
-SPONSOR_AUTHORIZATION_APPROVED
-SPONSOR_PAYMENT_RECORDED
+Accounting events:
 
-INSURANCE_RECEIVABLE_UPDATED
-INSURANCE_PAYMENT_RECORDED
-
-CORPORATE_CLIENT_CREATED
-CORPORATE_PAYMENT_RECORDED
-
-AR_AGING_REPORT_VIEWED
+```text
+ACCOUNTING_POSTED_FOR_GOODS_RECEIPT
+ACCOUNTING_POSTED_FOR_SUPPLIER_PAYMENT
+ACCOUNTING_POSTED_FOR_PURCHASE_RETURN
+ACCOUNTING_POSTING_FAILED
+ACCOUNTING_REVERSAL_CREATED
 ```
 
 Context:
 
 ```text
-invoice_id
-invoice_receivable_id
-patient_id
-visit_id
-payer_type
-payer_id
-insurance_provider_id
-sponsor_id
-corporate_client_id
+supplier_id
+purchase_order_id
+goods_receipt_id
+supplier_payment_id
+purchase_return_id
+supplier_ledger_entry_id
+journal_entry_id
+stock_movement_id
 amount
 old_values
 new_values
-journal_entry_id
 ```
 
-Patient-related allocation should appear on patient timeline when appropriate.
+Do not attach patient_id/visit_id.
 
-Generic sponsor/corporate setup logs should remain global.
+Supplier/procurement logs are facility-level logs.
 
 ---
 
-# 20. Permissions
+# 15. Permissions
 
 Add or verify:
 
 ```text
-receivables.view
-receivables.allocate
-receivables.reallocate
-receivables.payment.record
-receivables.write_off
+accounts_payable.view
+accounts_payable.payment.record
+accounts_payable.payment.reverse
+accounts_payable.aging.view
+accounts_payable.statement.view
 
-sponsors.view
-sponsors.create
-sponsors.edit
-sponsors.authorize
-sponsors.payment.record
+supplier_payables.view
+supplier_payables.manage
 
-corporate_clients.view
-corporate_clients.create
-corporate_clients.edit
-corporate_clients.payment.record
+supplier_payments.view
+supplier_payments.create
+supplier_payments.reverse
 
-reports.ar_aging.view
-reports.ar_aging.patient
-reports.ar_aging.insurance
-reports.ar_aging.sponsor
-reports.ar_aging.corporate
+purchase_returns.view
+purchase_returns.create
+purchase_returns.approve
+purchase_returns.post
+purchase_returns.cancel
+
+reports.ap_aging.view
+reports.supplier_statement.view
 ```
 
-Only authorized billing/finance/admin users should allocate receivables or record payer payments.
+Only authorized finance/procurement/admin users should record supplier payments or approve purchase returns.
 
 ---
 
-# 21. Manual Verification Strategy
+# 16. Reversal Behavior
+
+Do not delete posted financial records.
+
+For reversal:
+
+* reverse supplier payment by creating reversal journal entry
+* reverse supplier ledger impact if existing workflow supports it
+* reverse purchase return only through controlled cancellation/reversal
+* reverse goods receipt only if stock/procurement workflow supports it
+
+Do not edit posted journal entries.
+
+Use JournalEntryService::reverse() where possible.
+
+---
+
+# 17. Idempotency
+
+Every source posts once.
+
+Use:
+
+```text
+journal_entry_id
+accounting_status
+accounting_posted_at
+accounting_error
+reversal_journal_entry_id
+```
+
+Rules:
+
+* retry failed posting must not duplicate journal entry
+* posting same goods receipt twice is blocked
+* posting same supplier payment twice is blocked
+* posting same purchase return twice is blocked
+* reversal twice is blocked
+
+---
+
+# 18. Manual Verification Strategy
 
 Do not write the full automated test suite yet.
 
@@ -764,53 +805,50 @@ For this phase, provide manual verification notes.
 
 Manual verification required:
 
-1. Create invoice with patient responsibility.
-2. Confirm patient receivable is created.
-3. Allocate part of invoice to insurance.
-4. Confirm insurance receivable is created.
-5. Allocate part of invoice to sponsor.
-6. Confirm sponsor receivable is created.
-7. Allocate part of invoice to corporate client if supported.
-8. Confirm corporate receivable is created.
-9. Confirm payer allocations do not exceed invoice net total.
-10. Record patient payment and confirm patient receivable reduces.
-11. Record insurance payment and confirm insurance receivable reduces.
-12. Record sponsor payment and confirm sponsor receivable reduces.
-13. Record corporate payment and confirm corporate receivable reduces.
-14. Confirm payments post to correct accounting receivable account.
-15. Confirm revenue is not double-posted during reallocation.
-16. Confirm invoice detail shows payer responsibility section.
-17. Open AR Aging report and confirm balances appear in correct buckets.
-18. Confirm paid receivables do not appear as outstanding.
-19. Confirm written-off receivables do not appear as collectible AR.
-20. Confirm Trial Balance remains balanced.
-21. Confirm General Ledger shows receivable movements.
-22. Confirm logs:audit Stage-2 gate remains green.
-23. Confirm emergency/admission and insurance claims workflows still work.
+1. Create purchase order and confirm no accounting journal is posted.
+2. Receive goods and confirm stock balance increases.
+3. Confirm supplier ledger credit is created.
+4. Confirm supplier payable is created.
+5. Confirm goods receipt journal debits inventory and credits supplier payable.
+6. Confirm multiple inventory accounts are used when products map differently.
+7. Record supplier payment and confirm payable balance reduces.
+8. Confirm supplier payment journal debits supplier payable and credits cash/bank.
+9. Create purchase return and confirm stock reduces.
+10. Confirm purchase return reduces supplier payable.
+11. Confirm purchase return journal debits supplier payable and credits inventory.
+12. Confirm duplicate posting is prevented.
+13. Confirm AP Aging shows unpaid supplier balances in correct buckets.
+14. Confirm paid supplier payables disappear from outstanding AP.
+15. Confirm supplier statement shows goods received, payments, returns, and balance.
+16. Confirm Trial Balance remains balanced.
+17. Confirm General Ledger shows procurement/AP postings.
+18. Confirm activity logs are written.
+19. Confirm unauthorized users cannot record supplier payment or post purchase return.
+20. Confirm logs:audit Stage-2 gate remains green.
+21. Confirm existing procurement, stock, billing, and supplier workflows still work.
 
 Do not skip validation, permissions, accounting posting, activity logs, or idempotency because tests are deferred.
 
 ---
 
-# 22. Documentation
+# 19. Documentation
 
 Create:
 
 ```text
-docs/ACCOUNTING_PHASE_4_RECEIVABLES_AR_AGING_REPORT.md
+docs/ACCOUNTING_PHASE_5_PROCUREMENT_AP_AGING_REPORT.md
 ```
 
 Include:
 
-* data model implemented
-* sponsor behavior
-* insurance receivable behavior
-* corporate receivable behavior
-* payer allocation rules
-* accounting posting rules
-* payment rules by payer type
-* AR aging buckets
-* aging start date rules
+* goods receiving accounting rule
+* supplier invoice/payable treatment
+* supplier ledger convention
+* supplier payment posting
+* purchase return posting
+* AP aging buckets
+* supplier statement behavior
+* account mappings
 * UI changes
 * permissions
 * activity logs
@@ -821,21 +859,23 @@ Include:
 
 ---
 
-# 23. Acceptance Criteria
+# 20. Acceptance Criteria
 
-Phase 4 is complete when:
+Phase 5 is complete when:
 
-* invoice receivables exist by payer type
-* sponsor allocation works
-* insurance allocation works
-* corporate allocation works if supported
-* payer-specific payments reduce correct receivable
-* payer reallocations do not duplicate revenue
-* invoice detail shows payer responsibility
-* AR Aging report works
-* patient/insurance/sponsor/corporate AR can be separated
+* purchase orders do not create accounting liability by default
+* goods receiving can create supplier payable
+* goods receiving posts Dr Inventory / Cr Supplier Payable
+* supplier payments post Dr Supplier Payable / Cr Cash/Bank
+* supplier returns post Dr Supplier Payable / Cr Inventory where applicable
+* supplier ledger reconciles with supplier payable balance
+* AP Aging report works
+* Supplier Statement works
+* accounting status appears on procurement/AP records
+* duplicate posting is prevented
+* reversals are controlled
 * Trial Balance remains balanced
-* General Ledger shows receivable activity
+* General Ledger shows AP/procurement postings
 * activity logs are written
 * logs:audit Stage-2 gate remains green
 * manual verification is documented
@@ -843,20 +883,19 @@ Phase 4 is complete when:
 
 ---
 
-# 24. Important Rules
+# 21. Important Rules
 
-Do not treat sponsor as discount.
-Do not treat insurance as sponsor.
-Do not treat corporate receivable as write-off.
-Do not treat write-off as payment.
-Do not double-recognize revenue during receivable reallocation.
-Do not allow payer allocations to exceed invoice net amount.
-Do not let one payer’s payment reduce another payer’s balance.
-Do not remove existing claims workflow.
-Do not hardcode NHIS.
-Do not bypass accounting services.
+Do not treat purchase order as accounting liability.
+Do not treat supplier payment as expense.
+Do not duplicate supplier ledger entries.
+Do not duplicate stock movements.
+Do not duplicate journal entries.
+Do not post the same goods receipt twice.
+Do not silently post to random accounts.
+Do not edit posted journal entries.
+Do not bypass stock movement service.
+Do not bypass supplier ledger service.
 Do not bypass ActivityLogService.
 Do not enable full automated tests yet.
 
-Proceed with Accounting Phase 4: Sponsors, Insurance, Corporate Receivables & AR Aging now.
-
+Proceed with Accounting Phase 5: Procurement, Supplier Ledger, Accounts Payable & AP Aging now.
