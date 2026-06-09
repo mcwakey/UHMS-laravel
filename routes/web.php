@@ -99,6 +99,13 @@ use App\Http\Controllers\Admin\VisitDepartmentOptionsController;
 use App\Http\Controllers\Admin\VisitPreviewController;
 use App\Http\Controllers\Admin\VitalController;
 use App\Http\Controllers\Admin\WardController;
+use App\Http\Controllers\Accounting\AccountController as AccountingAccountController;
+use App\Http\Controllers\Accounting\AccountingDashboardController;
+use App\Http\Controllers\Accounting\AccountingPeriodController;
+use App\Http\Controllers\Accounting\AccountingReportController;
+use App\Http\Controllers\Accounting\AccountingSettingsController;
+use App\Http\Controllers\Accounting\FiscalYearController;
+use App\Http\Controllers\Accounting\JournalEntryController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
@@ -622,6 +629,61 @@ Route::middleware('auth')->group(function () {
                 Route::post('handover/{shift}/close', [CashierShiftController::class, 'close'])->name('handover.close');
                 Route::post('handover/{shift}/verify', [CashierShiftController::class, 'verify'])->name('handover.verify')->middleware('can:accounts.entries.approve');
             });
+        });
+
+        // Double-entry Accounting Foundation
+        Route::prefix('accounting')->name('accounting.')->group(function () {
+            Route::get('/', AccountingDashboardController::class)
+                ->name('dashboard')
+                ->middleware('can:accounting.dashboard.view');
+
+            Route::middleware('can:accounting.accounts.view')->prefix('accounts')->name('accounts.')->group(function () {
+                Route::get('/', [AccountingAccountController::class, 'index'])->name('index');
+                Route::get('create', [AccountingAccountController::class, 'create'])->name('create')->middleware('can:accounting.accounts.create');
+                Route::post('/', [AccountingAccountController::class, 'store'])->name('store')->middleware('can:accounting.accounts.create');
+                Route::get('{account}/edit', [AccountingAccountController::class, 'edit'])->name('edit')->middleware('can:accounting.accounts.edit');
+                Route::put('{account}', [AccountingAccountController::class, 'update'])->name('update')->middleware('can:accounting.accounts.edit');
+                Route::patch('{account}/disable', [AccountingAccountController::class, 'disable'])->name('disable')->middleware('can:accounting.accounts.disable');
+                Route::patch('{account}/activate', [AccountingAccountController::class, 'activate'])->name('activate')->middleware('can:accounting.accounts.edit');
+            });
+
+            Route::middleware('can:accounting.journals.view')->prefix('journals')->name('journals.')->group(function () {
+                Route::get('/', [JournalEntryController::class, 'index'])->name('index');
+                Route::get('create', [JournalEntryController::class, 'create'])->name('create')->middleware('can:accounting.journals.create');
+                Route::post('/', [JournalEntryController::class, 'store'])->name('store')->middleware('can:accounting.journals.create');
+                Route::get('{journal}', [JournalEntryController::class, 'show'])->name('show');
+                Route::get('{journal}/edit', [JournalEntryController::class, 'edit'])->name('edit')->middleware('can:accounting.journals.edit');
+                Route::put('{journal}', [JournalEntryController::class, 'update'])->name('update')->middleware('can:accounting.journals.edit');
+                Route::post('{journal}/post', [JournalEntryController::class, 'post'])->name('post')->middleware('can:accounting.journals.post');
+                Route::post('{journal}/reverse', [JournalEntryController::class, 'reverse'])->name('reverse')->middleware('can:accounting.journals.reverse');
+                Route::patch('{journal}/cancel', [JournalEntryController::class, 'cancel'])->name('cancel')->middleware('can:accounting.journals.cancel');
+            });
+
+            Route::get('trial-balance', [AccountingReportController::class, 'trialBalance'])
+                ->name('trial-balance')
+                ->middleware('can:accounting.reports.trial_balance');
+            Route::get('general-ledger', [AccountingReportController::class, 'generalLedger'])
+                ->name('general-ledger')
+                ->middleware('can:accounting.reports.general_ledger');
+
+            Route::middleware('can:accounting.fiscal_years.view')->prefix('fiscal-years')->name('fiscal-years.')->group(function () {
+                Route::get('/', [FiscalYearController::class, 'index'])->name('index');
+                Route::post('/', [FiscalYearController::class, 'store'])->name('store')->middleware('can:accounting.fiscal_years.manage');
+                Route::patch('{fiscalYear}/close', [FiscalYearController::class, 'close'])->name('close')->middleware('can:accounting.fiscal_years.manage');
+            });
+
+            Route::middleware('can:accounting.periods.view')->prefix('periods')->name('periods.')->group(function () {
+                Route::get('/', [AccountingPeriodController::class, 'index'])->name('index');
+                Route::post('/', [AccountingPeriodController::class, 'store'])->name('store')->middleware('can:accounting.periods.manage');
+                Route::patch('{period}/close', [AccountingPeriodController::class, 'close'])->name('close')->middleware('can:accounting.periods.manage');
+            });
+
+            Route::get('settings', [AccountingSettingsController::class, 'index'])
+                ->name('settings.index')
+                ->middleware('can:accounting.settings.view');
+            Route::put('settings', [AccountingSettingsController::class, 'update'])
+                ->name('settings.update')
+                ->middleware('can:accounting.settings.manage');
         });
 
         // HR & Payroll

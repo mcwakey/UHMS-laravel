@@ -294,6 +294,7 @@ class ActivityLogService
             'prescription_id', 'prescription_item_id', 'dispensing_id', 'drug_id',
             'department_id', 'appointment_id', 'invoice_id', 'invoice_item_id', 'claim_id', 'claim_item_id',
             'insurance_provider_id', 'insurance_type_id', 'payment_id', 'refund_id',
+            'account_id', 'journal_entry_id', 'fiscal_year_id', 'accounting_period_id',
             'product_id', 'stock_location_id', 'stock_movement_id', 'quantity', 'source_type', 'source_id',
             'from_stock_location_id', 'to_stock_location_id', 'stock_transfer_id', 'stock_requisition_id',
             'purchase_order_id', 'supplier_id', 'asset_id', 'target_user_id', 'role_id', 'module_id', 'setting_key',

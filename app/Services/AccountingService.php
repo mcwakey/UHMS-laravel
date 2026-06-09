@@ -6,8 +6,14 @@ use App\Enums\LogModule;
 use App\Enums\LogSeverity;
 use App\Enums\ShiftStatus;
 use App\Enums\PaymentMethod;
+use App\Enums\Accounting\JournalEntryStatus;
+use App\Enums\Accounting\PeriodStatus;
+use App\Models\Account;
+use App\Models\AccountingPeriod;
 use App\Models\CashierShift;
 use App\Models\FinancialEntry;
+use App\Models\JournalEntry;
+use App\Models\JournalEntryLine;
 use App\Models\Payment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -212,6 +218,42 @@ class AccountingService
             'today_expense' => $todayExpense,
             'today_payments' => $todayPayments,
             'today_net' => $todayIncome + $todayPayments - $todayExpense,
+        ];
+    }
+
+    public function getAccountingDashboard(?string $from = null, ?string $to = null): array
+    {
+        $from = $from ?? now()->startOfMonth()->toDateString();
+        $to = $to ?? now()->toDateString();
+
+        $postedStatuses = [JournalEntryStatus::POSTED->value, JournalEntryStatus::REVERSED->value];
+
+        $debits = JournalEntryLine::query()
+            ->whereHas('journalEntry', fn ($query) => $query->whereIn('status', $postedStatuses)
+                ->whereBetween('entry_date', [$from, $to]))
+            ->sum('debit');
+
+        $credits = JournalEntryLine::query()
+            ->whereHas('journalEntry', fn ($query) => $query->whereIn('status', $postedStatuses)
+                ->whereBetween('entry_date', [$from, $to]))
+            ->sum('credit');
+
+        return [
+            'from' => $from,
+            'to' => $to,
+            'accounts' => Account::count(),
+            'active_accounts' => Account::where('is_active', true)->count(),
+            'open_periods' => AccountingPeriod::where('status', PeriodStatus::OPEN->value)->count(),
+            'draft_journals' => JournalEntry::where('status', JournalEntryStatus::DRAFT->value)->count(),
+            'posted_journals' => JournalEntry::whereIn('status', $postedStatuses)->count(),
+            'period_debits' => $debits,
+            'period_credits' => $credits,
+            'period_balanced' => abs((float) $debits - (float) $credits) < 0.005,
+            'recent_journals' => JournalEntry::with(['createdBy', 'lines'])
+                ->latest('entry_date')
+                ->latest('id')
+                ->limit(8)
+                ->get(),
         ];
     }
 

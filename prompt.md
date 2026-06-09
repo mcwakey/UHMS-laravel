@@ -1,1556 +1,926 @@
-Absolutely — this is a very important step now. UHMS has grown into a large system, so without a **UI/UX governance layer**, every new module will start looking and behaving differently.
+You are working on UHMS — Ultimate Hospital Management System.
 
-Here is the full implementation prompt for Codex/Copilot:
+We are starting the full accounting transformation of UHMS.
 
-````text
-You are a senior UI/UX architect, Laravel + Inertia/Vue frontend engineer, and design system specialist working on UHMS — Ultimate Hospital Management System.
+Phase 1 is the Accounting Foundation.
 
-We need to perform a complete UI/UX audit of the whole UHMS system and create a unified design system rule file that must guide all future UI development and edits.
+Goal:
+Build the accounting core that will later allow UHMS billing, payments, credit notes, write-offs, sponsors, insurance claims, procurement, supplier ledger, stock, payroll, and expenses to generate proper double-entry journal entries.
 
-UHMS now includes many modules:
+Do not replace the current billing system.
+Do not break invoices, payments, discounts, credit notes, write-offs, stock, procurement, supplier ledger, or reports.
+Do not start posting every operational transaction yet unless explicitly requested.
+Do not remove existing financial records.
 
-- Dashboard
-- Patients
-- Visits
-- Consultation
-- Consultation Summary
-- Emergency
-- Admission
-- MAR / Medication Administration
-- Pharmacy
-- Billing
-- Insurance / Claims
-- Investigations
-- Procedures
-- Theatre Rooms
-- Blood Bank
-- Stock / Inventory
-- Procurement
-- Supplier Ledger
-- Assets
-- Reports
-- Statistics / Analytics
-- Notifications
-- Logs
-- Roles / Permissions
-- Modules
-- Settings
+Important rule:
 
-Because the system has grown quickly, many pages may now have inconsistent UI patterns, layouts, forms, tables, modals, filters, buttons, badges, cards, spacing, colors, typography, status displays, and workflow actions.
+Operational records remain operational.
+Accounting records are generated from operational records.
 
-We need to inspect the whole UI, identify gaps and inconsistencies, create a full recommendation report, and define a permanent UI/UX theme rule file that future developers must follow.
+Example:
 
-Do not randomly redesign everything.
-
-First inspect the current UI implementation, identify patterns that already work, then standardize and document the rules.
-
-Do not break existing workflows.
+Invoice = operational billing record.
+Journal Entry = accounting record created from invoice.
 
 ---
 
-# 1. Main Objectives
+# 1. Accounting Principle
 
-Perform a full UI/UX audit and standardization plan.
+UHMS must support standard double-entry accounting.
 
-You must:
+Every accounting transaction must satisfy:
 
-1. Inspect the entire UHMS frontend.
-2. Identify UI inconsistencies across modules.
-3. Identify UX workflow gaps.
-4. Identify broken or confusing layouts.
-5. Identify inconsistent buttons, forms, tables, modals, cards, badges, filters, status labels, navigation, and spacing.
-6. Identify accessibility problems.
-7. Identify responsive/mobile issues.
-8. Identify inconsistent terminology.
-9. Identify places where actions lack confirmation, warning, validation, or feedback.
-10. Create a detailed UI/UX gap report.
-11. Create a full recommendation report.
-12. Create a theme/design rule file that future UI work must follow.
-13. Add reusable UI guidelines for new pages/components.
-14. Define guards/rules for maintaining uniform design across UHMS.
-15. Update existing UI where safe and practical.
-16. Document remaining UI refactor TODOs.
+Assets = Liabilities + Equity
+
+And every journal entry must satisfy:
+
+Total Debits = Total Credits
+
+The system must reject unbalanced journal entries.
 
 ---
 
-# 2. Required Documentation Files
+# 2. Main Accounting Elements
 
-Create these files:
+Support the major accounting elements:
+
+1. Assets
+2. Liabilities
+3. Equity
+4. Income / Revenue
+5. Expenses
+
+Recommended account types:
+
+ASSET
+LIABILITY
+EQUITY
+INCOME
+EXPENSE
+
+Optional subtypes:
+
+CURRENT_ASSET
+NON_CURRENT_ASSET
+CURRENT_LIABILITY
+NON_CURRENT_LIABILITY
+OPERATING_REVENUE
+OTHER_INCOME
+COST_OF_SALES
+OPERATING_EXPENSE
+ADMIN_EXPENSE
+FINANCE_COST
+
+---
+
+# 3. Phase 1 Scope
+
+Build only the accounting foundation:
+
+1. Chart of Accounts
+2. Account groups/categories
+3. Fiscal years
+4. Accounting periods
+5. Journal entries
+6. Journal entry lines
+7. Manual journal entry screen
+8. Double-entry validation
+9. Posting/approval workflow
+10. Reversal workflow
+11. General Ledger report
+12. Trial Balance report
+13. Basic accounting settings
+14. Accounting permissions
+15. Audit/activity logs
+
+Do not yet fully automate all postings from billing/procurement/stock.
+
+However, design the foundation so Phase 2 can easily plug operational transactions into accounting posting.
+
+---
+
+# 4. Required Models / Tables
+
+Create or update models/tables using project conventions.
+
+---
+
+## accounts
+
+Fields:
 
 ```text
-docs/UI_UX_GAP_ANALYSIS.md
-docs/UI_UX_RECOMMENDATION_REPORT.md
-docs/UHMS_UI_THEME_RULES.md
-docs/UI_COMPONENT_STANDARDS.md
-docs/UI_UX_REMAINING_TODOS.md
+id
+code
+name
+type
+subtype nullable
+parent_id nullable
+description nullable
+is_cash_account boolean default false
+is_bank_account boolean default false
+is_control_account boolean default false
+is_active boolean default true
+opening_balance decimal default 0
+normal_balance debit/credit
+created_by nullable
+updated_by nullable
+timestamps
+softDeletes optional
 ````
 
-If the project already has a documentation folder convention, follow it.
+Rules:
+
+* code must be unique
+* parent_id allows account hierarchy
+* type must be one of ASSET, LIABILITY, EQUITY, INCOME, EXPENSE
+* normal balance:
+
+  * ASSET = debit
+  * EXPENSE = debit
+  * LIABILITY = credit
+  * EQUITY = credit
+  * INCOME = credit
+* parent account cannot be its own child
+* inactive accounts cannot be used in new journal entries
+* control accounts should not normally be posted manually unless allowed by permission/config
 
 ---
 
-# 3. UI_UX_GAP_ANALYSIS.md
+## fiscal_years
 
-This report must include:
-
-* current frontend framework and styling tools found
-* layout system found
-* theme/colors currently used
-* typography patterns found
-* button styles found
-* form patterns found
-* table patterns found
-* modal patterns found
-* card patterns found
-* filter/search patterns found
-* status badge patterns found
-* sidebar/menu patterns found
-* dashboard widget patterns found
-* empty state patterns found
-* loading/error patterns found
-* inconsistent UI elements
-* inconsistent UX flows
-* broken layouts
-* pages with overcrowded information
-* pages hiding important information
-* pages missing user feedback
-* pages missing confirmation dialogs
-* pages missing permissions-based action visibility
-* pages not responsive
-* pages using different spacing/style rules
-* duplicate components that should be reusable
-* UI risks by module
-* priority ranking of issues
-
-Group findings by module.
-
-Example:
+Fields:
 
 ```text
-Emergency Module
-- Triage section layout differs from Admission vitals layout.
-- Medication section does not follow Consultation prescription UI.
-- Billing and Procedure sections are visually mixed.
-- Some actions have no success/error feedback.
-Recommendation priority: HIGH.
-```
-
----
-
-# 4. UI_UX_RECOMMENDATION_REPORT.md
-
-This report must include:
-
-* recommended global layout standard
-* recommended page structure
-* recommended color system
-* recommended typography
-* recommended spacing
-* recommended button hierarchy
-* recommended form structure
-* recommended table structure
-* recommended modal behavior
-* recommended filter/search behavior
-* recommended status badges
-* recommended clinical document layout
-* recommended dashboard cards
-* recommended print layouts
-* recommended responsive behavior
-* recommended accessibility improvements
-* recommended module-specific UI fixes
-* priority implementation roadmap
-* files/components that should be refactored first
-
----
-
-# 5. UHMS_UI_THEME_RULES.md
-
-Create a permanent theme rule file.
-
-This file must be treated as the design law for UHMS.
-
-It should define:
-
-1. Brand personality.
-2. Color tokens.
-3. Typography rules.
-4. Spacing rules.
-5. Layout rules.
-6. Button rules.
-7. Form rules.
-8. Table rules.
-9. Modal rules.
-10. Card rules.
-11. Badge/status rules.
-12. Dashboard rules.
-13. Clinical document rules.
-14. Print rules.
-15. Mobile/responsive rules.
-16. Accessibility rules.
-17. Error/success feedback rules.
-18. Permission-based UI rules.
-19. Module layout rules.
-20. Do and Do Not rules.
-
----
-
-# 6. UI_COMPONENT_STANDARDS.md
-
-Create component-level standards.
-
-Document how to use/create:
-
-* PageHeader
-* SectionHeader
-* ModuleCard
-* StatCard
-* DataTable
-* FilterBar
-* SearchInput
-* StatusBadge
-* PriorityBadge
-* ActionButtonGroup
-* ConfirmDialog
-* FormSection
-* FormInput
-* SelectSearch
-* DateRangePicker
-* EmptyState
-* LoadingState
-* ErrorState
-* SuccessToast
-* Modal
-* Drawer/SidePanel
-* Timeline
-* ClinicalTimeline
-* VisitPreviewBlock
-* DocumentSummaryBlock
-* PrintButton
-* ExportButton
-* PermissionGuard
-
-If equivalent components already exist, document and reuse them.
-
-If they do not exist, create or recommend them.
-
----
-
-# 7. UI_UX_REMAINING_TODOS.md
-
-This file must include:
-
-* issues not fixed yet
-* pages needing full redesign
-* pages needing screenshot regeneration
-* components needing extraction
-* accessibility tasks
-* responsive tasks
-* print layout tasks
-* technical debt
-* recommended next prompts/tasks
-
----
-
-# 8. Inspect Frontend Structure
-
-Inspect:
-
-```text
-resources/js
-resources/views
-resources/css
-resources/sass
-tailwind.config.js
-vite.config.js
-package.json
-layouts
-components
-pages
-partials
-blade views
-sidebar/menu components
-theme/config files
-```
-
-Search for:
-
-```text
-button
-btn
-card
-modal
-badge
-table
-datatable
-form
-input
-select
-sidebar
-layout
-dashboard
-status
-toast
-alert
-print
-theme
-colors
-```
-
-Identify repeated hardcoded classes/styles that should become reusable components.
-
----
-
-# 9. Design Philosophy for UHMS
-
-UHMS must feel:
-
-```text
-clean
-modern
-medical
-professional
-calm
-fast
-readable
-trustworthy
-consistent
-data-rich but not chaotic
-```
-
-It should not feel:
-
-```text
-random
-overcrowded
-unfinished
-inconsistent
-too colorful
-too dark
-too flat
-too noisy
-hard to scan
-```
-
-Because UHMS is clinical software, clarity is more important than decoration.
-
----
-
-# 10. Global Page Layout Standard
-
-Every page should follow a consistent structure:
-
-```text
-Page Header
-    - Title
-    - Short description
-    - Primary action buttons
-    - Breadcrumbs if used
-
-Summary / KPI Cards if needed
-
-Filter/Search Bar if needed
-
-Main Content
-    - Table / Form / Clinical document / Board / Timeline
-
-Secondary Content
-    - Notes / logs / supporting details
-
-Pagination / Footer Actions
-```
-
-Avoid pages where actions are randomly placed.
-
-Primary actions must be visible at the top-right of the page header where appropriate.
-
----
-
-# 11. Page Header Rules
-
-Every major page should have a consistent page header.
-
-Required:
-
-* page title
-* short description or context
-* optional breadcrumb
-* primary action button
-* secondary actions where needed
-
-Example:
-
-```text
-Patients
-Manage patient folders, registrations, insurance records, and merge history.
-[New Patient]
-```
-
-Clinical example:
-
-```text
-Emergency Case
-ER-2026-000012 · Ama Mensah · RED · Under Emergency Care
-[Open MAR] [Disposition]
-```
-
-Do not use large inconsistent headers across pages.
-
----
-
-# 12. Module Layout Rules
-
-Each module should have a consistent internal pattern.
-
-## Patients
-
-Use patient-folder style layout.
-
-## Consultation
-
-Use clinical workspace layout.
-
-## Emergency
-
-Use emergency control-room layout.
-
-## Admission
-
-Use ward/bed/patient-care layout.
-
-## MAR
-
-Use medication grid and task-oriented layout.
-
-## Pharmacy
-
-Use prescription/billing/dispensing workflow layout.
-
-## Investigations
-
-Use department request/result workflow layout.
-
-## Procedures/Theatre
-
-Use schedule/case/clinical note layout.
-
-## Billing
-
-Use invoice/payment financial layout.
-
-## Stock
-
-Use product/location/movement matrix layout.
-
-## Reports/Statistics
-
-Use dashboard/filter/chart/table layout.
-
-## Settings/Roles/Modules
-
-Use admin configuration layout.
-
----
-
-# 13. Color System
-
-Define a controlled color system.
-
-Use semantic colors, not random colors.
-
-Recommended semantic colors:
-
-```text
-Primary = main brand/action color
-Secondary = neutral support
-Success = completed/paid/verified/available
-Warning = pending/attention/low stock
-Danger = critical/error/overdue/out of stock
-Info = due/current/in progress
-Muted = inactive/cancelled/secondary
-Dark = high contrast text
-Light = backgrounds
-```
-
-Medical status examples:
-
-```text
-GREEN = success/completed/available/paid
-BLUE = active/in progress/due/current
-ORANGE/YELLOW = warning/pending/low/held
-RED = danger/critical/overdue/out/refused
-GRAY = inactive/cancelled/not stocked
-PURPLE = special/correction/verified if already used
-```
-
-Do not use multiple meanings for the same color.
-
-Example:
-
-Red should not mean both “completed” and “critical”.
-
----
-
-# 14. Status Badge Rules
-
-All statuses must use a standard badge component.
-
-Create or reuse:
-
-```text
-StatusBadge
-```
-
-It should accept:
-
-```text
-status
-variant
-label
-size
-```
-
-Use consistent styling for statuses across modules.
-
-Examples:
-
-## Visit Status
-
-* REGISTERED = gray
-* WAITING_TRIAGE = warning
-* WAITING_CONSULTATION = warning
-* CONSULTING = info
-* EMERGENCY = danger
-* ADMITTED = primary/info
-* COMPLETED = success
-* CANCELLED = muted
-
-## Invoice Status
-
-* UNPAID = danger
-* PARTIALLY_PAID = warning
-* PAID = success
-* CANCELLED = muted
-
-## MAR Status
-
-* SCHEDULED = muted
-* DUE = info
-* OVERDUE = danger
-* GIVEN = success
-* HELD = warning
-* MISSED = danger
-* REFUSED = warning
-* CANCELLED = muted
-
-## Stock Status
-
-* OK = success
-* LOW = warning
-* CRITICAL = danger
-* OUT = danger
-* NOT_STOCKED = muted
-
-Document all badge mappings in `UHMS_UI_THEME_RULES.md`.
-
----
-
-# 15. Button Rules
-
-Use a consistent button hierarchy.
-
-Button types:
-
-```text
-Primary Action
-Secondary Action
-Danger Action
-Ghost/Link Action
-Icon Action
-Disabled/Locked Action
+id
+name
+start_date
+end_date
+status open/closed
+created_by nullable
+closed_by nullable
+closed_at nullable
+timestamps
 ```
 
 Rules:
 
-* One primary action per main area.
-* Destructive actions must be danger style.
-* Destructive actions require confirmation.
-* Disabled actions must explain why.
-* Do not use random button colors.
-* Do not use different sizes for same context.
-* Buttons must have consistent icons if icons are used.
+* fiscal year date range must be valid
+* cannot post into closed fiscal year
+* only one current open fiscal year should exist unless system config allows otherwise
+* closing a fiscal year should be permission-protected
 
-Examples:
+---
+
+## accounting_periods
+
+Fields:
 
 ```text
-[New Patient] = primary
-[Edit] = secondary
-[Delete] = danger
-[View] = ghost/link
-[Print] = secondary
-[Export] = secondary
+id
+fiscal_year_id
+name
+start_date
+end_date
+status open/closed
+created_by nullable
+closed_by nullable
+closed_at nullable
+timestamps
+```
+
+Rules:
+
+* period must belong to fiscal year
+* period date range must sit inside fiscal year date range
+* cannot post into closed period
+* journal date must fall into an open period
+* closing a period should be permission-protected
+
+---
+
+## journal_entries
+
+Fields:
+
+```text
+id
+journal_number
+entry_date
+fiscal_year_id
+accounting_period_id
+reference_number nullable
+reference_type nullable
+reference_id nullable
+source_module nullable
+description
+status draft/posted/reversed/cancelled
+posted_at nullable
+posted_by nullable
+created_by nullable
+approved_by nullable
+approved_at nullable
+reversed_entry_id nullable
+reversal_reason nullable
+timestamps
+```
+
+Rules:
+
+* journal_number must be unique
+* entry_date required
+* entry_date must fall inside an open accounting period
+* draft entries can be edited
+* posted entries cannot be edited directly
+* posted entries can only be reversed
+* cancelled entries should not affect reports
+* reversed entries should remain visible for audit
+
+---
+
+## journal_entry_lines
+
+Fields:
+
+```text
+id
+journal_entry_id
+account_id
+description nullable
+debit decimal default 0
+credit decimal default 0
+department_id nullable
+patient_id nullable
+visit_id nullable
+invoice_id nullable
+supplier_id nullable
+sponsor_id nullable
+insurance_provider_id nullable
+reference_type nullable
+reference_id nullable
+line_order nullable
+timestamps
+```
+
+Rules:
+
+* one line cannot have both debit and credit greater than zero
+* one line must have either debit or credit greater than zero
+* total debit must equal total credit
+* journal entry must have at least two lines
+* line account must be active
+* journal line may optionally carry operational context such as invoice_id, patient_id, supplier_id, department_id, etc.
+
+---
+
+# 5. Accounting Settings
+
+Add an accounting settings structure.
+
+This can be a settings table, config-driven setting, or existing UHMS settings system.
+
+Settings needed for future phases:
+
+```text
+default_cash_account_id
+default_bank_account_id
+default_mobile_money_account_id
+
+patient_receivable_account_id
+insurance_receivable_account_id
+sponsor_receivable_account_id
+corporate_receivable_account_id
+
+supplier_payable_account_id
+patient_deposit_liability_account_id
+
+default_revenue_account_id
+consultation_revenue_account_id
+laboratory_revenue_account_id
+pharmacy_revenue_account_id
+procedure_revenue_account_id
+admission_revenue_account_id
+emergency_revenue_account_id
+
+default_discount_account_id
+default_credit_note_account_id
+default_write_off_account_id
+default_refund_account_id
+
+inventory_account_id
+pharmacy_inventory_account_id
+consumables_inventory_account_id
+laboratory_reagents_inventory_account_id
+
+cost_of_goods_sold_account_id
+consumables_expense_account_id
+bad_debt_expense_account_id
+rounding_difference_account_id
+retained_earnings_account_id
+```
+
+Do not require all of these to be used in Phase 1.
+
+Prepare the structure so later phases can use them.
+
+---
+
+# 6. Accounting Services
+
+Create service classes using project conventions.
+
+Required services:
+
+```text
+AccountingService
+JournalEntryService
+ChartOfAccountsService
+AccountingPeriodService
+AccountingPostingService
+TrialBalanceService
+GeneralLedgerService
+AccountingSettingsService
 ```
 
 ---
 
-# 16. Form Rules
+## JournalEntryService
 
-All forms must follow consistent layout.
+Must handle:
 
-Rules:
-
-* group related fields into sections
-* use clear labels
-* show required indicators
-* show validation errors below fields
-* keep save/cancel buttons consistent
-* use searchable selects for large lists
-* use date/time picker consistently
-* use inline helper text where useful
-* avoid very long ungrouped forms
-* show loading state while saving
-* prevent double-submit
-* show success/failure feedback
-
-Medical forms should prioritize speed and clarity.
-
----
-
-# 17. Table Rules
-
-All data tables should have:
-
-* consistent header
-* search/filter section
-* clear columns
-* status badges
-* action column at far right
-* pagination aligned consistently
-* row hover style
-* empty state
-* loading state
-* responsive behavior
-* no broken HTML
-* no oversized columns without wrapping rules
-
-Common table action order:
-
-```text
-View
-Edit
-Print
-Cancel/Delete
+```php
+createDraft(array $data): JournalEntry
+updateDraft(JournalEntry $entry, array $data): JournalEntry
+post(JournalEntry $entry, User $user): JournalEntry
+reverse(JournalEntry $entry, string $reason, User $user): JournalEntry
+cancelDraft(JournalEntry $entry, User $user): JournalEntry
+validateBalanced(array $lines): void
 ```
 
-Danger actions last.
+Posting must:
 
-Do not put pagination on random sides. Standardize it, preferably bottom-right.
-
----
-
-# 18. Filter/Search Rules
-
-All list pages should use a standard FilterBar.
-
-FilterBar should support:
-
-* search input
-* date range
-* department
-* status
-* patient
-* user/staff
-* reset button
-* apply button if needed
-
-Rules:
-
-* filters must preserve state
-* reset must clear filters
-* filters should not break pagination
-* search placeholder must be meaningful
-* avoid different filter styles per module
+* validate entry is balanced
+* validate journal has at least two lines
+* validate every account is active
+* validate accounting period is open
+* set status = posted
+* set posted_at
+* set posted_by
+* prevent edits after posting unless reversal workflow is used
 
 ---
 
-# 19. Modal Rules
+## AccountingPeriodService
 
-All modals must follow consistent behavior.
+Must handle:
 
-Rules:
-
-* title
-* short explanation
-* form body
-* validation errors inside modal
-* cancel button
-* submit button
-* loading state
-* closes only after successful save
-* no stuck backdrop
-* reset form only after close/success
-* dangerous modals require confirmation wording/reason
-* large clinical data should use drawer/page, not tiny modal
-
-Use modals for:
-
-* simple create/edit
-* confirmation
-* quick actions
-
-Use full page/drawer for:
-
-* complex clinical notes
-* consultation summary
-* MAR chart
-* theatre case detail
-* emergency case detail
+```php
+resolveOpenPeriodForDate(Carbon|string $date): AccountingPeriod
+ensureDateIsPostable(Carbon|string $date): void
+closePeriod(AccountingPeriod $period, User $user): AccountingPeriod
+```
 
 ---
 
-# 20. Card Rules
+## AccountingPostingService
 
-Cards should be used for:
+For Phase 1, keep this ready for future operational postings.
 
-* summary stats
-* grouped clinical sections
-* dashboards
-* patient headers
-* module summaries
+Do not yet wire all billing/procurement/stock transactions automatically.
 
-Rules:
+It may expose future-friendly methods like:
 
-* consistent border/shadow
-* consistent padding
-* title at top
-* value clear if KPI
-* icon optional
-* avoid overcrowding
-* use same card heights in grids where possible
+```php
+postFromSource(string $sourceModule, Model $source, array $lines, array $meta = []): JournalEntry
+```
+
+But only use it for manual journals in Phase 1 unless existing architecture naturally requires it.
 
 ---
 
-# 21. Clinical Document Layout Rules
+# 7. Manual Journal Entries
 
-Clinical pages like Consultation Summary, Visit Preview, MAR print, Theatre notes, Emergency summary must feel like readable documents.
+Add admin/accounting UI for manual journal entries.
 
-Rules:
+Menu:
 
-* document-style container
-* clear patient header
-* clear section headings
-* chronological order where needed
-* authors/contributors visible
-* no hidden important clinical data
-* print-friendly
-* readable font size
-* avoid overuse of tables for narrative clinical data
-* support long text gracefully
+```text
+Accounts & Finance
+├── Accounting Dashboard
+├── Chart of Accounts
+├── Journal Entries
+├── General Ledger
+├── Trial Balance
+├── Fiscal Years
+├── Accounting Periods
+└── Accounting Settings
+```
 
----
+Manual journal entry page must allow:
 
-# 22. Timeline Rules
-
-Use timelines for:
-
-* Visit Preview
-* Emergency timeline
-* Theatre timeline
-* Logs
-* Patient pathway
-* Medication administration history
-* Patient merge history
-
-Timeline items should show:
-
-* time/date
-* title
+* journal date
 * description
-* user/actor
-* module/source
-* status/badge if relevant
+* reference number optional
+* account lines
+* debit amount
+* credit amount
+* department optional
+* patient optional if needed
+* supplier optional if needed
+* add/remove lines
+* save as draft
+* update draft
+* post entry
+* cancel draft
+* reverse posted entry
 
-Chronological order should be clear.
+UI must clearly show:
+
+```text
+Total Debit
+Total Credit
+Difference
+```
+
+If difference is not zero, posting must be blocked.
+
+Use existing UHMS UI standards:
+
+* Bootstrap 5
+* Tabler Icons
+* existing page headers
+* existing cards/tables/forms
+* existing confirmation modal/form components if available
+
+Do not introduce Tailwind or a new UI framework.
 
 ---
 
-# 23. Dashboard Rules
+# 8. Journal Numbering
 
-Dashboards should be consistent.
+Generate journal numbers automatically.
 
-Each dashboard should have:
-
-* KPI cards
-* trend charts if available
-* priority lists
-* action shortcuts
-* date/department filter where useful
-
-Do not overload dashboards with too many unrelated widgets.
-
-Each dashboard must answer a clear question.
-
-Examples:
-
-Emergency dashboard:
+Example:
 
 ```text
-Who needs urgent attention now?
+JE-2026-000001
+JE-2026-000002
 ```
 
-Pharmacy dashboard:
+Use existing numbering system if UHMS already has one.
 
-```text
-What prescriptions need billing/dispensing?
-```
+Do not allow duplicate journal numbers.
 
-Stock dashboard:
-
-```text
-What stock is low, moving, or pending transfer?
-```
+Journal numbering should be safe against concurrent creation.
 
 ---
 
-# 24. Navigation / Sidebar Rules
+# 9. Posting Rules
 
-Sidebar must be clean and permission-aware.
+For Phase 1, allow manual journal entries.
+
+Do not automatically post operational transactions yet.
 
 Rules:
 
-* group menu items logically
-* do not show empty modules
-* do not show disabled modules
-* do not show menu items without permission
-* keep icons consistent
-* active menu item must be visually clear
-* avoid too many top-level menu items
-* use nested menus carefully
-* module names must be consistent
-
-Recommended top-level groups:
-
-```text
-Dashboard
-Patients
-Clinical
-Emergency
-Admission
-Pharmacy
-Billing
-Stock
-Blood Bank
-Reports
-Administration
-Settings
-```
-
-Adapt to existing structure.
+* draft journal entries can be edited
+* posted journal entries cannot be edited
+* posted journal entries can only be reversed
+* reversal creates a new posted journal entry with debit/credit swapped
+* reversal must reference original journal entry
+* reversal requires a reason
+* cancellation is allowed only for draft entries
+* closed periods cannot receive new journal entries
+* closed fiscal years cannot receive new journal entries
+* reports should only include posted entries, not draft or cancelled entries
 
 ---
 
-# 25. Permission-Based UI Guards
+# 10. Opening Balances
 
-Every sensitive UI action must follow permission rules.
+Support opening balances carefully.
 
-Frontend must hide unavailable actions.
+Recommended approach:
+
+* opening balances should eventually be posted through an Opening Balance journal entry
+* do not silently affect trial balance from account.opening_balance alone
+* account.opening_balance can exist for setup/reference display
+* trial balance must be based on posted journal entries
+
+If opening balances are implemented now:
+
+* ensure they are balanced
+* create opening journal entry
+* mark source_module = OPENING_BALANCE
+
+If opening balances are not fully implemented now:
+
+* document as Phase 2/3 accounting setup TODO
+
+---
+
+# 11. Chart of Accounts Seeder
+
+Create a default hospital chart of accounts seeder.
+
+Suggested structure:
+
+```text
+1000 Assets
+1100 Cash and Bank
+1110 Cash on Hand
+1120 Bank Account
+1130 Mobile Money Account
+
+1200 Accounts Receivable
+1210 Patient Receivables
+1220 Insurance Receivables
+1230 Sponsor Receivables
+1240 Corporate Receivables
+
+1300 Inventory
+1310 Pharmacy Inventory
+1320 Medical Consumables Inventory
+1330 Laboratory Reagents Inventory
+1340 Theatre Supplies Inventory
+
+1400 Fixed Assets
+1410 Medical Equipment
+1420 Furniture and Fixtures
+1430 Computers and IT Equipment
+1440 Vehicles
+
+2000 Liabilities
+2100 Accounts Payable
+2110 Supplier Payables
+2200 Patient Deposits
+2300 Taxes Payable
+2400 Salary Payable
+2500 Accrued Expenses
+
+3000 Equity
+3100 Owner Capital
+3200 Retained Earnings
+3300 Current Year Earnings
+
+4000 Revenue
+4100 Consultation Revenue
+4200 Laboratory Revenue
+4300 Pharmacy Revenue
+4400 Procedure / Theatre Revenue
+4500 Admission Revenue
+4600 Emergency Revenue
+4700 Insurance Claim Revenue
+4800 Sponsor-Funded Revenue
+4900 Other Revenue
+
+5000 Expenses
+5100 Cost of Goods Sold
+5110 Pharmacy Cost of Goods Sold
+5120 Consumables Cost of Goods Sold
+
+5200 Medical Consumables Expense
+5300 Salaries and Wages
+5400 Rent
+5500 Utilities
+5600 Maintenance
+5700 Administrative Expenses
+5800 Bad Debt / Write-off Expense
+5900 Bank Charges
+```
+
+Use proper parent-child relationships.
+
+Do not duplicate accounts if seeder is run multiple times.
+
+---
+
+# 12. Reports
+
+## Trial Balance
+
+Create Trial Balance report.
+
+Columns:
+
+```text
+Account Code
+Account Name
+Debit
+Credit
+Balance
+```
+
+Filters:
+
+```text
+Fiscal Year
+Date From
+Date To
+Account Type optional
+Department optional
+```
+
+Rules:
+
+* include only posted journal entries
+* exclude draft/cancelled entries
+* reversal entries should naturally offset original entries
+* total debit must equal total credit
+* show warning if unbalanced, although unbalanced should not happen
+
+---
+
+## General Ledger
+
+Create General Ledger report.
+
+Filters:
+
+```text
+Account
+Date From
+Date To
+Department optional
+Source Module optional
+```
+
+Columns:
+
+```text
+Date
+Journal No
+Description
+Reference
+Debit
+Credit
+Running Balance
+```
+
+Rules:
+
+* include only posted journal entries
+* running balance follows account normal balance
+* support print/export if existing report system supports it
+* do not calculate from draft journal entries
+
+---
+
+# 13. Permissions
+
+Add or verify permissions:
+
+```text
+accounting.dashboard.view
+
+accounting.accounts.view
+accounting.accounts.create
+accounting.accounts.edit
+accounting.accounts.disable
+
+accounting.journals.view
+accounting.journals.create
+accounting.journals.edit
+accounting.journals.post
+accounting.journals.reverse
+accounting.journals.cancel
+
+accounting.reports.trial_balance
+accounting.reports.general_ledger
+
+accounting.periods.view
+accounting.periods.manage
+accounting.fiscal_years.view
+accounting.fiscal_years.manage
+
+accounting.settings.view
+accounting.settings.manage
+```
+
+Only authorized finance/admin users should manage accounting.
 
 Backend must enforce permissions.
 
-UI should show locked reason when helpful.
-
-Example:
-
-```text
-[Edit] hidden if user cannot edit.
-[Locked] shown if record is completed and user lacks correction permission.
-```
-
-Do not show clickable buttons that always fail with 403 unless unavoidable.
+Do not rely only on hiding UI buttons.
 
 ---
 
-# 26. Module Disabled UI Rules
+# 14. Audit Logs
 
-If module is disabled:
+Use ActivityLogService.
 
-* hide menu
-* block direct URL
-* show clear disabled-module message if accessed
-* do not break dashboard
-* dependent modules should show warning where relevant
+Do not create a separate accounting logging system.
 
-Core modules cannot be disabled.
+Log:
+
+```text
+ACCOUNT_CREATED
+ACCOUNT_UPDATED
+ACCOUNT_DISABLED
+ACCOUNT_REACTIVATED
+
+JOURNAL_ENTRY_CREATED
+JOURNAL_ENTRY_UPDATED
+JOURNAL_ENTRY_POSTED
+JOURNAL_ENTRY_REVERSED
+JOURNAL_ENTRY_CANCELLED
+
+FISCAL_YEAR_CREATED
+FISCAL_YEAR_CLOSED
+ACCOUNTING_PERIOD_CREATED
+ACCOUNTING_PERIOD_CLOSED
+ACCOUNTING_SETTINGS_UPDATED
+```
+
+Context:
+
+```text
+account_id
+journal_entry_id
+fiscal_year_id
+accounting_period_id
+source_module
+old_values
+new_values
+```
+
+Do not attach patient_id/visit_id unless the journal entry line is explicitly linked to a patient/visit.
+
+Manual accounting changes are global finance logs.
+
+logs:audit Stage-2 gate must remain green.
 
 ---
 
-# 27. Notification UI Rules
+# 15. Validation
 
-Notification UI must be consistent.
+Validate:
 
-Rules:
+* account code required and unique
+* account name required
+* account type required
+* account normal balance valid
+* journal entry date required
+* journal entry date inside open accounting period
+* journal must have at least two lines
+* each line must have account
+* each line must have debit or credit, not both
+* total debit equals total credit
+* cannot post to inactive account
+* cannot post into closed period
+* cannot post into closed fiscal year
+* cannot edit posted journal entry
+* cannot delete posted journal entry
+* reversal requires reason
+* unauthorized users cannot access accounting actions
 
-* bell icon with unread count
-* priority badge
-* module/source label
-* time ago
-* action link
-* mark as read
-* view all
-* empty state
-
-Critical notifications should be visually distinguishable but not chaotic.
-
----
-
-# 28. Logs UI Rules
-
-Logs must be readable.
-
-Rules:
-
-* filters at top
-* log table with module/action/user/time
-* severity badge
-* detail view for old/new values
-* hide sensitive data
-* use readable JSON/diff display
+Do not skip validation because tests are deferred.
 
 ---
 
-# 29. Reports / Statistics UI Rules
+# 16. Manual Verification Strategy
 
-Reports and statistics must follow:
+Do not write the full automated test suite yet.
 
-```text
-FilterBar
-Summary Cards
-Charts
-Detailed Table
-Export/Print Buttons
-```
+For now:
 
-Rules:
+* focus on implementation
+* keep the code clean and testable
+* add only minimal smoke checks if absolutely necessary
+* do not spend time building complete feature tests now
+* do not block implementation because tests are not complete
 
-* no chart without table/drill-down
-* default date range required
-* permissions enforced
-* export buttons consistent
-* heavy reports must paginate
-* charts must be readable
+Full tests will be written after the whole accounting implementation is complete.
 
----
+For this phase, provide manual verification notes instead of full automated tests.
 
-# 30. Responsive Rules
+Manual verification required:
 
-All pages must work on:
+1. Create account manually.
+2. Confirm duplicate account code is rejected.
+3. Create fiscal year.
+4. Create accounting period.
+5. Create balanced journal entry.
+6. Confirm unbalanced journal entry is rejected.
+7. Confirm journal with less than two lines is rejected.
+8. Confirm journal line cannot have both debit and credit.
+9. Confirm journal line cannot have neither debit nor credit.
+10. Post balanced journal entry.
+11. Confirm posted journal cannot be edited.
+12. Reverse posted journal.
+13. Confirm reversal swaps debit and credit.
+14. Open Trial Balance.
+15. Confirm debit and credit totals match.
+16. Open General Ledger for an account.
+17. Confirm running balance displays correctly.
+18. Confirm unauthorized users cannot access accounting pages.
+19. Confirm accounting actions appear in activity logs.
+20. Confirm existing billing/procurement/stock workflows still work.
+21. Confirm logs:audit Stage-2 gate still passes.
 
-* desktop
-* tablet
-* small laptop
-* mobile where possible
+Do not remove testability.
 
-Rules:
+Do not write messy code because tests are postponed.
 
-* tables should scroll horizontally on small screens
-* forms should stack on mobile
-* sidebars should collapse
-* cards should wrap
-* modals should fit screen
-* no fixed-width layouts that break
-* action buttons should not overflow
+Do not skip validation.
 
----
+Do not skip permissions.
 
-# 31. Accessibility Rules
-
-Improve accessibility.
-
-Rules:
-
-* proper labels on inputs
-* visible focus states
-* sufficient color contrast
-* do not rely on color only for status
-* status badges should include text
-* buttons must have accessible text
-* icon-only buttons need title/aria-label
-* keyboard navigation where possible
-* error messages clearly linked to fields
+Do not skip audit logs.
 
 ---
 
-# 32. Feedback Rules
-
-Every user action must give feedback.
-
-Use:
-
-* success toast
-* error toast
-* validation messages
-* loading spinner
-* disabled submit while saving
-* confirmation dialogs
-* empty states
-* warning banners
-
-Examples:
-
-```text
-Medication administered successfully.
-Payment recorded successfully.
-Cannot dispense: insufficient Pharmacy stock.
-This session is locked because it was completed automatically after midnight.
-```
-
-Do not fail silently.
-
----
-
-# 33. Empty State Rules
-
-Every empty list/table should have a meaningful empty state.
-
-Examples:
-
-```text
-No emergency cases are currently active.
-No medications are due for this patient.
-No stock movements found for the selected date range.
-No claims match your filters.
-```
-
-If appropriate, include action:
-
-```text
-[Create Emergency Case]
-```
-
-only if user has permission.
-
----
-
-# 34. Error State Rules
-
-Errors should be clear.
-
-Avoid raw technical messages like:
-
-```text
-SQLSTATE[23000]
-```
-
-Instead show:
-
-```text
-Unable to save stock movement because the product or stock location is missing.
-```
-
-Technical details can be logged, not shown to normal users.
-
----
-
-# 35. Confirmation Rules
-
-Require confirmation for:
-
-* delete
-* cancel
-* reverse payment
-* refund
-* stock adjustment
-* patient merge
-* mark deceased
-* discharge
-* dispose emergency case
-* cancel theatre case
-* override triage
-* issue incompatible/emergency blood
-* disable module
-* assign critical permissions
-
-High-risk actions require reason.
-
----
-
-# 36. Print Rules
-
-Print views should:
-
-* hide sidebar/navbar/buttons
-* show hospital header if available
-* show patient/visit context
-* show generated date/time
-* use readable black/white layout
-* avoid dark backgrounds
-* avoid tiny font
-* include signatures where needed
-
-Applies to:
-
-* invoice
-* receipt
-* consultation summary
-* visit preview
-* MAR chart
-* investigation result
-* theatre report
-* blood issue/transfusion report
-* claims documents
-
----
-
-# 37. Terminology Rules
-
-Use consistent terms across the system.
-
-Examples:
-
-Use:
-
-```text
-Patient Folder
-Visit
-Emergency Case
-Admission
-Consultation Session
-Invoice
-Invoice Item
-Payment
-Balance
-Dispensed
-Administered
-Rendered
-Verified
-Completed
-Cancelled
-```
-
-Avoid mixing:
-
-```text
-folder/file/card for patient folder inconsistently
-bill/invoice randomly
-drug/item/product inconsistently
-rendered/done/served randomly
-```
-
-If local terms are needed, document them.
-
----
-
-# 38. Status Vocabulary Rules
-
-Avoid too many random statuses.
-
-Standardize statuses per workflow and document them.
-
-Examples:
-
-Generic workflow:
-
-```text
-PENDING
-IN_PROGRESS
-COMPLETED
-CANCELLED
-ON_HOLD
-```
-
-Clinical:
-
-```text
-REQUESTED
-ACCEPTED
-VERIFIED
-COMPLETED
-```
-
-Financial:
-
-```text
-UNPAID
-PARTIALLY_PAID
-PAID
-CANCELLED
-REFUNDED
-```
-
-Stock:
-
-```text
-REQUESTED
-APPROVED
-ISSUED
-RECEIVED
-REJECTED
-```
-
-Medication:
-
-```text
-DUE
-OVERDUE
-GIVEN
-HELD
-MISSED
-REFUSED
-```
-
----
-
-# 39. Create Theme Config File
-
-Create a theme rule/config file.
-
-Preferred:
-
-```text
-resources/js/theme/uhmsTheme.js
-```
-
-or if the project uses TypeScript:
-
-```text
-resources/js/theme/uhmsTheme.ts
-```
-
-Also document in:
-
-```text
-docs/UHMS_UI_THEME_RULES.md
-```
-
-The theme file should define:
-
-```js
-export const uhmsTheme = {
-  colors: {
-    primary: '',
-    secondary: '',
-    success: '',
-    warning: '',
-    danger: '',
-    info: '',
-    muted: '',
-    background: '',
-    surface: '',
-    border: '',
-    text: '',
-    textMuted: '',
-  },
-  statusVariants: {
-    // visit, invoice, stock, mar, emergency, theatre, blood bank
-  },
-  spacing: {
-    page: '',
-    section: '',
-    card: '',
-    form: '',
-  },
-  radius: {
-    sm: '',
-    md: '',
-    lg: '',
-  },
-  shadows: {
-    card: '',
-    modal: '',
-  },
-  typography: {
-    pageTitle: '',
-    sectionTitle: '',
-    body: '',
-    small: '',
-  }
-}
-```
-
-Adapt values to existing CSS/Tailwind/Bootstrap variables.
-
-Do not hardcode random new design values if the existing framework already has tokens.
-
----
-
-# 40. Create UI Guard/Checklist File
+# 17. Documentation
 
 Create:
 
 ```text
-docs/UI_IMPLEMENTATION_CHECKLIST.md
+docs/ACCOUNTING_PHASE_1_FOUNDATION_REPORT.md
 ```
 
-Every new UI page must satisfy:
+Include:
 
-* has page header
-* has permission checks
-* has loading state
-* has empty state
-* has validation error display
-* has success/error feedback
-* uses standard buttons
-* uses standard badges
-* uses standard tables/forms
-* is responsive
-* has no raw SQL/error display
-* uses module theme/status rules
-* follows print rules if printable
-* includes logs/notifications where relevant
-* no hidden critical clinical data
+* database changes
+* models added/updated
+* services added
+* chart of accounts structure
+* journal entry workflow
+* validation rules
+* permissions
+* reports added
+* activity logs added
+* manual verification completed
+* what is intentionally not automated yet
+* what tests must be written later
+* known risks/TODOs
+* next phase recommendation
+
+Update any existing finance/accounting docs if applicable.
 
 ---
 
-# 41. Component Extraction Recommendations
+# 18. Acceptance Criteria
 
-Identify duplicated UI and recommend/create reusable components.
+Phase 1 is complete when:
 
-Likely reusable components:
+* Chart of Accounts exists.
+* Fiscal years exist.
+* Accounting periods exist.
+* Journal entries and journal lines exist.
+* Manual journal entries can be created.
+* Balanced journal entries can be posted.
+* Unbalanced entries are rejected.
+* Journals with invalid lines are rejected.
+* Posted journals cannot be edited directly.
+* Reversal workflow works.
+* Trial Balance report works.
+* General Ledger report works.
+* Default hospital chart of accounts is seeded.
+* Accounting permissions exist.
+* Accounting actions are logged.
+* Existing billing/procurement/stock workflows are not broken.
+* logs:audit Stage-2 gate still passes.
+* Manual verification is completed and documented.
+* Full automated tests are deferred until the final accounting implementation pass.
+
+---
+
+# 19. Important Rules
+
+Do not replace invoices with journal entries.
+
+Do not replace payments with journal entries.
+
+Do not replace supplier ledger with journal entries.
+
+Do not replace stock movements with journal entries.
+
+Do not delete operational financial records.
+
+Do not automatically post all modules yet.
+
+Do not allow unbalanced journal entries.
+
+Do not allow posting into closed periods.
+
+Do not allow editing posted journal entries.
+
+Do not bypass permissions.
+
+Do not bypass validation.
+
+Do not create accounting logs outside ActivityLogService.
+
+Do not break Stage-2 logs:audit CI gate.
+
+Proceed with Accounting Phase 1 Foundation now.
+
+````
+
+After this lands, Phase 2 should be:
 
 ```text
-AppLayout
-PageHeader
-ModuleHeader
-SectionCard
-StatCard
-StatusBadge
-PriorityBadge
-DataTable
-FilterBar
-ActionDropdown
-ConfirmModal
-FormModal
-SearchableSelect
-DateRangePicker
-PatientSummaryHeader
-VisitSummaryHeader
-ClinicalSection
-Timeline
-PrintLayout
-EmptyState
-LoadingState
-ErrorState
-PermissionGuard
-ModuleGuard
-```
+Billing → Accounting Posting
+````
 
-Create components only if safe.
-
-Otherwise document recommended extraction in the report.
-
----
-
-# 42. Module-Specific Audit Requirements
-
-Audit these modules individually and write findings/recommendations:
-
-## Dashboard
-
-Check KPI cards, charts, shortcuts, spacing.
-
-## Patients
-
-Check patient list, search filters, folder layout, merge UI, deceased status, documents.
-
-## Visits
-
-Check visit creation, selected services, status flow, preview, pathway timeline.
-
-## Consultation
-
-Check session list, clinical sections, ownership grouping, summary page, edit actions.
-
-## Emergency
-
-Check emergency board, triage/vitals, bay/team, medication/MAR, investigations, procedures, billing, disposition.
-
-## Admission
-
-Check admission board, bed assignment, vitals, MAR, discharge.
-
-## Pharmacy
-
-Check prescription billing, dispensing, catalogue, stock display.
-
-## Billing
-
-Check invoice view, payment flow, invoice items, discount, balance display.
-
-## Investigations
-
-Check request board, result entry, verification, print result.
-
-## Procedures/Theatre
-
-Check procedure requests, theatre rooms, schedule board, case detail, notes.
-
-## Stock
-
-Check products, stock balances matrix, stock movements, requisitions, transfers.
-
-## Blood Bank
-
-Check donor screening, recipient details, compatibility, crossmatch, issue, transfusion.
-
-## Reports/Statistics
-
-Check filters, cards, charts, tables, exports.
-
-## Notifications
-
-Check dropdown, list, priority, action links.
-
-## Logs
-
-Check filters, detail display, severity, old/new values.
-
-## Roles/Permissions/Modules
-
-Check grouped permissions, module descriptions, warnings for critical actions.
-
----
-
-# 43. UI Risk Ranking
-
-In the report, rank issues by severity:
-
-```text
-CRITICAL = causes wrong clinical/financial/stock action or unsafe workflow
-HIGH = blocks users or causes major confusion
-MEDIUM = inconsistent but usable
-LOW = visual polish
-```
-
-Example:
-
-```text
-CRITICAL: Emergency medication action has no clear stock source.
-HIGH: Pharmacy billing and dispensing buttons are visually similar.
-MEDIUM: Tables use inconsistent pagination placement.
-LOW: Some cards use slightly different border radius.
-```
-
----
-
-# 44. Implementation Scope
-
-First, perform the audit and generate reports.
-
-Then apply safe global improvements:
-
-* standard badges
-* standard buttons
-* standard page headers
-* standard empty/loading states
-* standard filter layout
-* standard modal behavior
-* standard permission guard helper
-* standard theme file
-
-Do not attempt to redesign every page in one risky change if the system is large.
-
-Prioritize high-risk clinical/financial pages.
-
----
-
-# 45. Tests / Verification
-
-Add or update tests where practical.
-
-UI/feature tests should verify:
-
-1. Unauthorized actions are hidden.
-2. Backend still blocks unauthorized actions.
-3. Status badges render expected labels/classes.
-4. Page header appears on key pages.
-5. Empty state appears when no data.
-6. Filters preserve state.
-7. Modals show validation errors.
-8. Confirmation appears for destructive actions.
-9. Print layout hides navigation.
-10. Sidebar respects module/permission access.
-
-If automated UI tests are not available, add manual verification checklist to report.
-
----
-
-# 46. Required Final Reports
-
-At the end, create:
-
-## docs/UI_UX_GAP_ANALYSIS.md
-
-With module-by-module findings.
-
-## docs/UI_UX_RECOMMENDATION_REPORT.md
-
-With exact recommendations and priority plan.
-
-## docs/UHMS_UI_THEME_RULES.md
-
-With permanent design system rules.
-
-## docs/UI_COMPONENT_STANDARDS.md
-
-With reusable component rules.
-
-## docs/UI_IMPLEMENTATION_CHECKLIST.md
-
-With checklist for future UI work.
-
-## docs/UI_UX_REMAINING_TODOS.md
-
-With remaining refactors.
-
----
-
-# 47. Deliverables
-
-Provide:
-
-1. Full UI/UX gap analysis.
-2. Module-by-module UI/UX findings.
-3. Recommendation report.
-4. Theme rule file.
-5. Component standards document.
-6. UI implementation checklist.
-7. Remaining TODOs document.
-8. Reusable theme config file.
-9. Standard status badge rules.
-10. Standard button/form/table/modal rules.
-11. Permission/module UI guard recommendations or implementation.
-12. Safe UI improvements applied where practical.
-13. Files modified.
-14. Remaining risks.
-
----
-
-# 48. Important Rules
-
-Do not randomly redesign the system without audit.
-
-Do not introduce a new CSS framework unless already approved.
-
-Do not break working pages.
-
-Do not make clinical data harder to read.
-
-Do not hide important clinical/financial/stock information.
-
-Do not rely only on color to communicate status.
-
-Do not show actions users cannot perform.
-
-Do not allow disabled modules to appear active.
-
-Do not leave modals with stuck backdrops.
-
-Do not show raw technical errors to users.
-
-Do not create inconsistent new components when reusable ones exist.
-
-Do not make all pages look beautiful but clinically unsafe.
-
-Now inspect the current UHMS frontend, perform a full UI/UX audit, generate the required reports, create the UHMS theme/design rule files, and apply safe standardization improvements where appropriate.
-
-```
-```
+That is where invoices, revenue, patient receivables, insurance receivables, sponsor receivables, payments, discounts, credit notes, write-offs, and refunds start generating real journal entries automatically.

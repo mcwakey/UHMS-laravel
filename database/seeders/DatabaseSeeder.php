@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             InsuranceProviderSeeder::class,
             SupplierSeeder::class,
             AccountCategorySeeder::class,
+            AccountingChartSeeder::class,
             ServiceCatalogSeeder::class,
 
             // ── Pharmacy / stock spine ───────────────────────────────────
