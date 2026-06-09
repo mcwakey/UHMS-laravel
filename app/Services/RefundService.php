@@ -51,7 +51,7 @@ class RefundService
             throw new \RuntimeException('A reason is required to reverse a payment.');
         }
 
-        return DB::transaction(function () use ($payment, $reason, $user) {
+        $reversal = DB::transaction(function () use ($payment, $reason, $user) {
             $payment = Payment::with('allocations')->lockForUpdate()->findOrFail($payment->id);
 
             if ($payment->is_reversal) {
@@ -130,5 +130,9 @@ class RefundService
 
             return $reversal->fresh(['invoice', 'allocations']);
         });
+
+        app(PaymentAccountingPostingService::class)->postPayment($reversal);
+
+        return $reversal;
     }
 }

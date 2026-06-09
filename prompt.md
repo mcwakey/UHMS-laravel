@@ -1,926 +1,806 @@
+Next is **Accounting Phase 2: Billing → Accounting Posting**.
+
+Now that the accounting foundation exists, we connect billing events to journal entries without replacing invoices/payments.
+
 You are working on UHMS — Ultimate Hospital Management System.
 
-We are starting the full accounting transformation of UHMS.
+Accounting Phase 1 Foundation is complete.
 
-Phase 1 is the Accounting Foundation.
+Now proceed with Accounting Phase 2:
+
+Billing → Accounting Posting
 
 Goal:
-Build the accounting core that will later allow UHMS billing, payments, credit notes, write-offs, sponsors, insurance claims, procurement, supplier ledger, stock, payroll, and expenses to generate proper double-entry journal entries.
+When billing events happen in UHMS, the system should automatically generate proper double-entry journal entries using the accounting foundation.
 
-Do not replace the current billing system.
-Do not break invoices, payments, discounts, credit notes, write-offs, stock, procurement, supplier ledger, or reports.
-Do not start posting every operational transaction yet unless explicitly requested.
-Do not remove existing financial records.
+Do not replace the existing billing system.
+Do not remove invoices, invoice items, payments, discounts, credit notes, write-offs, refunds, sponsor allocations, or insurance claims.
+Do not break the existing billing workflow.
+Do not post stock/procurement/payroll accounting yet unless directly required by billing.
+Do not write the full automated test suite yet. Full tests will be done after the whole accounting implementation is complete.
 
 Important rule:
 
-Operational records remain operational.
-Accounting records are generated from operational records.
+Operational billing records remain operational.
+Journal entries are accounting records generated from billing records.
 
 Example:
 
-Invoice = operational billing record.
-Journal Entry = accounting record created from invoice.
+Invoice = operational record.
+Journal entry = accounting impact of that invoice.
 
 ---
 
-# 1. Accounting Principle
+# 1. Main Objective
 
-UHMS must support standard double-entry accounting.
+Automatically create accounting journal entries for billing-related transactions:
 
-Every accounting transaction must satisfy:
+1. Invoice creation / invoice finalization
+2. Invoice item billing
+3. Patient receivable recognition
+4. Revenue recognition by department/service type
+5. Payments
+6. Discounts
+7. Credit notes
+8. Write-offs
+9. Refunds
+10. Patient deposits if already supported
+11. Sponsor allocation if already supported
+12. Insurance receivable if already supported
 
-Assets = Liabilities + Equity
+This phase should focus on billing and receivables.
 
-And every journal entry must satisfy:
+---
+
+# 2. Accounting Principle
+
+Every billing posting must satisfy:
 
 Total Debits = Total Credits
 
-The system must reject unbalanced journal entries.
+Never create unbalanced journal entries.
+
+Never silently ignore a posting failure.
+
+If accounting posting fails, decide safely:
+
+- either block the financial transaction, or
+- save the operational transaction and mark accounting posting as failed/pending
+
+Use the safest existing project convention.
+
+Recommended:
+
+For high-risk finalized financial transactions, posting should happen in the same transaction if possible.
 
 ---
 
-# 2. Main Accounting Elements
+# 3. Required Posting Events
 
-Support the major accounting elements:
-
-1. Assets
-2. Liabilities
-3. Equity
-4. Income / Revenue
-5. Expenses
-
-Recommended account types:
-
-ASSET
-LIABILITY
-EQUITY
-INCOME
-EXPENSE
-
-Optional subtypes:
-
-CURRENT_ASSET
-NON_CURRENT_ASSET
-CURRENT_LIABILITY
-NON_CURRENT_LIABILITY
-OPERATING_REVENUE
-OTHER_INCOME
-COST_OF_SALES
-OPERATING_EXPENSE
-ADMIN_EXPENSE
-FINANCE_COST
+Implement automatic journal posting for these billing events.
 
 ---
 
-# 3. Phase 1 Scope
+## A. Invoice Finalized / Invoice Posted
 
-Build only the accounting foundation:
-
-1. Chart of Accounts
-2. Account groups/categories
-3. Fiscal years
-4. Accounting periods
-5. Journal entries
-6. Journal entry lines
-7. Manual journal entry screen
-8. Double-entry validation
-9. Posting/approval workflow
-10. Reversal workflow
-11. General Ledger report
-12. Trial Balance report
-13. Basic accounting settings
-14. Accounting permissions
-15. Audit/activity logs
-
-Do not yet fully automate all postings from billing/procurement/stock.
-
-However, design the foundation so Phase 2 can easily plug operational transactions into accounting posting.
-
----
-
-# 4. Required Models / Tables
-
-Create or update models/tables using project conventions.
-
----
-
-## accounts
-
-Fields:
+When an invoice is finalized or becomes officially billable:
 
 ```text
-id
-code
-name
-type
-subtype nullable
-parent_id nullable
-description nullable
-is_cash_account boolean default false
-is_bank_account boolean default false
-is_control_account boolean default false
-is_active boolean default true
-opening_balance decimal default 0
-normal_balance debit/credit
-created_by nullable
-updated_by nullable
-timestamps
-softDeletes optional
+Debit: Patient Receivables / Insurance Receivables / Sponsor Receivables
+Credit: Revenue Account
 ````
 
-Rules:
+Example:
 
-* code must be unique
-* parent_id allows account hierarchy
-* type must be one of ASSET, LIABILITY, EQUITY, INCOME, EXPENSE
-* normal balance:
+Invoice item:
 
-  * ASSET = debit
-  * EXPENSE = debit
-  * LIABILITY = credit
-  * EQUITY = credit
-  * INCOME = credit
-* parent account cannot be its own child
-* inactive accounts cannot be used in new journal entries
-* control accounts should not normally be posted manually unless allowed by permission/config
+* Consultation service: GHS 100
 
----
-
-## fiscal_years
-
-Fields:
+Posting:
 
 ```text
-id
-name
-start_date
-end_date
-status open/closed
-created_by nullable
-closed_by nullable
-closed_at nullable
-timestamps
+Dr Patient Receivables      100
+Cr Consultation Revenue     100
 ```
 
-Rules:
-
-* fiscal year date range must be valid
-* cannot post into closed fiscal year
-* only one current open fiscal year should exist unless system config allows otherwise
-* closing a fiscal year should be permission-protected
-
----
-
-## accounting_periods
-
-Fields:
+If invoice has multiple item types:
 
 ```text
-id
-fiscal_year_id
-name
-start_date
-end_date
-status open/closed
-created_by nullable
-closed_by nullable
-closed_at nullable
-timestamps
+Dr Patient Receivables      500
+Cr Consultation Revenue     100
+Cr Laboratory Revenue       150
+Cr Pharmacy Revenue         200
+Cr Procedure Revenue         50
 ```
 
-Rules:
+Use revenue account mapping by:
 
-* period must belong to fiscal year
-* period date range must sit inside fiscal year date range
-* cannot post into closed period
-* journal date must fall into an open period
-* closing a period should be permission-protected
+* service department
+* service type
+* invoice item source
+* billing category
+* default revenue account fallback
+
+Do not use one revenue account for everything if better mappings exist.
 
 ---
 
-## journal_entries
+## B. Payment Received
 
-Fields:
+When a payment is recorded:
 
 ```text
-id
-journal_number
-entry_date
-fiscal_year_id
-accounting_period_id
-reference_number nullable
-reference_type nullable
-reference_id nullable
-source_module nullable
-description
-status draft/posted/reversed/cancelled
-posted_at nullable
-posted_by nullable
-created_by nullable
-approved_by nullable
-approved_at nullable
-reversed_entry_id nullable
-reversal_reason nullable
-timestamps
+Debit: Cash / Bank / Mobile Money Account
+Credit: Receivable Account
 ```
-
-Rules:
-
-* journal_number must be unique
-* entry_date required
-* entry_date must fall inside an open accounting period
-* draft entries can be edited
-* posted entries cannot be edited directly
-* posted entries can only be reversed
-* cancelled entries should not affect reports
-* reversed entries should remain visible for audit
-
----
-
-## journal_entry_lines
-
-Fields:
-
-```text
-id
-journal_entry_id
-account_id
-description nullable
-debit decimal default 0
-credit decimal default 0
-department_id nullable
-patient_id nullable
-visit_id nullable
-invoice_id nullable
-supplier_id nullable
-sponsor_id nullable
-insurance_provider_id nullable
-reference_type nullable
-reference_id nullable
-line_order nullable
-timestamps
-```
-
-Rules:
-
-* one line cannot have both debit and credit greater than zero
-* one line must have either debit or credit greater than zero
-* total debit must equal total credit
-* journal entry must have at least two lines
-* line account must be active
-* journal line may optionally carry operational context such as invoice_id, patient_id, supplier_id, department_id, etc.
-
----
-
-# 5. Accounting Settings
-
-Add an accounting settings structure.
-
-This can be a settings table, config-driven setting, or existing UHMS settings system.
-
-Settings needed for future phases:
-
-```text
-default_cash_account_id
-default_bank_account_id
-default_mobile_money_account_id
-
-patient_receivable_account_id
-insurance_receivable_account_id
-sponsor_receivable_account_id
-corporate_receivable_account_id
-
-supplier_payable_account_id
-patient_deposit_liability_account_id
-
-default_revenue_account_id
-consultation_revenue_account_id
-laboratory_revenue_account_id
-pharmacy_revenue_account_id
-procedure_revenue_account_id
-admission_revenue_account_id
-emergency_revenue_account_id
-
-default_discount_account_id
-default_credit_note_account_id
-default_write_off_account_id
-default_refund_account_id
-
-inventory_account_id
-pharmacy_inventory_account_id
-consumables_inventory_account_id
-laboratory_reagents_inventory_account_id
-
-cost_of_goods_sold_account_id
-consumables_expense_account_id
-bad_debt_expense_account_id
-rounding_difference_account_id
-retained_earnings_account_id
-```
-
-Do not require all of these to be used in Phase 1.
-
-Prepare the structure so later phases can use them.
-
----
-
-# 6. Accounting Services
-
-Create service classes using project conventions.
-
-Required services:
-
-```text
-AccountingService
-JournalEntryService
-ChartOfAccountsService
-AccountingPeriodService
-AccountingPostingService
-TrialBalanceService
-GeneralLedgerService
-AccountingSettingsService
-```
-
----
-
-## JournalEntryService
-
-Must handle:
-
-```php
-createDraft(array $data): JournalEntry
-updateDraft(JournalEntry $entry, array $data): JournalEntry
-post(JournalEntry $entry, User $user): JournalEntry
-reverse(JournalEntry $entry, string $reason, User $user): JournalEntry
-cancelDraft(JournalEntry $entry, User $user): JournalEntry
-validateBalanced(array $lines): void
-```
-
-Posting must:
-
-* validate entry is balanced
-* validate journal has at least two lines
-* validate every account is active
-* validate accounting period is open
-* set status = posted
-* set posted_at
-* set posted_by
-* prevent edits after posting unless reversal workflow is used
-
----
-
-## AccountingPeriodService
-
-Must handle:
-
-```php
-resolveOpenPeriodForDate(Carbon|string $date): AccountingPeriod
-ensureDateIsPostable(Carbon|string $date): void
-closePeriod(AccountingPeriod $period, User $user): AccountingPeriod
-```
-
----
-
-## AccountingPostingService
-
-For Phase 1, keep this ready for future operational postings.
-
-Do not yet wire all billing/procurement/stock transactions automatically.
-
-It may expose future-friendly methods like:
-
-```php
-postFromSource(string $sourceModule, Model $source, array $lines, array $meta = []): JournalEntry
-```
-
-But only use it for manual journals in Phase 1 unless existing architecture naturally requires it.
-
----
-
-# 7. Manual Journal Entries
-
-Add admin/accounting UI for manual journal entries.
-
-Menu:
-
-```text
-Accounts & Finance
-├── Accounting Dashboard
-├── Chart of Accounts
-├── Journal Entries
-├── General Ledger
-├── Trial Balance
-├── Fiscal Years
-├── Accounting Periods
-└── Accounting Settings
-```
-
-Manual journal entry page must allow:
-
-* journal date
-* description
-* reference number optional
-* account lines
-* debit amount
-* credit amount
-* department optional
-* patient optional if needed
-* supplier optional if needed
-* add/remove lines
-* save as draft
-* update draft
-* post entry
-* cancel draft
-* reverse posted entry
-
-UI must clearly show:
-
-```text
-Total Debit
-Total Credit
-Difference
-```
-
-If difference is not zero, posting must be blocked.
-
-Use existing UHMS UI standards:
-
-* Bootstrap 5
-* Tabler Icons
-* existing page headers
-* existing cards/tables/forms
-* existing confirmation modal/form components if available
-
-Do not introduce Tailwind or a new UI framework.
-
----
-
-# 8. Journal Numbering
-
-Generate journal numbers automatically.
 
 Example:
 
 ```text
-JE-2026-000001
-JE-2026-000002
+Dr Cash on Hand             300
+Cr Patient Receivables      300
 ```
 
-Use existing numbering system if UHMS already has one.
+Payment account depends on payment method:
 
-Do not allow duplicate journal numbers.
+* Cash → default_cash_account_id
+* Bank → default_bank_account_id
+* Mobile Money → default_mobile_money_account_id
+* Card/POS → bank or clearing account if configured
 
-Journal numbering should be safe against concurrent creation.
+Do not treat payment as revenue again.
+
+Revenue was recognized when the invoice was posted.
 
 ---
 
-# 9. Posting Rules
+## C. Discount Applied
 
-For Phase 1, allow manual journal entries.
+When a discount is approved/applied:
 
-Do not automatically post operational transactions yet.
+```text
+Debit: Discount Account
+Credit: Receivable Account
+```
+
+Example:
+
+```text
+Dr Discount Allowed         50
+Cr Patient Receivables      50
+```
+
+Discount reduces the amount collectible but does not delete invoice items.
+
+---
+
+## D. Credit Note Issued
+
+When a credit note is issued:
+
+```text
+Debit: Credit Note / Revenue Adjustment Account
+Credit: Receivable Account
+```
+
+Example:
+
+```text
+Dr Credit Note Adjustment   80
+Cr Patient Receivables      80
+```
+
+Credit note is for invoice correction/adjustment, not patient payment.
+
+---
+
+## E. Write-off Approved
+
+When write-off is approved:
+
+```text
+Debit: Bad Debt / Write-off Expense
+Credit: Receivable Account
+```
+
+Example:
+
+```text
+Dr Bad Debt Expense         200
+Cr Patient Receivables      200
+```
+
+Write-off means the hospital forgives or accepts the uncollectible balance.
+
+---
+
+## F. Refund Issued
+
+When a refund is issued:
+
+If refund reverses a patient overpayment:
+
+```text
+Debit: Patient Refund Liability / Patient Receivable
+Credit: Cash / Bank
+```
+
+Use existing UHMS refund logic.
+
+Recommended simple approach:
+
+If refund reduces overpaid patient balance:
+
+```text
+Dr Patient Receivables / Patient Deposits / Refund Payable
+Cr Cash or Bank
+```
+
+Do not treat refund as expense unless project accounting rules require it.
+
+---
+
+## G. Patient Deposit Received
+
+If patient deposit/prepayment exists:
+
+When deposit is received before invoice:
+
+```text
+Dr Cash / Bank
+Cr Patient Deposit Liability
+```
+
+When deposit is applied to invoice:
+
+```text
+Dr Patient Deposit Liability
+Cr Patient Receivables
+```
+
+Only implement if deposit workflow already exists.
+
+Do not create a new deposit workflow unless necessary.
+
+---
+
+## H. Sponsor Allocation
+
+If sponsor allocation exists:
+
+When invoice responsibility is allocated to sponsor:
+
+```text
+Dr Sponsor Receivables
+Cr Patient Receivables
+```
+
+or, if invoice is directly billed to sponsor:
+
+```text
+Dr Sponsor Receivables
+Cr Revenue
+```
+
+Use the current billing design.
+
+Important:
+
+Sponsor does not reduce invoice total.
+Sponsor shifts responsibility from patient to sponsor.
+
+---
+
+## I. Insurance Receivable
+
+If insurance/claims receivable exists:
+
+When invoice responsibility is allocated to insurance:
+
+```text
+Dr Insurance Receivables
+Cr Patient Receivables
+```
+
+or, if invoice is directly billed to insurance:
+
+```text
+Dr Insurance Receivables
+Cr Revenue
+```
+
+Use existing insurance billing workflow.
+
+Do not hardcode NHIS.
+NHIS is just one insurance provider/type.
+
+---
+
+# 4. Avoid Duplicate Posting
+
+Every operational record should be posted once.
+
+Add fields where needed:
+
+```text
+journal_entry_id nullable
+accounting_posted_at nullable
+accounting_status nullable: pending/posted/failed/reversed
+accounting_error nullable
+```
+
+Possible tables:
+
+* invoices
+* payments
+* invoice_discounts
+* credit_notes
+* write_offs
+* refunds
+* sponsor allocations
+* insurance claim allocations
+
+Use existing columns if already present.
+
+Do not create duplicate journal entries if the user retries the action.
+
+Posting must be idempotent.
+
+---
+
+# 5. Accounting Source Metadata
+
+Every journal entry generated from billing should include:
+
+```text
+source_module = BILLING / PAYMENTS / CLAIMS / SPONSORS
+reference_type = model class or source type
+reference_id = source model id
+description = clear human-readable text
+```
+
+Every journal line should include relevant context:
+
+```text
+patient_id
+visit_id
+invoice_id
+department_id
+supplier_id nullable
+sponsor_id nullable
+insurance_provider_id nullable
+reference_type
+reference_id
+```
+
+---
+
+# 6. Services to Create / Update
+
+Create or update:
+
+```text
+BillingAccountingPostingService
+PaymentAccountingPostingService
+ReceivableAccountingService
+RevenueAccountResolver
+PaymentAccountResolver
+AccountingPostingService
+AccountingSettingsService
+JournalEntryService
+```
+
+Controllers should not contain accounting logic.
+
+Operational services should call posting services after successful billing actions.
+
+Suggested methods:
+
+```php
+BillingAccountingPostingService::postInvoice(Invoice $invoice): JournalEntry
+PaymentAccountingPostingService::postPayment(Payment $payment): JournalEntry
+BillingAccountingPostingService::postDiscount(InvoiceDiscount $discount): JournalEntry
+BillingAccountingPostingService::postCreditNote(CreditNote $creditNote): JournalEntry
+BillingAccountingPostingService::postWriteOff(WriteOff $writeOff): JournalEntry
+BillingAccountingPostingService::postRefund(Refund $refund): JournalEntry
+```
+
+Use actual existing model names.
+
+---
+
+# 7. Revenue Account Mapping
+
+Implement account resolution.
+
+Priority order:
+
+```text
+1. Service-specific revenue account if configured
+2. Department revenue account if configured
+3. Invoice item source/category account mapping
+4. Accounting settings default revenue account
+```
+
+Examples:
+
+* consultation service → Consultation Revenue
+* lab investigation → Laboratory Revenue
+* pharmacy product → Pharmacy Revenue
+* procedure/theatre service → Procedure Revenue
+* admission charge → Admission Revenue
+* emergency consultation → Emergency Revenue
+
+If no mapping exists, use default_revenue_account_id.
+
+If even default revenue account is missing, fail clearly:
+
+```text
+No revenue account configured for this billing item.
+```
+
+Do not silently post to a random account.
+
+---
+
+# 8. Receivable Account Mapping
+
+Resolve receivable account based on payer responsibility.
+
+Possible payer types:
+
+```text
+patient
+insurance
+sponsor
+corporate
+```
+
+Mapping:
+
+* patient → patient_receivable_account_id
+* insurance → insurance_receivable_account_id
+* sponsor → sponsor_receivable_account_id
+* corporate → corporate_receivable_account_id
+
+If invoice is mixed responsibility, split receivable lines by payer.
+
+Example:
+
+Invoice total: GHS 1,000
+Patient responsible: GHS 300
+Insurance responsible: GHS 700
+
+Posting:
+
+```text
+Dr Patient Receivables       300
+Dr Insurance Receivables     700
+Cr Revenue                 1,000
+```
+
+If current UHMS does not yet support split payer responsibility, post to Patient Receivables for now and document payer-split as TODO for Phase 4.
+
+---
+
+# 9. Payment Account Mapping
+
+Resolve payment account based on payment method.
+
+Examples:
+
+```text
+Cash → Cash on Hand
+Bank Transfer → Bank Account
+Mobile Money → Mobile Money Account
+Card/POS → Bank/POS Clearing Account
+```
+
+Use existing payment method model/config if available.
+
+Do not hardcode payment methods only in service logic if the system has configurable methods.
+
+---
+
+# 10. Reversal Behavior
+
+If an operational financial transaction is reversed, cancelled, or voided:
+
+Do not delete the original journal entry.
+
+Create reversal journal entry.
+
+Examples:
+
+Payment reversed:
+
+```text
+Original:
+Dr Cash
+Cr Patient Receivable
+
+Reversal:
+Dr Patient Receivable
+Cr Cash
+```
+
+Credit note reversed:
+
+```text
+Original:
+Dr Credit Note Adjustment
+Cr Patient Receivable
+
+Reversal:
+Dr Patient Receivable
+Cr Credit Note Adjustment
+```
+
+Use JournalEntryService::reverse() or equivalent.
+
+---
+
+# 11. Invoice Status and Accounting Timing
+
+Decide when invoice is posted to accounting.
+
+Recommended:
+
+Post accounting when invoice becomes:
+
+```text
+FINALIZED
+POSTED
+APPROVED
+ISSUED
+```
+
+Do not post draft invoices.
+
+If UHMS currently creates invoices immediately as official bills, then post on creation only if invoice is not draft.
+
+Document the rule.
+
+Avoid posting incomplete draft billing lines.
+
+---
+
+# 12. Emergency / Admission Billing
+
+Emergency and Admission may use running bills.
 
 Rules:
 
-* draft journal entries can be edited
-* posted journal entries cannot be edited
-* posted journal entries can only be reversed
-* reversal creates a new posted journal entry with debit/credit swapped
-* reversal must reference original journal entry
-* reversal requires a reason
-* cancellation is allowed only for draft entries
-* closed periods cannot receive new journal entries
-* closed fiscal years cannot receive new journal entries
-* reports should only include posted entries, not draft or cancelled entries
+* emergency service can be rendered before payment
+* admission charges can accumulate
+* accounting revenue should post when invoice item becomes billable/finalized according to billing design
+* payments reduce receivables
+* do not block emergency care because accounting posting is pending unless project policy says so
+
+Document how running-bill invoices are posted.
+
+Recommended:
+
+* invoice item can be operationally added during emergency/admission
+* accounting post happens when invoice is finalized, or when item is approved as billable
+* choose one consistent rule
 
 ---
 
-# 10. Opening Balances
+# 13. Activity Logs
 
-Support opening balances carefully.
+Do not create a separate accounting audit system.
 
-Recommended approach:
+Use existing ActivityLogService.
 
-* opening balances should eventually be posted through an Opening Balance journal entry
-* do not silently affect trial balance from account.opening_balance alone
-* account.opening_balance can exist for setup/reference display
-* trial balance must be based on posted journal entries
-
-If opening balances are implemented now:
-
-* ensure they are balanced
-* create opening journal entry
-* mark source_module = OPENING_BALANCE
-
-If opening balances are not fully implemented now:
-
-* document as Phase 2/3 accounting setup TODO
-
----
-
-# 11. Chart of Accounts Seeder
-
-Create a default hospital chart of accounts seeder.
-
-Suggested structure:
+Log accounting posting events:
 
 ```text
-1000 Assets
-1100 Cash and Bank
-1110 Cash on Hand
-1120 Bank Account
-1130 Mobile Money Account
-
-1200 Accounts Receivable
-1210 Patient Receivables
-1220 Insurance Receivables
-1230 Sponsor Receivables
-1240 Corporate Receivables
-
-1300 Inventory
-1310 Pharmacy Inventory
-1320 Medical Consumables Inventory
-1330 Laboratory Reagents Inventory
-1340 Theatre Supplies Inventory
-
-1400 Fixed Assets
-1410 Medical Equipment
-1420 Furniture and Fixtures
-1430 Computers and IT Equipment
-1440 Vehicles
-
-2000 Liabilities
-2100 Accounts Payable
-2110 Supplier Payables
-2200 Patient Deposits
-2300 Taxes Payable
-2400 Salary Payable
-2500 Accrued Expenses
-
-3000 Equity
-3100 Owner Capital
-3200 Retained Earnings
-3300 Current Year Earnings
-
-4000 Revenue
-4100 Consultation Revenue
-4200 Laboratory Revenue
-4300 Pharmacy Revenue
-4400 Procedure / Theatre Revenue
-4500 Admission Revenue
-4600 Emergency Revenue
-4700 Insurance Claim Revenue
-4800 Sponsor-Funded Revenue
-4900 Other Revenue
-
-5000 Expenses
-5100 Cost of Goods Sold
-5110 Pharmacy Cost of Goods Sold
-5120 Consumables Cost of Goods Sold
-
-5200 Medical Consumables Expense
-5300 Salaries and Wages
-5400 Rent
-5500 Utilities
-5600 Maintenance
-5700 Administrative Expenses
-5800 Bad Debt / Write-off Expense
-5900 Bank Charges
-```
-
-Use proper parent-child relationships.
-
-Do not duplicate accounts if seeder is run multiple times.
-
----
-
-# 12. Reports
-
-## Trial Balance
-
-Create Trial Balance report.
-
-Columns:
-
-```text
-Account Code
-Account Name
-Debit
-Credit
-Balance
-```
-
-Filters:
-
-```text
-Fiscal Year
-Date From
-Date To
-Account Type optional
-Department optional
-```
-
-Rules:
-
-* include only posted journal entries
-* exclude draft/cancelled entries
-* reversal entries should naturally offset original entries
-* total debit must equal total credit
-* show warning if unbalanced, although unbalanced should not happen
-
----
-
-## General Ledger
-
-Create General Ledger report.
-
-Filters:
-
-```text
-Account
-Date From
-Date To
-Department optional
-Source Module optional
-```
-
-Columns:
-
-```text
-Date
-Journal No
-Description
-Reference
-Debit
-Credit
-Running Balance
-```
-
-Rules:
-
-* include only posted journal entries
-* running balance follows account normal balance
-* support print/export if existing report system supports it
-* do not calculate from draft journal entries
-
----
-
-# 13. Permissions
-
-Add or verify permissions:
-
-```text
-accounting.dashboard.view
-
-accounting.accounts.view
-accounting.accounts.create
-accounting.accounts.edit
-accounting.accounts.disable
-
-accounting.journals.view
-accounting.journals.create
-accounting.journals.edit
-accounting.journals.post
-accounting.journals.reverse
-accounting.journals.cancel
-
-accounting.reports.trial_balance
-accounting.reports.general_ledger
-
-accounting.periods.view
-accounting.periods.manage
-accounting.fiscal_years.view
-accounting.fiscal_years.manage
-
-accounting.settings.view
-accounting.settings.manage
-```
-
-Only authorized finance/admin users should manage accounting.
-
-Backend must enforce permissions.
-
-Do not rely only on hiding UI buttons.
-
----
-
-# 14. Audit Logs
-
-Use ActivityLogService.
-
-Do not create a separate accounting logging system.
-
-Log:
-
-```text
-ACCOUNT_CREATED
-ACCOUNT_UPDATED
-ACCOUNT_DISABLED
-ACCOUNT_REACTIVATED
-
-JOURNAL_ENTRY_CREATED
-JOURNAL_ENTRY_UPDATED
-JOURNAL_ENTRY_POSTED
-JOURNAL_ENTRY_REVERSED
-JOURNAL_ENTRY_CANCELLED
-
-FISCAL_YEAR_CREATED
-FISCAL_YEAR_CLOSED
-ACCOUNTING_PERIOD_CREATED
-ACCOUNTING_PERIOD_CLOSED
-ACCOUNTING_SETTINGS_UPDATED
+ACCOUNTING_POSTED_FOR_INVOICE
+ACCOUNTING_POSTED_FOR_PAYMENT
+ACCOUNTING_POSTED_FOR_DISCOUNT
+ACCOUNTING_POSTED_FOR_CREDIT_NOTE
+ACCOUNTING_POSTED_FOR_WRITE_OFF
+ACCOUNTING_POSTING_FAILED
+ACCOUNTING_REVERSAL_CREATED
 ```
 
 Context:
 
 ```text
-account_id
+invoice_id
+payment_id
+discount_id
+credit_note_id
+write_off_id
 journal_entry_id
-fiscal_year_id
-accounting_period_id
+patient_id
+visit_id
 source_module
 old_values
 new_values
+error message if failed
 ```
 
-Do not attach patient_id/visit_id unless the journal entry line is explicitly linked to a patient/visit.
+Avoid duplicate billing logs.
 
-Manual accounting changes are global finance logs.
+Billing logs say “invoice created/payment recorded”.
+Accounting logs say “journal entry posted for invoice/payment”.
 
-logs:audit Stage-2 gate must remain green.
-
----
-
-# 15. Validation
-
-Validate:
-
-* account code required and unique
-* account name required
-* account type required
-* account normal balance valid
-* journal entry date required
-* journal entry date inside open accounting period
-* journal must have at least two lines
-* each line must have account
-* each line must have debit or credit, not both
-* total debit equals total credit
-* cannot post to inactive account
-* cannot post into closed period
-* cannot post into closed fiscal year
-* cannot edit posted journal entry
-* cannot delete posted journal entry
-* reversal requires reason
-* unauthorized users cannot access accounting actions
-
-Do not skip validation because tests are deferred.
+Both are different.
 
 ---
 
-# 16. Manual Verification Strategy
+# 14. UI Updates
+
+On invoice detail page, show accounting status:
+
+```text
+Accounting Status: Posted / Pending / Failed / Reversed
+Journal Entry: JE-2026-000123
+```
+
+On payment detail/history, show journal entry if posted.
+
+On accounting journal entry page, show source link:
+
+```text
+Source: Invoice INV-2026-00045
+Source: Payment PAY-2026-00033
+```
+
+If posting failed, show friendly message to authorized users:
+
+```text
+Accounting posting failed: Missing revenue account for Laboratory Revenue.
+```
+
+Do not expose internal stack traces.
+
+---
+
+# 15. Permissions
+
+Add or verify:
+
+```text
+accounting.posting.view
+accounting.posting.retry
+accounting.posting.reverse
+accounting.posting.failure.view
+```
+
+Only authorized finance/admin users should retry failed postings.
+
+Normal billing users should not manually manipulate accounting journals unless they also have accounting permissions.
+
+---
+
+# 16. Manual Retry
+
+If posting fails because of missing account mapping, allow authorized user to retry after fixing settings.
+
+Recommended:
+
+```php
+AccountingPostingRetryService::retry(Model $source): JournalEntry
+```
+
+or buttons:
+
+```text
+Retry Accounting Posting
+```
+
+Available only when:
+
+```text
+accounting_status = failed
+```
+
+Do not create duplicate journal entry on retry.
+
+---
+
+# 17. Manual Verification Strategy
 
 Do not write the full automated test suite yet.
 
-For now:
+Full accounting tests will be written after all accounting phases are implemented.
 
-* focus on implementation
-* keep the code clean and testable
-* add only minimal smoke checks if absolutely necessary
-* do not spend time building complete feature tests now
-* do not block implementation because tests are not complete
-
-Full tests will be written after the whole accounting implementation is complete.
-
-For this phase, provide manual verification notes instead of full automated tests.
+For this phase, provide manual verification notes.
 
 Manual verification required:
 
-1. Create account manually.
-2. Confirm duplicate account code is rejected.
-3. Create fiscal year.
-4. Create accounting period.
-5. Create balanced journal entry.
-6. Confirm unbalanced journal entry is rejected.
-7. Confirm journal with less than two lines is rejected.
-8. Confirm journal line cannot have both debit and credit.
-9. Confirm journal line cannot have neither debit nor credit.
-10. Post balanced journal entry.
-11. Confirm posted journal cannot be edited.
-12. Reverse posted journal.
-13. Confirm reversal swaps debit and credit.
-14. Open Trial Balance.
-15. Confirm debit and credit totals match.
-16. Open General Ledger for an account.
-17. Confirm running balance displays correctly.
-18. Confirm unauthorized users cannot access accounting pages.
-19. Confirm accounting actions appear in activity logs.
-20. Confirm existing billing/procurement/stock workflows still work.
-21. Confirm logs:audit Stage-2 gate still passes.
+1. Finalize/create invoice and confirm journal entry is created.
+2. Confirm invoice journal debits receivable and credits revenue.
+3. Confirm invoice with multiple item categories credits correct revenue accounts.
+4. Record payment and confirm cash/bank/mobile money is debited.
+5. Confirm payment credits receivable, not revenue.
+6. Apply discount and confirm discount account is debited.
+7. Issue credit note and confirm credit note adjustment account is debited.
+8. Approve write-off and confirm bad debt/write-off expense is debited.
+9. Confirm outstanding balance is correct after payment/discount/credit/write-off.
+10. Confirm no duplicate journal entry is created on retry.
+11. Confirm reversal creates reversing journal entry.
+12. Confirm invoice detail shows accounting status and journal link.
+13. Confirm failed posting can be retried after fixing settings.
+14. Confirm emergency/admission billing still works.
+15. Confirm OPD billing still works.
+16. Confirm logs:audit Stage-2 gate still passes.
+17. Confirm Trial Balance remains balanced after billing postings.
+18. Confirm General Ledger shows invoice/payment postings.
 
-Do not remove testability.
-
-Do not write messy code because tests are postponed.
-
-Do not skip validation.
-
-Do not skip permissions.
-
-Do not skip audit logs.
+Do not skip validation, permissions, audit logs, or idempotency because tests are deferred.
 
 ---
 
-# 17. Documentation
+# 18. Documentation
 
 Create:
 
 ```text
-docs/ACCOUNTING_PHASE_1_FOUNDATION_REPORT.md
+docs/ACCOUNTING_PHASE_2_BILLING_POSTING_REPORT.md
 ```
 
 Include:
 
-* database changes
-* models added/updated
-* services added
-* chart of accounts structure
-* journal entry workflow
-* validation rules
+* billing events wired
+* posting rules
+* account mappings
+* invoice accounting timing
+* emergency/admission running bill treatment
+* payment treatment
+* discount/credit note/write-off treatment
+* reversal handling
+* UI changes
 * permissions
-* reports added
-* activity logs added
 * manual verification completed
-* what is intentionally not automated yet
-* what tests must be written later
+* tests deferred list
 * known risks/TODOs
 * next phase recommendation
 
-Update any existing finance/accounting docs if applicable.
+---
+
+# 19. Acceptance Criteria
+
+Phase 2 is complete when:
+
+* invoices can generate balanced journal entries
+* payments generate balanced journal entries
+* discounts generate balanced journal entries
+* credit notes generate balanced journal entries
+* write-offs generate balanced journal entries
+* refunds/reversals are handled if supported
+* journal entries are idempotent
+* accounting status appears on billing records
+* failed postings can be retried by authorized users
+* Trial Balance remains balanced
+* General Ledger shows billing postings
+* emergency/admission billing remains functional
+* OPD billing remains functional
+* Activity logs capture accounting posting events
+* logs:audit Stage-2 gate remains green
+* manual verification is documented
+* full automated tests remain deferred until final accounting implementation pass
 
 ---
 
-# 18. Acceptance Criteria
-
-Phase 1 is complete when:
-
-* Chart of Accounts exists.
-* Fiscal years exist.
-* Accounting periods exist.
-* Journal entries and journal lines exist.
-* Manual journal entries can be created.
-* Balanced journal entries can be posted.
-* Unbalanced entries are rejected.
-* Journals with invalid lines are rejected.
-* Posted journals cannot be edited directly.
-* Reversal workflow works.
-* Trial Balance report works.
-* General Ledger report works.
-* Default hospital chart of accounts is seeded.
-* Accounting permissions exist.
-* Accounting actions are logged.
-* Existing billing/procurement/stock workflows are not broken.
-* logs:audit Stage-2 gate still passes.
-* Manual verification is completed and documented.
-* Full automated tests are deferred until the final accounting implementation pass.
-
----
-
-# 19. Important Rules
+# 20. Important Rules
 
 Do not replace invoices with journal entries.
-
 Do not replace payments with journal entries.
-
-Do not replace supplier ledger with journal entries.
-
-Do not replace stock movements with journal entries.
-
-Do not delete operational financial records.
-
-Do not automatically post all modules yet.
-
-Do not allow unbalanced journal entries.
-
-Do not allow posting into closed periods.
-
-Do not allow editing posted journal entries.
-
+Do not treat payments as revenue.
+Do not delete invoice items when posting adjustments.
+Do not create duplicate journal entries.
+Do not post draft invoices unless the current billing design treats them as official.
+Do not hardcode NHIS.
+Do not hardcode all revenue to one account.
+Do not block emergency care because of OPD payment rules.
+Do not create a separate accounting audit system.
+Do not bypass ActivityLogService.
 Do not bypass permissions.
+Do not skip validation.
+Do not enable full automated tests yet.
 
-Do not bypass validation.
-
-Do not create accounting logs outside ActivityLogService.
-
-Do not break Stage-2 logs:audit CI gate.
-
-Proceed with Accounting Phase 1 Foundation now.
-
-````
-
-After this lands, Phase 2 should be:
-
-```text
-Billing → Accounting Posting
-````
-
-That is where invoices, revenue, patient receivables, insurance receivables, sponsor receivables, payments, discounts, credit notes, write-offs, and refunds start generating real journal entries automatically.
+Proceed with Accounting Phase 2: Billing → Accounting Posting now.

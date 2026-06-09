@@ -11,6 +11,17 @@
     $canRemoveDiscount = $currentUser?->can('billing.discount.remove') ?? false;
     $canViewDiscountHistory = $currentUser?->can('billing.discount.view') ?? false;
     $canDiscountActions = $canApplyDiscount || $canRemoveDiscount;
+    $canViewAccountingPosting = $currentUser?->can('accounting.posting.view') ?? false;
+    $canViewAccountingFailures = $currentUser?->can('accounting.posting.failure.view') ?? false;
+    $canRetryAccountingPosting = $currentUser?->can('accounting.posting.retry') ?? false;
+    $accountingStatusColors = [
+        'pending' => 'secondary',
+        'posted' => 'success',
+        'failed' => 'danger',
+        'reversed' => 'warning',
+    ];
+    $accountingStatusLabel = fn ($status) => ucfirst(str_replace('_', ' ', $status ?: 'pending'));
+    $accountingStatusColor = fn ($status) => $accountingStatusColors[$status ?: 'pending'] ?? 'secondary';
 @endphp
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
@@ -107,6 +118,28 @@
                         <p class="mb-1 text-muted">Date: <span class="text-dark">{{ $invoice->created_at->format('d M Y') }}</span></p>
                         <p class="mb-1 text-muted">Due Date: <span class="text-dark">{{ $invoice->due_date?->format('d M Y') ?? '—' }}</span></p>
                         <p class="mb-0 text-muted">Type: <span class="badge bg-soft-{{ $invoice->billing_type->color() }}">{{ $invoice->billing_type->label() }}</span></p>
+                        @if($canViewAccountingPosting)
+                            <div class="mt-2 small">
+                                <span class="text-muted">Accounting:</span>
+                                <span class="badge bg-{{ $accountingStatusColor($invoice->accounting_status) }}">
+                                    {{ $accountingStatusLabel($invoice->accounting_status) }}
+                                </span>
+                                @if($invoice->journalEntry)
+                                    <a href="{{ route('admin.accounting.journals.show', $invoice->journalEntry) }}" class="ms-1">{{ $invoice->journalEntry->journal_number }}</a>
+                                @endif
+                                @if($invoice->accounting_status === 'failed' && $canRetryAccountingPosting)
+                                    <form method="POST" action="{{ route('admin.accounting.postings.retry') }}" class="d-inline ms-1">
+                                        @csrf
+                                        <input type="hidden" name="source_type" value="invoice">
+                                        <input type="hidden" name="source_id" value="{{ $invoice->id }}">
+                                        <button type="submit" class="btn btn-link btn-sm p-0 align-baseline">Retry</button>
+                                    </form>
+                                @endif
+                                @if($invoice->accounting_status === 'failed' && $canViewAccountingFailures && $invoice->accounting_error)
+                                    <div class="text-danger mt-1">{{ $invoice->accounting_error }}</div>
+                                @endif
+                            </div>
+                        @endif
                     </div>
                     <div class="col-md-4">
                         <h6 class="fw-bold mb-2">{{ $invoice->patient ? 'Patient' : 'Recipient' }}</h6>
@@ -382,6 +415,9 @@
                                 <th>Risk</th>
                                 <th>Reason</th>
                                 <th>User</th>
+                                @if($canViewAccountingPosting)
+                                <th>Accounting</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
@@ -398,10 +434,30 @@
                                 </td>
                                 <td>{{ $event->reason }}</td>
                                 <td>{{ $event->performedBy->name ?? 'System' }}</td>
+                                @if($canViewAccountingPosting)
+                                <td>
+                                    <span class="badge bg-{{ $accountingStatusColor($event->accounting_status) }}">
+                                        {{ $accountingStatusLabel($event->accounting_status) }}
+                                    </span>
+                                    @if($event->journalEntry)
+                                        <a href="{{ route('admin.accounting.journals.show', $event->journalEntry) }}" class="d-block small">{{ $event->journalEntry->journal_number }}</a>
+                                    @elseif($event->accounting_status === 'failed' && $canRetryAccountingPosting)
+                                        <form method="POST" action="{{ route('admin.accounting.postings.retry') }}" class="d-inline">
+                                            @csrf
+                                            <input type="hidden" name="source_type" value="discount">
+                                            <input type="hidden" name="source_id" value="{{ $event->id }}">
+                                            <button type="submit" class="btn btn-link btn-sm p-0">Retry</button>
+                                        </form>
+                                    @endif
+                                    @if($event->accounting_status === 'failed' && $canViewAccountingFailures && $event->accounting_error)
+                                        <div class="small text-danger">{{ $event->accounting_error }}</div>
+                                    @endif
+                                </td>
+                                @endif
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-3">No discount history.</td>
+                                <td colspan="{{ $canViewAccountingPosting ? 8 : 7 }}" class="text-center text-muted py-3">No discount history.</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -423,6 +479,9 @@
                                 <th>Reference</th>
                                 <th class="text-end">Amount</th>
                                 <th>Received By</th>
+                                @if($canViewAccountingPosting)
+                                <th>Accounting</th>
+                                @endif
                             </tr>
                         </thead>
                         <tbody>
@@ -434,6 +493,26 @@
                                 <td>{{ $payment->reference_number ?? '—' }}</td>
                                 <td class="text-end fw-medium text-success">&#8373;{{ number_format($payment->amount, 2) }}</td>
                                 <td>{{ $payment->receivedBy->name ?? '—' }}</td>
+                                @if($canViewAccountingPosting)
+                                <td>
+                                    <span class="badge bg-{{ $accountingStatusColor($payment->accounting_status) }}">
+                                        {{ $accountingStatusLabel($payment->accounting_status) }}
+                                    </span>
+                                    @if($payment->journalEntry)
+                                        <a href="{{ route('admin.accounting.journals.show', $payment->journalEntry) }}" class="d-block small">{{ $payment->journalEntry->journal_number }}</a>
+                                    @elseif($payment->accounting_status === 'failed' && $canRetryAccountingPosting)
+                                        <form method="POST" action="{{ route('admin.accounting.postings.retry') }}" class="d-inline">
+                                            @csrf
+                                            <input type="hidden" name="source_type" value="payment">
+                                            <input type="hidden" name="source_id" value="{{ $payment->id }}">
+                                            <button type="submit" class="btn btn-link btn-sm p-0">Retry</button>
+                                        </form>
+                                    @endif
+                                    @if($payment->accounting_status === 'failed' && $canViewAccountingFailures && $payment->accounting_error)
+                                        <div class="small text-danger">{{ $payment->accounting_error }}</div>
+                                    @endif
+                                </td>
+                                @endif
                             </tr>
                             @endforeach
                         </tbody>

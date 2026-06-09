@@ -279,7 +279,7 @@ class BillingService
                 'payment_status' => $status,
             ])->save();
 
-            InvoiceDiscount::create([
+            $discountEvent = InvoiceDiscount::create([
                 'invoice_id' => $item->invoice_id,
                 'invoice_item_id' => $item->id,
                 'action' => $isRemoval ? InvoiceDiscount::ACTION_REMOVED : InvoiceDiscount::ACTION_APPLIED,
@@ -329,6 +329,8 @@ class BillingService
                 $item,
                 $isRemoval ? 'Discount removed from invoice item' : 'Discount applied to invoice item'
             );
+
+            app(BillingAccountingPostingService::class)->postDiscount($discountEvent);
 
             // Refresh invoice header totals + status.
             $invoice = $item->invoice()->with('items')->first();
@@ -623,6 +625,7 @@ class BillingService
     public function cancelInvoice(Invoice $invoice): Invoice
     {
         $invoice->update(['status' => InvoiceStatus::CANCELLED->value]);
+        app(BillingAccountingPostingService::class)->reverseInvoice($invoice, 'Invoice cancelled');
 
         return $invoice;
     }

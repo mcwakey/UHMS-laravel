@@ -40,6 +40,10 @@ class Payment extends Model
         'reversed_at',
         'reversed_by',
         'reversal_reason',
+        'journal_entry_id',
+        'accounting_posted_at',
+        'accounting_status',
+        'accounting_error',
     ];
 
     protected function casts(): array
@@ -51,6 +55,7 @@ class Payment extends Model
             'status' => PaymentStatus::class,
             'is_reversal' => 'boolean',
             'reversed_at' => 'datetime',
+            'accounting_posted_at' => 'datetime',
         ];
     }
 
@@ -83,6 +88,11 @@ class Payment extends Model
     public function reversedBy()
     {
         return $this->belongsTo(User::class, 'reversed_by');
+    }
+
+    public function journalEntry()
+    {
+        return $this->belongsTo(JournalEntry::class);
     }
 
     /**

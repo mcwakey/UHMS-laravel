@@ -36,6 +36,10 @@ class CreditNote extends Model
         'cancelled_at',
         'cancelled_by',
         'cancellation_reason',
+        'journal_entry_id',
+        'accounting_posted_at',
+        'accounting_status',
+        'accounting_error',
     ];
 
     protected function casts(): array
@@ -44,6 +48,7 @@ class CreditNote extends Model
             'type' => CreditNoteType::class,
             'amount' => 'decimal:2',
             'cancelled_at' => 'datetime',
+            'accounting_posted_at' => 'datetime',
         ];
     }
 
@@ -65,6 +70,11 @@ class CreditNote extends Model
     public function cancelledBy()
     {
         return $this->belongsTo(User::class, 'cancelled_by');
+    }
+
+    public function journalEntry()
+    {
+        return $this->belongsTo(JournalEntry::class);
     }
 
     public function scopeActive($query)

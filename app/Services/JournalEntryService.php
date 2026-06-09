@@ -23,7 +23,8 @@ class JournalEntryService
     {
         return DB::transaction(function () use ($data) {
             $period = $this->periodService->ensureDateIsPostable($data['entry_date']);
-            $lines = $this->validatedLines($data['lines'] ?? []);
+            $allowControlAccounts = (bool) ($data['allow_control_accounts'] ?? (($data['source_module'] ?? 'MANUAL') !== 'MANUAL'));
+            $lines = $this->validatedLines($data['lines'] ?? [], $allowControlAccounts);
 
             $entry = JournalEntry::create([
                 'journal_number' => $this->nextJournalNumber(),
@@ -98,7 +99,7 @@ class JournalEntryService
                 'supplier_id',
                 'sponsor_id',
                 'insurance_provider_id',
-            ]))->all());
+            ]))->all(), ($entry->source_module ?: 'MANUAL') !== 'MANUAL');
 
             $old = $entry->getOriginal();
             $entry->update([
@@ -204,7 +205,7 @@ class JournalEntryService
         $this->validatedLines($lines);
     }
 
-    protected function validatedLines(array $lines): array
+    protected function validatedLines(array $lines, bool $allowControlAccounts = false): array
     {
         $lines = collect($lines)
             ->filter(fn ($line) => ! empty($line['account_id']) || (float) ($line['debit'] ?? 0) > 0 || (float) ($line['credit'] ?? 0) > 0)
@@ -237,7 +238,7 @@ class JournalEntryService
                 throw ValidationException::withMessages(["lines.$index.account_id" => "Line {$row}: inactive accounts cannot be used."]);
             }
 
-            if ($account->is_control_account && ! $this->settingsService->bool('allow_manual_control_account_posting')) {
+            if ($account->is_control_account && ! $allowControlAccounts && ! $this->settingsService->bool('allow_manual_control_account_posting')) {
                 throw ValidationException::withMessages([
                     "lines.$index.account_id" => "Line {$row}: control accounts are locked for manual journals by accounting settings.",
                 ]);

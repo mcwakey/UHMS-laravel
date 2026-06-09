@@ -110,7 +110,17 @@ class InvoiceService
             'balance' => round($balance, 2),
         ])->save();
 
-        return $this->updateStatus($invoice);
+        $invoice = $this->updateStatus($invoice);
+
+        if (! in_array($invoice->status?->value ?? $invoice->status, [
+            InvoiceStatus::DRAFT->value,
+            InvoiceStatus::CANCELLED->value,
+            InvoiceStatus::REFUNDED->value,
+        ], true)) {
+            app(BillingAccountingPostingService::class)->postInvoice($invoice);
+        }
+
+        return $invoice->refresh();
     }
 
     /**

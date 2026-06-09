@@ -186,8 +186,11 @@ class InvoiceController extends Controller
         $invoice->load([
             'items.serviceCatalog',
             'items.department',
+            'items.journalEntry',
             'items.discountEvents.performedBy',
+            'journalEntry',
             'payments.receivedBy',
+            'payments.journalEntry',
             'patient',
             'visit.department',
             'visit.visitInsurance.insuranceProvider',
@@ -195,6 +198,7 @@ class InvoiceController extends Controller
             'createdBy',
             'discountEvents.invoiceItem',
             'discountEvents.performedBy',
+            'discountEvents.journalEntry',
         ]);
 
         return view('billing.invoices.show', compact('invoice'));

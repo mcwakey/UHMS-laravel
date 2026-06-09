@@ -175,6 +175,7 @@ class PermissionMeta
             'accounting.fiscal_years' => 'fiscal years',
             'accounting.journals' => 'manual journal entries',
             'accounting.periods' => 'accounting periods',
+            'accounting.posting' => 'automated accounting postings',
             'accounting.reports' => 'accounting reports',
             'accounting.settings' => 'accounting settings',
             'admission.mar_chart' => 'admission medication administration charts',

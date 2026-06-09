@@ -68,7 +68,7 @@ class CreditNoteService
             throw new \RuntimeException('Cannot issue a credit note on a cancelled or refunded invoice.');
         }
 
-        return DB::transaction(function () use ($invoice, $type, $amount, $reason, $notes, $user) {
+        $creditNote = DB::transaction(function () use ($invoice, $type, $amount, $reason, $notes, $user) {
             $invoice = Invoice::with('items')->lockForUpdate()->findOrFail($invoice->id);
 
             $available = $this->availableToCredit($invoice);
@@ -106,6 +106,10 @@ class CreditNoteService
 
             return $creditNote->fresh(['invoice', 'issuedBy']);
         });
+
+        app(BillingAccountingPostingService::class)->postCreditNote($creditNote);
+
+        return $creditNote->refresh();
     }
 
     /**
@@ -127,7 +131,7 @@ class CreditNoteService
             throw new \RuntimeException('A cancellation reason is required.');
         }
 
-        return DB::transaction(function () use ($creditNote, $reason) {
+        $creditNote = DB::transaction(function () use ($creditNote, $reason) {
             $creditNote->forceFill([
                 'status' => 'cancelled',
                 'cancelled_at' => now(),
@@ -152,6 +156,10 @@ class CreditNoteService
 
             return $creditNote->fresh();
         });
+
+        app(BillingAccountingPostingService::class)->reverseCreditNote($creditNote, $reason);
+
+        return $creditNote->refresh();
     }
 
     /**

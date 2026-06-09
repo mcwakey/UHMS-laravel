@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\JournalEntry;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
 class AccountingPostingService
@@ -17,9 +18,10 @@ class AccountingPostingService
             'reference_type' => $source::class,
             'reference_id' => $source->getKey(),
             'source_module' => $sourceModule,
+            'allow_control_accounts' => $meta['allow_control_accounts'] ?? ($sourceModule !== 'MANUAL'),
             'lines' => $lines,
         ]));
 
-        return $this->journalEntryService->post($entry, auth()->user());
+        return $this->journalEntryService->post($entry, auth()->user() ?? User::query()->firstOrFail());
     }
 }

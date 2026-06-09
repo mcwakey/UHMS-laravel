@@ -45,6 +45,12 @@
                 <div class="text-muted small">Reference</div>
                 <div>{{ $journal->reference_number ?? '-' }}</div>
             </div>
+            @if($sourceLink)
+                <div class="col-md-4">
+                    <div class="text-muted small">Source Record</div>
+                    <a href="{{ $sourceLink['url'] }}">{{ $sourceLink['label'] }}</a>
+                </div>
+            @endif
             @if($journal->reversedEntry)
                 <div class="col-md-6">
                     <div class="text-muted small">Reverses</div>

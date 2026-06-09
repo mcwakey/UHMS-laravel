@@ -101,6 +101,7 @@ use App\Http\Controllers\Admin\VitalController;
 use App\Http\Controllers\Admin\WardController;
 use App\Http\Controllers\Accounting\AccountController as AccountingAccountController;
 use App\Http\Controllers\Accounting\AccountingDashboardController;
+use App\Http\Controllers\Accounting\AccountingPostingController;
 use App\Http\Controllers\Accounting\AccountingPeriodController;
 use App\Http\Controllers\Accounting\AccountingReportController;
 use App\Http\Controllers\Accounting\AccountingSettingsController;
@@ -684,6 +685,10 @@ Route::middleware('auth')->group(function () {
             Route::put('settings', [AccountingSettingsController::class, 'update'])
                 ->name('settings.update')
                 ->middleware('can:accounting.settings.manage');
+
+            Route::post('postings/retry', [AccountingPostingController::class, 'retry'])
+                ->name('postings.retry')
+                ->middleware('can:accounting.posting.retry');
         });
 
         // HR & Payroll

@@ -5,8 +5,12 @@ namespace App\Http\Controllers\Accounting;
 use App\Enums\Accounting\JournalEntryStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
+use App\Models\CreditNote;
 use App\Models\Department;
+use App\Models\Invoice;
+use App\Models\InvoiceDiscount;
 use App\Models\JournalEntry;
+use App\Models\Payment;
 use App\Services\JournalEntryService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -54,8 +58,9 @@ class JournalEntryController extends Controller
     public function show(JournalEntry $journal)
     {
         $journal->load(['lines.account', 'lines.department', 'fiscalYear', 'accountingPeriod', 'createdBy', 'postedBy', 'reversedEntry', 'reversalEntries']);
+        $sourceLink = $this->sourceLink($journal);
 
-        return view('accounting.journals.show', compact('journal'));
+        return view('accounting.journals.show', compact('journal', 'sourceLink'));
     }
 
     public function edit(JournalEntry $journal)
@@ -129,5 +134,28 @@ class JournalEntryController extends Controller
             'lines.*.credit' => ['nullable', 'numeric', 'min:0'],
             'lines.*.department_id' => ['nullable', 'exists:departments,id'],
         ]);
+    }
+
+    protected function sourceLink(JournalEntry $journal): ?array
+    {
+        if (! $journal->reference_type || ! $journal->reference_id) {
+            return null;
+        }
+
+        return match ($journal->reference_type) {
+            Invoice::class => ($invoice = Invoice::query()->find($journal->reference_id))
+                ? ['label' => "Invoice {$invoice->invoice_number}", 'url' => route('admin.billing.invoices.show', $invoice)]
+                : null,
+            Payment::class => ($payment = Payment::with('invoice')->find($journal->reference_id))
+                ? ['label' => "Payment {$payment->payment_number}", 'url' => $payment->invoice ? route('admin.billing.invoices.show', $payment->invoice) : route('admin.billing.payments.index')]
+                : null,
+            InvoiceDiscount::class => ($discount = InvoiceDiscount::with('invoice')->find($journal->reference_id))
+                ? ['label' => "Invoice discount #{$discount->id}", 'url' => $discount->invoice ? route('admin.billing.invoices.show', $discount->invoice) : route('admin.billing.invoices.index')]
+                : null,
+            CreditNote::class => ($creditNote = CreditNote::with('invoice')->find($journal->reference_id))
+                ? ['label' => "{$creditNote->type?->label()} {$creditNote->credit_note_number}", 'url' => $creditNote->invoice ? route('admin.billing.invoices.show', $creditNote->invoice) : route('admin.billing.credit-notes.index')]
+                : null,
+            default => null,
+        };
     }
 }

@@ -27,6 +27,10 @@ class InvoiceDiscount extends Model
         'reason',
         'performed_by',
         'performed_at',
+        'journal_entry_id',
+        'accounting_posted_at',
+        'accounting_status',
+        'accounting_error',
     ];
 
     protected function casts(): array
@@ -41,6 +45,7 @@ class InvoiceDiscount extends Model
             'new_balance' => 'decimal:2',
             'is_override' => 'boolean',
             'performed_at' => 'datetime',
+            'accounting_posted_at' => 'datetime',
         ];
     }
 
@@ -57,5 +62,10 @@ class InvoiceDiscount extends Model
     public function performedBy()
     {
         return $this->belongsTo(User::class, 'performed_by');
+    }
+
+    public function journalEntry()
+    {
+        return $this->belongsTo(JournalEntry::class);
     }
 }

@@ -41,6 +41,10 @@ class Invoice extends Model
         'amount_paid',
         'balance',
         'status',
+        'journal_entry_id',
+        'accounting_posted_at',
+        'accounting_status',
+        'accounting_error',
         'due_date',
         'notes',
         'created_by',
@@ -59,6 +63,7 @@ class Invoice extends Model
             'total_amount' => 'decimal:2',
             'amount_paid' => 'decimal:2',
             'balance' => 'decimal:2',
+            'accounting_posted_at' => 'datetime',
             'due_date' => 'date',
         ];
     }
@@ -118,6 +123,11 @@ class Invoice extends Model
     public function discountEvents()
     {
         return $this->hasMany(InvoiceDiscount::class);
+    }
+
+    public function journalEntry()
+    {
+        return $this->belongsTo(JournalEntry::class);
     }
 
     public function createdBy()

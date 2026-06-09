@@ -126,6 +126,8 @@ class PaymentService
             return $payment->load(['invoice', 'patient', 'allocations.invoiceItem']);
         });
 
+        app(PaymentAccountingPostingService::class)->postPayment($payment);
+
         PaymentRecorded::dispatch($payment);
 
         $this->logger?->log(LogModule::PAYMENTS, 'PAYMENT_RECORDED', [

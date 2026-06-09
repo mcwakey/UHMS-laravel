@@ -97,6 +97,10 @@ class InvoiceItem extends Model
         'patient_insurance_id',
         'insurance_type',
         'pricing_source',
+        'journal_entry_id',
+        'accounting_posted_at',
+        'accounting_status',
+        'accounting_error',
         'created_by',
     ];
 
@@ -115,6 +119,7 @@ class InvoiceItem extends Model
             'paid_amount' => 'decimal:2',
             'balance' => 'decimal:2',
             'total_price' => 'decimal:2',
+            'accounting_posted_at' => 'datetime',
         ];
     }
 
@@ -167,6 +172,11 @@ class InvoiceItem extends Model
     public function discountEvents()
     {
         return $this->hasMany(InvoiceDiscount::class);
+    }
+
+    public function journalEntry()
+    {
+        return $this->belongsTo(JournalEntry::class);
     }
 
     /**
