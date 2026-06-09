@@ -20,6 +20,8 @@ class StoreInvoiceRequest extends FormRequest
             'visit_id' => ['required', 'exists:visits,id'],
             'patient_id' => ['required', 'exists:patients,id'],
             'billing_type' => ['required', Rule::in(array_column(BillingType::cases(), 'value'))],
+            'sponsor_id' => ['nullable', 'exists:sponsors,id'],
+            'corporate_client_id' => ['nullable', 'exists:corporate_clients,id'],
             'tax_amount' => ['nullable', 'numeric', 'min:0'],
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
             'due_date' => ['nullable', 'date'],

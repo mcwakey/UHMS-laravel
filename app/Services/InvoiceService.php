@@ -112,6 +112,8 @@ class InvoiceService
 
         $invoice = $this->updateStatus($invoice);
 
+        app(InvoiceReceivableService::class)->syncFromInvoice($invoice);
+
         if (! in_array($invoice->status?->value ?? $invoice->status, [
             InvoiceStatus::DRAFT->value,
             InvoiceStatus::CANCELLED->value,

@@ -6,12 +6,16 @@ use App\Enums\BillingType;
 use App\Enums\InvoiceStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreInvoiceRequest;
+use App\Models\CorporateClient;
+use App\Models\InsuranceProvider;
 use App\Models\Invoice;
 use App\Models\Patient;
 use App\Models\ServiceCatalog;
+use App\Models\Sponsor;
 use App\Models\Visit;
 use App\Services\BillingService;
 use App\Services\InvoiceBalanceService;
+use App\Services\InvoiceReceivableService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -170,7 +174,7 @@ class InvoiceController extends Controller
         }
 
         $invoice = $this->billingService->createInvoice(
-            $request->only(['visit_id', 'patient_id', 'billing_type', 'tax_amount', 'discount_amount', 'due_date', 'notes']),
+            $request->only(['visit_id', 'patient_id', 'billing_type', 'sponsor_id', 'corporate_client_id', 'tax_amount', 'discount_amount', 'due_date', 'notes']),
             $request->input('items', [])
         );
 
@@ -182,8 +186,10 @@ class InvoiceController extends Controller
     /**
      * Show invoice details.
      */
-    public function show(Invoice $invoice, InvoiceBalanceService $balanceService)
+    public function show(Invoice $invoice, InvoiceBalanceService $balanceService, InvoiceReceivableService $receivableService)
     {
+        $receivableService->syncFromInvoice($invoice);
+
         $invoice->load([
             'items.serviceCatalog',
             'items.department',
@@ -192,10 +198,19 @@ class InvoiceController extends Controller
             'journalEntry',
             'payments.receivedBy',
             'payments.journalEntry',
+            'payments.receivable.patient',
+            'payments.receivable.insuranceProvider',
+            'payments.receivable.sponsor',
+            'payments.receivable.corporateClient',
             'patient',
             'visit.department',
             'visit.visitInsurance.insuranceProvider',
             'claim',
+            'receivables.patient',
+            'receivables.insuranceProvider',
+            'receivables.sponsor',
+            'receivables.corporateClient',
+            'receivables.journalEntry',
             'createdBy',
             'discountEvents.invoiceItem',
             'discountEvents.performedBy',
@@ -211,6 +226,11 @@ class InvoiceController extends Controller
             'invoice' => $invoice,
             'invoiceBalanceSummary' => $balanceService->summary($invoice),
             'adjustmentHistory' => $balanceService->history($invoice),
+            'receivablePayerOptions' => [
+                'insurance' => InsuranceProvider::active()->orderBy('name')->get(['id', 'name']),
+                'sponsors' => Sponsor::active()->orderBy('name')->get(['id', 'name']),
+                'corporate' => CorporateClient::active()->orderBy('name')->get(['id', 'name']),
+            ],
         ]);
     }
 
@@ -219,7 +239,7 @@ class InvoiceController extends Controller
      */
     public function edit(Invoice $invoice)
     {
-        $invoice->load(['patient', 'sponsor']);
+        $invoice->load(['patient', 'sponsor', 'corporateClient']);
 
         return Inertia::render('Billing/Invoices/Edit', [
             'invoice' => [
@@ -228,6 +248,7 @@ class InvoiceController extends Controller
                 'patient_name' => $invoice->patient ? $invoice->patient->full_name : '—',
                 'billing_type' => $invoice->billing_type?->value,
                 'sponsor_id' => $invoice->sponsor_id,
+                'corporate_client_id' => $invoice->corporate_client_id,
                 'tax_amount' => (float) $invoice->tax_amount,
                 'due_date' => optional($invoice->due_date)->format('Y-m-d'),
                 'notes' => $invoice->notes,
@@ -238,7 +259,8 @@ class InvoiceController extends Controller
                 'value' => $c->value,
                 'label' => $c->label(),
             ])->values(),
-            'sponsors' => \App\Models\Sponsor::active()->orderBy('name')->get(['id', 'name']),
+            'sponsors' => Sponsor::active()->orderBy('name')->get(['id', 'name']),
+            'corporateClients' => CorporateClient::active()->orderBy('name')->get(['id', 'name']),
             'routes' => [
                 'update' => route('admin.billing.invoices.update', $invoice),
                 'show' => route('admin.billing.invoices.show', $invoice),
@@ -258,6 +280,7 @@ class InvoiceController extends Controller
         $data = $request->validate([
             'billing_type' => ['required', \Illuminate\Validation\Rule::in(array_column(BillingType::cases(), 'value'))],
             'sponsor_id' => ['nullable', 'exists:sponsors,id'],
+            'corporate_client_id' => ['nullable', 'exists:corporate_clients,id'],
             'tax_amount' => ['nullable', 'numeric', 'min:0'],
             'due_date' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
@@ -265,15 +288,19 @@ class InvoiceController extends Controller
 
         if ($data['billing_type'] !== BillingType::CORPORATE->value) {
             $data['sponsor_id'] = null;
+            $data['corporate_client_id'] = null;
         }
 
         $invoice->update([
             'billing_type' => $data['billing_type'],
             'sponsor_id' => $data['sponsor_id'] ?? null,
+            'corporate_client_id' => $data['corporate_client_id'] ?? null,
             'tax_amount' => $data['tax_amount'] ?? 0,
             'due_date' => $data['due_date'] ?? $invoice->due_date,
             'notes' => $data['notes'] ?? null,
         ]);
+
+        app(InvoiceReceivableService::class)->syncFromInvoice($invoice->fresh(['items', 'payments', 'creditNotes']));
 
         return redirect()
             ->route('admin.billing.invoices.show', $invoice)
@@ -299,7 +326,7 @@ class InvoiceController extends Controller
      */
     public function print(Invoice $invoice)
     {
-        $invoice->load(['items.serviceCatalog', 'payments', 'patient', 'visit.department', 'createdBy']);
+        $invoice->load(['items.serviceCatalog', 'payments', 'receivables.sponsor', 'receivables.insuranceProvider', 'receivables.corporateClient', 'patient', 'visit.department', 'createdBy']);
 
         return view('billing.invoices.print', compact('invoice'));
     }
@@ -309,7 +336,7 @@ class InvoiceController extends Controller
      */
     public function downloadPdf(Invoice $invoice)
     {
-        $invoice->load(['items.serviceCatalog', 'payments', 'patient', 'sponsor', 'visit.department', 'createdBy', 'creditNotes']);
+        $invoice->load(['items.serviceCatalog', 'payments', 'receivables.sponsor', 'receivables.insuranceProvider', 'receivables.corporateClient', 'patient', 'sponsor', 'corporateClient', 'visit.department', 'createdBy', 'creditNotes']);
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('billing.invoices.invoice-pdf', compact('invoice'))
             ->setPaper('a4');

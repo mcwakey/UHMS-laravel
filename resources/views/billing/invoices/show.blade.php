@@ -12,6 +12,8 @@
         || ($currentUser?->can('billing.discount.reverse') ?? false);
     $canViewDiscountHistory = $currentUser?->can('billing.discount.view') ?? false;
     $canDiscountActions = $canApplyDiscount || $canRemoveDiscount;
+    $canViewReceivables = ($currentUser?->can('receivables.view') ?? false) || ($currentUser?->can('invoices.view') ?? false);
+    $canReallocateReceivables = $currentUser?->can('receivables.reallocate') ?? false;
     $canViewAccountingPosting = $currentUser?->can('accounting.posting.view') ?? false;
     $canViewAccountingFailures = $currentUser?->can('accounting.posting.failure.view') ?? false;
     $canRetryAccountingPosting = $currentUser?->can('accounting.posting.retry') ?? false;
@@ -23,6 +25,21 @@
     ];
     $accountingStatusLabel = fn ($status) => ucfirst(str_replace('_', ' ', $status ?: 'pending'));
     $accountingStatusColor = fn ($status) => $accountingStatusColors[$status ?: 'pending'] ?? 'secondary';
+    $receivableStatusColors = [
+        'pending' => 'warning',
+        'partially_paid' => 'info',
+        'paid' => 'success',
+        'overdue' => 'danger',
+        'written_off' => 'dark',
+        'cancelled' => 'secondary',
+    ];
+    $receivableStatusColor = fn ($status) => $receivableStatusColors[$status ?: 'pending'] ?? 'secondary';
+    $openReceivables = $invoice->receivables->filter(fn ($r) => (float) $r->balance > 0)->values();
+    $selectedReceivableId = old('invoice_receivable_id');
+    $defaultPaymentReceivable = $openReceivables->firstWhere('id', (int) $selectedReceivableId) ?: $openReceivables->first();
+    $defaultPaymentAmount = $defaultPaymentReceivable
+        ? min((float) $invoice->balance, (float) $defaultPaymentReceivable->balance)
+        : (float) $invoice->balance;
 @endphp
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
@@ -407,6 +424,75 @@
                     </div>
                 </div>
 
+                @if($canViewReceivables)
+                <hr>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h6 class="fw-bold mb-0"><i class="ti ti-users-group me-1"></i>Payer Responsibility / Receivables</h6>
+                    @if($canReallocateReceivables && $openReceivables->isNotEmpty())
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#receivableReallocationModal">
+                        <i class="ti ti-arrows-exchange me-1"></i>Reallocate
+                    </button>
+                    @endif
+                </div>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Payer</th>
+                                <th>Type</th>
+                                <th class="text-end">Allocated</th>
+                                <th class="text-end">Paid</th>
+                                <th class="text-end">Adjustments</th>
+                                <th class="text-end">Balance</th>
+                                <th>Due / Aging</th>
+                                <th>Status</th>
+                                @if($canViewAccountingPosting)
+                                <th>Journal</th>
+                                @endif
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($invoice->receivables as $receivable)
+                            @php
+                                $adjustments = (float) $receivable->credit_note_amount + (float) $receivable->write_off_amount;
+                                $agingReference = $receivable->due_date ?: $receivable->aging_start_date;
+                                $agingDays = $agingReference ? max(0, $agingReference->diffInDays(now(), false)) : 0;
+                            @endphp
+                            <tr>
+                                <td class="fw-medium">{{ $receivable->payerName() }}</td>
+                                <td><span class="badge bg-{{ $receivable->payerBadgeColor() }}">{{ ucfirst($receivable->payer_type) }}</span></td>
+                                <td class="text-end">&#8373;{{ number_format($receivable->allocated_amount, 2) }}</td>
+                                <td class="text-end text-success">&#8373;{{ number_format($receivable->paid_amount, 2) }}</td>
+                                <td class="text-end">&#8373;{{ number_format($adjustments, 2) }}</td>
+                                <td class="text-end fw-semibold {{ (float) $receivable->balance > 0 ? 'text-danger' : 'text-muted' }}">&#8373;{{ number_format($receivable->balance, 2) }}</td>
+                                <td>
+                                    <div>{{ $receivable->due_date?->format('d M Y') ?? 'No due date' }}</div>
+                                    <small class="text-muted">{{ $agingDays }} day{{ $agingDays === 1 ? '' : 's' }}</small>
+                                </td>
+                                <td><span class="badge bg-{{ $receivableStatusColor($receivable->status) }}">{{ ucfirst(str_replace('_', ' ', $receivable->status)) }}</span></td>
+                                @if($canViewAccountingPosting)
+                                <td>
+                                    @if($receivable->journalEntry)
+                                        <a href="{{ route('admin.accounting.journals.show', $receivable->journalEntry) }}">{{ $receivable->journalEntry->journal_number }}</a>
+                                    @else
+                                        <span class="badge bg-{{ $accountingStatusColor($receivable->accounting_status) }}">{{ $accountingStatusLabel($receivable->accounting_status) }}</span>
+                                    @endif
+                                    @if($receivable->accounting_status === 'failed' && $canViewAccountingFailures && $receivable->accounting_error)
+                                        <div class="small text-danger">{{ $receivable->accounting_error }}</div>
+                                    @endif
+                                </td>
+                                @endif
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="{{ $canViewAccountingPosting ? 9 : 8 }}" class="text-center text-muted py-3">No payer responsibility rows are available yet.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                @endif
+
                 <hr>
                 <h6 class="fw-bold mb-3"><i class="ti ti-adjustments-dollar me-1"></i>Adjustments &amp; Settlements</h6>
                 <div class="table-responsive">
@@ -552,6 +638,7 @@
                             <tr>
                                 <th>Payment #</th>
                                 <th>Date</th>
+                                <th>Payer</th>
                                 <th>Method</th>
                                 <th>Reference</th>
                                 <th class="text-end">Amount</th>
@@ -566,6 +653,14 @@
                             <tr>
                                 <td class="fw-medium">{{ $payment->payment_number }}</td>
                                 <td>{{ $payment->paid_at->format('d M Y H:i') }}</td>
+                                <td>
+                                    @if($payment->receivable)
+                                        <span class="badge bg-{{ $payment->receivable->payerBadgeColor() }}">{{ ucfirst($payment->receivable->payer_type) }}</span>
+                                        <div class="small text-muted">{{ $payment->receivable->payerName() }}</div>
+                                    @else
+                                        <span class="badge bg-light text-dark">{{ ucfirst($payment->payer_type ?: 'patient') }}</span>
+                                    @endif
+                                </td>
                                 <td>{{ $payment->payment_method->label() }}</td>
                                 <td>{{ $payment->reference_number ?? '—' }}</td>
                                 <td class="text-end fw-medium text-success">&#8373;{{ number_format($payment->amount, 2) }}</td>
@@ -614,10 +709,28 @@
 
                 <form method="POST" action="{{ route('admin.billing.payments.store', $invoice) }}" id="paymentForm">
                     @csrf
+                    @if($openReceivables->isNotEmpty())
+                    <div class="mb-3">
+                        <label class="form-label fw-medium">Paying Party <span class="text-danger">*</span></label>
+                        <select name="invoice_receivable_id" id="invoiceReceivableSelect" class="form-select @error('invoice_receivable_id') is-invalid @enderror" required>
+                            @foreach($openReceivables as $receivable)
+                            <option value="{{ $receivable->id }}"
+                                    data-balance="{{ number_format((float) $receivable->balance, 2, '.', '') }}"
+                                    data-payer-type="{{ $receivable->payer_type }}"
+                                    {{ (int) $defaultPaymentReceivable?->id === (int) $receivable->id ? 'selected' : '' }}>
+                                {{ ucfirst($receivable->payer_type) }} - {{ $receivable->payerName() }} (&#8373;{{ number_format($receivable->balance, 2) }})
+                            </option>
+                            @endforeach
+                        </select>
+                        @error('invoice_receivable_id')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    @endif
                     <div class="mb-3">
                         <label class="form-label fw-medium">Amount (&#8373;) <span class="text-danger">*</span></label>
                         <input type="number" name="amount" id="paymentAmountInput" class="form-control @error('amount') is-invalid @enderror"
-                            value="{{ old('amount', $invoice->balance) }}" step="0.01" min="0.01" max="{{ $invoice->balance }}" required>
+                            value="{{ old('amount', number_format($defaultPaymentAmount, 2, '.', '')) }}" step="0.01" min="0.01" max="{{ number_format($defaultPaymentAmount, 2, '.', '') }}" required>
                         @error('amount')
                         <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -765,6 +878,86 @@
     </div>
 </div>
 
+@if($canReallocateReceivables && $openReceivables->isNotEmpty())
+<div class="modal fade" id="receivableReallocationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('admin.billing.invoices.receivables.reallocate', $invoice) }}" id="receivableReallocationForm">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="ti ti-arrows-exchange me-1"></i>Reallocate Payer Responsibility</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Move From <span class="text-danger">*</span></label>
+                        <select name="from_receivable_id" class="form-select" required>
+                            @foreach($openReceivables as $receivable)
+                            <option value="{{ $receivable->id }}" data-balance="{{ number_format((float) $receivable->balance, 2, '.', '') }}">
+                                {{ ucfirst($receivable->payer_type) }} - {{ $receivable->payerName() }} (Balance &#8373;{{ number_format($receivable->balance, 2) }})
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Move To <span class="text-danger">*</span></label>
+                        <select name="target_payer_type" id="targetPayerTypeSelect" class="form-select" required>
+                            <option value="patient">Patient</option>
+                            <option value="insurance">Insurance Provider</option>
+                            <option value="sponsor">Sponsor</option>
+                            <option value="corporate">Corporate Client</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 payer-target-select d-none" data-payer-target="insurance">
+                        <label class="form-label">Insurance Provider</label>
+                        <select class="form-select target-payer-id" disabled>
+                            <option value="">Select provider</option>
+                            @foreach(($receivablePayerOptions['insurance'] ?? []) as $provider)
+                            <option value="{{ $provider->id }}">{{ $provider->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3 payer-target-select d-none" data-payer-target="sponsor">
+                        <label class="form-label">Sponsor</label>
+                        <select class="form-select target-payer-id" disabled>
+                            <option value="">Select sponsor</option>
+                            @foreach(($receivablePayerOptions['sponsors'] ?? []) as $sponsor)
+                            <option value="{{ $sponsor->id }}">{{ $sponsor->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="mb-3 payer-target-select d-none" data-payer-target="corporate">
+                        <label class="form-label">Corporate Client</label>
+                        <select class="form-select target-payer-id" disabled>
+                            <option value="">Select corporate client</option>
+                            @foreach(($receivablePayerOptions['corporate'] ?? []) as $client)
+                            <option value="{{ $client->id }}">{{ $client->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <input type="hidden" name="target_payer_id" id="targetPayerIdInput">
+                    <div class="mb-3">
+                        <label class="form-label">Amount (GH&#8373;) <span class="text-danger">*</span></label>
+                        <input type="number" name="amount" id="receivableReallocationAmount" class="form-control" step="0.01" min="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason <span class="text-danger">*</span></label>
+                        <textarea name="reason" class="form-control" rows="3" maxlength="500" required></textarea>
+                    </div>
+                    <div class="alert alert-warning py-2 mb-0 small">
+                        Reallocation changes the payer responsible for collection. It does not discount, waive, or cancel the invoice.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>Reallocate</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+@endif
+
 @can('billing.discount.apply')
 <!-- Apply Discount Modal -->
 <div class="modal fade" id="discountModal" tabindex="-1" aria-hidden="true">
@@ -840,6 +1033,8 @@ $(function() {
     const invoiceOutstandingAlert = $('#invoiceOutstandingAlert');
     const invoiceOutstandingValue = $('#invoiceOutstandingValue');
     const paymentAmountInput = $('#paymentAmountInput');
+    const invoiceReceivableSelect = $('#invoiceReceivableSelect');
+    let invoiceMarkedPaid = false;
     const invoiceStatusColors = {
         draft: 'secondary',
         pending: 'warning',
@@ -898,10 +1093,55 @@ $(function() {
             invoiceOutstandingAlert.removeClass('alert-warning').addClass('alert-success');
             paymentForm.find(':input').prop('disabled', true);
             recordPaymentBtn.prop('disabled', true).html('<i class="ti ti-circle-check me-1"></i>Paid');
+            invoiceMarkedPaid = true;
             return;
         }
 
         paymentAmountInput.attr('max', nextBalance.toFixed(2)).val(nextBalance.toFixed(2));
+    }
+
+    function syncReceivablePaymentLimit() {
+        if (!invoiceReceivableSelect.length || paymentAmountInput.prop('readonly')) {
+            return;
+        }
+
+        const selected = invoiceReceivableSelect.find(':selected');
+        const balance = parseFloat(selected.data('balance') || paymentAmountInput.attr('max') || 0);
+        if (balance > 0) {
+            paymentAmountInput.attr('max', balance.toFixed(2)).val(balance.toFixed(2));
+        }
+    }
+
+    const targetPayerTypeSelect = $('#targetPayerTypeSelect');
+    const targetPayerIdInput = $('#targetPayerIdInput');
+    const reallocationAmount = $('#receivableReallocationAmount');
+    const reallocationSource = $('#receivableReallocationForm select[name="from_receivable_id"]');
+
+    function syncReallocationTarget() {
+        const payerType = targetPayerTypeSelect.val();
+        targetPayerIdInput.val('');
+        $('.payer-target-select').addClass('d-none');
+        $('.payer-target-select .target-payer-id').prop('disabled', true).removeAttr('name');
+
+        const group = $('.payer-target-select[data-payer-target="' + payerType + '"]');
+        if (group.length) {
+            group.removeClass('d-none');
+            const select = group.find('.target-payer-id');
+            select.prop('disabled', false).attr('name', 'target_payer_id');
+            targetPayerIdInput.prop('disabled', true);
+        } else {
+            targetPayerIdInput.prop('disabled', false).val('');
+        }
+    }
+
+    function syncReallocationAmountLimit() {
+        if (!reallocationSource.length) {
+            return;
+        }
+        const balance = parseFloat(reallocationSource.find(':selected').data('balance') || 0);
+        if (balance > 0) {
+            reallocationAmount.attr('max', balance.toFixed(2)).val(balance.toFixed(2));
+        }
     }
 
     function clearValidationErrors() {
@@ -935,6 +1175,9 @@ $(function() {
         let needsRef = ['mtn_momo', 'vodafone_cash', 'airteltigo_money', 'bank_transfer', 'card', 'cheque'].includes(method);
         referenceGroup.toggle(needsRef);
     }).trigger('change');
+    invoiceReceivableSelect.on('change', syncReceivablePaymentLimit);
+    targetPayerTypeSelect.on('change', syncReallocationTarget).trigger('change');
+    reallocationSource.on('change', syncReallocationAmountLimit).trigger('change');
 
     // Line-allocation toggle: enable amount + hidden id when checkbox ticked,
     // and sum allocations into the main amount field.
@@ -1008,7 +1251,7 @@ $(function() {
         } catch (error) {
             showFeedback('danger', 'Network error while recording payment.');
         } finally {
-            if (!recordPaymentBtn.is(':disabled')) {
+            if (!invoiceMarkedPaid) {
                 recordPaymentBtn.prop('disabled', false).html(originalButtonHtml);
             }
         }

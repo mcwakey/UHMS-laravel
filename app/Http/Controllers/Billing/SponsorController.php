@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers\Billing;
 
+use App\Enums\LogModule;
+use App\Enums\LogSeverity;
 use App\Http\Controllers\Controller;
 use App\Models\Sponsor;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -11,8 +14,12 @@ use Inertia\Inertia;
 
 class SponsorController extends Controller
 {
+    public function __construct(protected ActivityLogService $logger) {}
+
     public function index(Request $request)
     {
+        $this->authorizeAny($request, ['sponsors.view', 'sponsors.manage']);
+
         $query = Sponsor::withCount('invoices')
             ->withSum(['invoices as outstanding_balance' => fn ($q) => $q->whereIn('status', ['pending', 'partially_paid'])], 'balance')
             ->orderBy('name');
@@ -56,32 +63,57 @@ class SponsorController extends Controller
             ],
             'can' => [
                 'manage' => $user?->can('sponsors.manage') ?? false,
+                'create' => ($user?->can('sponsors.create') ?? false) || ($user?->can('sponsors.manage') ?? false),
+                'edit' => ($user?->can('sponsors.edit') ?? false) || ($user?->can('sponsors.manage') ?? false),
+                'authorize' => ($user?->can('sponsors.authorize') ?? false) || ($user?->can('sponsors.manage') ?? false),
             ],
         ]);
     }
 
     public function store(Request $request)
     {
+        $this->authorizeAny($request, ['sponsors.create', 'sponsors.manage']);
+
         $data = $this->validateSponsor($request);
         $data['code'] = ($data['code'] ?? null) ?: $this->generateCode($data['name']);
 
-        Sponsor::create($data);
+        $sponsor = Sponsor::create($data);
+
+        $this->log('SPONSOR_CREATED', $sponsor, [
+            'new_values' => $sponsor->getAttributes(),
+        ]);
 
         return back()->with('success', "Sponsor {$data['name']} created.");
     }
 
     public function update(Request $request, Sponsor $sponsor)
     {
+        $this->authorizeAny($request, ['sponsors.edit', 'sponsors.manage']);
+
         $data = $this->validateSponsor($request, $sponsor);
 
+        $old = $sponsor->getOriginal();
         $sponsor->update($data);
+
+        $this->log('SPONSOR_UPDATED', $sponsor, [
+            'old_values' => $old,
+            'new_values' => $sponsor->fresh()->getAttributes(),
+        ]);
 
         return back()->with('success', "Sponsor {$sponsor->name} updated.");
     }
 
     public function toggle(Sponsor $sponsor)
     {
+        $this->authorizeAny(request(), ['sponsors.edit', 'sponsors.manage']);
+
+        $old = $sponsor->getOriginal();
         $sponsor->update(['is_active' => ! $sponsor->is_active]);
+
+        $this->log('SPONSOR_STATUS_TOGGLED', $sponsor, [
+            'old_values' => $old,
+            'new_values' => $sponsor->fresh()->getAttributes(),
+        ]);
 
         return back()->with('success', "Sponsor {$sponsor->name} " . ($sponsor->is_active ? 'activated' : 'deactivated') . '.');
     }
@@ -111,5 +143,31 @@ class SponsorController extends Controller
         } while (Sponsor::where('code', $code)->exists());
 
         return $code;
+    }
+
+    private function authorizeAny(Request $request, array $permissions): void
+    {
+        $user = $request->user();
+        foreach ($permissions as $permission) {
+            if ($user?->can($permission)) {
+                return;
+            }
+        }
+
+        abort(403);
+    }
+
+    private function log(string $action, Sponsor $sponsor, array $context = []): void
+    {
+        $this->logger->log(
+            LogModule::BILLING,
+            $action,
+            array_merge([
+                'severity' => LogSeverity::INFO,
+                'sponsor_id' => $sponsor->id,
+            ], $context),
+            $sponsor,
+            str_replace('_', ' ', ucfirst(strtolower($action)))
+        );
     }
 }

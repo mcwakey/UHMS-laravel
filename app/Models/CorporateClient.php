@@ -8,9 +8,31 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-class Sponsor extends Model
+class CorporateClient extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity;
+
+    protected $fillable = [
+        'code',
+        'name',
+        'contact_person',
+        'email',
+        'phone',
+        'address',
+        'credit_limit',
+        'default_due_days',
+        'is_active',
+        'notes',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'credit_limit' => 'decimal:2',
+            'default_due_days' => 'integer',
+            'is_active' => 'boolean',
+        ];
+    }
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -21,26 +43,6 @@ class Sponsor extends Model
             ->dontSubmitEmptyLogs();
     }
 
-    protected $fillable = [
-        'code',
-        'name',
-        'contact_person',
-        'email',
-        'phone',
-        'address',
-        'credit_limit',
-        'is_active',
-        'notes',
-    ];
-
-    protected function casts(): array
-    {
-        return [
-            'credit_limit' => 'decimal:2',
-            'is_active' => 'boolean',
-        ];
-    }
-
     public function invoices()
     {
         return $this->hasMany(Invoice::class);
@@ -49,11 +51,6 @@ class Sponsor extends Model
     public function receivables()
     {
         return $this->hasMany(InvoiceReceivable::class);
-    }
-
-    public function authorizations()
-    {
-        return $this->hasMany(SponsorAuthorization::class);
     }
 
     public function payments()

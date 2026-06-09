@@ -8,6 +8,7 @@ use App\Models\CreditNote;
 use App\Models\Invoice;
 use App\Models\InvoiceDiscount;
 use App\Models\InvoiceItem;
+use App\Models\InvoiceReceivable;
 use App\Models\Payment;
 use RuntimeException;
 
@@ -49,7 +50,26 @@ class ReceivableAccountingService
 
     public function accountForPayment(Payment $payment): Account
     {
-        return $this->accountForInvoice($payment->invoice);
+        if ($payment->receivable) {
+            return $this->accountForReceivable($payment->receivable);
+        }
+
+        return match ((string) ($payment->payer_type ?: '')) {
+            InvoiceReceivable::PAYER_INSURANCE => $this->requiredAccount('insurance_receivable_account_id'),
+            InvoiceReceivable::PAYER_SPONSOR => $this->requiredAccount('sponsor_receivable_account_id'),
+            InvoiceReceivable::PAYER_CORPORATE => $this->requiredAccount('corporate_receivable_account_id'),
+            default => $this->accountForInvoice($payment->invoice),
+        };
+    }
+
+    public function accountForReceivable(InvoiceReceivable $receivable): Account
+    {
+        return match ($receivable->payer_type) {
+            InvoiceReceivable::PAYER_INSURANCE => $this->requiredAccount('insurance_receivable_account_id'),
+            InvoiceReceivable::PAYER_SPONSOR => $this->requiredAccount('sponsor_receivable_account_id'),
+            InvoiceReceivable::PAYER_CORPORATE => $this->requiredAccount('corporate_receivable_account_id'),
+            default => $this->requiredAccount('patient_receivable_account_id'),
+        };
     }
 
     public function accountForDiscount(InvoiceDiscount $discount): Account

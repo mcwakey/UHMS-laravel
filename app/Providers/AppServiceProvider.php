@@ -71,6 +71,13 @@ class AppServiceProvider extends ServiceProvider
                 return true;
             }
 
+            if (str_starts_with((string) $ability, 'sponsors.')
+                && $ability !== 'sponsors.manage'
+                && method_exists($user, 'hasPermissionTo')
+                && $user->getAllPermissions()->contains('name', 'sponsors.manage')) {
+                return true;
+            }
+
             return null;
         });
 

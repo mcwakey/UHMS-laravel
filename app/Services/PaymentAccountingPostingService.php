@@ -25,7 +25,14 @@ class PaymentAccountingPostingService
 
     public function postPayment(Payment $payment): ?JournalEntry
     {
-        $payment->loadMissing(['invoice.visit', 'invoice.patient', 'invoice.visit.visitInsurance', 'receivedBy', 'originalPayment']);
+        $payment->loadMissing([
+            'invoice.visit',
+            'invoice.patient',
+            'invoice.visit.visitInsurance',
+            'receivable',
+            'receivedBy',
+            'originalPayment',
+        ]);
 
         if ((string) $payment->accounting_status === self::STATUS_POSTED && $payment->journal_entry_id) {
             return $payment->journalEntry;
@@ -118,8 +125,8 @@ class PaymentAccountingPostingService
             'patient_id' => $payment->patient_id,
             'visit_id' => $payment->invoice?->visit_id,
             'invoice_id' => $payment->invoice_id,
-            'sponsor_id' => $payment->invoice?->sponsor_id,
-            'insurance_provider_id' => $payment->invoice?->visit?->visitInsurance?->insurance_provider_id,
+            'sponsor_id' => $payment->sponsor_id ?? $payment->invoice?->sponsor_id,
+            'insurance_provider_id' => $payment->insurance_provider_id ?? $payment->invoice?->visit?->visitInsurance?->insurance_provider_id,
             'reference_type' => Payment::class,
             'reference_id' => $payment->id,
         ];

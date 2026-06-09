@@ -22,6 +22,7 @@ class PaymentService
     public function __construct(
         protected InvoiceService $invoiceService,
         protected VisitWorkflowService $visitWorkflowService,
+        protected InvoiceReceivableService $receivableService,
         protected ?ActivityLogService $logger = null,
     ) {
         $this->logger = $this->logger ?: app(ActivityLogService::class);
@@ -50,6 +51,8 @@ class PaymentService
             ], true)) {
                 throw new \RuntimeException('Cannot record payment on this invoice.');
             }
+
+            $receivable = $this->receivableService->resolvePaymentReceivable($invoice, $data, $amount);
 
             // Build normalized allocations.
             $normalized = $this->normalizeAllocations($invoice, $allocations, $amount);
@@ -85,7 +88,14 @@ class PaymentService
             $payment = Payment::create([
                 'payment_number'   => Payment::generateNumber('PAY', 'payments', 'payment_number'),
                 'invoice_id'       => $invoice->id,
+                'invoice_receivable_id' => $receivable?->id,
                 'patient_id'       => $invoice->patient_id,
+                'payer_type'       => $receivable?->payer_type ?? 'patient',
+                'payer_id'         => $receivable?->payer_id ?? $invoice->patient_id,
+                'insurance_provider_id' => $receivable?->insurance_provider_id,
+                'sponsor_id'       => $receivable?->sponsor_id,
+                'corporate_client_id' => $receivable?->corporate_client_id,
+                'claim_id'         => $receivable?->claim_id,
                 'amount'           => $amount,
                 'payment_method'   => $data['payment_method'],
                 'reference_number' => $data['reference_number'] ?? null,
@@ -113,6 +123,7 @@ class PaymentService
             $invoice->refresh();
             $this->invoiceService->recalculateTotals($invoice);
             $invoice->refresh();
+            $this->receivableService->applyPayment($payment->refresh());
 
             // Payment settlement is a billing event only; clinical visit/session
             // completion must remain an explicit workflow action.
@@ -123,7 +134,7 @@ class PaymentService
                 }
             }
 
-            return $payment->load(['invoice', 'patient', 'allocations.invoiceItem']);
+            return $payment->load(['invoice', 'patient', 'receivable', 'allocations.invoiceItem']);
         });
 
         app(PaymentAccountingPostingService::class)->postPayment($payment);
@@ -141,6 +152,8 @@ class PaymentService
                     'invoice_item_id' => $a->invoice_item_id,
                     'amount' => $a->amount,
                 ])->all(),
+                'payer_type' => $payment->payer_type,
+                'invoice_receivable_id' => $payment->invoice_receivable_id,
             ],
         ], $payment, 'Payment recorded');
 

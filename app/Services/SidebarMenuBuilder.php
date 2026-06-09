@@ -993,7 +993,7 @@ class SidebarMenuBuilder
                         'icon' => 'ti ti-building-bank',
                         'route' => 'admin.billing.sponsors.index',
                         'active_patterns' => ['admin.billing.sponsors.*'],
-                        'permission' => 'sponsors.manage',
+                        'permission' => 'sponsors.view',
                         'module' => 'billing',
                     ],
                     [
@@ -1001,7 +1001,7 @@ class SidebarMenuBuilder
                         'icon' => 'ti ti-clock-dollar',
                         'route' => 'admin.billing.reports.aging',
                         'active_patterns' => ['admin.billing.reports.aging'],
-                        'permission' => 'invoices.view',
+                        'permission' => 'reports.ar_aging.view',
                         'module' => 'billing',
                     ],
                     [

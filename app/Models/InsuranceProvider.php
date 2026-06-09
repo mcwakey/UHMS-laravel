@@ -76,6 +76,16 @@ class InsuranceProvider extends Model
         return $this->hasMany(Claim::class);
     }
 
+    public function receivables(): HasMany
+    {
+        return $this->hasMany(InvoiceReceivable::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function patientInsurances(): HasMany
     {
         return $this->hasMany(PatientInsurance::class);

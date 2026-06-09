@@ -31,6 +31,7 @@ class Invoice extends Model
         'external_party_name',
         'blood_request_id',
         'sponsor_id',
+        'corporate_client_id',
         'billing_type',
         'subtotal',
         'tax_amount',
@@ -100,9 +101,19 @@ class Invoice extends Model
         return $this->belongsTo(Sponsor::class);
     }
 
+    public function corporateClient()
+    {
+        return $this->belongsTo(CorporateClient::class);
+    }
+
     public function items()
     {
         return $this->hasMany(InvoiceItem::class);
+    }
+
+    public function receivables()
+    {
+        return $this->hasMany(InvoiceReceivable::class);
     }
 
     public function claim()

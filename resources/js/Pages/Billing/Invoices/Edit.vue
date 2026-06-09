@@ -1,9 +1,4 @@
 <script setup>
-/**
- * Billing → Edit Invoice header (Inertia). Edit billing type, sponsor (for
- * corporate billing), tax, due date and notes. Line items are managed
- * elsewhere.
- */
 import { computed } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '../../../Layouts/AppLayout.vue';
@@ -12,12 +7,14 @@ const props = defineProps({
     invoice: { type: Object, required: true },
     billingTypeOptions: { type: Array, default: () => [] },
     sponsors: { type: Array, default: () => [] },
+    corporateClients: { type: Array, default: () => [] },
     routes: { type: Object, default: () => ({}) },
 });
 
 const form = useForm({
     billing_type: props.invoice.billing_type ?? '',
     sponsor_id: props.invoice.sponsor_id ?? '',
+    corporate_client_id: props.invoice.corporate_client_id ?? '',
     tax_amount: props.invoice.tax_amount ?? 0,
     due_date: props.invoice.due_date ?? '',
     notes: props.invoice.notes ?? '',
@@ -40,7 +37,7 @@ function submit() {
         <div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
             <div class="flex-grow-1">
                 <h4 class="fw-bold mb-0"><i class="ti ti-edit me-2"></i>Edit Invoice {{ invoice.invoice_number }}</h4>
-                <small class="text-muted">{{ invoice.patient_name }} · Total {{ formatMoney(invoice.total_amount) }} · Balance {{ formatMoney(invoice.balance) }}</small>
+                <small class="text-muted">{{ invoice.patient_name }} | Total {{ formatMoney(invoice.total_amount) }} | Balance {{ formatMoney(invoice.balance) }}</small>
             </div>
             <div class="d-flex gap-2">
                 <Link :href="routes.show" class="btn btn-outline-secondary btn-md">
@@ -63,12 +60,20 @@ function submit() {
                                     <div v-if="form.errors.billing_type" class="invalid-feedback">{{ form.errors.billing_type }}</div>
                                 </div>
                                 <div v-if="isCorporate" class="col-md-6">
-                                    <label class="form-label">Corporate Sponsor</label>
+                                    <label class="form-label">Sponsor</label>
                                     <select v-model="form.sponsor_id" class="form-select" :class="{ 'is-invalid': form.errors.sponsor_id }">
-                                        <option value="">— Select sponsor —</option>
+                                        <option value="">Select sponsor</option>
                                         <option v-for="s in sponsors" :key="s.id" :value="s.id">{{ s.name }}</option>
                                     </select>
                                     <div v-if="form.errors.sponsor_id" class="invalid-feedback">{{ form.errors.sponsor_id }}</div>
+                                </div>
+                                <div v-if="isCorporate" class="col-md-6">
+                                    <label class="form-label">Corporate Client</label>
+                                    <select v-model="form.corporate_client_id" class="form-select" :class="{ 'is-invalid': form.errors.corporate_client_id }">
+                                        <option value="">Select corporate client</option>
+                                        <option v-for="client in corporateClients" :key="client.id" :value="client.id">{{ client.name }}</option>
+                                    </select>
+                                    <div v-if="form.errors.corporate_client_id" class="invalid-feedback">{{ form.errors.corporate_client_id }}</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Tax Amount</label>

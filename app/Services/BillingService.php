@@ -536,6 +536,8 @@ class BillingService
                 'invoice_number' => $invoiceNumber,
                 'visit_id' => $data['visit_id'],
                 'patient_id' => $data['patient_id'],
+                'sponsor_id' => $data['sponsor_id'] ?? null,
+                'corporate_client_id' => $data['corporate_client_id'] ?? null,
                 'billing_type' => $data['billing_type'],
                 'subtotal' => $subtotal,
                 'tax_amount' => $taxAmount,
@@ -648,6 +650,7 @@ class BillingService
     public function cancelInvoice(Invoice $invoice): Invoice
     {
         $invoice->update(['status' => InvoiceStatus::CANCELLED->value]);
+        app(InvoiceReceivableService::class)->syncFromInvoice($invoice->fresh(['items', 'payments', 'creditNotes']));
         app(BillingAccountingPostingService::class)->reverseInvoice($invoice, 'Invoice cancelled');
 
         return $invoice;

@@ -29,6 +29,7 @@ class RefundService
 {
     public function __construct(
         protected InvoiceService $invoiceService,
+        protected InvoiceReceivableService $receivableService,
         protected ?ActivityLogService $logger = null,
     ) {
         $this->logger = $this->logger ?: app(ActivityLogService::class);
@@ -71,7 +72,14 @@ class RefundService
             $reversal = Payment::create([
                 'payment_number'      => Payment::generateNumber('REV', 'payments', 'payment_number'),
                 'invoice_id'          => $payment->invoice_id,
+                'invoice_receivable_id' => $payment->invoice_receivable_id,
                 'patient_id'          => $payment->patient_id,
+                'payer_type'          => $payment->payer_type,
+                'payer_id'            => $payment->payer_id,
+                'insurance_provider_id' => $payment->insurance_provider_id,
+                'sponsor_id'          => $payment->sponsor_id,
+                'corporate_client_id' => $payment->corporate_client_id,
+                'claim_id'            => $payment->claim_id,
                 'amount'              => -1 * (float) $payment->amount,
                 'payment_method'      => $payment->payment_method,
                 'reference_number'    => $payment->payment_number,
@@ -112,6 +120,7 @@ class RefundService
             $invoice = $payment->invoice()->with('items')->first();
             if ($invoice) {
                 $this->invoiceService->recalculateTotals($invoice);
+                $this->receivableService->applyPayment($reversal->refresh());
             }
 
             $this->logger?->log(LogModule::PAYMENTS, 'PAYMENT_REVERSED', [

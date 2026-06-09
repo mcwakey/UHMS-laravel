@@ -27,7 +27,14 @@ class Payment extends Model
     protected $fillable = [
         'payment_number',
         'invoice_id',
+        'invoice_receivable_id',
         'patient_id',
+        'payer_type',
+        'payer_id',
+        'insurance_provider_id',
+        'sponsor_id',
+        'corporate_client_id',
+        'claim_id',
         'amount',
         'payment_method',
         'reference_number',
@@ -71,9 +78,34 @@ class Payment extends Model
         return $this->belongsTo(Invoice::class);
     }
 
+    public function receivable()
+    {
+        return $this->belongsTo(InvoiceReceivable::class, 'invoice_receivable_id');
+    }
+
     public function patient()
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function insuranceProvider()
+    {
+        return $this->belongsTo(InsuranceProvider::class);
+    }
+
+    public function sponsor()
+    {
+        return $this->belongsTo(Sponsor::class);
+    }
+
+    public function corporateClient()
+    {
+        return $this->belongsTo(CorporateClient::class);
+    }
+
+    public function claim()
+    {
+        return $this->belongsTo(Claim::class);
     }
 
     public function receivedBy()

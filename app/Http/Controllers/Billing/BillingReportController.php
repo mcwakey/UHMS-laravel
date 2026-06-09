@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Billing;
 
 use App\Enums\BillingType;
 use App\Http\Controllers\Controller;
+use App\Models\CorporateClient;
+use App\Models\InsuranceProvider;
 use App\Models\Patient;
 use App\Models\Sponsor;
+use App\Services\ARAgingService;
 use App\Services\BillingReportService;
 use App\Services\StatementService;
 use Illuminate\Http\Request;
@@ -16,6 +19,7 @@ class BillingReportController extends Controller
     public function __construct(
         protected BillingReportService $reportService,
         protected StatementService $statementService,
+        protected ARAgingService $arAgingService,
     ) {}
 
     public function dashboard()
@@ -35,16 +39,30 @@ class BillingReportController extends Controller
 
     public function aging(Request $request)
     {
-        $filters = $request->only(['billing_type', 'sponsor_id']);
+        $filters = $request->only(['payer_type', 'status', 'sponsor_id', 'insurance_provider_id', 'corporate_client_id', 'as_of']);
+        $this->authorizeAgingPayer($request, $filters['payer_type'] ?? null);
 
         return Inertia::render('Billing/Reports/Aging', [
-            'aging' => $this->reportService->aging($filters),
+            'aging' => $this->arAgingService->report($filters),
             'filters' => $filters,
             'billingTypeOptions' => collect(BillingType::cases())->map(fn ($c) => [
                 'value' => $c->value,
                 'label' => $c->label(),
             ])->values(),
+            'payerTypeOptions' => [
+                ['value' => 'patient', 'label' => 'Patient'],
+                ['value' => 'insurance', 'label' => 'Insurance'],
+                ['value' => 'sponsor', 'label' => 'Sponsor'],
+                ['value' => 'corporate', 'label' => 'Corporate'],
+            ],
+            'statusOptions' => [
+                ['value' => 'pending', 'label' => 'Pending'],
+                ['value' => 'partially_paid', 'label' => 'Partially Paid'],
+                ['value' => 'overdue', 'label' => 'Overdue'],
+            ],
             'sponsors' => Sponsor::active()->orderBy('name')->get(['id', 'name']),
+            'insuranceProviders' => InsuranceProvider::active()->orderBy('name')->get(['id', 'name']),
+            'corporateClients' => CorporateClient::active()->orderBy('name')->get(['id', 'name']),
             'routes' => [
                 'aging' => route('admin.billing.reports.aging'),
                 'pdf' => route('admin.billing.reports.aging.pdf'),
@@ -54,13 +72,34 @@ class BillingReportController extends Controller
 
     public function agingPdf(Request $request)
     {
-        $aging = $this->reportService->aging($request->only(['billing_type', 'sponsor_id']));
+        $filters = $request->only(['payer_type', 'status', 'sponsor_id', 'insurance_provider_id', 'corporate_client_id', 'as_of']);
+        $this->authorizeAgingPayer($request, $filters['payer_type'] ?? null);
+        $aging = $this->arAgingService->report($filters);
         $generatedAt = now();
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('billing.reports.aging-pdf', compact('aging', 'generatedAt'))
             ->setPaper('a4', 'landscape');
 
         return $pdf->download('ar-aging-' . now()->format('Ymd') . '.pdf');
+    }
+
+    private function authorizeAgingPayer(Request $request, ?string $payerType): void
+    {
+        if (! $payerType) {
+            return;
+        }
+
+        $permission = match ($payerType) {
+            'patient' => 'reports.ar_aging.patient',
+            'insurance' => 'reports.ar_aging.insurance',
+            'sponsor' => 'reports.ar_aging.sponsor',
+            'corporate' => 'reports.ar_aging.corporate',
+            default => null,
+        };
+
+        if ($permission) {
+            abort_unless($request->user()?->can($permission), 403);
+        }
     }
 
     public function discounts(Request $request)

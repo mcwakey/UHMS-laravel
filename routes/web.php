@@ -112,6 +112,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Billing\InvoiceController;
 use App\Http\Controllers\Billing\PaymentController;
+use App\Http\Controllers\Billing\ReceivableController;
 use App\Http\Controllers\Billing\CreditNoteController;
 use App\Http\Controllers\Billing\SponsorController;
 use App\Http\Controllers\Billing\BillingReportController;
@@ -991,6 +992,9 @@ Route::middleware('auth')->group(function () {
                     ->middleware('can:billing.discount.apply');
                 Route::delete('invoices/{invoice}/items/{item}/discount', [InvoiceController::class, 'removeItemDiscount'])
                     ->name('invoices.items.discount.remove');
+                Route::post('invoices/{invoice}/receivables/reallocate', [ReceivableController::class, 'reallocate'])
+                    ->name('invoices.receivables.reallocate')
+                    ->middleware('can:receivables.reallocate');
             });
 
             // Payments
@@ -1014,16 +1018,16 @@ Route::middleware('auth')->group(function () {
             });
 
             // Corporate sponsors
-            Route::middleware('can:sponsors.manage')->prefix('sponsors')->name('sponsors.')->group(function () {
-                Route::get('/', [SponsorController::class, 'index'])->name('index');
-                Route::post('/', [SponsorController::class, 'store'])->name('store');
-                Route::put('{sponsor}', [SponsorController::class, 'update'])->name('update');
-                Route::patch('{sponsor}/toggle', [SponsorController::class, 'toggle'])->name('toggle');
+            Route::prefix('sponsors')->name('sponsors.')->group(function () {
+                Route::get('/', [SponsorController::class, 'index'])->name('index')->middleware('can:sponsors.view');
+                Route::post('/', [SponsorController::class, 'store'])->name('store')->middleware('can:sponsors.create');
+                Route::put('{sponsor}', [SponsorController::class, 'update'])->name('update')->middleware('can:sponsors.edit');
+                Route::patch('{sponsor}/toggle', [SponsorController::class, 'toggle'])->name('toggle')->middleware('can:sponsors.edit');
             });
 
             // Billing reports (AR aging & statements)
             Route::prefix('reports')->name('reports.')->group(function () {
-                Route::middleware('can:invoices.view')->group(function () {
+                Route::middleware('can:reports.ar_aging.view')->group(function () {
                     Route::get('aging', [BillingReportController::class, 'aging'])->name('aging');
                     Route::get('aging/pdf', [BillingReportController::class, 'agingPdf'])->name('aging.pdf');
                 });
