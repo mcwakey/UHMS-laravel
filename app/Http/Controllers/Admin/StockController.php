@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\StockMovementType;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\StockBatch;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
 use App\Services\StockBalanceMatrixService;
@@ -107,42 +108,19 @@ class StockController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    /** @return StockMovementType[] */
-    private function adjustmentTypes(): array
-    {
-        return [
-            StockMovementType::ADJUSTMENT_IN,
-            StockMovementType::ADJUSTMENT_OUT,
-            StockMovementType::DAMAGED,
-            StockMovementType::EXPIRED,
-        ];
-    }
-
-    /** @return StockMovementType[] */
-    private function returnTypes(): array
-    {
-        return [StockMovementType::RETURN_IN, StockMovementType::RETURN_OUT];
-    }
-
-    /** @return StockMovementType[] */
-    private function transferTypes(): array
-    {
-        return [StockMovementType::TRANSFER_IN, StockMovementType::TRANSFER_OUT];
-    }
-
     /**
-     * Shared query for a movement list page filtered to a set of types.
+     * Shared query for a batch list page of a given type. One row per batch
+     * (a group of movements recorded together).
      */
-    private function movementList(Request $request, array $types)
+    private function batchList(Request $request, string $type)
     {
-        return StockMovement::query()
-            ->whereIn('movement_type', array_map(fn ($t) => $t->value, $types))
-            ->with(['drug:id,name,unit', 'product:id,name', 'location:id,name', 'performedBy:id,first_name,last_name'])
-            ->when($request->location_id, fn ($q, $id) => $q->where('stock_location_id', $id))
-            ->when($request->movement_type, fn ($q, $t) => $q->where('movement_type', $t))
-            ->when($request->date_from, fn ($q, $d) => $q->whereDate('movement_date', '>=', $d))
-            ->when($request->date_to, fn ($q, $d) => $q->whereDate('movement_date', '<=', $d))
-            ->latest('movement_date')
+        return StockBatch::query()
+            ->where('type', $type)
+            ->with(['sourceLocation:id,name', 'destLocation:id,name', 'createdBy:id,first_name,last_name'])
+            ->withCount('movements')
+            ->when($request->location_id, fn ($q, $id) => $q->where(fn ($w) => $w->where('source_location_id', $id)->orWhere('dest_location_id', $id)))
+            ->when($request->date_from, fn ($q, $d) => $q->whereDate('created_at', '>=', $d))
+            ->when($request->date_to, fn ($q, $d) => $q->whereDate('created_at', '<=', $d))
             ->latest('id')
             ->paginate(25)
             ->withQueryString();
@@ -150,33 +128,43 @@ class StockController extends Controller
 
     public function adjustmentsIndex(Request $request)
     {
-        $movements = $this->movementList($request, $this->adjustmentTypes());
+        $batches   = $this->batchList($request, StockBatch::TYPE_ADJUSTMENT);
         $locations = StockLocation::active()->orderBy('name')->get();
-        $types     = $this->adjustmentTypes();
 
-        return view('store.stock.adjustments-index', compact('movements', 'locations', 'types'));
+        return view('store.stock.adjustments-index', compact('batches', 'locations'));
     }
 
     public function returnsIndex(Request $request)
     {
-        $movements = $this->movementList($request, $this->returnTypes());
+        $batches   = $this->batchList($request, StockBatch::TYPE_RETURN);
         $locations = StockLocation::active()->orderBy('name')->get();
-        $types     = $this->returnTypes();
 
-        return view('store.stock.returns-index', compact('movements', 'locations', 'types'));
+        return view('store.stock.returns-index', compact('batches', 'locations'));
     }
 
     public function transfersIndex(Request $request)
     {
-        $movements = $this->movementList($request, $this->transferTypes());
+        $batches   = $this->batchList($request, StockBatch::TYPE_TRANSFER);
         $locations = StockLocation::active()->orderBy('name')->get();
-        $types     = $this->transferTypes();
 
-        return view('store.stock.transfers-index', compact('movements', 'locations', 'types'));
+        return view('store.stock.transfers-index', compact('batches', 'locations'));
     }
 
     /**
-     * Detail of a single stock movement (everything that happened on a line).
+     * Detail of one batch — reveals every line item recorded together.
+     */
+    public function batchShow(StockBatch $batch)
+    {
+        $batch->load([
+            'sourceLocation:id,name', 'destLocation:id,name', 'createdBy:id,first_name,last_name',
+            'movements' => fn ($q) => $q->with(['product:id,name,code', 'drug:id,name,unit', 'location:id,name'])->orderBy('id'),
+        ]);
+
+        return view('store.stock.batch-show', compact('batch'));
+    }
+
+    /**
+     * Detail of a single stock movement (used from the ledger).
      */
     public function movementShow(StockMovement $movement)
     {
@@ -215,13 +203,13 @@ class StockController extends Controller
         ]);
 
         try {
-            $movements = $this->operations->adjustBatch($data);
+            $batch = $this->operations->adjustBatch($data);
         } catch (\Throwable $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        return redirect()->route('admin.store.stock.adjustments.index')
-            ->with('success', count($movements) . ' stock adjustment(s) recorded.');
+        return redirect()->route('admin.store.stock.batches.show', $batch)
+            ->with('success', 'Stock adjustment ' . $batch->batch_number . ' recorded.');
     }
 
     /*
@@ -254,13 +242,13 @@ class StockController extends Controller
         ]);
 
         try {
-            $movements = $this->operations->returnToMainBatch($data);
+            $batch = $this->operations->returnToMainBatch($data);
         } catch (\Throwable $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        return redirect()->route('admin.store.stock.returns.index')
-            ->with('success', (count($movements) / 2) . ' stock return line(s) recorded.');
+        return redirect()->route('admin.store.stock.batches.show', $batch)
+            ->with('success', 'Stock return ' . $batch->batch_number . ' recorded.');
     }
 
     /*
@@ -293,13 +281,13 @@ class StockController extends Controller
         ]);
 
         try {
-            $movements = $this->operations->transferFromMainBatch($data);
+            $batch = $this->operations->transferFromMainBatch($data);
         } catch (\Throwable $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        return redirect()->route('admin.store.stock.transfers.index')
-            ->with('success', (count($movements) / 2) . ' stock transfer line(s) recorded.');
+        return redirect()->route('admin.store.stock.batches.show', $batch)
+            ->with('success', 'Stock transfer ' . $batch->batch_number . ' recorded.');
     }
 
     /*

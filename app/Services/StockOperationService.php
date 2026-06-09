@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Enums\StockMovementType;
+use App\Models\StockBatch;
 use App\Models\StockLocation;
-use App\Models\StockMovement;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -45,20 +45,18 @@ class StockOperationService
      * Shared: stock_location_id, reason, notes.
      * Per row (items[]): product_id, type (in|out|damaged|expired), quantity,
      *                    unit_cost, batch_no, expiry_date.
-     *
-     * @return StockMovement[]
      */
-    public function adjustBatch(array $data): array
+    public function adjustBatch(array $data): StockBatch
     {
-        $rows = $this->validRows($data, 'adjust');
+        $rows = $this->validRows($data);
         $locationId = (int) ($data['stock_location_id'] ?? 0);
         if ($locationId <= 0) {
             throw new InvalidArgumentException('Select a location.');
         }
         $notes = $this->combinedNotes($data);
 
-        return DB::transaction(function () use ($rows, $locationId, $notes) {
-            $out = [];
+        return DB::transaction(function () use ($rows, $locationId, $notes, $data) {
+            $batch = $this->makeBatch(StockBatch::TYPE_ADJUSTMENT, $locationId, null, $data);
             foreach ($rows as $row) {
                 $type = match ((string) ($row['type'] ?? 'out')) {
                     'in'      => StockMovementType::ADJUSTMENT_IN,
@@ -66,7 +64,8 @@ class StockOperationService
                     'expired' => StockMovementType::EXPIRED,
                     default   => StockMovementType::ADJUSTMENT_OUT,
                 };
-                $out[] = $this->movements->createMovement([
+                $this->movements->createMovement([
+                    'stock_batch_id'    => $batch->id,
                     'product_id'        => (int) $row['product_id'],
                     'stock_location_id' => $locationId,
                     'movement_type'     => $type,
@@ -79,7 +78,7 @@ class StockOperationService
                 ]);
             }
 
-            return $out;
+            return $batch;
         });
     }
 
@@ -89,21 +88,20 @@ class StockOperationService
      *
      * Shared: source_location_id, reason, notes.
      * Per row (items[]): product_id, quantity, unit_cost, batch_no, expiry_date.
-     *
-     * @return StockMovement[]
      */
-    public function returnToMainBatch(array $data): array
+    public function returnToMainBatch(array $data): StockBatch
     {
-        $rows = $this->validRows($data, 'return');
+        $rows = $this->validRows($data);
         $source = $this->requireManagedLocation((int) ($data['source_location_id'] ?? 0), 'Select the location the stock is returned from.');
         $main = $this->mainStore();
         $notes = $this->combinedNotes($data);
 
-        return DB::transaction(function () use ($rows, $source, $main, $notes) {
-            $out = [];
+        return DB::transaction(function () use ($rows, $source, $main, $notes, $data) {
+            $batch = $this->makeBatch(StockBatch::TYPE_RETURN, $source->id, $main->id, $data);
+            $line = $notes . ' (Return ' . $source->name . ' → ' . $main->name . ')';
             foreach ($rows as $row) {
-                $line = $notes . ' (Return ' . $source->name . ' → ' . $main->name . ')';
-                $out[] = $this->movements->createMovement([
+                $this->movements->createMovement([
+                    'stock_batch_id'    => $batch->id,
                     'product_id'        => (int) $row['product_id'],
                     'stock_location_id' => $source->id,
                     'movement_type'     => StockMovementType::RETURN_OUT,
@@ -114,7 +112,8 @@ class StockOperationService
                     'performed_by'      => Auth::id(),
                     'notes'             => $line,
                 ]);
-                $out[] = $this->movements->createMovement([
+                $this->movements->createMovement([
+                    'stock_batch_id'    => $batch->id,
                     'product_id'        => (int) $row['product_id'],
                     'stock_location_id' => $main->id,
                     'movement_type'     => StockMovementType::RETURN_IN,
@@ -127,7 +126,7 @@ class StockOperationService
                 ]);
             }
 
-            return $out;
+            return $batch;
         });
     }
 
@@ -137,12 +136,10 @@ class StockOperationService
      *
      * Shared: dest_location_id, reason, notes.
      * Per row (items[]): product_id, quantity, unit_cost, batch_no, expiry_date.
-     *
-     * @return StockMovement[]
      */
-    public function transferFromMainBatch(array $data): array
+    public function transferFromMainBatch(array $data): StockBatch
     {
-        $rows = $this->validRows($data, 'transfer');
+        $rows = $this->validRows($data);
         $dest = $this->requireManagedLocation((int) ($data['dest_location_id'] ?? 0), 'Select the destination location.');
         $main = $this->mainStore();
         if ($dest->id === $main->id) {
@@ -150,11 +147,12 @@ class StockOperationService
         }
         $notes = $this->combinedNotes($data);
 
-        return DB::transaction(function () use ($rows, $dest, $main, $notes) {
-            $out = [];
+        return DB::transaction(function () use ($rows, $dest, $main, $notes, $data) {
+            $batch = $this->makeBatch(StockBatch::TYPE_TRANSFER, $main->id, $dest->id, $data);
+            $line = $notes . ' (Transfer ' . $main->name . ' → ' . $dest->name . ')';
             foreach ($rows as $row) {
-                $line = $notes . ' (Transfer ' . $main->name . ' → ' . $dest->name . ')';
-                $out[] = $this->movements->createMovement([
+                $this->movements->createMovement([
+                    'stock_batch_id'    => $batch->id,
                     'product_id'        => (int) $row['product_id'],
                     'stock_location_id' => $main->id,
                     'movement_type'     => StockMovementType::TRANSFER_OUT,
@@ -165,7 +163,8 @@ class StockOperationService
                     'performed_by'      => Auth::id(),
                     'notes'             => $line,
                 ]);
-                $out[] = $this->movements->createMovement([
+                $this->movements->createMovement([
+                    'stock_batch_id'    => $batch->id,
                     'product_id'        => (int) $row['product_id'],
                     'stock_location_id' => $dest->id,
                     'movement_type'     => StockMovementType::TRANSFER_IN,
@@ -178,14 +177,31 @@ class StockOperationService
                 ]);
             }
 
-            return $out;
+            return $batch;
         });
+    }
+
+    /**
+     * Create the grouping batch row + assign its readable number.
+     */
+    private function makeBatch(string $type, ?int $sourceId, ?int $destId, array $data): StockBatch
+    {
+        $batch = StockBatch::create([
+            'type'               => $type,
+            'source_location_id' => $sourceId,
+            'dest_location_id'   => $destId,
+            'reason'             => trim((string) ($data['reason'] ?? '')) ?: null,
+            'notes'              => trim((string) ($data['notes'] ?? '')) ?: null,
+            'created_by'         => Auth::id(),
+        ]);
+
+        return $batch->assignNumber();
     }
 
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function validRows(array $data, string $context): array
+    private function validRows(array $data): array
     {
         $rows = collect($data['items'] ?? [])
             ->filter(fn ($row) => ! empty($row['product_id']) && (float) ($row['quantity'] ?? 0) > 0)

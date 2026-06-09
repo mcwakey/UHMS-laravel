@@ -14,6 +14,7 @@ class StockMovement extends Model
     use HasFactory;
 
     protected $fillable = [
+        'stock_batch_id',
         'drug_id',
         'product_id',
         'stock_location_id',
@@ -38,6 +39,11 @@ class StockMovement extends Model
         'expiry_date'   => 'date',
         'movement_date' => 'datetime',
     ];
+
+    public function batch(): BelongsTo
+    {
+        return $this->belongsTo(StockBatch::class, 'stock_batch_id');
+    }
 
     public function drug(): BelongsTo
     {

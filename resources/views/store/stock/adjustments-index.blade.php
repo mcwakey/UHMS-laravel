@@ -1,15 +1,13 @@
 @extends('layouts.app')
 @section('title', 'Stock Adjustments')
 
-@php use App\Enums\StockMovementDirection; @endphp
-
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">Stock Adjustments
-            <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">Total: {{ $movements->total() }}</span>
+            <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">Total: {{ $batches->total() }}</span>
         </h4>
-        <small class="text-muted">Corrections, damaged and expired stock. Click a line to see its full detail.</small>
+        <small class="text-muted">One row per adjustment batch. Click a row to reveal its line items.</small>
     </div>
     <div>
         @can('store.purchase.create')
@@ -24,7 +22,7 @@
 <div class="card mb-3">
     <div class="card-body py-2">
         <form method="GET" action="{{ route('admin.store.stock.adjustments.index') }}" class="row g-2 align-items-end">
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <select name="location_id" class="form-select">
                     <option value="">All Locations</option>
                     @foreach($locations as $location)
@@ -32,18 +30,10 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
-                <select name="movement_type" class="form-select">
-                    <option value="">All Types</option>
-                    @foreach($types as $type)
-                        <option value="{{ $type->value }}" @selected(request('movement_type') === $type->value)>{{ $type->label() }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-2"><input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}"></div>
-            <div class="col-md-2"><input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}"></div>
+            <div class="col-md-3"><input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}"></div>
+            <div class="col-md-3"><input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}"></div>
             <div class="col-md-1"><button aria-label="Search" title="Search" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button></div>
-            @if(request()->hasAny(['location_id', 'movement_type', 'date_from', 'date_to']))
+            @if(request()->hasAny(['location_id', 'date_from', 'date_to']))
                 <div class="col-md-1"><a aria-label="Reset" title="Reset" href="{{ route('admin.store.stock.adjustments.index') }}" class="btn btn-outline-secondary w-100"><i class="ti ti-x"></i></a></div>
             @endif
         </form>
@@ -56,32 +46,31 @@
             <thead class="table-light">
                 <tr>
                     <th>Date</th>
-                    <th>Product</th>
+                    <th>Batch #</th>
                     <th>Location</th>
-                    <th>Type</th>
-                    <th class="text-end">Quantity</th>
+                    <th class="text-center">Items</th>
+                    <th>Reason</th>
                     <th>By</th>
                     <th class="text-end">Actions</th>
                 </tr>
             </thead>
             <tbody>
-            @forelse($movements as $movement)
-                @php $isIn = $movement->movement_type->direction() === StockMovementDirection::IN; @endphp
-                <tr>
-                    <td>{{ $movement->movement_date?->format('d M Y H:i') ?? '-' }}</td>
-                    <td><a href="{{ route('admin.store.stock.movements.show', $movement) }}" class="fw-medium text-primary">{{ $movement->product?->name ?? $movement->drug?->name ?? '—' }}</a></td>
-                    <td>{{ $movement->location?->name ?? '—' }}</td>
-                    <td><span class="badge {{ $isIn ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">{{ $movement->movement_type->label() }}</span></td>
-                    <td class="text-end fw-medium {{ $isIn ? 'text-success' : 'text-danger' }}">{{ $isIn ? '+' : '−' }}{{ rtrim(rtrim(number_format((float) $movement->quantity, 4, '.', ''), '0'), '.') }}</td>
-                    <td>{{ trim(($movement->performedBy?->first_name ?? '') . ' ' . ($movement->performedBy?->last_name ?? '')) ?: '—' }}</td>
-                    <td class="text-end"><a aria-label="View" title="View" href="{{ route('admin.store.stock.movements.show', $movement) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
+            @forelse($batches as $batch)
+                <tr role="button" onclick="window.location='{{ route('admin.store.stock.batches.show', $batch) }}'">
+                    <td>{{ $batch->created_at?->format('d M Y H:i') ?? '-' }}</td>
+                    <td><a href="{{ route('admin.store.stock.batches.show', $batch) }}" class="fw-medium text-primary">{{ $batch->batch_number }}</a></td>
+                    <td>{{ $batch->sourceLocation?->name ?? '—' }}</td>
+                    <td class="text-center"><span class="badge bg-info-subtle text-info">{{ $batch->movements_count }}</span></td>
+                    <td>{{ $batch->reason ?: '—' }}</td>
+                    <td>{{ trim(($batch->createdBy?->first_name ?? '') . ' ' . ($batch->createdBy?->last_name ?? '')) ?: '—' }}</td>
+                    <td class="text-end"><a aria-label="View" title="View" href="{{ route('admin.store.stock.batches.show', $batch) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
                 </tr>
             @empty
-                <tr><td colspan="7"><x-empty-state icon="ti-adjustments-off" title="No adjustments" message="No stock adjustments match your filters." /></td></tr>
+                <tr><td colspan="7"><x-empty-state icon="ti-adjustments-off" title="No adjustments" message="No stock adjustment batches match your filters." /></td></tr>
             @endforelse
             </tbody>
         </table>
     </div>
-    <div class="card-footer d-flex justify-content-end">{{ $movements->links() }}</div>
+    <div class="card-footer d-flex justify-content-end">{{ $batches->links() }}</div>
 </div>
 @endsection

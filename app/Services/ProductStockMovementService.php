@@ -57,6 +57,7 @@ class ProductStockMovementService
             }
 
             $movement = StockMovement::create([
+                'stock_batch_id'    => $data['stock_batch_id'] ?? null,
                 'drug_id'           => $data['drug_id'] ?? null,
                 'product_id'        => $productId,
                 'stock_location_id' => $locationId,

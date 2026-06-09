@@ -68,11 +68,6 @@ class InvestigationItem extends Model
         return $this->hasMany(PurchaseOrderItem::class);
     }
 
-    public function stockTransferItems(): HasMany
-    {
-        return $this->hasMany(StockTransferItem::class);
-    }
-
     /*
     |--------------------------------------------------------------------------
     | Scopes

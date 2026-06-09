@@ -90,7 +90,6 @@ use App\Http\Controllers\Admin\SpecialtyController;
 use App\Http\Controllers\Admin\StockController;
 use App\Http\Controllers\Admin\StockLocationController;
 use App\Http\Controllers\Admin\StockRequisitionController;
-use App\Http\Controllers\Admin\StockTransferController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\TriageController;
 use App\Http\Controllers\Admin\UserController;
@@ -558,19 +557,6 @@ Route::middleware('auth')->group(function () {
                 Route::post('stock-requisitions/{stockRequisition}/cancel', [StockRequisitionController::class, 'cancel'])->name('stock-requisitions.cancel')->middleware('can:store.requisition.create');
             });
 
-            // Stock Transfers
-            Route::middleware('can:store.transfer.view')->group(function () {
-                Route::get('transfers', [StockTransferController::class, 'index'])->name('transfers.index');
-                Route::get('transfers/create', [StockTransferController::class, 'create'])->name('transfers.create')->middleware('can:store.transfer.create');
-                Route::post('transfers', [StockTransferController::class, 'store'])->name('transfers.store')->middleware('can:store.transfer.create');
-                Route::get('transfers/{transfer}', [StockTransferController::class, 'show'])->name('transfers.show');
-                Route::post('transfers/{transfer}/approve', [StockTransferController::class, 'approve'])->name('transfers.approve')->middleware('can:store.purchase.approve');
-                Route::post('transfers/{transfer}/complete', [StockTransferController::class, 'complete'])->name('transfers.complete')->middleware('can:store.transfer.create');
-                Route::post('transfers/{transfer}/cancel', [StockTransferController::class, 'cancel'])->name('transfers.cancel')->middleware('can:store.transfer.create');
-                Route::get('transfers/drug-stock', [StockTransferController::class, 'drugStock'])->name('transfers.drug-stock');
-                Route::get('transfers/investigation-stock', [StockTransferController::class, 'investigationItemStock'])->name('transfers.investigation-stock');
-            });
-
             // Stock Movement Ledger / Balances / Adjustments / Returns / Locations
             Route::middleware('can:store.purchase.view')->group(function () {
                 Route::get('stock/balances', [StockController::class, 'balances'])->name('stock.balances');
@@ -580,6 +566,7 @@ Route::middleware('auth')->group(function () {
                 Route::get('stock/adjustments', [StockController::class, 'adjustmentsIndex'])->name('stock.adjustments.index');
                 Route::get('stock/returns', [StockController::class, 'returnsIndex'])->name('stock.returns.index');
                 Route::get('stock/transfers', [StockController::class, 'transfersIndex'])->name('stock.transfers.index');
+                Route::get('stock/batches/{batch}', [StockController::class, 'batchShow'])->name('stock.batches.show');
                 Route::get('stock/movements/{movement}', [StockController::class, 'movementShow'])->name('stock.movements.show');
 
                 Route::get('stock/locations', [StockController::class, 'locations'])->name('stock.locations.index');
