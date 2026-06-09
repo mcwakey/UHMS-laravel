@@ -1,8 +1,10 @@
 @extends('layouts.app')
 @section('title', 'Counter Sale')
 
+@php $genders = ['Male', 'Female', 'Other']; @endphp
+
 @section('content')
-<x-page-header title="Counter Sale" description="Walk-in cash sale for drugs and investigations — no visit required." icon="ti-cash-register">
+<x-page-header title="Counter Sale" description="Walk-in cash sale — pharmacy and investigations are billed separately." icon="ti-cash-register">
     <x-slot:actions>
         <a href="{{ route('admin.billing.invoices.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>Invoices</a>
     </x-slot:actions>
@@ -12,70 +14,106 @@
     <div class="alert alert-danger"><ul class="mb-0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
 @endif
 
-<form method="POST" action="{{ route('admin.billing.counter-sale.store') }}" id="counterSaleForm">
-    @csrf
-    <div class="row g-3">
-        <div class="col-lg-8">
-            {{-- Recipient --}}
-            <div class="card mb-3">
-                <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-user me-1"></i>Walk-in Recipient</h6></div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-7"><label class="form-label">Name <span class="text-danger">*</span></label><input name="external_party_name" class="form-control" value="{{ old('external_party_name') }}" required></div>
-                        <div class="col-md-5"><label class="form-label">Contact</label><input name="external_party_contact" class="form-control" value="{{ old('external_party_contact') }}"></div>
+<ul class="nav nav-tabs mb-3" id="counterSaleTabs" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabPharmacy" type="button"><i class="ti ti-pill me-1"></i>Pharmacy Sale</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabInvestigation" type="button"><i class="ti ti-microscope me-1"></i>Investigation Sale</button></li>
+</ul>
+
+<div class="tab-content">
+    {{-- ========================= PHARMACY (DRUGS) ========================= --}}
+    <div class="tab-pane fade show active" id="tabPharmacy">
+        <form method="POST" action="{{ route('admin.billing.counter-sale.store') }}">
+            @csrf
+            <div class="row g-3">
+                <div class="col-lg-8">
+                    <div class="card mb-3">
+                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-user me-1"></i>Walk-in Recipient</h6></div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-5"><label class="form-label">Name <span class="text-danger">*</span></label><input name="external_party_name" class="form-control" required></div>
+                                <div class="col-md-3"><label class="form-label">Gender</label><select name="external_party_sex" class="form-select"><option value="">—</option>@foreach($genders as $g)<option value="{{ $g }}">{{ $g }}</option>@endforeach</select></div>
+                                <div class="col-md-2"><label class="form-label">Age</label><input type="number" name="external_party_age" min="0" max="150" class="form-control"></div>
+                                <div class="col-md-2"><label class="form-label">Contact</label><input name="external_party_contact" class="form-control"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h6 class="card-title mb-0"><i class="ti ti-pill me-1"></i>Drugs <span class="text-muted small">(decrements pharmacy stock)</span></h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-add-row data-tpl="drugRowTpl" data-body="drugRows"><i class="ti ti-plus me-1"></i>Add Drug</button>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table align-middle mb-0">
+                                <thead class="bg-light"><tr><th>Drug</th><th style="width:110px">Qty</th><th style="width:120px" class="text-end">Price</th><th style="width:130px" class="text-end">Line</th><th style="width:40px"></th></tr></thead>
+                                <tbody id="drugRows"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card position-sticky" style="top:1rem">
+                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-receipt me-1"></i>Pharmacy Sale</h6></div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-3"><span class="fw-semibold">Total</span><span class="fw-bold fs-5" data-total="drugRows">₵0.00</span></div>
+                            <button type="submit" class="btn btn-primary w-100"><i class="ti ti-device-floppy me-1"></i>Create Pharmacy Sale</button>
+                            <p class="small text-muted mt-2 mb-0">Raises a cash invoice for the drugs only and decrements pharmacy stock on save.</p>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            {{-- Drugs --}}
-            <div class="card mb-3">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h6 class="card-title mb-0"><i class="ti ti-pill me-1"></i>Drugs <span class="text-muted small">(decrements pharmacy stock)</span></h6>
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="addDrugRow"><i class="ti ti-plus me-1"></i>Add Drug</button>
-                </div>
-                <div class="card-body p-0">
-                    <table class="table align-middle mb-0">
-                        <thead class="bg-light"><tr><th>Drug</th><th style="width:110px">Qty</th><th style="width:120px" class="text-end">Price</th><th style="width:130px" class="text-end">Line</th><th style="width:40px"></th></tr></thead>
-                        <tbody id="drugRows"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            {{-- Investigations --}}
-            <div class="card mb-3">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <h6 class="card-title mb-0"><i class="ti ti-microscope me-1"></i>Investigations <span class="text-muted small">(raises a lab request)</span></h6>
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="addServiceRow"><i class="ti ti-plus me-1"></i>Add Investigation</button>
-                </div>
-                <div class="card-body p-0">
-                    <table class="table align-middle mb-0">
-                        <thead class="bg-light"><tr><th>Investigation</th><th style="width:110px">Qty</th><th style="width:120px" class="text-end">Price</th><th style="width:130px" class="text-end">Line</th><th style="width:40px"></th></tr></thead>
-                        <tbody id="serviceRows"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        {{-- Summary --}}
-        <div class="col-lg-4">
-            <div class="card position-sticky" style="top:1rem">
-                <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-receipt me-1"></i>Sale Summary</h6></div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-between mb-2"><span class="text-muted">Drugs</span><span id="sumDrugs">₵0.00</span></div>
-                    <div class="d-flex justify-content-between mb-2"><span class="text-muted">Investigations</span><span id="sumServices">₵0.00</span></div>
-                    <hr>
-                    <div class="d-flex justify-content-between mb-3"><span class="fw-semibold">Total</span><span class="fw-bold fs-5" id="sumTotal">₵0.00</span></div>
-                    <button type="submit" class="btn btn-primary w-100"><i class="ti ti-device-floppy me-1"></i>Create Sale &amp; Go to Payment</button>
-                    <p class="small text-muted mt-2 mb-0">A standalone cash invoice is raised; collect payment and print the receipt on the next screen. Drug stock is decremented on save.</p>
-                </div>
-            </div>
-        </div>
+        </form>
     </div>
-</form>
+
+    {{-- ====================== INVESTIGATIONS (LAB) ====================== --}}
+    <div class="tab-pane fade" id="tabInvestigation">
+        <form method="POST" action="{{ route('admin.billing.counter-sale.store') }}">
+            @csrf
+            <div class="row g-3">
+                <div class="col-lg-8">
+                    <div class="card mb-3">
+                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-user me-1"></i>Walk-in Recipient</h6></div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-5"><label class="form-label">Name <span class="text-danger">*</span></label><input name="external_party_name" class="form-control" required></div>
+                                <div class="col-md-3"><label class="form-label">Gender</label><select name="external_party_sex" class="form-select"><option value="">—</option>@foreach($genders as $g)<option value="{{ $g }}">{{ $g }}</option>@endforeach</select></div>
+                                <div class="col-md-2"><label class="form-label">Age</label><input type="number" name="external_party_age" min="0" max="150" class="form-control"></div>
+                                <div class="col-md-2"><label class="form-label">Contact</label><input name="external_party_contact" class="form-control"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h6 class="card-title mb-0"><i class="ti ti-microscope me-1"></i>Investigations <span class="text-muted small">(raises a lab request)</span></h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-add-row data-tpl="serviceRowTpl" data-body="serviceRows"><i class="ti ti-plus me-1"></i>Add Investigation</button>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table align-middle mb-0">
+                                <thead class="bg-light"><tr><th>Investigation</th><th style="width:110px">Qty</th><th style="width:120px" class="text-end">Price</th><th style="width:130px" class="text-end">Line</th><th style="width:40px"></th></tr></thead>
+                                <tbody id="serviceRows"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card position-sticky" style="top:1rem">
+                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-receipt me-1"></i>Investigation Sale</h6></div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-3"><span class="fw-semibold">Total</span><span class="fw-bold fs-5" data-total="serviceRows">₵0.00</span></div>
+                            <button type="submit" class="btn btn-primary w-100"><i class="ti ti-device-floppy me-1"></i>Create Investigation Sale</button>
+                            <p class="small text-muted mt-2 mb-0">Raises a cash invoice for the investigations only and a visit-less lab request. Results can be entered after payment.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 
 {{-- Row templates --}}
 <template id="drugRowTpl">
-    <tr class="sale-row" data-kind="drug">
+    <tr class="sale-row">
         <td><select name="drug_id[]" class="form-select row-pick" data-search="{{ route('admin.billing.counter-sale.drug-search') }}" style="width:100%"></select></td>
         <td><input type="number" name="drug_qty[]" class="form-control row-qty" value="1" min="1"></td>
         <td class="text-end row-price">₵0.00</td>
@@ -84,7 +122,7 @@
     </tr>
 </template>
 <template id="serviceRowTpl">
-    <tr class="sale-row" data-kind="service">
+    <tr class="sale-row">
         <td><select name="service_id[]" class="form-select row-pick" data-search="{{ route('admin.billing.counter-sale.service-search') }}" style="width:100%"></select></td>
         <td><input type="number" name="service_qty[]" class="form-control row-qty" value="1" min="1"></td>
         <td class="text-end row-price">₵0.00</td>
@@ -99,58 +137,60 @@ document.addEventListener('DOMContentLoaded', function () {
     var $ = window.jQuery;
     function money(n){ return '₵' + (Math.round(n*100)/100).toFixed(2); }
 
-    function initPick(select) {
-        if (!$ || !$.fn.select2) return;
-        $(select).select2({
-            width: '100%',
-            placeholder: 'Search…',
-            minimumInputLength: 1,
-            ajax: {
-                url: select.dataset.search,
-                dataType: 'json',
-                delay: 250,
-                data: function (params) { return { q: params.term }; },
-                processResults: function (data) { return { results: data }; },
-                cache: true
-            }
-        }).on('select2:select', function (e) {
-            var row = select.closest('tr');
-            row.dataset.price = e.params.data.price || 0;
-            recalc();
-        });
-    }
-
-    function recalc() {
-        var sums = { drug: 0, service: 0 };
-        document.querySelectorAll('.sale-row').forEach(function (row) {
+    function recalcBody(bodyId) {
+        var total = 0;
+        document.querySelectorAll('#' + bodyId + ' .sale-row').forEach(function (row) {
             var price = parseFloat(row.dataset.price || 0);
             var qty = parseInt(row.querySelector('.row-qty').value || 1, 10);
             var line = price * qty;
             row.querySelector('.row-price').textContent = money(price);
             row.querySelector('.row-line').textContent = money(line);
-            sums[row.dataset.kind] += line;
+            total += line;
         });
-        document.getElementById('sumDrugs').textContent = money(sums.drug);
-        document.getElementById('sumServices').textContent = money(sums.service);
-        document.getElementById('sumTotal').textContent = money(sums.drug + sums.service);
+        var el = document.querySelector('[data-total="' + bodyId + '"]');
+        if (el) el.textContent = money(total);
+    }
+
+    function initPick(select, bodyId) {
+        if (!$ || !$.fn.select2) return;
+        $(select).select2({
+            width: '100%', placeholder: 'Search…', minimumInputLength: 1,
+            ajax: {
+                url: select.dataset.search, dataType: 'json', delay: 250,
+                data: function (params) { return { q: params.term }; },
+                processResults: function (data) { return { results: data }; },
+                cache: true
+            }
+        }).on('select2:select', function (e) {
+            select.closest('tr').dataset.price = e.params.data.price || 0;
+            recalcBody(bodyId);
+        });
     }
 
     function addRow(tplId, bodyId) {
-        var tpl = document.getElementById(tplId);
-        var clone = tpl.content.firstElementChild.cloneNode(true);
+        var clone = document.getElementById(tplId).content.firstElementChild.cloneNode(true);
         document.getElementById(bodyId).appendChild(clone);
-        initPick(clone.querySelector('.row-pick'));
-        clone.querySelector('.row-qty').addEventListener('input', recalc);
-        clone.querySelector('.row-remove').addEventListener('click', function () { clone.remove(); recalc(); });
-        recalc();
+        initPick(clone.querySelector('.row-pick'), bodyId);
+        clone.querySelector('.row-qty').addEventListener('input', function () { recalcBody(bodyId); });
+        clone.querySelector('.row-remove').addEventListener('click', function () { clone.remove(); recalcBody(bodyId); });
+        recalcBody(bodyId);
     }
 
-    document.getElementById('addDrugRow').addEventListener('click', function () { addRow('drugRowTpl', 'drugRows'); });
-    document.getElementById('addServiceRow').addEventListener('click', function () { addRow('serviceRowTpl', 'serviceRows'); });
+    document.querySelectorAll('[data-add-row]').forEach(function (btn) {
+        btn.addEventListener('click', function () { addRow(btn.dataset.tpl, btn.dataset.body); });
+    });
 
-    // Start with one of each.
+    // Seed the active tab; seed the other tab's first row only once it becomes visible
+    // (select2 needs a visible container to size correctly).
     addRow('drugRowTpl', 'drugRows');
-    addRow('serviceRowTpl', 'serviceRows');
+    document.querySelectorAll('#counterSaleTabs button').forEach(function (tabBtn) {
+        tabBtn.addEventListener('shown.bs.tab', function () {
+            var body = tabBtn.dataset.bsTarget === '#tabInvestigation' ? 'serviceRows' : 'drugRows';
+            if (!document.querySelector('#' + body + ' .sale-row')) {
+                addRow(body === 'serviceRows' ? 'serviceRowTpl' : 'drugRowTpl', body);
+            }
+        });
+    });
 });
 </script>
 @endpush

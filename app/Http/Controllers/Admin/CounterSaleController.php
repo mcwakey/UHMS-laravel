@@ -22,6 +22,8 @@ class CounterSaleController extends Controller
         $data = $request->validate([
             'external_party_name' => ['required', 'string', 'max:255'],
             'external_party_contact' => ['nullable', 'string', 'max:100'],
+            'external_party_sex' => ['nullable', 'string', 'max:20'],
+            'external_party_age' => ['nullable', 'integer', 'min:0', 'max:150'],
             'drug_id' => ['array'],
             'drug_id.*' => ['nullable', 'integer'],
             'drug_qty' => ['array'],
@@ -47,6 +49,8 @@ class CounterSaleController extends Controller
         $invoice = $this->sales->create([
             'external_party_name' => $data['external_party_name'],
             'external_party_contact' => $data['external_party_contact'] ?? null,
+            'external_party_sex' => $data['external_party_sex'] ?? null,
+            'external_party_age' => $data['external_party_age'] ?? null,
             'drugs' => $drugs,
             'services' => $services,
         ], $request->user());

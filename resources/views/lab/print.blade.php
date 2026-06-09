@@ -58,8 +58,8 @@
         <span class="value">{{ $patient?->full_name ?? $request->external_party_name ?? '—' }}</span><br>
         <span style="font-size:11px;color:#555;">
             {{ $patient?->patient_number ?? ($request->external_party_name ? 'Walk-in' : '') }}
-            @if($patient?->age) &middot; {{ $patient->age }}y @endif
-            @if($patient?->gender) &middot; {{ ucfirst($patient->gender->value ?? $patient->gender) }} @endif
+            @if($patient?->age) &middot; {{ $patient->age }}y @elseif($request->external_party_age) &middot; {{ $request->external_party_age }}y @endif
+            @if($patient?->gender) &middot; {{ ucfirst($patient->gender->value ?? $patient->gender) }} @elseif($request->external_party_sex) &middot; {{ $request->external_party_sex }} @endif
         </span>
     </div>
     <div>

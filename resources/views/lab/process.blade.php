@@ -29,7 +29,11 @@
 <div class="alert alert-danger alert-dismissible fade show" role="alert"><i class="ti ti-alert-circle me-1"></i>{{ session('error') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
 @endif
 
-@php $pendingItems = $request->items->where('status', 'pending'); @endphp
+@php
+    $pendingItems = $request->items->where('status', 'pending');
+    $prepaidRequired = $request->requiresPrepaidResults();
+    $resultBlocked = fn ($item) => $prepaidRequired && ! $item->isBillSettled();
+@endphp
 
 <div class="row">
     <!-- Main column -->
@@ -47,6 +51,14 @@
                 </div>
             </div>
         </div>
+
+        @php $awaitingPayment = $request->items->filter(fn ($i) => $resultBlocked($i)); @endphp
+        @if($awaitingPayment->isNotEmpty())
+        <div class="alert alert-warning d-flex align-items-center gap-2">
+            <i class="ti ti-cash-off fs-4"></i>
+            <div><strong>{{ $awaitingPayment->count() }} item(s) awaiting payment.</strong> For outpatient &amp; walk-in requests, the bill must be settled before results can be entered.</div>
+        </div>
+        @endif
 
 {{-- Patient / Visit / Doctor / Progress moved to the right sidebar below --}}
 
@@ -85,7 +97,7 @@
                             </thead>
                             <tbody>
                                 @foreach($request->items as $item)
-                                @if($item->status !== 'completed')
+                                @if($item->status !== 'completed' && !$resultBlocked($item))
                                 <tr>
                                     <td class="fw-medium">{{ $item->labTest->name ?? $item->name }} <small class="text-muted">({{ $item->labTest->code ?? '' }})</small></td>
                                     <td>
@@ -197,7 +209,11 @@
                             @endif
                             @if(in_array($request->status, ['processing']) && in_array($item->status, ['accepted','processing']) && !$item->result)
                             @can('lab.results.create')
+                            @if($resultBlocked($item))
+                            <span class="badge bg-warning text-dark" title="Bill not settled"><i class="ti ti-clock-dollar me-1"></i>Awaiting payment</span>
+                            @else
                             <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#resultModal-{{ $item->id }}" title="Enter Result"><i class="ti ti-edit"></i></button>
+                            @endif
                             @endcan
                             @endif
                         </td>
@@ -211,7 +227,7 @@
 
 {{-- Per-item modals (parameters) --}}
 @foreach($request->items as $item)
-@if(in_array($request->status, ['processing']) && in_array($item->status, ['accepted','processing']) && !$item->result)
+@if(in_array($request->status, ['processing']) && in_array($item->status, ['accepted','processing']) && !$item->result && !$resultBlocked($item))
 <div class="modal fade" id="resultModal-{{ $item->id }}" tabindex="-1">
     <div class="modal-dialog">
         <form method="POST" action="{{ route('admin.lab.results.store', $item) }}" enctype="multipart/form-data" class="modal-content">
@@ -439,9 +455,13 @@
                             @endif
                             @if($request->status === 'processing' && $item->status !== 'completed')
                             @can('lab.results.create')
+                            @if($resultBlocked($item))
+                            <span class="badge bg-warning text-dark"><i class="ti ti-clock-dollar me-1"></i>Awaiting payment</span>
+                            @else
                             <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#richtextModal-{{ $item->id }}">
                                 <i class="ti ti-edit me-1"></i>{{ $item->result ? 'Update' : 'Write' }} Report
                             </button>
+                            @endif
                             @endcan
                             @endif
                         </td>
@@ -454,7 +474,7 @@
 </div>
 
 @foreach($request->items as $item)
-@if($request->status === 'processing' && $item->status !== 'completed')
+@if($request->status === 'processing' && $item->status !== 'completed' && !$resultBlocked($item))
 <div class="modal fade" id="richtextModal-{{ $item->id }}" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <form method="POST" action="{{ route('admin.lab.results.store', $item) }}" enctype="multipart/form-data" class="modal-content">
@@ -540,9 +560,13 @@
                             @endif
                             @if($request->status === 'processing' && $item->status !== 'completed')
                             @can('lab.results.create')
+                            @if($resultBlocked($item))
+                            <span class="badge bg-warning text-dark"><i class="ti ti-clock-dollar me-1"></i>Awaiting payment</span>
+                            @else
                             <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#fileModal-{{ $item->id }}">
                                 <i class="ti ti-upload me-1"></i>Upload
                             </button>
+                            @endif
                             @endcan
                             @endif
                         </td>
@@ -555,7 +579,7 @@
 </div>
 
 @foreach($request->items as $item)
-@if($request->status === 'processing' && $item->status !== 'completed')
+@if($request->status === 'processing' && $item->status !== 'completed' && !$resultBlocked($item))
 <div class="modal fade" id="fileModal-{{ $item->id }}" tabindex="-1">
     <div class="modal-dialog">
         <form method="POST" action="{{ route('admin.lab.results.store', $item) }}" enctype="multipart/form-data" class="modal-content">
@@ -617,6 +641,9 @@
                     @endif
                 @else
                     <h6 class="fw-bold">{{ $request->external_party_name ?? '—' }}</h6>
+                    @if($request->external_party_sex || $request->external_party_age)
+                        <small class="text-muted d-block">{{ $request->external_party_sex }}@if($request->external_party_age) &middot; {{ $request->external_party_age }}y @endif</small>
+                    @endif
                     <small class="text-muted d-block">External / walk-in</small>
                     @if($request->external_party_contact)<small class="text-muted d-block">{{ $request->external_party_contact }}</small>@endif
                 @endif

@@ -42,6 +42,29 @@ class LabRequestItem extends Model
         return $this->belongsTo(ServiceCatalog::class, 'service_id');
     }
 
+    public function invoiceItem(): BelongsTo
+    {
+        return $this->belongsTo(InvoiceItem::class);
+    }
+
+    /**
+     * Whether this item's bill is settled (paid). Items with no billable charge
+     * (no invoice line) are considered settled. Used to gate result entry so an
+     * outpatient/walk-in must pay before their results are entered.
+     */
+    public function isBillSettled(): bool
+    {
+        if (! $this->invoice_item_id) {
+            return true;
+        }
+
+        $invoiceItem = $this->relationLoaded('invoiceItem')
+            ? $this->invoiceItem
+            : InvoiceItem::find($this->invoice_item_id);
+
+        return $invoiceItem ? $invoiceItem->isPaid() : true;
+    }
+
     /**
      * Resolve the display name for the request item — preferring service, then lab test, then free-text name.
      */

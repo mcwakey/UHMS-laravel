@@ -126,7 +126,11 @@ class LabResultController extends Controller
             $validated['result_value'] = $summary ?: '(criteria-based result)';
         }
 
-        $result = $this->labService->enterResult($item, $validated);
+        try {
+            $result = $this->labService->enterResult($item, $validated);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         // Persist criteria-based values if provided.
         if (!empty($validated['values'] ?? []) && $result instanceof LabResult) {
@@ -183,7 +187,11 @@ class LabResultController extends Controller
             'results.*.remarks'         => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $this->labService->batchEnterResults($labRequest, $validated['results']);
+        try {
+            $this->labService->batchEnterResults($labRequest, $validated['results']);
+        } catch (\RuntimeException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return back()->with('success', 'Results saved successfully.');
     }

@@ -261,6 +261,7 @@ class LabService
             'items.labTest.criteria',
             'items.service.investigationHeaders.criteria',
             'items.service.investigationCriteria',
+            'items.invoiceItem',
             'items.result.performedBy',
             'items.result.verifiedBy',
             'items.result.values',
@@ -326,6 +327,13 @@ class LabService
 
     public function enterResult(LabRequestItem $item, array $data): LabResult
     {
+        // Pay-before-results: an outpatient/walk-in must settle the bill before
+        // results are entered. Emergency/inpatient run on a post-paid bill.
+        $labRequest = $item->labRequest;
+        if ($labRequest && $labRequest->requiresPrepaidResults() && ! $item->isBillSettled()) {
+            throw new \RuntimeException('Payment required: this investigation must be paid before results can be entered.');
+        }
+
         return DB::transaction(function () use ($item, $data) {
             $resultType = ResultType::tryFrom($data['result_type'] ?? 'parameters')
                 ?? ResultType::PARAMETERS;

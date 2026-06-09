@@ -23,6 +23,8 @@ class LabRequest extends Model
         'patient_id',
         'external_party_name',
         'external_party_contact',
+        'external_party_sex',
+        'external_party_age',
         'requested_by',
         'department_id',
         'target_department_id',
@@ -158,6 +160,23 @@ class LabRequest extends Model
     public function partyName(): string
     {
         return $this->patient?->full_name ?: ($this->external_party_name ?: 'Unknown');
+    }
+
+    /**
+     * Whether results may only be entered after payment (pay-before-results).
+     * Outpatient (OPD) and external walk-ins must prepay; emergency and admitted
+     * (inpatient) cases run on a post-paid running bill and are exempt.
+     */
+    public function requiresPrepaidResults(): bool
+    {
+        if ($this->emergency_case_id) {
+            return false;
+        }
+        if ($this->visit && $this->visit->admission) {
+            return false;
+        }
+
+        return true;
     }
 
     public function getStatusColorAttribute(): string

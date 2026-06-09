@@ -39,10 +39,10 @@
                 <td>{{ $labRequest->patient?->patient_number ?? '—' }}</td>
             </tr>
             <tr>
-                <td class="lbl">Date of Birth:</td>
-                <td>{{ $labRequest->patient?->date_of_birth?->format('d/m/Y') ?? '—' }}</td>
+                <td class="lbl">{{ $labRequest->patient ? 'Date of Birth:' : 'Age:' }}</td>
+                <td>{{ $labRequest->patient?->date_of_birth?->format('d/m/Y') ?? ($labRequest->external_party_age ? $labRequest->external_party_age.' yrs' : '—') }}</td>
                 <td class="lbl">Gender:</td>
-                <td>{{ $labRequest->patient?->gender?->label() ?? '—' }}</td>
+                <td>{{ $labRequest->patient?->gender?->label() ?? ($labRequest->external_party_sex ?: '—') }}</td>
             </tr>
             <tr>
                 <td class="lbl">Requested By:</td>

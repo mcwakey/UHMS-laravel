@@ -4,6 +4,11 @@
 @section('content')
 <x-page-header title="Service Renderings" description="Track fulfilment of billed services that do not have a specialist workflow." icon="ti-clipboard-check">
     <x-slot:actions>
+        @can('invoices.create')
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addServiceModal">
+                <i class="ti ti-plus me-1"></i>Add Service to Bill
+            </button>
+        @endcan
         @can('service_rendering.reports')
             <a href="{{ route('admin.service-renderings.reports', request()->query()) }}" class="btn btn-outline-primary btn-sm">
                 <i class="ti ti-report-analytics me-1"></i>Reports
@@ -152,6 +157,72 @@
         <div class="card-footer">{{ $renderings->links() }}</div>
     @endif
 </div>
+
+@can('invoices.create')
+{{-- Add Service to Bill --}}
+<div class="modal fade" id="addServiceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.service-renderings.store') }}" id="addServiceForm">
+                @csrf
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title mb-0"><i class="ti ti-clipboard-plus me-2 text-primary"></i>Add Service to Bill</h5>
+                        <small class="text-muted">Bill a service to a patient's visit — a rendering task is created for the department automatically.</small>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label">Patient Visit <span class="text-danger">*</span></label>
+                            <select name="visit_id" id="addSvcVisit" class="form-select" style="width:100%" required>
+                                <option value="">Search by visit number or patient…</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Department <span class="text-danger">*</span></label>
+                            <select id="addSvcDepartment" class="form-select" required>
+                                <option value="">Choose a department…</option>
+                                @foreach($renderableDepartments as $dept)
+                                    <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                                @endforeach
+                            </select>
+                            @if($renderableDepartments->isEmpty())
+                                <div class="form-text text-danger">No departments have rendering-tracked services configured yet.</div>
+                            @endif
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Service <span class="text-danger">*</span></label>
+                            <select name="service_id" id="addSvcService" class="form-select" style="width:100%" required disabled>
+                                <option value="">Choose a department first…</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" name="quantity" id="addSvcQty" class="form-control" value="1" min="1" max="999">
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label">Note <span class="text-muted small">(optional)</span></label>
+                            <input name="notes" class="form-control" placeholder="e.g. reason / special instruction">
+                        </div>
+                        <div class="col-12">
+                            <div class="border rounded p-3 bg-light-subtle d-flex justify-content-between align-items-center">
+                                <div class="small text-muted" id="addSvcSummary">Select a service to see the charge.</div>
+                                <div class="fs-5 fw-bold" id="addSvcTotal">₵0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary"><i class="ti ti-receipt me-1"></i>Add &amp; Bill Service</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endcan
 @endsection
 
 @push('scripts')
@@ -179,6 +250,60 @@
                         filterForm.requestSubmit();
                     }, 400);
                 });
+            }
+        });
+    </script>
+    <script>
+        // Add Service to Bill modal — visit + service search with live charge preview.
+        document.addEventListener('DOMContentLoaded', function () {
+            var $ = window.jQuery;
+            var modal = document.getElementById('addServiceModal');
+            if (!modal || !$ || !$.fn.select2) return;
+
+            function money(n){ return '₵' + (Math.round(n * 100) / 100).toFixed(2); }
+            var svcPrice = 0, svcName = '', visitText = '';
+
+            $('#addSvcVisit').select2({
+                dropdownParent: $(modal), width: '100%', placeholder: 'Search visit or patient…', minimumInputLength: 2,
+                ajax: {
+                    url: '{{ route('admin.service-renderings.visit-search') }}', dataType: 'json', delay: 250,
+                    data: function (p) { return { q: p.term }; }, processResults: function (d) { return { results: d }; }, cache: true
+                }
+            }).on('select2:select', function (e) { visitText = e.params.data.text || ''; updateSummary(); });
+
+            $('#addSvcService').select2({
+                dropdownParent: $(modal), width: '100%', placeholder: 'Search a service…', minimumInputLength: 0,
+                ajax: {
+                    url: '{{ route('admin.service-renderings.service-search') }}', dataType: 'json', delay: 250,
+                    data: function (p) { return { q: p.term, department_id: document.getElementById('addSvcDepartment').value }; },
+                    processResults: function (d) { return { results: d }; }, cache: true
+                },
+                templateResult: function (s) {
+                    if (!s.id) return s.text;
+                    return $('<span>').html(
+                        '<span class="fw-medium">' + s.text + '</span> <span class="text-primary">' + money(s.price || 0) + '</span>'
+                    );
+                }
+            }).on('select2:select', function (e) {
+                svcPrice = parseFloat(e.params.data.price || 0); svcName = e.params.data.text || ''; updateSummary();
+            });
+
+            // Department-first: enable the service picker only after a department is chosen.
+            $('#addSvcDepartment').on('change', function () {
+                var hasDept = !!this.value;
+                $('#addSvcService').prop('disabled', !hasDept).val(null).trigger('change');
+                svcPrice = 0; svcName = ''; updateSummary();
+            });
+
+            document.getElementById('addSvcQty').addEventListener('input', updateSummary);
+
+            function updateSummary() {
+                var qty = parseInt(document.getElementById('addSvcQty').value || 1, 10);
+                document.getElementById('addSvcTotal').textContent = money(svcPrice * qty);
+                var el = document.getElementById('addSvcSummary');
+                el.innerHTML = svcName
+                    ? '<strong>' + svcName + '</strong> &times; ' + qty + (visitText ? ' &rarr; ' + visitText : '')
+                    : 'Select a service to see the charge.';
             }
         });
     </script>

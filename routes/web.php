@@ -309,6 +309,10 @@ Route::middleware('auth')->group(function () {
             ->group(function () {
                 Route::get('/', [ServiceRenderingController::class, 'index'])->name('index');
                 Route::get('/reports', [ServiceRenderingReportController::class, 'index'])->name('reports')->middleware('can:service_rendering.reports');
+                // Bill an extra service from the rendering board (creates a rendering task)
+                Route::post('/', [ServiceRenderingController::class, 'store'])->name('store')->middleware('can:invoices.create');
+                Route::get('/visit-search', [ServiceRenderingController::class, 'visitSearch'])->name('visit-search')->middleware('can:invoices.create');
+                Route::get('/service-search', [ServiceRenderingController::class, 'serviceSearch'])->name('service-search')->middleware('can:invoices.create');
                 Route::get('/{serviceRendering}', [ServiceRenderingController::class, 'show'])->name('show');
                 Route::post('/{serviceRendering}/start', [ServiceRenderingActionController::class, 'start'])->name('start')->middleware('can:service_rendering.start');
                 Route::post('/{serviceRendering}/mark-rendered', [ServiceRenderingActionController::class, 'markRendered'])->name('mark-rendered')->middleware('can:service_rendering.mark_rendered');

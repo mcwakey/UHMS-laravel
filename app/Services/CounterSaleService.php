@@ -52,8 +52,15 @@ class CounterSaleService
         }
 
         $grandTotal = round(array_sum(array_map(fn ($l) => $l['line_total'], $lines)), 2);
+        $sex = $data['external_party_sex'] ?? null;
+        $age = $data['external_party_age'] ?? null;
+        $demographics = trim(implode(' · ', array_filter([
+            $sex,
+            $age !== null && $age !== '' ? $age.'y' : null,
+            $data['external_party_contact'] ?? null,
+        ])));
 
-        return DB::transaction(function () use ($lines, $grandTotal, $partyName, $data, $user) {
+        return DB::transaction(function () use ($lines, $grandTotal, $partyName, $data, $user, $sex, $age, $demographics) {
             $invoice = Invoice::create([
                 'invoice_number' => Invoice::generateNumber('INV', 'invoices', 'invoice_number'),
                 'visit_id' => null,
@@ -69,7 +76,7 @@ class CounterSaleService
                 'balance' => $grandTotal,
                 'status' => InvoiceStatus::PENDING->value,
                 'due_date' => now()->addDays(1),
-                'notes' => 'Counter sale — '.$partyName.(! empty($data['external_party_contact']) ? ' ('.$data['external_party_contact'].')' : ''),
+                'notes' => 'Counter sale — '.$partyName.($demographics !== '' ? ' ('.$demographics.')' : ''),
                 'created_by' => $user->id,
             ]);
 
@@ -108,7 +115,7 @@ class CounterSaleService
             }
 
             // Raise a visit-less lab request per target department for the investigations.
-            $this->raiseLabRequests($serviceLines, $partyName, $data['external_party_contact'] ?? null, $user);
+            $this->raiseLabRequests($serviceLines, $partyName, $data['external_party_contact'] ?? null, $sex, $age, $user);
 
             $this->log->log(LogModule::BILLING, 'COUNTER_SALE_CREATED', [
                 'description' => "Counter sale {$invoice->invoice_number} for {$partyName} (₵{$grandTotal}).",
@@ -235,7 +242,7 @@ class CounterSaleService
      *
      * @param  array<int,array{service:ServiceCatalog,item:InvoiceItem,quantity:int}>  $serviceLines
      */
-    private function raiseLabRequests(array $serviceLines, string $partyName, ?string $contact, User $user): void
+    private function raiseLabRequests(array $serviceLines, string $partyName, ?string $contact, ?string $sex, $age, User $user): void
     {
         if (empty($serviceLines)) {
             return;
@@ -250,6 +257,8 @@ class CounterSaleService
                 'patient_id' => null,
                 'external_party_name' => $partyName,
                 'external_party_contact' => $contact,
+                'external_party_sex' => $sex,
+                'external_party_age' => $age !== null && $age !== '' ? (int) $age : null,
                 'requested_by' => $user->id,
                 'department_id' => null,
                 'target_department_id' => $departmentId ?: null,
