@@ -49,8 +49,10 @@ class CreditNoteService
     {
         $user ??= Auth::user();
 
-        $permission = $type === CreditNoteType::WRITE_OFF ? 'credit_notes.write_off' : 'credit_notes.create';
-        if ($user && method_exists($user, 'can') && ! $user->can($permission)) {
+        $permissions = $type === CreditNoteType::WRITE_OFF
+            ? ['credit_notes.write_off', 'billing.write_off.issue']
+            : ['credit_notes.create', 'billing.credit_note.issue'];
+        if ($user && method_exists($user, 'can') && ! $this->canAny($user, $permissions)) {
             throw new AuthorizationException('Not authorized to issue this credit note.');
         }
 
@@ -92,7 +94,7 @@ class CreditNoteService
 
             $this->syncInvoiceAdjustment($invoice);
 
-            $this->logger?->log(LogModule::BILLING, 'CREDIT_NOTE_ISSUED', [
+            $this->logger?->log(LogModule::BILLING, $type === CreditNoteType::WRITE_OFF ? 'WRITE_OFF_ISSUED' : 'CREDIT_NOTE_ISSUED', [
                 'invoice_id' => $invoice->id,
                 'patient_id' => $invoice->patient_id,
                 'severity' => $type === CreditNoteType::WRITE_OFF ? LogSeverity::WARNING : LogSeverity::INFO,
@@ -119,7 +121,10 @@ class CreditNoteService
     public function cancel(CreditNote $creditNote, string $reason, ?User $user = null): CreditNote
     {
         $user ??= Auth::user();
-        if ($user && method_exists($user, 'can') && ! $user->can('credit_notes.create')) {
+        $permissions = $creditNote->type === CreditNoteType::WRITE_OFF
+            ? ['credit_notes.write_off', 'billing.write_off.reverse']
+            : ['credit_notes.create', 'billing.credit_note.reverse'];
+        if ($user && method_exists($user, 'can') && ! $this->canAny($user, $permissions)) {
             throw new AuthorizationException('Not authorized to cancel credit notes.');
         }
 
@@ -144,7 +149,7 @@ class CreditNoteService
                 $this->syncInvoiceAdjustment($invoice);
             }
 
-            $this->logger?->log(LogModule::BILLING, 'CREDIT_NOTE_CANCELLED', [
+            $this->logger?->log(LogModule::BILLING, $creditNote->type === CreditNoteType::WRITE_OFF ? 'WRITE_OFF_REVERSED' : 'CREDIT_NOTE_REVERSED', [
                 'invoice_id' => $creditNote->invoice_id,
                 'patient_id' => $creditNote->patient_id,
                 'severity' => LogSeverity::WARNING,
@@ -173,5 +178,16 @@ class CreditNoteService
 
         $invoice->forceFill(['adjustment_amount' => round($total, 2)])->save();
         $this->invoiceService->recalculateTotals($invoice->fresh('items'));
+    }
+
+    private function canAny(User $user, array $permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            if ($user->can($permission)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

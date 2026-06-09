@@ -42,7 +42,7 @@ class RefundService
     {
         $user ??= Auth::user();
 
-        if ($user && method_exists($user, 'can') && ! $user->can('payments.refund')) {
+        if ($user && method_exists($user, 'can') && ! $this->canAny($user, ['payments.refund', 'billing.refund.issue', 'billing.refund.reverse'])) {
             throw new AuthorizationException('Not authorized to reverse payments.');
         }
 
@@ -128,11 +128,37 @@ class RefundService
                 ],
             ], $payment, 'Payment reversed');
 
+            $this->logger?->log(LogModule::PAYMENTS, 'REFUND_ISSUED', [
+                'payment_id' => $payment->id,
+                'refund_id' => $reversal->id,
+                'invoice_id' => $payment->invoice_id,
+                'patient_id' => $payment->patient_id,
+                'severity' => LogSeverity::WARNING,
+                'metadata' => [
+                    'original_payment_number' => $payment->payment_number,
+                    'refund_number' => $reversal->payment_number,
+                    'amount' => (float) $payment->amount,
+                    'reason' => $reason,
+                    'approved_by' => $user?->id,
+                ],
+            ], $reversal, 'Refund issued through payment reversal');
+
             return $reversal->fresh(['invoice', 'allocations']);
         });
 
         app(PaymentAccountingPostingService::class)->postPayment($reversal);
 
         return $reversal;
+    }
+
+    private function canAny(User $user, array $permissions): bool
+    {
+        foreach ($permissions as $permission) {
+            if ($user->can($permission)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

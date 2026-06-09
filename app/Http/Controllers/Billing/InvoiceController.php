@@ -11,6 +11,7 @@ use App\Models\Patient;
 use App\Models\ServiceCatalog;
 use App\Models\Visit;
 use App\Services\BillingService;
+use App\Services\InvoiceBalanceService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -181,7 +182,7 @@ class InvoiceController extends Controller
     /**
      * Show invoice details.
      */
-    public function show(Invoice $invoice)
+    public function show(Invoice $invoice, InvoiceBalanceService $balanceService)
     {
         $invoice->load([
             'items.serviceCatalog',
@@ -199,9 +200,18 @@ class InvoiceController extends Controller
             'discountEvents.invoiceItem',
             'discountEvents.performedBy',
             'discountEvents.journalEntry',
+            'discountEvents.reversalJournalEntry',
+            'creditNotes.issuedBy',
+            'creditNotes.cancelledBy',
+            'creditNotes.journalEntry',
+            'creditNotes.reversalJournalEntry',
         ]);
 
-        return view('billing.invoices.show', compact('invoice'));
+        return view('billing.invoices.show', [
+            'invoice' => $invoice,
+            'invoiceBalanceSummary' => $balanceService->summary($invoice),
+            'adjustmentHistory' => $balanceService->history($invoice),
+        ]);
     }
 
     /**

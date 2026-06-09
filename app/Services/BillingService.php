@@ -224,11 +224,12 @@ class BillingService
 
         $oldDiscount = round((float) $item->discount_amount, 2);
         $isRemoval = $discountAmount <= 0.0 && $oldDiscount > 0.0;
+        $isReduction = $discountAmount < $oldDiscount - 0.001;
 
         if ($user && method_exists($user, 'can')) {
-            if ($isRemoval) {
-                if (! $user->can('billing.discount.remove')) {
-                    throw new AuthorizationException('Not authorized to remove discounts.');
+            if ($isReduction) {
+                if (! ($user->can('billing.discount.remove') || $user->can('billing.discount.reverse'))) {
+                    throw new AuthorizationException('Not authorized to reverse or reduce discounts.');
                 }
             } elseif (! ($user->can('billing.discount.apply') || $user->can('invoices.discount'))) {
                 throw new AuthorizationException('Not authorized to apply discounts.');
@@ -253,13 +254,23 @@ class BillingService
             );
         }
 
-        return DB::transaction(function () use ($item, $discountAmount, $lineTotal, $user, $reason, $isRemoval, $isOverride) {
+        return DB::transaction(function () use ($item, $discountAmount, $lineTotal, $user, $reason, $isRemoval, $isReduction, $isOverride) {
             $item->refresh();
             $oldValues = [
                 'discount_amount' => round((float) $item->discount_amount, 2),
                 'patient_payable' => round((float) $item->patient_payable, 2),
                 'balance' => round((float) $item->balance, 2),
             ];
+            $discountToReverse = null;
+            if ($isReduction) {
+                $discountToReverse = InvoiceDiscount::query()
+                    ->where('invoice_item_id', $item->id)
+                    ->whereColumn('new_discount_amount', '>', 'old_discount_amount')
+                    ->whereNull('reversed_at')
+                    ->latest('performed_at')
+                    ->lockForUpdate()
+                    ->first();
+            }
 
             $paid = (float) $item->paid_amount;
             $patientPayable = max(0.0, round($lineTotal - $discountAmount, 2));
@@ -294,6 +305,7 @@ class BillingService
                 'reason' => $reason,
                 'performed_by' => $user?->id,
                 'performed_at' => now(),
+                'reverses_discount_id' => $discountToReverse?->id,
             ]);
 
             Log::info('Invoice item discount applied', [
@@ -331,6 +343,17 @@ class BillingService
             );
 
             app(BillingAccountingPostingService::class)->postDiscount($discountEvent);
+
+            if ($isReduction && $discountToReverse) {
+                $discountEvent->refresh();
+                $discountToReverse->forceFill([
+                    'reversal_journal_entry_id' => $discountEvent->journal_entry_id,
+                    'reversed_at' => now(),
+                    'reversed_by' => $user?->id,
+                    'reversal_reason' => $reason,
+                    'accounting_status' => $discountEvent->journal_entry_id ? BillingAccountingPostingService::STATUS_REVERSED : $discountToReverse->accounting_status,
+                ])->save();
+            }
 
             // Refresh invoice header totals + status.
             $invoice = $item->invoice()->with('items')->first();

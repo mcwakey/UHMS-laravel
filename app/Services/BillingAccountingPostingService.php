@@ -33,6 +33,10 @@ class BillingAccountingPostingService
 
     public function postInvoice(Invoice $invoice): ?JournalEntry
     {
+        if (in_array($invoice->status?->value ?? $invoice->status, ['cancelled', 'refunded'], true)) {
+            return $invoice->journalEntry;
+        }
+
         $invoice->loadMissing([
             'items.invoice',
             'items.serviceCatalog',
@@ -107,6 +111,10 @@ class BillingAccountingPostingService
             return $discount->journalEntry;
         }
 
+        if ((string) $discount->accounting_status === self::STATUS_REVERSED) {
+            return $discount->reversalJournalEntry ?? $discount->journalEntry;
+        }
+
         $delta = round((float) $discount->new_discount_amount - (float) $discount->old_discount_amount, 2);
         if (abs($delta) < 0.005 || (string) $discount->invoiceItem?->accounting_status !== self::STATUS_POSTED) {
             $discount->forceFill([
@@ -173,6 +181,10 @@ class BillingAccountingPostingService
     {
         $creditNote->loadMissing(['invoice.visit', 'invoice.patient']);
 
+        if ((string) $creditNote->accounting_status === self::STATUS_REVERSED) {
+            return $creditNote->reversalJournalEntry ?? $creditNote->journalEntry;
+        }
+
         if ($creditNote->status !== 'issued') {
             return $creditNote->journalEntry;
         }
@@ -213,7 +225,7 @@ class BillingAccountingPostingService
                 'accounting_error' => null,
             ])->save();
 
-            $this->log('ACCOUNTING_POSTED_FOR_CREDIT_NOTE', $creditNote, [
+            $this->log($creditNote->type === CreditNoteType::WRITE_OFF ? 'ACCOUNTING_POSTED_FOR_WRITE_OFF' : 'ACCOUNTING_POSTED_FOR_CREDIT_NOTE', $creditNote, [
                 'journal_entry_id' => $entry->id,
                 'invoice_id' => $creditNote->invoice_id,
                 'credit_note_id' => $creditNote->id,
@@ -266,11 +278,28 @@ class BillingAccountingPostingService
         }
 
         try {
-            $this->journalEntryService->reverse($creditNote->journalEntry, $reason, $this->postingUser($creditNote));
+            $reversal = $this->journalEntryService->reverse($creditNote->journalEntry, $reason, $this->postingUser($creditNote));
             $creditNote->forceFill([
+                'reversal_journal_entry_id' => $reversal->id,
+                'reversed_at' => now(),
+                'reversed_by' => auth()->id(),
+                'reversal_reason' => $reason,
                 'accounting_status' => self::STATUS_REVERSED,
                 'accounting_error' => null,
             ])->save();
+
+            $this->log(
+                'ACCOUNTING_REVERSAL_CREATED',
+                $creditNote,
+                [
+                    'journal_entry_id' => $creditNote->journal_entry_id,
+                    'reversal_journal_entry_id' => $reversal->id,
+                    'invoice_id' => $creditNote->invoice_id,
+                    'credit_note_id' => $creditNote->id,
+                    'amount' => (float) $creditNote->amount,
+                    'reason' => $reason,
+                ]
+            );
         } catch (Throwable $e) {
             $this->markFailed($creditNote, collect([$creditNote]), $e);
         }

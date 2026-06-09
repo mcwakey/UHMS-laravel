@@ -1,518 +1,347 @@
-Next is **Accounting Phase 2: Billing → Accounting Posting**.
+Next is **Accounting Phase 3: Payments, Discounts, Credit Notes, Write-offs, Refunds & Reversals hardening**.
 
-Now that the accounting foundation exists, we connect billing events to journal entries without replacing invoices/payments.
+Phase 2 connected billing to accounting. Phase 3 makes sure all adjustment/payment actions are financially clean, reversible, permission-protected, and reportable.
 
 You are working on UHMS — Ultimate Hospital Management System.
 
 Accounting Phase 1 Foundation is complete.
+Accounting Phase 2 Billing → Accounting Posting is complete.
 
-Now proceed with Accounting Phase 2:
+Now proceed with Accounting Phase 3:
 
-Billing → Accounting Posting
+Payments, Discounts, Credit Notes, Write-offs, Refunds & Reversals Hardening
 
 Goal:
-When billing events happen in UHMS, the system should automatically generate proper double-entry journal entries using the accounting foundation.
+Make all billing settlement and adjustment workflows financially correct, accounting-aware, auditable, reversible, and safe.
 
-Do not replace the existing billing system.
-Do not remove invoices, invoice items, payments, discounts, credit notes, write-offs, refunds, sponsor allocations, or insurance claims.
-Do not break the existing billing workflow.
-Do not post stock/procurement/payroll accounting yet unless directly required by billing.
-Do not write the full automated test suite yet. Full tests will be done after the whole accounting implementation is complete.
+This phase focuses on:
+
+1. Payments
+2. Discounts
+3. Credit Notes
+4. Write-offs
+5. Refunds
+6. Overpayments
+7. Reversals
+8. Invoice balance recalculation
+9. Accounting posting consistency
+10. Permission and approval rules
+11. Manual verification documentation
+
+Do not replace the current billing system.
+Do not replace invoices with journal entries.
+Do not replace payments with journal entries.
+Do not delete invoice items.
+Do not silently edit posted accounting journals.
+Do not write the full automated test suite yet. Full tests will be done after the full accounting implementation is complete.
 
 Important rule:
 
-Operational billing records remain operational.
-Journal entries are accounting records generated from billing records.
-
-Example:
-
-Invoice = operational record.
-Journal entry = accounting impact of that invoice.
+Operational records remain operational.
+Accounting records are generated from operational records.
 
 ---
 
 # 1. Main Objective
 
-Automatically create accounting journal entries for billing-related transactions:
+Ensure every payment or invoice adjustment has:
 
-1. Invoice creation / invoice finalization
-2. Invoice item billing
-3. Patient receivable recognition
-4. Revenue recognition by department/service type
-5. Payments
-6. Discounts
-7. Credit notes
-8. Write-offs
-9. Refunds
-10. Patient deposits if already supported
-11. Sponsor allocation if already supported
-12. Insurance receivable if already supported
-
-This phase should focus on billing and receivables.
+- clear operational record
+- correct invoice balance impact
+- correct accounting journal entry
+- activity log
+- permission enforcement
+- approval rules where needed
+- reversal workflow
+- no duplicate posting
+- visible history on invoice detail page
 
 ---
 
-# 2. Accounting Principle
+# 2. Core Difference Between Actions
 
-Every billing posting must satisfy:
-
-Total Debits = Total Credits
-
-Never create unbalanced journal entries.
-
-Never silently ignore a posting failure.
-
-If accounting posting fails, decide safely:
-
-- either block the financial transaction, or
-- save the operational transaction and mark accounting posting as failed/pending
-
-Use the safest existing project convention.
-
-Recommended:
-
-For high-risk finalized financial transactions, posting should happen in the same transaction if possible.
-
----
-
-# 3. Required Posting Events
-
-Implement automatic journal posting for these billing events.
-
----
-
-## A. Invoice Finalized / Invoice Posted
-
-When an invoice is finalized or becomes officially billable:
+Use these business meanings consistently:
 
 ```text
-Debit: Patient Receivables / Insurance Receivables / Sponsor Receivables
-Credit: Revenue Account
+Payment = money received
+Discount = hospital-approved price reduction
+Credit Note = invoice correction or adjustment
+Write-off = approved forgiveness of unpaid balance
+Refund = money returned to patient/payer
 ````
 
-Example:
+Do not mix these.
 
-Invoice item:
+Examples:
 
-* Consultation service: GHS 100
-
-Posting:
-
-```text
-Dr Patient Receivables      100
-Cr Consultation Revenue     100
-```
-
-If invoice has multiple item types:
-
-```text
-Dr Patient Receivables      500
-Cr Consultation Revenue     100
-Cr Laboratory Revenue       150
-Cr Pharmacy Revenue         200
-Cr Procedure Revenue         50
-```
-
-Use revenue account mapping by:
-
-* service department
-* service type
-* invoice item source
-* billing category
-* default revenue account fallback
-
-Do not use one revenue account for everything if better mappings exist.
+* patient pays cash → Payment
+* management gives 10% reduction → Discount
+* duplicate lab test billed → Credit Note
+* patient cannot pay old debt → Write-off
+* patient overpaid and hospital returns money → Refund
 
 ---
 
-## B. Payment Received
+# 3. Invoice Balance Formula
+
+Standardize invoice balance calculation.
+
+Recommended formula:
+
+```text
+gross_invoice_total
+- discounts
+- credit_notes
+- write_offs
+- payments
++ refunds
+= outstanding_balance
+```
+
+But if refunds are modeled as reversing payments, make sure the final balance effect is equivalent.
+
+Invoice detail must clearly show:
+
+```text
+Gross Total
+Discounts
+Credit Notes
+Write-offs
+Payments
+Refunds
+Outstanding Balance
+```
+
+Do not hide adjustments inside payment totals.
+
+---
+
+# 4. Payment Workflow
 
 When a payment is recorded:
 
+Operational effect:
+
+* create payment record
+* apply payment to invoice
+* reduce outstanding balance
+* update invoice payment status
+* show payment in payment history
+
+Accounting effect:
+
 ```text
-Debit: Cash / Bank / Mobile Money Account
-Credit: Receivable Account
+Dr Cash / Bank / Mobile Money
+Cr Receivable
 ```
 
-Example:
+Rules:
+
+* payment must not be treated as revenue
+* payment amount must be greater than zero
+* payment cannot exceed outstanding balance unless overpayment/deposit workflow exists
+* payment method must resolve to valid accounting account
+* payment must be idempotently posted once
+* payment reversal must create reversal journal entry
+
+If overpayment is allowed, move excess to:
 
 ```text
-Dr Cash on Hand             300
-Cr Patient Receivables      300
+Patient Deposit Liability
 ```
 
-Payment account depends on payment method:
-
-* Cash → default_cash_account_id
-* Bank → default_bank_account_id
-* Mobile Money → default_mobile_money_account_id
-* Card/POS → bank or clearing account if configured
-
-Do not treat payment as revenue again.
-
-Revenue was recognized when the invoice was posted.
+or document as TODO if deposit workflow is not ready.
 
 ---
 
-## C. Discount Applied
+# 5. Discount Workflow
 
-When a discount is approved/applied:
+When discount is applied:
+
+Operational effect:
+
+* create invoice discount record
+* require reason
+* require authorized user
+* reduce invoice outstanding balance
+* show discount in invoice adjustment history
+
+Accounting effect:
 
 ```text
-Debit: Discount Account
-Credit: Receivable Account
+Dr Discount Allowed
+Cr Receivable
 ```
 
-Example:
+Rules:
+
+* discount must not delete or change original invoice items
+* discount must be permission protected
+* discount may require approval depending amount/percentage
+* discount cannot exceed remaining eligible balance
+* discount reversal must create reversal journal entry
+
+Permissions:
 
 ```text
-Dr Discount Allowed         50
-Cr Patient Receivables      50
+billing.discount.apply
+billing.discount.approve
+billing.discount.override_limit
+billing.discount.reverse
 ```
 
-Discount reduces the amount collectible but does not delete invoice items.
+Use existing permissions if already implemented.
 
 ---
 
-## D. Credit Note Issued
+# 6. Credit Note Workflow
 
-When a credit note is issued:
+When credit note is issued:
+
+Operational effect:
+
+* create credit note record
+* require reason
+* optionally require approval
+* reduce invoice outstanding balance
+* show credit note in invoice adjustment history
+* optionally link to invoice item if correcting a specific item
+
+Accounting effect:
 
 ```text
-Debit: Credit Note / Revenue Adjustment Account
-Credit: Receivable Account
+Dr Credit Note / Revenue Adjustment
+Cr Receivable
 ```
 
-Example:
+Rules:
+
+* credit note is for correction/adjustment
+* credit note must not delete invoice item
+* credit note may be invoice-level or item-level
+* credit note cannot exceed eligible invoice balance
+* credit note should have number/reference
+* credit note reversal must create reversal journal entry
+
+Permissions:
 
 ```text
-Dr Credit Note Adjustment   80
-Cr Patient Receivables      80
+billing.credit_note.issue
+billing.credit_note.approve
+billing.credit_note.reverse
 ```
-
-Credit note is for invoice correction/adjustment, not patient payment.
 
 ---
 
-## E. Write-off Approved
+# 7. Write-off Workflow
 
 When write-off is approved:
 
+Operational effect:
+
+* create write-off record
+* require reason
+* require approval
+* reduce collectible balance
+* show write-off in invoice adjustment history
+* update AR aging so written-off balance is no longer collectible
+
+Accounting effect:
+
 ```text
-Debit: Bad Debt / Write-off Expense
-Credit: Receivable Account
+Dr Bad Debt / Write-off Expense
+Cr Receivable
 ```
 
-Example:
+Rules:
+
+* write-off means the hospital forgives/uncollectible balance
+* write-off must be high-risk permission protected
+* ordinary cashier must not write off unless explicitly permitted
+* write-off cannot exceed outstanding collectible balance
+* write-off reversal must create reversal journal entry
+* write-off should appear in write-off report
+
+Permissions:
 
 ```text
-Dr Bad Debt Expense         200
-Cr Patient Receivables      200
+billing.write_off.issue
+billing.write_off.approve
+billing.write_off.reverse
 ```
-
-Write-off means the hospital forgives or accepts the uncollectible balance.
 
 ---
 
-## F. Refund Issued
+# 8. Refund Workflow
 
-When a refund is issued:
+When refund is issued:
 
-If refund reverses a patient overpayment:
+Operational effect:
 
-```text
-Debit: Patient Refund Liability / Patient Receivable
-Credit: Cash / Bank
-```
+* create refund record
+* link to payment/invoice/patient where possible
+* require reason
+* require approval
+* increase invoice outstanding balance if refund reverses payment
+* or reduce patient deposit liability if refunding deposit
+* show refund in invoice/payment history
 
-Use existing UHMS refund logic.
+Accounting effect depends on refund source.
 
-Recommended simple approach:
-
-If refund reduces overpaid patient balance:
-
-```text
-Dr Patient Receivables / Patient Deposits / Refund Payable
-Cr Cash or Bank
-```
-
-Do not treat refund as expense unless project accounting rules require it.
-
----
-
-## G. Patient Deposit Received
-
-If patient deposit/prepayment exists:
-
-When deposit is received before invoice:
+If refund reverses patient payment:
 
 ```text
-Dr Cash / Bank
-Cr Patient Deposit Liability
+Dr Receivable
+Cr Cash / Bank / Mobile Money
 ```
 
-When deposit is applied to invoice:
+If refund returns patient deposit:
 
 ```text
 Dr Patient Deposit Liability
-Cr Patient Receivables
+Cr Cash / Bank / Mobile Money
 ```
 
-Only implement if deposit workflow already exists.
+Rules:
 
-Do not create a new deposit workflow unless necessary.
+* refund must not be treated as expense by default
+* refund must not be treated as negative revenue by default
+* refund must be permission protected
+* refund cannot exceed refundable amount
+* refund should have reference/number
+* refund reversal must be carefully permission protected
 
----
-
-## H. Sponsor Allocation
-
-If sponsor allocation exists:
-
-When invoice responsibility is allocated to sponsor:
-
-```text
-Dr Sponsor Receivables
-Cr Patient Receivables
-```
-
-or, if invoice is directly billed to sponsor:
+Permissions:
 
 ```text
-Dr Sponsor Receivables
-Cr Revenue
-```
-
-Use the current billing design.
-
-Important:
-
-Sponsor does not reduce invoice total.
-Sponsor shifts responsibility from patient to sponsor.
-
----
-
-## I. Insurance Receivable
-
-If insurance/claims receivable exists:
-
-When invoice responsibility is allocated to insurance:
-
-```text
-Dr Insurance Receivables
-Cr Patient Receivables
-```
-
-or, if invoice is directly billed to insurance:
-
-```text
-Dr Insurance Receivables
-Cr Revenue
-```
-
-Use existing insurance billing workflow.
-
-Do not hardcode NHIS.
-NHIS is just one insurance provider/type.
-
----
-
-# 4. Avoid Duplicate Posting
-
-Every operational record should be posted once.
-
-Add fields where needed:
-
-```text
-journal_entry_id nullable
-accounting_posted_at nullable
-accounting_status nullable: pending/posted/failed/reversed
-accounting_error nullable
-```
-
-Possible tables:
-
-* invoices
-* payments
-* invoice_discounts
-* credit_notes
-* write_offs
-* refunds
-* sponsor allocations
-* insurance claim allocations
-
-Use existing columns if already present.
-
-Do not create duplicate journal entries if the user retries the action.
-
-Posting must be idempotent.
-
----
-
-# 5. Accounting Source Metadata
-
-Every journal entry generated from billing should include:
-
-```text
-source_module = BILLING / PAYMENTS / CLAIMS / SPONSORS
-reference_type = model class or source type
-reference_id = source model id
-description = clear human-readable text
-```
-
-Every journal line should include relevant context:
-
-```text
-patient_id
-visit_id
-invoice_id
-department_id
-supplier_id nullable
-sponsor_id nullable
-insurance_provider_id nullable
-reference_type
-reference_id
+billing.refund.issue
+billing.refund.approve
+billing.refund.reverse
 ```
 
 ---
 
-# 6. Services to Create / Update
+# 9. Reversal Workflow
 
-Create or update:
+Every posted financial action must be reversible only through a controlled reversal.
 
-```text
-BillingAccountingPostingService
-PaymentAccountingPostingService
-ReceivableAccountingService
-RevenueAccountResolver
-PaymentAccountResolver
-AccountingPostingService
-AccountingSettingsService
-JournalEntryService
-```
+Do not delete original records.
 
-Controllers should not contain accounting logic.
+Do not edit posted journals.
 
-Operational services should call posting services after successful billing actions.
+For reversal:
 
-Suggested methods:
-
-```php
-BillingAccountingPostingService::postInvoice(Invoice $invoice): JournalEntry
-PaymentAccountingPostingService::postPayment(Payment $payment): JournalEntry
-BillingAccountingPostingService::postDiscount(InvoiceDiscount $discount): JournalEntry
-BillingAccountingPostingService::postCreditNote(CreditNote $creditNote): JournalEntry
-BillingAccountingPostingService::postWriteOff(WriteOff $writeOff): JournalEntry
-BillingAccountingPostingService::postRefund(Refund $refund): JournalEntry
-```
-
-Use actual existing model names.
-
----
-
-# 7. Revenue Account Mapping
-
-Implement account resolution.
-
-Priority order:
-
-```text
-1. Service-specific revenue account if configured
-2. Department revenue account if configured
-3. Invoice item source/category account mapping
-4. Accounting settings default revenue account
-```
+* mark original operational record as reversed/cancelled if appropriate
+* create reversal operational record or reversal metadata
+* create reversal journal entry with debit/credit swapped
+* link reversal to original source
+* require reason
+* require authorized user
+* log the reversal
 
 Examples:
 
-* consultation service → Consultation Revenue
-* lab investigation → Laboratory Revenue
-* pharmacy product → Pharmacy Revenue
-* procedure/theatre service → Procedure Revenue
-* admission charge → Admission Revenue
-* emergency consultation → Emergency Revenue
-
-If no mapping exists, use default_revenue_account_id.
-
-If even default revenue account is missing, fail clearly:
-
-```text
-No revenue account configured for this billing item.
-```
-
-Do not silently post to a random account.
-
----
-
-# 8. Receivable Account Mapping
-
-Resolve receivable account based on payer responsibility.
-
-Possible payer types:
-
-```text
-patient
-insurance
-sponsor
-corporate
-```
-
-Mapping:
-
-* patient → patient_receivable_account_id
-* insurance → insurance_receivable_account_id
-* sponsor → sponsor_receivable_account_id
-* corporate → corporate_receivable_account_id
-
-If invoice is mixed responsibility, split receivable lines by payer.
-
-Example:
-
-Invoice total: GHS 1,000
-Patient responsible: GHS 300
-Insurance responsible: GHS 700
-
-Posting:
-
-```text
-Dr Patient Receivables       300
-Dr Insurance Receivables     700
-Cr Revenue                 1,000
-```
-
-If current UHMS does not yet support split payer responsibility, post to Patient Receivables for now and document payer-split as TODO for Phase 4.
-
----
-
-# 9. Payment Account Mapping
-
-Resolve payment account based on payment method.
-
-Examples:
-
-```text
-Cash → Cash on Hand
-Bank Transfer → Bank Account
-Mobile Money → Mobile Money Account
-Card/POS → Bank/POS Clearing Account
-```
-
-Use existing payment method model/config if available.
-
-Do not hardcode payment methods only in service logic if the system has configurable methods.
-
----
-
-# 10. Reversal Behavior
-
-If an operational financial transaction is reversed, cancelled, or voided:
-
-Do not delete the original journal entry.
-
-Create reversal journal entry.
-
-Examples:
-
-Payment reversed:
+Payment reversal:
 
 ```text
 Original:
@@ -524,181 +353,285 @@ Dr Patient Receivable
 Cr Cash
 ```
 
-Credit note reversed:
+Discount reversal:
 
 ```text
 Original:
-Dr Credit Note Adjustment
+Dr Discount Allowed
 Cr Patient Receivable
 
 Reversal:
 Dr Patient Receivable
-Cr Credit Note Adjustment
+Cr Discount Allowed
 ```
 
-Use JournalEntryService::reverse() or equivalent.
-
----
-
-# 11. Invoice Status and Accounting Timing
-
-Decide when invoice is posted to accounting.
-
-Recommended:
-
-Post accounting when invoice becomes:
+Write-off reversal:
 
 ```text
-FINALIZED
-POSTED
-APPROVED
-ISSUED
+Original:
+Dr Bad Debt Expense
+Cr Patient Receivable
+
+Reversal:
+Dr Patient Receivable
+Cr Bad Debt Expense
 ```
-
-Do not post draft invoices.
-
-If UHMS currently creates invoices immediately as official bills, then post on creation only if invoice is not draft.
-
-Document the rule.
-
-Avoid posting incomplete draft billing lines.
 
 ---
 
-# 12. Emergency / Admission Billing
+# 10. Idempotency / Duplicate Prevention
 
-Emergency and Admission may use running bills.
+Every operational record should post once.
+
+Use or add fields:
+
+```text
+journal_entry_id
+accounting_status
+accounting_posted_at
+accounting_error
+reversed_at
+reversed_by
+reversal_reason
+reversal_journal_entry_id
+```
+
+Apply where appropriate:
+
+* payments
+* invoice_discounts
+* credit_notes
+* write_offs
+* refunds
 
 Rules:
 
-* emergency service can be rendered before payment
-* admission charges can accumulate
-* accounting revenue should post when invoice item becomes billable/finalized according to billing design
-* payments reduce receivables
-* do not block emergency care because accounting posting is pending unless project policy says so
-
-Document how running-bill invoices are posted.
-
-Recommended:
-
-* invoice item can be operationally added during emergency/admission
-* accounting post happens when invoice is finalized, or when item is approved as billable
-* choose one consistent rule
+* retry failed posting must not duplicate journal entry
+* reversing twice must be blocked
+* posting reversed/cancelled source must be blocked
+* posting amount must match operational amount
+* accounting status must be visible to authorized users
 
 ---
 
-# 13. Activity Logs
+# 11. Invoice Adjustment History UI
 
-Do not create a separate accounting audit system.
-
-Use existing ActivityLogService.
-
-Log accounting posting events:
+On invoice detail page, add a clear section:
 
 ```text
-ACCOUNTING_POSTED_FOR_INVOICE
+Adjustments & Settlements
+```
+
+Show:
+
+```text
+Date
+Type
+Reference
+Amount
+Reason
+Status
+Approved By
+Journal Entry
+Action
+```
+
+Types:
+
+```text
+Payment
+Discount
+Credit Note
+Write-off
+Refund
+Reversal
+```
+
+Invoice summary should show:
+
+```text
+Gross Total
+Discounts
+Credit Notes
+Write-offs
+Payments
+Refunds
+Outstanding Balance
+Accounting Status
+```
+
+Do not hide adjustments inside payment list only.
+
+---
+
+# 12. Approval Rules
+
+Implement or align with existing approval rules.
+
+Recommended:
+
+## Discount
+
+* small discount may be applied directly by authorized billing officer
+* high discount requires approval
+* override limit requires higher permission
+
+## Credit Note
+
+* issuing requires billing credit note permission
+* approval may be required depending amount
+
+## Write-off
+
+* approval should always be required or restricted to management
+* high severity audit event
+
+## Refund
+
+* approval should be required
+* must reference original payment/deposit where possible
+
+Use existing approval system if available.
+
+Do not create a parallel approval engine if one exists.
+
+---
+
+# 13. Accounting Posting Services
+
+Create or update:
+
+```text
+PaymentSettlementService
+InvoiceAdjustmentService
+CreditNoteService
+WriteOffService
+RefundService
+FinancialReversalService
+InvoiceBalanceService
+BillingAccountingPostingService
+PaymentAccountingPostingService
+AccountingPostingRetryService
+```
+
+Use existing services if already present.
+
+Controllers should remain thin.
+
+Do not put accounting logic directly in controllers.
+
+---
+
+# 14. Account Mapping
+
+Use AccountingSettingsService.
+
+Required accounts:
+
+```text
+patient_receivable_account_id
+insurance_receivable_account_id
+sponsor_receivable_account_id
+corporate_receivable_account_id
+
+default_cash_account_id
+default_bank_account_id
+default_mobile_money_account_id
+
+default_discount_account_id
+default_credit_note_account_id
+default_write_off_account_id
+default_refund_account_id
+patient_deposit_liability_account_id
+rounding_difference_account_id
+```
+
+Fail clearly if required account is missing:
+
+```text
+Accounting posting failed: Missing default credit note account.
+```
+
+Do not silently post to a random account.
+
+---
+
+# 15. Activity Logs
+
+Use ActivityLogService.
+
+Log operational events:
+
+```text
+PAYMENT_RECORDED
+PAYMENT_REVERSED
+DISCOUNT_APPLIED
+DISCOUNT_APPROVED
+DISCOUNT_REVERSED
+CREDIT_NOTE_ISSUED
+CREDIT_NOTE_APPROVED
+CREDIT_NOTE_REVERSED
+WRITE_OFF_ISSUED
+WRITE_OFF_APPROVED
+WRITE_OFF_REVERSED
+REFUND_ISSUED
+REFUND_APPROVED
+REFUND_REVERSED
+```
+
+Log accounting events:
+
+```text
 ACCOUNTING_POSTED_FOR_PAYMENT
 ACCOUNTING_POSTED_FOR_DISCOUNT
 ACCOUNTING_POSTED_FOR_CREDIT_NOTE
 ACCOUNTING_POSTED_FOR_WRITE_OFF
-ACCOUNTING_POSTING_FAILED
+ACCOUNTING_POSTED_FOR_REFUND
 ACCOUNTING_REVERSAL_CREATED
+ACCOUNTING_POSTING_FAILED
 ```
+
+Avoid duplicates.
+
+Billing operational log and accounting posting log are different.
 
 Context:
 
 ```text
+patient_id
+visit_id
 invoice_id
 payment_id
 discount_id
 credit_note_id
 write_off_id
+refund_id
 journal_entry_id
-patient_id
-visit_id
-source_module
-old_values
-new_values
-error message if failed
+amount
+old_balance
+new_balance
+reason
+approved_by
+reversed_by
 ```
-
-Avoid duplicate billing logs.
-
-Billing logs say “invoice created/payment recorded”.
-Accounting logs say “journal entry posted for invoice/payment”.
-
-Both are different.
 
 ---
 
-# 14. UI Updates
+# 16. AR Aging Impact
 
-On invoice detail page, show accounting status:
+Prepare adjustment impact for AR aging.
 
-```text
-Accounting Status: Posted / Pending / Failed / Reversed
-Journal Entry: JE-2026-000123
-```
+Rules:
 
-On payment detail/history, show journal entry if posted.
+* payments reduce receivable balance
+* discounts reduce receivable balance
+* credit notes reduce receivable balance
+* write-offs remove amount from collectible AR and classify as written off
+* refunds may increase receivable or reduce deposit liability depending source
 
-On accounting journal entry page, show source link:
+If AR aging module is not yet implemented, expose clean balances so Phase 4 can build on them.
 
-```text
-Source: Invoice INV-2026-00045
-Source: Payment PAY-2026-00033
-```
-
-If posting failed, show friendly message to authorized users:
-
-```text
-Accounting posting failed: Missing revenue account for Laboratory Revenue.
-```
-
-Do not expose internal stack traces.
-
----
-
-# 15. Permissions
-
-Add or verify:
-
-```text
-accounting.posting.view
-accounting.posting.retry
-accounting.posting.reverse
-accounting.posting.failure.view
-```
-
-Only authorized finance/admin users should retry failed postings.
-
-Normal billing users should not manually manipulate accounting journals unless they also have accounting permissions.
-
----
-
-# 16. Manual Retry
-
-If posting fails because of missing account mapping, allow authorized user to retry after fixing settings.
-
-Recommended:
-
-```php
-AccountingPostingRetryService::retry(Model $source): JournalEntry
-```
-
-or buttons:
-
-```text
-Retry Accounting Posting
-```
-
-Available only when:
-
-```text
-accounting_status = failed
-```
-
-Do not create duplicate journal entry on retry.
+Do not build full AR aging here unless already easy from existing balance data.
 
 ---
 
@@ -712,24 +645,29 @@ For this phase, provide manual verification notes.
 
 Manual verification required:
 
-1. Finalize/create invoice and confirm journal entry is created.
-2. Confirm invoice journal debits receivable and credits revenue.
-3. Confirm invoice with multiple item categories credits correct revenue accounts.
-4. Record payment and confirm cash/bank/mobile money is debited.
-5. Confirm payment credits receivable, not revenue.
-6. Apply discount and confirm discount account is debited.
-7. Issue credit note and confirm credit note adjustment account is debited.
-8. Approve write-off and confirm bad debt/write-off expense is debited.
-9. Confirm outstanding balance is correct after payment/discount/credit/write-off.
-10. Confirm no duplicate journal entry is created on retry.
-11. Confirm reversal creates reversing journal entry.
-12. Confirm invoice detail shows accounting status and journal link.
-13. Confirm failed posting can be retried after fixing settings.
-14. Confirm emergency/admission billing still works.
-15. Confirm OPD billing still works.
-16. Confirm logs:audit Stage-2 gate still passes.
-17. Confirm Trial Balance remains balanced after billing postings.
-18. Confirm General Ledger shows invoice/payment postings.
+1. Record payment and confirm invoice balance reduces.
+2. Confirm payment journal debits cash/bank/mobile money and credits receivable.
+3. Reverse payment and confirm reversal journal is created.
+4. Apply discount and confirm invoice balance reduces.
+5. Confirm discount journal debits discount account and credits receivable.
+6. Reverse discount and confirm balance/journal reverses.
+7. Issue credit note and confirm balance reduces.
+8. Confirm credit note journal debits credit note account and credits receivable.
+9. Reverse credit note and confirm balance/journal reverses.
+10. Approve write-off and confirm collectible balance reduces.
+11. Confirm write-off journal debits bad debt/write-off expense and credits receivable.
+12. Reverse write-off and confirm receivable returns.
+13. Issue refund and confirm correct cash/bank credit.
+14. Confirm refund does not post as expense by default.
+15. Confirm invoice detail shows adjustment history.
+16. Confirm duplicate posting is prevented.
+17. Confirm missing account mapping creates clear failed status.
+18. Confirm authorized user can retry failed posting.
+19. Confirm unauthorized user cannot issue/approve/reverse high-risk adjustments.
+20. Confirm Trial Balance remains balanced.
+21. Confirm General Ledger shows all postings.
+22. Confirm logs:audit Stage-2 gate still passes.
+23. Confirm existing billing, emergency, admission, pharmacy, and claims workflows still work.
 
 Do not skip validation, permissions, audit logs, or idempotency because tests are deferred.
 
@@ -740,21 +678,22 @@ Do not skip validation, permissions, audit logs, or idempotency because tests ar
 Create:
 
 ```text
-docs/ACCOUNTING_PHASE_2_BILLING_POSTING_REPORT.md
+docs/ACCOUNTING_PHASE_3_SETTLEMENTS_ADJUSTMENTS_REPORT.md
 ```
 
 Include:
 
-* billing events wired
-* posting rules
-* account mappings
-* invoice accounting timing
-* emergency/admission running bill treatment
-* payment treatment
-* discount/credit note/write-off treatment
-* reversal handling
+* payment workflow
+* discount workflow
+* credit note workflow
+* write-off workflow
+* refund workflow
+* reversal rules
+* accounting postings
+* invoice balance formula
+* approval/permission rules
 * UI changes
-* permissions
+* activity logs
 * manual verification completed
 * tests deferred list
 * known risks/TODOs
@@ -764,22 +703,21 @@ Include:
 
 # 19. Acceptance Criteria
 
-Phase 2 is complete when:
+Phase 3 is complete when:
 
-* invoices can generate balanced journal entries
-* payments generate balanced journal entries
-* discounts generate balanced journal entries
-* credit notes generate balanced journal entries
-* write-offs generate balanced journal entries
-* refunds/reversals are handled if supported
-* journal entries are idempotent
-* accounting status appears on billing records
-* failed postings can be retried by authorized users
+* payments are correctly posted and reversible
+* discounts are correctly posted and reversible
+* credit notes are correctly posted and reversible
+* write-offs are correctly posted and reversible
+* refunds are correctly posted and reversible if supported
+* invoice outstanding balance formula is consistent
+* adjustment history is visible on invoice
+* high-risk actions require permissions/approval
+* duplicate posting is prevented
+* failed posting can be retried safely
 * Trial Balance remains balanced
-* General Ledger shows billing postings
-* emergency/admission billing remains functional
-* OPD billing remains functional
-* Activity logs capture accounting posting events
+* General Ledger shows settlement/adjustment postings
+* Activity logs are written
 * logs:audit Stage-2 gate remains green
 * manual verification is documented
 * full automated tests remain deferred until final accounting implementation pass
@@ -788,19 +726,18 @@ Phase 2 is complete when:
 
 # 20. Important Rules
 
-Do not replace invoices with journal entries.
-Do not replace payments with journal entries.
-Do not treat payments as revenue.
-Do not delete invoice items when posting adjustments.
-Do not create duplicate journal entries.
-Do not post draft invoices unless the current billing design treats them as official.
-Do not hardcode NHIS.
-Do not hardcode all revenue to one account.
-Do not block emergency care because of OPD payment rules.
-Do not create a separate accounting audit system.
-Do not bypass ActivityLogService.
+Do not delete invoice items.
+Do not silently change original invoice item prices.
+Do not treat payment as revenue.
+Do not treat refund as expense by default.
+Do not treat sponsor payment as discount.
+Do not treat write-off as payment.
+Do not treat credit note as payment.
+Do not edit posted journal entries.
+Do not reverse by deleting journals.
+Do not duplicate postings.
 Do not bypass permissions.
-Do not skip validation.
+Do not bypass ActivityLogService.
 Do not enable full automated tests yet.
 
-Proceed with Accounting Phase 2: Billing → Accounting Posting now.
+Proceed with Accounting Phase 3: Payments, Discounts, Credit Notes, Write-offs, Refunds & Reversals Hardening now.

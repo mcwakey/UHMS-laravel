@@ -8,7 +8,8 @@
     $canCreateInsuranceClaim = (float) $invoice->nhis_amount > 0 && ! $invoiceClaim;
     $currentUser = auth()->user();
     $canApplyDiscount = $currentUser?->can('billing.discount.apply') ?? false;
-    $canRemoveDiscount = $currentUser?->can('billing.discount.remove') ?? false;
+    $canRemoveDiscount = ($currentUser?->can('billing.discount.remove') ?? false)
+        || ($currentUser?->can('billing.discount.reverse') ?? false);
     $canViewDiscountHistory = $currentUser?->can('billing.discount.view') ?? false;
     $canDiscountActions = $canApplyDiscount || $canRemoveDiscount;
     $canViewAccountingPosting = $currentUser?->can('accounting.posting.view') ?? false;
@@ -365,40 +366,116 @@
                     </div>
                     <div class="col-md-6">
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Subtotal</span>
-                            <span class="fw-medium">&#8373;{{ number_format($invoice->subtotal, 2) }}</span>
-                        </div>
-                        @if($invoice->tax_amount > 0)
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Tax</span>
-                            <span>&#8373;{{ number_format($invoice->tax_amount, 2) }}</span>
-                        </div>
-                        @endif
-                        @if($invoice->discount_amount > 0)
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Discount</span>
-                            <span class="text-danger">-&#8373;{{ number_format($invoice->discount_amount, 2) }}</span>
-                        </div>
-                        @endif
-                        @if($invoice->nhis_amount > 0)
-                        <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Insurance Covered</span>
-                            <span class="text-primary">&#8373;{{ number_format($invoice->nhis_amount, 2) }}</span>
-                        </div>
-                        @endif
-                        <div class="d-flex justify-content-between mb-2 border-top pt-2">
-                            <span class="fw-bold fs-5">Total</span>
-                            <span class="fw-bold fs-5">&#8373;{{ number_format($invoice->total_amount, 2) }}</span>
+                            <span class="text-muted">Gross Total</span>
+                            <span class="fw-medium">&#8373;{{ number_format($invoiceBalanceSummary['gross_total'], 2) }}</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-success fw-medium">Paid</span>
-                            <span id="invoicePaidValue" class="text-success fw-medium" data-amount="{{ $invoice->amount_paid }}">&#8373;{{ number_format($invoice->amount_paid, 2) }}</span>
+                            <span class="text-muted">Discounts</span>
+                            <span class="text-danger">-&#8373;{{ number_format($invoiceBalanceSummary['discounts'], 2) }}</span>
                         </div>
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Credit Notes</span>
+                            <span class="text-info">-&#8373;{{ number_format($invoiceBalanceSummary['credit_notes'], 2) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Write-offs</span>
+                            <span class="text-dark">-&#8373;{{ number_format($invoiceBalanceSummary['write_offs'], 2) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-success fw-medium">Payments</span>
+                            <span id="invoicePaidValue" class="text-success fw-medium" data-amount="{{ $invoice->amount_paid }}">-&#8373;{{ number_format($invoiceBalanceSummary['payments'], 2) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-danger fw-medium">Refunds / Reversals</span>
+                            <span class="text-danger">+&#8373;{{ number_format($invoiceBalanceSummary['refunds'], 2) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between border-top pt-2">
                             <span class="fw-bold text-danger">Balance</span>
-                            <span id="invoiceBalanceValue" class="fw-bold text-danger fs-5" data-amount="{{ $invoice->balance }}">&#8373;{{ number_format($invoice->balance, 2) }}</span>
+                            <span id="invoiceBalanceValue" class="fw-bold text-danger fs-5" data-amount="{{ $invoice->balance }}">&#8373;{{ number_format($invoiceBalanceSummary['outstanding_balance'], 2) }}</span>
                         </div>
+                        @if($canViewAccountingPosting)
+                        <div class="d-flex justify-content-between mt-2">
+                            <span class="text-muted">Accounting Status</span>
+                            <span class="badge bg-{{ $accountingStatusColor($invoiceBalanceSummary['accounting_status']) }}">{{ $accountingStatusLabel($invoiceBalanceSummary['accounting_status']) }}</span>
+                        </div>
+                        @endif
+                        @if(! $invoiceBalanceSummary['formula_matches_invoice'])
+                        <div class="alert alert-warning py-2 mt-2 mb-0 small">
+                            Formula balance is &#8373;{{ number_format($invoiceBalanceSummary['formula_balance'], 2) }}. Invoice balance is &#8373;{{ number_format($invoiceBalanceSummary['outstanding_balance'], 2) }}.
+                        </div>
+                        @endif
                     </div>
+                </div>
+
+                <hr>
+                <h6 class="fw-bold mb-3"><i class="ti ti-adjustments-dollar me-1"></i>Adjustments &amp; Settlements</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Type</th>
+                                <th>Reference</th>
+                                <th class="text-end">Amount</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Approved By</th>
+                                @if($canViewAccountingPosting)
+                                <th>Journal Entry</th>
+                                <th>Action</th>
+                                @endif
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($adjustmentHistory as $history)
+                            <tr>
+                                <td>{{ $history['date']?->format('d M Y H:i') ?? '—' }}</td>
+                                <td><span class="badge bg-{{ $history['badge'] }}">{{ $history['type'] }}</span></td>
+                                <td class="fw-medium">{{ $history['reference'] }}</td>
+                                <td class="text-end">&#8373;{{ number_format($history['amount'], 2) }}</td>
+                                <td>{{ $history['reason'] ?: '—' }}</td>
+                                <td>{{ $history['status'] }}</td>
+                                <td>{{ $history['actor'] ?: '—' }}</td>
+                                @if($canViewAccountingPosting)
+                                <td>
+                                    @if($history['journal'])
+                                        <a href="{{ route('admin.accounting.journals.show', $history['journal']) }}">{{ $history['journal']->journal_number }}</a>
+                                    @else
+                                        <span class="badge bg-{{ $accountingStatusColor($history['accounting_status']) }}">{{ $accountingStatusLabel($history['accounting_status']) }}</span>
+                                    @endif
+                                    @if($history['reversal_journal'])
+                                        <div class="small">
+                                            Reversal:
+                                            <a href="{{ route('admin.accounting.journals.show', $history['reversal_journal']) }}">{{ $history['reversal_journal']->journal_number }}</a>
+                                        </div>
+                                    @endif
+                                    @if($history['accounting_status'] === 'failed' && $canViewAccountingFailures && $history['accounting_error'])
+                                        <div class="small text-danger">{{ $history['accounting_error'] }}</div>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($history['accounting_status'] === 'failed' && $canRetryAccountingPosting)
+                                        <form method="POST" action="{{ route('admin.accounting.postings.retry') }}" class="d-inline">
+                                            @csrf
+                                            <input type="hidden" name="source_type" value="{{ $history['retry_source_type'] }}">
+                                            <input type="hidden" name="source_id" value="{{ $history['retry_source_id'] }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-warning">
+                                                <i class="ti ti-refresh me-1"></i>Retry
+                                            </button>
+                                        </form>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
+                                @endif
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="{{ $canViewAccountingPosting ? 9 : 7 }}" class="text-center text-muted py-3">No payments or adjustments recorded.</td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
 
                 @if($canViewDiscountHistory)
@@ -805,7 +882,7 @@ $(function() {
 
         if (invoicePaidValue.length) {
             invoicePaidValue.data('amount', nextPaid);
-            invoicePaidValue.html(formatMoney(nextPaid));
+            invoicePaidValue.html('-' + formatMoney(nextPaid));
         }
 
         if (invoiceBalanceValue.length) {

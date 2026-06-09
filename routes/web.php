@@ -990,8 +990,7 @@ Route::middleware('auth')->group(function () {
                     ->name('invoices.items.discount')
                     ->middleware('can:billing.discount.apply');
                 Route::delete('invoices/{invoice}/items/{item}/discount', [InvoiceController::class, 'removeItemDiscount'])
-                    ->name('invoices.items.discount.remove')
-                    ->middleware('can:billing.discount.remove');
+                    ->name('invoices.items.discount.remove');
             });
 
             // Payments

@@ -31,6 +31,10 @@ class PaymentAccountingPostingService
             return $payment->journalEntry;
         }
 
+        if ((string) $payment->accounting_status === self::STATUS_REVERSED) {
+            return $payment->journalEntry;
+        }
+
         $amount = abs(round((float) $payment->amount, 2));
         if ($amount <= 0) {
             $payment->forceFill([
@@ -81,12 +85,13 @@ class PaymentAccountingPostingService
 
             if ($payment->is_reversal && $payment->originalPayment) {
                 $payment->originalPayment->forceFill([
+                    'reversal_journal_entry_id' => $entry->id,
                     'accounting_status' => self::STATUS_REVERSED,
                     'accounting_error' => null,
                 ])->save();
             }
 
-            $this->log('ACCOUNTING_POSTED_FOR_PAYMENT', $payment, [
+            $this->log(((bool) $payment->is_reversal || (float) $payment->amount < 0) ? 'ACCOUNTING_POSTED_FOR_REFUND' : 'ACCOUNTING_POSTED_FOR_PAYMENT', $payment, [
                 'journal_entry_id' => $entry->id,
                 'payment_id' => $payment->id,
                 'invoice_id' => $payment->invoice_id,

@@ -41,6 +41,7 @@ class Payment extends Model
         'reversed_by',
         'reversal_reason',
         'journal_entry_id',
+        'reversal_journal_entry_id',
         'accounting_posted_at',
         'accounting_status',
         'accounting_error',
@@ -93,6 +94,11 @@ class Payment extends Model
     public function journalEntry()
     {
         return $this->belongsTo(JournalEntry::class);
+    }
+
+    public function reversalJournalEntry()
+    {
+        return $this->belongsTo(JournalEntry::class, 'reversal_journal_entry_id');
     }
 
     /**

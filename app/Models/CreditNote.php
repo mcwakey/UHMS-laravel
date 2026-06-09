@@ -37,9 +37,13 @@ class CreditNote extends Model
         'cancelled_by',
         'cancellation_reason',
         'journal_entry_id',
+        'reversal_journal_entry_id',
         'accounting_posted_at',
         'accounting_status',
         'accounting_error',
+        'reversed_at',
+        'reversed_by',
+        'reversal_reason',
     ];
 
     protected function casts(): array
@@ -49,6 +53,7 @@ class CreditNote extends Model
             'amount' => 'decimal:2',
             'cancelled_at' => 'datetime',
             'accounting_posted_at' => 'datetime',
+            'reversed_at' => 'datetime',
         ];
     }
 
@@ -75,6 +80,16 @@ class CreditNote extends Model
     public function journalEntry()
     {
         return $this->belongsTo(JournalEntry::class);
+    }
+
+    public function reversalJournalEntry()
+    {
+        return $this->belongsTo(JournalEntry::class, 'reversal_journal_entry_id');
+    }
+
+    public function reversedBy()
+    {
+        return $this->belongsTo(User::class, 'reversed_by');
     }
 
     public function scopeActive($query)
