@@ -6,11 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Enums\DepartmentType;
 use App\Enums\ResultType;
 use App\Models\Department;
+use App\Services\StockLocationSyncService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class DepartmentController extends Controller
 {
+    public function __construct(private StockLocationSyncService $stockLocationSync) {}
+
     public function index(Request $request)
     {
         $departments = Department::withCount(['users', 'designations'])
@@ -41,7 +44,10 @@ class DepartmentController extends Controller
 
         $validated['is_stock_managed'] = $request->boolean('is_stock_managed');
 
-        Department::create($validated);
+        $department = Department::create($validated);
+
+        // Auto-create a stock location when the department manages stock.
+        $this->stockLocationSync->ensureDepartmentLocation($department);
 
         return redirect()->route('admin.departments.index')
             ->with('success', 'Department created successfully.');
@@ -62,6 +68,9 @@ class DepartmentController extends Controller
         $validated['is_stock_managed'] = $request->boolean('is_stock_managed');
 
         $department->update($validated);
+
+        // Keep the department's stock location in sync when stock management is on.
+        $this->stockLocationSync->ensureDepartmentLocation($department);
 
         return redirect()->route('admin.departments.index')
             ->with('success', 'Department updated successfully.');

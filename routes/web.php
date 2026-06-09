@@ -538,6 +538,7 @@ Route::middleware('auth')->group(function () {
             Route::middleware('can:store.return.view')->group(function () {
                 Route::get('purchase-returns', [PurchaseReturnController::class, 'index'])->name('purchase-returns.index');
                 Route::get('purchase-returns/create', [PurchaseReturnController::class, 'create'])->name('purchase-returns.create')->middleware('can:store.return.create');
+                Route::get('purchase-returns/po/{purchaseOrder}/items', [PurchaseReturnController::class, 'poItems'])->name('purchase-returns.po-items')->middleware('can:store.return.create');
                 Route::post('purchase-returns', [PurchaseReturnController::class, 'store'])->name('purchase-returns.store')->middleware('can:store.return.create');
                 Route::get('purchase-returns/{purchaseReturn}', [PurchaseReturnController::class, 'show'])->name('purchase-returns.show');
                 Route::post('purchase-returns/{purchaseReturn}/approve', [PurchaseReturnController::class, 'approve'])->name('purchase-returns.approve')->middleware('can:store.return.approve');
@@ -575,6 +576,12 @@ Route::middleware('auth')->group(function () {
                 Route::get('stock/balances', [StockController::class, 'balances'])->name('stock.balances');
                 Route::get('stock/ledger', [StockController::class, 'ledger'])->name('stock.ledger');
 
+                // Stock movement list pages + per-movement detail
+                Route::get('stock/adjustments', [StockController::class, 'adjustmentsIndex'])->name('stock.adjustments.index');
+                Route::get('stock/returns', [StockController::class, 'returnsIndex'])->name('stock.returns.index');
+                Route::get('stock/transfers', [StockController::class, 'transfersIndex'])->name('stock.transfers.index');
+                Route::get('stock/movements/{movement}', [StockController::class, 'movementShow'])->name('stock.movements.show');
+
                 Route::get('stock/locations', [StockController::class, 'locations'])->name('stock.locations.index');
                 Route::post('stock/locations', [StockController::class, 'storeLocation'])
                     ->name('stock.locations.store')->middleware('can:store.purchase.create');
@@ -587,6 +594,9 @@ Route::middleware('auth')->group(function () {
 
                     Route::get('stock/returns/create', [StockController::class, 'returnForm'])->name('stock.returns.create');
                     Route::post('stock/returns', [StockController::class, 'storeReturn'])->name('stock.returns.store');
+
+                    Route::get('stock/transfers/create', [StockController::class, 'transferForm'])->name('stock.transfers.create');
+                    Route::post('stock/transfers', [StockController::class, 'storeTransfer'])->name('stock.transfers.store');
                 });
             });
         });

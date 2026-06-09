@@ -20,8 +20,9 @@ class PurchaseOrderController extends Controller
 
     public function index(Request $request)
     {
+        $filters = self::withParsedDateRange($request->all());
         $stats = $this->procurementService->getStats();
-        $purchaseOrders = $this->procurementService->list($request->all());
+        $purchaseOrders = $this->procurementService->list($filters);
         $suppliers = Supplier::active()->orderBy('name')->get();
         $products = Product::active()->orderBy('name')->get(['id', 'name', 'code']);
         $statuses = PurchaseOrderStatus::cases();

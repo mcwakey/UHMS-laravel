@@ -4,32 +4,25 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\StockMovementType;
 use App\Http\Controllers\Controller;
-use App\Models\Drug;
+use App\Models\Product;
 use App\Models\StockLocation;
 use App\Models\StockMovement;
-use App\Services\StockAdjustmentService;
-use App\Services\StockBalanceService;
 use App\Services\StockBalanceMatrixService;
-use App\Services\StockReturnService;
+use App\Services\StockLocationSyncService;
+use App\Services\StockOperationService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class StockController extends Controller
 {
     public function __construct(
-        private StockBalanceService $balances,
-        private StockAdjustmentService $adjustments,
-        private StockReturnService $returns,
         private StockBalanceMatrixService $matrix,
+        private StockLocationSyncService $locationSync,
+        private StockOperationService $operations,
     ) {}
 
     /**
      * Product Stock Balances — single source of truth for on-hand inventory.
-     *
-    * Reads exclusively from `stock_balances` joined to `products`
-     * and `stock_locations`. Every physical item in the hospital is a Product
-     * and lives in this one ledger; there are no parallel drug/investigation
-     * stock tables surfaced here.
      */
     public function balances(Request $request)
     {
@@ -44,7 +37,7 @@ class StockController extends Controller
     public function ledger(Request $request)
     {
         $movements = StockMovement::query()
-            ->with(['drug:id,name,unit', 'location:id,name', 'performedBy:id,first_name,last_name'])
+            ->with(['drug:id,name,unit', 'product:id,name', 'location:id,name', 'performedBy:id,first_name,last_name'])
             ->when($request->drug_id, fn ($q, $id) => $q->where('drug_id', $id))
             ->when($request->location_id, fn ($q, $id) => $q->where('stock_location_id', $id))
             ->when($request->movement_type, fn ($q, $t) => $q->where('movement_type', $t))
@@ -81,7 +74,10 @@ class StockController extends Controller
             'notes'         => 'nullable|string|max:1000',
         ]);
 
-        StockLocation::create(array_merge($data, ['is_active' => true]));
+        $location = StockLocation::create(array_merge($data, ['is_active' => true]));
+
+        // A location tied to a department implies that department manages stock.
+        $this->locationSync->markDepartmentManaged($location);
 
         return back()->with('success', 'Stock location created.');
     }
@@ -99,78 +95,231 @@ class StockController extends Controller
         $data['is_active'] = $request->boolean('is_active', true);
         $location->update($data);
 
+        // Keep the department's stock-managed flag in sync with its location.
+        $this->locationSync->markDepartmentManaged($location);
+
         return back()->with('success', 'Stock location updated.');
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Movement list pages + per-movement detail
+    |--------------------------------------------------------------------------
+    */
+
+    /** @return StockMovementType[] */
+    private function adjustmentTypes(): array
+    {
+        return [
+            StockMovementType::ADJUSTMENT_IN,
+            StockMovementType::ADJUSTMENT_OUT,
+            StockMovementType::DAMAGED,
+            StockMovementType::EXPIRED,
+        ];
+    }
+
+    /** @return StockMovementType[] */
+    private function returnTypes(): array
+    {
+        return [StockMovementType::RETURN_IN, StockMovementType::RETURN_OUT];
+    }
+
+    /** @return StockMovementType[] */
+    private function transferTypes(): array
+    {
+        return [StockMovementType::TRANSFER_IN, StockMovementType::TRANSFER_OUT];
+    }
+
     /**
-     * Adjustment / Damaged / Expired entry form.
+     * Shared query for a movement list page filtered to a set of types.
      */
+    private function movementList(Request $request, array $types)
+    {
+        return StockMovement::query()
+            ->whereIn('movement_type', array_map(fn ($t) => $t->value, $types))
+            ->with(['drug:id,name,unit', 'product:id,name', 'location:id,name', 'performedBy:id,first_name,last_name'])
+            ->when($request->location_id, fn ($q, $id) => $q->where('stock_location_id', $id))
+            ->when($request->movement_type, fn ($q, $t) => $q->where('movement_type', $t))
+            ->when($request->date_from, fn ($q, $d) => $q->whereDate('movement_date', '>=', $d))
+            ->when($request->date_to, fn ($q, $d) => $q->whereDate('movement_date', '<=', $d))
+            ->latest('movement_date')
+            ->latest('id')
+            ->paginate(25)
+            ->withQueryString();
+    }
+
+    public function adjustmentsIndex(Request $request)
+    {
+        $movements = $this->movementList($request, $this->adjustmentTypes());
+        $locations = StockLocation::active()->orderBy('name')->get();
+        $types     = $this->adjustmentTypes();
+
+        return view('store.stock.adjustments-index', compact('movements', 'locations', 'types'));
+    }
+
+    public function returnsIndex(Request $request)
+    {
+        $movements = $this->movementList($request, $this->returnTypes());
+        $locations = StockLocation::active()->orderBy('name')->get();
+        $types     = $this->returnTypes();
+
+        return view('store.stock.returns-index', compact('movements', 'locations', 'types'));
+    }
+
+    public function transfersIndex(Request $request)
+    {
+        $movements = $this->movementList($request, $this->transferTypes());
+        $locations = StockLocation::active()->orderBy('name')->get();
+        $types     = $this->transferTypes();
+
+        return view('store.stock.transfers-index', compact('movements', 'locations', 'types'));
+    }
+
+    /**
+     * Detail of a single stock movement (everything that happened on a line).
+     */
+    public function movementShow(StockMovement $movement)
+    {
+        $movement->load(['drug:id,name,unit', 'product:id,name,code', 'location:id,name', 'performedBy:id,first_name,last_name', 'source']);
+
+        return view('store.stock.movement-show', compact('movement'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Adjustments — product based, multi-row, at a single location
+    |--------------------------------------------------------------------------
+    */
+
     public function adjustmentForm()
     {
-        $drugs     = Drug::where('is_active', true)->orderBy('name')->get(['id', 'name', 'unit']);
-        $locations = StockLocation::active()->orderBy('name')->get();
-
-        return view('store.stock.adjustment', compact('drugs', 'locations'));
+        return view('store.stock.adjustment', [
+            'products'  => $this->stockableProducts(),
+            'locations' => StockLocation::active()->orderBy('name')->get(),
+        ]);
     }
 
     public function storeAdjustment(Request $request)
     {
         $data = $request->validate([
-            'drug_id'           => 'required|exists:drugs,id',
-            'stock_location_id' => 'required|exists:stock_locations,id',
-            'type'              => 'required|in:in,out,damaged,expired',
-            'quantity'          => 'required|numeric|min:0.0001',
-            'reason'            => 'required|string|max:255',
-            'notes'             => 'nullable|string|max:1000',
-            'batch_no'          => 'nullable|string|max:100',
-            'expiry_date'       => 'nullable|date',
-            'unit_cost'         => 'nullable|numeric|min:0',
+            'stock_location_id'   => 'required|exists:stock_locations,id',
+            'reason'              => 'required|string|max:255',
+            'notes'               => 'nullable|string|max:1000',
+            'items'               => 'required|array|min:1',
+            'items.*.product_id'  => 'nullable|exists:products,id',
+            'items.*.type'        => 'nullable|in:in,out,damaged,expired',
+            'items.*.quantity'    => 'nullable|numeric|min:0.0001',
+            'items.*.batch_no'    => 'nullable|string|max:100',
+            'items.*.expiry_date' => 'nullable|date',
+            'items.*.unit_cost'   => 'nullable|numeric|min:0',
         ]);
 
         try {
-            $movement = $this->adjustments->adjust($data);
+            $movements = $this->operations->adjustBatch($data);
         } catch (\Throwable $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        return redirect()
-            ->route('admin.store.stock.ledger', ['drug_id' => $movement->drug_id])
-            ->with('success', 'Stock adjustment recorded.');
+        return redirect()->route('admin.store.stock.adjustments.index')
+            ->with('success', count($movements) . ' stock adjustment(s) recorded.');
     }
 
-    /**
-     * Return entry form.
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | Returns — product based, from a managed location into the Main Store
+    |--------------------------------------------------------------------------
+    */
+
     public function returnForm()
     {
-        $drugs     = Drug::where('is_active', true)->orderBy('name')->get(['id', 'name', 'unit']);
-        $locations = StockLocation::active()->orderBy('name')->get();
-
-        return view('store.stock.return', compact('drugs', 'locations'));
+        return view('store.stock.return', [
+            'products'         => $this->stockableProducts(),
+            'managedLocations' => $this->managedLocations(),
+            'mainStore'        => $this->mainStore(),
+        ]);
     }
 
     public function storeReturn(Request $request)
     {
         $data = $request->validate([
-            'drug_id'           => 'required|exists:drugs,id',
-            'stock_location_id' => 'required|exists:stock_locations,id',
-            'type'              => 'required|in:in,out',
-            'quantity'          => 'required|numeric|min:0.0001',
-            'reason'            => 'required|string|max:255',
-            'notes'             => 'nullable|string|max:1000',
-            'batch_no'          => 'nullable|string|max:100',
-            'expiry_date'       => 'nullable|date',
-            'unit_cost'         => 'nullable|numeric|min:0',
+            'source_location_id'  => 'required|exists:stock_locations,id',
+            'reason'              => 'required|string|max:255',
+            'notes'               => 'nullable|string|max:1000',
+            'items'               => 'required|array|min:1',
+            'items.*.product_id'  => 'nullable|exists:products,id',
+            'items.*.quantity'    => 'nullable|numeric|min:0.0001',
+            'items.*.batch_no'    => 'nullable|string|max:100',
+            'items.*.expiry_date' => 'nullable|date',
+            'items.*.unit_cost'   => 'nullable|numeric|min:0',
         ]);
 
         try {
-            $movement = $this->returns->record($data);
+            $movements = $this->operations->returnToMainBatch($data);
         } catch (\Throwable $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        return redirect()
-            ->route('admin.store.stock.ledger', ['drug_id' => $movement->drug_id])
-            ->with('success', 'Stock return recorded.');
+        return redirect()->route('admin.store.stock.returns.index')
+            ->with('success', (count($movements) / 2) . ' stock return line(s) recorded.');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Transfers — product based, from the Main Store into a managed location
+    |--------------------------------------------------------------------------
+    */
+
+    public function transferForm()
+    {
+        return view('store.stock.transfer', [
+            'products'         => $this->stockableProducts(),
+            'managedLocations' => $this->managedLocations(),
+            'mainStore'        => $this->mainStore(),
+        ]);
+    }
+
+    public function storeTransfer(Request $request)
+    {
+        $data = $request->validate([
+            'dest_location_id'    => 'required|exists:stock_locations,id',
+            'reason'              => 'required|string|max:255',
+            'notes'               => 'nullable|string|max:1000',
+            'items'               => 'required|array|min:1',
+            'items.*.product_id'  => 'nullable|exists:products,id',
+            'items.*.quantity'    => 'nullable|numeric|min:0.0001',
+            'items.*.batch_no'    => 'nullable|string|max:100',
+            'items.*.expiry_date' => 'nullable|date',
+            'items.*.unit_cost'   => 'nullable|numeric|min:0',
+        ]);
+
+        try {
+            $movements = $this->operations->transferFromMainBatch($data);
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('admin.store.stock.transfers.index')
+            ->with('success', (count($movements) / 2) . ' stock transfer line(s) recorded.');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Shared lookups
+    |--------------------------------------------------------------------------
+    */
+
+    private function stockableProducts()
+    {
+        return Product::active()->orderBy('name')->get(['id', 'name', 'code', 'unit']);
+    }
+
+    private function managedLocations()
+    {
+        return StockLocation::active()->where('is_main', false)->orderBy('name')->get(['id', 'name']);
+    }
+
+    private function mainStore(): ?StockLocation
+    {
+        return StockLocation::where('is_main', true)->where('is_active', true)->first(['id', 'name']);
     }
 }

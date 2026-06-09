@@ -17,7 +17,7 @@ class StockRequisitionController extends Controller
 
     public function index(Request $request)
     {
-        $stockRequisitions = $this->requisitions->list($request->all());
+        $stockRequisitions = $this->requisitions->list(self::withParsedDateRange($request->all()));
         $departments = Department::active()->stockManaged()->orderBy('name')->get(['id', 'name']);
         $products = Product::active()->orderBy('name')->get(['id', 'name', 'code']);
         $statuses = StockRequisitionStatus::cases();

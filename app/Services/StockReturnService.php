@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\StockMovementType;
 use App\Models\StockMovement;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 class StockReturnService
@@ -12,6 +13,44 @@ class StockReturnService
     public function __construct(
         private StockMovementService $movements,
     ) {}
+
+    /**
+     * Record several stock returns at once. Shared keys: stock_location_id,
+     * reason, notes. Per-row keys (items[]): drug_id, type (in|out),
+     * quantity, unit_cost, batch_no, expiry_date. Blank rows are skipped and
+     * the whole batch is atomic.
+     *
+     * @return StockMovement[]
+     */
+    public function recordBatch(array $data): array
+    {
+        $rows = collect($data['items'] ?? [])
+            ->filter(fn ($row) => ! empty($row['drug_id']) && (float) ($row['quantity'] ?? 0) > 0)
+            ->values();
+
+        if ($rows->isEmpty()) {
+            throw new InvalidArgumentException('Add at least one line to return.');
+        }
+
+        return DB::transaction(function () use ($rows, $data) {
+            $movements = [];
+            foreach ($rows as $row) {
+                $movements[] = $this->record([
+                    'drug_id'           => $row['drug_id'],
+                    'stock_location_id' => $data['stock_location_id'],
+                    'type'              => $row['type'] ?? 'out',
+                    'quantity'          => $row['quantity'],
+                    'reason'            => $data['reason'] ?? '',
+                    'notes'             => $data['notes'] ?? null,
+                    'unit_cost'         => $row['unit_cost'] ?? null,
+                    'batch_no'          => $row['batch_no'] ?? null,
+                    'expiry_date'       => $row['expiry_date'] ?? null,
+                ]);
+            }
+
+            return $movements;
+        });
+    }
 
     /**
      * Record a stock return movement.

@@ -119,11 +119,8 @@
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-2">
-                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
-            </div>
-            <div class="col-md-2">
-                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
+            <div class="col-md-3">
+                @include('partials.date-range-filter', ['name' => 'date_range', 'value' => request('date_range'), 'label' => 'Date Range', 'labelClass' => 'small text-muted mb-1'])
             </div>
             <div class="col-md-2">
                 <select name="product_id" class="form-select">
@@ -136,7 +133,7 @@
             <div class="col-md-1">
                 <button aria-label="Search" title="Search" type="submit" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button>
             </div>
-            @if(request()->hasAny(['search', 'status', 'supplier_id', 'date_from', 'date_to', 'product_id']))
+            @if(request()->hasAny(['search', 'status', 'supplier_id', 'date_range', 'date_from', 'date_to', 'product_id']))
             <div class="col-md-1">
                 <a aria-label="Close" title="Close" href="{{ route('admin.store.purchase-orders.index') }}" class="btn btn-outline-secondary w-100"><i class="ti ti-x"></i></a>
             </div>
@@ -243,3 +240,7 @@
 </div>
 @endif
 @endsection
+
+@push('scripts')
+@include('partials.date-range-filter-scripts')
+@endpush

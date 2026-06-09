@@ -48,6 +48,11 @@
     <!-- Select2 CSS -->
     <link rel="stylesheet" href="{{ URL::asset('build/plugins/select2/css/select2.min.css') }}">
 
+    <!-- SweetAlert2 CSS — required: the loaded sweetalert2.min.js does NOT inject its
+         own styles, so without this every confirm dialog renders unstyled at the page
+         bottom (the "malformed/near-invisible confirmation"). -->
+    <link rel="stylesheet" href="{{ URL::asset('build/plugins/sweetalert2/sweetalert2.min.css') }}">
+
     <!-- Template Style -->
     <link rel="stylesheet" href="{{ URL::asset('build/css/style.css') }}">
 
@@ -364,6 +369,72 @@
 
                 setTimeout(cleanupModalState, 200);
             }, true);
+        }());
+    </script>
+
+    {{-- Persist the sidebar scroll position across full page reloads so navigating
+         the menu no longer snaps back to the top and loses your place. The sidebar
+         scrolls inside SimpleBar's .simplebar-content-wrapper; we stash scrollTop in
+         sessionStorage on navigation and restore it while the page is still hidden. --}}
+    <script>
+        (function () {
+            var KEY = 'uhmsSidebarScrollTop';
+            var userInteracted = false;
+
+            function scroller() {
+                var inner = document.querySelector('#sidebar .sidebar-inner');
+                if (!inner) return null;
+                // SimpleBar moves the scroll onto its content wrapper; fall back to
+                // the inner element (native overflow) if SimpleBar isn't active.
+                return inner.querySelector('.simplebar-content-wrapper') || inner;
+            }
+            function save() {
+                var el = scroller();
+                if (!el) return;
+                try { sessionStorage.setItem(KEY, String(el.scrollTop)); } catch (e) {}
+            }
+            function stored() {
+                try { var v = sessionStorage.getItem(KEY); return v === null ? null : (parseFloat(v) || 0); } catch (e) { return null; }
+            }
+
+            // Persist live while scrolling (throttled) so we always have the latest
+            // position regardless of how the next navigation is triggered.
+            var saveTimer = null;
+            function bindScroll() {
+                var el = scroller();
+                if (!el || el.__uhmsScrollBound) return;
+                el.__uhmsScrollBound = true;
+                el.addEventListener('scroll', function () {
+                    if (saveTimer) return;
+                    saveTimer = setTimeout(function () { saveTimer = null; save(); }, 120);
+                }, { passive: true });
+            }
+
+            // Mark genuine user interaction so the restore loop stops fighting them.
+            ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (evt) {
+                document.addEventListener(evt, function (e) {
+                    if (e.target && e.target.closest && e.target.closest('#sidebar')) userInteracted = true;
+                }, { passive: true, capture: true });
+            });
+
+            document.addEventListener('click', function (e) {
+                if (e.target.closest('#sidebar a[href]')) save();
+            }, true);
+            window.addEventListener('beforeunload', save);
+
+            // Restore + bind as soon as the scroller exists, retrying for ~2s to
+            // outlast SimpleBar initialising and the active submenu auto-expanding.
+            var target = stored();
+            var tries = 0;
+            var iv = setInterval(function () {
+                tries++;
+                bindScroll();
+                if (target !== null && !userInteracted) {
+                    var el = scroller();
+                    if (el && Math.abs(el.scrollTop - target) > 1) el.scrollTop = target;
+                }
+                if (userInteracted || tries > 40) clearInterval(iv);
+            }, 50);
         }());
     </script>
 

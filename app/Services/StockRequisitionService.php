@@ -29,6 +29,8 @@ class StockRequisitionService
             ->when($filters['search'] ?? null, fn ($query, $search) => $query->where('requisition_number', 'like', "%{$search}%"))
             ->when($filters['department_id'] ?? null, fn ($query, $departmentId) => $query->where('department_id', $departmentId))
             ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
+            ->when($filters['date_from'] ?? null, fn ($query, $date) => $query->whereDate('requested_at', '>=', $date))
+            ->when($filters['date_to'] ?? null, fn ($query, $date) => $query->whereDate('requested_at', '<=', $date))
             ->when($filters['product_id'] ?? null, fn ($query, $productId) => $query->whereHas('items', fn ($iq) => $iq->where('product_id', $productId)))
             ->latest('requested_at')
             ->latest('id')

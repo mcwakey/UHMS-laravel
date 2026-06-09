@@ -42,8 +42,11 @@
                     @endforeach
                 </select>
             </div>
+            <div class="col-md-3">
+                @include('partials.date-range-filter', ['name' => 'date_range', 'value' => request('date_range'), 'label' => 'Date Range', 'labelClass' => 'small text-muted mb-1'])
+            </div>
             <div class="col-md-1"><button aria-label="Search" title="Search" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button></div>
-            @if(request()->hasAny(['search', 'department_id', 'status', 'product_id']))
+            @if(request()->hasAny(['search', 'department_id', 'status', 'product_id', 'date_range']))
                 <div class="col-md-1"><a aria-label="Close" title="Close" href="{{ route('admin.store.stock-requisitions.index') }}" class="btn btn-outline-secondary w-100"><i class="ti ti-x"></i></a></div>
             @endif
         </form>
@@ -84,3 +87,7 @@
     <div class="card-footer d-flex justify-content-end">{{ $stockRequisitions->links() }}</div>
 </div>
 @endsection
+
+@push('scripts')
+@include('partials.date-range-filter-scripts')
+@endpush

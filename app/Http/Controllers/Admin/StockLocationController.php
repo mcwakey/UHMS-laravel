@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\StockLocation;
+use App\Services\StockLocationSyncService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class StockLocationController extends Controller
 {
+    public function __construct(private StockLocationSyncService $locationSync) {}
+
     public function index()
     {
         $this->ensureMainStoreExists();
@@ -29,7 +32,9 @@ class StockLocationController extends Controller
                 }
                 StockLocation::query()->where('is_main', true)->update(['is_main' => false]);
             }
-            StockLocation::create($data);
+            $location = StockLocation::create($data);
+            // A department-linked location implies that department manages stock.
+            $this->locationSync->markDepartmentManaged($location);
         });
         return back()->with('success', 'Stock location created.');
     }
@@ -46,6 +51,8 @@ class StockLocationController extends Controller
                 StockLocation::query()->where('id', '!=', $stockLocation->id)->where('is_main', true)->update(['is_main' => false]);
             }
             $stockLocation->update($data);
+            // Keep the department's stock-managed flag in sync with its location.
+            $this->locationSync->markDepartmentManaged($stockLocation);
         });
         return back()->with('success', 'Stock location updated.');
     }

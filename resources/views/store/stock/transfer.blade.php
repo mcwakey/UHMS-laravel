@@ -1,14 +1,14 @@
 @extends('layouts.app')
-@section('title', 'New Stock Return')
+@section('title', 'New Stock Transfer')
 
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">New Stock Return</h4>
-        <small class="text-muted">Return stock from a managed location back into the Main Store — add as many lines as you need.</small>
+        <h4 class="fw-bold mb-0">New Stock Transfer</h4>
+        <small class="text-muted">Transfer stock from the Main Store to a managed location — add as many lines as you need.</small>
     </div>
     <div>
-        <a href="{{ route('admin.store.stock.returns.index') }}" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>Back</a>
+        <a href="{{ route('admin.store.stock.transfers.index') }}" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>Back</a>
     </div>
 </div>
 
@@ -23,32 +23,32 @@
 @endif
 
 @if(!$mainStore)
-<div class="alert alert-warning"><i class="ti ti-alert-triangle me-1"></i>No active Main Store is configured, so returns cannot be recorded yet.</div>
+<div class="alert alert-warning"><i class="ti ti-alert-triangle me-1"></i>No active Main Store is configured, so transfers cannot be recorded yet.</div>
 @elseif($managedLocations->isEmpty())
-<div class="alert alert-warning"><i class="ti ti-alert-triangle me-1"></i>There are no managed stock locations to return from. Enable "Store manages stock" on a department, or create a stock location first.</div>
+<div class="alert alert-warning"><i class="ti ti-alert-triangle me-1"></i>There are no managed stock locations to transfer to. Enable "Store manages stock" on a department, or create a stock location first.</div>
 @else
 
 <div class="card">
     <div class="card-body">
-        <form method="POST" action="{{ route('admin.store.stock.returns.store') }}" id="returnForm">
+        <form method="POST" action="{{ route('admin.store.stock.transfers.store') }}" id="transferForm">
             @csrf
             <div class="row mb-3">
+                <div class="col-md-2">
+                    <label class="form-label">Transfer From</label>
+                    <input type="text" class="form-control" value="{{ $mainStore->name }}" readonly>
+                </div>
                 <div class="col-md-4">
-                    <label class="form-label">Return From <span class="text-danger">*</span></label>
-                    <select name="source_location_id" class="form-select" required>
+                    <label class="form-label">Transfer To <span class="text-danger">*</span></label>
+                    <select name="dest_location_id" class="form-select" required>
                         <option value="">Select managed location…</option>
                         @foreach($managedLocations as $location)
-                            <option value="{{ $location->id }}" @selected(old('source_location_id') == $location->id)>{{ $location->name }}</option>
+                            <option value="{{ $location->id }}" @selected(old('dest_location_id') == $location->id)>{{ $location->name }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label">Return To</label>
-                    <input type="text" class="form-control" value="{{ $mainStore->name }}" readonly>
-                </div>
                 <div class="col-md-3">
                     <label class="form-label">Reason <span class="text-danger">*</span></label>
-                    <input type="text" name="reason" class="form-control" maxlength="255" value="{{ old('reason') }}" placeholder="e.g. Surplus returned" required>
+                    <input type="text" name="reason" class="form-control" maxlength="255" value="{{ old('reason') }}" placeholder="e.g. Department restock" required>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Notes</label>
@@ -56,7 +56,7 @@
                 </div>
             </div>
 
-            <h6 class="mb-2">Return Lines <span class="text-danger">*</span></h6>
+            <h6 class="mb-2">Transfer Lines <span class="text-danger">*</span></h6>
             <div class="table-responsive mb-3">
                 <table class="table table-bordered align-middle" id="itemsTable">
                     <thead class="table-light">
@@ -92,8 +92,8 @@
             <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="addItemBtn"><i class="ti ti-plus me-1"></i>Add Line</button>
 
             <div>
-                <button type="submit" class="btn btn-primary"><i class="ti ti-arrow-back-up me-1"></i>Record Returns</button>
-                <a href="{{ route('admin.store.stock.returns.index') }}" class="btn btn-light">Cancel</a>
+                <button type="submit" class="btn btn-primary"><i class="ti ti-transfer me-1"></i>Record Transfers</button>
+                <a href="{{ route('admin.store.stock.transfers.index') }}" class="btn btn-light">Cancel</a>
             </div>
         </form>
     </div>
@@ -152,7 +152,7 @@ $(document).ready(function () {
 
     $(document).on('change', '.product-select', syncProductOptions);
 
-    $('#returnForm').on('submit', function (e) {
+    $('#transferForm').on('submit', function (e) {
         let validIdx = 0;
         $('.item-row').each(function () {
             const $row = $(this);

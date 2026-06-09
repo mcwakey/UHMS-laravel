@@ -32,6 +32,11 @@
     <link rel="stylesheet" href="{{ URL::asset('build/css/bootstrap-datetimepicker.min.css') }}">
     <link rel="stylesheet" href="{{ URL::asset('build/css/dataTables.bootstrap5.min.css') }}">
     <link rel="stylesheet" href="{{ URL::asset('build/plugins/select2/css/select2.min.css') }}">
+    {{-- SweetAlert2 CSS — required: the loaded sweetalert2.min.js does NOT inject its
+         own styles, so without this every confirm dialog renders unstyled at the page
+         bottom (the "malformed/near-invisible confirmation"). This Inertia shell is the
+         document actually served to the browser, so the stylesheet must live here. --}}
+    <link rel="stylesheet" href="{{ URL::asset('build/plugins/sweetalert2/sweetalert2.min.css') }}">
     <link rel="stylesheet" href="{{ URL::asset('build/css/style.css') }}">
     <link rel="stylesheet" href="{{ URL::asset('build/css/uhms-design-system.css') }}">
 

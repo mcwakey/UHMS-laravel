@@ -33,15 +33,46 @@ class PurchaseReturnController extends Controller
         return view('store.purchase-returns.create', [
             'suppliers' => Supplier::active()->orderBy('name')->get(['id', 'name']),
             'purchaseOrders' => PurchaseOrder::query()
+                ->with('supplier:id,name')
                 ->whereIn('status', [
-                    PurchaseOrderStatus::APPROVED->value,
                     PurchaseOrderStatus::PARTIALLY_RECEIVED->value,
                     PurchaseOrderStatus::RECEIVED->value,
                 ])
+                ->whereHas('items', fn ($q) => $q->where('quantity_received', '>', 0))
                 ->latest('order_date')
-                ->get(['id', 'po_number', 'supplier_id']),
+                ->get(['id', 'po_number', 'supplier_id', 'order_date']),
             'locations' => StockLocation::active()->orderByDesc('is_main')->orderBy('name')->get(['id', 'name', 'is_main']),
-            'products' => Product::active()->orderBy('name')->get(['id', 'name', 'code', 'unit']),
+        ]);
+    }
+
+    /**
+     * JSON: received line items of a purchase order, used to build the
+     * "return from this PO" editable datatable. Only items with received
+     * quantity are returnable.
+     */
+    public function poItems(PurchaseOrder $purchaseOrder)
+    {
+        $purchaseOrder->load(['supplier:id,name', 'items.product:id,name,code,unit']);
+
+        $items = $purchaseOrder->items
+            ->filter(fn ($item) => (float) $item->quantity_received > 0 && $item->product_id)
+            ->map(fn ($item) => [
+                'purchase_order_item_id' => $item->id,
+                'product_id' => $item->product_id,
+                'product_name' => $item->product?->name ?? $item->item_name,
+                'product_code' => $item->product?->code,
+                'unit' => $item->product?->unit,
+                'quantity_received' => (float) $item->quantity_received,
+                'unit_cost' => (float) $item->unit_cost,
+                'batch_no' => $item->batch_number,
+                'expiry_date' => optional($item->expiry_date)->toDateString(),
+            ])
+            ->values();
+
+        return response()->json([
+            'supplier_id' => $purchaseOrder->supplier_id,
+            'supplier_name' => $purchaseOrder->supplier?->name,
+            'items' => $items,
         ]);
     }
 
@@ -49,7 +80,7 @@ class PurchaseReturnController extends Controller
     {
         $data = $request->validate([
             'supplier_id' => 'required|integer|exists:suppliers,id',
-            'purchase_order_id' => 'nullable|integer|exists:purchase_orders,id',
+            'purchase_order_id' => 'required|integer|exists:purchase_orders,id',
             'goods_received_note_id' => 'nullable|integer|exists:goods_received_notes,id',
             'stock_location_id' => 'required|integer|exists:stock_locations,id',
             'return_date' => 'required|date',
