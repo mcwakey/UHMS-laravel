@@ -169,27 +169,10 @@ Route::get('/', function () {
 
 Route::middleware('auth')->group(function () {
 
-    // Generic dashboard redirect (resolves based on role)
-    Route::get('dashboard', function () {
-        /** @var User $user */
-        $user = Auth::user();
-
-        if ($user->hasAnyRole(['Super Admin', 'Admin'])) {
-            return redirect()->route('admin.dashboard');
-        }
-
-        if ($user->hasRole('Doctor')) {
-            return redirect()->route('doctor.dashboard');
-        }
-
-        // Role-specific staff dashboards (single shared view, content varies by role)
-        if ($user->hasAnyRole(['Nurse', 'Receptionist', 'Pharmacist', 'Lab Technician', 'Accountant', 'Cashier', 'HR Manager', 'Store Manager'])) {
-            return redirect()->route('staff.dashboard');
-        }
-
-        // Default fallback
-        return redirect()->route('admin.dashboard');
-    })->name('dashboard');
+    // Generic dashboard entry — routes every user to their resolved
+    // department-type dashboard. The legacy admin/doctor/staff dashboards
+    // remain available directly for anyone who needs them.
+    Route::get('dashboard', fn () => redirect()->route('admin.my-dashboard'))->name('dashboard');
 
     // Shared staff dashboard — role-aware content
     Route::get('staff/dashboard', [StaffDashboardController::class, 'index'])
@@ -204,6 +187,9 @@ Route::middleware('auth')->group(function () {
 
         // Dashboard
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+        // Department-type dashboard — resolves the right dashboard for the user.
+        Route::get('my-dashboard', [\App\Http\Controllers\Admin\DepartmentDashboardController::class, 'index'])->name('my-dashboard');
 
         // Complaint catalogue and patient complaint endpoints
         Route::get('complaints/search', ComplaintSearchController::class)->name('complaints.search')->middleware('can:complaints.view');

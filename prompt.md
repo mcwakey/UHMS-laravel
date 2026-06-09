@@ -1,901 +1,930 @@
-Next is **Accounting Phase 5: Procurement, Supplier Ledger, Accounts Payable & AP Aging**.
+Yes — this is the right direction. Instead of one generic dashboard for everybody, UHMS should generate dashboards based on department type, because Pharmacy, Lab, Emergency, Theatre, Ward, Billing, Consultation, and Admin each need different KPIs and actions.
 
-This phase handles the other side of accounting: **what the hospital owes suppliers**.
+Also, the dashboard rollout must respect the existing UI rules: UHMS is Blade + Bootstrap 5 + Tabler Icons, not Tailwind; new pages should reuse shared components like <x-page-header>, <x-status-badge>, <x-empty-state>, and follow the standard layout order: header → KPIs → filters → main content → pagination.  
 
+Copy this prompt:
 
 You are working on UHMS — Ultimate Hospital Management System.
-
-Accounting Phase 1 Foundation is complete.
-Accounting Phase 2 Billing → Accounting Posting is complete.
-Accounting Phase 3 Payments, Discounts, Credit Notes, Write-offs, Refunds & Reversals is complete.
-Accounting Phase 4 Sponsors, Insurance, Corporate Receivables & AR Aging is complete.
-
-Now proceed with Accounting Phase 5:
-
-Procurement, Supplier Ledger, Accounts Payable & AP Aging
-
-Goal:
-Implement full supplier-side accounting so UHMS can track:
-
-1. Purchase orders
-2. Goods receiving
-3. Supplier invoices
-4. Supplier payables
-5. Supplier payments
-6. Supplier returns
-7. Supplier credit/debit adjustments
-8. Accounts Payable aging
-9. Supplier ledger accounting integration
-
-Do not replace the existing procurement system.
-Do not replace stock movements.
-Do not replace supplier ledger records.
-Do not automatically treat purchase orders as accounting liabilities.
-Do not write the full automated test suite yet. Full tests will be written after the full accounting implementation is complete.
-
-Important rule:
-
-Purchase Order = procurement request/commitment, not yet accounting liability.
-Goods Received / Supplier Invoice = accounting liability.
-Supplier Payment = settlement of supplier liability.
-Supplier Return / Credit Note = reduction of supplier liability or inventory.
-
+We now want to build dashboards based on Department Types.
+The system should not rely on only one generic dashboard for all users.
+Each department type should have its own dashboard experience, KPIs, queues, pending work, quick actions, alerts, and reports.
+Examples of department types:
+- Consultation / OPD
+- Emergency / Casualty
+- Admission / Ward
+- Pharmacy
+- Investigations / Laboratory
+- Imaging / Radiology
+- Procedures / Theatre
+- Billing / Cashier
+- Insurance / Claims
+- Stock / Store / Procurement
+- Blood Bank
+- Administration / Management
+- Accounting / Finance
+- HR / Payroll
+- Reception / Front Desk
+Do not rebuild the whole dashboard system blindly.
+Do not create random dashboard pages without checking existing modules.
+Do not break existing dashboards.
+Do not introduce a second UI framework.
+Do not use Tailwind.
+Use Blade, Bootstrap 5, Tabler Icons, and existing UHMS UI components.
+Follow existing UHMS UI standards:
+- use `<x-page-header>`
+- use `<x-stat-card>` if available
+- use `<x-filter-bar>` where filters exist
+- use `<x-status-badge>` for statuses
+- use `<x-empty-state>` for empty dashboard sections
+- use Bootstrap cards/tables
+- use semantic colors from `config/ui.php`
+- avoid hidden critical clinical/financial/stock information
 ---
-
 # 1. Main Objective
-
-Implement supplier-side accounting and AP aging.
-
-The system must support:
-
-- supplier payables
-- supplier invoices
-- goods receiving accounting
-- supplier payment accounting
-- supplier returns accounting
-- supplier ledger integration
-- AP aging report
-- supplier statement
-- supplier balance
-- accounting posting status
-- activity logs
-- permissions
-- manual verification notes
-
+Build a department-type dashboard system.
+When a user logs in or opens the dashboard, UHMS should show the dashboard relevant to their department type, role, and permissions.
+The dashboard must answer:
+- What is happening in this department now?
+- What requires attention?
+- What is pending?
+- What has been completed today?
+- What are the financial/clinical/stock risks?
+- What quick actions should this user take?
 ---
-
-# 2. Business Meaning
-
-Use these meanings consistently:
-
-```text
-Purchase Order = request/approval to buy; no accounting posting by default
-Goods Receiving = goods physically received; may create inventory and payable
-Supplier Invoice = supplier’s official billing document
-Supplier Payable = amount hospital owes supplier
-Supplier Payment = money paid to supplier
-Supplier Return = goods returned to supplier
-Supplier Credit Note = supplier reduces amount owed
-AP Aging = unpaid supplier balances grouped by age
-````
-
-Do not confuse purchase order approval with supplier debt.
-
-A PO should not increase liabilities until goods/invoice are received according to the hospital’s accounting rule.
-
----
-
-# 3. Accounting Rules
-
-## A. Purchase Order Created / Approved
-
-Operational only.
-
-No accounting journal entry by default.
-
-Log procurement activity, but do not post:
-
-```text
-No debit
-No credit
-```
-
-Reason:
-
-The hospital has not yet received goods or incurred a liability.
-
----
-
-## B. Goods Received
-
-When goods are received and supplier liability should be recognized:
-
-```text
-Dr Inventory / Expense
-Cr Supplier Payables
-```
-
-Example:
-
-```text
-Dr Pharmacy Inventory        2,000
-Cr Supplier Payables         2,000
-```
-
-If the received item is not stock/inventory but an expense:
-
-```text
-Dr Maintenance Expense       500
-Cr Supplier Payables         500
-```
-
-Use product/category/account mapping.
-
----
-
-## C. Supplier Invoice Recorded
-
-If UHMS separates goods receiving from supplier invoice:
-
-Option 1 — Liability recognized on goods receiving:
-
-```text
-Goods receiving already posted:
-Dr Inventory
-Cr Supplier Payables
-```
-
-Supplier invoice only confirms/updates payable.
-
-Option 2 — Liability recognized on supplier invoice:
-
-```text
-Dr Inventory / Expense
-Cr Supplier Payables
-```
-
-Choose one rule and document it.
-
-Recommended for UHMS:
-
-Recognize liability on goods receiving when goods are accepted into stock.
-
-Avoid duplicate liability when supplier invoice is later attached.
-
----
-
-## D. Supplier Payment
-
-When paying supplier:
-
-```text
-Dr Supplier Payables
-Cr Cash / Bank / Mobile Money
-```
-
-Example:
-
-```text
-Dr Supplier Payables         1,000
-Cr Bank Account              1,000
-```
-
-Payment reduces AP.
-
-Payment must not be treated as expense again.
-
----
-
-## E. Supplier Return
-
-When goods are returned to supplier after receiving:
-
-If payable is still outstanding:
-
-```text
-Dr Supplier Payables
-Cr Inventory
-```
-
-If supplier already paid and refund expected:
-
-```text
-Dr Supplier Refund Receivable
-Cr Inventory
-```
-
-For Phase 5, if supplier refund receivable is not implemented, reduce supplier payable where possible and document refund receivable as TODO.
-
----
-
-## F. Supplier Credit Note
-
-When supplier issues credit note:
-
-```text
-Dr Supplier Payables
-Cr Inventory / Expense Adjustment
-```
-
-or if linked to returned goods:
-
-```text
-Dr Supplier Payables
-Cr Inventory
-```
-
-Use project’s inventory/expense treatment.
-
----
-
-## G. Supplier Debit Note
-
-If hospital owes more due to adjustment:
-
-```text
-Dr Inventory / Expense
-Cr Supplier Payables
-```
-
-Only implement if existing supplier ledger supports debit notes.
-
----
-
-# 4. Required Data Model
-
-Inspect current procurement and supplier tables first.
-
+# 2. Department Type Model / Configuration
+Inspect the current department model first.
 Search for:
-
 ```text
-suppliers
-supplier_ledger_entries
-purchase_orders
-purchase_order_items
-goods_receipts
-goods_receipt_items
-supplier_payments
-supplier_returns
-purchase_returns
-stock_movements
-product_stock_movements
-stock_balances
-accounts
-journal_entries
-```
+Department
+department_type
+type
+category
+service_type
+department_id
+current_department_id
 
-Use existing tables where possible.
+If department types already exist, reuse them.
 
-Add accounting fields if missing:
+If not, add a clean enum/config for department types.
 
-```text
-journal_entry_id nullable
-accounting_status nullable: pending/posted/failed/reversed
-accounting_posted_at nullable
-accounting_error nullable
-reversal_journal_entry_id nullable
-reversed_at nullable
-reversed_by nullable
-reversal_reason nullable
-```
+Recommended department type keys:
 
-Possible tables:
+consultation
+emergency
+admission
+pharmacy
+investigation
+imaging
+procedure_theatre
+billing
+insurance_claims
+stock_store
+blood_bank
+admin
+accounting
+hr
+reception
 
-* goods_receipts
-* purchase_receipts
-* supplier_invoices
-* supplier_ledger_entries
-* supplier_payments
-* supplier_returns
-* purchase_returns
+Do not hardcode dashboard logic only by department name.
 
-Do not duplicate supplier ledger if already exists.
+Use department type or department category.
 
----
+⸻
 
-# 5. Supplier Payables Structure
+3. Dashboard Routing
 
-If supplier ledger already tracks balance, keep it.
+Create a dashboard resolver.
 
-But accounting must also support AP aging.
+Suggested service:
 
-Recommended table if missing:
+DepartmentDashboardResolver
 
-```text
-supplier_payables
-```
+Responsibilities:
 
-Fields:
+* detect authenticated user
+* detect user role
+* detect user primary department
+* detect department type
+* detect enabled modules
+* detect permissions
+* return the dashboard route/view/component to show
 
-```text
-id
-supplier_id
-purchase_order_id nullable
-goods_receipt_id nullable
-supplier_invoice_id nullable
-supplier_ledger_entry_id nullable
+Suggested logic:
 
-original_amount decimal
-paid_amount decimal default 0
-credit_note_amount decimal default 0
-return_amount decimal default 0
-adjustment_amount decimal default 0
-balance decimal
+1. If user has global admin/management role → management dashboard
+2. Else if user has assigned department → department-type dashboard
+3. Else if user has role-specific dashboard → role dashboard
+4. Else fallback to general staff dashboard
 
-invoice_date nullable
-aging_start_date date
-due_date nullable
-status enum: pending, partially_paid, paid, overdue, cancelled, written_off
+Do not break existing:
 
-journal_entry_id nullable
-accounting_status nullable
-accounting_posted_at nullable
-accounting_error nullable
+dashboard
+admin.dashboard
+doctor.dashboard
+staff.dashboard
 
-created_by nullable
-updated_by nullable
-timestamps
-```
+If those routes exist, keep them and route internally to the correct department dashboard.
 
-Rules:
+⸻
 
-* supplier payable balance must reconcile with supplier ledger
-* paid supplier payables should not appear as outstanding AP
-* cancelled supplier payables should not appear as outstanding AP
-* supplier returns reduce payable balance
-* supplier payments reduce payable balance
+4. Dashboard Layout Standard
 
-If existing supplier ledger already has enough structure, avoid adding duplicate tables and instead derive AP aging from it.
+Every department dashboard should follow this structure:
 
----
+<x-page-header>
+KPI cards
+Alerts / attention cards
+Queue / worklist
+Recent activity
+Quick actions
+Reports / analytics links
 
-# 6. Supplier Ledger Integration
+Use this order:
 
-Supplier ledger must clearly show:
+Header
+KPIs
+Critical alerts
+Main work queue
+Secondary lists
+Recent activity
+Reports
 
-```text
-Date
-Supplier
-Type
-Description
-Debit
-Credit
-Balance
-Source
-Journal Entry
-Created By
-```
+This matches the UHMS UI governance and keeps dashboards consistent. The UI checklist also requires permissions on actions, status badges through <x-status-badge>, empty states through <x-empty-state>, and no hidden critical clinical/financial/stock data.  
 
-Recommended convention:
+⸻
 
-```text
-Credit = amount hospital owes supplier
-Debit = amount paid/reduced
-Balance = Credits - Debits
-```
+5. Common Dashboard Data Contract
+
+Each dashboard should return a common structure:
+
+[
+    'title' => 'Pharmacy Dashboard',
+    'department' => $department,
+    'kpis' => [],
+    'alerts' => [],
+    'queues' => [],
+    'quickActions' => [],
+    'recentActivity' => [],
+    'reports' => [],
+]
+
+This allows consistent rendering while each department type supplies its own metrics.
+
+⸻
+
+6. Consultation / OPD Dashboard
+
+KPIs:
+
+* patients waiting
+* consultations in progress
+* completed consultations today
+* referred to investigations
+* referred to pharmacy
+* follow-up appointments set
+* average waiting time
+
+Main queue:
+
+* next patient in line
+* waiting consultation patients
+* patients currently being consulted
+* patients returned from investigations/pharmacy
+* high-priority patients
+
+Quick actions:
+
+* open consultation queue
+* start next consultation
+* view patient history
+* create follow-up appointment
+
+Alerts:
+
+* long waiting patients
+* patients returned with completed investigation results
+* unpaid OPD patients if payment gate applies
+
+⸻
+
+7. Emergency / Casualty Dashboard
+
+KPIs:
+
+* active emergency cases
+* red/orange triage cases
+* waiting triage cases
+* cases awaiting disposition
+* emergency admissions pending
+* emergency bed/bay occupancy
+* emergency deaths/DOA today if permitted
+
+Main queue:
+
+* active emergency cases
+* triage priority board
+* pending disposition
+* cases awaiting admission/theatre/transfer
+
+Quick actions:
+
+* create emergency case
+* open triage
+* assign bay/bed
+* dispose to admission/theatre/OPD
+* view emergency board
+
+Alerts:
+
+* critical triage
+* long-stay emergency cases
+* no bay/bed available
+* pending emergency billing/consumables
+
+Emergency should continue to behave as a visit/consultation-based workflow, not a parallel patient lifecycle. Existing emergency audit notes say emergency should be implemented as an overlay on the Visit workflow and not as a separate lifecycle.  
+
+⸻
+
+8. Admission / Ward Dashboard
+
+KPIs:
+
+* admitted patients
+* beds occupied
+* beds available
+* discharges pending
+* MAR overdue doses
+* patients pending billing clearance
+* deaths/discharges today
+
+Main lists:
+
+* current admissions
+* pending discharges
+* medication administration schedule
+* overdue nursing tasks
+* patients needing vitals
+
+Quick actions:
+
+* admit patient
+* transfer bed
+* open MAR
+* discharge patient
+* view bed map
+
+Alerts:
+
+* overdue MAR doses
+* patients not discharged but clinically completed
+* bed occupancy threshold
+* unpaid discharge clearance
+
+⸻
+
+9. Pharmacy Dashboard
+
+KPIs:
+
+* prescriptions waiting
+* prescriptions billed
+* prescriptions dispensed
+* partial dispensing
+* out-of-stock drugs
+* low-stock drugs
+* revenue today if permitted
+
+Main queue:
+
+* prescriptions pending billing
+* prescriptions pending dispensing
+* partial dispensing follow-ups
+* stock alerts
+
+Quick actions:
+
+* open dispensing
+* bill selected drugs
+* view drug catalogue
+* receive stock
+* request stock transfer
+
+Alerts:
+
+* out-of-stock drugs
+* low-stock drugs
+* urgent/emergency prescriptions
+
+⸻
+
+10. Investigations / Laboratory Dashboard
+
+KPIs:
+
+* requests waiting
+* samples pending
+* results pending
+* verified results today
+* rejected/cancelled tests
+* urgent investigations
+* consumables low stock
+
+Main queue:
+
+* pending requests
+* accepted/in-progress requests
+* results awaiting verification
+* urgent/emergency investigations
+
+Quick actions:
+
+* accept request
+* enter result
+* verify result
+* print result
+* use consumables
+
+Alerts:
+
+* urgent requests
+* delayed results
+* low reagents/consumables
+
+⸻
+
+11. Imaging / Radiology Dashboard
+
+If imaging is separate from investigations:
+
+KPIs:
+
+* imaging requests pending
+* imaging completed today
+* reports pending
+* reports verified
+* urgent imaging
+
+Main queue:
+
+* X-ray requests
+* scan requests
+* pending report entry
+* pending verification
+
+Quick actions:
+
+* accept imaging request
+* upload/enter report
+* verify report
+* print result
+
+If imaging uses the investigation workflow, reuse investigation dashboard logic with imaging-specific filters.
+
+⸻
+
+12. Procedures / Theatre Dashboard
+
+KPIs:
+
+* pending procedure requests
+* scheduled procedures
+* in-theatre cases
+* recovery cases
+* completed procedures today
+* cancelled/postponed cases
+
+Main board:
+
+* pending requests
+* scheduled
+* in theatre
+* recovery
+* completed
+
+Quick actions:
+
+* schedule procedure
+* assign theatre room
+* assign theatre team
+* start procedure
+* enter operative note
+* complete procedure
+
+Alerts:
+
+* overdue scheduled procedures
+* room conflicts
+* missing team assignment
+* pending pre-op checklist
+
+⸻
+
+13. Billing / Cashier Dashboard
+
+KPIs:
+
+* invoices pending payment
+* payments received today
+* unpaid OPD services
+* partial payments
+* refunds
+* discounts/credit notes/write-offs pending approval
+* cashier shift status
+
+Main lists:
+
+* unpaid invoices
+* payments today
+* failed accounting postings
+* pending approval adjustments
+* cashier shift summary
+
+Quick actions:
+
+* record payment
+* open invoice
+* issue receipt
+* apply discount if permitted
+* close cashier shift
+
+Alerts:
+
+* unpaid OPD service blocks
+* failed accounting postings
+* high-risk discounts/write-offs
+
+⸻
+
+14. Insurance / Claims Dashboard
+
+KPIs:
+
+* claims prepared
+* claims submitted
+* claims approved
+* claims rejected
+* claim payments received
+* pending CCC/verification
+* aging insurance receivables
+
+Main lists:
+
+* claims pending preparation
+* claims ready for submission
+* rejected claims needing correction
+* unpaid approved claims
+
+Quick actions:
+
+* prepare claim
+* submit claim
+* update CCC/verification code
+* record claim payment
+
+Alerts:
+
+* rejected claims
+* missing CCC/reference
+* aging insurance receivables
+
+Do not hardcode NHIS. NHIS is only an insurance provider under an insurance type.
+
+⸻
+
+15. Stock / Store / Procurement Dashboard
+
+KPIs:
+
+* low-stock products
+* out-of-stock products
+* pending requisitions
+* pending stock transfers
+* pending purchase orders
+* goods received today
+* purchase returns
+
+Main lists:
+
+* low stock by department/location
+* requisitions awaiting approval
+* stock transfers awaiting receipt
+* purchase orders awaiting receipt
+* expired/damaged stock
+
+Quick actions:
+
+* create requisition
+* approve requisition
+* receive stock
+* transfer stock
+* stock adjustment
+* create purchase order
+
+Alerts:
+
+* low stock
+* expired stock
+* stock inconsistencies
+* PO received but stock not reflected
+
+Stock/procurement has known historical complexity with drug/product ledgers and stock balances, so dashboard metrics must use the current canonical stock balance services and not mix incompatible ledgers blindly.  
+
+⸻
+
+16. Blood Bank Dashboard
+
+KPIs:
+
+* available blood units
+* units expiring soon
+* pending screening
+* pending compatibility/crossmatch
+* blood requests pending
+* blood issued today
+* transfusion reactions
+
+Main lists:
+
+* blood units by group
+* pending donor screening
+* pending recipient compatibility
+* pending issue requests
+* expiring units
+
+Quick actions:
+
+* register donor
+* screen donation
+* perform compatibility
+* issue blood
+* record transfusion reaction
+
+Alerts:
+
+* low blood group stock
+* expiring units
+* incompatible/emergency release
+* pending WHO screening
+
+⸻
+
+17. Accounting / Finance Dashboard
+
+KPIs:
+
+* cash/bank balance if available
+* receivables total
+* payables total
+* AR aging total
+* AP aging total
+* revenue today/month
+* expenses today/month
+* failed accounting postings
+
+Main lists:
+
+* failed postings
+* journal entries pending posting
+* receivables aging
+* payables aging
+* trial balance warning if unbalanced
+
+Quick actions:
+
+* create journal entry
+* open trial balance
+* open general ledger
+* open AR aging
+* open AP aging
+* retry failed posting
+
+Alerts:
+
+* failed accounting posting
+* closed period posting attempt
+* unbalanced draft journal
+* old receivables
+
+⸻
+
+18. HR / Payroll Dashboard
+
+KPIs:
+
+* staff active
+* leave requests pending
+* payroll batches pending
+* payroll approved/paid
+* attendance issues if available
+
+Main lists:
+
+* leave requests
+* payroll batches
+* staff onboarding/exit if available
+
+Quick actions:
+
+* approve leave
+* process payroll
+* view staff
+
+Alerts:
+
+* pending payroll approval
+* unpaid payroll
+* leave conflicts
+
+⸻
+
+19. Administration / Management Dashboard
+
+KPIs:
+
+* visits today
+* admissions
+* emergency cases
+* revenue today
+* receivables
+* payables
+* claims pending
+* low stock
+* bed occupancy
+* department performance
+
+Main panels:
+
+* hospital overview
+* department summaries
+* financial overview
+* operational alerts
+* system alerts
+
+Quick actions:
+
+* manage users
+* manage roles
+* manage modules
+* view logs
+* open reports
+
+Alerts:
+
+* failed accounting postings
+* critical permission changes
+* modules disabled
+* stockout
+* unverified claims
+* overdue receivables
+
+⸻
+
+20. Permissions
+
+Every dashboard section must respect permissions.
 
 Examples:
 
-Goods received worth 5,000:
+* billing KPIs require billing permissions
+* accounting KPIs require accounting permissions
+* clinical queues require clinical permissions
+* stock cost values require inventory cost permissions
+* admin/system cards require admin permissions
 
-```text
-Credit = 5,000
-```
+Do not show dashboard actions that always 403.
 
-Supplier payment of 2,000:
+Backend must still enforce permissions.
 
-```text
-Debit = 2,000
-```
+⸻
 
-Return to supplier worth 500:
+21. Module Enable/Disable
 
-```text
-Debit = 500
-```
+Dashboard cards should respect module availability.
 
-Outstanding balance:
+If module is disabled:
 
-```text
-Credits - Debits
-```
+* hide that dashboard section
+* or show disabled-module friendly state for admins only
 
----
+Do not break dashboard rendering if a module is disabled.
 
-# 7. Inventory / Expense Account Mapping
+⸻
 
-Create or update:
-
-```text
-ProcurementAccountingPostingService
-SupplierAccountingPostingService
-InventoryAccountResolver
-ExpenseAccountResolver
-SupplierPayableAccountResolver
-PaymentAccountResolver
-```
-
-Inventory account resolution priority:
-
-```text
-1. Product-specific inventory account
-2. Product category/type inventory account
-3. Department/location inventory account
-4. Accounting settings inventory account
-5. Accounting settings default inventory account
-```
-
-Expense account resolution priority:
-
-```text
-1. Expense category account
-2. Supplier invoice line account
-3. Department expense account
-4. Accounting settings default expense account
-```
-
-Supplier payable account:
-
-```text
-supplier_payable_account_id
-```
-
-Payment account:
-
-* Cash → default_cash_account_id
-* Bank → default_bank_account_id
-* Mobile Money → default_mobile_money_account_id
-
-Fail clearly if required account is missing.
-
-Do not silently post to random accounts.
-
----
-
-# 8. Goods Receiving Posting
-
-When goods are received:
-
-Operational actions:
-
-* create goods receipt
-* create stock movement IN
-* update stock balance
-* create supplier ledger credit
-* create or update supplier payable
-
-Accounting posting:
-
-```text
-Dr Inventory
-Cr Supplier Payables
-```
-
-If multiple product categories map to different inventory accounts:
-
-```text
-Dr Pharmacy Inventory              1,200
-Dr Medical Consumables Inventory     800
-Cr Supplier Payables               2,000
-```
-
-Do not duplicate posting if stock movement retries.
-
-Use the goods receipt / supplier ledger source as the accounting source.
-
----
-
-# 9. Supplier Payment Posting
-
-When supplier payment is recorded:
-
-Operational actions:
-
-* create supplier payment
-* create supplier ledger debit
-* reduce supplier payable balance
-
-Accounting posting:
-
-```text
-Dr Supplier Payables
-Cr Bank / Cash / Mobile Money
-```
-
-Rules:
-
-* payment amount must be greater than zero
-* payment cannot exceed supplier outstanding balance unless supplier advance workflow exists
-* supplier advance/prepayment can be documented as TODO if not supported
-* payment must be idempotently posted once
-
----
-
-# 10. Purchase Return / Supplier Return Posting
-
-When goods are returned to supplier:
-
-Operational actions:
-
-* create purchase return
-* create stock movement OUT
-* reduce stock balance
-* create supplier ledger debit or credit note
-* reduce supplier payable balance
-
-Accounting posting:
-
-```text
-Dr Supplier Payables
-Cr Inventory
-```
-
-If goods were already paid and supplier owes refund:
-
-* either create supplier refund receivable if supported
-* or document as TODO
-
-Rules:
-
-* returned quantity cannot exceed received/available quantity
-* do not post return twice
-* do not create duplicate stock movements
-* do not duplicate supplier ledger entry
-
----
-
-# 11. AP Aging
-
-Implement Accounts Payable Aging report.
-
-Aging buckets:
-
-```text
-Current / Not Due
-0–30 days
-31–60 days
-61–90 days
-91–120 days
-120+ days
-```
-
-AP Aging should show:
-
-```text
-Supplier
-Reference
-Purchase Order
-Goods Receipt / Supplier Invoice
-Original Amount
-Paid
-Returns / Credits
-Balance
-Aging Start Date
-Due Date
-Age Days
-Bucket
-Status
-```
-
-Summary:
-
-```text
-0–30
-31–60
-61–90
-91–120
-120+
-Total
-```
-
-Rules:
-
-* include only unpaid supplier payables
-* exclude paid/cancelled fully settled records
-* due date should come from supplier terms or invoice date + default payment terms
-* if no due date, age from aging_start_date
-
----
-
-# 12. Supplier Statement
-
-Add supplier statement view/report.
-
-Supplier statement should show:
-
-```text
-Opening Balance
-Goods Received / Supplier Invoices
-Payments
-Returns
-Credit Notes
-Debit Notes
-Closing Balance
-```
-
-With date filters.
-
-This can use supplier ledger entries.
-
----
-
-# 13. UI Updates
-
-Add or update menu under Store / Procurement and Accounts & Finance.
-
-Recommended:
-
-```text
-Accounts & Finance
-├── Accounts Payable
-│   ├── Supplier Payables
-│   ├── Supplier Payments
-│   ├── Supplier Statements
-│   └── AP Aging
-```
-
-Supplier details page should show:
-
-* profile
-* purchase orders
-* goods received
-* ledger
-* payments
-* returns
-* outstanding balance
-* AP aging
-* journal entries
-
-Goods receipt detail should show:
-
-```text
-Accounting Status
-Journal Entry
-Supplier Payable Status
-```
-
-Supplier payment detail should show:
-
-```text
-Accounting Status
-Journal Entry
-```
-
-Purchase return detail should show:
-
-```text
-Accounting Status
-Journal Entry
-```
-
----
-
-# 14. Activity Logs
-
-Use ActivityLogService.
-
-Do not create a separate audit system.
-
-Operational events:
-
-```text
-GOODS_RECEIVED
-SUPPLIER_PAYABLE_CREATED
-SUPPLIER_PAYMENT_RECORDED
-SUPPLIER_PAYMENT_REVERSED
-PURCHASE_RETURN_CREATED
-PURCHASE_RETURN_APPROVED
-PURCHASE_RETURN_POSTED
-SUPPLIER_CREDIT_NOTE_RECORDED
-SUPPLIER_DEBIT_NOTE_RECORDED
-```
-
-Accounting events:
-
-```text
-ACCOUNTING_POSTED_FOR_GOODS_RECEIPT
-ACCOUNTING_POSTED_FOR_SUPPLIER_PAYMENT
-ACCOUNTING_POSTED_FOR_PURCHASE_RETURN
-ACCOUNTING_POSTING_FAILED
-ACCOUNTING_REVERSAL_CREATED
-```
-
-Context:
-
-```text
-supplier_id
-purchase_order_id
-goods_receipt_id
-supplier_payment_id
-purchase_return_id
-supplier_ledger_entry_id
-journal_entry_id
-stock_movement_id
-amount
-old_values
-new_values
-```
-
-Do not attach patient_id/visit_id.
-
-Supplier/procurement logs are facility-level logs.
-
----
-
-# 15. Permissions
-
-Add or verify:
-
-```text
-accounts_payable.view
-accounts_payable.payment.record
-accounts_payable.payment.reverse
-accounts_payable.aging.view
-accounts_payable.statement.view
-
-supplier_payables.view
-supplier_payables.manage
-
-supplier_payments.view
-supplier_payments.create
-supplier_payments.reverse
-
-purchase_returns.view
-purchase_returns.create
-purchase_returns.approve
-purchase_returns.post
-purchase_returns.cancel
-
-reports.ap_aging.view
-reports.supplier_statement.view
-```
-
-Only authorized finance/procurement/admin users should record supplier payments or approve purchase returns.
-
----
-
-# 16. Reversal Behavior
-
-Do not delete posted financial records.
-
-For reversal:
-
-* reverse supplier payment by creating reversal journal entry
-* reverse supplier ledger impact if existing workflow supports it
-* reverse purchase return only through controlled cancellation/reversal
-* reverse goods receipt only if stock/procurement workflow supports it
-
-Do not edit posted journal entries.
-
-Use JournalEntryService::reverse() where possible.
-
----
-
-# 17. Idempotency
-
-Every source posts once.
-
-Use:
-
-```text
-journal_entry_id
-accounting_status
-accounting_posted_at
-accounting_error
-reversal_journal_entry_id
-```
-
-Rules:
-
-* retry failed posting must not duplicate journal entry
-* posting same goods receipt twice is blocked
-* posting same supplier payment twice is blocked
-* posting same purchase return twice is blocked
-* reversal twice is blocked
-
----
-
-# 18. Manual Verification Strategy
-
-Do not write the full automated test suite yet.
-
-Full accounting tests will be written after all accounting phases are implemented.
-
-For this phase, provide manual verification notes.
-
-Manual verification required:
-
-1. Create purchase order and confirm no accounting journal is posted.
-2. Receive goods and confirm stock balance increases.
-3. Confirm supplier ledger credit is created.
-4. Confirm supplier payable is created.
-5. Confirm goods receipt journal debits inventory and credits supplier payable.
-6. Confirm multiple inventory accounts are used when products map differently.
-7. Record supplier payment and confirm payable balance reduces.
-8. Confirm supplier payment journal debits supplier payable and credits cash/bank.
-9. Create purchase return and confirm stock reduces.
-10. Confirm purchase return reduces supplier payable.
-11. Confirm purchase return journal debits supplier payable and credits inventory.
-12. Confirm duplicate posting is prevented.
-13. Confirm AP Aging shows unpaid supplier balances in correct buckets.
-14. Confirm paid supplier payables disappear from outstanding AP.
-15. Confirm supplier statement shows goods received, payments, returns, and balance.
-16. Confirm Trial Balance remains balanced.
-17. Confirm General Ledger shows procurement/AP postings.
-18. Confirm activity logs are written.
-19. Confirm unauthorized users cannot record supplier payment or post purchase return.
-20. Confirm logs:audit Stage-2 gate remains green.
-21. Confirm existing procurement, stock, billing, and supplier workflows still work.
-
-Do not skip validation, permissions, accounting posting, activity logs, or idempotency because tests are deferred.
-
----
-
-# 19. Documentation
+22. Services to Create / Update
 
 Create:
 
-```text
-docs/ACCOUNTING_PHASE_5_PROCUREMENT_AP_AGING_REPORT.md
-```
+DepartmentDashboardResolver
+DepartmentDashboardService
+DashboardMetricService
+DashboardQueueService
+DashboardAlertService
+
+Optional per-department services:
+
+ConsultationDashboardService
+EmergencyDashboardService
+AdmissionDashboardService
+PharmacyDashboardService
+InvestigationDashboardService
+TheatreDashboardService
+BillingDashboardService
+StockDashboardService
+AccountingDashboardService
+ClaimsDashboardService
+BloodBankDashboardService
+
+Prefer small focused services rather than one giant controller.
+
+⸻
+
+23. Views
+
+Recommended structure:
+
+resources/views/admin/dashboards/
+├── index.blade.php
+├── partials/
+│   ├── kpi-card.blade.php
+│   ├── alert-list.blade.php
+│   ├── work-queue.blade.php
+│   └── quick-actions.blade.php
+├── department-types/
+│   ├── consultation.blade.php
+│   ├── emergency.blade.php
+│   ├── admission.blade.php
+│   ├── pharmacy.blade.php
+│   ├── investigation.blade.php
+│   ├── theatre.blade.php
+│   ├── billing.blade.php
+│   ├── stock.blade.php
+│   ├── blood-bank.blade.php
+│   ├── accounting.blade.php
+│   ├── hr.blade.php
+│   └── management.blade.php
+
+Use shared components. Do not duplicate large blocks unnecessarily.
+
+⸻
+
+24. Sidebar / Navigation
+
+Update sidebar/dashboard navigation carefully.
+
+The existing sidebar is built through SidebarMenuBuilder, so do not hardcode menu links directly in Blade if the project uses the builder.  
+
+Add either:
+
+* one Dashboard route that resolves automatically
+* or a dashboard submenu by department type for admins
+
+Recommended:
+
+Dashboard → My Dashboard
+Dashboard → Management Dashboard
+Dashboard → Department Dashboards
+
+Only show department dashboards the user can access.
+
+⸻
+
+25. Activity Logs / Notifications
+
+Do not log dashboard views unless policy requires it.
+
+Do log dashboard-triggered actions, such as:
+
+* approve requisition
+* record payment
+* assign bed
+* verify result
+* approve claim
+* retry accounting posting
+
+Dashboard is a view layer; action services own logs.
+
+⸻
+
+26. Performance
+
+Dashboards must be fast.
+
+Rules:
+
+* avoid N+1 queries
+* use aggregate queries
+* cache expensive metrics if needed
+* do not load thousands of records
+* limit queues to top 10–20 items
+* use date filters: today, this week, this month
+* paginate or link to full list
+
+Suggested:
+
+Today by default
+Refresh button
+Last updated timestamp
+
+⸻
+
+27. UI Requirements
+
+Each dashboard must include:
+
+* <x-page-header>
+* KPI cards
+* alert cards
+* work queue table/list
+* quick action buttons
+* empty states
+* status badges
+* permission-aware actions
+* module-aware sections
+* responsive layout
+
+Use dashboard cards like:
+
+<x-stat-card title="Waiting Patients" :value="$waiting" icon="ti-users" variant="warning" />
+
+If <x-stat-card> is not available, create or reuse the existing KPI card pattern.
+
+⸻
+
+28. Manual Verification Strategy
+
+Do not write the full automated test suite yet if the current implementation phase is still ongoing.
+
+Manual verification required:
+
+1. Login as doctor and confirm consultation dashboard appears.
+2. Login as emergency staff and confirm emergency dashboard appears.
+3. Login as pharmacist and confirm pharmacy dashboard appears.
+4. Login as lab user and confirm investigation dashboard appears.
+5. Login as theatre user and confirm theatre dashboard appears.
+6. Login as billing/cashier and confirm billing dashboard appears.
+7. Login as stock/store user and confirm stock dashboard appears.
+8. Login as accountant and confirm accounting dashboard appears.
+9. Login as admin and confirm management dashboard appears.
+10. Confirm disabled modules do not break dashboard.
+11. Confirm unauthorized dashboard actions are hidden and backend protected.
+12. Confirm KPIs match existing module counts.
+13. Confirm queues link to correct pages.
+14. Confirm empty states display correctly.
+15. Confirm dashboard performance is acceptable.
+16. Confirm logs:audit Stage-2 gate remains green.
+
+⸻
+
+29. Documentation
+
+Create:
+
+docs/DEPARTMENT_TYPE_DASHBOARDS_REPORT.md
 
 Include:
 
-* goods receiving accounting rule
-* supplier invoice/payable treatment
-* supplier ledger convention
-* supplier payment posting
-* purchase return posting
-* AP aging buckets
-* supplier statement behavior
-* account mappings
-* UI changes
-* permissions
-* activity logs
+* department types implemented
+* dashboard resolver behavior
+* KPI definitions
+* queue definitions
+* permission rules
+* module enable/disable rules
+* UI components used
 * manual verification completed
-* tests deferred list
-* known risks/TODOs
-* next phase recommendation
+* known TODOs
+* next recommendations
 
----
+⸻
 
-# 20. Acceptance Criteria
+30. Acceptance Criteria
 
-Phase 5 is complete when:
+This task is complete when:
 
-* purchase orders do not create accounting liability by default
-* goods receiving can create supplier payable
-* goods receiving posts Dr Inventory / Cr Supplier Payable
-* supplier payments post Dr Supplier Payable / Cr Cash/Bank
-* supplier returns post Dr Supplier Payable / Cr Inventory where applicable
-* supplier ledger reconciles with supplier payable balance
-* AP Aging report works
-* Supplier Statement works
-* accounting status appears on procurement/AP records
-* duplicate posting is prevented
-* reversals are controlled
-* Trial Balance remains balanced
-* General Ledger shows AP/procurement postings
-* activity logs are written
+* department-type dashboard resolver exists
+* each major department type has dashboard data/view
+* users are routed to the correct dashboard
+* KPIs are permission-aware
+* queues are permission-aware
+* disabled modules do not break dashboards
+* dashboards follow UHMS UI standards
+* dashboard actions route to existing workflows
+* no duplicate business logic is created
 * logs:audit Stage-2 gate remains green
-* manual verification is documented
-* full automated tests remain deferred until final accounting implementation pass
+* documentation is updated
 
----
+⸻
 
-# 21. Important Rules
+31. Important Rules
 
-Do not treat purchase order as accounting liability.
-Do not treat supplier payment as expense.
-Do not duplicate supplier ledger entries.
-Do not duplicate stock movements.
-Do not duplicate journal entries.
-Do not post the same goods receipt twice.
-Do not silently post to random accounts.
-Do not edit posted journal entries.
-Do not bypass stock movement service.
-Do not bypass supplier ledger service.
-Do not bypass ActivityLogService.
-Do not enable full automated tests yet.
+Do not introduce Tailwind.
+Do not introduce a second dashboard framework.
+Do not create dashboard actions that bypass existing service workflows.
+Do not duplicate module business logic inside dashboard controllers.
+Do not show unauthorized financial/clinical/stock data.
+Do not expose stock cost to unauthorized users.
+Do not log dashboard views unless policy requires it.
+Do not break existing dashboard routes.
+Do not break SidebarMenuBuilder.
+Do not ignore module enable/disable state.
 
-Proceed with Accounting Phase 5: Procurement, Supplier Ledger, Accounts Payable & AP Aging now.
+Proceed with Department-Type Dashboards implementation now.
