@@ -1166,7 +1166,7 @@
                                         <div class="col-md-6">
                                             <label class="form-label small">Department <span class="text-danger">*</span></label>
                                             @if($investigationDepts->isNotEmpty())
-                                                <select id="investigationDeptSelect" class="form-select" required onchange="loadInvestigationServices(this.value)">
+                                                <select name="department_id" id="investigationDeptSelect" class="form-select" required onchange="loadInvestigationServices(this.value)">
                                                     <option value="">-- Select Department --</option>
                                                     @foreach($investigationDepts as $dept)
                                                         <option value="{{ $dept->id }}">{{ $dept->name }}</option>

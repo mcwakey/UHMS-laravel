@@ -30,6 +30,9 @@ class CounterSaleController extends Controller
             'service_id' => ['array'],
             'service_id.*' => ['nullable', 'integer'],
             'service_qty' => ['array'],
+            'procedure_id' => ['array'],
+            'procedure_id.*' => ['nullable', 'integer'],
+            'procedure_qty' => ['array'],
         ]);
 
         $drugs = [];
@@ -46,6 +49,13 @@ class CounterSaleController extends Controller
             }
         }
 
+        $procedures = [];
+        foreach ((array) $request->input('procedure_id', []) as $i => $id) {
+            if ($id) {
+                $procedures[] = ['id' => (int) $id, 'quantity' => max(1, (int) $request->input("procedure_qty.{$i}", 1))];
+            }
+        }
+
         $invoice = $this->sales->create([
             'external_party_name' => $data['external_party_name'],
             'external_party_contact' => $data['external_party_contact'] ?? null,
@@ -53,6 +63,7 @@ class CounterSaleController extends Controller
             'external_party_age' => $data['external_party_age'] ?? null,
             'drugs' => $drugs,
             'services' => $services,
+            'procedures' => $procedures,
         ], $request->user());
 
         return redirect()
@@ -86,6 +97,25 @@ class CounterSaleController extends Controller
         $q = trim((string) $request->query('q', ''));
 
         $services = ServiceCatalog::where('category', 'investigation')
+            ->where('is_active', true)
+            ->when($q !== '', fn ($x) => $x->where('name', 'like', "%{$q}%"))
+            ->orderBy('name')
+            ->limit(20)
+            ->get();
+
+        return response()->json($services->map(fn ($s) => [
+            'id' => $s->id,
+            'text' => $s->name,
+            'price' => (float) ($s->price ?? 0),
+        ]));
+    }
+
+    /** select2 JSON: active procedure services with cash price. */
+    public function procedureSearch(Request $request)
+    {
+        $q = trim((string) $request->query('q', ''));
+
+        $services = ServiceCatalog::where('category', 'procedure')
             ->where('is_active', true)
             ->when($q !== '', fn ($x) => $x->where('name', 'like', "%{$q}%"))
             ->orderBy('name')

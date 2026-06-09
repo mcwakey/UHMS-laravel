@@ -109,9 +109,10 @@ class CounterSaleService
 
                 if ($line['kind'] === 'drug') {
                     $this->dispenseStock($line['drug'], (int) $line['quantity'], $item, $invoice, $user);
-                } else {
+                } elseif ($line['kind'] === 'service') {
                     $serviceLines[] = ['service' => $line['service'], 'item' => $item, 'quantity' => (int) $line['quantity']];
                 }
+                // 'procedure' lines are billed only — no lab request is raised.
             }
 
             // Raise a visit-less lab request per target department for the investigations.
@@ -181,6 +182,30 @@ class CounterSaleService
                 'service_catalog_id' => $service->id,
                 'department_id' => $service->department_id,
                 'source_type' => InvoiceItem::SOURCE_INVESTIGATION_SERVICE,
+                'description' => $service->name,
+                'quantity' => $qty,
+                'unit_price' => $price,
+                'line_total' => round($price * $qty, 2),
+            ];
+        }
+
+        foreach ($data['procedures'] ?? [] as $row) {
+            $qty = (int) ($row['quantity'] ?? 0);
+            if (empty($row['id']) || $qty < 1) {
+                continue;
+            }
+            $service = ServiceCatalog::find($row['id']);
+            if (! $service) {
+                continue;
+            }
+            $price = (float) ($service->price ?? 0);
+            $lines[] = [
+                'kind' => 'procedure',
+                'service' => $service,
+                'product_id' => null,
+                'service_catalog_id' => $service->id,
+                'department_id' => $service->department_id,
+                'source_type' => InvoiceItem::SOURCE_PROCEDURE_SERVICE,
                 'description' => $service->name,
                 'quantity' => $qty,
                 'unit_price' => $price,

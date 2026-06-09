@@ -6,6 +6,17 @@
     use App\Enums\ProcedureStatus;
     $status = $procedure->status;
     $can = fn($p) => auth()->user()?->can($p) ?? false;
+
+    // The procedure workflow is split into two segments:
+    //   Request   — acceptance → billing → scheduling/rescheduling
+    //   Operation — pre-op vitals & checklist → … → complete procedure
+    // SCHEDULED is the hinge: reschedule lives in Request, pre-op opens Operation.
+    $operationStatuses = [
+        ProcedureStatus::SCHEDULED, ProcedureStatus::PRE_OP, ProcedureStatus::ANAESTHESIA,
+        ProcedureStatus::IN_SURGERY, ProcedureStatus::SURGERY_DONE, ProcedureStatus::POST_OP,
+        ProcedureStatus::COMPLETED,
+    ];
+    $showOperationFirst = in_array($status, $operationStatuses, true);
 @endphp
 
 @section('content')
@@ -74,8 +85,28 @@
             </div>
         </div>
 
-        {{-- RIGHT: Action forms (status-driven) --}}
+        {{-- RIGHT: Action forms (status-driven), split into Request + Operation segments --}}
         <div class="col-lg-7">
+
+            <ul class="nav nav-tabs mb-3" id="procedureSegments" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link {{ $showOperationFirst ? '' : 'active' }}" data-bs-toggle="tab" data-bs-target="#segRequest" type="button" role="tab">
+                        <i class="ti ti-clipboard-check me-1"></i>Request
+                        <span class="d-block small text-muted">Accept · Bill · Schedule</span>
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link {{ $showOperationFirst ? 'active' : '' }}" data-bs-toggle="tab" data-bs-target="#segOperation" type="button" role="tab">
+                        <i class="ti ti-stethoscope me-1"></i>Operation
+                        <span class="d-block small text-muted">Pre-op → Complete</span>
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+
+            {{-- ============================ REQUEST SEGMENT ============================ --}}
+            <div class="tab-pane fade {{ $showOperationFirst ? '' : 'show active' }}" id="segRequest" role="tabpanel">
 
             {{-- ACCEPT / REJECT --}}
             @if ($status === ProcedureStatus::REQUESTED)
@@ -124,6 +155,19 @@
             {{-- RESCHEDULE --}}
             @if ($status === ProcedureStatus::SCHEDULED && $can('procedure.reschedule'))
                 @include('theatre.partials.schedule-form', ['procedure'=>$procedure,'theatreRooms'=>$theatreRooms,'clinicians'=>$clinicians, 'mode'=>'reschedule'])
+            @endif
+
+            @if (in_array($status, [ProcedureStatus::REQUESTED, ProcedureStatus::ACCEPTED, ProcedureStatus::BILLED, ProcedureStatus::RESCHEDULED, ProcedureStatus::SCHEDULED], true) === false)
+                <p class="text-muted small mb-0"><i class="ti ti-info-circle me-1"></i>This procedure has moved past the request phase.</p>
+            @endif
+
+            </div>{{-- /segRequest --}}
+
+            {{-- ============================ OPERATION SEGMENT ============================ --}}
+            <div class="tab-pane fade {{ $showOperationFirst ? 'show active' : '' }}" id="segOperation" role="tabpanel">
+
+            @if (! $showOperationFirst)
+                <p class="text-muted small"><i class="ti ti-info-circle me-1"></i>The operation phase opens once the procedure is scheduled.</p>
             @endif
 
             {{-- PRE-OP --}}
@@ -345,7 +389,10 @@
                 </div>
             @endif
 
-            {{-- CANCEL (available while open) --}}
+            </div>{{-- /segOperation --}}
+            </div>{{-- /tab-content --}}
+
+            {{-- CANCEL (available while open) — stays outside the segments --}}
             @if (! in_array($status, [ProcedureStatus::COMPLETED, ProcedureStatus::CANCELLED, ProcedureStatus::REJECTED]) && $can('procedure.cancel'))
                 <div class="card shadow-sm mb-3 border-danger">
                     <div class="card-header bg-light"><strong class="text-danger">Cancel Procedure</strong></div>

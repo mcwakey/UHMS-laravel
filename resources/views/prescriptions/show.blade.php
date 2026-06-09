@@ -120,10 +120,10 @@
                 @elseif($billableItems->isEmpty())
                     <p class="text-muted mb-0">All prescribed items have been billed. Once payment is settled, they can be dispensed at the pharmacy.</p>
                 @else
-                <form method="POST" action="{{ route('admin.prescriptions.bill', $prescription) }}">
+                <form method="POST" action="{{ route('admin.prescriptions.bill', $prescription) }}" id="pharmacyBillForm">
                     @csrf
                     <div class="table-responsive">
-                        <table class="table table-sm align-middle mb-0">
+                        <table class="table table-sm align-middle mb-0" id="pharmacyBillTable">
                             <thead class="table-light">
                                 <tr>
                                     <th style="width:48px">Bill</th>
@@ -132,7 +132,9 @@
                                     <th class="text-end">Billed</th>
                                     <th class="text-end">Remaining</th>
                                     <th class="text-end">Pharmacy Qty</th>
+                                    <th class="text-end">Unit Price</th>
                                     <th style="width:130px">Selected Qty</th>
+                                    <th class="text-end">Line Total</th>
                                     <th>Notes</th>
                                 </tr>
                             </thead>
@@ -143,9 +145,10 @@
                                         $pharmacyQty = (float) ($item->pharmacy_available_quantity ?? 0);
                                         $defaultQty = min($remainingToBill, $pharmacyQty);
                                         $pharmacyStatus = $item->pharmacy_stock_status ?? ['label' => 'OUT', 'class' => 'danger'];
+                                        $unitPrice = (float) ($item->drug?->product?->base_price ?? 0);
                                     @endphp
-                                    <tr>
-                                        <td><input type="checkbox" class="form-check-input" name="items[{{ $item->id }}][selected]" value="1" {{ $defaultQty > 0 ? '' : 'disabled' }}></td>
+                                    <tr class="bill-row" data-price="{{ $unitPrice }}">
+                                        <td><input type="checkbox" class="form-check-input bill-check" name="items[{{ $item->id }}][selected]" value="1" {{ $defaultQty > 0 ? '' : 'disabled' }}></td>
                                         <td>
                                             <span class="fw-medium">{{ $item->drug_name }}</span>
                                             @if($item->drug)<br><small class="text-muted">{{ $item->drug->dosage_form }} {{ $item->drug->strength }}</small>@endif
@@ -154,17 +157,49 @@
                                         <td class="text-end">{{ $formatQty($item->billed_quantity ?? 0) }}</td>
                                         <td class="text-end fw-semibold text-primary">{{ $formatQty($remainingToBill) }}</td>
                                         <td class="text-end">{{ $formatQty($pharmacyQty) }} <span class="badge bg-{{ $pharmacyStatus['class'] }} ms-1">{{ $pharmacyStatus['label'] }}</span></td>
-                                        <td><input type="number" name="items[{{ $item->id }}][quantity]" class="form-control form-control-sm" value="{{ $formatQty($defaultQty) }}" min="0" max="{{ $formatQty($defaultQty) }}"></td>
+                                        <td class="text-end">GH₵ {{ number_format($unitPrice, 2) }}</td>
+                                        <td><input type="number" name="items[{{ $item->id }}][quantity]" class="form-control form-control-sm bill-qty" value="{{ $formatQty($defaultQty) }}" min="0" max="{{ $formatQty($defaultQty) }}"></td>
+                                        <td class="text-end fw-medium line-total">GH₵ 0.00</td>
                                         <td><input type="text" name="items[{{ $item->id }}][notes]" class="form-control form-control-sm" placeholder="Optional"></td>
                                     </tr>
                                 @endforeach
                             </tbody>
+                            <tfoot>
+                                <tr class="table-light">
+                                    <td colspan="8" class="text-end fw-bold">Total to bill:</td>
+                                    <td class="text-end fw-bold" id="pharmacyBillTotal">GH₵ 0.00</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                     <div class="mt-3 d-flex justify-content-end">
                         <button type="submit" class="btn btn-primary"><i class="ti ti-receipt me-1"></i>Bill Selected</button>
                     </div>
                 </form>
+                @push('scripts')
+                <script>
+                (function () {
+                    const table = document.getElementById('pharmacyBillTable');
+                    if (!table) return;
+                    const fmt = n => 'GH₵ ' + (parseFloat(n) || 0).toFixed(2);
+                    function recalc() {
+                        let grand = 0;
+                        table.querySelectorAll('.bill-row').forEach(function (row) {
+                            const price = parseFloat(row.dataset.price) || 0;
+                            const qty = parseFloat(row.querySelector('.bill-qty')?.value) || 0;
+                            const checked = row.querySelector('.bill-check')?.checked;
+                            row.querySelector('.line-total').textContent = fmt(qty * price);
+                            if (checked) grand += qty * price;
+                        });
+                        document.getElementById('pharmacyBillTotal').textContent = fmt(grand);
+                    }
+                    table.addEventListener('input', function (e) { if (e.target.classList.contains('bill-qty')) recalc(); });
+                    table.addEventListener('change', function (e) { if (e.target.classList.contains('bill-check')) recalc(); });
+                    recalc();
+                })();
+                </script>
+                @endpush
                 @endif
             </div>
         </div>

@@ -17,6 +17,7 @@
 <ul class="nav nav-tabs mb-3" id="counterSaleTabs" role="tablist">
     <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabPharmacy" type="button"><i class="ti ti-pill me-1"></i>Pharmacy Sale</button></li>
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabInvestigation" type="button"><i class="ti ti-microscope me-1"></i>Investigation Sale</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabProcedure" type="button"><i class="ti ti-stethoscope me-1"></i>Procedure Sale</button></li>
 </ul>
 
 <div class="tab-content">
@@ -109,6 +110,51 @@
             </div>
         </form>
     </div>
+
+    {{-- ========================= PROCEDURES ========================= --}}
+    <div class="tab-pane fade" id="tabProcedure">
+        <form method="POST" action="{{ route('admin.billing.counter-sale.store') }}">
+            @csrf
+            <div class="row g-3">
+                <div class="col-lg-8">
+                    <div class="card mb-3">
+                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-user me-1"></i>Walk-in Recipient</h6></div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-5"><label class="form-label">Name <span class="text-danger">*</span></label><input name="external_party_name" class="form-control" required></div>
+                                <div class="col-md-3"><label class="form-label">Gender</label><select name="external_party_sex" class="form-select"><option value="">—</option>@foreach($genders as $g)<option value="{{ $g }}">{{ $g }}</option>@endforeach</select></div>
+                                <div class="col-md-2"><label class="form-label">Age</label><input type="number" name="external_party_age" min="0" max="150" class="form-control"></div>
+                                <div class="col-md-2"><label class="form-label">Contact</label><input name="external_party_contact" class="form-control"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h6 class="card-title mb-0"><i class="ti ti-stethoscope me-1"></i>Procedures</h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-add-row data-tpl="procedureRowTpl" data-body="procedureRows"><i class="ti ti-plus me-1"></i>Add Procedure</button>
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table align-middle mb-0">
+                                <thead class="bg-light"><tr><th>Procedure</th><th style="width:110px">Qty</th><th style="width:120px" class="text-end">Price</th><th style="width:130px" class="text-end">Line</th><th style="width:40px"></th></tr></thead>
+                                <tbody id="procedureRows"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card position-sticky" style="top:1rem">
+                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-receipt me-1"></i>Procedure Sale</h6></div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-3"><span class="fw-semibold">Total</span><span class="fw-bold fs-5" data-total="procedureRows">₵0.00</span></div>
+                            <button type="submit" class="btn btn-primary w-100"><i class="ti ti-device-floppy me-1"></i>Create Procedure Sale</button>
+                            <p class="small text-muted mt-2 mb-0">Raises a cash invoice for the procedure charges only.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
 
 {{-- Row templates --}}
@@ -125,6 +171,15 @@
     <tr class="sale-row">
         <td><select name="service_id[]" class="form-select row-pick" data-search="{{ route('admin.billing.counter-sale.service-search') }}" style="width:100%"></select></td>
         <td><input type="number" name="service_qty[]" class="form-control row-qty" value="1" min="1"></td>
+        <td class="text-end row-price">₵0.00</td>
+        <td class="text-end row-line">₵0.00</td>
+        <td class="text-end"><button type="button" class="btn btn-sm btn-link text-danger row-remove p-0"><i class="ti ti-trash"></i></button></td>
+    </tr>
+</template>
+<template id="procedureRowTpl">
+    <tr class="sale-row">
+        <td><select name="procedure_id[]" class="form-select row-pick" data-search="{{ route('admin.billing.counter-sale.procedure-search') }}" style="width:100%"></select></td>
+        <td><input type="number" name="procedure_qty[]" class="form-control row-qty" value="1" min="1"></td>
         <td class="text-end row-price">₵0.00</td>
         <td class="text-end row-line">₵0.00</td>
         <td class="text-end"><button type="button" class="btn btn-sm btn-link text-danger row-remove p-0"><i class="ti ti-trash"></i></button></td>
@@ -183,11 +238,16 @@ document.addEventListener('DOMContentLoaded', function () {
     // Seed the active tab; seed the other tab's first row only once it becomes visible
     // (select2 needs a visible container to size correctly).
     addRow('drugRowTpl', 'drugRows');
+    var tabSeed = {
+        '#tabInvestigation': { body: 'serviceRows', tpl: 'serviceRowTpl' },
+        '#tabProcedure': { body: 'procedureRows', tpl: 'procedureRowTpl' },
+        '#tabPharmacy': { body: 'drugRows', tpl: 'drugRowTpl' },
+    };
     document.querySelectorAll('#counterSaleTabs button').forEach(function (tabBtn) {
         tabBtn.addEventListener('shown.bs.tab', function () {
-            var body = tabBtn.dataset.bsTarget === '#tabInvestigation' ? 'serviceRows' : 'drugRows';
-            if (!document.querySelector('#' + body + ' .sale-row')) {
-                addRow(body === 'serviceRows' ? 'serviceRowTpl' : 'drugRowTpl', body);
+            var seed = tabSeed[tabBtn.dataset.bsTarget] || tabSeed['#tabPharmacy'];
+            if (!document.querySelector('#' + seed.body + ' .sale-row')) {
+                addRow(seed.tpl, seed.body);
             }
         });
     });

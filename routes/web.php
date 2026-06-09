@@ -971,6 +971,7 @@ Route::middleware('auth')->group(function () {
                 Route::post('counter-sale', [CounterSaleController::class, 'store'])->name('counter-sale.store');
                 Route::get('counter-sale/drug-search', [CounterSaleController::class, 'drugSearch'])->name('counter-sale.drug-search');
                 Route::get('counter-sale/service-search', [CounterSaleController::class, 'serviceSearch'])->name('counter-sale.service-search');
+                Route::get('counter-sale/procedure-search', [CounterSaleController::class, 'procedureSearch'])->name('counter-sale.procedure-search');
             });
 
             // Invoices
