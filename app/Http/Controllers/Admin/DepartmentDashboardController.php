@@ -23,6 +23,12 @@ class DepartmentDashboardController extends Controller
     {
         $user = $request->user();
 
+        // Super Admins use the original hospital-wide admin dashboard by default,
+        // but may still preview any department dashboard via ?as=<key>.
+        // if (! $request->filled('as') && $user->hasRole('Super Admin')) {
+        //     return redirect()->route('admin.dashboard');
+        // }
+
         // Admins may preview any dashboard via ?as=<key>; everyone else gets theirs.
         $resolvedKey = $this->resolver->resolveKey($user);
         $key = $resolvedKey;

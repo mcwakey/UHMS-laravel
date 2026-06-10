@@ -34,8 +34,14 @@ class SidebarMenuBuilder
                     [
                         'label' => 'Dashboard',
                         'icon' => 'ti ti-layout-dashboard',
+                        'route' => 'admin.dashboard',
+                        'active_patterns' => ['admin.dashboard'],
+                    ],
+                    [
+                        'label' => 'Other Dashboards',
+                        'icon' => 'ti ti-layout-dashboard',
                         'route' => 'admin.my-dashboard',
-                        'active_patterns' => ['dashboard', 'admin.dashboard', 'admin.my-dashboard', 'doctor.dashboard', 'staff.dashboard'],
+                        'active_patterns' => [ 'admin.my-dashboard', 'doctor.dashboard', 'staff.dashboard'],
                     ],
                 ],
             ],
