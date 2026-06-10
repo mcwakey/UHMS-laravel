@@ -31,8 +31,15 @@
     $textDark = (! $soft && in_array($variant, config('ui.dark_text_variants', []), true)) ? ' text-dark' : '';
     $sizeClass = $size === 'sm' ? ' fs-12' : '';
 
+    // Translated label: statuses.{domain}.{status} → statuses.default.{status}
+    // → enum label() → title-cased raw. Explicit `label` prop always wins.
+    $langKey = strtolower(trim($raw));
     if ($label !== null) {
         $text = $label;
+    } elseif ($langKey !== '' && \Illuminate\Support\Facades\Lang::has("statuses.{$domain}.{$langKey}")) {
+        $text = __("statuses.{$domain}.{$langKey}");
+    } elseif ($langKey !== '' && \Illuminate\Support\Facades\Lang::has("statuses.default.{$langKey}")) {
+        $text = __("statuses.default.{$langKey}");
     } elseif ($enum && method_exists($enum, 'label')) {
         $text = $enum->label();
     } else {

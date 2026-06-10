@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
@@ -1655,7 +1656,24 @@ class SidebarMenuBuilder
 
         $section['items'] = $items;
 
+        if (! empty($section['title'])) {
+            $section['title'] = $this->translateLabel($section['title']);
+        }
+
         return $section;
+    }
+
+    /**
+     * Translate a menu label using a key derived from the English label
+     * (lowercase, non-alphanumeric runs collapsed to '_'). Falls back to
+     * the original label when no translation exists, so new menu entries
+     * never break.
+     */
+    protected function translateLabel(string $label): string
+    {
+        $key = 'menu.' . trim(preg_replace('/[^a-z0-9]+/', '_', strtolower($label)), '_');
+
+        return Lang::has($key) ? __($key) : $label;
     }
 
     protected function filterItem(array $item, User $user, string $currentRouteName): ?array
@@ -1675,6 +1693,10 @@ class SidebarMenuBuilder
             }
 
             $item['children'] = $children;
+        }
+
+        if (! empty($item['label'])) {
+            $item['label'] = $this->translateLabel($item['label']);
         }
 
         $item['active'] = $this->isActive($item, $currentRouteName)

@@ -1,0 +1,35 @@
+<?php
+
+return [
+    'title' => 'Dashboard',
+    'welcome' => 'Welcome back, :name',
+    'overview' => 'Overview',
+    'work_queue' => 'Work Queue',
+    'quick_actions' => 'Quick Actions',
+    'alerts' => 'Alerts',
+    'recent_activity' => 'Recent Activity',
+    'today' => 'Today',
+    'this_week' => 'This Week',
+    'this_month' => 'This Month',
+    'view_details' => 'View Details',
+    'no_items_in_queue' => 'No items in the queue.',
+    'no_alerts' => 'No alerts.',
+
+    'kpi' => [
+        'patients_today' => 'Patients Today',
+        'visits_today' => 'Visits Today',
+        'waiting' => 'Waiting',
+        'in_progress' => 'In Progress',
+        'completed_today' => 'Completed Today',
+        'revenue_today' => 'Revenue Today',
+        'pending_payments' => 'Pending Payments',
+        'low_stock_items' => 'Low Stock Items',
+        'expiring_soon' => 'Expiring Soon',
+        'admitted_patients' => 'Admitted Patients',
+        'available_beds' => 'Available Beds',
+        'active_cases' => 'Active Cases',
+        'prescriptions_waiting' => 'Prescriptions Waiting',
+        'results_pending' => 'Results Pending',
+        'appointments_today' => 'Appointments Today',
+    ],
+];

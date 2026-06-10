@@ -22,6 +22,7 @@
 </div></div>
 
 <div class="card"><div class="card-body">
+    <div class="table-responsive">
     <table class="table table-sm mb-0">
         <tbody>
         @foreach(['revenue'=>'Revenue'] as $key=>$lbl)
@@ -48,5 +49,6 @@
         <tr class="{{ $report['net_profit'] >= 0 ? 'table-success' : 'table-danger' }}"><th class="fs-6">Net {{ $report['net_profit'] >= 0 ? 'Profit' : 'Loss' }}</th><th class="text-end fs-6">{{ $money($report['net_profit']) }}</th></tr>
         </tbody>
     </table>
+    </div>
 </div></div>
 @endsection

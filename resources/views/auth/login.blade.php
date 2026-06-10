@@ -1,5 +1,5 @@
 @extends('layouts.auth')
-@section('title', 'Sign In')
+@section('title', __('common.sign_in'))
 
 @section('content')
 <div class="container-fuild position-relative z-1">
@@ -13,8 +13,8 @@
                     <div class="card border-1 p-lg-3 shadow-md rounded-3 mb-4">
                         <div class="card-body">
                             <div class="text-center mb-3">
-                                <h5 class="mb-1 fs-20 fw-bold">Sign In</h5>
-                                <p class="mb-0">Enter your credentials to access the dashboard</p>
+                                <h5 class="mb-1 fs-20 fw-bold">{{ __('common.sign_in') }}</h5>
+                                <p class="mb-0">{{ __('common.enter_credentials') }}</p>
                             </div>
 
                             @if($errors->any())
@@ -36,16 +36,16 @@
                             <form method="POST" action="{{ route('login') }}">
                                 @csrf
                                 <div class="mb-3">
-                                    <label class="form-label">Email Address</label>
+                                    <label class="form-label">{{ __('common.email_address') }}</label>
                                     <div class="input-group">
                                         <span class="input-group-text border-end-0 bg-white">
                                             <i class="ti ti-mail fs-14 text-dark"></i>
                                         </span>
-                                        <input type="email" name="email" value="{{ old('email') }}" class="form-control border-start-0 ps-0 @error('email') is-invalid @enderror" placeholder="Enter Email Address" required autofocus>
+                                        <input type="email" name="email" value="{{ old('email') }}" class="form-control border-start-0 ps-0 @error('email') is-invalid @enderror" placeholder="{{ __('common.enter_email_address') }}" required autofocus>
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">Password</label>
+                                    <label class="form-label">{{ __('common.password') }}</label>
                                     <div class="pass-group input-group position-relative border rounded">
                                         <span class="input-group-text bg-white border-0">
                                             <i class="ti ti-lock text-dark fs-14"></i>
@@ -60,15 +60,15 @@
                                     <div class="d-flex align-items-center">
                                         <div class="form-check form-check-md mb-0">
                                             <input class="form-check-input" id="remember_me" name="remember" type="checkbox" {{ old('remember') ? 'checked' : '' }}>
-                                            <label for="remember_me" class="form-check-label mt-0 text-dark">Remember Me</label>
+                                            <label for="remember_me" class="form-check-label mt-0 text-dark">{{ __('common.remember_me') }}</label>
                                         </div>
                                     </div>
                                     <div class="text-end">
-                                        <a href="{{ route('password.request') }}" class="text-danger">Forgot Password?</a>
+                                        <a href="{{ route('password.request') }}" class="text-danger">{{ __('common.forgot_password') }}</a>
                                     </div>
                                 </div>
                                 <div class="mb-2">
-                                    <button type="submit" class="btn bg-primary text-white w-100">Login</button>
+                                    <button type="submit" class="btn bg-primary text-white w-100">{{ __('common.login') }}</button>
                                 </div>
                             </form>
                         </div>

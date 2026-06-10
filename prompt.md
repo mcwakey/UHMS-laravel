@@ -1,884 +1,1019 @@
-Next is **Accounting Phase 7: Financial Reports, Closing Controls & Management Dashboards**.
+Good. This should be the next cross-cutting phase: **App Responsiveness + Localisation**.
 
-This phase turns the accounting engine into useful management reports: Trial Balance, General Ledger, Profit & Loss, Balance Sheet, Cash Flow, AR/AP Aging summaries, revenue/expense dashboards, and period closing controls.
+We should treat it as a full-system UI/UX pass, not just fixing one page. Since UHMS is Blade-dominant with Bootstrap 5 + Tabler Icons, the responsive work should improve the current layout instead of introducing Tailwind or another framework. The uploaded UI rules already make this clear: UHMS must keep Blade + Bootstrap 5 + Tabler Icons, reuse shared components, avoid new frameworks, and follow the standard layout/checklist for every edited page.   
 
 You are working on UHMS — Ultimate Hospital Management System.
 
-Accounting Phase 1 Foundation is complete.
-Accounting Phase 2 Billing → Accounting Posting is complete.
-Accounting Phase 3 Payments, Discounts, Credit Notes, Write-offs, Refunds & Reversals is complete.
-Accounting Phase 4 Sponsors, Insurance, Corporate Receivables & AR Aging is complete.
-Accounting Phase 5 Procurement, Supplier Ledger, Accounts Payable & AP Aging is complete.
-Accounting Phase 6 Stock Valuation, COGS, Consumables Expense & Inventory Accounting is complete.
+We now want to improve full-system responsiveness and localisation.
 
-Now proceed with Accounting Phase 7:
-
-Financial Reports, Closing Controls & Management Dashboards
+This is a cross-cutting UI/UX and internationalisation phase.
 
 Goal:
-Build the main accounting reports, financial dashboards, and period closing controls needed for UHMS to operate as a full accounting-aware hospital management system.
+Make UHMS usable on desktop, laptop, tablet, and mobile screens, and prepare the system for multi-language support, starting with English and French.
 
-Do not replace the existing operational reports.
-Do not replace billing, procurement, stock, supplier, AR, or AP reports.
-Do not change posted journal entries.
-Do not enable full automated tests yet.
-Full tests will be written after the whole accounting implementation is complete.
+Do not redesign the whole system.
+Do not introduce Tailwind.
+Do not introduce a second CSS framework.
+Do not break existing workflows.
+Do not rewrite unrelated modules.
+Do not remove existing Blade pages.
+Do not convert everything to Vue/Inertia unless the page already uses Vue/Inertia.
 
-Important rule:
-
-Operational reports show hospital workflow activity.
-Accounting reports show financial impact from posted journal entries.
-
----
-
-# 1. Main Objective
-
-Implement complete accounting reporting and finance dashboards.
-
-This phase must include:
-
-1. General Ledger
-2. Trial Balance
-3. Profit & Loss / Income Statement
-4. Balance Sheet
-5. Cashbook / Cash & Bank Summary
-6. Cash Flow report if feasible
-7. AR Aging summary
-8. AP Aging summary
-9. Revenue by Department
-10. Expense by Department
-11. Inventory Valuation summary
-12. Supplier Payables summary
-13. Receivables summary
-14. Period closing controls
-15. Accounting dashboard
-16. Report exports/printing where existing report system supports it
-17. Activity logs
-18. Manual verification documentation
+UHMS is mainly a Blade + Bootstrap 5 + Tabler Icons application. Continue using the existing UI architecture.
 
 ---
 
-# 2. Reporting Principle
+# 1. Main Objectives
 
-All core accounting reports must use only:
+Implement two major improvements:
+
+1. Responsiveness
+   - desktop
+   - laptop
+   - tablet
+   - mobile
+   - printable views
+
+2. Localisation
+   - English
+   - French
+   - language files
+   - translated UI labels
+   - translated validation messages
+   - translated status labels
+   - translated menus
+   - translatable reports where practical
+
+---
+
+# 2. Responsiveness Scope
+
+Review and improve responsive behavior across major UHMS modules:
 
 ```text
-posted journal entries
-posted journal entry lines
-valid accounting periods
-valid fiscal years
+Dashboard
+Patients
+Visits
+Consultation
+Emergency
+Admissions / Wards
+Pharmacy
+Investigations / Lab
+Theatre / Procedures
+Billing
+Insurance / Claims
+Stock / Store / Procurement
+Accounting / Finance
+Reports
+Administration
+Settings
 ````
 
-Do not include:
+Prioritize the most-used and highest-risk pages first:
 
 ```text
-draft journals
-cancelled journals
-unposted operational records
-failed accounting postings
-```
-
-Operational records can be linked for drill-down, but report totals must come from accounting records.
-
----
-
-# 3. General Ledger
-
-Create or finalize the General Ledger report.
-
-Filters:
-
-```text
-Account
-Account Type
-Date From
-Date To
-Fiscal Year
-Accounting Period
-Department
-Patient
-Supplier
-Sponsor
-Insurance Provider
-Source Module
-Reference Type
-Reference Number
-```
-
-Columns:
-
-```text
-Date
-Journal Number
-Account Code
-Account Name
-Description
-Reference
-Source Module
-Debit
-Credit
-Running Balance
-Posted By
-```
-
-Rules:
-
-* include only posted journal entries
-* running balance must respect account normal balance
-* allow drill-down to journal entry
-* allow drill-down to source record if available
-* support print/export if existing report system supports it
-* show opening balance before date_from if date filter is used
-
-Opening balance logic:
-
-For debit-normal accounts:
-
-```text
-opening_balance = prior_debits - prior_credits
-```
-
-For credit-normal accounts:
-
-```text
-opening_balance = prior_credits - prior_debits
+Patients
+Visits
+Consultation
+Emergency
+Pharmacy
+Investigations
+Billing
+Admissions
+Stock
+Accounting
+Dashboards
 ```
 
 ---
 
-# 4. Trial Balance
+# 3. Responsive UI Rules
 
-Create or finalize Trial Balance report.
+Follow existing UHMS UI rules.
 
-Filters:
-
-```text
-Fiscal Year
-Date From
-Date To
-Account Type
-Department optional
-Include Zero Balances yes/no
-```
-
-Columns:
+Use:
 
 ```text
-Account Code
-Account Name
-Account Type
-Opening Debit
-Opening Credit
-Period Debit
-Period Credit
-Closing Debit
-Closing Credit
+Bootstrap 5 grid
+Bootstrap responsive utilities
+.table-responsive
+cards with g-3 spacing
+stacked forms on mobile
+responsive action buttons
+offcanvas/drawer only where already supported or easy
+existing Blade components
 ```
 
-Rules:
+Do not use:
 
-* posted entries only
-* total debits must equal total credits
-* show imbalance warning if totals differ
-* parent accounts should optionally roll up child accounts
-* allow detailed view per account
+```text
+Tailwind
+new CSS framework
+random inline CSS
+unapproved layout libraries
+new chart library
+```
 
-Trial Balance must be usable for Balance Sheet and P&L.
+Every edited page must follow:
+
+```text
+PageHeader
+KPIs if any
+Filters if any
+Main content
+Secondary content
+Pagination
+```
+
+Use:
+
+```blade
+<x-page-header>
+<x-status-badge>
+<x-empty-state>
+<x-stat-card>
+<x-filter-bar>
+<x-data-table>
+<x-action-menu>
+<x-confirm-form>
+```
+
+where available.
 
 ---
 
-# 5. Profit & Loss / Income Statement
+# 4. Responsive Breakpoints
 
-Create Profit & Loss report.
-
-Sections:
+Target Bootstrap breakpoints:
 
 ```text
-Revenue
-Cost of Goods Sold
-Gross Profit
-Operating Expenses
-Administrative Expenses
-Finance Costs
-Net Profit / Loss
+xs: mobile portrait
+sm: mobile landscape
+md: tablets
+lg: laptops
+xl: desktops
+xxl: large screens
 ```
 
-Filters:
+Check layouts at minimum:
 
 ```text
-Fiscal Year
-Accounting Period
-Date From
-Date To
-Department
-Branch if multi-branch exists
-```
-
-Rules:
-
-* Revenue accounts use INCOME type
-* Expenses use EXPENSE type
-* COGS can use EXPENSE subtype COST_OF_SALES
-* Net Profit = Total Income - Total Expenses
-* support department-level P&L if department_id exists on journal lines
-
-Example:
-
-```text
-Consultation Revenue
-Laboratory Revenue
-Pharmacy Revenue
-Procedure Revenue
-Emergency Revenue
-Admission Revenue
-Other Revenue
-
-Less:
-Pharmacy COGS
-Consumables COGS
-Salaries
-Utilities
-Rent
-Maintenance
-Administrative Expenses
-Bad Debt / Write-off Expense
-
-Net Profit / Loss
+375px mobile
+414px mobile
+768px tablet
+1024px tablet/laptop
+1366px desktop
+1920px large desktop
 ```
 
 ---
 
-# 6. Balance Sheet
+# 5. Sidebar / Navigation Responsiveness
 
-Create Balance Sheet report.
+Improve navigation behavior.
 
-Sections:
+Requirements:
+
+* sidebar collapses correctly on tablet/mobile
+* menu is scrollable when long
+* active section remains visible
+* department dashboards remain accessible
+* no menu item overlaps content
+* module-disabled items do not leave broken gaps
+* topbar actions fit small screens
+* notification/profile dropdowns work on mobile
+
+Do not hardcode menu links directly in Blade if the system uses `SidebarMenuBuilder`.
+
+---
+
+# 6. Tables Responsiveness
+
+Audit all major tables.
+
+Rules:
+
+* wrap wide tables in `.table-responsive`
+* avoid horizontal page overflow
+* keep action column visible where possible
+* use compact text on mobile
+* avoid too many columns on small screens
+* use stacked card layout only for critical mobile workflows where table scrolling is poor
+* show `<x-empty-state>` when empty
+* use `<x-status-badge>` for statuses
+
+High priority tables:
 
 ```text
-Assets
-Liabilities
-Equity
+Patient list
+Visit list
+Consultation queue
+Emergency cases
+Admission list
+Bed map
+Prescription queue
+Dispensing list
+Investigation requests
+Investigation results
+Procedure requests
+Invoice list
+Payments
+Claims
+Stock balances
+Stock movements
+Purchase orders
+Supplier ledger
+Journal entries
+General ledger
+AR aging
+AP aging
+```
+
+---
+
+# 7. Forms Responsiveness
+
+Audit major forms.
+
+Rules:
+
+* forms stack cleanly on mobile
+* labels stay above inputs
+* long selects use Select2/searchable select
+* date pickers work on mobile
+* submit/cancel buttons remain visible
+* no form fields overflow card boundaries
+* validation errors show under fields
+* required fields are clear
+* modals fit mobile screens
+
+High priority forms:
+
+```text
+Patient registration
+Visit creation
+Emergency case creation
+Triage
+Consultation clinical forms
+Prescription
+Lab result entry
+Procedure scheduling
+Invoice/payment forms
+Insurance/claims forms
+Stock receiving
+Stock transfer
+Purchase order
+Journal entry
+User/role forms
+```
+
+---
+
+# 8. Dashboard Responsiveness
+
+Department-type dashboards must work well on:
+
+```text
+desktop
+tablet
+mobile
 ```
 
 Rules:
 
-* Assets from ASSET accounts
-* Liabilities from LIABILITY accounts
-* Equity from EQUITY accounts
-* Include current year profit/loss from P&L if not already closed to retained earnings
-* Must validate:
+* KPI cards should wrap naturally
+* work queues should be scrollable or stack gracefully
+* quick actions should become compact buttons
+* charts should resize
+* alert cards should remain readable
+* no KPI text overflow
+* no hidden critical alerts
+
+---
+
+# 9. Clinical Page Responsiveness
+
+Clinical pages need special care.
+
+Review:
 
 ```text
-Assets = Liabilities + Equity
+Consultation page
+Patient profile
+Patient timeline
+Emergency case page
+Admission detail
+MAR chart
+Investigation result entry
+Theatre/procedure workflow
 ```
 
-Show warning if out of balance.
+Rules:
 
-Recommended sections:
+* do not cram large clinical content into small modals
+* use cards/sections/tabs/accordion where appropriate
+* patient context must remain visible
+* critical status badges must remain visible
+* action buttons must not disappear
+* timelines must be readable on mobile
+* MAR grid may scroll horizontally if needed
+* clinical safety beats visual compactness
+
+---
+
+# 10. Financial Page Responsiveness
+
+Review:
 
 ```text
-Current Assets
-Non-current Assets
-Current Liabilities
-Non-current Liabilities
-Equity
+Invoices
+Payments
+Cashier shift
+Claims
+AR aging
+AP aging
+Journal entries
+General ledger
+Trial balance
+Supplier ledger
 ```
+
+Rules:
+
+* numbers must remain readable
+* totals must remain visible
+* action buttons must be permission-aware
+* accounting status must be visible to authorized users
+* wide reports can scroll horizontally
+* print/export must remain available
+* financial totals must not be hidden on mobile
+
+---
+
+# 11. Print Responsiveness
+
+Improve print layouts where relevant.
+
+Priority print views:
+
+```text
+Invoice
+Receipt
+Claim form
+Lab result
+Prescription
+Discharge summary
+Consultation summary
+Procedure report
+Stock report
+Trial balance
+General ledger
+AR aging
+AP aging
+```
+
+Rules:
+
+* black on white
+* hide sidebar/topbar/buttons
+* show hospital name/logo
+* show patient/visit context where relevant
+* show printed by and printed at
+* show signatures where needed
+* avoid broken tables across pages where practical
+
+Use `<x-print-layout>` where available.
+
+---
+
+# 12. Localisation Scope
+
+Prepare UHMS for multiple languages.
+
+Initial languages:
+
+```text
+en
+fr
+```
+
+Default language:
+
+```text
+en
+```
+
+French should be selectable.
+
+Do not translate database content automatically unless content is system-defined.
+
+Translate:
+
+```text
+Menus
+Page titles
+Buttons
+Labels
+Placeholders
+Validation messages
+Flash messages
+Status labels
+Empty states
+Confirmation messages
+Report headings
+Dashboard titles
+KPI labels
+Table headings
+Form section titles
+```
+
+Do not translate:
+
+```text
+Patient names
+Doctor names
+Supplier names
+Department names unless configured
+Product names unless configured
+Service names unless configured
+Clinical notes entered by users
+Uploaded documents
+```
+
+---
+
+# 13. Laravel Localisation Structure
+
+Use Laravel localisation files.
+
+Recommended:
+
+```text
+lang/en/
+lang/fr/
+```
+
+Files:
+
+```text
+lang/en/common.php
+lang/en/menu.php
+lang/en/patients.php
+lang/en/visits.php
+lang/en/consultation.php
+lang/en/emergency.php
+lang/en/admissions.php
+lang/en/pharmacy.php
+lang/en/investigations.php
+lang/en/procedures.php
+lang/en/billing.php
+lang/en/claims.php
+lang/en/stock.php
+lang/en/accounting.php
+lang/en/reports.php
+lang/en/auth.php
+lang/en/validation.php
+lang/en/statuses.php
+
+lang/fr/common.php
+lang/fr/menu.php
+lang/fr/patients.php
+lang/fr/visits.php
+lang/fr/consultation.php
+lang/fr/emergency.php
+lang/fr/admissions.php
+lang/fr/pharmacy.php
+lang/fr/investigations.php
+lang/fr/procedures.php
+lang/fr/billing.php
+lang/fr/claims.php
+lang/fr/stock.php
+lang/fr/accounting.php
+lang/fr/reports.php
+lang/fr/auth.php
+lang/fr/validation.php
+lang/fr/statuses.php
+```
+
+Use existing Laravel conventions if the project already has lang files.
+
+---
+
+# 14. Translation Key Rules
+
+Do not scatter random translation keys.
+
+Use structured keys.
 
 Examples:
 
-Assets:
+```php
+__('common.save')
+__('common.cancel')
+__('common.delete')
+__('common.confirm')
+__('common.search')
+__('common.filter')
+__('common.reset')
+__('common.actions')
 
-* Cash on Hand
-* Bank Account
-* Mobile Money
-* Patient Receivables
-* Insurance Receivables
-* Sponsor Receivables
-* Corporate Receivables
-* Inventory
-* Fixed Assets
+__('menu.patients')
+__('menu.visits')
+__('menu.billing')
+__('menu.accounting')
 
-Liabilities:
+__('patients.title')
+__('patients.create')
+__('patients.search_placeholder')
 
-* Supplier Payables
-* Patient Deposits
-* Taxes Payable
-* Salary Payable
-* Accrued Expenses
+__('visits.create_visit')
+__('visits.visit_type')
+__('visits.patient_search')
 
-Equity:
+__('billing.invoice')
+__('billing.payment')
+__('billing.outstanding_balance')
 
-* Owner Capital
-* Retained Earnings
-* Current Year Earnings
+__('statuses.invoice.paid')
+__('statuses.invoice.partially_paid')
+__('statuses.visit.emergency')
+```
+
+Avoid keys like:
+
+```php
+__('Save Button Text On Patient Page')
+```
+
+Keep keys reusable and predictable.
 
 ---
 
-# 7. Cashbook / Cash & Bank Summary
+# 15. Status Localisation
 
-Create Cashbook report.
+Centralize status labels.
 
-Filters:
-
-```text
-Cash/Bank/Mobile Money Account
-Date From
-Date To
-Payment Method
-Source Module
-```
-
-Columns:
+Statuses should not display raw enum values like:
 
 ```text
-Date
-Reference
-Description
-Debit / Money In
-Credit / Money Out
-Running Balance
-Source
-Created By / Posted By
+WAITING_CONSULTATION
+PARTIALLY_PAID
+IN_PROGRESS
 ```
 
-Rules:
-
-* use accounts flagged as cash/bank/mobile money
-* include posted journal entries only
-* cash receipts from patients/sponsors/insurance should appear
-* supplier payments/refunds should appear as money out
-* support account-specific running balance
-
----
-
-# 8. Cash Flow Report
-
-If feasible in this phase, create a simple cash flow report.
-
-Minimum:
+They should display translated human labels:
 
 ```text
-Cash Inflows
-Cash Outflows
-Net Cash Movement
-Opening Cash Balance
-Closing Cash Balance
+Waiting Consultation
+Partially Paid
+In Progress
 ```
 
-Sources:
-
-* posted journal lines hitting cash/bank/mobile money accounts
-
-Do not overcomplicate into full indirect-method cash flow unless already easy.
-
----
-
-# 9. AR Aging Summary
-
-Integrate Phase 4 AR Aging into accounting dashboard/reports.
-
-Show:
+French examples:
 
 ```text
-Total Receivables
-Patient Receivables
-Insurance Receivables
-Sponsor Receivables
-Corporate Receivables
-0–30
-31–60
-61–90
-91–120
-120+
+En attente de consultation
+Partiellement payé
+En cours
 ```
 
-Rules:
-
-* use payer receivables from Phase 4
-* reconcile with receivable account balances where possible
-* show warning if operational AR and GL receivable balance differ
-
----
-
-# 10. AP Aging Summary
-
-Integrate Phase 5 AP Aging.
-
-Show:
-
-```text
-Total Payables
-Supplier Payables
-0–30
-31–60
-61–90
-91–120
-120+
-```
-
-Rules:
-
-* use supplier payables / supplier ledger from Phase 5
-* reconcile with Supplier Payables GL balance where possible
-* show warning if operational AP and GL payable balance differ
-
----
-
-# 11. Inventory Valuation Summary
-
-Integrate Phase 6 Inventory Valuation.
-
-Show:
-
-```text
-Total Inventory Value
-Pharmacy Inventory
-Consumables Inventory
-Laboratory Reagents Inventory
-Theatre Supplies Inventory
-Inventory by Location
-Inventory by Product Type
-```
-
-Rules:
-
-* use stock balance valuation fields
-* reconcile with Inventory GL account balance where possible
-* show warning if operational inventory value and GL inventory balance differ
-
----
-
-# 12. Revenue by Department
-
-Create Revenue by Department report.
-
-Filters:
-
-```text
-Date From
-Date To
-Department
-Service Type
-Source Module
-```
-
-Columns:
-
-```text
-Department
-Revenue Account
-Gross Revenue
-Discounts
-Credit Notes
-Net Revenue
-Payments Received optional
-Outstanding Receivables optional
-```
-
-Rules:
-
-* accounting revenue comes from posted journal entries
-* operational billing can be shown as comparison if useful
-* department_id should come from journal lines
-* if missing department_id, classify as Unassigned
-
----
-
-# 13. Expense by Department
-
-Create Expense by Department report.
-
-Filters:
-
-```text
-Date From
-Date To
-Department
-Expense Type
-Source Module
-```
-
-Columns:
-
-```text
-Department
-Expense Account
-Amount
-Source Module
-```
-
-Include:
-
-* consumables expense
-* COGS
-* salary/payroll expense if already posted
-* utilities/admin expenses from manual journals
-* damaged/expired stock expense
-* write-off expense
-
----
-
-# 14. Accounting Dashboard
-
-Create/update Accounting Dashboard.
-
-Cards:
-
-```text
-Cash / Bank Balance
-Total Receivables
-Total Payables
-Inventory Value
-Revenue This Month
-Expenses This Month
-Net Profit This Month
-Unposted / Failed Accounting Items
-Open Fiscal Year
-Open Period
-```
-
-Charts/tables:
-
-```text
-Monthly Revenue Trend
-Monthly Expense Trend
-AR Aging Summary
-AP Aging Summary
-Top Revenue Departments
-Top Expense Departments
-Recent Journal Entries
-Failed Accounting Postings
-```
-
-Use existing UI standards:
-
-* Bootstrap 5
-* Tabler Icons
-* existing card/table components
-* no new frontend framework
-
----
-
-# 15. Period Closing Controls
-
-Implement or finalize accounting closing controls.
-
-## Accounting Period Closing
-
-When closing an accounting period:
-
-* require permission
-* ensure no draft journals in period, or warn/block depending policy
-* ensure no failed accounting postings in period, or warn/block
-* ensure trial balance is balanced
-* set period status = closed
-* log ACCOUNTING_PERIOD_CLOSED
-
-After closing:
-
-* no new journals can be posted into that period
-* no operational posting can create journal entries in that period
-* reversals for that period must post into an open period unless policy allows reopening
-
-## Fiscal Year Closing
-
-For fiscal year closing:
-
-* all periods should be closed
-* trial balance must be balanced
-* calculate current year profit/loss
-* optionally create closing entry to retained earnings
-* set fiscal year status = closed
-* log FISCAL_YEAR_CLOSED
-
-If full year-end closing is too much now, document as TODO but enforce no posting into closed fiscal years.
-
----
-
-# 16. Closing Entry
-
-If implementing year-end closing entry:
-
-Close income and expense accounts to current year earnings/retained earnings.
+Update `<x-status-badge>` if needed so it can use translation keys.
 
 Example:
 
-If profit:
-
-```text
-Dr Income Accounts
-Cr Expense Accounts
-Cr Retained Earnings / Current Year Earnings
+```php
+__('statuses.visit.waiting_consultation')
+__('statuses.invoice.partially_paid')
+__('statuses.payment.refunded')
 ```
-
-If loss:
-
-```text
-Dr Retained Earnings / Current Year Earnings
-Dr Income Accounts
-Cr Expense Accounts
-```
-
-Use JournalEntryService.
-
-Do not silently close without journal entry.
-
-If not implemented now, document as future TODO.
 
 ---
 
-# 17. Reconciliation Warnings
+# 16. Menu Localisation
 
-Add report-level reconciliation checks.
+Update `SidebarMenuBuilder` labels to use translation keys.
+
+Example:
+
+```php
+'label' => __('menu.patients')
+```
+
+or if menu arrays are generated before translation, store translation keys:
+
+```php
+'label_key' => 'menu.patients'
+```
+
+and render with:
+
+```php
+__($item['label_key'])
+```
+
+Do not hardcode English labels in menu builder after this phase.
+
+---
+
+# 17. Language Switcher
+
+Add a language switcher.
+
+Location:
+
+```text
+Topbar user dropdown
+or settings/profile page
+```
+
+Supported languages:
+
+```text
+English
+Français
+```
+
+Behavior:
+
+* user can switch language
+* selected language persists in session
+* if user profile has locale field, persist to user profile
+* fallback to app locale if no user preference
+* middleware sets locale on every request
+
+Suggested middleware:
+
+```php
+SetLocale
+```
+
+Logic:
+
+```text
+1. Authenticated user locale if set
+2. Session locale
+3. Browser locale if allowed
+4. config('app.locale')
+```
+
+---
+
+# 18. Database Update for User Locale
+
+If not already present, add:
+
+```text
+users.locale nullable string default null
+```
+
+Allowed values:
+
+```text
+en
+fr
+```
+
+Do not allow arbitrary unsafe locale values.
+
+---
+
+# 19. Validation Localisation
+
+Translate validation messages.
+
+Use:
+
+```text
+lang/en/validation.php
+lang/fr/validation.php
+```
+
+Ensure custom request validation messages are translatable.
+
+Do not leave mixed English/French validation on the same page.
+
+---
+
+# 20. Flash / Toast / Error Localisation
+
+Translate:
+
+```text
+Saved successfully
+Updated successfully
+Deleted successfully
+Payment recorded successfully
+Invoice created successfully
+Unauthorized action
+Something went wrong
+No records found
+Are you sure?
+This action cannot be undone
+Reason is required
+```
+
+Friendly error pages should also be translatable:
+
+```text
+403
+404
+500
+419 session expired
+```
+
+---
+
+# 21. Date, Time, Currency Formatting
+
+Add locale-aware formatting helpers.
+
+Requirements:
+
+* date format can adapt to locale
+* time format can adapt to locale
+* currency formatting should remain safe and consistent
+* do not break accounting reports
+* allow hospital/system setting for currency symbol
 
 Examples:
 
 ```text
-Patient Receivable GL balance vs invoice_receivables patient balance
-Insurance Receivable GL balance vs insurance receivables balance
-Sponsor Receivable GL balance vs sponsor receivables balance
-Supplier Payables GL balance vs supplier payables balance
-Inventory GL balance vs inventory valuation report
-Cash account balance vs cashbook
+English: Jun 10, 2026
+French: 10 juin 2026
 ```
 
-Do not block reports if mismatch exists.
-
-Show warning:
+Currency example:
 
 ```text
-Warning: Operational receivable balance does not match GL balance.
+GHS 1,250.00
+1 250,00 GHS
 ```
 
-These warnings are extremely useful for management.
+For now, keep currency format consistent if changing it risks breaking reports.
+
+Document formatting decisions.
 
 ---
 
-# 18. Exports / Print
+# 22. Search and Filters Localisation
 
-If UHMS already supports exports/printing, add export/print to:
+Translate placeholders and filter labels.
 
-```text
-General Ledger
-Trial Balance
-Profit & Loss
-Balance Sheet
-Cashbook
-AR Aging
-AP Aging
-Inventory Valuation
-```
-
-Preferred formats:
+Examples:
 
 ```text
-PDF
-Excel/CSV
-Print view
+Search patients...
+Filter by department
+Date from
+Date to
+Apply filters
+Reset
 ```
 
-Do not build a heavy export system if one already exists; reuse existing report/export utilities.
+French:
+
+```text
+Rechercher des patients...
+Filtrer par département
+Date début
+Date fin
+Appliquer les filtres
+Réinitialiser
+```
 
 ---
 
-# 19. Permissions
+# 23. Confirmation Messages
 
-Add or verify:
+All destructive/high-risk confirmations must be translatable.
+
+Examples:
 
 ```text
-accounting.dashboard.view
-
-accounting.reports.general_ledger
-accounting.reports.trial_balance
-accounting.reports.profit_loss
-accounting.reports.balance_sheet
-accounting.reports.cashbook
-accounting.reports.cash_flow
-accounting.reports.revenue_by_department
-accounting.reports.expense_by_department
-
-accounting.periods.close
-accounting.periods.reopen
-accounting.fiscal_years.close
-accounting.fiscal_years.reopen
-
-accounting.reconciliation.view
-accounting.failed_postings.view
-accounting.exports
+Are you sure you want to cancel this visit?
+Are you sure you want to reverse this payment?
+Please provide a reason.
+This action cannot be undone.
 ```
 
-Restrict financial reports to authorized finance/admin roles.
+French translations must be provided.
 
 ---
 
-# 20. Activity Logs
+# 24. Localisation of Reports
 
-Use ActivityLogService.
-
-Log:
+Translate report UI:
 
 ```text
-GENERAL_LEDGER_VIEWED
-TRIAL_BALANCE_VIEWED
-PROFIT_LOSS_VIEWED
-BALANCE_SHEET_VIEWED
-CASHBOOK_VIEWED
-AR_AGING_VIEWED
-AP_AGING_VIEWED
-INVENTORY_VALUATION_VIEWED
-ACCOUNTING_DASHBOARD_VIEWED
-
-ACCOUNTING_PERIOD_CLOSED
-ACCOUNTING_PERIOD_REOPENED
-FISCAL_YEAR_CLOSED
-FISCAL_YEAR_REOPENED
-YEAR_END_CLOSING_ENTRY_CREATED
-
-ACCOUNTING_REPORT_EXPORTED
+Report title
+Filters
+Column headings
+Summary labels
+Print button
+Export button
+Generated by
+Generated at
 ```
 
-Context:
-
-```text
-fiscal_year_id
-accounting_period_id
-date_from
-date_to
-account_id
-department_id
-report_type
-export_type
-journal_entry_id
-old_values
-new_values
-```
-
-Do not log every simple page refresh too noisily if the project avoids report-view logs.
-
-If report-view logging is considered too noisy, log exports and period/fiscal closing at minimum.
+Do not translate raw data unless it is a system label/status.
 
 ---
 
-# 21. Services to Create / Update
+# 25. Localisation of Dashboards
 
-Create or update:
+All department-type dashboards must use translation keys for:
 
 ```text
-GeneralLedgerService
-TrialBalanceService
-ProfitLossService
-BalanceSheetService
-CashbookService
-CashFlowService
-AccountingDashboardService
-AccountingReconciliationService
-AccountingPeriodCloseService
-FiscalYearCloseService
-AccountingExportService
+Dashboard title
+KPI labels
+Queue headings
+Alert labels
+Quick actions
+Empty states
 ```
 
-Use existing services where already available.
+Example:
 
-Controllers should remain thin.
+```php
+__('dashboards.pharmacy.title')
+__('dashboards.pharmacy.prescriptions_waiting')
+__('dashboards.emergency.active_cases')
+```
 
-Reports should not contain heavy SQL directly inside controllers.
+Add:
+
+```text
+lang/en/dashboards.php
+lang/fr/dashboards.php
+```
 
 ---
 
-# 22. Manual Verification Strategy
+# 26. Code Audit Targets
 
-Do not write the full automated test suite yet.
+Search and replace hardcoded UI strings in priority order:
 
-Full accounting tests will be written after all accounting phases are implemented.
+```text
+SidebarMenuBuilder
+layouts
+dashboard pages
+patient pages
+visit pages
+billing pages
+pharmacy pages
+investigation pages
+emergency pages
+admission pages
+stock pages
+accounting pages
+report pages
+auth pages
+common components
+```
 
-For this phase, provide manual verification notes.
+Do not attempt to translate every single legacy/vendor template page first.
+
+Prioritize live UHMS workflows.
+
+---
+
+# 27. Localisation Safety Rules
+
+Do not translate route names.
+
+Do not translate permission names.
+
+Do not translate database enum stored values.
+
+Do not translate internal event names.
+
+Do not translate audit log event codes.
+
+Do not translate class names, model names, or config keys.
+
+Translate only user-facing labels.
+
+---
+
+# 28. Responsiveness Manual Verification
+
+Do not write the full automated test suite yet if we are still in implementation flow.
 
 Manual verification required:
 
-1. Open General Ledger and confirm posted journals appear.
-2. Confirm General Ledger running balance is correct.
-3. Open Trial Balance and confirm debit/credit totals match.
-4. Confirm Trial Balance excludes draft/cancelled journals.
-5. Open Profit & Loss and confirm revenue/expense totals.
-6. Open Balance Sheet and confirm Assets = Liabilities + Equity.
-7. Open Cashbook and confirm cash/bank movement.
-8. Open AR Aging summary and confirm payer balances.
-9. Open AP Aging summary and confirm supplier balances.
-10. Open Inventory Valuation summary and confirm stock value.
-11. Confirm dashboard cards show correct values.
-12. Confirm reconciliation warnings appear when mismatch exists.
-13. Close an accounting period and confirm posting into it is blocked.
-14. Confirm unauthorized users cannot view restricted accounting reports.
-15. Export/print reports if supported.
-16. Confirm activity logs are written for closing/export events.
-17. Confirm logs:audit Stage-2 gate remains green.
-18. Confirm billing, payments, procurement, stock, AR, and AP workflows still work.
-
-Do not skip validation, permissions, audit logs, reconciliation warnings, or report correctness because tests are deferred.
+1. Check dashboard on mobile/tablet/desktop.
+2. Check patient list on mobile/tablet/desktop.
+3. Check visit creation on mobile/tablet/desktop.
+4. Check consultation page on mobile/tablet/desktop.
+5. Check emergency page on mobile/tablet/desktop.
+6. Check pharmacy dispensing on mobile/tablet/desktop.
+7. Check investigation result entry on mobile/tablet/desktop.
+8. Check billing invoice/payment screens on mobile/tablet/desktop.
+9. Check stock balance and stock movement pages on mobile/tablet/desktop.
+10. Check accounting reports on mobile/tablet/desktop.
+11. Confirm no horizontal page overflow except intentional table scroll.
+12. Confirm buttons remain accessible.
+13. Confirm modals fit small screens.
+14. Confirm critical information remains visible.
+15. Confirm print views render cleanly.
 
 ---
 
-# 23. Documentation
+# 29. Localisation Manual Verification
+
+Manual verification required:
+
+1. Switch language to English.
+2. Confirm menus display in English.
+3. Confirm major page titles display in English.
+4. Confirm buttons and labels display in English.
+5. Switch language to French.
+6. Confirm menus display in French.
+7. Confirm major page titles display in French.
+8. Confirm buttons and labels display in French.
+9. Confirm validation messages display in selected language.
+10. Confirm status badges display translated labels.
+11. Confirm dashboard labels display translated labels.
+12. Confirm flash messages display translated labels.
+13. Confirm reports display translated headings.
+14. Confirm user-entered clinical notes are not translated.
+15. Confirm route names and permissions are not translated.
+16. Confirm language preference persists after refresh/login.
+
+---
+
+# 30. Documentation
 
 Create:
 
 ```text
-docs/ACCOUNTING_PHASE_7_REPORTS_CLOSING_DASHBOARDS_REPORT.md
+docs/RESPONSIVENESS_LOCALISATION_REPORT.md
 ```
 
 Include:
 
-* reports implemented
-* report formulas
-* report filters
-* closing controls
-* reconciliation warnings
-* dashboard widgets
-* permissions
-* exports/printing
-* activity logs
+* pages audited
+* responsive fixes completed
+* localisation architecture
+* language files created
+* translation key structure
+* language switcher behavior
+* middleware behavior
+* user locale persistence
+* formatting decisions
 * manual verification completed
-* tests deferred list
-* known risks/TODOs
-* next phase recommendation
+* remaining untranslated pages
+* known TODOs
 
 ---
 
-# 24. Acceptance Criteria
+# 31. Acceptance Criteria
 
-Phase 7 is complete when:
+This phase is complete when:
 
-* General Ledger works
-* Trial Balance works
-* Profit & Loss works
-* Balance Sheet works
-* Cashbook works
-* AR Aging summary is integrated
-* AP Aging summary is integrated
-* Inventory Valuation summary is integrated
-* Accounting Dashboard works
-* Period closing blocks further posting
-* Fiscal year posting restrictions work
-* Reconciliation warnings exist
-* Reports are permission-protected
-* Export/print is available where supported
-* Activity logs are written for important report/closing/export actions
-* logs:audit Stage-2 gate remains green
+* major UHMS pages work on desktop/tablet/mobile
+* wide tables are safely responsive
+* major forms stack correctly
+* dashboards are responsive
+* clinical pages remain usable on smaller screens
+* financial reports remain readable
+* language switcher exists
+* English and French are supported
+* user language preference persists
+* menus are translatable
+* statuses are translatable
+* validation messages are translatable
+* dashboard labels are translatable
+* major module labels are translatable
+* reports have translated headings
+* no new UI framework is introduced
+* existing workflows are not broken
+* documentation is created
 * manual verification is documented
-* full automated tests remain deferred until final accounting implementation pass
 
 ---
 
-# 25. Important Rules
+# 32. Important Rules
 
-Do not calculate accounting reports from invoices only.
-Do not calculate P&L from payments only.
-Do not include draft journals in official reports.
-Do not include cancelled journals in official reports.
-Do not allow posting into closed periods.
-Do not silently close fiscal year without audit.
-Do not expose financial reports to unauthorized users.
-Do not hide reconciliation mismatches.
-Do not enable full automated tests yet.
+Do not introduce Tailwind.
+Do not introduce a second CSS framework.
+Do not redesign UHMS from scratch.
+Do not translate internal codes.
+Do not translate permissions.
+Do not translate route names.
+Do not translate database enum values.
+Do not translate user-entered clinical notes.
+Do not expose raw technical errors.
+Do not hide critical clinical/financial/stock information on mobile.
+Do not break existing dashboards.
+Do not break existing SidebarMenuBuilder.
+Do not skip permission checks.
+Do not bypass existing UI components.
+Do not write the full automated test suite yet.
 
-Proceed with Accounting Phase 7: Financial Reports, Closing Controls & Management Dashboards now.
+Proceed with full-system Responsiveness and Localisation implementation now.
+
+```
+
+After this, the next clean phase should be **Role-Based Dashboard Polish + Module Reports**, because responsive/localised dashboards will make the whole system feel much more professional.
+```

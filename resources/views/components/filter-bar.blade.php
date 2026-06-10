@@ -2,14 +2,17 @@
     'action' => null,
     'method' => 'GET',
     'resetUrl' => null,
-    'title' => 'Filters',
+    'title' => null,
     'icon' => 'ti-filter',
     'collapsible' => false,
-    'applyLabel' => 'Apply Filters',
-    'resetLabel' => 'Reset',
+    'applyLabel' => null,
+    'resetLabel' => null,
 ])
 
 @php
+    $title ??= __('common.filters');
+    $applyLabel ??= __('common.apply_filters');
+    $resetLabel ??= __('common.reset');
     $action = $action ?: url()->current();
     $resetUrl = $resetUrl ?: url()->current();
     $isGet = strtoupper($method) === 'GET';
@@ -31,7 +34,7 @@
         <div class="card-header bg-white d-flex justify-content-between align-items-center py-2">
             <span class="fw-semibold small"><i class="ti {{ $icon }} me-1"></i>{{ $title }}</span>
             <button class="btn btn-sm btn-link p-0 text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#{{ $bodyId }}">
-                Toggle
+                {{ __('common.toggle') }}
             </button>
         </div>
     @endif

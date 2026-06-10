@@ -1,0 +1,340 @@
+<?php
+
+/*
+| Human-readable status labels, keyed by domain then lowercase status code.
+| <x-status-badge> resolves statuses.{domain}.{status}; falls back to
+| statuses.default.{status}, then to title-cased raw value.
+*/
+
+return [
+    'default' => [
+        'pending' => 'Pending',
+        'in_progress' => 'In Progress',
+        'active' => 'Active',
+        'open' => 'Open',
+        'on_hold' => 'On Hold',
+        'held' => 'Held',
+        'completed' => 'Completed',
+        'done' => 'Done',
+        'approved' => 'Approved',
+        'verified' => 'Verified',
+        'passed' => 'Passed',
+        'requested' => 'Requested',
+        'accepted' => 'Accepted',
+        'rejected' => 'Rejected',
+        'failed' => 'Failed',
+        'overdue' => 'Overdue',
+        'cancelled' => 'Cancelled',
+        'inactive' => 'Inactive',
+        'closed' => 'Closed',
+        'inconclusive' => 'Inconclusive',
+        'draft' => 'Draft',
+        'submitted' => 'Submitted',
+        'scheduled' => 'Scheduled',
+        'expired' => 'Expired',
+        'paid' => 'Paid',
+        'unpaid' => 'Unpaid',
+        'partially_paid' => 'Partially Paid',
+        'reversed' => 'Reversed',
+        'refunded' => 'Refunded',
+    ],
+
+    'priority' => [
+        'routine' => 'Routine',
+        'low' => 'Low',
+        'normal' => 'Normal',
+        'standard' => 'Standard',
+        'urgent' => 'Urgent',
+        'high' => 'High',
+        'emergency' => 'Emergency',
+        'critical' => 'Critical',
+        'massive_transfusion' => 'Massive Transfusion',
+    ],
+
+    'visit' => [
+        'registered' => 'Registered',
+        'waiting_triage' => 'Waiting Triage',
+        'waiting_consultation' => 'Waiting Consultation',
+        'consulting' => 'Consulting',
+        'in_consultation' => 'In Consultation',
+        'emergency' => 'Emergency',
+        'admitted' => 'Admitted',
+        'completed' => 'Completed',
+        'cancelled' => 'Cancelled',
+    ],
+
+    'invoice' => [
+        'draft' => 'Draft',
+        'unpaid' => 'Unpaid',
+        'pending' => 'Pending',
+        'partially_paid' => 'Partially Paid',
+        'paid' => 'Paid',
+        'cancelled' => 'Cancelled',
+        'refunded' => 'Refunded',
+    ],
+
+    'payment' => [
+        'pending' => 'Pending',
+        'completed' => 'Completed',
+        'success' => 'Success',
+        'reversed' => 'Reversed',
+        'failed' => 'Failed',
+        'refunded' => 'Refunded',
+    ],
+
+    'mar' => [
+        'scheduled' => 'Scheduled',
+        'due' => 'Due',
+        'overdue' => 'Overdue',
+        'given' => 'Given',
+        'partially_given' => 'Partially Given',
+        'administered' => 'Administered',
+        'completed' => 'Completed',
+        'held' => 'Held',
+        'missed' => 'Missed',
+        'refused' => 'Refused',
+        'not_given' => 'Not Given',
+        'skipped' => 'Skipped',
+        'corrected' => 'Corrected',
+        'cancelled' => 'Cancelled',
+        'voided' => 'Voided',
+    ],
+
+    'med_order' => [
+        'pending' => 'Pending',
+        'active' => 'Active',
+        'active_administration' => 'Active Administration',
+        'held' => 'Held',
+        'on_hold' => 'On Hold',
+        'stopped' => 'Stopped',
+        'discontinued' => 'Discontinued',
+        'completed' => 'Completed',
+        'cancelled' => 'Cancelled',
+    ],
+
+    'stock' => [
+        'ok' => 'OK',
+        'in_stock' => 'In Stock',
+        'low' => 'Low',
+        'critical' => 'Critical',
+        'out' => 'Out',
+        'out_of_stock' => 'Out of Stock',
+        'not_stocked' => 'Not Stocked',
+    ],
+
+    'requisition' => [
+        'draft' => 'Draft',
+        'requested' => 'Requested',
+        'submitted' => 'Submitted',
+        'approved' => 'Approved',
+        'issued' => 'Issued',
+        'received' => 'Received',
+        'acknowledged' => 'Acknowledged',
+        'rejected' => 'Rejected',
+        'cancelled' => 'Cancelled',
+    ],
+
+    'emergency' => [
+        'waiting' => 'Waiting',
+        'in_triage' => 'In Triage',
+        'under_care' => 'Under Care',
+        'under_emergency_care' => 'Under Emergency Care',
+        'admitted' => 'Admitted',
+        'disposed' => 'Disposed',
+        'discharged' => 'Discharged',
+        'cancelled' => 'Cancelled',
+    ],
+
+    'triage' => [
+        'red' => 'Red',
+        'orange' => 'Orange',
+        'yellow' => 'Yellow',
+        'green' => 'Green',
+        'blue' => 'Blue',
+        'black' => 'Black',
+    ],
+
+    'disposition' => [
+        'admitted' => 'Admitted',
+        'discharged' => 'Discharged',
+        'transferred_to_opd' => 'Transferred to OPD',
+        'transferred_to_theatre' => 'Transferred to Theatre',
+        'referred_out' => 'Referred Out',
+        'left_against_medical_advice' => 'Left Against Medical Advice',
+        'absconded' => 'Absconded',
+        'died' => 'Died',
+        'dead_on_arrival' => 'Dead on Arrival',
+    ],
+
+    'theatre' => [
+        'requested' => 'Requested',
+        'accepted' => 'Accepted',
+        'scheduled' => 'Scheduled',
+        'in_progress' => 'In Progress',
+        'completed' => 'Completed',
+        'postponed' => 'Postponed',
+        'cancelled' => 'Cancelled',
+        'rejected' => 'Rejected',
+    ],
+
+    'lab' => [
+        'requested' => 'Requested',
+        'accepted' => 'Accepted',
+        'in_progress' => 'In Progress',
+        'result_entered' => 'Result Entered',
+        'verified' => 'Verified',
+        'completed' => 'Completed',
+        'rejected' => 'Rejected',
+        'cancelled' => 'Cancelled',
+    ],
+
+    'blood_unit' => [
+        'collected' => 'Collected',
+        'quarantined' => 'Quarantined',
+        'screening_pending' => 'Screening Pending',
+        'available' => 'Available',
+        'reserved' => 'Reserved',
+        'crossmatched' => 'Crossmatched',
+        'issued' => 'Issued',
+        'transfused' => 'Transfused',
+        'expired' => 'Expired',
+        'discarded' => 'Discarded',
+        'rejected' => 'Rejected',
+    ],
+
+    'blood_request' => [
+        'pending' => 'Pending',
+        'approved' => 'Approved',
+        'partially_issued' => 'Partially Issued',
+        'issued' => 'Issued',
+        'completed' => 'Completed',
+        'cancelled' => 'Cancelled',
+    ],
+
+    'blood_issue' => [
+        'issued' => 'Issued',
+        'transfused' => 'Transfused',
+        'reaction_recorded' => 'Reaction Recorded',
+        'returned' => 'Returned',
+        'voided' => 'Voided',
+    ],
+
+    'crossmatch' => [
+        'pending' => 'Pending',
+        'compatible' => 'Compatible',
+        'compatible_with_caution' => 'Compatible with Caution',
+        'incompatible' => 'Incompatible',
+        'emergency_override' => 'Emergency Override',
+        'cancelled' => 'Cancelled',
+    ],
+
+    'screening' => [
+        'pending' => 'Pending',
+        'passed' => 'Passed',
+        'failed' => 'Failed',
+        'inconclusive' => 'Inconclusive',
+        'not_done' => 'Not Done',
+        'negative' => 'Negative',
+        'non_reactive' => 'Non Reactive',
+        'positive' => 'Positive',
+        'reactive' => 'Reactive',
+    ],
+
+    'donor_screening' => [
+        'registered' => 'Registered',
+        'questionnaire_pending' => 'Questionnaire Pending',
+        'physical_assessment_pending' => 'Physical Assessment Pending',
+        'eligibility_pending' => 'Eligibility Pending',
+        'eligible' => 'Eligible',
+        'needs_review' => 'Needs Review',
+        'temporarily_deferred' => 'Temporarily Deferred',
+        'permanently_deferred' => 'Permanently Deferred',
+    ],
+
+    'consultation_route' => [
+        'pending' => 'Pending',
+        'active' => 'Active',
+        'paused' => 'Paused',
+        'completed' => 'Completed',
+        'cancelled' => 'Cancelled',
+    ],
+
+    'consultation_session' => [
+        'pending' => 'Pending',
+        'active' => 'Active',
+        'paused' => 'Paused',
+        'completed' => 'Completed',
+        'cancelled' => 'Cancelled',
+    ],
+
+    'claim' => [
+        'draft' => 'Draft',
+        'prepared' => 'Prepared',
+        'ready' => 'Ready',
+        'submitted' => 'Submitted',
+        'approved' => 'Approved',
+        'paid' => 'Paid',
+        'partially_paid' => 'Partially Paid',
+        'rejected' => 'Rejected',
+        'cancelled' => 'Cancelled',
+    ],
+
+    'settlement' => [
+        'unbilled' => 'Unbilled',
+        'billed_unpaid' => 'Billed (Unpaid)',
+        'partially_paid' => 'Partially Paid',
+        'paid' => 'Paid',
+        'covered_by_insurance' => 'Covered by Insurance',
+        'waived' => 'Waived',
+        'credit_approved' => 'Credit Approved',
+        'deferred_approved' => 'Deferred Approved',
+        'cancelled' => 'Cancelled',
+    ],
+
+    'service_readiness' => [
+        'ready_to_render' => 'Ready to Render',
+        'waiting_payment' => 'Waiting Payment',
+        'blocked' => 'Blocked',
+        'running_bill' => 'Running Bill',
+        'deferred_approved' => 'Deferred Approved',
+    ],
+
+    'payment_gate' => [
+        'ready_to_render' => 'Ready to Render',
+        'waiting_payment' => 'Waiting Payment',
+        'blocked' => 'Blocked',
+        'running_bill' => 'Running Bill',
+        'deferred_approved' => 'Deferred Approved',
+    ],
+
+    'billing_policy' => [
+        'strict_pay_before_service' => 'Strict Pay Before Service',
+        'deferred_visit_settlement' => 'Deferred Visit Settlement',
+        'running_bill' => 'Running Bill',
+        'insurance_covered' => 'Insurance Covered',
+        'credit_approved' => 'Credit Approved',
+        'waived' => 'Waived',
+        'payment_gate_bypass' => 'Payment Gate Bypass',
+        'advisory' => 'Advisory',
+    ],
+
+    'billing_override' => [
+        'active' => 'Active',
+        'revoked' => 'Revoked',
+        'expired' => 'Expired',
+        'completed' => 'Completed',
+        'deferred_opd_settlement' => 'Deferred OPD Settlement',
+        'payment_gate_bypass' => 'Payment Gate Bypass',
+        'credit_approval' => 'Credit Approval',
+        'management_approval' => 'Management Approval',
+        'insurance_authorization_pending' => 'Insurance Authorization Pending',
+    ],
+
+    'discharge_clearance' => [
+        'cleared' => 'Cleared',
+        'outstanding_balance' => 'Outstanding Balance',
+        'blocked' => 'Blocked',
+        'waived' => 'Waived',
+        'credit_approved' => 'Credit Approved',
+    ],
+];

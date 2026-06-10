@@ -29,7 +29,7 @@
                     <span class="input-icon-addon">
                         <i class="ti ti-search"></i>
                     </span>
-                    <input type="text" class="form-control shadow-sm" placeholder="Search">
+                    <input type="text" class="form-control shadow-sm" placeholder="{{ __('common.search') }}">
                     <span class="input-icon-addon text-dark shadow fs-18 d-inline-flex p-0 header-search-icon"><i class="ti ti-command"></i></span>
                 </div>
             </div>
@@ -63,11 +63,11 @@
                         <div class="p-2 border-bottom">
                             <div class="row align-items-center">
                                 <div class="col">
-                                    <h6 class="m-0 fs-16 fw-semibold">Notifications</h6>
+                                    <h6 class="m-0 fs-16 fw-semibold">{{ __('common.notifications') }}</h6>
                                 </div>
                                 <div class="col-auto">
                                     <a href="javascript:void(0);" class="text-muted fs-13" id="markAllReadBtn" style="display:none;">
-                                        Mark all read
+                                        {{ __('common.mark_all_read') }}
                                     </a>
                                 </div>
                             </div>
@@ -75,12 +75,12 @@
                         <div class="notification-body position-relative z-2 rounded-0" data-simplebar id="notificationList">
                             <div class="text-center text-muted py-4" id="noNotifications">
                                 <i class="ti ti-bell-off fs-24 d-block mb-2"></i>
-                                No new notifications
+                                {{ __('common.no_new_notifications') }}
                             </div>
                         </div>
                         <div class="p-2 border-top text-center">
                             <a href="{{ route('admin.notifications.index') }}" class="text-primary fs-13">
-                                View All Notifications
+                                {{ __('common.view_all_notifications') }}
                             </a>
                         </div>
                     </div>
@@ -110,27 +110,49 @@
                         @endif
                         <div class="ms-2">
                             <p class="fw-medium text-dark mb-0">{{ Auth::user()->full_name }}</p>
-                            <span class="d-block fs-13">{{ Auth::user()->roles->first()?->name ?? 'Staff' }}</span>
+                            <span class="d-block fs-13">{{ Auth::user()->roles->first()?->name ?? __('common.staff') }}</span>
                         </div>
                     </div>
 
                     <a href="{{ route('admin.profile') }}" class="dropdown-item">
                         <i class="ti ti-user me-1 fs-17 align-middle"></i>
-                        <span class="align-middle">My Profile</span>
+                        <span class="align-middle">{{ __('common.my_profile') }}</span>
                     </a>
                     @can('settings.manage')
                     <a href="{{ route('admin.settings.organization') }}" class="dropdown-item">
                         <i class="ti ti-settings me-1 fs-17 align-middle"></i>
-                        <span class="align-middle">Settings</span>
+                        <span class="align-middle">{{ __('common.settings') }}</span>
                     </a>
                     @endcan
+
+                    <div class="pt-2 mt-2 border-top">
+                        <p class="fs-12 text-muted mb-1 px-2">{{ __('common.language') }}</p>
+                        <form method="POST" action="{{ route('locale.switch') }}" data-spa-ignore="true" class="mb-0">
+                            @csrf
+                            <input type="hidden" name="locale" value="en">
+                            <button type="submit" class="dropdown-item {{ app()->getLocale() === 'en' ? 'active' : '' }}">
+                                <i class="ti ti-language me-1 fs-17 align-middle"></i>
+                                <span class="align-middle">English</span>
+                                @if(app()->getLocale() === 'en')<i class="ti ti-check ms-auto float-end mt-1"></i>@endif
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ route('locale.switch') }}" data-spa-ignore="true" class="mb-0">
+                            @csrf
+                            <input type="hidden" name="locale" value="fr">
+                            <button type="submit" class="dropdown-item {{ app()->getLocale() === 'fr' ? 'active' : '' }}">
+                                <i class="ti ti-language me-1 fs-17 align-middle"></i>
+                                <span class="align-middle">Français</span>
+                                @if(app()->getLocale() === 'fr')<i class="ti ti-check ms-auto float-end mt-1"></i>@endif
+                            </button>
+                        </form>
+                    </div>
 
                     <div class="pt-2 mt-2 border-top">
                         <form method="POST" action="{{ route('logout') }}" data-spa-ignore="true">
                             @csrf
                             <button type="submit" class="dropdown-item text-danger">
                                 <i class="ti ti-logout me-1 fs-17 align-middle"></i>
-                                <span class="align-middle">Log Out</span>
+                                <span class="align-middle">{{ __('common.log_out') }}</span>
                             </button>
                         </form>
                     </div>
@@ -149,7 +171,7 @@
             <div class="card shadow-none mb-0">
                 <div class="px-3 py-2 d-flex flex-row align-items-center" id="search-top">
                     <i class="ti ti-search fs-22"></i>
-                    <input type="search" class="form-control border-0" placeholder="Search">
+                    <input type="search" class="form-control border-0" placeholder="{{ __('common.search') }}">
                     <button type="button" class="btn p-0" data-bs-dismiss="modal" aria-label="Close"><i class="ti ti-x fs-22"></i></button>
                 </div>
             </div>

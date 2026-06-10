@@ -1,0 +1,35 @@
+<?php
+
+return [
+    'title' => 'Tableau de bord',
+    'welcome' => 'Bon retour, :name',
+    'overview' => 'Vue d\'ensemble',
+    'work_queue' => 'File de travail',
+    'quick_actions' => 'Actions rapides',
+    'alerts' => 'Alertes',
+    'recent_activity' => 'Activité récente',
+    'today' => 'Aujourd\'hui',
+    'this_week' => 'Cette semaine',
+    'this_month' => 'Ce mois',
+    'view_details' => 'Voir les détails',
+    'no_items_in_queue' => 'Aucun élément dans la file.',
+    'no_alerts' => 'Aucune alerte.',
+
+    'kpi' => [
+        'patients_today' => 'Patients aujourd\'hui',
+        'visits_today' => 'Visites aujourd\'hui',
+        'waiting' => 'En attente',
+        'in_progress' => 'En cours',
+        'completed_today' => 'Terminés aujourd\'hui',
+        'revenue_today' => 'Revenus du jour',
+        'pending_payments' => 'Paiements en attente',
+        'low_stock_items' => 'Articles en stock faible',
+        'expiring_soon' => 'Expirant bientôt',
+        'admitted_patients' => 'Patients admis',
+        'available_beds' => 'Lits disponibles',
+        'active_cases' => 'Cas actifs',
+        'prescriptions_waiting' => 'Ordonnances en attente',
+        'results_pending' => 'Résultats en attente',
+        'appointments_today' => 'Rendez-vous aujourd\'hui',
+    ],
+];

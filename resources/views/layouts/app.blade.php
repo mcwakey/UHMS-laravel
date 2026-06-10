@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -57,7 +57,7 @@
     <link rel="stylesheet" href="{{ URL::asset('build/css/style.css') }}">
 
     <!-- UHMS Design Rules -->
-    <link rel="stylesheet" href="{{ URL::asset('build/css/uhms-design-system.css') }}">
+    <link rel="stylesheet" href="{{ URL::asset('build/css/uhms-design-system.css') }}?v={{ filemtime(public_path('build/css/uhms-design-system.css')) }}">
 
     {{-- Anti-FOUC: hide page until critical CSS is parsed.
          Prevents the sidebar/menu "flash of unstyled content" on load. --}}
@@ -110,7 +110,7 @@
         <div class="footer text-center bg-white p-2 border-top">
             <p class="text-dark mb-0">
                 <script>document.write(new Date().getFullYear())</script> &copy;
-                <a href="javascript:void(0);" class="link-primary">UHMS</a> - Ultimate Hospital Management System
+                <a href="javascript:void(0);" class="link-primary">UHMS</a> - {{ __('common.app_tagline') }}
             </p>
         </div>
 
@@ -267,7 +267,7 @@
                     if (btn.tagName === 'BUTTON') {
                         btn.dataset.uhmsOriginal = btn.innerHTML;
                         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>'
-                            + (btn.getAttribute('data-loading-text') || 'Please wait…');
+                            + (btn.getAttribute('data-loading-text') || @json(__('common.please_wait')));
                     }
                     btn.disabled = true;
                 });

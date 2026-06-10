@@ -35,25 +35,25 @@
 <div class="row g-3">
     <div class="col-lg-6">
         <div class="card"><div class="card-header"><h6 class="mb-0">Assets</h6></div><div class="card-body">
-            <table class="table table-sm mb-0"><tbody>
+            <div class="table-responsive"><table class="table table-sm mb-0"><tbody>
                 @foreach($report['groups']['assets']['rows'] as $r)<tr><td>{{ $r['code'] }} — {{ $r['name'] }}</td><td class="text-end">{{ $money($r['amount']) }}</td></tr>@endforeach
                 <tr class="table-primary"><th>Total Assets</th><th class="text-end">{{ $money($report['total_assets']) }}</th></tr>
-            </tbody></table>
+            </tbody></table></div>
         </div></div>
     </div>
     <div class="col-lg-6">
         <div class="card mb-3"><div class="card-header"><h6 class="mb-0">Liabilities</h6></div><div class="card-body">
-            <table class="table table-sm mb-0"><tbody>
+            <div class="table-responsive"><table class="table table-sm mb-0"><tbody>
                 @foreach($report['groups']['liabilities']['rows'] as $r)<tr><td>{{ $r['code'] }} — {{ $r['name'] }}</td><td class="text-end">{{ $money($r['amount']) }}</td></tr>@endforeach
                 <tr><th>Total Liabilities</th><th class="text-end">{{ $money($report['groups']['liabilities']['total']) }}</th></tr>
-            </tbody></table>
+            </tbody></table></div>
         </div></div>
         <div class="card"><div class="card-header"><h6 class="mb-0">Equity</h6></div><div class="card-body">
-            <table class="table table-sm mb-0"><tbody>
+            <div class="table-responsive"><table class="table table-sm mb-0"><tbody>
                 @foreach($report['groups']['equity']['rows'] as $r)<tr><td>{{ $r['code'] }} — {{ $r['name'] }}</td><td class="text-end">{{ $money($r['amount']) }}</td></tr>@endforeach
                 <tr><th>Total Equity</th><th class="text-end">{{ $money($report['groups']['equity']['total']) }}</th></tr>
                 <tr class="table-primary"><th>Liabilities + Equity</th><th class="text-end">{{ $money($report['total_liabilities_equity']) }}</th></tr>
-            </tbody></table>
+            </tbody></table></div>
         </div></div>
     </div>
 </div>

@@ -152,6 +152,24 @@ Route::middleware('guest')->group(function () {
 
 Route::post('logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
+// Language switcher — available to guests (session) and users (persisted to profile).
+Route::post('locale', function (\Illuminate\Http\Request $request) {
+    $validated = $request->validate([
+        'locale' => ['required', 'string', \Illuminate\Validation\Rule::in(\App\Http\Middleware\SetLocale::SUPPORTED)],
+    ]);
+
+    $request->session()->put('locale', $validated['locale']);
+
+    if ($request->user()) {
+        $request->user()->forceFill(['locale' => $validated['locale']])->save();
+    }
+
+    // Flash in the newly selected language, not the one the request started with.
+    app()->setLocale($validated['locale']);
+
+    return back()->with('success', __('common.language_updated'));
+})->name('locale.switch');
+
 /*
 |--------------------------------------------------------------------------
 | Redirect Root

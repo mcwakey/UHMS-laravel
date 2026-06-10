@@ -1,5 +1,5 @@
 @extends('layouts.auth')
-@section('title', 'Forgot Password')
+@section('title', __('common.forgot_password_title'))
 
 @section('content')
 <div class="container-fuild position-relative z-1">
@@ -13,8 +13,8 @@
                     <div class="card border-1 p-lg-3 shadow-md rounded-3 mb-4">
                         <div class="card-body">
                             <div class="text-center mb-3">
-                                <h5 class="mb-1 fs-20 fw-bold">Forgot Password</h5>
-                                <p class="mb-0">No worries, we'll send you reset instructions</p>
+                                <h5 class="mb-1 fs-20 fw-bold">{{ __('common.forgot_password_title') }}</h5>
+                                <p class="mb-0">{{ __('common.forgot_password_text') }}</p>
                             </div>
 
                             @if(session('status'))
@@ -36,20 +36,20 @@
                             <form method="POST" action="{{ route('password.email') }}">
                                 @csrf
                                 <div class="mb-3">
-                                    <label class="form-label">Email Address</label>
+                                    <label class="form-label">{{ __('common.email_address') }}</label>
                                     <div class="input-group">
                                         <span class="input-group-text border-end-0 bg-white">
                                             <i class="ti ti-mail fs-14 text-dark"></i>
                                         </span>
-                                        <input type="email" name="email" value="{{ old('email') }}" class="form-control border-start-0 ps-0" placeholder="Enter Email Address" required autofocus>
+                                        <input type="email" name="email" value="{{ old('email') }}" class="form-control border-start-0 ps-0" placeholder="{{ __('common.enter_email_address') }}" required autofocus>
                                     </div>
                                 </div>
                                 <div class="mb-3">
-                                    <button type="submit" class="btn bg-primary text-white w-100">Send Reset Link</button>
+                                    <button type="submit" class="btn bg-primary text-white w-100">{{ __('common.send_reset_link') }}</button>
                                 </div>
                                 <div class="text-center">
-                                    <h6 class="fw-normal fs-14 text-dark mb-0">Return to
-                                        <a href="{{ route('login') }}" class="hover-a">Login</a>
+                                    <h6 class="fw-normal fs-14 text-dark mb-0">{{ __('common.return_to') }}
+                                        <a href="{{ route('login') }}" class="hover-a">{{ __('common.login') }}</a>
                                     </h6>
                                 </div>
                             </form>

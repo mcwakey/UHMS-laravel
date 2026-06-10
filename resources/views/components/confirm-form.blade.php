@@ -1,13 +1,13 @@
 @props([
     'action',
     'method' => 'POST',
-    'buttonLabel' => 'Confirm',
+    'buttonLabel' => null,
     'buttonClass' => 'btn btn-danger',
     'icon' => null,
-    'confirmTitle' => 'Are you sure?',
-    'confirmText' => 'Please confirm this action.',
-    'confirmButton' => 'Confirm',
-    'cancelButton' => 'Cancel',
+    'confirmTitle' => null,
+    'confirmText' => null,
+    'confirmButton' => null,
+    'cancelButton' => null,
     'requireReason' => false,
     'reasonName' => 'reason',
     'reasonPlaceholder' => null,
@@ -15,7 +15,14 @@
     'disabledReason' => null,
 ])
 
-@php $formId = 'cf_'.\Illuminate\Support\Str::random(8); @endphp
+@php
+    $buttonLabel ??= __('common.confirm');
+    $confirmTitle ??= __('common.are_you_sure');
+    $confirmText ??= __('common.please_confirm_action');
+    $confirmButton ??= __('common.confirm');
+    $cancelButton ??= __('common.cancel');
+    $formId = 'cf_'.\Illuminate\Support\Str::random(8);
+@endphp
 
 {{--
     Destructive/high-risk action as a confirmed form. Submits only after a
@@ -41,7 +48,7 @@
             data-cancel="{{ $cancelButton }}"
             data-require-reason="{{ $requireReason ? '1' : '0' }}"
             data-reason-name="{{ $reasonName }}"
-            data-reason-placeholder="{{ $reasonPlaceholder ?? 'Enter a reason' }}">
+            data-reason-placeholder="{{ $reasonPlaceholder ?? __('common.enter_a_reason') }}">
         @if($icon)<i class="ti {{ $icon }} me-1"></i>@endif{{ $buttonLabel }}
     </button>
 </form>

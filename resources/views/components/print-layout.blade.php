@@ -13,7 +13,7 @@
 @endphp
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -39,10 +39,10 @@
         <div class="d-flex justify-content-between align-items-start border-bottom pb-2 mb-3">
             <div>
                 <div class="h5 fw-bold mb-0">{{ $hospital }}</div>
-                <div class="text-muted small">Ultimate Hospital Management System</div>
+                <div class="text-muted small">{{ __('common.app_tagline') }}</div>
             </div>
             <div class="text-end small text-muted">
-                Generated: {{ $generatedAt instanceof \Illuminate\Support\Carbon || $generatedAt instanceof \Carbon\Carbon ? $generatedAt->format('d M Y, h:i A') : $generatedAt }}
+                {{ __('common.generated') }}: {{ $generatedAt instanceof \Illuminate\Support\Carbon || $generatedAt instanceof \Carbon\Carbon ? $generatedAt->format('d M Y, h:i A') : $generatedAt }}
             </div>
         </div>
 
@@ -56,13 +56,13 @@
         @if($patient || $visit)
             <div class="row g-2 border rounded p-2 mb-3 small">
                 @if($patient)
-                    <div class="col-6"><span class="text-muted">Patient:</span> <strong>{{ $patient->full_name ?? trim(($patient->first_name ?? '').' '.($patient->last_name ?? '')) }}</strong></div>
-                    <div class="col-3"><span class="text-muted">Patient No:</span> {{ $patient->patient_number ?? '—' }}</div>
-                    <div class="col-3"><span class="text-muted">Gender / Age:</span> {{ $patient->gender ?? '—' }}{{ isset($patient->date_of_birth) && $patient->date_of_birth ? ' · '.$patient->date_of_birth->age.'y' : '' }}</div>
+                    <div class="col-6"><span class="text-muted">{{ __('common.patient') }}:</span> <strong>{{ $patient->full_name ?? trim(($patient->first_name ?? '').' '.($patient->last_name ?? '')) }}</strong></div>
+                    <div class="col-3"><span class="text-muted">{{ __('common.patient_no') }}:</span> {{ $patient->patient_number ?? '—' }}</div>
+                    <div class="col-3"><span class="text-muted">{{ __('common.gender_age') }}:</span> {{ $patient->gender ?? '—' }}{{ isset($patient->date_of_birth) && $patient->date_of_birth ? ' · '.$patient->date_of_birth->age.'y' : '' }}</div>
                 @endif
                 @if($visit)
-                    <div class="col-6"><span class="text-muted">Visit No:</span> {{ $visit->visit_number ?? '—' }}</div>
-                    <div class="col-6"><span class="text-muted">Visit Date:</span> {{ optional($visit->visit_date ?? $visit->created_at)->format('d M Y') }}</div>
+                    <div class="col-6"><span class="text-muted">{{ __('common.visit_no') }}:</span> {{ $visit->visit_number ?? '—' }}</div>
+                    <div class="col-6"><span class="text-muted">{{ __('common.visit_date') }}:</span> {{ optional($visit->visit_date ?? $visit->created_at)->format('d M Y') }}</div>
                 @endif
             </div>
         @endif
@@ -86,8 +86,8 @@
 
     {{-- Print control (never printed) --}}
     <div class="d-print-none text-center my-4">
-        <button onclick="window.print()" class="btn btn-primary"><i class="ti ti-printer me-1"></i>Print</button>
-        <button onclick="window.history.back()" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>Back</button>
+        <button onclick="window.print()" class="btn btn-primary"><i class="ti ti-printer me-1"></i>{{ __('common.print') }}</button>
+        <button onclick="window.history.back()" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>{{ __('common.back') }}</button>
     </div>
 </body>
 </html>

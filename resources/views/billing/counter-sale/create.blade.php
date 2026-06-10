@@ -45,10 +45,12 @@
                             <button type="button" class="btn btn-sm btn-outline-primary" data-add-row data-tpl="drugRowTpl" data-body="drugRows"><i class="ti ti-plus me-1"></i>Add Drug</button>
                         </div>
                         <div class="card-body p-0">
-                            <table class="table align-middle mb-0">
-                                <thead class="bg-light"><tr><th>Drug</th><th style="width:110px">Qty</th><th style="width:120px" class="text-end">Price</th><th style="width:130px" class="text-end">Line</th><th style="width:40px"></th></tr></thead>
-                                <tbody id="drugRows"></tbody>
-                            </table>
+                            <div class="table-responsive">
+                                <table class="table align-middle mb-0">
+                                    <thead class="bg-light"><tr><th>Drug</th><th style="width:110px">Qty</th><th style="width:120px" class="text-end">Price</th><th style="width:130px" class="text-end">Line</th><th style="width:40px"></th></tr></thead>
+                                    <tbody id="drugRows"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -90,10 +92,12 @@
                             <button type="button" class="btn btn-sm btn-outline-primary" data-add-row data-tpl="serviceRowTpl" data-body="serviceRows"><i class="ti ti-plus me-1"></i>Add Investigation</button>
                         </div>
                         <div class="card-body p-0">
-                            <table class="table align-middle mb-0">
-                                <thead class="bg-light"><tr><th>Investigation</th><th style="width:110px">Qty</th><th style="width:120px" class="text-end">Price</th><th style="width:130px" class="text-end">Line</th><th style="width:40px"></th></tr></thead>
-                                <tbody id="serviceRows"></tbody>
-                            </table>
+                            <div class="table-responsive">
+                                <table class="table align-middle mb-0">
+                                    <thead class="bg-light"><tr><th>Investigation</th><th style="width:110px">Qty</th><th style="width:120px" class="text-end">Price</th><th style="width:130px" class="text-end">Line</th><th style="width:40px"></th></tr></thead>
+                                    <tbody id="serviceRows"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -135,10 +139,12 @@
                             <button type="button" class="btn btn-sm btn-outline-primary" data-add-row data-tpl="procedureRowTpl" data-body="procedureRows"><i class="ti ti-plus me-1"></i>Add Procedure</button>
                         </div>
                         <div class="card-body p-0">
-                            <table class="table align-middle mb-0">
-                                <thead class="bg-light"><tr><th>Procedure</th><th style="width:110px">Qty</th><th style="width:120px" class="text-end">Price</th><th style="width:130px" class="text-end">Line</th><th style="width:40px"></th></tr></thead>
-                                <tbody id="procedureRows"></tbody>
-                            </table>
+                            <div class="table-responsive">
+                                <table class="table align-middle mb-0">
+                                    <thead class="bg-light"><tr><th>Procedure</th><th style="width:110px">Qty</th><th style="width:120px" class="text-end">Price</th><th style="width:130px" class="text-end">Line</th><th style="width:40px"></th></tr></thead>
+                                    <tbody id="procedureRows"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>

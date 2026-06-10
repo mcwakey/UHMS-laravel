@@ -1,8 +1,10 @@
 @props([
     'icon' => 'ti-inbox',
     'title' => null,
-    'message' => 'No records found.',
+    'message' => null,
 ])
+
+@php $message ??= __('common.no_records_found'); @endphp
 
 {{--
     Standard empty state for tables/lists. Usage:

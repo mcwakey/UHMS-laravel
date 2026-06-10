@@ -37,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Harmless on classic Blade responses (no-ops unless an
         // Inertia\Response is returned).
         $middleware->web(append: [
+            \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             \App\Http\Middleware\ConvertBladeViewsToInertia::class,
         ]);

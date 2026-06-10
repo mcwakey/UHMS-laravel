@@ -227,6 +227,29 @@ input[type="number"],
     transform: translateY(-1px);
 }
 
+/* ------------------------------------------------------------------ */
+/* Responsive layer — tablet and below                                  */
+/* ------------------------------------------------------------------ */
+
+/* Horizontal scroll containers get momentum scrolling on touch devices
+   and a subtle hint that the table continues off-screen. */
+.table-responsive {
+    -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 991.98px) {
+    /* Wide inline forms (payment queue rows etc.) scroll instead of squish */
+    .uhms-payment-queue .table-responsive {
+        overscroll-behavior-x: contain;
+    }
+
+    /* Notification / large dropdowns never exceed the viewport */
+    .dropdown-menu-lg,
+    .dropdown-menu-md {
+        max-width: calc(100vw - 1.5rem);
+    }
+}
+
 @media (max-width: 767.98px) {
     .uhms-page-header {
         align-items: stretch !important;
@@ -244,5 +267,109 @@ input[type="number"],
     .uhms-payment-queue .payment-inline-form {
         min-width: 0;
         width: 100%;
+    }
+
+    /* Tighter chrome on small screens */
+    .card-body {
+        padding: .875rem;
+    }
+
+    .content {
+        padding-left: .75rem;
+        padding-right: .75rem;
+    }
+
+    /* KPI / stat cards compress gracefully */
+    .uhms-stat-card .card-body {
+        min-height: 0;
+    }
+
+    /* Filter bar: fields and Apply/Reset buttons stack full-width */
+    .uhms-filter-bar .row > [class*="col-"],
+    form.card .row.g-2.align-items-end > .col-md-auto {
+        width: 100%;
+    }
+
+    form.card .row.g-2.align-items-end > .col-md-auto .btn {
+        flex: 1 1 auto;
+    }
+
+    /* Pagination wraps instead of overflowing */
+    .pagination {
+        flex-wrap: wrap;
+        row-gap: .25rem;
+    }
+
+    .card-footer .d-flex.justify-content-end {
+        justify-content: center !important;
+    }
+
+    /* Modals breathe on small screens */
+    .modal-dialog {
+        margin: .5rem auto;
+        max-width: calc(100vw - 1rem);
+    }
+
+    /* Comfortable touch targets for icon buttons */
+    .topbar-link.btn-icon,
+    .btn-icon {
+        min-width: 2.25rem;
+        min-height: 2.25rem;
+    }
+
+    /* Breadcrumbs truncate rather than wrap awkwardly */
+    .breadcrumb {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+}
+
+@media (max-width: 575.98px) {
+    /* Action clusters (header buttons, form footers) stack */
+    .uhms-page-header .d-flex.flex-wrap.gap-2 {
+        width: 100%;
+    }
+
+    .uhms-page-header .d-flex.flex-wrap.gap-2 .btn {
+        flex: 1 1 100%;
+    }
+
+    /* Slightly smaller table text keeps more columns legible */
+    .table {
+        font-size: .8125rem;
+    }
+
+    /* Nav tabs scroll horizontally instead of wrapping into a tall block */
+    .nav-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    .nav-tabs .nav-link {
+        white-space: nowrap;
+    }
+}
+
+/* Print: hide app chrome, show content full-width */
+@media print {
+    .navbar-header,
+    #sidebar,
+    .sidebar,
+    .footer,
+    .uhms-page-header .btn,
+    .page-header .btn {
+        display: none !important;
+    }
+
+    .page-wrapper {
+        margin-left: 0 !important;
+        padding-top: 0 !important;
+    }
+
+    .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
     }
 }
