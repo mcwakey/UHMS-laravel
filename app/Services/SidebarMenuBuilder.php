@@ -997,6 +997,27 @@ class SidebarMenuBuilder
                         'module' => 'billing',
                     ],
                     [
+                        'label' => 'Supplier Payables',
+                        'icon' => 'ti ti-file-dollar',
+                        'route' => 'admin.accounts-payable.payables',
+                        'active_patterns' => ['admin.accounts-payable.payables'],
+                        'permission' => 'accounts_payable.view',
+                    ],
+                    [
+                        'label' => 'Supplier Payments',
+                        'icon' => 'ti ti-cash',
+                        'route' => 'admin.accounts-payable.payments',
+                        'active_patterns' => ['admin.accounts-payable.payments', 'admin.accounts-payable.statement'],
+                        'permission' => 'accounts_payable.view',
+                    ],
+                    [
+                        'label' => 'AP Aging',
+                        'icon' => 'ti ti-clock-dollar',
+                        'route' => 'admin.accounts-payable.aging',
+                        'active_patterns' => ['admin.accounts-payable.aging'],
+                        'permission' => 'reports.ap_aging.view',
+                    ],
+                    [
                         'label' => 'Discount Report',
                         'icon' => 'ti ti-discount-2',
                         'route' => 'admin.billing.reports.discounts',

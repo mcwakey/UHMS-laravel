@@ -182,6 +182,24 @@ class PurchaseReturnService
                     sourceType: PurchaseReturn::class,
                     sourceId: $purchaseReturn->id,
                 );
+
+                // Accounting Phase 5: post Dr Supplier Payables / Cr Inventory
+                // and reduce open supplier payables (idempotent per return).
+                $inventoryLines = [];
+                $accounts = app(SupplierAccountingService::class);
+                foreach ($purchaseReturn->items as $item) {
+                    $amount = round((float) $item->quantity * (float) $item->unit_cost, 2);
+                    if ($amount <= 0) {
+                        continue;
+                    }
+                    $account = $accounts->inventoryAccountForProduct($item->product);
+                    $inventoryLines[$account->id] ??= ['account' => $account, 'amount' => 0.0];
+                    $inventoryLines[$account->id]['amount'] += $amount;
+                }
+                if (! empty($inventoryLines)) {
+                    app(SupplierAccountingPostingService::class)->postPurchaseReturn($purchaseReturn, array_values($inventoryLines));
+                    app(SupplierPayableService::class)->applyReturnFifo($purchaseReturn->supplier, (float) $purchaseReturn->total_amount);
+                }
             }
 
             $purchaseReturn->update([

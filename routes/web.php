@@ -100,6 +100,7 @@ use App\Http\Controllers\Admin\VitalController;
 use App\Http\Controllers\Admin\WardController;
 use App\Http\Controllers\Accounting\AccountController as AccountingAccountController;
 use App\Http\Controllers\Accounting\AccountingDashboardController;
+use App\Http\Controllers\Accounting\AccountsPayableController;
 use App\Http\Controllers\Accounting\AccountingPostingController;
 use App\Http\Controllers\Accounting\AccountingPeriodController;
 use App\Http\Controllers\Accounting\AccountingReportController;
@@ -1024,6 +1025,16 @@ Route::middleware('auth')->group(function () {
                 Route::get('{patient}', [BillingReportController::class, 'statementShow'])->name('show');
                 Route::get('{patient}/pdf', [BillingReportController::class, 'statementPdf'])->name('pdf');
             });
+        });
+
+        // Accounts Payable (Accounting Phase 5)
+        Route::prefix('accounts-payable')->name('accounts-payable.')->middleware('can:accounts_payable.view')->group(function () {
+            Route::get('/', [AccountsPayableController::class, 'payables'])->name('payables');
+            Route::get('aging', [AccountsPayableController::class, 'aging'])->name('aging')->middleware('can:reports.ap_aging.view');
+            Route::get('payments', [AccountsPayableController::class, 'payments'])->name('payments');
+            Route::post('payments', [AccountsPayableController::class, 'recordPayment'])->name('payments.store')->middleware('can:supplier_payments.create');
+            Route::post('payments/{payment}/reverse', [AccountsPayableController::class, 'reversePayment'])->name('payments.reverse')->middleware('can:supplier_payments.reverse');
+            Route::get('statement/{supplier}', [AccountsPayableController::class, 'statement'])->name('statement')->middleware('can:reports.supplier_statement.view');
         });
 
         // Service Catalog

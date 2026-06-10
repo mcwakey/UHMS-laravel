@@ -29,6 +29,10 @@ class PurchaseReturn extends Model
         'approved_by',
         'posted_by',
         'posted_at',
+        'journal_entry_id',
+        'accounting_status',
+        'accounting_posted_at',
+        'accounting_error',
     ];
 
     protected $casts = [
@@ -36,7 +40,13 @@ class PurchaseReturn extends Model
         'total_amount' => 'decimal:2',
         'status' => PurchaseReturnStatus::class,
         'posted_at' => 'datetime',
+        'accounting_posted_at' => 'datetime',
     ];
+
+    public function journalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class);
+    }
 
     public static function generateReturnNumber(): string
     {

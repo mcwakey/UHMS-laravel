@@ -31,11 +31,27 @@ class GoodsReceivedNote extends Model
         'supplier_delivery_no',
         'received_by',
         'notes',
+        'supplier_payable_id',
+        'journal_entry_id',
+        'accounting_status',
+        'accounting_posted_at',
+        'accounting_error',
     ];
 
     protected $casts = [
         'received_date' => 'datetime',
+        'accounting_posted_at' => 'datetime',
     ];
+
+    public function journalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class);
+    }
+
+    public function supplierPayable(): BelongsTo
+    {
+        return $this->belongsTo(SupplierPayable::class);
+    }
 
     public function purchaseOrder(): BelongsTo
     {

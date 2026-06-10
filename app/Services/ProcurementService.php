@@ -287,8 +287,8 @@ class ProcurementService
             }
 
             // Supplier ledger: GOODS_RECEIVED creates a credit (facility now owes supplier).
-            if ($receivedValue > 0 && $po->supplier) {
-                $this->supplierLedger->recordEntry(
+            if ($grnHasItems && $receivedValue > 0 && $po->supplier) {
+                $ledgerEntry = $this->supplierLedger->recordEntry(
                     supplier: $po->supplier,
                     entryType: SupplierLedgerEntry::TYPE_GOODS_RECEIVED,
                     debit: 0,
@@ -297,6 +297,10 @@ class ProcurementService
                     sourceType: PurchaseOrder::class,
                     sourceId: $po->id,
                 );
+
+                // Accounting Phase 5: recognise the supplier payable and post
+                // Dr Inventory / Cr Supplier Payables (idempotent per GRN).
+                app(SupplierPayableService::class)->recognizeFromGoodsReceipt($grn, $ledgerEntry->id);
             }
 
             if ($receivedQty > 0) {

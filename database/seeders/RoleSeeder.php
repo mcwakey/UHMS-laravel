@@ -186,6 +186,16 @@ class RoleSeeder extends Seeder
             'reports.ar_aging.insurance',
             'reports.ar_aging.sponsor',
             'reports.ar_aging.corporate',
+
+            // Accounting Phase 5 — Accounts Payable
+            'accounts_payable.view',
+            'supplier_payables.view',
+            'supplier_payments.view',
+            'supplier_payments.create',
+            'supplier_payments.reverse',
+            'reports.ap_aging.view',
+            'reports.supplier_statement.view',
+
             'services.manage',
 
             // Service rendering / fulfilment
