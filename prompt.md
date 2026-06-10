@@ -1,6 +1,6 @@
-Next is **Accounting Phase 6: Stock Valuation, COGS, Consumables Expense & Inventory Accounting**.
+Next is **Accounting Phase 7: Financial Reports, Closing Controls & Management Dashboards**.
 
-This phase connects the stock system to accounting properly.
+This phase turns the accounting engine into useful management reports: Trial Balance, General Ledger, Profit & Loss, Balance Sheet, Cash Flow, AR/AP Aging summaries, revenue/expense dashboards, and period closing controls.
 
 You are working on UHMS — Ultimate Hospital Management System.
 
@@ -9,756 +9,783 @@ Accounting Phase 2 Billing → Accounting Posting is complete.
 Accounting Phase 3 Payments, Discounts, Credit Notes, Write-offs, Refunds & Reversals is complete.
 Accounting Phase 4 Sponsors, Insurance, Corporate Receivables & AR Aging is complete.
 Accounting Phase 5 Procurement, Supplier Ledger, Accounts Payable & AP Aging is complete.
+Accounting Phase 6 Stock Valuation, COGS, Consumables Expense & Inventory Accounting is complete.
 
-Now proceed with Accounting Phase 6:
+Now proceed with Accounting Phase 7:
 
-Stock Valuation, COGS, Consumables Expense & Inventory Accounting
+Financial Reports, Closing Controls & Management Dashboards
 
 Goal:
-Implement full inventory accounting so UHMS can correctly value stock, account for stock received, transferred, consumed, dispensed, adjusted, damaged, expired, returned, and sold.
+Build the main accounting reports, financial dashboards, and period closing controls needed for UHMS to operate as a full accounting-aware hospital management system.
 
-This phase must connect the existing product/stock movement system to accounting without replacing stock movements or stock balances.
-
-Do not replace existing Products.
-Do not replace stock movements.
-Do not replace stock balances.
-Do not replace pharmacy dispensing.
-Do not replace procurement/goods receiving.
-Do not create a parallel stock system.
-Do not write the full automated test suite yet. Full tests will be written after the full accounting implementation is complete.
+Do not replace the existing operational reports.
+Do not replace billing, procurement, stock, supplier, AR, or AP reports.
+Do not change posted journal entries.
+Do not enable full automated tests yet.
+Full tests will be written after the whole accounting implementation is complete.
 
 Important rule:
 
-Products = physical items.
-Stock movements = operational inventory movement.
-Stock valuation = financial value of inventory.
-Journal entries = accounting impact.
+Operational reports show hospital workflow activity.
+Accounting reports show financial impact from posted journal entries.
 
 ---
 
 # 1. Main Objective
 
-Implement accounting support for:
+Implement complete accounting reporting and finance dashboards.
 
-1. Stock valuation
-2. Inventory account mapping
-3. Cost of goods sold
-4. Pharmacy dispensing cost
-5. Department consumable usage
-6. Investigation consumables expense
-7. Procedure consumables expense
-8. Stock adjustments
-9. Damaged stock
-10. Expired stock
-11. Stock transfers
-12. Purchase returns
-13. Inventory valuation report
-14. Stock movement accounting status
-15. Activity logs
-16. Manual verification documentation
+This phase must include:
+
+1. General Ledger
+2. Trial Balance
+3. Profit & Loss / Income Statement
+4. Balance Sheet
+5. Cashbook / Cash & Bank Summary
+6. Cash Flow report if feasible
+7. AR Aging summary
+8. AP Aging summary
+9. Revenue by Department
+10. Expense by Department
+11. Inventory Valuation summary
+12. Supplier Payables summary
+13. Receivables summary
+14. Period closing controls
+15. Accounting dashboard
+16. Report exports/printing where existing report system supports it
+17. Activity logs
+18. Manual verification documentation
 
 ---
 
-# 2. Core Accounting Rules
+# 2. Reporting Principle
 
-## A. Stock received from supplier
-
-Already handled in Phase 5 through goods receiving:
+All core accounting reports must use only:
 
 ```text
-Dr Inventory
-Cr Supplier Payables
+posted journal entries
+posted journal entry lines
+valid accounting periods
+valid fiscal years
 ````
 
-Do not duplicate this posting here.
+Do not include:
 
-Phase 6 may verify and improve inventory account mapping, but should not double-post goods receiving.
+```text
+draft journals
+cancelled journals
+unposted operational records
+failed accounting postings
+```
+
+Operational records can be linked for drill-down, but report totals must come from accounting records.
 
 ---
 
-## B. Pharmacy product sold / dispensed as billable item
+# 3. General Ledger
 
-There are two accounting sides:
-
-### Revenue side
-
-Handled by billing phases:
-
-```text
-Dr Receivable / Cash
-Cr Pharmacy Revenue
-```
-
-Do not duplicate revenue here.
-
-### Cost side
-
-When pharmacy stock is dispensed and stock leaves inventory:
-
-```text
-Dr Cost of Goods Sold
-Cr Inventory
-```
-
-Example:
-
-```text
-Dr Pharmacy COGS          40
-Cr Pharmacy Inventory     40
-```
-
-This records the cost of the medicine sold.
-
----
-
-## C. Department consumable used but not billed separately
-
-Example:
-
-* gloves used in lab
-* reagent consumed during test
-* gauze used in theatre
-* syringe used in ward
-
-Accounting:
-
-```text
-Dr Consumables Expense
-Cr Inventory
-```
-
-Example:
-
-```text
-Dr Laboratory Consumables Expense     15
-Cr Laboratory Reagents Inventory      15
-```
-
----
-
-## D. Consumable used and billed to patient
-
-There may be both:
-
-Revenue side:
-
-```text
-Dr Receivable
-Cr Revenue
-```
-
-Cost side:
-
-```text
-Dr Cost of Goods Sold / Consumables Expense
-Cr Inventory
-```
-
-Do not skip cost just because it was billed.
-
-Do not duplicate revenue.
-
----
-
-## E. Stock transfer between locations
-
-Normal internal transfer:
-
-```text
-No P&L impact
-```
-
-If the inventory account is the same:
-
-```text
-No journal entry required
-```
-
-If different inventory accounts are used by location/department:
-
-```text
-Dr Destination Inventory
-Cr Source Inventory
-```
-
-Example:
-
-```text
-Dr Pharmacy Inventory        500
-Cr Main Store Inventory      500
-```
-
-Use project accounting settings.
-
-Do not treat transfer as expense.
-
----
-
-## F. Stock adjustment increase
-
-If stock is increased because of correction:
-
-```text
-Dr Inventory
-Cr Inventory Adjustment Gain
-```
-
-or use adjustment account configured.
-
----
-
-## G. Stock adjustment decrease
-
-If stock is reduced because of correction/loss:
-
-```text
-Dr Inventory Adjustment Loss / Expense
-Cr Inventory
-```
-
----
-
-## H. Damaged / expired stock
-
-When stock is written off as damaged or expired:
-
-```text
-Dr Damaged / Expired Stock Expense
-Cr Inventory
-```
-
----
-
-## I. Purchase return to supplier
-
-Already partly handled in Phase 5:
-
-```text
-Dr Supplier Payables
-Cr Inventory
-```
-
-Do not duplicate if Phase 5 already posts purchase return.
-
-Phase 6 should ensure inventory value reduction is correct.
-
----
-
-# 3. Stock Valuation Method
-
-Implement one stock valuation method first.
-
-Recommended default:
-
-```text
-Weighted Average Cost
-```
-
-Reason:
-It is simpler and safer for hospital stock than FIFO in the first implementation.
-
-Required behavior:
-
-* every product/location stock balance should carry quantity and average cost where possible
-* goods receiving updates average cost
-* stock OUT movement uses current average cost
-* stock transfer preserves cost
-* stock adjustment uses configured cost or average cost
-* inventory valuation report uses quantity_on_hand × average_cost
-
-If the system already has unit_cost on stock movements, reuse it.
-
-Do not invent cost if not available; fail clearly or use last known average cost with documentation.
-
----
-
-# 4. Data Model Updates
-
-Inspect current tables first:
-
-```text
-products
-stock_movements
-stock_balances
-product_stock_movements
-product_stock_balances
-goods_receipts
-goods_receipt_items
-purchase_order_items
-dispensing_records
-consumable_usages
-purchase_returns
-```
-
-Add fields only where needed.
-
-Possible fields on stock movements:
-
-```text
-unit_cost nullable
-total_cost nullable
-valuation_method nullable
-journal_entry_id nullable
-accounting_status nullable
-accounting_posted_at nullable
-accounting_error nullable
-reversal_journal_entry_id nullable
-```
-
-Possible fields on stock balances:
-
-```text
-quantity_on_hand
-average_cost nullable
-total_value nullable
-last_valued_at nullable
-```
-
-Possible fields on products:
-
-```text
-inventory_account_id nullable
-cogs_account_id nullable
-expense_account_id nullable
-valuation_method nullable
-```
-
-Possible fields on product categories/types:
-
-```text
-inventory_account_id nullable
-cogs_account_id nullable
-expense_account_id nullable
-```
-
-Do not add duplicate fields if equivalents already exist.
-
----
-
-# 5. Required Services
-
-Create or update:
-
-```text
-StockValuationService
-InventoryAccountingPostingService
-StockCostingService
-InventoryAccountResolver
-COGSAccountResolver
-ConsumablesExpenseAccountResolver
-StockAdjustmentAccountingService
-InventoryValuationReportService
-```
-
-Use existing services if available.
-
-Controllers must remain thin.
-
-Stock accounting must be service-layer driven.
-
----
-
-# 6. StockValuationService
-
-Required methods:
-
-```php
-calculateWeightedAverageCost(Product $product, StockLocation $location, float $incomingQty, float $incomingUnitCost): float
-
-applyIncomingStock(Product $product, StockLocation $location, float $qty, float $unitCost): void
-
-applyOutgoingStock(Product $product, StockLocation $location, float $qty): array
-
-getCurrentAverageCost(Product $product, StockLocation $location): float
-
-getStockValue(Product $product, StockLocation $location): float
-```
-
-Outgoing stock should return:
-
-```php
-[
-    'unit_cost' => 12.50,
-    'total_cost' => 125.00,
-    'valuation_method' => 'weighted_average',
-]
-```
-
----
-
-# 7. InventoryAccountingPostingService
-
-Required methods:
-
-```php
-postDispensingCost(DispensingRecord $record): ?JournalEntry
-
-postConsumableUsageCost(ConsumableUsage $usage): ?JournalEntry
-
-postStockAdjustment(StockMovement $movement): ?JournalEntry
-
-postDamagedExpiredStock(StockMovement $movement): ?JournalEntry
-
-postTransferIfRequired(StockTransfer $transfer): ?JournalEntry
-
-postPurchaseReturnInventoryEffect(PurchaseReturn $return): ?JournalEntry
-```
-
-Rules:
-
-* use existing stock movement as source
-* do not post if source already has journal_entry_id
-* do not duplicate Phase 5 procurement postings
-* create reversal journal if stock movement is reversed
-* fail clearly if account mapping missing
-
----
-
-# 8. Account Mapping
-
-Use priority order.
-
-## Inventory account
-
-```text
-1. Product inventory_account_id
-2. Product category inventory_account_id
-3. Product type inventory account
-4. Stock location / department inventory account
-5. Accounting settings default inventory account
-```
-
-## COGS account
-
-```text
-1. Product cogs_account_id
-2. Product category cogs_account_id
-3. Department/service cogs account
-4. Accounting settings cost_of_goods_sold_account_id
-```
-
-## Consumables expense account
-
-```text
-1. Product expense_account_id
-2. Product category expense_account_id
-3. Department expense account
-4. Accounting settings consumables_expense_account_id
-```
-
-## Damaged/expired stock expense
-
-```text
-1. Product/category damaged stock expense account
-2. Accounting settings damaged_expired_stock_expense_account_id
-3. Accounting settings inventory_adjustment_loss_account_id
-```
-
-Fail clearly if required account is missing.
-
-Do not silently post to random accounts.
-
----
-
-# 9. Pharmacy Dispensing Cost Posting
-
-When pharmacy dispensing creates a stock OUT movement:
-
-Operational behavior remains:
-
-* prescription is dispensed
-* stock decreases from pharmacy location
-* billing/revenue remains handled by billing module
-
-Accounting cost posting:
-
-```text
-Dr Pharmacy COGS
-Cr Pharmacy Inventory
-```
-
-Context:
-
-```text
-product_id
-stock_location_id
-stock_movement_id
-dispensing_record_id
-patient_id
-visit_id
-invoice_id if available
-```
-
-Do not duplicate pharmacy revenue posting.
-
-Do not duplicate MAR administration logging.
-
----
-
-# 10. Consumable Usage Cost Posting
-
-When consumables are used in:
-
-* investigation
-* procedure/theatre
-* emergency
-* ward/admission
-* general clinical consumption
-
-Accounting:
-
-```text
-Dr Department Consumables Expense
-Cr Department Inventory
-```
-
-Context:
-
-```text
-product_id
-stock_location_id
-stock_movement_id
-consumable_usage_id
-patient_id nullable
-visit_id nullable
-department_id
-source_type
-source_id
-```
-
-If the usage is patient-related, context may carry patient/visit.
-
-If generic department usage, do not force patient context.
-
----
-
-# 11. Stock Adjustment Posting
-
-For adjustment increase:
-
-```text
-Dr Inventory
-Cr Inventory Adjustment Gain
-```
-
-For adjustment decrease:
-
-```text
-Dr Inventory Adjustment Loss
-Cr Inventory
-```
-
-Rules:
-
-* require reason
-* require permission
-* require approval if high-value
-* use average cost for valuation
-* adjustment must be traceable in stock movement and journal
-
----
-
-# 12. Damaged / Expired Stock
-
-When stock is marked damaged or expired:
-
-Operational:
-
-* stock OUT movement
-* reason: damaged/expired
-* optional batch/expiry reference
-* approval if needed
-
-Accounting:
-
-```text
-Dr Damaged / Expired Stock Expense
-Cr Inventory
-```
-
-This should appear in expense reports.
-
----
-
-# 13. Stock Transfers
-
-For internal transfers:
-
-If both locations use same inventory account:
-
-```text
-No accounting journal required
-```
-
-Still keep operational stock movement.
-
-If source and destination map to different inventory accounts:
-
-```text
-Dr Destination Inventory
-Cr Source Inventory
-```
-
-Transfer should preserve stock value.
-
-Do not create gain/loss on transfer.
-
----
-
-# 14. Inventory Valuation Report
-
-Create report:
-
-```text
-Inventory Valuation
-```
+Create or finalize the General Ledger report.
 
 Filters:
 
 ```text
-Date
-Location
+Account
+Account Type
+Date From
+Date To
+Fiscal Year
+Accounting Period
 Department
-Product Type
-Product Category
-Product
+Patient
+Supplier
+Sponsor
+Insurance Provider
+Source Module
+Reference Type
+Reference Number
 ```
 
 Columns:
 
 ```text
-Product Code
-Product Name
-Location
-Quantity on Hand
-Average Cost
-Total Value
-Inventory Account
-Last Movement Date
-```
-
-Summary:
-
-```text
-Total Inventory Value
-Value by Location
-Value by Product Type
-Value by Department
+Date
+Journal Number
+Account Code
+Account Name
+Description
+Reference
+Source Module
+Debit
+Credit
+Running Balance
+Posted By
 ```
 
 Rules:
 
-* use stock balances and average cost
-* do not calculate from all movements on every request if stock_balances has value fields
-* report must reconcile with inventory accounts in General Ledger as much as possible
+* include only posted journal entries
+* running balance must respect account normal balance
+* allow drill-down to journal entry
+* allow drill-down to source record if available
+* support print/export if existing report system supports it
+* show opening balance before date_from if date filter is used
+
+Opening balance logic:
+
+For debit-normal accounts:
+
+```text
+opening_balance = prior_debits - prior_credits
+```
+
+For credit-normal accounts:
+
+```text
+opening_balance = prior_credits - prior_debits
+```
 
 ---
 
-# 15. Stock Movement UI
+# 4. Trial Balance
 
-On stock movement details, show:
+Create or finalize Trial Balance report.
 
-```text
-Unit Cost
-Total Cost
-Valuation Method
-Accounting Status
-Journal Entry
-```
-
-On product stock balance page, show:
+Filters:
 
 ```text
-Quantity on Hand
-Average Cost
-Total Value
+Fiscal Year
+Date From
+Date To
+Account Type
+Department optional
+Include Zero Balances yes/no
 ```
 
-Only show accounting values to authorized users.
+Columns:
+
+```text
+Account Code
+Account Name
+Account Type
+Opening Debit
+Opening Credit
+Period Debit
+Period Credit
+Closing Debit
+Closing Credit
+```
+
+Rules:
+
+* posted entries only
+* total debits must equal total credits
+* show imbalance warning if totals differ
+* parent accounts should optionally roll up child accounts
+* allow detailed view per account
+
+Trial Balance must be usable for Balance Sheet and P&L.
 
 ---
 
-# 16. Permissions
+# 5. Profit & Loss / Income Statement
+
+Create Profit & Loss report.
+
+Sections:
+
+```text
+Revenue
+Cost of Goods Sold
+Gross Profit
+Operating Expenses
+Administrative Expenses
+Finance Costs
+Net Profit / Loss
+```
+
+Filters:
+
+```text
+Fiscal Year
+Accounting Period
+Date From
+Date To
+Department
+Branch if multi-branch exists
+```
+
+Rules:
+
+* Revenue accounts use INCOME type
+* Expenses use EXPENSE type
+* COGS can use EXPENSE subtype COST_OF_SALES
+* Net Profit = Total Income - Total Expenses
+* support department-level P&L if department_id exists on journal lines
+
+Example:
+
+```text
+Consultation Revenue
+Laboratory Revenue
+Pharmacy Revenue
+Procedure Revenue
+Emergency Revenue
+Admission Revenue
+Other Revenue
+
+Less:
+Pharmacy COGS
+Consumables COGS
+Salaries
+Utilities
+Rent
+Maintenance
+Administrative Expenses
+Bad Debt / Write-off Expense
+
+Net Profit / Loss
+```
+
+---
+
+# 6. Balance Sheet
+
+Create Balance Sheet report.
+
+Sections:
+
+```text
+Assets
+Liabilities
+Equity
+```
+
+Rules:
+
+* Assets from ASSET accounts
+* Liabilities from LIABILITY accounts
+* Equity from EQUITY accounts
+* Include current year profit/loss from P&L if not already closed to retained earnings
+* Must validate:
+
+```text
+Assets = Liabilities + Equity
+```
+
+Show warning if out of balance.
+
+Recommended sections:
+
+```text
+Current Assets
+Non-current Assets
+Current Liabilities
+Non-current Liabilities
+Equity
+```
+
+Examples:
+
+Assets:
+
+* Cash on Hand
+* Bank Account
+* Mobile Money
+* Patient Receivables
+* Insurance Receivables
+* Sponsor Receivables
+* Corporate Receivables
+* Inventory
+* Fixed Assets
+
+Liabilities:
+
+* Supplier Payables
+* Patient Deposits
+* Taxes Payable
+* Salary Payable
+* Accrued Expenses
+
+Equity:
+
+* Owner Capital
+* Retained Earnings
+* Current Year Earnings
+
+---
+
+# 7. Cashbook / Cash & Bank Summary
+
+Create Cashbook report.
+
+Filters:
+
+```text
+Cash/Bank/Mobile Money Account
+Date From
+Date To
+Payment Method
+Source Module
+```
+
+Columns:
+
+```text
+Date
+Reference
+Description
+Debit / Money In
+Credit / Money Out
+Running Balance
+Source
+Created By / Posted By
+```
+
+Rules:
+
+* use accounts flagged as cash/bank/mobile money
+* include posted journal entries only
+* cash receipts from patients/sponsors/insurance should appear
+* supplier payments/refunds should appear as money out
+* support account-specific running balance
+
+---
+
+# 8. Cash Flow Report
+
+If feasible in this phase, create a simple cash flow report.
+
+Minimum:
+
+```text
+Cash Inflows
+Cash Outflows
+Net Cash Movement
+Opening Cash Balance
+Closing Cash Balance
+```
+
+Sources:
+
+* posted journal lines hitting cash/bank/mobile money accounts
+
+Do not overcomplicate into full indirect-method cash flow unless already easy.
+
+---
+
+# 9. AR Aging Summary
+
+Integrate Phase 4 AR Aging into accounting dashboard/reports.
+
+Show:
+
+```text
+Total Receivables
+Patient Receivables
+Insurance Receivables
+Sponsor Receivables
+Corporate Receivables
+0–30
+31–60
+61–90
+91–120
+120+
+```
+
+Rules:
+
+* use payer receivables from Phase 4
+* reconcile with receivable account balances where possible
+* show warning if operational AR and GL receivable balance differ
+
+---
+
+# 10. AP Aging Summary
+
+Integrate Phase 5 AP Aging.
+
+Show:
+
+```text
+Total Payables
+Supplier Payables
+0–30
+31–60
+61–90
+91–120
+120+
+```
+
+Rules:
+
+* use supplier payables / supplier ledger from Phase 5
+* reconcile with Supplier Payables GL balance where possible
+* show warning if operational AP and GL payable balance differ
+
+---
+
+# 11. Inventory Valuation Summary
+
+Integrate Phase 6 Inventory Valuation.
+
+Show:
+
+```text
+Total Inventory Value
+Pharmacy Inventory
+Consumables Inventory
+Laboratory Reagents Inventory
+Theatre Supplies Inventory
+Inventory by Location
+Inventory by Product Type
+```
+
+Rules:
+
+* use stock balance valuation fields
+* reconcile with Inventory GL account balance where possible
+* show warning if operational inventory value and GL inventory balance differ
+
+---
+
+# 12. Revenue by Department
+
+Create Revenue by Department report.
+
+Filters:
+
+```text
+Date From
+Date To
+Department
+Service Type
+Source Module
+```
+
+Columns:
+
+```text
+Department
+Revenue Account
+Gross Revenue
+Discounts
+Credit Notes
+Net Revenue
+Payments Received optional
+Outstanding Receivables optional
+```
+
+Rules:
+
+* accounting revenue comes from posted journal entries
+* operational billing can be shown as comparison if useful
+* department_id should come from journal lines
+* if missing department_id, classify as Unassigned
+
+---
+
+# 13. Expense by Department
+
+Create Expense by Department report.
+
+Filters:
+
+```text
+Date From
+Date To
+Department
+Expense Type
+Source Module
+```
+
+Columns:
+
+```text
+Department
+Expense Account
+Amount
+Source Module
+```
+
+Include:
+
+* consumables expense
+* COGS
+* salary/payroll expense if already posted
+* utilities/admin expenses from manual journals
+* damaged/expired stock expense
+* write-off expense
+
+---
+
+# 14. Accounting Dashboard
+
+Create/update Accounting Dashboard.
+
+Cards:
+
+```text
+Cash / Bank Balance
+Total Receivables
+Total Payables
+Inventory Value
+Revenue This Month
+Expenses This Month
+Net Profit This Month
+Unposted / Failed Accounting Items
+Open Fiscal Year
+Open Period
+```
+
+Charts/tables:
+
+```text
+Monthly Revenue Trend
+Monthly Expense Trend
+AR Aging Summary
+AP Aging Summary
+Top Revenue Departments
+Top Expense Departments
+Recent Journal Entries
+Failed Accounting Postings
+```
+
+Use existing UI standards:
+
+* Bootstrap 5
+* Tabler Icons
+* existing card/table components
+* no new frontend framework
+
+---
+
+# 15. Period Closing Controls
+
+Implement or finalize accounting closing controls.
+
+## Accounting Period Closing
+
+When closing an accounting period:
+
+* require permission
+* ensure no draft journals in period, or warn/block depending policy
+* ensure no failed accounting postings in period, or warn/block
+* ensure trial balance is balanced
+* set period status = closed
+* log ACCOUNTING_PERIOD_CLOSED
+
+After closing:
+
+* no new journals can be posted into that period
+* no operational posting can create journal entries in that period
+* reversals for that period must post into an open period unless policy allows reopening
+
+## Fiscal Year Closing
+
+For fiscal year closing:
+
+* all periods should be closed
+* trial balance must be balanced
+* calculate current year profit/loss
+* optionally create closing entry to retained earnings
+* set fiscal year status = closed
+* log FISCAL_YEAR_CLOSED
+
+If full year-end closing is too much now, document as TODO but enforce no posting into closed fiscal years.
+
+---
+
+# 16. Closing Entry
+
+If implementing year-end closing entry:
+
+Close income and expense accounts to current year earnings/retained earnings.
+
+Example:
+
+If profit:
+
+```text
+Dr Income Accounts
+Cr Expense Accounts
+Cr Retained Earnings / Current Year Earnings
+```
+
+If loss:
+
+```text
+Dr Retained Earnings / Current Year Earnings
+Dr Income Accounts
+Cr Expense Accounts
+```
+
+Use JournalEntryService.
+
+Do not silently close without journal entry.
+
+If not implemented now, document as future TODO.
+
+---
+
+# 17. Reconciliation Warnings
+
+Add report-level reconciliation checks.
+
+Examples:
+
+```text
+Patient Receivable GL balance vs invoice_receivables patient balance
+Insurance Receivable GL balance vs insurance receivables balance
+Sponsor Receivable GL balance vs sponsor receivables balance
+Supplier Payables GL balance vs supplier payables balance
+Inventory GL balance vs inventory valuation report
+Cash account balance vs cashbook
+```
+
+Do not block reports if mismatch exists.
+
+Show warning:
+
+```text
+Warning: Operational receivable balance does not match GL balance.
+```
+
+These warnings are extremely useful for management.
+
+---
+
+# 18. Exports / Print
+
+If UHMS already supports exports/printing, add export/print to:
+
+```text
+General Ledger
+Trial Balance
+Profit & Loss
+Balance Sheet
+Cashbook
+AR Aging
+AP Aging
+Inventory Valuation
+```
+
+Preferred formats:
+
+```text
+PDF
+Excel/CSV
+Print view
+```
+
+Do not build a heavy export system if one already exists; reuse existing report/export utilities.
+
+---
+
+# 19. Permissions
 
 Add or verify:
 
 ```text
-inventory.valuation.view
-inventory.cost.view
-inventory.accounting.post
-inventory.accounting.retry
-stock.adjustment.approve
-stock.writeoff.approve
-reports.inventory_valuation.view
+accounting.dashboard.view
+
+accounting.reports.general_ledger
+accounting.reports.trial_balance
+accounting.reports.profit_loss
+accounting.reports.balance_sheet
+accounting.reports.cashbook
+accounting.reports.cash_flow
+accounting.reports.revenue_by_department
+accounting.reports.expense_by_department
+
+accounting.periods.close
+accounting.periods.reopen
+accounting.fiscal_years.close
+accounting.fiscal_years.reopen
+
+accounting.reconciliation.view
+accounting.failed_postings.view
+accounting.exports
 ```
 
-Do not show cost/valuation to users without permission.
-
-Pharmacy/lab/theatre users may see quantity but not necessarily cost.
+Restrict financial reports to authorized finance/admin roles.
 
 ---
 
-# 17. Activity Logs
+# 20. Activity Logs
 
 Use ActivityLogService.
 
-Operational logs may already exist. Do not duplicate.
-
-Add accounting-specific logs:
+Log:
 
 ```text
-ACCOUNTING_POSTED_FOR_STOCK_DISPENSE
-ACCOUNTING_POSTED_FOR_CONSUMABLE_USAGE
-ACCOUNTING_POSTED_FOR_STOCK_ADJUSTMENT
-ACCOUNTING_POSTED_FOR_DAMAGED_STOCK
-ACCOUNTING_POSTED_FOR_EXPIRED_STOCK
-ACCOUNTING_POSTED_FOR_STOCK_TRANSFER
-ACCOUNTING_POSTING_FAILED
+GENERAL_LEDGER_VIEWED
+TRIAL_BALANCE_VIEWED
+PROFIT_LOSS_VIEWED
+BALANCE_SHEET_VIEWED
+CASHBOOK_VIEWED
+AR_AGING_VIEWED
+AP_AGING_VIEWED
+INVENTORY_VALUATION_VIEWED
+ACCOUNTING_DASHBOARD_VIEWED
+
+ACCOUNTING_PERIOD_CLOSED
+ACCOUNTING_PERIOD_REOPENED
+FISCAL_YEAR_CLOSED
+FISCAL_YEAR_REOPENED
+YEAR_END_CLOSING_ENTRY_CREATED
+
+ACCOUNTING_REPORT_EXPORTED
 ```
 
 Context:
 
 ```text
-product_id
-stock_location_id
-stock_movement_id
-stock_transfer_id
-dispensing_record_id
-consumable_usage_id
+fiscal_year_id
+accounting_period_id
+date_from
+date_to
+account_id
+department_id
+report_type
+export_type
 journal_entry_id
-unit_cost
-total_cost
-valuation_method
-patient_id nullable
-visit_id nullable
+old_values
+new_values
 ```
+
+Do not log every simple page refresh too noisily if the project avoids report-view logs.
+
+If report-view logging is considered too noisy, log exports and period/fiscal closing at minimum.
 
 ---
 
-# 18. Idempotency
+# 21. Services to Create / Update
 
-Every stock accounting source should post once.
-
-Use:
+Create or update:
 
 ```text
-journal_entry_id
-accounting_status
-accounting_posted_at
-accounting_error
-reversal_journal_entry_id
+GeneralLedgerService
+TrialBalanceService
+ProfitLossService
+BalanceSheetService
+CashbookService
+CashFlowService
+AccountingDashboardService
+AccountingReconciliationService
+AccountingPeriodCloseService
+FiscalYearCloseService
+AccountingExportService
 ```
 
-Rules:
+Use existing services where already available.
 
-* retry failed posting must not duplicate journal entry
-* stock movement reversal creates accounting reversal if original was posted
-* goods receiving is not double-posted if Phase 5 already posted it
-* purchase return is not double-posted if Phase 5 already posted it
+Controllers should remain thin.
+
+Reports should not contain heavy SQL directly inside controllers.
 
 ---
 
-# 19. Manual Verification Strategy
+# 22. Manual Verification Strategy
 
 Do not write the full automated test suite yet.
 
@@ -768,50 +795,47 @@ For this phase, provide manual verification notes.
 
 Manual verification required:
 
-1. Receive stock and confirm average cost updates.
-2. Confirm inventory valuation shows stock value.
-3. Dispense pharmacy item and confirm stock reduces.
-4. Confirm dispensing cost journal debits COGS and credits inventory.
-5. Use investigation consumable and confirm stock reduces.
-6. Confirm consumable usage journal debits consumables expense and credits inventory.
-7. Perform stock transfer between same-account locations and confirm no journal is created.
-8. Perform stock transfer between different-account locations and confirm Dr destination inventory / Cr source inventory.
-9. Perform stock adjustment increase and confirm Dr Inventory / Cr Adjustment Gain.
-10. Perform stock adjustment decrease and confirm Dr Adjustment Loss / Cr Inventory.
-11. Mark stock damaged/expired and confirm Dr Expense / Cr Inventory.
-12. Confirm inventory valuation report totals match stock balances.
-13. Confirm cost fields are hidden from unauthorized users.
-14. Confirm duplicate accounting posting is prevented.
-15. Confirm Trial Balance remains balanced.
-16. Confirm General Ledger shows inventory/COGS/expense postings.
+1. Open General Ledger and confirm posted journals appear.
+2. Confirm General Ledger running balance is correct.
+3. Open Trial Balance and confirm debit/credit totals match.
+4. Confirm Trial Balance excludes draft/cancelled journals.
+5. Open Profit & Loss and confirm revenue/expense totals.
+6. Open Balance Sheet and confirm Assets = Liabilities + Equity.
+7. Open Cashbook and confirm cash/bank movement.
+8. Open AR Aging summary and confirm payer balances.
+9. Open AP Aging summary and confirm supplier balances.
+10. Open Inventory Valuation summary and confirm stock value.
+11. Confirm dashboard cards show correct values.
+12. Confirm reconciliation warnings appear when mismatch exists.
+13. Close an accounting period and confirm posting into it is blocked.
+14. Confirm unauthorized users cannot view restricted accounting reports.
+15. Export/print reports if supported.
+16. Confirm activity logs are written for closing/export events.
 17. Confirm logs:audit Stage-2 gate remains green.
-18. Confirm procurement, pharmacy, investigations, theatre, and billing workflows still work.
+18. Confirm billing, payments, procurement, stock, AR, and AP workflows still work.
 
-Do not skip validation, permissions, accounting posting, activity logs, or idempotency because tests are deferred.
+Do not skip validation, permissions, audit logs, reconciliation warnings, or report correctness because tests are deferred.
 
 ---
 
-# 20. Documentation
+# 23. Documentation
 
 Create:
 
 ```text
-docs/ACCOUNTING_PHASE_6_STOCK_VALUATION_INVENTORY_ACCOUNTING_REPORT.md
+docs/ACCOUNTING_PHASE_7_REPORTS_CLOSING_DASHBOARDS_REPORT.md
 ```
 
 Include:
 
-* valuation method implemented
-* stock costing rules
-* dispensing cost posting
-* consumable usage posting
-* stock adjustment posting
-* damaged/expired stock posting
-* transfer accounting rule
-* account mappings
-* inventory valuation report
-* UI changes
+* reports implemented
+* report formulas
+* report filters
+* closing controls
+* reconciliation warnings
+* dashboard widgets
 * permissions
+* exports/printing
 * activity logs
 * manual verification completed
 * tests deferred list
@@ -820,40 +844,41 @@ Include:
 
 ---
 
-# 21. Acceptance Criteria
+# 24. Acceptance Criteria
 
-Phase 6 is complete when:
+Phase 7 is complete when:
 
-* weighted average cost is implemented or existing valuation method is documented
-* stock balances carry cost/value where appropriate
-* dispensing cost can post Dr COGS / Cr Inventory
-* consumable usage can post Dr Expense / Cr Inventory
-* stock adjustments can post correctly
-* damaged/expired stock can post correctly
-* transfers post only when inventory accounts differ
-* inventory valuation report works
-* cost visibility is permission-protected
-* duplicate postings are prevented
-* Trial Balance remains balanced
-* General Ledger shows stock valuation postings
-* activity logs are written
+* General Ledger works
+* Trial Balance works
+* Profit & Loss works
+* Balance Sheet works
+* Cashbook works
+* AR Aging summary is integrated
+* AP Aging summary is integrated
+* Inventory Valuation summary is integrated
+* Accounting Dashboard works
+* Period closing blocks further posting
+* Fiscal year posting restrictions work
+* Reconciliation warnings exist
+* Reports are permission-protected
+* Export/print is available where supported
+* Activity logs are written for important report/closing/export actions
 * logs:audit Stage-2 gate remains green
 * manual verification is documented
 * full automated tests remain deferred until final accounting implementation pass
 
 ---
 
-# 22. Important Rules
+# 25. Important Rules
 
-Do not duplicate goods receiving postings from Phase 5.
-Do not duplicate purchase return postings from Phase 5.
-Do not treat stock transfer as expense.
-Do not treat pharmacy payment as revenue here.
-Do not duplicate billing revenue postings.
-Do not expose stock cost to unauthorized users.
-Do not create parallel stock ledgers.
-Do not bypass stock movement service.
-Do not bypass ActivityLogService.
+Do not calculate accounting reports from invoices only.
+Do not calculate P&L from payments only.
+Do not include draft journals in official reports.
+Do not include cancelled journals in official reports.
+Do not allow posting into closed periods.
+Do not silently close fiscal year without audit.
+Do not expose financial reports to unauthorized users.
+Do not hide reconciliation mismatches.
 Do not enable full automated tests yet.
 
-Proceed with Accounting Phase 6: Stock Valuation, COGS, Consumables Expense & Inventory Accounting now.
+Proceed with Accounting Phase 7: Financial Reports, Closing Controls & Management Dashboards now.

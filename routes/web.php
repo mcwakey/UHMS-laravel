@@ -653,6 +653,15 @@ Route::middleware('auth')->group(function () {
                 ->name('general-ledger')
                 ->middleware('can:accounting.reports.general_ledger');
 
+            // Financial statements (Phase 7)
+            Route::name('reports.')->group(function () {
+                Route::get('profit-loss', [AccountingReportController::class, 'profitLoss'])->name('profit-loss')->middleware('can:accounting.reports.profit_loss');
+                Route::get('balance-sheet', [AccountingReportController::class, 'balanceSheet'])->name('balance-sheet')->middleware('can:accounting.reports.balance_sheet');
+                Route::get('cashbook', [AccountingReportController::class, 'cashbook'])->name('cashbook')->middleware('can:accounting.reports.cashbook');
+                Route::get('revenue-by-department', [AccountingReportController::class, 'revenueByDepartment'])->name('revenue-by-department')->middleware('can:accounting.reports.revenue_by_department');
+                Route::get('expense-by-department', [AccountingReportController::class, 'expenseByDepartment'])->name('expense-by-department')->middleware('can:accounting.reports.expense_by_department');
+            });
+
             Route::middleware('can:accounting.fiscal_years.view')->prefix('fiscal-years')->name('fiscal-years.')->group(function () {
                 Route::get('/', [FiscalYearController::class, 'index'])->name('index');
                 Route::post('/', [FiscalYearController::class, 'store'])->name('store')->middleware('can:accounting.fiscal_years.manage');
