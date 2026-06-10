@@ -39,4 +39,23 @@
         </div>
     </div>
 </div>
+
+{{-- Phase 6: inventory accounting (cost gated by permission) --}}
+<div class="card mt-3">
+    <div class="card-header"><h6 class="mb-0"><i class="ti ti-report-money me-1"></i>Inventory Accounting</h6></div>
+    <div class="card-body">
+        <div class="row g-3">
+            @can('inventory.cost.view')
+                <div class="col-md-3"><small class="text-muted d-block">Total Cost</small><strong>GH₵ {{ number_format((float) $movement->total_cost, 2) }}</strong></div>
+                <div class="col-md-3"><small class="text-muted d-block">Valuation Method</small><strong>{{ $movement->valuation_method ? ucwords(str_replace('_',' ',$movement->valuation_method)) : '—' }}</strong></div>
+            @endcan
+            @php $acct = $movement->accounting_status; $acctVar = match($acct){ 'posted'=>'success','failed'=>'danger','reversed'=>'secondary','not_applicable'=>'light', default=>'warning' }; @endphp
+            <div class="col-md-3"><small class="text-muted d-block">Accounting Status</small><span class="badge bg-{{ $acctVar }}-subtle text-{{ $acctVar === 'light' ? 'muted' : $acctVar }}">{{ $acct ? ucwords(str_replace('_',' ',$acct)) : 'Pending' }}</span></div>
+            <div class="col-md-3"><small class="text-muted d-block">Journal Entry</small><strong>{{ $movement->journal_entry_id ? '#'.$movement->journal_entry_id : '—' }}</strong></div>
+            @if($movement->accounting_error)
+                <div class="col-12"><small class="text-muted d-block">Posting Error</small><span class="text-danger small">{{ $movement->accounting_error }}</span></div>
+            @endif
+        </div>
+    </div>
+</div>
 @endsection

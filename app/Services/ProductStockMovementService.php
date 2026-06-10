@@ -56,6 +56,12 @@ class ProductStockMovementService
                 }
             }
 
+            // Weighted-average cost: cost the movement, then maintain the balance's
+            // quantity + average cost + total value (Phase 6).
+            $valuation = app(StockValuationService::class);
+            $providedUnitCost = isset($data['unit_cost']) ? (float) $data['unit_cost'] : null;
+            $cost = $valuation->quoteMovementCost($productId, $locationId, $direction, $quantity, $providedUnitCost);
+
             $movement = StockMovement::create([
                 'stock_batch_id'    => $data['stock_batch_id'] ?? null,
                 'drug_id'           => $data['drug_id'] ?? null,
@@ -64,7 +70,9 @@ class ProductStockMovementService
                 'movement_type'     => $type,
                 'direction'         => $direction,
                 'quantity'          => $quantity,
-                'unit_cost'         => $data['unit_cost']   ?? null,
+                'unit_cost'         => $cost['unit_cost'],
+                'total_cost'        => $cost['total_cost'],
+                'valuation_method'  => $cost['valuation_method'],
                 'batch_no'          => $data['batch_no']    ?? null,
                 'expiry_date'       => $data['expiry_date'] ?? null,
                 'source_type'       => $data['source_type'] ?? null,
@@ -74,7 +82,11 @@ class ProductStockMovementService
                 'notes'             => $data['notes'] ?? null,
             ]);
 
-            $this->adjustBalance($productId, $locationId, $direction === StockMovementDirection::IN ? $quantity : -$quantity);
+            $valuation->applyBalance($productId, $locationId, $direction, $quantity, $providedUnitCost);
+
+            // Inventory accounting (Phase 6): post Dr COGS/Expense/Adjustment / Cr Inventory
+            // where applicable. Self-guarded (idempotent) and never breaks the movement.
+            app(InventoryAccountingPostingService::class)->postForMovement($movement);
 
             return $movement;
         });

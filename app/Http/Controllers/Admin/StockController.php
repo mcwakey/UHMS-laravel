@@ -33,6 +33,19 @@ class StockController extends Controller
     }
 
     /**
+     * Inventory valuation report (Phase 6) — quantity × average cost = value.
+     */
+    public function valuation(Request $request)
+    {
+        $report = app(\App\Services\InventoryValuationReportService::class)
+            ->report($request->only(['location_id', 'product_type', 'search']));
+        $locations = StockLocation::active()->orderBy('name')->get();
+        $productTypes = \App\Enums\ProductType::cases();
+
+        return view('store.stock.valuation', compact('report', 'locations', 'productTypes'));
+    }
+
+    /**
      * Stock movement ledger (paginated).
      */
     public function ledger(Request $request)

@@ -826,6 +826,14 @@ class SidebarMenuBuilder
                         'module' => 'inventory',
                     ],
                     [
+                        'label' => 'Inventory Valuation',
+                        'icon' => 'ti ti-report-money',
+                        'route' => 'admin.store.stock.valuation',
+                        'active_patterns' => ['admin.store.stock.valuation'],
+                        'permission' => 'reports.inventory_valuation.view',
+                        'module' => 'inventory',
+                    ],
+                    [
                         'label' => 'Stock Locations',
                         'icon' => 'ti ti-building-warehouse',
                         'route' => 'admin.stock-locations.index',

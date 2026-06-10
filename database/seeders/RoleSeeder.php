@@ -196,6 +196,15 @@ class RoleSeeder extends Seeder
             'reports.ap_aging.view',
             'reports.supplier_statement.view',
 
+            // Accounting Phase 6 — Inventory accounting & valuation
+            'inventory.valuation.view',
+            'inventory.cost.view',
+            'inventory.accounting.post',
+            'inventory.accounting.retry',
+            'stock.adjustment.approve',
+            'stock.writeoff.approve',
+            'reports.inventory_valuation.view',
+
             'services.manage',
 
             // Service rendering / fulfilment

@@ -22,6 +22,8 @@ class StockMovement extends Model
         'direction',
         'quantity',
         'unit_cost',
+        'total_cost',
+        'valuation_method',
         'batch_no',
         'expiry_date',
         'source_type',
@@ -29,6 +31,11 @@ class StockMovement extends Model
         'performed_by',
         'movement_date',
         'notes',
+        'journal_entry_id',
+        'accounting_status',
+        'accounting_posted_at',
+        'accounting_error',
+        'reversal_journal_entry_id',
     ];
 
     protected $casts = [
@@ -36,9 +43,16 @@ class StockMovement extends Model
         'direction'     => StockMovementDirection::class,
         'quantity'      => 'decimal:4',
         'unit_cost'     => 'decimal:2',
+        'total_cost'    => 'decimal:2',
         'expiry_date'   => 'date',
         'movement_date' => 'datetime',
+        'accounting_posted_at' => 'datetime',
     ];
+
+    public function journalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class);
+    }
 
     public function batch(): BelongsTo
     {

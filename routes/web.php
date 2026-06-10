@@ -547,6 +547,7 @@ Route::middleware('auth')->group(function () {
             // Stock Movement Ledger / Balances / Adjustments / Returns / Locations
             Route::middleware('can:store.purchase.view')->group(function () {
                 Route::get('stock/balances', [StockController::class, 'balances'])->name('stock.balances');
+                Route::get('stock/valuation', [StockController::class, 'valuation'])->name('stock.valuation')->middleware('can:reports.inventory_valuation.view');
                 Route::get('stock/ledger', [StockController::class, 'ledger'])->name('stock.ledger');
 
                 // Stock movement list pages + per-movement detail

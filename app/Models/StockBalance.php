@@ -16,11 +16,17 @@ class StockBalance extends Model
         'stock_location_id',
         'quantity_on_hand',
         'last_movement_at',
+        'average_cost',
+        'total_value',
+        'last_valued_at',
     ];
 
     protected $casts = [
         'quantity_on_hand' => 'decimal:4',
         'last_movement_at' => 'datetime',
+        'average_cost' => 'decimal:4',
+        'total_value' => 'decimal:2',
+        'last_valued_at' => 'datetime',
     ];
 
     public function drug(): BelongsTo
