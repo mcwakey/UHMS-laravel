@@ -31,20 +31,20 @@ class OperationalReportService
     public function catalogue(): array
     {
         return [
-            'consultations' => ['title' => 'Consultation Report', 'description' => 'Department sessions, doctors, linked services, and session statuses.'],
-            'diagnoses' => ['title' => 'Diagnosis Report', 'description' => 'Clinical diagnoses by visit, department, doctor, ICD code, and type.'],
-            'complaints' => ['title' => 'Complaints Report', 'description' => 'Complaints and presenting history captured during clinical care.'],
-            'pharmacy' => ['title' => 'Pharmacy Report', 'description' => 'Prescriptions, dispensing activity, and supplied quantities.'],
-            'investigations' => ['title' => 'Investigation Report', 'description' => 'Requests, target departments, urgency, and result workflow status.'],
-            'procedures' => ['title' => 'Procedure Report', 'description' => 'Procedure requests, billing, acceptance, scheduling, and completion state.'],
-            'theatre' => ['title' => 'Theatre Report', 'description' => 'Theatre/procedure workload and operative workflow status.'],
-            'emergency' => ['title' => 'Emergency Report', 'description' => 'Emergency attendance, triage, disposition, and operational status.'],
-            'admission' => ['title' => 'Admission Report', 'description' => 'Inpatient admissions, ward/bed, length of stay, and discharge status.'],
-            'mar' => ['title' => 'MAR Report', 'description' => 'Medication administration, overdue tasks, missed/held/refused doses, and nurse activity.'],
-            'billing' => ['title' => 'Billing Report', 'description' => 'Invoices, payments, outstanding balances, and billed-not-rendered risk.'],
-            'claims' => ['title' => 'Claims Report', 'description' => 'Insurance claims by workflow, provider, status, and financial outcome.'],
-            'stock' => ['title' => 'Stock Report', 'description' => 'Product stock movement and expiry-sensitive inventory activity.'],
-            'blood-bank' => ['title' => 'Blood Bank Report', 'description' => 'Blood inventory, requests, issue, transfusion, expiry, and wastage.'],
+            'consultations' => ['title' => __('reports.consultations.title'), 'description' => __('reports.consultations.description')],
+            'diagnoses'     => ['title' => __('reports.diagnoses.title'),     'description' => __('reports.diagnoses.description')],
+            'complaints'    => ['title' => __('reports.complaints.title'),    'description' => __('reports.complaints.description')],
+            'pharmacy'      => ['title' => __('reports.pharmacy.title'),      'description' => __('reports.pharmacy.description')],
+            'investigations'=> ['title' => __('reports.investigations.title'),'description' => __('reports.investigations.description')],
+            'procedures'    => ['title' => __('reports.procedures.title'),    'description' => __('reports.procedures.description')],
+            'theatre'       => ['title' => __('reports.theatre.title'),       'description' => __('reports.theatre.description')],
+            'emergency'     => ['title' => __('reports.emergency.title'),     'description' => __('reports.emergency.description')],
+            'admission'     => ['title' => __('reports.admissions.title'),    'description' => __('reports.admissions.description')],
+            'mar'           => ['title' => __('reports.mar.title'),           'description' => __('reports.mar.description')],
+            'billing'       => ['title' => __('reports.billing.title'),       'description' => __('reports.billing.description')],
+            'claims'        => ['title' => __('reports.claims.title'),        'description' => __('reports.claims.description')],
+            'stock'         => ['title' => __('reports.stock.title'),         'description' => __('reports.stock.description')],
+            'blood-bank'    => ['title' => __('reports.blood_bank.title'),    'description' => __('reports.blood_bank.description')],
         ];
     }
 
@@ -57,16 +57,16 @@ class OperationalReportService
         return [
             'filters' => $range,
             'cards' => [
-                ['label' => 'Consultation Sessions', 'value' => $this->countInRange(VisitConsultationRoute::query(), 'created_at', $range), 'route' => 'admin.reports.consultations', 'color' => 'primary'],
-                ['label' => 'Diagnoses', 'value' => $this->countInRange(Diagnosis::query(), 'created_at', $range), 'route' => 'admin.reports.diagnoses', 'color' => 'success'],
-                ['label' => 'Investigations', 'value' => $this->countInRange(LabRequest::query(), 'created_at', $range), 'route' => 'admin.reports.investigations', 'color' => 'info'],
-                ['label' => 'Procedures', 'value' => $this->countInRange(ProcedureRequest::query(), 'requested_at', $range), 'route' => 'admin.reports.procedures', 'color' => 'warning'],
-                ['label' => 'Emergency Cases', 'value' => $this->countInRange(EmergencyCase::query(), 'arrival_time', $range), 'route' => 'admin.reports.emergency', 'color' => 'danger'],
-                ['label' => 'Admissions', 'value' => $this->countInRange(Admission::query(), 'admission_date', $range), 'route' => 'admin.reports.admission', 'color' => 'secondary'],
-                ['label' => 'MAR Records', 'value' => $this->countInRange(MedicationAdministration::query(), 'administered_at', $range), 'route' => 'admin.reports.mar', 'color' => 'primary'],
-                ['label' => 'Invoices', 'value' => $this->countInRange(Invoice::query(), 'created_at', $range), 'route' => 'admin.reports.billing', 'color' => 'success'],
-                ['label' => 'Claims', 'value' => $this->countInRange(Claim::query(), 'claim_date', $range), 'route' => 'admin.reports.claims', 'color' => 'info'],
-                ['label' => 'Blood Requests', 'value' => class_exists(BloodRequest::class) ? $this->countInRange(BloodRequest::query(), 'requested_at', $range) : 0, 'route' => 'admin.reports.blood-bank', 'color' => 'danger'],
+                ['label' => __('reports.consultations.title'),  'value' => $this->countInRange(VisitConsultationRoute::query(), 'created_at', $range),   'route' => 'admin.reports.consultations', 'color' => 'primary'],
+                ['label' => __('reports.diagnoses.title'),      'value' => $this->countInRange(Diagnosis::query(), 'created_at', $range),                 'route' => 'admin.reports.diagnoses',     'color' => 'success'],
+                ['label' => __('reports.investigations.title'), 'value' => $this->countInRange(LabRequest::query(), 'created_at', $range),                'route' => 'admin.reports.investigations','color' => 'info'],
+                ['label' => __('reports.procedures.title'),     'value' => $this->countInRange(ProcedureRequest::query(), 'requested_at', $range),        'route' => 'admin.reports.procedures',    'color' => 'warning'],
+                ['label' => __('reports.emergency.title'),      'value' => $this->countInRange(EmergencyCase::query(), 'arrival_time', $range),           'route' => 'admin.reports.emergency',     'color' => 'danger'],
+                ['label' => __('reports.admissions.title'),     'value' => $this->countInRange(Admission::query(), 'admission_date', $range),             'route' => 'admin.reports.admission',     'color' => 'secondary'],
+                ['label' => __('reports.mar.title'),            'value' => $this->countInRange(MedicationAdministration::query(), 'administered_at', $range), 'route' => 'admin.reports.mar',       'color' => 'primary'],
+                ['label' => __('reports.billing.title'),        'value' => $this->countInRange(Invoice::query(), 'created_at', $range),                  'route' => 'admin.reports.billing',       'color' => 'success'],
+                ['label' => __('reports.claims.title'),         'value' => $this->countInRange(Claim::query(), 'claim_date', $range),                    'route' => 'admin.reports.claims',        'color' => 'info'],
+                ['label' => __('reports.blood_bank.title'),     'value' => class_exists(BloodRequest::class) ? $this->countInRange(BloodRequest::query(), 'requested_at', $range) : 0, 'route' => 'admin.reports.blood-bank', 'color' => 'danger'],
             ],
             'financial' => [
                 'billed' => $this->sumInRange(Invoice::query(), 'created_at', $range, 'total_amount'),
@@ -117,7 +117,7 @@ class OperationalReportService
         $this->dateRange($query, 'created_at', $filters);
 
         return $this->table('consultations', $filters, $query, [
-            'Visit', 'Patient', 'Department', 'Services', 'Doctor', 'Status', 'Started', 'Completed',
+            __('reports.col_visit'), __('reports.col_patient'), __('reports.col_department'), __('reports.col_services'), __('reports.col_doctor'), __('reports.col_status'), __('reports.col_started'), __('reports.col_completed'),
         ], fn ($route) => [
             $route->visit?->visit_number,
             $route->patient?->full_name,
@@ -140,7 +140,7 @@ class OperationalReportService
         $this->dateRange($query, 'created_at', $filters);
 
         return $this->table('diagnoses', $filters, $query, [
-            'Date', 'Visit', 'Patient', 'Department', 'Diagnosis', 'Type', 'Primary', 'Entered By',
+            __('reports.col_date'), __('reports.col_visit'), __('reports.col_patient'), __('reports.col_department'), __('reports.col_diagnosis'), __('reports.col_type'), __('reports.col_primary'), __('reports.col_entered_by'),
         ], fn ($diagnosis) => [
             optional($diagnosis->created_at)->format('d M Y H:i'),
             $diagnosis->visit?->visit_number,
@@ -162,7 +162,7 @@ class OperationalReportService
         $this->dateRange($query, 'created_at', $filters);
 
         return $this->table('complaints', $filters, $query, [
-            'Date', 'Visit', 'Patient', 'Department', 'Complaint', 'Duration', 'Severity', 'Entered By',
+            __('reports.col_date'), __('reports.col_visit'), __('reports.col_patient'), __('reports.col_department'), __('reports.col_complaint'), __('reports.col_duration'), __('reports.col_severity'), __('reports.col_entered_by'),
         ], fn ($complaint) => [
             optional($complaint->created_at)->format('d M Y H:i'),
             $complaint->visit?->visit_number,
@@ -185,7 +185,7 @@ class OperationalReportService
         $this->dateRange($query, 'dispensed_at', $filters);
 
         return $this->table('pharmacy', $filters, $query, [
-            'Dispensed At', 'Visit', 'Patient', 'Prescription', 'Medication', 'Quantity', 'Dispensed By',
+            __('reports.col_dispensed_at'), __('reports.col_visit'), __('reports.col_patient'), __('reports.col_prescription'), __('reports.col_medication'), __('reports.col_quantity'), __('reports.col_dispensed_by'),
         ], fn ($record) => [
             optional($record->dispensed_at)->format('d M Y H:i'),
             $record->visit?->visit_number,
@@ -209,7 +209,7 @@ class OperationalReportService
         $this->dateRange($query, 'created_at', $filters);
 
         return $this->table('investigations', $filters, $query, [
-            'Request', 'Visit', 'Patient', 'Department', 'Urgency', 'Items', 'Status', 'Requested By',
+            __('reports.col_request'), __('reports.col_visit'), __('reports.col_patient'), __('reports.col_department'), __('reports.col_urgency'), __('reports.col_items'), __('reports.col_status'), __('reports.col_requested_by'),
         ], fn ($request) => [
             $request->request_number,
             $request->visit?->visit_number,
@@ -232,7 +232,7 @@ class OperationalReportService
         $this->dateRange($query, 'requested_at', $filters);
 
         return $this->table($key, $filters, $query, [
-            'Request', 'Visit', 'Patient', 'Department', 'Service', 'Priority', 'Status', 'Requested By',
+            __('reports.col_request'), __('reports.col_visit'), __('reports.col_patient'), __('reports.col_department'), __('reports.col_service'), __('reports.col_priority'), __('reports.col_status'), __('reports.col_requested_by'),
         ], fn ($request) => [
             $request->request_number,
             $request->visit?->visit_number,
@@ -253,7 +253,7 @@ class OperationalReportService
         $this->dateRange($query, 'arrival_time', $filters);
 
         return $this->table('emergency', $filters, $query, [
-            'Emergency #', 'Patient', 'Arrival', 'Triage', 'Status', 'Disposition', 'Bay', 'Team',
+            __('reports.col_emergency_no'), __('reports.col_patient'), __('reports.col_arrival'), __('reports.col_triage'), __('reports.col_status'), __('reports.col_disposition'), __('reports.col_bay'), __('reports.col_team'),
         ], fn ($case) => [
             $case->emergency_number,
             $case->patient?->full_name,
@@ -274,7 +274,7 @@ class OperationalReportService
         $this->dateRange($query, 'admission_date', $filters);
 
         return $this->table('admission', $filters, $query, [
-            'Admission #', 'Patient', 'Ward / Bed', 'Admission Date', 'Status', 'Length Of Stay', 'Admitted By', 'Discharged',
+            __('reports.col_admission_no'), __('reports.col_patient'), __('reports.col_ward_bed'), __('reports.col_admission_date'), __('reports.col_status'), __('reports.col_los'), __('reports.col_admitted_by'), __('reports.col_discharged'),
         ], fn ($admission) => [
             $admission->admission_number,
             $admission->patient?->full_name,
@@ -296,7 +296,7 @@ class OperationalReportService
         $this->dateRange($query, 'administered_at', $filters);
 
         return $this->table('mar', $filters, $query, [
-            'Administered At', 'Patient', 'Location', 'Medication', 'Status', 'Dose', 'Nurse', 'Reason / Reaction',
+            __('reports.col_dispensed_at'), __('reports.col_patient'), __('reports.col_location'), __('reports.col_medication'), __('reports.col_status'), __('reports.col_dose'), __('reports.col_nurse'), __('reports.col_reason'),
         ], fn ($record) => [
             optional($record->administered_at)->format('d M Y H:i'),
             $record->patient?->full_name,
@@ -321,7 +321,7 @@ class OperationalReportService
         $this->dateRange($query, 'created_at', $filters);
 
         return $this->table('billing', $filters, $query, [
-            'Invoice', 'Visit', 'Patient', 'Billing Type', 'Status', 'Total', 'Paid', 'Balance',
+            __('reports.col_invoice'), __('reports.col_visit'), __('reports.col_patient'), __('reports.col_billing_type'), __('reports.col_status'), __('reports.col_total'), __('reports.col_paid'), __('reports.col_balance'),
         ], fn ($invoice) => [
             $invoice->invoice_number,
             $invoice->visit?->visit_number,
@@ -345,7 +345,7 @@ class OperationalReportService
         $this->dateRange($query, 'claim_date', $filters);
 
         return $this->table('claims', $filters, $query, [
-            'Claim', 'Patient', 'Visit', 'Type', 'Provider', 'Status', 'Claim Amount', 'Paid',
+            __('reports.col_claim'), __('reports.col_patient'), __('reports.col_visit'), __('reports.col_claim_type'), __('reports.provider'), __('reports.col_status'), __('reports.col_claim_amount'), __('reports.col_paid'),
         ], fn ($claim) => [
             $claim->claim_number,
             $claim->patient?->full_name,
@@ -366,7 +366,7 @@ class OperationalReportService
         $this->dateRange($query, 'movement_date', $filters);
 
         return $this->table('stock', $filters, $query, [
-            'Date', 'Item', 'Location', 'Type', 'Direction', 'Quantity', 'Batch', 'Expiry', 'Performed By',
+            __('reports.col_date'), __('reports.col_item'), __('reports.col_location'), __('reports.col_type'), __('reports.col_direction'), __('reports.col_quantity'), __('reports.col_batch'), __('reports.col_expiry'), __('reports.col_performed_by'),
         ], fn ($movement) => [
             optional($movement->movement_date)->format('d M Y H:i'),
             $movement->product?->name ?? $movement->drug?->name,
@@ -389,7 +389,7 @@ class OperationalReportService
         $this->dateRange($query, 'created_at', $filters);
 
         return $this->table('blood-bank', $filters, $query, [
-            'Unit', 'Blood Group', 'Component', 'Screening', 'Status', 'Expiry', 'Storage', 'Reserved For',
+            __('reports.col_item'), __('reports.col_blood_group'), __('reports.col_type'), __('reports.investigations.title'), __('reports.col_status'), __('reports.col_expiry'), __('reports.col_location'), __('reports.col_patient'),
         ], fn ($unit) => [
             $unit->unit_number,
             $unit->blood_group,

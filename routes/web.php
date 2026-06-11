@@ -79,6 +79,7 @@ use App\Http\Controllers\Admin\PurchaseOrderController;
 use App\Http\Controllers\Admin\PurchaseReturnController;
 use App\Http\Controllers\Admin\QueueController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\ReportsHubController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\ServiceCatalogController;
 use App\Http\Controllers\Admin\ServiceRenderingActionController;
@@ -1101,7 +1102,8 @@ Route::middleware('auth')->group(function () {
 
         // Reports
         Route::middleware(['module:reports', 'can:reports.view'])->prefix('reports')->name('reports.')->group(function () {
-            Route::get('/', [OperationalReportController::class, 'dashboard'])->name('dashboard');
+            Route::get('/', [ReportsHubController::class, 'index'])->name('index');
+            Route::get('/dashboard', [OperationalReportController::class, 'dashboard'])->name('dashboard');
             foreach ([
                 'consultations',
                 'diagnoses',

@@ -1147,6 +1147,14 @@ class SidebarMenuBuilder
                 'title' => 'Reports',
                 'items' => [
                     [
+                        'label' => 'Reports Hub',
+                        'icon' => 'ti ti-report-analytics',
+                        'route' => 'admin.reports.index',
+                        'active_patterns' => ['admin.reports.index'],
+                        'permission' => 'reports.view',
+                        'module' => 'reports',
+                    ],
+                    [
                         'label' => 'Statistical Reports',
                         'icon' => 'ti ti-chart-histogram',
                         'permission' => 'statistics.view',
@@ -1177,6 +1185,7 @@ class SidebarMenuBuilder
                         'permission' => 'reports.view',
                         'module' => 'reports',
                         'active_patterns' => [
+                            'admin.reports.index',
                             'admin.reports.dashboard',
                             'admin.reports.income',
                             'admin.reports.daily-collection',
@@ -1186,6 +1195,7 @@ class SidebarMenuBuilder
                             'admin.reports.patient-statement',
                         ],
                         'children' => [
+                            ['label' => 'Reports Hub', 'route' => 'admin.reports.index', 'active_patterns' => ['admin.reports.index'], 'permission' => 'reports.view', 'module' => 'reports'],
                             ['label' => 'Reports Dashboard', 'route' => 'admin.reports.dashboard', 'active_patterns' => ['admin.reports.dashboard'], 'permission' => 'reports.view', 'module' => 'reports'],
                             ['label' => 'Income Report', 'route' => 'admin.reports.income', 'active_patterns' => ['admin.reports.income'], 'permission' => 'reports.view', 'module' => 'reports'],
                             ['label' => 'Daily Collection', 'route' => 'admin.reports.daily-collection', 'active_patterns' => ['admin.reports.daily-collection'], 'permission' => 'reports.view', 'module' => 'reports'],

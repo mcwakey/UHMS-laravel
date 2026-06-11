@@ -1,16 +1,24 @@
 @extends('layouts.app')
-@section('title', 'Reports Dashboard')
+@section('title', __('reports.reports_dashboard'))
 
 @section('content')
-<x-page-header title="Reports Dashboard" icon="ti-chart-bar"
-    description="Cross-module UHMS reporting overview for clinical, operational, financial, stock, and blood-bank work." />
+<x-page-header
+    :title="__('reports.reports_dashboard')"
+    icon="ti-chart-bar"
+    description="Cross-module UHMS reporting overview for clinical, operational, financial, stock, and blood-bank work.">
+    <x-slot:actions>
+        <a href="{{ route('admin.reports.index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="ti ti-report-analytics me-1"></i>{{ __('reports.hub_title') }}
+        </a>
+    </x-slot:actions>
+</x-page-header>
 
 <form method="GET" class="card mb-3">
     <div class="card-body">
         <div class="row g-2 align-items-end">
-            <div class="col-md-4"><label class="form-label">From</label><input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}"></div>
-            <div class="col-md-4"><label class="form-label">To</label><input type="date" name="date_to" class="form-control" value="{{ $filters['date_to'] ?? '' }}"></div>
-            <div class="col-md-4"><button class="btn btn-primary w-100">Refresh Dashboard</button></div>
+            <div class="col-md-4"><label class="form-label">{{ __('reports.date_from') }}</label><input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}"></div>
+            <div class="col-md-4"><label class="form-label">{{ __('reports.date_to') }}</label><input type="date" name="date_to" class="form-control" value="{{ $filters['date_to'] ?? '' }}"></div>
+            <div class="col-md-4"><button class="btn btn-primary w-100">{{ __('reports.refresh_dashboard') }}</button></div>
         </div>
     </div>
 </form>
@@ -33,13 +41,13 @@
 <div class="row g-3">
     <div class="col-xl-4">
         <div class="card h-100">
-            <div class="card-header bg-white"><h5 class="card-title mb-0">Financial Summary</h5></div>
+            <div class="card-header bg-white"><h5 class="card-title mb-0">{{ __('reports.management.financial_summary') }}</h5></div>
             <div class="card-body">
                 @foreach([
-                    'Billed' => $financial['billed'],
-                    'Collected' => $financial['collected'],
-                    'Outstanding' => $financial['outstanding'],
-                    'Claims Total' => $financial['claims_total'],
+                    __('reports.management.billed')       => $financial['billed'],
+                    __('reports.management.collected')    => $financial['collected'],
+                    __('reports.management.outstanding')  => $financial['outstanding'],
+                    __('reports.management.claims_total') => $financial['claims_total'],
                 ] as $label => $value)
                     <div class="d-flex justify-content-between border-bottom py-2">
                         <span class="text-muted">{{ $label }}</span>
@@ -51,17 +59,19 @@
     </div>
     <div class="col-xl-4">
         <div class="card h-100">
-            <div class="card-header bg-white"><h5 class="card-title mb-0">Rendering Risk</h5></div>
+            <div class="card-header bg-white"><h5 class="card-title mb-0">{{ __('reports.management.rendering_risk') }}</h5></div>
             <div class="card-body">
-                <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted">Billed Not Rendered</span><strong>{{ $renderingRisk['billed_not_rendered'] }}</strong></div>
-                <div class="d-flex justify-content-between py-2"><span class="text-muted">Rendered Unpaid</span><strong>{{ $renderingRisk['rendered_unpaid'] }}</strong></div>
-                <a href="{{ route('admin.service-renderings.reports') }}" class="btn btn-outline-primary btn-sm mt-3">Open Service Rendering Reports</a>
+                <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted">{{ __('reports.management.billed_not_rendered') }}</span><strong>{{ $renderingRisk['billed_not_rendered'] }}</strong></div>
+                <div class="d-flex justify-content-between py-2"><span class="text-muted">{{ __('reports.management.rendered_unpaid') }}</span><strong>{{ $renderingRisk['rendered_unpaid'] }}</strong></div>
+                @if(\Illuminate\Support\Facades\Route::has('admin.service-renderings.reports'))
+                    <a href="{{ route('admin.service-renderings.reports') }}" class="btn btn-outline-primary btn-sm mt-3">{{ __('reports.management.open_service_rendering_reports') }}</a>
+                @endif
             </div>
         </div>
     </div>
     <div class="col-xl-4">
         <div class="card h-100">
-            <div class="card-header bg-white"><h5 class="card-title mb-0">Report Catalogue</h5></div>
+            <div class="card-header bg-white"><h5 class="card-title mb-0">{{ __('reports.management.report_catalogue') }}</h5></div>
             <div class="card-body">
                 <div class="row g-2">
                     @foreach($catalogue as $key => $report)
