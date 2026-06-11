@@ -4,6 +4,7 @@ namespace App\Services\Dashboard;
 
 use App\Enums\DepartmentType;
 use App\Models\User;
+use Illuminate\Support\Facades\Lang;
 
 /**
  * Decides which department-type dashboard a user should see.
@@ -101,22 +102,11 @@ class DepartmentDashboardResolver
 
     public function labelFor(string $key): string
     {
-        return match ($key) {
-            self::MANAGEMENT => 'Management Dashboard',
-            self::CONSULTATION => 'Consultation Dashboard',
-            self::PHARMACY => 'Pharmacy Dashboard',
-            self::INVESTIGATION => 'Investigations Dashboard',
-            self::THEATRE => 'Theatre & Procedures Dashboard',
-            self::BILLING => 'Billing Dashboard',
-            self::STOCK => 'Stock & Store Dashboard',
-            self::ACCOUNTING => 'Accounting Dashboard',
-            self::EMERGENCY => 'Emergency / Casualty Dashboard',
-            self::ADMISSION => 'Admission / Ward Dashboard',
-            self::BLOOD_BANK => 'Blood Bank Dashboard',
-            self::CLAIMS => 'Insurance / Claims Dashboard',
-            self::HR => 'HR / Payroll Dashboard',
-            self::RECEPTION => 'Reception / Front Desk Dashboard',
-            default => 'My Dashboard',
-        };
+        $transKey = 'dashboards.titles.'.$key;
+        if (Lang::has($transKey)) {
+            return __($transKey);
+        }
+
+        return __('dashboards.titles.generic');
     }
 }

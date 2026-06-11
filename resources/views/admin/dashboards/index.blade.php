@@ -29,13 +29,14 @@
             </select>
         </form>
         @endif
-        <a href="{{ url()->current() }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-refresh me-1"></i>Refresh</a>
+        <a href="{{ url()->current() }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-refresh me-1"></i>{{ __('dashboards.refresh') }}</a>
     </x-slot:actions>
 </x-page-header>
 
 @if(!empty($is_preview))
 <div class="alert alert-info d-flex align-items-center gap-2 py-2"><i class="ti ti-eye"></i>
-    <span>Previewing the <strong>{{ $title }}</strong>. Your own dashboard is <strong>{{ \Illuminate\Support\Str::headline($resolved_key) }}</strong>.</span>
+    @php $ownLabel = app(\App\Services\Dashboard\DepartmentDashboardResolver::class)->labelFor($resolved_key); @endphp
+    <span>{!! __('dashboards.previewing_dashboard', ['title' => '<strong>'.e($title).'</strong>', 'own' => '<strong>'.e($ownLabel).'</strong>']) !!}</span>
 </div>
 @endif
 
@@ -84,7 +85,7 @@
     <div class="col-lg-4">
         @if(!empty($quick_actions))
         <div class="card mb-3">
-            <div class="card-header"><h6 class="fw-bold mb-0"><i class="ti ti-bolt me-1"></i>Quick Actions</h6></div>
+            <div class="card-header"><h6 class="fw-bold mb-0"><i class="ti ti-bolt me-1"></i>{{ __('dashboards.quick_actions_heading') }}</h6></div>
             <div class="card-body d-grid gap-2">
                 @foreach($quick_actions as $action)
                 <a href="{{ $action['route'] }}" class="btn btn-{{ $action['variant'] === 'primary' ? 'primary' : 'outline-secondary' }} text-start">
@@ -97,7 +98,7 @@
 
         @if(!empty($reports))
         <div class="card">
-            <div class="card-header"><h6 class="fw-bold mb-0"><i class="ti ti-report me-1"></i>Reports</h6></div>
+            <div class="card-header"><h6 class="fw-bold mb-0"><i class="ti ti-report me-1"></i>{{ __('dashboards.reports_heading') }}</h6></div>
             <div class="list-group list-group-flush">
                 @foreach($reports as $report)
                 <a href="{{ $report['route'] }}" class="list-group-item list-group-item-action d-flex align-items-center">

@@ -72,26 +72,26 @@ class DepartmentDashboardService
         $s = fn (string $status) => $this->count(fn () => $V::query()->whereDate('created_at', today())->where('status', $status)->count());
 
         return [
-            'title' => 'Consultation / OPD Dashboard',
+            'title' => __('dashboards.titles.consultation'),
             'kpis' => array_values(array_filter([
-                $this->kpi('Waiting Consultation', $s('waiting_consultation'), 'ti-users', 'warning'),
-                $this->kpi('In Consultation', $s('consulting'), 'ti-stethoscope', 'info'),
-                $this->kpi('Completed Today', $s('completed'), 'ti-check', 'success'),
-                $this->kpi('Visits Today', $this->count(fn () => $V::query()->whereDate('created_at', today())->count()), 'ti-calendar', 'primary'),
+                $this->kpi(__('dashboards.consultation.waiting'), $s('waiting_consultation'), 'ti-users', 'warning'),
+                $this->kpi(__('dashboards.consultation.in_consultation'), $s('consulting'), 'ti-stethoscope', 'info'),
+                $this->kpi(__('dashboards.consultation.completed_today'), $s('completed'), 'ti-check', 'success'),
+                $this->kpi(__('dashboards.consultation.visits_today'), $this->count(fn () => $V::query()->whereDate('created_at', today())->count()), 'ti-calendar', 'primary'),
             ])),
             'alerts' => array_values(array_filter([
-                $this->alert('Patients waiting for consultation', $s('waiting_consultation'), 'warning', 'ti-clock'),
+                $this->alert(__('dashboards.consultation.alert_waiting'), $s('waiting_consultation'), 'warning', 'ti-clock'),
             ])),
             'queues' => [
-                $this->visitQueue('Waiting Consultation Queue', ['waiting_consultation', 'consulting']),
+                $this->visitQueue(__('dashboards.consultation.queue_title'), ['waiting_consultation', 'consulting']),
             ],
             'quick_actions' => $this->actions([
-                ['New Visit', 'ti-plus', 'admin.visits.create', 'primary', null],
-                ['Consultation Queue', 'ti-list', 'admin.consultations.index', 'secondary', null],
-                ['Patients', 'ti-users', 'admin.patients.index', 'secondary', 'patient.view'],
+                [__('dashboards.consultation.action_new_visit'), 'ti-plus', 'admin.visits.create', 'primary', null],
+                [__('dashboards.consultation.action_queue'), 'ti-list', 'admin.consultations.index', 'secondary', null],
+                [__('dashboards.consultation.action_patients'), 'ti-users', 'admin.patients.index', 'secondary', 'patient.view'],
             ]),
             'reports' => $this->reportLinks([
-                ['Patient Report', 'admin.reports.patients', 'ti-report'],
+                [__('dashboards.consultation.report_patients'), 'admin.reports.patients', 'ti-report'],
             ]),
         ];
     }
@@ -104,30 +104,30 @@ class DepartmentDashboardService
         $outStock = $this->pharmacyStockCount('<=', 'zero');
 
         return [
-            'title' => 'Pharmacy Dashboard',
+            'title' => __('dashboards.titles.pharmacy'),
             'kpis' => array_values(array_filter([
-                $this->kpi('Pending (to bill)', $s('pending') + $s('partially_billed'), 'ti-clipboard-list', 'warning', 'admin.prescriptions.index'),
-                $this->kpi('Billed (to dispense)', $s('billed') + $s('partially_dispensed'), 'ti-receipt', 'info', 'admin.prescriptions.index'),
-                $this->kpi('Dispensed Today', $this->count(fn () => $P::query()->where('status', 'dispensed')->whereDate('updated_at', today())->count()), 'ti-check', 'success'),
-                $this->kpi('Low Stock Drugs', $lowStock, 'ti-alert-triangle', 'warning', 'admin.store.stock.balances'),
-                $this->kpi('Out of Stock', $outStock, 'ti-x', 'danger', 'admin.store.stock.balances'),
+                $this->kpi(__('dashboards.pharmacy.pending_to_bill'), $s('pending') + $s('partially_billed'), 'ti-clipboard-list', 'warning', 'admin.prescriptions.index'),
+                $this->kpi(__('dashboards.pharmacy.billed_to_dispense'), $s('billed') + $s('partially_dispensed'), 'ti-receipt', 'info', 'admin.prescriptions.index'),
+                $this->kpi(__('dashboards.pharmacy.dispensed_today'), $this->count(fn () => $P::query()->where('status', 'dispensed')->whereDate('updated_at', today())->count()), 'ti-check', 'success'),
+                $this->kpi(__('dashboards.pharmacy.low_stock'), $lowStock, 'ti-alert-triangle', 'warning', 'admin.store.stock.balances'),
+                $this->kpi(__('dashboards.pharmacy.out_of_stock'), $outStock, 'ti-x', 'danger', 'admin.store.stock.balances'),
             ])),
             'alerts' => array_values(array_filter([
-                $this->alert('Drugs out of stock', $outStock, 'danger', 'ti-x', 'admin.store.stock.balances'),
-                $this->alert('Drugs low on stock', $lowStock, 'warning', 'ti-alert-triangle', 'admin.store.stock.balances'),
+                $this->alert(__('dashboards.pharmacy.alert_out_of_stock'), $outStock, 'danger', 'ti-x', 'admin.store.stock.balances'),
+                $this->alert(__('dashboards.pharmacy.alert_low_stock'), $lowStock, 'warning', 'ti-alert-triangle', 'admin.store.stock.balances'),
             ])),
             'queues' => [
                 $this->prescriptionQueue(),
             ],
             'quick_actions' => $this->actions([
-                ['Prescriptions', 'ti-prescription', 'admin.prescriptions.index', 'primary', 'prescriptions.view'],
-                ['Counter Sale', 'ti-cash-register', 'admin.billing.counter-sale.create', 'secondary', 'invoices.create'],
-                ['Stock Balances', 'ti-list-numbers', 'admin.store.stock.balances', 'secondary', 'store.purchase.view'],
-                ['New Requisition', 'ti-clipboard-plus', 'admin.store.stock-requisitions.create', 'secondary', 'store.requisition.create'],
+                [__('dashboards.pharmacy.action_prescriptions'), 'ti-prescription', 'admin.prescriptions.index', 'primary', 'prescriptions.view'],
+                [__('dashboards.pharmacy.action_counter_sale'), 'ti-cash-register', 'admin.billing.counter-sale.create', 'secondary', 'invoices.create'],
+                [__('dashboards.pharmacy.action_stock_balances'), 'ti-list-numbers', 'admin.store.stock.balances', 'secondary', 'store.purchase.view'],
+                [__('dashboards.pharmacy.action_new_requisition'), 'ti-clipboard-plus', 'admin.store.stock-requisitions.create', 'secondary', 'store.requisition.create'],
             ]),
             'reports' => $this->reportLinks([
-                ['Stock Valuation', 'admin.reports.stock-valuation', 'ti-report-money'],
-                ['Expired Stock', 'admin.reports.expired-stock', 'ti-clock-x'],
+                [__('dashboards.pharmacy.report_stock_valuation'), 'admin.reports.stock-valuation', 'ti-report-money'],
+                [__('dashboards.pharmacy.report_expired_stock'), 'admin.reports.expired-stock', 'ti-clock-x'],
             ]),
         ];
     }
@@ -140,26 +140,26 @@ class DepartmentDashboardService
         $s = fn (string $status) => $this->count(fn () => $scope($L::query())->where('status', $status)->count());
 
         return [
-            'title' => 'Investigations / Laboratory Dashboard',
+            'title' => __('dashboards.titles.investigation'),
             'kpis' => array_values(array_filter([
-                $this->kpi('Pending Requests', $s('pending'), 'ti-clipboard-list', 'warning', 'admin.lab.requests.index'),
-                $this->kpi('In Progress', $s('processing'), 'ti-flask', 'info', 'admin.lab.requests.index'),
-                $this->kpi('Completed Today', $this->count(fn () => $scope($L::query())->where('status', 'completed')->whereDate('updated_at', today())->count()), 'ti-check', 'success'),
-                $this->kpi('Urgent', $this->count(fn () => $scope($L::query())->whereIn('status', ['pending', 'processing'])->where('urgency', 'urgent')->count()), 'ti-urgent', 'danger'),
+                $this->kpi(__('dashboards.investigation.pending_requests'), $s('pending'), 'ti-clipboard-list', 'warning', 'admin.lab.requests.index'),
+                $this->kpi(__('dashboards.investigation.in_progress'), $s('processing'), 'ti-flask', 'info', 'admin.lab.requests.index'),
+                $this->kpi(__('dashboards.investigation.completed_today'), $this->count(fn () => $scope($L::query())->where('status', 'completed')->whereDate('updated_at', today())->count()), 'ti-check', 'success'),
+                $this->kpi(__('dashboards.investigation.urgent'), $this->count(fn () => $scope($L::query())->whereIn('status', ['pending', 'processing'])->where('urgency', 'urgent')->count()), 'ti-urgent', 'danger'),
             ])),
             'alerts' => array_values(array_filter([
-                $this->alert('Urgent investigations waiting', $this->count(fn () => $scope($L::query())->whereIn('status', ['pending', 'processing'])->where('urgency', 'urgent')->count()), 'danger', 'ti-urgent', 'admin.lab.requests.index'),
+                $this->alert(__('dashboards.investigation.alert_urgent'), $this->count(fn () => $scope($L::query())->whereIn('status', ['pending', 'processing'])->where('urgency', 'urgent')->count()), 'danger', 'ti-urgent', 'admin.lab.requests.index'),
             ])),
             'queues' => [
                 $this->labQueue($scope),
             ],
             'quick_actions' => $this->actions([
-                ['Investigation Requests', 'ti-microscope', 'admin.lab.requests.index', 'primary', 'lab.requests.view'],
-                ['Results', 'ti-file-text', 'admin.lab.results.index', 'secondary', 'lab.results.view'],
-                ['Counter Sale', 'ti-cash-register', 'admin.billing.counter-sale.create', 'secondary', 'invoices.create'],
+                [__('dashboards.investigation.action_requests'), 'ti-microscope', 'admin.lab.requests.index', 'primary', 'lab.requests.view'],
+                [__('dashboards.investigation.action_results'), 'ti-file-text', 'admin.lab.results.index', 'secondary', 'lab.results.view'],
+                [__('dashboards.investigation.action_counter_sale'), 'ti-cash-register', 'admin.billing.counter-sale.create', 'secondary', 'invoices.create'],
             ]),
             'reports' => $this->reportLinks([
-                ['Investigation Revenue', 'admin.reports.investigation-revenue', 'ti-report-money'],
+                [__('dashboards.investigation.report_revenue'), 'admin.reports.investigation-revenue', 'ti-report-money'],
             ]),
         ];
     }
@@ -170,23 +170,23 @@ class DepartmentDashboardService
         $s = fn ($status) => $this->count(fn () => $R::query()->where('status', is_array($status) ? null : $status)->when(is_array($status), fn ($q) => $q->whereIn('status', $status))->count());
 
         return [
-            'title' => 'Theatre & Procedures Dashboard',
+            'title' => __('dashboards.titles.theatre'),
             'kpis' => array_values(array_filter([
-                $this->kpi('Pending Requests', $s('requested'), 'ti-clipboard-list', 'secondary', 'admin.theatre.index'),
-                $this->kpi('Scheduled', $s('scheduled'), 'ti-calendar', 'primary', 'admin.theatre.index'),
-                $this->kpi('In Theatre', $s(['pre_op', 'anaesthesia', 'in_surgery', 'surgery_done', 'post_op']), 'ti-activity', 'danger', 'admin.theatre.index'),
-                $this->kpi('Completed Today', $this->count(fn () => $R::query()->where('status', 'completed')->whereDate('updated_at', today())->count()), 'ti-check', 'success'),
+                $this->kpi(__('dashboards.theatre.pending_requests'), $s('requested'), 'ti-clipboard-list', 'secondary', 'admin.theatre.index'),
+                $this->kpi(__('dashboards.theatre.scheduled'), $s('scheduled'), 'ti-calendar', 'primary', 'admin.theatre.index'),
+                $this->kpi(__('dashboards.theatre.in_theatre'), $s(['pre_op', 'anaesthesia', 'in_surgery', 'surgery_done', 'post_op']), 'ti-activity', 'danger', 'admin.theatre.index'),
+                $this->kpi(__('dashboards.theatre.completed_today'), $this->count(fn () => $R::query()->where('status', 'completed')->whereDate('updated_at', today())->count()), 'ti-check', 'success'),
             ])),
             'alerts' => array_values(array_filter([
-                $this->alert('Procedures awaiting acceptance', $s('requested'), 'warning', 'ti-clipboard-list', 'admin.theatre.index'),
+                $this->alert(__('dashboards.theatre.alert_awaiting'), $s('requested'), 'warning', 'ti-clipboard-list', 'admin.theatre.index'),
             ])),
             'queues' => [
                 $this->procedureQueue(),
             ],
             'quick_actions' => $this->actions([
-                ['Theatre Board', 'ti-layout-board', 'admin.theatre.index', 'primary', 'procedures.view'],
-                ['Schedule', 'ti-calendar', 'admin.theatre.calendar', 'secondary', 'procedure.schedule'],
-                ['Counter Sale', 'ti-cash-register', 'admin.billing.counter-sale.create', 'secondary', 'invoices.create'],
+                [__('dashboards.theatre.action_board'), 'ti-layout-board', 'admin.theatre.index', 'primary', 'procedures.view'],
+                [__('dashboards.theatre.action_schedule'), 'ti-calendar', 'admin.theatre.calendar', 'secondary', 'procedure.schedule'],
+                [__('dashboards.theatre.action_counter_sale'), 'ti-cash-register', 'admin.billing.counter-sale.create', 'secondary', 'invoices.create'],
             ]),
             'reports' => [],
         ];
@@ -201,26 +201,26 @@ class DepartmentDashboardService
         $invoicesToday = $this->count(fn () => $I::query()->whereDate('created_at', today())->count());
 
         return [
-            'title' => 'Billing / Cashier Dashboard',
+            'title' => __('dashboards.titles.billing'),
             'kpis' => array_values(array_filter([
-                $this->kpi('Unpaid Invoices', $unpaid, 'ti-file-invoice', 'warning', 'admin.billing.invoices.index'),
-                $this->kpi('Invoices Today', $invoicesToday, 'ti-files', 'info', 'admin.billing.invoices.index'),
-                $this->permits('payments.view') ? $this->kpi('Payments Today', $paymentsToday, 'ti-cash', 'success', null, [], 'currency') : null,
-                $this->kpi('Partial Payments', $this->count(fn () => $I::query()->where('status', 'partially_paid')->count()), 'ti-progress', 'secondary', 'admin.billing.invoices.index'),
+                $this->kpi(__('dashboards.billing.unpaid_invoices'), $unpaid, 'ti-file-invoice', 'warning', 'admin.billing.invoices.index'),
+                $this->kpi(__('dashboards.billing.invoices_today'), $invoicesToday, 'ti-files', 'info', 'admin.billing.invoices.index'),
+                $this->permits('payments.view') ? $this->kpi(__('dashboards.billing.payments_today'), $paymentsToday, 'ti-cash', 'success', null, [], 'currency') : null,
+                $this->kpi(__('dashboards.billing.partial_payments'), $this->count(fn () => $I::query()->where('status', 'partially_paid')->count()), 'ti-progress', 'secondary', 'admin.billing.invoices.index'),
             ])),
             'alerts' => array_values(array_filter([
-                $this->alert('Invoices awaiting payment', $unpaid, 'warning', 'ti-file-invoice', 'admin.billing.invoices.index'),
+                $this->alert(__('dashboards.billing.alert_awaiting_payment'), $unpaid, 'warning', 'ti-file-invoice', 'admin.billing.invoices.index'),
             ])),
             'queues' => [
                 $this->invoiceQueue(),
             ],
             'quick_actions' => $this->actions([
-                ['Invoices', 'ti-file-invoice', 'admin.billing.invoices.index', 'primary', 'invoices.view'],
-                ['Receive Payment', 'ti-cash', 'admin.billing.payments.index', 'secondary', 'payments.create'],
-                ['Counter Sale', 'ti-cash-register', 'admin.billing.counter-sale.create', 'secondary', 'invoices.create'],
+                [__('dashboards.billing.action_invoices'), 'ti-file-invoice', 'admin.billing.invoices.index', 'primary', 'invoices.view'],
+                [__('dashboards.billing.action_receive_payment'), 'ti-cash', 'admin.billing.payments.index', 'secondary', 'payments.create'],
+                [__('dashboards.billing.action_counter_sale'), 'ti-cash-register', 'admin.billing.counter-sale.create', 'secondary', 'invoices.create'],
             ]),
             'reports' => $this->reportLinks([
-                ['AR Aging', 'admin.billing.reports.aging', 'ti-report-money'],
+                [__('dashboards.billing.report_ar_aging'), 'admin.billing.reports.aging', 'ti-report-money'],
             ]),
         ];
     }
@@ -233,30 +233,30 @@ class DepartmentDashboardService
         $po = $this->count(fn () => \App\Models\PurchaseOrder::query()->whereIn('status', ['submitted', 'approved', 'partially_received'])->count());
 
         return [
-            'title' => 'Stock / Store & Procurement Dashboard',
+            'title' => __('dashboards.titles.stock'),
             'kpis' => array_values(array_filter([
-                $this->kpi('Low Stock', $low, 'ti-alert-triangle', 'warning', 'admin.store.stock.balances'),
-                $this->kpi('Out of Stock', $out, 'ti-x', 'danger', 'admin.store.stock.balances'),
-                $this->kpi('Requisitions to Approve', $req, 'ti-clipboard-check', 'info', 'admin.store.stock-requisitions.index'),
-                $this->kpi('Open Purchase Orders', $po, 'ti-truck-delivery', 'primary', 'admin.store.purchase-orders.index'),
+                $this->kpi(__('dashboards.stock.low_stock'), $low, 'ti-alert-triangle', 'warning', 'admin.store.stock.balances'),
+                $this->kpi(__('dashboards.stock.out_of_stock'), $out, 'ti-x', 'danger', 'admin.store.stock.balances'),
+                $this->kpi(__('dashboards.stock.requisitions_to_approve'), $req, 'ti-clipboard-check', 'info', 'admin.store.stock-requisitions.index'),
+                $this->kpi(__('dashboards.stock.open_purchase_orders'), $po, 'ti-truck-delivery', 'primary', 'admin.store.purchase-orders.index'),
             ])),
             'alerts' => array_values(array_filter([
-                $this->alert('Products out of stock', $out, 'danger', 'ti-x', 'admin.store.stock.balances'),
-                $this->alert('Products low on stock', $low, 'warning', 'ti-alert-triangle', 'admin.store.stock.balances'),
-                $this->alert('Requisitions awaiting approval', $req, 'info', 'ti-clipboard-check', 'admin.store.stock-requisitions.index'),
+                $this->alert(__('dashboards.stock.alert_out_of_stock'), $out, 'danger', 'ti-x', 'admin.store.stock.balances'),
+                $this->alert(__('dashboards.stock.alert_low_stock'), $low, 'warning', 'ti-alert-triangle', 'admin.store.stock.balances'),
+                $this->alert(__('dashboards.stock.alert_requisitions'), $req, 'info', 'ti-clipboard-check', 'admin.store.stock-requisitions.index'),
             ])),
             'queues' => [
                 $this->requisitionQueue(),
             ],
             'quick_actions' => $this->actions([
-                ['Stock Balances', 'ti-list-numbers', 'admin.store.stock.balances', 'primary', 'store.purchase.view'],
-                ['New Requisition', 'ti-clipboard-plus', 'admin.store.stock-requisitions.create', 'secondary', 'store.requisition.create'],
-                ['New Transfer', 'ti-transfer', 'admin.store.stock.transfers.create', 'secondary', 'store.purchase.create'],
-                ['New Purchase Order', 'ti-shopping-cart', 'admin.store.purchase-orders.create', 'secondary', 'store.purchase.create'],
+                [__('dashboards.stock.action_stock_balances'), 'ti-list-numbers', 'admin.store.stock.balances', 'primary', 'store.purchase.view'],
+                [__('dashboards.stock.action_new_requisition'), 'ti-clipboard-plus', 'admin.store.stock-requisitions.create', 'secondary', 'store.requisition.create'],
+                [__('dashboards.stock.action_new_transfer'), 'ti-transfer', 'admin.store.stock.transfers.create', 'secondary', 'store.purchase.create'],
+                [__('dashboards.stock.action_new_po'), 'ti-shopping-cart', 'admin.store.purchase-orders.create', 'secondary', 'store.purchase.create'],
             ]),
             'reports' => $this->reportLinks([
-                ['Stock Operations', 'admin.reports.stock', 'ti-report'],
-                ['Stock Valuation', 'admin.reports.stock-valuation', 'ti-report-money'],
+                [__('dashboards.stock.report_stock_operations'), 'admin.reports.stock', 'ti-report'],
+                [__('dashboards.stock.report_stock_valuation'), 'admin.reports.stock-valuation', 'ti-report-money'],
             ]),
         ];
     }
@@ -267,23 +267,23 @@ class DepartmentDashboardService
         $failed = $this->count(fn () => \App\Models\Invoice::query()->where('accounting_status', 'failed')->count());
 
         return [
-            'title' => 'Accounting / Finance Dashboard',
+            'title' => __('dashboards.titles.accounting'),
             'kpis' => array_values(array_filter([
-                $this->kpi('Journal Entries', $this->count(fn () => $J::query()->count()), 'ti-book', 'primary', 'admin.accounting.journals.index'),
-                $this->kpi('Failed Postings', $failed, 'ti-alert-octagon', 'danger'),
-                $this->kpi('Invoices Today', $this->count(fn () => \App\Models\Invoice::query()->whereDate('created_at', today())->count()), 'ti-files', 'info', 'admin.billing.invoices.index'),
+                $this->kpi(__('dashboards.accounting.journal_entries'), $this->count(fn () => $J::query()->count()), 'ti-book', 'primary', 'admin.accounting.journals.index'),
+                $this->kpi(__('dashboards.accounting.failed_postings'), $failed, 'ti-alert-octagon', 'danger'),
+                $this->kpi(__('dashboards.accounting.invoices_today'), $this->count(fn () => \App\Models\Invoice::query()->whereDate('created_at', today())->count()), 'ti-files', 'info', 'admin.billing.invoices.index'),
             ])),
             'alerts' => array_values(array_filter([
-                $this->alert('Failed accounting postings', $failed, 'danger', 'ti-alert-octagon'),
+                $this->alert(__('dashboards.accounting.alert_failed_postings'), $failed, 'danger', 'ti-alert-octagon'),
             ])),
             'queues' => [],
             'quick_actions' => $this->actions([
-                ['General Ledger', 'ti-book', 'admin.accounting.general-ledger.index', 'primary', 'accounts.view'],
-                ['Trial Balance', 'ti-scale', 'admin.accounting.trial-balance.index', 'secondary', 'accounts.view'],
-                ['Journals', 'ti-notebook', 'admin.accounting.journals.index', 'secondary', 'accounts.view'],
+                [__('dashboards.accounting.action_general_ledger'), 'ti-book', 'admin.accounting.general-ledger.index', 'primary', 'accounts.view'],
+                [__('dashboards.accounting.action_trial_balance'), 'ti-scale', 'admin.accounting.trial-balance.index', 'secondary', 'accounts.view'],
+                [__('dashboards.accounting.action_journals'), 'ti-notebook', 'admin.accounting.journals.index', 'secondary', 'accounts.view'],
             ]),
             'reports' => $this->reportLinks([
-                ['AR Aging', 'admin.billing.reports.aging', 'ti-report-money'],
+                [__('dashboards.accounting.report_ar_aging'), 'admin.billing.reports.aging', 'ti-report-money'],
             ]),
         ];
     }
@@ -291,28 +291,28 @@ class DepartmentDashboardService
     private function management(): array
     {
         return [
-            'title' => 'Management Dashboard',
+            'title' => __('dashboards.titles.management'),
             'kpis' => array_values(array_filter([
-                $this->kpi('Visits Today', $this->count(fn () => \App\Models\Visit::query()->whereDate('created_at', today())->count()), 'ti-calendar', 'primary'),
-                $this->kpi('Admitted Patients', $this->count(fn () => \App\Models\Admission::query()->whereNull('discharged_at')->count()), 'ti-bed', 'info'),
-                $this->permits('payments.view') ? $this->kpi('Revenue Today', $this->sum(fn () => \App\Models\Payment::query()->whereDate('created_at', today())->sum('amount')), 'ti-cash', 'success', null, [], 'currency') : null,
-                $this->kpi('Unpaid Invoices', $this->count(fn () => \App\Models\Invoice::query()->whereIn('status', ['pending', 'partially_paid'])->count()), 'ti-file-invoice', 'warning', 'admin.billing.invoices.index'),
-                $this->kpi('Low Stock', $this->stockCount('reorder'), 'ti-alert-triangle', 'warning', 'admin.store.stock.balances'),
-                $this->kpi('Pending Claims', $this->count(fn () => \App\Models\Claim::query()->whereIn('status', ['draft', 'ready', 'submitted'])->count()), 'ti-clipboard-text', 'secondary'),
+                $this->kpi(__('dashboards.management.visits_today'), $this->count(fn () => \App\Models\Visit::query()->whereDate('created_at', today())->count()), 'ti-calendar', 'primary'),
+                $this->kpi(__('dashboards.management.admitted_patients'), $this->count(fn () => \App\Models\Admission::query()->whereNull('discharged_at')->count()), 'ti-bed', 'info'),
+                $this->permits('payments.view') ? $this->kpi(__('dashboards.management.revenue_today'), $this->sum(fn () => \App\Models\Payment::query()->whereDate('created_at', today())->sum('amount')), 'ti-cash', 'success', null, [], 'currency') : null,
+                $this->kpi(__('dashboards.management.unpaid_invoices'), $this->count(fn () => \App\Models\Invoice::query()->whereIn('status', ['pending', 'partially_paid'])->count()), 'ti-file-invoice', 'warning', 'admin.billing.invoices.index'),
+                $this->kpi(__('dashboards.management.low_stock'), $this->stockCount('reorder'), 'ti-alert-triangle', 'warning', 'admin.store.stock.balances'),
+                $this->kpi(__('dashboards.management.pending_claims'), $this->count(fn () => \App\Models\Claim::query()->whereIn('status', ['draft', 'ready', 'submitted'])->count()), 'ti-clipboard-text', 'secondary'),
             ])),
             'alerts' => array_values(array_filter([
-                $this->alert('Failed accounting postings', $this->count(fn () => \App\Models\Invoice::query()->where('accounting_status', 'failed')->count()), 'danger', 'ti-alert-octagon'),
-                $this->alert('Products out of stock', $this->stockCount('zero'), 'danger', 'ti-x', 'admin.store.stock.balances'),
+                $this->alert(__('dashboards.management.alerts_failed_postings'), $this->count(fn () => \App\Models\Invoice::query()->where('accounting_status', 'failed')->count()), 'danger', 'ti-alert-octagon'),
+                $this->alert(__('dashboards.management.alerts_out_of_stock'), $this->stockCount('zero'), 'danger', 'ti-x', 'admin.store.stock.balances'),
             ])),
             'queues' => [],
             'quick_actions' => $this->actions([
-                ['Invoices', 'ti-file-invoice', 'admin.billing.invoices.index', 'primary', 'invoices.view'],
-                ['Stock Balances', 'ti-list-numbers', 'admin.store.stock.balances', 'secondary', 'store.purchase.view'],
-                ['Users & Roles', 'ti-users-group', 'admin.users.index', 'secondary', 'users.view'],
-                ['Activity Logs', 'ti-history', 'admin.activity-logs.index', 'secondary', null],
+                [__('dashboards.management.action_invoices'), 'ti-file-invoice', 'admin.billing.invoices.index', 'primary', 'invoices.view'],
+                [__('dashboards.management.action_stock_balances'), 'ti-list-numbers', 'admin.store.stock.balances', 'secondary', 'store.purchase.view'],
+                [__('dashboards.management.action_users'), 'ti-users-group', 'admin.users.index', 'secondary', 'users.view'],
+                [__('dashboards.management.action_activity_logs'), 'ti-history', 'admin.activity-logs.index', 'secondary', null],
             ]),
             'reports' => $this->reportLinks([
-                ['Reports Hub', 'admin.reports.index', 'ti-report'],
+                [__('dashboards.management.report_hub'), 'admin.reports.index', 'ti-report'],
             ]),
         ];
     }
@@ -320,13 +320,13 @@ class DepartmentDashboardService
     private function generic(): array
     {
         return [
-            'title' => 'My Dashboard',
+            'title' => __('dashboards.titles.generic'),
             'kpis' => array_values(array_filter([
-                $this->kpi('Visits Today', $this->count(fn () => \App\Models\Visit::query()->whereDate('created_at', today())->count()), 'ti-calendar', 'primary'),
+                $this->kpi(__('dashboards.generic.visits_today'), $this->count(fn () => \App\Models\Visit::query()->whereDate('created_at', today())->count()), 'ti-calendar', 'primary'),
             ])),
             'quick_actions' => $this->actions([
-                ['Patients', 'ti-users', 'admin.patients.index', 'primary', 'patient.view'],
-                ['Visits', 'ti-clipboard', 'admin.visits.index', 'secondary', 'visits.view'],
+                [__('dashboards.generic.action_patients'), 'ti-users', 'admin.patients.index', 'primary', 'patient.view'],
+                [__('dashboards.generic.action_visits'), 'ti-clipboard', 'admin.visits.index', 'secondary', 'visits.view'],
             ]),
         ];
     }
@@ -338,23 +338,23 @@ class DepartmentDashboardService
         $triage = fn (array $cats) => $this->count(fn () => $open()->whereIn('final_triage_category', $cats)->count());
 
         return [
-            'title' => 'Emergency / Casualty Dashboard',
+            'title' => __('dashboards.titles.emergency'),
             'kpis' => array_values(array_filter([
-                $this->kpi('Active Cases', $this->count(fn () => $open()->count()), 'ti-ambulance', 'danger', 'admin.emergency.board'),
-                $this->kpi('Critical (Red)', $triage(['RED', 'red']), 'ti-urgent', 'danger'),
-                $this->kpi('Urgent (Orange)', $triage(['ORANGE', 'orange']), 'ti-alert-triangle', 'warning'),
-                $this->kpi('Cases Today', $this->count(fn () => $E::query()->whereDate('created_at', today())->count()), 'ti-calendar', 'info'),
+                $this->kpi(__('dashboards.emergency.active_cases'), $this->count(fn () => $open()->count()), 'ti-ambulance', 'danger', 'admin.emergency.board'),
+                $this->kpi(__('dashboards.emergency.critical_red'), $triage(['RED', 'red']), 'ti-urgent', 'danger'),
+                $this->kpi(__('dashboards.emergency.urgent_orange'), $triage(['ORANGE', 'orange']), 'ti-alert-triangle', 'warning'),
+                $this->kpi(__('dashboards.emergency.cases_today'), $this->count(fn () => $E::query()->whereDate('created_at', today())->count()), 'ti-calendar', 'info'),
             ])),
             'alerts' => array_values(array_filter([
-                $this->alert('Critical (Red) cases active', $triage(['RED', 'red']), 'danger', 'ti-urgent', 'admin.emergency.board'),
+                $this->alert(__('dashboards.emergency.alert_critical'), $triage(['RED', 'red']), 'danger', 'ti-urgent', 'admin.emergency.board'),
             ])),
             'queues' => [$this->emergencyQueue($open)],
             'quick_actions' => $this->actions([
-                ['Emergency Board', 'ti-layout-board', 'admin.emergency.board', 'primary', 'emergency.view'],
-                ['New Case', 'ti-plus', 'admin.emergency.cases.create', 'secondary', 'emergency.case.create'],
-                ['Bays', 'ti-bed', 'admin.emergency.bays.index', 'secondary', null],
+                [__('dashboards.emergency.action_board'), 'ti-layout-board', 'admin.emergency.board', 'primary', 'emergency.view'],
+                [__('dashboards.emergency.action_new_case'), 'ti-plus', 'admin.emergency.cases.create', 'secondary', 'emergency.case.create'],
+                [__('dashboards.emergency.action_bays'), 'ti-bed', 'admin.emergency.bays.index', 'secondary', null],
             ]),
-            'reports' => $this->reportLinks([['Emergency Reports', 'admin.emergency.reports.index', 'ti-report']]),
+            'reports' => $this->reportLinks([[__('dashboards.emergency.report_emergency'), 'admin.emergency.reports.index', 'ti-report']]),
         ];
     }
 
@@ -365,24 +365,24 @@ class DepartmentDashboardService
         $admitted = $this->count(fn () => $A::query()->where('status', 'admitted')->count());
 
         return [
-            'title' => 'Admission / Ward Dashboard',
+            'title' => __('dashboards.titles.admission'),
             'kpis' => array_values(array_filter([
-                $this->kpi('Admitted Patients', $admitted, 'ti-bed', 'primary', 'admin.admissions.index'),
-                $this->kpi('Beds Occupied', $this->count(fn () => $B::query()->where('status', 'occupied')->count()), 'ti-bed-filled', 'info'),
-                $this->kpi('Beds Available', $this->count(fn () => $B::query()->where('status', 'available')->count()), 'ti-bed', 'success'),
-                $this->kpi('Admission Requests', $this->count(fn () => $A::query()->where('status', 'pending')->count()), 'ti-clipboard-list', 'warning', 'admin.admissions.requests'),
+                $this->kpi(__('dashboards.admission.admitted_patients'), $admitted, 'ti-bed', 'primary', 'admin.admissions.index'),
+                $this->kpi(__('dashboards.admission.beds_occupied'), $this->count(fn () => $B::query()->where('status', 'occupied')->count()), 'ti-bed-filled', 'info'),
+                $this->kpi(__('dashboards.admission.beds_available'), $this->count(fn () => $B::query()->where('status', 'available')->count()), 'ti-bed', 'success'),
+                $this->kpi(__('dashboards.admission.admission_requests'), $this->count(fn () => $A::query()->where('status', 'pending')->count()), 'ti-clipboard-list', 'warning', 'admin.admissions.requests'),
             ])),
             'alerts' => array_values(array_filter([
-                $this->alert('No beds available', $this->count(fn () => $B::query()->where('status', 'available')->count()) === 0 ? 1 : 0, 'danger', 'ti-bed-off'),
+                $this->alert(__('dashboards.admission.alert_no_beds'), $this->count(fn () => $B::query()->where('status', 'available')->count()) === 0 ? 1 : 0, 'danger', 'ti-bed-off'),
             ])),
             'queues' => [$this->admissionQueue()],
             'quick_actions' => $this->actions([
-                ['Admissions', 'ti-bed', 'admin.admissions.index', 'primary', 'admissions.view'],
-                ['Admit Patient', 'ti-plus', 'admin.admissions.create', 'secondary', 'admissions.create'],
-                ['Medication Board', 'ti-pill', 'admin.admissions.medication-board', 'secondary', null],
-                ['Discharge Requests', 'ti-logout', 'admin.admissions.requests', 'secondary', null],
+                [__('dashboards.admission.action_admissions'), 'ti-bed', 'admin.admissions.index', 'primary', 'admissions.view'],
+                [__('dashboards.admission.action_admit'), 'ti-plus', 'admin.admissions.create', 'secondary', 'admissions.create'],
+                [__('dashboards.admission.action_medication_board'), 'ti-pill', 'admin.admissions.medication-board', 'secondary', null],
+                [__('dashboards.admission.action_discharge'), 'ti-logout', 'admin.admissions.requests', 'secondary', null],
             ]),
-            'reports' => $this->reportLinks([['Admission Report', 'admin.reports.admissions', 'ti-report']]),
+            'reports' => $this->reportLinks([[__('dashboards.admission.report_admissions'), 'admin.reports.admissions', 'ti-report']]),
         ];
     }
 
@@ -394,25 +394,25 @@ class DepartmentDashboardService
         $pendingReq = $this->count(fn () => $R::query()->whereIn('status', ['PENDING', 'pending'])->count());
 
         return [
-            'title' => 'Blood Bank Dashboard',
+            'title' => __('dashboards.titles.blood_bank'),
             'kpis' => array_values(array_filter([
-                $this->kpi('Available Units', $this->count(fn () => $U::query()->where('status', 'AVAILABLE')->count()), 'ti-droplet', 'danger', 'admin.blood-bank.units.index'),
-                $this->kpi('Expiring ≤ 7 days', $expiring, 'ti-clock-x', 'warning', 'admin.blood-bank.units.index'),
-                $this->kpi('Pending Requests', $pendingReq, 'ti-clipboard-list', 'info', 'admin.blood-bank.requests.index'),
-                $this->kpi('Pending Screening', $this->count(fn () => $U::query()->whereIn('screening_status', ['PENDING', 'pending'])->count()), 'ti-test-pipe', 'secondary'),
+                $this->kpi(__('dashboards.blood_bank.available_units'), $this->count(fn () => $U::query()->where('status', 'AVAILABLE')->count()), 'ti-droplet', 'danger', 'admin.blood-bank.units.index'),
+                $this->kpi(__('dashboards.blood_bank.expiring_soon'), $expiring, 'ti-clock-x', 'warning', 'admin.blood-bank.units.index'),
+                $this->kpi(__('dashboards.blood_bank.pending_requests'), $pendingReq, 'ti-clipboard-list', 'info', 'admin.blood-bank.requests.index'),
+                $this->kpi(__('dashboards.blood_bank.pending_screening'), $this->count(fn () => $U::query()->whereIn('screening_status', ['PENDING', 'pending'])->count()), 'ti-test-pipe', 'secondary'),
             ])),
             'alerts' => array_values(array_filter([
-                $this->alert('Units expiring within 7 days', $expiring, 'warning', 'ti-clock-x', 'admin.blood-bank.units.index'),
-                $this->alert('Blood requests pending', $pendingReq, 'info', 'ti-clipboard-list', 'admin.blood-bank.requests.index'),
+                $this->alert(__('dashboards.blood_bank.alert_expiring'), $expiring, 'warning', 'ti-clock-x', 'admin.blood-bank.units.index'),
+                $this->alert(__('dashboards.blood_bank.alert_pending_requests'), $pendingReq, 'info', 'ti-clipboard-list', 'admin.blood-bank.requests.index'),
             ])),
             'queues' => [$this->bloodRequestQueue()],
             'quick_actions' => $this->actions([
-                ['Blood Bank Dashboard', 'ti-layout-dashboard', 'admin.blood-bank.dashboard', 'primary', 'blood_bank.view'],
-                ['Requests', 'ti-clipboard-list', 'admin.blood-bank.requests.index', 'secondary', null],
-                ['Units', 'ti-droplet', 'admin.blood-bank.units.index', 'secondary', null],
-                ['Donations', 'ti-heart-handshake', 'admin.blood-bank.donations.index', 'secondary', null],
+                [__('dashboards.blood_bank.action_dashboard'), 'ti-layout-dashboard', 'admin.blood-bank.dashboard', 'primary', 'blood_bank.view'],
+                [__('dashboards.blood_bank.action_requests'), 'ti-clipboard-list', 'admin.blood-bank.requests.index', 'secondary', null],
+                [__('dashboards.blood_bank.action_units'), 'ti-droplet', 'admin.blood-bank.units.index', 'secondary', null],
+                [__('dashboards.blood_bank.action_donations'), 'ti-heart-handshake', 'admin.blood-bank.donations.index', 'secondary', null],
             ]),
-            'reports' => $this->reportLinks([['Blood Bank Report', 'admin.reports.blood-bank', 'ti-report']]),
+            'reports' => $this->reportLinks([[__('dashboards.blood_bank.report_blood_bank'), 'admin.reports.blood-bank', 'ti-report']]),
         ];
     }
 
@@ -423,23 +423,23 @@ class DepartmentDashboardService
         $rejected = $s(['rejected']);
 
         return [
-            'title' => 'Insurance / Claims Dashboard',
+            'title' => __('dashboards.titles.claims'),
             'kpis' => array_values(array_filter([
-                $this->kpi('To Prepare', $s(['draft']), 'ti-clipboard-list', 'secondary', 'admin.claims.index'),
-                $this->kpi('Ready / Submitted', $s(['ready', 'submitted', 'resubmitted']), 'ti-send', 'info', 'admin.claims.index'),
-                $this->kpi('Under Review', $s(['acknowledged', 'under_review']), 'ti-eye-search', 'primary', 'admin.claims.index'),
-                $this->kpi('Approved (unpaid)', $s(['approved', 'partially_approved']), 'ti-checks', 'success', 'admin.claims.index'),
-                $this->kpi('Rejected', $rejected, 'ti-x', 'danger', 'admin.claims.index'),
+                $this->kpi(__('dashboards.claims.to_prepare'), $s(['draft']), 'ti-clipboard-list', 'secondary', 'admin.claims.index'),
+                $this->kpi(__('dashboards.claims.ready_submitted'), $s(['ready', 'submitted', 'resubmitted']), 'ti-send', 'info', 'admin.claims.index'),
+                $this->kpi(__('dashboards.claims.under_review'), $s(['acknowledged', 'under_review']), 'ti-eye-search', 'primary', 'admin.claims.index'),
+                $this->kpi(__('dashboards.claims.approved_unpaid'), $s(['approved', 'partially_approved']), 'ti-checks', 'success', 'admin.claims.index'),
+                $this->kpi(__('dashboards.claims.rejected'), $rejected, 'ti-x', 'danger', 'admin.claims.index'),
             ])),
             'alerts' => array_values(array_filter([
-                $this->alert('Rejected claims need correction', $rejected, 'danger', 'ti-x', 'admin.claims.index'),
+                $this->alert(__('dashboards.claims.alert_rejected'), $rejected, 'danger', 'ti-x', 'admin.claims.index'),
             ])),
             'queues' => [$this->claimsQueue()],
             'quick_actions' => $this->actions([
-                ['Claims', 'ti-clipboard-text', 'admin.claims.index', 'primary', 'claims.view'],
-                ['New Claim', 'ti-plus', 'admin.claims.create', 'secondary', 'claims.create'],
+                [__('dashboards.claims.action_claims'), 'ti-clipboard-text', 'admin.claims.index', 'primary', 'claims.view'],
+                [__('dashboards.claims.action_new_claim'), 'ti-plus', 'admin.claims.create', 'secondary', 'claims.create'],
             ]),
-            'reports' => $this->reportLinks([['Claims Report', 'admin.reports.claims', 'ti-report-money']]),
+            'reports' => $this->reportLinks([[__('dashboards.claims.report_claims'), 'admin.reports.claims', 'ti-report-money']]),
         ];
     }
 
@@ -449,22 +449,22 @@ class DepartmentDashboardService
         $pendingLeave = $this->count(fn () => $L::query()->where('status', 'pending')->count());
 
         return [
-            'title' => 'HR / Payroll Dashboard',
+            'title' => __('dashboards.titles.hr'),
             'kpis' => array_values(array_filter([
-                $this->kpi('Active Staff', $this->count(fn () => \App\Models\User::query()->count()), 'ti-users-group', 'primary', 'admin.hr.employees.index'),
-                $this->kpi('Pending Leave', $pendingLeave, 'ti-calendar-off', 'warning', 'admin.hr.leave.index'),
-                $this->kpi('Payroll Draft', $this->count(fn () => \App\Models\PayrollRecord::query()->where('status', 'draft')->count()), 'ti-file-dollar', 'secondary'),
-                $this->kpi('Payroll Approved', $this->count(fn () => \App\Models\PayrollRecord::query()->where('status', 'approved')->count()), 'ti-check', 'success'),
+                $this->kpi(__('dashboards.hr.active_staff'), $this->count(fn () => \App\Models\User::query()->count()), 'ti-users-group', 'primary', 'admin.hr.employees.index'),
+                $this->kpi(__('dashboards.hr.pending_leave'), $pendingLeave, 'ti-calendar-off', 'warning', 'admin.hr.leave.index'),
+                $this->kpi(__('dashboards.hr.payroll_draft'), $this->count(fn () => \App\Models\PayrollRecord::query()->where('status', 'draft')->count()), 'ti-file-dollar', 'secondary'),
+                $this->kpi(__('dashboards.hr.payroll_approved'), $this->count(fn () => \App\Models\PayrollRecord::query()->where('status', 'approved')->count()), 'ti-check', 'success'),
             ])),
             'alerts' => array_values(array_filter([
-                $this->alert('Leave requests pending approval', $pendingLeave, 'warning', 'ti-calendar-off', 'admin.hr.leave.index'),
+                $this->alert(__('dashboards.hr.alert_pending_leave'), $pendingLeave, 'warning', 'ti-calendar-off', 'admin.hr.leave.index'),
             ])),
             'queues' => [$this->leaveQueue()],
             'quick_actions' => $this->actions([
-                ['Employees', 'ti-users-group', 'admin.hr.employees.index', 'primary', null],
-                ['Leave', 'ti-calendar', 'admin.hr.leave.index', 'secondary', null],
-                ['Attendance', 'ti-user-check', 'admin.hr.attendance.index', 'secondary', null],
-                ['Payroll', 'ti-coin', 'admin.hr.payroll.index', 'secondary', null],
+                [__('dashboards.hr.action_employees'), 'ti-users-group', 'admin.hr.employees.index', 'primary', null],
+                [__('dashboards.hr.action_leave'), 'ti-calendar', 'admin.hr.leave.index', 'secondary', null],
+                [__('dashboards.hr.action_attendance'), 'ti-user-check', 'admin.hr.attendance.index', 'secondary', null],
+                [__('dashboards.hr.action_payroll'), 'ti-coin', 'admin.hr.payroll.index', 'secondary', null],
             ]),
             'reports' => [],
         ];
@@ -476,20 +476,20 @@ class DepartmentDashboardService
         $A = \App\Models\Appointment::class;
 
         return [
-            'title' => 'Reception / Front Desk Dashboard',
+            'title' => __('dashboards.titles.reception'),
             'kpis' => array_values(array_filter([
-                $this->kpi('Visits Today', $this->count(fn () => $V::query()->whereDate('created_at', today())->count()), 'ti-clipboard', 'primary', 'admin.visits.index'),
-                $this->kpi('Appointments Today', $this->count(fn () => $A::query()->whereDate('appointment_date', today())->count()), 'ti-calendar', 'info', 'admin.appointments.index'),
-                $this->kpi('Checked-in', $this->count(fn () => $A::query()->whereDate('appointment_date', today())->where('status', 'checked_in')->count()), 'ti-user-check', 'success'),
-                $this->kpi('Waiting', $this->count(fn () => $V::query()->whereDate('created_at', today())->whereIn('status', ['waiting', 'registered'])->count()), 'ti-clock', 'warning'),
+                $this->kpi(__('dashboards.reception.visits_today'), $this->count(fn () => $V::query()->whereDate('created_at', today())->count()), 'ti-clipboard', 'primary', 'admin.visits.index'),
+                $this->kpi(__('dashboards.reception.appointments_today'), $this->count(fn () => $A::query()->whereDate('appointment_date', today())->count()), 'ti-calendar', 'info', 'admin.appointments.index'),
+                $this->kpi(__('dashboards.reception.checked_in'), $this->count(fn () => $A::query()->whereDate('appointment_date', today())->where('status', 'checked_in')->count()), 'ti-user-check', 'success'),
+                $this->kpi(__('dashboards.reception.waiting'), $this->count(fn () => $V::query()->whereDate('created_at', today())->whereIn('status', ['waiting', 'registered'])->count()), 'ti-clock', 'warning'),
             ])),
             'alerts' => [],
             'queues' => [$this->appointmentQueue()],
             'quick_actions' => $this->actions([
-                ['New Visit', 'ti-plus', 'admin.visits.create', 'primary', 'visits.create'],
-                ['New Appointment', 'ti-calendar-plus', 'admin.appointments.create', 'secondary', null],
-                ['Appointments', 'ti-calendar', 'admin.appointments.index', 'secondary', null],
-                ['Register Patient', 'ti-user-plus', 'admin.patients.create', 'secondary', 'patient.create'],
+                [__('dashboards.reception.action_new_visit'), 'ti-plus', 'admin.visits.create', 'primary', 'visits.create'],
+                [__('dashboards.reception.action_new_appointment'), 'ti-calendar-plus', 'admin.appointments.create', 'secondary', null],
+                [__('dashboards.reception.action_appointments'), 'ti-calendar', 'admin.appointments.index', 'secondary', null],
+                [__('dashboards.reception.action_register_patient'), 'ti-user-plus', 'admin.patients.create', 'secondary', 'patient.create'],
             ]),
             'reports' => [],
         ];
@@ -515,7 +515,7 @@ class DepartmentDashboardService
                 ])->all();
         });
 
-        return $this->queue($title, 'ti-users', $rows, 'admin.consultations.index', 'No patients in the queue.');
+        return $this->queue($title, 'ti-users', $rows, 'admin.consultations.index', __('dashboards.no_items_in_queue'));
     }
 
     private function prescriptionQueue(): array
@@ -534,7 +534,7 @@ class DepartmentDashboardService
                 ])->all();
         });
 
-        return $this->queue('Prescriptions to Bill / Dispense', 'ti-prescription', $rows, 'admin.prescriptions.index', 'No pending prescriptions.');
+        return $this->queue(__('dashboards.pharmacy.queue_title'), 'ti-prescription', $rows, 'admin.prescriptions.index', __('dashboards.pharmacy.queue_empty'));
     }
 
     private function labQueue(Closure $scope): array
@@ -552,7 +552,7 @@ class DepartmentDashboardService
                 ])->all();
         });
 
-        return $this->queue('Investigation Worklist', 'ti-microscope', $rows, 'admin.lab.requests.index', 'No pending investigations.');
+        return $this->queue(__('dashboards.investigation.queue_title'), 'ti-microscope', $rows, 'admin.lab.requests.index', __('dashboards.investigation.queue_empty'));
     }
 
     private function procedureQueue(): array
@@ -571,7 +571,7 @@ class DepartmentDashboardService
                 ])->all();
         });
 
-        return $this->queue('Procedure Board', 'ti-stethoscope', $rows, 'admin.theatre.index', 'No open procedures.');
+        return $this->queue(__('dashboards.theatre.queue_title'), 'ti-stethoscope', $rows, 'admin.theatre.index', __('dashboards.theatre.queue_empty'));
     }
 
     private function invoiceQueue(): array
@@ -590,7 +590,7 @@ class DepartmentDashboardService
                 ])->all();
         });
 
-        return $this->queue('Unpaid Invoices', 'ti-file-invoice', $rows, 'admin.billing.invoices.index', 'No unpaid invoices.');
+        return $this->queue(__('dashboards.billing.queue_title'), 'ti-file-invoice', $rows, 'admin.billing.invoices.index', __('dashboards.billing.queue_empty'));
     }
 
     private function requisitionQueue(): array
@@ -609,7 +609,7 @@ class DepartmentDashboardService
                 ])->all();
         });
 
-        return $this->queue('Requisitions Awaiting Approval', 'ti-clipboard-check', $rows, 'admin.store.stock-requisitions.index', 'No requisitions awaiting approval.');
+        return $this->queue(__('dashboards.stock.queue_title'), 'ti-clipboard-check', $rows, 'admin.store.stock-requisitions.index', __('dashboards.stock.queue_empty'));
     }
 
     private function emergencyQueue(Closure $open): array
@@ -625,7 +625,7 @@ class DepartmentDashboardService
                 ])->all();
         });
 
-        return $this->queue('Active Emergency Cases', 'ti-ambulance', $rows, 'admin.emergency.board', 'No active emergency cases.');
+        return $this->queue(__('dashboards.emergency.queue_title'), 'ti-ambulance', $rows, 'admin.emergency.board', __('dashboards.emergency.queue_empty'));
     }
 
     private function admissionQueue(): array
@@ -644,7 +644,7 @@ class DepartmentDashboardService
                 ])->all();
         });
 
-        return $this->queue('Current Admissions', 'ti-bed', $rows, 'admin.admissions.index', 'No active admissions.');
+        return $this->queue(__('dashboards.admission.queue_title'), 'ti-bed', $rows, 'admin.admissions.index', __('dashboards.admission.queue_empty'));
     }
 
     private function bloodRequestQueue(): array
@@ -662,7 +662,7 @@ class DepartmentDashboardService
                 ])->all();
         });
 
-        return $this->queue('Pending Blood Requests', 'ti-droplet', $rows, 'admin.blood-bank.requests.index', 'No pending blood requests.');
+        return $this->queue(__('dashboards.blood_bank.queue_title'), 'ti-droplet', $rows, 'admin.blood-bank.requests.index', __('dashboards.blood_bank.queue_empty'));
     }
 
     private function claimsQueue(): array
@@ -680,7 +680,7 @@ class DepartmentDashboardService
                 ])->all();
         });
 
-        return $this->queue('Claims Needing Attention', 'ti-clipboard-text', $rows, 'admin.claims.index', 'No claims need attention.');
+        return $this->queue(__('dashboards.claims.queue_title'), 'ti-clipboard-text', $rows, 'admin.claims.index', __('dashboards.claims.queue_empty'));
     }
 
     private function leaveQueue(): array
@@ -699,7 +699,7 @@ class DepartmentDashboardService
                 ])->all();
         });
 
-        return $this->queue('Leave Requests Pending', 'ti-calendar-off', $rows, 'admin.hr.leave.index', 'No pending leave requests.');
+        return $this->queue(__('dashboards.hr.queue_title'), 'ti-calendar-off', $rows, 'admin.hr.leave.index', __('dashboards.hr.queue_empty'));
     }
 
     private function appointmentQueue(): array
@@ -719,7 +719,7 @@ class DepartmentDashboardService
                 ])->all();
         });
 
-        return $this->queue("Today's Appointments", 'ti-calendar', $rows, 'admin.appointments.index', 'No appointments today.');
+        return $this->queue(__('dashboards.reception.queue_title'), 'ti-calendar', $rows, 'admin.appointments.index', __('dashboards.reception.queue_empty'));
     }
 
     /* ===================================================================== */

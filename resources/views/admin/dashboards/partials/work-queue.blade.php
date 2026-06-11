@@ -3,7 +3,7 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h6 class="fw-bold mb-0"><i class="ti {{ $queue['icon'] ?? 'ti-list' }} me-1"></i>{{ $queue['title'] }}</h6>
         @if(!empty($queue['view_all']))
-            <a href="{{ $queue['view_all'] }}" class="btn btn-sm btn-outline-secondary">View all</a>
+            <a href="{{ $queue['view_all'] }}" class="btn btn-sm btn-outline-secondary">{{ __('dashboards.view_all') }}</a>
         @endif
     </div>
     <div class="card-body p-0">
