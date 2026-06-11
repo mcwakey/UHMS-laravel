@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'investigation_requests' => 'Investigation Requests',
+    'pending' => 'Pending',
+    'processing' => 'Processing',
+    'completed_today' => 'Completed Today',
+    'active_tests' => 'Active Tests',
+    'search_placeholder' => 'Search patient, request #...',
+    'all_status' => 'All Status',
+    'completed' => 'Completed',
+    'cancelled' => 'Cancelled',
+    'all_departments' => 'All Departments',
+    'urgency' => 'Urgency',
+    'all_urgency' => 'All Urgency',
+    'routine' => 'Routine',
+    'urgent' => 'Urgent',
+    'emergency' => 'Emergency',
+    'request_number_short' => 'Request #',
+    'progress' => 'Progress',
+    'walk_in' => 'Walk-in',
+    'bill' => 'Bill',
+    'results' => 'Results',
+    'no_requests_found' => 'No investigation requests found.',
+];

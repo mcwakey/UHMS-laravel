@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Visits / OPD',
+    'queue_board' => 'Queue Board',
+    'new_visit' => 'New Visit',
+    'range_total' => 'Range Total',
+    'outpatients' => 'Outpatients',
+    'inpatients' => 'Inpatients',
+    'emergency' => 'Emergency',
+    'waiting_consulting' => 'Waiting / Consulting',
+    'completed_cancelled' => 'Completed / Cancelled',
+    'search_placeholder' => 'Visit #, patient name, phone...',
+    'visit_type' => 'Visit Type',
+    'all_types' => 'All Types',
+    'active_insurance' => 'Active Insurance',
+    'all_insurance' => 'All Insurance',
+    'cash_and_carry' => 'Cash & Carry',
+    'duration' => 'Duration',
+    'view_details' => 'View Details',
+    'preview_visit' => 'Preview Visit',
+    'date_range' => 'Date Range',
+    'select_date_range' => 'Select date range',
+    'edit_visit' => 'Edit Visit',
+    'transition_failed' => 'Status transition failed.',
+    'no_visits_found' => 'No visits found',
+    'no_visits_match_filters' => 'No visits match the selected filters.',
+];

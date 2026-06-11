@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'invoices' => 'Factures',
+    'counter_sale' => 'Vente au comptoir',
+    'new_invoice' => 'Nouvelle facture',
+    'total_invoices' => 'Total des factures',
+    'pending' => 'En attente',
+    'todays_revenue' => 'Revenus du jour',
+    'outstanding' => 'Impayé',
+    'search_placeholder' => 'Rechercher n° de facture, patient...',
+    'all_statuses' => 'Tous les statuts',
+    'billing_type' => 'Type de facturation',
+    'all_billing_types' => 'Tous les types de facturation',
+    'invoice_number_short' => 'Facture n°',
+    'paid' => 'Payé',
+    'external_referral' => 'Externe / référé',
+    'view_insurance_claim' => 'Voir la réclamation d\'assurance',
+    'generate_insurance_claim' => 'Générer une réclamation d\'assurance',
+    'cancel_invoice' => 'Annuler la facture',
+    'cancel_invoice_message' => 'Annuler la facture :number ?',
+    'cancel_invoice_details' => 'La facture sera annulée. Cette action est irréversible.',
+    'keep_invoice' => 'Conserver la facture',
+    'cancel_invoice_title' => 'Annuler cette facture ?',
+    'cancel_invoice_text' => 'La facture sera marquée comme annulée.',
+    'cancel_invoice_confirm' => 'Oui, annuler la facture',
+    'no_invoices_found' => 'Aucune facture trouvée.',
+];

@@ -4,6 +4,7 @@ return [
     'default' => [
         'pending' => 'En attente',
         'in_progress' => 'En cours',
+        'processing' => 'En traitement',
         'active' => 'Actif',
         'open' => 'Ouvert',
         'on_hold' => 'En suspens',

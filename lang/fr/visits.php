@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'title' => 'Visites / Consultations externes',
+    'queue_board' => 'Tableau de file d\'attente',
+    'new_visit' => 'Nouvelle visite',
+    'range_total' => 'Total de la période',
+    'outpatients' => 'Patients externes',
+    'inpatients' => 'Patients hospitalisés',
+    'emergency' => 'Urgences',
+    'waiting_consulting' => 'En attente / En consultation',
+    'completed_cancelled' => 'Terminées / Annulées',
+    'search_placeholder' => 'N° de visite, nom du patient, téléphone...',
+    'visit_type' => 'Type de visite',
+    'all_types' => 'Tous les types',
+    'active_insurance' => 'Assurance active',
+    'all_insurance' => 'Toutes les assurances',
+    'cash_and_carry' => 'Paiement comptant',
+    'duration' => 'Durée',
+    'view_details' => 'Voir les détails',
+    'preview_visit' => 'Aperçu de la visite',
+    'date_range' => 'Période',
+    'select_date_range' => 'Sélectionner une période',
+    'edit_visit' => 'Modifier la visite',
+    'transition_failed' => 'Le changement de statut a échoué.',
+    'no_visits_found' => 'Aucune visite trouvée',
+    'no_visits_match_filters' => 'Aucune visite ne correspond aux filtres sélectionnés.',
+];

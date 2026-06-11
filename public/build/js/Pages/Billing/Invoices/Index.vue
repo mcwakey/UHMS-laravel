@@ -13,8 +13,10 @@ import { reactive, watch } from 'vue';
 import { Link, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '../../../Layouts/AppLayout.vue';
 import { useConfirm } from '../../../Composables/useConfirm';
+import { useTrans } from '../../../composables/useTrans';
 
 const { confirm } = useConfirm();
+const { t } = useTrans();
 
 const props = defineProps({
     invoices: { type: Object, required: true },
@@ -56,12 +58,12 @@ watch(() => form.search, () => {
 async function cancelInvoice(invoice) {
     if (!invoice.urls.cancel) return;
     const ok = await confirm({
-        title: 'Cancel invoice',
-        message: `Cancel invoice ${invoice.invoice_number ?? ''}?`,
-        details: 'This will void the invoice. The action cannot be undone.',
+        title: t('billing.cancel_invoice'),
+        message: t('billing.cancel_invoice_message', { number: invoice.invoice_number ?? '' }),
+        details: t('billing.cancel_invoice_details'),
         variant: 'danger',
-        confirmLabel: 'Cancel invoice',
-        cancelLabel: 'Keep invoice',
+        confirmLabel: t('billing.cancel_invoice'),
+        cancelLabel: t('billing.keep_invoice'),
     });
     if (!ok) return;
     useForm({}).patch(invoice.urls.cancel, { preserveScroll: true });
@@ -86,15 +88,15 @@ function formatMoney(value) {
 </script>
 
 <template>
-    <AppLayout title="Invoices">
+    <AppLayout :title="t('billing.invoices')">
         <!-- Page Header -->
         <div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
             <div class="flex-grow-1">
-                <h4 class="fw-bold mb-0"><i class="ti ti-file-invoice me-2"></i>Invoices</h4>
+                <h4 class="fw-bold mb-0"><i class="ti ti-file-invoice me-2"></i>{{ t('billing.invoices') }}</h4>
             </div>
             <div class="d-flex gap-2">
                 <Link v-if="can.create" :href="routes.create" class="btn btn-primary btn-md">
-                    <i class="ti ti-plus me-1"></i>New Invoice
+                    <i class="ti ti-plus me-1"></i>{{ t('billing.new_invoice') }}
                 </Link>
             </div>
         </div>
@@ -110,7 +112,7 @@ function formatMoney(value) {
                             </div>
                             <div>
                                 <h3 class="fw-bold mb-0">{{ Number(stats.total_invoices || 0).toLocaleString() }}</h3>
-                                <p class="text-muted mb-0">Total Invoices</p>
+                                <p class="text-muted mb-0">{{ t('billing.total_invoices') }}</p>
                             </div>
                         </div>
                     </div>
@@ -125,7 +127,7 @@ function formatMoney(value) {
                             </div>
                             <div>
                                 <h3 class="fw-bold mb-0">{{ Number(stats.pending_invoices || 0).toLocaleString() }}</h3>
-                                <p class="text-muted mb-0">Pending</p>
+                                <p class="text-muted mb-0">{{ t('billing.pending') }}</p>
                             </div>
                         </div>
                     </div>
@@ -140,7 +142,7 @@ function formatMoney(value) {
                             </div>
                             <div>
                                 <h3 class="fw-bold mb-0">{{ formatMoney(stats.today_revenue) }}</h3>
-                                <p class="text-muted mb-0">Today's Revenue</p>
+                                <p class="text-muted mb-0">{{ t('billing.todays_revenue') }}</p>
                             </div>
                         </div>
                     </div>
@@ -155,7 +157,7 @@ function formatMoney(value) {
                             </div>
                             <div>
                                 <h3 class="fw-bold mb-0">{{ formatMoney(stats.outstanding_balance) }}</h3>
-                                <p class="text-muted mb-0">Outstanding</p>
+                                <p class="text-muted mb-0">{{ t('billing.outstanding') }}</p>
                             </div>
                         </div>
                     </div>
@@ -168,25 +170,25 @@ function formatMoney(value) {
             <div class="card-body py-2">
                 <form @submit.prevent="applyFilters" class="row g-2 align-items-end">
                     <div class="col-md-4">
-                        <label class="form-label small">Search</label>
-                        <input v-model="form.search" type="text" class="form-control form-control-sm" placeholder="Search invoice #, patient...">
+                        <label class="form-label small">{{ t('common.search') }}</label>
+                        <input v-model="form.search" type="text" class="form-control form-control-sm" :placeholder="t('billing.search_placeholder')">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label small">Status</label>
+                        <label class="form-label small">{{ t('common.status') }}</label>
                         <select v-model="form.status" class="form-select form-select-sm" @change="applyFilters">
-                            <option value="">All Statuses</option>
+                            <option value="">{{ t('billing.all_statuses') }}</option>
                             <option v-for="opt in statusOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label small">Billing Type</label>
+                        <label class="form-label small">{{ t('billing.billing_type') }}</label>
                         <select v-model="form.billing_type" class="form-select form-select-sm" @change="applyFilters">
-                            <option value="">All Billing Types</option>
+                            <option value="">{{ t('billing.all_billing_types') }}</option>
                             <option v-for="opt in billingTypeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
                         </select>
                     </div>
                     <div class="col-md-2 d-flex gap-1">
-                        <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-filter me-1"></i>Filter</button>
+                        <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-filter me-1"></i>{{ t('common.filter') }}</button>
                         <button type="button" class="btn btn-sm btn-outline-secondary" @click="clearFilters"><i class="ti ti-x"></i></button>
                     </div>
                 </form>
@@ -200,15 +202,15 @@ function formatMoney(value) {
                     <table class="table table-hover table-nowrap mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Invoice #</th>
-                                <th>Patient</th>
-                                <th>Billing Type</th>
-                                <th class="text-end">Total</th>
-                                <th class="text-end">Paid</th>
-                                <th class="text-end">Balance</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                                <th class="text-center">Actions</th>
+                                <th>{{ t('billing.invoice_number_short') }}</th>
+                                <th>{{ t('common.patient') }}</th>
+                                <th>{{ t('billing.billing_type') }}</th>
+                                <th class="text-end">{{ t('common.total') }}</th>
+                                <th class="text-end">{{ t('billing.paid') }}</th>
+                                <th class="text-end">{{ t('common.balance') }}</th>
+                                <th>{{ t('common.status') }}</th>
+                                <th>{{ t('common.date') }}</th>
+                                <th class="text-center">{{ t('common.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -244,22 +246,22 @@ function formatMoney(value) {
                                         <ul class="dropdown-menu dropdown-menu-end">
                                             <li>
                                                 <Link class="dropdown-item" :href="invoice.urls.show">
-                                                    <i class="ti ti-eye me-1"></i>View
+                                                    <i class="ti ti-eye me-1"></i>{{ t('common.view') }}
                                                 </Link>
                                             </li>
                                             <li v-if="invoice.urls.view_claim">
                                                 <Link class="dropdown-item" :href="invoice.urls.view_claim">
-                                                    <i class="ti ti-file-dollar me-1"></i>View Insurance Claim
+                                                    <i class="ti ti-file-dollar me-1"></i>{{ t('billing.view_insurance_claim') }}
                                                 </Link>
                                             </li>
                                             <li v-if="invoice.can_create_claim">
                                                 <button type="button" class="dropdown-item" @click="generateClaim(invoice)">
-                                                    <i class="ti ti-file-plus me-1"></i>Generate Insurance Claim
+                                                    <i class="ti ti-file-plus me-1"></i>{{ t('billing.generate_insurance_claim') }}
                                                 </button>
                                             </li>
                                             <li v-if="invoice.urls.cancel">
                                                 <button type="button" class="dropdown-item text-danger" @click="cancelInvoice(invoice)">
-                                                    <i class="ti ti-x me-1"></i>Cancel
+                                                    <i class="ti ti-x me-1"></i>{{ t('common.cancel') }}
                                                 </button>
                                             </li>
                                         </ul>
@@ -270,7 +272,7 @@ function formatMoney(value) {
                                 <td colspan="9" class="text-center py-4">
                                     <div class="text-muted">
                                         <i class="ti ti-file-invoice fs-1 d-block mb-2"></i>
-                                        No invoices found.
+                                        {{ t('billing.no_invoices_found') }}
                                     </div>
                                 </td>
                             </tr>

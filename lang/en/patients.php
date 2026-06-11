@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'title' => 'Patients',
+    'new_patient' => 'New Patient',
+    'new_visit' => 'New Visit',
+    'search_placeholder' => 'Search by name, phone, Ghana Card, insurance card, or emergency contact...',
+    'insurance_provider' => 'Insurance Provider',
+    'all_insurances' => 'All Insurances',
+    'all_status' => 'All Status',
+    'deceased' => 'Deceased',
+    'last_visit_range' => 'Last Visit Range',
+    'patient_id' => 'Patient ID',
+    'patient_name' => 'Patient Name',
+    'city' => 'City',
+    'insurance' => 'Insurance',
+    'last_visit' => 'Last Visit',
+    'merged' => 'Merged',
+    'view_profile' => 'View Profile',
+    'activate' => 'Activate',
+    'deactivate' => 'Deactivate',
+    'no_patients_found' => 'No patients found.',
+    'register_new_patient' => 'Register a new patient',
+    'merged_folder_no_visits' => 'Merged folder cannot receive new visits',
+];

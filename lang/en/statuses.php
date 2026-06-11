@@ -10,6 +10,7 @@ return [
     'default' => [
         'pending' => 'Pending',
         'in_progress' => 'In Progress',
+        'processing' => 'Processing',
         'active' => 'Active',
         'open' => 'Open',
         'on_hold' => 'On Hold',

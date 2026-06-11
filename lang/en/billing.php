@@ -1,0 +1,28 @@
+<?php
+
+return [
+    'invoices' => 'Invoices',
+    'counter_sale' => 'Counter Sale',
+    'new_invoice' => 'New Invoice',
+    'total_invoices' => 'Total Invoices',
+    'pending' => 'Pending',
+    'todays_revenue' => "Today's Revenue",
+    'outstanding' => 'Outstanding',
+    'search_placeholder' => 'Search invoice #, patient...',
+    'all_statuses' => 'All Statuses',
+    'billing_type' => 'Billing Type',
+    'all_billing_types' => 'All Billing Types',
+    'invoice_number_short' => 'Invoice #',
+    'paid' => 'Paid',
+    'external_referral' => 'External / referral',
+    'view_insurance_claim' => 'View Insurance Claim',
+    'generate_insurance_claim' => 'Generate Insurance Claim',
+    'cancel_invoice' => 'Cancel invoice',
+    'cancel_invoice_message' => 'Cancel invoice :number?',
+    'cancel_invoice_details' => 'This will void the invoice. The action cannot be undone.',
+    'keep_invoice' => 'Keep invoice',
+    'cancel_invoice_title' => 'Cancel this invoice?',
+    'cancel_invoice_text' => 'The invoice will be marked cancelled.',
+    'cancel_invoice_confirm' => 'Yes, cancel invoice',
+    'no_invoices_found' => 'No invoices found.',
+];

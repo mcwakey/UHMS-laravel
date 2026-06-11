@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'investigation_requests' => 'Demandes d\'examens',
+    'pending' => 'En attente',
+    'processing' => 'En cours',
+    'completed_today' => 'Terminées aujourd\'hui',
+    'active_tests' => 'Tests actifs',
+    'search_placeholder' => 'Rechercher patient, n° de demande...',
+    'all_status' => 'Tous les statuts',
+    'completed' => 'Terminée',
+    'cancelled' => 'Annulée',
+    'all_departments' => 'Tous les services',
+    'urgency' => 'Urgence',
+    'all_urgency' => 'Toutes les urgences',
+    'routine' => 'Routine',
+    'urgent' => 'Urgent',
+    'emergency' => 'Urgence vitale',
+    'request_number_short' => 'Demande n°',
+    'progress' => 'Progression',
+    'walk_in' => 'Sans rendez-vous',
+    'bill' => 'Facturer',
+    'results' => 'Résultats',
+    'no_requests_found' => 'Aucune demande d\'examen trouvée.',
+];

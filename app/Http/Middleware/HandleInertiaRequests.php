@@ -53,6 +53,29 @@ class HandleInertiaRequests extends Middleware
             ],
             'csrf_token' => fn () => csrf_token(),
 
+            // Locale + translation groups for Vue pages (used by the
+            // useTrans() composable). Skipped on partial reloads — the
+            // client keeps the copy from the initial page load.
+            'i18n' => function () use ($request) {
+                if ($request->header('X-Inertia-Partial-Data')) {
+                    return null;
+                }
+
+                return [
+                    'locale' => app()->getLocale(),
+                    'translations' => [
+                        'common' => __('common'),
+                        'dashboards' => __('dashboards'),
+                        'patients' => __('patients'),
+                        'visits' => __('visits'),
+                        'billing' => __('billing'),
+                        'pharmacy' => __('pharmacy'),
+                        'lab' => __('lab'),
+                        'statuses' => __('statuses'),
+                    ],
+                ];
+            },
+
             // Notifications: light header for the topbar dropdown / SPA layouts.
             // Lazy-evaluated so requests for guests or partial reloads stay cheap.
             'notifications' => function () use ($request) {

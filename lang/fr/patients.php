@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'title' => 'Patients',
+    'new_patient' => 'Nouveau patient',
+    'new_visit' => 'Nouvelle visite',
+    'search_placeholder' => 'Rechercher par nom, téléphone, carte Ghana, carte d\'assurance ou contact d\'urgence...',
+    'insurance_provider' => 'Assureur',
+    'all_insurances' => 'Toutes les assurances',
+    'all_status' => 'Tous les statuts',
+    'deceased' => 'Décédé',
+    'last_visit_range' => 'Période de dernière visite',
+    'patient_id' => 'ID patient',
+    'patient_name' => 'Nom du patient',
+    'city' => 'Ville',
+    'insurance' => 'Assurance',
+    'last_visit' => 'Dernière visite',
+    'merged' => 'Fusionné',
+    'view_profile' => 'Voir le profil',
+    'activate' => 'Activer',
+    'deactivate' => 'Désactiver',
+    'no_patients_found' => 'Aucun patient trouvé.',
+    'register_new_patient' => 'Enregistrer un nouveau patient',
+    'merged_folder_no_visits' => 'Un dossier fusionné ne peut pas recevoir de nouvelles visites',
+];

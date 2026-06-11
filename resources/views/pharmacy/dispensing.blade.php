@@ -1,16 +1,16 @@
 @extends('layouts.app')
-@section('title', 'Dispensing Queue')
+@section('title', __('pharmacy.dispensing_queue'))
 
 @section('content')
-<x-page-header title="Dispensing Queue" icon="ti-pill">
+<x-page-header :title="__('pharmacy.dispensing_queue')" icon="ti-pill">
     <x-slot:actions>
         @can('invoices.create')
         <a href="{{ route('admin.billing.counter-sale.create') }}" class="btn btn-primary btn-md">
-            <i class="ti ti-cash-register me-1"></i>Counter Sale
+            <i class="ti ti-cash-register me-1"></i>{{ __('pharmacy.counter_sale') }}
         </a>
         @endcan
         <a href="{{ route('admin.pharmacy.history') }}" class="btn btn-outline-secondary btn-md">
-            <i class="ti ti-history me-1"></i>Dispensing History
+            <i class="ti ti-history me-1"></i>{{ __('pharmacy.dispensing_history') }}
         </a>
     </x-slot:actions>
 </x-page-header>
@@ -21,7 +21,7 @@
         <div class="card border-warning">
             <div class="card-body py-3 text-center">
                 <h3 class="mb-0 text-warning">{{ $stats['pending_prescriptions'] }}</h3>
-                <small class="text-muted">Pending</small>
+                <small class="text-muted">{{ __('pharmacy.pending') }}</small>
             </div>
         </div>
     </div>
@@ -29,7 +29,7 @@
         <div class="card border-info">
             <div class="card-body py-3 text-center">
                 <h3 class="mb-0 text-info">{{ $stats['partially_dispensed'] }}</h3>
-                <small class="text-muted">Partial</small>
+                <small class="text-muted">{{ __('pharmacy.partial') }}</small>
             </div>
         </div>
     </div>
@@ -37,7 +37,7 @@
         <div class="card border-success">
             <div class="card-body py-3 text-center">
                 <h3 class="mb-0 text-success">{{ $stats['dispensed_today'] }}</h3>
-                <small class="text-muted">Dispensed Today</small>
+                <small class="text-muted">{{ __('pharmacy.dispensed_today') }}</small>
             </div>
         </div>
     </div>
@@ -45,7 +45,7 @@
         <div class="card border-danger">
             <div class="card-body py-3 text-center">
                 <h3 class="mb-0 text-danger">{{ $stats['low_stock_count'] }}</h3>
-                <small class="text-muted">Low Stock</small>
+                <small class="text-muted">{{ __('pharmacy.low_stock') }}</small>
             </div>
         </div>
     </div>
@@ -53,7 +53,7 @@
         <div class="card border-orange">
             <div class="card-body py-3 text-center">
                 <h3 class="mb-0 text-warning">{{ $stats['expiring_soon_count'] }}</h3>
-                <small class="text-muted">Expiring Soon</small>
+                <small class="text-muted">{{ __('pharmacy.expiring_soon') }}</small>
             </div>
         </div>
     </div>
@@ -61,7 +61,7 @@
         <div class="card border-primary">
             <div class="card-body py-3 text-center">
                 <h3 class="mb-0 text-primary">{{ $stats['total_drugs'] }}</h3>
-                <small class="text-muted">Active Drugs</small>
+                <small class="text-muted">{{ __('pharmacy.active_drugs') }}</small>
             </div>
         </div>
     </div>
@@ -72,11 +72,11 @@
     <div class="card-body py-2">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-md-4">
-                <input type="text" name="search" class="form-control" placeholder="Search patient, Rx #..." value="{{ request('search') }}">
+                <input type="text" name="search" class="form-control" placeholder="{{ __('pharmacy.search_placeholder') }}" value="{{ request('search') }}">
             </div>
             <div class="col-auto">
-                <button type="submit" class="btn btn-primary btn-md"><i class="ti ti-search me-1"></i>Search</button>
-                <a href="{{ route('admin.pharmacy.dispensing.index') }}" class="btn btn-outline-secondary btn-md">Clear</a>
+                <button type="submit" class="btn btn-primary btn-md"><i class="ti ti-search me-1"></i>{{ __('common.search') }}</button>
+                <a href="{{ route('admin.pharmacy.dispensing.index') }}" class="btn btn-outline-secondary btn-md">{{ __('common.clear') }}</a>
             </div>
         </form>
     </div>
@@ -89,13 +89,13 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Rx #</th>
-                        <th>Patient</th>
-                        <th>Doctor</th>
-                        <th>Items</th>
-                        <th>Status</th>
-                        <th>Date</th>
-                        <th class="text-end">Actions</th>
+                        <th>{{ __('pharmacy.rx_number_short') }}</th>
+                        <th>{{ __('common.patient') }}</th>
+                        <th>{{ __('common.doctor') }}</th>
+                        <th>{{ __('pharmacy.items') }}</th>
+                        <th>{{ __('common.status') }}</th>
+                        <th>{{ __('common.date') }}</th>
+                        <th class="text-end">{{ __('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -112,31 +112,31 @@
                         </td>
                         <td>{{ $rx->doctor->name ?? '-' }}</td>
                         <td>
-                            <span class="badge bg-soft-primary">{{ $rx->items->count() }} item(s)</span>
+                            <span class="badge bg-soft-primary">{{ __('pharmacy.items_count', ['count' => $rx->items->count()]) }}</span>
                             @php
                                 $dispensed = $rx->items->where('is_dispensed', true)->count();
                             @endphp
                             @if($dispensed > 0)
-                                <span class="badge bg-soft-success">{{ $dispensed }} dispensed</span>
+                                <span class="badge bg-soft-success">{{ __('pharmacy.dispensed_count', ['count' => $dispensed]) }}</span>
                             @endif
                         </td>
                         <td>
                             <x-status-badge :status="$rx->status" />
                         </td>
                         <td>
-                            <small>{{ $rx->created_at->format('d M Y') }}</small><br>
+                            <small>{{ $rx->created_at->translatedFormat('d M Y') }}</small><br>
                             <small class="text-muted">{{ $rx->created_at->format('H:i') }}</small>
                         </td>
                         <td class="text-end">
                             <a href="{{ route('admin.pharmacy.dispensing.show', $rx) }}" class="btn btn-sm btn-primary">
-                                <i class="ti ti-pill me-1"></i>Dispense
+                                <i class="ti ti-pill me-1"></i>{{ __('pharmacy.dispense') }}
                             </a>
                         </td>
                     </tr>
                     @empty
                     <tr>
                         <td colspan="7">
-                            <x-empty-state icon="ti-pill" title="Nothing to dispense" message="No pending prescriptions to dispense." />
+                            <x-empty-state icon="ti-pill" :title="__('pharmacy.nothing_to_dispense')" :message="__('pharmacy.no_pending_prescriptions')" />
                         </td>
                     </tr>
                     @endforelse

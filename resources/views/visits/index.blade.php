@@ -1,17 +1,17 @@
 @extends('layouts.app')
-@section('title', 'Visits / OPD')
+@section('title', __('visits.title'))
 
 @section('content')
-<x-page-header title="Visits / OPD" icon="ti-stethoscope">
+<x-page-header :title="__('visits.title')" icon="ti-stethoscope">
     <x-slot:actions>
         @can('queue.view')
         <a href="{{ route('admin.queue.board') }}" class="btn btn-outline-info btn-md">
-            <i class="ti ti-list-numbers me-1"></i>Queue Board
+            <i class="ti ti-list-numbers me-1"></i>{{ __('visits.queue_board') }}
         </a>
         @endcan
         @can('visits.create')
         <a href="{{ route('admin.visits.create') }}" class="btn btn-primary btn-md">
-            <i class="ti ti-plus me-1"></i>New Visit
+            <i class="ti ti-plus me-1"></i>{{ __('visits.new_visit') }}
         </a>
         @endcan
     </x-slot:actions>
@@ -22,7 +22,7 @@
     <div class="col-xl-2 col-md-4 col-6">
         <div class="card border-start border-primary border-3">
             <div class="card-body py-3 px-3">
-                <p class="text-muted mb-1 small">Range Total</p>
+                <p class="text-muted mb-1 small">{{ __('visits.range_total') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['total'] }}</h4>
             </div>
         </div>
@@ -30,7 +30,7 @@
     <div class="col-xl-2 col-md-4 col-6">
         <div class="card border-start border-secondary border-3">
             <div class="card-body py-3 px-3">
-                <p class="text-muted mb-1 small">Outpatients</p>
+                <p class="text-muted mb-1 small">{{ __('visits.outpatients') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['outpatient'] ?? 0 }}</h4>
             </div>
         </div>
@@ -38,7 +38,7 @@
     <div class="col-xl-2 col-md-4 col-6">
         <div class="card border-start border-info border-3">
             <div class="card-body py-3 px-3">
-                <p class="text-muted mb-1 small">Inpatients</p>
+                <p class="text-muted mb-1 small">{{ __('visits.inpatients') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['inpatient'] ?? 0 }}</h4>
             </div>
         </div>
@@ -46,7 +46,7 @@
     <div class="col-xl-2 col-md-4 col-6">
         <div class="card border-start border-danger border-3">
             <div class="card-body py-3 px-3">
-                <p class="text-muted mb-1 small">Emergency</p>
+                <p class="text-muted mb-1 small">{{ __('visits.emergency') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['emergency'] }}</h4>
             </div>
         </div>
@@ -54,7 +54,7 @@
     <div class="col-xl-2 col-md-4 col-6">
         <div class="card border-start border-warning border-3">
             <div class="card-body py-3 px-3">
-                <p class="text-muted mb-1 small">Waiting / Consulting</p>
+                <p class="text-muted mb-1 small">{{ __('visits.waiting_consulting') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['waiting_consulting'] ?? 0 }}</h4>
             </div>
         </div>
@@ -62,7 +62,7 @@
     <div class="col-xl-2 col-md-4 col-6">
         <div class="card border-start border-success border-3">
             <div class="card-body py-3 px-3">
-                <p class="text-muted mb-1 small">Completed / Cancelled</p>
+                <p class="text-muted mb-1 small">{{ __('visits.completed_cancelled') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['completed_cancelled'] ?? 0 }}</h4>
             </div>
         </div>
@@ -75,24 +75,24 @@
         <form method="GET" action="{{ route('admin.visits.index') }}">
             <div class="row g-3 align-items-end">
                 <div class="col-md-3">
-                    <label class="form-label">Search</label>
-                    <input type="text" name="search" class="form-control" placeholder="Visit #, patient name, phone..." value="{{ $filters['search'] ?? '' }}">
+                    <label class="form-label">{{ __('common.search') }}</label>
+                    <input type="text" name="search" class="form-control" placeholder="{{ __('visits.search_placeholder') }}" value="{{ $filters['search'] ?? '' }}">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">Visit Type</label>
+                    <label class="form-label">{{ __('visits.visit_type') }}</label>
                     <select name="visit_type" class="form-select">
-                        <option value="">All Types</option>
+                        <option value="">{{ __('visits.all_types') }}</option>
                         @foreach(\App\Enums\VisitType::cases() as $type)
                             <option value="{{ $type->value }}" {{ ($filters['visit_type'] ?? '') == $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Active Insurance</label>
+                    <label class="form-label">{{ __('visits.active_insurance') }}</label>
                     <select name="insurance_provider_id" class="form-select">
-                        <option value="">All Insurance</option>
+                        <option value="">{{ __('visits.all_insurance') }}</option>
                         @php
-                            $legacyInsuranceOptions = collect($insuranceProviderOptions ?? [['value' => 'cash', 'label' => 'Cash & Carry']]);
+                            $legacyInsuranceOptions = collect($insuranceProviderOptions ?? [['value' => 'cash', 'label' => __('visits.cash_and_carry')]]);
                         @endphp
                         @foreach($legacyInsuranceOptions as $provider)
                             <option value="{{ $provider['value'] }}" {{ (string) ($filters['insurance_provider_id'] ?? '') === (string) $provider['value'] ? 'selected' : '' }}>
@@ -109,7 +109,7 @@
                 </div>
                 <div class="col-md-auto">
                     <div class="d-flex gap-1">
-                        <button aria-label="Filter" title="Filter" type="submit" class="btn btn-primary"><i class="ti ti-filter"></i> Filter</button>
+                        <button aria-label="{{ __('common.filter') }}" title="{{ __('common.filter') }}" type="submit" class="btn btn-primary"><i class="ti ti-filter"></i> {{ __('common.filter') }}</button>
                         <a aria-label="Close" title="Close" href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary"><i class="ti ti-x"></i></a>
                     </div>
                 </div>
@@ -125,17 +125,17 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Visit #</th>
-                        <th>Patient</th>
-                        <th>Active Insurance</th>
-                        <th>Age</th>
-                        <th>Type</th>
-                        <th>Priority</th>
-                        <th>Doctor</th>
-                        <th>Status</th>
-                        <th>Date</th>
-                        <th>Duration</th>
-                        <th class="text-end">Actions</th>
+                        <th>{{ __('common.visit_number_short') }}</th>
+                        <th>{{ __('common.patient') }}</th>
+                        <th>{{ __('visits.active_insurance') }}</th>
+                        <th>{{ __('common.age') }}</th>
+                        <th>{{ __('common.type') }}</th>
+                        <th>{{ __('common.priority') }}</th>
+                        <th>{{ __('common.doctor') }}</th>
+                        <th>{{ __('common.status') }}</th>
+                        <th>{{ __('common.date') }}</th>
+                        <th>{{ __('visits.duration') }}</th>
+                        <th class="text-end">{{ __('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -163,7 +163,7 @@
                                     && ! $provider->is_default;
                             @endphp
                             <span class="badge bg-{{ $hasInsurance ? ($provider->type?->color() ?? 'info') : 'secondary' }}">
-                                <i class="ti ti-{{ $hasInsurance ? 'shield-check' : 'cash' }} me-1"></i>{{ $hasInsurance ? $provider->name : ($provider?->name ?? 'Cash & Carry') }}
+                                <i class="ti ti-{{ $hasInsurance ? 'shield-check' : 'cash' }} me-1"></i>{{ $hasInsurance ? $provider->name : ($provider?->name ?? __('visits.cash_and_carry')) }}
                             </span>
                             @if($hasInsurance && $visitInsurance->insuranceTier?->name)
                                 <small class="text-muted d-block mt-1">{{ $visitInsurance->insuranceTier->name }}</small>
@@ -185,7 +185,7 @@
                         <td>
                             <x-status-badge :status="$visit->status" />
                         </td>
-                        <td>{{ $visit->visit_date->format('d M Y') }}</td>
+                        <td>{{ $visit->visit_date->translatedFormat('d M Y') }}</td>
                         <td>{{ $visit->duration ?? '—' }}</td>
                         <td class="text-end">
                             <div class="dropdown">
@@ -193,9 +193,9 @@
                                     <i class="ti ti-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="{{ route('admin.visits.show', $visit) }}"><i class="ti ti-eye me-2"></i>View Details</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('admin.visits.show', $visit) }}"><i class="ti ti-eye me-2"></i>{{ __('visits.view_details') }}</a></li>
                                     @can('visits.preview')
-                                    <li><a class="dropdown-item" href="{{ route('admin.visits.preview', $visit) }}"><i class="ti ti-eye-search me-2"></i>Preview Visit</a></li>
+                                    <li><a class="dropdown-item" href="{{ route('admin.visits.preview', $visit) }}"><i class="ti ti-eye-search me-2"></i>{{ __('visits.preview_visit') }}</a></li>
                                     @endcan
                                     {{-- @can('visits.edit')
                                     <li><a class="dropdown-item" href="{{ route('admin.visits.edit', $visit) }}"><i class="ti ti-pencil me-2"></i>Edit Visit</a></li>
@@ -222,7 +222,7 @@
                     @empty
                     <tr>
                         <td colspan="11">
-                            <x-empty-state icon="ti-calendar-off" title="No visits found" message="No visits match the selected filters." />
+                            <x-empty-state icon="ti-calendar-off" :title="__('visits.no_visits_found')" :message="__('visits.no_visits_match_filters')" />
                         </td>
                     </tr>
                     @endforelse

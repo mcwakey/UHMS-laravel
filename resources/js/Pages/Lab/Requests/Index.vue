@@ -5,6 +5,7 @@
 import { reactive, watch } from 'vue';
 import { Link, router } from '@inertiajs/vue3';
 import AppLayout from '../../../Layouts/AppLayout.vue';
+import { useTrans } from '../../../composables/useTrans';
 
 const props = defineProps({
     requests: { type: Object, required: true },
@@ -13,6 +14,8 @@ const props = defineProps({
     filters: { type: Object, default: () => ({}) },
     routes: { type: Object, default: () => ({}) },
 });
+
+const { t } = useTrans();
 
 const form = reactive({
     search: props.filters.search ?? '',
@@ -39,10 +42,10 @@ watch(() => form.search, () => {
 </script>
 
 <template>
-    <AppLayout title="Investigation Requests">
+    <AppLayout :title="t('lab.investigation_requests')">
         <div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
             <div class="flex-grow-1">
-                <h4 class="fw-bold mb-0"><i class="ti ti-microscope me-2"></i>Investigation Requests</h4>
+                <h4 class="fw-bold mb-0"><i class="ti ti-microscope me-2"></i>{{ t('lab.investigation_requests') }}</h4>
             </div>
         </div>
 
@@ -51,25 +54,25 @@ watch(() => form.search, () => {
             <div class="col-md-3">
                 <div class="card border-warning"><div class="card-body py-3 text-center">
                     <h3 class="mb-0 text-warning">{{ stats.pending }}</h3>
-                    <small class="text-muted">Pending</small>
+                    <small class="text-muted">{{ t('lab.pending') }}</small>
                 </div></div>
             </div>
             <div class="col-md-3">
                 <div class="card border-info"><div class="card-body py-3 text-center">
                     <h3 class="mb-0 text-info">{{ stats.processing }}</h3>
-                    <small class="text-muted">Processing</small>
+                    <small class="text-muted">{{ t('lab.processing') }}</small>
                 </div></div>
             </div>
             <div class="col-md-3">
                 <div class="card border-success"><div class="card-body py-3 text-center">
                     <h3 class="mb-0 text-success">{{ stats.completed_today }}</h3>
-                    <small class="text-muted">Completed Today</small>
+                    <small class="text-muted">{{ t('lab.completed_today') }}</small>
                 </div></div>
             </div>
             <div class="col-md-3">
                 <div class="card border-primary"><div class="card-body py-3 text-center">
                     <h3 class="mb-0 text-primary">{{ stats.total_tests }}</h3>
-                    <small class="text-muted">Active Tests</small>
+                    <small class="text-muted">{{ t('lab.active_tests') }}</small>
                 </div></div>
             </div>
         </div>
@@ -79,47 +82,47 @@ watch(() => form.search, () => {
             <div class="card-body py-2">
                 <form @submit.prevent="applyFilters" class="row g-2 align-items-end">
                     <div class="col-md-3">
-                        <label class="form-label small">Search</label>
-                        <input v-model="form.search" type="text" class="form-control" placeholder="Search patient, request #...">
+                        <label class="form-label small">{{ t('common.search') }}</label>
+                        <input v-model="form.search" type="text" class="form-control" :placeholder="t('lab.search_placeholder')">
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label small">Status</label>
+                        <label class="form-label small">{{ t('common.status') }}</label>
                         <select v-model="form.status" class="form-select" @change="applyFilters">
-                            <option value="">All Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="processing">Processing</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
+                            <option value="">{{ t('lab.all_status') }}</option>
+                            <option value="pending">{{ t('lab.pending') }}</option>
+                            <option value="processing">{{ t('lab.processing') }}</option>
+                            <option value="completed">{{ t('lab.completed') }}</option>
+                            <option value="cancelled">{{ t('lab.cancelled') }}</option>
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label small">Department</label>
+                        <label class="form-label small">{{ t('common.department') }}</label>
                         <select v-model="form.department_id" class="form-select" @change="applyFilters">
-                            <option value="">All Departments</option>
+                            <option value="">{{ t('lab.all_departments') }}</option>
                             <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.name }}</option>
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label small">Urgency</label>
+                        <label class="form-label small">{{ t('lab.urgency') }}</label>
                         <select v-model="form.urgency" class="form-select" @change="applyFilters">
-                            <option value="">All Urgency</option>
-                            <option value="routine">Routine</option>
-                            <option value="urgent">Urgent</option>
-                            <option value="emergency">Emergency</option>
+                            <option value="">{{ t('lab.all_urgency') }}</option>
+                            <option value="routine">{{ t('lab.routine') }}</option>
+                            <option value="urgent">{{ t('lab.urgent') }}</option>
+                            <option value="emergency">{{ t('lab.emergency') }}</option>
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label small">From</label>
+                        <label class="form-label small">{{ t('common.from') }}</label>
                         <input v-model="form.date_from" type="date" class="form-control" @change="applyFilters">
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label small">To</label>
+                        <label class="form-label small">{{ t('common.to') }}</label>
                         <input v-model="form.date_to" type="date" class="form-control" @change="applyFilters">
                     </div>
                     <div class="col-auto">
-                        <button type="submit" class="btn btn-primary btn-md"><i class="ti ti-search me-1"></i>Filter</button>
+                        <button type="submit" class="btn btn-primary btn-md"><i class="ti ti-search me-1"></i>{{ t('common.filter') }}</button>
                         <button type="button" class="btn btn-outline-secondary btn-md" @click="clearFilters">
-                            <i class="ti ti-x me-1"></i>Clear
+                            <i class="ti ti-x me-1"></i>{{ t('common.clear') }}
                         </button>
                     </div>
                 </form>
@@ -133,15 +136,15 @@ watch(() => form.search, () => {
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Request #</th>
-                                <th>Patient</th>
-                                <th>Department</th>
-                                <th>Type</th>
-                                <th>Urgency</th>
-                                <th>Status</th>
-                                <th>Progress</th>
-                                <th>Date</th>
-                                <th class="text-end">Actions</th>
+                                <th>{{ t('lab.request_number_short') }}</th>
+                                <th>{{ t('common.patient') }}</th>
+                                <th>{{ t('common.department') }}</th>
+                                <th>{{ t('common.type') }}</th>
+                                <th>{{ t('lab.urgency') }}</th>
+                                <th>{{ t('common.status') }}</th>
+                                <th>{{ t('lab.progress') }}</th>
+                                <th>{{ t('common.date') }}</th>
+                                <th class="text-end">{{ t('common.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -186,21 +189,21 @@ watch(() => form.search, () => {
                                         :href="req.urls.show"
                                         class="btn btn-sm btn-outline-primary"
                                     >
-                                        <i class="ti ti-receipt me-1"></i>Bill
+                                        <i class="ti ti-receipt me-1"></i>{{ t('lab.bill') }}
                                     </Link>
                                     <Link
                                         v-else
                                         :href="req.urls.results"
                                         class="btn btn-sm btn-outline-success"
                                     >
-                                        <i class="ti ti-report-medical me-1"></i>Results
+                                        <i class="ti ti-report-medical me-1"></i>{{ t('lab.results') }}
                                     </Link>
                                 </td>
                             </tr>
                             <tr v-if="!requests.data.length">
                                 <td colspan="9" class="text-center text-muted py-4">
                                     <i class="ti ti-microscope fs-1 d-block mb-2"></i>
-                                    No investigation requests found.
+                                    {{ t('lab.no_requests_found') }}
                                 </td>
                             </tr>
                         </tbody>

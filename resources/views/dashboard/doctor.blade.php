@@ -1,12 +1,12 @@
 @extends('layouts.app')
-@section('title', 'Doctor Dashboard')
+@section('title', __('dashboards.doctor_dashboard'))
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
     <div>
-        <h4 class="fw-bold mb-0">Doctor Dashboard</h4>
-        <p class="text-muted mb-0">Welcome back, {{ auth()->user()->full_name }}</p>
+        <h4 class="fw-bold mb-0">{{ __('dashboards.doctor_dashboard') }}</h4>
+        <p class="text-muted mb-0">{{ __('dashboards.welcome', ['name' => auth()->user()->full_name]) }}</p>
     </div>
 </div>
 
@@ -15,7 +15,7 @@
     <div class="col-xl-2 col-md-4 col-6">
         <div class="card border-start border-primary border-3">
             <div class="card-body py-3 px-3">
-                <p class="text-muted mb-1 small">Today's Patients</p>
+                <p class="text-muted mb-1 small">{{ __('dashboards.todays_patients') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['total_today'] ?? 0 }}</h4>
             </div>
         </div>
@@ -23,7 +23,7 @@
     <div class="col-xl-2 col-md-4 col-6">
         <div class="card border-start border-warning border-3">
             <div class="card-body py-3 px-3">
-                <p class="text-muted mb-1 small">Waiting</p>
+                <p class="text-muted mb-1 small">{{ __('dashboards.kpi.waiting') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['waiting'] ?? 0 }}</h4>
             </div>
         </div>
@@ -31,7 +31,7 @@
     <div class="col-xl-2 col-md-4 col-6">
         <div class="card border-start border-info border-3">
             <div class="card-body py-3 px-3">
-                <p class="text-muted mb-1 small">Consulting</p>
+                <p class="text-muted mb-1 small">{{ __('dashboards.consulting') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['consulting'] ?? 0 }}</h4>
             </div>
         </div>
@@ -39,7 +39,7 @@
     <div class="col-xl-2 col-md-4 col-6">
         <div class="card border-start border-success border-3">
             <div class="card-body py-3 px-3">
-                <p class="text-muted mb-1 small">Completed</p>
+                <p class="text-muted mb-1 small">{{ __('dashboards.completed') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['completed_today'] ?? 0 }}</h4>
             </div>
         </div>
@@ -47,7 +47,7 @@
     <div class="col-xl-2 col-md-4 col-6">
         <div class="card border-start border-danger border-3">
             <div class="card-body py-3 px-3">
-                <p class="text-muted mb-1 small">Pending Lab</p>
+                <p class="text-muted mb-1 small">{{ __('dashboards.pending_lab') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['pending_lab'] ?? 0 }}</h4>
             </div>
         </div>
@@ -55,7 +55,7 @@
     <div class="col-xl-2 col-md-4 col-6">
         <div class="card border-start border-secondary border-3">
             <div class="card-body py-3 px-3">
-                <p class="text-muted mb-1 small">Pending Rx</p>
+                <p class="text-muted mb-1 small">{{ __('dashboards.pending_rx') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['pending_prescriptions'] ?? 0 }}</h4>
             </div>
         </div>
@@ -67,21 +67,21 @@
     <div class="col-lg-8">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <h5 class="card-title mb-0">Today's Patient Queue</h5>
-                <span class="badge bg-primary">{{ $stats['total_today'] ?? 0 }} patients</span>
+                <h5 class="card-title mb-0">{{ __('dashboards.todays_patient_queue') }}</h5>
+                <span class="badge bg-primary">{{ __('dashboards.patients_count', ['count' => $stats['total_today'] ?? 0]) }}</span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Visit #</th>
-                                <th>Patient</th>
-                                <th>Type</th>
-                                <th>Priority</th>
-                                <th>Department</th>
-                                <th>Status</th>
-                                <th>Action</th>
+                                <th>{{ __('common.visit_number_short') }}</th>
+                                <th>{{ __('common.patient') }}</th>
+                                <th>{{ __('common.type') }}</th>
+                                <th>{{ __('common.priority') }}</th>
+                                <th>{{ __('common.department') }}</th>
+                                <th>{{ __('common.status') }}</th>
+                                <th>{{ __('common.action') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -105,11 +105,11 @@
                                 <td>
                                     @if($visit->status->value === 'waiting' || $visit->status->value === 'consulting')
                                         <a href="{{ route('doctor.consultation.show', $visit) }}" class="btn btn-sm btn-primary">
-                                            <i class="ti ti-stethoscope me-1"></i>Consult
+                                            <i class="ti ti-stethoscope me-1"></i>{{ __('dashboards.consult') }}
                                         </a>
                                     @elseif($visit->status->value === 'completed')
                                         <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-sm btn-outline-secondary">
-                                            <i class="ti ti-eye me-1"></i>View
+                                            <i class="ti ti-eye me-1"></i>{{ __('common.view') }}
                                         </a>
                                     @endif
                                 </td>
@@ -118,7 +118,7 @@
                             <tr>
                                 <td colspan="7" class="text-center text-muted py-4">
                                     <i class="ti ti-mood-happy fs-1 d-block mb-2"></i>
-                                    No patients assigned yet today
+                                    {{ __('dashboards.no_patients_assigned') }}
                                 </td>
                             </tr>
                             @endforelse
@@ -133,28 +133,28 @@
         <!-- Upcoming This Week -->
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">Upcoming This Week</h5>
+                <h5 class="card-title mb-0">{{ __('dashboards.upcoming_this_week') }}</h5>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Date</th>
-                                <th>Patient</th>
-                                <th>Type</th>
+                                <th>{{ __('common.date') }}</th>
+                                <th>{{ __('common.patient') }}</th>
+                                <th>{{ __('common.type') }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($upcomingVisits as $visit)
                             <tr>
-                                <td>{{ $visit->visit_date->format('D, d M') }}</td>
+                                <td>{{ $visit->visit_date->translatedFormat('D, d M') }}</td>
                                 <td>{{ $visit->patient->full_name }}</td>
                                 <td><span class="badge bg-light text-dark">{{ $visit->visit_type->label() }}</span></td>
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3"><x-empty-state message="No upcoming visits" /></td>
+                                <td colspan="3"><x-empty-state :message="__('dashboards.no_upcoming_visits')" /></td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -166,16 +166,16 @@
         <!-- Recent Completed -->
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">Recently Completed</h5>
+                <h5 class="card-title mb-0">{{ __('dashboards.recently_completed') }}</h5>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Patient</th>
-                                <th>Department</th>
-                                <th>Date</th>
+                                <th>{{ __('common.patient') }}</th>
+                                <th>{{ __('common.department') }}</th>
+                                <th>{{ __('common.date') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -191,7 +191,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="3"><x-empty-state message="No completed visits" /></td>
+                                <td colspan="3"><x-empty-state :message="__('dashboards.no_completed_visits')" /></td>
                             </tr>
                             @endforelse
                         </tbody>

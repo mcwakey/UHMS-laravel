@@ -16,6 +16,7 @@
 import { onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { Link, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '../../Layouts/AppLayout.vue';
+import { useTrans } from '../../composables/useTrans';
 
 const props = defineProps({
     visits: { type: Object, required: true }, // Laravel paginator shape
@@ -28,6 +29,8 @@ const props = defineProps({
     can: { type: Object, default: () => ({}) },
 });
 
+const { t } = useTrans();
+
 // Local reactive copy of the filter values (two-way bound to inputs).
 const form = reactive({
     search: props.filters.search ?? '',
@@ -36,7 +39,7 @@ const form = reactive({
     date_range: props.filters.date_range ?? '',
 });
 const dateRangePicker = ref(null);
-const dateRangeLabel = ref('Select date range');
+const dateRangeLabel = ref(t('visits.select_date_range'));
 
 function applyFilters() {
     router.get(props.routes.index, form, {
@@ -133,7 +136,7 @@ function initDateRangePicker() {
 
     $picker.on('cancel.daterangepicker', () => {
         form.date_range = '';
-        dateRangeLabel.value = 'Select date range';
+        dateRangeLabel.value = t('visits.select_date_range');
         applyFilters();
     });
 }
@@ -178,7 +181,7 @@ function transitionVisit(visitId, nextStatusValue) {
         preserveScroll: true,
         onError: () => {
             if (window.UhmsInertia?.toast) {
-                window.UhmsInertia.toast('Status transition failed.', 'danger');
+                window.UhmsInertia.toast(t('visits.transition_failed'), 'danger');
             }
         },
     });
@@ -186,11 +189,11 @@ function transitionVisit(visitId, nextStatusValue) {
 </script>
 
 <template>
-    <AppLayout title="Visits / OPD">
+    <AppLayout :title="t('visits.title')">
         <!-- Page Header -->
         <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
             <div class="flex-grow-1">
-                <h4 class="fw-bold mb-0">Visits / OPD</h4>
+                <h4 class="fw-bold mb-0">{{ t('visits.title') }}</h4>
             </div>
             <div class="d-flex gap-2">
                 <Link
@@ -198,14 +201,14 @@ function transitionVisit(visitId, nextStatusValue) {
                     :href="routes.queueBoard"
                     class="btn btn-outline-info btn-md"
                 >
-                    <i class="ti ti-list-numbers me-1"></i>Queue Board
+                    <i class="ti ti-list-numbers me-1"></i>{{ t('visits.queue_board') }}
                 </Link>
                 <Link
                     v-if="can.create"
                     :href="routes.create"
                     class="btn btn-primary btn-md"
                 >
-                    <i class="ti ti-plus me-1"></i>New Visit
+                    <i class="ti ti-plus me-1"></i>{{ t('visits.new_visit') }}
                 </Link>
             </div>
         </div>
@@ -215,7 +218,7 @@ function transitionVisit(visitId, nextStatusValue) {
             <div class="col-xl-2 col-md-4 col-6">
                 <div class="card border-start border-primary border-3">
                     <div class="card-body py-3 px-3">
-                        <p class="text-muted mb-1 small">Range Total</p>
+                        <p class="text-muted mb-1 small">{{ t('visits.range_total') }}</p>
                         <h4 class="fw-bold mb-0">{{ stats.total }}</h4>
                     </div>
                 </div>
@@ -223,7 +226,7 @@ function transitionVisit(visitId, nextStatusValue) {
             <div class="col-xl-2 col-md-4 col-6">
                 <div class="card border-start border-secondary border-3">
                     <div class="card-body py-3 px-3">
-                        <p class="text-muted mb-1 small">Outpatients</p>
+                        <p class="text-muted mb-1 small">{{ t('visits.outpatients') }}</p>
                         <h4 class="fw-bold mb-0">{{ stats.outpatient }}</h4>
                     </div>
                 </div>
@@ -231,7 +234,7 @@ function transitionVisit(visitId, nextStatusValue) {
             <div class="col-xl-2 col-md-4 col-6">
                 <div class="card border-start border-info border-3">
                     <div class="card-body py-3 px-3">
-                        <p class="text-muted mb-1 small">Inpatients</p>
+                        <p class="text-muted mb-1 small">{{ t('visits.inpatients') }}</p>
                         <h4 class="fw-bold mb-0">{{ stats.inpatient }}</h4>
                     </div>
                 </div>
@@ -239,7 +242,7 @@ function transitionVisit(visitId, nextStatusValue) {
             <div class="col-xl-2 col-md-4 col-6">
                 <div class="card border-start border-danger border-3">
                     <div class="card-body py-3 px-3">
-                        <p class="text-muted mb-1 small">Emergency</p>
+                        <p class="text-muted mb-1 small">{{ t('visits.emergency') }}</p>
                         <h4 class="fw-bold mb-0">{{ stats.emergency }}</h4>
                     </div>
                 </div>
@@ -247,7 +250,7 @@ function transitionVisit(visitId, nextStatusValue) {
             <div class="col-xl-2 col-md-4 col-6">
                 <div class="card border-start border-warning border-3">
                     <div class="card-body py-3 px-3">
-                        <p class="text-muted mb-1 small">Waiting / Consulting</p>
+                        <p class="text-muted mb-1 small">{{ t('visits.waiting_consulting') }}</p>
                         <h4 class="fw-bold mb-0">{{ stats.waiting_consulting }}</h4>
                     </div>
                 </div>
@@ -255,7 +258,7 @@ function transitionVisit(visitId, nextStatusValue) {
             <div class="col-xl-2 col-md-4 col-6">
                 <div class="card border-start border-success border-3">
                     <div class="card-body py-3 px-3">
-                        <p class="text-muted mb-1 small">Completed / Cancelled</p>
+                        <p class="text-muted mb-1 small">{{ t('visits.completed_cancelled') }}</p>
                         <h4 class="fw-bold mb-0">{{ stats.completed_cancelled }}</h4>
                     </div>
                 </div>
@@ -268,18 +271,18 @@ function transitionVisit(visitId, nextStatusValue) {
                 <form @submit.prevent="applyFilters">
                     <div class="row g-3 align-items-end">
                         <div class="col-md-3">
-                            <label class="form-label">Search</label>
+                            <label class="form-label">{{ t('common.search') }}</label>
                             <input
                                 v-model="form.search"
                                 type="text"
                                 class="form-control"
-                                placeholder="Visit #, patient name, phone..."
+                                :placeholder="t('visits.search_placeholder')"
                             >
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label">Visit Type</label>
+                            <label class="form-label">{{ t('visits.visit_type') }}</label>
                             <select v-model="form.visit_type" class="form-select" @change="applyFilters">
-                                <option value="">All Types</option>
+                                <option value="">{{ t('visits.all_types') }}</option>
                                 <option
                                     v-for="opt in visitTypeOptions"
                                     :key="opt.value"
@@ -288,9 +291,9 @@ function transitionVisit(visitId, nextStatusValue) {
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Active Insurance</label>
+                            <label class="form-label">{{ t('visits.active_insurance') }}</label>
                             <select v-model="form.insurance_provider_id" class="form-select" @change="applyFilters">
-                                <option value="">All Insurance</option>
+                                <option value="">{{ t('visits.all_insurance') }}</option>
                                 <option
                                     v-for="opt in insuranceProviderOptions"
                                     :key="opt.value"
@@ -299,7 +302,7 @@ function transitionVisit(visitId, nextStatusValue) {
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label">Date Range</label>
+                            <label class="form-label">{{ t('visits.date_range') }}</label>
                             <div
                                 ref="dateRangePicker"
                                 class="reportrange-picker d-flex align-items-center justify-content-between w-100"
@@ -335,17 +338,17 @@ function transitionVisit(visitId, nextStatusValue) {
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Visit #</th>
-                                <th>Patient</th>
-                                <th>Active Insurance</th>
-                                <th>Age</th>
-                                <th>Type</th>
-                                <th>Priority</th>
-                                <th>Doctor</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                                <th>Duration</th>
-                                <th class="text-end">Actions</th>
+                                <th>{{ t('common.visit_number_short') }}</th>
+                                <th>{{ t('common.patient') }}</th>
+                                <th>{{ t('visits.active_insurance') }}</th>
+                                <th>{{ t('common.age') }}</th>
+                                <th>{{ t('common.type') }}</th>
+                                <th>{{ t('common.priority') }}</th>
+                                <th>{{ t('common.doctor') }}</th>
+                                <th>{{ t('common.status') }}</th>
+                                <th>{{ t('common.date') }}</th>
+                                <th>{{ t('visits.duration') }}</th>
+                                <th class="text-end">{{ t('common.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -411,13 +414,13 @@ function transitionVisit(visitId, nextStatusValue) {
                                                 <Link
                                                     class="dropdown-item"
                                                     :href="visit.urls.show"
-                                                ><i class="ti ti-eye me-2"></i>View Details</Link>
+                                                ><i class="ti ti-eye me-2"></i>{{ t('visits.view_details') }}</Link>
                                             </li>
                                             <li v-if="can.edit">
                                                 <Link
                                                     class="dropdown-item"
                                                     :href="visit.urls.edit"
-                                                ><i class="ti ti-pencil me-2"></i>Edit Visit</Link>
+                                                ><i class="ti ti-pencil me-2"></i>{{ t('visits.edit_visit') }}</Link>
                                             </li>
                                             <template v-if="visit.allowed_transitions.length">
                                                 <li><hr class="dropdown-divider"></li>
@@ -441,7 +444,7 @@ function transitionVisit(visitId, nextStatusValue) {
                             <tr v-if="!visits.data.length">
                                 <td colspan="11" class="text-center text-muted py-4">
                                     <i class="ti ti-calendar-off fs-1 d-block mb-2"></i>
-                                    No visits found
+                                    {{ t('visits.no_visits_found') }}
                                 </td>
                             </tr>
                         </tbody>

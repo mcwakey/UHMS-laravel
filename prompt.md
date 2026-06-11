@@ -1,1019 +1,469 @@
-Good. This should be the next cross-cutting phase: **App Responsiveness + Localisation**.
+Next should be **Responsiveness + Localisation Phase 2: Module Translation & Browser QA Hardening**.
 
-We should treat it as a full-system UI/UX pass, not just fixing one page. Since UHMS is Blade-dominant with Bootstrap 5 + Tabler Icons, the responsive work should improve the current layout instead of introducing Tailwind or another framework. The uploaded UI rules already make this clear: UHMS must keep Blade + Bootstrap 5 + Tabler Icons, reuse shared components, avoid new frameworks, and follow the standard layout/checklist for every edited page.   
+The first pass already added the real localisation infrastructure: `lang/en`, `lang/fr`, `SetLocale` middleware, `users.locale`, language switcher, menu translation, status badge translation, shared component translation, and a responsive CSS layer. It also verified sidebar translations, status parity, Blade compilation, locale switching, and MariaDB migration. 
 
+But the report still leaves some important follow-up work: page-level strings in high-traffic modules, controller flash messages, Form Request attributes, DataTables/Select2 UI strings, and manual browser checks at different screen widths. 
+
+So the next prompt should be this:
+
+````text
 You are working on UHMS — Ultimate Hospital Management System.
 
-We now want to improve full-system responsiveness and localisation.
+The first Responsiveness + Localisation phase is complete.
 
-This is a cross-cutting UI/UX and internationalisation phase.
+The implementation already added:
+- English/French language files
+- SetLocale middleware
+- users.locale
+- POST /locale switch route
+- EN/FR language switcher in the topbar
+- translated SidebarMenuBuilder labels
+- translated status badge labels
+- shared component translation defaults
+- responsive CSS hardening
+- table responsiveness fixes
+- print/mobile CSS improvements
+
+Now proceed with Responsiveness + Localisation Phase 2:
+
+Module-Level Translation, Flash Messages, Form Requests, Plugin Locales & Browser QA Hardening.
 
 Goal:
-Make UHMS usable on desktop, laptop, tablet, and mobile screens, and prepare the system for multi-language support, starting with English and French.
+Complete the practical localisation and responsive polish for the most-used UHMS modules so users can actually work in English or French across real hospital workflows.
 
-Do not redesign the whole system.
+Do not redesign the system.
 Do not introduce Tailwind.
 Do not introduce a second CSS framework.
 Do not break existing workflows.
-Do not rewrite unrelated modules.
-Do not remove existing Blade pages.
-Do not convert everything to Vue/Inertia unless the page already uses Vue/Inertia.
-
-UHMS is mainly a Blade + Bootstrap 5 + Tabler Icons application. Continue using the existing UI architecture.
-
----
-
-# 1. Main Objectives
-
-Implement two major improvements:
-
-1. Responsiveness
-   - desktop
-   - laptop
-   - tablet
-   - mobile
-   - printable views
-
-2. Localisation
-   - English
-   - French
-   - language files
-   - translated UI labels
-   - translated validation messages
-   - translated status labels
-   - translated menus
-   - translatable reports where practical
+Do not translate database enum stored values.
+Do not translate route names.
+Do not translate permission names.
+Do not translate user-entered clinical notes.
+Do not translate patient/doctor/supplier/product names unless they are system-defined labels.
 
 ---
 
-# 2. Responsiveness Scope
+# 1. Phase 2 Scope
 
-Review and improve responsive behavior across major UHMS modules:
+Focus on high-traffic production pages first:
 
-```text
-Dashboard
-Patients
-Visits
-Consultation
-Emergency
-Admissions / Wards
-Pharmacy
-Investigations / Lab
-Theatre / Procedures
-Billing
-Insurance / Claims
-Stock / Store / Procurement
-Accounting / Finance
-Reports
-Administration
-Settings
-````
+1. Dashboards
+2. Patients
+3. Visits
+4. Consultation
+5. Emergency
+6. Admissions / Wards
+7. Pharmacy
+8. Investigations / Lab
+9. Theatre / Procedures
+10. Billing
+11. Insurance / Claims
+12. Stock / Store / Procurement
+13. Accounting / Finance
+14. Reports
+15. Auth / Profile / Settings
 
-Prioritize the most-used and highest-risk pages first:
-
-```text
-Patients
-Visits
-Consultation
-Emergency
-Pharmacy
-Investigations
-Billing
-Admissions
-Stock
-Accounting
-Dashboards
-```
+Do not waste time translating legacy/vendor template demo pages unless they are used in UHMS workflows.
 
 ---
 
-# 3. Responsive UI Rules
+# 2. Module Page Translation
 
-Follow existing UHMS UI rules.
-
-Use:
-
-```text
-Bootstrap 5 grid
-Bootstrap responsive utilities
-.table-responsive
-cards with g-3 spacing
-stacked forms on mobile
-responsive action buttons
-offcanvas/drawer only where already supported or easy
-existing Blade components
-```
-
-Do not use:
-
-```text
-Tailwind
-new CSS framework
-random inline CSS
-unapproved layout libraries
-new chart library
-```
-
-Every edited page must follow:
-
-```text
-PageHeader
-KPIs if any
-Filters if any
-Main content
-Secondary content
-Pagination
-```
-
-Use:
-
-```blade
-<x-page-header>
-<x-status-badge>
-<x-empty-state>
-<x-stat-card>
-<x-filter-bar>
-<x-data-table>
-<x-action-menu>
-<x-confirm-form>
-```
-
-where available.
-
----
-
-# 4. Responsive Breakpoints
-
-Target Bootstrap breakpoints:
-
-```text
-xs: mobile portrait
-sm: mobile landscape
-md: tablets
-lg: laptops
-xl: desktops
-xxl: large screens
-```
-
-Check layouts at minimum:
-
-```text
-375px mobile
-414px mobile
-768px tablet
-1024px tablet/laptop
-1366px desktop
-1920px large desktop
-```
-
----
-
-# 5. Sidebar / Navigation Responsiveness
-
-Improve navigation behavior.
-
-Requirements:
-
-* sidebar collapses correctly on tablet/mobile
-* menu is scrollable when long
-* active section remains visible
-* department dashboards remain accessible
-* no menu item overlaps content
-* module-disabled items do not leave broken gaps
-* topbar actions fit small screens
-* notification/profile dropdowns work on mobile
-
-Do not hardcode menu links directly in Blade if the system uses `SidebarMenuBuilder`.
-
----
-
-# 6. Tables Responsiveness
-
-Audit all major tables.
-
-Rules:
-
-* wrap wide tables in `.table-responsive`
-* avoid horizontal page overflow
-* keep action column visible where possible
-* use compact text on mobile
-* avoid too many columns on small screens
-* use stacked card layout only for critical mobile workflows where table scrolling is poor
-* show `<x-empty-state>` when empty
-* use `<x-status-badge>` for statuses
-
-High priority tables:
-
-```text
-Patient list
-Visit list
-Consultation queue
-Emergency cases
-Admission list
-Bed map
-Prescription queue
-Dispensing list
-Investigation requests
-Investigation results
-Procedure requests
-Invoice list
-Payments
-Claims
-Stock balances
-Stock movements
-Purchase orders
-Supplier ledger
-Journal entries
-General ledger
-AR aging
-AP aging
-```
-
----
-
-# 7. Forms Responsiveness
-
-Audit major forms.
-
-Rules:
-
-* forms stack cleanly on mobile
-* labels stay above inputs
-* long selects use Select2/searchable select
-* date pickers work on mobile
-* submit/cancel buttons remain visible
-* no form fields overflow card boundaries
-* validation errors show under fields
-* required fields are clear
-* modals fit mobile screens
-
-High priority forms:
-
-```text
-Patient registration
-Visit creation
-Emergency case creation
-Triage
-Consultation clinical forms
-Prescription
-Lab result entry
-Procedure scheduling
-Invoice/payment forms
-Insurance/claims forms
-Stock receiving
-Stock transfer
-Purchase order
-Journal entry
-User/role forms
-```
-
----
-
-# 8. Dashboard Responsiveness
-
-Department-type dashboards must work well on:
-
-```text
-desktop
-tablet
-mobile
-```
-
-Rules:
-
-* KPI cards should wrap naturally
-* work queues should be scrollable or stack gracefully
-* quick actions should become compact buttons
-* charts should resize
-* alert cards should remain readable
-* no KPI text overflow
-* no hidden critical alerts
-
----
-
-# 9. Clinical Page Responsiveness
-
-Clinical pages need special care.
-
-Review:
-
-```text
-Consultation page
-Patient profile
-Patient timeline
-Emergency case page
-Admission detail
-MAR chart
-Investigation result entry
-Theatre/procedure workflow
-```
-
-Rules:
-
-* do not cram large clinical content into small modals
-* use cards/sections/tabs/accordion where appropriate
-* patient context must remain visible
-* critical status badges must remain visible
-* action buttons must not disappear
-* timelines must be readable on mobile
-* MAR grid may scroll horizontally if needed
-* clinical safety beats visual compactness
-
----
-
-# 10. Financial Page Responsiveness
-
-Review:
-
-```text
-Invoices
-Payments
-Cashier shift
-Claims
-AR aging
-AP aging
-Journal entries
-General ledger
-Trial balance
-Supplier ledger
-```
-
-Rules:
-
-* numbers must remain readable
-* totals must remain visible
-* action buttons must be permission-aware
-* accounting status must be visible to authorized users
-* wide reports can scroll horizontally
-* print/export must remain available
-* financial totals must not be hidden on mobile
-
----
-
-# 11. Print Responsiveness
-
-Improve print layouts where relevant.
-
-Priority print views:
-
-```text
-Invoice
-Receipt
-Claim form
-Lab result
-Prescription
-Discharge summary
-Consultation summary
-Procedure report
-Stock report
-Trial balance
-General ledger
-AR aging
-AP aging
-```
-
-Rules:
-
-* black on white
-* hide sidebar/topbar/buttons
-* show hospital name/logo
-* show patient/visit context where relevant
-* show printed by and printed at
-* show signatures where needed
-* avoid broken tables across pages where practical
-
-Use `<x-print-layout>` where available.
-
----
-
-# 12. Localisation Scope
-
-Prepare UHMS for multiple languages.
-
-Initial languages:
-
-```text
-en
-fr
-```
-
-Default language:
-
-```text
-en
-```
-
-French should be selectable.
-
-Do not translate database content automatically unless content is system-defined.
+Audit Blade views and Vue/Inertia islands for hardcoded user-facing strings.
 
 Translate:
 
-```text
-Menus
-Page titles
-Buttons
-Labels
-Placeholders
-Validation messages
-Flash messages
-Status labels
-Empty states
-Confirmation messages
-Report headings
-Dashboard titles
-KPI labels
-Table headings
-Form section titles
-```
+- page titles
+- section titles
+- buttons
+- labels
+- placeholders
+- table headings
+- filter labels
+- empty states
+- modal titles
+- confirmation messages
+- dashboard KPI labels
+- report headings
+- print labels
 
-Do not translate:
+Use existing lang files where available.
+
+If module language files are missing, create them:
 
 ```text
-Patient names
-Doctor names
-Supplier names
-Department names unless configured
-Product names unless configured
-Service names unless configured
-Clinical notes entered by users
-Uploaded documents
-```
-
----
-
-# 13. Laravel Localisation Structure
-
-Use Laravel localisation files.
-
-Recommended:
-
-```text
-lang/en/
-lang/fr/
-```
-
-Files:
-
-```text
-lang/en/common.php
-lang/en/menu.php
 lang/en/patients.php
-lang/en/visits.php
-lang/en/consultation.php
-lang/en/emergency.php
-lang/en/admissions.php
-lang/en/pharmacy.php
-lang/en/investigations.php
-lang/en/procedures.php
-lang/en/billing.php
-lang/en/claims.php
-lang/en/stock.php
-lang/en/accounting.php
-lang/en/reports.php
-lang/en/auth.php
-lang/en/validation.php
-lang/en/statuses.php
-
-lang/fr/common.php
-lang/fr/menu.php
 lang/fr/patients.php
+lang/en/visits.php
 lang/fr/visits.php
-lang/fr/consultation.php
-lang/fr/emergency.php
-lang/fr/admissions.php
-lang/fr/pharmacy.php
-lang/fr/investigations.php
-lang/fr/procedures.php
+lang/en/billing.php
 lang/fr/billing.php
-lang/fr/claims.php
+lang/en/pharmacy.php
+lang/fr/pharmacy.php
+lang/en/investigations.php
+lang/fr/investigations.php
+lang/en/emergency.php
+lang/fr/emergency.php
+lang/en/admissions.php
+lang/fr/admissions.php
+lang/en/stock.php
 lang/fr/stock.php
+lang/en/accounting.php
 lang/fr/accounting.php
+lang/en/reports.php
 lang/fr/reports.php
-lang/fr/auth.php
-lang/fr/validation.php
-lang/fr/statuses.php
-```
-
-Use existing Laravel conventions if the project already has lang files.
-
----
-
-# 14. Translation Key Rules
-
-Do not scatter random translation keys.
+````
 
 Use structured keys.
 
 Examples:
 
 ```php
-__('common.save')
-__('common.cancel')
-__('common.delete')
-__('common.confirm')
-__('common.search')
-__('common.filter')
-__('common.reset')
-__('common.actions')
-
-__('menu.patients')
-__('menu.visits')
-__('menu.billing')
-__('menu.accounting')
-
 __('patients.title')
-__('patients.create')
 __('patients.search_placeholder')
+__('patients.create_patient')
 
 __('visits.create_visit')
 __('visits.visit_type')
 __('visits.patient_search')
 
 __('billing.invoice')
-__('billing.payment')
 __('billing.outstanding_balance')
+__('billing.record_payment')
 
-__('statuses.invoice.paid')
-__('statuses.invoice.partially_paid')
-__('statuses.visit.emergency')
+__('pharmacy.pending_prescriptions')
+__('pharmacy.dispense')
+__('pharmacy.out_of_stock')
+
+__('accounting.trial_balance')
+__('accounting.general_ledger')
+__('accounting.journal_entries')
 ```
 
-Avoid keys like:
-
-```php
-__('Save Button Text On Patient Page')
-```
-
-Keep keys reusable and predictable.
+Avoid random long keys.
 
 ---
 
-# 15. Status Localisation
+# 3. Controller Flash Message Translation
 
-Centralize status labels.
+Audit controllers and services for hardcoded flash/session messages.
 
-Statuses should not display raw enum values like:
-
-```text
-WAITING_CONSULTATION
-PARTIALLY_PAID
-IN_PROGRESS
-```
-
-They should display translated human labels:
+Translate messages like:
 
 ```text
-Waiting Consultation
-Partially Paid
-In Progress
+Saved successfully.
+Updated successfully.
+Deleted successfully.
+Invoice created successfully.
+Payment recorded successfully.
+Visit created successfully.
+Patient registered successfully.
+Unauthorized action.
+Something went wrong.
 ```
-
-French examples:
-
-```text
-En attente de consultation
-Partiellement payé
-En cours
-```
-
-Update `<x-status-badge>` if needed so it can use translation keys.
-
-Example:
-
-```php
-__('statuses.visit.waiting_consultation')
-__('statuses.invoice.partially_paid')
-__('statuses.payment.refunded')
-```
-
----
-
-# 16. Menu Localisation
-
-Update `SidebarMenuBuilder` labels to use translation keys.
-
-Example:
-
-```php
-'label' => __('menu.patients')
-```
-
-or if menu arrays are generated before translation, store translation keys:
-
-```php
-'label_key' => 'menu.patients'
-```
-
-and render with:
-
-```php
-__($item['label_key'])
-```
-
-Do not hardcode English labels in menu builder after this phase.
-
----
-
-# 17. Language Switcher
-
-Add a language switcher.
-
-Location:
-
-```text
-Topbar user dropdown
-or settings/profile page
-```
-
-Supported languages:
-
-```text
-English
-Français
-```
-
-Behavior:
-
-* user can switch language
-* selected language persists in session
-* if user profile has locale field, persist to user profile
-* fallback to app locale if no user preference
-* middleware sets locale on every request
-
-Suggested middleware:
-
-```php
-SetLocale
-```
-
-Logic:
-
-```text
-1. Authenticated user locale if set
-2. Session locale
-3. Browser locale if allowed
-4. config('app.locale')
-```
-
----
-
-# 18. Database Update for User Locale
-
-If not already present, add:
-
-```text
-users.locale nullable string default null
-```
-
-Allowed values:
-
-```text
-en
-fr
-```
-
-Do not allow arbitrary unsafe locale values.
-
----
-
-# 19. Validation Localisation
-
-Translate validation messages.
 
 Use:
 
-```text
-lang/en/validation.php
-lang/fr/validation.php
+```php
+__('common.saved_successfully')
+__('common.updated_successfully')
+__('common.deleted_successfully')
+__('billing.payment_recorded')
+__('visits.visit_created')
 ```
 
-Ensure custom request validation messages are translatable.
-
-Do not leave mixed English/French validation on the same page.
+Do not leave mixed English/French flash messages on translated pages.
 
 ---
 
-# 20. Flash / Toast / Error Localisation
+# 4. Form Request Localisation
 
-Translate:
+Audit Form Request classes.
 
-```text
-Saved successfully
-Updated successfully
-Deleted successfully
-Payment recorded successfully
-Invoice created successfully
-Unauthorized action
-Something went wrong
-No records found
-Are you sure?
-This action cannot be undone
-Reason is required
+Add or update:
+
+```php
+attributes()
+messages()
 ```
 
-Friendly error pages should also be translatable:
-
-```text
-403
-404
-500
-419 session expired
-```
-
----
-
-# 21. Date, Time, Currency Formatting
-
-Add locale-aware formatting helpers.
-
-Requirements:
-
-* date format can adapt to locale
-* time format can adapt to locale
-* currency formatting should remain safe and consistent
-* do not break accounting reports
-* allow hospital/system setting for currency symbol
-
-Examples:
-
-```text
-English: Jun 10, 2026
-French: 10 juin 2026
-```
-
-Currency example:
-
-```text
-GHS 1,250.00
-1 250,00 GHS
-```
-
-For now, keep currency format consistent if changing it risks breaking reports.
-
-Document formatting decisions.
-
----
-
-# 22. Search and Filters Localisation
-
-Translate placeholders and filter labels.
-
-Examples:
-
-```text
-Search patients...
-Filter by department
-Date from
-Date to
-Apply filters
-Reset
-```
-
-French:
-
-```text
-Rechercher des patients...
-Filtrer par département
-Date début
-Date fin
-Appliquer les filtres
-Réinitialiser
-```
-
----
-
-# 23. Confirmation Messages
-
-All destructive/high-risk confirmations must be translatable.
-
-Examples:
-
-```text
-Are you sure you want to cancel this visit?
-Are you sure you want to reverse this payment?
-Please provide a reason.
-This action cannot be undone.
-```
-
-French translations must be provided.
-
----
-
-# 24. Localisation of Reports
-
-Translate report UI:
-
-```text
-Report title
-Filters
-Column headings
-Summary labels
-Print button
-Export button
-Generated by
-Generated at
-```
-
-Do not translate raw data unless it is a system label/status.
-
----
-
-# 25. Localisation of Dashboards
-
-All department-type dashboards must use translation keys for:
-
-```text
-Dashboard title
-KPI labels
-Queue headings
-Alert labels
-Quick actions
-Empty states
-```
+Use translation keys for attribute names and custom messages.
 
 Example:
 
 ```php
-__('dashboards.pharmacy.title')
-__('dashboards.pharmacy.prescriptions_waiting')
-__('dashboards.emergency.active_cases')
+public function attributes(): array
+{
+    return [
+        'patient_id' => __('patients.patient'),
+        'visit_type' => __('visits.visit_type'),
+        'payment_method' => __('billing.payment_method'),
+    ];
+}
 ```
 
-Add:
+Make validation errors readable in both English and French.
+
+---
+
+# 5. DataTables / Select2 / Datepicker Localisation
+
+Add locale support for JavaScript plugin UI where used.
+
+Priority plugins:
+
+* DataTables
+* Select2
+* daterangepicker / datepicker
+* SweetAlert2 confirmation text
+
+Requirements:
+
+* English plugin UI when locale is `en`
+* French plugin UI when locale is `fr`
+* no broken JS when locale changes
+* fallback to English if plugin translation file missing
+
+Do not introduce new JS libraries.
+
+---
+
+# 6. SweetAlert2 / Confirmation Translation
+
+Translate all confirmation dialogs.
+
+Examples:
+
+```php
+__('common.are_you_sure')
+__('common.this_action_cannot_be_undone')
+__('common.reason_required')
+__('common.cancel')
+__('common.confirm')
+```
+
+High-risk actions must still require reasons where already required.
+
+Do not remove confirmation logic while translating.
+
+---
+
+# 7. Responsive Browser QA
+
+Perform browser/manual QA for these widths:
 
 ```text
-lang/en/dashboards.php
-lang/fr/dashboards.php
+375px
+414px
+768px
+1024px
+1366px
+1920px
 ```
 
+Check at least:
+
+1. Dashboard
+2. Patient list
+3. Patient profile
+4. Visit creation
+5. Consultation page
+6. Emergency case page
+7. Pharmacy dispensing
+8. Investigation result entry
+9. Invoice create/show
+10. Payment screen
+11. Stock balances
+12. Stock movements
+13. Journal entries
+14. General ledger
+15. Trial balance
+16. AR aging
+17. AP aging
+18. Invoice/receipt print preview
+
+Fix:
+
+* horizontal overflow
+* broken buttons
+* unreadable tables
+* modals too wide for mobile
+* hidden totals
+* hidden clinical warnings
+* hidden financial warnings
+* broken dropdowns
+* bad spacing
+* action buttons wrapping badly
+
+Do not hide critical information just to make the page smaller.
+
 ---
 
-# 26. Code Audit Targets
+# 8. Financial and Clinical Safety Checks
 
-Search and replace hardcoded UI strings in priority order:
+On mobile/tablet, ensure critical information remains visible.
 
-```text
-SidebarMenuBuilder
-layouts
-dashboard pages
-patient pages
-visit pages
-billing pages
-pharmacy pages
-investigation pages
-emergency pages
-admission pages
-stock pages
-accounting pages
-report pages
-auth pages
-common components
+Clinical:
+
+* patient name
+* visit number
+* status
+* triage/emergency priority
+* allergies if available
+* diagnosis/clinical context where relevant
+* active medication/MAR warnings
+
+Financial:
+
+* invoice total
+* amount paid
+* balance
+* payer responsibility
+* accounting status
+* payment/refund/write-off status
+
+Stock:
+
+* product
+* location
+* quantity on hand
+* low/out/expired status
+* stock movement direction
+
+---
+
+# 9. Print View QA
+
+Check print views:
+
+* invoice
+* receipt
+* lab result
+* prescription
+* discharge summary
+* consultation summary
+* claim report
+* trial balance
+* general ledger
+* AR aging
+* AP aging
+
+Rules:
+
+* sidebar/topbar hidden
+* black-on-white
+* hospital identity visible
+* patient/visit context visible where relevant
+* totals visible
+* printed by / printed at visible
+* signatures where needed
+* no broken page layout
+
+---
+
+# 10. Translation Parity Script
+
+Add or update a script/command to verify translation parity.
+
+It should check:
+
+* every `lang/en/*.php` key exists in `lang/fr/*.php`
+* every `lang/fr/*.php` key exists in `lang/en/*.php`
+* statuses have matching keys
+* menu keys have matching translations
+* dashboard keys have matching translations
+
+Do not block development for vendor/demo pages, but report missing keys clearly.
+
+Suggested command:
+
+```bash
+php artisan translations:audit
 ```
 
-Do not attempt to translate every single legacy/vendor template page first.
-
-Prioritize live UHMS workflows.
+or a documented script if command is too much.
 
 ---
 
-# 27. Localisation Safety Rules
+# 11. Documentation
 
-Do not translate route names.
-
-Do not translate permission names.
-
-Do not translate database enum stored values.
-
-Do not translate internal event names.
-
-Do not translate audit log event codes.
-
-Do not translate class names, model names, or config keys.
-
-Translate only user-facing labels.
-
----
-
-# 28. Responsiveness Manual Verification
-
-Do not write the full automated test suite yet if we are still in implementation flow.
-
-Manual verification required:
-
-1. Check dashboard on mobile/tablet/desktop.
-2. Check patient list on mobile/tablet/desktop.
-3. Check visit creation on mobile/tablet/desktop.
-4. Check consultation page on mobile/tablet/desktop.
-5. Check emergency page on mobile/tablet/desktop.
-6. Check pharmacy dispensing on mobile/tablet/desktop.
-7. Check investigation result entry on mobile/tablet/desktop.
-8. Check billing invoice/payment screens on mobile/tablet/desktop.
-9. Check stock balance and stock movement pages on mobile/tablet/desktop.
-10. Check accounting reports on mobile/tablet/desktop.
-11. Confirm no horizontal page overflow except intentional table scroll.
-12. Confirm buttons remain accessible.
-13. Confirm modals fit small screens.
-14. Confirm critical information remains visible.
-15. Confirm print views render cleanly.
-
----
-
-# 29. Localisation Manual Verification
-
-Manual verification required:
-
-1. Switch language to English.
-2. Confirm menus display in English.
-3. Confirm major page titles display in English.
-4. Confirm buttons and labels display in English.
-5. Switch language to French.
-6. Confirm menus display in French.
-7. Confirm major page titles display in French.
-8. Confirm buttons and labels display in French.
-9. Confirm validation messages display in selected language.
-10. Confirm status badges display translated labels.
-11. Confirm dashboard labels display translated labels.
-12. Confirm flash messages display translated labels.
-13. Confirm reports display translated headings.
-14. Confirm user-entered clinical notes are not translated.
-15. Confirm route names and permissions are not translated.
-16. Confirm language preference persists after refresh/login.
-
----
-
-# 30. Documentation
-
-Create:
+Update:
 
 ```text
 docs/RESPONSIVENESS_LOCALISATION_REPORT.md
 ```
 
-Include:
+Add Phase 2 section:
 
-* pages audited
-* responsive fixes completed
-* localisation architecture
-* language files created
-* translation key structure
-* language switcher behavior
-* middleware behavior
-* user locale persistence
-* formatting decisions
-* manual verification completed
+* module pages translated
+* controller flash messages translated
+* Form Request attributes/messages translated
+* plugin locale behavior
+* responsive browser QA results
+* print QA results
 * remaining untranslated pages
 * known TODOs
+* screenshots if useful
 
 ---
 
-# 31. Acceptance Criteria
+# 12. Manual Verification Required
 
-This phase is complete when:
+1. Switch to English and browse major modules.
+2. Switch to French and browse major modules.
+3. Confirm menus remain translated.
+4. Confirm status badges remain translated.
+5. Confirm flash messages are translated.
+6. Confirm validation messages are translated.
+7. Confirm DataTables/Select2 UI strings are translated.
+8. Confirm dashboard labels are translated.
+9. Confirm reports headings are translated.
+10. Confirm user-entered clinical notes are not translated.
+11. Confirm route names and permissions are not translated.
+12. Confirm mobile views work at 375px and 414px.
+13. Confirm tablet views work at 768px and 1024px.
+14. Confirm desktop views work at 1366px and 1920px.
+15. Confirm print views are clean.
+16. Confirm existing workflows still work.
 
-* major UHMS pages work on desktop/tablet/mobile
-* wide tables are safely responsive
-* major forms stack correctly
-* dashboards are responsive
-* clinical pages remain usable on smaller screens
-* financial reports remain readable
-* language switcher exists
-* English and French are supported
-* user language preference persists
-* menus are translatable
-* statuses are translatable
-* validation messages are translatable
-* dashboard labels are translatable
-* major module labels are translatable
-* reports have translated headings
-* no new UI framework is introduced
+---
+
+# 13. Acceptance Criteria
+
+Phase 2 is complete when:
+
+* major module pages are practically usable in English and French
+* controller flash messages are translated
+* validation attributes/messages are translated
+* status badges remain translated
+* menu translation remains stable
+* plugin UI strings are localised where practical
+* dashboard labels are translated
+* reports headings are translated
+* major pages pass responsive browser QA
+* print views remain clean
+* translation parity is documented
 * existing workflows are not broken
-* documentation is created
-* manual verification is documented
+* no new CSS framework is introduced
+* documentation is updated
 
 ---
 
-# 32. Important Rules
+# 14. Important Rules
 
 Do not introduce Tailwind.
 Do not introduce a second CSS framework.
-Do not redesign UHMS from scratch.
-Do not translate internal codes.
+Do not translate stored enum values.
 Do not translate permissions.
 Do not translate route names.
-Do not translate database enum values.
+Do not translate audit log event codes.
 Do not translate user-entered clinical notes.
-Do not expose raw technical errors.
-Do not hide critical clinical/financial/stock information on mobile.
+Do not hide critical clinical, financial, or stock information on mobile.
 Do not break existing dashboards.
-Do not break existing SidebarMenuBuilder.
-Do not skip permission checks.
+Do not break SidebarMenuBuilder.
 Do not bypass existing UI components.
-Do not write the full automated test suite yet.
+Do not skip manual browser QA.
 
-Proceed with full-system Responsiveness and Localisation implementation now.
+Proceed with Responsiveness + Localisation Phase 2 now.
 
-```
-
-After this, the next clean phase should be **Role-Based Dashboard Polish + Module Reports**, because responsive/localised dashboards will make the whole system feel much more professional.
 ```
