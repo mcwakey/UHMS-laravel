@@ -32,7 +32,7 @@ class CashierShiftController extends Controller
     {
         try {
             $this->accountingService->openShift($request->validated());
-            return back()->with('success', 'Shift opened successfully.');
+            return back()->with('success', __('messages.cashier.shift_opened'));
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -47,7 +47,7 @@ class CashierShiftController extends Controller
 
         try {
             $this->accountingService->closeShift($shift, $request->only(['actual_closing', 'notes']));
-            return back()->with('success', 'Shift closed. Variance calculated.');
+            return back()->with('success', __('messages.cashier.shift_closed'));
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -57,7 +57,7 @@ class CashierShiftController extends Controller
     {
         try {
             $this->accountingService->verifyShift($shift);
-            return back()->with('success', 'Shift verified.');
+            return back()->with('success', __('messages.cashier.shift_verified'));
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }

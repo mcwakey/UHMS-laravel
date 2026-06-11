@@ -18,4 +18,17 @@ return [
     'dispense' => 'Délivrer',
     'nothing_to_dispense' => 'Rien à délivrer',
     'no_pending_prescriptions' => 'Aucune ordonnance en attente de délivrance.',
+
+    // Drug catalogue
+    'drug_catalogue'           => 'Catalogue de médicaments',
+    'drug_catalogue_description' => 'Liste consultable de tous les produits en pharmacie avec les niveaux de stock en temps réel.',
+    'col_product'              => 'Produit',
+    'col_product_type'         => 'Type de produit',
+    'col_unit'                 => 'Unité',
+    'col_pharmacy_qty'         => 'Qté Pharmacie',
+    'col_main_stock_qty'       => 'Qté Stock Principal',
+    'col_reorder_level'        => 'Seuil de réapprovisionnement',
+    'col_status'               => 'Statut',
+    'search_drug_placeholder'  => 'Rechercher nom du produit ou code',
+    'no_drugs_found'           => 'Aucun produit pharmaceutique trouvé.',
 ];

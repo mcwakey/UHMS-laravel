@@ -87,7 +87,7 @@ class BloodRequestController extends Controller
             $this->requests->createForVisit(Visit::findOrFail($data['visit_id']), $data, $request->user());
         }
 
-        return back()->with('success', 'Blood request and recipient details created.');
+        return back()->with('success', __('messages.blood_bank.request_created'));
     }
 
     /** Searchable visit lookup for the request select2 (visit number / patient). */
@@ -146,13 +146,13 @@ class BloodRequestController extends Controller
 
         $this->requests->upsertRecipient($bloodRequest, $bloodRequest->visit, $data, $request->user());
 
-        return back()->with('success', 'Recipient details updated.');
+        return back()->with('success', __('messages.blood_bank.recipient_updated'));
     }
 
     public function approve(Request $request, BloodRequest $bloodRequest)
     {
         $this->requests->approve($bloodRequest, $request->user());
 
-        return back()->with('success', 'Blood request approved.');
+        return back()->with('success', __('messages.blood_bank.request_approved'));
     }
 }

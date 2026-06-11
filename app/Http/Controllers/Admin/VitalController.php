@@ -119,12 +119,12 @@ class VitalController extends Controller
 
             return redirect()
                 ->route('admin.vitals.create', ['visit_id' => $visit->id, 'dept_chooser' => 1])
-                ->with('success', 'Vitals recorded for ' . $visit->patient->full_name . '. Please direct patient to a consultation department.');
+                ->with('success', __('messages.vitals.recorded_triage', ['name' => $visit->patient->full_name]));
         }
 
         return redirect()
             ->back()
-            ->with('success', 'Vitals recorded for ' . $visit->patient->full_name);
+            ->with('success', __('messages.vitals.recorded', ['name' => $visit->patient->full_name]));
     }
 
     /**
@@ -138,7 +138,7 @@ class VitalController extends Controller
 
         $visit->update(['priority' => $request->priority]);
 
-        return back()->with('success', 'Priority updated to ' . \App\Enums\Priority::from($request->priority)->label() . '.');
+        return back()->with('success', __('messages.vitals.priority_updated', ['priority' => \App\Enums\Priority::from($request->priority)->label()]));
     }
 
     /**
@@ -158,7 +158,7 @@ class VitalController extends Controller
 
         return redirect()
             ->route('admin.vitals.create')
-            ->with('success', 'Patient assigned to consultation queue.');
+            ->with('success', __('messages.vitals.assigned_consultation'));
     }
 
     /**

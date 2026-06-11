@@ -36,7 +36,7 @@ class EmergencyBillingController extends Controller
         $service = ServiceCatalog::findOrFail($data['service_catalog_id']);
         $this->billing->addService($emergencyCase, $service, (int) ($data['quantity'] ?? 1), $request->user(), $data['notes'] ?? null);
 
-        return back()->with('success', 'Emergency billable service added.');
+        return back()->with('success', __('messages.emergency.billing_service_added'));
     }
 
     private function emergencyDepartmentId(EmergencyCase $case): ?int

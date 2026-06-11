@@ -133,7 +133,7 @@ class PatientController extends Controller
 
         return redirect()
             ->route('admin.patients.show', $patient)
-            ->with('success', "Patient {$patient->patient_number} registered successfully.");
+            ->with('success', __('messages.patients.registered', ['number' => $patient->patient_number]));
     }
 
     public function show(Patient $patient, Request $request)
@@ -218,28 +218,28 @@ class PatientController extends Controller
 
         return redirect()
             ->route('admin.patients.show', $patient)
-            ->with('success', 'Patient updated successfully.');
+            ->with('success', __('messages.patients.updated'));
     }
 
     public function toggleStatus(Patient $patient)
     {
         if ($patient->status === 'deceased') {
-            return back()->with('error', 'Cannot change the status of a deceased patient.');
+            return back()->with('error', __('messages.patients.cannot_change_deceased_status'));
         }
 
         $this->patientService->toggleStatus($patient);
 
-        return back()->with('success', "Patient status changed to {$patient->status}.");
+        return back()->with('success', __('messages.patients.status_changed', ['status' => $patient->status]));
     }
 
     public function markDeceased(MarkPatientDeceasedRequest $request, Patient $patient)
     {
         if ($patient->is_deceased) {
-            return back()->with('error', 'Patient is already marked as deceased.');
+            return back()->with('error', __('messages.patients.already_deceased'));
         }
 
         $this->patientService->markDeceased($patient, $request->validated());
 
-        return back()->with('success', "{$patient->full_name} has been marked as deceased.");
+        return back()->with('success', __('messages.patients.marked_deceased', ['name' => $patient->full_name]));
     }
 }

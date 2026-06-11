@@ -59,7 +59,7 @@ class LabTestController extends Controller
         $validated['is_active'] = true;
         $this->labService->storeCategory($validated);
 
-        return back()->with('success', 'Category created successfully.');
+        return back()->with('success', __('messages.lab_tests.category_created'));
     }
 
     /**
@@ -77,7 +77,7 @@ class LabTestController extends Controller
         $validated['is_active'] = $request->boolean('is_active', true);
         $this->labService->updateCategory($category, $validated);
 
-        return back()->with('success', 'Category updated successfully.');
+        return back()->with('success', __('messages.lab_tests.category_updated'));
     }
 
     /**
@@ -86,10 +86,10 @@ class LabTestController extends Controller
     public function destroyCategory(LabTestCategory $category)
     {
         if (!$this->labService->deleteCategory($category)) {
-            return back()->with('error', 'Cannot delete category with existing tests. Remove or reassign tests first.');
+            return back()->with('error', __('messages.lab_tests.category_cannot_delete'));
         }
 
-        return back()->with('success', 'Category deleted successfully.');
+        return back()->with('success', __('messages.lab_tests.category_deleted'));
     }
 
     /**
@@ -114,7 +114,7 @@ class LabTestController extends Controller
         $validated['is_active'] = true;
         $this->labService->storeTest($validated);
 
-        return back()->with('success', 'Lab test created successfully.');
+        return back()->with('success', __('messages.lab_tests.created'));
     }
 
     /**
@@ -140,7 +140,7 @@ class LabTestController extends Controller
         $validated['is_active'] = $request->boolean('is_active', true);
         $this->labService->updateTest($test, $validated);
 
-        return back()->with('success', 'Lab test updated successfully.');
+        return back()->with('success', __('messages.lab_tests.updated'));
     }
 
     /**
@@ -150,7 +150,7 @@ class LabTestController extends Controller
     {
         $this->labService->toggleTest($test);
 
-        return back()->with('success', 'Lab test status toggled.');
+        return back()->with('success', __('messages.lab_tests.toggled'));
     }
 
     /**

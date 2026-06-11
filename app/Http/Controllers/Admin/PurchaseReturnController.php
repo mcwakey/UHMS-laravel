@@ -103,7 +103,7 @@ class PurchaseReturnController extends Controller
         }
 
         return redirect()->route('admin.store.purchase-returns.show', $purchaseReturn)
-            ->with('success', 'Purchase return created.');
+            ->with('success', __('messages.purchase_returns.created'));
     }
 
     public function show(PurchaseReturn $purchaseReturn)
@@ -124,7 +124,7 @@ class PurchaseReturnController extends Controller
             return back()->withErrors(['error' => $e->getMessage()]);
         }
 
-        return back()->with('success', 'Purchase return approved.');
+        return back()->with('success', __('messages.purchase_returns.approved'));
     }
 
     public function post(PurchaseReturn $purchaseReturn)
@@ -135,7 +135,7 @@ class PurchaseReturnController extends Controller
             return back()->withErrors(['error' => $e->getMessage()]);
         }
 
-        return back()->with('success', 'Purchase return posted to stock and supplier ledger.');
+        return back()->with('success', __('messages.purchase_returns.posted'));
     }
 
     public function cancel(PurchaseReturn $purchaseReturn)
@@ -146,6 +146,6 @@ class PurchaseReturnController extends Controller
             return back()->withErrors(['error' => $e->getMessage()]);
         }
 
-        return back()->with('success', 'Purchase return cancelled.');
+        return back()->with('success', __('messages.purchase_returns.cancelled'));
     }
 }

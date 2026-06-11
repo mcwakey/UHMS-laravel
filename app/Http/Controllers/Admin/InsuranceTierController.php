@@ -31,7 +31,7 @@ class InsuranceTierController extends Controller
 
         return redirect()
             ->route('admin.insurance-providers.tiers.index', $provider)
-            ->with('success', 'Tier created successfully.');
+            ->with('success', __('messages.insurance_tiers.created'));
     }
 
     /** Update an existing tier. */
@@ -49,14 +49,14 @@ class InsuranceTierController extends Controller
 
         return redirect()
             ->route('admin.insurance-providers.tiers.index', $tier->insurance_provider_id)
-            ->with('success', 'Tier updated.');
+            ->with('success', __('messages.insurance_tiers.updated'));
     }
 
     /** Delete a tier (blocked if patients are enrolled). */
     public function destroy(InsuranceTier $tier)
     {
         if ($tier->patientInsurances()->exists()) {
-            return back()->with('error', 'Cannot delete tier: patients are currently enrolled on it.');
+            return back()->with('error', __('messages.insurance_tiers.cannot_delete'));
         }
 
         $providerId = $tier->insurance_provider_id;
@@ -64,7 +64,7 @@ class InsuranceTierController extends Controller
 
         return redirect()
             ->route('admin.insurance-providers.tiers.index', $providerId)
-            ->with('success', 'Tier deleted.');
+            ->with('success', __('messages.insurance_tiers.deleted'));
     }
 
     /**

@@ -49,6 +49,6 @@ class NotificationPreferenceController extends Controller
             );
         }
 
-        return back()->with('success', 'Notification preferences saved.');
+        return back()->with('success', __('messages.notification_preferences.saved'));
     }
 }

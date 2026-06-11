@@ -57,6 +57,6 @@ class EmergencyTriageController extends Controller
 
         $this->triage->record($emergencyCase, $data, $request->user());
 
-        return back()->with('success', 'Emergency triage recorded.');
+        return back()->with('success', __('messages.emergency.triage_recorded'));
     }
 }

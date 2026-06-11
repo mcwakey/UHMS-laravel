@@ -59,21 +59,21 @@ class FinancialEntryController extends Controller
 
         return redirect()
             ->route($route)
-            ->with('success', ucfirst($entry->type->value) . ' entry recorded successfully.');
+            ->with('success', __('messages.financial_entries.recorded', ['type' => ucfirst($entry->type->value)]));
     }
 
     public function approve(FinancialEntry $entry)
     {
         $this->accountingService->approveEntry($entry);
 
-        return back()->with('success', 'Entry approved.');
+        return back()->with('success', __('messages.financial_entries.approved'));
     }
 
     public function destroy(FinancialEntry $entry)
     {
         try {
             $this->accountingService->deleteEntry($entry);
-            return back()->with('success', 'Entry deleted.');
+            return back()->with('success', __('messages.financial_entries.deleted'));
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }

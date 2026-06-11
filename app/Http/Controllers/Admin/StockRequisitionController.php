@@ -56,7 +56,7 @@ class StockRequisitionController extends Controller
         }
 
         return redirect()->route('admin.store.stock-requisitions.show', $stockRequisition)
-            ->with('success', 'Stock requisition submitted.');
+            ->with('success', __('messages.stock_requisitions.submitted'));
     }
 
     public function show(StockRequisition $stockRequisition)
@@ -85,7 +85,7 @@ class StockRequisitionController extends Controller
             return back()->withErrors(['error' => $e->getMessage()]);
         }
 
-        return back()->with('success', 'Stock requisition approved.');
+        return back()->with('success', __('messages.stock_requisitions.approved'));
     }
 
     public function issue(StockRequisition $stockRequisition)
@@ -96,7 +96,7 @@ class StockRequisitionController extends Controller
             return back()->withErrors(['error' => $e->getMessage()]);
         }
 
-        return back()->with('success', 'Stock issued from Main Store. Department stock will update after acknowledgement.');
+        return back()->with('success', __('messages.stock_requisitions.issued'));
     }
 
     public function acknowledge(StockRequisition $stockRequisition)
@@ -107,7 +107,7 @@ class StockRequisitionController extends Controller
             return back()->withErrors(['error' => $e->getMessage()]);
         }
 
-        return back()->with('success', 'Department stock acknowledged and updated.');
+        return back()->with('success', __('messages.stock_requisitions.acknowledged'));
     }
 
     public function cancel(StockRequisition $stockRequisition)
@@ -118,6 +118,6 @@ class StockRequisitionController extends Controller
             return back()->withErrors(['error' => $e->getMessage()]);
         }
 
-        return back()->with('success', 'Stock requisition cancelled.');
+        return back()->with('success', __('messages.stock_requisitions.cancelled'));
     }
 }

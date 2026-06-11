@@ -36,13 +36,13 @@ class StockLocationController extends Controller
             // A department-linked location implies that department manages stock.
             $this->locationSync->markDepartmentManaged($location);
         });
-        return back()->with('success', 'Stock location created.');
+        return back()->with('success', __('messages.stock_locations.created'));
     }
 
     public function update(Request $request, StockLocation $stockLocation)
     {
         if ($stockLocation->is_main) {
-            return back()->with('error', 'Main Store is a protected system location and cannot be edited here.');
+            return back()->with('error', __('messages.stock_locations.cannot_edit_main'));
         }
 
         $data = $this->validatePayload($request, $stockLocation->id);
@@ -54,17 +54,17 @@ class StockLocationController extends Controller
             // Keep the department's stock-managed flag in sync with its location.
             $this->locationSync->markDepartmentManaged($stockLocation);
         });
-        return back()->with('success', 'Stock location updated.');
+        return back()->with('success', __('messages.stock_locations.updated'));
     }
 
     public function toggle(StockLocation $stockLocation)
     {
         if ($stockLocation->is_main) {
-            return back()->with('error', 'Main Store cannot be deactivated.');
+            return back()->with('error', __('messages.stock_locations.cannot_deactivate_main'));
         }
 
         $stockLocation->update(['is_active' => ! $stockLocation->is_active]);
-        return back()->with('success', 'Status toggled.');
+        return back()->with('success', __('messages.stock_locations.toggled'));
     }
 
     private function ensureMainStoreExists(): StockLocation

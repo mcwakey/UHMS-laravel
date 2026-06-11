@@ -54,7 +54,7 @@ class ConsultationTaskController extends Controller
             return response()->json(['success' => true, 'task' => $task->load(['assignedUser', 'creator'])]);
         }
 
-        return back()->with('success', 'Task created.');
+        return back()->with('success', __('messages.consultation_tasks.created'));
     }
 
     public function update(Request $request, ConsultationTask $task)
@@ -83,7 +83,7 @@ class ConsultationTaskController extends Controller
             return response()->json(['success' => true, 'task' => $task->fresh(['assignedUser', 'creator', 'completedBy'])]);
         }
 
-        return back()->with('success', 'Task updated.');
+        return back()->with('success', __('messages.consultation_tasks.updated'));
     }
 
     public function toggleComplete(ConsultationTask $task)
@@ -102,7 +102,7 @@ class ConsultationTaskController extends Controller
             return response()->json(['success' => true, 'task' => $task->fresh(['assignedUser', 'creator', 'completedBy'])]);
         }
 
-        return back()->with('success', 'Task status toggled.');
+        return back()->with('success', __('messages.consultation_tasks.toggled'));
     }
 
     public function destroy(ConsultationTask $task)
@@ -115,6 +115,6 @@ class ConsultationTaskController extends Controller
             return response()->json(['success' => true]);
         }
 
-        return back()->with('success', 'Task deleted.');
+        return back()->with('success', __('messages.consultation_tasks.deleted'));
     }
 }

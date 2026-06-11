@@ -45,6 +45,6 @@ class EmergencyProcedureController extends Controller
             );
         }
 
-        return back()->with('success', 'Emergency procedure(s) requested.');
+        return back()->with('success', __('messages.emergency.procedure_requested'));
     }
 }

@@ -30,6 +30,6 @@ class EmergencyMedicationController extends Controller
 
         $this->medications->order($emergencyCase, $data, $request->user());
 
-        return back()->with('success', 'Emergency medication ordered and MAR schedule updated.');
+        return back()->with('success', __('messages.emergency.medication_ordered'));
     }
 }

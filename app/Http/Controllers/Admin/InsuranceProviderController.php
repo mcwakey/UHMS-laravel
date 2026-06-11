@@ -44,7 +44,7 @@ class InsuranceProviderController extends Controller
 
         return redirect()
             ->route('admin.insurance-providers.index')
-            ->with('success', 'Insurance provider created. A Standard tier has been added — configure its limits from the provider dropdown.');
+            ->with('success', __('messages.insurance_providers.created'));
     }
 
     public function update(StoreInsuranceProviderRequest $request, InsuranceProvider $provider)
@@ -53,13 +53,13 @@ class InsuranceProviderController extends Controller
 
         return redirect()
             ->route('admin.insurance-providers.index')
-            ->with('success', 'Insurance provider updated successfully.');
+            ->with('success', __('messages.insurance_providers.updated'));
     }
 
     public function toggle(InsuranceProvider $provider)
     {
         $provider->update(['is_active' => ! $provider->is_active]);
 
-        return back()->with('success', 'Provider status updated.');
+        return back()->with('success', __('messages.insurance_providers.status_updated'));
     }
 }

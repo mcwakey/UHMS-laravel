@@ -56,6 +56,6 @@ class PermissionDashboardController extends Controller
         app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         return redirect()->route('admin.permissions.index')
-            ->with('success', 'Permissions audit refreshed.');
+            ->with('success', __('messages.permissions.audit_refreshed'));
     }
 }

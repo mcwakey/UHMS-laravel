@@ -20,6 +20,6 @@ class EmergencyNoteController extends Controller
 
         $this->notes->create($emergencyCase, $data, $request->user());
 
-        return back()->with('success', 'Emergency note added.');
+        return back()->with('success', __('messages.emergency.note_added'));
     }
 }

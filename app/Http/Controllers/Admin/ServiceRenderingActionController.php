@@ -19,7 +19,7 @@ class ServiceRenderingActionController extends Controller
 
         $this->service->start($serviceRendering, $request->user(), $data['notes'] ?? null);
 
-        return back()->with('success', 'Service rendering started.');
+        return back()->with('success', __('messages.service_rendering.started'));
     }
 
     public function markRendered(Request $request, ServiceRendering $serviceRendering)
@@ -32,7 +32,7 @@ class ServiceRenderingActionController extends Controller
 
         $this->service->markRendered($serviceRendering, $request->user(), $data);
 
-        return back()->with('success', 'Service marked as rendered.');
+        return back()->with('success', __('messages.service_rendering.rendered'));
     }
 
     public function markNotRendered(Request $request, ServiceRendering $serviceRendering)
@@ -44,7 +44,7 @@ class ServiceRenderingActionController extends Controller
 
         $this->service->markNotRendered($serviceRendering, $request->user(), $data);
 
-        return back()->with('success', 'Service marked as not rendered.');
+        return back()->with('success', __('messages.service_rendering.not_rendered'));
     }
 
     public function cancel(Request $request, ServiceRendering $serviceRendering)
@@ -56,7 +56,7 @@ class ServiceRenderingActionController extends Controller
 
         $this->service->cancel($serviceRendering, $request->user(), $data);
 
-        return back()->with('success', 'Service rendering cancelled.');
+        return back()->with('success', __('messages.service_rendering.cancelled'));
     }
 
     public function updateNotes(Request $request, ServiceRendering $serviceRendering)
@@ -68,6 +68,6 @@ class ServiceRenderingActionController extends Controller
 
         $this->service->updateNotes($serviceRendering, $request->user(), $data);
 
-        return back()->with('success', 'Rendering notes updated.');
+        return back()->with('success', __('messages.service_rendering.notes_updated'));
     }
 }

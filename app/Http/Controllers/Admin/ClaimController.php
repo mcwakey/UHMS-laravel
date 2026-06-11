@@ -111,7 +111,7 @@ class ClaimController extends Controller
         if ($invoice?->claim) {
             return redirect()
                 ->route('admin.claims.show', $invoice->claim)
-                ->with('success', 'A claim already exists for this invoice.');
+                ->with('success', __('messages.claims.already_exists'));
         }
 
         $providersQuery = InsuranceProvider::active()->where('is_default', false);
@@ -150,7 +150,7 @@ class ClaimController extends Controller
 
         return redirect()
             ->route('admin.claims.show', $claim)
-            ->with('success', 'Insurance claim is ready for review.');
+            ->with('success', __('messages.claims.ready_for_review'));
     }
 
     public function prepareFromVisit(Request $request, Visit $visit)
@@ -158,7 +158,7 @@ class ClaimController extends Controller
         $visit->loadMissing(['latestInvoice.items', 'visitInsurance.insuranceProvider.insuranceType']);
 
         if (! $visit->latestInvoice) {
-            return back()->with('error', 'This visit has no invoice to prepare a claim from.');
+            return back()->with('error', __('messages.claims.no_invoice'));
         }
 
         try {
@@ -173,7 +173,7 @@ class ClaimController extends Controller
 
         return redirect()
             ->route('admin.claims.show', $claim)
-            ->with('success', 'Insurance claim prepared from visit.');
+            ->with('success', __('messages.claims.prepared_from_visit'));
     }
 
     /**
@@ -185,7 +185,7 @@ class ClaimController extends Controller
 
         return redirect()
             ->route('admin.claims.show', $claim)
-            ->with('success', 'Claim created successfully.');
+            ->with('success', __('messages.claims.created'));
     }
 
     /**
@@ -219,7 +219,7 @@ class ClaimController extends Controller
 
         $this->claimService->updateVerificationCode($claim, $request->input('verification_code'));
 
-        return back()->with('success', "{$label} updated.");
+        return back()->with('success', __('messages.claims.field_updated', ['label' => $label]));
     }
 
     public function validateClaim(Claim $claim)
@@ -227,11 +227,11 @@ class ClaimController extends Controller
         $result = $this->claimService->validateClaim($claim);
 
         if ($result->valid) {
-            return back()->with('success', 'Claim validation passed.');
+            return back()->with('success', __('messages.claims.validation_passed'));
         }
 
         return back()
-            ->with('error', 'Claim validation has required issues.')
+            ->with('error', __('messages.claims.validation_issues'))
             ->with('claim_validation', $result->toArray());
     }
 
@@ -240,7 +240,7 @@ class ClaimController extends Controller
         try {
             $this->claimService->markReady($claim);
 
-            return back()->with('success', 'Claim marked ready for submission.');
+            return back()->with('success', __('messages.claims.ready_for_submission'));
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -260,7 +260,7 @@ class ClaimController extends Controller
 
             return redirect()
                 ->route('admin.claims.show', $claim)
-                ->with('success', 'Claim submitted.');
+                ->with('success', __('messages.claims.submitted'));
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -283,7 +283,7 @@ class ClaimController extends Controller
         if (! $claim->is_reviewable) {
             return redirect()
                 ->route('admin.claims.show', $claim)
-                ->with('error', 'This claim cannot be reviewed in its current status.');
+                ->with('error', __('messages.claims.cannot_review_status'));
         }
 
         // Start review if submitted
@@ -318,7 +318,7 @@ class ClaimController extends Controller
             $request->rejection_reason,
         );
 
-        return back()->with('success', "Item {$request->action}d successfully.");
+        return back()->with('success', __('messages.claims.field_updated', ['label' => 'Item']));
     }
 
     /**
@@ -333,14 +333,14 @@ class ClaimController extends Controller
         // Ensure all items have been reviewed
         $pendingItems = $claim->items()->where('status', ClaimItemStatus::PENDING)->count();
         if ($pendingItems > 0) {
-            return back()->with('error', "Please review all items. {$pendingItems} item(s) still pending.");
+            return back()->with('error', __('messages.claims.items_pending', ['count' => $pendingItems]));
         }
 
         $this->claimService->completeReview($claim, $request->reviewer_notes);
 
         return redirect()
             ->route('admin.claims.show', $claim)
-            ->with('success', 'Claim review completed.');
+            ->with('success', __('messages.claims.review_completed'));
     }
 
     /**
@@ -350,7 +350,7 @@ class ClaimController extends Controller
     {
         $this->claimService->markPaid($claim);
 
-        return back()->with('success', 'Claim marked as paid.');
+        return back()->with('success', __('messages.claims.marked_paid'));
     }
 
     public function recordPayment(Request $request, Claim $claim)
@@ -365,7 +365,7 @@ class ClaimController extends Controller
 
         $this->claimPaymentService->record($claim, $data, $request->user());
 
-        return back()->with('success', 'Claim payment recorded separately from patient invoice payments.');
+        return back()->with('success', __('messages.claims.payment_recorded'));
     }
 
     /**
@@ -376,7 +376,7 @@ class ClaimController extends Controller
         try {
             $this->claimService->appeal($claim);
 
-            return back()->with('success', 'Claim has been appealed and sent for re-review.');
+            return back()->with('success', __('messages.claims.appealed'));
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -398,7 +398,7 @@ class ClaimController extends Controller
             'service_name', 'service_type', 'quantity', 'unit_price',
         ]));
 
-        return back()->with('success', 'Item added to claim.');
+        return back()->with('success', __('messages.claims.item_added'));
     }
 
     /**
@@ -409,12 +409,12 @@ class ClaimController extends Controller
         $claim = $item->claim;
 
         if (! $claim->is_editable) {
-            return back()->with('error', 'Cannot modify items on this claim.');
+            return back()->with('error', __('messages.claims.cannot_modify'));
         }
 
         $this->claimService->removeItem($item);
 
-        return back()->with('success', 'Item removed from claim.');
+        return back()->with('success', __('messages.claims.item_removed'));
     }
 
     /**

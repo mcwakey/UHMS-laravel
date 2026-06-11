@@ -38,21 +38,21 @@ class PayrollController extends Controller
         );
 
         return redirect()->route('admin.hr.payroll.index', ['pay_period' => $request->pay_period])
-            ->with('success', "Payroll processed for {$records->count()} employees.");
+            ->with('success', __('messages.payroll.processed', ['count' => $records->count()]));
     }
 
     public function approve(Request $request)
     {
         $request->validate(['pay_period' => 'required|string']);
         $count = $this->payrollService->approvePayroll($request->pay_period);
-        return redirect()->back()->with('success', "{$count} payroll records approved.");
+        return redirect()->back()->with('success', __('messages.payroll.approved', ['count' => $count]));
     }
 
     public function markPaid(Request $request)
     {
         $request->validate(['pay_period' => 'required|string']);
         $count = $this->payrollService->markPaid($request->pay_period);
-        return redirect()->back()->with('success', "{$count} payroll records marked as paid.");
+        return redirect()->back()->with('success', __('messages.payroll.marked_paid', ['count' => $count]));
     }
 
     public function payslip(PayrollRecord $record)

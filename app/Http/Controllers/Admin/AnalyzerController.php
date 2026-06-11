@@ -46,7 +46,7 @@ class AnalyzerController extends Controller
 
         $this->analyzerService->createAnalyzer($validated);
 
-        return back()->with('success', 'Analyzer device added successfully.');
+        return back()->with('success', __('messages.analyzers.created'));
     }
 
     /**
@@ -68,7 +68,7 @@ class AnalyzerController extends Controller
 
         $this->analyzerService->updateAnalyzer($analyzer, $validated);
 
-        return back()->with('success', 'Analyzer device updated successfully.');
+        return back()->with('success', __('messages.analyzers.updated'));
     }
 
     /**
@@ -79,7 +79,7 @@ class AnalyzerController extends Controller
         $this->analyzerService->toggleAnalyzer($analyzer);
         $status = $analyzer->fresh()->is_active ? 'activated' : 'deactivated';
 
-        return back()->with('success', "Analyzer {$analyzer->name} {$status}.");
+        return back()->with('success', __('messages.analyzers.status_changed', ['name' => $analyzer->name, 'status' => $status]));
     }
 
     /**
@@ -88,10 +88,10 @@ class AnalyzerController extends Controller
     public function destroy(Analyzer $analyzer)
     {
         if (!$this->analyzerService->deleteAnalyzer($analyzer)) {
-            return back()->with('error', 'Cannot delete analyzer with messages currently being processed.');
+            return back()->with('error', __('messages.analyzers.cannot_delete_processing'));
         }
 
-        return back()->with('success', 'Analyzer device deleted.');
+        return back()->with('success', __('messages.analyzers.deleted'));
     }
 
     /**
@@ -122,7 +122,7 @@ class AnalyzerController extends Controller
 
         $this->analyzerService->storeMapping($analyzer, $validated);
 
-        return back()->with('success', 'Test mapping added.');
+        return back()->with('success', __('messages.analyzers.mapping_added'));
     }
 
     /**
@@ -138,7 +138,7 @@ class AnalyzerController extends Controller
 
         $this->analyzerService->updateMapping($mapping, $validated);
 
-        return back()->with('success', 'Test mapping updated.');
+        return back()->with('success', __('messages.analyzers.mapping_updated'));
     }
 
     /**
@@ -148,7 +148,7 @@ class AnalyzerController extends Controller
     {
         $this->analyzerService->deleteMapping($mapping);
 
-        return back()->with('success', 'Test mapping removed.');
+        return back()->with('success', __('messages.analyzers.mapping_removed'));
     }
 
     /**
@@ -171,7 +171,7 @@ class AnalyzerController extends Controller
     public function reprocess(AnalyzerRawMessage $message)
     {
         if (!in_array($message->processing_status, ['failed', 'received'])) {
-            return back()->with('error', 'Only failed or received messages can be reprocessed.');
+            return back()->with('error', __('messages.analyzers.cannot_reprocess'));
         }
 
         $message->update([
@@ -182,6 +182,6 @@ class AnalyzerController extends Controller
 
         ProcessAnalyzerMessage::dispatch($message->id);
 
-        return back()->with('success', "Message #{$message->id} queued for reprocessing.");
+        return back()->with('success', __('messages.analyzers.message_requeued', ['id' => $message->id]));
     }
 }

@@ -37,7 +37,7 @@ class BloodIssueController extends Controller
             array_merge($data, ['emergency' => $request->boolean('emergency')])
         );
 
-        return back()->with('success', 'Blood unit issued.');
+        return back()->with('success', __('messages.blood_bank.unit_issued'));
     }
 
     public function transfuse(Request $request, BloodIssue $bloodIssue)
@@ -57,7 +57,7 @@ class BloodIssueController extends Controller
         $data['reaction_occurred'] = $request->boolean('reaction_occurred');
         $this->issues->recordTransfusion($bloodIssue, $request->user(), $data);
 
-        return back()->with('success', 'Transfusion outcome recorded.');
+        return back()->with('success', __('messages.blood_bank.transfusion_outcome'));
     }
 
     public function reaction(Request $request, BloodIssue $bloodIssue)
@@ -70,6 +70,6 @@ class BloodIssueController extends Controller
 
         $this->issues->recordReaction($bloodIssue, $request->user(), $data);
 
-        return back()->with('success', 'Transfusion reaction recorded.');
+        return back()->with('success', __('messages.blood_bank.transfusion_reaction'));
     }
 }

@@ -29,7 +29,7 @@ class TriageController extends Controller
         if (! in_array($visit->status, [VisitStatus::WAITING, VisitStatus::TRIAGE])) {
             return redirect()
                 ->route('admin.visits.show', $visit)
-                ->with('error', 'This visit is not awaiting triage.');
+                ->with('error', __('messages.triage.not_awaiting'));
         }
 
         // Auto-transition WAITING → TRIAGE when nurse opens the form
@@ -78,7 +78,7 @@ class TriageController extends Controller
 
             return redirect()
                 ->route('admin.visits.show', $visit)
-                ->with('error', 'This visit is not in TRIAGE status.');
+                ->with('error', __('messages.triage.not_in_triage'));
         }
 
         $consultationDeptIds = $this->billableConsultationDepartmentsForVisit($visit)->pluck('id')->all();
@@ -150,7 +150,7 @@ class TriageController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        $message = 'Triage completed. Visit moved to '.$visit->status->label().'.';
+        $message = __('messages.triage.completed', ['status' => $visit->status->label()]);
 
         if ($request->expectsJson()) {
             return response()->json([

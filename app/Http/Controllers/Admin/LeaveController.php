@@ -38,14 +38,14 @@ class LeaveController extends Controller
     public function store(StoreLeaveRequest $request)
     {
         $this->hrService->createLeaveRequest($request->validated());
-        return redirect()->route('admin.hr.leave.index')->with('success', 'Leave request submitted successfully.');
+        return redirect()->route('admin.hr.leave.index')->with('success', __('messages.leave.submitted'));
     }
 
     public function approve(LeaveRequest $leave)
     {
         try {
             $this->hrService->approveLeave($leave);
-            return redirect()->back()->with('success', 'Leave request approved.');
+            return redirect()->back()->with('success', __('messages.leave.approved'));
         } catch (\InvalidArgumentException $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
@@ -57,7 +57,7 @@ class LeaveController extends Controller
 
         try {
             $this->hrService->rejectLeave($leave, $request->rejection_reason);
-            return redirect()->back()->with('success', 'Leave request rejected.');
+            return redirect()->back()->with('success', __('messages.leave.rejected'));
         } catch (\InvalidArgumentException $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }

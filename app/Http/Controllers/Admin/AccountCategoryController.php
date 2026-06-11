@@ -31,7 +31,7 @@ class AccountCategoryController extends Controller
 
         return redirect()
             ->route('admin.accounts.categories.index')
-            ->with('success', 'Category created successfully.');
+            ->with('success', __('messages.accounts.category_created'));
     }
 
     public function update(StoreAccountCategoryRequest $request, AccountCategory $category)
@@ -40,13 +40,13 @@ class AccountCategoryController extends Controller
 
         return redirect()
             ->route('admin.accounts.categories.index')
-            ->with('success', 'Category updated successfully.');
+            ->with('success', __('messages.accounts.category_updated'));
     }
 
     public function toggle(AccountCategory $category)
     {
         $category->update(['is_active' => ! $category->is_active]);
 
-        return back()->with('success', 'Category status updated.');
+        return back()->with('success', __('messages.accounts.category_status_updated'));
     }
 }

@@ -93,21 +93,21 @@
             <x-status-badge :status="$case->emergency_status" domain="emergency" class="ms-1" />
         </h4>
         <p class="text-muted mb-0">
-            {{ $case->patient->full_name ?? 'Unknown patient' }} - {{ $case->patient->patient_number ?? 'No patient number' }} - {{ $case->visit->visit_number ?? 'No visit number' }} - arrived {{ $case->waiting_minutes }} min ago
+            {{ $case->patient->full_name ?? __('emergency.unknown_patient') }} - {{ $case->patient->patient_number ?? '' }} - {{ $case->visit->visit_number ?? '' }} - {{ __('emergency.min') }}: {{ $case->waiting_minutes }}
         </p>
     </div>
     <div class="d-flex flex-wrap gap-2">
         @if($temporaryPatient)
             @can('patients.merge.confirm_identity')
                 <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#confirmEmergencyIdentityModal">
-                    <i class="ti ti-id-badge-2 me-1"></i>Confirm Identity
+                    <i class="ti ti-id-badge-2 me-1"></i>{{ __('emergency.temporary') }}
                 </button>
             @endcan
         @endif
-        <a href="{{ route('admin.emergency.board') }}" class="btn btn-outline-secondary btn-sm">Board</a>
+        <a href="{{ route('admin.emergency.board') }}" class="btn btn-outline-secondary btn-sm">{{ __('emergency.emergency_board_btn') }}</a>
         @if($case->visit)
-            <a href="{{ route('admin.emergency.mar-chart', $case->visit) }}" class="btn btn-outline-danger btn-sm">Open MAR</a>
-            <a href="{{ route('admin.visits.preview', $case->visit) }}" class="btn btn-outline-primary btn-sm">Visit Preview</a>
+            <a href="{{ route('admin.emergency.mar-chart', $case->visit) }}" class="btn btn-outline-danger btn-sm">{{ __('emergency.mar') }}</a>
+            <a href="{{ route('admin.visits.preview', $case->visit) }}" class="btn btn-outline-primary btn-sm">{{ __('common.view') }}</a>
         @endif
     </div>
 </div>

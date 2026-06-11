@@ -81,7 +81,7 @@ class BloodDonorController extends Controller
             'registered_by' => $request->user()->id,
         ]));
 
-        return back()->with('success', 'Blood donor registered.');
+        return back()->with('success', __('messages.blood_bank.donor_registered'));
     }
 
     public function questionnaire(Request $request, BloodDonor $donor)
@@ -105,7 +105,7 @@ class BloodDonorController extends Controller
             'consent_contact' => $request->boolean('consent_contact'),
         ]);
 
-        return back()->with('success', 'Donor questionnaire saved.');
+        return back()->with('success', __('messages.blood_bank.donor_questionnaire_saved'));
     }
 
     public function assessment(Request $request, BloodDonor $donor)
@@ -125,7 +125,7 @@ class BloodDonorController extends Controller
         $screening = $this->screening->startScreening($donor, $request->user());
         $this->screening->recordPhysicalAssessment($screening, $data, $request->user());
 
-        return back()->with('success', 'Physical assessment recorded.');
+        return back()->with('success', __('messages.blood_bank.physical_assessment_saved'));
     }
 
     public function eligibility(Request $request, BloodDonor $donor)
@@ -147,6 +147,6 @@ class BloodDonorController extends Controller
         $screening = $this->screening->startScreening($donor, $request->user());
         $this->screening->decideEligibility($screening, $request->user(), $data['decision'] ?? null, $data, $override);
 
-        return back()->with('success', 'Donor eligibility decision recorded.');
+        return back()->with('success', __('messages.blood_bank.donor_eligibility_saved'));
     }
 }

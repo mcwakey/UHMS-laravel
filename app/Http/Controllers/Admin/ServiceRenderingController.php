@@ -83,7 +83,7 @@ class ServiceRenderingController extends Controller
 
         return redirect()
             ->route('admin.service-renderings.index')
-            ->with('success', "Billed \"{$service->name}\" to {$visit->visit_number}. A rendering task was created for the department.");
+            ->with('success', __('messages.service_rendering.billed', ['service' => $service->name, 'visit' => $visit->visit_number]));
     }
 
     /** select2 JSON: open visits to bill against (search visit # or patient). */

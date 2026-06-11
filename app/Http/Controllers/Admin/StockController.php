@@ -93,7 +93,7 @@ class StockController extends Controller
         // A location tied to a department implies that department manages stock.
         $this->locationSync->markDepartmentManaged($location);
 
-        return back()->with('success', 'Stock location created.');
+        return back()->with('success', __('messages.stock.location_created'));
     }
 
     public function updateLocation(Request $request, StockLocation $location)
@@ -112,7 +112,7 @@ class StockController extends Controller
         // Keep the department's stock-managed flag in sync with its location.
         $this->locationSync->markDepartmentManaged($location);
 
-        return back()->with('success', 'Stock location updated.');
+        return back()->with('success', __('messages.stock.location_updated'));
     }
 
     /*
@@ -222,7 +222,7 @@ class StockController extends Controller
         }
 
         return redirect()->route('admin.store.stock.batches.show', $batch)
-            ->with('success', 'Stock adjustment ' . $batch->batch_number . ' recorded.');
+            ->with('success', __('messages.stock.adjustment_recorded', ['number' => $batch->batch_number]));
     }
 
     /*
@@ -261,7 +261,7 @@ class StockController extends Controller
         }
 
         return redirect()->route('admin.store.stock.batches.show', $batch)
-            ->with('success', 'Stock return ' . $batch->batch_number . ' recorded.');
+            ->with('success', __('messages.stock.return_recorded', ['number' => $batch->batch_number]));
     }
 
     /*
@@ -300,7 +300,7 @@ class StockController extends Controller
         }
 
         return redirect()->route('admin.store.stock.batches.show', $batch)
-            ->with('success', 'Stock transfer ' . $batch->batch_number . ' recorded.');
+            ->with('success', __('messages.stock.transfer_recorded', ['number' => $batch->batch_number]));
     }
 
     /*

@@ -51,6 +51,6 @@ class NotificationBroadcastController extends Controller
             'department' => $notifier->notifyDepartment((int) $data['target_value'], $payload, 0),
         };
 
-        return back()->with('success', "Broadcast sent to {$count} user(s).");
+        return back()->with('success', __('messages.notifications.broadcast_sent', ['count' => $count]));
     }
 }

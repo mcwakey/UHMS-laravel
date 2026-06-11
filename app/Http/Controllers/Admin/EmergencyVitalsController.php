@@ -29,6 +29,6 @@ class EmergencyVitalsController extends Controller
 
         $this->vitals->record($emergencyCase, $data, $request->user());
 
-        return back()->with('success', 'Emergency vitals recorded.');
+        return back()->with('success', __('messages.emergency.vitals_recorded'));
     }
 }

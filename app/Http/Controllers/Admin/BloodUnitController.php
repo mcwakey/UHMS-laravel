@@ -33,7 +33,7 @@ class BloodUnitController extends Controller
         ]);
 
         if (in_array($unit->status, [BloodUnit::STATUS_ISSUED, BloodUnit::STATUS_TRANSFUSED], true)) {
-            return back()->with('error', 'Issued or transfused units cannot be discarded.');
+            return back()->with('error', __('messages.blood_bank.cannot_discard_issued'));
         }
 
         $unit->update([
@@ -43,6 +43,6 @@ class BloodUnitController extends Controller
             'discard_reason' => $data['discard_reason'],
         ]);
 
-        return back()->with('success', 'Blood unit discarded.');
+        return back()->with('success', __('messages.blood_bank.unit_discarded'));
     }
 }

@@ -1,12 +1,8 @@
 @extends('layouts.app')
-@section('title', 'Pharmacy Drug Catalogue')
+@section('title', __('pharmacy.drug_catalogue'))
 
 @section('content')
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"><i class="ti ti-pill me-2"></i>Pharmacy Drug Catalogue</h4>
-    </div>
-</div>
+<x-page-header :title="__('pharmacy.drug_catalogue')" :description="__('pharmacy.drug_catalogue_description')" icon="ti-pill" />
 
 @if(session('success'))
 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -25,12 +21,12 @@
     <div class="card-body py-2">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-md-5">
-                <label class="form-label small mb-1">Search</label>
-                <input type="text" name="search" class="form-control" placeholder="Search product name or code" value="{{ request('search') }}">
+                <label class="form-label small mb-1">{{ __('common.search') }}</label>
+                <input type="text" name="search" class="form-control" placeholder="{{ __('pharmacy.search_drug_placeholder') }}" value="{{ request('search') }}">
             </div>
             <div class="col-auto">
-                <button type="submit" class="btn btn-primary btn-md"><i class="ti ti-search me-1"></i>Filter</button>
-                <a href="{{ route('admin.pharmacy.drugs.index') }}" class="btn btn-outline-secondary btn-md">Clear</a>
+                <button type="submit" class="btn btn-primary btn-md"><i class="ti ti-search me-1"></i>{{ __('common.filter') }}</button>
+                <a href="{{ route('admin.pharmacy.drugs.index') }}" class="btn btn-outline-secondary btn-md">{{ __('common.clear') }}</a>
             </div>
         </form>
     </div>
@@ -42,13 +38,13 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Product</th>
-                        <th>Product Type</th>
-                        <th>Unit</th>
-                        <th class="text-end">Pharmacy Available Qty</th>
-                        <th class="text-end">Main Stock Qty</th>
-                        <th class="text-end">Reorder Level</th>
-                        <th>Status</th>
+                        <th>{{ __('pharmacy.col_product') }}</th>
+                        <th>{{ __('pharmacy.col_product_type') }}</th>
+                        <th>{{ __('pharmacy.col_unit') }}</th>
+                        <th class="text-end">{{ __('pharmacy.col_pharmacy_qty') }}</th>
+                        <th class="text-end">{{ __('pharmacy.col_main_stock_qty') }}</th>
+                        <th class="text-end">{{ __('pharmacy.col_reorder_level') }}</th>
+                        <th>{{ __('pharmacy.col_status') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -86,7 +82,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7"><x-empty-state message="No pharmacy products found." /></td>
+                            <td colspan="7"><x-empty-state icon="ti-pill-off" :message="__('pharmacy.no_drugs_found')" /></td>
                         </tr>
                     @endforelse
                 </tbody>

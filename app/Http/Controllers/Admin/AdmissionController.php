@@ -165,7 +165,7 @@ class AdmissionController extends Controller
 
         return redirect()
             ->route('admin.admissions.show', $admission)
-            ->with('success', "Patient admitted successfully. Admission #{$admission->admission_number}");
+            ->with('success', __('messages.admissions.admitted', ['number' => $admission->admission_number]));
     }
 
     public function show(Admission $admission)
@@ -211,7 +211,7 @@ class AdmissionController extends Controller
 
         return redirect()
             ->route('admin.admissions.show', $admission)
-            ->with('success', 'Patient discharged successfully.');
+            ->with('success', __('messages.admissions.discharged'));
     }
 
     public function storeRound(Request $request, Admission $admission)
@@ -226,7 +226,7 @@ class AdmissionController extends Controller
 
         return redirect()
             ->route('admin.admissions.show', $admission)
-            ->with('success', 'Ward round recorded successfully.');
+            ->with('success', __('messages.admissions.ward_round_saved'));
     }
 
     public function storeVital(Request $request, Admission $admission)
@@ -258,7 +258,7 @@ class AdmissionController extends Controller
         return redirect()
             ->route('admin.admissions.show', $admission)
             ->withFragment('tab-vitals')
-            ->with('success', 'Vitals recorded.');
+            ->with('success', __('messages.admissions.vitals_recorded'));
     }
 
     public function storeService(Request $request, Admission $admission)
@@ -284,6 +284,6 @@ class AdmissionController extends Controller
         return redirect()
             ->route('admin.admissions.show', $admission)
             ->withFragment('tab-billing')
-            ->with('success', 'Service charge added.');
+            ->with('success', __('messages.admissions.charge_added'));
     }
 }

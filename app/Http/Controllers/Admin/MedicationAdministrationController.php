@@ -42,7 +42,7 @@ class MedicationAdministrationController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Medication administration recorded.');
+        return back()->with('success', __('messages.medication_administration.recorded'));
     }
 
     public function administerPrn(Request $request, MedicationOrder $order)
@@ -70,7 +70,7 @@ class MedicationAdministrationController extends Controller
             ]);
         }
 
-        return back()->with('success', 'PRN/SOS medication administration recorded.');
+        return back()->with('success', __('messages.medication_administration.prn_recorded'));
     }
 
     public function holdOrder(Request $request, MedicationOrder $order)
@@ -81,7 +81,7 @@ class MedicationAdministrationController extends Controller
 
         $this->orders->hold($order, $request->user(), $validated['reason']);
 
-        return back()->with('success', 'Medication order held.');
+        return back()->with('success', __('messages.medication_administration.order_held'));
     }
 
     public function stopOrder(Request $request, MedicationOrder $order)
@@ -92,7 +92,7 @@ class MedicationAdministrationController extends Controller
 
         $this->orders->stop($order, $request->user(), $validated['reason']);
 
-        return back()->with('success', 'Medication order stopped and future doses cancelled.');
+        return back()->with('success', __('messages.medication_administration.order_stopped'));
     }
 
     public function correct(Request $request, MedicationAdministration $administration)
@@ -108,6 +108,6 @@ class MedicationAdministrationController extends Controller
 
         $this->administrations->correct($administration, $validated, $request->user());
 
-        return back()->with('success', 'Administration record corrected with audit log.');
+        return back()->with('success', __('messages.medication_administration.corrected'));
     }
 }

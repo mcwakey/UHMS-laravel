@@ -32,7 +32,7 @@ class WardController extends Controller
 
         return redirect()
             ->route('admin.wards.index')
-            ->with('success', "Ward '{$ward->name}' created successfully.");
+            ->with('success', __('messages.wards.created', ['name' => $ward->name]));
     }
 
     public function update(UpdateWardRequest $request, Ward $ward)
@@ -41,7 +41,7 @@ class WardController extends Controller
 
         return redirect()
             ->route('admin.wards.index')
-            ->with('success', "Ward '{$ward->name}' updated successfully.");
+            ->with('success', __('messages.wards.updated', ['name' => $ward->name]));
     }
 
     public function toggle(Ward $ward)
@@ -49,7 +49,7 @@ class WardController extends Controller
         $this->wardService->toggleWard($ward);
         $status = $ward->is_active ? 'activated' : 'deactivated';
 
-        return back()->with('success', "Ward '{$ward->name}' {$status}.");
+        return back()->with('success', __('messages.wards.toggled', ['name' => $ward->name, 'status' => $status]));
     }
 
     public function beds(Request $request)
@@ -66,7 +66,7 @@ class WardController extends Controller
 
         return redirect()
             ->route('admin.wards.beds')
-            ->with('success', 'Bed created successfully.');
+            ->with('success', __('messages.wards.bed_created'));
     }
 
     public function updateBed(Request $request, Bed $bed)
@@ -83,7 +83,7 @@ class WardController extends Controller
 
         return redirect()
             ->route('admin.wards.beds')
-            ->with('success', 'Bed updated successfully.');
+            ->with('success', __('messages.wards.bed_updated'));
     }
 
     public function bedMap()

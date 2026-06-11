@@ -79,7 +79,7 @@ class EmergencyCaseController extends Controller
 
         return redirect()
             ->route('admin.emergency.cases.show', $case)
-            ->with('success', "Emergency case {$case->emergency_number} created.");
+            ->with('success', __('messages.emergency.case_created', ['number' => $case->emergency_number]));
     }
 
     public function show(EmergencyCase $emergencyCase)
@@ -225,7 +225,7 @@ class EmergencyCaseController extends Controller
             }
         }
 
-        return back()->with('success', 'Emergency case updated.');
+        return back()->with('success', __('messages.emergency.case_updated'));
     }
 
     private function emergencyDepartmentId(EmergencyCase $case): ?int

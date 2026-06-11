@@ -96,7 +96,7 @@ class ProductPricingController extends Controller
             );
         }
 
-        return back()->with('success', "Prices for \"{$product->name}\" updated.");
+        return back()->with('success', __('messages.product_pricing.prices_updated', ['name' => $product->name]));
     }
 
     /**
@@ -106,7 +106,7 @@ class ProductPricingController extends Controller
     {
         $this->authorizePrice($product, $price);
         $price->delete();
-        return back()->with('success', 'Price removed.');
+        return back()->with('success', __('messages.product_pricing.price_removed'));
     }
 
     /* ──────────────────────────────────────────────────────────────────── */
@@ -125,7 +125,7 @@ class ProductPricingController extends Controller
             'is_billable' => (bool) ($data['is_billable'] ?? false),
         ]);
 
-        return back()->with('success', 'Base pricing updated.');
+        return back()->with('success', __('messages.product_pricing.base_updated'));
     }
 
     /* ──────────────────────────────────────────────────────────────────── */
@@ -161,7 +161,7 @@ class ProductPricingController extends Controller
             'is_active'             => (bool) ($data['is_active'] ?? true),
         ]);
 
-        return back()->with('success', 'Insurance type price added.');
+        return back()->with('success', __('messages.product_pricing.type_price_added'));
     }
 
     public function updateTypePrice(Request $request, Product $product, ProductPrice $price): RedirectResponse
@@ -178,14 +178,14 @@ class ProductPricingController extends Controller
             'is_active' => (bool) ($data['is_active'] ?? $price->is_active),
         ]);
 
-        return back()->with('success', 'Insurance type price updated.');
+        return back()->with('success', __('messages.product_pricing.type_price_updated'));
     }
 
     public function destroyTypePrice(Product $product, ProductPrice $price): RedirectResponse
     {
         $this->authorizePrice($product, $price);
         $price->delete();
-        return back()->with('success', 'Insurance type price removed.');
+        return back()->with('success', __('messages.product_pricing.type_price_removed'));
     }
 
     /* ──────────────────────────────────────────────────────────────────── */
@@ -221,7 +221,7 @@ class ProductPricingController extends Controller
             'is_active'             => (bool) ($data['is_active'] ?? true),
         ]);
 
-        return back()->with('success', 'Provider-specific price added.');
+        return back()->with('success', __('messages.product_pricing.provider_price_added'));
     }
 
     public function updateProviderPrice(Request $request, Product $product, ProductPrice $price): RedirectResponse
@@ -238,14 +238,14 @@ class ProductPricingController extends Controller
             'is_active' => (bool) ($data['is_active'] ?? $price->is_active),
         ]);
 
-        return back()->with('success', 'Provider price updated.');
+        return back()->with('success', __('messages.product_pricing.provider_price_updated'));
     }
 
     public function destroyProviderPrice(Product $product, ProductPrice $price): RedirectResponse
     {
         $this->authorizePrice($product, $price);
         $price->delete();
-        return back()->with('success', 'Provider price removed.');
+        return back()->with('success', __('messages.product_pricing.provider_price_removed'));
     }
 
     /* ── Guard ──────────────────────────────────────────────────────────── */

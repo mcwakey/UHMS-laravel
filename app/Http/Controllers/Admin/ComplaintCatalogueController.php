@@ -34,7 +34,7 @@ class ComplaintCatalogueController extends Controller
         $data = $this->validated($request);
         $complaints->create($data);
 
-        return back()->with('success', 'Complaint added to the catalogue.');
+        return back()->with('success', __('messages.complaints_catalogue.added'));
     }
 
     public function update(Request $request, ComplaintCatalogue $complaint, ComplaintCatalogueService $complaints)
@@ -42,14 +42,14 @@ class ComplaintCatalogueController extends Controller
         $data = $this->validated($request, $complaint);
         $complaints->update($complaint, $data);
 
-        return back()->with('success', 'Complaint catalogue entry updated.');
+        return back()->with('success', __('messages.complaints_catalogue.updated'));
     }
 
     public function toggle(ComplaintCatalogue $complaint, ComplaintCatalogueService $complaints)
     {
         $complaints->toggle($complaint);
 
-        return back()->with('success', 'Complaint catalogue status updated.');
+        return back()->with('success', __('messages.complaints_catalogue.status_updated'));
     }
 
     private function validated(Request $request, ?ComplaintCatalogue $complaint = null): array

@@ -25,7 +25,7 @@ class EmergencyContactController extends Controller
 
         $patient->emergencyContacts()->create($data);
 
-        return back()->with('success', 'Emergency contact added.');
+        return back()->with('success', __('messages.emergency.contact_added'));
     }
 
     public function update(Request $request, Patient $patient, EmergencyContact $contact)
@@ -44,13 +44,13 @@ class EmergencyContactController extends Controller
 
         $contact->update($data);
 
-        return back()->with('success', 'Emergency contact updated.');
+        return back()->with('success', __('messages.emergency.contact_updated'));
     }
 
     public function destroy(Patient $patient, EmergencyContact $contact)
     {
         $contact->delete();
 
-        return back()->with('success', 'Emergency contact removed.');
+        return back()->with('success', __('messages.emergency.contact_removed'));
     }
 }

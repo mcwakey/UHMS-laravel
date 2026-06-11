@@ -53,7 +53,7 @@ class EmergencyTaskController extends Controller
             'assigned_role' => empty($data['assigned_to']) ? 'Emergency Nurse' : null,
         ]);
 
-        return back()->with('success', 'Monitoring task added.');
+        return back()->with('success', __('messages.emergency.task_added'));
     }
 
     public function complete(Request $request, EmergencyCase $emergencyCase, ClinicalTask $task)
@@ -69,6 +69,6 @@ class EmergencyTaskController extends Controller
             $this->tasks->completeTask($task, $request->user());
         }
 
-        return back()->with('success', 'Task updated.');
+        return back()->with('success', __('messages.emergency.task_updated'));
     }
 }

@@ -299,13 +299,13 @@ class VisitController extends Controller
                 ], 500);
             }
 
-            return redirect()->back()->withInput()->with('error', 'Failed to create visit. Please try again.');
+            return redirect()->back()->withInput()->with('error', __('messages.visits.create_failed'));
         }
 
         $message = match (true) {
-            $visit->status === VisitStatus::SCHEDULED => "Visit {$visit->visit_number} scheduled successfully.",
-            $visit->status === VisitStatus::WAITING => "Visit {$visit->visit_number} created and patient added to triage queue.",
-            default => "Visit {$visit->visit_number} created. No consultation service selected — triage skipped.",
+            $visit->status === VisitStatus::SCHEDULED => __('messages.visits.scheduled', ['number' => $visit->visit_number]),
+            $visit->status === VisitStatus::WAITING => __('messages.visits.created_waiting', ['number' => $visit->visit_number]),
+            default => __('messages.visits.created_no_triage', ['number' => $visit->visit_number]),
         };
 
         if ($request->expectsJson()) {
@@ -359,12 +359,12 @@ class VisitController extends Controller
                 }
             });
         } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Failed to update visit: '.$e->getMessage());
+            return redirect()->back()->withInput()->with('error', __('messages.visits.update_failed', ['error' => $e->getMessage()]));
         }
 
         return redirect()
             ->route('admin.visits.show', $visit)
-            ->with('success', "Visit {$visit->visit_number} updated.");
+            ->with('success', __('messages.visits.updated', ['number' => $visit->visit_number]));
     }
 
     public function show(Visit $visit)
@@ -442,7 +442,7 @@ class VisitController extends Controller
         $oldInsurance = $visit->visitInsurance;
 
         if ((int) $oldInsurance?->id === (int) $newInsurance->id) {
-            return back()->with('success', 'Visit insurance is already set to the selected option.');
+            return back()->with('success', __('messages.visits.insurance_already_set'));
         }
 
         DB::transaction(function () use ($visit, $oldInsurance, $newInsurance) {
@@ -472,7 +472,7 @@ class VisitController extends Controller
 
         $providerName = $newInsurance->insuranceProvider?->name ?? 'Cash & Carry';
 
-        return back()->with('success', "Visit insurance changed to {$providerName}. Existing billed items were not changed.");
+        return back()->with('success', __('messages.visits.insurance_changed', ['provider' => $providerName]));
     }
 
     public function transition(Request $request, Visit $visit)
@@ -485,12 +485,12 @@ class VisitController extends Controller
         $newStatus = VisitStatus::from($request->status);
 
         if (! $visit->canTransitionTo($newStatus)) {
-            return back()->with('error', "Cannot transition from {$visit->status->label()} to {$newStatus->label()}.");
+            return back()->with('error', __('messages.visits.cannot_transition', ['from' => $visit->status->label(), 'to' => $newStatus->label()]));
         }
 
         $this->visitService->transition($visit, $newStatus, $request->notes);
 
-        return back()->with('success', "Visit status updated to {$newStatus->label()}.");
+        return back()->with('success', __('messages.visits.status_updated', ['status' => $newStatus->label()]));
     }
 
     public function sendToDepartment(Request $request, Visit $visit)
@@ -506,7 +506,7 @@ class VisitController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', 'Patient sent to department and queue entry created.');
+        return back()->with('success', __('messages.visits.sent_to_department'));
     }
 
     public function patientSearch(Request $request)

@@ -68,7 +68,7 @@ class ServiceCatalogController extends Controller
             $service->specialties()->sync($request->specialties ?? []);
         }
 
-        return back()->with('success', 'Service added successfully.');
+        return back()->with('success', __('messages.service_catalog.created'));
     }
 
     /**
@@ -88,7 +88,7 @@ class ServiceCatalogController extends Controller
 
         $service->specialties()->sync($request->specialties ?? []);
 
-        return back()->with('success', 'Service updated successfully.');
+        return back()->with('success', __('messages.service_catalog.updated'));
     }
 
     /**
@@ -98,7 +98,7 @@ class ServiceCatalogController extends Controller
     {
         $service->update(['is_active' => !$service->is_active]);
 
-        return back()->with('success', "Service {$service->name} " . ($service->is_active ? 'activated' : 'deactivated') . '.');
+        return back()->with('success', __('messages.service_catalog.toggled', ['name' => $service->name, 'status' => $service->is_active ? 'activated' : 'deactivated']));
     }
 
     /**
@@ -184,7 +184,7 @@ class ServiceCatalogController extends Controller
             );
         }
 
-        $message = "Prices for \"{$service->name}\" updated.";
+        $message = __('messages.service_catalog.prices_updated', ['name' => $service->name]);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -212,6 +212,6 @@ class ServiceCatalogController extends Controller
             return response()->json(['message' => 'Price entry removed.']);
         }
 
-        return back()->with('success', 'Price entry removed.');
+        return back()->with('success', __('messages.service_catalog.price_removed'));
     }
 }

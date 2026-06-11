@@ -72,7 +72,7 @@ class AppointmentController extends Controller
             );
 
             if ($hasConflict) {
-                return back()->withInput()->with('error', 'The selected doctor has a conflicting appointment at that time.');
+                return back()->withInput()->with('error', __('messages.appointments.doctor_conflict'));
             }
         }
 
@@ -80,7 +80,7 @@ class AppointmentController extends Controller
 
         return redirect()
             ->route('admin.appointments.show', $appointment)
-            ->with('success', 'Appointment scheduled successfully.');
+            ->with('success', __('messages.appointments.created'));
     }
 
     /**
@@ -125,7 +125,7 @@ class AppointmentController extends Controller
             );
 
             if ($hasConflict) {
-                return back()->withInput()->with('error', 'The selected doctor has a conflicting appointment at that time.');
+                return back()->withInput()->with('error', __('messages.appointments.doctor_conflict'));
             }
         }
 
@@ -133,7 +133,7 @@ class AppointmentController extends Controller
 
         return redirect()
             ->route('admin.appointments.show', $appointment)
-            ->with('success', 'Appointment updated successfully.');
+            ->with('success', __('messages.appointments.updated'));
     }
 
     /**
@@ -164,7 +164,7 @@ class AppointmentController extends Controller
 
             return redirect()
                 ->route('admin.appointments.show', $appointment)
-                ->with('success', 'Patient checked in and visit created successfully.');
+                ->with('success', __('messages.appointments.checked_in'));
         } catch (\InvalidArgumentException $e) {
             if (request()->expectsJson()) {
                 return response()->json([
@@ -191,7 +191,7 @@ class AppointmentController extends Controller
 
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => "Appointment status changed to {$newStatus->label()}.",
+                    'message' => __('messages.appointments.status_changed', ['status' => $newStatus->label()]),
                     'appointment_id' => $appointment->id,
                     'appointment_number' => $appointment->appointment_number,
                     'appointment_status' => $appointment->status->value,
@@ -201,7 +201,7 @@ class AppointmentController extends Controller
                 ]);
             }
 
-            return back()->with('success', "Appointment status changed to {$newStatus->label()}.");
+            return back()->with('success', __('messages.appointments.status_changed', ['status' => $newStatus->label()]));
         } catch (\InvalidArgumentException $e) {
             if ($request->expectsJson()) {
                 return response()->json([
@@ -226,7 +226,7 @@ class AppointmentController extends Controller
 
         return redirect()
             ->route('admin.appointments.index')
-            ->with('success', 'Appointment cancelled.');
+            ->with('success', __('messages.appointments.cancelled'));
     }
 
     /**
@@ -236,7 +236,7 @@ class AppointmentController extends Controller
     {
         $this->appointmentService->markNoShow($appointment);
 
-        return back()->with('success', 'Appointment marked as no-show.');
+        return back()->with('success', __('messages.appointments.no_show'));
     }
 
     /**

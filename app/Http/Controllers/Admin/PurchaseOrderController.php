@@ -61,7 +61,7 @@ class PurchaseOrderController extends Controller
 
         return redirect()
             ->route('admin.store.purchase-orders.show', $po)
-            ->with('success', 'Purchase order created successfully.');
+            ->with('success', __('messages.purchase_orders.created'));
     }
 
     public function show(PurchaseOrder $purchaseOrder)
@@ -77,7 +77,7 @@ class PurchaseOrderController extends Controller
     {
         try {
             $this->procurementService->submit($purchaseOrder);
-            return back()->with('success', 'Purchase order submitted for approval.');
+            return back()->with('success', __('messages.purchase_orders.submitted'));
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -87,7 +87,7 @@ class PurchaseOrderController extends Controller
     {
         try {
             $this->procurementService->approve($purchaseOrder);
-            return back()->with('success', 'Purchase order approved.');
+            return back()->with('success', __('messages.purchase_orders.approved'));
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -105,7 +105,7 @@ class PurchaseOrderController extends Controller
 
         try {
             $this->procurementService->receiveItems($purchaseOrder, $request->items);
-            return back()->with('success', 'Items received successfully.');
+            return back()->with('success', __('messages.purchase_orders.items_received'));
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -115,7 +115,7 @@ class PurchaseOrderController extends Controller
     {
         try {
             $this->procurementService->cancel($purchaseOrder);
-            return back()->with('success', 'Purchase order cancelled.');
+            return back()->with('success', __('messages.purchase_orders.cancelled'));
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -141,7 +141,7 @@ class PurchaseOrderController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', 'Item added to purchase order.');
+        return back()->with('success', __('messages.purchase_orders.item_added'));
     }
 
     public function removeItem(PurchaseOrderItem $item)
@@ -149,11 +149,11 @@ class PurchaseOrderController extends Controller
         $po = $item->purchaseOrder;
 
         if (! $po->is_editable) {
-            return back()->with('error', 'Cannot modify items on this purchase order.');
+            return back()->with('error', __('messages.purchase_orders.cannot_modify'));
         }
 
         $this->procurementService->removeItem($item);
 
-        return back()->with('success', 'Item removed from purchase order.');
+        return back()->with('success', __('messages.purchase_orders.item_removed'));
     }
 }

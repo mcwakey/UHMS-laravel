@@ -28,7 +28,7 @@ class SupplierController extends Controller
 
         return redirect()
             ->route('admin.store.suppliers.index')
-            ->with('success', 'Supplier created successfully.');
+            ->with('success', __('messages.suppliers.created'));
     }
 
     public function update(StoreSupplierRequest $request, Supplier $supplier)
@@ -37,14 +37,14 @@ class SupplierController extends Controller
 
         return redirect()
             ->route('admin.store.suppliers.index')
-            ->with('success', 'Supplier updated successfully.');
+            ->with('success', __('messages.suppliers.updated'));
     }
 
     public function toggle(Supplier $supplier)
     {
         $supplier->update(['is_active' => ! $supplier->is_active]);
 
-        return back()->with('success', 'Supplier status updated.');
+        return back()->with('success', __('messages.suppliers.status_updated'));
     }
 
     /**
@@ -96,6 +96,6 @@ class SupplierController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', 'Ledger entry recorded.');
+        return back()->with('success', __('messages.suppliers.ledger_entry_recorded'));
     }
 }

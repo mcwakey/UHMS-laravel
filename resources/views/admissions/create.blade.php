@@ -1,16 +1,14 @@
 @extends('layouts.app')
-@section('title', 'New Admission')
+@section('title', __('admissions.create_title'))
 
 @section('content')
-<!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"><i class="ti ti-bed-filled me-2 text-teal"></i>New Admission</h4>
-    </div>
-    <div class="text-end">
-        <a href="{{ route('admin.admissions.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>Back to Admissions</a>
-    </div>
-</div>
+<x-page-header :title="__('admissions.create_title')" icon="ti-bed-filled">
+    <x-slot:actions>
+        <a href="{{ route('admin.admissions.index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="ti ti-arrow-left me-1"></i>{{ __('admissions.back_to_admissions') }}
+        </a>
+    </x-slot:actions>
+</x-page-header>
 
 @if(session('success'))
 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -36,7 +34,7 @@
         {{-- PATIENT / VISIT SELECTION --}}
         <div class="card mb-3">
             <div class="card-header py-2 bg-light">
-                <h6 class="card-title mb-0 fw-semibold"><i class="ti ti-user-heart me-2 text-primary"></i>Patient & Visit</h6>
+                <h6 class="card-title mb-0 fw-semibold"><i class="ti ti-user-heart me-2 text-primary"></i>{{ __('admissions.patient_visit') }}</h6>
             </div>
             <div class="card-body">
                 @if($preselectedVisit)
@@ -53,9 +51,9 @@
                 @else
                     <div class="row g-3">
                         <div class="col-md-7">
-                            <label class="form-label fw-semibold">Visit Awaiting Admission <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold">{{ __('admissions.visit_awaiting') }} <span class="text-danger">*</span></label>
                             <select name="visit_id" id="visitSelect" class="form-select" required>
-                                <option value="">— Select visit —</option>
+                                <option value="">{{ __('admissions.select_visit') }}</option>
                                 @foreach($admittingVisits as $v)
                                     @php
                                         $vIns = $v->visitInsurance;
@@ -87,14 +85,14 @@
                                 @endforeach
                             </select>
                             @if($admittingVisits->isEmpty())
-                                <small class="text-danger"><i class="ti ti-alert-circle me-1"></i>No visits currently awaiting admission. Use "Admit Patient" from a consultation.</small>
+                                <small class="text-danger"><i class="ti ti-alert-circle me-1"></i>{{ __('admissions.no_visits_waiting') }}</small>
                             @else
-                                <small class="text-muted">Showing {{ $admittingVisits->count() }} visit(s) marked for admission</small>
+                                <small class="text-muted">{{ __('admissions.showing_visits', ['count' => $admittingVisits->count()]) }}</small>
                             @endif
                         </div>
                         <div class="col-md-5">
-                            <label class="form-label fw-semibold">Patient</label>
-                            <input type="text" id="patientDisplay" class="form-control bg-light" readonly placeholder="Auto-filled from visit">
+                            <label class="form-label fw-semibold">{{ __('admissions.patient') }}</label>
+                            <input type="text" id="patientDisplay" class="form-control bg-light" readonly placeholder="{{ __('admissions.auto_filled_from_visit') }}">
                             <input type="hidden" name="patient_id" id="patientId" value="{{ old('patient_id') }}">
                         </div>
                     </div>
@@ -105,7 +103,7 @@
         {{-- ADMISSION TYPE --}}
         <div class="card mb-3">
             <div class="card-header py-2 bg-light">
-                <h6 class="card-title mb-0 fw-semibold"><i class="ti ti-clipboard-list me-2 text-info"></i>Admission Type</h6>
+                <h6 class="card-title mb-0 fw-semibold"><i class="ti ti-clipboard-list me-2 text-info"></i>{{ __('admissions.admission_type') }}</h6>
             </div>
             <div class="card-body">
                 <div class="row g-3">
@@ -115,8 +113,8 @@
                                    value="admission" {{ old('admission_type', 'admission') === 'admission' ? 'checked' : '' }}>
                             <span class="form-check-label p-3 d-block border rounded text-center" style="cursor:pointer">
                                 <i class="ti ti-bed fs-2 d-block mb-1 text-primary"></i>
-                                <strong>Admission</strong>
-                                <small class="d-block text-muted">Stay <strong>&gt;24 hours</strong></small>
+                                <strong>{{ __('admissions.type_admission') }}</strong>
+                                <small class="d-block text-muted">{{ __('admissions.stay_over_24h') }}</small>
                             </span>
                         </label>
                     </div>
@@ -126,8 +124,8 @@
                                    value="detention" {{ old('admission_type') === 'detention' ? 'checked' : '' }}>
                             <span class="form-check-label p-3 d-block border rounded text-center" style="cursor:pointer">
                                 <i class="ti ti-clock-hour-4 fs-2 d-block mb-1 text-warning"></i>
-                                <strong>Detention</strong>
-                                <small class="d-block text-muted">Short stay <strong>&lt;24 hours</strong></small>
+                                <strong>{{ __('admissions.type_detention') }}</strong>
+                                <small class="d-block text-muted">{{ __('admissions.stay_under_24h') }}</small>
                             </span>
                         </label>
                     </div>
@@ -138,23 +136,23 @@
         {{-- WARD & BED --}}
         <div class="card mb-3">
             <div class="card-header py-2 bg-light">
-                <h6 class="card-title mb-0 fw-semibold"><i class="ti ti-building-hospital me-2 text-success"></i>Ward & Bed</h6>
+                <h6 class="card-title mb-0 fw-semibold"><i class="ti ti-building-hospital me-2 text-success"></i>{{ __('admissions.ward_and_bed') }}</h6>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Filter by Ward</label>
+                        <label class="form-label fw-semibold">{{ __('admissions.filter_by_ward') }}</label>
                         <select id="wardFilter" class="form-select">
-                            <option value="">All Wards</option>
+                            <option value="">{{ __('admissions.all_wards_option') }}</option>
                             @foreach($wards as $ward)
                                 <option value="{{ $ward->id }}">{{ $ward->name }} ({{ $ward->code }})</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Bed <span class="text-danger">*</span></label>
+                        <label class="form-label fw-semibold">{{ __('admissions.bed_label') }} <span class="text-danger">*</span></label>
                         <select name="bed_id" id="bedSelect" class="form-select" required>
-                            <option value="">— Select available bed —</option>
+                            <option value="">{{ __('admissions.select_bed') }}</option>
                             @foreach($availableBeds as $bed)
                                 <option value="{{ $bed->id }}"
                                         data-ward="{{ $bed->ward_id }}"
@@ -175,20 +173,20 @@
         {{-- DATES --}}
         <div class="card mb-3">
             <div class="card-header py-2 bg-light">
-                <h6 class="card-title mb-0 fw-semibold"><i class="ti ti-calendar me-2 text-orange"></i>Dates</h6>
+                <h6 class="card-title mb-0 fw-semibold"><i class="ti ti-calendar me-2 text-orange"></i>{{ __('admissions.dates_section') }}</h6>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Admission Date</label>
+                        <label class="form-label fw-semibold">{{ __('admissions.admission_date') }}</label>
                         <input type="datetime-local" name="admission_date" id="admissionDate" class="form-control"
                                value="{{ old('admission_date', now()->format('Y-m-d\TH:i')) }}">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Expected Discharge Date</label>
+                        <label class="form-label fw-semibold">{{ __('admissions.expected_discharge') }}</label>
                         <input type="date" name="expected_discharge_date" id="expectedDischarge" class="form-control"
                                value="{{ old('expected_discharge_date') }}" min="{{ now()->addDay()->format('Y-m-d') }}">
-                        <small class="text-muted">Used to calculate billing estimate</small>
+                        <small class="text-muted">{{ __('admissions.billing_estimate_hint') }}</small>
                     </div>
                 </div>
             </div>
@@ -197,27 +195,27 @@
         {{-- ADMITTING DIAGNOSIS --}}
         <div class="card mb-3">
             <div class="card-header py-2 bg-light">
-                <h6 class="card-title mb-0 fw-semibold"><i class="ti ti-stethoscope me-2 text-purple"></i>Admitting Diagnosis</h6>
+                <h6 class="card-title mb-0 fw-semibold"><i class="ti ti-stethoscope me-2 text-purple"></i>{{ __('admissions.admitting_diagnosis') }}</h6>
             </div>
             <div class="card-body">
                 <textarea name="admitting_diagnosis" class="form-control" rows="3"
-                          placeholder="Enter the reason for admission / principal diagnosis...">{{ old('admitting_diagnosis') }}</textarea>
+                          placeholder="{{ __('admissions.admitting_diagnosis_ph') }}">{{ old('admitting_diagnosis') }}</textarea>
             </div>
         </div>
 
         {{-- FEE SERVICES --}}
         <div class="card mb-3">
             <div class="card-header py-2 bg-light">
-                <h6 class="card-title mb-0 fw-semibold"><i class="ti ti-receipt me-2 text-cyan"></i>Fee Services Mapping</h6>
+                <h6 class="card-title mb-0 fw-semibold"><i class="ti ti-receipt me-2 text-cyan"></i>{{ __('admissions.fee_services') }}</h6>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold" id="admFeeServiceLabel">Admission Fee Service</label>
+                        <label class="form-label fw-semibold" id="admFeeServiceLabel">{{ __('admissions.admission_fee_service') }}</label>
                         <select name="admission_fee_service_id" id="admissionFeeService" class="form-select"
                                 data-default-admission="{{ $defaultAdmissionFeeServiceId ?? '' }}"
                                 data-default-detention="{{ $defaultDetentionFeeServiceId ?? '' }}">
-                            <option value="">— None / Manual —</option>
+                            <option value="">{{ __('admissions.none_manual') }}</option>
                             @foreach($services as $svc)
                                 <option value="{{ $svc->id }}" data-price="{{ $svc->price }}"
                                         {{ old('admission_fee_service_id', $defaultAdmissionFeeServiceId) == $svc->id ? 'selected' : '' }}>
@@ -225,12 +223,12 @@
                                 </option>
                             @endforeach
                         </select>
-                        <small class="text-muted">One-time fee at admission</small>
+                        <small class="text-muted">{{ __('admissions.one_time_fee') }}</small>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Consumable Fee Service (Daily)</label>
+                        <label class="form-label fw-semibold">{{ __('admissions.consumable_daily_fee') }}</label>
                         <select name="consumable_fee_service_id" id="consumableFeeService" class="form-select">
-                            <option value="">— None / Manual —</option>
+                            <option value="">{{ __('admissions.none_manual') }}</option>
                             @foreach($services as $svc)
                                 <option value="{{ $svc->id }}" data-price="{{ $svc->price }}"
                                         {{ old('consumable_fee_service_id', $defaultConsumableFeeServiceId) == $svc->id ? 'selected' : '' }}>
@@ -238,7 +236,7 @@
                                 </option>
                             @endforeach
                         </select>
-                        <small class="text-muted">Per-day consumables charge</small>
+                        <small class="text-muted">{{ __('admissions.per_day_consumables') }}</small>
                     </div>
                 </div>
             </div>
@@ -399,25 +397,25 @@
         {{-- BILLING SUMMARY --}}
         <div class="card mb-3 border-primary">
             <div class="card-header py-2 bg-primary text-white">
-                <h6 class="card-title mb-0 fw-semibold"><i class="ti ti-cash me-2"></i>Billing Preview</h6>
+                <h6 class="card-title mb-0 fw-semibold"><i class="ti ti-cash me-2"></i>{{ __('admissions.billing_preview') }}</h6>
             </div>
             <div class="card-body pb-0">
                 <div id="billingDaysInfo" class="alert alert-light py-1 text-center mb-3 small text-muted">
-                    Set expected discharge date to calculate billing
+                    {{ __('admissions.set_discharge_hint') }}
                 </div>
                 <div class="table-responsive"><table class="table table-sm table-borderless mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Description</th>
-                            <th class="text-center">Qty</th>
-                            <th class="text-end">Amount</th>
+                            <th>{{ __('admissions.description') }}</th>
+                            <th class="text-center">{{ __('admissions.qty') }}</th>
+                            <th class="text-end">{{ __('admissions.amount') }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>
-                                <span id="admFeeLabel">Admission Fee</span>
-                                <small class="d-block text-muted">One-time</small>
+                                <span id="admFeeLabel">{{ __('admissions.admission_fee') }}</span>
+                                <small class="d-block text-muted">{{ __('admissions.one_time_label') }}</small>
                             </td>
                             <td class="text-center">1</td>
                             <td class="text-end">
@@ -430,8 +428,8 @@
                         </tr>
                         <tr>
                             <td>
-                                Bed Fee
-                                <small class="d-block text-muted" id="bedRateHint">Select a bed</small>
+                                {{ __('admissions.bed_fee') }}
+                                <small class="d-block text-muted" id="bedRateHint">{{ __('admissions.select_bed_hint') }}</small>
                             </td>
                             <td class="text-center" id="daysQty">1</td>
                             <td class="text-end">
@@ -445,8 +443,8 @@
                         </tr>
                         <tr>
                             <td>
-                                Consumable Fee
-                                <small class="d-block text-muted">Daily</small>
+                                {{ __('admissions.consumable_fee') }}
+                                <small class="d-block text-muted">{{ __('admissions.daily_label') }}</small>
                             </td>
                             <td class="text-center" id="daysQty2">1</td>
                             <td class="text-end">
@@ -460,32 +458,32 @@
                     </tbody>
                     <tfoot class="border-top-2">
                         <tr id="insRow" class="text-success d-none">
-                            <td colspan="2"><i class="ti ti-shield-check me-1"></i>Insurance Coverage</td>
+                            <td colspan="2"><i class="ti ti-shield-check me-1"></i>{{ __('admissions.insurance_coverage_row') }}</td>
                             <td class="text-end text-success" id="insCoveredDisplay">— GH₵ 0.00</td>
                         </tr>
                         <tr id="patientPayRow" class="text-info d-none">
-                            <td colspan="2">Patient Pays</td>
+                            <td colspan="2">{{ __('admissions.patient_pays') }}</td>
                             <td class="text-end text-info" id="patientPayDisplay">GH₵ 0.00</td>
                         </tr>
                         <tr class="fw-bold">
-                            <td colspan="2">Estimated Total</td>
+                            <td colspan="2">{{ __('admissions.estimated_total') }}</td>
                             <td class="text-end text-primary" id="billingTotal">GH₵ 0.00</td>
                         </tr>
                     </tfoot>
                 </table></div>
-                <small class="text-muted d-block pb-2 text-center">Amounts are editable before completing admission</small>
+                <small class="text-muted d-block pb-2 text-center">{{ __('admissions.amounts_editable') }}</small>
             </div>
         </div>
 
         {{-- AVAILABLE BEDS SUMMARY --}}
         <div class="card mb-3">
             <div class="card-header py-2 bg-light">
-                <h6 class="card-title mb-0 fw-semibold">Available Beds</h6>
+                <h6 class="card-title mb-0 fw-semibold">{{ __('admissions.available_beds') }}</h6>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive"><table class="table table-sm mb-0">
                     <thead class="table-light">
-                        <tr><th>Ward</th><th class="text-center">Free</th></tr>
+                        <tr><th>{{ __('admissions.ward_col') }}</th><th class="text-center">{{ __('admissions.free_col') }}</th></tr>
                     </thead>
                     <tbody>
                         @foreach($wards as $ward)
@@ -506,9 +504,9 @@
         <div class="card border-success">
             <div class="card-body text-center py-3">
                 <button type="submit" class="btn btn-success btn-lg w-100" id="submitBtn">
-                    <i class="ti ti-bed-filled me-2"></i>Complete Admission
+                    <i class="ti ti-bed-filled me-2"></i>{{ __('admissions.complete_admission') }}
                 </button>
-                <a href="{{ route('admin.admissions.index') }}" class="btn btn-outline-secondary btn-sm mt-2 w-100">Cancel</a>
+                <a href="{{ route('admin.admissions.index') }}" class="btn btn-outline-secondary btn-sm mt-2 w-100">{{ __('admissions.cancel') }}</a>
             </div>
         </div>
     </div>{{-- /col-lg-4 --}}

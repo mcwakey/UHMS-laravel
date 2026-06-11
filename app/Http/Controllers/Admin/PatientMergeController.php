@@ -96,12 +96,12 @@ class PatientMergeController extends Controller
 
                 return redirect()
                     ->route('admin.patients.merge.requests.show', $mergeRequest)
-                    ->with('success', 'Patient folders merged successfully.');
+                    ->with('success', __('messages.patient_merge.merged'));
             }
 
             return redirect()
                 ->route('admin.patients.merge.requests.show', $mergeRequest)
-                ->with('success', 'Patient merge request created.');
+                ->with('success', __('messages.patient_merge.request_created'));
         } catch (\InvalidArgumentException $e) {
             return back()->withInput()->withErrors(['duplicate_patient_number' => $e->getMessage()]);
         }
@@ -128,7 +128,7 @@ class PatientMergeController extends Controller
 
             return redirect()
                 ->route('admin.patients.merge.requests.show', $mergeRequest)
-                ->with('success', 'Patient folders merged successfully.');
+                ->with('success', __('messages.patient_merge.merged'));
         } catch (\InvalidArgumentException $e) {
             return back()->withErrors(['merge_request' => $e->getMessage()]);
         }

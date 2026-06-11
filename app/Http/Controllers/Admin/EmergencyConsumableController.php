@@ -21,6 +21,6 @@ class EmergencyConsumableController extends Controller
 
         $this->consumables->useConsumable($emergencyCase, $data, $request->user());
 
-        return back()->with('success', 'Emergency consumable recorded.');
+        return back()->with('success', __('messages.emergency.consumable_recorded'));
     }
 }

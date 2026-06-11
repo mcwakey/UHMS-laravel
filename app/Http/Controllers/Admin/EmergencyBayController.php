@@ -31,7 +31,7 @@ class EmergencyBayController extends Controller
 
         EmergencyBay::create($data + ['is_active' => true]);
 
-        return back()->with('success', 'Emergency bay created.');
+        return back()->with('success', __('messages.emergency.bay_created'));
     }
 
     public function assign(Request $request, EmergencyCase $emergencyCase)
@@ -52,7 +52,7 @@ class EmergencyBayController extends Controller
             isset($data['bed_id']) ? (int) $data['bed_id'] : null,
         );
 
-        return back()->with('success', 'Emergency bay assigned.');
+        return back()->with('success', __('messages.emergency.bay_assigned'));
     }
 
     public function assignWardBed(Request $request, EmergencyCase $emergencyCase)
@@ -71,6 +71,6 @@ class EmergencyBayController extends Controller
             (bool) ($data['override'] ?? false),
         );
 
-        return back()->with('success', 'Ward / bed updated.');
+        return back()->with('success', __('messages.emergency.ward_bed_updated'));
     }
 }

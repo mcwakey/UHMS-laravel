@@ -84,7 +84,7 @@ class UserPermissionController extends Controller
         );
 
         return redirect()->route('admin.users.permissions.edit', $user)
-            ->with('success', 'Direct permissions updated.');
+            ->with('success', __('messages.user_permissions.updated'));
     }
 
     private function authorizeCriticalPermissionChange(Request $request, array $current, array $requested): void

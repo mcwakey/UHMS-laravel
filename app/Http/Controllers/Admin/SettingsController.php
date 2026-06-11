@@ -44,7 +44,7 @@ class SettingsController extends Controller
             Setting::setValue('organization', $key, $value ?? '');
         }
 
-        return back()->with('success', 'Organization settings updated successfully.');
+        return back()->with('success', __('messages.settings.organization_updated'));
     }
 
     /**
@@ -75,7 +75,7 @@ class SettingsController extends Controller
             Setting::setValue('invoice', $key, $value ?? '');
         }
 
-        return back()->with('success', 'Invoice settings updated successfully.');
+        return back()->with('success', __('messages.settings.invoice_updated'));
     }
 
     /**
@@ -111,7 +111,7 @@ class SettingsController extends Controller
             Setting::setValue('payment', $key, $value ?? '');
         }
 
-        return back()->with('success', 'Payment method settings updated successfully.');
+        return back()->with('success', __('messages.settings.payment_methods_updated'));
     }
 
     /**
@@ -137,6 +137,6 @@ class SettingsController extends Controller
         Setting::setValue('ward', 'detention_fee_service_id',  $validated['detention_fee_service_id']  ?? '', 'integer');
         Setting::setValue('ward', 'consumable_fee_service_id', $validated['consumable_fee_service_id'] ?? '', 'integer');
 
-        return back()->with('success', 'Ward & Admissions settings updated successfully.');
+        return back()->with('success', __('messages.settings.ward_updated'));
     }
 }

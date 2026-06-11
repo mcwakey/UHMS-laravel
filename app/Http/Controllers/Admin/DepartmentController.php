@@ -50,7 +50,7 @@ class DepartmentController extends Controller
         $this->stockLocationSync->ensureDepartmentLocation($department);
 
         return redirect()->route('admin.departments.index')
-            ->with('success', 'Department created successfully.');
+            ->with('success', __('messages.departments.created'));
     }
 
     public function update(Request $request, Department $department)
@@ -73,19 +73,19 @@ class DepartmentController extends Controller
         $this->stockLocationSync->ensureDepartmentLocation($department);
 
         return redirect()->route('admin.departments.index')
-            ->with('success', 'Department updated successfully.');
+            ->with('success', __('messages.departments.updated'));
     }
 
     public function destroy(Department $department)
     {
         if ($department->users()->exists()) {
             return redirect()->back()
-                ->with('error', 'Cannot delete department with assigned users.');
+                ->with('error', __('messages.departments.cannot_delete'));
         }
 
         $department->delete();
 
         return redirect()->route('admin.departments.index')
-            ->with('success', 'Department deleted successfully.');
+            ->with('success', __('messages.departments.deleted'));
     }
 }

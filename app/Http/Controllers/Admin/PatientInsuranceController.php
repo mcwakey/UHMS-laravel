@@ -78,7 +78,7 @@ class PatientInsuranceController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Insurance added to patient.');
+        return back()->with('success', __('messages.patient_insurance.added'));
     }
 
     public function update(Request $request, Patient $patient, PatientInsurance $insurance)
@@ -111,18 +111,18 @@ class PatientInsuranceController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Insurance updated.');
+        return back()->with('success', __('messages.patient_insurance.updated'));
     }
 
     public function destroy(Patient $patient, PatientInsurance $insurance)
     {
         if ($insurance->insuranceProvider->is_default) {
-            return back()->with('error', 'Cannot remove the default Cash & Carry insurance.');
+            return back()->with('error', __('messages.patient_insurance.cannot_remove_default'));
         }
 
         $insurance->delete();
 
-        return back()->with('success', 'Insurance removed.');
+        return back()->with('success', __('messages.patient_insurance.removed'));
     }
 
     public function setPrimary(Patient $patient, PatientInsurance $insurance)
@@ -130,7 +130,7 @@ class PatientInsuranceController extends Controller
         $patient->insurances()->update(['is_primary' => false]);
         $insurance->update(['is_primary' => true]);
 
-        return back()->with('success', 'Primary insurance updated.');
+        return back()->with('success', __('messages.patient_insurance.primary_updated'));
     }
 
     /**

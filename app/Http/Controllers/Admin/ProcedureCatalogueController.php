@@ -61,7 +61,7 @@ class ProcedureCatalogueController extends Controller
         } catch (Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
-        return back()->with('success', 'Section added.');
+        return back()->with('success', __('messages.procedure_catalogue.section_added'));
     }
 
     public function updateSection(Request $request, ProcedureTemplateSection $section)
@@ -78,13 +78,13 @@ class ProcedureCatalogueController extends Controller
         } catch (Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
-        return back()->with('success', 'Section updated.');
+        return back()->with('success', __('messages.procedure_catalogue.section_updated'));
     }
 
     public function destroySection(ProcedureTemplateSection $section)
     {
         $this->catalogue->deleteSection($section);
-        return back()->with('success', 'Section removed.');
+        return back()->with('success', __('messages.procedure_catalogue.section_removed'));
     }
 
     /* ── Fields ─────────────────────────────────── */
@@ -107,7 +107,7 @@ class ProcedureCatalogueController extends Controller
         } catch (Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
-        return back()->with('success', 'Field added.');
+        return back()->with('success', __('messages.procedure_catalogue.field_added'));
     }
 
     public function updateField(Request $request, ProcedureTemplateField $field)
@@ -129,13 +129,13 @@ class ProcedureCatalogueController extends Controller
         } catch (Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
-        return back()->with('success', 'Field updated.');
+        return back()->with('success', __('messages.procedure_catalogue.field_updated'));
     }
 
     public function destroyField(ProcedureTemplateField $field)
     {
         $this->catalogue->deleteField($field);
-        return back()->with('success', 'Field removed.');
+        return back()->with('success', __('messages.procedure_catalogue.field_removed'));
     }
 
     /* ── Consumables ─────────────────────────────────── */
@@ -153,12 +153,12 @@ class ProcedureCatalogueController extends Controller
         } catch (Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
-        return back()->with('success', 'Consumable saved.');
+        return back()->with('success', __('messages.procedure_catalogue.consumable_saved'));
     }
 
     public function destroyConsumable(ServiceCatalog $service, int $product)
     {
         $this->consumables->delete($service, $product);
-        return back()->with('success', 'Consumable removed.');
+        return back()->with('success', __('messages.procedure_catalogue.consumable_removed'));
     }
 }

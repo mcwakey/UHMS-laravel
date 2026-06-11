@@ -21,7 +21,7 @@ class PatientComplaintController extends Controller
             return response()->json(['success' => true, 'complaint' => $complaint]);
         }
 
-        return back()->with('success', 'Complaint recorded.');
+        return back()->with('success', __('messages.patient_complaints.recorded'));
     }
 
     public function update(Request $request, Complaint $complaint, PatientComplaintService $complaints, MedicalRecordEntryPermissionService $permissions)
@@ -34,7 +34,7 @@ class PatientComplaintController extends Controller
             return response()->json(['success' => true, 'complaint' => $complaint]);
         }
 
-        return back()->with('success', 'Complaint updated.');
+        return back()->with('success', __('messages.patient_complaints.updated'));
     }
 
     public function destroy(Request $request, Complaint $complaint, PatientComplaintService $complaints, MedicalRecordEntryPermissionService $permissions)
@@ -47,7 +47,7 @@ class PatientComplaintController extends Controller
             return response()->json(['success' => true]);
         }
 
-        return back()->with('success', 'Complaint removed.');
+        return back()->with('success', __('messages.patient_complaints.removed'));
     }
 
     private function validated(Request $request): array

@@ -76,7 +76,7 @@ class ProductController extends Controller
         } catch (Throwable $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
-        return back()->with('success', 'Product created.');
+        return back()->with('success', __('messages.products.created'));
     }
 
     public function update(Request $request, Product $product)
@@ -87,13 +87,13 @@ class ProductController extends Controller
         } catch (Throwable $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
-        return back()->with('success', 'Product updated.');
+        return back()->with('success', __('messages.products.updated'));
     }
 
     public function toggle(Product $product)
     {
         $this->products->toggle($product);
-        return back()->with('success', 'Product status toggled.');
+        return back()->with('success', __('messages.products.toggled'));
     }
 
     /**

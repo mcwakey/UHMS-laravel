@@ -38,7 +38,7 @@ class EmployeeController extends Controller
     public function store(StoreEmployeeRequest $request)
     {
         $this->hrService->createEmployee($request->validated());
-        return redirect()->route('admin.hr.employees.index')->with('success', 'Employee created successfully.');
+        return redirect()->route('admin.hr.employees.index')->with('success', __('messages.employees.created'));
     }
 
     public function show(Employee $employee)
@@ -66,6 +66,6 @@ class EmployeeController extends Controller
     public function update(StoreEmployeeRequest $request, Employee $employee)
     {
         $this->hrService->updateEmployee($employee, $request->validated());
-        return redirect()->route('admin.hr.employees.show', $employee)->with('success', 'Employee updated successfully.');
+        return redirect()->route('admin.hr.employees.show', $employee)->with('success', __('messages.employees.updated'));
     }
 }

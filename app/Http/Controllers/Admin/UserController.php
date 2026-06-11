@@ -41,7 +41,7 @@ class UserController extends Controller
         $this->userService->create($request->validated());
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'User created successfully.');
+            ->with('success', __('messages.users.created'));
     }
 
     public function edit(User $user)
@@ -59,7 +59,7 @@ class UserController extends Controller
         $this->userService->update($user, $request->validated());
 
         return redirect()->route('admin.users.index')
-            ->with('success', 'User updated successfully.');
+            ->with('success', __('messages.users.updated'));
     }
 
     public function toggleStatus(User $user)
@@ -67,6 +67,6 @@ class UserController extends Controller
         $this->userService->toggleStatus($user);
 
         return redirect()->back()
-            ->with('success', 'User status updated.');
+            ->with('success', __('messages.users.status_updated'));
     }
 }

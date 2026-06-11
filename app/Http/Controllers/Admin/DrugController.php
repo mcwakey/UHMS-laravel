@@ -41,7 +41,7 @@ class DrugController extends Controller
         $validated['is_active'] = true;
         $this->pharmacyService->storeCategory($validated);
 
-        return back()->with('success', 'Category created successfully.');
+        return back()->with('success', __('messages.drugs.category_created'));
     }
 
     /**
@@ -58,7 +58,7 @@ class DrugController extends Controller
         $validated['is_active'] = $request->boolean('is_active', true);
         $this->pharmacyService->updateCategory($category, $validated);
 
-        return back()->with('success', 'Category updated successfully.');
+        return back()->with('success', __('messages.drugs.category_updated'));
     }
 
     /**
@@ -67,10 +67,10 @@ class DrugController extends Controller
     public function destroyCategory(DrugCategory $category)
     {
         if (!$this->pharmacyService->deleteCategory($category)) {
-            return back()->with('error', 'Cannot delete category with existing drugs. Remove or reassign drugs first.');
+            return back()->with('error', __('messages.drugs.category_cannot_delete'));
         }
 
-        return back()->with('success', 'Category deleted successfully.');
+        return back()->with('success', __('messages.drugs.category_deleted'));
     }
 
     /**
@@ -111,7 +111,7 @@ class DrugController extends Controller
         $validated['is_active'] = true;
         $this->pharmacyService->storeDrug($validated);
 
-        return back()->with('success', 'Drug created successfully.');
+        return back()->with('success', __('messages.drugs.created'));
     }
 
     /**
@@ -152,7 +152,7 @@ class DrugController extends Controller
         $validated['is_active'] = $request->boolean('is_active', true);
         $this->pharmacyService->updateDrug($drug, $validated);
 
-        return back()->with('success', 'Drug updated successfully.');
+        return back()->with('success', __('messages.drugs.updated'));
     }
 
     /**
@@ -163,7 +163,7 @@ class DrugController extends Controller
         abort(410, 'Pharmacy drug status is controlled by the linked Product.');
 
         $this->pharmacyService->toggleDrug($drug);
-        return back()->with('success', 'Drug status toggled.');
+        return back()->with('success', __('messages.drugs.toggled'));
     }
 
     /**

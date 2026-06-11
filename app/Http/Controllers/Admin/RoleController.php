@@ -30,13 +30,13 @@ class RoleController extends Controller
         $this->audit->roleCreated($role);
 
         return redirect()->route('admin.roles.index')
-            ->with('success', 'Role created successfully.');
+            ->with('success', __('messages.roles.created'));
     }
 
     public function update(Request $request, Role $role)
     {
         if (in_array($role->name, ['Super Admin', 'Admin'])) {
-            return redirect()->back()->with('error', 'Cannot rename system roles.');
+            return redirect()->back()->with('error', __('messages.roles.cannot_rename_system'));
         }
 
         $validated = $request->validate([
@@ -48,24 +48,24 @@ class RoleController extends Controller
         $this->audit->roleUpdated($role, $old, ['name' => $role->name, 'guard_name' => $role->guard_name]);
 
         return redirect()->route('admin.roles.index')
-            ->with('success', 'Role updated successfully.');
+            ->with('success', __('messages.roles.updated'));
     }
 
     public function destroy(Role $role)
     {
         if (in_array($role->name, ['Super Admin', 'Admin'])) {
-            return redirect()->back()->with('error', 'Cannot delete system roles.');
+            return redirect()->back()->with('error', __('messages.roles.cannot_delete_system'));
         }
 
         if ($role->users()->exists()) {
-            return redirect()->back()->with('error', 'Cannot delete role with assigned users.');
+            return redirect()->back()->with('error', __('messages.roles.cannot_delete_assigned'));
         }
 
         $role->delete();
         $this->audit->roleDeleted($role);
 
         return redirect()->route('admin.roles.index')
-            ->with('success', 'Role deleted successfully.');
+            ->with('success', __('messages.roles.deleted'));
     }
 
     public function permissions(Role $role)
@@ -105,7 +105,7 @@ class RoleController extends Controller
         $this->audit->rolePermissionsUpdated($role, $before, $role->fresh()->permissions->pluck('name')->all());
 
         return redirect()->route('admin.roles.permissions', $role)
-            ->with('success', 'Permissions updated successfully.');
+            ->with('success', __('messages.roles.permissions_updated'));
     }
 
     private function authorizeCriticalPermissionChange(Request $request, array $current, array $requested): void

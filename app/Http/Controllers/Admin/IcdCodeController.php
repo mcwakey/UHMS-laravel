@@ -57,7 +57,7 @@ class IcdCodeController extends Controller
         $data['is_billable'] = $request->boolean('is_billable', true);
         IcdCode::create($data);
 
-        return back()->with('success', 'ICD-10 code added successfully.');
+        return back()->with('success', __('messages.icd_codes.created'));
     }
 
     public function update(Request $request, IcdCode $icdCode)
@@ -73,17 +73,17 @@ class IcdCodeController extends Controller
         $data['is_billable'] = $request->boolean('is_billable', true);
         $icdCode->update($data);
 
-        return back()->with('success', 'ICD-10 code updated successfully.');
+        return back()->with('success', __('messages.icd_codes.updated'));
     }
 
     public function destroy(IcdCode $icdCode)
     {
         if ($icdCode->diagnoses()->exists()) {
-            return back()->with('error', 'Cannot delete: this ICD code is linked to existing diagnoses.');
+            return back()->with('error', __('messages.icd_codes.cannot_delete'));
         }
 
         $icdCode->delete();
 
-        return back()->with('success', 'ICD-10 code deleted.');
+        return back()->with('success', __('messages.icd_codes.deleted'));
     }
 }

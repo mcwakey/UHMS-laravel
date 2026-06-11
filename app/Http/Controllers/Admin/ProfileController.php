@@ -51,7 +51,7 @@ class ProfileController extends Controller
 
         $user->update($validated);
 
-        return back()->with('success', 'Profile updated successfully.');
+        return back()->with('success', __('messages.profile.updated'));
     }
 
     /**
@@ -70,6 +70,6 @@ class ProfileController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        return back()->with('success', 'Password updated successfully.');
+        return back()->with('success', __('messages.profile.password_updated'));
     }
 }

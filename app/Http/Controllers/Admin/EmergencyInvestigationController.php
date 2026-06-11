@@ -37,6 +37,6 @@ class EmergencyInvestigationController extends Controller
 
         $this->investigations->request($emergencyCase, $data, $request->user());
 
-        return back()->with('success', 'Emergency investigation(s) requested.');
+        return back()->with('success', __('messages.emergency.investigation_requested'));
     }
 }

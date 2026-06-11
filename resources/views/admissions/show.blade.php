@@ -1,5 +1,5 @@
 ﻿@extends('layouts.app')
-@section('title', 'Admission — ' . $admission->admission_number)
+@section('title', __('admissions.admission_details') . ' — ' . $admission->admission_number)
 
 @push('styles')
 <style>
@@ -16,7 +16,7 @@
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
     <div class="flex-grow-1">
         <h4 class="fw-bold mb-0">
-            Admission {{ $admission->admission_number }}
+            {{ __('admissions.admission_no') }} {{ $admission->admission_number }}
             <span class="badge badge-soft-{{ $admission->status->color() }} ms-2">{{ $admission->status->label() }}</span>
         </h4>
     </div>
@@ -24,12 +24,12 @@
         @if($admission->status->value === 'admitted')
             @can('ward.discharge')
             <a href="{{ route('admin.admissions.discharge', $admission) }}" class="btn btn-warning btn-md fs-13">
-                <i class="ti ti-logout me-1"></i>Discharge Patient
+                <i class="ti ti-logout me-1"></i>{{ __('admissions.discharge_patient') }}
             </a>
             @endcan
         @endif
         <a href="{{ route('admin.admissions.index') }}" class="btn btn-outline-secondary btn-md fs-13">
-            <i class="ti ti-arrow-left me-1"></i>Back
+            <i class="ti ti-arrow-left me-1"></i>{{ __('admissions.back') }}
         </a>
     </div>
 </div>
@@ -55,16 +55,16 @@
                         <small class="text-muted">{{ $admission->patient->patient_number }} &bull; {{ $admission->patient->age }} yrs &bull; {{ $admission->patient->gender->label() }}</small>
                     </div>
                     <div class="ms-auto d-flex gap-3 flex-wrap">
-                        <div class="text-center"><div class="fw-bold">{{ $admission->bed->ward->name }}</div><small class="text-muted">Ward</small></div>
-                        <div class="text-center"><div class="fw-bold">{{ $admission->bed->bed_number }}</div><small class="text-muted">Bed</small></div>
-                        <div class="text-center"><div class="fw-bold">{{ $admission->length_of_stay }}d</div><small class="text-muted">Stay</small></div>
+                        <div class="text-center"><div class="fw-bold">{{ $admission->bed->ward->name }}</div><small class="text-muted">{{ __('admissions.ward_col') }}</small></div>
+                        <div class="text-center"><div class="fw-bold">{{ $admission->bed->bed_number }}</div><small class="text-muted">{{ __('admissions.bed_col') }}</small></div>
+                        <div class="text-center"><div class="fw-bold">{{ $admission->length_of_stay }}d</div><small class="text-muted">{{ __('admissions.stay_col') }}</small></div>
                         <div class="text-center">
                             <span class="badge badge-soft-{{ $admission->status->color() }}">{{ $admission->status->label() }}</span>
                         </div>
                     </div>
                 </div>
                 @if($admission->patient->allergies)
-                <div class="alert alert-danger py-1 px-2 mb-0 mt-2 fs-12"><i class="ti ti-alert-triangle me-1"></i><strong>Allergies:</strong> {{ $admission->patient->allergies }}</div>
+                <div class="alert alert-danger py-1 px-2 mb-0 mt-2 fs-12"><i class="ti ti-alert-triangle me-1"></i><strong>{{ __('admissions.allergies') }}:</strong> {{ $admission->patient->allergies }}</div>
                 @endif
             </div>
         </div>
@@ -75,7 +75,7 @@
     <div class="col-12">
         <div class="card border-info">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <h5 class="card-title mb-0"><i class="ti ti-pill me-1"></i>Medication Administration</h5>
+                <h5 class="card-title mb-0"><i class="ti ti-pill me-1"></i>{{ __('admissions.medication_admin') }}</h5>
                 <div class="d-flex gap-2 flex-wrap">
                     @can('admission.mar_chart.view')
                     <a href="{{ route('admin.admissions.mar-chart', $admission) }}" class="btn btn-sm btn-primary">MAR Chart</a>

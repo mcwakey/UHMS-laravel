@@ -48,6 +48,6 @@ class BloodCrossmatchController extends Controller
     {
         $this->crossmatches->verify($crossmatch, $request->user());
 
-        return back()->with('success', 'Crossmatch verified.');
+        return back()->with('success', __('messages.blood_bank.crossmatch_verified'));
     }
 }

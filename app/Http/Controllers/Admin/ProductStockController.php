@@ -119,7 +119,7 @@ class ProductStockController extends Controller
         }
 
         return redirect()->route('admin.product-stock.balances', ['location_id' => $mainStore->id])
-            ->with('success', 'Stock received.');
+            ->with('success', __('messages.product_stock.received'));
     }
 
     // ---------- Adjust ----------
@@ -169,7 +169,7 @@ class ProductStockController extends Controller
         }
 
         return redirect()->route('admin.product-stock.balances', ['location_id' => $data['stock_location_id']])
-            ->with('success', 'Stock adjusted.');
+            ->with('success', __('messages.product_stock.adjusted'));
     }
 
     // ---------- Transfer ----------
@@ -196,7 +196,7 @@ class ProductStockController extends Controller
         } catch (Throwable $e) {
             return back()->withInput()->withErrors(['error' => $e->getMessage()]);
         }
-        return redirect()->route('admin.product-stock.balances', ['location_id' => $data['from_location_id']])->with('success', 'Transfer recorded.');
+        return redirect()->route('admin.product-stock.balances', ['location_id' => $data['from_location_id']])->with('success', __('messages.product_stock.transferred'));
     }
 
     // ---------- Return ----------
@@ -247,6 +247,6 @@ class ProductStockController extends Controller
             return back()->withInput()->withErrors(['error' => $e->getMessage()]);
         }
 
-        return redirect()->route('admin.product-stock.balances', ['location_id' => $data['to_location_id']])->with('success', 'Return recorded.');
+        return redirect()->route('admin.product-stock.balances', ['location_id' => $data['to_location_id']])->with('success', __('messages.product_stock.returned'));
     }
 }

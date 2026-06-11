@@ -73,7 +73,7 @@ class BloodDonationController extends Controller
 
         $this->donations->recordDonation(BloodDonor::findOrFail($data['donor_id']), $data, $request->user(), $override);
 
-        return back()->with('success', 'Donation recorded and unit quarantined pending screening.');
+        return back()->with('success', __('messages.blood_bank.donation_recorded'));
     }
 
     public function recordTest(Request $request, BloodDonation $donation)
@@ -86,14 +86,14 @@ class BloodDonationController extends Controller
 
         $this->donations->recordTest($donation, $data['test_code'], $data['result'], $request->user(), $data['notes'] ?? null);
 
-        return back()->with('success', 'Screening test result saved.');
+        return back()->with('success', __('messages.blood_bank.screening_result_saved'));
     }
 
     public function verifyTest(Request $request, BloodDonationTest $test)
     {
         $this->donations->verifyTest($test, $request->user());
 
-        return back()->with('success', 'Screening test verified.');
+        return back()->with('success', __('messages.blood_bank.screening_verified'));
     }
 
     public function updateScreening(Request $request, BloodDonation $donation)
@@ -105,6 +105,6 @@ class BloodDonationController extends Controller
 
         $this->donations->updateScreening($donation, $data['screening_status'], $request->user(), $data['screening_notes'] ?? null);
 
-        return back()->with('success', 'Donation screening updated.');
+        return back()->with('success', __('messages.blood_bank.screening_updated'));
     }
 }

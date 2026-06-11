@@ -47,7 +47,7 @@ class ProcedureController extends Controller
         $data['requires_consent'] = $request->boolean('requires_consent');
         $this->clinicalService->createProcedure($data);
 
-        return back()->with('success', 'Procedure added successfully.');
+        return back()->with('success', __('messages.procedures.created'));
     }
 
     public function update(Request $request, Procedure $procedure)
@@ -66,7 +66,7 @@ class ProcedureController extends Controller
         $data['requires_consent'] = $request->boolean('requires_consent');
         $this->clinicalService->updateProcedure($procedure, $data);
 
-        return back()->with('success', 'Procedure updated successfully.');
+        return back()->with('success', __('messages.procedures.updated'));
     }
 
     public function toggle(Procedure $procedure)
@@ -74,7 +74,7 @@ class ProcedureController extends Controller
         $this->clinicalService->toggleProcedure($procedure);
         $status = $procedure->fresh()->is_active ? 'activated' : 'deactivated';
 
-        return back()->with('success', "Procedure {$procedure->name} {$status}.");
+        return back()->with('success', __('messages.procedures.toggled', ['name' => $procedure->name, 'status' => $status]));
     }
 
     /*
@@ -106,19 +106,19 @@ class ProcedureController extends Controller
         $procedure = Procedure::findOrFail($data['procedure_id']);
 
         if ($procedure->requires_consent && !$data['consent_signed']) {
-            return back()->with('error', 'This procedure requires signed consent before scheduling.');
+            return back()->with('error', __('messages.procedures.consent_required'));
         }
 
         $this->clinicalService->scheduleProcedure($data);
 
-        return back()->with('success', 'Procedure scheduled.');
+        return back()->with('success', __('messages.procedures.scheduled'));
     }
 
     public function startProcedure(PatientProcedure $patientProcedure)
     {
         $this->clinicalService->startProcedure($patientProcedure);
 
-        return back()->with('success', 'Procedure started.');
+        return back()->with('success', __('messages.procedures.started'));
     }
 
     public function completeProcedure(Request $request, PatientProcedure $patientProcedure)
@@ -130,7 +130,7 @@ class ProcedureController extends Controller
 
         $this->clinicalService->completeProcedure($patientProcedure, $data);
 
-        return back()->with('success', 'Procedure completed.');
+        return back()->with('success', __('messages.procedures.completed'));
     }
 
     public function cancelProcedure(Request $request, PatientProcedure $patientProcedure)
@@ -138,6 +138,6 @@ class ProcedureController extends Controller
         $reason = $request->input('reason');
         $this->clinicalService->cancelProcedure($patientProcedure, $reason);
 
-        return back()->with('success', 'Procedure cancelled.');
+        return back()->with('success', __('messages.procedures.cancelled'));
     }
 }

@@ -141,12 +141,12 @@ class InvestigationCatalogueController extends Controller
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
-        return back()->with('success', 'Consumable saved.');
+        return back()->with('success', __('messages.investigation_catalogue.consumable_saved'));
     }
 
     public function destroyConsumable(ServiceCatalog $service, int $product)
     {
         app(\App\Services\ServiceConsumableService::class)->delete($service, $product);
-        return back()->with('success', 'Consumable removed.');
+        return back()->with('success', __('messages.investigation_catalogue.consumable_removed'));
     }
 }

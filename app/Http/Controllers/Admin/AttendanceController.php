@@ -23,7 +23,7 @@ class AttendanceController extends Controller
     public function store(StoreAttendanceRequest $request)
     {
         $this->hrService->recordAttendance($request->validated());
-        return redirect()->route('admin.hr.attendance.index')->with('success', 'Attendance recorded successfully.');
+        return redirect()->route('admin.hr.attendance.index')->with('success', __('messages.attendance.recorded'));
     }
 
     public function summary(Request $request)

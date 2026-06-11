@@ -1,16 +1,14 @@
 @extends('layouts.app')
-@section('title', 'Discharge Patient — ' . $admission->patient->full_name)
+@section('title', __('admissions.discharge_title') . ' — ' . $admission->patient->full_name)
 
 @section('content')
-<!-- Page Header -->
-<div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
-    <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Discharge Patient</h4>
-    </div>
-    <div class="text-end">
-        <a href="{{ route('admin.admissions.show', $admission) }}" class="btn btn-outline-secondary btn-md fs-13"><i class="ti ti-arrow-left me-1"></i>Back to Admission</a>
-    </div>
-</div>
+<x-page-header :title="__('admissions.discharge_title')" icon="ti-logout">
+    <x-slot:actions>
+        <a href="{{ route('admin.admissions.show', $admission) }}" class="btn btn-outline-secondary btn-md fs-13">
+            <i class="ti ti-arrow-left me-1"></i>{{ __('admissions.back_to_admission') }}
+        </a>
+    </x-slot:actions>
+</x-page-header>
 
 @if($errors->any())
 <div class="alert alert-danger">
@@ -26,16 +24,15 @@
     <div class="col-lg-8">
         <div class="card">
             <div class="card-header bg-warning bg-opacity-10">
-                <h5 class="card-title mb-0"><i class="ti ti-logout me-1"></i>Discharge Form</h5>
+                <h5 class="card-title mb-0"><i class="ti ti-logout me-1"></i>{{ __('admissions.discharge_form') }}</h5>
             </div>
             <div class="card-body">
-                <!-- Patient Summary -->
                 <div class="alert alert-info d-flex align-items-start mb-4">
                     <i class="ti ti-info-circle fs-4 me-2 mt-1"></i>
                     <div>
                         <strong>{{ $admission->patient->full_name }}</strong> ({{ $admission->patient->patient_number }})<br>
-                        <small>Admission: {{ $admission->admission_number }} | Ward: {{ $admission->bed->ward->name }} | Bed: {{ $admission->bed->bed_number }}</small><br>
-                        <small>Admitted: {{ $admission->admission_date->format('d M Y, H:i') }} | Length of Stay: {{ $admission->length_of_stay }} day(s)</small>
+                        <small>{{ __('admissions.admission_no') }} {{ $admission->admission_number }} | {{ __('admissions.ward_bed') }}: {{ $admission->bed->ward->name }} | {{ __('admissions.bed') }}: {{ $admission->bed->bed_number }}</small><br>
+                        <small>{{ __('admissions.admitted_on') }}: {{ $admission->admission_date->format('d M Y, H:i') }} | {{ __('admissions.length_of_stay') }}: {{ $admission->length_of_stay }} {{ __('admissions.days') }}</small>
                     </div>
                 </div>
 
@@ -43,19 +40,22 @@
                     @csrf
 
                     <div class="mb-3">
-                        <label class="form-label">Discharge Summary <span class="text-danger">*</span></label>
-                        <textarea name="discharge_summary" class="form-control" rows="5" required placeholder="Summary of treatment, outcomes, and condition at discharge...">{{ old('discharge_summary') }}</textarea>
+                        <label class="form-label">{{ __('admissions.discharge_summary') }} <span class="text-danger">*</span></label>
+                        <textarea name="discharge_summary" class="form-control" rows="5" required
+                                  placeholder="{{ __('admissions.discharge_summary_ph') }}">{{ old('discharge_summary') }}</textarea>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Discharge Instructions</label>
-                        <textarea name="discharge_instructions" class="form-control" rows="4" placeholder="Follow-up appointments, medications to continue, dietary restrictions, activity limitations...">{{ old('discharge_instructions') }}</textarea>
+                        <label class="form-label">{{ __('admissions.discharge_instructions') }}</label>
+                        <textarea name="discharge_instructions" class="form-control" rows="4"
+                                  placeholder="{{ __('admissions.discharge_instructions_ph') }}">{{ old('discharge_instructions') }}</textarea>
                     </div>
 
                     <div class="text-end">
-                        <a href="{{ route('admin.admissions.show', $admission) }}" class="btn btn-secondary me-2">Cancel</a>
-                        <button type="submit" class="btn btn-warning" onclick="return confirm('Are you sure you want to discharge this patient? The bed will be freed up.')">
-                            <i class="ti ti-logout me-1"></i>Discharge Patient
+                        <a href="{{ route('admin.admissions.show', $admission) }}" class="btn btn-secondary me-2">{{ __('admissions.cancel') }}</a>
+                        <button type="submit" class="btn btn-warning"
+                                onclick="return confirm('{{ __('admissions.discharge_confirm') }}')">
+                            <i class="ti ti-logout me-1"></i>{{ __('admissions.discharge_patient_btn') }}
                         </button>
                     </div>
                 </form>
@@ -64,60 +64,58 @@
     </div>
 
     <div class="col-lg-4">
-        <!-- Admission Summary -->
         <div class="card mb-3">
             <div class="card-header">
-                <h5 class="card-title mb-0">Admission Summary</h5>
+                <h5 class="card-title mb-0">{{ __('admissions.admission_summary') }}</h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive"><table class="table table-sm table-borderless mb-0">
                     <tr>
-                        <td class="text-muted">Admission #</td>
+                        <td class="text-muted">{{ __('admissions.admission_no') }}</td>
                         <td class="fw-medium">{{ $admission->admission_number }}</td>
                     </tr>
                     <tr>
-                        <td class="text-muted">Admitted On</td>
+                        <td class="text-muted">{{ __('admissions.admitted_on') }}</td>
                         <td>{{ $admission->admission_date->format('d M Y, H:i') }}</td>
                     </tr>
                     <tr>
-                        <td class="text-muted">Admitted By</td>
+                        <td class="text-muted">{{ __('admissions.admitted_by') }}</td>
                         <td>{{ $admission->admittedBy->name ?? '—' }}</td>
                     </tr>
                     <tr>
-                        <td class="text-muted">Days</td>
+                        <td class="text-muted">{{ __('admissions.days') }}</td>
                         <td>{{ $admission->length_of_stay }}</td>
                     </tr>
                     <tr>
-                        <td class="text-muted">Ward Rounds</td>
+                        <td class="text-muted">{{ __('admissions.ward_rounds_count') }}</td>
                         <td>{{ $admission->wardRounds->count() }}</td>
                     </tr>
                 </table></div>
 
                 @if($admission->admitting_diagnosis)
                 <hr>
-                <h6 class="text-muted mb-1">Admitting Diagnosis</h6>
+                <h6 class="text-muted mb-1">{{ __('admissions.admitting_diagnosis_lbl') }}</h6>
                 <p class="mb-0">{{ $admission->admitting_diagnosis }}</p>
                 @endif
             </div>
         </div>
 
-        <!-- Estimated Charges -->
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0"><i class="ti ti-cash me-1"></i>Estimated Bed Charges</h5>
+                <h5 class="card-title mb-0"><i class="ti ti-cash me-1"></i>{{ __('admissions.estimated_bed_charges') }}</h5>
             </div>
             <div class="card-body">
                 <div class="table-responsive"><table class="table table-sm table-borderless mb-0">
                     <tr>
-                        <td class="text-muted">Daily Rate</td>
+                        <td class="text-muted">{{ __('admissions.daily_rate') }}</td>
                         <td class="fw-medium">GH₵ {{ number_format($admission->bed->daily_rate, 2) }}</td>
                     </tr>
                     <tr>
-                        <td class="text-muted">Days</td>
+                        <td class="text-muted">{{ __('admissions.days') }}</td>
                         <td>{{ max(1, $admission->length_of_stay) }}</td>
                     </tr>
                     <tr class="border-top">
-                        <td class="fw-bold">Total Estimate</td>
+                        <td class="fw-bold">{{ __('admissions.total_estimate') }}</td>
                         <td class="fw-bold text-primary">GH₵ {{ number_format($admission->bed->daily_rate * max(1, $admission->length_of_stay), 2) }}</td>
                     </tr>
                 </table></div>

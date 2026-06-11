@@ -68,7 +68,7 @@ class CounterSaleController extends Controller
 
         return redirect()
             ->route('admin.billing.invoices.show', $invoice)
-            ->with('success', 'Counter sale created. Collect payment to complete.');
+            ->with('success', __('messages.counter_sales.created'));
     }
 
     /** select2 JSON: billable, stock-linked drugs with cash price. */

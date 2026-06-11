@@ -55,6 +55,6 @@ class LogRetentionController extends Controller
             'metadata' => ['count' => count($data['overrides'] ?? [])],
         ], null, 'Log retention overrides updated');
 
-        return back()->with('success', 'Retention overrides updated.');
+        return back()->with('success', __('messages.log_retention.updated'));
     }
 }

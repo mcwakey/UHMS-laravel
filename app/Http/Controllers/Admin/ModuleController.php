@@ -32,7 +32,7 @@ class ModuleController extends Controller
     public function toggle(Request $request, Module $module)
     {
         if ($module->is_core) {
-            return back()->with('error', "Cannot disable core module '{$module->name}'.");
+            return back()->with('error', __('messages.modules.cannot_disable_core', ['name' => $module->name]));
         }
 
         if ($module->is_enabled) {
@@ -47,12 +47,12 @@ class ModuleController extends Controller
             if (!empty($dependents)) {
                 return back()->with(
                     'error',
-                    "Disable dependent modules first: " . implode(', ', $dependents)
+                    __('messages.modules.disable_dependents_first', ['modules' => implode(', ', $dependents)])
                 );
             }
 
             $this->modules->disable($module->slug);
-            $msg = "Module '{$module->name}' disabled.";
+            $msg = __('messages.modules.disabled', ['name' => $module->name]);
         } else {
             abort_unless($request->user()?->can('modules.enable'), 403);
 
@@ -62,12 +62,12 @@ class ModuleController extends Controller
                 if ($parent && !$parent->is_enabled) {
                     return back()->with(
                         'error',
-                        "Enable parent module '{$parent->name}' first."
+                        __('messages.modules.enable_parent_first', ['name' => $parent->name])
                     );
                 }
             }
             $this->modules->enable($module->slug);
-            $msg = "Module '{$module->name}' enabled.";
+            $msg = __('messages.modules.enabled', ['name' => $module->name]);
         }
 
         return back()->with('success', $msg);
@@ -77,6 +77,6 @@ class ModuleController extends Controller
     {
         $this->modules->flush();
         Cache::forget('spatie.permission.cache');
-        return back()->with('success', 'Module cache flushed.');
+        return back()->with('success', __('messages.modules.cache_flushed'));
     }
 }

@@ -25,9 +25,9 @@ class EmergencyDispositionController extends Controller
         if ($case->disposition === EmergencyCase::DISPOSITION_ADMITTED) {
             return redirect()
                 ->route('admin.admissions.create', ['visit_id' => $case->visit_id])
-                ->with('success', 'Emergency case marked for admission. Complete admission placement.');
+                ->with('success', __('messages.emergency.case_marked_for_admission'));
         }
 
-        return back()->with('success', 'Emergency disposition recorded.');
+        return back()->with('success', __('messages.emergency.disposition_recorded'));
     }
 }

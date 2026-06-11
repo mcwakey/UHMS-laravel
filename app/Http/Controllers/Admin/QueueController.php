@@ -63,27 +63,27 @@ class QueueController extends Controller
         $entry = $this->queueService->callNext((int) $request->department_id);
 
         if (!$entry) {
-            return back()->with('info', 'No patients waiting in this department queue.');
+            return back()->with('info', __('messages.queue.none_waiting'));
         }
 
-        return back()->with('success', "Now serving #{$entry->queue_number} — {$entry->visit->patient->full_name}");
+        return back()->with('success', __('messages.queue.now_serving', ['number' => $entry->queue_number, 'name' => $entry->visit->patient->full_name]));
     }
 
     public function complete(QueueEntry $queueEntry)
     {
         $this->queueService->markCompleted($queueEntry);
-        return back()->with('success', "Queue #{$queueEntry->queue_number} marked as completed.");
+        return back()->with('success', __('messages.queue.completed', ['number' => $queueEntry->queue_number]));
     }
 
     public function skip(QueueEntry $queueEntry)
     {
         $this->queueService->skip($queueEntry);
-        return back()->with('success', "Queue #{$queueEntry->queue_number} skipped.");
+        return back()->with('success', __('messages.queue.skipped', ['number' => $queueEntry->queue_number]));
     }
 
     public function requeue(QueueEntry $queueEntry)
     {
         $entry = $this->queueService->requeue($queueEntry);
-        return back()->with('success', "Patient re-queued as #{$entry->queue_number}.");
+        return back()->with('success', __('messages.queue.requeued', ['number' => $entry->queue_number]));
     }
 }

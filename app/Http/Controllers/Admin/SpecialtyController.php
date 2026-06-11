@@ -35,7 +35,7 @@ class SpecialtyController extends Controller
         $data['is_active'] = true;
         Specialty::create($data);
 
-        return back()->with('success', 'Specialty created successfully.');
+        return back()->with('success', __('messages.specialties.created'));
     }
 
     public function update(Request $request, Specialty $specialty)
@@ -48,13 +48,13 @@ class SpecialtyController extends Controller
 
         $specialty->update($data);
 
-        return back()->with('success', 'Specialty updated successfully.');
+        return back()->with('success', __('messages.specialties.updated'));
     }
 
     public function toggle(Specialty $specialty)
     {
         $specialty->update(['is_active' => !$specialty->is_active]);
 
-        return back()->with('success', "Specialty {$specialty->name} " . ($specialty->is_active ? 'activated' : 'deactivated') . '.');
+        return back()->with('success', __('messages.specialties.toggled', ['name' => $specialty->name, 'status' => $specialty->is_active ? 'activated' : 'deactivated']));
     }
 }

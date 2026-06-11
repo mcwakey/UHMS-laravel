@@ -37,7 +37,7 @@ class BloodStorageLocationController extends Controller
 
         BloodStorageLocation::create($data);
 
-        return back()->with('success', 'Storage location added.');
+        return back()->with('success', __('messages.blood_bank.location_added'));
     }
 
     public function update(Request $request, BloodStorageLocation $location)
@@ -47,14 +47,14 @@ class BloodStorageLocationController extends Controller
 
         $location->update($data);
 
-        return back()->with('success', 'Storage location updated.');
+        return back()->with('success', __('messages.blood_bank.location_updated'));
     }
 
     public function toggle(BloodStorageLocation $location)
     {
         $location->update(['is_active' => ! $location->is_active]);
 
-        return back()->with('success', 'Storage location '.($location->is_active ? 'activated' : 'deactivated').'.');
+        return back()->with('success', __('messages.blood_bank.location_status_updated', ['status' => $location->is_active ? 'activated' : 'deactivated']));
     }
 
     private function validateLocation(Request $request, ?BloodStorageLocation $location = null): array

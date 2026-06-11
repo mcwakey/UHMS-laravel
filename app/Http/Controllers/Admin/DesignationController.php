@@ -38,7 +38,7 @@ class DesignationController extends Controller
         Designation::create($validated);
 
         return redirect()->route('admin.designations.index')
-            ->with('success', 'Designation created successfully.');
+            ->with('success', __('messages.designations.created'));
     }
 
     public function update(Request $request, Designation $designation)
@@ -52,19 +52,19 @@ class DesignationController extends Controller
         $designation->update($validated);
 
         return redirect()->route('admin.designations.index')
-            ->with('success', 'Designation updated successfully.');
+            ->with('success', __('messages.designations.updated'));
     }
 
     public function destroy(Designation $designation)
     {
         if ($designation->users()->exists()) {
             return redirect()->back()
-                ->with('error', 'Cannot delete designation with assigned users.');
+                ->with('error', __('messages.designations.cannot_delete'));
         }
 
         $designation->delete();
 
         return redirect()->route('admin.designations.index')
-            ->with('success', 'Designation deleted successfully.');
+            ->with('success', __('messages.designations.deleted'));
     }
 }
