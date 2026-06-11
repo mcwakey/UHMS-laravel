@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Daily Collection Report</title>
+    <title>{{ __('reports.billing.daily_collections') }}</title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #333; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #0d6efd; padding-bottom: 10px; }
@@ -23,30 +23,30 @@
 </head>
 <body>
     <div class="header">
-        <h1>UHMS - Daily Collection Report</h1>
-        <p>Date: {{ $filters['date'] ?? now()->toDateString() }} &bull; Generated: {{ now()->format('d M Y H:i') }}</p>
+        <h1>UHMS - {{ __('reports.billing.daily_collections') }}</h1>
+        <p>{{ __('common.date') }}: {{ $filters['date'] ?? now()->toDateString() }} &bull; {{ __('common.generated') }}: {{ now()->format('d M Y H:i') }}</p>
     </div>
 
     <div class="stats">
         <div class="stat-box">
             <div class="value text-success">₵{{ number_format($stats['total_collected'], 2) }}</div>
-            <div class="label">Total Collected</div>
+            <div class="label">{{ __('reports.kpi.total_collected') }}</div>
         </div>
         <div class="stat-box">
             <div class="value">{{ number_format($stats['total_transactions']) }}</div>
-            <div class="label">Transactions</div>
+            <div class="label">{{ __('reports.kpi.transactions') }}</div>
         </div>
         <div class="stat-box">
             <div class="value">{{ $stats['methods'] }}</div>
-            <div class="label">Payment Methods</div>
+            <div class="label">{{ __('reports.kpi.payment_methods') }}</div>
         </div>
     </div>
 
     @if($byMethod->count())
-    <div class="section-title">Collection by Payment Method</div>
+    <div class="section-title">{{ __('reports.billing.collection_by_method') }}</div>
     <table>
         <thead>
-            <tr><th>Method</th><th class="text-right">Transactions</th><th class="text-right">Amount</th></tr>
+            <tr><th>{{ __('reports.columns.method') }}</th><th class="text-right">{{ __('reports.kpi.transactions') }}</th><th class="text-right">{{ __('reports.columns.amount') }}</th></tr>
         </thead>
         <tbody>
             @foreach($byMethod as $method)
@@ -60,16 +60,16 @@
     </table>
     @endif
 
-    <div class="section-title">Payment Details</div>
+    <div class="section-title">{{ __('reports.print.title') }}</div>
     <table>
         <thead>
             <tr>
-                <th>Receipt #</th>
-                <th>Time</th>
-                <th>Patient</th>
-                <th>Method</th>
-                <th>Received By</th>
-                <th class="text-right">Amount</th>
+                <th>{{ __('reports.billing.receipt_no') }}</th>
+                <th>{{ __('reports.billing.time') }}</th>
+                <th>{{ __('reports.columns.patient') }}</th>
+                <th>{{ __('reports.columns.method') }}</th>
+                <th>{{ __('reports.billing.received_by') }}</th>
+                <th class="text-right">{{ __('reports.columns.amount') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -87,7 +87,7 @@
     </table>
 
     <div class="footer">
-        <p>University Hospital Management System (UHMS) &bull; Confidential</p>
+        <p>{{ __('reports.print.system_generated') }} &bull; {{ __('reports.print.confidential') }}</p>
     </div>
 </body>
 </html>

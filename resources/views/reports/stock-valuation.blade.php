@@ -1,20 +1,20 @@
 @extends('layouts.app')
-@section('title', 'Stock Valuation Report')
+@section('title', __('reports.stock.stock_valuation'))
 
 @section('content')
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
     <div>
-        <h4 class="fw-bold mb-0">Stock Valuation Report</h4>
+        <h4 class="fw-bold mb-0">{{ __('reports.stock.stock_valuation') }}</h4>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Stock Valuation</li>
+                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('common.dashboard') }}</a></li>
+                <li class="breadcrumb-item active">{{ __('reports.stock.stock_valuation') }}</li>
             </ol>
         </nav>
     </div>
     <div>
         <a href="{{ route('admin.reports.stock-valuation', array_merge(request()->query(), ['export' => 'excel'])) }}" class="btn btn-success btn-sm">
-            <i class="ti ti-file-spreadsheet me-1"></i>Excel
+            <i class="ti ti-file-spreadsheet me-1"></i>{{ __('reports.actions.excel') }}
         </a>
     </div>
 </div>
@@ -23,7 +23,7 @@
     <div class="col-md-3">
         <div class="card border-start border-primary border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Stock Balances</p>
+                <p class="text-muted mb-1 small">{{ __('reports.kpi.stock_balances') }}</p>
                 <h4 class="fw-bold mb-0">{{ number_format($stats['total_items']) }}</h4>
             </div>
         </div>
@@ -31,7 +31,7 @@
     <div class="col-md-3">
         <div class="card border-start border-success border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Cost Value</p>
+                <p class="text-muted mb-1 small">{{ __('reports.kpi.cost_value') }}</p>
                 <h4 class="fw-bold mb-0 text-success">GHS {{ number_format($stats['total_cost_value'], 2) }}</h4>
             </div>
         </div>
@@ -39,7 +39,7 @@
     <div class="col-md-3">
         <div class="card border-start border-info border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Selling Value</p>
+                <p class="text-muted mb-1 small">{{ __('reports.kpi.selling_value') }}</p>
                 <h4 class="fw-bold mb-0 text-info">GHS {{ number_format($stats['total_sell_value'], 2) }}</h4>
             </div>
         </div>
@@ -47,7 +47,7 @@
     <div class="col-md-3">
         <div class="card border-start border-warning border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Potential Margin</p>
+                <p class="text-muted mb-1 small">{{ __('reports.kpi.potential_margin') }}</p>
                 <h4 class="fw-bold mb-0 text-warning">GHS {{ number_format($stats['total_sell_value'] - $stats['total_cost_value'], 2) }}</h4>
             </div>
         </div>
@@ -58,21 +58,21 @@
     <div class="card-body">
         <form method="GET" action="{{ route('admin.reports.stock-valuation') }}" class="row g-3 align-items-end">
             <div class="col-md-4">
-                <label class="form-label">Location</label>
+                <label class="form-label">{{ __('reports.stock.location') }}</label>
                 <select name="location" class="form-select">
-                    <option value="">All Locations</option>
+                    <option value="">{{ __('reports.filters.all_locations') }}</option>
                     @foreach($locations as $location)
                     <option value="{{ $location->id }}" @selected(($filters['location'] ?? '') == $location->id)>{{ $location->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-4">
-                <label class="form-label">Search Product</label>
-                <input type="text" name="search" class="form-control" placeholder="Product name or code..." value="{{ $filters['search'] ?? '' }}">
+                <label class="form-label">{{ __('reports.filters.search_product') }}</label>
+                <input type="text" name="search" class="form-control" placeholder="{{ __('reports.filters.product_placeholder') }}" value="{{ $filters['search'] ?? '' }}">
             </div>
             <div class="col-md-4">
-                <button class="btn btn-primary">Filter</button>
-                <a href="{{ route('admin.reports.stock-valuation') }}" class="btn btn-outline-secondary">Clear</a>
+                <button class="btn btn-primary">{{ __('reports.filter') }}</button>
+                <a href="{{ route('admin.reports.stock-valuation') }}" class="btn btn-outline-secondary">{{ __('reports.clear') }}</a>
             </div>
         </form>
     </div>
@@ -83,14 +83,14 @@
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>Product</th>
-                    <th>Type</th>
-                    <th>Location</th>
-                    <th class="text-end">Qty</th>
-                    <th class="text-end">Cost Price</th>
-                    <th class="text-end">Sell Price</th>
-                    <th class="text-end">Cost Value</th>
-                    <th class="text-end">Sell Value</th>
+                    <th>{{ __('reports.stock.product') }}</th>
+                    <th>{{ __('reports.stock.type') }}</th>
+                    <th>{{ __('reports.stock.location') }}</th>
+                    <th class="text-end">{{ __('reports.columns.qty') }}</th>
+                    <th class="text-end">{{ __('reports.columns.cost_price') }}</th>
+                    <th class="text-end">{{ __('reports.columns.selling_price') }}</th>
+                    <th class="text-end">{{ __('reports.columns.cost_value') }}</th>
+                    <th class="text-end">{{ __('reports.columns.sell_value') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -112,7 +112,7 @@
                     <td class="text-end fw-semibold">GHS {{ number_format($quantity * $sellPrice, 2) }}</td>
                 </tr>
                 @empty
-                <tr><td colspan="8"><x-empty-state message="No stock records found." /></td></tr>
+                <tr><td colspan="8"><x-empty-state message="{{ __('reports.empty.no_stock') }}" /></td></tr>
                 @endforelse
             </tbody>
         </table>

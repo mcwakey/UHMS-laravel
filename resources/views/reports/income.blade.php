@@ -1,20 +1,20 @@
 @extends('layouts.app')
-@section('title', 'Income Report')
+@section('title', __('reports.billing.income_title'))
 
 @section('content')
 <div class="uhms-page-header d-flex align-items-sm-center justify-content-between flex-wrap gap-2">
     <div>
-        <h4 class="fw-bold mb-0">Income Report</h4>
+        <h4 class="fw-bold mb-0">{{ __('reports.billing.income_title') }}</h4>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Income Report</li>
+                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('common.dashboard') }}</a></li>
+                <li class="breadcrumb-item active">{{ __('reports.billing.income_title') }}</li>
             </ol>
         </nav>
     </div>
     <div>
         <a href="{{ route('admin.reports.income', array_merge(request()->query(), ['export' => 'pdf'])) }}" class="btn btn-danger btn-sm">
-            <i class="ti ti-file-type-pdf me-1"></i>Export PDF
+            <i class="ti ti-file-type-pdf me-1"></i>{{ __('reports.actions.export_pdf') }}
         </a>
     </div>
 </div>
@@ -24,7 +24,7 @@
     <div class="col-xl-3 col-md-6">
         <div class="card border-start border-success border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Total Income</p>
+                <p class="text-muted mb-1 small">{{ __('reports.kpi.total_income') }}</p>
                 <h4 class="fw-bold mb-0 text-success">₵{{ number_format($stats['total_income'] ?? 0, 2) }}</h4>
             </div>
         </div>
@@ -32,7 +32,7 @@
     <div class="col-xl-3 col-md-6">
         <div class="card border-start border-primary border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Consultation Fees</p>
+                <p class="text-muted mb-1 small">{{ __('reports.kpi.consultation_fees') }}</p>
                 <h4 class="fw-bold mb-0">₵{{ number_format($stats['consultation_fees'] ?? 0, 2) }}</h4>
             </div>
         </div>
@@ -40,7 +40,7 @@
     <div class="col-xl-3 col-md-6">
         <div class="card border-start border-info border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Lab Revenue</p>
+                <p class="text-muted mb-1 small">{{ __('reports.kpi.lab_revenue') }}</p>
                 <h4 class="fw-bold mb-0">₵{{ number_format($stats['lab_revenue'] ?? 0, 2) }}</h4>
             </div>
         </div>
@@ -48,7 +48,7 @@
     <div class="col-xl-3 col-md-6">
         <div class="card border-start border-warning border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Insurance Revenue</p>
+                <p class="text-muted mb-1 small">{{ __('reports.kpi.insurance_revenue') }}</p>
                 <h4 class="fw-bold mb-0">₵{{ number_format($stats['insurance_revenue'] ?? 0, 2) }}</h4>
             </div>
         </div>
@@ -60,17 +60,17 @@
     <div class="card-body">
         <form method="GET" action="{{ route('admin.reports.income') }}" class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="form-label">Date From</label>
+                <label class="form-label">{{ __('reports.filters.date_from') }}</label>
                 <input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}">
             </div>
             <div class="col-md-3">
-                <label class="form-label">Date To</label>
+                <label class="form-label">{{ __('reports.filters.date_to') }}</label>
                 <input type="date" name="date_to" class="form-control" value="{{ $filters['date_to'] ?? '' }}">
             </div>
             <div class="col-md-3">
-                <label class="form-label">Payment Method</label>
+                <label class="form-label">{{ __('reports.payment_method') }}</label>
                 <select name="payment_method" class="form-select">
-                    <option value="">All Methods</option>
+                    <option value="">{{ __('reports.all_methods') }}</option>
                     @foreach($paymentMethods as $method)
                         <option value="{{ $method->value }}" {{ ($filters['payment_method'] ?? '') === $method->value ? 'selected' : '' }}>
                             {{ $method->label() }}
@@ -79,7 +79,7 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <button type="submit" class="btn btn-primary w-100"><i class="ti ti-filter me-1"></i>Filter</button>
+                <button type="submit" class="btn btn-primary w-100"><i class="ti ti-filter me-1"></i>{{ __('reports.filter') }}</button>
             </div>
         </form>
     </div>
@@ -88,20 +88,20 @@
 <!-- Data Table -->
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title mb-0">Payment Records</h5>
+        <h5 class="card-title mb-0">{{ __('reports.billing.invoice_register') }}</h5>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Receipt #</th>
-                        <th>Patient</th>
-                        <th>Invoice #</th>
-                        <th>Method</th>
-                        <th class="text-end">Amount</th>
-                        <th>Received By</th>
-                        <th>Date</th>
+                        <th>{{ __('reports.billing.receipt_no') }}</th>
+                        <th>{{ __('reports.col_patient') }}</th>
+                        <th>{{ __('reports.columns.invoice_number') }}</th>
+                        <th>{{ __('reports.billing.method') }}</th>
+                        <th class="text-end">{{ __('reports.billing.amount') }}</th>
+                        <th>{{ __('reports.billing.received_by') }}</th>
+                        <th>{{ __('reports.date') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -125,7 +125,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7"><x-empty-state message="No payment records found" /></td>
+                        <td colspan="7"><x-empty-state message="{{ __('reports.empty.no_records') }}" /></td>
                     </tr>
                     @endforelse
                 </tbody>

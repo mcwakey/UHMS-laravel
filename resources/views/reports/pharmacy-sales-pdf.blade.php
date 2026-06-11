@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Pharmacy Sales Report</title>
+    <title>{{ __('reports.pharmacy.sales_title') }}</title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #333; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #198754; padding-bottom: 10px; }
@@ -22,39 +22,39 @@
 </head>
 <body>
     <div class="header">
-        <h1>UHMS - Pharmacy Sales Report</h1>
-        <p>Generated: {{ now()->format('d M Y H:i') }}</p>
+        <h1>UHMS - {{ __('reports.pharmacy.sales_title') }}</h1>
+        <p>{{ __('common.generated') }}: {{ now()->format('d M Y H:i') }}</p>
     </div>
 
     <div class="stats">
         <div class="stat-box">
             <div class="value text-success">₵{{ number_format($stats['total_revenue'], 2) }}</div>
-            <div class="label">Total Revenue</div>
+            <div class="label">{{ __('reports.kpi.total_revenue') }}</div>
         </div>
         <div class="stat-box">
             <div class="value">{{ number_format($stats['total_dispensed']) }}</div>
-            <div class="label">Total Dispensed</div>
+            <div class="label">{{ __('reports.kpi.total_dispensed') }}</div>
         </div>
         <div class="stat-box">
             <div class="value">{{ number_format($stats['total_items']) }}</div>
-            <div class="label">Items</div>
+            <div class="label">{{ __('reports.kpi.items_dispensed') }}</div>
         </div>
         <div class="stat-box">
             <div class="value">{{ number_format($stats['unique_patients']) }}</div>
-            <div class="label">Patients</div>
+            <div class="label">{{ __('reports.kpi.unique_patients') }}</div>
         </div>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th>Date</th>
-                <th>Patient</th>
-                <th>Drug</th>
-                <th>Batch</th>
-                <th class="text-right">Qty</th>
-                <th class="text-right">Price</th>
-                <th class="text-right">Total</th>
+                <th>{{ __('reports.columns.date') }}</th>
+                <th>{{ __('reports.columns.patient') }}</th>
+                <th>{{ __('reports.columns.drug') }}</th>
+                <th>{{ __('reports.columns.batch') }}</th>
+                <th class="text-right">{{ __('reports.columns.qty') }}</th>
+                <th class="text-right">{{ __('reports.columns.unit_price') }}</th>
+                <th class="text-right">{{ __('reports.columns.total') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -73,7 +73,7 @@
     </table>
 
     <div class="footer">
-        <p>University Hospital Management System (UHMS) &bull; Confidential</p>
+        <p>{{ __('reports.print.system_generated') }} &bull; {{ __('reports.print.confidential') }}</p>
     </div>
 </body>
 </html>

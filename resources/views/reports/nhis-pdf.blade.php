@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Insurance Claims Report</title>
+    <title>{{ __('reports.claims.title') }}</title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #333; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #0d6efd; padding-bottom: 10px; }
@@ -18,21 +18,21 @@
 </head>
 <body>
     <div class="header">
-        <h1>UHMS - Insurance Claims Report</h1>
-        <p>Generated: {{ now()->format('d M Y H:i') }} | Total Claims: {{ $stats['total_claims'] ?? 0 }} | Amount: ₵{{ number_format($stats['total_insurance_amount'] ?? 0, 2) }}</p>
+        <h1>UHMS - {{ __('reports.claims.title') }}</h1>
+        <p>{{ __('common.generated') }}: {{ now()->format('d M Y H:i') }} | {{ __('reports.kpi.total_claims') }}: {{ $stats['total_claims'] ?? 0 }} | {{ __('reports.columns.amount') }}: ₵{{ number_format($stats['total_insurance_amount'] ?? 0, 2) }}</p>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th>Invoice #</th>
-                <th>Patient</th>
-                <th>Department</th>
-                <th class="text-right">Total</th>
-                <th class="text-right">Insurance Amount</th>
-                <th class="text-right">Patient Pays</th>
-                <th>Status</th>
-                <th>Date</th>
+                <th>{{ __('reports.columns.invoice_number') }}</th>
+                <th>{{ __('reports.columns.patient') }}</th>
+                <th>{{ __('reports.columns.department') }}</th>
+                <th class="text-right">{{ __('reports.columns.total') }}</th>
+                <th class="text-right">{{ __('reports.columns.insurance_amount') }}</th>
+                <th class="text-right">{{ __('reports.columns.patient_pays') }}</th>
+                <th>{{ __('reports.columns.status') }}</th>
+                <th>{{ __('reports.columns.date') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -52,7 +52,7 @@
     </table>
 
     <div class="footer">
-        <p>University Hospital Management System (UHMS) &bull; Confidential</p>
+        <p>{{ __('reports.print.system_generated') }} &bull; {{ __('reports.print.confidential') }}</p>
     </div>
 </body>
 </html>

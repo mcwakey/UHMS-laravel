@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Patient Report</title>
+    <title>{{ __('reports.patients.title') }}</title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #333; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #0d6efd; padding-bottom: 10px; }
@@ -16,20 +16,20 @@
 </head>
 <body>
     <div class="header">
-        <h1>UHMS - Patient Report</h1>
-        <p>Generated: {{ now()->format('d M Y H:i') }} | Total: {{ $stats['total_patients'] ?? 0 }} patients</p>
+        <h1>UHMS - {{ __('reports.patients.title') }}</h1>
+        <p>{{ __('common.generated') }}: {{ now()->format('d M Y H:i') }} | {{ __('reports.total') }}: {{ $stats['total_patients'] ?? 0 }} {{ __('reports.kpi.total_patients') }}</p>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th>Patient ID</th>
-                <th>Name</th>
-                <th>Gender</th>
-                <th>DOB</th>
-                <th>Phone</th>
-                <th>Visits</th>
-                <th>Registered</th>
+                <th>{{ __('reports.columns.patient_id') }}</th>
+                <th>{{ __('reports.columns.name') }}</th>
+                <th>{{ __('reports.columns.type') }}</th>
+                <th>{{ __('reports.columns.dob') }}</th>
+                <th>{{ __('reports.columns.phone') }}</th>
+                <th>{{ __('reports.columns.visits') }}</th>
+                <th>{{ __('reports.columns.registered') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -48,7 +48,7 @@
     </table>
 
     <div class="footer">
-        <p>University Hospital Management System (UHMS) &bull; Confidential</p>
+        <p>{{ __('reports.print.system_generated') }} &bull; {{ __('reports.print.confidential') }}</p>
     </div>
 </body>
 </html>

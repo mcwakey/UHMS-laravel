@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Income Report</title>
+    <title>{{ __('reports.billing.income_title') }}</title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #333; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #0d6efd; padding-bottom: 10px; }
@@ -22,38 +22,38 @@
 </head>
 <body>
     <div class="header">
-        <h1>UHMS - Income Report</h1>
-        <p>Generated: {{ now()->format('d M Y H:i') }}</p>
+        <h1>UHMS - {{ __('reports.billing.income_title') }}</h1>
+        <p>{{ __('common.generated') }}: {{ now()->format('d M Y H:i') }}</p>
     </div>
 
     <div class="stats">
         <div class="stat-box">
             <div class="value text-success">₵{{ number_format($stats['total_income'] ?? 0, 2) }}</div>
-            <div class="label">Total Income</div>
+            <div class="label">{{ __('reports.kpi.total_income') }}</div>
         </div>
         <div class="stat-box">
             <div class="value">₵{{ number_format($stats['consultation_fees'] ?? 0, 2) }}</div>
-            <div class="label">Consultation</div>
+            <div class="label">{{ __('reports.kpi.consultation_fees') }}</div>
         </div>
         <div class="stat-box">
             <div class="value">₵{{ number_format($stats['lab_revenue'] ?? 0, 2) }}</div>
-            <div class="label">Lab Revenue</div>
+            <div class="label">{{ __('reports.kpi.lab_revenue') }}</div>
         </div>
         <div class="stat-box">
             <div class="value">₵{{ number_format($stats['insurance_revenue'] ?? 0, 2) }}</div>
-            <div class="label">Insurance Revenue</div>
+            <div class="label">{{ __('reports.kpi.insurance_revenue') }}</div>
         </div>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th>Receipt #</th>
-                <th>Patient</th>
-                <th>Method</th>
-                <th class="text-right">Amount</th>
-                <th>Received By</th>
-                <th>Date</th>
+                <th>{{ __('reports.billing.receipt_no') }}</th>
+                <th>{{ __('reports.columns.patient') }}</th>
+                <th>{{ __('reports.columns.method') }}</th>
+                <th class="text-right">{{ __('reports.columns.amount') }}</th>
+                <th>{{ __('reports.billing.received_by') }}</th>
+                <th>{{ __('reports.columns.date') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -71,7 +71,7 @@
     </table>
 
     <div class="footer">
-        <p>University Hospital Management System (UHMS) &bull; Confidential</p>
+        <p>{{ __('reports.print.system_generated') }} &bull; {{ __('reports.print.confidential') }}</p>
     </div>
 </body>
 </html>

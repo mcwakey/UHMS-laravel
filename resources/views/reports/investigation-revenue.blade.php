@@ -1,20 +1,20 @@
 @extends('layouts.app')
-@section('title', 'Investigation Revenue')
+@section('title', __('reports.investigations.revenue_title'))
 
 @section('content')
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
     <div>
-        <h4 class="fw-bold mb-0">Investigation Revenue</h4>
+        <h4 class="fw-bold mb-0">{{ __('reports.investigations.revenue_title') }}</h4>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Investigation Revenue</li>
+                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('common.dashboard') }}</a></li>
+                <li class="breadcrumb-item active">{{ __('reports.investigations.revenue_title') }}</li>
             </ol>
         </nav>
     </div>
     <div>
         <a href="{{ route('admin.reports.investigation-revenue', array_merge(request()->query(), ['export' => 'excel'])) }}" class="btn btn-success btn-sm">
-            <i class="ti ti-file-spreadsheet me-1"></i>Excel
+            <i class="ti ti-file-spreadsheet me-1"></i>{{ __('reports.actions.excel') }}
         </a>
     </div>
 </div>
@@ -23,7 +23,7 @@
     <div class="col-md-4">
         <div class="card border-start border-success border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Total Revenue</p>
+                <p class="text-muted mb-1 small">{{ __('reports.kpi.total_revenue') }}</p>
                 <h4 class="fw-bold mb-0 text-success">₵{{ number_format($stats['total_revenue'], 2) }}</h4>
             </div>
         </div>
@@ -31,7 +31,7 @@
     <div class="col-md-4">
         <div class="card border-start border-primary border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Completed Requests</p>
+                <p class="text-muted mb-1 small">{{ __('reports.kpi.completed_requests') }}</p>
                 <h4 class="fw-bold mb-0">{{ number_format($stats['total_requests']) }}</h4>
             </div>
         </div>
@@ -39,7 +39,7 @@
     <div class="col-md-4">
         <div class="card border-start border-info border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Departments</p>
+                <p class="text-muted mb-1 small">{{ __('reports.kpi.departments') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['departments'] }}</h4>
             </div>
         </div>
@@ -49,11 +49,15 @@
 <!-- Revenue by Department -->
 @if($departmentRevenue->count())
 <div class="card mb-4">
-    <div class="card-header"><h6 class="mb-0">Revenue by Requesting Department</h6></div>
+    <div class="card-header"><h6 class="mb-0">{{ __('reports.charts.revenue_by_dept') }}</h6></div>
     <div class="table-responsive">
         <table class="table table-sm mb-0">
             <thead class="table-light">
-                <tr><th>Department</th><th class="text-end">Tests</th><th class="text-end">Revenue</th></tr>
+                <tr>
+                    <th>{{ __('reports.department') }}</th>
+                    <th class="text-end">{{ __('reports.columns.tests') }}</th>
+                    <th class="text-end">{{ __('reports.columns.revenue') }}</th>
+                </tr>
             </thead>
             <tbody>
                 @foreach($departmentRevenue as $dept)
@@ -73,25 +77,25 @@
     <div class="card-body">
         <form method="GET" action="{{ route('admin.reports.investigation-revenue') }}" class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="form-label">Date From</label>
+                <label class="form-label">{{ __('reports.filters.date_from') }}</label>
                 <input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}">
             </div>
             <div class="col-md-3">
-                <label class="form-label">Date To</label>
+                <label class="form-label">{{ __('reports.filters.date_to') }}</label>
                 <input type="date" name="date_to" class="form-control" value="{{ $filters['date_to'] ?? '' }}">
             </div>
             <div class="col-md-3">
-                <label class="form-label">Department</label>
+                <label class="form-label">{{ __('reports.department') }}</label>
                 <select name="department_id" class="form-select">
-                    <option value="">All Departments</option>
+                    <option value="">{{ __('reports.all_departments') }}</option>
                     @foreach($departments as $dept)
                     <option value="{{ $dept->id }}" {{ ($filters['department_id'] ?? '') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-3">
-                <button class="btn btn-primary">Filter</button>
-                <a href="{{ route('admin.reports.investigation-revenue') }}" class="btn btn-outline-secondary">Clear</a>
+                <button class="btn btn-primary">{{ __('reports.filter') }}</button>
+                <a href="{{ route('admin.reports.investigation-revenue') }}" class="btn btn-outline-secondary">{{ __('reports.clear') }}</a>
             </div>
         </form>
     </div>
@@ -102,12 +106,12 @@
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>Request #</th>
-                    <th>Date</th>
-                    <th>Patient</th>
-                    <th>Department</th>
-                    <th>Tests</th>
-                    <th class="text-end">Revenue</th>
+                    <th>{{ __('reports.investigations.request_no') }}</th>
+                    <th>{{ __('reports.col_date') }}</th>
+                    <th>{{ __('reports.col_patient') }}</th>
+                    <th>{{ __('reports.department') }}</th>
+                    <th>{{ __('reports.columns.tests') }}</th>
+                    <th class="text-end">{{ __('reports.columns.revenue') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -121,7 +125,7 @@
                     <td class="text-end fw-semibold">₵{{ number_format($req->items->sum(fn($i) => $i->labTest->price ?? 0), 2) }}</td>
                 </tr>
                 @empty
-                <tr><td colspan="6"><x-empty-state message="No completed requests found." /></td></tr>
+                <tr><td colspan="6"><x-empty-state message="{{ __('reports.empty.no_requests') }}" /></td></tr>
                 @endforelse
             </tbody>
         </table>

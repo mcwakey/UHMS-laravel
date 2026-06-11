@@ -1,20 +1,20 @@
 @extends('layouts.app')
-@section('title', 'Consultation Statistics')
+@section('title', __('reports.consultations.title'))
 
 @section('content')
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
     <div>
-        <h4 class="fw-bold mb-0">Consultation Statistics</h4>
+        <h4 class="fw-bold mb-0">{{ __('reports.consultations.title') }}</h4>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Consultation Statistics</li>
+                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('common.dashboard') }}</a></li>
+                <li class="breadcrumb-item active">{{ __('reports.consultations.title') }}</li>
             </ol>
         </nav>
     </div>
     <div>
         <a href="{{ route('admin.reports.consultation-stats', array_merge(request()->query(), ['export' => 'excel'])) }}" class="btn btn-success btn-sm">
-            <i class="ti ti-file-spreadsheet me-1"></i>Excel
+            <i class="ti ti-file-spreadsheet me-1"></i>{{ __('reports.actions.excel') }}
         </a>
     </div>
 </div>
@@ -23,7 +23,7 @@
     <div class="col-md-3">
         <div class="card border-start border-primary border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Total Consultations</p>
+                <p class="text-muted mb-1 small">{{ __('reports.kpi.total_consultations') }}</p>
                 <h4 class="fw-bold mb-0">{{ number_format($stats['total_consultations']) }}</h4>
             </div>
         </div>
@@ -31,7 +31,7 @@
     <div class="col-md-3">
         <div class="card border-start border-success border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Doctors</p>
+                <p class="text-muted mb-1 small">{{ __('reports.kpi.doctors') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['doctors'] }}</h4>
             </div>
         </div>
@@ -39,7 +39,7 @@
     <div class="col-md-3">
         <div class="card border-start border-info border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Departments</p>
+                <p class="text-muted mb-1 small">{{ __('reports.kpi.departments') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['departments'] }}</h4>
             </div>
         </div>
@@ -47,7 +47,7 @@
     <div class="col-md-3">
         <div class="card border-start border-warning border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Avg / Doctor</p>
+                <p class="text-muted mb-1 small">{{ __('reports.kpi.avg_per_doctor') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['doctors'] > 0 ? number_format($stats['total_consultations'] / $stats['doctors'], 1) : 0 }}</h4>
             </div>
         </div>
@@ -57,11 +57,15 @@
 <!-- Consultations by Doctor -->
 @if($byDoctor->count())
 <div class="card mb-4">
-    <div class="card-header"><h6 class="mb-0">Consultations by Doctor</h6></div>
+    <div class="card-header"><h6 class="mb-0">{{ __('reports.charts.consultations_by_doctor') }}</h6></div>
     <div class="table-responsive">
         <table class="table table-sm mb-0">
             <thead class="table-light">
-                <tr><th>Doctor</th><th>Department</th><th class="text-end">Count</th></tr>
+                <tr>
+                    <th>{{ __('reports.consultations.doctor') }}</th>
+                    <th>{{ __('reports.consultations.department') }}</th>
+                    <th class="text-end">{{ __('reports.columns.count') }}</th>
+                </tr>
             </thead>
             <tbody>
                 @foreach($byDoctor as $doc)
@@ -81,25 +85,25 @@
     <div class="card-body">
         <form method="GET" action="{{ route('admin.reports.consultation-stats') }}" class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="form-label">Date From</label>
+                <label class="form-label">{{ __('reports.filters.date_from') }}</label>
                 <input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}">
             </div>
             <div class="col-md-3">
-                <label class="form-label">Date To</label>
+                <label class="form-label">{{ __('reports.filters.date_to') }}</label>
                 <input type="date" name="date_to" class="form-control" value="{{ $filters['date_to'] ?? '' }}">
             </div>
             <div class="col-md-3">
-                <label class="form-label">Doctor</label>
+                <label class="form-label">{{ __('reports.doctor') }}</label>
                 <select name="doctor_id" class="form-select">
-                    <option value="">All Doctors</option>
+                    <option value="">{{ __('reports.all_doctors') }}</option>
                     @foreach($doctors as $doc)
                     <option value="{{ $doc->id }}" {{ ($filters['doctor_id'] ?? '') == $doc->id ? 'selected' : '' }}>{{ $doc->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-3">
-                <button class="btn btn-primary">Filter</button>
-                <a href="{{ route('admin.reports.consultation-stats') }}" class="btn btn-outline-secondary">Clear</a>
+                <button class="btn btn-primary">{{ __('reports.filter') }}</button>
+                <a href="{{ route('admin.reports.consultation-stats') }}" class="btn btn-outline-secondary">{{ __('reports.clear') }}</a>
             </div>
         </form>
     </div>
@@ -110,12 +114,12 @@
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>Date</th>
-                    <th>Patient</th>
-                    <th>Doctor</th>
-                    <th>Department</th>
-                    <th>Complaints</th>
-                    <th>Visit</th>
+                    <th>{{ __('reports.col_date') }}</th>
+                    <th>{{ __('reports.col_patient') }}</th>
+                    <th>{{ __('reports.consultations.doctor') }}</th>
+                    <th>{{ __('reports.consultations.department') }}</th>
+                    <th>{{ __('reports.columns.complaints') }}</th>
+                    <th>{{ __('reports.col_visit') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -136,7 +140,7 @@
                     <td><code>{{ $record->visit?->visit_number ?? '—' }}</code></td>
                 </tr>
                 @empty
-                <tr><td colspan="6"><x-empty-state message="No consultations found." /></td></tr>
+                <tr><td colspan="6"><x-empty-state message="{{ __('reports.empty.no_consultations') }}" /></td></tr>
                 @endforelse
             </tbody>
         </table>

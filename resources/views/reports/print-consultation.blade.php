@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Consultation Note</title>
+    <title>{{ __('reports.print_templates.consultation_note') }}</title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #333; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #0d6efd; padding-bottom: 10px; }
@@ -25,39 +25,39 @@
 </head>
 <body>
     <div class="header">
-        <h1>UHMS - Consultation Note</h1>
-        <p>Date: {{ $record->created_at->format('d M Y H:i') }}</p>
+        <h1>UHMS - {{ __('reports.print_templates.consultation_note') }}</h1>
+        <p>{{ __('common.date') }}: {{ $record->created_at->format('d M Y H:i') }}</p>
     </div>
 
     <div class="patient-info">
         <table>
             <tr>
-                <td class="lbl">Patient Name:</td>
+                <td class="lbl">{{ __('reports.print_templates.patient_name') }}:</td>
                 <td>{{ $record->visit?->patient?->full_name ?? '—' }}</td>
-                <td class="lbl">Patient ID:</td>
+                <td class="lbl">{{ __('reports.print_templates.patient_id') }}:</td>
                 <td>{{ $record->visit?->patient?->patient_number ?? '—' }}</td>
             </tr>
             <tr>
-                <td class="lbl">Date of Birth:</td>
+                <td class="lbl">{{ __('reports.print_templates.date_of_birth') }}:</td>
                 <td>{{ $record->visit?->patient?->date_of_birth?->format('d/m/Y') ?? '—' }}</td>
-                <td class="lbl">Gender:</td>
+                <td class="lbl">{{ __('reports.print_templates.gender') }}:</td>
                 <td>{{ $record->visit?->patient?->gender?->label() ?? '—' }}</td>
             </tr>
             <tr>
-                <td class="lbl">Visit #:</td>
+                <td class="lbl">{{ __('reports.print_templates.visit_no') }}:</td>
                 <td>{{ $record->visit?->visit_number ?? '—' }}</td>
-                <td class="lbl">Department:</td>
+                <td class="lbl">{{ __('reports.print_templates.dept') }}:</td>
                 <td>{{ $record->visit?->department?->name ?? '—' }}</td>
             </tr>
             <tr>
-                <td class="lbl">Doctor:</td>
+                <td class="lbl">{{ __('reports.print_templates.doctor') }}:</td>
                 <td colspan="3">{{ $record->doctor?->name ?? '—' }}</td>
             </tr>
         </table>
     </div>
 
     @if($record->complaints->count())
-    <div class="section-title">Presenting Complaints</div>
+    <div class="section-title">{{ __('reports.print_templates.presenting_complaints') }}</div>
     <div class="content-block">
         @foreach($record->complaints as $complaint)
         <p>&bull; {{ $complaint->complaint }} @if($complaint->duration)({{ $complaint->duration }})@endif</p>
@@ -66,17 +66,21 @@
     @endif
 
     @if($record->physical_examination)
-    <div class="section-title">Physical Examination</div>
+    <div class="section-title">{{ __('reports.print_templates.physical_examination') }}</div>
     <div class="content-block">
         <p>{{ $record->physical_examination }}</p>
     </div>
     @endif
 
     @if($record->visit?->vitals->count())
-    <div class="section-title">Vitals</div>
+    <div class="section-title">{{ __('reports.print_templates.vitals') }}</div>
     <table>
         <thead>
-            <tr><th>Parameter</th><th>Value</th><th>Recorded At</th></tr>
+            <tr>
+                <th>{{ __('reports.print_templates.parameter') }}</th>
+                <th>{{ __('reports.print_templates.value') }}</th>
+                <th>{{ __('reports.print_templates.recorded_at') }}</th>
+            </tr>
         </thead>
         <tbody>
             @foreach($record->visit->vitals as $vital)
@@ -101,10 +105,15 @@
     @endif
 
     @if($record->diagnoses->count())
-    <div class="section-title">Diagnoses</div>
+    <div class="section-title">{{ __('reports.print_templates.diagnoses') }}</div>
     <table>
         <thead>
-            <tr><th>#</th><th>Diagnosis</th><th>Type</th><th>Notes</th></tr>
+            <tr>
+                <th>#</th>
+                <th>{{ __('reports.col_diagnosis') }}</th>
+                <th>{{ __('reports.columns.type') }}</th>
+                <th>{{ __('reports.columns.notes') }}</th>
+            </tr>
         </thead>
         <tbody>
             @foreach($record->diagnoses as $i => $diag)
@@ -120,20 +129,20 @@
     @endif
 
     @if($record->notes)
-    <div class="section-title">Clinical Notes</div>
+    <div class="section-title">{{ __('reports.print_templates.clinical_notes') }}</div>
     <div class="content-block">
         <p>{{ $record->notes }}</p>
     </div>
     @endif
 
     <div class="signature">
-        <p><strong>Consulting Physician:</strong> {{ $record->doctor?->name ?? '—' }}</p>
+        <p><strong>{{ __('reports.print_templates.consulting_physician') }}:</strong> {{ $record->doctor?->name ?? '—' }}</p>
         <div class="signature-line"></div>
-        <p style="font-size: 10px; color: #666;">Signature</p>
+        <p style="font-size: 10px; color: #666;">{{ __('reports.print_templates.signature') ?? __('common.signature') }}</p>
     </div>
 
     <div class="footer">
-        <p>University Hospital Management System (UHMS) &bull; Confidential Medical Document</p>
+        <p>{{ __('reports.print.system_generated') }} &bull; {{ __('reports.sensitive.confidential_clinical') }}</p>
     </div>
 </body>
 </html>

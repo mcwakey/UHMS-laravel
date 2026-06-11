@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AR Aging Report</title>
+    <title>{{ __('reports.aging.title') }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 9px; color: #333; }
@@ -29,10 +29,10 @@
 <body>
     <table class="header">
         <tr>
-            <td><div class="logo">UHMS<small>Ultimate Hospital Management System</small></div></td>
+            <td><div class="logo">UHMS<small>{{ __('common.app_tagline') }}</small></div></td>
             <td>
-                <div class="title">ACCOUNTS RECEIVABLE AGING</div>
-                <div class="sub">As of {{ $aging['as_of'] ?? $generatedAt->format('Y-m-d') }} | Generated {{ $generatedAt->format('d M Y H:i') }}</div>
+                <div class="title">{{ __('reports.aging.title') }}</div>
+                <div class="sub">{{ __('reports.aging.as_of') }} {{ $aging['as_of'] ?? $generatedAt->format('Y-m-d') }} | {{ __('common.generated') }} {{ $generatedAt->format('d M Y H:i') }}</div>
             </td>
         </tr>
     </table>
@@ -51,17 +51,17 @@
     <table class="rows">
         <thead>
             <tr>
-                <th>Invoice #</th>
-                <th>Patient</th>
-                <th>Payer</th>
-                <th>Due / Aging</th>
-                <th>Status</th>
-                <th class="text-center">Days</th>
-                <th>Bucket</th>
-                <th class="text-end">Allocated</th>
-                <th class="text-end">Paid</th>
-                <th class="text-end">Adjustments</th>
-                <th class="text-end">Balance</th>
+                <th>{{ __('reports.columns.invoice_number') }}</th>
+                <th>{{ __('reports.columns.patient') }}</th>
+                <th>{{ __('reports.columns.payer') }}</th>
+                <th>{{ __('reports.columns.due_aging') }}</th>
+                <th>{{ __('reports.columns.status') }}</th>
+                <th class="text-center">{{ __('reports.columns.days') }}</th>
+                <th>{{ __('reports.columns.bucket') }}</th>
+                <th class="text-end">{{ __('reports.columns.allocated') }}</th>
+                <th class="text-end">{{ __('reports.columns.paid') }}</th>
+                <th class="text-end">{{ __('reports.columns.adjustments') }}</th>
+                <th class="text-end">{{ __('reports.columns.balance') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -80,17 +80,17 @@
                 <td class="text-end">&#8373;{{ number_format($row['balance'], 2) }}</td>
             </tr>
             @empty
-            <tr><td colspan="11" class="text-center" style="padding:14px;">No outstanding receivables.</td></tr>
+            <tr><td colspan="11" class="text-center" style="padding:14px;">{{ __('reports.aging.no_receivables') }}</td></tr>
             @endforelse
         </tbody>
         <tfoot>
             <tr class="grand">
-                <td colspan="10" class="text-end">Grand Total ({{ $aging['grand_count'] }} receivables)</td>
+                <td colspan="10" class="text-end">{{ __('reports.aging.grand_total') }} ({{ $aging['grand_count'] }} {{ __('reports.kpi.patient_receivables') }})</td>
                 <td class="text-end">&#8373;{{ number_format($aging['grand_total'], 2) }}</td>
             </tr>
         </tfoot>
     </table>
 
-    <div class="footer">UHMS - Computer-generated report.</div>
+    <div class="footer">{{ __('reports.print.system_generated') }}</div>
 </body>
 </html>

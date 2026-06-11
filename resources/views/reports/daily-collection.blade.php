@@ -1,25 +1,25 @@
 @extends('layouts.app')
-@section('title', 'Daily Collection Report')
+@section('title', __('reports.billing.daily_collections'))
 
 @section('content')
 <div class="uhms-page-header d-flex align-items-sm-center justify-content-between flex-wrap gap-2">
     <div>
-        <h4 class="fw-bold mb-0">Daily Collection Report</h4>
+        <h4 class="fw-bold mb-0">{{ __('reports.billing.daily_collections') }}</h4>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Daily Collection</li>
+                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('common.dashboard') }}</a></li>
+                <li class="breadcrumb-item active">{{ __('reports.billing.daily_collections') }}</li>
             </ol>
         </nav>
     </div>
     <div>
         @can('invoices.create')
         <a href="{{ route('admin.billing.invoices.create') }}" class="btn btn-primary btn-sm">
-            <i class="ti ti-file-invoice me-1"></i>Create Invoice
+            <i class="ti ti-file-invoice me-1"></i>{{ __('reports.billing.create_invoice') }}
         </a>
         @endcan
         <a href="{{ route('admin.reports.daily-collection', array_merge(request()->query(), ['export' => 'pdf'])) }}" class="btn btn-danger btn-sm">
-            <i class="ti ti-file-type-pdf me-1"></i>PDF
+            <i class="ti ti-file-type-pdf me-1"></i>{{ __('reports.actions.pdf') }}
         </a>
     </div>
 </div>
@@ -28,7 +28,7 @@
     <div class="col-md-4">
         <div class="card border-start border-success border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Total Collected</p>
+                <p class="text-muted mb-1 small">{{ __('reports.billing.total_collected') }}</p>
                 <h4 class="fw-bold mb-0 text-success">₵{{ number_format($stats['total_collected'], 2) }}</h4>
             </div>
         </div>
@@ -36,7 +36,7 @@
     <div class="col-md-4">
         <div class="card border-start border-primary border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Transactions</p>
+                <p class="text-muted mb-1 small">{{ __('reports.billing.transactions') }}</p>
                 <h4 class="fw-bold mb-0">{{ number_format($stats['total_transactions']) }}</h4>
             </div>
         </div>
@@ -44,7 +44,7 @@
     <div class="col-md-4">
         <div class="card border-start border-info border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Payment Methods</p>
+                <p class="text-muted mb-1 small">{{ __('reports.billing.payment_methods') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['methods'] }}</h4>
             </div>
         </div>
@@ -54,11 +54,11 @@
 <!-- Collection by Payment Method -->
 @if($byMethod->count())
 <div class="card mb-4">
-    <div class="card-header"><h6 class="mb-0">Collection by Payment Method</h6></div>
+    <div class="card-header"><h6 class="mb-0">{{ __('reports.billing.collection_by_method') }}</h6></div>
     <div class="table-responsive">
         <table class="table table-sm table-hover mb-0">
             <thead class="table-light">
-                <tr><th>Method</th><th class="text-end">Transactions</th><th class="text-end">Amount</th></tr>
+                <tr><th>{{ __('reports.billing.method') }}</th><th class="text-end">{{ __('reports.billing.transactions') }}</th><th class="text-end">{{ __('reports.billing.amount') }}</th></tr>
             </thead>
             <tbody>
                 @foreach($byMethod as $method)
@@ -78,21 +78,21 @@
     <div class="card-body">
         <form method="GET" action="{{ route('admin.reports.daily-collection') }}" class="row g-3 align-items-end">
             <div class="col-md-4">
-                <label class="form-label">Date</label>
+                <label class="form-label">{{ __('reports.date') }}</label>
                 <input type="date" name="date" class="form-control" value="{{ $filters['date'] ?? now()->toDateString() }}">
             </div>
             <div class="col-md-4">
-                <label class="form-label">Payment Method</label>
+                <label class="form-label">{{ __('reports.payment_method') }}</label>
                 <select name="payment_method" class="form-select">
-                    <option value="">All Methods</option>
+                    <option value="">{{ __('reports.all_methods') }}</option>
                     @foreach(\App\Enums\PaymentMethod::cases() as $pm)
                     <option value="{{ $pm->value }}" {{ ($filters['payment_method'] ?? '') == $pm->value ? 'selected' : '' }}>{{ $pm->label() }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-4">
-                <button type="submit" class="btn btn-primary"><i class="ti ti-filter me-1"></i>Filter</button>
-                <a href="{{ route('admin.reports.daily-collection') }}" class="btn btn-outline-secondary"><i class="ti ti-x me-1"></i>Clear</a>
+                <button type="submit" class="btn btn-primary"><i class="ti ti-filter me-1"></i>{{ __('reports.filter') }}</button>
+                <a href="{{ route('admin.reports.daily-collection') }}" class="btn btn-outline-secondary"><i class="ti ti-x me-1"></i>{{ __('reports.clear') }}</a>
             </div>
         </form>
     </div>
@@ -103,13 +103,13 @@
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>Receipt #</th>
-                    <th>Time</th>
-                    <th>Patient</th>
-                    <th>Invoice</th>
-                    <th>Method</th>
-                    <th>Received By</th>
-                    <th class="text-end">Amount</th>
+                    <th>{{ __('reports.billing.receipt_no') }}</th>
+                    <th>{{ __('reports.billing.time') }}</th>
+                    <th>{{ __('reports.col_patient') }}</th>
+                    <th>{{ __('reports.col_invoice') }}</th>
+                    <th>{{ __('reports.billing.method') }}</th>
+                    <th>{{ __('reports.billing.received_by') }}</th>
+                    <th class="text-end">{{ __('reports.billing.amount') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -124,7 +124,7 @@
                     <td class="text-end fw-semibold">₵{{ number_format($payment->amount, 2) }}</td>
                 </tr>
                 @empty
-                <tr><td colspan="7"><x-empty-state message="No payments collected on this date." /></td></tr>
+                <tr><td colspan="7"><x-empty-state message="{{ __('reports.empty.no_records') }}" /></td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Payroll Report</title>
+    <title>{{ __('reports.hr.payroll_title') }}</title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #333; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #6f42c1; padding-bottom: 10px; }
@@ -24,34 +24,40 @@
 </head>
 <body>
     <div class="header">
-        <h1>UHMS - Payroll Report</h1>
-        <p>Generated: {{ now()->format('d M Y H:i') }}</p>
+        <h1>UHMS - {{ __('reports.hr.payroll_title') }}</h1>
+        <p>{{ __('common.generated') }}: {{ now()->format('d M Y H:i') }}</p>
     </div>
 
     <div class="stats">
         <div class="stat-box">
             <div class="value">{{ number_format($stats['total_records']) }}</div>
-            <div class="label">Records</div>
+            <div class="label">{{ __('reports.kpi.total_records') }}</div>
         </div>
         <div class="stat-box">
             <div class="value text-success">₵{{ number_format($stats['total_gross'], 2) }}</div>
-            <div class="label">Total Gross</div>
+            <div class="label">{{ __('reports.kpi.total_gross') }}</div>
         </div>
         <div class="stat-box">
             <div class="value text-danger">₵{{ number_format($stats['total_deductions'], 2) }}</div>
-            <div class="label">Total Deductions</div>
+            <div class="label">{{ __('reports.kpi.total_deductions') }}</div>
         </div>
         <div class="stat-box">
             <div class="value">₵{{ number_format($stats['total_net'], 2) }}</div>
-            <div class="label">Total Net</div>
+            <div class="label">{{ __('reports.kpi.total_net') }}</div>
         </div>
     </div>
 
     @if($byDepartment->count())
-    <div class="section-title">By Department</div>
+    <div class="section-title">{{ __('reports.charts.pay_by_dept') }}</div>
     <table>
         <thead>
-            <tr><th>Department</th><th class="text-right">Staff</th><th class="text-right">Gross</th><th class="text-right">Deductions</th><th class="text-right">Net</th></tr>
+            <tr>
+                <th>{{ __('reports.columns.department') }}</th>
+                <th class="text-right">{{ __('reports.hr.staff') }}</th>
+                <th class="text-right">{{ __('reports.columns.gross') }}</th>
+                <th class="text-right">{{ __('reports.columns.deductions') }}</th>
+                <th class="text-right">{{ __('reports.columns.net_pay') }}</th>
+            </tr>
         </thead>
         <tbody>
             @foreach($byDepartment as $dept)
@@ -67,17 +73,17 @@
     </table>
     @endif
 
-    <div class="section-title">Payroll Details</div>
+    <div class="section-title">{{ __('reports.hr.payroll_title') }}</div>
     <table>
         <thead>
             <tr>
-                <th>Employee</th>
-                <th>Department</th>
-                <th>Period</th>
-                <th class="text-right">Basic</th>
-                <th class="text-right">Allowances</th>
-                <th class="text-right">Deductions</th>
-                <th class="text-right">Net Pay</th>
+                <th>{{ __('reports.columns.employee') }}</th>
+                <th>{{ __('reports.columns.department') }}</th>
+                <th>{{ __('reports.columns.period') }}</th>
+                <th class="text-right">{{ __('reports.columns.basic') }}</th>
+                <th class="text-right">{{ __('reports.columns.allowances') }}</th>
+                <th class="text-right">{{ __('reports.columns.deductions') }}</th>
+                <th class="text-right">{{ __('reports.columns.net_pay') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -96,7 +102,7 @@
     </table>
 
     <div class="footer">
-        <p>University Hospital Management System (UHMS) &bull; Confidential</p>
+        <p>{{ __('reports.print.system_generated') }} &bull; {{ __('reports.print.confidential') }}</p>
     </div>
 </body>
 </html>

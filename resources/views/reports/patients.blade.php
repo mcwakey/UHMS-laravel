@@ -1,20 +1,20 @@
 @extends('layouts.app')
-@section('title', 'Patient Report')
+@section('title', __('reports.patients.title'))
 
 @section('content')
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
     <div>
-        <h4 class="fw-bold mb-0">Patient Report</h4>
+        <h4 class="fw-bold mb-0">{{ __('reports.patients.title') }}</h4>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Patient Report</li>
+                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('common.dashboard') }}</a></li>
+                <li class="breadcrumb-item active">{{ __('reports.patients.title') }}</li>
             </ol>
         </nav>
     </div>
     <div>
         <a href="{{ route('admin.reports.patients', array_merge(request()->query(), ['export' => 'pdf'])) }}" class="btn btn-danger btn-sm">
-            <i class="ti ti-file-type-pdf me-1"></i>Export PDF
+            <i class="ti ti-file-type-pdf me-1"></i>{{ __('reports.actions.export_pdf') }}
         </a>
     </div>
 </div>
@@ -24,7 +24,7 @@
     <div class="col-xl-3 col-md-6">
         <div class="card border-start border-primary border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Total Patients</p>
+                <p class="text-muted mb-1 small">{{ __('reports.patients.total_patients') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['total_patients'] ?? 0 }}</h4>
             </div>
         </div>
@@ -32,7 +32,7 @@
     <div class="col-xl-3 col-md-6">
         <div class="card border-start border-success border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">New This Month</p>
+                <p class="text-muted mb-1 small">{{ __('reports.patients.new_patients') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['new_this_month'] ?? 0 }}</h4>
             </div>
         </div>
@@ -40,7 +40,7 @@
     <div class="col-xl-3 col-md-6">
         <div class="card border-start border-info border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Male / Female</p>
+                <p class="text-muted mb-1 small">{{ __('reports.patients.gender_breakdown') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['male_patients'] ?? 0 }} / {{ $stats['female_patients'] ?? 0 }}</h4>
             </div>
         </div>
@@ -52,7 +52,7 @@
     <div class="col-lg-8">
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="card-title mb-0">Monthly Registration Trend</h5>
+                <h5 class="card-title mb-0">{{ __('reports.charts.monthly_trend') }}</h5>
             </div>
             <div class="card-body">
                 <canvas id="registrationChart" height="100"></canvas>
@@ -62,7 +62,7 @@
     <div class="col-lg-4">
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="card-title mb-0">Gender Distribution</h5>
+                <h5 class="card-title mb-0">{{ __('reports.charts.gender_distribution') }}</h5>
             </div>
             <div class="card-body">
                 <canvas id="genderChart" height="200"></canvas>
@@ -76,27 +76,27 @@
     <div class="card-body">
         <form method="GET" action="{{ route('admin.reports.patients') }}" class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="form-label">Search</label>
+                <label class="form-label">{{ __('reports.search') }}</label>
                 <input type="text" name="search" class="form-control" placeholder="Name or ID..." value="{{ $filters['search'] ?? '' }}">
             </div>
             <div class="col-md-2">
-                <label class="form-label">Date From</label>
+                <label class="form-label">{{ __('reports.filters.date_from') }}</label>
                 <input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}">
             </div>
             <div class="col-md-2">
-                <label class="form-label">Date To</label>
+                <label class="form-label">{{ __('reports.filters.date_to') }}</label>
                 <input type="date" name="date_to" class="form-control" value="{{ $filters['date_to'] ?? '' }}">
             </div>
             <div class="col-md-2">
-                <label class="form-label">Gender</label>
+                <label class="form-label">{{ __('common.gender') }}</label>
                 <select name="gender" class="form-select">
-                    <option value="">All</option>
-                    <option value="male" {{ ($filters['gender'] ?? '') === 'male' ? 'selected' : '' }}>Male</option>
-                    <option value="female" {{ ($filters['gender'] ?? '') === 'female' ? 'selected' : '' }}>Female</option>
+                    <option value="">{{ __('common.all') }}</option>
+                    <option value="male" {{ ($filters['gender'] ?? '') === 'male' ? 'selected' : '' }}>{{ __('common.male') }}</option>
+                    <option value="female" {{ ($filters['gender'] ?? '') === 'female' ? 'selected' : '' }}>{{ __('common.female') }}</option>
                 </select>
             </div>
             <div class="col-md-3">
-                <button type="submit" class="btn btn-primary w-100"><i class="ti ti-filter me-1"></i>Filter</button>
+                <button type="submit" class="btn btn-primary w-100"><i class="ti ti-filter me-1"></i>{{ __('reports.filter') }}</button>
             </div>
         </form>
     </div>
@@ -105,20 +105,20 @@
 <!-- Data Table -->
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title mb-0">Patient Records</h5>
+        <h5 class="card-title mb-0">{{ __('reports.patients.title') }}</h5>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Patient ID</th>
-                        <th>Name</th>
-                        <th>Gender</th>
-                        <th>DOB</th>
-                        <th>Phone</th>
-                        <th>Visits</th>
-                        <th>Registered</th>
+                        <th>{{ __('reports.patients.patient_number') }}</th>
+                        <th>{{ __('reports.patients.name') }}</th>
+                        <th>{{ __('reports.patients.gender') }}</th>
+                        <th>{{ __('reports.columns.dob') }}</th>
+                        <th>{{ __('reports.patients.phone') }}</th>
+                        <th>{{ __('reports.columns.visits') }}</th>
+                        <th>{{ __('reports.patients.registered') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -134,7 +134,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8"><x-empty-state message="No patients found" /></td>
+                        <td colspan="8"><x-empty-state message="{{ __('reports.empty.no_patients') }}" /></td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return new Date(y, mo-1).toLocaleDateString('en-GB', {month:'short', year:'numeric'});
                 }),
                 datasets: [{
-                    label: 'Registrations',
+                    label: @json(__('reports.charts.registrations')),
                     data: Object.values(trend),
                     backgroundColor: '#0d6efd',
                     borderRadius: 4,
@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
         new Chart(genderCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Male', 'Female'],
+                labels: [@json(__('reports.charts.male')), @json(__('reports.charts.female'))],
                 datasets: [{
                     data: [{{ $stats['male_patients'] ?? 0 }}, {{ $stats['female_patients'] ?? 0 }}],
                     backgroundColor: ['#0d6efd', '#e83e8c'],

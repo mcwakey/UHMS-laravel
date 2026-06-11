@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Prescription</title>
+    <title>{{ __('reports.print_templates.prescription') }}</title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #333; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #198754; padding-bottom: 10px; }
@@ -26,28 +26,28 @@
 <body>
     <div class="header">
         <div class="rx">℞</div>
-        <h1>UHMS - Prescription</h1>
-        <p>Date: {{ $prescription->created_at->format('d M Y') }}</p>
+        <h1>UHMS - {{ __('reports.print_templates.prescription') }}</h1>
+        <p>{{ __('common.date') }}: {{ $prescription->created_at->format('d M Y') }}</p>
     </div>
 
     <div class="patient-info">
         <table>
             <tr>
-                <td class="lbl">Patient Name:</td>
+                <td class="lbl">{{ __('reports.print_templates.patient_name') }}:</td>
                 <td>{{ $prescription->visit?->patient?->full_name ?? '—' }}</td>
-                <td class="lbl">Patient ID:</td>
+                <td class="lbl">{{ __('reports.print_templates.patient_id') }}:</td>
                 <td>{{ $prescription->visit?->patient?->patient_number ?? '—' }}</td>
             </tr>
             <tr>
-                <td class="lbl">Date of Birth:</td>
+                <td class="lbl">{{ __('reports.print_templates.date_of_birth') }}:</td>
                 <td>{{ $prescription->visit?->patient?->date_of_birth?->format('d/m/Y') ?? '—' }}</td>
-                <td class="lbl">Gender:</td>
+                <td class="lbl">{{ __('reports.print_templates.gender') }}:</td>
                 <td>{{ $prescription->visit?->patient?->gender?->label() ?? '—' }}</td>
             </tr>
             <tr>
-                <td class="lbl">Prescriber:</td>
+                <td class="lbl">{{ __('reports.print_templates.prescriber') }}:</td>
                 <td>{{ $prescription->prescriber?->name ?? '—' }}</td>
-                <td class="lbl">Visit #:</td>
+                <td class="lbl">{{ __('reports.print_templates.visit_no') }}:</td>
                 <td>{{ $prescription->visit?->visit_number ?? '—' }}</td>
             </tr>
         </table>
@@ -57,12 +57,12 @@
         <thead>
             <tr>
                 <th>#</th>
-                <th>Medication</th>
-                <th>Dosage</th>
-                <th>Frequency</th>
-                <th>Duration</th>
-                <th>Qty</th>
-                <th>Route</th>
+                <th>{{ __('reports.print_templates.medication') }}</th>
+                <th>{{ __('reports.print_templates.dosage') }}</th>
+                <th>{{ __('reports.print_templates.frequency') }}</th>
+                <th>{{ __('reports.print_templates.duration') }}</th>
+                <th>{{ __('reports.col_quantity') }}</th>
+                <th>{{ __('reports.print_templates.route') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -86,17 +86,17 @@
     </table>
 
     @if($prescription->notes)
-    <p><strong>Notes:</strong> {{ $prescription->notes }}</p>
+    <p><strong>{{ __('reports.columns.notes') }}:</strong> {{ $prescription->notes }}</p>
     @endif
 
     <div class="signature">
-        <p><strong>Prescribing Physician:</strong> {{ $prescription->prescriber?->name ?? '—' }}</p>
+        <p><strong>{{ __('reports.print_templates.prescribing_physician') }}:</strong> {{ $prescription->prescriber?->name ?? '—' }}</p>
         <div class="signature-line"></div>
-        <p style="font-size: 10px; color: #666;">Signature & Stamp</p>
+        <p style="font-size: 10px; color: #666;">{{ __('reports.print_templates.signature_stamp') }}</p>
     </div>
 
     <div class="footer">
-        <p>University Hospital Management System (UHMS) &bull; Confidential Medical Document</p>
+        <p>{{ __('reports.print.system_generated') }} &bull; {{ __('reports.sensitive.confidential_clinical') }}</p>
     </div>
 </body>
 </html>

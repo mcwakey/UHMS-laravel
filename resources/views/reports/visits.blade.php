@@ -1,20 +1,20 @@
 @extends('layouts.app')
-@section('title', 'Visit Report')
+@section('title', __('reports.visits.title'))
 
 @section('content')
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
     <div>
-        <h4 class="fw-bold mb-0">Visit / Appointment Report</h4>
+        <h4 class="fw-bold mb-0">{{ __('reports.visits.title') }}</h4>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Visit Report</li>
+                <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">{{ __('common.dashboard') }}</a></li>
+                <li class="breadcrumb-item active">{{ __('reports.visits.title') }}</li>
             </ol>
         </nav>
     </div>
     <div>
         <a href="{{ route('admin.reports.visits', array_merge(request()->query(), ['export' => 'pdf'])) }}" class="btn btn-danger btn-sm">
-            <i class="ti ti-file-type-pdf me-1"></i>Export PDF
+            <i class="ti ti-file-type-pdf me-1"></i>{{ __('reports.actions.export_pdf') }}
         </a>
     </div>
 </div>
@@ -24,7 +24,7 @@
     <div class="col-xl-3 col-md-6">
         <div class="card border-start border-primary border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Total Visits</p>
+                <p class="text-muted mb-1 small">{{ __('reports.visits.total_visits') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['total_visits'] ?? 0 }}</h4>
             </div>
         </div>
@@ -32,7 +32,7 @@
     <div class="col-xl-3 col-md-6">
         <div class="card border-start border-success border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Completed</p>
+                <p class="text-muted mb-1 small">{{ __('reports.investigations.completed') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['completed'] ?? 0 }}</h4>
             </div>
         </div>
@@ -40,7 +40,7 @@
     <div class="col-xl-3 col-md-6">
         <div class="card border-start border-warning border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">In Progress</p>
+                <p class="text-muted mb-1 small">{{ __('reports.investigations.in_progress') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['in_progress'] ?? 0 }}</h4>
             </div>
         </div>
@@ -48,7 +48,7 @@
     <div class="col-xl-3 col-md-6">
         <div class="card border-start border-danger border-3">
             <div class="card-body py-3">
-                <p class="text-muted mb-1 small">Cancelled</p>
+                <p class="text-muted mb-1 small">{{ __('reports.theatre.cancelled') }}</p>
                 <h4 class="fw-bold mb-0">{{ $stats['cancelled'] ?? 0 }}</h4>
             </div>
         </div>
@@ -60,7 +60,7 @@
     <div class="col-lg-8">
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="card-title mb-0">Daily Visit Trend (Last 30 Days)</h5>
+                <h5 class="card-title mb-0">{{ __('reports.charts.daily_visit_trend') }}</h5>
             </div>
             <div class="card-body">
                 <canvas id="dailyTrendChart" height="100"></canvas>
@@ -70,13 +70,13 @@
     <div class="col-lg-4">
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="card-title mb-0">Department Distribution</h5>
+                <h5 class="card-title mb-0">{{ __('reports.charts.department_distribution') }}</h5>
             </div>
             <div class="card-body">
                 @if(!empty($departmentLoad))
                     <canvas id="deptChart" height="200"></canvas>
                 @else
-                    <p class="text-center text-muted py-4">No data available</p>
+                    <p class="text-center text-muted py-4">{{ __('reports.charts.no_data') }}</p>
                 @endif
             </div>
         </div>
@@ -88,17 +88,17 @@
     <div class="card-body">
         <form method="GET" action="{{ route('admin.reports.visits') }}" class="row g-3 align-items-end">
             <div class="col-md-2">
-                <label class="form-label">Date From</label>
+                <label class="form-label">{{ __('reports.filters.date_from') }}</label>
                 <input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}">
             </div>
             <div class="col-md-2">
-                <label class="form-label">Date To</label>
+                <label class="form-label">{{ __('reports.filters.date_to') }}</label>
                 <input type="date" name="date_to" class="form-control" value="{{ $filters['date_to'] ?? '' }}">
             </div>
             <div class="col-md-3">
-                <label class="form-label">Department</label>
+                <label class="form-label">{{ __('reports.department') }}</label>
                 <select name="department_id" class="form-select">
-                    <option value="">All Departments</option>
+                    <option value="">{{ __('reports.all_departments') }}</option>
                     @foreach($departments as $dept)
                         <option value="{{ $dept->id }}" {{ ($filters['department_id'] ?? '') == $dept->id ? 'selected' : '' }}>
                             {{ $dept->name }}
@@ -107,9 +107,9 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label">Status</label>
+                <label class="form-label">{{ __('reports.status') }}</label>
                 <select name="status" class="form-select">
-                    <option value="">All</option>
+                    <option value="">{{ __('common.all') }}</option>
                     @foreach($visitStatuses as $vs)
                         <option value="{{ $vs->value }}" {{ ($filters['status'] ?? '') === $vs->value ? 'selected' : '' }}>
                             {{ $vs->label() }}
@@ -118,7 +118,7 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <button type="submit" class="btn btn-primary w-100"><i class="ti ti-filter me-1"></i>Filter</button>
+                <button type="submit" class="btn btn-primary w-100"><i class="ti ti-filter me-1"></i>{{ __('reports.filter') }}</button>
             </div>
         </form>
     </div>
@@ -127,21 +127,21 @@
 <!-- Data Table -->
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title mb-0">Visit Records</h5>
+        <h5 class="card-title mb-0">{{ __('reports.visits.title') }}</h5>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Visit #</th>
-                        <th>Patient</th>
-                        <th>Type</th>
-                        <th>Priority</th>
-                        <th>Department</th>
-                        <th>Doctor</th>
-                        <th>Status</th>
-                        <th>Date</th>
+                        <th>{{ __('reports.visits.visit_number') }}</th>
+                        <th>{{ __('reports.col_patient') }}</th>
+                        <th>{{ __('reports.col_type') }}</th>
+                        <th>{{ __('reports.col_priority') }}</th>
+                        <th>{{ __('reports.col_department') }}</th>
+                        <th>{{ __('reports.col_doctor') }}</th>
+                        <th>{{ __('reports.col_status') }}</th>
+                        <th>{{ __('reports.col_date') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -158,7 +158,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="8"><x-empty-state message="No visits found" /></td>
+                        <td colspan="8"><x-empty-state message="{{ __('reports.empty.no_visits') }}" /></td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Visits',
+                    label: @json(__('reports.visits.title')),
                     data: Object.values(dailyTrend),
                     borderColor: '#0d6efd',
                     backgroundColor: 'rgba(13,110,253,0.1)',

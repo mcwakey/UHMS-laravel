@@ -7,683 +7,921 @@ Follow the instructions in this prompt directly.
 
 We already started UHMS responsiveness and localisation.
 
+Assume the previous localisation phase focused on:
+
+* high-traffic screen translations
+* common UI labels
+* menu labels
+* dashboard labels
+* patient/visit/billing/pharmacy/lab/emergency/admission screens
+* flash messages
+* validation messages
+* JavaScript UI strings
+* responsive Blade cleanup
+
 Now continue with:
 
-# UHMS Localisation Phase 2 — High-Traffic Screen Translation & UI Text Standardisation
+# UHMS Localisation Phase 3 — Reports, Analytics, Export & Print Translation
 
 ## Goal
 
-Continue translating UHMS from hardcoded visible text into proper Laravel language files.
+Prepare UHMS for a clean reporting layer by standardising all translation keys and visible labels needed for:
 
-The goal is to make the main high-traffic screens usable in both English and French, while preserving the existing UI, routes, business logic, permissions, services, and workflows.
+1. Reports
+2. Analytics
+3. Filters
+4. KPI cards
+5. Charts
+6. Exports
+7. Print views
+8. PDF views
+9. Financial summaries
+10. Clinical summaries
+11. Stock summaries
+12. Audit summaries
 
-Do not restart the localisation system from scratch.
-Do not create a parallel translation system.
-Do not duplicate existing middleware, routes, helpers, or language files.
-Audit first, reuse what exists, then continue.
+This phase must focus on translation/localisation only.
 
-Use the existing UHMS stack:
+Do not build the full Reports, Analytics, Export & Print module yet.
+Do not create fake report numbers.
+Do not create duplicate report systems.
+Do not rewrite existing business logic.
+Do not introduce a new chart library.
+Do not introduce a new export package.
+Do not introduce Tailwind.
+
+Use existing UHMS stack:
 
 * Laravel
 * Blade
 * Bootstrap 5
 * Tabler Icons
 * existing localisation infrastructure
-* existing layouts and components
-* existing permissions and services
+* existing print/PDF tools
+* existing dashboard/report/analytics views if present
+* existing permissions
+* existing services
 
 ---
 
 # 1. Audit First
 
-Before implementing, audit the current localisation work.
+Before implementing, audit the project.
 
-Check for:
+Check for existing:
 
-* existing `lang/en`
-* existing `lang/fr`
-* existing `lang/en/*.php` files
-* existing `lang/fr/*.php` files
-* locale middleware
-* locale route, especially `POST /locale` or similar
-* user locale persistence, especially `users.locale`
-* header/topbar language switcher
-* sidebar/menu translation hooks
-* translated status badge helper/resolver
-* translated validation files
-* translated auth/pagination/password files
-* translated Blade components
-* translated dashboard text
-* translated table labels
-* translated flash messages
-* translated JavaScript strings
-* responsive/localisation documentation if already present
+* `lang/en/reports.php`
+* `lang/fr/reports.php`
+* report views
+* dashboard analytics views
+* print layouts
+* PDF templates
+* export buttons
+* filter components
+* date range filters
+* KPI card components
+* chart labels
+* accounting report labels
+* billing report labels
+* stock report labels
+* pharmacy report labels
+* clinical report labels
+* claims report labels
+* audit/activity report labels
+* management dashboard labels
 
-Do not duplicate anything that already exists.
-If an existing structure is present, extend it.
-
----
-
-# 2. Translation Priority
-
-Focus on high-traffic screens first:
-
-1. Dashboard
-2. Patients
-3. Visits
-4. Appointments
-5. Triage
-6. Emergency
-7. Billing
-8. Payments
-9. Invoices
-10. Sponsors / Insurance
-11. Pharmacy
-12. Laboratory / Investigations
-13. Admissions / Wards
-14. Stock / Inventory
-15. Users / Roles
-16. Settings
-
-Translate visible text only.
-
-Move hardcoded UI text from Blade, controllers, components, and JavaScript into language keys.
+Do not duplicate existing language files or keys.
+If `reports.php` already exists, extend it cleanly.
+If report-related keys are already in another clean file, reuse the existing structure where appropriate.
 
 ---
 
-# 3. What Must Be Translated
+# 2. Language Files
 
-Translate:
+Create or update:
 
-* page titles
-* page subtitles
-* breadcrumbs
-* menu labels
-* sidebar labels
-* topbar labels
-* buttons
-* action dropdowns
-* form labels
-* placeholders
-* help text
-* filter labels
-* search labels
-* table headers
-* empty states
-* status labels
-* badge labels
-* modal titles
-* modal buttons
-* confirmation messages
-* success flash messages
-* error flash messages
-* warning flash messages
-* informational flash messages
-* validation messages where applicable
-* print labels where safe
-* dashboard KPI labels
-* chart labels where practical
-* DataTables labels if DataTables is used
-* Select2 placeholders if Select2 is used
+```text
+lang/en/reports.php
+lang/fr/reports.php
+```
 
----
-
-# 4. What Must Not Be Translated
-
-Do not translate:
-
-* patient names
-* staff names
-* doctor names
-* supplier names
-* sponsor names
-* insurance provider names
-* product names entered by users
-* service names entered by users unless system-defined
-* clinical notes
-* diagnosis free text
-* prescription notes
-* audit event codes
-* route names
-* permission names
-* database enum/internal codes unless mapped through a display label
-* log keys used internally
-* API payload keys
-* migration names
-* model class names
-
-Where internal statuses are displayed to users, map them through a status translation helper or language key.
-
----
-
-# 5. Language File Structure
-
-Create or update language files cleanly.
-
-Recommended structure:
+Also update these files if they already exist and are relevant:
 
 ```text
 lang/en/common.php
 lang/fr/common.php
 
-lang/en/menu.php
-lang/fr/menu.php
-
-lang/en/dashboard.php
-lang/fr/dashboard.php
-
-lang/en/patients.php
-lang/fr/patients.php
-
-lang/en/visits.php
-lang/fr/visits.php
-
-lang/en/appointments.php
-lang/fr/appointments.php
-
-lang/en/triage.php
-lang/fr/triage.php
-
-lang/en/emergency.php
-lang/fr/emergency.php
-
-lang/en/billing.php
-lang/fr/billing.php
-
-lang/en/payments.php
-lang/fr/payments.php
-
-lang/en/invoices.php
-lang/fr/invoices.php
-
-lang/en/insurance.php
-lang/fr/insurance.php
-
-lang/en/pharmacy.php
-lang/fr/pharmacy.php
-
-lang/en/investigations.php
-lang/fr/investigations.php
-
-lang/en/admissions.php
-lang/fr/admissions.php
-
-lang/en/stock.php
-lang/fr/stock.php
-
-lang/en/users.php
-lang/fr/users.php
-
-lang/en/settings.php
-lang/fr/settings.php
+lang/en/actions.php
+lang/fr/actions.php
 
 lang/en/statuses.php
 lang/fr/statuses.php
-
-lang/en/actions.php
-lang/fr/actions.php
 
 lang/en/messages.php
 lang/fr/messages.php
 
-lang/en/validation.php
-lang/fr/validation.php
+lang/en/dashboard.php
+lang/fr/dashboard.php
+
+lang/en/billing.php
+lang/fr/billing.php
+
+lang/en/accounting.php
+lang/fr/accounting.php
+
+lang/en/stock.php
+lang/fr/stock.php
+
+lang/en/pharmacy.php
+lang/fr/pharmacy.php
+
+lang/en/claims.php
+lang/fr/claims.php
+
+lang/en/audit.php
+lang/fr/audit.php
 ```
 
-If the project already has a different clean structure, reuse it instead of forcing this one.
-
-Avoid giant messy files if module-specific files already exist.
+Do not create huge duplicate files if good files already exist.
 
 ---
 
-# 6. Key Naming Rules
+# 3. Reports Translation Structure
+
+Create clean grouped keys in `reports.php`.
+
+Recommended structure:
+
+```php
+return [
+    'title' => 'Reports',
+    'menu' => [
+        'management' => 'Management Overview',
+        'clinical' => 'Clinical Reports',
+        'patients_visits' => 'Patient / Visit Reports',
+        'emergency' => 'Emergency Reports',
+        'admissions' => 'Admission / Ward Reports',
+        'pharmacy' => 'Pharmacy Reports',
+        'investigations' => 'Investigation Reports',
+        'theatre' => 'Theatre / Procedure Reports',
+        'billing' => 'Billing Reports',
+        'claims' => 'Insurance / Claims Reports',
+        'accounting' => 'Accounting Reports',
+        'receivables' => 'Receivables Reports',
+        'payables' => 'Payables Reports',
+        'stock' => 'Stock / Procurement Reports',
+        'audit' => 'Audit Logs',
+        'saved' => 'Saved Reports',
+    ],
+    'filters' => [],
+    'columns' => [],
+    'actions' => [],
+    'empty' => [],
+    'print' => [],
+    'export' => [],
+    'summaries' => [],
+    'charts' => [],
+    'groups' => [],
+];
+```
+
+Create equivalent French translations.
 
 Use clear, reusable keys.
-
-Examples:
-
-```php
-__('common.save')
-__('common.cancel')
-__('common.search')
-__('common.filter')
-__('common.reset')
-__('common.export')
-__('common.print')
-__('common.actions')
-
-__('patients.title')
-__('patients.create')
-__('patients.edit')
-__('patients.fields.first_name')
-__('patients.fields.last_name')
-__('patients.empty.no_patients_found')
-
-__('visits.title')
-__('visits.create')
-__('visits.fields.visit_type')
-__('visits.statuses.active')
-__('visits.statuses.completed')
-
-__('billing.invoices.title')
-__('billing.payments.title')
-__('billing.messages.invoice_created')
-```
-
-Avoid keys like:
-
-```php
-__('text1')
-__('label2')
-__('new_page_title')
-__('button_here')
-```
-
-Do not duplicate common words in every module if `common.php` already handles them.
+Avoid messy names like `label1`, `report_text`, `new_report_title`, or `test_key`.
 
 ---
 
-# 7. Blade Translation Rules
+# 4. Common Report Labels
 
-Replace hardcoded visible text in Blade with translation helpers.
+Translate common report labels:
 
-Example:
-
-```blade
-<h1>{{ __('patients.title') }}</h1>
-<button>{{ __('common.save') }}</button>
-<label>{{ __('patients.fields.first_name') }}</label>
-<input placeholder="{{ __('patients.placeholders.search_patient') }}">
-```
-
-Do not translate variable user data.
-
-Correct:
-
-```blade
-<td>{{ $patient->full_name }}</td>
-<td>{{ __('visits.statuses.' . $visit->status) }}</td>
-```
-
-Wrong:
-
-```blade
-<td>{{ __($patient->full_name) }}</td>
-```
-
-Do not put business logic in Blade while translating.
+* Reports
+* Report
+* Report type
+* Report group
+* Report title
+* Description
+* Summary
+* Details
+* Filters
+* Date from
+* Date to
+* Start date
+* End date
+* Generated by
+* Generated at
+* Printed by
+* Printed at
+* Exported by
+* Exported at
+* Page
+* Total
+* Subtotal
+* Grand total
+* Count
+* Amount
+* Balance
+* Opening balance
+* Closing balance
+* Debit
+* Credit
+* Net amount
+* Gross amount
+* Tax
+* Discount
+* Refund
+* Write-off
+* Credit note
+* Revenue
+* Expense
+* Cost
+* Profit
+* Loss
+* Quantity
+* Status
+* Department
+* Branch
+* User
+* Staff
+* Patient
+* Visit
+* Doctor
+* Supplier
+* Sponsor
+* Insurance provider
+* Corporate client
+* Payment method
+* Stock location
+* Service type
+* Product type
 
 ---
 
-# 8. Controller Flash Messages
+# 5. Common Report Actions
 
-Move hardcoded controller messages into language files.
+Translate report action labels:
 
-Example:
-
-```php
-return redirect()
-    ->route('patients.index')
-    ->with('success', __('patients.messages.created'));
-```
-
-Translate messages in both English and French.
-
-Cover:
-
-* create success
-* update success
-* delete success
-* activation/deactivation success
-* validation failure messages where custom
-* business rule error messages
-* permission/authorization messages where custom
-
-Do not change business behavior while translating.
+* View report
+* Generate report
+* Refresh
+* Apply filters
+* Clear filters
+* Reset
+* Print
+* Export
+* Export CSV
+* Export Excel
+* Export PDF
+* Download
+* Save report
+* Save filters
+* Load saved report
+* Share report
+* Back to reports
+* Open details
+* View source record
+* View invoice
+* View patient
+* View visit
+* View payment
+* View journal entry
 
 ---
 
-# 9. Validation Translation
+# 6. Empty States and Messages
 
-Use Laravel validation translation properly.
+Translate report empty states and messages:
 
-Update:
+* No records found
+* No report data available
+* No results match your filters
+* Select filters to generate report
+* This report is not available
+* You do not have permission to view this report
+* You do not have permission to export this report
+* You do not have permission to print this report
+* This report contains restricted financial data
+* This report contains restricted clinical data
+* This report contains restricted stock cost data
+* Report generated successfully
+* Report export started
+* Report export failed
+* Invalid report filters
+* Date range is required
+* Date range is too large
+* Please choose a shorter date range
+* Unable to load report data
+
+---
+
+# 7. Report Group Titles
+
+Translate report group titles and descriptions for:
+
+1. Management Overview
+2. Clinical Reports
+3. Patient / Visit Reports
+4. Emergency Reports
+5. Admission / Ward Reports
+6. Pharmacy Reports
+7. Investigation Reports
+8. Theatre / Procedure Reports
+9. Billing Reports
+10. Insurance / Claims Reports
+11. Accounting Reports
+12. Receivables Reports
+13. Payables Reports
+14. Stock / Procurement Reports
+15. Audit Logs
+16. Saved Reports
+
+Each group should have:
+
+* title
+* short description
+* empty state where relevant
+
+---
+
+# 8. Specific Report Titles
+
+Add translations for these report titles and descriptions.
+
+## Management
+
+* Hospital Activity Summary
+* Department Performance
+* Revenue Summary
+* Clinical Workload
+* Financial Position Summary
+* Stock Risk Summary
+* Receivables / Payables Summary
+* Claims Summary
+* Emergency Summary
+* Admission Summary
+
+## Clinical
+
+* Patient Visit Summary
+* Daily Visit Register
+* Consultation Activity Report
+* Diagnosis Report
+* Prescription Report
+* Clinical Follow-up Report
+* Deceased Patients Report
+
+## Emergency
+
+* Emergency Case Summary
+* Emergency Triage Report
+* Emergency Admissions Report
+* Emergency Disposition Report
+* Emergency Consumables Report
+* Emergency Billing Report
+
+## Admissions / Wards
+
+* Admission Register
+* Discharge Register
+* Bed Occupancy Report
+* Ward Census
+* MAR Overdue Report
+* Ward Consumables Report
+* Admission Billing Report
+
+## Pharmacy
+
+* Prescription Report
+* Dispensing Report
+* Drug Sales Report
+* Partial Dispensing Report
+* Out-of-Stock Report
+* Low Stock Report
+* Expired Drug Report
+* Pharmacy Revenue Report
+* Pharmacy COGS Report
+
+## Investigations / Lab
+
+* Investigation Request Report
+* Pending Results Report
+* Verified Results Report
+* Rejected / Cancelled Tests Report
+* Urgent Investigation Report
+* Lab Consumables Usage Report
+* Lab Revenue Report
+
+## Theatre / Procedure
+
+* Procedure Request Report
+* Scheduled Procedures Report
+* Completed Procedures Report
+* Cancelled Procedures Report
+* Theatre Utilisation Report
+* Procedure Consumables Report
+* Procedure Revenue Report
+
+## Billing
+
+* Daily Collections
+* Cashier Shift Report
+* Invoice Register
+* Unpaid Invoices
+* Partially Paid Invoices
+* Discount Report
+* Credit Note Report
+* Write-off Report
+* Refund Report
+* Payment Method Summary
+* Revenue by Department
+* Revenue by Service Type
+* Revenue by Payer Type
+
+## Insurance / Claims
+
+* Claims Prepared Report
+* Claims Submitted Report
+* Claims Approved Report
+* Claims Rejected Report
+* Claims Paid Report
+* Claim Aging Report
+* Insurance Receivables Report
+* CCC / Verification Report
+
+## Receivables
+
+* AR Aging
+* Patient Receivables
+* Insurance Receivables
+* Sponsor Receivables
+* Corporate Receivables
+* Receivable Payments
+* Written-off Receivables
+* Overdue Receivables
+
+## Payables
+
+* AP Aging
+* Supplier Payables
+* Supplier Statement
+* Supplier Payments
+* Supplier Returns
+* Outstanding Supplier Balances
+
+## Accounting
+
+* General Ledger
+* Trial Balance
+* Profit & Loss
+* Balance Sheet
+* Cashbook
+* Journal Entry Report
+* Failed Accounting Postings
+* Revenue Report
+* Expense Report
+* Inventory Valuation Reconciliation
+
+## Stock / Procurement
+
+* Stock Balance Report
+* Stock Movement Report
+* Inventory Valuation Report
+* Low Stock Report
+* Out-of-Stock Report
+* Expired / Damaged Stock Report
+* Stock Transfer Report
+* Purchase Order Report
+* Goods Receiving Report
+* Purchase Return Report
+* Supplier Ledger Report
+
+## Audit
+
+* Activity Log Report
+* User Action Report
+* High-Risk Action Report
+* Financial Action Report
+* Clinical Action Report
+* Permission Change Report
+* Login / Security Report
+
+---
+
+# 9. Filters Translation
+
+Translate report filters:
+
+* Date from
+* Date to
+* Period
+* Today
+* Yesterday
+* This week
+* Last week
+* This month
+* Last month
+* This year
+* Custom range
+* Department
+* Branch
+* Patient
+* Visit type
+* Payment type
+* Insurance provider
+* Sponsor
+* Corporate client
+* Supplier
+* Stock location
+* Product type
+* Service type
+* Status
+* User
+* Staff
+* Doctor
+* Requested by
+* Verified by
+* Created by
+* Approved by
+* Posted by
+* Claim status
+* Invoice status
+* Payment status
+* Stock status
+* Admission status
+* Emergency status
+
+---
+
+# 10. Column Headings Translation
+
+Translate common report columns:
+
+* Reference
+* Code
+* Number
+* Date
+* Time
+* Patient
+* Visit
+* Department
+* Doctor
+* Service
+* Product
+* Quantity
+* Unit price
+* Amount
+* Discount
+* Tax
+* Total
+* Paid
+* Balance
+* Status
+* Payment method
+* Cashier
+* User
+* Created by
+* Updated by
+* Posted by
+* Approved by
+* Supplier
+* Sponsor
+* Insurance provider
+* Claim number
+* Invoice number
+* Receipt number
+* Journal number
+* Account
+* Debit
+* Credit
+* Opening balance
+* Closing balance
+* Stock location
+* Batch number
+* Expiry date
+* Cost price
+* Selling price
+* Movement type
+* Action
+* Notes
+
+---
+
+# 11. Print Translation
+
+Translate print-specific labels:
+
+* Printed report
+* Print date
+* Printed by
+* Generated by
+* Generated at
+* Filter summary
+* Report period
+* Signature
+* Prepared by
+* Checked by
+* Approved by
+* Page
+* Confidential
+* Official report
+* Draft report
+* This report is system generated
+* No signature required
+* End of report
+
+Print rules:
+
+* Do not translate patient names, product names, supplier names, clinical free text, or user-entered service names.
+* Do not break existing print layout.
+* Keep print labels black-on-white and A4-safe.
+* Hide action buttons, sidebar, topbar, filters, pagination, and debug information in print mode.
+
+---
+
+# 12. Export Translation
+
+Translate export-specific labels:
+
+* Export
+* Export CSV
+* Export Excel
+* Export PDF
+* Download CSV
+* Download Excel
+* Download PDF
+* Exported by
+* Exported at
+* Export filters
+* Export failed
+* Export completed
+* No data to export
+* Too many records to export
+* Please narrow your filters
+* CSV
+* Excel
+* PDF
+
+Rules:
+
+* Do not install a new export package.
+* If Excel support does not exist, prepare CSV labels first.
+* Export headings must use translation keys.
+* Export metadata must use translation keys.
+
+---
+
+# 13. KPI and Chart Translation
+
+Translate common KPI/chart labels:
+
+* Total visits
+* Total patients
+* Total revenue
+* Total collections
+* Total invoices
+* Outstanding balance
+* Pending claims
+* Rejected claims
+* Approved claims
+* Paid claims
+* Emergency cases
+* Admissions
+* Discharges
+* Bed occupancy
+* Low stock items
+* Out-of-stock items
+* Expired items
+* Supplier payables
+* Patient receivables
+* Insurance receivables
+* Sponsor receivables
+* Cash payments
+* Mobile money payments
+* Card payments
+* Bank payments
+* Revenue trend
+* Visit trend
+* Claims trend
+* Stock risk trend
+* Department performance
+* Daily
+* Weekly
+* Monthly
+* Yearly
+
+---
+
+# 14. Sensitive Data Labels
+
+Translate labels and warnings for sensitive data:
+
+* Restricted financial data
+* Restricted clinical data
+* Restricted stock cost data
+* You need permission to view financial values
+* You need permission to view clinical details
+* You need permission to view stock cost
+* Hidden due to permission restrictions
+* Confidential clinical information
+* Confidential financial information
+
+Do not expose hidden data just because labels are translated.
+
+---
+
+# 15. Status and Aging Labels
+
+Translate report statuses and aging labels:
+
+* Current
+* Not due
+* Overdue
+* 0–30 days
+* 31–60 days
+* 61–90 days
+* 91–120 days
+* 120+ days
+* Draft
+* Posted
+* Voided
+* Paid
+* Unpaid
+* Partially paid
+* Pending
+* Approved
+* Rejected
+* Submitted
+* Prepared
+* Completed
+* Cancelled
+* Refunded
+* Written off
+* Dispensed
+* Partially dispensed
+* Verified
+* In progress
+* Admitted
+* Discharged
+* Transferred
+
+---
+
+# 16. Update Existing Views Safely
+
+Where report, dashboard, print, analytics, or export views already exist, replace hardcoded labels with translation keys.
+
+Prioritise:
 
 ```text
-lang/en/validation.php
-lang/fr/validation.php
+resources/views/reports/
+resources/views/dashboard/
+resources/views/analytics/
+resources/views/accounting/reports/
+resources/views/billing/reports/
+resources/views/stock/reports/
+resources/views/pharmacy/reports/
+resources/views/claims/reports/
+resources/views/audit/
+resources/views/prints/
+resources/views/pdf/
+resources/views/components/
+resources/views/layouts/
+resources/views/partials/
 ```
 
-Where Form Requests have custom messages, move them to translation keys.
-
-Translate attribute names where useful:
-
-```php
-'attributes' => [
-    'first_name' => 'first name',
-    'last_name' => 'last name',
-]
-```
-
-French example:
-
-```php
-'attributes' => [
-    'first_name' => 'prénom',
-    'last_name' => 'nom',
-]
-```
-
-Do not weaken validation rules.
+Do not create the full report system yet if it does not exist.
+This phase is about preparing and standardising translation keys.
 
 ---
 
-# 10. JavaScript Translation
+# 17. JavaScript Report Labels
 
-Audit JavaScript strings used in:
+If JavaScript charts, filters, DataTables, or export buttons have hardcoded strings, localise them.
 
-* confirmation dialogs
-* delete confirmations
-* DataTables
-* Select2
-* chart labels
-* AJAX loading messages
-* empty messages
-* search/filter labels
+Reuse the existing JavaScript translation exposure if present.
 
-If the project already exposes translations to JavaScript, reuse that approach.
-
-If not, safely expose only needed strings through Blade:
+If none exists, safely expose only needed labels:
 
 ```blade
 <script>
-window.UHMS_I18N = {
-    confirmDelete: @json(__('messages.confirm_delete')),
+window.UHMS_REPORT_I18N = {
     loading: @json(__('common.loading')),
-    noResults: @json(__('common.no_results')),
+    noData: @json(__('reports.empty.no_data')),
+    exportCsv: @json(__('reports.export.csv')),
+    print: @json(__('reports.actions.print')),
 };
 </script>
 ```
 
-Do not expose sensitive data to JavaScript.
-
-Do not create a heavy new frontend translation framework.
-
----
-
-# 11. Status Translation
-
-Standardise status display.
-
-Create or update:
-
-```text
-lang/en/statuses.php
-lang/fr/statuses.php
-```
-
-Translate common statuses:
-
-```text
-active
-inactive
-pending
-completed
-cancelled
-approved
-rejected
-paid
-unpaid
-partially_paid
-draft
-posted
-voided
-refunded
-admitted
-discharged
-in_progress
-verified
-dispensed
-partially_dispensed
-out_of_stock
-low_stock
-expired
-```
-
-Use a helper/resolver if one already exists.
-
-Do not translate database values directly unless safely mapped.
+Do not expose sensitive data.
+Do not add a heavy frontend i18n framework.
 
 ---
 
-# 12. Menu and Permission-Aware Navigation
-
-Translate sidebar/menu labels.
-
-Use:
-
-```php
-__('menu.patients')
-__('menu.visits')
-__('menu.billing')
-__('menu.pharmacy')
-__('menu.reports')
-```
-
-Rules:
-
-* keep existing permission checks
-* keep existing module visibility checks
-* do not expose hidden modules through translation changes
-* do not duplicate menu arrays unnecessarily
-
----
-
-# 13. Print and PDF Translation
-
-Review print/PDF templates where safe:
-
-* invoice print
-* receipt print
-* prescription print
-* lab result print
-* patient card print
-* visit summary print
-* billing report print
-* stock print views if any
-
-Translate system labels:
-
-* Invoice
-* Receipt
-* Date
-* Patient
-* Doctor
-* Quantity
-* Amount
-* Total
-* Paid
-* Balance
-* Generated by
-* Printed at
-
-Do not translate:
-
-* patient names
-* service names unless system-defined
-* drug names
-* diagnosis free text
-* clinical notes
-
-Do not break existing print layout.
-
----
-
-# 14. Responsive Check While Translating
-
-While touching Blade files, also fix obvious responsive issues.
-
-Check:
-
-* mobile horizontal overflow
-* table wrapping
-* filter bars on mobile
-* action buttons on small screens
-* modals on small screens
-* tabs on mobile
-* cards stacking
-* print hidden elements
-
-Use Bootstrap 5 utilities only.
-
-Do not introduce Tailwind.
-Do not create a second UI system.
-
----
-
-# 15. Architecture Rules
+# 18. Architecture Rules
 
 Follow these UHMS rules:
 
 * Do not create parallel systems.
-* Do not duplicate existing localisation infrastructure.
-* Do not create duplicate middleware.
-* Do not create duplicate locale routes.
-* Do not create duplicate layouts.
-* Do not move business logic into Blade.
-* Do not create controller-heavy logic.
-* Use services where business logic is needed.
+* Do not create a new reporting module in this phase.
+* Do not create fake numbers.
+* Do not duplicate dashboard logic.
+* Do not duplicate accounting calculations.
+* Do not duplicate stock calculations.
+* Do not bypass existing services.
+* Do not bypass existing permissions.
 * Do not bypass ActivityLogService.
-* Do not break audit logging.
+* Do not move business logic into Blade views.
 * Do not hardcode NHIS.
 * Do not hardcode sponsors.
 * Do not hardcode insurance providers.
-* Do not hardcode emergency services.
+* Do not expose unauthorized clinical data.
+* Do not expose unauthorized financial values.
+* Do not expose unauthorized stock cost.
 * Products are physical stock items.
 * Services are billable activities.
 * Use Bootstrap 5 and Tabler Icons only.
+* Do not introduce Tailwind.
 
 ---
 
-# 16. Files to Prioritise
-
-Prioritise likely files in these areas:
-
-```text
-resources/views/layouts/
-resources/views/components/
-resources/views/partials/
-resources/views/dashboard/
-resources/views/patients/
-resources/views/visits/
-resources/views/appointments/
-resources/views/triage/
-resources/views/emergency/
-resources/views/billing/
-resources/views/payments/
-resources/views/invoices/
-resources/views/pharmacy/
-resources/views/investigations/
-resources/views/admissions/
-resources/views/stock/
-resources/views/users/
-resources/views/settings/
-
-app/Http/Controllers/
-app/Http/Requests/
-app/View/Components/
-resources/js/
-routes/web.php
-lang/en/
-lang/fr/
-```
-
-Do not blindly edit every file.
-Start with high-traffic screens and shared components.
-
----
-
-# 17. Verification
+# 19. Verification
 
 After implementation, verify:
 
-1. English locale loads.
-2. French locale loads.
-3. Locale switcher works.
-4. User locale persists if implemented.
-5. Dashboard labels translate.
-6. Sidebar/menu labels translate.
-7. Patient screens translate.
-8. Visit screens translate.
-9. Billing screens translate.
-10. Pharmacy screens translate.
-11. Investigation screens translate.
-12. Emergency screens translate.
-13. Admission screens translate if present.
-14. Common buttons translate.
-15. Status badges translate.
-16. Flash messages translate.
-17. Validation messages translate.
-18. Print labels translate where touched.
-19. No obvious hardcoded text remains on targeted screens.
-20. No broken Blade syntax.
-21. No missing translation key errors.
-22. No mobile layout regression.
-23. No permission regression.
-24. Existing workflows still work.
+1. `lang/en/reports.php` exists or is updated.
+2. `lang/fr/reports.php` exists or is updated.
+3. Report group labels translate in English.
+4. Report group labels translate in French.
+5. Filter labels translate.
+6. Column labels translate.
+7. Print labels translate.
+8. Export labels translate.
+9. KPI labels translate.
+10. Chart labels translate where touched.
+11. Sensitive data labels translate.
+12. Aging labels translate.
+13. Existing dashboard/report/print pages still render.
+14. No missing translation key errors appear.
+15. No Blade syntax errors were introduced.
+16. No report/business logic was moved into Blade.
+17. No new export/chart package was installed.
+18. Existing permissions remain enforced.
+19. French language switch displays report labels correctly.
+20. Existing workflows still work.
 
-Run available checks such as:
+Run relevant checks:
 
 ```bash
-php artisan test
-php artisan route:list
 php artisan view:clear
 php artisan config:clear
+php artisan route:list
+php artisan test
 ```
 
-If full tests are too broad, run relevant tests and document what was checked manually.
+If full tests are too broad, run relevant tests and document manual checks.
 
 ---
 
-# 18. Documentation
+# 20. Documentation
 
 Create or update:
 
 ```text
-docs/LOCALISATION_RESPONSIVENESS_PHASE_2_REPORT.md
+docs/LOCALISATION_REPORTS_EXPORT_PRINT_TRANSLATION_REPORT.md
 ```
 
 Include:
 
 * audit findings
-* files changed
 * language files added/updated
-* modules translated
-* controllers/messages translated
-* validation files updated
-* JavaScript strings translated
-* print views touched
-* responsive fixes made
-* remaining untranslated areas
-* manual verification results
-* known TODOs
+* report translation groups added
+* print labels added
+* export labels added
+* KPI/chart labels added
+* views updated
+* JavaScript labels updated
+* sensitive-data labels added
+* verification performed
+* remaining TODOs
 
 ---
 
-# 19. Deliverables
+# 21. Deliverables
 
 At the end, provide:
 
-1. Summary of what existed before changes.
-2. Summary of what was added or improved.
-3. List of files changed.
-4. List of language files added or updated.
-5. List of main modules translated.
-6. List of responsive fixes made.
-7. List of remaining untranslated areas.
-8. Confirmation that no duplicate localisation system was created.
-9. Confirmation that Bootstrap 5 + Tabler Icons remain the UI standard.
-10. Confirmation that business logic was not moved into Blade views.
-11. Confirmation that existing workflows still work.
+1. Summary of existing report/print/export translation work found.
+2. Summary of translation keys added or updated.
+3. List of language files changed.
+4. List of views/components touched.
+5. List of JavaScript labels touched, if any.
+6. Confirmation that no full report system was created in this phase.
+7. Confirmation that no fake numbers were introduced.
+8. Confirmation that no business logic was moved into Blade.
+9. Confirmation that existing permissions remain enforced.
+10. Confirmation that Bootstrap 5 + Tabler Icons remain the UI standard.
+11. List of remaining untranslated report/export/print areas.
 
-Proceed with UHMS Localisation Phase 2 now.
+Proceed with UHMS Localisation Phase 3 now.

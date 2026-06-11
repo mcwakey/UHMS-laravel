@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Patient Statement</title>
+    <title>{{ __('reports.statement.title') }}</title>
     <style>
         body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #333; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #0d6efd; padding-bottom: 10px; }
@@ -28,22 +28,22 @@
 </head>
 <body>
     <div class="header">
-        <h1>UHMS - Patient Statement</h1>
-        <p>Generated: {{ now()->format('d M Y H:i') }}</p>
+        <h1>UHMS - {{ __('reports.statement.title') }}</h1>
+        <p>{{ __('common.generated') }}: {{ now()->format('d M Y H:i') }}</p>
     </div>
 
     <div class="patient-info">
         <table>
             <tr>
-                <td class="label">Patient Name:</td>
+                <td class="label">{{ __('reports.statement.patient_name') }}:</td>
                 <td>{{ $patient->full_name }}</td>
-                <td class="label">Patient ID:</td>
+                <td class="label">{{ __('reports.statement.patient_id') }}:</td>
                 <td>{{ $patient->patient_number }}</td>
             </tr>
             <tr>
-                <td class="label">Phone:</td>
+                <td class="label">{{ __('common.phone') }}:</td>
                 <td>{{ $patient->phone ?? '—' }}</td>
-                <td class="label">Date of Birth:</td>
+                <td class="label">{{ __('common.date_of_birth') }}:</td>
                 <td>{{ $patient->date_of_birth?->format('d/m/Y') ?? '—' }}</td>
             </tr>
         </table>
@@ -52,30 +52,30 @@
     <div class="stats">
         <div class="stat-box">
             <div class="value text-danger">₵{{ number_format($summary['total_charges'], 2) }}</div>
-            <div class="label">Total Charges</div>
+            <div class="label">{{ __('reports.statement.total_charges') }}</div>
         </div>
         <div class="stat-box">
             <div class="value text-success">₵{{ number_format($summary['total_payments'], 2) }}</div>
-            <div class="label">Total Payments</div>
+            <div class="label">{{ __('reports.statement.total_payments') }}</div>
         </div>
         <div class="stat-box">
             <div class="value">₵{{ number_format($summary['balance_due'], 2) }}</div>
-            <div class="label">Balance Due</div>
+            <div class="label">{{ __('reports.statement.balance_due') }}</div>
         </div>
         <div class="stat-box">
             <div class="value">{{ $summary['invoice_count'] }} / {{ $summary['payment_count'] }}</div>
-            <div class="label">Invoices / Payments</div>
+            <div class="label">{{ __('reports.statement.transaction_ledger') }}</div>
         </div>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th>Date</th>
-                <th>Description</th>
-                <th class="text-right">Charges</th>
-                <th class="text-right">Payments</th>
-                <th class="text-right">Balance</th>
+                <th>{{ __('reports.columns.date') }}</th>
+                <th>{{ __('reports.statement.col_description') }}</th>
+                <th class="text-right">{{ __('reports.statement.col_charges') }}</th>
+                <th class="text-right">{{ __('reports.statement.col_payments') }}</th>
+                <th class="text-right">{{ __('reports.statement.col_balance') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -91,7 +91,7 @@
         </tbody>
         <tfoot>
             <tr class="totals">
-                <td colspan="2">Totals</td>
+                <td colspan="2">{{ __('reports.columns.totals') }}</td>
                 <td class="text-right text-danger">₵{{ number_format($summary['total_charges'], 2) }}</td>
                 <td class="text-right text-success">₵{{ number_format($summary['total_payments'], 2) }}</td>
                 <td class="text-right">₵{{ number_format($summary['balance_due'], 2) }}</td>
@@ -100,7 +100,7 @@
     </table>
 
     <div class="footer">
-        <p>University Hospital Management System (UHMS) &bull; Confidential</p>
+        <p>{{ __('reports.print.system_generated') }} &bull; {{ __('reports.print.confidential') }}</p>
     </div>
 </body>
 </html>
