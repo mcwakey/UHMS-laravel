@@ -135,7 +135,7 @@
                         <td>
                             @php $rt = $req->result_type; @endphp
                             @if($rt && $rt->value !== 'none')
-                            <span class="badge bg-{{ $rt->color() }}"><i class="ti {{ $rt->icon() }} me-1"></i>{{ $rt->label() }}</span>
+                            <span class="badge bg-{{ $rt->color() }}"><i class="ti {{ $rt->icon() }} me-1"></i>{{ $rt->translatedLabel() }}</span>
                             @else <span class="text-muted">&mdash;</span> @endif
                         </td>
                         <td><x-status-badge :status="$req->urgency" domain="priority" /></td>

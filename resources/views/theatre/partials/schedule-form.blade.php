@@ -17,7 +17,7 @@
                         <option value="">Select…</option>
                         @foreach ($theatreRooms as $room)
                             <option value="{{ $room->id }}" @selected((string) old('theatre_room_id', $existing?->theatre_room_id)===(string) $room->id)>
-                                {{ $room->code }} - {{ $room->name }} ({{ $room->status?->label() }})
+                                {{ $room->code }} - {{ $room->name }} ({{ $room->status?->translatedLabel() }})
                             </option>
                         @endforeach
                     </select>

@@ -60,7 +60,7 @@
                             <strong>{{ $room->name }}</strong>
                             <span class="text-muted small ms-1">{{ $room->code }}</span>
                         </div>
-                        <span class="badge bg-{{ $room->status?->color() ?? 'secondary' }}">{{ $room->status?->label() ?? '-' }}</span>
+                        <span class="badge bg-{{ $room->status?->color() ?? 'secondary' }}">{{ $room->status?->translatedLabel() ?? '-' }}</span>
                     </div>
                     <div class="card-body">
                         @if ($roomSchedules->isEmpty() && $roomBlocks->isEmpty())
@@ -85,7 +85,7 @@
                                         <div class="d-flex justify-content-between gap-2">
                                             <strong>{{ $schedule->scheduled_start?->format('H:i') }} - {{ $schedule->scheduled_end?->format('H:i') }}</strong>
                                             @if ($procedure)
-                                                <span class="badge" style="background-color: {{ $procedure->status->color() }}; color:#fff;">{{ $procedure->status->label() }}</span>
+                                                <span class="badge" style="background-color: {{ $procedure->status->color() }}; color:#fff;">{{ $procedure->status->translatedLabel() }}</span>
                                             @endif
                                         </div>
                                         @if ($procedure)

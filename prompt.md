@@ -5,306 +5,370 @@ There is currently no docs/UHMS_IMPLEMENTATION_SKILL.md file in this project.
 Do not try to read it.
 Follow the instructions in this prompt directly.
 
-We completed UHMS Localisation Phase 7.
+We completed UHMS Localisation Phase 8 — Active Pages Translation Batch 1.
 
-Phase 7 established:
+Phase 8 Batch 1 completed:
 
-* Active Laravel routes: 714
-* Live controller/route `view(...)` references found: 240
-* Blade files under `resources/views`: 590
-* Direct active route-linked Blade views matched: 227
-* Inertia pages were observed separately and still need frontend localisation review
-* The application is not yet fully free of hardcoded runtime text
+* appointments create/edit/show/calendar/index
+* active admin product views and modals
+* service-rendering index/show/reports
+* visit Inertia index date-range labels
+* EN/FR parity remained clean
+* route/cache checks passed
+* localisation audit candidate count reduced from 19,639 to 19,434
 
-Phase 7 translated:
+Phase 8 still lists these active untranslated areas:
 
-* `resources/views/appointments/index.blade.php`
-* `resources/views/admin/products/index.blade.php`
-* `resources/views/admin/services/index.blade.php`
-
-Phase 7 still lists many remaining active pages with hardcoded user-facing text.
+* Visit Blade create/edit/show/preview deeper JS and partial sweep
+* Billing Inertia pages and invoice/payment/statement Blade print flows
+* Product pricing explanatory copy and remaining encoded modal title strings
+* Admin service catalogue modal internals beyond the index
+* Procedure, lab, radiology, and service catalogue rendering-adjacent pages
+* Store, stock, suppliers, requisitions, purchase orders, receipts, returns, transfers, adjustments, and valuation pages
+* HR attendance, employees, leave, payroll, and related screens
+* Theatre index, show, report, calendar, rooms, and consumables pages
+* Blood bank pages beyond the dashboard
+* Medication administration pages beyond the admission board
+* Reports, accounting, claims, wards, triage, queues, settings, and shared workflow components
 
 Now proceed with:
 
-# UHMS Localisation Phase 8 — Active Pages Translation Batch 1
+# UHMS Localisation Phase 9 — Active Pages Translation Batch 2
 
 ## Goal
 
-Continue translating active route-linked UHMS pages from the Phase 7 inventory.
+Continue active runtime page localisation from the Phase 7 inventory and Phase 8 backlog.
 
-This phase must focus on real active runtime pages only.
+This batch focuses on clinical and procedure-heavy modules:
+
+1. Consultations
+2. Theatre / Procedures
+3. Lab / Radiology / Procedure catalogues
+4. Medication Administration
+5. Blood Bank
 
 Do not translate demo/template/sample pages.
 Do not translate backup-route-only pages.
 Do not translate files only referenced by `routes/web.php.bak`.
-Do not guess based on folder names only.
-Use the active route/view inventory and actual controller/view usage.
-
-This batch must focus on:
-
-1. Appointments remaining pages
-2. Visits remaining pages
-3. Products remaining pages
-4. Services and service rendering remaining pages
-5. Related Inertia/frontend strings for visits and billing if present and safe
+Do not guess based only on folder names.
+Use active routes, controllers, and the current route/view inventory.
 
 ---
 
-# 1. Start From Phase 7 Inventory
+# 1. Source Reports
 
-Open and use:
+Use these existing reports as context:
 
 ```text
 docs/LOCALISATION_PHASE_7_COMPLETE_ACTIVE_PAGE_TRANSLATION_REPORT.md
+docs/LOCALISATION_PHASE_8_ACTIVE_PAGES_BATCH_1_REPORT.md
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
 
-Use these as the starting point.
+Do not restart the project-wide localisation from scratch.
 
-Do not repeat the full broad audit from scratch unless necessary.
-
-Work from the active backlog.
+Continue from the active backlog.
 
 ---
 
-# 2. Batch 1 Target Areas
+# 2. Target Area A — Consultations
 
-Translate all active route-linked views and related partials/components for:
-
-## Appointments
-
-Check and translate active appointment pages beyond the index:
+Check active consultation route-linked views and partials, especially:
 
 ```text
-resources/views/appointments/
+resources/views/consultations/
+resources/views/doctor/
+resources/views/clinical/
 ```
 
-Cover:
+depending on actual active route/controller usage.
 
-* create page
-* edit page
-* show page
-* calendar page
-* appointment forms
-* appointment partials
-* appointment modals
-* check-in flows
-* appointment status labels
-* doctor schedule links
-* appointment reminders
-* inline scripts
+Prioritise:
+
+```text
+resources/views/consultations/show.blade.php
+```
+
+Translate:
+
+* consultation page headings
+* tabs
+* patient/visit context labels
+* complaints section labels
+* history labels
+* examination labels
+* diagnosis labels
+* investigation labels
+* prescription labels
+* procedure request labels
+* treatment plan labels
+* follow-up labels
+* action buttons
+* modal titles
+* modal body text
+* form labels
+* placeholders
+* table headers
+* empty states
+* AJAX messages
+* inline JavaScript UI text
 
 Use or extend:
 
 ```text
-lang/en/appointments.php
-lang/fr/appointments.php
+lang/en/consultations.php
+lang/fr/consultations.php
+lang/en/messages.php
+lang/fr/messages.php
+lang/en/common.php
+lang/fr/common.php
+lang/en/statuses.php
+lang/fr/statuses.php
 ```
 
-## Visits
+Do not translate:
 
-Check and translate all active visit pages:
+* clinical free text
+* diagnosis notes
+* doctor notes
+* patient-entered text
+* drug names
+* investigation names entered by users
+* service names entered by users unless system-defined
+
+Do not change consultation workflow logic.
+
+---
+
+# 3. Target Area B — Theatre / Procedures
+
+Check active theatre/procedure route-linked views and partials:
 
 ```text
-resources/views/visits/
+resources/views/theatre/
+resources/views/procedures/
+resources/views/admin/procedures/
 ```
 
-Also check Inertia/frontend visit pages if used:
+depending on actual active route/controller usage.
 
-```text
-resources/js/Pages/Visits/
-resources/js/pages/Visits/
-resources/js/views/Visits/
-```
+Translate:
 
-depending on the actual project structure.
-
-Cover:
-
-* visit index
-* create
-* edit
-* show
-* preview
-* visit partials
-* visit timeline labels
-* visit queue/session panels
-* billing preview
-* insurance switching panels
-* emergency visit panels
-* consultation assignment labels
-* inline scripts
-* Inertia labels if present
+* theatre dashboard/index
+* procedure request pages
+* procedure show pages
+* procedure calendar
+* procedure room pages
+* procedure consumables pages
+* procedure reports
+* procedure catalogue pages
+* acceptance/rejection labels
+* billing labels
+* scheduling labels
+* pre-op labels
+* anaesthesia labels
+* surgery labels
+* operative note labels
+* post-op labels
+* completion/cancellation labels
+* table headers
+* filters
+* action buttons
+* modal labels
+* empty states
+* inline JavaScript UI text
 
 Use or extend:
 
 ```text
-lang/en/visits.php
-lang/fr/visits.php
-```
-
-Do not change visit workflow logic.
-Emergency visits must remain part of the Visit workflow.
-
-## Products
-
-Phase 7 translated only the active product index.
-
-Now translate remaining active product pages, modals, and related partials under actual active paths such as:
-
-```text
-resources/views/admin/products/
-resources/views/products/
-resources/views/pharmacy/
-resources/views/store/
-```
-
-depending on route/view inventory.
-
-Cover:
-
-* product show
-* product create/edit forms
-* product modal internals
-* product pricing modal internals
-* product category labels
-* product type labels
-* billable/stock labels
-* stock-linked product screens
-* reorder labels
-* expiry labels
-* batch labels
-* supplier history labels
-* inline scripts
-
-Use or extend:
-
-```text
-lang/en/products.php
-lang/fr/products.php
-lang/en/stock.php
-lang/fr/stock.php
-lang/en/pharmacy.php
-lang/fr/pharmacy.php
-```
-
-Rules:
-
-* Products are physical stock items.
-* Services are billable activities.
-* Do not mix product/service terminology.
-* Do not expose stock cost unless existing permission allows it.
-
-## Services / Service Rendering
-
-Phase 7 translated only the active service catalogue index.
-
-Now translate remaining active service pages and partials under actual active paths such as:
-
-```text
-resources/views/admin/services/
-resources/views/services/
-resources/views/service-rendering/
-resources/views/service-catalog/
-```
-
-depending on route/view inventory.
-
-Cover:
-
-* service show
-* service create/edit forms
-* service modal internals
-* service pricing modal internals
-* service rendering pages
-* service categories
-* billable service labels
-* consultation service labels
-* emergency service labels
-* lab/procedure/pharmacy service links
-* inline scripts
-
-Use or extend:
-
-```text
-lang/en/services.php
-lang/fr/services.php
+lang/en/theatre.php
+lang/fr/theatre.php
+lang/en/procedures.php
+lang/fr/procedures.php
+lang/en/statuses.php
+lang/fr/statuses.php
+lang/en/messages.php
+lang/fr/messages.php
 lang/en/common.php
 lang/fr/common.php
 ```
 
 Rules:
 
-* Services are billable activities.
-* Products are physical stock items.
-* Do not hardcode emergency services.
-* Do not hardcode consultation services.
-* Do not move pricing or billing logic into Blade.
+* do not change procedure workflow logic
+* do not change procedure status transitions
+* do not hardcode procedure services
+* procedure services remain billable services
+* consumables remain stock products
 
 ---
 
-# 3. Translation Rules
+# 4. Target Area C — Lab / Radiology / Catalogues
 
-Translate user-facing:
+Check active route-linked views and partials for:
 
 ```text
-page titles
-headings
-breadcrumbs
-tabs
-buttons
-dropdown actions
-form labels
-placeholders
-help text
-filters
-search fields
-table headers
-empty states
-status labels
-modal titles
-modal body text
-modal buttons
-confirmation messages
-alert messages
-validation hints
-print labels
-PDF labels
-JavaScript UI text
-Inertia/frontend page labels
+resources/views/lab/
+resources/views/investigations/
+resources/views/radiology/
+resources/views/admin/lab/
+resources/views/admin/radiology/
+resources/views/admin/procedures/
+```
+
+Translate:
+
+* lab catalogue pages
+* investigation request pages
+* lab process/result pages not already fully handled
+* radiology catalogue pages
+* procedure/lab/radiology service catalogue pages
+* filters
+* table headers
+* create/edit forms
+* modal labels
+* result labels
+* verification labels
+* rejection/cancellation labels
+* print labels
+* AJAX messages
+* inline JavaScript UI text
+
+Use or extend:
+
+```text
+lang/en/lab.php
+lang/fr/lab.php
+lang/en/investigations.php
+lang/fr/investigations.php
+lang/en/radiology.php
+lang/fr/radiology.php
+lang/en/services.php
+lang/fr/services.php
+lang/en/statuses.php
+lang/fr/statuses.php
+lang/en/common.php
+lang/fr/common.php
 ```
 
 Do not translate:
 
-```text
-patient names
-staff names
-doctor names
-supplier names
-sponsor names
-insurance provider names
-product names entered by users
-service names entered by users unless system-defined
-clinical notes
-diagnosis free text
-prescription notes
-audit event codes
-permission names
-route names
-database/internal codes unless mapped through display labels
-CSS classes
-JS selectors
-units such as mmHg, bpm, °C, kg, ml, %
-currency symbols such as GH₵ or ₵
-format examples
-UHMS brand name
-```
+* test names entered by users
+* service names entered by users unless system-defined
+* clinical result values
+* clinical notes
+* specimen IDs
+* reference range numeric constants
 
 ---
 
-# 4. Dynamic Labels
+# 5. Target Area D — Medication Administration
 
-Search targeted files for:
+Continue active medication-administration localisation beyond admission board.
+
+Check:
+
+```text
+resources/views/medication-administration/
+```
+
+Translate:
+
+* emergency medication board
+* MAR chart
+* reports
+* partials
+* modals
+* filters
+* dose/schedule/route labels
+* PRN/SOS labels
+* overdue labels
+* administered/held/refused/missed labels
+* table headers
+* action buttons
+* inline JavaScript UI text
+
+Use or extend:
+
+```text
+lang/en/medication_administration.php
+lang/fr/medication_administration.php
+lang/en/statuses.php
+lang/fr/statuses.php
+lang/en/common.php
+lang/fr/common.php
+lang/en/messages.php
+lang/fr/messages.php
+```
+
+Do not translate:
+
+* drug names
+* dose values
+* clinical notes
+* staff/patient names
+
+Do not change MAR workflow logic.
+
+---
+
+# 6. Target Area E — Blood Bank
+
+Continue active blood-bank localisation beyond dashboard.
+
+Check:
+
+```text
+resources/views/blood-bank/
+```
+
+Translate:
+
+* donors
+* donations
+* units
+* storage
+* requests
+* crossmatch
+* issue/release
+* transfusion reaction
+* reports
+* forms
+* filters
+* table headers
+* action buttons
+* modal labels
+* empty states
+* inline JavaScript UI text
+
+Use or extend:
+
+```text
+lang/en/blood_bank.php
+lang/fr/blood_bank.php
+lang/en/statuses.php
+lang/fr/statuses.php
+lang/en/messages.php
+lang/fr/messages.php
+lang/en/common.php
+lang/fr/common.php
+```
+
+Do not translate:
+
+* blood group codes like A+, B-, O+
+* donor names
+* patient names
+* unit numbers
+* clinical notes
+
+Do not change blood bank workflow logic.
+
+---
+
+# 7. Dynamic Labels
+
+Search target files for:
 
 ```php
 ->label()
@@ -333,54 +397,52 @@ Do not change workflow/status transition logic.
 
 ---
 
-# 5. JavaScript / Inertia Localisation
+# 8. JavaScript / Frontend Strings
 
-If active frontend/Inertia files are present for visits, billing, products, services, or appointments:
+Translate visible JavaScript UI strings in targeted Blade and frontend files.
 
-1. Identify hardcoded visible strings.
-2. Use existing localisation bridge if already present.
-3. Do not introduce a new frontend framework.
-4. Do not introduce a new translation package.
-5. Do not expose sensitive data to JavaScript.
+Examples:
 
-If the project has no clear frontend i18n pattern for Inertia yet, document the needed pattern and safely localise only Blade-provided strings where practical.
+* alerts
+* confirmations
+* loading text
+* empty messages
+* Select2 placeholders
+* AJAX success/error messages
+* modal dynamic row labels
+* calendar labels
+* chart labels
+
+Use the existing `window.UHMS_I18N`, `useTrans()`, or module-level Blade i18n bridge already present in the project.
+
+Do not introduce a new frontend localisation package.
+Do not expose sensitive clinical data to JavaScript.
 
 ---
 
-# 6. Language Files
+# 9. Language File Rules
 
 Add EN and FR keys together.
 
-Use existing files:
+Use existing files where possible.
 
-```text
-lang/en/appointments.php
-lang/fr/appointments.php
-lang/en/visits.php
-lang/fr/visits.php
-lang/en/products.php
-lang/fr/products.php
-lang/en/services.php
-lang/fr/services.php
-lang/en/common.php
-lang/fr/common.php
-lang/en/statuses.php
-lang/fr/statuses.php
-lang/en/messages.php
-lang/fr/messages.php
-lang/en/stock.php
-lang/fr/stock.php
-lang/en/pharmacy.php
-lang/fr/pharmacy.php
-```
-
-Create new paired files only if absolutely needed.
+Create new paired EN/FR files only if the module is active and needs them.
 
 Maintain nested EN/FR parity.
 
+Avoid vague keys like:
+
+```text
+label1
+text2
+button_new
+```
+
+Prefer clear grouped keys.
+
 ---
 
-# 7. Responsive Cleanup While Translating
+# 10. Responsive Cleanup While Translating
 
 While touching these views, fix obvious responsive issues:
 
@@ -395,12 +457,11 @@ long French labels breaking layout
 ```
 
 Use Bootstrap 5 utilities only.
-
 Do not introduce Tailwind.
 
 ---
 
-# 8. Verification
+# 11. Verification
 
 Run:
 
@@ -409,6 +470,8 @@ php artisan view:clear
 php artisan config:clear
 php artisan cache:clear
 php artisan route:list
+php artisan view:cache
+php artisan view:clear
 ```
 
 Run language lint:
@@ -429,59 +492,61 @@ The raw candidate count may remain high because demo/template files are still in
 
 But the report must specifically state:
 
-* appointments remaining pages cleaned
-* visits remaining pages cleaned
-* products remaining pages cleaned
-* services/service-rendering remaining pages cleaned
-* Inertia/frontend review result
+* consultation pages cleaned
+* theatre/procedure pages cleaned
+* lab/radiology/catalogue pages cleaned
+* medication-administration pages cleaned
+* blood-bank pages cleaned
 * remaining active pages after this batch
 
 ---
 
-# 9. Documentation
+# 12. Documentation
 
 Create:
 
 ```text
-docs/LOCALISATION_PHASE_8_ACTIVE_PAGES_BATCH_1_REPORT.md
+docs/LOCALISATION_PHASE_9_ACTIVE_PAGES_BATCH_2_REPORT.md
 ```
 
 Include:
 
 * active routes/views checked in this batch
-* appointments files translated
-* visits files translated
-* product files translated
-* service/service-rendering files translated
-* Inertia/frontend files checked or deferred
+* consultation files translated
+* theatre/procedure files translated
+* lab/radiology/catalogue files translated
+* medication-administration files translated
+* blood-bank files translated
 * language files added/updated
 * JavaScript strings translated
 * dynamic labels updated
 * responsive fixes made
 * EN/FR parity result
 * PHP lint result
-* cache/route verification result
+* cache/route/view-cache verification result
 * localisation audit result
 * remaining active untranslated pages
 
 ---
 
-# 10. Acceptance Criteria
+# 13. Acceptance Criteria
 
 This phase is complete when:
 
-* all active appointment pages in this batch are checked and translated or documented
-* all active visit pages in this batch are checked and translated or documented
-* all active product pages in this batch are checked and translated or documented
-* all active service/service-rendering pages in this batch are checked and translated or documented
-* related active Inertia/frontend strings are checked and translated or documented
+* consultation active pages are checked and translated or documented
+* theatre/procedure active pages are checked and translated or documented
+* lab/radiology/catalogue active pages are checked and translated or documented
+* medication-administration active pages are checked and translated or documented
+* blood-bank active pages are checked and translated or documented
+* active frontend strings in these areas are checked and translated or documented
 * EN/FR parity remains clean
 * touched files pass lint
 * caches clear
 * route list works
+* view cache works
 * no business logic changed
 * no workflows changed
 * no duplicate localisation system created
 * no new packages introduced
 
-Proceed with UHMS Localisation Phase 8 — Active Pages Translation Batch 1 now.
+Proceed with UHMS Localisation Phase 9 — Active Pages Translation Batch 2 now.

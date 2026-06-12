@@ -9,7 +9,7 @@
         <h4 class="fw-bold mb-0">
             <a aria-label="Back" title="Back" href="{{ $backRoute ?? route('admin.lab.requests.index') }}" class="text-muted me-2"><i class="ti ti-arrow-left"></i></a>
             {{ $request->request_number }}
-            <span class="badge bg-{{ $resultType->color() }} ms-2"><i class="ti {{ $resultType->icon() }} me-1"></i>{{ $resultType->label() }}</span>
+            <span class="badge bg-{{ $resultType->color() }} ms-2"><i class="ti {{ $resultType->icon() }} me-1"></i>{{ $resultType->translatedLabel() }}</span>
         </h4>
         @if($request->targetDepartment)<small class="text-muted">{{ __('lab.department_label') }}: <strong>{{ $request->targetDepartment->name }}</strong></small>@endif
     </div>

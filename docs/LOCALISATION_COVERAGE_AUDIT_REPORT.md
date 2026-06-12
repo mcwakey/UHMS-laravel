@@ -1,12 +1,12 @@
 # UHMS Localisation Coverage Audit Report
 
-Date: 2026-06-12 18:17:30 +02:00
+Date: 2026-06-12 18:54:34 +02:00
 
 ## Summary
 
-- Total files scanned: 1258
-- Total files with possible hardcoded strings: 531
-- Total hardcoded candidates found: 19434
+- Total files scanned: 1262
+- Total files with possible hardcoded strings: 529
+- Total hardcoded candidates found: 19337
 - Modules affected: 310
 
 ### Modules Affected
@@ -16,19 +16,18 @@ Date: 2026-06-12 18:17:30 +02:00
 - layout: 406
 - app: 394
 - widgets.blade.php: 390
-- consultations: 350
 - ui-dropdowns.blade.php: 336
+- consultations: 326
 - store: 248
-- theatre: 248
 - tables-basic.blade.php: 240
-- blood-bank: 229
+- theatre: 229
 - patterns: 208
+- blood-bank: 206
 - ui-modals.blade.php: 202
 - social-feed.blade.php: 201
 - form-select2.blade.php: 196
 - doctors.blade.php: 178
 - hr: 171
-- medication-administration: 166
 - payments.blade.php: 161
 - email.blade.php: 155
 - doctors-patient-details.blade.php: 153
@@ -41,6 +40,7 @@ Date: 2026-06-12 18:17:30 +02:00
 - index.blade.php: 133
 - layout-dark.blade.php: 133
 - layout-full-width.blade.php: 133
+- layout-hidden.blade.php: 133
 
 ### High Priority Files
 
@@ -101,12 +101,12 @@ Date: 2026-06-12 18:17:30 +02:00
 - app/Services/StatementService.php: 2
 - app/Services/VisitPreviewService.php: 2
 - lang/en/admissions.php: 2
+- lang/en/consultations.php: 2
 - lang/en/invoices.php: 2
 - lang/fr/admissions.php: 2
+- lang/fr/consultations.php: 2
 - app/Services/AdmissionService.php: 1
 - app/Services/BloodCrossmatchService.php: 1
-- app/Services/ClinicalTaskService.php: 1
-- app/Services/ConsultationNextPatientService.php: 1
 
 ### Likely False Positives
 
@@ -1816,6 +1816,17 @@ Date: 2026-06-12 18:17:30 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: description`
 
+### `lang/en/consultations.php`
+
+- Line 4 [medium]: `Consultations`
+  - Context: `'title' => 'Consultations',`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Suggested key: `lang/{en,fr}/lang.php :: consultations`
+- Line 5 [medium]: `Route-aware consultation queue`
+  - Context: `'description' => 'Route-aware consultation queue',`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Suggested key: `lang/{en,fr}/lang.php :: route_aware_consultation_queue`
+
 ### `lang/en/dashboards.php`
 
 - Line 4 [medium]: `Dashboard`
@@ -2126,6 +2137,17 @@ Date: 2026-06-12 18:17:30 +02:00
   - Context: `'description' => 'Description',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: description`
+
+### `lang/fr/consultations.php`
+
+- Line 4 [medium]: `Consultations`
+  - Context: `'title' => 'Consultations',`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Suggested key: `lang/{en,fr}/lang.php :: consultations`
+- Line 5 [medium]: `File de consultation tenant compte des parcours`
+  - Context: `'description' => 'File de consultation tenant compte des parcours',`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Suggested key: `lang/{en,fr}/lang.php :: file_de_consultation_tenant_compte_des_parcours`
 
 ### `lang/fr/emergency.php`
 
@@ -10630,101 +10652,6 @@ Date: 2026-06-12 18:17:30 +02:00
   - Context: `<tr><td colspan="5" class="text-center text-muted py-3">No donations yet.</td></tr>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/blood_bank.php :: no_donations_yet`
-
-### `resources/views/blood-bank/donors.blade.php`
-
-- Line 2 [high]: `Blood Donors`
-  - Context: `@section('title', 'Blood Donors')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: blood_donors`
-- Line 7 [high]: `Blood Donors`
-  - Context: `<x-page-header title="Blood Donors" description="Register, search, and screen blood donors." icon="ti-droplet">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: blood_donors`
-- Line 25 [high]: `Search`
-  - Context: `<div class="col-md-4"><label class="form-label">Search</label><input name="search" class="form-control" value="{{ $filters['search'] ?? '' }}" placeholder="Donor number, name, phone"></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: search`
-- Line 25 [high]: `Donor number, name, phone`
-  - Context: `<div class="col-md-4"><label class="form-label">Search</label><input name="search" class="form-control" value="{{ $filters['search'] ?? '' }}" placeholder="Donor number, name, phone"></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: donor_number_name_phone`
-- Line 26 [high]: `Blood Group`
-  - Context: `<div class="col-md-2"><label class="form-label">Blood Group</label><select name="blood_group" class="form-select"><option value="">All</option>@foreach($groups as $g)<option value="{{ $g }}" @selected(($filters['blood_group'] ?? '') === $g)>{{ $g }}</option>@endforeach</select></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: blood_group`
-- Line 26 [high]: `All`
-  - Context: `<div class="col-md-2"><label class="form-label">Blood Group</label><select name="blood_group" class="form-select"><option value="">All</option>@foreach($groups as $g)<option value="{{ $g }}" @selected(($filters['blood_group'] ?? '') === $g)>{{ $g }}</option>@endforeach</select></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: all`
-- Line 27 [high]: `Screening`
-  - Context: `<div class="col-md-3"><label class="form-label">Screening</label><select name="screening_status" class="form-select"><option value="">All</option>@foreach(['REGISTERED','QUESTIONNAIRE_PENDING','PHYSICAL_ASSESSMENT_PENDING','ELIGIBILITY_PENDING','ELIGIBLE','TEMPORARILY_DEFERRED','PERMANENTLY_DEFERRED'] as $s)<option value="{{ $s }}" @selected(($filters['screening_status'] ?? '') === $s)>{{ str_replace('_',' ',$s) }}</option>@endforeach</select></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: screening`
-- Line 27 [high]: `All`
-  - Context: `<div class="col-md-3"><label class="form-label">Screening</label><select name="screening_status" class="form-select"><option value="">All</option>@foreach(['REGISTERED','QUESTIONNAIRE_PENDING','PHYSICAL_ASSESSMENT_PENDING','ELIGIBILITY_PENDING','ELIGIBLE','TEMPORARILY_DEFERRED','PERMANENTLY_DEFERRED'] as $s)<option value="{{ $s }}" @selected(($filters['screening_status'] ?? '') === $s)>{{ str_replace('_',' ',$s) }}</option>@endforeach</select></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: all`
-- Line 30 [high]: `Clear`
-  - Context: `<a class="btn btn-outline-secondary flex-fill" href="{{ route('admin.blood-bank.donors.index') }}">Clear</a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: clear`
-- Line 37 [high]: `Donor #`
-  - Context: `<thead class="bg-light"><tr><th>Donor #</th><th>Name</th><th>Group</th><th>Screening Status</th><th>Last Donation</th><th class="text-end">Action</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: donor`
-- Line 37 [high]: `Group`
-  - Context: `<thead class="bg-light"><tr><th>Donor #</th><th>Name</th><th>Group</th><th>Screening Status</th><th>Last Donation</th><th class="text-end">Action</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: group`
-- Line 37 [high]: `Screening Status`
-  - Context: `<thead class="bg-light"><tr><th>Donor #</th><th>Name</th><th>Group</th><th>Screening Status</th><th>Last Donation</th><th class="text-end">Action</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: screening_status`
-- Line 37 [high]: `Last Donation`
-  - Context: `<thead class="bg-light"><tr><th>Donor #</th><th>Name</th><th>Group</th><th>Screening Status</th><th>Last Donation</th><th class="text-end">Action</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: last_donation`
-- Line 37 [high]: `Action`
-  - Context: `<thead class="bg-light"><tr><th>Donor #</th><th>Name</th><th>Group</th><th>Screening Status</th><th>Last Donation</th><th class="text-end">Action</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: action`
-- Line 47 [high]: `Unknown`
-  - Context: `<td>@if($donor->blood_group)<span class="badge bg-red-lt">{{ $donor->blood_group }}</span>@else<span class="text-muted">Unknown</span>@endif</td>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: unknown`
-- Line 60 [high]: `No donors`
-  - Context: `<tr><td colspan="6"><x-empty-state icon="ti-users" title="No donors" message="No blood donors match your filters." /></td></tr>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: no_donors`
-- Line 84 [high]: `Blood Group`
-  - Context: `<div class="col-md-4"><label class="form-label">Blood Group</label><select name="blood_group" class="form-select"><option value="">Unknown</option>@foreach($groups as $g)<option value="{{ $g }}" @selected(old('blood_group')===$g)>{{ $g }}</option>@endforeach</select></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: blood_group`
-- Line 84 [high]: `Unknown`
-  - Context: `<div class="col-md-4"><label class="form-label">Blood Group</label><select name="blood_group" class="form-select"><option value="">Unknown</option>@foreach($groups as $g)<option value="{{ $g }}" @selected(old('blood_group')===$g)>{{ $g }}</option>@endforeach</select></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: unknown`
-- Line 85 [high]: `Gender`
-  - Context: `<div class="col-md-4"><label class="form-label">Gender</label><select name="gender" class="form-select"><option value="">—</option>@foreach(['Male','Female','Other'] as $gn)<option value="{{ $gn }}" @selected(old('gender')===$gn)>{{ $gn }}</option>@endforeach</select></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: gender`
-- Line 86 [high]: `Date of Birth`
-  - Context: `<div class="col-md-4"><label class="form-label">Date of Birth</label><input type="date" name="date_of_birth" class="form-control" value="{{ old('date_of_birth') }}"></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: date_of_birth`
-- Line 87 [high]: `Phone`
-  - Context: `<div class="col-md-6"><label class="form-label">Phone</label><input name="phone" class="form-control" value="{{ old('phone') }}"></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: phone`
-- Line 89 [high]: `Address`
-  - Context: `<div class="col-12"><label class="form-label">Address</label><input name="address" class="form-control" value="{{ old('address') }}"></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: address`
-- Line 94 [high]: `Cancel`
-  - Context: `<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: cancel`
 
 ### `resources/views/blood-bank/reports.blade.php`
 
@@ -21009,106 +20936,10 @@ Date: 2026-06-12 18:17:30 +02:00
 
 ### `resources/views/consultations/index.blade.php`
 
-- Line 2 [high]: `Consultations`
-  - Context: `@section('title', 'Consultations')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: consultations`
-- Line 5 [high]: `Consultations`
-  - Context: `<x-page-header title="Consultations" description="Route-aware consultation queue" icon="ti-stethoscope">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: consultations`
-- Line 8 [high]: `Consultation queue`
-  - Context: `<a aria-label="Consultation queue" title="Consultation queue" href="{{ route('admin.consultations.index') }}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: consultation_queue`
-- Line 8 [high]: `Consultation queue`
-  - Context: `<a aria-label="Consultation queue" title="Consultation queue" href="{{ route('admin.consultations.index') }}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: consultation_queue`
-- Line 12 [high]: `Appointment calendar`
-  - Context: `<a aria-label="Appointment calendar" title="Appointment calendar" href="{{ route('admin.appointments.calendar') }}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: appointment_calendar`
-- Line 12 [high]: `Appointment calendar`
-  - Context: `<a aria-label="Appointment calendar" title="Appointment calendar" href="{{ route('admin.appointments.calendar') }}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: appointment_calendar`
-- Line 24 [high]: `Search`
-  - Context: `<label class="form-label small">Search</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: search`
-- Line 25 [high]: `Patient name, visit number...`
-  - Context: `<input type="text" name="search" class="form-control" placeholder="Patient name, visit number..." value="{{ $filters['search'] ?? '' }}">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: patient_name_visit_number`
-- Line 28 [high]: `Visit Type`
-  - Context: `<label class="form-label small">Visit Type</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: visit_type`
-- Line 30 [high]: `All Types`
-  - Context: `<option value="">All Types</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: all_types`
-- Line 47 [high]: `My Patients Only`
-  - Context: `<label class="form-check-label" for="myPatients">My Patients Only</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: my_patients_only`
-- Line 53 [high]: `Filter`
-  - Context: `<button aria-label="Filter" title="Filter" type="submit" class="btn btn-primary"><i class="ti ti-filter"></i> Filter</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: filter`
-- Line 53 [high]: `Filter`
-  - Context: `<button aria-label="Filter" title="Filter" type="submit" class="btn btn-primary"><i class="ti ti-filter"></i> Filter</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: filter`
-- Line 54 [high]: `Close`
-  - Context: `<a aria-label="Close" title="Close" href="{{ route('admin.consultations.index') }}" class="btn btn-outline-secondary"><i class="ti ti-x"></i></a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: close`
-- Line 54 [high]: `Close`
-  - Context: `<a aria-label="Close" title="Close" href="{{ route('admin.consultations.index') }}" class="btn btn-outline-secondary"><i class="ti ti-x"></i></a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: close`
 - Line 58 [high]: `Clear`
   - Context: `<a href="{{ route('admin.consultations.index') }}" class="btn btn-outline-secondary ms-1">Clear</a> --}}`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/consultations.php :: clear`
-- Line 70 [high]: `Queue #`
-  - Context: `<th>Queue #</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: queue`
-- Line 71 [high]: `Visit #`
-  - Context: `<th>Visit #</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: visit`
-- Line 72 [high]: `Patient`
-  - Context: `<th>Patient</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: patient`
-- Line 73 [high]: `Department`
-  - Context: `<th>Department</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: department`
-- Line 74 [high]: `Services`
-  - Context: `<th>Services</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: services`
-- Line 75 [high]: `Priority`
-  - Context: `<th>Priority</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: priority`
-- Line 76 [high]: `Doctor`
-  - Context: `<th>Doctor</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: doctor`
-- Line 78 [high]: `Waiting Time`
-  - Context: `<th>Waiting Time</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: waiting_time`
-- Line 79 [high]: `Action`
-  - Context: `<th>Action</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/consultations.php :: action`
 
 ### `resources/views/consultations/partials/summary-sections.blade.php`
 
@@ -49240,81 +49071,6 @@ Date: 2026-06-12 18:17:30 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/medication_administration.php :: closed`
 
-### `resources/views/medication-administration/emergency-board.blade.php`
-
-- Line 2 [high]: `Emergency Medication Board`
-  - Context: `@section('title', 'Emergency Medication Board')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: emergency_medication_board`
-- Line 7 [high]: `Emergency Medication Board`
-  - Context: `<h4 class="fw-bold mb-1">Emergency Medication Board</h4>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: emergency_medication_board`
-- Line 8 [high]: `STAT, due, overdue, PRN/SOS, and administered emergency medications.`
-  - Context: `<p class="text-muted mb-0">STAT, due, overdue, PRN/SOS, and administered emergency medications.</p>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: stat_due_overdue_prn_sos_and_administered_emergenc`
-- Line 10 [high]: `Reports`
-  - Context: `<a href="{{ route('admin.medication-administration.reports') }}" class="btn btn-outline-primary btn-sm">Reports</a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: reports`
-- Line 14 [high]: `STAT Due`
-  - Context: `<div class="col-6 col-lg-2"><div class="card bg-danger text-white border-0"><div class="card-body py-3"><div class="small opacity-75">STAT Due</div><div class="h4 mb-0">{{ $stat_due->count() }}</div></div></div></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: stat_due`
-- Line 15 [high]: `Due Now`
-  - Context: `<div class="col-6 col-lg-2"><div class="card bg-info text-white border-0"><div class="card-body py-3"><div class="small opacity-75">Due Now</div><div class="h4 mb-0">{{ $counts['due_now'] ?? 0 }}</div></div></div></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: due_now`
-- Line 16 [high]: `Overdue`
-  - Context: `<div class="col-6 col-lg-2"><div class="card bg-danger-subtle border-0"><div class="card-body py-3"><div class="small text-danger">Overdue</div><div class="h4 mb-0 text-danger">{{ $counts['overdue'] ?? 0 }}</div></div></div></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: overdue`
-- Line 17 [high]: `Administered Today`
-  - Context: `<div class="col-6 col-lg-2"><div class="card bg-light border-0"><div class="card-body py-3"><div class="small text-muted">Administered Today</div><div class="h4 mb-0">{{ $administered_today->count() }}</div></div></div></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: administered_today`
-- Line 22 [high]: `Emergency Medication Tasks`
-  - Context: `<div class="card-header"><h5 class="card-title mb-0">Emergency Medication Tasks</h5></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: emergency_medication_tasks`
-- Line 28 [high]: `Patient`
-  - Context: `<th>Patient</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: patient`
-- Line 29 [high]: `Medication`
-  - Context: `<th>Medication</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: medication`
-- Line 30 [high]: `Dose / Route`
-  - Context: `<th>Dose / Route</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: dose_route`
-- Line 31 [high]: `Scheduled`
-  - Context: `<th>Scheduled</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: scheduled`
-- Line 33 [high]: `Prescribed By`
-  - Context: `<th>Prescribed By</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: prescribed_by`
-- Line 34 [high]: `Administered By`
-  - Context: `<th>Administered By</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: administered_by`
-- Line 35 [high]: `Action`
-  - Context: `<th class="text-end">Action</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: action`
-- Line 66 [high]: `Administer`
-  - Context: `<button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#{{ $modalId }}">Administer</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: administer`
-- Line 69 [high]: `Closed`
-  - Context: `<span class="text-muted small align-self-center">Closed</span>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: closed`
-
 ### `resources/views/medication-administration/mar-chart.blade.php`
 
 - Line 41 [high]: `Patient-specific medication administration grid for scheduled, due, overdue, and completed doses.`
@@ -49787,77 +49543,6 @@ Date: 2026-06-12 18:17:30 +02:00
   - Context: `<div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary"><i class="ti ti-device-floppy me-1"></i>Save PRN Administration</button></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/medication_administration.php :: cancel`
-
-### `resources/views/medication-administration/reports.blade.php`
-
-- Line 2 [high]: `Medication Administration Reports`
-  - Context: `@section('title', 'Medication Administration Reports')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: medication_administration_reports`
-- Line 5 [high]: `Medication Administration Reports`
-  - Context: `<x-page-header title="Medication Administration Reports" description="Administration, overdue, missed, held, refused, and nurse activity foundation." icon="ti-checkup-list" />`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: medication_administration_reports`
-- Line 10 [high]: `From`
-  - Context: `<div class="col-md-3"><label class="form-label">From</label><input type="date" name="date_from" class="form-control" value="{{ $filters['date_from'] ?? '' }}"></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: from`
-- Line 15 [high]: `All statuses`
-  - Context: `<option value="">All statuses</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: all_statuses`
-- Line 21 [high]: `Apply Filters`
-  - Context: `<div class="col-md-3"><button class="btn btn-primary w-100">Apply Filters</button></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: apply_filters`
-- Line 27 [high]: `Medication Administration Report`
-  - Context: `<div class="card-header"><h5 class="card-title mb-0">Medication Administration Report</h5></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: medication_administration_report`
-- Line 32 [high]: `Date`
-  - Context: `<tr><th>Date</th><th>Patient</th><th>Medication</th><th>Status</th><th>Nurse</th><th>Reason / Reaction</th></tr>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: date`
-- Line 32 [high]: `Patient`
-  - Context: `<tr><th>Date</th><th>Patient</th><th>Medication</th><th>Status</th><th>Nurse</th><th>Reason / Reaction</th></tr>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: patient`
-- Line 32 [high]: `Medication`
-  - Context: `<tr><th>Date</th><th>Patient</th><th>Medication</th><th>Status</th><th>Nurse</th><th>Reason / Reaction</th></tr>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: medication`
-- Line 32 [high]: `Nurse`
-  - Context: `<tr><th>Date</th><th>Patient</th><th>Medication</th><th>Status</th><th>Nurse</th><th>Reason / Reaction</th></tr>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: nurse`
-- Line 32 [high]: `Reason / Reaction`
-  - Context: `<tr><th>Date</th><th>Patient</th><th>Medication</th><th>Status</th><th>Nurse</th><th>Reason / Reaction</th></tr>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: reason_reaction`
-- Line 57 [high]: `Overdue Medication Report`
-  - Context: `<div class="card-header"><h5 class="card-title mb-0 text-danger">Overdue Medication Report</h5></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: overdue_medication_report`
-- Line 61 [high]: `Due`
-  - Context: `<thead class="bg-light"><tr><th>Due</th><th>Patient</th><th>Ward</th><th>Medication</th><th>Escalation</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: due`
-- Line 61 [high]: `Patient`
-  - Context: `<thead class="bg-light"><tr><th>Due</th><th>Patient</th><th>Ward</th><th>Medication</th><th>Escalation</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: patient`
-- Line 61 [high]: `Ward`
-  - Context: `<thead class="bg-light"><tr><th>Due</th><th>Patient</th><th>Ward</th><th>Medication</th><th>Escalation</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: ward`
-- Line 61 [high]: `Medication`
-  - Context: `<thead class="bg-light"><tr><th>Due</th><th>Patient</th><th>Ward</th><th>Medication</th><th>Escalation</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: medication`
-- Line 61 [high]: `Escalation`
-  - Context: `<thead class="bg-light"><tr><th>Due</th><th>Patient</th><th>Ward</th><th>Medication</th><th>Escalation</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: escalation`
 
 ### `resources/views/messages.blade.php`
 
@@ -66681,85 +66366,6 @@ Date: 2026-06-12 18:17:30 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/theatre.php :: reorder_level`
 
-### `resources/views/theatre/index.blade.php`
-
-- Line 3 [high]: `Theatre / Procedure Workflow`
-  - Context: `@section('title', 'Theatre / Procedure Workflow')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: theatre_procedure_workflow`
-- Line 10 [high]: `Theatre Schedule Board`
-  - Context: `<h3 class="mb-1">Theatre Schedule Board</h3>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: theatre_schedule_board`
-- Line 11 [high]: `Procedure requests, room assignments, billing state, and theatre workflow status.`
-  - Context: `<div class="text-muted small">Procedure requests, room assignments, billing state, and theatre workflow status.</div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: procedure_requests_room_assignments_billing_state_`
-- Line 30 [high]: `Search`
-  - Context: `<label class="form-label small">Search</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: search`
-- Line 31 [high]: `Request #, patient, visit`
-  - Context: `<input type="text" name="search" value="{{ request('search') }}" placeholder="Request #, patient, visit" class="form-control form-control-sm">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: request_patient_visit`
-- Line 34 [high]: `Priority`
-  - Context: `<label class="form-label small">Priority</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: priority`
-- Line 36 [high]: `Any priority`
-  - Context: `<option value="">Any priority</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: any_priority`
-- Line 43 [high]: `Room`
-  - Context: `<label class="form-label small">Room</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: room`
-- Line 45 [high]: `Any room`
-  - Context: `<option value="">Any room</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: any_room`
-- Line 52 [high]: `Scheduled date`
-  - Context: `<label class="form-label small">Scheduled date</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: scheduled_date`
-- Line 56 [high]: `Filter`
-  - Context: `<button class="btn btn-sm btn-primary flex-fill">Filter</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: filter`
-- Line 112 [high]: `Request`
-  - Context: `<th>Request</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: request`
-- Line 113 [high]: `Patient`
-  - Context: `<th>Patient</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: patient`
-- Line 114 [high]: `Service`
-  - Context: `<th>Service</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: service`
-- Line 115 [high]: `Priority`
-  - Context: `<th>Priority</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: priority`
-- Line 117 [high]: `Schedule`
-  - Context: `<th>Schedule</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: schedule`
-- Line 118 [high]: `Surgeon`
-  - Context: `<th>Surgeon</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: surgeon`
-- Line 157 [high]: `Open`
-  - Context: `<a class="btn btn-sm btn-outline-primary" href="{{ route('admin.theatre.show', $r) }}">Open</a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: open`
-- Line 159 [high]: `Report`
-  - Context: `<a data-no-inertia class="btn btn-sm btn-outline-secondary" href="{{ route('admin.theatre.report', $r) }}" target="_blank">Report</a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/theatre.php :: report`
-
 ### `resources/views/theatre/partials/_consumables.blade.php`
 
 - Line 9 [high]: `Consumables Used`
@@ -66887,7 +66493,7 @@ Date: 2026-06-12 18:17:30 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/theatre.php :: request`
 - Line 25 [high]: `Status:`
-  - Context: `<div><strong>Status:</strong> <span class="badge" style="background-color: {{ $procedure->status->color() }};">{{ $procedure->status->label() }}</span></div>`
+  - Context: `<div><strong>Status:</strong> <span class="badge" style="background-color: {{ $procedure->status->color() }};">{{ $procedure->status->translatedLabel() }}</span></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/theatre.php :: status`
 - Line 26 [high]: `Printed:`

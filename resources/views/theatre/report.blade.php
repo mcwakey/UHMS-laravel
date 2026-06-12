@@ -22,7 +22,7 @@
                 </div>
                 <div class="col-md-6 text-end">
                     <div><strong>Request #:</strong> {{ $procedure->request_number }}</div>
-                    <div><strong>Status:</strong> <span class="badge" style="background-color: {{ $procedure->status->color() }};">{{ $procedure->status->label() }}</span></div>
+                    <div><strong>Status:</strong> <span class="badge" style="background-color: {{ $procedure->status->color() }};">{{ $procedure->status->translatedLabel() }}</span></div>
                     <div><strong>Printed:</strong> {{ now()->format('d M Y H:i') }}</div>
                 </div>
             </div>

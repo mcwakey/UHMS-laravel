@@ -187,7 +187,7 @@
             </div>
             <div class="session-summary-item">
                 <div class="text-muted small">Visit Type</div>
-                <div class="fw-semibold">{{ $visit->visit_type?->label() ?? '-' }}</div>
+                <div class="fw-semibold">{{ $visit->visit_type?->translatedLabel() ?? '-' }}</div>
             </div>
             <div class="session-summary-item">
                 <div class="text-muted small">Insurance</div>
@@ -333,7 +333,7 @@
                 <div class="border rounded p-2 h-100">
                     <div class="fw-semibold small mb-2"><i class="ti ti-activity me-1 text-warning"></i>Procedures</div>
                     @forelse($emergencyCase->procedureRequests->take(4) as $procedure)
-                        <div class="small">{{ $procedure->service?->name ?? $procedure->procedure?->name ?? 'Procedure request' }} <span class="text-muted">{{ $procedure->status?->label() ?? $procedure->status }}</span></div>
+                        <div class="small">{{ $procedure->service?->name ?? $procedure->procedure?->name ?? 'Procedure request' }} <span class="text-muted">{{ $procedure->status?->translatedLabel() ?? $procedure->status }}</span></div>
                     @empty
                         <div class="small text-muted">No procedures requested.</div>
                     @endforelse
@@ -381,7 +381,7 @@
             @endphp
             @if($triageScore)
                 <span class="badge bg-{{ $triageScore->color() }} triage-badge">
-                    <i class="ti {{ $triageScore->icon() }} me-1"></i>{{ $triageScore->label() }}
+                    <i class="ti {{ $triageScore->icon() }} me-1"></i>{{ $triageScore->translatedLabel() }}
                 </span>
             @else
                 <span class="badge bg-secondary triage-badge"><i class="ti ti-help me-1"></i>Triage N/A</span>
@@ -643,8 +643,8 @@
                             @csrf @method('PATCH')
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
                             <button type="submit" class="btn btn-{{ $nextStatus->color() }} btn-sm w-100"
-                                    onclick="return confirm('Move to {{ $nextStatus->label() }}?')">
-                                <i class="ti ti-arrow-right me-1"></i>{{ $nextStatus->label() }}
+                                    onclick="return confirm('Move to {{ $nextStatus->translatedLabel() }}?')">
+                                <i class="ti ti-arrow-right me-1"></i>{{ $nextStatus->translatedLabel() }}
                             </button>
                         </form> --}}
                         @endif
@@ -1684,7 +1684,7 @@
                                             <div class="d-flex justify-content-between align-items-start">
                                                 <div>
                                                     <p class="mb-1">
-                                                        <span class="badge" style="background-color: {{ $pr->status->color() }}; color:#fff;">{{ $pr->status->label() }}</span>
+                                                        <span class="badge" style="background-color: {{ $pr->status->color() }}; color:#fff;">{{ $pr->status->translatedLabel() }}</span>
                                                         <span class="fw-medium">{{ $pr->service?->name ?? 'Procedure' }}</span>
                                                         <small class="text-muted">· {{ $pr->request_number }}</small>
                                                     </p>
@@ -1942,7 +1942,7 @@
                             <div>
                                 <h5 class="modal-title" id="followUpAppointmentModalLabel"><i class="ti ti-calendar-plus me-1"></i>Next Appointment / Follow-up</h5>
                                 @if($followUpAppointment)
-                                    <small class="text-muted">Current status: {{ $followUpAppointment->status?->label() ?? ucfirst((string) $followUpAppointment->status) }}</small>
+                                    <small class="text-muted">Current status: {{ $followUpAppointment->status?->translatedLabel() ?? ucfirst((string) $followUpAppointment->status) }}</small>
                                 @endif
                             </div>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -2025,7 +2025,7 @@
                                             <label class="form-label">Priority</label>
                                             <select name="priority" class="form-select @error('priority') is-invalid @enderror">
                                                 @foreach(\App\Enums\Priority::cases() as $priority)
-                                                    <option value="{{ $priority->value }}" @selected($followUpPriority === $priority->value)>{{ $priority->label() }}</option>
+                                                    <option value="{{ $priority->value }}" @selected($followUpPriority === $priority->value)>{{ $priority->translatedLabel() }}</option>
                                                 @endforeach
                                             </select>
                                             @error('priority')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -2604,7 +2604,7 @@
                                             data-result-type="{{ $dept->result_type?->value }}"
                                             data-uses-catalog="{{ $dept->result_type?->usesTestCatalog() ? 'true' : 'false' }}">
                                             {{ $dept->name }}
-                                            <small>({{ $dept->result_type?->label() }})</small>
+                                            <small>({{ $dept->result_type?->translatedLabel() }})</small>
                                         </option>
                                         @endforeach
                                     </select>

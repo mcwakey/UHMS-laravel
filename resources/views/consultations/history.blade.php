@@ -462,7 +462,7 @@
                                 <div class="entry">
                                     <div class="entry-text">
                                         {{ $pr->service?->name ?? 'Procedure' }}
-                                        <span class="badge ms-1" style="background-color:{{ $pr->status->color() }};color:#fff">{{ $pr->status->label() }}</span>
+                                        <span class="badge ms-1" style="background-color:{{ $pr->status->color() }};color:#fff">{{ $pr->status->translatedLabel() }}</span>
                                         @if($pr->priority)<span class="badge bg-light text-dark ms-1">{{ ucfirst($pr->priority) }}</span>@endif
                                     </div>
                                     <div class="meta">

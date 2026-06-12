@@ -52,7 +52,7 @@
                     <select name="room_type" class="form-select form-select-sm">
                         <option value="">Any type</option>
                         @foreach ($roomTypes as $type)
-                            <option value="{{ $type->value }}" @selected(request('room_type') === $type->value)>{{ $type->label() }}</option>
+                            <option value="{{ $type->value }}" @selected(request('room_type') === $type->value)>{{ $type->translatedLabel() }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -61,7 +61,7 @@
                     <select name="status" class="form-select form-select-sm">
                         <option value="">Any status</option>
                         @foreach ($roomStatuses as $status)
-                            <option value="{{ $status->value }}" @selected(request('status') === $status->value)>{{ $status->label() }}</option>
+                            <option value="{{ $status->value }}" @selected(request('status') === $status->value)>{{ $status->translatedLabel() }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -106,10 +106,10 @@
                                     <span class="badge bg-dark ms-1">Inactive</span>
                                 @endunless
                             </td>
-                            <td>{{ $room->room_type?->label() ?? '-' }}</td>
+                            <td>{{ $room->room_type?->translatedLabel() ?? '-' }}</td>
                             <td>
                                 <span class="badge bg-{{ $room->status?->color() ?? 'secondary' }}">
-                                    {{ $room->status?->label() ?? '-' }}
+                                    {{ $room->status?->translatedLabel() ?? '-' }}
                                 </span>
                             </td>
                             <td>
@@ -243,7 +243,7 @@
                             <label class="form-label small">Block type</label>
                             <select name="block_type" class="form-select form-select-sm" required>
                                 @foreach ($blockTypes as $type)
-                                    <option value="{{ $type->value }}">{{ $type->label() }}</option>
+                                    <option value="{{ $type->value }}">{{ $type->translatedLabel() }}</option>
                                 @endforeach
                             </select>
                         </div>

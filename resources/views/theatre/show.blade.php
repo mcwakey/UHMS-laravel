@@ -40,7 +40,7 @@
         </div>
         <div>
             <span class="badge fs-6" style="background-color: {{ $status->color() }}; color:#fff;">
-                {{ $status->label() }}
+                {{ $status->translatedLabel() }}
             </span>
             @if ($status === ProcedureStatus::COMPLETED)
                 <a data-no-inertia class="btn btn-outline-secondary btn-sm ms-2" href="{{ route('admin.theatre.report', $procedure) }}" target="_blank">View Full Report</a>

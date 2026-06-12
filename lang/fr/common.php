@@ -93,6 +93,7 @@ return [
     'other' => 'Autre',
     'gender_male' => 'Masculin',
     'gender_female' => 'Féminin',
+    'gender_other' => 'Autre',
     'billing_type_cash' => 'Espèces',
     'billing_type_insurance' => 'Assurance',
     'billing_type_corporate' => 'Entreprise',

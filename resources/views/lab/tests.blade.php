@@ -81,7 +81,7 @@
                                                 <option value="">{{ __('lab.unlinked_option') }}</option>
                                                 @foreach($investigationDepartments as $dept)
                                                     <option value="{{ $dept->id }}" {{ $cat->department_id == $dept->id ? 'selected' : '' }}>
-                                                        {{ $dept->name }} ({{ $dept->result_type?->label() ?? '—' }})
+                                                        {{ $dept->name }} ({{ $dept->result_type?->translatedLabel() ?? '—' }})
                                                     </option>
                                                 @endforeach
                                             </select>
@@ -327,7 +327,7 @@
                         <select name="department_id" class="form-select">
                             <option value="">{{ __('lab.unlinked_option') }}</option>
                             @foreach($investigationDepartments as $dept)
-                                <option value="{{ $dept->id }}">{{ $dept->name }} ({{ $dept->result_type?->label() ?? '—' }})</option>
+                                <option value="{{ $dept->id }}">{{ $dept->name }} ({{ $dept->result_type?->translatedLabel() ?? '—' }})</option>
                             @endforeach
                         </select>
                         <div class="form-text">{{ __('lab.department_help') }}</div>

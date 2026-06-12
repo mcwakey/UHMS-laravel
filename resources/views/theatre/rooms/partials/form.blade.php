@@ -27,7 +27,7 @@
         <label class="form-label small">Room type <span class="text-danger">*</span></label>
         <select name="room_type" class="form-select form-select-sm" required>
             @foreach ($roomTypes as $type)
-                <option value="{{ $type->value }}" @selected(old('room_type', $room?->room_type?->value ?? 'PROCEDURE_ROOM') === $type->value)>{{ $type->label() }}</option>
+                <option value="{{ $type->value }}" @selected(old('room_type', $room?->room_type?->value ?? 'PROCEDURE_ROOM') === $type->value)>{{ $type->translatedLabel() }}</option>
             @endforeach
         </select>
     </div>
@@ -35,7 +35,7 @@
         <label class="form-label small">Status <span class="text-danger">*</span></label>
         <select name="status" class="form-select form-select-sm" required>
             @foreach ($roomStatuses as $status)
-                <option value="{{ $status->value }}" @selected(old('status', $room?->status?->value ?? 'AVAILABLE') === $status->value)>{{ $status->label() }}</option>
+                <option value="{{ $status->value }}" @selected(old('status', $room?->status?->value ?? 'AVAILABLE') === $status->value)>{{ $status->translatedLabel() }}</option>
             @endforeach
         </select>
     </div>

@@ -63,7 +63,7 @@
                     <option value="">All Locations</option>
                     @foreach($locations as $loc)
                     <option value="{{ $loc->value }}" {{ request('location') === $loc->value ? 'selected' : '' }}>
-                        {{ $loc->label() }}
+                        {{ $loc->translatedLabel() }}
                     </option>
                     @endforeach
                 </select>
@@ -116,7 +116,7 @@
                         <td class="fw-medium">{{ $stock->item->name }}</td>
                         <td>
                             <span class="badge bg-{{ $stock->item->category->color() }}">
-                                {{ $stock->item->category->label() }}
+                                {{ $stock->item->category->translatedLabel() }}
                             </span>
                         </td>
                         <td>
@@ -192,7 +192,7 @@
                             <select name="location" class="form-select" required>
                                 @foreach($locations as $loc)
                                 <option value="{{ $loc->value }}" {{ $loc->value === 'laboratory' ? 'selected' : '' }}>
-                                    {{ $loc->label() }}
+                                    {{ $loc->translatedLabel() }}
                                 </option>
                                 @endforeach
                             </select>

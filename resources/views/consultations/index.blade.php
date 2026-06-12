@@ -1,15 +1,15 @@
 @extends('layouts.app')
-@section('title', 'Consultations')
+@section('title', __('consultations.title'))
 
 @section('content')
-<x-page-header title="Consultations" description="Route-aware consultation queue" icon="ti-stethoscope">
+<x-page-header :title="__('consultations.title')" :description="__('consultations.description')" icon="ti-stethoscope">
     <x-slot:actions>
         <div class="bg-white border shadow-sm rounded px-1 pb-0 text-center d-flex align-items-center justify-content-center">
-            <a aria-label="Consultation queue" title="Consultation queue" href="{{ route('admin.consultations.index') }}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center">
+            <a aria-label="{{ __('consultations.queue_view') }}" title="{{ __('consultations.queue_view') }}" href="{{ route('admin.consultations.index') }}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center">
                 <i class="ti ti-list fs-14 text-body"></i>
             </a>
             @can('appointments.view')
-            <a aria-label="Appointment calendar" title="Appointment calendar" href="{{ route('admin.appointments.calendar') }}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center">
+            <a aria-label="{{ __('consultations.appointment_calendar') }}" title="{{ __('consultations.appointment_calendar') }}" href="{{ route('admin.appointments.calendar') }}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center">
                 <i class="ti ti-calendar-event fs-14 text-body"></i>
             </a>
             @endcan
@@ -21,15 +21,15 @@
     <div class="card-body">
         <form method="GET" class="row g-2 align-items-end" data-auto-filter-form="consultations-index">
             <div class="col-md-3">
-                <label class="form-label small">Search</label>
-                <input type="text" name="search" class="form-control" placeholder="Patient name, visit number..." value="{{ $filters['search'] ?? '' }}">
+                <label class="form-label small">{{ __('common.search') }}</label>
+                <input type="text" name="search" class="form-control" placeholder="{{ __('consultations.search_placeholder') }}" value="{{ $filters['search'] ?? '' }}">
             </div>
             <div class="col-md-2">
-                <label class="form-label small">Visit Type</label>
+                <label class="form-label small">{{ __('consultations.visit_type') }}</label>
                 <select name="visit_type" class="form-select">
-                    <option value="">All Types</option>
+                    <option value="">{{ __('consultations.all_types') }}</option>
                     @foreach(\App\Enums\VisitType::cases() as $type)
-                        <option value="{{ $type->value }}" @selected(($filters['visit_type'] ?? '') == $type->value)>{{ $type->label() }}</option>
+                        <option value="{{ $type->value }}" @selected(($filters['visit_type'] ?? '') == $type->value)>{{ $type->translatedLabel() }}</option>
                     @endforeach
                 </select>
             </div>
@@ -44,14 +44,14 @@
             <div class="col-md-2">
                 <div class="form-check mt-4">
                     <input class="form-check-input" type="checkbox" name="my_patients" value="1" id="myPatients" @checked(request('my_patients'))>
-                    <label class="form-check-label" for="myPatients">My Patients Only</label>
+                    <label class="form-check-label" for="myPatients">{{ __('consultations.my_patients_only') }}</label>
                 </div>
             </div>
             {{-- <div class="col-md-1"> --}}
             <div class="col-md-auto">
                 <div class="d-flex gap-1">
-                    <button aria-label="Filter" title="Filter" type="submit" class="btn btn-primary"><i class="ti ti-filter"></i> Filter</button>
-                    <a aria-label="Close" title="Close" href="{{ route('admin.consultations.index') }}" class="btn btn-outline-secondary"><i class="ti ti-x"></i></a>
+                    <button aria-label="{{ __('common.filter') }}" title="{{ __('common.filter') }}" type="submit" class="btn btn-primary"><i class="ti ti-filter"></i> {{ __('common.filter') }}</button>
+                    <a aria-label="{{ __('common.close') }}" title="{{ __('common.close') }}" href="{{ route('admin.consultations.index') }}" class="btn btn-outline-secondary"><i class="ti ti-x"></i></a>
                 </div>
                 {{-- </div> --}}
                 {{-- <button type="submit" class="btn btn-primary"><i class="ti ti-search me-1"></i>Filter</button>
@@ -67,16 +67,16 @@
             <table class="table table-hover mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Queue #</th>
-                        <th>Visit #</th>
-                        <th>Patient</th>
-                        <th>Department</th>
-                        <th>Services</th>
-                        <th>Priority</th>
-                        <th>Doctor</th>
-                        <th>Status</th>
-                        <th>Waiting Time</th>
-                        <th>Action</th>
+                        <th>{{ __('consultations.queue_number') }}</th>
+                        <th>{{ __('consultations.visit_number') }}</th>
+                        <th>{{ __('common.patient') }}</th>
+                        <th>{{ __('common.department') }}</th>
+                        <th>{{ __('consultations.services') }}</th>
+                        <th>{{ __('common.priority') }}</th>
+                        <th>{{ __('common.doctor') }}</th>
+                        <th>{{ __('common.status') }}</th>
+                        <th>{{ __('consultations.waiting_time') }}</th>
+                        <th>{{ __('common.action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -93,7 +93,7 @@
                             $serviceNames = collect([$route->service->name]);
                         }
                         $routeDepartmentLabel = $route->isEmergencySession()
-                            ? 'Emergency Department Session'
+                            ? __('consultations.emergency_department_session')
                             : ($route->department?->name ?? '-');
                         $queueEntries = $visit->queueEntries ?? collect();
                         $queueEntry = $queueEntries
@@ -113,7 +113,7 @@
                         </td>
                         <td>
                             <span class="fw-medium">{{ $visit->visit_number }}</span>
-                            <div class="small text-muted">{{ $visit->visit_type?->label() }}</div>
+                            <div class="small text-muted">{{ $visit->visit_type?->translatedLabel() }}</div>
                         </td>
                         <td>
                             <div class="fw-medium">{{ $visit->patient->full_name }}</div>
@@ -143,7 +143,7 @@
                         <td>{{ $route->doctor || $route->mainDoctor ? 'Dr. ' . ($route->doctor?->full_name ?? $route->mainDoctor?->full_name) : '-' }}</td>
                         <td>
                             <x-status-badge :status="$route->status" domain="consultation_route" />
-                            <div class="small text-muted">{{ $visit->status->label() }}</div>
+                            <div class="small text-muted">{{ $visit->status->translatedLabel() }}</div>
                         </td>
                         <td><small>{{ ($route->activated_at ?? $route->started_at ?? $route->created_at)->diffForHumans(null, true) }}</small></td>
                         <td>
@@ -152,17 +152,17 @@
                                 <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $route]) }}" class="d-inline">
                                     @csrf
                                     <button type="submit" class="btn btn-sm btn-primary">
-                                        <i class="ti ti-player-play me-1"></i>{{ $visit->status === \App\Enums\VisitStatus::CONSULTING ? 'Activate' : 'Start' }}
+                                        <i class="ti ti-player-play me-1"></i>{{ $visit->status === \App\Enums\VisitStatus::CONSULTING ? __('consultations.activate') : __('consultations.start') }}
                                     </button>
                                 </form>
                                 @endcan
                             @elseif($isActive)
                                 <a href="{{ route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-sm btn-success">
-                                    <i class="ti ti-pencil me-1"></i>Continue
+                                    <i class="ti ti-pencil me-1"></i>{{ __('consultations.continue') }}
                                 </a>
                             @else
                                 <a href="{{ route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-sm btn-outline-primary">
-                                    <i class="ti ti-eye me-1"></i>Open
+                                    <i class="ti ti-eye me-1"></i>{{ __('consultations.open') }}
                                 </a>
                             @endif
                         </td>
@@ -171,7 +171,7 @@
                     <tr>
                         <td colspan="10" class="text-center py-4 text-muted">
                             <i class="ti ti-stethoscope fs-1 d-block mb-2"></i>
-                            No active consultations at the moment.
+                            {{ __('consultations.no_active_consultations') }}
                         </td>
                     </tr>
                     @endforelse
