@@ -30,7 +30,7 @@
                 <select name="status" class="form-select">
                     <option value="">{{ __('stock.all_status') }}</option>
                     @foreach($statuses as $status)
-                        <option value="{{ $status->value }}" @selected(request('status') === $status->value)>{{ $status->label() }}</option>
+                        <option value="{{ $status->value }}" @selected(request('status') === $status->value)>{{ $status->translatedLabel() }}</option>
                     @endforeach
                 </select>
             </div>

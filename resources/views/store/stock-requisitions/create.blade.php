@@ -174,7 +174,7 @@ $(document).ready(function () {
         if (validIdx === 0) {
             e.preventDefault();
             $('.item-row').find('input, select').prop('disabled', false);
-            alert('Add at least one product to request.');
+            alert(@json(__('stock.alert_add_requisition_product')));
             return false;
         }
     });

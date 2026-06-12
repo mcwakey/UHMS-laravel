@@ -36,7 +36,7 @@
                             <select name="gender" class="form-select">
                                 <option value="">Select</option>
                                 @foreach($genders as $g)
-                                    <option value="{{ $g->value }}" {{ old('gender', $employee->gender?->value) == $g->value ? 'selected' : '' }}>{{ $g->label() }}</option>
+                                    <option value="{{ $g->value }}" {{ old('gender', $employee->gender?->value) == $g->value ? 'selected' : '' }}>{{ $g->translatedLabel() }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -98,7 +98,7 @@
                             <label class="form-label">Status</label>
                             <select name="status" class="form-select">
                                 @foreach($statuses as $s)
-                                    <option value="{{ $s->value }}" {{ old('status', $employee->status->value) == $s->value ? 'selected' : '' }}>{{ $s->label() }}</option>
+                                    <option value="{{ $s->value }}" {{ old('status', $employee->status->value) == $s->value ? 'selected' : '' }}>{{ $s->translatedLabel() }}</option>
                                 @endforeach
                             </select>
                         </div>

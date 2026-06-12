@@ -200,7 +200,7 @@ $(document).ready(function () {
         if (validIdx === 0) {
             e.preventDefault();
             $('#itemsBody .return-row').find('input').prop('disabled', false);
-            alert('Enter a return quantity for at least one item.');
+            alert(@json(__('stock.alert_enter_return_quantity')));
             return false;
         }
     });

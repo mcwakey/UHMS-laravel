@@ -14,7 +14,7 @@
 @section('content')
 <div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom">
     <div>
-        <h4 class="fw-bold mb-0">{{ $batch->typeLabel() }} {{ $batch->batch_number }}</h4>
+        <h4 class="fw-bold mb-0">{{ $batch->translatedTypeLabel() }} {{ $batch->batch_number }}</h4>
         <div class="text-muted small">{{ $batch->created_at?->format('d M Y H:i') }}</div>
     </div>
     <a href="{{ route($backRoute) }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>{{ __('stock.back') }}</a>
@@ -23,7 +23,7 @@
 @if(session('success'))<div class="alert alert-success alert-dismissible fade show">{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>@endif
 
 <div class="row g-3 mb-3">
-    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.type') }}</small><strong>{{ $batch->typeLabel() }}</strong></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.type') }}</small><strong>{{ $batch->translatedTypeLabel() }}</strong></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.from') }}</small><strong>{{ $batch->sourceLocation?->name ?? '—' }}</strong></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.to') }}</small><strong>{{ $batch->destLocation?->name ?? '—' }}</strong></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.recorded_by') }}</small><strong>{{ trim(($batch->createdBy?->first_name ?? '') . ' ' . ($batch->createdBy?->last_name ?? '')) ?: '—' }}</strong></div></div></div>
@@ -62,7 +62,7 @@
                         @if($movement->product?->code)<small class="text-muted">({{ $movement->product->code }})</small>@endif
                     </td>
                     <td>{{ $movement->location?->name ?? '—' }}</td>
-                    <td><span class="badge {{ $isIn ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">{{ $movement->movement_type->label() }}</span></td>
+                    <td><span class="badge {{ $isIn ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }}">{{ $movement->movement_type->translatedLabel() }}</span></td>
                     <td class="text-end fw-medium {{ $isIn ? 'text-success' : 'text-danger' }}">{{ $isIn ? '+' : '−' }}{{ rtrim(rtrim(number_format((float) $movement->quantity, 4, '.', ''), '0'), '.') }}</td>
                     <td>{{ $movement->batch_no ?: '—' }}</td>
                     <td>{{ $movement->expiry_date?->format('d M Y') ?? '—' }}</td>

@@ -107,7 +107,7 @@
                 <select name="status" class="form-select">
                     <option value="">All Status</option>
                     @foreach($statuses as $status)
-                        <option value="{{ $status->value }}" {{ request('status') == $status->value ? 'selected' : '' }}>{{ $status->label() }}</option>
+                        <option value="{{ $status->value }}" {{ request('status') == $status->value ? 'selected' : '' }}>{{ $status->translatedLabel() }}</option>
                     @endforeach
                 </select>
             </div>

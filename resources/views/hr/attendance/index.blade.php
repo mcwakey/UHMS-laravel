@@ -1,24 +1,24 @@
 @extends('layouts.app')
-@section('title', 'Attendance')
+@section('title', __('hr.staff_attendance'))
 
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Staff Attendance</h4>
+        <h4 class="fw-bold mb-0">{{ __('hr.staff_attendance') }}</h4>
     </div>
     <div class="d-flex gap-2">
         <form method="GET" action="{{ route('admin.hr.attendance.index') }}" class="d-flex gap-2">
             <select name="employee_id" class="form-select" style="width:180px;" onchange="this.form.submit()">
-                <option value="">All Employees</option>
+                <option value="">{{ __('hr.all_employees') }}</option>
                 @foreach($employees as $emp)
                     <option value="{{ $emp->id }}" {{ request('employee_id') == $emp->id ? 'selected' : '' }}>{{ $emp->full_name }}</option>
                 @endforeach
             </select>
             <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}" style="width:140px;">
             <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}" style="width:140px;">
-            <button aria-label="Filter" title="Filter" type="submit" class="btn btn-outline-primary"><i class="ti ti-filter"></i></button>
+            <button aria-label="{{ __('common.filter') }}" title="{{ __('common.filter') }}" type="submit" class="btn btn-outline-primary"><i class="ti ti-filter"></i></button>
         </form>
-        <a href="{{ route('admin.hr.attendance.summary') }}" class="btn btn-outline-info"><i class="ti ti-chart-bar me-1"></i>Summary</a>
+        <a href="{{ route('admin.hr.attendance.summary') }}" class="btn btn-outline-info"><i class="ti ti-chart-bar me-1"></i>{{ __('hr.summary') }}</a>
     </div>
 </div>
 
@@ -31,48 +31,48 @@
     @can('hr.attendance.manage')
     <div class="col-lg-4">
         <div class="card">
-            <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-clock-record me-1"></i>Record Attendance</h5></div>
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-clock-record me-1"></i>{{ __('hr.record_attendance') }}</h5></div>
             <div class="card-body">
                 <form method="POST" action="{{ route('admin.hr.attendance.store') }}">
                     @csrf
                     <div class="mb-3">
-                        <label class="form-label">Employee <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('hr.employee') }} <span class="text-danger">*</span></label>
                         <select name="employee_id" class="form-select" required>
-                            <option value="">Select Employee</option>
+                            <option value="">{{ __('hr.select_employee') }}</option>
                             @foreach($employees as $emp)
                                 <option value="{{ $emp->id }}">{{ $emp->full_name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Date <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('hr.date') }} <span class="text-danger">*</span></label>
                         <input type="date" name="date" class="form-control" value="{{ now()->format('Y-m-d') }}" required>
                     </div>
                     <div class="row mb-3">
                         <div class="col-6">
-                            <label class="form-label">Clock In</label>
+                            <label class="form-label">{{ __('hr.clock_in') }}</label>
                             <input type="time" name="clock_in" class="form-control">
                         </div>
                         <div class="col-6">
-                            <label class="form-label">Clock Out</label>
+                            <label class="form-label">{{ __('hr.clock_out') }}</label>
                             <input type="time" name="clock_out" class="form-control">
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Status <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('hr.status') }} <span class="text-danger">*</span></label>
                         <select name="status" class="form-select" required>
-                            <option value="present">Present</option>
-                            <option value="absent">Absent</option>
-                            <option value="late">Late</option>
-                            <option value="half_day">Half Day</option>
-                            <option value="holiday">Holiday</option>
+                            <option value="present">{{ __('hr.present') }}</option>
+                            <option value="absent">{{ __('hr.absent') }}</option>
+                            <option value="late">{{ __('hr.late') }}</option>
+                            <option value="half_day">{{ __('hr.half_day') }}</option>
+                            <option value="holiday">{{ __('hr.holiday') }}</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Notes</label>
+                        <label class="form-label">{{ __('hr.notes') }}</label>
                         <textarea name="notes" class="form-control" rows="2"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100"><i class="ti ti-check me-1"></i>Save</button>
+                    <button type="submit" class="btn btn-primary w-100"><i class="ti ti-check me-1"></i>{{ __('stock.save') }}</button>
                 </form>
             </div>
         </div>
@@ -87,12 +87,12 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Date</th>
-                                <th>Employee</th>
-                                <th>Clock In</th>
-                                <th>Clock Out</th>
-                                <th>Hours</th>
-                                <th>Status</th>
+                                <th>{{ __('hr.date') }}</th>
+                                <th>{{ __('hr.employee') }}</th>
+                                <th>{{ __('hr.clock_in') }}</th>
+                                <th>{{ __('hr.clock_out') }}</th>
+                                <th>{{ __('hr.hours') }}</th>
+                                <th>{{ __('hr.status') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -102,16 +102,16 @@
                                 <td class="fw-medium">{{ $rec->employee->full_name }}</td>
                                 <td>{{ $rec->clock_in ?? '-' }}</td>
                                 <td>{{ $rec->clock_out ?? '-' }}</td>
-                                <td>{{ $rec->hours_worked ? number_format($rec->hours_worked, 1) . ' hrs' : '-' }}</td>
+                                <td>{{ $rec->hours_worked ? number_format($rec->hours_worked, 1) . ' ' . __('hr.hrs') : '-' }}</td>
                                 <td>
                                     @php
                                         $statusColors = ['present' => 'success', 'absent' => 'danger', 'late' => 'warning', 'half_day' => 'info', 'holiday' => 'secondary'];
                                     @endphp
-                                    <span class="badge bg-{{ $statusColors[$rec->status] ?? 'secondary' }}">{{ ucfirst(str_replace('_', ' ', $rec->status)) }}</span>
+                                    <span class="badge bg-{{ $statusColors[$rec->status] ?? 'secondary' }}">{{ __('hr.' . $rec->status) }}</span>
                                 </td>
                             </tr>
                             @empty
-                            <tr><td colspan="6"><x-empty-state message="No attendance records found" /></td></tr>
+                            <tr><td colspan="6"><x-empty-state :message="__('hr.no_attendance_records')" /></td></tr>
                             @endforelse
                         </tbody>
                     </table>

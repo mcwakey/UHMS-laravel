@@ -33,7 +33,7 @@
                 <select name="movement_type" class="form-select">
                     <option value="">{{ __('stock.all') }}</option>
                     @foreach($types as $t)
-                    <option value="{{ $t->value }}" {{ request('movement_type') === $t->value ? 'selected' : '' }}>{{ $t->label() }}</option>
+                    <option value="{{ $t->value }}" {{ request('movement_type') === $t->value ? 'selected' : '' }}>{{ $t->translatedLabel() }}</option>
                     @endforeach
                 </select>
             </div>
@@ -85,7 +85,7 @@
                         <td class="small">{{ $m->movement_date?->format('d M Y H:i') }}</td>
                         <td>{{ $m->drug?->name }}</td>
                         <td>{{ $m->location?->name }}</td>
-                        <td><span class="badge bg-light text-dark">{{ $m->movement_type->label() }}</span></td>
+                        <td><span class="badge bg-light text-dark">{{ $m->movement_type->translatedLabel() }}</span></td>
                         <td>
                             @if($m->direction->value === 'in')
                             <span class="badge bg-success">IN</span>

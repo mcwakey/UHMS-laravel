@@ -172,7 +172,7 @@ $(document).ready(function () {
         if (validIdx === 0) {
             e.preventDefault();
             $('.item-row').find('input, select').prop('disabled', false);
-            alert('Add at least one line with a product and quantity.');
+            alert(@json(__('stock.alert_add_stock_line')));
             return false;
         }
     });

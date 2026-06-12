@@ -286,4 +286,7 @@ return [
     'no_emergency_products_or_stock' => 'Aucun produit n\'est lié aux urgences ou stocké dans un emplacement d\'urgence.',
     'no_emergency_stock_location_configured' => 'Aucun emplacement de stock d\'urgence n\'est configuré. Veuillez configurer un emplacement de stock pour le service d\'urgence.',
     'actions'                   => 'Actions',
+    'alert_add_stock_line'      => 'Ajoutez au moins une ligne avec un produit et une quantite.',
+    'alert_add_requisition_product' => 'Ajoutez au moins un produit a demander.',
+    'alert_enter_return_quantity' => 'Saisissez une quantite de retour pour au moins un article.',
 ];

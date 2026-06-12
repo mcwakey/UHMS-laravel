@@ -60,6 +60,11 @@ class StockBatch extends Model
         };
     }
 
+    public function translatedTypeLabel(): string
+    {
+        return __('statuses.default.' . $this->type);
+    }
+
     public static function prefixFor(string $type): string
     {
         return match ($type) {

@@ -286,4 +286,7 @@ return [
     'no_emergency_products_or_stock' => 'No products are linked to Emergency or stocked in an Emergency stock location yet.',
     'no_emergency_stock_location_configured' => 'No Emergency stock location is configured. Please configure a stock location for Emergency department.',
     'actions'                   => 'Actions',
+    'alert_add_stock_line'      => 'Add at least one line with a product and quantity.',
+    'alert_add_requisition_product' => 'Add at least one product to request.',
+    'alert_enter_return_quantity' => 'Enter a return quantity for at least one item.',
 ];

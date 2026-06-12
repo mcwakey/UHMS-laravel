@@ -14,7 +14,7 @@
 </div>
 
 <div class="row g-3 mb-3">
-    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.type') }}</small><span class="badge {{ $isIn ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }} fs-13">{{ $movement->movement_type->label() }}</span></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.type') }}</small><span class="badge {{ $isIn ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }} fs-13">{{ $movement->movement_type->translatedLabel() }}</span></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.direction_label') }}</small><strong class="{{ $isIn ? 'text-success' : 'text-danger' }}">{{ $isIn ? 'IN' : 'OUT' }}</strong></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.quantity') }}</small><strong class="{{ $isIn ? 'text-success' : 'text-danger' }}">{{ $isIn ? '+' : '−' }}{{ rtrim(rtrim(number_format((float) $movement->quantity, 4, '.', ''), '0'), '.') }}</strong></div></div></div>
     <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.line_value') }}</small><strong>GH₵ {{ number_format((float) $movement->quantity * (float) $movement->unit_cost, 2) }}</strong></div></div></div>
