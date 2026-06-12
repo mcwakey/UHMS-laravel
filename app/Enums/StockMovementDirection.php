@@ -16,4 +16,9 @@ enum StockMovementDirection: string
     {
         return $this === self::IN ? 'In' : 'Out';
     }
+
+    public function translatedLabel(): string
+    {
+        return __('statuses.default.' . $this->value);
+    }
 }

@@ -17,6 +17,11 @@ enum TriageScore: string
         };
     }
 
+    public function translatedLabel(): string
+    {
+        return __('statuses.priority.' . $this->value);
+    }
+
     public function color(): string
     {
         return match ($this) {

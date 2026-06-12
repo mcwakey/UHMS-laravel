@@ -39,6 +39,11 @@ enum ProcedureStatus: string
         };
     }
 
+    public function translatedLabel(): string
+    {
+        return __('statuses.theatre.' . $this->value);
+    }
+
     public function color(): string
     {
         return match ($this) {

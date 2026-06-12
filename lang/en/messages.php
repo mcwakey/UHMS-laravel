@@ -3,6 +3,31 @@
 return [
 
     /* ------------------------------------------------------------------ */
+    /* Accounting (journal entries, fiscal years, periods, accounts, etc.) */
+    /* ------------------------------------------------------------------ */
+    'accounting' => [
+        'journal_drafted'          => 'Journal entry saved as draft.',
+        'journal_updated'          => 'Journal entry updated.',
+        'journal_posted'           => 'Journal entry posted.',
+        'journal_reversed'         => 'Journal entry reversed.',
+        'journal_cancelled'        => 'Draft journal cancelled.',
+        'journal_cannot_edit'      => 'Posted, reversed, or cancelled journal entries cannot be edited.',
+        'fiscal_year_created'      => 'Fiscal year created.',
+        'fiscal_year_closed'       => 'Fiscal year closed.',
+        'period_created'           => 'Accounting period created.',
+        'period_closed'            => 'Accounting period closed.',
+        'account_created'          => 'Account created.',
+        'account_updated'          => 'Account updated.',
+        'account_disabled'         => 'Account disabled.',
+        'account_reactivated'      => 'Account reactivated.',
+        'settings_updated'         => 'Accounting settings updated.',
+        'posting_retried'          => 'Accounting posting retried successfully (:number).',
+        'posting_retry_failed'     => 'Accounting retry did not produce a journal entry. Review the posting status/error on the source record.',
+        'supplier_payment_recorded'=> 'Supplier payment :number recorded.',
+        'supplier_payment_reversed'=> 'Payment :number reversed.',
+    ],
+
+    /* ------------------------------------------------------------------ */
     /* Accounts / Categories                                                */
     /* ------------------------------------------------------------------ */
     'accounts' => [
@@ -85,6 +110,38 @@ return [
     ],
 
     /* ------------------------------------------------------------------ */
+    /* Billing (invoices, payments, credit notes, sponsors, receivables)   */
+    /* ------------------------------------------------------------------ */
+    'invoices' => [
+        'created'            => 'Invoice :number created successfully.',
+        'updated'            => 'Invoice :number updated.',
+        'cancelled'          => 'Invoice :number has been cancelled.',
+        'cannot_edit'        => 'This invoice can no longer be edited.',
+        'cannot_cancel'      => 'Cannot cancel a fully paid invoice.',
+        'item_not_belong'    => 'Item does not belong to this invoice.',
+        'discount_applied'   => 'Discount applied successfully.',
+        'discount_removed'   => 'Discount removed successfully.',
+        'manual_discount_note' => 'Manual discounts must be applied to invoice items with a reason after invoice creation.',
+    ],
+
+    'payments' => [
+        'recorded'           => 'Payment :number of :amount recorded successfully.',
+        'reversed'           => 'Payment :number reversed (reversal :reversal).',
+        'cannot_record'      => 'Cannot record payment on this invoice.',
+        'exceeds_balance'    => 'Payment amount exceeds outstanding balance of :balance',
+        'open_shift_required'=> 'Open a cashier shift before accepting cash payments.',
+    ],
+
+    'billing' => [
+        'credit_note_issued'     => ':type :number issued.',
+        'credit_note_cancelled'  => 'Credit note :number cancelled.',
+        'receivable_reallocated' => 'Payer responsibility reallocated successfully.',
+        'sponsor_created'        => 'Sponsor :name created.',
+        'sponsor_updated'        => 'Sponsor :name updated.',
+        'sponsor_toggled'        => 'Sponsor :name :status.',
+    ],
+
+    /* ------------------------------------------------------------------ */
     /* Cashier                                                              */
     /* ------------------------------------------------------------------ */
     'cashier' => [
@@ -125,6 +182,55 @@ return [
         'added'          => 'Complaint added to the catalogue.',
         'updated'        => 'Complaint catalogue entry updated.',
         'status_updated' => 'Complaint catalogue status updated.',
+    ],
+
+    /* ------------------------------------------------------------------ */
+    /* Consultations                                                        */
+    /* ------------------------------------------------------------------ */
+    'consultations' => [
+        'started'                   => 'Consultation started.',
+        'route_queued'              => 'Consultation session queued.',
+        'route_activated'           => 'Consultation session activated.',
+        'route_activated_queued'    => 'Consultation route activated and queued.',
+        'route_completed'           => 'Consultation session completed.',
+        'route_cancelled'           => 'Consultation session cancelled.',
+        'followup_saved'            => 'Next appointment / follow-up saved.',
+        'followup_updated'          => 'Next appointment / follow-up updated.',
+        'followup_cancelled'        => 'Next appointment / follow-up cancelled.',
+        'next_patient_opened'       => 'Next patient opened.',
+        'completed_next_opened'     => 'Consultation completed and next patient opened.',
+        'complaint_added'           => 'Complaint added.',
+        'complaint_updated'         => 'Complaint updated.',
+        'complaint_removed'         => 'Complaint removed.',
+        'hopc_added'                => 'History of presenting complaint added.',
+        'hopc_updated'              => 'History of presenting complaint updated.',
+        'hopc_removed'              => 'History of presenting complaint removed.',
+        'examination_added'         => 'Examination findings added.',
+        'examination_updated'       => 'Examination findings updated.',
+        'examination_removed'       => 'Examination findings removed.',
+        'diagnosis_added'           => 'Diagnosis added.',
+        'diagnosis_updated'         => 'Diagnosis updated.',
+        'diagnosis_removed'         => 'Diagnosis removed.',
+        'primary_diagnosis_set'     => 'Primary diagnosis set.',
+        'treatment_added'           => 'Treatment added.',
+        'treatment_updated'         => 'Treatment updated.',
+        'treatment_removed'         => 'Treatment removed.',
+        'prescription_created'      => 'Prescription :number created and sent to pharmacy.',
+        'prescription_updated'      => 'Prescription updated.',
+        'prescription_deleted'      => 'Prescription deleted.',
+        'prescription_cannot_delete'=> 'Cannot delete a dispensed or cancelled prescription.',
+        'investigation_removed'     => 'Investigation removed.',
+        'investigation_updated'     => 'Investigation updated.',
+        'investigations_added'      => ':count investigation(s) added.',
+        'investigations_added_with_request' => ':count investigation(s) added — request :number sent to investigation department.',
+        'lab_request_sent'          => 'Investigation request :number sent to :department.',
+        'lab_request_updated'       => 'Investigation request updated.',
+        'procedure_submitted'       => 'Procedure request submitted (:number).',
+        'procedure_updated'         => 'Procedure request updated.',
+        'visit_transitioned'        => 'Visit moved to :status.',
+        'referred_activated'        => 'Patient sent to :department and session activated.',
+        'referred_queued'           => 'Patient queued for :department.',
+        'sent_to_investigation'     => 'Patient sent to :department for investigation.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -175,6 +281,7 @@ return [
         'created'                => 'Drug created successfully.',
         'updated'                => 'Drug updated successfully.',
         'toggled'                => 'Drug status toggled.',
+        'status_toggled'         => 'Drug status toggled.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -203,6 +310,10 @@ return [
         'task_updated'             => 'Task updated.',
         'triage_recorded'          => 'Emergency triage recorded.',
         'vitals_recorded'          => 'Emergency vitals recorded.',
+        'bed_updated'              => 'Ward / bed updated.',
+        'billable_added'           => 'Emergency billable service added.',
+        'admit_disposition'        => 'Emergency case marked for admission. Complete admission placement.',
+        'monitoring_added'         => 'Monitoring task added.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -289,6 +400,20 @@ return [
     ],
 
     /* ------------------------------------------------------------------ */
+    /* Lab requests / results                                               */
+    /* ------------------------------------------------------------------ */
+    'lab' => [
+        'request_accepted'              => 'Lab request accepted and is now ready for result entry.',
+        'request_cancelled'             => 'Lab request cancelled.',
+        'result_saved'                  => 'Result saved successfully.',
+        'results_saved'                 => 'Results saved successfully.',
+        'result_verified'               => 'Result verified successfully.',
+        'accept_items_first'            => 'Accept and bill investigation items before entering results.',
+        'items_accepted'                => 'Accepted :count item(s) (no billable services).',
+        'items_accepted_with_invoice'   => 'Accepted :count item(s) — invoice :number generated.',
+    ],
+
+    /* ------------------------------------------------------------------ */
     /* Lab tests                                                            */
     /* ------------------------------------------------------------------ */
     'lab_tests' => [
@@ -299,6 +424,7 @@ return [
         'created'                => 'Lab test created successfully.',
         'updated'                => 'Lab test updated successfully.',
         'toggled'                => 'Lab test status toggled.',
+        'status_toggled'         => 'Lab test status toggled.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -322,6 +448,60 @@ return [
     /* ------------------------------------------------------------------ */
     'log_retention' => [
         'updated' => 'Retention overrides updated.',
+    ],
+
+    /* ------------------------------------------------------------------ */
+    /* Medical patterns                                                     */
+    /* ------------------------------------------------------------------ */
+    'patterns' => [
+        'created'                => 'Pattern ":name" created.',
+        'saved_from_consultation'=> 'Pattern ":name" saved from consultation.',
+        'updated'                => 'Pattern ":name" updated.',
+        'toggled'                => 'Pattern ":name" :status.',
+        'deleted'                => 'Pattern ":name" deleted.',
+    ],
+
+    /* ------------------------------------------------------------------ */
+    /* Pharmacy dispensing                                                  */
+    /* ------------------------------------------------------------------ */
+    'pharmacy' => [
+        'item_dispensed'  => 'Item dispensed successfully.',
+        'items_dispensed' => 'Items dispensed successfully.',
+    ],
+
+    /* ------------------------------------------------------------------ */
+    /* Prescriptions                                                        */
+    /* ------------------------------------------------------------------ */
+    'prescriptions' => [
+        'cancelled' => 'Prescription :number cancelled.',
+        'billed'    => ':count item(s) billed. Collect payment, then dispense at the pharmacy.',
+    ],
+
+    /* ------------------------------------------------------------------ */
+    /* Theatre                                                              */
+    /* ------------------------------------------------------------------ */
+    'theatre' => [
+        'room_created'              => 'Theatre room created.',
+        'room_updated'              => 'Theatre room updated.',
+        'room_status_updated'       => 'Theatre room status updated.',
+        'room_block_recorded'       => 'Theatre room block recorded.',
+        'room_block_removed'        => 'Theatre room block removed.',
+        'procedure_submitted'       => 'Procedure request submitted.',
+        'procedure_submitted_number'=> 'Procedure request submitted (:number).',
+        'report_unavailable'        => 'Full procedure report is only available for completed procedures.',
+        'procedure_accepted'        => 'Procedure accepted.',
+        'procedure_rejected'        => 'Procedure rejected.',
+        'procedure_billed'          => 'Procedure billed on visit invoice.',
+        'procedure_scheduled'       => 'Procedure scheduled.',
+        'procedure_rescheduled'     => 'Procedure rescheduled.',
+        'preop_saved'               => 'Pre-op vitals and checklist saved.',
+        'anaesthesia_saved'         => 'Anaesthesia note saved.',
+        'surgery_started'           => 'Surgery started.',
+        'operative_note_saved'      => 'Operative note saved.',
+        'surgery_done'              => 'Surgery marked as done.',
+        'postop_saved'              => 'Post-op note saved.',
+        'procedure_completed'       => 'Procedure completed.',
+        'procedure_cancelled'       => 'Procedure cancelled.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -356,6 +536,8 @@ return [
         'disabled'                => 'Module \':name\' disabled.',
         'enable_parent_first'     => 'Enable parent module \':name\' first.',
         'enabled'                 => 'Module \':name\' enabled.',
+        'cannot_disable'          => 'Cannot disable core module \':name\'.',
+        'status_changed'          => ':message',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -383,6 +565,8 @@ return [
         'marked_deceased'              => ':name has been marked as deceased.',
         'already_deceased'             => 'Patient is already marked as deceased.',
         'cannot_change_deceased_status'=> 'Cannot change the status of a deceased patient.',
+        'deceased'                     => ':name has been marked as deceased.',
+        'cannot_change_deceased'       => 'Cannot change the status of a deceased patient.',
         'complaint_recorded'           => 'Complaint recorded.',
         'complaint_updated'            => 'Complaint updated.',
         'complaint_removed'            => 'Complaint removed.',
@@ -414,6 +598,7 @@ return [
         'processed'   => 'Payroll processed for :count employees.',
         'approved'    => ':count payroll records approved.',
         'marked_paid' => ':count payroll records marked as paid.',
+        'paid'        => ':count payroll record(s) marked as paid.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -457,15 +642,18 @@ return [
         'scheduled'        => 'Procedure scheduled.',
         'toggled'          => 'Procedure :name :status.',
         'consent_required' => 'This procedure requires signed consent before scheduling.',
+        'added'            => 'Procedure added successfully.',
+        'status_changed'   => 'Procedure :name :status.',
     ],
 
     /* ------------------------------------------------------------------ */
     /* Products                                                             */
     /* ------------------------------------------------------------------ */
     'products' => [
-        'created' => 'Product created.',
-        'updated' => 'Product updated.',
-        'toggled' => 'Product status toggled.',
+        'created'        => 'Product created.',
+        'updated'        => 'Product updated.',
+        'toggled'        => 'Product status toggled.',
+        'status_toggled' => 'Product status toggled.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -481,17 +669,39 @@ return [
         'provider_price_added'  => 'Provider-specific price added.',
         'provider_price_updated'=> 'Provider price updated.',
         'provider_price_removed'=> 'Provider price removed.',
+        'bulk_updated'          => 'Pricing for ":name" updated.',
+        'insurance_type_added'  => 'Insurance type price added.',
+        'insurance_type_updated'=> 'Insurance type price updated.',
+        'insurance_type_removed'=> 'Insurance type price removed.',
+        'provider_added'        => 'Provider-specific price added.',
+        'provider_updated'      => 'Provider price updated.',
+        'provider_removed'      => 'Provider price removed.',
     ],
 
     /* ------------------------------------------------------------------ */
     /* Stock (StockController)                                              */
     /* ------------------------------------------------------------------ */
     'stock' => [
-        'location_created'   => 'Stock location created.',
-        'location_updated'   => 'Stock location updated.',
-        'adjustment_recorded'=> 'Stock adjustment :number recorded.',
-        'return_recorded'    => 'Stock return :number recorded.',
-        'transfer_recorded'  => 'Stock transfer :number recorded.',
+        'location_created'        => 'Stock location created.',
+        'location_updated'        => 'Stock location updated.',
+        'adjustment_recorded'     => 'Stock adjustment :number recorded.',
+        'return_recorded'         => 'Stock return :number recorded.',
+        'transfer_recorded'       => 'Stock transfer :number recorded.',
+        'received'                => 'Stock received.',
+        'adjusted'                => 'Stock adjusted.',
+        'transferred'             => 'Transfer recorded.',
+        'returned'                => 'Return recorded.',
+        'adjustment_batch'        => 'Stock adjustment :batch recorded.',
+        'return_batch'            => 'Stock return :batch recorded.',
+        'transfer_batch'          => 'Stock transfer :batch recorded.',
+        'location_status'         => 'Status toggled.',
+        'cannot_deactivate_main'  => 'Main Store cannot be deactivated.',
+        'cannot_edit_main'        => 'Main Store is a protected system location and cannot be edited here.',
+        'requisition_submitted'   => 'Stock requisition submitted.',
+        'requisition_approved'    => 'Stock requisition approved.',
+        'requisition_cancelled'   => 'Stock requisition cancelled.',
+        'requisition_issued'      => 'Stock issued from Main Store. Department stock will update after acknowledgement.',
+        'requisition_acknowledged'=> 'Department stock acknowledged and updated.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -546,6 +756,7 @@ return [
         'item_added'     => 'Item added to purchase order.',
         'item_removed'   => 'Item removed from purchase order.',
         'cannot_modify'  => 'Cannot modify items on this purchase order.',
+        'received'       => 'Items received successfully.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -567,6 +778,7 @@ return [
         'completed'    => 'Queue #:number marked as completed.',
         'skipped'      => 'Queue #:number skipped.',
         'none_waiting' => 'No patients waiting in this department queue.',
+        're_queued'    => 'Patient re-queued as #:number.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -578,8 +790,9 @@ return [
         'deleted'              => 'Role deleted successfully.',
         'permissions_updated'  => 'Permissions updated successfully.',
         'cannot_delete_assigned' => 'Cannot delete role with assigned users.',
-        'cannot_delete_system' => 'Cannot delete system roles.',
-        'cannot_rename_system' => 'Cannot rename system roles.',
+        'cannot_delete_system'   => 'Cannot delete system roles.',
+        'cannot_rename_system'   => 'Cannot rename system roles.',
+        'cannot_delete_users'    => 'Cannot delete role with assigned users.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -617,15 +830,18 @@ return [
         'invoice_updated'        => 'Invoice settings updated successfully.',
         'payment_methods_updated'=> 'Payment method settings updated successfully.',
         'ward_updated'           => 'Ward & Admissions settings updated successfully.',
+        'organisation_updated'   => 'Organization settings updated successfully.',
+        'payment_updated'        => 'Payment method settings updated successfully.',
     ],
 
     /* ------------------------------------------------------------------ */
     /* Specialties                                                          */
     /* ------------------------------------------------------------------ */
     'specialties' => [
-        'created' => 'Specialty created successfully.',
-        'updated' => 'Specialty updated successfully.',
-        'toggled' => 'Specialty :name :status.',
+        'created'        => 'Specialty created successfully.',
+        'updated'        => 'Specialty updated successfully.',
+        'toggled'        => 'Specialty :name :status.',
+        'status_changed' => 'Specialty :name :status.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -636,6 +852,7 @@ return [
         'updated'               => 'Supplier updated successfully.',
         'status_updated'        => 'Supplier status updated.',
         'ledger_entry_recorded' => 'Ledger entry recorded.',
+        'ledger_recorded'       => 'Ledger entry recorded.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -671,27 +888,34 @@ return [
         'cannot_transition'  => 'Cannot transition from :from to :to.',
         'insurance_changed'  => 'Visit insurance changed to :provider. Existing billed items were not changed.',
         'insurance_already_set' => 'Visit insurance is already set to the selected option.',
+        'failed_create'      => 'Failed to create visit. Please try again.',
+        'failed_update'      => 'Failed to update visit: :error',
+        'invalid_transition' => 'Cannot transition from :from to :to.',
+        'insurance_unchanged'=> 'Visit insurance is already set to the selected option.',
     ],
 
     /* ------------------------------------------------------------------ */
     /* Vitals                                                               */
     /* ------------------------------------------------------------------ */
     'vitals' => [
-        'recorded_triage'     => 'Vitals recorded for :name. Please direct patient to a consultation department.',
-        'recorded'            => 'Vitals recorded for :name.',
+        'recorded_triage'       => 'Vitals recorded for :name. Please direct patient to a consultation department.',
+        'recorded'              => 'Vitals recorded for :name.',
         'assigned_consultation' => 'Patient assigned to consultation queue.',
-        'priority_updated'    => 'Priority updated to :priority.',
+        'priority_updated'      => 'Priority updated to :priority.',
+        'recorded_with_queue'   => 'Vitals recorded for :name. Please direct patient to a consultation department.',
+        'assigned_to_queue'     => 'Patient assigned to consultation queue.',
     ],
 
     /* ------------------------------------------------------------------ */
     /* Wards                                                                */
     /* ------------------------------------------------------------------ */
     'wards' => [
-        'created'     => 'Ward \':name\' created successfully.',
-        'updated'     => 'Ward \':name\' updated successfully.',
-        'toggled'     => 'Ward \':name\' :status.',
-        'bed_created' => 'Bed created successfully.',
-        'bed_updated' => 'Bed updated successfully.',
+        'created'        => 'Ward \':name\' created successfully.',
+        'updated'        => 'Ward \':name\' updated successfully.',
+        'toggled'        => 'Ward \':name\' :status.',
+        'bed_created'    => 'Bed created successfully.',
+        'bed_updated'    => 'Bed updated successfully.',
+        'status_changed' => 'Ward \':name\' :status.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -719,3 +943,4 @@ return [
     ],
 
 ];
+

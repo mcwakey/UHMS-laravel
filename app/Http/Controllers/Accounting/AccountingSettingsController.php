@@ -57,6 +57,6 @@ class AccountingSettingsController extends Controller
             'new_values' => $after,
         ], null, 'Accounting settings updated');
 
-        return back()->with('success', 'Accounting settings updated.');
+        return back()->with('success', __('messages.accounting.settings_updated'));
     }
 }

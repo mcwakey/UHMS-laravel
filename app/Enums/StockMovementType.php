@@ -73,4 +73,9 @@ enum StockMovementType: string
             self::REVERSAL_OUT        => 'Reversal Out',
         };
     }
+
+    public function translatedLabel(): string
+    {
+        return __('statuses.default.' . $this->value);
+    }
 }

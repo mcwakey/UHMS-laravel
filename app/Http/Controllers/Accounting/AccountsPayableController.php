@@ -81,7 +81,7 @@ class AccountsPayableController extends Controller
             return back()->withInput()->withErrors(['amount' => $e->getMessage()]);
         }
 
-        return back()->with('success', "Supplier payment {$payment->payment_number} recorded.");
+        return back()->with('success', __('messages.accounting.supplier_payment_recorded', ['number' => $payment->payment_number]));
     }
 
     public function reversePayment(Request $request, SupplierPayment $payment)
@@ -96,7 +96,7 @@ class AccountsPayableController extends Controller
             return back()->withErrors(['reason' => $e->getMessage()]);
         }
 
-        return back()->with('success', "Payment {$payment->payment_number} reversed.");
+        return back()->with('success', __('messages.accounting.supplier_payment_reversed', ['number' => $payment->payment_number]));
     }
 
     /** Supplier statement from the ledger. */

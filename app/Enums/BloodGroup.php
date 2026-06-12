@@ -17,4 +17,9 @@ enum BloodGroup: string
     {
         return $this->value;
     }
+
+    public function translatedLabel(): string
+    {
+        return __('statuses.default.' . $this->value);
+    }
 }

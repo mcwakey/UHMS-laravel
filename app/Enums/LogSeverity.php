@@ -17,6 +17,11 @@ enum LogSeverity: string
         return ucfirst(strtolower($this->value));
     }
 
+    public function translatedLabel(): string
+    {
+        return __('statuses.default.' . strtolower($this->value));
+    }
+
     public function color(): string
     {
         return match ($this) {

@@ -64,7 +64,7 @@ class PrescriptionController extends Controller
         try {
             $created = $this->billingSelections->billSelectedItems($prescription, $validated['items']);
 
-            return back()->with('success', $created->count().' item(s) billed. Collect payment, then dispense at the pharmacy.');
+            return back()->with('success', __('messages.prescriptions.billed', ['count' => $created->count()]));
         } catch (\RuntimeException $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
@@ -77,6 +77,6 @@ class PrescriptionController extends Controller
     {
         $this->prescriptionService->cancel($prescription);
 
-        return back()->with('success', "Prescription {$prescription->prescription_number} cancelled.");
+        return back()->with('success', __('messages.prescriptions.cancelled', ['number' => $prescription->prescription_number]));
     }
 }

@@ -195,7 +195,7 @@ class TheatreController extends Controller
     public function fullReport(ProcedureRequest $procedure)
     {
         if ($procedure->status !== ProcedureStatus::COMPLETED) {
-            return back()->with('error', 'Full procedure report is only available for completed procedures.');
+            return back()->with('error', __('messages.theatre.report_unavailable'));
         }
 
         $procedure->load([
@@ -238,11 +238,11 @@ class TheatreController extends Controller
 
         if ($this->shouldReturnJson($request)) {
             return response()->json([
-                'success'   => 'Procedure request submitted (' . $procedure->request_number . ').',
+                'success'   => __('messages.theatre.procedure_submitted_number', ['number' => $procedure->request_number]),
                 'procedure' => $procedure->only(['id', 'request_number', 'status', 'priority']),
             ]);
         }
-        return back()->withFragment('procedures-section')->with('success', 'Procedure request submitted.');
+        return back()->withFragment('procedures-section')->with('success', __('messages.theatre.procedure_submitted'));
     }
 
     /* ── Workflow actions ── */
@@ -254,7 +254,7 @@ class TheatreController extends Controller
         } catch (\Throwable $e) {
             return $this->errorBack($request, $e);
         }
-        return $this->successBack($request, 'Procedure accepted.');
+        return $this->successBack($request, __('messages.theatre.procedure_accepted'));
     }
 
     public function reject(Request $request, ProcedureRequest $procedure)
@@ -265,7 +265,7 @@ class TheatreController extends Controller
         } catch (\Throwable $e) {
             return $this->errorBack($request, $e);
         }
-        return $this->successBack($request, 'Procedure rejected.');
+        return $this->successBack($request, __('messages.theatre.procedure_rejected'));
     }
 
     public function generateBilling(Request $request, ProcedureRequest $procedure)
@@ -275,7 +275,7 @@ class TheatreController extends Controller
         } catch (\Throwable $e) {
             return $this->errorBack($request, $e);
         }
-        return $this->successBack($request, 'Procedure billed on visit invoice.');
+        return $this->successBack($request, __('messages.theatre.procedure_billed'));
     }
 
     public function schedule(Request $request, ProcedureRequest $procedure)
@@ -299,7 +299,7 @@ class TheatreController extends Controller
         } catch (\Throwable $e) {
             return $this->errorBack($request, $e);
         }
-        return $this->successBack($request, 'Procedure scheduled.');
+        return $this->successBack($request, __('messages.theatre.procedure_scheduled'));
     }
 
     public function reschedule(Request $request, ProcedureRequest $procedure)
@@ -324,7 +324,7 @@ class TheatreController extends Controller
         } catch (\Throwable $e) {
             return $this->errorBack($request, $e);
         }
-        return $this->successBack($request, 'Procedure rescheduled.');
+        return $this->successBack($request, __('messages.theatre.procedure_rescheduled'));
     }
 
     public function preop(Request $request, ProcedureRequest $procedure)
@@ -356,7 +356,7 @@ class TheatreController extends Controller
         } catch (\Throwable $e) {
             return $this->errorBack($request, $e);
         }
-        return $this->successBack($request, 'Pre-op vitals and checklist saved.');
+        return $this->successBack($request, __('messages.theatre.preop_saved'));
     }
 
     public function anaesthesia(Request $request, ProcedureRequest $procedure)
@@ -382,7 +382,7 @@ class TheatreController extends Controller
         } catch (\Throwable $e) {
             return $this->errorBack($request, $e);
         }
-        return $this->successBack($request, 'Anaesthesia note saved.');
+        return $this->successBack($request, __('messages.theatre.anaesthesia_saved'));
     }
 
     public function startSurgery(Request $request, ProcedureRequest $procedure)
@@ -392,7 +392,7 @@ class TheatreController extends Controller
         } catch (\Throwable $e) {
             return $this->errorBack($request, $e);
         }
-        return $this->successBack($request, 'Surgery started.');
+        return $this->successBack($request, __('messages.theatre.surgery_started'));
     }
 
     public function operativeNote(Request $request, ProcedureRequest $procedure)
@@ -424,7 +424,7 @@ class TheatreController extends Controller
         } catch (\Throwable $e) {
             return $this->errorBack($request, $e);
         }
-        return $this->successBack($request, 'Operative note saved.');
+        return $this->successBack($request, __('messages.theatre.operative_note_saved'));
     }
 
     public function completeSurgery(Request $request, ProcedureRequest $procedure)
@@ -434,7 +434,7 @@ class TheatreController extends Controller
         } catch (\Throwable $e) {
             return $this->errorBack($request, $e);
         }
-        return $this->successBack($request, 'Surgery marked as done.');
+        return $this->successBack($request, __('messages.theatre.surgery_done'));
     }
 
     public function postop(Request $request, ProcedureRequest $procedure)
@@ -463,7 +463,7 @@ class TheatreController extends Controller
         } catch (\Throwable $e) {
             return $this->errorBack($request, $e);
         }
-        return $this->successBack($request, 'Post-op note saved.');
+        return $this->successBack($request, __('messages.theatre.postop_saved'));
     }
 
     public function complete(Request $request, ProcedureRequest $procedure)
@@ -473,7 +473,7 @@ class TheatreController extends Controller
         } catch (\Throwable $e) {
             return $this->errorBack($request, $e);
         }
-        return $this->successBack($request, 'Procedure completed.');
+        return $this->successBack($request, __('messages.theatre.procedure_completed'));
     }
 
     public function cancel(Request $request, ProcedureRequest $procedure)
@@ -484,7 +484,7 @@ class TheatreController extends Controller
         } catch (\Throwable $e) {
             return $this->errorBack($request, $e);
         }
-        return $this->successBack($request, 'Procedure cancelled.');
+        return $this->successBack($request, __('messages.theatre.procedure_cancelled'));
     }
 
     /* ── Helpers ─────────────────────────────────────────── */

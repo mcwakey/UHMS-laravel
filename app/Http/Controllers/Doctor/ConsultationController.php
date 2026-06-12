@@ -148,7 +148,7 @@ class ConsultationController extends Controller
             ->to($activeRoute
                 ? route('admin.consultations.routes.show', [$visit, $activeRoute])
                 : route('admin.consultations.show', $visit))
-            ->with('success', 'Consultation started.');
+            ->with('success', __('messages.consultations.started'));
     }
 
     /**
@@ -169,7 +169,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => 'Investigation removed.']);
         }
 
-        return back()->with('success', 'Investigation removed.');
+        return back()->with('success', __('messages.consultations.investigation_removed'));
     }
 
     /**
@@ -629,8 +629,8 @@ class ConsultationController extends Controller
         }
 
         $message = ($data['activate_now'] ?? false)
-            ? 'Consultation session activated.'
-            : 'Consultation session queued.';
+            ? __('messages.consultations.route_activated')
+            : __('messages.consultations.route_queued');
 
         if ($this->shouldReturnJson($request)) {
             return response()->json([
@@ -655,7 +655,7 @@ class ConsultationController extends Controller
 
                 return redirect()
                     ->route('admin.visits.show', $visit)
-                    ->with('success', 'Consultation route activated and queued.');
+                    ->with('success', __('messages.consultations.route_activated_queued'));
             }
 
             $route = $this->consultationRouteService->activateRoute($route, Auth::user());
@@ -665,7 +665,7 @@ class ConsultationController extends Controller
 
         return redirect()
             ->route('admin.consultations.routes.show', [$visit, $route])
-            ->with('success', 'Consultation session activated.');
+            ->with('success', __('messages.consultations.route_activated'));
     }
 
     public function completeRoute(Request $request, Visit $visit, VisitConsultationRoute $route)
@@ -680,7 +680,7 @@ class ConsultationController extends Controller
 
         return redirect()
             ->route('admin.consultations.routes.show', [$visit, $route])
-            ->with('success', 'Consultation session completed.');
+            ->with('success', __('messages.consultations.route_completed'));
     }
 
     public function cancelRoute(Request $request, Visit $visit, VisitConsultationRoute $route)
@@ -695,7 +695,7 @@ class ConsultationController extends Controller
 
         return redirect()
             ->route('admin.consultations.routes.show', [$visit, $route])
-            ->with('success', 'Consultation session cancelled.');
+            ->with('success', __('messages.consultations.route_cancelled'));
     }
 
     public function storeFollowUpAppointment(
@@ -717,7 +717,7 @@ class ConsultationController extends Controller
 
         return redirect()
             ->route('admin.consultations.routes.show', [$visit, $route])
-            ->with('success', 'Next appointment / follow-up saved.');
+            ->with('success', __('messages.consultations.followup_saved'));
     }
 
     public function updateFollowUpAppointment(
@@ -740,7 +740,7 @@ class ConsultationController extends Controller
 
         return redirect()
             ->route('admin.consultations.routes.show', [$visit, $route])
-            ->with('success', 'Next appointment / follow-up updated.');
+            ->with('success', __('messages.consultations.followup_updated'));
     }
 
     public function cancelFollowUpAppointment(
@@ -764,7 +764,7 @@ class ConsultationController extends Controller
 
         return redirect()
             ->route('admin.consultations.routes.show', [$visit, $route])
-            ->with('success', 'Next appointment / follow-up cancelled.');
+            ->with('success', __('messages.consultations.followup_cancelled'));
     }
 
     public function openNextPatient(
@@ -783,7 +783,7 @@ class ConsultationController extends Controller
 
         return redirect()
             ->route('admin.consultations.routes.show', [$nextRoute->visit, $nextRoute])
-            ->with('success', 'Next patient opened.');
+            ->with('success', __('messages.consultations.next_patient_opened'));
     }
 
     public function completeAndOpenNextPatient(
@@ -802,7 +802,7 @@ class ConsultationController extends Controller
 
         return redirect()
             ->route('admin.consultations.routes.show', [$nextRoute->visit, $nextRoute])
-            ->with('success', 'Consultation completed and next patient opened.');
+            ->with('success', __('messages.consultations.completed_next_opened'));
     }
 
     private function validateFollowUpAppointment(Request $request): array
@@ -848,7 +848,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true, 'complaint' => $this->entryPayload($complaint)]);
         }
 
-        return back()->with('success', 'Complaint added.');
+        return back()->with('success', __('messages.consultations.complaint_added'));
     }
 
     public function updateComplaint(Request $request, Complaint $complaint)
@@ -870,7 +870,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true, 'complaint' => $this->entryPayload($complaint)]);
         }
 
-        return back()->withFragment('complaints-section')->with('success', 'Complaint updated.');
+        return back()->withFragment('complaints-section')->with('success', __('messages.consultations.complaint_updated'));
     }
 
     public function destroyComplaint(Complaint $complaint)
@@ -883,7 +883,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true]);
         }
 
-        return back()->with('success', 'Complaint removed.');
+        return back()->with('success', __('messages.consultations.complaint_removed'));
     }
 
     /*
@@ -921,7 +921,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true, 'hopc' => $this->entryPayload($entry, ['complaint'])]);
         }
 
-        return back()->withFragment('hopc-section')->with('success', 'History of presenting complaint added.');
+        return back()->withFragment('hopc-section')->with('success', __('messages.consultations.hopc_added'));
     }
 
     public function updateHistoryOfPresentingComplaint(Request $request, HistoryOfPresentingComplaint $hopc)
@@ -952,7 +952,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true, 'hopc' => $this->entryPayload($hopc, ['complaint'])]);
         }
 
-        return back()->withFragment('hopc-section')->with('success', 'History of presenting complaint updated.');
+        return back()->withFragment('hopc-section')->with('success', __('messages.consultations.hopc_updated'));
     }
 
     public function destroyHistoryOfPresentingComplaint(HistoryOfPresentingComplaint $hopc)
@@ -966,7 +966,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true]);
         }
 
-        return back()->withFragment('hopc-section')->with('success', 'History of presenting complaint removed.');
+        return back()->withFragment('hopc-section')->with('success', __('messages.consultations.hopc_removed'));
     }
 
     /*
@@ -1002,7 +1002,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true, 'examination' => $this->entryPayload($entry)]);
         }
 
-        return back()->withFragment('examination-section')->with('success', 'Examination findings added.');
+        return back()->withFragment('examination-section')->with('success', __('messages.consultations.examination_added'));
     }
 
     public function updateExamination(Request $request, PhysicalExamination $examination)
@@ -1031,7 +1031,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true, 'examination' => $this->entryPayload($examination)]);
         }
 
-        return back()->withFragment('examination-section')->with('success', 'Examination findings updated.');
+        return back()->withFragment('examination-section')->with('success', __('messages.consultations.examination_updated'));
     }
 
     public function destroyExamination(PhysicalExamination $examination)
@@ -1045,7 +1045,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true]);
         }
 
-        return back()->withFragment('examination-section')->with('success', 'Examination findings removed.');
+        return back()->withFragment('examination-section')->with('success', __('messages.consultations.examination_removed'));
     }
 
     /*
@@ -1074,7 +1074,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true, 'diagnosis' => $this->entryPayload($diagnosis, ['icdCodeEntry'])]);
         }
 
-        return back()->with('success', 'Diagnosis added.');
+        return back()->with('success', __('messages.consultations.diagnosis_added'));
     }
 
     public function destroyDiagnosis(Diagnosis $diagnosis)
@@ -1087,7 +1087,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true]);
         }
 
-        return back()->with('success', 'Diagnosis removed.');
+        return back()->with('success', __('messages.consultations.diagnosis_removed'));
     }
 
     /**
@@ -1115,7 +1115,7 @@ class ConsultationController extends Controller
             ]);
         }
 
-        return back()->with('success', 'Diagnosis updated.');
+        return back()->with('success', __('messages.consultations.diagnosis_updated'));
     }
 
     /**
@@ -1131,7 +1131,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true]);
         }
 
-        return back()->with('success', 'Primary diagnosis set.');
+        return back()->with('success', __('messages.consultations.primary_diagnosis_set'));
     }
 
     /**
@@ -1248,12 +1248,9 @@ class ConsultationController extends Controller
             ]);
         }
 
-        $msg = count($created).' investigation(s) added';
-        if ($labRequest) {
-            $msg .= " — request {$labRequest->request_number} sent to investigation department.";
-        } else {
-            $msg .= '.';
-        }
+        $msg = $labRequest
+            ? __('messages.consultations.investigations_added_with_request', ['count' => count($created), 'number' => $labRequest->request_number])
+            : __('messages.consultations.investigations_added', ['count' => count($created)]);
 
         return back()->with('success', $msg);
     }
@@ -1275,7 +1272,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true, 'investigation' => $this->entryPayload($investigation)]);
         }
 
-        return back()->withFragment('investigations-section')->with('success', 'Investigation updated.');
+        return back()->withFragment('investigations-section')->with('success', __('messages.consultations.investigation_updated'));
     }
 
     public function destroyInvestigation(Investigation $investigation)
@@ -1288,7 +1285,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true]);
         }
 
-        return back()->with('success', 'Investigation removed.');
+        return back()->with('success', __('messages.consultations.investigation_removed'));
     }
 
     /*
@@ -1314,7 +1311,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true, 'treatment' => $this->entryPayload($treatment)]);
         }
 
-        return back()->with('success', 'Treatment added.');
+        return back()->with('success', __('messages.consultations.treatment_added'));
     }
 
     public function updateTreatment(Request $request, Treatment $treatment)
@@ -1332,7 +1329,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true, 'treatment' => $this->entryPayload($treatment)]);
         }
 
-        return back()->withFragment('treatments-section')->with('success', 'Treatment updated.');
+        return back()->withFragment('treatments-section')->with('success', __('messages.consultations.treatment_updated'));
     }
 
     public function destroyTreatment(Treatment $treatment)
@@ -1345,7 +1342,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true]);
         }
 
-        return back()->with('success', 'Treatment removed.');
+        return back()->with('success', __('messages.consultations.treatment_removed'));
     }
 
     /*
@@ -1369,7 +1366,7 @@ class ConsultationController extends Controller
         return redirect()
             ->route('admin.consultations.show', $visit)
             ->withFragment('prescriptions-section')
-            ->with('success', "Prescription {$prescription->prescription_number} created and sent to pharmacy.");
+            ->with('success', __('messages.consultations.prescription_created', ['number' => $prescription->prescription_number]));
     }
 
     public function updatePrescription(Request $request, Prescription $prescription)
@@ -1397,7 +1394,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true, 'prescription' => $prescription->fresh(['items', 'creator', 'doctor', 'updater', 'sourcePattern'])]);
         }
 
-        return back()->withFragment('prescriptions-section')->with('success', 'Prescription updated.');
+        return back()->withFragment('prescriptions-section')->with('success', __('messages.consultations.prescription_updated'));
     }
 
     public function destroyPrescription(Prescription $prescription)
@@ -1411,7 +1408,7 @@ class ConsultationController extends Controller
                 return response()->json(['success' => false, 'message' => 'Cannot delete a dispensed or cancelled prescription.'], 422);
             }
 
-            return back()->with('error', 'Cannot delete a dispensed or cancelled prescription.');
+            return back()->with('error', __('messages.consultations.prescription_cannot_delete'));
         }
 
         $prescription->items()->delete();
@@ -1421,7 +1418,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true]);
         }
 
-        return back()->with('success', 'Prescription deleted.');
+        return back()->with('success', __('messages.consultations.prescription_deleted'));
     }
 
     public function storeProcedureRequest(Request $request, Visit $visit)
@@ -1459,7 +1456,7 @@ class ConsultationController extends Controller
         return redirect()
             ->route('admin.consultations.show', $visit)
             ->withFragment('procedures-section')
-            ->with('success', 'Procedure request submitted ('.$procedureRequest->request_number.').');
+            ->with('success', __('messages.consultations.procedure_submitted', ['number' => $procedureRequest->request_number]));
     }
 
     public function updateProcedureRequest(Request $request, ProcedureRequest $procedureRequest)
@@ -1495,7 +1492,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true, 'procedure' => $procedureRequest->fresh(['service', 'department', 'requestingDoctor', 'schedule.theatreRoom'])]);
         }
 
-        return back()->withFragment('procedures-section')->with('success', 'Procedure request updated.');
+        return back()->withFragment('procedures-section')->with('success', __('messages.consultations.procedure_updated'));
     }
 
     /**
@@ -1557,7 +1554,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true, 'labRequest' => $labRequest->fresh(['targetDepartment', 'requestedBy', 'items.labTest', 'items.service', 'items.result'])]);
         }
 
-        return back()->with('success', "Investigation request {$labRequest->request_number} sent to {$labRequest->targetDepartment?->name}.");
+        return back()->with('success', __('messages.consultations.lab_request_sent', ['number' => $labRequest->request_number, 'department' => $labRequest->targetDepartment?->name]));
     }
 
     public function updateLabRequest(Request $request, LabRequest $labRequest)
@@ -1593,7 +1590,7 @@ class ConsultationController extends Controller
             return response()->json(['success' => true, 'labRequest' => $labRequest->fresh(['targetDepartment', 'requestedBy', 'items.labTest', 'items.service', 'items.result'])]);
         }
 
-        return back()->withFragment('investigations-section')->with('success', 'Investigation request updated.');
+        return back()->withFragment('investigations-section')->with('success', __('messages.consultations.lab_request_updated'));
     }
 
     /*
@@ -1612,14 +1609,14 @@ class ConsultationController extends Controller
         $newStatus = VisitStatus::from($request->status);
 
         if (! $visit->canTransitionTo($newStatus)) {
-            return back()->with('error', "Cannot transition from {$visit->status->label()} to {$newStatus->label()}.");
+            return back()->with('error', __('messages.visits.cannot_transition', ['from' => $visit->status->label(), 'to' => $newStatus->label()]));
         }
 
         $this->visitService->transition($visit, $newStatus, $request->notes);
 
         return redirect()
             ->route('admin.consultations.index')
-            ->with('success', "Visit moved to {$newStatus->label()}.");
+            ->with('success', __('messages.consultations.visit_transitioned', ['status' => $newStatus->label()]));
     }
 
     /*
@@ -1667,8 +1664,8 @@ class ConsultationController extends Controller
         return redirect()
             ->route('admin.consultations.routes.show', [$visit, $route])
             ->with('success', $request->boolean('activate_now')
-                ? "Patient sent to {$dept?->name} and session activated."
-                : "Patient queued for {$dept?->name}.");
+                ? __('messages.consultations.referred_activated', ['department' => $dept?->name])
+                : __('messages.consultations.referred_queued', ['department' => $dept?->name]));
     }
 
     /*
@@ -1702,7 +1699,7 @@ class ConsultationController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => "Patient sent to {$dept?->name} for investigation.",
+                'message' => __('messages.consultations.sent_to_investigation', ['department' => $dept?->name]),
                 'department' => [
                     'id' => $dept?->id,
                     'name' => $dept?->name,
@@ -1712,6 +1709,6 @@ class ConsultationController extends Controller
 
         return redirect()
             ->route('admin.consultations.index')
-            ->with('success', "Patient sent to {$dept?->name} for investigation.");
+            ->with('success', __('messages.consultations.sent_to_investigation', ['department' => $dept?->name]));
     }
 }

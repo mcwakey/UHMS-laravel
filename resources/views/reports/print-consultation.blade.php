@@ -138,7 +138,7 @@
     <div class="signature">
         <p><strong>{{ __('reports.print_templates.consulting_physician') }}:</strong> {{ $record->doctor?->name ?? '—' }}</p>
         <div class="signature-line"></div>
-        <p style="font-size: 10px; color: #666;">{{ __('reports.print_templates.signature') ?? __('common.signature') }}</p>
+        <p style="font-size: 10px; color: #666;">{{ __('reports.print.signature') }}</p>
     </div>
 
     <div class="footer">

@@ -131,31 +131,31 @@ class PaymentController extends Controller
         if (in_array($invoice->status, [InvoiceStatus::PAID, InvoiceStatus::CANCELLED, InvoiceStatus::REFUNDED])) {
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => 'Cannot record payment on this invoice.',
+                    'message' => __('messages.payments.cannot_record'),
                 ], 409);
             }
 
-            return back()->with('error', 'Cannot record payment on this invoice.');
+            return back()->with('error', __('messages.payments.cannot_record'));
         }
 
         if ((float) $validated['amount'] > (float) $invoice->balance) {
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => 'Payment amount exceeds outstanding balance of ₵' . number_format($invoice->balance, 2),
+                    'message' => __('messages.payments.exceeds_balance', ['balance' => '₵' . number_format($invoice->balance, 2)]),
                 ], 422);
             }
 
-            return back()->with('error', 'Payment amount exceeds outstanding balance of ₵' . number_format($invoice->balance, 2));
+            return back()->with('error', __('messages.payments.exceeds_balance', ['balance' => '₵' . number_format($invoice->balance, 2)]));
         }
 
         if ($validated['payment_method'] === PaymentMethod::CASH->value && ! $this->accountingService->getOpenShift()) {
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => 'Open a cashier shift before accepting cash payments.',
+                    'message' => __('messages.payments.open_shift_required'),
                 ], 409);
             }
 
-            return back()->with('error', 'Open a cashier shift before accepting cash payments.');
+            return back()->with('error', __('messages.payments.open_shift_required'));
         }
 
         try {
@@ -177,7 +177,7 @@ class PaymentController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                'message' => "Payment {$payment->payment_number} of ₵" . number_format($payment->amount, 2) . ' recorded successfully.',
+                'message' => __('messages.payments.recorded', ['number' => $payment->payment_number, 'amount' => '₵' . number_format($payment->amount, 2)]),
                 'payment_id' => $payment->id,
                 'payment_number' => $payment->payment_number,
                 'amount' => (float) $payment->amount,
@@ -195,12 +195,12 @@ class PaymentController extends Controller
         if ($request->input('return_to') === 'receive') {
             return redirect()
                 ->route('admin.billing.payments.receive')
-                ->with('success', "Payment {$payment->payment_number} of ₵" . number_format($payment->amount, 2) . " recorded successfully.");
+                ->with('success', __('messages.payments.recorded', ['number' => $payment->payment_number, 'amount' => '₵' . number_format($payment->amount, 2)]));
         }
 
         return redirect()
             ->route('admin.billing.invoices.show', $invoice)
-            ->with('success', "Payment {$payment->payment_number} of ₵" . number_format($payment->amount, 2) . " recorded successfully.");
+            ->with('success', __('messages.payments.recorded', ['number' => $payment->payment_number, 'amount' => '₵' . number_format($payment->amount, 2)]));
     }
 
     /**
@@ -245,7 +245,7 @@ class PaymentController extends Controller
 
         return back()->with(
             'success',
-            "Payment {$payment->payment_number} reversed (reversal {$reversal->payment_number})."
+            __('messages.payments.reversed', ['number' => $payment->payment_number, 'reversal' => $reversal->payment_number])
         );
     }
 }

@@ -83,7 +83,7 @@ class SponsorController extends Controller
             'new_values' => $sponsor->getAttributes(),
         ]);
 
-        return back()->with('success', "Sponsor {$data['name']} created.");
+        return back()->with('success', __('messages.billing.sponsor_created', ['name' => $data['name']]));
     }
 
     public function update(Request $request, Sponsor $sponsor)
@@ -100,7 +100,7 @@ class SponsorController extends Controller
             'new_values' => $sponsor->fresh()->getAttributes(),
         ]);
 
-        return back()->with('success', "Sponsor {$sponsor->name} updated.");
+        return back()->with('success', __('messages.billing.sponsor_updated', ['name' => $sponsor->name]));
     }
 
     public function toggle(Sponsor $sponsor)
@@ -115,7 +115,7 @@ class SponsorController extends Controller
             'new_values' => $sponsor->fresh()->getAttributes(),
         ]);
 
-        return back()->with('success', "Sponsor {$sponsor->name} " . ($sponsor->is_active ? 'activated' : 'deactivated') . '.');
+        return back()->with('success', __('messages.billing.sponsor_toggled', ['name' => $sponsor->name, 'status' => $sponsor->is_active ? 'activated' : 'deactivated']));
     }
 
     private function validateSponsor(Request $request, ?Sponsor $sponsor = null): array

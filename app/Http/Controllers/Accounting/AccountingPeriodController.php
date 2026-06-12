@@ -34,13 +34,13 @@ class AccountingPeriodController extends Controller
 
         $service->createPeriod($data, $request->user());
 
-        return back()->with('success', 'Accounting period created.');
+        return back()->with('success', __('messages.accounting.period_created'));
     }
 
     public function close(Request $request, AccountingPeriod $period, AccountingPeriodService $service)
     {
         $service->closePeriod($period, $request->user());
 
-        return back()->with('success', 'Accounting period closed.');
+        return back()->with('success', __('messages.accounting.period_closed'));
     }
 }

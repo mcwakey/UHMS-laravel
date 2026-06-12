@@ -47,7 +47,7 @@ class ReceivableController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', 'Payer responsibility reallocated successfully.');
+        return back()->with('success', __('messages.billing.receivable_reallocated'));
     }
 
     private function validatedTargetPayerId(string $payerType, ?int $payerId, Invoice $invoice): ?int

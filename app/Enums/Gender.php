@@ -14,4 +14,9 @@ enum Gender: string
             self::FEMALE => 'Female',
         };
     }
+
+    public function translatedLabel(): string
+    {
+        return __('common.gender_' . $this->value);
+    }
 }

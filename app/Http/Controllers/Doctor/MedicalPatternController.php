@@ -69,7 +69,7 @@ class MedicalPatternController extends Controller
             return response()->json(['success' => true, 'pattern' => $pattern]);
         }
 
-        return redirect()->route('admin.patterns.index')->with('success', "Pattern \"{$pattern->name}\" created.");
+        return redirect()->route('admin.patterns.index')->with('success', __('messages.patterns.created', ['name' => $pattern->name]));
     }
 
     /**
@@ -97,7 +97,7 @@ class MedicalPatternController extends Controller
             return response()->json(['success' => true, 'pattern' => $pattern->load('items')]);
         }
 
-        return back()->with('success', "Pattern \"{$pattern->name}\" saved from consultation.");
+        return back()->with('success', __('messages.patterns.saved_from_consultation', ['name' => $pattern->name]));
     }
 
     /**
@@ -145,7 +145,7 @@ class MedicalPatternController extends Controller
             return response()->json(['success' => true, 'pattern' => $pattern]);
         }
 
-        return redirect()->route('admin.patterns.index')->with('success', "Pattern \"{$pattern->name}\" updated.");
+        return redirect()->route('admin.patterns.index')->with('success', __('messages.patterns.updated', ['name' => $pattern->name]));
     }
 
     /**
@@ -159,7 +159,10 @@ class MedicalPatternController extends Controller
             return response()->json(['success' => true, 'is_active' => $pattern->is_active]);
         }
 
-        return back()->with('success', "Pattern \"" . $pattern->name . "\" " . ($pattern->is_active ? 'activated' : 'deactivated') . ".");
+        return back()->with('success', __('messages.patterns.toggled', [
+            'name'   => $pattern->name,
+            'status' => $pattern->is_active ? 'activated' : 'deactivated',
+        ]));
     }
 
     /**
@@ -174,7 +177,7 @@ class MedicalPatternController extends Controller
             return response()->json(['success' => true]);
         }
 
-        return redirect()->route('admin.patterns.index')->with('success', "Pattern \"{$name}\" deleted.");
+        return redirect()->route('admin.patterns.index')->with('success', __('messages.patterns.deleted', ['name' => $name]));
     }
 
     /**

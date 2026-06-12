@@ -95,7 +95,7 @@ class LabRequestController extends Controller
             $this->labService->acceptRequest($labRequest);
             return redirect()
                 ->route('admin.lab.results.index', ['search' => $labRequest->request_number])
-                ->with('success', 'Lab request accepted and is now ready for result entry.');
+                ->with('success', __('messages.lab.request_accepted'));
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -125,8 +125,9 @@ class LabRequestController extends Controller
         }
 
         $invoice = $result['invoice'];
-        $msg = "Accepted {$result['accepted_count']} item(s)" .
-               ($invoice ? " — invoice {$invoice->invoice_number} generated." : ' (no billable services).');
+        $msg = $invoice
+            ? __('messages.lab.items_accepted_with_invoice', ['count' => $result['accepted_count'], 'number' => $invoice->invoice_number])
+            : __('messages.lab.items_accepted', ['count' => $result['accepted_count']]);
 
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
@@ -138,7 +139,7 @@ class LabRequestController extends Controller
 
         return redirect()
             ->route('admin.lab.results.index', ['search' => $labRequest->request_number])
-            ->with('success', $msg . ' Open the request here to enter results.');
+            ->with('success', $msg);
     }
 
     /**
@@ -148,7 +149,7 @@ class LabRequestController extends Controller
     {
         try {
             $this->labService->cancelRequest($labRequest);
-            return back()->with('success', 'Lab request cancelled.');
+            return back()->with('success', __('messages.lab.request_cancelled'));
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }

@@ -276,4 +276,7 @@ return [
     // Admin stock-locations _form
     'none_department'           => '— None —',
     'main_store_info'           => 'Main Store is managed automatically as a protected system location.',
+
+    // Shared
+    'actions'                   => 'Actions',
 ];

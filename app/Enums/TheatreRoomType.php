@@ -30,4 +30,9 @@ enum TheatreRoomType: string
             self::OTHER => 'Other',
         };
     }
+
+    public function translatedLabel(): string
+    {
+        return __('statuses.default.' . strtolower($this->value));
+    }
 }

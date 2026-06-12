@@ -87,7 +87,7 @@ class DispensingController extends Controller
 
         try {
             $this->pharmacyService->dispenseItem($item, $validated['quantity'], $validated['notes'] ?? null);
-            return back()->with('success', 'Item dispensed successfully.');
+            return back()->with('success', __('messages.pharmacy.item_dispensed'));
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -106,7 +106,7 @@ class DispensingController extends Controller
 
         try {
             $this->pharmacyService->batchDispense($prescription, $validated['items']);
-            return back()->with('success', 'Items dispensed successfully.');
+            return back()->with('success', __('messages.pharmacy.items_dispensed'));
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }

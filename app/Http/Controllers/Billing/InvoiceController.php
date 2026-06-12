@@ -170,7 +170,7 @@ class InvoiceController extends Controller
 
             return back()
                 ->withInput()
-                ->with('error', 'Manual discounts must be applied to invoice items with a reason after invoice creation.');
+                ->with('error', __('messages.invoices.manual_discount_note'));
         }
 
         $invoice = $this->billingService->createInvoice(
@@ -180,7 +180,7 @@ class InvoiceController extends Controller
 
         return redirect()
             ->route('admin.billing.invoices.show', $invoice)
-            ->with('success', "Invoice {$invoice->invoice_number} created successfully.");
+            ->with('success', __('messages.invoices.created', ['number' => $invoice->invoice_number]));
     }
 
     /**
@@ -274,7 +274,7 @@ class InvoiceController extends Controller
     public function update(Request $request, Invoice $invoice)
     {
         if (in_array($invoice->status, [InvoiceStatus::CANCELLED, InvoiceStatus::REFUNDED, InvoiceStatus::PAID], true)) {
-            return back()->with('error', 'This invoice can no longer be edited.');
+            return back()->with('error', __('messages.invoices.cannot_edit'));
         }
 
         $data = $request->validate([
@@ -304,7 +304,7 @@ class InvoiceController extends Controller
 
         return redirect()
             ->route('admin.billing.invoices.show', $invoice)
-            ->with('success', "Invoice {$invoice->invoice_number} updated.");
+            ->with('success', __('messages.invoices.updated', ['number' => $invoice->invoice_number]));
     }
 
     /**
@@ -313,12 +313,12 @@ class InvoiceController extends Controller
     public function cancel(Invoice $invoice)
     {
         if ($invoice->status === InvoiceStatus::PAID) {
-            return back()->with('error', 'Cannot cancel a fully paid invoice.');
+            return back()->with('error', __('messages.invoices.cannot_cancel'));
         }
 
         $this->billingService->cancelInvoice($invoice);
 
-        return back()->with('success', "Invoice {$invoice->invoice_number} has been cancelled.");
+        return back()->with('success', __('messages.invoices.cancelled', ['number' => $invoice->invoice_number]));
     }
 
     /**
@@ -353,7 +353,7 @@ class InvoiceController extends Controller
     public function applyItemDiscount(Request $request, Invoice $invoice, \App\Models\InvoiceItem $item)
     {
         if ($item->invoice_id !== $invoice->id) {
-            return back()->with('error', 'Item does not belong to this invoice.');
+            return back()->with('error', __('messages.invoices.item_not_belong'));
         }
 
         $data = $request->validate([
@@ -369,7 +369,7 @@ class InvoiceController extends Controller
             abort(403, $e->getMessage());
         }
 
-        return back()->with('success', 'Discount applied successfully.');
+        return back()->with('success', __('messages.invoices.discount_applied'));
     }
 
     /**
@@ -378,7 +378,7 @@ class InvoiceController extends Controller
     public function removeItemDiscount(Request $request, Invoice $invoice, \App\Models\InvoiceItem $item)
     {
         if ($item->invoice_id !== $invoice->id) {
-            return back()->with('error', 'Item does not belong to this invoice.');
+            return back()->with('error', __('messages.invoices.item_not_belong'));
         }
 
         $data = $request->validate([
@@ -393,6 +393,6 @@ class InvoiceController extends Controller
             abort(403, $e->getMessage());
         }
 
-        return back()->with('success', 'Discount removed successfully.');
+        return back()->with('success', __('messages.invoices.discount_removed'));
     }
 }

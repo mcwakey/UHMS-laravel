@@ -22,4 +22,9 @@ enum ServiceType: string
             self::OTHER => 'Other',
         };
     }
+
+    public function translatedLabel(): string
+    {
+        return __('statuses.default.' . $this->value);
+    }
 }

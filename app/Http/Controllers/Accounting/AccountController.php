@@ -45,7 +45,7 @@ class AccountController extends Controller
 
         return redirect()
             ->route('admin.accounting.accounts.edit', $account)
-            ->with('success', 'Account created.');
+            ->with('success', __('messages.accounting.account_created'));
     }
 
     public function edit(Account $account)
@@ -60,21 +60,21 @@ class AccountController extends Controller
 
         return redirect()
             ->route('admin.accounting.accounts.edit', $account)
-            ->with('success', 'Account updated.');
+            ->with('success', __('messages.accounting.account_updated'));
     }
 
     public function disable(Request $request, Account $account, ChartOfAccountsService $service)
     {
         $service->disable($account, $request->user());
 
-        return back()->with('success', 'Account disabled.');
+        return back()->with('success', __('messages.accounting.account_disabled'));
     }
 
     public function activate(Request $request, Account $account, ChartOfAccountsService $service)
     {
         $service->activate($account, $request->user());
 
-        return back()->with('success', 'Account reactivated.');
+        return back()->with('success', __('messages.accounting.account_reactivated'));
     }
 
     protected function formData(?Account $account = null): array

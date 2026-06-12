@@ -14,6 +14,11 @@ enum JournalEntryStatus: string
         return ucfirst($this->value);
     }
 
+    public function translatedLabel(): string
+    {
+        return __('statuses.default.' . $this->value);
+    }
+
     public function color(): string
     {
         return match ($this) {

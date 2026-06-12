@@ -78,7 +78,7 @@ class TheatreRoomController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', 'Theatre room created.');
+        return back()->with('success', __('messages.theatre.room_created'));
     }
 
     public function update(Request $request, TheatreRoom $theatreRoom)
@@ -91,7 +91,7 @@ class TheatreRoomController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', 'Theatre room updated.');
+        return back()->with('success', __('messages.theatre.room_updated'));
     }
 
     public function status(Request $request, TheatreRoom $theatreRoom)
@@ -106,7 +106,7 @@ class TheatreRoomController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', 'Theatre room status updated.');
+        return back()->with('success', __('messages.theatre.room_status_updated'));
     }
 
     public function storeBlock(Request $request, TheatreRoom $theatreRoom)
@@ -125,14 +125,14 @@ class TheatreRoomController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', 'Theatre room block recorded.');
+        return back()->with('success', __('messages.theatre.room_block_recorded'));
     }
 
     public function destroyBlock(TheatreRoomBlock $block)
     {
         $block->delete();
 
-        return back()->with('success', 'Theatre room block removed.');
+        return back()->with('success', __('messages.theatre.room_block_removed'));
     }
 
     private function validateRoom(Request $request, ?TheatreRoom $room = null): array

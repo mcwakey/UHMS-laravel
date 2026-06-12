@@ -168,7 +168,7 @@ class CreditNoteController extends Controller
 
         return redirect()
             ->route('admin.billing.credit-notes.index')
-            ->with('success', "{$creditNote->type->label()} {$creditNote->credit_note_number} issued.");
+            ->with('success', __('messages.billing.credit_note_issued', ['type' => $creditNote->type->label(), 'number' => $creditNote->credit_note_number]));
     }
 
     public function cancel(Request $request, CreditNote $creditNote)
@@ -185,6 +185,6 @@ class CreditNoteController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', "Credit note {$creditNote->credit_note_number} cancelled.");
+        return back()->with('success', __('messages.billing.credit_note_cancelled', ['number' => $creditNote->credit_note_number]));
     }
 }

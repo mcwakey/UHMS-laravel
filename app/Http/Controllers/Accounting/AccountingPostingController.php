@@ -21,8 +21,8 @@ class AccountingPostingController extends Controller
         return back()->with(
             $entry ? 'success' : 'error',
             $entry
-                ? "Accounting posting retried successfully ({$entry->journal_number})."
-                : 'Accounting retry did not produce a journal entry. Review the posting status/error on the source record.'
+                ? __('messages.accounting.posting_retried', ['number' => $entry->journal_number])
+                : __('messages.accounting.posting_retry_failed')
         );
     }
 }

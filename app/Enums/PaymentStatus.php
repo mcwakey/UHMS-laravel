@@ -17,6 +17,11 @@ enum PaymentStatus: string
         };
     }
 
+    public function translatedLabel(): string
+    {
+        return __('statuses.payment.' . $this->value);
+    }
+
     public function color(): string
     {
         return match ($this) {

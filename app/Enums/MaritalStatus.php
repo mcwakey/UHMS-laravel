@@ -18,4 +18,9 @@ enum MaritalStatus: string
             self::WIDOWED => 'Widowed',
         };
     }
+
+    public function translatedLabel(): string
+    {
+        return __('statuses.default.' . $this->value);
+    }
 }

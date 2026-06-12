@@ -26,6 +26,11 @@ enum NotificationModule: string
         return ucwords(strtolower(str_replace('_', ' ', $this->value)));
     }
 
+    public function translatedLabel(): string
+    {
+        return __('statuses.default.' . strtolower($this->value));
+    }
+
     public function icon(): string
     {
         return match ($this) {

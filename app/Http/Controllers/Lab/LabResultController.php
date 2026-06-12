@@ -55,7 +55,7 @@ class LabResultController extends Controller
         if (! $hasAcceptedOrBilledItems) {
             return redirect()
                 ->route('admin.lab.requests.show', $request)
-                ->with('error', 'Accept and bill investigation items before entering results.');
+                ->with('error', __('messages.lab.accept_items_first'));
         }
 
         $backRoute = route('admin.lab.results.index');
@@ -172,7 +172,7 @@ class LabResultController extends Controller
             }
         }
 
-        return back()->with('success', 'Result saved successfully.');
+        return back()->with('success', __('messages.lab.result_saved'));
     }
 
     /**
@@ -193,7 +193,7 @@ class LabResultController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', 'Results saved successfully.');
+        return back()->with('success', __('messages.lab.results_saved'));
     }
 
     /**
@@ -210,7 +210,7 @@ class LabResultController extends Controller
 
         try {
             $this->labService->verifyResult($result);
-            return back()->with('success', 'Result verified successfully.');
+            return back()->with('success', __('messages.lab.result_verified'));
         } catch (\RuntimeException $e) {
             return back()->with('error', $e->getMessage());
         }

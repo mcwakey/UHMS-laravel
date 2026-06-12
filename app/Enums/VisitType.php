@@ -16,4 +16,9 @@ enum VisitType: string
             self::EMERGENCY => 'Emergency',
         };
     }
+
+    public function translatedLabel(): string
+    {
+        return __('visits.' . $this->value);
+    }
 }

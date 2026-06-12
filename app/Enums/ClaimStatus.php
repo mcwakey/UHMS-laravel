@@ -37,6 +37,11 @@ enum ClaimStatus: string
         };
     }
 
+    public function translatedLabel(): string
+    {
+        return __('statuses.claim.' . $this->value);
+    }
+
     public function color(): string
     {
         return match ($this) {

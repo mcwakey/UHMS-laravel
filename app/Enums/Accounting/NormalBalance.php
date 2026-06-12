@@ -11,4 +11,9 @@ enum NormalBalance: string
     {
         return ucfirst($this->value);
     }
+
+    public function translatedLabel(): string
+    {
+        return __('statuses.default.' . $this->value);
+    }
 }

@@ -21,6 +21,7 @@ return [
         'overdue' => 'En retard',
         'cancelled' => 'Annulé',
         'inactive' => 'Inactif',
+        'suspended' => 'Suspendu',
         'closed' => 'Fermé',
         'inconclusive' => 'Non concluant',
         'draft' => 'Brouillon',

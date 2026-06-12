@@ -32,7 +32,7 @@ return [
     'export_csv'        => 'Exporter CSV',
     'export_excel'      => 'Exporter Excel',
     'export_pdf'        => 'Exporter PDF',
-    'print'             => 'Imprimer',
+    'print_label'       => 'Imprimer',
     'refresh_dashboard' => 'Actualiser le tableau de bord',
     'no_data'           => 'Aucune donnée ne correspond à ce rapport.',
     'no_records'        => 'Aucun enregistrement trouvé.',
@@ -700,6 +700,7 @@ return [
         'totals'             => 'Totaux',
         'location'           => 'Emplacement',
         'qty'                => 'Qté',
+        'total_amount'       => 'Montant total',
     ],
 
     /* ------------------------------------------------------------------ */

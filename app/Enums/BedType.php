@@ -20,4 +20,9 @@ enum BedType: string
             self::PEDIATRIC => 'Pediatric',
         };
     }
+
+    public function translatedLabel(): string
+    {
+        return __('statuses.default.' . $this->value);
+    }
 }

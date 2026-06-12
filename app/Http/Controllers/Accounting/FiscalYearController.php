@@ -27,13 +27,13 @@ class FiscalYearController extends Controller
 
         $service->createFiscalYear($data, $request->user());
 
-        return back()->with('success', 'Fiscal year created.');
+        return back()->with('success', __('messages.accounting.fiscal_year_created'));
     }
 
     public function close(Request $request, FiscalYear $fiscalYear, AccountingPeriodService $service)
     {
         $service->closeFiscalYear($fiscalYear, $request->user());
 
-        return back()->with('success', 'Fiscal year closed.');
+        return back()->with('success', __('messages.accounting.fiscal_year_closed'));
     }
 }

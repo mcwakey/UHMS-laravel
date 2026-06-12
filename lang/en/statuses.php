@@ -27,6 +27,7 @@ return [
         'overdue' => 'Overdue',
         'cancelled' => 'Cancelled',
         'inactive' => 'Inactive',
+        'suspended' => 'Suspended',
         'closed' => 'Closed',
         'inconclusive' => 'Inconclusive',
         'draft' => 'Draft',

@@ -3,6 +3,31 @@
 return [
 
     /* ------------------------------------------------------------------ */
+    /* Accounting (journal entries, fiscal years, periods, accounts, etc.) */
+    /* ------------------------------------------------------------------ */
+    'accounting' => [
+        'journal_drafted'          => 'Écriture de journal enregistrée en brouillon.',
+        'journal_updated'          => 'Écriture de journal mise à jour.',
+        'journal_posted'           => 'Écriture de journal validée.',
+        'journal_reversed'         => 'Écriture de journal contrepassée.',
+        'journal_cancelled'        => 'Brouillon de journal annulé.',
+        'journal_cannot_edit'      => 'Les écritures validées, contrepassées ou annulées ne peuvent pas être modifiées.',
+        'fiscal_year_created'      => 'Exercice fiscal créé.',
+        'fiscal_year_closed'       => 'Exercice fiscal clôturé.',
+        'period_created'           => 'Période comptable créée.',
+        'period_closed'            => 'Période comptable clôturée.',
+        'account_created'          => 'Compte créé.',
+        'account_updated'          => 'Compte mis à jour.',
+        'account_disabled'         => 'Compte désactivé.',
+        'account_reactivated'      => 'Compte réactivé.',
+        'settings_updated'         => 'Paramètres comptables mis à jour.',
+        'posting_retried'          => 'Enregistrement comptable retraité avec succès (:number).',
+        'posting_retry_failed'     => 'Le retraitement comptable n\'a pas produit d\'écriture. Vérifiez le statut/erreur de la source.',
+        'supplier_payment_recorded'=> 'Paiement fournisseur :number enregistré.',
+        'supplier_payment_reversed'=> 'Paiement :number contrepassé.',
+    ],
+
+    /* ------------------------------------------------------------------ */
     /* Accounts / Categories                                                */
     /* ------------------------------------------------------------------ */
     'accounts' => [
@@ -85,6 +110,38 @@ return [
     ],
 
     /* ------------------------------------------------------------------ */
+    /* Billing (invoices, payments, credit notes, sponsors, receivables)   */
+    /* ------------------------------------------------------------------ */
+    'invoices' => [
+        'created'            => 'Facture :number créée avec succès.',
+        'updated'            => 'Facture :number mise à jour.',
+        'cancelled'          => 'Facture :number annulée.',
+        'cannot_edit'        => 'Cette facture ne peut plus être modifiée.',
+        'cannot_cancel'      => 'Impossible d\'annuler une facture entièrement payée.',
+        'item_not_belong'    => 'L\'article n\'appartient pas à cette facture.',
+        'discount_applied'   => 'Remise appliquée avec succès.',
+        'discount_removed'   => 'Remise supprimée avec succès.',
+        'manual_discount_note' => 'Les remises manuelles doivent être appliquées aux articles de facture avec une raison après la création de la facture.',
+    ],
+
+    'payments' => [
+        'recorded'           => 'Paiement :number de :amount enregistré avec succès.',
+        'reversed'           => 'Paiement :number contrepassé (contrepassation :reversal).',
+        'cannot_record'      => 'Impossible d\'enregistrer un paiement sur cette facture.',
+        'exceeds_balance'    => 'Le montant du paiement dépasse le solde impayé de :balance',
+        'open_shift_required'=> 'Ouvrez un poste de caisse avant d\'accepter des paiements en espèces.',
+    ],
+
+    'billing' => [
+        'credit_note_issued'     => ':type :number émis.',
+        'credit_note_cancelled'  => 'Note de crédit :number annulée.',
+        'receivable_reallocated' => 'Responsabilité du payeur réallouée avec succès.',
+        'sponsor_created'        => 'Sponsor :name créé.',
+        'sponsor_updated'        => 'Sponsor :name mis à jour.',
+        'sponsor_toggled'        => 'Sponsor :name :status.',
+    ],
+
+    /* ------------------------------------------------------------------ */
     /* Cashier                                                              */
     /* ------------------------------------------------------------------ */
     'cashier' => [
@@ -125,6 +182,55 @@ return [
         'added'          => 'Plainte ajoutée au catalogue.',
         'updated'        => 'Entrée du catalogue de plaintes mise à jour.',
         'status_updated' => 'Statut du catalogue de plaintes mis à jour.',
+    ],
+
+    /* ------------------------------------------------------------------ */
+    /* Consultations                                                        */
+    /* ------------------------------------------------------------------ */
+    'consultations' => [
+        'started'                   => 'Consultation démarrée.',
+        'route_queued'              => 'Session de consultation mise en file d\'attente.',
+        'route_activated'           => 'Session de consultation activée.',
+        'route_activated_queued'    => 'Itinéraire de consultation activé et mis en file d\'attente.',
+        'route_completed'           => 'Session de consultation terminée.',
+        'route_cancelled'           => 'Session de consultation annulée.',
+        'followup_saved'            => 'Prochain rendez-vous / suivi enregistré.',
+        'followup_updated'          => 'Prochain rendez-vous / suivi mis à jour.',
+        'followup_cancelled'        => 'Prochain rendez-vous / suivi annulé.',
+        'next_patient_opened'       => 'Patient suivant ouvert.',
+        'completed_next_opened'     => 'Consultation terminée et patient suivant ouvert.',
+        'complaint_added'           => 'Plainte ajoutée.',
+        'complaint_updated'         => 'Plainte mise à jour.',
+        'complaint_removed'         => 'Plainte supprimée.',
+        'hopc_added'                => 'Histoire de la plainte principale ajoutée.',
+        'hopc_updated'              => 'Histoire de la plainte principale mise à jour.',
+        'hopc_removed'              => 'Histoire de la plainte principale supprimée.',
+        'examination_added'         => 'Résultats d\'examen ajoutés.',
+        'examination_updated'       => 'Résultats d\'examen mis à jour.',
+        'examination_removed'       => 'Résultats d\'examen supprimés.',
+        'diagnosis_added'           => 'Diagnostic ajouté.',
+        'diagnosis_updated'         => 'Diagnostic mis à jour.',
+        'diagnosis_removed'         => 'Diagnostic supprimé.',
+        'primary_diagnosis_set'     => 'Diagnostic principal défini.',
+        'treatment_added'           => 'Traitement ajouté.',
+        'treatment_updated'         => 'Traitement mis à jour.',
+        'treatment_removed'         => 'Traitement supprimé.',
+        'prescription_created'      => 'Ordonnance :number créée et envoyée à la pharmacie.',
+        'prescription_updated'      => 'Ordonnance mise à jour.',
+        'prescription_deleted'      => 'Ordonnance supprimée.',
+        'prescription_cannot_delete'=> 'Impossible de supprimer une ordonnance délivrée ou annulée.',
+        'investigation_removed'                => 'Investigation supprimée.',
+        'investigation_updated'               => 'Investigation mise à jour.',
+        'investigations_added'                => ':count investigation(s) ajoutée(s).',
+        'investigations_added_with_request'   => ':count investigation(s) ajoutée(s) — demande :number envoyée au département d\'investigation.',
+        'lab_request_sent'          => 'Demande d\'investigation :number envoyée à :department.',
+        'lab_request_updated'       => 'Demande d\'investigation mise à jour.',
+        'procedure_submitted'       => 'Demande de procédure soumise (:number).',
+        'procedure_updated'         => 'Demande de procédure mise à jour.',
+        'visit_transitioned'        => 'Visite déplacée vers :status.',
+        'referred_activated'        => 'Patient envoyé à :department et session activée.',
+        'referred_queued'           => 'Patient mis en file pour :department.',
+        'sent_to_investigation'     => 'Patient envoyé à :department pour investigation.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -311,6 +417,20 @@ return [
     ],
 
     /* ------------------------------------------------------------------ */
+    /* Lab requests / results                                               */
+    /* ------------------------------------------------------------------ */
+    'lab' => [
+        'request_accepted'              => 'Demande d\'investigation acceptée et prête pour la saisie des résultats.',
+        'request_cancelled'             => 'Demande d\'investigation annulée.',
+        'result_saved'                  => 'Résultat enregistré avec succès.',
+        'results_saved'                 => 'Résultats enregistrés avec succès.',
+        'result_verified'               => 'Résultat vérifié avec succès.',
+        'accept_items_first'            => 'Acceptez et facturez les articles d\'investigation avant de saisir les résultats.',
+        'items_accepted'                => ':count article(s) accepté(s) (aucun service facturable).',
+        'items_accepted_with_invoice'   => ':count article(s) accepté(s) — facture :number générée.',
+    ],
+
+    /* ------------------------------------------------------------------ */
     /* Lab tests                                                            */
     /* ------------------------------------------------------------------ */
     'lab_tests' => [
@@ -356,6 +476,60 @@ return [
     /* ------------------------------------------------------------------ */
     'logs' => [
         'retention_updated' => 'Remplacements de rétention mis à jour.',
+    ],
+
+    /* ------------------------------------------------------------------ */
+    /* Medical patterns                                                     */
+    /* ------------------------------------------------------------------ */
+    'patterns' => [
+        'created'                => 'Modèle ":name" créé.',
+        'saved_from_consultation'=> 'Modèle ":name" enregistré depuis la consultation.',
+        'updated'                => 'Modèle ":name" mis à jour.',
+        'toggled'                => 'Modèle ":name" :status.',
+        'deleted'                => 'Modèle ":name" supprimé.',
+    ],
+
+    /* ------------------------------------------------------------------ */
+    /* Pharmacy dispensing                                                  */
+    /* ------------------------------------------------------------------ */
+    'pharmacy' => [
+        'item_dispensed'  => 'Article délivré avec succès.',
+        'items_dispensed' => 'Articles délivrés avec succès.',
+    ],
+
+    /* ------------------------------------------------------------------ */
+    /* Prescriptions                                                        */
+    /* ------------------------------------------------------------------ */
+    'prescriptions' => [
+        'cancelled' => 'Ordonnance :number annulée.',
+        'billed'    => ':count article(s) facturé(s). Encaissez le paiement, puis délivrez à la pharmacie.',
+    ],
+
+    /* ------------------------------------------------------------------ */
+    /* Theatre                                                              */
+    /* ------------------------------------------------------------------ */
+    'theatre' => [
+        'room_created'              => 'Salle de bloc créée.',
+        'room_updated'              => 'Salle de bloc mise à jour.',
+        'room_status_updated'       => 'Statut de la salle de bloc mis à jour.',
+        'room_block_recorded'       => 'Blocage de salle de bloc enregistré.',
+        'room_block_removed'        => 'Blocage de salle de bloc supprimé.',
+        'procedure_submitted'       => 'Demande de procédure soumise.',
+        'procedure_submitted_number'=> 'Demande de procédure soumise (:number).',
+        'report_unavailable'        => 'Le rapport complet de procédure n\'est disponible que pour les procédures terminées.',
+        'procedure_accepted'        => 'Procédure acceptée.',
+        'procedure_rejected'        => 'Procédure rejetée.',
+        'procedure_billed'          => 'Procédure facturée sur la facture de visite.',
+        'procedure_scheduled'       => 'Procédure planifiée.',
+        'procedure_rescheduled'     => 'Procédure replanifiée.',
+        'preop_saved'               => 'Signes vitaux et liste de contrôle préopératoires enregistrés.',
+        'anaesthesia_saved'         => 'Note d\'anesthésie enregistrée.',
+        'surgery_started'           => 'Chirurgie démarrée.',
+        'operative_note_saved'      => 'Note opératoire enregistrée.',
+        'surgery_done'              => 'Chirurgie marquée comme terminée.',
+        'postop_saved'              => 'Note post-opératoire enregistrée.',
+        'procedure_completed'       => 'Procédure terminée.',
+        'procedure_cancelled'       => 'Procédure annulée.',
     ],
 
     /* ------------------------------------------------------------------ */

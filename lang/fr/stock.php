@@ -276,4 +276,7 @@ return [
     // Admin stock-locations _form
     'none_department'           => '— Aucun —',
     'main_store_info'           => 'Le magasin principal est géré automatiquement comme emplacement système protégé.',
+
+    // Shared
+    'actions'                   => 'Actions',
 ];

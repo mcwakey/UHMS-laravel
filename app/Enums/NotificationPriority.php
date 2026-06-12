@@ -15,6 +15,11 @@ enum NotificationPriority: string
         return ucfirst(strtolower($this->value));
     }
 
+    public function translatedLabel(): string
+    {
+        return __('statuses.priority.' . strtolower($this->value));
+    }
+
     public function color(): string
     {
         return match ($this) {

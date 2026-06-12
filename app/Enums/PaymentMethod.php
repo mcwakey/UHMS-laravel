@@ -26,4 +26,9 @@ enum PaymentMethod: string
             self::CHEQUE => 'Cheque',
         };
     }
+
+    public function translatedLabel(): string
+    {
+        return __('statuses.default.' . $this->value);
+    }
 }

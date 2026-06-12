@@ -15,6 +15,11 @@ enum CreditNoteType: string
         };
     }
 
+    public function translatedLabel(): string
+    {
+        return __('statuses.default.' . $this->value);
+    }
+
     public function color(): string
     {
         return match ($this) {

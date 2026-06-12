@@ -23,6 +23,11 @@ enum TheatreRoomBlockType: string
         };
     }
 
+    public function translatedLabel(): string
+    {
+        return __('statuses.default.' . strtolower($this->value));
+    }
+
     public function color(): string
     {
         return match ($this) {

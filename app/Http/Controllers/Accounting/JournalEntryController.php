@@ -52,7 +52,7 @@ class JournalEntryController extends Controller
 
         return redirect()
             ->route('admin.accounting.journals.show', $entry)
-            ->with('success', 'Journal entry saved as draft.');
+            ->with('success', __('messages.accounting.journal_drafted'));
     }
 
     public function show(JournalEntry $journal)
@@ -68,7 +68,7 @@ class JournalEntryController extends Controller
         if ($journal->status !== JournalEntryStatus::DRAFT) {
             return redirect()
                 ->route('admin.accounting.journals.show', $journal)
-                ->with('error', 'Posted, reversed, or cancelled journal entries cannot be edited.');
+                ->with('error', __('messages.accounting.journal_cannot_edit'));
         }
 
         $journal->load('lines');
@@ -82,7 +82,7 @@ class JournalEntryController extends Controller
 
         return redirect()
             ->route('admin.accounting.journals.show', $journal)
-            ->with('success', 'Journal entry updated.');
+            ->with('success', __('messages.accounting.journal_updated'));
     }
 
     public function post(Request $request, JournalEntry $journal, JournalEntryService $service)
@@ -91,7 +91,7 @@ class JournalEntryController extends Controller
 
         return redirect()
             ->route('admin.accounting.journals.show', $journal)
-            ->with('success', 'Journal entry posted.');
+            ->with('success', __('messages.accounting.journal_posted'));
     }
 
     public function reverse(Request $request, JournalEntry $journal, JournalEntryService $service)
@@ -101,7 +101,7 @@ class JournalEntryController extends Controller
 
         return redirect()
             ->route('admin.accounting.journals.show', $reversal)
-            ->with('success', 'Journal entry reversed.');
+            ->with('success', __('messages.accounting.journal_reversed'));
     }
 
     public function cancel(Request $request, JournalEntry $journal, JournalEntryService $service)
@@ -110,7 +110,7 @@ class JournalEntryController extends Controller
 
         return redirect()
             ->route('admin.accounting.journals.show', $journal)
-            ->with('success', 'Draft journal cancelled.');
+            ->with('success', __('messages.accounting.journal_cancelled'));
     }
 
     protected function formData(): array

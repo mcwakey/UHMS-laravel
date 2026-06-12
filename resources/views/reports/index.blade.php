@@ -31,7 +31,7 @@
                                         <span class="badge bg-success-subtle text-success"><i class="ti ti-file-type-csv me-1"></i>{{ __('reports.export_csv') }}</span>
                                     @endif
                                     @if($report['printable'])
-                                        <span class="badge bg-secondary-subtle text-secondary"><i class="ti ti-printer me-1"></i>{{ __('reports.print') }}</span>
+                                        <span class="badge bg-secondary-subtle text-secondary"><i class="ti ti-printer me-1"></i>{{ __('reports.print_label') }}</span>
                                     @endif
                                 </div>
                             </div>

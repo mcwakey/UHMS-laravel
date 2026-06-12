@@ -27,7 +27,7 @@
 <body>
     <div class="header">
         <h1>UHMS - {{ __('reports.print_templates.lab_report') }}</h1>
-        <p>{{ __('col_request') ?? 'Request' }} #: {{ $labRequest->request_number }} &bull; {{ __('common.date') }}: {{ $labRequest->created_at->format('d M Y') }}</p>
+        <p>{{ __('lab.request_number_short') }}: {{ $labRequest->request_number }} &bull; {{ __('common.date') }}: {{ $labRequest->created_at->format('d M Y') }}</p>
     </div>
 
     <div class="patient-info">

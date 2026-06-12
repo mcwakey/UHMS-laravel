@@ -19,6 +19,11 @@ enum BillingType: string
         };
     }
 
+    public function translatedLabel(): string
+    {
+        return __('common.billing_type_' . $this->value);
+    }
+
     public function color(): string
     {
         return match ($this) {

@@ -146,6 +146,27 @@
     <!-- Chart.js -->
     <script src="{{ URL::asset('build/plugins/chartjs/chart.min.js') }}"></script>
 
+    <!-- Global i18n bridge — read by script.js and other standalone JS files -->
+    @php
+    $uhmsI18n = [
+        'today'        => __('common.drp_today'),
+        'yesterday'    => __('common.drp_yesterday'),
+        'last_7_days'  => __('common.drp_last_7_days'),
+        'last_30_days' => __('common.drp_last_30_days'),
+        'this_month'   => __('common.drp_this_month'),
+        'last_month'   => __('common.drp_last_month'),
+        'this_year'    => __('common.drp_this_year'),
+        'last_year'    => __('common.drp_last_year'),
+        'next_year'    => __('common.drp_next_year'),
+        'clear'        => __('common.drp_clear'),
+        'search'       => __('common.search'),
+        'dt_search_placeholder' => __('common.search'),
+        'dt_info'      => __('common.drp_dt_info'),
+        'dt_length'    => __('common.drp_dt_length'),
+    ];
+    @endphp
+    <script>window.UHMS_I18N = @json($uhmsI18n);</script>
+
     <!-- Template Script -->
     <script src="{{ URL::asset('build/js/script.js') }}"></script>
 

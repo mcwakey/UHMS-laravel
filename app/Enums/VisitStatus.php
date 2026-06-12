@@ -60,6 +60,11 @@ enum VisitStatus: string
         };
     }
 
+    public function translatedLabel(): string
+    {
+        return __('statuses.visit.' . $this->value);
+    }
+
     public function color(): string
     {
         return match ($this) {
