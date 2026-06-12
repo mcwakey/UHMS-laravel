@@ -393,33 +393,34 @@
         }());
     </script>
 
-    {{-- Persist the sidebar scroll position across full page reloads so navigating
-         the menu no longer snaps back to the top and loses your place. The sidebar
-         scrolls inside SimpleBar's .simplebar-content-wrapper; we stash scrollTop in
-         sessionStorage on navigation and restore it while the page is still hidden. --}}
+    {{-- Persist the sidebar scroll position across full page reloads.
+         Strategy: scroll the active menu item into view (so the position is
+         layout-independent), and use a raw-pixel fallback for pages with no
+         active item. Saves on every scroll event (throttled) and on navigation. --}}
     <script>
         (function () {
-            var KEY = 'uhmsSidebarScrollTop';
-            var userInteracted = false;
+            var SCROLL_KEY = 'uhmsSidebarScrollTop';
+            var HREF_KEY   = 'uhmsSidebarActiveHref';
 
             function scroller() {
                 var inner = document.querySelector('#sidebar .sidebar-inner');
                 if (!inner) return null;
-                // SimpleBar moves the scroll onto its content wrapper; fall back to
-                // the inner element (native overflow) if SimpleBar isn't active.
                 return inner.querySelector('.simplebar-content-wrapper') || inner;
             }
+
             function save() {
                 var el = scroller();
                 if (!el) return;
-                try { sessionStorage.setItem(KEY, String(el.scrollTop)); } catch (e) {}
-            }
-            function stored() {
-                try { var v = sessionStorage.getItem(KEY); return v === null ? null : (parseFloat(v) || 0); } catch (e) { return null; }
+                try {
+                    sessionStorage.setItem(SCROLL_KEY, String(el.scrollTop));
+                    // Also stash the href of the active leaf link so we can find
+                    // the right item even if a different submenu opened.
+                    var activeLink = document.querySelector('#sidebar a.active[href]:not([href="javascript:void(0);"])');
+                    if (activeLink) sessionStorage.setItem(HREF_KEY, activeLink.href);
+                } catch (e) {}
             }
 
-            // Persist live while scrolling (throttled) so we always have the latest
-            // position regardless of how the next navigation is triggered.
+            // Bind the scroll-save listener as soon as SimpleBar has the wrapper.
             var saveTimer = null;
             function bindScroll() {
                 var el = scroller();
@@ -427,34 +428,72 @@
                 el.__uhmsScrollBound = true;
                 el.addEventListener('scroll', function () {
                     if (saveTimer) return;
-                    saveTimer = setTimeout(function () { saveTimer = null; save(); }, 120);
+                    saveTimer = setTimeout(function () { saveTimer = null; save(); }, 150);
                 }, { passive: true });
             }
 
-            // Mark genuine user interaction so the restore loop stops fighting them.
+            // Save before any sidebar link navigates away.
+            document.addEventListener('click', function (e) {
+                var a = e.target.closest('#sidebar a[href]');
+                if (a && a.href && a.href.indexOf('javascript:') === -1) save();
+            }, true);
+            window.addEventListener('beforeunload', save);
+
+            // Restore: prefer scrolling the active item into view; fall back to pixel.
+            var restoredPixel = null;
+            var restoredHref  = null;
+            try {
+                var v = sessionStorage.getItem(SCROLL_KEY);
+                if (v !== null) restoredPixel = parseFloat(v) || 0;
+                restoredHref = sessionStorage.getItem(HREF_KEY);
+            } catch (e) {}
+
+            var userInteracted = false;
             ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (evt) {
                 document.addEventListener(evt, function (e) {
                     if (e.target && e.target.closest && e.target.closest('#sidebar')) userInteracted = true;
                 }, { passive: true, capture: true });
             });
 
-            document.addEventListener('click', function (e) {
-                if (e.target.closest('#sidebar a[href]')) save();
-            }, true);
-            window.addEventListener('beforeunload', save);
-
-            // Restore + bind as soon as the scroller exists, retrying for ~2s to
-            // outlast SimpleBar initialising and the active submenu auto-expanding.
-            var target = stored();
             var tries = 0;
             var iv = setInterval(function () {
                 tries++;
                 bindScroll();
-                if (target !== null && !userInteracted) {
+
+                if (!userInteracted) {
                     var el = scroller();
-                    if (el && Math.abs(el.scrollTop - target) > 1) el.scrollTop = target;
+                    if (el) {
+                        // Try to scroll the active item into view first.
+                        var activeItem = document.querySelector('#sidebar li.active > a.active[href]:not([href="javascript:void(0);"])');
+                        if (!activeItem && restoredHref) {
+                            // Match by href in case the active class hasn't been set yet.
+                            try {
+                                activeItem = document.querySelector('#sidebar a[href="' + CSS.escape(restoredHref) + '"]');
+                            } catch (ex) {}
+                        }
+
+                        if (activeItem) {
+                            // scrollIntoView on the scroller's coordinate space so the
+                            // item is visible roughly in the centre of the sidebar.
+                            var itemTop    = activeItem.getBoundingClientRect().top;
+                            var scrollerRect = el.getBoundingClientRect();
+                            var offset = itemTop - scrollerRect.top - (scrollerRect.height / 2) + (activeItem.offsetHeight / 2);
+                            if (Math.abs(offset) > 2) {
+                                el.scrollTop += offset;
+                            }
+                            // Once the item is roughly in view, stop retrying.
+                            clearInterval(iv);
+                            return;
+                        }
+
+                        // Fallback: raw pixel restore.
+                        if (restoredPixel !== null && Math.abs(el.scrollTop - restoredPixel) > 1) {
+                            el.scrollTop = restoredPixel;
+                        }
+                    }
                 }
-                if (userInteracted || tries > 40) clearInterval(iv);
+
+                if (userInteracted || tries > 60) clearInterval(iv);
             }, 50);
         }());
     </script>
