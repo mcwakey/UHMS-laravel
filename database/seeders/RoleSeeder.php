@@ -509,22 +509,40 @@ class RoleSeeder extends Seeder
             'reports.view',
             'reports.generate',
             'reports.export',
+            'reports.print',
             'reports.clinical',
+            'reports.clinical.view',
             'reports.consultation',
             'reports.consultations',
             'reports.diagnosis',
             'reports.diagnoses',
             'reports.complaints',
+            'reports.emergency.view',
+            'reports.admissions.view',
             'reports.pharmacy',
+            'reports.pharmacy.view',
             'reports.investigations',
+            'reports.investigations.view',
             'reports.procedures',
+            'reports.procedures.view',
             'reports.theatre',
             'reports.emergency',
             'reports.admission',
             'reports.mar',
             'reports.billing',
+            'reports.billing.view',
             'reports.claims',
+            'reports.claims.view',
+            'reports.receivables.view',
+            'reports.payables.view',
+            'reports.accounting.view',
             'reports.stock',
+            'reports.stock.view',
+            'reports.audit.view',
+            'reports.management.view',
+            'reports.financial_values.view',
+            'reports.stock_cost.view',
+            'reports.clinical_sensitive.view',
             'reports.blood_bank',
 
             // ── Statistical Reports / Analytics ───────────────────────────
@@ -668,6 +686,7 @@ class RoleSeeder extends Seeder
             'icd.view',
             'product.view',
             'reports.view',
+            'reports.clinical_sensitive.view',
         ];
 
         $doctor = Role::firstOrCreate(['name' => 'Doctor']);
@@ -988,7 +1007,7 @@ class RoleSeeder extends Seeder
             'receivables.view', 'receivables.allocate', 'receivables.reallocate', 'receivables.payment.record', 'receivables.write_off',
             'reports.ar_aging.view', 'reports.ar_aging.patient', 'reports.ar_aging.insurance', 'reports.ar_aging.sponsor', 'reports.ar_aging.corporate',
             'services.manage',
-            'reports.view', 'reports.generate',
+            'reports.view', 'reports.generate', 'reports.export', 'reports.print', 'reports.financial_values.view',
             'statistics.view', 'statistics.dashboard.view', 'statistics.billing.view', 'statistics.claims.view', 'statistics.export',
             'claims.view',
             'accounts.manage',
@@ -1017,7 +1036,7 @@ class RoleSeeder extends Seeder
             'claims.eligible.view', 'claims.prepare', 'claims.validate', 'claims.submit',
             'claims.payment.record', 'claims.nhia.view', 'claims.nhia.prepare',
             'claims.nhia.submit', 'claims.nhia.export',
-            'reports.view',
+            'reports.view', 'reports.export', 'reports.print', 'reports.claims.view', 'reports.financial_values.view',
             'notifications.view',
         ]);
 
@@ -1083,7 +1102,7 @@ class RoleSeeder extends Seeder
             // Supplier ledger
             'supplier.manage', 'supplier.ledger.view',
             'supplier.payment.create', 'supplier.return.create',
-            'reports.view',
+            'reports.view', 'reports.export', 'reports.print', 'reports.stock.view', 'reports.stock_cost.view',
             'notifications.view',
         ]);
 

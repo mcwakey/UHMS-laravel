@@ -5,9 +5,16 @@
 <x-page-header :title="$meta['title']" :description="$meta['description']" icon="ti-report-analytics">
     <x-slot:actions>
         <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.reports.index') }}">{{ __('reports.hub_title') }}</a>
-        <a class="btn btn-outline-primary btn-sm" href="{{ route('admin.reports.'.$key, array_merge($filters, ['export' => 'csv'])) }}">
-            <i class="ti ti-file-type-csv me-1"></i>{{ __('reports.export_csv') }}
-        </a>
+        @can('reports.export')
+            <a class="btn btn-outline-primary btn-sm" href="{{ route('admin.reports.'.$key, array_merge($filters, ['export' => 'csv'])) }}">
+                <i class="ti ti-file-type-csv me-1"></i>{{ __('reports.export_csv') }}
+            </a>
+        @endcan
+        @can('reports.print')
+            <a class="btn btn-outline-secondary btn-sm" href="{{ route('admin.reports.'.$key, array_merge($filters, ['print' => 1])) }}">
+                <i class="ti ti-printer me-1"></i>{{ __('reports.print_label') }}
+            </a>
+        @endcan
     </x-slot:actions>
 </x-page-header>
 

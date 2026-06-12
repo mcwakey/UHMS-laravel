@@ -21,6 +21,7 @@ use App\Models\Prescription;
 use App\Models\ProcedureRequest;
 use App\Models\ServiceRendering;
 use App\Models\StockMovement;
+use App\Models\User;
 use App\Models\VisitConsultationRoute;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -84,7 +85,7 @@ class OperationalReportService
         ];
     }
 
-    public function build(string $key, array $filters = [], bool $export = false): array
+    public function build(string $key, array $filters = [], bool $export = false, ?User $user = null): array
     {
         if (! isset($this->catalogue()[$key])) {
             throw new InvalidArgumentException("Unknown operational report [{$key}].");
@@ -92,16 +93,16 @@ class OperationalReportService
 
         return match ($key) {
             'consultations' => $this->consultations($filters, $export),
-            'diagnoses' => $this->diagnoses($filters, $export),
-            'complaints' => $this->complaints($filters, $export),
+            'diagnoses' => $this->diagnoses($filters, $export, $user),
+            'complaints' => $this->complaints($filters, $export, $user),
             'pharmacy' => $this->pharmacy($filters, $export),
             'investigations' => $this->investigations($filters, $export),
             'procedures', 'theatre' => $this->procedures($filters, $export, $key),
             'emergency' => $this->emergency($filters, $export),
             'admission' => $this->admission($filters, $export),
             'mar' => $this->mar($filters, $export),
-            'billing' => $this->billing($filters, $export),
-            'claims' => $this->claims($filters, $export),
+            'billing' => $this->billing($filters, $export, $user),
+            'claims' => $this->claims($filters, $export, $user),
             'stock' => $this->stock($filters, $export),
             'blood-bank' => $this->bloodBank($filters, $export),
         };
@@ -130,8 +131,10 @@ class OperationalReportService
         ], $export, 'created_at');
     }
 
-    protected function diagnoses(array $filters, bool $export): array
+    protected function diagnoses(array $filters, bool $export, ?User $user): array
     {
+        $filters['_can_view_sensitive_clinical'] = $this->canViewSensitiveClinical($user);
+
         $query = Diagnosis::with(['visit', 'patient', 'department', 'creator', 'doctor'])
             ->when($filters['department_id'] ?? null, fn ($q, $v) => $q->where('department_id', $v))
             ->when($filters['user_id'] ?? null, fn ($q, $v) => $q->where('created_by', $v))
@@ -153,8 +156,10 @@ class OperationalReportService
         ], $export, 'created_at');
     }
 
-    protected function complaints(array $filters, bool $export): array
+    protected function complaints(array $filters, bool $export, ?User $user): array
     {
+        $filters['_can_view_sensitive_clinical'] = $this->canViewSensitiveClinical($user);
+
         $query = Complaint::with(['visit', 'patient', 'department', 'creator', 'doctor'])
             ->when($filters['department_id'] ?? null, fn ($q, $v) => $q->where('department_id', $v))
             ->when($filters['user_id'] ?? null, fn ($q, $v) => $q->where('created_by', $v));
@@ -313,8 +318,10 @@ class OperationalReportService
         ]);
     }
 
-    protected function billing(array $filters, bool $export): array
+    protected function billing(array $filters, bool $export, ?User $user): array
     {
+        $filters['_can_view_financial_values'] = $this->canViewFinancialValues($user);
+
         $query = Invoice::with(['patient', 'visit', 'createdBy'])
             ->when($filters['status'] ?? null, fn ($q, $v) => $q->where('status', $v));
 
@@ -337,8 +344,10 @@ class OperationalReportService
         ]);
     }
 
-    protected function claims(array $filters, bool $export): array
+    protected function claims(array $filters, bool $export, ?User $user): array
     {
+        $filters['_can_view_financial_values'] = $this->canViewFinancialValues($user);
+
         $query = Claim::with(['patient', 'visit', 'invoice', 'insuranceProvider', 'insuranceType'])
             ->when($filters['status'] ?? null, fn ($q, $v) => $q->where('status', $v));
 
@@ -432,10 +441,15 @@ class OperationalReportService
             ? $query->orderByDesc($orderColumn)->limit(5000)->get()->map($map)->values()
             : $query->orderByDesc($orderColumn)->paginate(30)->withQueryString()->through($map);
 
+        [$columns, $rows] = $this->redactProtectedColumns($key, $filters, $columns, $rows);
+
         return [
             'key' => $key,
             'meta' => $this->catalogue()[$key],
-            'filters' => $filters,
+            'filters' => collect($filters)->except([
+                '_can_view_sensitive_clinical',
+                '_can_view_financial_values',
+            ])->all(),
             'columns' => $columns,
             'rows' => $rows,
             'summary' => array_merge([
@@ -483,5 +497,50 @@ class OperationalReportService
             'complaints', 'pharmacy' => null,
             default => 'status',
         };
+    }
+
+    protected function redactProtectedColumns(string $key, array $filters, array $columns, mixed $rows): array
+    {
+        $remove = match (true) {
+            in_array($key, ['diagnoses', 'complaints'], true)
+                && empty($filters['_can_view_sensitive_clinical']) => [4],
+            $key === 'billing' && empty($filters['_can_view_financial_values']) => [5, 6, 7],
+            $key === 'claims' && empty($filters['_can_view_financial_values']) => [6, 7],
+            default => [],
+        };
+
+        if (empty($remove)) {
+            return [$columns, $rows];
+        }
+
+        $redact = fn (array $row) => array_values(array_filter(
+            $row,
+            fn ($value, int $index) => ! in_array($index, $remove, true),
+            ARRAY_FILTER_USE_BOTH
+        ));
+
+        $columns = array_values(array_filter(
+            $columns,
+            fn ($value, int $index) => ! in_array($index, $remove, true),
+            ARRAY_FILTER_USE_BOTH
+        ));
+
+        if ($rows instanceof \Illuminate\Contracts\Pagination\Paginator) {
+            $rows->setCollection($rows->getCollection()->map($redact));
+        } elseif ($rows instanceof \Illuminate\Support\Collection) {
+            $rows = $rows->map($redact)->values();
+        }
+
+        return [$columns, $rows];
+    }
+
+    protected function canViewFinancialValues(?User $user): bool
+    {
+        return $user?->can('reports.financial_values.view') ?? false;
+    }
+
+    protected function canViewSensitiveClinical(?User $user): bool
+    {
+        return $user?->can('reports.clinical_sensitive.view') ?? false;
     }
 }

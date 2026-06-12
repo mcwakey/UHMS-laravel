@@ -1,57 +1,62 @@
- You are working on UHMS — Ultimate Hospital Management System.
+You are working on UHMS — Ultimate Hospital Management System.
 
 Important:
 There is currently no docs/UHMS_IMPLEMENTATION_SKILL.md file in this project.
 Do not try to read it.
 Follow the instructions in this prompt directly.
 
-We have completed:
+We have completed the localisation and responsiveness track:
 
 * Localisation Phase 1: base EN/FR infrastructure
 * Localisation Phase 2: high-traffic screen translation, reports hub, controller flash messages
 * Localisation Phase 3: reports, analytics, export and print translation layer
 * Localisation Phase 4: remaining operational screens bulk translation
+* Localisation Phase 5: final QA, JavaScript, emails, controller messages and dynamic label cleanup
 
 Current localisation status:
 
-* 23 EN/FR language file pairs exist
-* 3,301 EN keys and 3,301 FR keys exist
-* EN/FR parity was verified
-* 141 Blade views contain translation calls
-* All main operational Blade screens are translated
+* Zero hardcoded controller flash message literals remain
+* EN/FR parity remains clean across all 25 language modules
+* All new consultation, lab and theatre workflow flash keys exist in both EN and FR
+* PHP lint passes for language files
+* Caches have been cleared
 * Bootstrap 5 + Tabler Icons remain the UI standard
 * No parallel localisation system was created
 
 Now proceed with:
 
-# UHMS Localisation Phase 5 — Final QA, JavaScript, Emails & Dynamic Label Cleanup
+# Reports, Analytics, Export & Print Standardisation
 
 ## Goal
 
-Perform the final localisation quality assurance pass before moving to Reports, Analytics, Export & Print implementation.
+Create a clean, consistent, permission-aware, localised, printable, and exportable reporting layer across UHMS.
 
-This phase must close the remaining localisation gaps after Phase 4.
+Reports must support:
 
-Focus on:
+1. Hospital management
+2. Clinical departments
+3. Patient and visit activity
+4. Emergency
+5. Admissions and wards
+6. Pharmacy
+7. Investigations and laboratory
+8. Theatre and procedures
+9. Billing and collections
+10. Insurance and claims
+11. Receivables
+12. Payables
+13. Accounting and finance
+14. Stock and procurement
+15. Audit and activity review
 
-1. JavaScript resource files
-2. Controller flash messages
-3. Email templates
-4. Dynamic enum/model labels
-5. Missing translation keys
-6. EN/FR parity verification
-7. Browser and UI QA
-8. Documentation
-
-Do not build new features.
-Do not create a new localisation system.
-Do not create duplicate middleware.
-Do not create duplicate locale routes.
-Do not rewrite business logic.
-Do not change workflows.
-Do not introduce Tailwind.
-Do not introduce Vue/React.
-Do not introduce a new translation package.
+Do not rewrite existing business logic.
+Do not create fake report numbers.
+Do not duplicate dashboard logic.
+Do not bypass existing services.
+Do not expose unauthorized clinical, financial, accounting, or stock cost data.
+Do not introduce a new UI framework.
+Do not introduce a new chart library unless already present and approved.
+Do not introduce a new export package unless already present and approved.
 
 Use existing UHMS stack:
 
@@ -59,431 +64,806 @@ Use existing UHMS stack:
 * Blade
 * Bootstrap 5
 * Tabler Icons
-* existing `lang/en` and `lang/fr`
-* existing `SetLocale` middleware
-* existing locale switcher
-* existing translated components
-* existing JavaScript i18n bridge pattern
+* existing Chart.js / ApexCharts if already bundled
+* existing UI components
+* existing permissions
+* existing localisation infrastructure
+* existing `lang/en/reports.php`
+* existing `lang/fr/reports.php`
+* existing print layout component where available
+* existing report hub if already present
 
 ---
 
 # 1. Audit First
 
-Audit the remaining localisation gaps.
+Before implementing, audit the current project and identify what already exists.
 
-Check:
+Check for:
 
-```text
-resources/js/
-resources/views/emails/
-app/Http/Controllers/
-app/Models/
-app/Enums/
-app/Services/
-app/Helpers/
-resources/views/**/*.blade.php
-lang/en/
-lang/fr/
-```
+* existing report controllers
+* existing report services
+* existing report routes
+* existing Reports Hub
+* existing `ReportRegistryService`
+* existing operational reports
+* existing dashboard analytics logic
+* existing export helpers
+* existing print layouts
+* existing permission names
+* existing localisation keys
+* existing accounting reports
+* existing billing reports
+* existing stock reports
+* existing pharmacy reports
+* existing audit/activity log views
+* existing Chart.js or ApexCharts usage
+* existing CSV/PDF/Excel export packages
 
-Look for:
+Do not duplicate existing report systems.
+Reuse and improve what exists.
 
-* hardcoded English strings in JavaScript files
-* hardcoded English strings in email templates
-* hardcoded controller flash messages
-* `->with('success', '...')`
-* `->with('error', '...')`
-* `->with('warning', '...')`
-* `->with('info', '...')`
-* hardcoded model `label()` methods
-* hardcoded enum labels
-* hardcoded service-layer display labels
-* missing translation keys
-* EN/FR parity mismatch
-* translation keys that exist in EN but not FR
-* translation keys that exist in FR but not EN
-* broken translation calls
-* duplicate messy translation keys
-
-Do not edit blindly.
-Audit first, then fix.
+After the audit, continue implementation using the existing architecture.
 
 ---
 
-# 2. JavaScript Resource Files
+# 2. Report Architecture
 
-Check all files in:
+Create or update reporting services.
 
-```text
-resources/js/
-public/js/
+Recommended services:
+
+```php
+ReportRegistryService
+ReportPermissionService
+ReportFilterService
+ReportExportService
+ReportPrintService
+ClinicalReportService
+BillingReportService
+AccountingReportService
+ReceivablesReportService
+PayablesReportService
+StockReportService
+PharmacyReportService
+InvestigationReportService
+TheatreReportService
+EmergencyReportService
+AdmissionReportService
+ClaimsReportService
+AuditReportService
+ManagementReportService
 ```
 
-where applicable.
+If some services already exist, extend them instead of duplicating them.
 
-Find hardcoded user-facing strings in:
+Do not put heavy report queries directly inside controllers or Blade views.
 
-* alerts
-* confirmations
-* toast messages
-* loading messages
-* error messages
-* empty states
-* DataTables labels
-* Select2 placeholders
-* chart labels
-* billing calculator labels
-* AJAX feedback messages
+Each report should define metadata similar to:
 
-If strings are used inside Blade files, continue using the existing Blade i18n bridge pattern:
+```php
+[
+    'key' => 'billing.daily_collections',
+    'title' => __('reports.billing.daily_collections'),
+    'description' => __('reports.billing.daily_collections_description'),
+    'permission' => 'reports.billing.view',
+    'module' => 'billing',
+    'filters' => [],
+    'columns' => [],
+    'exportable' => true,
+    'printable' => true,
+]
+```
+
+Controllers should stay thin.
+Services should handle report data.
+Views should only render data.
+
+---
+
+# 3. Report Menu
+
+Add or update the Reports menu.
+
+Recommended structure:
+
+```text
+Reports
+├── Management Overview
+├── Clinical Reports
+├── Patient / Visit Reports
+├── Emergency Reports
+├── Admission / Ward Reports
+├── Pharmacy Reports
+├── Investigation Reports
+├── Theatre / Procedure Reports
+├── Billing Reports
+├── Insurance / Claims Reports
+├── Accounting Reports
+├── Receivables Reports
+├── Payables Reports
+├── Stock / Procurement Reports
+├── Audit Logs
+└── Saved Reports / Custom Reports
+```
+
+Hide unavailable report sections if:
+
+* the module is disabled
+* the user lacks permission
+* the feature does not exist yet
+
+Backend authorization must still be enforced.
+Do not rely only on hiding UI.
+
+---
+
+# 4. Common Report Layout
+
+Every report page should use existing UHMS layout conventions.
+
+Use or create reusable Blade components only if consistent with the current project:
 
 ```blade
-@php
-$i18n = [
-    'loading' => __('common.loading'),
-    'no_results' => __('common.no_results'),
-    'confirm_delete' => __('messages.general.confirm_delete'),
-];
-@endphp
-
-<script>
-const uhmsI18n = @json($i18n);
-</script>
+<x-page-header>
+<x-filter-bar>
+<x-stat-card>
+<x-status-badge>
+<x-empty-state>
+<x-data-table>
+<x-print-layout>
 ```
 
-If strings are inside standalone `resources/js` files, do not create a heavy frontend i18n framework.
+Every standard report should contain:
 
-Use one of these safe patterns:
+* page header
+* filter section
+* summary KPI cards where useful
+* table and/or chart
+* export action
+* print action
+* pagination where needed
+* empty state
 
-1. Read from `window.UHMS_I18N` if already provided globally.
-2. Add a small global bridge in the main layout if needed.
-3. Keep module-level bridges where the strings are view-specific.
+Report filters must preserve query strings during:
 
-Do not expose sensitive data to JavaScript.
-Do not expose patient clinical data in translation objects.
+* pagination
+* export
+* print
+* language switching where practical
+
+Use existing translation keys from:
+
+* `lang/en/reports.php`
+* `lang/fr/reports.php`
+* `lang/en/common.php`
+* `lang/fr/common.php`
+
+Add new keys only when necessary and maintain EN/FR parity.
 
 ---
 
-# 3. Controller Flash Messages Verification
+# 5. Common Filters
 
-Verify all controller flash messages use translation keys.
+Support common filters where relevant:
 
-Search for:
+* Date From
+* Date To
+* Department
+* Branch if multi-branch exists
+* Patient
+* Visit Type
+* Payment Type
+* Insurance Provider
+* Sponsor
+* Corporate Client
+* Supplier
+* Stock Location
+* Product Type
+* Service Type
+* Status
+* User / Staff
+* Doctor
+* Requested By
+* Verified By
+* Approved By
+* Posted By
 
-```php
-->with('success',
-->with('error',
-->with('warning',
-->with('info',
-session()->flash(
-```
+Rules:
 
-Replace hardcoded messages with:
-
-```php
-__('messages.section.key')
-```
-
-Use named placeholders for dynamic values:
-
-```php
-__('messages.patients.created', ['number' => $patient->patient_number])
-```
-
-Do not use string concatenation for translated messages.
-
-Correct:
-
-```php
-->with('success', __('messages.invoices.created', ['number' => $invoice->invoice_number]))
-```
-
-Wrong:
-
-```php
-->with('success', 'Invoice ' . $invoice->invoice_number . ' created successfully.')
-```
-
-Do not change controller business logic.
-Only translate user-facing messages.
+* filters must validate safely
+* default date range should be Today or Current Month depending on report
+* expensive reports must not run unlimited by default
+* preserve filters during pagination/export/print
+* avoid loading all records into memory
+* never trust query filters without validation
 
 ---
 
-# 4. Email Templates
+# 6. Export Requirements
 
-Translate email templates in:
+Support exports where practical:
 
-```text
-resources/views/emails/
-resources/views/mail/
+* CSV
+* Excel only if an existing package already supports it
+* PDF/Print using existing print/PDF tools
+
+If no Excel package exists, implement CSV first.
+
+Do not install a new package unless explicitly approved.
+
+Exports must:
+
+* respect filters
+* respect permissions
+* respect locale for headings
+* include generated by
+* include generated at
+* include hospital identity
+* avoid unauthorized fields
+* avoid clinical sensitive details unless permitted
+* avoid stock cost unless permitted
+* avoid financial values unless permitted
+
+Large CSV exports should use chunking/cursor where practical.
+
+---
+
+# 7. Print Requirements
+
+Standardise print views.
+
+Use:
+
+```blade
+<x-print-layout>
 ```
 
-if they exist.
+where available.
 
-Create or extend:
+Print pages must show:
+
+* hospital name/logo
+* report title
+* filter summary
+* generated by
+* generated at
+* page date/time
+* signature area if needed
+
+Print must hide:
+
+* sidebar
+* topbar
+* action buttons
+* search inputs
+* pagination controls
+* debug info
+
+Print must be:
+
+* black-on-white
+* readable
+* table-safe
+* A4-friendly
+* translated where labels are system labels
+
+Do not break existing invoice, receipt, prescription, lab, claims, or accounting print views.
+
+---
+
+# 8. Localisation Requirements
+
+Use the existing completed localisation system.
+
+Create or update only when necessary:
 
 ```text
-lang/en/emails.php
-lang/fr/emails.php
+lang/en/reports.php
+lang/fr/reports.php
 ```
 
-Translate:
+Translate any new:
 
-* email subject labels where applicable
-* greetings
-* body labels
-* button text
-* footer text
-* notification headings
-* appointment reminders
-* payment notices
-* invoice notices
-* admission/discharge notices
-* password/user account emails if custom
-* system notification emails
+* report titles
+* report descriptions
+* filter labels
+* column headings
+* summary labels
+* export buttons
+* print buttons
+* empty states
+* generated by
+* generated at
+* totals
+* subtotals
+* chart labels
 
 Do not translate:
 
 * patient names
-* staff names
-* facility names
-* invoice numbers
-* appointment dates
-* user-entered notes
+* doctor names
+* supplier names
+* product names
+* service names unless system-defined
 * clinical free text
-* reset tokens
-* URLs
+* audit event codes
+* permission names
+* route names
+* database values unless mapped through status labels
 
-Do not break existing email layout.
-Do not change mail delivery logic.
-
-If no email templates exist, document that clearly.
+Maintain EN/FR parity.
+Run parity verification after changes.
 
 ---
 
-# 5. Dynamic Enum and Model Labels
+# 9. Clinical Reports
 
-Audit model and enum label methods.
+Implement or improve:
 
-Check for methods like:
+* Patient Visit Summary
+* Daily Visit Register
+* Consultation Activity Report
+* Diagnosis Report
+* Prescription Report
+* Clinical Follow-up Report
+* Deceased Patients Report
 
-```php
-label()
-getLabelAttribute()
-statusLabel()
-typeLabel()
-displayName()
-humanName()
-```
+Filters:
 
-in:
+* date range
+* doctor
+* department
+* visit type
+* diagnosis
+* patient status
+
+Permissions:
+
+* reports.clinical.view
+* reports.clinical.export
+* reports.clinical_sensitive.view
+
+Clinical reports must not expose sensitive clinical details to unauthorized users.
+
+---
+
+# 10. Emergency Reports
+
+Implement or improve:
+
+* Emergency Case Summary
+* Emergency Triage Report
+* Emergency Admissions Report
+* Emergency Disposition Report
+* Emergency Consumables Report
+* Emergency Billing Report
+
+KPIs:
+
+* total emergency cases
+* red/orange triage cases
+* admitted from emergency
+* transferred cases
+* completed/discharged cases
+* emergency revenue
+* emergency consumables
+
+Rules:
+
+* emergency must remain based on the Visit workflow
+* do not create a separate patient lifecycle
+* do not hardcode emergency services
+* emergency billing must use existing billing/services logic
+
+---
+
+# 11. Admission / Ward Reports
+
+Implement or improve:
+
+* Admission Register
+* Discharge Register
+* Bed Occupancy Report
+* Ward Census
+* MAR Overdue Report
+* Ward Consumables Report
+* Admission Billing Report
+
+KPIs:
+
+* current admissions
+* discharges
+* average length of stay
+* bed occupancy rate
+* pending discharge clearance
+
+---
+
+# 12. Pharmacy Reports
+
+Implement or improve:
+
+* Prescription Report
+* Dispensing Report
+* Drug Sales Report
+* Partial Dispensing Report
+* Out-of-Stock Report
+* Low Stock Report
+* Expired Drug Report
+* Pharmacy Revenue Report
+* Pharmacy COGS Report if accounting is enabled
+
+Rules:
+
+* do not show stock cost to unauthorized users
+* dispensing and MAR administration must remain distinct
+* pharmacy revenue comes from billing
+* pharmacy cost comes from inventory accounting
+* do not calculate cost directly in Blade views
+
+---
+
+# 13. Investigation / Lab Reports
+
+Implement or improve:
+
+* Investigation Request Report
+* Pending Results Report
+* Verified Results Report
+* Rejected / Cancelled Tests Report
+* Urgent Investigation Report
+* Lab Consumables Usage Report
+* Lab Revenue Report
+
+Filters:
+
+* date range
+* department
+* test/service
+* status
+* requested by
+* verified by
+
+---
+
+# 14. Theatre / Procedure Reports
+
+Implement or improve:
+
+* Procedure Request Report
+* Scheduled Procedures Report
+* Completed Procedures Report
+* Cancelled Procedures Report
+* Theatre Utilisation Report
+* Procedure Consumables Report
+* Procedure Revenue Report
+
+---
+
+# 15. Billing Reports
+
+Implement or improve:
+
+* Daily Collections
+* Cashier Shift Report
+* Invoice Register
+* Unpaid Invoices
+* Partially Paid Invoices
+* Discount Report
+* Credit Note Report
+* Write-off Report
+* Refund Report
+* Payment Method Summary
+* Revenue by Department
+* Revenue by Service Type
+* Revenue by Payer Type
+
+Rules:
+
+* payment is not revenue
+* revenue comes from invoice/billing posting
+* discounts, credit notes, write-offs, and refunds must be shown separately
+* financial values require permission
+* do not duplicate accounting calculations
+
+---
+
+# 16. Insurance / Claims Reports
+
+Implement or improve:
+
+* Claims Prepared Report
+* Claims Submitted Report
+* Claims Approved Report
+* Claims Rejected Report
+* Claims Paid Report
+* Claim Aging Report
+* Insurance Receivables Report
+* CCC / Verification Report
+
+Rules:
+
+* do not hardcode NHIS
+* NHIS is only one insurance provider/type
+* use insurance provider filters
+* show rejected claims needing action
+* do not create NHIS-only architecture
+
+---
+
+# 17. Receivables Reports
+
+Implement or improve:
+
+* AR Aging
+* Patient Receivables
+* Insurance Receivables
+* Sponsor Receivables
+* Corporate Receivables
+* Receivable Payments
+* Written-off Receivables
+* Overdue Receivables
+
+Reports must reconcile with invoice receivables.
+
+Aging buckets:
+
+* Current / Not Due
+* 0–30
+* 31–60
+* 61–90
+* 91–120
+* 120+
+
+Rules:
+
+* use existing receivables/accounting services
+* do not invent balances
+* do not double-count sponsor or insurance balances
+
+---
+
+# 18. Payables Reports
+
+Implement or improve:
+
+* AP Aging
+* Supplier Payables
+* Supplier Statement
+* Supplier Payments
+* Supplier Returns
+* Outstanding Supplier Balances
+
+Reports must reconcile with supplier ledger/payables.
+
+---
+
+# 19. Accounting Reports
+
+Implement or improve:
+
+* General Ledger
+* Trial Balance
+* Profit & Loss
+* Balance Sheet
+* Cashbook
+* Journal Entry Report
+* Failed Accounting Postings
+* Revenue Report
+* Expense Report
+* Inventory Valuation Reconciliation
+
+Rules:
+
+* use posted journal entries only
+* exclude drafts from official reports
+* reversals should naturally offset originals
+* do not expose accounting reports to unauthorized users
+* do not duplicate journal calculations in controllers or views
+
+---
+
+# 20. Stock / Procurement Reports
+
+Implement or improve:
+
+* Stock Balance Report
+* Stock Movement Report
+* Inventory Valuation Report
+* Low Stock Report
+* Out-of-Stock Report
+* Expired / Damaged Stock Report
+* Stock Transfer Report
+* Purchase Order Report
+* Goods Receiving Report
+* Purchase Return Report
+* Supplier Ledger Report
+
+Rules:
+
+* current stock must come from stock balances/services
+* stock movement is operational source
+* stock valuation uses accounting/valuation service
+* do not mix incompatible ledgers blindly
+* do not show cost unless authorized
+* products are physical stock items
+* services are billable activities
+
+---
+
+# 21. Audit / Activity Reports
+
+Implement or improve:
+
+* Activity Log Report
+* User Action Report
+* High-Risk Action Report
+* Financial Action Report
+* Clinical Action Report
+* Permission Change Report
+* Login / Security Report if available
+
+Filters:
+
+* date range
+* user
+* module
+* action
+* patient
+* visit
+* source type
+* risk level
+
+Rules:
+
+* use ActivityLogService data
+* patient-context logs should link to patient timeline where permitted
+* global logs remain facility/system logs
+* do not bypass ActivityLogService
+* do not log report views unless policy requires it
+
+---
+
+# 22. Management Overview Reports
+
+Implement:
+
+* Hospital Activity Summary
+* Department Performance
+* Revenue Summary
+* Clinical Workload
+* Financial Position Summary
+* Stock Risk Summary
+* Receivables / Payables Summary
+* Claims Summary
+* Emergency Summary
+* Admission Summary
+
+Rules:
+
+* management reports should aggregate data
+* avoid exposing detailed sensitive clinical data unless permitted
+* dashboard cards should link to real reports where practical
+* do not duplicate dashboard logic unnecessarily
+
+---
+
+# 23. Saved Reports
+
+If practical, add saved report filters.
+
+Recommended table:
 
 ```text
-app/Models/
-app/Enums/
-app/Services/
-app/Helpers/
+saved_reports
 ```
 
-If they return hardcoded English visible to users, add translation support.
-
-Preferred approach:
-
-* keep existing `label()` if changing it would be risky
-* add `translatedLabel()` where needed
-* or update label resolver to use `__('statuses.domain.key')` if already standardised
-
-Example:
-
-```php
-public function translatedLabel(): string
-{
-    return __('statuses.visits.' . $this->status);
-}
-```
-
-Do not translate internal codes.
-Do not break database values.
-Do not change enum stored values.
-Do not change business rules.
-
----
-
-# 6. Validation Attributes and Messages
-
-Verify:
+Fields:
 
 ```text
-lang/en/validation.php
-lang/fr/validation.php
+id
+user_id
+report_key
+name
+filters json
+is_shared boolean default false
+created_at
+updated_at
 ```
 
-Check:
+If not practical in this phase, document it clearly as TODO in the report documentation.
 
-* validation syntax
-* translated attribute names
-* French attribute names
-* custom validation messages
-* missing attributes for high-traffic forms
-
-Add missing attributes for:
-
-* patients
-* visits
-* billing
-* invoices
-* payments
-* admissions
-* emergency
-* triage
-* lab
-* stock
-* users
-* settings
-
-Do not change validation rules.
+Do not add this table if the current project structure makes it risky. Documentation as TODO is acceptable.
 
 ---
 
-# 7. Missing Translation Key Scan
+# 24. Permissions
 
-Search Blade/PHP files for translation keys and verify they exist.
-
-Check:
-
-* `__('...')`
-* `@lang('...')`
-* `trans('...')`
-
-Find:
-
-* missing keys
-* typo keys
-* EN-only keys
-* FR-only keys
-* duplicate keys with different meanings
-* keys placed in wrong files
-
-Fix cleanly.
-
-Do not remove existing keys unless obviously unused and safe.
-
----
-
-# 8. EN/FR Parity Verification
-
-Run or create a small parity verification script to confirm every lang file pair has matching top-level and nested keys.
-
-Check all modules:
+Add or verify permissions:
 
 ```text
-admissions
-auth
-billing
-common
-dashboards
-emergency
-investigations
-invoices
-lab
-menu
-messages
-patients
-payments
-pharmacy
-reports
-roles
-settings
-statuses
-stock
-triage
-users
-validation
-visits
+reports.view
+reports.export
+reports.print
+reports.clinical.view
+reports.emergency.view
+reports.admissions.view
+reports.pharmacy.view
+reports.investigations.view
+reports.procedures.view
+reports.billing.view
+reports.claims.view
+reports.receivables.view
+reports.payables.view
+reports.accounting.view
+reports.stock.view
+reports.audit.view
+reports.management.view
+reports.financial_values.view
+reports.stock_cost.view
+reports.clinical_sensitive.view
 ```
 
-If new files are added, include them in the parity check.
-
-Required result:
-
-* 0 missing EN keys
-* 0 missing FR keys
-* no syntax errors in lang files
+Backend must enforce permissions.
+Do not rely only on hiding menu items or buttons.
 
 ---
 
-# 9. UI QA Pass
+# 25. Performance Rules
 
-Manually check the system in English and French.
+Reports must be safe on large data.
 
-Verify:
+Rules:
 
-1. Login page
-2. Dashboard
-3. Sidebar/menu
-4. Patients
-5. Visits
-6. Billing
-7. Invoices
-8. Payments
-9. Admissions
-10. Emergency
-11. Triage
-12. Lab/investigations
-13. Pharmacy
-14. Stock/store
-15. Reports hub
-16. Settings
-17. Users/roles
-18. Print views
-19. PDF views
-20. Emails if previewable
-
-Check for:
-
-* missing translation keys
-* raw key text displayed to user
-* untranslated English text
-* broken layout due to long French labels
-* mobile overflow caused by translated text
-* buttons wrapping badly
-* tables overflowing without wrappers
-* modals breaking on mobile
-* print layout problems
-
-Use Bootstrap 5 utilities only for responsive fixes.
+* paginate large result sets
+* use aggregate queries
+* avoid N+1 queries
+* use date range defaults
+* avoid loading all records before export if huge
+* use chunking/cursor for large CSV export where practical
+* cache expensive summary reports only if safe
+* never calculate stock from all movements on every request if stock_balances exists
+* add indexes only when clearly needed and safe
+* avoid destructive migrations
 
 ---
 
-# 10. Architecture Rules
+# 26. Manual Verification
 
-Follow these UHMS rules:
+Manual verification required:
 
-* Do not create parallel systems.
-* Do not duplicate localisation infrastructure.
-* Do not create duplicate middleware.
-* Do not create duplicate locale routes.
-* Do not create duplicate layouts.
-* Do not move business logic into Blade.
-* Do not create controller-heavy logic.
-* Do not bypass ActivityLogService.
-* Do not break audit logging.
-* Do not hardcode NHIS.
-* Do not hardcode sponsors.
-* Do not hardcode insurance providers.
-* Do not hardcode emergency services.
-* Do not expose unauthorized clinical data.
-* Do not expose unauthorized financial values.
-* Do not expose unauthorized stock cost.
-* Products are physical stock items.
-* Services are billable activities.
-* Use Bootstrap 5 and Tabler Icons only.
-* Do not introduce Tailwind.
-* Do not introduce new packages.
+1. Open Reports menu as admin.
+2. Confirm report sections appear based on permissions.
+3. Confirm unauthorized user cannot access restricted reports by URL.
+4. Run Daily Collections report.
+5. Run Invoice Register report.
+6. Run AR Aging report.
+7. Run AP Aging report.
+8. Run Trial Balance.
+9. Run General Ledger.
+10. Run Stock Balance report.
+11. Run Inventory Valuation report.
+12. Run Pharmacy Dispensing report.
+13. Run Investigation Pending Results report.
+14. Run Emergency Summary report.
+15. Run Admission Register.
+16. Run Claims Rejected report.
+17. Run Activity Log report.
+18. Confirm filters work.
+19. Confirm pagination preserves filters.
+20. Confirm CSV/export respects filters.
+21. Confirm print layout is clean.
+22. Switch to French and confirm report labels translate.
+23. Confirm financial values are hidden from unauthorized users.
+24. Confirm stock cost is hidden from unauthorized users.
+25. Confirm sensitive clinical details are hidden from unauthorized users.
+26. Confirm performance is acceptable.
+27. Confirm existing workflows still work.
 
 ---
 
-# 11. Verification Commands
+# 27. Verification Commands
 
 Run:
 
@@ -495,62 +875,93 @@ php artisan route:list
 php artisan test
 ```
 
-Also run syntax checks:
+Run PHP syntax checks where relevant:
 
 ```bash
+find app -name "*.php" -print0 | xargs -0 -n1 php -l
 for f in lang/en/*.php lang/fr/*.php; do php -l "$f"; done
 ```
 
-Run or create a parity check for nested translation keys.
+Run EN/FR parity verification after adding or changing language keys.
 
-If full tests are too broad, run relevant tests and document what was checked manually.
+If full tests are too broad, run relevant tests and document manual checks.
 
 ---
 
-# 12. Documentation
+# 28. Documentation
 
 Create:
 
 ```text
-docs/LOCALISATION_PHASE_5_FINAL_QA_JS_EMAILS_DYNAMIC_LABELS_REPORT.md
+docs/REPORTS_ANALYTICS_EXPORT_PRINT_REPORT.md
 ```
 
 Include:
 
 * audit findings
-* JavaScript files checked
-* JavaScript strings translated
-* controller flash messages verified/fixed
-* email templates translated or marked not present
-* enum/model labels fixed
-* validation attributes updated
-* missing keys fixed
-* parity verification result
-* syntax check result
-* UI QA result
-* responsive fixes made
+* reports implemented
+* report services added or updated
+* controllers added or updated
+* routes added or updated
+* views added or updated
+* permissions added or verified
+* filters supported
+* export behavior
+* print behavior
+* localisation keys added
+* performance notes
+* manual verification completed
 * remaining TODOs
 
 ---
 
-# 13. Deliverables
+# 29. Acceptance Criteria
 
-At the end, provide:
+This phase is complete when:
 
-1. Summary of audit findings.
-2. List of JavaScript files checked and changed.
-3. List of controller flash messages fixed, if any.
-4. List of email templates translated, if any.
-5. List of enum/model label methods updated, if any.
-6. List of validation attributes added or fixed.
-7. List of missing keys fixed.
-8. EN/FR parity result.
-9. Syntax check result for language files.
-10. UI QA result.
-11. List of files changed.
-12. Remaining TODOs, if any.
-13. Confirmation that no duplicate localisation system was created.
-14. Confirmation that no business logic was moved into Blade.
-15. Confirmation that existing workflows still work.
+* report registry exists or existing report structure is standardised
+* major report groups exist
+* reports are permission-aware
+* reports are module-aware
+* reports support filters
+* reports support print
+* reports support export where practical
+* report labels are translated
+* financial data is protected
+* clinical sensitive data is protected
+* stock cost data is protected
+* dashboards link to real reports where practical
+* reports do not duplicate business logic
+* reports do not create fake numbers
+* reports use existing services/source-of-truth data
+* large reports are paginated or safely exported
+* documentation is updated
+* manual verification is documented
 
-Proceed with UHMS Localisation Phase 5 now.
+---
+
+# 30. Important UHMS Rules
+
+Do not introduce Tailwind.
+Do not introduce a new chart library.
+Do not create fake numbers.
+Do not duplicate accounting calculations.
+Do not duplicate stock calculations.
+Do not expose unauthorized clinical details.
+Do not expose unauthorized financial values.
+Do not expose stock cost to unauthorized users.
+Do not hardcode NHIS.
+Do not hardcode sponsors.
+Do not hardcode insurance providers.
+Do not hardcode emergency services.
+Do not translate internal codes.
+Do not bypass existing services.
+Do not bypass permissions.
+Do not bypass ActivityLogService.
+Do not break existing workflows.
+Do not create parallel systems.
+Do not create duplicate report modules if existing ones can be reused.
+Do not move business logic into Blade views.
+Use Bootstrap 5 and Tabler Icons only.
+
+Proceed with Reports, Analytics, Export & Print Standardisation now.
