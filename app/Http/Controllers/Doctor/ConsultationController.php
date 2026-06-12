@@ -1405,7 +1405,7 @@ class ConsultationController extends Controller
         $allowedStatuses = ['pending', 'active'];
         if (! in_array($prescription->status->value, $allowedStatuses)) {
             if ($this->shouldReturnJson(request())) {
-                return response()->json(['success' => false, 'message' => 'Cannot delete a dispensed or cancelled prescription.'], 422);
+                return response()->json(['success' => false, 'message' => __('messages.consultations.prescription_cannot_delete')], 422);
             }
 
             return back()->with('error', __('messages.consultations.prescription_cannot_delete'));
@@ -1448,7 +1448,7 @@ class ConsultationController extends Controller
         if ($this->shouldReturnJson($request)) {
             return response()->json([
                 'success' => true,
-                'message' => 'Procedure request submitted ('.$procedureRequest->request_number.').',
+                'message' => __('messages.consultations.procedure_submitted', ['number' => $procedureRequest->request_number]),
                 'procedure' => $procedureRequest->fresh(['service', 'department', 'requestingDoctor', 'schedule.theatreRoom']),
             ]);
         }

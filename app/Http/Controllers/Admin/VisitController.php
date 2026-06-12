@@ -106,7 +106,7 @@ class VisitController extends Controller
                 ] : null,
                 'active_insurance' => [
                     'provider_id' => $insuranceProvider?->id,
-                    'label' => $hasInsurance ? $insuranceProvider->name : ($insuranceProvider?->name ?? 'Cash & Carry'),
+                    'label' => $hasInsurance ? $insuranceProvider->name : ($insuranceProvider?->name ?? __('visits.cash_and_carry')),
                     'tier' => $hasInsurance ? $visitInsurance->insuranceTier?->name : null,
                     'is_cash' => ! $hasInsurance,
                     'is_expired' => (bool) ($visitInsurance?->is_expired ?? false),
@@ -147,7 +147,7 @@ class VisitController extends Controller
 
         $insuranceProviderOptions = collect([[
             'value' => 'cash',
-            'label' => 'Cash & Carry',
+            'label' => __('visits.cash_and_carry'),
         ]])->merge(
             InsuranceProvider::active()
                 ->where(function ($query) {
@@ -295,7 +295,7 @@ class VisitController extends Controller
             ]);
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => 'Failed to create visit. Please try again.',
+                    'message' => __('messages.visits.create_failed'),
                 ], 500);
             }
 
@@ -463,14 +463,14 @@ class VisitController extends Controller
                         'visit_insurance_id' => $newInsurance->id,
                         'provider' => $newInsurance->insuranceProvider?->name,
                     ],
-                    'description' => 'Visit active insurance changed for future billed items only.',
+                    'description' => __('messages.visits.active_insurance_changed_future_items'),
                 ],
                 $visit,
-                'Visit active insurance changed'
+                __('messages.visits.active_insurance_changed')
             );
         });
 
-        $providerName = $newInsurance->insuranceProvider?->name ?? 'Cash & Carry';
+        $providerName = $newInsurance->insuranceProvider?->name ?? __('visits.cash_and_carry');
 
         return back()->with('success', __('messages.visits.insurance_changed', ['provider' => $providerName]));
     }

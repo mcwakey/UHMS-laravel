@@ -44,7 +44,7 @@ class AccountingReportController extends Controller
     {
         return view('accounting.reports.by-department', [
             'report' => $service->byDepartment(AccountType::INCOME->value, $this->dateFilters($request)),
-            'title' => 'Revenue by Department',
+            'title' => __('accounting.revenue_by_department'),
             'route' => 'admin.accounting.reports.revenue-by-department',
         ]);
     }
@@ -53,7 +53,7 @@ class AccountingReportController extends Controller
     {
         return view('accounting.reports.by-department', [
             'report' => $service->byDepartment(AccountType::EXPENSE->value, $this->dateFilters($request)),
-            'title' => 'Expense by Department',
+            'title' => __('accounting.expense_by_department'),
             'route' => 'admin.accounting.reports.expense-by-department',
         ]);
     }

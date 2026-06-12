@@ -487,6 +487,7 @@ return [
         'updated'                => 'Modèle ":name" mis à jour.',
         'toggled'                => 'Modèle ":name" :status.',
         'deleted'                => 'Modèle ":name" supprimé.',
+        'applied'                => 'Modèle ":name" appliqué avec succès.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -909,6 +910,8 @@ return [
         'cannot_transition'   => 'Impossible de passer de :from à :to.',
         'invalid_transition'  => 'Impossible de passer de :from à :to.',
         'insurance_changed'   => 'Assurance de la visite changée en :provider. Les éléments facturés existants n\'ont pas été modifiés.',
+        'active_insurance_changed' => 'Assurance active de la visite modifiée',
+        'active_insurance_changed_future_items' => 'Assurance active de la visite modifiée uniquement pour les éléments facturés futurs.',
         'insurance_already_set' => 'L\'assurance de la visite est déjà définie sur l\'option sélectionnée.',
         'insurance_unchanged' => 'L\'assurance de la visite est déjà définie sur l\'option sélectionnée.',
     ],
@@ -935,6 +938,21 @@ return [
         'status_changed' => 'Unité \':name\' :status.',
         'bed_created'    => 'Lit créé avec succès.',
         'bed_updated'    => 'Lit mis à jour avec succès.',
+    ],
+
+    /* ------------------------------------------------------------------ */
+    /* Activity logs, statistics, and shared validation                     */
+    /* ------------------------------------------------------------------ */
+    'activity_logs' => [
+        'exported_to_csv' => 'Journaux d\'activité exportés en CSV',
+    ],
+
+    'statistics' => [
+        'report_exported_to_csv' => "Rapport statistique ':report' exporté en CSV.",
+    ],
+
+    'validation' => [
+        'correct_highlighted_fields' => 'Veuillez corriger les champs mis en évidence.',
     ],
 
 ];

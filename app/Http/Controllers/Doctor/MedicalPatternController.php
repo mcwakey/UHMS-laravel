@@ -221,7 +221,7 @@ class MedicalPatternController extends Controller
         return response()->json([
             'success' => true,
             'applied' => $applied,
-            'message' => "Pattern \"{$pattern->name}\" applied successfully.",
+            'message' => __('messages.patterns.applied', ['name' => $pattern->name]),
         ]);
     }
 }

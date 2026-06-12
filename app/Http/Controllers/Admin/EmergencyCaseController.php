@@ -246,12 +246,12 @@ class EmergencyCaseController extends Controller
 
         return $items->groupBy(function ($item) {
             return match ($item->source_type) {
-                'emergency_service' => 'Emergency Services',
-                'emergency_medication_order' => 'Emergency Medications',
-                'emergency_consumable' => 'Emergency Consumables',
-                'investigation_service', 'emergency_investigation' => 'Emergency Investigations',
-                'procedure_service', 'emergency_procedure' => 'Emergency Procedures',
-                default => str_starts_with((string) $item->source_type, 'emergency') ? 'Other Emergency Charges' : 'Visit Charges',
+                'emergency_service' => __('emergency.billing_group_services'),
+                'emergency_medication_order' => __('emergency.billing_group_medications'),
+                'emergency_consumable' => __('menu.emergency_consumables'),
+                'investigation_service', 'emergency_investigation' => __('emergency.billing_group_investigations'),
+                'procedure_service', 'emergency_procedure' => __('emergency.billing_group_procedures'),
+                default => str_starts_with((string) $item->source_type, 'emergency') ? __('emergency.billing_group_other') : __('emergency.billing_group_visit_charges'),
             };
         })->all();
     }

@@ -42,11 +42,11 @@ class DepartmentConsumablesController extends Controller
             ->withQueryString();
 
         return $this->viewCatalogue($products, $locationIds->all(), [
-            'title' => 'Ward Consumables',
+            'title' => __('menu.ward_consumables'),
             'routeName' => 'admin.wards.consumables.index',
-            'locationLabel' => 'Ward stock location',
-            'departmentLabel' => 'Ward / Treatment departments',
-            'emptyMessage' => 'No products are linked to Ward / Treatment departments yet.',
+            'locationLabel' => __('stock.ward_stock_location'),
+            'departmentLabel' => __('stock.ward_treatment_departments'),
+            'emptyMessage' => __('stock.no_ward_treatment_products'),
             'allowedTypes' => $allowedProductTypes,
         ]);
     }
@@ -92,11 +92,11 @@ class DepartmentConsumablesController extends Controller
             ->withQueryString();
 
         return $this->viewCatalogue($products, $locationIds->all(), [
-            'title' => 'Emergency Consumables',
+            'title' => __('menu.emergency_consumables'),
             'routeName' => 'admin.emergency.consumables.index',
-            'locationLabel' => 'Emergency stock location',
-            'departmentLabel' => 'Emergency department or stocked emergency location',
-            'emptyMessage' => 'No products are linked to Emergency or stocked in an Emergency stock location yet.',
+            'locationLabel' => __('stock.emergency_stock_location'),
+            'departmentLabel' => __('stock.emergency_department_or_stocked_location'),
+            'emptyMessage' => __('stock.no_emergency_products_or_stock'),
             'allowedTypes' => $allowedProductTypes,
         ]);
     }

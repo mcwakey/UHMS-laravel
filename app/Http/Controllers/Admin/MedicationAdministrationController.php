@@ -37,7 +37,7 @@ class MedicationAdministrationController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                'message' => 'Medication administration recorded.',
+                'message' => __('messages.medication_administration.recorded'),
                 'administration_id' => $administration->id,
             ]);
         }
@@ -65,7 +65,7 @@ class MedicationAdministrationController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                'message' => 'PRN/SOS medication administration recorded.',
+                'message' => __('messages.medication_administration.prn_recorded'),
                 'administration_id' => $administration->id,
             ]);
         }

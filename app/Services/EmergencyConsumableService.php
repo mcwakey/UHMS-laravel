@@ -117,7 +117,7 @@ class EmergencyConsumableService
 
         if (! $location) {
             throw ValidationException::withMessages([
-                'stock_location_id' => 'No Emergency stock location is configured. Please configure a stock location for Emergency department.',
+                'stock_location_id' => __('stock.no_emergency_stock_location_configured'),
             ]);
         }
 

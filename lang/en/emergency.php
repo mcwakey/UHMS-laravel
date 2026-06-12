@@ -231,6 +231,12 @@ return [
     'usage_notes_ph'            => 'Usage notes',
     'use_consumable_btn'        => 'Use Consumable',
     'no_consumables'            => 'No emergency consumables recorded yet.',
+    'billing_group_services'    => 'Emergency Services',
+    'billing_group_medications' => 'Emergency Medications',
+    'billing_group_investigations' => 'Emergency Investigations',
+    'billing_group_procedures'  => 'Emergency Procedures',
+    'billing_group_other'       => 'Other Emergency Charges',
+    'billing_group_visit_charges' => 'Visit Charges',
 
     // Tasks tab
     'tasks_monitoring'          => 'Tasks & Monitoring',

@@ -75,4 +75,6 @@ return [
     'reverses' => 'Extourne',
     'reversal_reason' => 'Motif d\'extourne',
     'totals' => 'Totaux',
+    'revenue_by_department' => 'Revenus par service',
+    'expense_by_department' => 'Dépenses par service',
 ];

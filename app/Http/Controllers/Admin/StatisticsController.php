@@ -55,7 +55,7 @@ class StatisticsController extends Controller
         abort_unless($request->user()->can('statistics.export'), 403);
 
         $this->log->log(LogModule::SYSTEM, 'STATISTICS_EXPORTED', [
-            'description' => "Statistics report '{$report}' exported to CSV.",
+            'description' => __('messages.statistics.report_exported_to_csv', ['report' => $report]),
             'causer' => $request->user(),
             'metadata' => ['report' => $report, 'filters' => $data['filters'] ?? []],
         ]);

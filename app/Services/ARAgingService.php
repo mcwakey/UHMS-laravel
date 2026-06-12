@@ -44,18 +44,18 @@ class ARAgingService
         }
 
         $buckets = [
-            'not_due' => ['label' => 'Not Due', 'total' => 0.0, 'count' => 0],
-            'b0_30' => ['label' => '0-30 days', 'total' => 0.0, 'count' => 0],
-            'b31_60' => ['label' => '31-60 days', 'total' => 0.0, 'count' => 0],
-            'b61_90' => ['label' => '61-90 days', 'total' => 0.0, 'count' => 0],
-            'b91_120' => ['label' => '91-120 days', 'total' => 0.0, 'count' => 0],
-            'b120_plus' => ['label' => '120+ days', 'total' => 0.0, 'count' => 0],
+            'not_due' => ['label' => __('reports.statuses.not_due'), 'total' => 0.0, 'count' => 0],
+            'b0_30' => ['label' => __('reports.statuses.aging_0_30'), 'total' => 0.0, 'count' => 0],
+            'b31_60' => ['label' => __('reports.statuses.aging_31_60'), 'total' => 0.0, 'count' => 0],
+            'b61_90' => ['label' => __('reports.statuses.aging_61_90'), 'total' => 0.0, 'count' => 0],
+            'b91_120' => ['label' => __('reports.statuses.aging_91_120'), 'total' => 0.0, 'count' => 0],
+            'b120_plus' => ['label' => __('reports.statuses.aging_120_plus'), 'total' => 0.0, 'count' => 0],
         ];
         $payerSummary = [
-            'patient' => ['label' => 'Patient', 'total' => 0.0, 'count' => 0],
-            'insurance' => ['label' => 'Insurance', 'total' => 0.0, 'count' => 0],
-            'sponsor' => ['label' => 'Sponsor', 'total' => 0.0, 'count' => 0],
-            'corporate' => ['label' => 'Corporate', 'total' => 0.0, 'count' => 0],
+            'patient' => ['label' => __('common.patient'), 'total' => 0.0, 'count' => 0],
+            'insurance' => ['label' => __('common.billing_type_insurance'), 'total' => 0.0, 'count' => 0],
+            'sponsor' => ['label' => __('reports.insurance.sponsor'), 'total' => 0.0, 'count' => 0],
+            'corporate' => ['label' => __('common.billing_type_corporate'), 'total' => 0.0, 'count' => 0],
         ];
 
         $rows = [];

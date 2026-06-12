@@ -278,5 +278,12 @@ return [
     'main_store_info'           => 'Main Store is managed automatically as a protected system location.',
 
     // Shared
+    'ward_stock_location'       => 'Ward stock location',
+    'ward_treatment_departments'=> 'Ward / Treatment departments',
+    'no_ward_treatment_products'=> 'No products are linked to Ward / Treatment departments yet.',
+    'emergency_stock_location'  => 'Emergency stock location',
+    'emergency_department_or_stocked_location' => 'Emergency department or stocked emergency location',
+    'no_emergency_products_or_stock' => 'No products are linked to Emergency or stocked in an Emergency stock location yet.',
+    'no_emergency_stock_location_configured' => 'No Emergency stock location is configured. Please configure a stock location for Emergency department.',
     'actions'                   => 'Actions',
 ];

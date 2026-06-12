@@ -27,12 +27,12 @@ class APAgingService
         }
 
         $buckets = [
-            'not_due' => ['label' => 'Not Due', 'total' => 0.0, 'count' => 0],
-            'b0_30' => ['label' => '0-30 days', 'total' => 0.0, 'count' => 0],
-            'b31_60' => ['label' => '31-60 days', 'total' => 0.0, 'count' => 0],
-            'b61_90' => ['label' => '61-90 days', 'total' => 0.0, 'count' => 0],
-            'b91_120' => ['label' => '91-120 days', 'total' => 0.0, 'count' => 0],
-            'b120_plus' => ['label' => '120+ days', 'total' => 0.0, 'count' => 0],
+            'not_due' => ['label' => __('reports.statuses.not_due'), 'total' => 0.0, 'count' => 0],
+            'b0_30' => ['label' => __('reports.statuses.aging_0_30'), 'total' => 0.0, 'count' => 0],
+            'b31_60' => ['label' => __('reports.statuses.aging_31_60'), 'total' => 0.0, 'count' => 0],
+            'b61_90' => ['label' => __('reports.statuses.aging_61_90'), 'total' => 0.0, 'count' => 0],
+            'b91_120' => ['label' => __('reports.statuses.aging_91_120'), 'total' => 0.0, 'count' => 0],
+            'b120_plus' => ['label' => __('reports.statuses.aging_120_plus'), 'total' => 0.0, 'count' => 0],
         ];
         $supplierSummary = [];
         $rows = [];

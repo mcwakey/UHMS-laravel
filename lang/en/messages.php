@@ -459,6 +459,7 @@ return [
         'updated'                => 'Pattern ":name" updated.',
         'toggled'                => 'Pattern ":name" :status.',
         'deleted'                => 'Pattern ":name" deleted.',
+        'applied'                => 'Pattern ":name" applied successfully.',
     ],
 
     /* ------------------------------------------------------------------ */
@@ -887,6 +888,8 @@ return [
         'status_updated'     => 'Visit status updated to :status.',
         'cannot_transition'  => 'Cannot transition from :from to :to.',
         'insurance_changed'  => 'Visit insurance changed to :provider. Existing billed items were not changed.',
+        'active_insurance_changed' => 'Visit active insurance changed',
+        'active_insurance_changed_future_items' => 'Visit active insurance changed for future billed items only.',
         'insurance_already_set' => 'Visit insurance is already set to the selected option.',
         'failed_create'      => 'Failed to create visit. Please try again.',
         'failed_update'      => 'Failed to update visit: :error',
@@ -942,5 +945,19 @@ return [
         'notes_updated' => 'Rendering notes updated.',
     ],
 
-];
+    /* ------------------------------------------------------------------ */
+    /* Activity logs, statistics, and shared validation                     */
+    /* ------------------------------------------------------------------ */
+    'activity_logs' => [
+        'exported_to_csv' => 'Activity logs exported to CSV',
+    ],
 
+    'statistics' => [
+        'report_exported_to_csv' => "Statistics report ':report' exported to CSV.",
+    ],
+
+    'validation' => [
+        'correct_highlighted_fields' => 'Please correct the highlighted fields.',
+    ],
+
+];

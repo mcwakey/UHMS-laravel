@@ -71,7 +71,7 @@ class TriageController extends Controller
         if ($visit->status !== VisitStatus::TRIAGE) {
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => 'This visit is not in TRIAGE status.',
+                    'message' => __('messages.triage.not_in_triage'),
                     'redirect_url' => route('admin.visits.show', $visit),
                 ], 409);
             }

@@ -80,7 +80,7 @@ class ActivityLogController extends Controller
 
         // Log the export itself.
         $this->logger->log(LogModule::SYSTEM, 'EXPORTED', [
-            'description' => 'Activity logs exported to CSV',
+            'description' => __('messages.activity_logs.exported_to_csv'),
             'metadata' => ['filters' => $this->extractFilters($request)],
         ]);
 

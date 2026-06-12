@@ -231,6 +231,12 @@ return [
     'usage_notes_ph'            => 'Notes d\'utilisation',
     'use_consumable_btn'        => 'Utiliser consommable',
     'no_consumables'            => 'Aucun consommable d\'urgence enregistré encore.',
+    'billing_group_services'    => 'Services d\'urgence',
+    'billing_group_medications' => 'Médicaments d\'urgence',
+    'billing_group_investigations' => 'Examens d\'urgence',
+    'billing_group_procedures'  => 'Procédures d\'urgence',
+    'billing_group_other'       => 'Autres frais d\'urgence',
+    'billing_group_visit_charges' => 'Frais de visite',
 
     // Tasks tab
     'tasks_monitoring'          => 'Tâches & Surveillance',

@@ -146,7 +146,7 @@ class AppointmentController extends Controller
 
             if (request()->expectsJson()) {
                 return response()->json([
-                    'message' => 'Patient checked in and visit created successfully.',
+                    'message' => __('messages.appointments.checked_in'),
                     'appointment_id' => $appointment->id,
                     'appointment_number' => $appointment->appointment_number,
                     'appointment_status' => $appointment->status->value,

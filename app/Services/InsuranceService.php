@@ -362,7 +362,7 @@ class InsuranceService
                     'provider_id'              => $cashProvider->id,
                     'provider_name'            => $cashProvider->name,
                     'type'                     => $cashProvider->type?->value ?? $cashProvider->type,
-                    'type_label'               => $cashProvider->type?->label() ?? 'Cash & Carry',
+                    'type_label'               => $cashProvider->type?->label() ?? __('visits.cash_and_carry'),
                     'type_color'               => $cashProvider->type?->color() ?? 'secondary',
                     'tier_id'                  => null,
                     'tier_name'                => null,

@@ -73,7 +73,7 @@ class PatientInsuranceController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                'message'      => 'Insurance added to patient.',
+                'message'      => __('messages.patient_insurance.added'),
                 'insurance_id' => $insurance->id,
             ]);
         }
@@ -106,7 +106,7 @@ class PatientInsuranceController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                'message'      => 'Insurance updated.',
+                'message'      => __('messages.patient_insurance.updated'),
                 'insurance_id' => $insurance->id,
             ]);
         }

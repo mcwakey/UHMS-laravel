@@ -139,7 +139,7 @@ class ServiceCatalogController extends Controller
         if ($validator->fails()) {
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => 'Please correct the highlighted fields.',
+                    'message' => __('messages.validation.correct_highlighted_fields'),
                     'errors'  => $validator->errors(),
                 ], 422);
             }
@@ -209,7 +209,7 @@ class ServiceCatalogController extends Controller
         $price->delete();
 
         if ($request->expectsJson()) {
-            return response()->json(['message' => 'Price entry removed.']);
+            return response()->json(['message' => __('messages.service_catalog.price_removed')]);
         }
 
         return back()->with('success', __('messages.service_catalog.price_removed'));

@@ -278,5 +278,12 @@ return [
     'main_store_info'           => 'Le magasin principal est géré automatiquement comme emplacement système protégé.',
 
     // Shared
+    'ward_stock_location'       => 'Emplacement de stock de salle',
+    'ward_treatment_departments'=> 'Services de salle / traitement',
+    'no_ward_treatment_products'=> 'Aucun produit n\'est encore lié aux services de salle / traitement.',
+    'emergency_stock_location'  => 'Emplacement de stock d\'urgence',
+    'emergency_department_or_stocked_location' => 'Service d\'urgence ou emplacement d\'urgence approvisionné',
+    'no_emergency_products_or_stock' => 'Aucun produit n\'est lié aux urgences ou stocké dans un emplacement d\'urgence.',
+    'no_emergency_stock_location_configured' => 'Aucun emplacement de stock d\'urgence n\'est configuré. Veuillez configurer un emplacement de stock pour le service d\'urgence.',
     'actions'                   => 'Actions',
 ];

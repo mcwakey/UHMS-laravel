@@ -75,4 +75,6 @@ return [
     'reverses' => 'Reverses',
     'reversal_reason' => 'Reversal Reason',
     'totals' => 'Totals',
+    'revenue_by_department' => 'Revenue by Department',
+    'expense_by_department' => 'Expense by Department',
 ];

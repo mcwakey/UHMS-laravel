@@ -1,20 +1,20 @@
 # UHMS Localisation Coverage Audit Report
 
-Date: 2026-06-12 12:43:20 +02:00
+Date: 2026-06-12 13:05:15 +02:00
 
 ## Summary
 
 - Total files scanned: 1248
-- Total files with possible hardcoded strings: 551
-- Total hardcoded candidates found: 19758
-- Modules affected: 311
+- Total files with possible hardcoded strings: 536
+- Total hardcoded candidates found: 19723
+- Modules affected: 310
 
 ### Modules Affected
 
 - components: 1909
-- admin: 628
+- admin: 613
 - layout: 406
-- app: 403
+- app: 394
 - widgets.blade.php: 390
 - consultations: 350
 - ui-dropdowns.blade.php: 336
@@ -81,23 +81,14 @@ Date: 2026-06-12 12:43:20 +02:00
 - lang/en/reports.php: 47
 - lang/fr/reports.php: 46
 - app/Services/PatientMergePreviewService.php: 35
-- app/Services/StatisticsService.php: 24
+- app/Services/StatisticsService.php: 21
 - app/Services/ProcedureReportService.php: 16
 - app/Services/FinancialReportService.php: 8
-- app/Http/Controllers/Billing/BillingReportController.php: 6
 - app/Services/ProcedureWorkflowService.php: 6
-- app/Services/ARAgingService.php: 5
 - app/Services/LabService.php: 4
-- app/Http/Controllers/Admin/VisitController.php: 3
 - app/Services/EmergencyBedBillingService.php: 3
 - app/Services/VisitService.php: 3
 - app/Services/VisitWorkflowService.php: 3
-- app/Http/Controllers/Accounting/AccountingReportController.php: 2
-- app/Http/Controllers/Admin/DepartmentConsumablesController.php: 2
-- app/Http/Controllers/Admin/MedicationAdministrationController.php: 2
-- app/Http/Controllers/Admin/PatientInsuranceController.php: 2
-- app/Http/Controllers/Admin/ServiceCatalogController.php: 2
-- app/Http/Controllers/Doctor/ConsultationController.php: 2
 - app/Services/AdmissionBedBillingService.php: 2
 - app/Services/Billing/VisitBillingOverrideService.php: 2
 - app/Services/BloodDonationService.php: 2
@@ -107,6 +98,15 @@ Date: 2026-06-12 12:43:20 +02:00
 - app/Services/JournalEntryService.php: 2
 - app/Services/QueueService.php: 2
 - app/Services/ReportService.php: 2
+- app/Services/StatementService.php: 2
+- app/Services/VisitPreviewService.php: 2
+- lang/en/admissions.php: 2
+- lang/en/invoices.php: 2
+- lang/fr/admissions.php: 2
+- app/Services/AdmissionService.php: 1
+- app/Services/BloodCrossmatchService.php: 1
+- app/Services/ClinicalTaskService.php: 1
+- app/Services/ConsultationNextPatientService.php: 1
 
 ### Likely False Positives
 
@@ -115,179 +115,6 @@ Date: 2026-06-12 12:43:20 +02:00
 - Table cells containing fallback text from source data should be checked manually before translation.
 
 ## Detailed Findings
-
-### `app/Http/Controllers/Accounting/AccountingReportController.php`
-
-- Line 47 [medium]: `Revenue by Department`
-  - Context: `'title' => 'Revenue by Department',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounting.php :: revenue_by_department`
-- Line 56 [medium]: `Expense by Department`
-  - Context: `'title' => 'Expense by Department',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounting.php :: expense_by_department`
-
-### `app/Http/Controllers/Admin/ActivityLogController.php`
-
-- Line 83 [medium]: `Activity logs exported to CSV`
-  - Context: `'description' => 'Activity logs exported to CSV',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/admin.php :: activity_logs_exported_to_csv`
-
-### `app/Http/Controllers/Admin/AppointmentController.php`
-
-- Line 149 [medium]: `Patient checked in and visit created successfully.`
-  - Context: `'message' => 'Patient checked in and visit created successfully.',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/admin.php :: patient_checked_in_and_visit_created_successfully`
-
-### `app/Http/Controllers/Admin/DepartmentConsumablesController.php`
-
-- Line 45 [medium]: `Ward Consumables`
-  - Context: `'title' => 'Ward Consumables',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/admin.php :: ward_consumables`
-- Line 95 [medium]: `Emergency Consumables`
-  - Context: `'title' => 'Emergency Consumables',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/admin.php :: emergency_consumables`
-
-### `app/Http/Controllers/Admin/MedicationAdministrationController.php`
-
-- Line 40 [medium]: `Medication administration recorded.`
-  - Context: `'message' => 'Medication administration recorded.',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/admin.php :: medication_administration_recorded`
-- Line 68 [medium]: `PRN/SOS medication administration recorded.`
-  - Context: `'message' => 'PRN/SOS medication administration recorded.',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/admin.php :: prn_sos_medication_administration_recorded`
-
-### `app/Http/Controllers/Admin/PatientInsuranceController.php`
-
-- Line 76 [medium]: `Insurance added to patient.`
-  - Context: `'message'      => 'Insurance added to patient.',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/admin.php :: insurance_added_to_patient`
-- Line 109 [medium]: `Insurance updated.`
-  - Context: `'message'      => 'Insurance updated.',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/admin.php :: insurance_updated`
-
-### `app/Http/Controllers/Admin/ServiceCatalogController.php`
-
-- Line 142 [medium]: `Please correct the highlighted fields.`
-  - Context: `'message' => 'Please correct the highlighted fields.',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/admin.php :: please_correct_the_highlighted_fields`
-- Line 212 [medium]: `Price entry removed.`
-  - Context: `return response()->json(['message' => 'Price entry removed.']);`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/admin.php :: price_entry_removed`
-
-### `app/Http/Controllers/Admin/StatisticsController.php`
-
-- Line 58 [medium]: `Statistics report`
-  - Context: `'description' => "Statistics report '{$report}' exported to CSV.",`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/admin.php :: statistics_report`
-
-### `app/Http/Controllers/Admin/TriageController.php`
-
-- Line 74 [medium]: `This visit is not in TRIAGE status.`
-  - Context: `'message' => 'This visit is not in TRIAGE status.',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/admin.php :: this_visit_is_not_in_triage_status`
-
-### `app/Http/Controllers/Admin/VisitController.php`
-
-- Line 150 [medium]: `Cash & Carry`
-  - Context: `'label' => 'Cash & Carry',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/admin.php :: cash_carry`
-- Line 298 [medium]: `Failed to create visit. Please try again.`
-  - Context: `'message' => 'Failed to create visit. Please try again.',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/admin.php :: failed_to_create_visit_please_try_again`
-- Line 466 [medium]: `Visit active insurance changed for future billed items only.`
-  - Context: `'description' => 'Visit active insurance changed for future billed items only.',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/admin.php :: visit_active_insurance_changed_for_future_billed_i`
-
-### `app/Http/Controllers/Billing/BillingReportController.php`
-
-- Line 53 [medium]: `Patient`
-  - Context: `['value' => 'patient', 'label' => 'Patient'],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/billing.php :: patient`
-- Line 54 [medium]: `Insurance`
-  - Context: `['value' => 'insurance', 'label' => 'Insurance'],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/billing.php :: insurance`
-- Line 55 [medium]: `Sponsor`
-  - Context: `['value' => 'sponsor', 'label' => 'Sponsor'],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/billing.php :: sponsor`
-- Line 56 [medium]: `Corporate`
-  - Context: `['value' => 'corporate', 'label' => 'Corporate'],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/billing.php :: corporate`
-- Line 60 [medium]: `Partially Paid`
-  - Context: `['value' => 'partially_paid', 'label' => 'Partially Paid'],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/billing.php :: partially_paid`
-- Line 61 [medium]: `Overdue`
-  - Context: `['value' => 'overdue', 'label' => 'Overdue'],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/billing.php :: overdue`
-
-### `app/Http/Controllers/Doctor/ConsultationController.php`
-
-- Line 1408 [medium]: `Cannot delete a dispensed or cancelled prescription.`
-  - Context: `return response()->json(['success' => false, 'message' => 'Cannot delete a dispensed or cancelled prescription.'], 422);`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/doctor.php :: cannot_delete_a_dispensed_or_cancelled_prescriptio`
-- Line 1451 [medium]: `Procedure request submitted (`
-  - Context: `'message' => 'Procedure request submitted ('.$procedureRequest->request_number.').',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/doctor.php :: procedure_request_submitted`
-
-### `app/Http/Controllers/Doctor/MedicalPatternController.php`
-
-- Line 224 [medium]: `Pattern \`
-  - Context: `'message' => "Pattern \"{$pattern->name}\" applied successfully.",`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/doctor.php :: pattern`
-
-### `app/Services/APAgingService.php`
-
-- Line 30 [medium]: `Not Due`
-  - Context: `'not_due' => ['label' => 'Not Due', 'total' => 0.0, 'count' => 0],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/app.php :: not_due`
-
-### `app/Services/ARAgingService.php`
-
-- Line 47 [medium]: `Not Due`
-  - Context: `'not_due' => ['label' => 'Not Due', 'total' => 0.0, 'count' => 0],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/app.php :: not_due`
-- Line 55 [medium]: `Patient`
-  - Context: `'patient' => ['label' => 'Patient', 'total' => 0.0, 'count' => 0],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/app.php :: patient`
-- Line 56 [medium]: `Insurance`
-  - Context: `'insurance' => ['label' => 'Insurance', 'total' => 0.0, 'count' => 0],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/app.php :: insurance`
-- Line 57 [medium]: `Sponsor`
-  - Context: `'sponsor' => ['label' => 'Sponsor', 'total' => 0.0, 'count' => 0],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/app.php :: sponsor`
-- Line 58 [medium]: `Corporate`
-  - Context: `'corporate' => ['label' => 'Corporate', 'total' => 0.0, 'count' => 0],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/app.php :: corporate`
 
 ### `app/Services/AdmissionBedBillingService.php`
 
@@ -1902,10 +1729,6 @@ Date: 2026-06-12 12:43:20 +02:00
   - Context: `'title' => 'Ward Bed Occupancy',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/app.php :: ward_bed_occupancy`
-- Line 461 [medium]: `Revenue by Department`
-  - Context: `'title' => 'Revenue by Department',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/app.php :: revenue_by_department`
 - Line 556 [medium]: `Blood Inventory (Available)`
   - Context: `'title' => 'Blood Inventory (Available)',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -1914,14 +1737,6 @@ Date: 2026-06-12 12:43:20 +02:00
   - Context: `'drilldown' => ['route' => 'admin.reports.blood-bank', 'label' => 'Open Blood Bank Report', 'params' => $r],`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/app.php :: open_blood_bank_report`
-- Line 720 [medium]: `Revenue Over Time`
-  - Context: `'id' => 'revenue_trend', 'type' => 'line', 'title' => 'Revenue Over Time',`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/app.php :: revenue_over_time`
-- Line 722 [medium]: `Collected (GHS)`
-  - Context: `'datasets' => [['label' => 'Collected (GHS)', 'data' => $rows->pluck('total')->map(fn ($v) => round((float) $v, 2))->all()]],`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/app.php :: collected_ghs`
 - Line 734 [medium]: `Open detailed report`
   - Context: `'drilldown' => $route ? ['route' => $route, 'label' => 'Open detailed report', 'params' => $params] : null,`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -2154,79 +1969,79 @@ Date: 2026-06-12 12:43:20 +02:00
   - Context: `'description'        => 'Invoices, payments, outstanding balances, and billed-not-rendered risk.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: invoices_payments_outstanding_balances_and_billed_`
-- Line 342 [medium]: `Claims Report`
+- Line 345 [medium]: `Claims Report`
   - Context: `'title'             => 'Claims Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: claims_report`
-- Line 343 [medium]: `Insurance claims by workflow, provider, status, and financial outcome.`
+- Line 346 [medium]: `Insurance claims by workflow, provider, status, and financial outcome.`
   - Context: `'description'       => 'Insurance claims by workflow, provider, status, and financial outcome.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: insurance_claims_by_workflow_provider_status_and_f`
-- Line 360 [medium]: `Accounting Reports`
+- Line 363 [medium]: `Accounting Reports`
   - Context: `'title'              => 'Accounting Reports',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: accounting_reports`
-- Line 361 [medium]: `Financial statements, ledger, journals, and posting integrity.`
+- Line 364 [medium]: `Financial statements, ledger, journals, and posting integrity.`
   - Context: `'description'        => 'Financial statements, ledger, journals, and posting integrity.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: financial_statements_ledger_journals_and_posting_i`
-- Line 376 [medium]: `Receivables Reports`
+- Line 379 [medium]: `Receivables Reports`
   - Context: `'title'       => 'Receivables Reports',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: receivables_reports`
-- Line 377 [medium]: `AR aging, patient and insurance receivables, overdue balances.`
+- Line 380 [medium]: `AR aging, patient and insurance receivables, overdue balances.`
   - Context: `'description' => 'AR aging, patient and insurance receivables, overdue balances.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: ar_aging_patient_and_insurance_receivables_overdue`
-- Line 388 [medium]: `Payables Reports`
+- Line 391 [medium]: `Payables Reports`
   - Context: `'title'          => 'Payables Reports',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: payables_reports`
-- Line 389 [medium]: `AP aging, supplier balances and payments.`
+- Line 392 [medium]: `AP aging, supplier balances and payments.`
   - Context: `'description'    => 'AP aging, supplier balances and payments.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: ap_aging_supplier_balances_and_payments`
-- Line 399 [medium]: `Stock Report`
+- Line 402 [medium]: `Stock Report`
   - Context: `'title'              => 'Stock Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: stock_report`
-- Line 400 [medium]: `Product stock movement and expiry-sensitive inventory activity.`
+- Line 403 [medium]: `Product stock movement and expiry-sensitive inventory activity.`
   - Context: `'description'        => 'Product stock movement and expiry-sensitive inventory activity.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: product_stock_movement_and_expiry_sensitive_invent`
-- Line 437 [medium]: `Blood Bank Report`
+- Line 440 [medium]: `Blood Bank Report`
   - Context: `'title'       => 'Blood Bank Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: blood_bank_report`
-- Line 438 [medium]: `Blood inventory, requests, issue, transfusion, expiry, and wastage.`
+- Line 441 [medium]: `Blood inventory, requests, issue, transfusion, expiry, and wastage.`
   - Context: `'description' => 'Blood inventory, requests, issue, transfusion, expiry, and wastage.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: blood_inventory_requests_issue_transfusion_expiry_`
-- Line 445 [medium]: `Activity Log Report`
+- Line 448 [medium]: `Activity Log Report`
   - Context: `'title'       => 'Activity Log Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: activity_log_report`
-- Line 446 [medium]: `User actions, high-risk events, and system activity.`
+- Line 449 [medium]: `User actions, high-risk events, and system activity.`
   - Context: `'description' => 'User actions, high-risk events, and system activity.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: user_actions_high_risk_events_and_system_activity`
-- Line 453 [medium]: `Patient Statement`
+- Line 456 [medium]: `Patient Statement`
   - Context: `'title'              => 'Patient Statement',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: patient_statement`
-- Line 454 [medium]: `Financial statement for a patient across a date range.`
+- Line 457 [medium]: `Financial statement for a patient across a date range.`
   - Context: `'description'        => 'Financial statement for a patient across a date range.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: financial_statement_for_a_patient_across_a_date_ra`
-- Line 653 [medium]: `Description`
+- Line 656 [medium]: `Description`
   - Context: `'description'        => 'Description',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: description`
-- Line 803 [medium]: `Printed Report`
+- Line 806 [medium]: `Printed Report`
   - Context: `'title'              => 'Printed Report',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: printed_report`
-- Line 1085 [medium]: `Accounts Receivable Aging`
+- Line 1088 [medium]: `Accounts Receivable Aging`
   - Context: `'title'          => 'Accounts Receivable Aging',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: accounts_receivable_aging`
@@ -2440,75 +2255,75 @@ Date: 2026-06-12 12:43:20 +02:00
   - Context: `'description'        => 'Factures, paiements, soldes impayés et risque de prestation non rendue.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: factures_paiements_soldes_impay_s_et_risque_de_pre`
-- Line 342 [medium]: `Rapport des réclamations`
+- Line 345 [medium]: `Rapport des réclamations`
   - Context: `'title'             => 'Rapport des réclamations',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_des_r_clamations`
-- Line 343 [medium]: `Réclamations d\`
+- Line 346 [medium]: `Réclamations d\`
   - Context: `'description'       => 'Réclamations d\'assurance par flux, prestataire, statut et résultat financier.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: r_clamations_d`
-- Line 360 [medium]: `Rapports comptabilité`
+- Line 363 [medium]: `Rapports comptabilité`
   - Context: `'title'              => 'Rapports comptabilité',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: rapports_comptabilit`
-- Line 376 [medium]: `Rapports débiteurs`
+- Line 379 [medium]: `Rapports débiteurs`
   - Context: `'title'       => 'Rapports débiteurs',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: rapports_d_biteurs`
-- Line 377 [medium]: `Balance âgée, débiteurs patients et assurances, soldes en retard.`
+- Line 380 [medium]: `Balance âgée, débiteurs patients et assurances, soldes en retard.`
   - Context: `'description' => 'Balance âgée, débiteurs patients et assurances, soldes en retard.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: balance_g_e_d_biteurs_patients_et_assurances_solde`
-- Line 388 [medium]: `Rapports créanciers`
+- Line 391 [medium]: `Rapports créanciers`
   - Context: `'title'          => 'Rapports créanciers',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: rapports_cr_anciers`
-- Line 389 [medium]: `Balance âgée fournisseurs, soldes et paiements.`
+- Line 392 [medium]: `Balance âgée fournisseurs, soldes et paiements.`
   - Context: `'description'    => 'Balance âgée fournisseurs, soldes et paiements.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: balance_g_e_fournisseurs_soldes_et_paiements`
-- Line 399 [medium]: `Rapport de stock`
+- Line 402 [medium]: `Rapport de stock`
   - Context: `'title'              => 'Rapport de stock',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_de_stock`
-- Line 400 [medium]: `Mouvements de stock et inventaire sensible aux dates de péremption.`
+- Line 403 [medium]: `Mouvements de stock et inventaire sensible aux dates de péremption.`
   - Context: `'description'        => 'Mouvements de stock et inventaire sensible aux dates de péremption.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: mouvements_de_stock_et_inventaire_sensible_aux_dat`
-- Line 437 [medium]: `Rapport banque de sang`
+- Line 440 [medium]: `Rapport banque de sang`
   - Context: `'title'       => 'Rapport banque de sang',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_banque_de_sang`
-- Line 438 [medium]: `Inventaire du sang, demandes, distribution, transfusion, expiration et gaspillage.`
+- Line 441 [medium]: `Inventaire du sang, demandes, distribution, transfusion, expiration et gaspillage.`
   - Context: `'description' => 'Inventaire du sang, demandes, distribution, transfusion, expiration et gaspillage.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: inventaire_du_sang_demandes_distribution_transfusi`
-- Line 445 [medium]: `Rapport journal d\`
+- Line 448 [medium]: `Rapport journal d\`
   - Context: `'title'       => 'Rapport journal d\'activité',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_journal_d`
-- Line 446 [medium]: `Actions des utilisateurs, événements à haut risque et activité système.`
+- Line 449 [medium]: `Actions des utilisateurs, événements à haut risque et activité système.`
   - Context: `'description' => 'Actions des utilisateurs, événements à haut risque et activité système.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: actions_des_utilisateurs_v_nements_haut_risque_et_`
-- Line 453 [medium]: `Relevé patient`
+- Line 456 [medium]: `Relevé patient`
   - Context: `'title'              => 'Relevé patient',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: relev_patient`
-- Line 454 [medium]: `Relevé financier d\`
+- Line 457 [medium]: `Relevé financier d\`
   - Context: `'description'        => 'Relevé financier d\'un patient sur une période.',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: relev_financier_d`
-- Line 653 [medium]: `Description`
+- Line 656 [medium]: `Description`
   - Context: `'description'        => 'Description',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: description`
-- Line 803 [medium]: `Rapport imprimé`
+- Line 806 [medium]: `Rapport imprimé`
   - Context: `'title'              => 'Rapport imprimé',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: rapport_imprim`
-- Line 1085 [medium]: `Balance âgée des débiteurs`
+- Line 1088 [medium]: `Balance âgée des débiteurs`
   - Context: `'title'          => 'Balance âgée des débiteurs',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: balance_g_e_des_d_biteurs`
@@ -80816,18 +80631,3 @@ Date: 2026-06-12 12:43:20 +02:00
 
 - This report is heuristic. Fix high-confidence visible UI strings first.
 - Do not translate user-entered names, clinical free text, route names, permission names, or internal codes.
-
-## Post-Audit Cleanup Completed
-
-- Added `lang/en/accounting.php` and `lang/fr/accounting.php` with full EN/FR key parity.
-- Localised high-confidence visible text in:
-  - `resources/views/accounting/dashboard.blade.php`
-  - `resources/views/accounting/accounts/index.blade.php`
-  - `resources/views/accounting/accounts/_form.blade.php`
-  - `resources/views/accounting/accounts/create.blade.php`
-  - `resources/views/accounting/accounts/edit.blade.php`
-  - `resources/views/accounting/journals/index.blade.php`
-  - `resources/views/accounting/journals/show.blade.php`
-  - `resources/views/components/confirm-form.blade.php`
-- Regenerated this report after cleanup: 1,248 files scanned, 551 files with candidates, 19,758 candidates.
-- Remaining high-priority candidates are concentrated in legacy/template-style root views, modal demo components, consultation detail UI, store/theatre/blood-bank pages, and older accounting/payables pages.

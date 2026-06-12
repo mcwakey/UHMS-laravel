@@ -453,13 +453,13 @@ class StatisticsService
             ],
             'charts' => [
                 $this->revenueTrend($r),
-                $this->donut('pay_method', 'Revenue by Payment Method', $byMethod->pluck('label')->all(), $byMethod->pluck('total')->map(fn ($v) => round((float) $v, 2))->all()),
-                $this->bar('rev_dept', 'Revenue by Department', $byDept->pluck('label')->all(), $byDept->pluck('total')->map(fn ($v) => round((float) $v, 2))->all()),
+                $this->donut('pay_method', __('reports.billing.revenue_by_payment_method'), $byMethod->pluck('label')->all(), $byMethod->pluck('total')->map(fn ($v) => round((float) $v, 2))->all()),
+                $this->bar('rev_dept', __('accounting.revenue_by_department'), $byDept->pluck('label')->all(), $byDept->pluck('total')->map(fn ($v) => round((float) $v, 2))->all()),
             ],
             'lists' => [
                 [
-                    'title' => 'Revenue by Department',
-                    'columns' => ['Department', 'Collected (GHS)'],
+                    'title' => __('accounting.revenue_by_department'),
+                    'columns' => [__('reports.col_department'), __('reports.billing.collected_ghs')],
                     'rows' => $byDept->map(fn ($d) => ['cells' => [$d->label, number_format((float) $d->total, 2)]])->all(),
                 ],
             ],
@@ -717,9 +717,9 @@ class StatisticsService
             ->groupBy(DB::raw('DATE(paid_at)'))->orderBy('d')->get();
 
         return [
-            'id' => 'revenue_trend', 'type' => 'line', 'title' => 'Revenue Over Time',
+            'id' => 'revenue_trend', 'type' => 'line', 'title' => __('reports.billing.revenue_over_time'),
             'labels' => $rows->pluck('d')->map(fn ($d) => Carbon::parse($d)->format('d M'))->all(),
-            'datasets' => [['label' => 'Collected (GHS)', 'data' => $rows->pluck('total')->map(fn ($v) => round((float) $v, 2))->all()]],
+            'datasets' => [['label' => __('reports.billing.collected_ghs'), 'data' => $rows->pluck('total')->map(fn ($v) => round((float) $v, 2))->all()]],
         ];
     }
 
