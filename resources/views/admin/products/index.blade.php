@@ -1,15 +1,15 @@
 @extends('layouts.app')
-@section('title', 'Products')
+@section('title', __('products.title'))
 
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"><i class="ti ti-package me-2"></i>Products</h4>
-        <small class="text-muted">{{ $products->total() }} products</small>
+        <h4 class="fw-bold mb-0"><i class="ti ti-package me-2"></i>{{ __('products.title') }}</h4>
+        <small class="text-muted">{{ trans_choice('products.count', $products->total(), ['count' => $products->total()]) }}</small>
     </div>
     <div>
         <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addProductModal">
-            <i class="ti ti-plus me-1"></i>Add Product
+            <i class="ti ti-plus me-1"></i>{{ __('products.add_product') }}
         </button>
     </div>
 </div>
@@ -23,18 +23,18 @@
 <div class="card mb-3">
     <div class="card-body py-2">
         <form method="GET" action="{{ route('admin.products.index') }}" class="row g-2 align-items-end">
-            <div class="col-md-3"><input type="text" name="search" class="form-control form-control-sm" placeholder="Search name or code" value="{{ $filters['search'] ?? '' }}"></div>
+            <div class="col-md-3"><input type="text" name="search" class="form-control form-control-sm" placeholder="{{ __('products.search_name_or_code') }}" value="{{ $filters['search'] ?? '' }}"></div>
             <div class="col-md-2">
                 <select name="product_type" class="form-select form-select-sm">
-                    <option value="">All types</option>
+                    <option value="">{{ __('products.all_types') }}</option>
                     @foreach($types as $t)
-                        <option value="{{ $t->value }}" @selected(($filters['product_type'] ?? $filters['type'] ?? '') === $t->value)>{{ $t->label() }}</option>
+                        <option value="{{ $t->value }}" @selected(($filters['product_type'] ?? $filters['type'] ?? '') === $t->value)>{{ $t->translatedLabel() }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-2">
                 <select name="department_id" class="form-select form-select-sm">
-                    <option value="">All departments</option>
+                    <option value="">{{ __('common.all_departments') }}</option>
                     @foreach($departments as $d)
                         <option value="{{ $d->id }}" @selected((string)($filters['department_id'] ?? '') === (string) $d->id)>{{ $d->name }}</option>
                     @endforeach
@@ -42,36 +42,36 @@
             </div>
             <div class="col-md-2">
                 <select name="status" class="form-select form-select-sm">
-                    <option value="">Any status</option>
-                    <option value="active" @selected(($filters['status'] ?? '') === 'active')>Active</option>
-                    <option value="inactive" @selected(($filters['status'] ?? '') === 'inactive')>Inactive</option>
+                    <option value="">{{ __('products.any_status') }}</option>
+                    <option value="active" @selected(($filters['status'] ?? '') === 'active')>{{ __('statuses.default.active') }}</option>
+                    <option value="inactive" @selected(($filters['status'] ?? '') === 'inactive')>{{ __('statuses.default.inactive') }}</option>
                 </select>
             </div>
             <div class="col-md-2">
                 <select name="has_insurance_prices" class="form-select form-select-sm">
-                    <option value="">Any pricing</option>
-                    <option value="1" @selected(($filters['has_insurance_prices'] ?? '') === '1')>Has insurance prices</option>
-                    <option value="0" @selected(($filters['has_insurance_prices'] ?? '') === '0')>No insurance prices</option>
+                    <option value="">{{ __('products.any_pricing') }}</option>
+                    <option value="1" @selected(($filters['has_insurance_prices'] ?? '') === '1')>{{ __('products.has_insurance_prices') }}</option>
+                    <option value="0" @selected(($filters['has_insurance_prices'] ?? '') === '0')>{{ __('products.no_insurance_prices') }}</option>
                 </select>
             </div>
-            <div class="col-md-1"><button class="btn btn-primary btn-sm w-100" type="submit">Filter</button></div>
+            <div class="col-md-1"><button class="btn btn-primary btn-sm w-100" type="submit">{{ __('common.filter') }}</button></div>
             <div class="col-md-2">
                 <select name="is_billable" class="form-select form-select-sm">
-                    <option value="">Any billable state</option>
-                    <option value="1" @selected(($filters['is_billable'] ?? '') === '1')>Billable</option>
-                    <option value="0" @selected(($filters['is_billable'] ?? '') === '0')>Non-billable</option>
+                    <option value="">{{ __('products.any_billable_state') }}</option>
+                    <option value="1" @selected(($filters['is_billable'] ?? '') === '1')>{{ __('products.billable') }}</option>
+                    <option value="0" @selected(($filters['is_billable'] ?? '') === '0')>{{ __('products.non_billable') }}</option>
                 </select>
             </div>
             <div class="col-md-3">
                 <select name="supplier_id" class="form-select form-select-sm">
-                    <option value="">Any supplier history</option>
+                    <option value="">{{ __('products.any_supplier_history') }}</option>
                     @foreach($suppliers as $supplier)
                         <option value="{{ $supplier->id }}" @selected((string)($filters['supplier_id'] ?? '') === (string) $supplier->id)>{{ $supplier->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-2">
-                <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary btn-sm w-100">Reset</a>
+                <a href="{{ route('admin.products.index') }}" class="btn btn-outline-secondary btn-sm w-100">{{ __('common.reset') }}</a>
             </div>
         </form>
     </div>
@@ -82,7 +82,7 @@
         <div class="table-responsive">
             <table class="table table-hover mb-0 align-middle">
                 <thead class="table-light">
-                    <tr><th>Name</th><th>Code</th><th>Type</th><th>Unit</th><th>Departments</th><th>Insurance Prices</th><th>Status</th><th class="text-end">Actions</th></tr>
+                    <tr><th>{{ __('common.name') }}</th><th>{{ __('common.code') }}</th><th>{{ __('common.type') }}</th><th>{{ __('products.unit') }}</th><th>{{ __('common.departments') }}</th><th>{{ __('products.insurance_prices') }}</th><th>{{ __('common.status') }}</th><th class="text-end">{{ __('common.actions') }}</th></tr>
                 </thead>
                 <tbody>
                 @forelse($products as $product)
@@ -102,7 +102,7 @@
                                 $providerCount = (int) ($product->provider_prices_count ?? $product->prices->whereNotNull('insurance_provider_id')->where('is_active', true)->count());
                             @endphp
                             @if($product->base_price !== null)
-                                <span class="badge bg-light text-dark border">Base</span>
+                                <span class="badge bg-light text-dark border">{{ __('products.base') }}</span>
                             @endif
                             @if($typeCount > 0)
                                 <span class="badge bg-primary-subtle text-primary">{{ $typeCount }} type</span>
@@ -111,15 +111,15 @@
                                 <span class="badge bg-purple-subtle text-purple">{{ $providerCount }} provider</span>
                             @endif
                             @if($product->base_price === null && $typeCount === 0 && $providerCount === 0)
-                                <span class="text-muted">None</span>
+                                <span class="text-muted">{{ __('common.none') }}</span>
                             @endif
                         </td>
                         <td>
-                            @if($product->is_active)<span class="badge bg-success-subtle text-success">Active</span>
-                            @else<span class="badge bg-secondary-subtle text-secondary">Inactive</span>@endif
+                            @if($product->is_active)<span class="badge bg-success-subtle text-success">{{ __('statuses.default.active') }}</span>
+                            @else<span class="badge bg-secondary-subtle text-secondary">{{ __('statuses.default.inactive') }}</span>@endif
                         </td>
                         <td class="text-end">
-                            <a href="{{ route('admin.products.show', $product) }}" class="btn btn-sm btn-outline-info" title="View / Stock"><i class="ti ti-eye"></i></a>
+                            <a href="{{ route('admin.products.show', $product) }}" class="btn btn-sm btn-outline-info" title="{{ __('products.view_stock') }}"><i class="ti ti-eye"></i></a>
                             <button class="btn btn-sm btn-soft-info border" title="Insurance Prices"
                                 data-bs-toggle="modal" data-bs-target="#productPricesModal-{{ $product->id }}">
                                 <i class="ti ti-tag"></i>
@@ -132,7 +132,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr><td colspan="8"><x-empty-state message="No products found." /></td></tr>
+                    <tr><td colspan="8"><x-empty-state :message="__('products.no_products_found')" /></td></tr>
                 @endforelse
                 </tbody>
             </table>
@@ -156,7 +156,7 @@
     <div class="modal-dialog modal-lg">
         <form class="modal-content" method="POST" action="{{ route('admin.products.store') }}">
             @csrf
-            <div class="modal-header"><h5 class="modal-title">Add Product</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header"><h5 class="modal-title">{{ __('products.add_product') }}</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
                 @include('admin.products._form_fields', ['product' => null, 'departments' => $departments, 'types' => $types])
             </div>

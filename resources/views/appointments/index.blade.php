@@ -1,17 +1,17 @@
 @extends('layouts.app')
 
-@section('title', 'Appointments')
+@section('title', __('appointments.title'))
 
 @section('content')
     <div class="page-header">
         <div class="row align-items-center">
             <div class="col-sm-6">
-                <h3 class="page-title">Appointments <span class="badge bg-primary ms-2">{{ $appointments->total() }}</span></h3>
+                <h3 class="page-title">{{ __('appointments.title') }} <span class="badge bg-primary ms-2">{{ $appointments->total() }}</span></h3>
             </div>
             <div class="col-sm-6 text-sm-end">
                 <div class="bg-white border shadow-sm rounded px-1 pb-0 text-center d-flex align-items-center justify-content-center">
-                    <a aria-label="List" title="List" href="{{ route('admin.appointments.index') }}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-body"></i></a>
-                    <a aria-label="Calendar event" title="Calendar event" href="{{ route('admin.appointments.calendar') }}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-calendar-event fs-14 text-body"></i> </a>
+                    <a aria-label="{{ __('appointments.list_view') }}" title="{{ __('appointments.list_view') }}" href="{{ route('admin.appointments.index') }}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-body"></i></a>
+                    <a aria-label="{{ __('appointments.calendar_view') }}" title="{{ __('appointments.calendar_view') }}" href="{{ route('admin.appointments.calendar') }}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-calendar-event fs-14 text-body"></i> </a>
                 </div>
                 {{-- @can('appointments.view')
                 <a href="{{ route('admin.appointments.calendar') }}" class="btn btn-outline-info me-2">
@@ -20,7 +20,7 @@
                 @endcan --}}
                 @can('appointments.create')
                 <a href="{{ route('admin.appointments.create') }}" class="btn btn-primary">
-                    <i class="ti ti-plus me-1"></i> New Appointment
+                    <i class="ti ti-plus me-1"></i> {{ __('appointments.new_appointment') }}
                 </a>
                 @endcan
             </div>
@@ -33,7 +33,7 @@
             <div class="card">
                 <div class="card-body text-center">
                     <h3 class="mb-1">{{ $stats['total_today'] }}</h3>
-                    <p class="text-muted mb-0">Range Total</p>
+                    <p class="text-muted mb-0">{{ __('appointments.range_total') }}</p>
                 </div>
             </div>
         </div>
@@ -41,7 +41,7 @@
             <div class="card">
                 <div class="card-body text-center">
                     <h3 class="mb-1 text-secondary">{{ $stats['scheduled_today'] }}</h3>
-                    <p class="text-muted mb-0">Scheduled</p>
+                    <p class="text-muted mb-0">{{ __('appointments.scheduled') }}</p>
                 </div>
             </div>
         </div>
@@ -49,7 +49,7 @@
             <div class="card">
                 <div class="card-body text-center">
                     <h3 class="mb-1 text-info">{{ $stats['confirmed_today'] }}</h3>
-                    <p class="text-muted mb-0">Confirmed</p>
+                    <p class="text-muted mb-0">{{ __('appointments.confirmed') }}</p>
                 </div>
             </div>
         </div>
@@ -57,7 +57,7 @@
             <div class="card">
                 <div class="card-body text-center">
                     <h3 class="mb-1 text-primary">{{ $stats['checked_in_today'] }}</h3>
-                    <p class="text-muted mb-0">Checked In</p>
+                    <p class="text-muted mb-0">{{ __('appointments.checked_in') }}</p>
                 </div>
             </div>
         </div>
@@ -65,7 +65,7 @@
             <div class="card">
                 <div class="card-body text-center">
                     <h3 class="mb-1 text-success">{{ $stats['completed_today'] }}</h3>
-                    <p class="text-muted mb-0">Completed</p>
+                    <p class="text-muted mb-0">{{ __('appointments.completed') }}</p>
                 </div>
             </div>
         </div>
@@ -73,7 +73,7 @@
             <div class="card">
                 <div class="card-body text-center">
                     <h3 class="mb-1 text-dark">{{ $stats['no_show_today'] }}</h3>
-                    <p class="text-muted mb-0">No Show</p>
+                    <p class="text-muted mb-0">{{ __('appointments.no_show') }}</p>
                 </div>
             </div>
         </div>
@@ -84,24 +84,24 @@
         <div class="card-body">
             <form method="GET" action="{{ route('admin.appointments.index') }}" class="row g-3 align-items-end" data-auto-filter-form="appointments-index">
                 <div class="col-md-3">
-                    <label class="form-label small">Search</label>
-                    <input type="text" name="search" class="form-control" placeholder="Search patient, phone, or apt#..." value="{{ $filters['search'] ?? '' }}">
+                    <label class="form-label small">{{ __('common.search') }}</label>
+                    <input type="text" name="search" class="form-control" placeholder="{{ __('appointments.search_placeholder') }}" value="{{ $filters['search'] ?? '' }}">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small">Status</label>
+                    <label class="form-label small">{{ __('common.status') }}</label>
                     <select name="status" class="form-select">
-                        <option value="">All Statuses</option>
+                        <option value="">{{ __('common.all_statuses') }}</option>
                         @foreach($statuses as $status)
                             <option value="{{ $status->value }}" {{ ($filters['status'] ?? '') == $status->value ? 'selected' : '' }}>
-                                {{ $status->label() }}
+                                {{ $status->translatedLabel() }}
                             </option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small">Doctor</label>
+                    <label class="form-label small">{{ __('common.doctor') }}</label>
                     <select name="doctor_id" class="form-select">
-                        <option value="">All Doctors</option>
+                        <option value="">{{ __('appointments.all_doctors') }}</option>
                         @foreach($doctors as $doctor)
                             <option value="{{ $doctor->id }}" {{ ($filters['doctor_id'] ?? '') == $doctor->id ? 'selected' : '' }}>
                                 {{ $doctor->name }}
@@ -110,9 +110,9 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small">Department</label>
+                    <label class="form-label small">{{ __('common.department') }}</label>
                     <select name="department_id" class="form-select">
-                        <option value="">All Departments</option>
+                        <option value="">{{ __('common.all_departments') }}</option>
                         @foreach($departments as $dept)
                             <option value="{{ $dept->id }}" {{ ($filters['department_id'] ?? '') == $dept->id ? 'selected' : '' }}>
                                 {{ $dept->name }}
@@ -130,7 +130,7 @@
                 </div>
                 <div class="col-md-auto">
                     <button type="submit" class="btn btn-primary me-2">
-                        <i class="ti ti-filter me-1"></i> Filter
+                        <i class="ti ti-filter me-1"></i> {{ __('common.filter') }}
                     </button>
                     <a href="{{ route('admin.appointments.index') }}" class="btn btn-outline-secondary">
                         <i class="ti ti-x me-1"></i>
@@ -150,13 +150,13 @@
                 <table class="table table-hover mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Apt #</th>
-                            <th>Patient</th>
-                            <th>Doctor</th>
-                            <th>Department</th>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th class="text-end">Actions</th>
+                            <th>{{ __('appointments.appointment_no') }}</th>
+                            <th>{{ __('common.patient') }}</th>
+                            <th>{{ __('common.doctor') }}</th>
+                            <th>{{ __('common.department') }}</th>
+                            <th>{{ __('common.date') }}</th>
+                            <th>{{ __('common.status') }}</th>
+                            <th class="text-end">{{ __('common.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>

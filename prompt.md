@@ -5,339 +5,402 @@ There is currently no docs/UHMS_IMPLEMENTATION_SKILL.md file in this project.
 Do not try to read it.
 Follow the instructions in this prompt directly.
 
-We completed:
+We completed UHMS Localisation Phase 7.
 
-* Localisation Phases 1–5
-* Localisation Coverage Audit
-* Localisation Coverage Cleanup — Real Runtime Messages
+Phase 7 established:
 
-The latest cleanup report shows:
+* Active Laravel routes: 714
+* Live controller/route `view(...)` references found: 240
+* Blade files under `resources/views`: 590
+* Direct active route-linked Blade views matched: 227
+* Inertia pages were observed separately and still need frontend localisation review
+* The application is not yet fully free of hardcoded runtime text
 
-* files scanned stayed at 1,248
-* files with candidates reduced from 551 to 536
-* candidates reduced from 19,758 to 19,723
-* controller/API messages and several report/service labels were fixed
-* many remaining candidates are demo/template/sample pages
-* `SidebarMenuBuilder.php` still appears because raw source labels are translated downstream
-* enum/model labels need a dedicated safe pass
-* real Blade screens still need a separate cleanup excluding demo/template files
+Phase 7 translated:
+
+* `resources/views/appointments/index.blade.php`
+* `resources/views/admin/products/index.blade.php`
+* `resources/views/admin/services/index.blade.php`
+
+Phase 7 still lists many remaining active pages with hardcoded user-facing text.
 
 Now proceed with:
 
-# UHMS Localisation Phase 6 — Real Blade Screens & Enum/Status Label Cleanup
+# UHMS Localisation Phase 8 — Active Pages Translation Batch 1
 
 ## Goal
 
-Clean remaining real UHMS Blade screens and safely localise enum/model/status labels that are visible to users.
+Continue translating active route-linked UHMS pages from the Phase 7 inventory.
 
-This phase must avoid wasting time on demo/template/sample pages.
+This phase must focus on real active runtime pages only.
 
-Do not blindly translate all audit candidates.
-Do not translate demo/template files unless they are actively used by UHMS routes or menus.
-Do not change stored enum/database values.
-Do not change business logic.
-Do not change workflow logic.
-Do not create a parallel localisation system.
+Do not translate demo/template/sample pages.
+Do not translate backup-route-only pages.
+Do not translate files only referenced by `routes/web.php.bak`.
+Do not guess based on folder names only.
+Use the active route/view inventory and actual controller/view usage.
 
----
+This batch must focus on:
 
-# 1. Audit Real Routes First
-
-Before editing Blade files, map real runtime routes to views.
-
-Use:
-
-```bash
-php artisan route:list
-```
-
-Then identify which Blade files are actually used by active UHMS routes/controllers.
-
-Create a classification list:
-
-1. Real active UHMS views — clean now
-2. Shared components used by real views — clean now
-3. Demo/template/sample views — ignore/document
-4. Legacy unused views — document as cleanup candidates
-5. Unsure views — document for manual review
-
-Do not rely only on filename.
-Check route/controller usage.
+1. Appointments remaining pages
+2. Visits remaining pages
+3. Products remaining pages
+4. Services and service rendering remaining pages
+5. Related Inertia/frontend strings for visits and billing if present and safe
 
 ---
 
-# 2. Exclude Demo/Template Views
+# 1. Start From Phase 7 Inventory
 
-Unless proven active, exclude these from translation cleanup:
+Open and use:
 
 ```text
-resources/views/widgets.blade.php
-resources/views/ui-dropdowns.blade.php
-resources/views/tables-basic.blade.php
-resources/views/ui-modals.blade.php
-resources/views/social-feed.blade.php
-resources/views/form-select2.blade.php
-resources/views/layout-dark.blade.php
-resources/views/layout-full-width.blade.php
-resources/views/layout-hidden.blade.php
-resources/views/layout-hover-view.blade.php
-resources/views/layout-mini.blade.php
-resources/views/layout-rtl.blade.php
-resources/views/components/modal-popup.blade.php
+docs/LOCALISATION_PHASE_7_COMPLETE_ACTIVE_PAGE_TRANSLATION_REPORT.md
+docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
 ```
 
-For each excluded file, document:
+Use these as the starting point.
 
-* whether it has a route
-* whether it is linked in menu/sidebar
-* whether it appears to be template/demo
-* whether it should be deleted, archived, or left as reference later
+Do not repeat the full broad audit from scratch unless necessary.
 
-Do not delete these files in this phase.
+Work from the active backlog.
 
 ---
 
-# 3. Real Blade Screen Cleanup
+# 2. Batch 1 Target Areas
 
-Clean real active Blade views only.
+Translate all active route-linked views and related partials/components for:
 
-Prioritise:
+## Appointments
+
+Check and translate active appointment pages beyond the index:
 
 ```text
-resources/views/consultations/
-resources/views/theatre/
-resources/views/blood-bank/
-resources/views/medication-administration/
-resources/views/hr/
-resources/views/admin/
+resources/views/appointments/
+```
+
+Cover:
+
+* create page
+* edit page
+* show page
+* calendar page
+* appointment forms
+* appointment partials
+* appointment modals
+* check-in flows
+* appointment status labels
+* doctor schedule links
+* appointment reminders
+* inline scripts
+
+Use or extend:
+
+```text
+lang/en/appointments.php
+lang/fr/appointments.php
+```
+
+## Visits
+
+Check and translate all active visit pages:
+
+```text
+resources/views/visits/
+```
+
+Also check Inertia/frontend visit pages if used:
+
+```text
+resources/js/Pages/Visits/
+resources/js/pages/Visits/
+resources/js/views/Visits/
+```
+
+depending on the actual project structure.
+
+Cover:
+
+* visit index
+* create
+* edit
+* show
+* preview
+* visit partials
+* visit timeline labels
+* visit queue/session panels
+* billing preview
+* insurance switching panels
+* emergency visit panels
+* consultation assignment labels
+* inline scripts
+* Inertia labels if present
+
+Use or extend:
+
+```text
+lang/en/visits.php
+lang/fr/visits.php
+```
+
+Do not change visit workflow logic.
+Emergency visits must remain part of the Visit workflow.
+
+## Products
+
+Phase 7 translated only the active product index.
+
+Now translate remaining active product pages, modals, and related partials under actual active paths such as:
+
+```text
+resources/views/admin/products/
+resources/views/products/
+resources/views/pharmacy/
 resources/views/store/
-resources/views/layout/partials/
-resources/views/components/
-resources/views/partials/
-resources/views/emails/
-resources/views/mail/
 ```
 
-Translate visible:
+depending on route/view inventory.
 
-* page headings
-* section headings
-* breadcrumbs
-* buttons
-* labels
-* placeholders
-* table headers
-* filter labels
-* modal titles
-* modal button text
-* empty states
-* alerts
-* dropdown actions
-* print labels
-* email labels
-* JavaScript UI strings inside Blade
+Cover:
+
+* product show
+* product create/edit forms
+* product modal internals
+* product pricing modal internals
+* product category labels
+* product type labels
+* billable/stock labels
+* stock-linked product screens
+* reorder labels
+* expiry labels
+* batch labels
+* supplier history labels
+* inline scripts
+
+Use or extend:
+
+```text
+lang/en/products.php
+lang/fr/products.php
+lang/en/stock.php
+lang/fr/stock.php
+lang/en/pharmacy.php
+lang/fr/pharmacy.php
+```
+
+Rules:
+
+* Products are physical stock items.
+* Services are billable activities.
+* Do not mix product/service terminology.
+* Do not expose stock cost unless existing permission allows it.
+
+## Services / Service Rendering
+
+Phase 7 translated only the active service catalogue index.
+
+Now translate remaining active service pages and partials under actual active paths such as:
+
+```text
+resources/views/admin/services/
+resources/views/services/
+resources/views/service-rendering/
+resources/views/service-catalog/
+```
+
+depending on route/view inventory.
+
+Cover:
+
+* service show
+* service create/edit forms
+* service modal internals
+* service pricing modal internals
+* service rendering pages
+* service categories
+* billable service labels
+* consultation service labels
+* emergency service labels
+* lab/procedure/pharmacy service links
+* inline scripts
+
+Use or extend:
+
+```text
+lang/en/services.php
+lang/fr/services.php
+lang/en/common.php
+lang/fr/common.php
+```
+
+Rules:
+
+* Services are billable activities.
+* Products are physical stock items.
+* Do not hardcode emergency services.
+* Do not hardcode consultation services.
+* Do not move pricing or billing logic into Blade.
+
+---
+
+# 3. Translation Rules
+
+Translate user-facing:
+
+```text
+page titles
+headings
+breadcrumbs
+tabs
+buttons
+dropdown actions
+form labels
+placeholders
+help text
+filters
+search fields
+table headers
+empty states
+status labels
+modal titles
+modal body text
+modal buttons
+confirmation messages
+alert messages
+validation hints
+print labels
+PDF labels
+JavaScript UI text
+Inertia/frontend page labels
+```
 
 Do not translate:
 
-* patient names
-* doctor names
-* supplier names
-* product names entered by users
-* service names entered by users unless system-defined
-* clinical free text
-* diagnosis notes
-* audit event codes
-* route names
-* permission names
-* internal codes
-* CSS classes
-* JavaScript selectors
-* units like mmHg, bpm, °C, kg, ml
-* currency symbols
-* UHMS brand name
+```text
+patient names
+staff names
+doctor names
+supplier names
+sponsor names
+insurance provider names
+product names entered by users
+service names entered by users unless system-defined
+clinical notes
+diagnosis free text
+prescription notes
+audit event codes
+permission names
+route names
+database/internal codes unless mapped through display labels
+CSS classes
+JS selectors
+units such as mmHg, bpm, °C, kg, ml, %
+currency symbols such as GH₵ or ₵
+format examples
+UHMS brand name
+```
 
 ---
 
-# 4. Enum / Model / Status Label Cleanup
+# 4. Dynamic Labels
 
-Audit:
-
-```text
-app/Enums/
-app/Models/
-app/Services/
-app/Helpers/
-```
-
-Look for:
+Search targeted files for:
 
 ```php
-label()
+->label()
+->statusLabel()
+->typeLabel()
 getLabelAttribute()
-statusLabel()
-typeLabel()
 displayName()
 humanName()
 ```
 
-Also check enum-like classes such as:
-
-```text
-InvoiceStatus
-ClaimStatus
-BillingType
-PaymentStatus
-VisitStatus
-AdmissionStatus
-EmergencyStatus
-ProcedureStatus
-StockMovementType
-```
-
-If labels are visible to users, localise them safely.
-
-Preferred approach:
-
-* do not change stored values
-* do not change canonical enum constants
-* add `translatedLabel()` if changing `label()` is risky
-* use existing `statuses.php` groups where possible
-* use module-specific lang files when needed
-
-Example:
+Where displayed to users and safe, replace with:
 
 ```php
-public function translatedLabel(): string
-{
-    return __('statuses.invoices.' . $this->value);
-}
+->translatedLabel()
 ```
 
-If an existing status badge resolver already handles translation, reuse it.
+or an existing shared component such as:
 
-Do not duplicate status logic.
+```blade
+<x-status-badge>
+```
 
----
-
-# 5. Service Event Title Review
-
-Review remaining service `title` and `message` findings.
-
-Focus on services where strings may appear in:
-
-* patient timeline
-* visit timeline
-* notifications
-* audit logs
-* report payloads
-* task queues
-* dashboard cards
-* API responses
-
-Known areas from previous report:
-
-* admission workflow services
-* blood bank services
-* procedure workflow services
-* lab workflow services
-* merge-preview services
-* queue services
-* emergency services
-* pharmacy services
-
-Classify each string:
-
-1. User-facing timeline/notification/report/API label — translate
-2. Internal audit/event code — do not translate
-3. Stored canonical event title — risky, document for later
-4. False positive — ignore
-
-Do not change audit/event semantics accidentally.
+Do not change stored enum values.
+Do not change enum constants.
+Do not change workflow/status transition logic.
 
 ---
 
-# 6. Sidebar/Menu Handling
+# 5. JavaScript / Inertia Localisation
 
-Inspect `app/Services/SidebarMenuBuilder.php`.
+If active frontend/Inertia files are present for visits, billing, products, services, or appointments:
 
-If active labels are translated downstream through `translateLabel()` or existing menu translation logic, document this as a false positive.
+1. Identify hardcoded visible strings.
+2. Use existing localisation bridge if already present.
+3. Do not introduce a new frontend framework.
+4. Do not introduce a new translation package.
+5. Do not expose sensitive data to JavaScript.
 
-Only fix labels that are active and not translated at render time.
-
-Ignore commented-out menu blocks.
-
-Do not break:
-
-* permissions
-* module visibility
-* menu hierarchy
-* route names
-* icon names
+If the project has no clear frontend i18n pattern for Inertia yet, document the needed pattern and safely localise only Blade-provided strings where practical.
 
 ---
 
-# 7. Translation Keys
+# 6. Language Files
 
-Use existing files where possible:
+Add EN and FR keys together.
+
+Use existing files:
 
 ```text
+lang/en/appointments.php
+lang/fr/appointments.php
+lang/en/visits.php
+lang/fr/visits.php
+lang/en/products.php
+lang/fr/products.php
+lang/en/services.php
+lang/fr/services.php
 lang/en/common.php
 lang/fr/common.php
-lang/en/menu.php
-lang/fr/menu.php
 lang/en/statuses.php
 lang/fr/statuses.php
 lang/en/messages.php
 lang/fr/messages.php
-lang/en/reports.php
-lang/fr/reports.php
-lang/en/consultations.php
-lang/fr/consultations.php
-lang/en/theatre.php
-lang/fr/theatre.php
-lang/en/blood_bank.php
-lang/fr/blood_bank.php
-lang/en/hr.php
-lang/fr/hr.php
-lang/en/lab.php
-lang/fr/lab.php
 lang/en/stock.php
 lang/fr/stock.php
+lang/en/pharmacy.php
+lang/fr/pharmacy.php
 ```
 
-If a needed module file does not exist, create both EN and FR files.
+Create new paired files only if absolutely needed.
 
-Maintain EN/FR parity.
-
-Avoid duplicate keys.
-Avoid vague keys like `label1`, `text2`, `button_new`.
+Maintain nested EN/FR parity.
 
 ---
 
-# 8. Re-run Localisation Audit
+# 7. Responsive Cleanup While Translating
 
-After cleanup, rerun:
+While touching these views, fix obvious responsive issues:
 
-```bash
-php scripts/localisation-audit.php
+```text
+table overflow
+filter wrapping
+action button overflow
+modal sizing
+tab overflow
+cards not stacking
+long French labels breaking layout
 ```
 
-The total candidate count may still be high because of excluded demo/template files.
+Use Bootstrap 5 utilities only.
 
-That is acceptable.
-
-But the report must clearly show:
-
-* real active UHMS views cleaned
-* demo/template files documented separately
-* enum/status labels handled or documented
-* remaining real candidates listed clearly
-* no hardcoded controller flash literals
-* no obvious untranslated text in active high-priority modules
+Do not introduce Tailwind.
 
 ---
 
-# 9. Verification
+# 8. Verification
 
 Run:
 
@@ -348,69 +411,77 @@ php artisan cache:clear
 php artisan route:list
 ```
 
-Run lint:
+Run language lint:
 
 ```bash
-find app database routes config -name "*.php" -print0 | xargs -0 -n1 php -l
 for f in lang/en/*.php lang/fr/*.php; do php -l "$f"; done
 ```
 
-Run nested EN/FR parity check.
+Run nested EN/FR parity verification.
 
-Required:
+Run localisation audit again:
 
-* 0 missing EN keys
-* 0 missing FR keys
-* touched files pass PHP lint
-* caches clear
-* route list works
+```bash
+php scripts/localisation-audit.php
+```
 
-If full recursive lint times out, run touched-file lint and document the timeout honestly.
+The raw candidate count may remain high because demo/template files are still included.
+
+But the report must specifically state:
+
+* appointments remaining pages cleaned
+* visits remaining pages cleaned
+* products remaining pages cleaned
+* services/service-rendering remaining pages cleaned
+* Inertia/frontend review result
+* remaining active pages after this batch
 
 ---
 
-# 10. Documentation
+# 9. Documentation
 
 Create:
 
 ```text
-docs/LOCALISATION_PHASE_6_REAL_BLADE_ENUM_STATUS_CLEANUP_REPORT.md
+docs/LOCALISATION_PHASE_8_ACTIVE_PAGES_BATCH_1_REPORT.md
 ```
 
 Include:
 
-* route-to-view audit summary
-* real active views cleaned
-* shared components cleaned
-* demo/template views excluded
-* legacy unused views documented
-* enum/model/status labels updated
-* service event titles translated or classified
-* sidebar/menu false-positive decision
-* language files changed
-* audit result after cleanup
+* active routes/views checked in this batch
+* appointments files translated
+* visits files translated
+* product files translated
+* service/service-rendering files translated
+* Inertia/frontend files checked or deferred
+* language files added/updated
+* JavaScript strings translated
+* dynamic labels updated
+* responsive fixes made
 * EN/FR parity result
-* lint/cache/route verification result
-* remaining TODOs
+* PHP lint result
+* cache/route verification result
+* localisation audit result
+* remaining active untranslated pages
 
 ---
 
-# 11. Acceptance Criteria
+# 10. Acceptance Criteria
 
 This phase is complete when:
 
-* real active UHMS Blade views from the audit are cleaned
-* demo/template files are separated from real app files
-* enum/status labels visible to users are translated or safely documented
-* service event titles are translated or classified
-* sidebar/menu false positives are documented
+* all active appointment pages in this batch are checked and translated or documented
+* all active visit pages in this batch are checked and translated or documented
+* all active product pages in this batch are checked and translated or documented
+* all active service/service-rendering pages in this batch are checked and translated or documented
+* related active Inertia/frontend strings are checked and translated or documented
 * EN/FR parity remains clean
 * touched files pass lint
 * caches clear
 * route list works
-* no business logic was changed
-* no workflow logic was changed
-* no duplicate localisation system was created
-* no Tailwind or new packages introduced
+* no business logic changed
+* no workflows changed
+* no duplicate localisation system created
+* no new packages introduced
 
-Proceed with UHMS Localisation Phase 6 now.
+Proceed with UHMS Localisation Phase 8 — Active Pages Translation Batch 1 now.

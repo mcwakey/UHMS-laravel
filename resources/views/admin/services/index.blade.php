@@ -1,15 +1,15 @@
 @extends('layouts.app')
-@section('title', 'Service Catalog')
+@section('title', __('services.catalog_title'))
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"><i class="ti ti-list-details me-2"></i>Service Catalog</h4>
+        <h4 class="fw-bold mb-0"><i class="ti ti-list-details me-2"></i>{{ __('services.catalog_title') }}</h4>
     </div>
     <div class="d-flex gap-2">
         <button class="btn btn-primary btn-md" data-bs-toggle="modal" data-bs-target="#addServiceModal">
-            <i class="ti ti-plus me-1"></i>Add Service
+            <i class="ti ti-plus me-1"></i>{{ __('services.add_service') }}
         </button>
     </div>
 </div>
@@ -26,11 +26,11 @@
     <div class="card-body py-2">
         <form method="GET" action="{{ route('admin.services.index') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
-                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search service name or code..." value="{{ request('search') }}">
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="{{ __('services.search_placeholder') }}" value="{{ request('search') }}">
             </div>
             <div class="col-md-2">
                 <select name="category" class="form-select form-select-sm">
-                    <option value="">All Categories</option>
+                    <option value="">{{ __('services.all_categories') }}</option>
                     @foreach($categories as $cat)
                     <option value="{{ $cat }}" {{ request('category') === $cat ? 'selected' : '' }}>{{ ucfirst($cat) }}</option>
                     @endforeach
@@ -38,14 +38,14 @@
             </div>
             <div class="col-md-2">
                 <select name="department_id" class="form-select form-select-sm">
-                    <option value="">All Departments</option>
+                    <option value="">{{ __('common.all_departments') }}</option>
                     @foreach($departments as $dept)
                     <option value="{{ $dept->id }}" {{ request('department_id') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-auto d-flex gap-1">
-                <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-filter me-1"></i>Filter</button>
+                <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-filter me-1"></i>{{ __('common.filter') }}</button>
                 <a aria-label="Close" title="Close" href="{{ route('admin.services.index') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-x"></i></a>
             </div>
         </form>
@@ -59,14 +59,14 @@
             <table class="table table-hover table-nowrap mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Code</th>
-                        <th>Service Name</th>
-                        <th>Category</th>
-                        <th>Departments</th>
-                        <th class="text-end">Base Price (&#8373;)</th>
-                        <th class="text-center">Insurance Prices</th>
-                        <th class="text-center">Status</th>
-                        <th class="text-center">Actions</th>
+                        <th>{{ __('common.code') }}</th>
+                        <th>{{ __('services.service_name') }}</th>
+                        <th>{{ __('services.category') }}</th>
+                        <th>{{ __('common.departments') }}</th>
+                        <th class="text-end">{{ __('services.base_price_ghs') }}</th>
+                        <th class="text-center">{{ __('services.insurance_prices') }}</th>
+                        <th class="text-center">{{ __('common.status') }}</th>
+                        <th class="text-center">{{ __('common.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -111,12 +111,12 @@
                                 </button>
                             @else
                                 <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#pricesModal-{{ $service->id }}">
-                                    <i class="ti ti-plus me-1"></i>Set Prices
+                                    <i class="ti ti-plus me-1"></i>{{ __('services.set_prices') }}
                                 </button>
                             @endif
                         </td>
                         <td class="text-center">
-                            <span class="badge bg-{{ $service->is_active ? 'success' : 'danger' }}">{{ $service->is_active ? 'Active' : 'Inactive' }}</span>
+                            <span class="badge bg-{{ $service->is_active ? 'success' : 'danger' }}">{{ $service->is_active ? __('statuses.default.active') : __('statuses.default.inactive') }}</span>
                         </td>
                         <td class="text-center">
                             <div class="dropdown">
@@ -126,12 +126,12 @@
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
                                         <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editServiceModal-{{ $service->id }}">
-                                            <i class="ti ti-edit me-1"></i>Edit
+                                            <i class="ti ti-edit me-1"></i>{{ __('common.edit') }}
                                         </button>
                                     </li>
                                     <li>
                                         <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#pricesModal-{{ $service->id }}">
-                                            <i class="ti ti-tag me-1"></i>Manage Prices
+                                            <i class="ti ti-tag me-1"></i>{{ __('services.manage_prices') }}
                                         </button>
                                     </li>
                                     <li>
@@ -139,7 +139,7 @@
                                             @csrf @method('PATCH')
                                             <button type="submit" class="dropdown-item {{ $service->is_active ? 'text-danger' : 'text-success' }}">
                                                 <i class="ti ti-{{ $service->is_active ? 'x' : 'check' }} me-1"></i>
-                                                {{ $service->is_active ? 'Deactivate' : 'Activate' }}
+                                                {{ $service->is_active ? __('common.deactivate') : __('common.activate') }}
                                             </button>
                                         </form>
                                     </li>
@@ -156,7 +156,7 @@
                                 <form method="POST" action="{{ route('admin.services.update', $service) }}">
                                     @csrf @method('PUT')
                                     <div class="modal-header">
-                                        <h5 class="modal-title fw-bold">Edit Service</h5>
+                                        <h5 class="modal-title fw-bold">{{ __('services.edit_service') }}</h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <div class="modal-body">
