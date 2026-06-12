@@ -154,6 +154,8 @@ return [
     'gender_age' => 'Gender / Age',
     'visit_no' => 'Visit No',
     'visit_date' => 'Visit Date',
+    'blood_group' => 'Blood Group',
+    'system' => 'System',
 
     // Auth pages
     'sign_in' => 'Sign In',

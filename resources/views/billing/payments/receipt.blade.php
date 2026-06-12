@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt {{ $payment->payment_number }}</title>
+    <title>{{ __('payments.receipt') }} {{ $payment->payment_number }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 14px; color: #333; padding: 20px; background: #f4f4f4; }
@@ -47,8 +47,8 @@
 </head>
 <body>
     <div class="no-print actions">
-        <button class="print" onclick="window.print()">Print Receipt</button>
-        <button class="close" onclick="window.close()">Close</button>
+        <button class="print" onclick="window.print()">{{ __('payments.print_receipt') }}</button>
+        <button class="close" onclick="window.close()">{{ __('common.close') }}</button>
     </div>
 
     <div class="receipt">
@@ -56,15 +56,15 @@
         <div class="header">
             <div class="logo">
                 UHMS
-                <small>Ultimate Hospital Management System</small>
+                <small>{{ __('common.app_tagline') }}</small>
             </div>
             <div class="meta">
-                <div class="title">PAYMENT RECEIPT</div>
+                <div class="title">{{ __('payments.payment_receipt_label') }}</div>
                 <div class="num">{{ $payment->payment_number }}</div>
                 @if($payment->invoice && $payment->invoice->balance <= 0)
-                    <div class="stamp">PAID IN FULL</div>
+                    <div class="stamp">{{ __('payments.paid_in_full') }}</div>
                 @else
-                    <div class="stamp" style="border-color:#fd7e14; color:#fd7e14;">PART PAYMENT</div>
+                    <div class="stamp" style="border-color:#fd7e14; color:#fd7e14;">{{ __('payments.part_payment_label') }}</div>
                 @endif
             </div>
         </div>
@@ -72,46 +72,46 @@
         <!-- Info -->
         <div class="info-grid">
             <div class="col">
-                <h5>Received From</h5>
+                <h5>{{ __('payments.received_from') }}</h5>
                 @if($payment->patient)
                     <p style="font-weight:bold;">{{ $payment->patient->full_name }}</p>
                     <p>{{ $payment->patient->patient_number }}</p>
                     <p>{{ $payment->patient->phone }}</p>
                 @else
-                    <p style="font-weight:bold;">{{ $payment->invoice?->external_party_name ?? 'External recipient' }}</p>
-                    <p>External / referral</p>
+                    <p style="font-weight:bold;">{{ $payment->invoice?->external_party_name ?? __('invoices.external_recipient') }}</p>
+                    <p>{{ __('payments.external_referral') }}</p>
                 @endif
             </div>
             <div class="col">
-                <h5>Payment Details</h5>
-                <p><span class="label">Date:</span> {{ $payment->paid_at->format('d M Y, h:i A') }}</p>
-                <p><span class="label">Method:</span> {{ $payment->payment_method instanceof \App\Enums\PaymentMethod ? $payment->payment_method->label() : (\App\Enums\PaymentMethod::tryFrom((string) $payment->payment_method)?->label() ?? $payment->payment_method) }}</p>
+                <h5>{{ __('payments.payment_details') }}</h5>
+                <p><span class="label">{{ __('payments.date_label') }}:</span> {{ $payment->paid_at->format('d M Y, h:i A') }}</p>
+                <p><span class="label">{{ __('payments.method_label') }}:</span> {{ $payment->payment_method instanceof \App\Enums\PaymentMethod ? $payment->payment_method->label() : (\App\Enums\PaymentMethod::tryFrom((string) $payment->payment_method)?->label() ?? $payment->payment_method) }}</p>
                 @if($payment->reference_number)
-                <p><span class="label">Reference:</span> {{ $payment->reference_number }}</p>
+                <p><span class="label">{{ __('payments.reference_label') }}:</span> {{ $payment->reference_number }}</p>
                 @endif
-                <p><span class="label">Cashier:</span> {{ $payment->receivedBy->name ?? '—' }}</p>
+                <p><span class="label">{{ __('payments.cashier_label') }}:</span> {{ $payment->receivedBy->name ?? '—' }}</p>
             </div>
         </div>
 
         <!-- Amount Banner -->
         <div class="amount-banner">
-            <div class="lbl">Amount Received</div>
+            <div class="lbl">{{ __('payments.amount_received') }}</div>
             <div class="amt">&#8373;{{ number_format($payment->amount, 2) }}</div>
         </div>
 
         <!-- Invoice Snapshot -->
         @if($payment->invoice)
         @php $inv = $payment->invoice; @endphp
-        <h5 style="font-size:12px; text-transform:uppercase; color:#198754; margin-bottom:6px;">Applied To Invoice</h5>
+        <h5 style="font-size:12px; text-transform:uppercase; color:#198754; margin-bottom:6px;">{{ __('payments.applied_to_invoice') }}</h5>
         <table>
             <thead>
                 <tr>
-                    <th>Invoice #</th>
-                    <th>Date</th>
-                    <th>Visit</th>
-                    <th class="text-end">Total</th>
-                    <th class="text-end">Paid</th>
-                    <th class="text-end">Balance</th>
+                    <th>{{ __('payments.invoice_num_col') }}</th>
+                    <th>{{ __('payments.date_label') }}</th>
+                    <th>{{ __('payments.visit_col') }}</th>
+                    <th class="text-end">{{ __('payments.total_col_rcpt') }}</th>
+                    <th class="text-end">{{ __('payments.paid_col_rcpt') }}</th>
+                    <th class="text-end">{{ __('payments.balance_col_rcpt') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -138,16 +138,16 @@
                 'base_price'             => 'Base Price',
             ];
         @endphp
-        <h5 style="font-size:12px; text-transform:uppercase; color:#198754; margin:14px 0 6px;">Items</h5>
+        <h5 style="font-size:12px; text-transform:uppercase; color:#198754; margin:14px 0 6px;">{{ __('payments.items_section') }}</h5>
         <table>
             <thead>
                 <tr>
-                    <th>Description</th>
-                    <th>Pricing</th>
-                    <th class="text-center">Qty</th>
-                    <th class="text-end">Unit</th>
-                    <th class="text-end">Insurance</th>
-                    <th class="text-end">Total</th>
+                    <th>{{ __('payments.description_col') }}</th>
+                    <th>{{ __('payments.pricing_col') }}</th>
+                    <th class="text-center">{{ __('payments.qty_col') }}</th>
+                    <th class="text-end">{{ __('payments.unit_col') }}</th>
+                    <th class="text-end">{{ __('payments.insurance_col') }}</th>
+                    <th class="text-end">{{ __('payments.total_col_items') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -184,35 +184,35 @@
         <div class="summary">
             <table>
                 <tr>
-                    <td style="color:#888;">Invoice Subtotal</td>
+                    <td style="color:#888;">{{ __('payments.invoice_subtotal') }}</td>
                     <td class="text-end">&#8373;{{ number_format($inv->subtotal, 2) }}</td>
                 </tr>
                 @if($inv->discount_amount > 0)
                 <tr>
-                    <td style="color:#888;">Discount</td>
+                    <td style="color:#888;">{{ __('payments.discount_col') }}</td>
                     <td class="text-end" style="color:#dc3545;">-&#8373;{{ number_format($inv->discount_amount, 2) }}</td>
                 </tr>
                 @endif
                 @if($inv->nhis_amount > 0)
                 <tr>
-                    <td style="color:#888;">Insurance Covered</td>
+                    <td style="color:#888;">{{ __('payments.insurance_covered_col') }}</td>
                     <td class="text-end" style="color:#0d6efd;">&#8373;{{ number_format($inv->nhis_amount, 2) }}</td>
                 </tr>
                 @endif
                 <tr class="total">
-                    <td>Invoice Total</td>
+                    <td>{{ __('payments.invoice_total') }}</td>
                     <td class="text-end">&#8373;{{ number_format($inv->total_amount, 2) }}</td>
                 </tr>
                 <tr>
-                    <td style="color:#198754;">This Receipt</td>
+                    <td style="color:#198754;">{{ __('payments.this_receipt') }}</td>
                     <td class="text-end" style="color:#198754; font-weight:bold;">&#8373;{{ number_format($payment->amount, 2) }}</td>
                 </tr>
                 <tr>
-                    <td style="color:#888;">Total Paid To Date</td>
+                    <td style="color:#888;">{{ __('payments.total_paid_to_date') }}</td>
                     <td class="text-end">&#8373;{{ number_format($inv->amount_paid, 2) }}</td>
                 </tr>
                 <tr class="total">
-                    <td>Outstanding Balance</td>
+                    <td>{{ __('payments.outstanding_balance_col') }}</td>
                     <td class="text-end" style="color:{{ $inv->balance > 0 ? '#dc3545' : '#198754' }};">&#8373;{{ number_format($inv->balance, 2) }}</td>
                 </tr>
             </table>
@@ -221,15 +221,15 @@
 
         @if($payment->notes)
         <div style="margin-top:14px; padding:10px; background:#f8f9fa; border-radius:4px; font-size:12px;">
-            <strong>Notes:</strong> {{ $payment->notes }}
+            <strong>{{ __('payments.notes') }}:</strong> {{ $payment->notes }}
         </div>
         @endif
 
         <!-- Footer -->
         <div class="footer">
-            <p class="thanks">Thank you for your payment.</p>
-            <p>This is a computer-generated receipt and is valid without a signature.</p>
-            <p>Issued on {{ now()->format('d M Y, h:i A') }} | UHMS — Ultimate Hospital Management System</p>
+            <p class="thanks">{{ __('payments.thank_you_payment') }}</p>
+            <p>{{ __('payments.computer_generated_receipt') }}</p>
+            <p>{{ __('payments.issued_footer', ['date' => now()->format('d M Y, h:i A')]) }}</p>
         </div>
     </div>
 </body>

@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 @section('title', __('admissions.admission_details') . ' — ' . $admission->admission_number)
 
 @push('styles')
@@ -55,7 +55,7 @@
                         <small class="text-muted">{{ $admission->patient->patient_number }} &bull; {{ $admission->patient->age }} yrs &bull; {{ $admission->patient->gender->label() }}</small>
                     </div>
                     <div class="ms-auto d-flex gap-3 flex-wrap">
-                        <div class="text-center"><div class="fw-bold">{{ $admission->bed->ward->name }}</div><small class="text-muted">{{ __('admissions.ward_col') }}</small></div>
+                        <div class="text-center"><div class="fw-bold">{{ $admission->bed->ward->name }}</div><small class="text-muted">{{ __('admissions.ward_label') }}</small></div>
                         <div class="text-center"><div class="fw-bold">{{ $admission->bed->bed_number }}</div><small class="text-muted">{{ __('admissions.bed_col') }}</small></div>
                         <div class="text-center"><div class="fw-bold">{{ $admission->length_of_stay }}d</div><small class="text-muted">{{ __('admissions.stay_col') }}</small></div>
                         <div class="text-center">
@@ -78,18 +78,18 @@
                 <h5 class="card-title mb-0"><i class="ti ti-pill me-1"></i>{{ __('admissions.medication_admin') }}</h5>
                 <div class="d-flex gap-2 flex-wrap">
                     @can('admission.mar_chart.view')
-                    <a href="{{ route('admin.admissions.mar-chart', $admission) }}" class="btn btn-sm btn-primary">MAR Chart</a>
+                    <a href="{{ route('admin.admissions.mar-chart', $admission) }}" class="btn btn-sm btn-primary">{{ __('admissions.mar_chart_btn') }}</a>
                     @endcan
-                    <a href="{{ route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-outline-primary">Board</a>
+                    <a href="{{ route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-outline-primary">{{ __('admissions.dose_board_btn') }}</a>
                 </div>
             </div>
             <div class="card-body">
                 @php $medCounts = $medicationBoard['counts'] ?? []; @endphp
                 <div class="d-flex flex-wrap gap-2">
-                    <span class="badge bg-info">Due now: {{ $medCounts['due_now'] ?? 0 }}</span>
-                    <span class="badge bg-danger">Overdue: {{ $medCounts['overdue'] ?? 0 }}</span>
-                    <span class="badge bg-secondary">Upcoming: {{ $medCounts['upcoming'] ?? 0 }}</span>
-                    <span class="badge bg-success">Completed today: {{ $medCounts['completed_today'] ?? 0 }}</span>
+                    <span class="badge bg-info">{{ __('admissions.due_now_badge') }}: {{ $medCounts['due_now'] ?? 0 }}</span>
+                    <span class="badge bg-danger">{{ __('admissions.overdue_badge') }}: {{ $medCounts['overdue'] ?? 0 }}</span>
+                    <span class="badge bg-secondary">{{ __('admissions.upcoming_badge') }}: {{ $medCounts['upcoming'] ?? 0 }}</span>
+                    <span class="badge bg-success">{{ __('admissions.completed_today_badge') }}: {{ $medCounts['completed_today'] ?? 0 }}</span>
                 </div>
             </div>
         </div>
@@ -101,10 +101,10 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <h5 class="card-title mb-0"><i class="ti ti-heartbeat me-1"></i>Record Vitals</h5>
+                <h5 class="card-title mb-0"><i class="ti ti-heartbeat me-1"></i>{{ __('admissions.record_vitals') }}</h5>
                 @if($admission->visit->vitals->count() > 0)
                 @php $lastV = $admission->visit->vitals->sortByDesc('recorded_at')->first(); @endphp
-                <small class="text-muted">Last: <strong>{{ $lastV->recorded_at->diffForHumans() }}</strong> by {{ $lastV->recordedBy->name ?? '—' }}</small>
+                <small class="text-muted">{{ __('admissions.last_recorded') }}: <strong>{{ $lastV->recorded_at->diffForHumans() }}</strong> by {{ $lastV->recordedBy->name ?? '—' }}</small>
                 @endif
             </div>
             <div class="card-body">
@@ -112,23 +112,23 @@
                 <form method="POST" action="{{ route('admin.admissions.vitals.store', $admission) }}">
                     @csrf
                     <div class="row g-2 mb-3">
-                        <div class="col-6 col-md-3"><label class="form-label small">BP Systolic</label><div class="input-group input-group-sm"><input type="number" name="blood_pressure_systolic" class="form-control" placeholder="120" min="0" max="300"><span class="input-group-text">mmHg</span></div></div>
-                        <div class="col-6 col-md-3"><label class="form-label small">BP Diastolic</label><div class="input-group input-group-sm"><input type="number" name="blood_pressure_diastolic" class="form-control" placeholder="80" min="0" max="200"><span class="input-group-text">mmHg</span></div></div>
-                        <div class="col-6 col-md-3"><label class="form-label small">Heart Rate</label><div class="input-group input-group-sm"><input type="number" name="heart_rate" class="form-control" placeholder="72" min="0" max="300"><span class="input-group-text">bpm</span></div></div>
-                        <div class="col-6 col-md-3"><label class="form-label small">Temperature</label><div class="input-group input-group-sm"><input type="number" name="temperature" class="form-control" placeholder="36.6" step="0.1" min="30" max="45"><span class="input-group-text">°C</span></div></div>
-                        <div class="col-6 col-md-3"><label class="form-label small">Resp. Rate</label><div class="input-group input-group-sm"><input type="number" name="respiratory_rate" class="form-control" placeholder="16" min="0" max="60"><span class="input-group-text">/min</span></div></div>
-                        <div class="col-6 col-md-3"><label class="form-label small">SpO₂</label><div class="input-group input-group-sm"><input type="number" name="spo2" class="form-control" placeholder="98" step="0.1" min="0" max="100"><span class="input-group-text">%</span></div></div>
-                        <div class="col-6 col-md-3"><label class="form-label small">Weight</label><div class="input-group input-group-sm"><input type="number" name="weight" class="form-control" placeholder="70" step="0.1" min="0"><span class="input-group-text">kg</span></div></div>
-                        <div class="col-6 col-md-3"><label class="form-label small">Blood Sugar</label><div class="input-group input-group-sm"><input type="number" name="blood_sugar" class="form-control" placeholder="5.0" step="0.1" min="0"><span class="input-group-text">mmol/L</span></div></div>
+                        <div class="col-6 col-md-3"><label class="form-label small">{{ __('admissions.bp_systolic') }}</label><div class="input-group input-group-sm"><input type="number" name="blood_pressure_systolic" class="form-control" placeholder="120" min="0" max="300"><span class="input-group-text">mmHg</span></div></div>
+                        <div class="col-6 col-md-3"><label class="form-label small">{{ __('admissions.bp_diastolic') }}</label><div class="input-group input-group-sm"><input type="number" name="blood_pressure_diastolic" class="form-control" placeholder="80" min="0" max="200"><span class="input-group-text">mmHg</span></div></div>
+                        <div class="col-6 col-md-3"><label class="form-label small">{{ __('admissions.heart_rate') }}</label><div class="input-group input-group-sm"><input type="number" name="heart_rate" class="form-control" placeholder="72" min="0" max="300"><span class="input-group-text">bpm</span></div></div>
+                        <div class="col-6 col-md-3"><label class="form-label small">{{ __('admissions.temperature') }}</label><div class="input-group input-group-sm"><input type="number" name="temperature" class="form-control" placeholder="36.6" step="0.1" min="30" max="45"><span class="input-group-text">°C</span></div></div>
+                        <div class="col-6 col-md-3"><label class="form-label small">{{ __('admissions.resp_rate') }}</label><div class="input-group input-group-sm"><input type="number" name="respiratory_rate" class="form-control" placeholder="16" min="0" max="60"><span class="input-group-text">/min</span></div></div>
+                        <div class="col-6 col-md-3"><label class="form-label small">{{ __('admissions.spo2_col') }}</label><div class="input-group input-group-sm"><input type="number" name="spo2" class="form-control" placeholder="98" step="0.1" min="0" max="100"><span class="input-group-text">%</span></div></div>
+                        <div class="col-6 col-md-3"><label class="form-label small">{{ __('admissions.weight') }}</label><div class="input-group input-group-sm"><input type="number" name="weight" class="form-control" placeholder="70" step="0.1" min="0"><span class="input-group-text">kg</span></div></div>
+                        <div class="col-6 col-md-3"><label class="form-label small">{{ __('admissions.blood_sugar') }}</label><div class="input-group input-group-sm"><input type="number" name="blood_sugar" class="form-control" placeholder="5.0" step="0.1" min="0"><span class="input-group-text">mmol/L</span></div></div>
                     </div>
                     <div class="row g-2 mb-3">
-                        <div class="col-md-4"><label class="form-label small">Recorded At</label><input type="datetime-local" name="recorded_at" class="form-control form-control-sm" value="{{ now()->format('Y-m-d\TH:i') }}"></div>
-                        <div class="col-md-8"><label class="form-label small">Notes</label><input type="text" name="notes" class="form-control form-control-sm" placeholder="Optional observations..."></div>
+                        <div class="col-md-4"><label class="form-label small">{{ __('admissions.recorded_at') }}</label><input type="datetime-local" name="recorded_at" class="form-control form-control-sm" value="{{ now()->format('Y-m-d\TH:i') }}"></div>
+                        <div class="col-md-8"><label class="form-label small">{{ __('admissions.notes') }}</label><input type="text" name="notes" class="form-control form-control-sm" placeholder="{{ __('admissions.observations_ph') }}"></div>
                     </div>
-                    <div class="text-end"><button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-device-floppy me-1"></i>Save Vitals</button></div>
+                    <div class="text-end"><button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-device-floppy me-1"></i>{{ __('admissions.save_vitals') }}</button></div>
                 </form>
                 @else
-                <p class="text-muted mb-0">Patient is no longer admitted. Vitals recording disabled.</p>
+                <p class="text-muted mb-0">{{ __('admissions.vitals_disabled') }}</p>
                 @endif
             </div>
         </div>
@@ -140,14 +140,14 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <h5 class="card-title mb-0"><i class="ti ti-stethoscope me-1"></i>Consultation Records</h5>
+                <h5 class="card-title mb-0"><i class="ti ti-stethoscope me-1"></i>{{ __('admissions.consultation_records') }}</h5>
                 <small class="text-muted">Dr. {{ $medicalRecord->doctor->name ?? 'N/A' }}</small>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     @if($medicalRecord->complaints->count() > 0)
                     <div class="col-md-6">
-                        <h6 class="fw-bold fs-13 mb-2"><i class="ti ti-message-circle me-1"></i>Complaints</h6>
+                        <h6 class="fw-bold fs-13 mb-2"><i class="ti ti-message-circle me-1"></i>{{ __('admissions.complaints') }}</h6>
                         @foreach($medicalRecord->complaints as $c)
                         <div class="ehr-item"><div class="fw-medium">{{ $c->description }}</div>@if($c->duration)<small class="text-muted">{{ $c->duration }}</small>@endif</div>
                         @endforeach
@@ -155,10 +155,10 @@
                     @endif
                     @if($medicalRecord->diagnoses->count() > 0)
                     <div class="col-md-6">
-                        <h6 class="fw-bold fs-13 mb-2"><i class="ti ti-stethoscope me-1"></i>Diagnoses</h6>
+                        <h6 class="fw-bold fs-13 mb-2"><i class="ti ti-stethoscope me-1"></i>{{ __('admissions.diagnoses') }}</h6>
                         @foreach($medicalRecord->diagnoses as $d)
                         <div class="ehr-item {{ $d->is_primary?'is-primary':'' }}">
-                            @if($d->is_primary)<span class="badge bg-warning text-dark me-1" style="font-size:0.6rem">Primary</span>@endif
+                            @if($d->is_primary)<span class="badge bg-warning text-dark me-1" style="font-size:0.6rem">{{ __('admissions.primary_badge') }}</span>@endif
                             <span class="fw-medium">{{ $d->description }}</span>
                             @if($d->icdCodeEntry)<span class="badge bg-light text-dark ms-1 border">{{ $d->icdCodeEntry->code }}</span>@endif
                         </div>
@@ -167,7 +167,7 @@
                     @endif
                     @if($medicalRecord->treatments->count() > 0)
                     <div class="col-md-6">
-                        <h6 class="fw-bold fs-13 mb-2"><i class="ti ti-first-aid-kit me-1"></i>Treatments</h6>
+                        <h6 class="fw-bold fs-13 mb-2"><i class="ti ti-first-aid-kit me-1"></i>{{ __('admissions.treatments') }}</h6>
                         @foreach($medicalRecord->treatments as $t)
                         <div class="ehr-item"><div class="fw-medium">{{ $t->description }}</div>@if($t->notes)<small class="text-muted">{{ $t->notes }}</small>@endif</div>
                         @endforeach
@@ -175,7 +175,7 @@
                     @endif
                     @if($medicalRecord->prescriptions->count() > 0)
                     <div class="col-md-6">
-                        <h6 class="fw-bold fs-13 mb-2"><i class="ti ti-pill me-1"></i>Active Prescriptions</h6>
+                        <h6 class="fw-bold fs-13 mb-2"><i class="ti ti-pill me-1"></i>{{ __('admissions.active_prescriptions') }}</h6>
                         @foreach($medicalRecord->prescriptions as $rx)
                         @if($rx->items->count() > 0)
                         <div class="ehr-item mb-2">
@@ -199,13 +199,13 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <h5 class="card-title mb-0"><i class="ti ti-clipboard-list me-1"></i>Nursing Tasks</h5>
-                <span class="badge bg-warning text-dark">{{ $medicalRecord->tasks->whereNotIn('status',['completed','cancelled'])->count() }} pending</span>
+                <h5 class="card-title mb-0"><i class="ti ti-clipboard-list me-1"></i>{{ __('admissions.nursing_tasks') }}</h5>
+                <span class="badge bg-warning text-dark">{{ $medicalRecord->tasks->whereNotIn('status',['completed','cancelled'])->count() }} {{ __('admissions.pending_label') }}</span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
-                        <thead class="bg-light"><tr><th style="width:3rem"></th><th>Task</th><th>Priority</th><th>Assigned To</th><th>Due</th><th>Status</th></tr></thead>
+                        <thead class="bg-light"><tr><th style="width:3rem"></th><th>{{ __('admissions.task_col') }}</th><th>{{ __('admissions.priority_col') }}</th><th>{{ __('admissions.assigned_to_col') }}</th><th>{{ __('admissions.due_col') }}</th><th>{{ __('admissions.status_col') }}</th></tr></thead>
                         <tbody>
                             @foreach($medicalRecord->tasks->sortBy('status') as $task)
                             @php $isDone = $task->status === 'completed'; @endphp
@@ -248,23 +248,23 @@
         ])
 
         <div class="card mb-3">
-            <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-clipboard me-1"></i>Admission Details</h5></div>
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-clipboard me-1"></i>{{ __('admissions.admission_details_card') }}</h5></div>
             <div class="card-body">
                 <div class="table-responsive"><table class="table table-sm table-borderless mb-0">
-                    <tr><td class="text-muted" style="width:45%">Admission #</td><td class="fw-medium">{{ $admission->admission_number }}</td></tr>
-                    <tr><td class="text-muted">Visit #</td><td><a href="{{ route('admin.visits.show', $admission->visit) }}" class="text-decoration-none">{{ $admission->visit->visit_number }}</a></td></tr>
-                    <tr><td class="text-muted">Ward</td><td>{{ $admission->bed->ward->name }}</td></tr>
-                    <tr><td class="text-muted">Bed</td><td>{{ $admission->bed->bed_number }} ({{ $admission->bed->bed_type->label() }})</td></tr>
-                    <tr><td class="text-muted">Daily Rate</td><td>GH&#8373; {{ number_format($admission->bed->daily_rate,2) }}</td></tr>
-                    <tr><td class="text-muted">Admitted On</td><td>{{ $admission->admission_date->format('d M Y, H:i') }}</td></tr>
-                    <tr><td class="text-muted">Admitted By</td><td>{{ $admission->admittedBy->name ?? '—' }}</td></tr>
-                    <tr><td class="text-muted">Length of Stay</td><td><span class="badge badge-soft-secondary">{{ $admission->length_of_stay }} day(s)</span></td></tr>
+                    <tr><td class="text-muted" style="width:45%">{{ __('admissions.admission_no') }}</td><td class="fw-medium">{{ $admission->admission_number }}</td></tr>
+                    <tr><td class="text-muted">{{ __('admissions.visit_no_label') }}</td><td><a href="{{ route('admin.visits.show', $admission->visit) }}" class="text-decoration-none">{{ $admission->visit->visit_number }}</a></td></tr>
+                    <tr><td class="text-muted">{{ __('admissions.ward_label') }}</td><td>{{ $admission->bed->ward->name }}</td></tr>
+                    <tr><td class="text-muted">{{ __('admissions.bed_label_detail') }}</td><td>{{ $admission->bed->bed_number }} ({{ $admission->bed->bed_type->label() }})</td></tr>
+                    <tr><td class="text-muted">{{ __('admissions.daily_rate_label') }}</td><td>GH&#8373; {{ number_format($admission->bed->daily_rate,2) }}</td></tr>
+                    <tr><td class="text-muted">{{ __('admissions.admitted_on_label') }}</td><td>{{ $admission->admission_date->format('d M Y, H:i') }}</td></tr>
+                    <tr><td class="text-muted">{{ __('admissions.admitted_by_label') }}</td><td>{{ $admission->admittedBy->name ?? '—' }}</td></tr>
+                    <tr><td class="text-muted">{{ __('admissions.length_of_stay_label') }}</td><td><span class="badge badge-soft-secondary">{{ $admission->length_of_stay }} {{ __('admissions.days') }}</span></td></tr>
                     @if($admission->expected_discharge_date)
-                    <tr><td class="text-muted">Expected Discharge</td><td>{{ $admission->expected_discharge_date->format('d M Y') }}</td></tr>
+                    <tr><td class="text-muted">{{ __('admissions.expected_discharge_label') }}</td><td>{{ $admission->expected_discharge_date->format('d M Y') }}</td></tr>
                     @endif
                     @if($admission->actual_discharge_date)
-                    <tr><td class="text-muted">Discharged On</td><td>{{ $admission->actual_discharge_date->format('d M Y, H:i') }}</td></tr>
-                    <tr><td class="text-muted">Discharged By</td><td>{{ $admission->dischargedBy->name ?? '—' }}</td></tr>
+                    <tr><td class="text-muted">{{ __('admissions.discharged_on_label') }}</td><td>{{ $admission->actual_discharge_date->format('d M Y, H:i') }}</td></tr>
+                    <tr><td class="text-muted">{{ __('admissions.discharged_by_label') }}</td><td>{{ $admission->dischargedBy->name ?? '—' }}</td></tr>
                     @endif
                 </table></div>
             </div>
@@ -272,7 +272,7 @@
 
         @if($admission->admitting_diagnosis)
         <div class="card mb-3">
-            <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-stethoscope me-1"></i>Admitting Diagnosis</h5></div>
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-stethoscope me-1"></i>{{ __('admissions.admitting_diagnosis_card') }}</h5></div>
             <div class="card-body"><p class="mb-0">{{ $admission->admitting_diagnosis }}</p></div>
         </div>
         @endif
@@ -280,11 +280,11 @@
         @if($admission->status->value === 'discharged')
         <div class="card mb-3 border-success">
             <div class="card-header bg-success bg-opacity-10">
-                <h5 class="card-title mb-0 text-success"><i class="ti ti-logout me-1"></i>Discharge Summary</h5>
+                <h5 class="card-title mb-0 text-success"><i class="ti ti-logout me-1"></i>{{ __('admissions.discharge_summary_card') }}</h5>
             </div>
             <div class="card-body">
                 @if($admission->discharge_summary)<p>{{ $admission->discharge_summary }}</p>@endif
-                @if($admission->discharge_instructions)<hr><h6>Instructions</h6><p class="mb-0">{{ $admission->discharge_instructions }}</p>@endif
+                @if($admission->discharge_instructions)<hr><h6>{{ __('admissions.instructions_label') }}</h6><p class="mb-0">{{ $admission->discharge_instructions }}</p>@endif
             </div>
         </div>
         @endif
@@ -294,7 +294,7 @@
         <div class="card mb-3 border-warning">
             <div class="card-header bg-warning bg-opacity-10">
                 <h5 class="card-title mb-0 text-warning">
-                    <i class="ti ti-clipboard-list me-1"></i>Pending Tasks
+                    <i class="ti ti-clipboard-list me-1"></i>{{ __('admissions.pending_tasks_card') }}
                     <span class="badge bg-warning text-dark ms-1">{{ $pendingSummary->count() }}</span>
                 </h5>
             </div>
@@ -303,13 +303,13 @@
                 <div class="d-flex align-items-center gap-2 mb-2">
                     <form method="POST" action="{{ route('admin.consultations.tasks.toggle', $task) }}" class="mb-0">
                         @csrf @method('PATCH')
-                        <button type="submit" class="btn btn-sm btn-outline-success p-1" title="Mark done"><i class="ti ti-check fs-12"></i></button>
+                        <button type="submit" class="btn btn-sm btn-outline-success p-1" title="{{ __('admissions.mark_done_title') }}"><i class="ti ti-check fs-12"></i></button>
                     </form>
                     <span class="fs-13 @if($task->priority==='high') text-danger fw-medium @endif">{{ $task->title }}</span>
                 </div>
                 @endforeach
                 @if($pendingSummary->count() > 3)
-                <a href="#tab-tasks" class="fs-12 text-muted" onclick="event.preventDefault();showTab('tab-tasks')">+ {{ $pendingSummary->count()-3 }} more...</a>
+                <a href="#tab-tasks" class="fs-12 text-muted" onclick="event.preventDefault();showTab('tab-tasks')">+ {{ $pendingSummary->count()-3 }} {{ __('admissions.more_tasks') }}</a>
                 @endif
             </div>
         </div>
@@ -319,23 +319,23 @@
     <!-- RIGHT COLUMN — Tabbed -->
     <div class="col-lg-8">
         <ul class="nav nav-tabs mb-3" id="admTabs" role="tablist">
-            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-consult" type="button"><i class="ti ti-stethoscope me-1"></i>Consultation</button></li>
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-consult" type="button"><i class="ti ti-stethoscope me-1"></i>{{ __('admissions.tab_consultation') }}</button></li>
             @can('admission.medication_board.view')
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-medications" type="button"><i class="ti ti-pill me-1"></i>MAR @if(($medicationBoard['counts']['overdue'] ?? 0) > 0)<span class="badge bg-danger ms-1">{{ $medicationBoard['counts']['overdue'] }}</span>@elseif(($medicationBoard['counts']['due_now'] ?? 0) > 0)<span class="badge bg-info ms-1">{{ $medicationBoard['counts']['due_now'] }}</span>@endif</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-medications" type="button"><i class="ti ti-pill me-1"></i>{{ __('admissions.tab_mar') }} @if(($medicationBoard['counts']['overdue'] ?? 0) > 0)<span class="badge bg-danger ms-1">{{ $medicationBoard['counts']['overdue'] }}</span>@elseif(($medicationBoard['counts']['due_now'] ?? 0) > 0)<span class="badge bg-info ms-1">{{ $medicationBoard['counts']['due_now'] }}</span>@endif</button></li>
             @endcan
             @if($medicalRecord)
             <li class="nav-item">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tasks" type="button">
-                    <i class="ti ti-clipboard-list me-1"></i>Tasks
+                    <i class="ti ti-clipboard-list me-1"></i>{{ __('admissions.tab_tasks') }}
                     @php $pendingCount = $medicalRecord->tasks->whereNotIn('status',['completed','cancelled'])->count(); @endphp
                     @if($pendingCount > 0)<span class="badge bg-warning text-dark ms-1">{{ $pendingCount }}</span>
                     @else<span class="badge bg-secondary ms-1">{{ $medicalRecord->tasks->count() }}</span>@endif
                 </button>
             </li>
             @endif
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-rounds" type="button"><i class="ti ti-notes me-1"></i>Ward Rounds <span class="badge bg-secondary ms-1">{{ $admission->wardRounds->count() }}</span></button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-vitals" type="button"><i class="ti ti-heartbeat me-1"></i>Vitals <span class="badge bg-secondary ms-1">{{ $admission->visit->vitals->count() }}</span></button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-billing" type="button"><i class="ti ti-file-invoice me-1"></i>Billing <span class="badge bg-secondary ms-1">{{ $admission->visit->visitServices->count() }}</span></button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-rounds" type="button"><i class="ti ti-notes me-1"></i>{{ __('admissions.tab_ward_rounds') }} <span class="badge bg-secondary ms-1">{{ $admission->wardRounds->count() }}</span></button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-vitals" type="button"><i class="ti ti-heartbeat me-1"></i>{{ __('admissions.tab_vitals') }} <span class="badge bg-secondary ms-1">{{ $admission->visit->vitals->count() }}</span></button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-billing" type="button"><i class="ti ti-file-invoice me-1"></i>{{ __('admissions.tab_billing') }} <span class="badge bg-secondary ms-1">{{ $admission->visit->visitServices->count() }}</span></button></li>
         </ul>
 
         <div class="tab-content">
@@ -344,32 +344,32 @@
             <div class="tab-pane fade" id="tab-medications" role="tabpanel">
                 <div class="card">
                     <div class="card-header d-flex align-items-center justify-content-between">
-                        <h5 class="card-title mb-0"><i class="ti ti-pill me-1"></i>Medication Administration Record</h5>
+                        <h5 class="card-title mb-0"><i class="ti ti-pill me-1"></i>{{ __('admissions.medication_admin_record') }}</h5>
                         <div class="d-flex gap-2 flex-wrap">
                             @can('admission.mar_chart.view')
-                            <a href="{{ route('admin.admissions.mar-chart', $admission) }}" class="btn btn-sm btn-primary">MAR Chart</a>
+                            <a href="{{ route('admin.admissions.mar-chart', $admission) }}" class="btn btn-sm btn-primary">{{ __('admissions.mar_chart_btn') }}</a>
                             @endcan
-                            <a href="{{ route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-outline-primary">Dose Board</a>
+                            <a href="{{ route('admin.admissions.medications.show', $admission) }}" class="btn btn-sm btn-outline-primary">{{ __('admissions.dose_board_btn') }}</a>
                         </div>
                     </div>
                     <div class="card-body">
                         @php $medCounts = $medicationBoard['counts'] ?? []; @endphp
                         <div class="row g-2 mb-3">
-                            <div class="col-6 col-md-3"><span class="badge bg-info w-100 py-2">Due now: {{ $medCounts['due_now'] ?? 0 }}</span></div>
-                            <div class="col-6 col-md-3"><span class="badge bg-danger w-100 py-2">Overdue: {{ $medCounts['overdue'] ?? 0 }}</span></div>
-                            <div class="col-6 col-md-3"><span class="badge bg-secondary w-100 py-2">Upcoming: {{ $medCounts['upcoming'] ?? 0 }}</span></div>
-                            <div class="col-6 col-md-3"><span class="badge bg-success w-100 py-2">Completed today: {{ $medCounts['completed_today'] ?? 0 }}</span></div>
+                            <div class="col-6 col-md-3"><span class="badge bg-info w-100 py-2">{{ __('admissions.due_now_badge') }}: {{ $medCounts['due_now'] ?? 0 }}</span></div>
+                            <div class="col-6 col-md-3"><span class="badge bg-danger w-100 py-2">{{ __('admissions.overdue_badge') }}: {{ $medCounts['overdue'] ?? 0 }}</span></div>
+                            <div class="col-6 col-md-3"><span class="badge bg-secondary w-100 py-2">{{ __('admissions.upcoming_badge') }}: {{ $medCounts['upcoming'] ?? 0 }}</span></div>
+                            <div class="col-6 col-md-3"><span class="badge bg-success w-100 py-2">{{ __('admissions.completed_today_badge') }}: {{ $medCounts['completed_today'] ?? 0 }}</span></div>
                         </div>
                         @if(($medicationBoard['orders'] ?? collect())->isNotEmpty())
                             <div class="table-responsive">
                                 <table class="table table-sm align-middle">
-                                    <thead class="bg-light"><tr><th>Medication</th><th>Progress</th><th>Next Due</th><th>Status</th></tr></thead>
+                                    <thead class="bg-light"><tr><th>{{ __('admissions.medication_col') }}</th><th>{{ __('admissions.progress_col') }}</th><th>{{ __('admissions.next_due_col') }}</th><th>{{ __('admissions.status_col') }}</th></tr></thead>
                                     <tbody>
                                         @foreach($medicationBoard['orders'] as $entry)
                                         @php $order = $entry['order']; $progress = $entry['progress']; @endphp
                                         <tr>
                                             <td><strong>{{ $order->display_name }}</strong><br><small class="text-muted">{{ $order->dose }} {{ $order->frequency_code ? '· '.$order->frequency_code : '' }}</small></td>
-                                            <td>{{ $progress['given_doses'] }}/{{ $progress['total_doses'] }} given</td>
+                                            <td>{{ $progress['given_doses'] }}/{{ $progress['total_doses'] }} {{ __('admissions.given_doses') }}</td>
                                             <td>{{ $progress['next_due_at'] ? $progress['next_due_at']->format('d M H:i') : '—' }}</td>
                                             <td><span class="badge badge-soft-secondary">{{ str_replace('_',' ', $order->status) }}</span></td>
                                         </tr>
@@ -378,7 +378,7 @@
                                 </table>
                             </div>
                         @else
-                            <div class="text-center py-4 text-muted">No medication administration orders are linked to this admission yet.</div>
+                            <div class="text-center py-4 text-muted">{{ __('admissions.no_medication_orders') }}</div>
                         @endif
                     </div>
                 </div>
@@ -389,36 +389,36 @@
             <div class="tab-pane fade" id="tab-rounds" role="tabpanel">
                 @if($admission->status->value === 'admitted')
                 <div class="card mb-3">
-                    <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-plus me-1"></i>Record Ward Round</h5></div>
+                    <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-plus me-1"></i>{{ __('admissions.record_ward_round') }}</h5></div>
                     <div class="card-body">
                         <form method="POST" action="{{ route('admin.admissions.rounds.store', $admission) }}">
                             @csrf
                             <div class="mb-3">
-                                <label class="form-label">Round Notes <span class="text-danger">*</span></label>
-                                <textarea name="notes" class="form-control" rows="3" required placeholder="Observations, patient condition...">{{ old('notes') }}</textarea>
+                                <label class="form-label">{{ __('admissions.round_notes_label') }} <span class="text-danger">*</span></label>
+                                <textarea name="notes" class="form-control" rows="3" required placeholder="{{ __('admissions.round_notes_ph') }}">{{ old('notes') }}</textarea>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">Instructions</label>
-                                    <textarea name="instructions" class="form-control" rows="2" placeholder="Medication changes, diet...">{{ old('instructions') }}</textarea>
+                                    <label class="form-label">{{ __('admissions.instructions_field') }}</label>
+                                    <textarea name="instructions" class="form-control" rows="2" placeholder="{{ __('admissions.instructions_ph') }}">{{ old('instructions') }}</textarea>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label">Round Date/Time</label>
+                                    <label class="form-label">{{ __('admissions.round_datetime_label') }}</label>
                                     <input type="datetime-local" name="round_date" class="form-control" value="{{ now()->format('Y-m-d\TH:i') }}">
                                 </div>
                             </div>
-                            <div class="text-end"><button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>Save Round</button></div>
+                            <div class="text-end"><button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>{{ __('admissions.save_round_btn') }}</button></div>
                         </form>
                     </div>
                 </div>
                 @endif
                 <div class="card">
-                    <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-history me-1"></i>Ward Rounds History ({{ $admission->wardRounds->count() }})</h5></div>
+                    <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-history me-1"></i>{{ __('admissions.ward_rounds_history') }} ({{ $admission->wardRounds->count() }})</h5></div>
                     <div class="card-body p-0">
                         @if($admission->wardRounds->count() > 0)
                         <div class="table-responsive">
                             <table class="table table-hover mb-0">
-                                <thead class="bg-light"><tr><th style="width:15%">Date/Time</th><th style="width:15%">Recorded By</th><th>Notes</th><th>Instructions</th></tr></thead>
+                                <thead class="bg-light"><tr><th style="width:15%">{{ __('admissions.date_time_col') }}</th><th style="width:15%">{{ __('admissions.recorded_by_col') }}</th><th>{{ __('admissions.notes_col') }}</th><th>{{ __('admissions.instructions_col') }}</th></tr></thead>
                                 <tbody>
                                     @foreach($admission->wardRounds as $round)
                                     <tr>
@@ -432,7 +432,7 @@
                             </table>
                         </div>
                         @else
-                        <div class="text-center py-4 text-muted"><i class="ti ti-notes-off fs-1 d-block mb-2"></i>No ward rounds recorded yet.</div>
+                        <div class="text-center py-4 text-muted"><i class="ti ti-notes-off fs-1 d-block mb-2"></i>{{ __('admissions.no_ward_rounds_yet') }}</div>
                         @endif
                     </div>
                 </div>
@@ -442,61 +442,61 @@
             <div class="tab-pane fade" id="tab-vitals" role="tabpanel">
                 @if($admission->status->value === 'admitted')
                 <div class="card mb-3">
-                    <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-activity me-1"></i>Record Vitals</h5></div>
+                    <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-activity me-1"></i>{{ __('admissions.record_vitals') }}</h5></div>
                     <div class="card-body">
                         <form method="POST" action="{{ route('admin.admissions.vitals.store', $admission) }}">
                             @csrf
                             <div class="row g-2 mb-3">
                                 <div class="col-6 col-md-3">
-                                    <label class="form-label small">BP Systolic</label>
+                                    <label class="form-label small">{{ __('admissions.bp_systolic') }}</label>
                                     <div class="input-group input-group-sm"><input type="number" name="blood_pressure_systolic" class="form-control" placeholder="120" min="0" max="300"><span class="input-group-text">mmHg</span></div>
                                 </div>
                                 <div class="col-6 col-md-3">
-                                    <label class="form-label small">BP Diastolic</label>
+                                    <label class="form-label small">{{ __('admissions.bp_diastolic') }}</label>
                                     <div class="input-group input-group-sm"><input type="number" name="blood_pressure_diastolic" class="form-control" placeholder="80" min="0" max="200"><span class="input-group-text">mmHg</span></div>
                                 </div>
                                 <div class="col-6 col-md-3">
-                                    <label class="form-label small">Heart Rate</label>
+                                    <label class="form-label small">{{ __('admissions.heart_rate') }}</label>
                                     <div class="input-group input-group-sm"><input type="number" name="heart_rate" class="form-control" placeholder="72" min="0" max="300"><span class="input-group-text">bpm</span></div>
                                 </div>
                                 <div class="col-6 col-md-3">
-                                    <label class="form-label small">Temperature</label>
+                                    <label class="form-label small">{{ __('admissions.temperature') }}</label>
                                     <div class="input-group input-group-sm"><input type="number" name="temperature" class="form-control" placeholder="36.6" step="0.1" min="30" max="45"><span class="input-group-text">°C</span></div>
                                 </div>
                                 <div class="col-6 col-md-3">
-                                    <label class="form-label small">Resp. Rate</label>
+                                    <label class="form-label small">{{ __('admissions.resp_rate') }}</label>
                                     <div class="input-group input-group-sm"><input type="number" name="respiratory_rate" class="form-control" placeholder="16" min="0" max="60"><span class="input-group-text">/min</span></div>
                                 </div>
                                 <div class="col-6 col-md-3">
-                                    <label class="form-label small">SpO&#8322;</label>
+                                    <label class="form-label small">{{ __('admissions.spo2_col') }}</label>
                                     <div class="input-group input-group-sm"><input type="number" name="spo2" class="form-control" placeholder="98" step="0.1" min="0" max="100"><span class="input-group-text">%</span></div>
                                 </div>
                                 <div class="col-6 col-md-3">
-                                    <label class="form-label small">Weight</label>
+                                    <label class="form-label small">{{ __('admissions.weight') }}</label>
                                     <div class="input-group input-group-sm"><input type="number" name="weight" class="form-control" placeholder="70" step="0.1" min="0" max="500"><span class="input-group-text">kg</span></div>
                                 </div>
                                 <div class="col-6 col-md-3">
-                                    <label class="form-label small">Blood Sugar</label>
+                                    <label class="form-label small">{{ __('admissions.blood_sugar') }}</label>
                                     <div class="input-group input-group-sm"><input type="number" name="blood_sugar" class="form-control" placeholder="5.0" step="0.1" min="0"><span class="input-group-text">mmol/L</span></div>
                                 </div>
                             </div>
                             <div class="row g-2 mb-3">
                                 <div class="col-md-4">
-                                    <label class="form-label small">Recorded At</label>
+                                    <label class="form-label small">{{ __('admissions.recorded_at') }}</label>
                                     <input type="datetime-local" name="recorded_at" class="form-control form-control-sm" value="{{ now()->format('Y-m-d\TH:i') }}">
                                 </div>
                                 <div class="col-md-8">
-                                    <label class="form-label small">Notes</label>
-                                    <input type="text" name="notes" class="form-control form-control-sm" placeholder="Optional observations...">
+                                    <label class="form-label small">{{ __('admissions.notes') }}</label>
+                                    <input type="text" name="notes" class="form-control form-control-sm" placeholder="{{ __('admissions.observations_ph') }}">
                                 </div>
                             </div>
-                            <div class="text-end"><button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-device-floppy me-1"></i>Save Vitals</button></div>
+                            <div class="text-end"><button type="submit" class="btn btn-primary btn-sm"><i class="ti ti-device-floppy me-1"></i>{{ __('admissions.save_vitals') }}</button></div>
                         </form>
                     </div>
                 </div>
                 @endif
                 <div class="card">
-                    <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-history me-1"></i>Vitals History ({{ $admission->visit->vitals->count() }})</h5></div>
+                    <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-history me-1"></i>{{ __('admissions.vitals_history') }} ({{ $admission->visit->vitals->count() }})</h5></div>
                     <div class="card-body p-0">
                         @if($admission->visit->vitals->count() > 0)
                         @php $vitalsChronological = $admission->visit->vitals->sortBy('recorded_at'); @endphp
@@ -507,7 +507,7 @@
                         <div class="table-responsive">
                             <table class="table table-sm table-hover mb-0">
                                 <thead class="bg-light">
-                                    <tr><th>Date/Time</th><th>BP</th><th>HR</th><th>Temp</th><th>SpO&#8322;</th><th>RR</th><th>Sugar</th><th>By</th></tr>
+                                    <tr><th>{{ __('admissions.date_time_col') }}</th><th>{{ __('admissions.bp_col') }}</th><th>{{ __('admissions.hr_col') }}</th><th>{{ __('admissions.temp_col') }}</th><th>{{ __('admissions.spo2_col') }}</th><th>{{ __('admissions.rr_col') }}</th><th>{{ __('admissions.sugar_col') }}</th><th>{{ __('admissions.by_col') }}</th></tr>
                                 </thead>
                                 <tbody>
                                     @foreach($admission->visit->vitals->sortByDesc('recorded_at') as $vital)
@@ -526,7 +526,7 @@
                             </table>
                         </div>
                         @else
-                        <div class="text-center py-4 text-muted"><i class="ti ti-activity-off fs-1 d-block mb-2"></i>No vitals recorded yet.</div>
+                        <div class="text-center py-4 text-muted"><i class="ti ti-activity-off fs-1 d-block mb-2"></i>{{ __('admissions.no_vitals_yet') }}</div>
                         @endif
                     </div>
                 </div>
@@ -536,17 +536,17 @@
             <div class="tab-pane fade show active" id="tab-consult" role="tabpanel">
                 <div class="alert alert-info py-2 mb-3">
                     <i class="ti ti-user-md me-1"></i>
-                    Consultation by <strong>{{ $medicalRecord->doctor->name ?? 'N/A' }}</strong>
+                    {{ __('admissions.consultation_by') }} <strong>{{ $medicalRecord->doctor->name ?? 'N/A' }}</strong>
                     &mdash;
                     <a href="{{ route('admin.consultations.show', $admission->visit) }}" target="_blank" class="link-primary ms-1">
-                        <i class="ti ti-external-link me-1"></i>Open Full Consultation
+                        <i class="ti ti-external-link me-1"></i>{{ __('admissions.open_full_consultation') }}
                     </a>
                 </div>
                 @if($medicalRecord)
                     <div class="row" id="summary-section">
                         <div class="card">
                             <div class="card-header">
-                                <h6 class="fw-bold mb-0"><i class="ti ti-notes me-1"></i>Notes / Consultation Summary</h6>
+                                <h6 class="fw-bold mb-0"><i class="ti ti-notes me-1"></i>{{ __('admissions.notes_summary_card') }}</h6>
                             </div>
                             <div class="card-body" id="consultation-summary-body">
                                 @include('consultations.partials.summary-sections', ['consultationSummary' => $consultationSummary])
@@ -618,7 +618,7 @@
                     @endif
                 </div> --}}
                     @if($medicalRecord->complaints->count()===0 && $medicalRecord->diagnoses->count()===0 && $medicalRecord->treatments->count()===0 && $medicalRecord->prescriptions->count()===0)
-                        <div class="text-center py-4 text-muted"><i class="ti ti-notes-off fs-1 d-block mb-2"></i>No consultation data recorded yet.</div>
+                        <div class="text-center py-4 text-muted"><i class="ti ti-notes-off fs-1 d-block mb-2"></i>{{ __('admissions.no_consultation_data') }}</div>
                     @endif
                 @endif
             </div>
@@ -628,10 +628,10 @@
             <div class="tab-pane fade" id="tab-tasks" role="tabpanel">
                 <div class="card">
                     <div class="card-header d-flex align-items-center justify-content-between">
-                        <h5 class="card-title mb-0"><i class="ti ti-clipboard-list me-1"></i>Nursing / Clinical Tasks</h5>
+                        <h5 class="card-title mb-0"><i class="ti ti-clipboard-list me-1"></i>{{ __('admissions.nursing_clinical_tasks') }}</h5>
                         <div class="d-flex gap-2">
-                            <span class="badge bg-warning text-dark">{{ $medicalRecord->tasks->whereNotIn('status',['completed','cancelled'])->count() }} pending</span>
-                            <span class="badge bg-success">{{ $medicalRecord->tasks->where('status','completed')->count() }} done</span>
+                            <span class="badge bg-warning text-dark">{{ $medicalRecord->tasks->whereNotIn('status',['completed','cancelled'])->count() }} {{ __('admissions.pending_label') }}</span>
+                            <span class="badge bg-success">{{ $medicalRecord->tasks->where('status','completed')->count() }} {{ __('admissions.done_label') }}</span>
                         </div>
                     </div>
                     <div class="card-body p-0">
@@ -639,7 +639,7 @@
                         <div class="table-responsive">
                             <table class="table table-hover mb-0">
                                 <thead class="bg-light">
-                                    <tr><th style="width:3rem"></th><th>Task</th><th style="width:8rem">Priority</th><th style="width:12rem">Assigned To</th><th style="width:8rem">Due</th><th style="width:8rem">Status</th><th style="width:9rem">Completed</th></tr>
+                                    <tr><th style="width:3rem"></th><th>{{ __('admissions.task_col') }}</th><th style="width:8rem">{{ __('admissions.priority_col') }}</th><th style="width:12rem">{{ __('admissions.assigned_to_col') }}</th><th style="width:8rem">{{ __('admissions.due_col') }}</th><th style="width:8rem">{{ __('admissions.status_col') }}</th><th style="width:9rem">{{ __('admissions.completed_col') }}</th></tr>
                                 </thead>
                                 <tbody>
                                     @foreach($medicalRecord->tasks->sortBy('status') as $task)
@@ -648,7 +648,7 @@
                                         <td class="text-center">
                                             <form method="POST" action="{{ route('admin.consultations.tasks.toggle', $task) }}">
                                                 @csrf @method('PATCH')
-                                                <button type="submit" class="btn btn-sm {{ $isDone ? 'btn-success' : 'btn-outline-success' }} p-1" title="{{ $isDone ? 'Mark as pending' : 'Mark as done' }}">
+                                                <button type="submit" class="btn btn-sm {{ $isDone ? 'btn-success' : 'btn-outline-success' }} p-1" title="{{ $isDone ? __('admissions.mark_pending_title') : __('admissions.mark_done_title') }}">
                                                     <i class="ti ti-check fs-13"></i>
                                                 </button>
                                             </form>
@@ -675,7 +675,7 @@
                             </table>
                         </div>
                         @else
-                        <div class="text-center py-4 text-muted"><i class="ti ti-clipboard-off fs-1 d-block mb-2"></i>No tasks assigned.</div>
+                        <div class="text-center py-4 text-muted"><i class="ti ti-clipboard-off fs-1 d-block mb-2"></i>{{ __('admissions.no_tasks') }}</div>
                         @endif
                     </div>
                 </div>
@@ -686,15 +686,15 @@
             <div class="tab-pane fade" id="tab-billing" role="tabpanel">
                 @if($admission->status->value === 'admitted')
                 <div class="card mb-3">
-                    <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-plus me-1"></i>Add Service Charge</h5></div>
+                    <div class="card-header"><h5 class="card-title mb-0"><i class="ti ti-plus me-1"></i>{{ __('admissions.add_service_charge') }}</h5></div>
                     <div class="card-body">
                         <form method="POST" action="{{ route('admin.admissions.services.store', $admission) }}">
                             @csrf
                             <div class="row g-2 align-items-end">
                                 <div class="col-md-6">
-                                    <label class="form-label">Service <span class="text-danger">*</span></label>
+                                    <label class="form-label">{{ __('admissions.service_field') }} <span class="text-danger">*</span></label>
                                     <select name="service_catalog_id" class="form-select form-select-sm select2" required>
-                                        <option value="">— Select service —</option>
+                                        <option value="">{{ __('admissions.select_service') }}</option>
                                         @foreach($services as $svc)
                                         <option value="{{ $svc->id }}" {{ old('service_catalog_id')==$svc->id?'selected':'' }}>
                                             {{ $svc->name }}@if($svc->base_price) (GH&#8373; {{ number_format($svc->base_price,2) }})@endif
@@ -703,12 +703,12 @@
                                     </select>
                                 </div>
                                 <div class="col-md-2">
-                                    <label class="form-label">Qty</label>
+                                    <label class="form-label">{{ __('admissions.qty_field') }}</label>
                                     <input type="number" name="quantity" class="form-control form-control-sm" value="{{ old('quantity',1) }}" min="1" max="99">
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label">Notes</label>
-                                    <input type="text" name="notes" class="form-control form-control-sm" placeholder="Optional" value="{{ old('notes') }}">
+                                    <label class="form-label">{{ __('admissions.notes_optional_field') }}</label>
+                                    <input type="text" name="notes" class="form-control form-control-sm" placeholder="{{ __('admissions.optional_ph') }}" value="{{ old('notes') }}">
                                 </div>
                                 <div class="col-md-1 text-end">
                                     <button aria-label="Add" title="Add" type="submit" class="btn btn-primary btn-sm w-100"><i class="ti ti-plus"></i></button>
@@ -731,7 +731,7 @@
                 @if($invoiceItems->count() > 0)
                 <div class="card mb-3">
                     <div class="card-header d-flex align-items-center justify-content-between">
-                        <h5 class="card-title mb-0"><i class="ti ti-bed me-1"></i>Admission Charges
+                        <h5 class="card-title mb-0"><i class="ti ti-bed me-1"></i>{{ __('admissions.admission_charges') }}
                             @if($invoice)<a href="{{ route('admin.billing.invoices.show', $invoice) }}" class="btn btn-outline-primary btn-xs ms-2 fs-11"><i class="ti ti-file-invoice me-1"></i>{{ $invoice->invoice_number }}</a>@endif
                         </h5>
                         <span class="fw-bold text-primary">GH&#8373; {{ number_format($invoiceItems->sum('total_price'),2) }}</span>
@@ -739,7 +739,7 @@
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-sm table-hover mb-0">
-                                <thead class="bg-light"><tr><th>Description</th><th class="text-center">Qty</th><th class="text-end">Unit Price</th><th class="text-end">Total</th><th class="text-end">Insurance</th><th class="text-end">Patient Pays</th></tr></thead>
+                                <thead class="bg-light"><tr><th>{{ __('admissions.description_col') }}</th><th class="text-center">{{ __('admissions.qty_col') }}</th><th class="text-end">{{ __('admissions.unit_price_col') }}</th><th class="text-end">{{ __('admissions.total_col') }}</th><th class="text-end">{{ __('admissions.insurance_col') }}</th><th class="text-end">{{ __('admissions.patient_pays_col') }}</th></tr></thead>
                                 <tbody>
                                     @foreach($invoiceItems as $item)
                                     <tr>
@@ -761,14 +761,14 @@
                 {{-- Additional Service Charges --}}
                 <div class="card">
                     <div class="card-header d-flex align-items-center justify-content-between">
-                        <h5 class="card-title mb-0"><i class="ti ti-receipt me-1"></i>Additional Service Charges ({{ $svcItems->count() }})</h5>
+                        <h5 class="card-title mb-0"><i class="ti ti-receipt me-1"></i>{{ __('admissions.additional_service_charges') }} ({{ $svcItems->count() }})</h5>
                         <span class="fw-bold text-success">GH&#8373; {{ number_format($svcItems->sum('total_price'),2) }}</span>
                     </div>
                     <div class="card-body p-0">
                         @if($svcItems->count() > 0)
                         <div class="table-responsive">
                             <table class="table table-sm table-hover mb-0">
-                                <thead class="bg-light"><tr><th>Service</th><th class="text-center">Qty</th><th class="text-end">Unit Price</th><th class="text-end">Total</th><th class="text-end">Insurance</th><th class="text-end">Patient Pays</th></tr></thead>
+                                <thead class="bg-light"><tr><th>{{ __('admissions.service_col') }}</th><th class="text-center">{{ __('admissions.qty_col') }}</th><th class="text-end">{{ __('admissions.unit_price_col') }}</th><th class="text-end">{{ __('admissions.total_col') }}</th><th class="text-end">{{ __('admissions.insurance_col') }}</th><th class="text-end">{{ __('admissions.patient_pays_col') }}</th></tr></thead>
                                 <tbody>
                                     @foreach($svcItems as $svc)
                                     <tr>
@@ -782,12 +782,12 @@
                                     @endforeach
                                 </tbody>
                                 <tfoot class="bg-light fw-bold">
-                                    <tr><td colspan="3" class="text-end">Subtotal:</td><td class="text-end">GH&#8373; {{ number_format($svcItems->sum('total_price'),2) }}</td><td class="text-end text-info">GH&#8373; {{ number_format($svcItems->sum('insurance_covered'),2) }}</td><td class="text-end text-success">GH&#8373; {{ number_format($svcItems->sum('patient_payable'),2) }}</td></tr>
+                                    <tr><td colspan="3" class="text-end">{{ __('admissions.subtotal_label') }}:</td><td class="text-end">GH&#8373; {{ number_format($svcItems->sum('total_price'),2) }}</td><td class="text-end text-info">GH&#8373; {{ number_format($svcItems->sum('insurance_covered'),2) }}</td><td class="text-end text-success">GH&#8373; {{ number_format($svcItems->sum('patient_payable'),2) }}</td></tr>
                                 </tfoot>
                             </table>
                         </div>
                         @else
-                        <div class="text-center py-3 text-muted"><i class="ti ti-receipt-off fs-1 d-block mb-2"></i>No additional service charges.</div>
+                        <div class="text-center py-3 text-muted"><i class="ti ti-receipt-off fs-1 d-block mb-2"></i>{{ __('admissions.no_additional_charges') }}</div>
                         @endif
                     </div>
                 </div>

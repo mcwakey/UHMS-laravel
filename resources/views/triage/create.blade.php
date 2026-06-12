@@ -1,15 +1,15 @@
 @extends('layouts.app')
-@section('title', 'Triage — ' . $visit->patient->full_name)
+@section('title', __('triage.assessment') . ' — ' . $visit->patient->full_name)
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"><i class="ti ti-stethoscope me-2 text-info"></i>Triage Assessment</h4>
+        <h4 class="fw-bold mb-0"><i class="ti ti-stethoscope me-2 text-info"></i>{{ __('triage.assessment') }}</h4>
         <small class="text-muted">{{ $visit->patient->full_name }} &bull; {{ $visit->visit_number }}</small>
     </div>
     <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary btn-sm">
-        <i class="ti ti-arrow-left me-1"></i>Back to Visit
+        <i class="ti ti-arrow-left me-1"></i>{{ __('triage.back_to_visit') }}
     </a>
 </div>
 
@@ -31,21 +31,21 @@
             <!-- Vitals Card -->
             <div class="card mb-3">
                 <div class="card-header">
-                    <h6 class="fw-bold mb-0"><i class="ti ti-heart-rate-monitor me-1"></i>Vital Signs</h6>
+                    <h6 class="fw-bold mb-0"><i class="ti ti-heart-rate-monitor me-1"></i>{{ __('triage.vital_signs') }}</h6>
                 </div>
                 <div class="card-body">
                     <!-- Blood Pressure -->
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label">Blood Pressure (mmHg)</label>
+                            <label class="form-label">{{ __('triage.blood_pressure_mmhg') }}</label>
                             <div class="input-group">
                                 <input type="number" name="blood_pressure_systolic" class="form-control @error('blood_pressure_systolic') is-invalid @enderror"
-                                       placeholder="Systolic" min="40" max="300"
+                                       placeholder="{{ __('triage.systolic_placeholder') }}" min="40" max="300"
                                        value="{{ old('blood_pressure_systolic', $visit->triage?->blood_pressure_systolic) }}"
                                        id="inp_sbp">
                                 <span class="input-group-text">/</span>
                                 <input type="number" name="blood_pressure_diastolic" class="form-control @error('blood_pressure_diastolic') is-invalid @enderror"
-                                       placeholder="Diastolic" min="20" max="200"
+                                       placeholder="{{ __('triage.diastolic_placeholder') }}" min="20" max="200"
                                        value="{{ old('blood_pressure_diastolic', $visit->triage?->blood_pressure_diastolic) }}"
                                        id="inp_dbp">
                                 <span class="input-group-text">mmHg</span>
@@ -53,7 +53,7 @@
                             @error('blood_pressure_systolic')<div class="text-danger small">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Heart Rate (Pulse)</label>
+                            <label class="form-label">{{ __('triage.heart_rate_pulse') }}</label>
                             <div class="input-group">
                                 <input type="number" name="heart_rate" class="form-control @error('heart_rate') is-invalid @enderror"
                                        placeholder="bpm" min="20" max="300"
@@ -67,7 +67,7 @@
 
                     <div class="row mb-3">
                         <div class="col-md-4">
-                            <label class="form-label">Temperature</label>
+                            <label class="form-label">{{ __('triage.temperature') }}</label>
                             <div class="input-group">
                                 <input type="number" name="temperature" class="form-control @error('temperature') is-invalid @enderror"
                                        placeholder="e.g. 37.0" min="30" max="45" step="0.1"
@@ -78,7 +78,7 @@
                             @error('temperature')<div class="text-danger small">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Respiratory Rate</label>
+                            <label class="form-label">{{ __('triage.respiratory_rate') }}</label>
                             <div class="input-group">
                                 <input type="number" name="respiratory_rate" class="form-control @error('respiratory_rate') is-invalid @enderror"
                                        placeholder="breaths/min" min="4" max="60"
@@ -89,7 +89,7 @@
                             @error('respiratory_rate')<div class="text-danger small">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">SpO₂ (Oxygen Sat.)</label>
+                            <label class="form-label">{{ __('triage.spo2_label') }}</label>
                             <div class="input-group">
                                 <input type="number" name="spo2" class="form-control @error('spo2') is-invalid @enderror"
                                        placeholder="%" min="50" max="100"
@@ -103,7 +103,7 @@
 
                     <div class="row mb-3">
                         <div class="col-md-4">
-                            <label class="form-label">Weight <span class="text-muted">(optional)</span></label>
+                            <label class="form-label">{{ __('triage.weight') }} <span class="text-muted">({{ __('common.optional') }})</span></label>
                             <div class="input-group">
                                 <input type="number" name="weight" class="form-control"
                                        placeholder="kg" min="0.5" max="500" step="0.1"
@@ -113,7 +113,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Height <span class="text-muted">(optional)</span></label>
+                            <label class="form-label">{{ __('triage.height') }} <span class="text-muted">({{ __('common.optional') }})</span></label>
                             <div class="input-group">
                                 <input type="number" name="height" class="form-control"
                                        placeholder="cm" min="20" max="250" step="0.1"
@@ -123,7 +123,7 @@
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">BMI <span class="text-muted">(auto)</span></label>
+                            <label class="form-label">{{ __('triage.bmi') }} <span class="text-muted">({{ __('triage.bmi_auto_hint') }})</span></label>
                             <div class="input-group">
                                 <input type="text" id="bmi_display" class="form-control" readonly placeholder="—">
                                 <span class="input-group-text">kg/m²</span>
@@ -133,7 +133,7 @@
 
                     <!-- Live Triage Score Preview -->
                     <div id="triageScorePreview" class="alert alert-secondary d-none">
-                        <strong>Estimated Triage Score:</strong>
+                        <strong>{{ __('triage.estimated_score') }}</strong>
                         <span id="triageScoreLabel" class="badge ms-2"></span>
                         <span id="triageScoreReason" class="text-muted ms-2 small"></span>
                     </div>
@@ -143,14 +143,14 @@
             <!-- Outcome Card -->
             <div class="card mb-3">
                 <div class="card-header">
-                    <h6 class="fw-bold mb-0"><i class="ti ti-arrows-transfer-up me-1"></i>Triage Action</h6>
+                    <h6 class="fw-bold mb-0"><i class="ti ti-arrows-transfer-up me-1"></i>{{ __('triage.triage_action') }}</h6>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label class="form-label">Assign to Consultation Route <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('triage.assign_route') }} <span class="text-danger">*</span></label>
                         @if($pendingRoutes->isEmpty())
                             <div class="alert alert-warning py-2 mb-2 small">
-                                No pending consultation routes for this visit. Triage will be recorded without assigning a destination.
+                                {{ __('triage.no_pending_routes') }}
                             </div>
                         @else
                             @php $selectedRouteId = old('consultation_route_id', $pendingRoutes->first()?->id); @endphp
@@ -174,30 +174,30 @@
                                         <div>
                                             <div class="fw-semibold">{{ $route->department?->name ?? '—' }}</div>
                                             <div class="text-muted small">
-                                                <i class="ti ti-stethoscope me-1"></i>{{ $serviceNames->implode(', ') ?: 'Consultation services pending' }}
+                                                <i class="ti ti-stethoscope me-1"></i>{{ $serviceNames->implode(', ') ?: __('triage.consultation_services_pending') }}
                                             </div>
                                         </div>
                                     </label>
                                 @endforeach
                             </div>
                             @error('consultation_route_id')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
-                            <div class="form-text">The selected route will be activated and queued for consultation as soon as triage is completed.</div>
+                            <div class="form-text">{{ __('triage.route_activated_note') }}</div>
                         @endif
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Notes</label>
+                        <label class="form-label">{{ __('common.notes') }}</label>
                         <textarea name="notes" class="form-control" rows="3"
-                                  placeholder="Additional clinical notes...">{{ old('notes', $visit->triage?->notes) }}</textarea>
+                                  placeholder="{{ __('triage.notes_placeholder') }}">{{ old('notes', $visit->triage?->notes) }}</textarea>
                     </div>
                 </div>
             </div>
 
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary px-4" id="triageSubmitBtn">
-                    <i class="ti ti-stethoscope me-1"></i><span id="triageSubmitLabel">Complete Triage</span>
+                    <i class="ti ti-stethoscope me-1"></i><span id="triageSubmitLabel">{{ __('triage.complete_triage') }}</span>
                 </button>
-                <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary">Cancel</a>
+                <a href="{{ route('admin.visits.show', $visit) }}" class="btn btn-outline-secondary">{{ __('common.cancel') }}</a>
             </div>
         </form>
     </div>
@@ -206,7 +206,7 @@
     <div class="col-lg-4">
         <div class="card mb-3">
             <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-user me-1"></i>Patient</h6>
+                <h6 class="fw-bold mb-0"><i class="ti ti-user me-1"></i>{{ __('triage.patient_card') }}</h6>
             </div>
             <div class="card-body">
                 <div class="d-flex align-items-center gap-3 mb-3">
@@ -220,19 +220,19 @@
                 </div>
                 <div class="row g-2 text-sm">
                     <div class="col-6">
-                        <div class="text-muted small">Age</div>
+                        <div class="text-muted small">{{ __('common.age') }}</div>
                         <div>{{ $visit->patient->age ?? '—' }} yrs</div>
                     </div>
                     <div class="col-6">
-                        <div class="text-muted small">Gender</div>
+                        <div class="text-muted small">{{ __('common.gender') }}</div>
                         <div>{{ $visit->patient->gender?->label() ?? '—' }}</div>
                     </div>
                     <div class="col-6">
-                        <div class="text-muted small">Blood Group</div>
+                        <div class="text-muted small">{{ __('common.blood_group') }}</div>
                         <div>{{ $visit->patient->blood_group?->label() ?? '—' }}</div>
                     </div>
                     <div class="col-6">
-                        <div class="text-muted small">Priority</div>
+                        <div class="text-muted small">{{ __('triage.priority') }}</div>
                         <div><x-status-badge :status="$visit->priority" /></div>
                     </div>
                 </div>
@@ -241,7 +241,7 @@
 
         <div class="card mb-3">
             <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>Chief Complaint</h6>
+                <h6 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>{{ __('triage.chief_complaint') }}</h6>
             </div>
             <div class="card-body">
                 <p class="mb-0">{{ $visit->chief_complaint ?? '—' }}</p>
@@ -251,33 +251,33 @@
         <!-- Triage Score Guide -->
         <div class="card">
             <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-info-circle me-1"></i>Score Guide</h6>
+                <h6 class="fw-bold mb-0"><i class="ti ti-info-circle me-1"></i>{{ __('triage.score_guide') }}</h6>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive"><table class="table table-sm mb-0 small">
                     <thead class="table-light">
                         <tr>
-                            <th>Score</th>
-                            <th>SpO₂</th>
-                            <th>Temp</th>
-                            <th>HR</th>
+                            <th>{{ __('common.status') }}</th>
+                            <th>{{ __('triage.spo2') }}</th>
+                            <th>{{ __('triage.temperature') }}</th>
+                            <th>{{ __('triage.heart_rate') }}</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td><span class="badge bg-success">Routine</span></td>
+                            <td><span class="badge bg-success">{{ __('triage.score_routine') }}</span></td>
                             <td>≥95%</td>
                             <td>36–38.5°C</td>
                             <td>50–110</td>
                         </tr>
                         <tr>
-                            <td><span class="badge bg-warning text-dark">Urgent</span></td>
+                            <td><span class="badge bg-warning text-dark">{{ __('triage.urgent') }}</span></td>
                             <td>92–94%</td>
                             <td>36–38.5°C</td>
                             <td>50–110</td>
                         </tr>
                         <tr>
-                            <td><span class="badge bg-danger">Emergency</span></td>
+                            <td><span class="badge bg-danger">{{ __('triage.emergency') }}</span></td>
                             <td>&lt;92%</td>
                             <td>&lt;35 / &gt;39.5°C</td>
                             <td>&lt;40 / &gt;130</td>
@@ -294,6 +294,22 @@
 <script>
 (function () {
     'use strict';
+
+    // Blade-rendered translatable strings used in JS
+    const i18n = {
+        completeTriage:         @json(__('triage.complete_triage')),
+        saving:                 @json(__('triage.saving')),
+        completed:              @json(__('triage.triage_completed_label')),
+        correctFields:          @json(__('common.something_went_wrong')),
+        completedSuccessfully:  @json(__('triage.js_completed_successfully')),
+        triageScoreLabel:       @json(__('triage.js_triage_score_label')),
+        departmentLabel:        @json(__('triage.js_department_label')),
+        viewVisit:              @json(__('triage.js_view_visit')),
+        openConsultationQueue:  @json(__('triage.js_open_consultation_queue')),
+        openVisit:              @json(__('triage.js_open_visit')),
+        failedToComplete:       @json(__('triage.js_failed_to_complete')),
+        networkError:           @json(__('triage.js_network_error')),
+    };
 
     const triageForm = document.getElementById('triageForm');
     const triageSubmitBtn = document.getElementById('triageSubmitBtn');
@@ -416,12 +432,12 @@
             return;
         }
 
-        showFormFeedback('danger', 'Please correct the highlighted fields and try again.');
+        showFormFeedback('danger', i18n.correctFields);
     }
 
     function setSubmitting(isSubmitting) {
         triageSubmitBtn.disabled = isSubmitting;
-        triageSubmitLabel.textContent = isSubmitting ? 'Saving...' : 'Complete Triage';
+        triageSubmitLabel.textContent = isSubmitting ? i18n.saving : i18n.completeTriage;
     }
 
     function lockFormAfterSuccess() {
@@ -429,7 +445,7 @@
             element.disabled = true;
         });
 
-        triageSubmitLabel.textContent = 'Completed';
+        triageSubmitLabel.textContent = i18n.completed;
     }
 
     function escapeHtml(text) {
@@ -512,15 +528,15 @@
                     'success',
                     '<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">'
                         + '<div>'
-                        + '<div class="fw-bold">' + escapeHtml(payload.message || 'Triage completed successfully.') + '</div>'
+                        + '<div class="fw-bold">' + escapeHtml(payload.message || i18n.completedSuccessfully) + '</div>'
                         + '<div class="small text-muted">'
-                        + 'Triage score: ' + escapeHtml(payload.triage_score_label || 'Captured')
-                        + (payload.department ? ' | Department: ' + escapeHtml(payload.department) : '')
+                        + i18n.triageScoreLabel + ' ' + escapeHtml(payload.triage_score_label || '')
+                        + (payload.department ? ' | ' + i18n.departmentLabel + ' ' + escapeHtml(payload.department) : '')
                         + '</div>'
                         + '</div>'
                         + '<div class="d-flex gap-2">'
-                        + '<a href="' + escapeHtml(payload.redirect_url || '#') + '" class="btn btn-sm btn-success">View Visit</a>'
-                        + '<a href="' + escapeHtml(payload.queue_url || '#') + '" class="btn btn-sm btn-outline-success">Open Consultation Queue</a>'
+                        + '<a href="' + escapeHtml(payload.redirect_url || '#') + '" class="btn btn-sm btn-success">' + i18n.viewVisit + '</a>'
+                        + '<a href="' + escapeHtml(payload.queue_url || '#') + '" class="btn btn-sm btn-outline-success">' + i18n.openConsultationQueue + '</a>'
                         + '</div>'
                         + '</div>'
                 );
@@ -532,13 +548,13 @@
                 return;
             }
 
-            const message = payload.message || 'Failed to complete triage. Please try again.';
+            const message = payload.message || i18n.failedToComplete;
             const link = payload.redirect_url
-                ? ' <a href="' + escapeHtml(payload.redirect_url) + '" class="alert-link">Open visit</a>'
+                ? ' <a href="' + escapeHtml(payload.redirect_url) + '" class="alert-link">' + i18n.openVisit + '</a>'
                 : '';
             showFormFeedback('danger', escapeHtml(message) + link);
         } catch (error) {
-            showFormFeedback('danger', 'Network error while completing triage. Please try again.');
+            showFormFeedback('danger', i18n.networkError);
         } finally {
             if (!triageSubmitBtn.disabled) {
                 setSubmitting(false);

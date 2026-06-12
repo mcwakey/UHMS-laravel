@@ -1,10 +1,10 @@
 @extends('layouts.app')
-@section('title', 'New Stock Requisition')
+@section('title', __('stock.new_dept_requisition'))
 
 @section('content')
 <div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom">
-    <h4 class="fw-bold mb-0">New Department Stock Requisition</h4>
-    <a href="{{ route('admin.store.stock-requisitions.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>Back</a>
+    <h4 class="fw-bold mb-0">{{ __('stock.new_dept_requisition') }}</h4>
+    <a href="{{ route('admin.store.stock-requisitions.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>{{ __('stock.back') }}</a>
 </div>
 
 @if($errors->any())
@@ -23,29 +23,29 @@
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-6">
-                <label class="form-label">Requesting Department <span class="text-danger">*</span></label>
+                <label class="form-label">{{ __('stock.requesting_department') }} <span class="text-danger">*</span></label>
                 <select name="department_id" class="form-select select2" required>
-                    <option value="">Select department</option>
+                    <option value="">{{ __('stock.select_department') }}</option>
                     @foreach($departments as $department)
                         <option value="{{ $department->id }}" @selected((string) old('department_id', $defaultDepartmentId) === (string) $department->id)>{{ $department->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-6">
-                <label class="form-label">Notes</label>
+                <label class="form-label">{{ __('stock.notes') }}</label>
                 <input type="text" name="notes" class="form-control" maxlength="1000" value="{{ old('notes') }}">
             </div>
         </div>
 
         <hr>
-        <h6 class="mb-2">Requested Products <span class="text-danger">*</span></h6>
+        <h6 class="mb-2">{{ __('stock.requested_products') }} <span class="text-danger">*</span></h6>
         <div class="table-responsive mb-3">
             <table class="table table-bordered align-middle" id="itemsTable">
                 <thead class="table-light">
                     <tr>
-                        <th style="min-width: 320px;">Product</th>
-                        <th style="width: 160px;">Qty Requested</th>
-                        <th>Line Notes</th>
+                        <th style="min-width: 320px;">{{ __('stock.product') }}</th>
+                        <th style="width: 160px;">{{ __('stock.qty_requested') }}</th>
+                        <th>{{ __('stock.line_notes') }}</th>
                         <th style="width: 50px;"></th>
                     </tr>
                 </thead>
@@ -53,7 +53,7 @@
                     <tr class="item-row">
                         <td>
                             <select name="items[0][product_id]" class="form-select form-select-sm product-select">
-                                <option value="">Select product</option>
+                                <option value="">{{ __('stock.select_product') }}</option>
                                 @foreach($products as $product)
                                     <option value="{{ $product->id }}">
                                         {{ $product->name }}
@@ -72,12 +72,12 @@
         </div>
 
         <button type="button" class="btn btn-outline-primary btn-sm" id="addItemBtn">
-            <i class="ti ti-plus me-1"></i>Add Item
+            <i class="ti ti-plus me-1"></i>{{ __('stock.add_item') }}
         </button>
     </div>
     <div class="card-footer d-flex justify-content-end gap-2">
-        <a href="{{ route('admin.store.stock-requisitions.index') }}" class="btn btn-outline-secondary">Cancel</a>
-        <button class="btn btn-primary">Submit Requisition</button>
+        <a href="{{ route('admin.store.stock-requisitions.index') }}" class="btn btn-outline-secondary">{{ __('stock.cancel') }}</a>
+        <button class="btn btn-primary">{{ __('stock.submit_requisition') }}</button>
     </div>
 </form>
 @endsection
@@ -92,7 +92,7 @@ $(document).ready(function () {
 
     function initProductSelect($select) {
         if ($.fn.select2 && !$select.data('select2')) {
-            $select.select2({ width: '100%', placeholder: 'Select product', allowClear: false });
+            $select.select2({ width: '100%', placeholder: '{{ __('stock.select_product') }}', allowClear: false });
         }
     }
 

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Stock Requisition')
+@section('title', __('stock.stock_requisition'))
 
 @section('content')
 <div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom">
@@ -8,7 +8,7 @@
         <div class="text-muted small">{{ $stockRequisition->department?->name }} - {{ $stockRequisition->requested_at?->format('d M Y H:i') }}</div>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ route('admin.store.stock-requisitions.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>Back</a>
+        <a href="{{ route('admin.store.stock-requisitions.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>{{ __('stock.back') }}</a>
         @if(in_array($stockRequisition->status, [\App\Enums\StockRequisitionStatus::SUBMITTED, \App\Enums\StockRequisitionStatus::APPROVED, \App\Enums\StockRequisitionStatus::PARTIALLY_APPROVED], true))
             <x-confirm-form :action="route('admin.store.stock-requisitions.cancel', $stockRequisition)" method="POST" button-label="Cancel" button-class="btn btn-outline-danger btn-sm" icon="ti-x" confirm-title="Cancel this requisition?" confirm-text="The requisition will be cancelled." confirm-button="Yes, cancel" />
         @endif
@@ -25,19 +25,19 @@
 @if($errors->any())<div class="alert alert-danger">{{ $errors->first() }}</div>@endif
 
 <div class="row g-3 mb-3">
-    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">Status</small><x-status-badge :status="$stockRequisition->status" /></div></div></div>
-    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">Requested By</small><strong>{{ $stockRequisition->requestedByUser?->name ?: '-' }}</strong></div></div></div>
-    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">Approved By</small><strong>{{ $stockRequisition->approvedByUser?->name ?: '-' }}</strong></div></div></div>
-    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">Issued By</small><strong>{{ $stockRequisition->issuedByUser?->name ?: '-' }}</strong></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.status') }}</small><x-status-badge :status="$stockRequisition->status" /></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.requested_by') }}</small><strong>{{ $stockRequisition->requestedByUser?->name ?: '-' }}</strong></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.approved_by') }}</small><strong>{{ $stockRequisition->approvedByUser?->name ?: '-' }}</strong></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.issued_by') }}</small><strong>{{ $stockRequisition->issuedByUser?->name ?: '-' }}</strong></div></div></div>
 </div>
 
 @if($stockRequisition->status === \App\Enums\StockRequisitionStatus::SUBMITTED)
 <form method="POST" action="{{ route('admin.store.stock-requisitions.approve', $stockRequisition) }}" class="card mb-3">
     @csrf
-    <div class="card-header"><h6 class="mb-0">Approve Requested Quantities</h6></div>
+    <div class="card-header"><h6 class="mb-0">{{ __('stock.approve_quantities') }}</h6></div>
     <div class="table-responsive">
         <table class="table table-sm align-middle mb-0">
-            <thead class="table-light"><tr><th>Product</th><th class="text-end">Requested</th><th style="width: 180px;">Approved</th></tr></thead>
+            <thead class="table-light"><tr><th>{{ __('stock.product') }}</th><th class="text-end">{{ __('stock.requested_col') }}</th><th style="width: 180px;">{{ __('stock.approved_col') }}</th></tr></thead>
             <tbody>
             @foreach($stockRequisition->items as $item)
                 <tr>
@@ -49,16 +49,16 @@
             </tbody>
         </table>
     </div>
-    <div class="card-footer d-flex justify-content-end"><button class="btn btn-primary">Approve</button></div>
+    <div class="card-footer d-flex justify-content-end"><button class="btn btn-primary">{{ __('stock.approve') }}</button></div>
 </form>
 @endif
 
 <div class="card">
-    <div class="card-header"><h6 class="mb-0">Items</h6></div>
+    <div class="card-header"><h6 class="mb-0">{{ __('stock.requisition_items') }}</h6></div>
     <div class="table-responsive">
         <table class="table table-hover mb-0">
             <thead class="table-light">
-                <tr><th>Product</th><th class="text-end">Requested</th><th class="text-end">Approved</th><th class="text-end">Issued</th><th class="text-end">Acknowledged</th><th>Notes</th></tr>
+                <tr><th>{{ __('stock.product') }}</th><th class="text-end">{{ __('stock.requested_col') }}</th><th class="text-end">{{ __('stock.approved_col') }}</th><th class="text-end">{{ __('stock.issued_col') }}</th><th class="text-end">{{ __('stock.acknowledged_col') }}</th><th>{{ __('stock.notes') }}</th></tr>
             </thead>
             <tbody>
             @foreach($stockRequisition->items as $item)
@@ -77,6 +77,6 @@
 </div>
 
 @if($stockRequisition->notes)
-<div class="card mt-3"><div class="card-body"><small class="text-muted d-block">Notes</small>{{ $stockRequisition->notes }}</div></div>
+<div class="card mt-3"><div class="card-body"><small class="text-muted d-block">{{ __('stock.notes') }}</small>{{ $stockRequisition->notes }}</div></div>
 @endif
 @endsection

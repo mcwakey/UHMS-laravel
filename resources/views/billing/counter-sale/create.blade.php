@@ -1,12 +1,12 @@
 @extends('layouts.app')
-@section('title', 'Counter Sale')
+@section('title', __('invoices.counter_sale'))
 
 @php $genders = ['Male', 'Female', 'Other']; @endphp
 
 @section('content')
-<x-page-header title="Counter Sale" description="Walk-in cash sale — pharmacy and investigations are billed separately." icon="ti-cash-register">
+<x-page-header title="{{ __('invoices.counter_sale') }}" description="{{ __('invoices.counter_sale_description') }}" icon="ti-cash-register">
     <x-slot:actions>
-        <a href="{{ route('admin.billing.invoices.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>Invoices</a>
+        <a href="{{ route('admin.billing.invoices.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>{{ __('invoices.title') }}</a>
     </x-slot:actions>
 </x-page-header>
 
@@ -15,9 +15,9 @@
 @endif
 
 <ul class="nav nav-tabs mb-3" id="counterSaleTabs" role="tablist">
-    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabPharmacy" type="button"><i class="ti ti-pill me-1"></i>Pharmacy Sale</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabInvestigation" type="button"><i class="ti ti-microscope me-1"></i>Investigation Sale</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabProcedure" type="button"><i class="ti ti-stethoscope me-1"></i>Procedure Sale</button></li>
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabPharmacy" type="button"><i class="ti ti-pill me-1"></i>{{ __('invoices.pharmacy_sale_tab') }}</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabInvestigation" type="button"><i class="ti ti-microscope me-1"></i>{{ __('invoices.investigation_sale_tab') }}</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabProcedure" type="button"><i class="ti ti-stethoscope me-1"></i>{{ __('invoices.procedure_sale_tab') }}</button></li>
 </ul>
 
 <div class="tab-content">
@@ -28,26 +28,26 @@
             <div class="row g-3">
                 <div class="col-lg-8">
                     <div class="card mb-3">
-                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-user me-1"></i>Walk-in Recipient</h6></div>
+                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-user me-1"></i>{{ __('invoices.walk_in_recipient') }}</h6></div>
                         <div class="card-body">
                             <div class="row g-3">
-                                <div class="col-md-5"><label class="form-label">Name <span class="text-danger">*</span></label><input name="external_party_name" class="form-control" required></div>
-                                <div class="col-md-3"><label class="form-label">Gender</label><select name="external_party_sex" class="form-select"><option value="">—</option>@foreach($genders as $g)<option value="{{ $g }}">{{ $g }}</option>@endforeach</select></div>
-                                <div class="col-md-2"><label class="form-label">Age</label><input type="number" name="external_party_age" min="0" max="150" class="form-control"></div>
-                                <div class="col-md-2"><label class="form-label">Contact</label><input name="external_party_contact" class="form-control"></div>
+                                <div class="col-md-5"><label class="form-label">{{ __('common.name') }} <span class="text-danger">*</span></label><input name="external_party_name" class="form-control" required></div>
+                                <div class="col-md-3"><label class="form-label">{{ __('common.gender') }}</label><select name="external_party_sex" class="form-select"><option value="">—</option>@foreach($genders as $g)<option value="{{ $g }}">{{ $g }}</option>@endforeach</select></div>
+                                <div class="col-md-2"><label class="form-label">{{ __('common.age') }}</label><input type="number" name="external_party_age" min="0" max="150" class="form-control"></div>
+                                <div class="col-md-2"><label class="form-label">{{ __('invoices.contact_label') }}</label><input name="external_party_contact" class="form-control"></div>
                             </div>
                         </div>
                     </div>
 
                     <div class="card mb-3">
                         <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                            <h6 class="card-title mb-0"><i class="ti ti-pill me-1"></i>Drugs <span class="text-muted small">(decrements pharmacy stock)</span></h6>
-                            <button type="button" class="btn btn-sm btn-outline-primary" data-add-row data-tpl="drugRowTpl" data-body="drugRows"><i class="ti ti-plus me-1"></i>Add Drug</button>
+                            <h6 class="card-title mb-0"><i class="ti ti-pill me-1"></i>{{ __('invoices.drugs_section') }} <span class="text-muted small">({{ __('invoices.drugs_stock_note') }})</span></h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-add-row data-tpl="drugRowTpl" data-body="drugRows"><i class="ti ti-plus me-1"></i>{{ __('invoices.add_drug_btn') }}</button>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="table align-middle mb-0">
-                                    <thead class="bg-light"><tr><th>Drug</th><th style="width:110px">Qty</th><th style="width:120px" class="text-end">Price</th><th style="width:130px" class="text-end">Line</th><th style="width:40px"></th></tr></thead>
+                                    <thead class="bg-light"><tr><th>{{ __('common.drug') }}</th><th style="width:110px">{{ __('common.qty') }}</th><th style="width:120px" class="text-end">{{ __('invoices.price') }}</th><th style="width:130px" class="text-end">{{ __('invoices.total_col') }}</th><th style="width:40px"></th></tr></thead>
                                     <tbody id="drugRows"></tbody>
                                 </table>
                             </div>
@@ -56,11 +56,11 @@
                 </div>
                 <div class="col-lg-4">
                     <div class="card position-sticky" style="top:1rem">
-                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-receipt me-1"></i>Pharmacy Sale</h6></div>
+                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-receipt me-1"></i>{{ __('invoices.pharmacy_sale_tab') }}</h6></div>
                         <div class="card-body">
-                            <div class="d-flex justify-content-between mb-3"><span class="fw-semibold">Total</span><span class="fw-bold fs-5" data-total="drugRows">₵0.00</span></div>
-                            <button type="submit" class="btn btn-primary w-100"><i class="ti ti-device-floppy me-1"></i>Create Pharmacy Sale</button>
-                            <p class="small text-muted mt-2 mb-0">Raises a cash invoice for the drugs only and decrements pharmacy stock on save.</p>
+                            <div class="d-flex justify-content-between mb-3"><span class="fw-semibold">{{ __('invoices.total') }}</span><span class="fw-bold fs-5" data-total="drugRows">₵0.00</span></div>
+                            <button type="submit" class="btn btn-primary w-100"><i class="ti ti-device-floppy me-1"></i>{{ __('invoices.create_pharmacy_sale_btn') }}</button>
+                            <p class="small text-muted mt-2 mb-0">{{ __('invoices.pharmacy_sale_note') }}</p>
                         </div>
                     </div>
                 </div>
@@ -75,26 +75,26 @@
             <div class="row g-3">
                 <div class="col-lg-8">
                     <div class="card mb-3">
-                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-user me-1"></i>Walk-in Recipient</h6></div>
+                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-user me-1"></i>{{ __('invoices.walk_in_recipient') }}</h6></div>
                         <div class="card-body">
                             <div class="row g-3">
-                                <div class="col-md-5"><label class="form-label">Name <span class="text-danger">*</span></label><input name="external_party_name" class="form-control" required></div>
-                                <div class="col-md-3"><label class="form-label">Gender</label><select name="external_party_sex" class="form-select"><option value="">—</option>@foreach($genders as $g)<option value="{{ $g }}">{{ $g }}</option>@endforeach</select></div>
-                                <div class="col-md-2"><label class="form-label">Age</label><input type="number" name="external_party_age" min="0" max="150" class="form-control"></div>
-                                <div class="col-md-2"><label class="form-label">Contact</label><input name="external_party_contact" class="form-control"></div>
+                                <div class="col-md-5"><label class="form-label">{{ __('common.name') }} <span class="text-danger">*</span></label><input name="external_party_name" class="form-control" required></div>
+                                <div class="col-md-3"><label class="form-label">{{ __('common.gender') }}</label><select name="external_party_sex" class="form-select"><option value="">—</option>@foreach($genders as $g)<option value="{{ $g }}">{{ $g }}</option>@endforeach</select></div>
+                                <div class="col-md-2"><label class="form-label">{{ __('common.age') }}</label><input type="number" name="external_party_age" min="0" max="150" class="form-control"></div>
+                                <div class="col-md-2"><label class="form-label">{{ __('invoices.contact_label') }}</label><input name="external_party_contact" class="form-control"></div>
                             </div>
                         </div>
                     </div>
 
                     <div class="card mb-3">
                         <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                            <h6 class="card-title mb-0"><i class="ti ti-microscope me-1"></i>Investigations <span class="text-muted small">(raises a lab request)</span></h6>
-                            <button type="button" class="btn btn-sm btn-outline-primary" data-add-row data-tpl="serviceRowTpl" data-body="serviceRows"><i class="ti ti-plus me-1"></i>Add Investigation</button>
+                            <h6 class="card-title mb-0"><i class="ti ti-microscope me-1"></i>{{ __('invoices.investigations_section') }} <span class="text-muted small">({{ __('invoices.investigations_lab_note') }})</span></h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-add-row data-tpl="serviceRowTpl" data-body="serviceRows"><i class="ti ti-plus me-1"></i>{{ __('invoices.add_investigation_btn') }}</button>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="table align-middle mb-0">
-                                    <thead class="bg-light"><tr><th>Investigation</th><th style="width:110px">Qty</th><th style="width:120px" class="text-end">Price</th><th style="width:130px" class="text-end">Line</th><th style="width:40px"></th></tr></thead>
+                                    <thead class="bg-light"><tr><th>{{ __('invoices.investigation_col') }}</th><th style="width:110px">{{ __('common.qty') }}</th><th style="width:120px" class="text-end">{{ __('invoices.price') }}</th><th style="width:130px" class="text-end">{{ __('invoices.total_col') }}</th><th style="width:40px"></th></tr></thead>
                                     <tbody id="serviceRows"></tbody>
                                 </table>
                             </div>
@@ -103,11 +103,11 @@
                 </div>
                 <div class="col-lg-4">
                     <div class="card position-sticky" style="top:1rem">
-                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-receipt me-1"></i>Investigation Sale</h6></div>
+                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-receipt me-1"></i>{{ __('invoices.investigation_sale_tab') }}</h6></div>
                         <div class="card-body">
-                            <div class="d-flex justify-content-between mb-3"><span class="fw-semibold">Total</span><span class="fw-bold fs-5" data-total="serviceRows">₵0.00</span></div>
-                            <button type="submit" class="btn btn-primary w-100"><i class="ti ti-device-floppy me-1"></i>Create Investigation Sale</button>
-                            <p class="small text-muted mt-2 mb-0">Raises a cash invoice for the investigations only and a visit-less lab request. Results can be entered after payment.</p>
+                            <div class="d-flex justify-content-between mb-3"><span class="fw-semibold">{{ __('invoices.total') }}</span><span class="fw-bold fs-5" data-total="serviceRows">₵0.00</span></div>
+                            <button type="submit" class="btn btn-primary w-100"><i class="ti ti-device-floppy me-1"></i>{{ __('invoices.create_investigation_sale_btn') }}</button>
+                            <p class="small text-muted mt-2 mb-0">{{ __('invoices.investigation_sale_note') }}</p>
                         </div>
                     </div>
                 </div>
@@ -122,26 +122,26 @@
             <div class="row g-3">
                 <div class="col-lg-8">
                     <div class="card mb-3">
-                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-user me-1"></i>Walk-in Recipient</h6></div>
+                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-user me-1"></i>{{ __('invoices.walk_in_recipient') }}</h6></div>
                         <div class="card-body">
                             <div class="row g-3">
-                                <div class="col-md-5"><label class="form-label">Name <span class="text-danger">*</span></label><input name="external_party_name" class="form-control" required></div>
-                                <div class="col-md-3"><label class="form-label">Gender</label><select name="external_party_sex" class="form-select"><option value="">—</option>@foreach($genders as $g)<option value="{{ $g }}">{{ $g }}</option>@endforeach</select></div>
-                                <div class="col-md-2"><label class="form-label">Age</label><input type="number" name="external_party_age" min="0" max="150" class="form-control"></div>
-                                <div class="col-md-2"><label class="form-label">Contact</label><input name="external_party_contact" class="form-control"></div>
+                                <div class="col-md-5"><label class="form-label">{{ __('common.name') }} <span class="text-danger">*</span></label><input name="external_party_name" class="form-control" required></div>
+                                <div class="col-md-3"><label class="form-label">{{ __('common.gender') }}</label><select name="external_party_sex" class="form-select"><option value="">—</option>@foreach($genders as $g)<option value="{{ $g }}">{{ $g }}</option>@endforeach</select></div>
+                                <div class="col-md-2"><label class="form-label">{{ __('common.age') }}</label><input type="number" name="external_party_age" min="0" max="150" class="form-control"></div>
+                                <div class="col-md-2"><label class="form-label">{{ __('invoices.contact_label') }}</label><input name="external_party_contact" class="form-control"></div>
                             </div>
                         </div>
                     </div>
 
                     <div class="card mb-3">
                         <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                            <h6 class="card-title mb-0"><i class="ti ti-stethoscope me-1"></i>Procedures</h6>
-                            <button type="button" class="btn btn-sm btn-outline-primary" data-add-row data-tpl="procedureRowTpl" data-body="procedureRows"><i class="ti ti-plus me-1"></i>Add Procedure</button>
+                            <h6 class="card-title mb-0"><i class="ti ti-stethoscope me-1"></i>{{ __('invoices.procedures_section') }}</h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary" data-add-row data-tpl="procedureRowTpl" data-body="procedureRows"><i class="ti ti-plus me-1"></i>{{ __('invoices.add_procedure_btn') }}</button>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="table align-middle mb-0">
-                                    <thead class="bg-light"><tr><th>Procedure</th><th style="width:110px">Qty</th><th style="width:120px" class="text-end">Price</th><th style="width:130px" class="text-end">Line</th><th style="width:40px"></th></tr></thead>
+                                    <thead class="bg-light"><tr><th>{{ __('invoices.procedure_col') }}</th><th style="width:110px">{{ __('common.qty') }}</th><th style="width:120px" class="text-end">{{ __('invoices.price') }}</th><th style="width:130px" class="text-end">{{ __('invoices.total_col') }}</th><th style="width:40px"></th></tr></thead>
                                     <tbody id="procedureRows"></tbody>
                                 </table>
                             </div>
@@ -150,11 +150,11 @@
                 </div>
                 <div class="col-lg-4">
                     <div class="card position-sticky" style="top:1rem">
-                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-receipt me-1"></i>Procedure Sale</h6></div>
+                        <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-receipt me-1"></i>{{ __('invoices.procedure_sale_tab') }}</h6></div>
                         <div class="card-body">
-                            <div class="d-flex justify-content-between mb-3"><span class="fw-semibold">Total</span><span class="fw-bold fs-5" data-total="procedureRows">₵0.00</span></div>
-                            <button type="submit" class="btn btn-primary w-100"><i class="ti ti-device-floppy me-1"></i>Create Procedure Sale</button>
-                            <p class="small text-muted mt-2 mb-0">Raises a cash invoice for the procedure charges only.</p>
+                            <div class="d-flex justify-content-between mb-3"><span class="fw-semibold">{{ __('invoices.total') }}</span><span class="fw-bold fs-5" data-total="procedureRows">₵0.00</span></div>
+                            <button type="submit" class="btn btn-primary w-100"><i class="ti ti-device-floppy me-1"></i>{{ __('invoices.create_procedure_sale_btn') }}</button>
+                            <p class="small text-muted mt-2 mb-0">{{ __('invoices.procedure_sale_note') }}</p>
                         </div>
                     </div>
                 </div>

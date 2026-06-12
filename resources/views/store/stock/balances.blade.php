@@ -1,18 +1,18 @@
 @extends('layouts.app')
-@section('title', 'Product Stock Balances')
+@section('title', __('stock.product_stock_balances'))
 
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Product Stock Balances</h4>
-        <small class="text-muted">Unified on-hand inventory across the hospital. One ledger, one truth — read from <code>stock_balances</code>.</small>
+        <h4 class="fw-bold mb-0">{{ __('stock.product_stock_balances') }}</h4>
+        <small class="text-muted">{{ __('stock.balances_description') }}</small>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ route('admin.store.stock.ledger') }}" class="btn btn-outline-primary"><i class="ti ti-list me-1"></i>View Ledger</a>
+        <a href="{{ route('admin.store.stock.ledger') }}" class="btn btn-outline-primary"><i class="ti ti-list me-1"></i>{{ __('stock.view_ledger') }}</a>
         @can('store.purchase.create')
-        <a href="{{ route('admin.store.stock.adjustments.create') }}" class="btn btn-warning"><i class="ti ti-adjustments me-1"></i>Adjust Stock</a>
-        <a href="{{ route('admin.store.stock.returns.create') }}" class="btn btn-info text-white"><i class="ti ti-rotate me-1"></i>Record Return</a>
-        <a href="{{ route('admin.store.stock.locations.index') }}" class="btn btn-outline-secondary"><i class="ti ti-building me-1"></i>Locations</a>
+        <a href="{{ route('admin.store.stock.adjustments.create') }}" class="btn btn-warning"><i class="ti ti-adjustments me-1"></i>{{ __('stock.adjust_stock') }}</a>
+        <a href="{{ route('admin.store.stock.returns.create') }}" class="btn btn-info text-white"><i class="ti ti-rotate me-1"></i>{{ __('stock.record_return') }}</a>
+        <a href="{{ route('admin.store.stock.locations.index') }}" class="btn btn-outline-secondary"><i class="ti ti-building me-1"></i>{{ __('stock.locations') }}</a>
         @endcan
     </div>
 </div>
@@ -24,18 +24,18 @@
     <div class="card-body">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-md-3">
-                <label class="form-label">Location</label>
+                <label class="form-label">{{ __('stock.location') }}</label>
                 <select name="location_id" class="form-select">
-                    <option value="">All Locations</option>
+                    <option value="">{{ __('stock.all_locations') }}</option>
                     @foreach($allLocations as $loc)
                     <option value="{{ $loc->id }}" {{ request('location_id') == $loc->id ? 'selected' : '' }}>{{ $loc->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Product Type</label>
+                <label class="form-label">{{ __('stock.product_type') }}</label>
                 <select name="product_type" class="form-select">
-                    <option value="">All Types</option>
+                    <option value="">{{ __('stock.all_types') }}</option>
                     @foreach($productTypes as $pt)
                     <option value="{{ $pt->value }}" {{ request('product_type') === $pt->value ? 'selected' : '' }}>
                         {{ ucfirst(str_replace('_', ' ', strtolower($pt->value))) }}
@@ -44,12 +44,12 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Search</label>
-                <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Name or code…">
+                <label class="form-label">{{ __('stock.search') }}</label>
+                <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="{{ __('stock.search_name_code') }}">
             </div>
             <div class="col-md-3 text-end">
-                <button type="submit" class="btn btn-primary"><i class="ti ti-filter me-1"></i>Filter</button>
-                <a href="{{ route('admin.store.stock.balances') }}" class="btn btn-light">Reset</a>
+                <button type="submit" class="btn btn-primary"><i class="ti ti-filter me-1"></i>{{ __('stock.filter') }}</button>
+                <a href="{{ route('admin.store.stock.balances') }}" class="btn btn-light">{{ __('stock.reset') }}</a>
             </div>
         </form>
     </div>
@@ -61,15 +61,15 @@
             <table class="table table-bordered table-sm align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Product</th>
-                        <th>Code</th>
-                        <th>Type</th>
-                        <th>Unit</th>
+                        <th>{{ __('stock.product') }}</th>
+                        <th>{{ __('stock.code') }}</th>
+                        <th>{{ __('stock.type') }}</th>
+                        <th>{{ __('stock.unit') }}</th>
                         @foreach($locations as $location)
                             <th class="text-end text-nowrap">{{ $location->name }}</th>
                         @endforeach
-                        <th class="text-end">Total</th>
-                        <th>Status</th>
+                        <th class="text-end">{{ __('stock.total') }}</th>
+                        <th>{{ __('stock.status') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -98,7 +98,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="{{ 6 + $locations->count() }}" class="text-center text-muted py-4">No products found for the current filters.</td></tr>
+                    <tr><td colspan="{{ 6 + $locations->count() }}" class="text-center text-muted py-4">{{ __('stock.no_products_found') }}</td></tr>
                     @endforelse
                 </tbody>
             </table>

@@ -154,6 +154,8 @@ return [
     'gender_age' => 'Sexe / Âge',
     'visit_no' => 'N° de visite',
     'visit_date' => 'Date de visite',
+    'blood_group' => 'Groupe sanguin',
+    'system' => 'Système',
 
     // Auth pages
     'sign_in' => 'Connexion',

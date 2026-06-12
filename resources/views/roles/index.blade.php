@@ -1,15 +1,15 @@
 @extends('layouts.app')
-@section('title', 'Roles & Permissions')
+@section('title', __('roles.title'))
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Roles & Permissions</h4>
+        <h4 class="fw-bold mb-0">{{ __('roles.title') }}</h4>
     </div>
     <div>
         <button class="btn btn-primary btn-md fs-13" data-bs-toggle="modal" data-bs-target="#addRoleModal">
-            <i class="ti ti-plus me-1"></i>Add Role
+            <i class="ti ti-plus me-1"></i>{{ __('roles.add_role') }}
         </button>
     </div>
 </div>
@@ -24,30 +24,30 @@
                     <h5 class="card-title mb-0">{{ $role->name }}</h5>
                     <div class="dropdown">
                         @if(!in_array($role->name, ['Super Admin', 'Admin']))
-                        <button aria-label="Actions" title="Actions" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
+                        <button aria-label="{{ __('common.actions') }}" title="{{ __('common.actions') }}" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
                             <i class="ti ti-dots-vertical"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li>
                                 <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editRoleModal-{{ $role->id }}">
-                                    <i class="ti ti-edit me-1"></i>Edit Name
+                                    <i class="ti ti-edit me-1"></i>{{ __('roles.edit_name') }}
                                 </button>
                             </li>
                             <li>
                                 <x-confirm-form :action="route('admin.roles.destroy', $role)" method="DELETE"
-                                    button-label="Delete" button-class="dropdown-item text-danger" icon="ti-trash"
-                                    confirm-title="Delete this role?" confirm-text="Users assigned this role will lose its permissions. This cannot be undone." confirm-button="Yes, delete" />
+                                    button-label="{{ __('roles.delete_role') }}" button-class="dropdown-item text-danger" icon="ti-trash"
+                                    confirm-title="{{ __('roles.delete_role') }}?" confirm-text="{{ __('roles.cannot_delete') }}" confirm-button="{{ __('common.yes') }}, {{ strtolower(__('common.delete')) }}" />
                             </li>
                         </ul>
                         @endif
                     </div>
                 </div>
                 <div class="d-flex align-items-center gap-3 mb-3">
-                    <span class="badge bg-soft-primary"><i class="ti ti-shield-lock me-1"></i>{{ $role->permissions_count }} permissions</span>
-                    <span class="badge bg-soft-info"><i class="ti ti-users me-1"></i>{{ $role->users_count }} users</span>
+                    <span class="badge bg-soft-primary"><i class="ti ti-shield-lock me-1"></i>{{ $role->permissions_count }} {{ __('roles.permissions') }}</span>
+                    <span class="badge bg-soft-info"><i class="ti ti-users me-1"></i>{{ $role->users_count }} {{ __('roles.users_count') }}</span>
                 </div>
                 <a href="{{ route('admin.roles.permissions', $role) }}" class="btn btn-outline-primary btn-sm w-100">
-                    <i class="ti ti-settings me-1"></i>Manage Permissions
+                    <i class="ti ti-settings me-1"></i>{{ __('roles.manage_permissions') }}
                 </a>
             </div>
         </div>
@@ -60,18 +60,18 @@
                 <form method="POST" action="{{ route('admin.roles.update', $role) }}">
                     @csrf @method('PUT')
                     <div class="modal-header">
-                        <h5 class="modal-title">Edit Role</h5>
+                        <h5 class="modal-title">{{ __('roles.edit_role') }}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label class="form-label">Role Name <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('roles.role_name') }} <span class="text-danger">*</span></label>
                             <input type="text" name="name" class="form-control" value="{{ $role->name }}" required>
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update Role</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                        <button type="submit" class="btn btn-primary">{{ __('roles.update_role') }}</button>
                     </div>
                 </form>
             </div>
@@ -87,18 +87,18 @@
             <form method="POST" action="{{ route('admin.roles.store') }}">
                 @csrf
                 <div class="modal-header">
-                    <h5 class="modal-title">Add New Role</h5>
+                    <h5 class="modal-title">{{ __('roles.add_new_role') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Role Name <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('roles.role_name') }} <span class="text-danger">*</span></label>
                         <input type="text" name="name" class="form-control" placeholder="e.g. Lab Technician" required>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create Role</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('roles.create_role') }}</button>
                 </div>
             </form>
         </div>

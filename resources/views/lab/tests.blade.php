@@ -5,14 +5,14 @@
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"><i class="ti ti-flask me-2"></i>Lab Test Catalog</h4>
+        <h4 class="fw-bold mb-0"><i class="ti ti-flask me-2"></i>{{ __('lab.test_catalog_title') }}</h4>
     </div>
     <div class="d-flex gap-2">
         <button class="btn btn-outline-primary btn-md" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
-            <i class="ti ti-folder-plus me-1"></i>Add Category
+            <i class="ti ti-folder-plus me-1"></i>{{ __('lab.add_category') }}
         </button>
         <button class="btn btn-primary btn-md" data-bs-toggle="modal" data-bs-target="#addTestModal">
-            <i class="ti ti-plus me-1"></i>Add Test
+            <i class="ti ti-plus me-1"></i>{{ __('lab.add_test') }}
         </button>
     </div>
 </div>
@@ -22,7 +22,7 @@
     <div class="col-md-4">
         <div class="card">
             <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-folders me-1"></i>Categories</h6>
+                <h6 class="fw-bold mb-0"><i class="ti ti-folders me-1"></i>{{ __('lab.categories_heading') }}</h6>
             </div>
             <div class="card-body p-0">
                 <div class="list-group list-group-flush">
@@ -32,7 +32,7 @@
                             <span class="fw-medium">{{ $cat->name }}</span>
                             <span class="badge bg-soft-primary ms-1">{{ $cat->tests_count }}</span>
                             @if(!$cat->is_active)
-                                <span class="badge bg-danger ms-1">Inactive</span>
+                                <span class="badge bg-danger ms-1">{{ __('lab.inactive_badge') }}</span>
                             @endif
                             @if($cat->description)
                                 <br><small class="text-muted">{{ Str::limit($cat->description, 50) }}</small>
@@ -45,14 +45,14 @@
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
                                     <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editCategoryModal-{{ $cat->id }}">
-                                        <i class="ti ti-edit me-1"></i>Edit
+                                        <i class="ti ti-edit me-1"></i>{{ __('lab.edit_action') }}
                                     </button>
                                 </li>
                                 <li>
-                                    <form method="POST" action="{{ route('admin.lab.categories.destroy', $cat) }}" onsubmit="return confirm('Delete this category?')">
+                                    <form method="POST" action="{{ route('admin.lab.categories.destroy', $cat) }}" onsubmit="return confirm('{{ __('lab.delete_confirm') }}')">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="dropdown-item text-danger">
-                                            <i class="ti ti-trash me-1"></i>Delete
+                                            <i class="ti ti-trash me-1"></i>{{ __('lab.delete_action') }}
                                         </button>
                                     </form>
                                 </li>
@@ -67,39 +67,39 @@
                                 <form method="POST" action="{{ route('admin.lab.categories.update', $cat) }}">
                                     @csrf @method('PUT')
                                     <div class="modal-header">
-                                        <h5 class="modal-title">Edit Category</h5>
+                                        <h5 class="modal-title">{{ __('lab.edit_category_title') }}</h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <div class="modal-body">
                                         <div class="mb-3">
-                                            <label class="form-label">Name <span class="text-danger">*</span></label>
+                                            <label class="form-label">{{ __('lab.name_label') }} <span class="text-danger">*</span></label>
                                             <input type="text" name="name" class="form-control" value="{{ $cat->name }}" required>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Investigation Department</label>
+                                            <label class="form-label">{{ __('lab.inv_department_label') }}</label>
                                             <select name="department_id" class="form-select">
-                                                <option value="">— Unlinked —</option>
+                                                <option value="">{{ __('lab.unlinked_option') }}</option>
                                                 @foreach($investigationDepartments as $dept)
                                                     <option value="{{ $dept->id }}" {{ $cat->department_id == $dept->id ? 'selected' : '' }}>
                                                         {{ $dept->name }} ({{ $dept->result_type?->label() ?? '—' }})
                                                     </option>
                                                 @endforeach
                                             </select>
-                                            <div class="form-text">Linking to a department drives whether tests use criteria or a rich-text template.</div>
+                                            <div class="form-text">{{ __('lab.department_help') }}</div>
                                         </div>
                                         <div class="mb-3">
-                                            <label class="form-label">Description</label>
+                                            <label class="form-label">{{ __('lab.description_label') }}</label>
                                             <textarea name="description" class="form-control" rows="3">{{ $cat->description }}</textarea>
                                         </div>
                                         <div class="form-check">
                                             <input type="hidden" name="is_active" value="0">
                                             <input type="checkbox" name="is_active" value="1" class="form-check-input" id="catActive-{{ $cat->id }}" {{ $cat->is_active ? 'checked' : '' }}>
-                                            <label class="form-check-label" for="catActive-{{ $cat->id }}">Active</label>
+                                            <label class="form-check-label" for="catActive-{{ $cat->id }}">{{ __('lab.active_label') }}</label>
                                         </div>
                                     </div>
                                     <div class="modal-footer">
-                                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                        <button type="submit" class="btn btn-primary">Update</button>
+                                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('lab.cancel_button') }}</button>
+                                        <button type="submit" class="btn btn-primary">{{ __('lab.update_button') }}</button>
                                     </div>
                                 </form>
                             </div>
@@ -107,7 +107,7 @@
                     </div>
                     @empty
                     <div class="list-group-item text-center text-muted py-4">
-                        No categories yet. Create one to get started.
+                        {{ __('lab.no_categories') }}
                     </div>
                     @endforelse
                 </div>
@@ -120,11 +120,11 @@
         <div class="card">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold mb-0"><i class="ti ti-flask me-1"></i>Lab Tests</h6>
+                    <h6 class="fw-bold mb-0"><i class="ti ti-flask me-1"></i>{{ __('lab.lab_tests_heading') }}</h6>
                     <form method="GET" class="d-flex gap-2">
-                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Search tests..." value="{{ request('search') }}" style="width: 150px;">
+                        <input type="text" name="search" class="form-control form-control-sm" placeholder="{{ __('lab.search_label') }}..." value="{{ request('search') }}" style="width: 150px;">
                         <select name="category_id" class="form-select form-select-sm" style="width: 150px;" onchange="this.form.submit()">
-                            <option value="">All Categories</option>
+                            <option value="">{{ __('lab.all_categories') }}</option>
                             @foreach($categories as $cat)
                                 <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                             @endforeach
@@ -137,13 +137,13 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Code</th>
-                                <th>Name</th>
-                                <th>Category</th>
-                                <th>Criteria</th>
-                                <th>Price</th>
-                                <th>Status</th>
-                                <th class="text-end">Actions</th>
+                                <th>{{ __('lab.code_col') }}</th>
+                                <th>{{ __('lab.name_label') }}</th>
+                                <th>{{ __('lab.category_label') }}</th>
+                                <th>{{ __('lab.criteria_col') }}</th>
+                                <th>{{ __('lab.price_col_label') }}</th>
+                                <th>{{ __('lab.status_col_label') }}</th>
+                                <th class="text-end">{{ __('lab.actions_col') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -167,7 +167,7 @@
                                 <td>{{ $test->price ? 'GH₵ ' . number_format($test->price, 2) : '-' }}</td>
                                 <td>
                                     <span class="badge bg-{{ $test->is_active ? 'success' : 'danger' }}">
-                                        {{ $test->is_active ? 'Active' : 'Inactive' }}
+                                        {{ $test->is_active ? __('lab.active_status') : __('lab.inactive_status') }}
                                     </span>
                                 </td>
                                 <td class="text-end">
@@ -178,7 +178,7 @@
                                         <ul class="dropdown-menu dropdown-menu-end">
                                             <li>
                                                 <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#editTestModal-{{ $test->id }}">
-                                                    <i class="ti ti-edit me-1"></i>Edit
+                                                    <i class="ti ti-edit me-1"></i>{{ __('lab.edit_action') }}
                                                 </button>
                                             </li>
                                             <li>
@@ -186,7 +186,7 @@
                                                     @csrf @method('PATCH')
                                                     <button type="submit" class="dropdown-item">
                                                         <i class="ti ti-{{ $test->is_active ? 'eye-off' : 'eye' }} me-1"></i>
-                                                        {{ $test->is_active ? 'Deactivate' : 'Activate' }}
+                                                        {{ $test->is_active ? __('lab.deactivate_action') : __('lab.activate_action') }}
                                                     </button>
                                                 </form>
                                             </li>
@@ -202,12 +202,12 @@
                                         <form method="POST" action="{{ route('admin.lab.tests.update', $test) }}">
                                             @csrf @method('PUT')
                                             <div class="modal-header">
-                                                <h5 class="modal-title">Edit Lab Test</h5>
+                                                <h5 class="modal-title">{{ __('lab.edit_test_title') }}</h5>
                                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                             </div>
                                             <div class="modal-body">
                                                 <div class="mb-3">
-                                                    <label class="form-label">Category <span class="text-danger">*</span></label>
+                                                    <label class="form-label">{{ __('lab.category_label') }} <span class="text-danger">*</span></label>
                                                     <select name="category_id" class="form-select test-category-select" required>
                                                         @foreach($categories as $cat)
                                                             <option value="{{ $cat->id }}" data-result-type="{{ $cat->department?->result_type?->value ?? 'parameters' }}" {{ $test->category_id == $cat->id ? 'selected' : '' }}>{{ $cat->name }}{{ $cat->department ? ' — ' . $cat->department->name : '' }}</option>
@@ -216,16 +216,16 @@
                                                 </div>
                                                 <div class="row g-2">
                                                     <div class="col-md-8">
-                                                        <label class="form-label">Name <span class="text-danger">*</span></label>
+                                                        <label class="form-label">{{ __('lab.name_label') }} <span class="text-danger">*</span></label>
                                                         <input type="text" name="name" class="form-control" value="{{ $test->name }}" required>
                                                     </div>
                                                     <div class="col-md-4">
-                                                        <label class="form-label">Code <span class="text-danger">*</span></label>
+                                                        <label class="form-label">{{ __('lab.code_col') }} <span class="text-danger">*</span></label>
                                                         <input type="text" name="code" class="form-control" value="{{ $test->code }}" required>
                                                     </div>
                                                 </div>
                                                 <div class="mt-3 result-type-block result-type-parameters">
-                                                    <label class="form-label fw-medium">Criteria <small class="text-muted">(parameters)</small></label>
+                                                    <label class="form-label fw-medium">{{ __('lab.criteria_label') }} <small class="text-muted">(parameters)</small></label>
                                                     <div class="criteria-container" data-next-index="{{ max(1, $test->criteria->count()) }}">
                                                         @forelse($test->criteria as $criterionIndex => $criterion)
                                                         <div class="criteria-row row g-2 mb-2">
@@ -260,27 +260,27 @@
                                                         @endforelse
                                                     </div>
                                                     <button type="button" class="btn btn-sm btn-outline-primary add-criterion-row">
-                                                        <i class="ti ti-plus me-1"></i>Add Criterion
+                                                        <i class="ti ti-plus me-1"></i>{{ __('lab.add_criterion') }}
                                                     </button>
                                                 </div>
                                                 <div class="mt-3 result-type-block result-type-richtext d-none">
-                                                    <label class="form-label fw-medium">Description Template <small class="text-muted">(rich text)</small></label>
+                                                    <label class="form-label fw-medium">{{ __('lab.desc_template_label') }} <small class="text-muted">(rich text)</small></label>
                                                     <textarea name="description_template" class="form-control" rows="6" placeholder="Default report skeleton: findings, impressions, conclusions...">{{ $test->description_template }}</textarea>
                                                     <div class="form-text">Pre-filled into the result form for richtext-type investigation departments.</div>
                                                 </div>
                                                 <div class="mt-3">
-                                                    <label class="form-label">Price (GH₵)</label>
+                                                    <label class="form-label">{{ __('lab.price_label_ghc') }}</label>
                                                     <input type="number" name="price" class="form-control" value="{{ $test->price }}" step="0.01" min="0">
                                                 </div>
                                                 <div class="form-check mt-3">
                                                     <input type="hidden" name="is_active" value="0">
                                                     <input type="checkbox" name="is_active" value="1" class="form-check-input" id="testActive-{{ $test->id }}" {{ $test->is_active ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="testActive-{{ $test->id }}">Active</label>
+                                                    <label class="form-check-label" for="testActive-{{ $test->id }}">{{ __('lab.active_label') }}</label>
                                                 </div>
                                             </div>
                                             <div class="modal-footer">
-                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-primary">Update</button>
+                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('lab.cancel_button') }}</button>
+                                                <button type="submit" class="btn btn-primary">{{ __('lab.update_button') }}</button>
                                             </div>
                                         </form>
                                     </div>
@@ -290,7 +290,7 @@
                             <tr>
                                 <td colspan="7" class="text-center text-muted py-4">
                                     <i class="ti ti-flask fs-1 d-block mb-2"></i>
-                                    No lab tests found. Create a category first, then add tests.
+                                    {{ __('lab.no_tests_found') }}
                                 </td>
                             </tr>
                             @endforelse
@@ -314,32 +314,32 @@
             <form method="POST" action="{{ route('admin.lab.categories.store') }}">
                 @csrf
                 <div class="modal-header">
-                    <h5 class="modal-title">Add Category</h5>
+                    <h5 class="modal-title">{{ __('lab.add_category') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Name <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('lab.name_label') }} <span class="text-danger">*</span></label>
                         <input type="text" name="name" class="form-control" placeholder="e.g. Haematology" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Investigation Department</label>
+                        <label class="form-label">{{ __('lab.inv_department_label') }}</label>
                         <select name="department_id" class="form-select">
-                            <option value="">— Unlinked —</option>
+                            <option value="">{{ __('lab.unlinked_option') }}</option>
                             @foreach($investigationDepartments as $dept)
                                 <option value="{{ $dept->id }}">{{ $dept->name }} ({{ $dept->result_type?->label() ?? '—' }})</option>
                             @endforeach
                         </select>
-                        <div class="form-text">Linking to a department drives whether tests use criteria or a rich-text template.</div>
+                        <div class="form-text">{{ __('lab.department_help') }}</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Description</label>
+                        <label class="form-label">{{ __('lab.description_label') }}</label>
                         <textarea name="description" class="form-control" rows="3" placeholder="Brief description..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create Category</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('lab.cancel_button') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('lab.create_category_btn') }}</button>
                 </div>
             </form>
         </div>
@@ -353,14 +353,14 @@
             <form method="POST" action="{{ route('admin.lab.tests.store') }}">
                 @csrf
                 <div class="modal-header">
-                    <h5 class="modal-title">Add Lab Test</h5>
+                    <h5 class="modal-title">{{ __('lab.add_test_title') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Category <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('lab.category_label') }} <span class="text-danger">*</span></label>
                         <select name="category_id" class="form-select test-category-select" required>
-                            <option value="">-- Select Category --</option>
+                            <option value="">{{ __('lab.select_category_opt') }}</option>
                             @foreach($categories as $cat)
                                 <option value="{{ $cat->id }}" data-result-type="{{ $cat->department?->result_type?->value ?? 'parameters' }}">{{ $cat->name }}{{ $cat->department ? ' — ' . $cat->department->name : '' }}</option>
                             @endforeach
@@ -368,16 +368,16 @@
                     </div>
                     <div class="row g-2">
                         <div class="col-md-8">
-                            <label class="form-label">Name <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('lab.name_label') }} <span class="text-danger">*</span></label>
                             <input type="text" name="name" class="form-control" placeholder="e.g. Full Blood Count" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Code <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('lab.code_col') }} <span class="text-danger">*</span></label>
                             <input type="text" name="code" class="form-control" placeholder="e.g. FBC" required>
                         </div>
                     </div>
                     <div class="mt-3 result-type-block result-type-parameters">
-                        <label class="form-label fw-medium">Criteria <small class="text-muted">(parameters)</small></label>
+                        <label class="form-label fw-medium">{{ __('lab.criteria_label') }} <small class="text-muted">(parameters)</small></label>
                         <div class="criteria-container" data-next-index="1">
                             <div class="criteria-row row g-2 mb-2">
                                 <div class="col-md-4">
@@ -395,22 +395,22 @@
                             </div>
                         </div>
                         <button type="button" class="btn btn-sm btn-outline-primary add-criterion-row">
-                            <i class="ti ti-plus me-1"></i>Add Criterion
+                            <i class="ti ti-plus me-1"></i>{{ __('lab.add_criterion') }}
                         </button>
                     </div>
                     <div class="mt-3 result-type-block result-type-richtext d-none">
-                        <label class="form-label fw-medium">Description Template <small class="text-muted">(rich text)</small></label>
+                        <label class="form-label fw-medium">{{ __('lab.desc_template_label') }} <small class="text-muted">(rich text)</small></label>
                         <textarea name="description_template" class="form-control" rows="6" placeholder="Default report skeleton: findings, impressions, conclusions..."></textarea>
                         <div class="form-text">Pre-filled into the result form for richtext-type investigation departments.</div>
                     </div>
                     <div class="mt-3">
-                        <label class="form-label">Price (GH₵)</label>
+                        <label class="form-label">{{ __('lab.price_label_ghc') }}</label>
                         <input type="number" name="price" class="form-control" placeholder="0.00" step="0.01" min="0">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create Test</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('lab.cancel_button') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('lab.create_test_btn') }}</button>
                 </div>
             </form>
         </div>

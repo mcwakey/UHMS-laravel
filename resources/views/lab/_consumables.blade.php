@@ -15,15 +15,15 @@
 
 <details class="mb-3 border rounded p-2">
     <summary class="fw-medium small text-muted text-uppercase">
-        <i class="ti ti-package me-1"></i> Consumables Used (optional, deducts stock from lab location)
+        <i class="ti ti-package me-1"></i> {{ __('lab.consumables_summary') }}
     </summary>
     <div class="mt-2">
         <div class="table-responsive"><table class="table table-sm align-middle mb-1" id="consumablesTable-{{ $item->id }}">
             <thead>
                 <tr>
-                    <th style="width:55%;">Product</th>
-                    <th style="width:20%;">Qty</th>
-                    <th style="width:20%;">Notes</th>
+                    <th style="width:55%;">{{ __('lab.product_col') }}</th>
+                    <th style="width:20%;">{{ __('lab.qty_col') }}</th>
+                    <th style="width:20%;">{{ __('lab.notes_col') }}</th>
                     <th></th>
                 </tr>
             </thead>
@@ -53,6 +53,6 @@
             @endif
             </tbody>
         </table></div>
-        <div class="form-text">Leave blank if no consumables were used for this test.</div>
+        <div class="form-text">{{ __('lab.consumables_blank_hint') }}</div>
     </div>
 </details>

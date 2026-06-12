@@ -1,17 +1,17 @@
 @extends('layouts.app')
-@section('title', 'Stock Transfers')
+@section('title', __('stock.stock_transfers'))
 
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Stock Transfers
-            <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">Total: {{ $batches->total() }}</span>
+        <h4 class="fw-bold mb-0">{{ __('stock.stock_transfers') }}
+            <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">{{ __('stock.total') }}: {{ $batches->total() }}</span>
         </h4>
-        <small class="text-muted">One row per transfer batch (Main Store → managed location). Click a row to reveal its line items.</small>
+        <small class="text-muted">{{ __('stock.transfers_description') }}</small>
     </div>
     <div>
         @can('store.purchase.create')
-        <a href="{{ route('admin.store.stock.transfers.create') }}" class="btn btn-primary btn-md fs-13"><i class="ti ti-plus me-1"></i>New Transfer</a>
+        <a href="{{ route('admin.store.stock.transfers.create') }}" class="btn btn-primary btn-md fs-13"><i class="ti ti-plus me-1"></i>{{ __('stock.new_transfer') }}</a>
         @endcan
     </div>
 </div>
@@ -24,7 +24,7 @@
         <form method="GET" action="{{ route('admin.store.stock.transfers.index') }}" class="row g-2 align-items-end">
             <div class="col-md-4">
                 <select name="location_id" class="form-select">
-                    <option value="">All Locations</option>
+                    <option value="">{{ __('stock.all_locations') }}</option>
                     @foreach($locations as $location)
                         <option value="{{ $location->id }}" @selected((string) request('location_id') === (string) $location->id)>{{ $location->name }}</option>
                     @endforeach
@@ -45,13 +45,13 @@
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>Date</th>
-                    <th>Batch #</th>
-                    <th>From → To</th>
-                    <th class="text-center">Items</th>
-                    <th>Reason</th>
-                    <th>By</th>
-                    <th class="text-end">Actions</th>
+                    <th>{{ __('stock.date') }}</th>
+                    <th>{{ __('stock.batch_number') }}</th>
+                    <th>{{ __('stock.from_to') }}</th>
+                    <th class="text-center">{{ __('stock.items') }}</th>
+                    <th>{{ __('stock.reason') }}</th>
+                    <th>{{ __('stock.by') }}</th>
+                    <th class="text-end">{{ __('stock.actions') ?? 'Actions' }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -66,7 +66,7 @@
                     <td class="text-end"><a aria-label="View" title="View" href="{{ route('admin.store.stock.batches.show', $batch) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
                 </tr>
             @empty
-                <tr><td colspan="7"><x-empty-state icon="ti-transfer" title="No transfers" message="No stock transfer batches match your filters." /></td></tr>
+                <tr><td colspan="7"><x-empty-state icon="ti-transfer" title="{{ __('stock.no_transfers') }}" message="{{ __('stock.no_transfers_message') }}" /></td></tr>
             @endforelse
             </tbody>
         </table>

@@ -1,11 +1,11 @@
 @extends('layouts.app')
-@section('title', 'Payments')
+@section('title', __('payments.title'))
 
 @section('content')
 <!-- Page Header -->
 <div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0"><i class="ti ti-cash me-2"></i>Payments</h4>
+        <h4 class="fw-bold mb-0"><i class="ti ti-cash me-2"></i>{{ __('payments.title') }}</h4>
     </div>
 </div>
 
@@ -27,7 +27,7 @@
                     </div>
                     <div>
                         <h3 class="fw-bold mb-0">&#8373;{{ number_format($totalToday, 2) }}</h3>
-                        <p class="text-muted mb-0">Today's Collections</p>
+                        <p class="text-muted mb-0">{{ __('payments.todays_collections') }}</p>
                     </div>
                 </div>
             </div>
@@ -42,7 +42,7 @@
                     </div>
                     <div>
                         <h3 class="fw-bold mb-0">&#8373;{{ number_format($totalMonth, 2) }}</h3>
-                        <p class="text-muted mb-0">This Month</p>
+                        <p class="text-muted mb-0">{{ __('payments.this_month') }}</p>
                     </div>
                 </div>
             </div>
@@ -57,7 +57,7 @@
                     </div>
                     <div>
                         <h3 class="fw-bold mb-0">{{ $payments->total() }}</h3>
-                        <p class="text-muted mb-0">Total Payments</p>
+                        <p class="text-muted mb-0">{{ __('payments.total_payments') }}</p>
                     </div>
                 </div>
             </div>
@@ -70,13 +70,13 @@
     <div class="card-body py-2">
         <form method="GET" action="{{ route('admin.billing.payments.index') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
-                <label class="form-label small">Search</label>
-                <input type="text" name="search" class="form-control form-control-sm" placeholder="Search payment #, patient..." value="{{ request('search') }}">
+                <label class="form-label small">{{ __('common.search') }}</label>
+                <input type="text" name="search" class="form-control form-control-sm" placeholder="{{ __('payments.search_placeholder') }}" value="{{ request('search') }}">
             </div>
             <div class="col-md-2">
-                <label class="form-label small">Method</label>
+                <label class="form-label small">{{ __('payments.method_col') }}</label>
                 <select name="payment_method" class="form-select form-select-sm">
-                    <option value="">All Methods</option>
+                    <option value="">{{ __('payments.all_methods') }}</option>
                     @foreach($paymentMethods as $method)
                     <option value="{{ $method->value }}" {{ request('payment_method') === $method->value ? 'selected' : '' }}>
                         {{ $method->label() }}
@@ -85,16 +85,16 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label small">From</label>
-                <input type="date" name="date_from" class="form-control form-control-sm" value="{{ request('date_from') }}" placeholder="From">
+                <label class="form-label small">{{ __('common.from') }}</label>
+                <input type="date" name="date_from" class="form-control form-control-sm" value="{{ request('date_from') }}">
             </div>
             <div class="col-md-2">
-                <label class="form-label small">To</label>
-                <input type="date" name="date_to" class="form-control form-control-sm" value="{{ request('date_to') }}" placeholder="To">
+                <label class="form-label small">{{ __('common.to') }}</label>
+                <input type="date" name="date_to" class="form-control form-control-sm" value="{{ request('date_to') }}">
             </div>
             <div class="col-md-3 d-flex gap-1">
-                <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-filter me-1"></i>Filter</button>
-                <a aria-label="Close" title="Close" href="{{ route('admin.billing.payments.index') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-x"></i></a>
+                <button type="submit" class="btn btn-sm btn-primary"><i class="ti ti-filter me-1"></i>{{ __('common.filter') }}</button>
+                <a aria-label="{{ __('common.close') }}" title="{{ __('common.close') }}" href="{{ route('admin.billing.payments.index') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-x"></i></a>
             </div>
         </form>
     </div>
@@ -107,15 +107,15 @@
             <table class="table table-hover table-nowrap mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Payment #</th>
-                        <th>Patient</th>
-                        <th>Invoice</th>
-                        <th>Method</th>
-                        <th>Reference</th>
-                        <th class="text-end">Amount</th>
-                        <th>Received By</th>
-                        <th>Date</th>
-                        <th class="text-center">Actions</th>
+                        <th>{{ __('payments.payment_number_short') }}</th>
+                        <th>{{ __('payments.patient_col') }}</th>
+                        <th>{{ __('payments.invoice_col') }}</th>
+                        <th>{{ __('payments.method_col') }}</th>
+                        <th>{{ __('payments.reference_col') }}</th>
+                        <th class="text-end">{{ __('payments.amount_col') }}</th>
+                        <th>{{ __('payments.received_by_col') }}</th>
+                        <th>{{ __('payments.date_col') }}</th>
+                        <th class="text-center">{{ __('payments.actions_col') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -124,14 +124,14 @@
                         <td class="fw-medium">
                             {{ $payment->payment_number }}
                             @if($payment->is_reversal)
-                                <span class="badge bg-danger ms-1">Reversal</span>
+                                <span class="badge bg-danger ms-1">{{ __('payments.reversal_label') }}</span>
                             @elseif($payment->status === \App\Enums\PaymentStatus::REVERSED)
-                                <span class="badge bg-secondary ms-1">Reversed</span>
+                                <span class="badge bg-secondary ms-1">{{ __('payments.reversed_label') }}</span>
                             @endif
                         </td>
                         <td>
                             <div class="fw-medium">{{ $payment->patient?->full_name ?? $payment->invoice?->external_party_name ?? '—' }}</div>
-                            <small class="text-muted">{{ $payment->patient?->patient_number ?? 'External / referral' }}</small>
+                            <small class="text-muted">{{ $payment->patient?->patient_number ?? __('payments.external_referral') }}</small>
                         </td>
                         <td>
                             <a href="{{ route('admin.billing.invoices.show', $payment->invoice) }}" class="text-primary">
@@ -147,18 +147,18 @@
                         <td>{{ $payment->paid_at->format('d M Y H:i') }}</td>
                         <td class="text-center">
                             <div class="dropdown">
-                                <button aria-label="Actions" title="Actions" type="button" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
+                                <button aria-label="{{ __('common.actions') }}" title="{{ __('common.actions') }}" type="button" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
                                         <a class="dropdown-item" href="{{ route('admin.billing.payments.receipt', $payment) }}" target="_blank">
-                                            <i class="ti ti-eye me-1"></i>View Receipt
+                                            <i class="ti ti-eye me-1"></i>{{ __('payments.view_receipt') }}
                                         </a>
                                     </li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('admin.billing.payments.receipt-pdf', $payment) }}">
-                                            <i class="ti ti-file-type-pdf me-1"></i>Download PDF
+                                            <i class="ti ti-file-type-pdf me-1"></i>{{ __('payments.download_pdf') }}
                                         </a>
                                     </li>
                                     @can('payments.refund')
@@ -169,7 +169,7 @@
                                                 data-bs-toggle="modal" data-bs-target="#reversePaymentModal"
                                                 data-payment-url="{{ route('admin.billing.payments.reverse', $payment) }}"
                                                 data-payment-number="{{ $payment->payment_number }}">
-                                            <i class="ti ti-arrow-back-up me-1"></i>Reverse Payment
+                                            <i class="ti ti-arrow-back-up me-1"></i>{{ __('payments.reverse_payment') }}
                                         </button>
                                     </li>
                                     @endif
@@ -183,7 +183,7 @@
                         <td colspan="9" class="text-center py-4">
                             <div class="text-muted">
                                 <i class="ti ti-cash fs-1 d-block mb-2"></i>
-                                No payments found.
+                                {{ __('payments.no_payments_found') }}
                             </div>
                         </td>
                     </tr>
@@ -207,22 +207,21 @@
             @csrf
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Reverse Payment <span id="reversePaymentNumber"></span></h5>
+                    <h5 class="modal-title">{{ __('payments.reverse_modal_title') }} <span id="reversePaymentNumber"></span></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <p class="text-muted small">
-                        This will create an offsetting reversal entry and restore the invoice balance.
-                        The original payment is retained for audit. This action cannot be undone.
+                        {{ __('payments.reverse_modal_warning') }}
                     </p>
-                    <label class="form-label small">Reason <span class="text-danger">*</span></label>
+                    <label class="form-label small">{{ __('payments.reversal_reason') }} <span class="text-danger">*</span></label>
                     <textarea name="reason" class="form-control" rows="3" required maxlength="500"
-                              placeholder="Reason for reversal"></textarea>
+                              placeholder="{{ __('payments.reversal_reason') }}"></textarea>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
                     <button type="submit" class="btn btn-danger">
-                        <i class="ti ti-arrow-back-up me-1"></i>Reverse Payment
+                        <i class="ti ti-arrow-back-up me-1"></i>{{ __('payments.reverse_payment') }}
                     </button>
                 </div>
             </div>

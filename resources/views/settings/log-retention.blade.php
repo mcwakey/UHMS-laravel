@@ -4,10 +4,10 @@
 @section('content')
 <div class="d-flex align-items-center justify-content-between mb-3">
     <div>
-        <h4 class="fw-bold mb-0">Log Retention</h4>
-        <small class="text-muted">Default retention: <strong>{{ $default }}</strong> days. Override per module below.</small>
+        <h4 class="fw-bold mb-0">{{ __('settings.log_retention_title') }}</h4>
+        <small class="text-muted">{{ __('settings.retention_default_hint', ['days' => $default]) }}</small>
     </div>
-    <a href="{{ route('admin.logs.index') }}" class="btn btn-sm btn-outline-secondary">Back to logs</a>
+    <a href="{{ route('admin.logs.index') }}" class="btn btn-sm btn-outline-secondary">{{ __('settings.back_to_logs') }}</a>
 </div>
 
 <form method="POST" action="{{ route('admin.log-retention.update') }}">
@@ -17,9 +17,9 @@
             <table class="table mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Module</th>
-                        <th style="width:160px">Retention (days)</th>
-                        <th>Reason</th>
+                        <th>{{ __('settings.module_label') }}</th>
+                        <th style="width:160px">{{ __('settings.retention_days_col') }}</th>
+                        <th>{{ __('settings.reason_col') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -49,7 +49,7 @@
             </table>
         </div>
         <div class="card-footer">
-            <button class="btn btn-primary btn-sm">Save retention overrides</button>
+            <button class="btn btn-primary btn-sm">{{ __('settings.save_retention') }}</button>
         </div>
     </div>
 </form>

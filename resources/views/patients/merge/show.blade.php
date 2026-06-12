@@ -5,9 +5,9 @@
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
         <h4 class="fw-bold mb-1">{{ $mergeRequest->request_number }}</h4>
-        <p class="text-muted mb-0">Patient folder merge request</p>
+        <p class="text-muted mb-0">{{ __('patients.merge_request_subtitle') }}</p>
     </div>
-    <a href="{{ route('admin.patients.merge.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-chevron-left me-1"></i>Back</a>
+    <a href="{{ route('admin.patients.merge.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-chevron-left me-1"></i>{{ __('common.back') }}</a>
 </div>
 
 @if(session('success'))
@@ -21,16 +21,16 @@
     <div class="col-md-4">
         <div class="card h-100">
             <div class="card-body">
-                <div class="text-muted small">Status</div>
+                <div class="text-muted small">{{ __('common.status') }}</div>
                 <div class="h5 mb-1">{{ str_replace('_', ' ', $mergeRequest->status) }}</div>
-                <small class="text-muted">Requested {{ $mergeRequest->created_at?->format('d M Y H:i') }}</small>
+                <small class="text-muted">{{ __('patients.requested') }} {{ $mergeRequest->created_at?->format('d M Y H:i') }}</small>
             </div>
         </div>
     </div>
     <div class="col-md-4">
         <div class="card h-100 border-success">
             <div class="card-body">
-                <div class="text-muted small">Main Folder</div>
+                <div class="text-muted small">{{ __('patients.main_folder') }}</div>
                 <a href="{{ route('admin.patients.show', $mergeRequest->mainPatient) }}" class="h6 d-block mb-1">{{ $mergeRequest->mainPatient?->full_name }}</a>
                 <small class="text-muted">{{ $mergeRequest->mainPatient?->patient_number }}</small>
             </div>
@@ -39,7 +39,7 @@
     <div class="col-md-4">
         <div class="card h-100 border-warning">
             <div class="card-body">
-                <div class="text-muted small">Duplicate Folder</div>
+                <div class="text-muted small">{{ __('patients.duplicate_folder') }}</div>
                 <a href="{{ route('admin.patients.show', $mergeRequest->duplicatePatient) }}" class="h6 d-block mb-1">{{ $mergeRequest->duplicatePatient?->full_name }}</a>
                 <small class="text-muted">{{ $mergeRequest->duplicatePatient?->patient_number }}</small>
             </div>
@@ -48,25 +48,25 @@
 </div>
 
 @if($mergeRequest->reason)
-    <div class="alert alert-light border"><strong>Reason:</strong> {{ $mergeRequest->reason }}</div>
+    <div class="alert alert-light border"><strong>{{ __('patients.reason_label') }}:</strong> {{ $mergeRequest->reason }}</div>
 @endif
 
 @if($mergeRequest->can_execute)
     @can('patients.merge.execute')
         <form method="POST" action="{{ route('admin.patients.merge.requests.execute', $mergeRequest) }}" class="mb-3">
             @csrf
-            <button class="btn btn-primary"><i class="ti ti-git-merge me-1"></i>Execute Merge</button>
+            <button class="btn btn-primary"><i class="ti ti-git-merge me-1"></i>{{ __('patients.execute_merge') }}</button>
         </form>
     @endcan
 @endif
 
 <div class="card mb-3">
     <div class="card-header">
-        <h5 class="card-title mb-0">Preview Summary</h5>
+        <h5 class="card-title mb-0">{{ __('patients.preview_summary') }}</h5>
     </div>
     <div class="table-responsive">
         <table class="table table-sm mb-0">
-            <thead class="bg-light"><tr><th>Area</th><th>Handler</th><th class="text-end">Records</th></tr></thead>
+            <thead class="bg-light"><tr><th>{{ __('patients.col_area') }}</th><th>{{ __('patients.col_handler') }}</th><th class="text-end">{{ __('patients.col_records') }}</th></tr></thead>
             <tbody>
                 @foreach(($mergeRequest->preview_summary['record_counts'] ?? []) as $row)
                     <tr>
@@ -82,11 +82,11 @@
 
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title mb-0">Audit Trail</h5>
+        <h5 class="card-title mb-0">{{ __('patients.audit_trail') }}</h5>
     </div>
     <div class="table-responsive">
         <table class="table table-hover mb-0">
-            <thead class="bg-light"><tr><th>Time</th><th>Action</th><th>Table</th><th>By</th></tr></thead>
+            <thead class="bg-light"><tr><th>{{ __('patients.col_time') }}</th><th>{{ __('patients.col_action_log') }}</th><th>{{ __('patients.col_table') }}</th><th>{{ __('patients.col_by') }}</th></tr></thead>
             <tbody>
                 @forelse($mergeRequest->logs as $log)
                     <tr>
@@ -96,7 +96,7 @@
                         <td>{{ $log->performedBy?->name ?: '-' }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="4"><x-empty-state message="No audit entries yet." /></td></tr>
+                    <tr><td colspan="4"><x-empty-state message="{{ __('patients.no_audit_entries') }}" /></td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -5,7 +5,7 @@
 @if(($showBillingAcceptance ?? true) && $pendingItems->count() > 0)
 <div class="card mb-3">
     <div class="card-header bg-primary-subtle d-flex justify-content-between align-items-center">
-        <h6 class="fw-bold mb-0"><i class="ti ti-list-check me-1"></i>Select Items to Accept &amp; Bill</h6>
+        <h6 class="fw-bold mb-0"><i class="ti ti-list-check me-1"></i>{{ __('lab.select_items_to_accept') }}</h6>
         <small class="text-muted"><span id="selCount">0</span> of {{ $pendingItems->count() }} selected</small>
     </div>
     <div class="card-body">
@@ -17,9 +17,9 @@
                     <thead class="table-light">
                         <tr>
                             <th style="width:36px;"><input type="checkbox" id="selectAllItems" class="form-check-input"></th>
-                            <th>Item</th>
-                            <th>Status</th>
-                            <th class="text-end">Price</th>
+                            <th>{{ __('lab.item_col') }}</th>
+                            <th>{{ __('lab.status_col') }}</th>
+                            <th class="text-end">{{ __('lab.price_col') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -44,16 +44,16 @@
                     </tbody>
                     <tfoot>
                         <tr class="table-light">
-                            <td colspan="3" class="text-end fw-bold">Selected total:</td>
+                            <td colspan="3" class="text-end fw-bold">{{ __('lab.selected_total') }}</td>
                             <td class="text-end fw-bold" id="acceptSelectedTotal">GH₵ 0.00</td>
                         </tr>
                     </tfoot>
                 </table>
             </div>
             <div class="d-flex justify-content-between align-items-center">
-                <small class="text-muted"><i class="ti ti-info-circle me-1"></i>Only selected items are accepted and invoiced. After billing, use Investigation Results to enter results.</small>
+                <small class="text-muted"><i class="ti ti-info-circle me-1"></i>{{ __('lab.accept_billing_note') }}</small>
                 <button type="submit" id="acceptSelectedBtn" class="btn btn-success" disabled>
-                    <i class="ti ti-check me-1"></i>Bill Selected
+                    <i class="ti ti-check me-1"></i>{{ __('lab.bill_selected') }}
                 </button>
             </div>
         </form>

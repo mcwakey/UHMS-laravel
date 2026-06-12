@@ -19,54 +19,54 @@
 
 <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
     <div>
-        <h4 class="fw-bold mb-0">Log Entry #{{ $activity->id }}</h4>
+        <h4 class="fw-bold mb-0">{{ __('settings.log_entry_title', ['id' => $activity->id]) }}</h4>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ route('admin.logs.index') }}">Activity Logs</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('admin.logs.index') }}">{{ __('settings.activity_logs_breadcrumb') }}</a></li>
                 <li class="breadcrumb-item active">#{{ $activity->id }}</li>
             </ol>
         </nav>
     </div>
-    <a href="{{ route('admin.logs.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>Back</a>
+    <a href="{{ route('admin.logs.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>{{ __('settings.back') }}</a>
 </div>
 
 <div class="row">
     <div class="col-lg-5">
         <div class="card mb-3">
-            <div class="card-header"><h6 class="card-title mb-0">Overview</h6></div>
+            <div class="card-header"><h6 class="card-title mb-0">{{ __('settings.overview') }}</h6></div>
             <div class="card-body">
                 <dl class="row mb-0 small">
-                    <dt class="col-sm-4">Timestamp</dt>
+                    <dt class="col-sm-4">{{ __('settings.timestamp') }}</dt>
                     <dd class="col-sm-8">{{ $activity->created_at?->format('d M Y H:i:s') }}</dd>
 
-                    <dt class="col-sm-4">Module</dt>
+                    <dt class="col-sm-4">{{ __('settings.module_label') }}</dt>
                     <dd class="col-sm-8">
                         <span class="badge bg-{{ $moduleEnum?->color() ?? 'secondary' }}-subtle text-{{ $moduleEnum?->color() ?? 'secondary' }}">
                             {{ $moduleEnum?->label() ?? $module }}
                         </span>
                     </dd>
 
-                    <dt class="col-sm-4">Action</dt>
+                    <dt class="col-sm-4">{{ __('settings.action_label') }}</dt>
                     <dd class="col-sm-8"><span class="badge bg-light text-dark">{{ $action }}</span></dd>
 
-                    <dt class="col-sm-4">Severity</dt>
+                    <dt class="col-sm-4">{{ __('settings.severity_label') }}</dt>
                     <dd class="col-sm-8">
                         <span class="badge bg-{{ $sevEnum?->color() ?? 'secondary' }}-subtle text-{{ $sevEnum?->color() ?? 'secondary' }}">
                             {{ $sevEnum?->label() ?? $severity }}
                         </span>
                     </dd>
 
-                    <dt class="col-sm-4">Causer</dt>
+                    <dt class="col-sm-4">{{ __('settings.causer_label') }}</dt>
                     <dd class="col-sm-8">
                         @if($activity->causer)
                             {{ $activity->causer->full_name ?? $activity->causer->name ?? $activity->causer->email ?? 'User #' . $activity->causer_id }}
                             <br><small class="text-muted">{{ class_basename($activity->causer_type) }} #{{ $activity->causer_id }}</small>
                         @else
-                            <span class="text-muted">System</span>
+                            <span class="text-muted">{{ __('settings.system_label') }}</span>
                         @endif
                     </dd>
 
-                    <dt class="col-sm-4">Subject</dt>
+                    <dt class="col-sm-4">{{ __('settings.subject_label') }}</dt>
                     <dd class="col-sm-8">
                         @if($activity->subject_type)
                             {{ class_basename($activity->subject_type) }} #{{ $activity->subject_id }}
@@ -75,19 +75,19 @@
                         @endif
                     </dd>
 
-                    <dt class="col-sm-4">Description</dt>
+                    <dt class="col-sm-4">{{ __('settings.description_label') }}</dt>
                     <dd class="col-sm-8">{{ $activity->description }}</dd>
 
                     @if(!empty($props['reason']))
-                        <dt class="col-sm-4">Reason</dt>
+                        <dt class="col-sm-4">{{ __('settings.reason_label') }}</dt>
                         <dd class="col-sm-8">{{ $props['reason'] }}</dd>
                     @endif
 
-                    <dt class="col-sm-4">IP</dt>
+                    <dt class="col-sm-4">{{ __('settings.ip_label') }}</dt>
                     <dd class="col-sm-8"><code class="small">{{ $props['ip'] ?? '—' }}</code></dd>
 
                     @if(!empty($props['user_agent']))
-                        <dt class="col-sm-4">User Agent</dt>
+                        <dt class="col-sm-4">{{ __('settings.user_agent_label') }}</dt>
                         <dd class="col-sm-8"><small class="text-muted">{{ $props['user_agent'] }}</small></dd>
                     @endif
                 </dl>
@@ -99,7 +99,7 @@
         @endphp
         @if(!empty($contextRows))
             <div class="card mb-3">
-                <div class="card-header"><h6 class="card-title mb-0">Context</h6></div>
+                <div class="card-header"><h6 class="card-title mb-0">{{ __('settings.context') }}</h6></div>
                 <div class="card-body">
                     <dl class="row mb-0 small">
                         @foreach($contextRows as $k => $v)
@@ -115,15 +115,15 @@
     <div class="col-lg-7">
         @if(!empty($old) || !empty($new))
             <div class="card mb-3">
-                <div class="card-header"><h6 class="card-title mb-0">Changes</h6></div>
+                <div class="card-header"><h6 class="card-title mb-0">{{ __('settings.changes') }}</h6></div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-sm table-bordered mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Field</th>
-                                    <th>Old</th>
-                                    <th>New</th>
+                                    <th>{{ __('settings.field_label') }}</th>
+                                    <th>{{ __('settings.old_label') }}</th>
+                                    <th>{{ __('settings.new_label') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -144,7 +144,7 @@
 
         @if(!empty($metadata))
             <div class="card mb-3">
-                <div class="card-header"><h6 class="card-title mb-0">Metadata</h6></div>
+                <div class="card-header"><h6 class="card-title mb-0">{{ __('settings.metadata') }}</h6></div>
                 <div class="card-body">
                     <pre class="bg-light p-2 rounded small mb-0">{{ json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
                 </div>
@@ -152,7 +152,7 @@
         @endif
 
         <div class="card">
-            <div class="card-header"><h6 class="card-title mb-0">Raw Properties</h6></div>
+            <div class="card-header"><h6 class="card-title mb-0">{{ __('settings.raw_properties') }}</h6></div>
             <div class="card-body">
                 <pre class="bg-light p-2 rounded small mb-0">{{ json_encode($props, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) }}</pre>
             </div>

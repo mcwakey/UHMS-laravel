@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Receipt {{ $payment->payment_number }}</title>
+    <title>{{ __('payments.receipt') }} {{ $payment->payment_number }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #333; }
@@ -37,12 +37,12 @@
     @endphp
     <table class="header">
         <tr>
-            <td><div class="logo">UHMS<small>Ultimate Hospital Management System</small></div></td>
+            <td><div class="logo">UHMS<small>{{ __('common.app_tagline') }}</small></div></td>
             <td>
-                <div class="title">PAYMENT RECEIPT</div>
+                <div class="title">{{ __('payments.payment_receipt_label') }}</div>
                 <div class="num">{{ $payment->payment_number }}</div>
                 @if($payment->is_reversal)
-                    <div style="text-align:right; margin-top:4px;"><span class="reversed">REVERSAL</span></div>
+                    <div style="text-align:right; margin-top:4px;"><span class="reversed">{{ __('payments.reversal_stamp') }}</span></div>
                 @endif
             </td>
         </tr>
@@ -51,24 +51,24 @@
     <table class="info-table">
         <tr>
             <td>
-                <h5>Received From</h5>
+                <h5>{{ __('payments.received_from') }}</h5>
                 @if($payment->patient)
                     <p style="font-weight:bold;">{{ $payment->patient->full_name }}</p>
                     <p>{{ $payment->patient->patient_number }}</p>
                     <p>{{ $payment->patient->phone }}</p>
                 @else
-                    <p style="font-weight:bold;">{{ $payment->invoice?->external_party_name ?? 'External recipient' }}</p>
-                    <p>External / referral</p>
+                    <p style="font-weight:bold;">{{ $payment->invoice?->external_party_name ?? __('invoices.external_recipient') }}</p>
+                    <p>{{ __('payments.external_referral') }}</p>
                 @endif
             </td>
             <td>
-                <h5>Payment Details</h5>
-                <p><span class="label">Date:</span> {{ $payment->paid_at?->format('d M Y, h:i A') }}</p>
-                <p><span class="label">Method:</span> {{ $method }}</p>
+                <h5>{{ __('payments.payment_details') }}</h5>
+                <p><span class="label">{{ __('payments.date_label') }}:</span> {{ $payment->paid_at?->format('d M Y, h:i A') }}</p>
+                <p><span class="label">{{ __('payments.method_label') }}:</span> {{ $method }}</p>
                 @if($payment->reference_number)
-                <p><span class="label">Reference:</span> {{ $payment->reference_number }}</p>
+                <p><span class="label">{{ __('payments.reference_label') }}:</span> {{ $payment->reference_number }}</p>
                 @endif
-                <p><span class="label">Cashier:</span> {{ $payment->receivedBy->name ?? '—' }}</p>
+                <p><span class="label">{{ __('payments.cashier_label') }}:</span> {{ $payment->receivedBy->name ?? '—' }}</p>
             </td>
         </tr>
     </table>
@@ -76,22 +76,28 @@
     <div class="amount-banner" @if($payment->is_reversal) style="background:#f8d7da; color:#842029;" @endif>
         <table>
             <tr>
-                <td style="font-weight:600;">{{ $payment->is_reversal ? 'Amount Reversed' : 'Amount Received' }}</td>
+                <td style="font-weight:600;">{{ $payment->is_reversal ? __('payments.amount_reversed') : __('payments.amount_received') }}</td>
                 <td class="amt">&#8373;{{ number_format(abs($payment->amount), 2) }}</td>
             </tr>
         </table>
     </div>
 
     @if($payment->reversal_reason)
-    <p style="font-size:10px; color:#842029; margin-bottom:10px;"><strong>Reason:</strong> {{ $payment->reversal_reason }}</p>
+    <p style="font-size:10px; color:#842029; margin-bottom:10px;"><strong>{{ __('common.reason') }}:</strong> {{ $payment->reversal_reason }}</p>
     @endif
 
     @if($payment->invoice)
     @php $inv = $payment->invoice; @endphp
-    <h5 style="font-size:10px; text-transform:uppercase; color:#198754; margin-bottom:5px;">Applied To Invoice</h5>
+    <h5 style="font-size:10px; text-transform:uppercase; color:#198754; margin-bottom:5px;">{{ __('payments.applied_to_invoice') }}</h5>
     <table class="inv">
         <thead>
-            <tr><th>Invoice #</th><th>Date</th><th class="text-end">Total</th><th class="text-end">Paid</th><th class="text-end">Balance</th></tr>
+            <tr>
+                <th>{{ __('payments.invoice_num_col') }}</th>
+                <th>{{ __('payments.date_label') }}</th>
+                <th class="text-end">{{ __('payments.total_col_rcpt') }}</th>
+                <th class="text-end">{{ __('payments.paid_col_rcpt') }}</th>
+                <th class="text-end">{{ __('payments.balance_col_rcpt') }}</th>
+            </tr>
         </thead>
         <tbody>
             <tr>
@@ -106,8 +112,8 @@
     @endif
 
     <div class="footer">
-        <div class="thanks">Thank you.</div>
-        Generated on {{ now()->format('d M Y H:i') }} · UHMS · Computer-generated receipt.
+        <div class="thanks">{{ __('payments.thank_you_short') }}</div>
+        {{ __('payments.generated_footer_pdf', ['date' => now()->format('d M Y H:i')]) }}
     </div>
 </body>
 </html>

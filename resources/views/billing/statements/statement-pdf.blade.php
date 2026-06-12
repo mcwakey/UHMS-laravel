@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Statement — {{ $patient->patient_number }}</title>
+    <title>{{ __('invoices.patient_statement') }} — {{ $patient->patient_number }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #333; }
@@ -31,10 +31,10 @@
 <body>
     <table class="header">
         <tr>
-            <td><div class="logo">UHMS<small>Ultimate Hospital Management System</small></div></td>
+            <td><div class="logo">UHMS<small>{{ __('common.app_tagline') }}</small></div></td>
             <td>
-                <div class="title">PATIENT STATEMENT</div>
-                <div class="sub">Generated {{ $generatedAt->format('d M Y H:i') }}</div>
+                <div class="title">{{ __('invoices.patient_statement') }}</div>
+                <div class="sub">{{ __('invoices.statement_generated', ['date' => $generatedAt->format('d M Y H:i')]) }}</div>
             </td>
         </tr>
     </table>
@@ -42,7 +42,7 @@
     <table class="info-table">
         <tr>
             <td>
-                <h5>Patient</h5>
+                <h5>{{ __('common.patient') }}</h5>
                 <p style="font-weight:bold;">{{ trim($patient->first_name . ' ' . $patient->last_name) }}</p>
                 <p>{{ $patient->patient_number }}</p>
                 <p>{{ $patient->phone }}</p>
@@ -52,23 +52,23 @@
 
     <table class="summary">
         <tr>
-            <td><div class="s-label">Total Charges</div><div class="s-val">&#8373;{{ number_format($summary['total_charges'], 2) }}</div></td>
-            <td><div class="s-label">Total Payments</div><div class="s-val" style="color:#198754;">&#8373;{{ number_format($summary['total_payments'], 2) }}</div></td>
-            <td><div class="s-label">Balance Due</div><div class="s-val" style="color:{{ $summary['balance_due'] > 0 ? '#dc3545' : '#198754' }};">&#8373;{{ number_format($summary['balance_due'], 2) }}</div></td>
-            <td><div class="s-label">Invoices / Payments</div><div class="s-val">{{ $summary['invoice_count'] }} / {{ $summary['payment_count'] }}</div></td>
+            <td><div class="s-label">{{ __('invoices.total_charges') }}</div><div class="s-val">&#8373;{{ number_format($summary['total_charges'], 2) }}</div></td>
+            <td><div class="s-label">{{ __('invoices.payments_col') }}</div><div class="s-val" style="color:#198754;">&#8373;{{ number_format($summary['total_payments'], 2) }}</div></td>
+            <td><div class="s-label">{{ __('invoices.balance_due') }}</div><div class="s-val" style="color:{{ $summary['balance_due'] > 0 ? '#dc3545' : '#198754' }};">&#8373;{{ number_format($summary['balance_due'], 2) }}</div></td>
+            <td><div class="s-label">{{ __('invoices.invoices_payments_count') }}</div><div class="s-val">{{ $summary['invoice_count'] }} / {{ $summary['payment_count'] }}</div></td>
         </tr>
     </table>
 
     <table class="ledger">
         <thead>
             <tr>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Reference</th>
-                <th>Description</th>
-                <th class="text-end">Charges</th>
-                <th class="text-end">Payments</th>
-                <th class="text-end">Balance</th>
+                <th>{{ __('invoices.date_label') }}</th>
+                <th>{{ __('common.type') }}</th>
+                <th>{{ __('invoices.reference') }}</th>
+                <th>{{ __('invoices.description') }}</th>
+                <th class="text-end">{{ __('invoices.charges_col') }}</th>
+                <th class="text-end">{{ __('invoices.payments_col') }}</th>
+                <th class="text-end">{{ __('invoices.balance_label') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -83,12 +83,12 @@
                 <td class="text-end" style="font-weight:600;">&#8373;{{ number_format($entry['balance'], 2) }}</td>
             </tr>
             @empty
-            <tr><td colspan="7" class="text-end" style="text-align:center; padding:14px;">No transactions.</td></tr>
+            <tr><td colspan="7" style="text-align:center; padding:14px;">{{ __('invoices.no_transactions') }}</td></tr>
             @endforelse
         </tbody>
         <tfoot>
             <tr class="total-row">
-                <td colspan="4" class="text-end">Totals</td>
+                <td colspan="4" class="text-end">{{ __('invoices.totals_row') }}</td>
                 <td class="text-end">&#8373;{{ number_format($summary['total_charges'], 2) }}</td>
                 <td class="text-end">&#8373;{{ number_format($summary['total_payments'], 2) }}</td>
                 <td class="text-end">&#8373;{{ number_format($summary['balance_due'], 2) }}</td>
@@ -96,6 +96,6 @@
         </tfoot>
     </table>
 
-    <div class="footer">UHMS · Computer-generated statement.</div>
+    <div class="footer">{{ __('invoices.computer_generated_statement') }}</div>
 </body>
 </html>

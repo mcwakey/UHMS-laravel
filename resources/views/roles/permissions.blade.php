@@ -8,11 +8,11 @@
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Manage Permissions: <span class="text-primary">{{ $role->name }}</span></h4>
+        <h4 class="fw-bold mb-0">{{ __('roles.manage_permissions_for') }}<span class="text-primary">{{ $role->name }}</span></h4>
     </div>
     <div>
         <a href="{{ route('admin.roles.index') }}" class="btn btn-outline-secondary btn-md">
-            <i class="ti ti-arrow-left me-1"></i>Back to Roles
+            <i class="ti ti-arrow-left me-1"></i>{{ __('roles.back_to_roles') }}
         </a>
     </div>
 </div>
@@ -30,7 +30,7 @@
                     <div class="form-check">
                         <input class="form-check-input module-check-all" type="checkbox" data-module="{{ $module }}"
                             {{ $modulePermissions->every(fn($p) => in_array($p->name, $rolePermissions)) ? 'checked' : '' }}>
-                        <label class="form-check-label fs-12">All</label>
+                        <label class="form-check-label fs-12">{{ __('roles.select_all') }}</label>
                     </div>
                 </div>
                 <div class="card-body py-2">
@@ -54,7 +54,7 @@
                                 <span>{{ ucfirst(str_replace($module . '.', '', $permission->name)) }}</span>
                                 <span class="badge bg-{{ $riskMeta['color'] }} fs-10">{{ $riskMeta['label'] }}</span>
                                 @if($criticalLocked)
-                                    <span class="badge bg-dark fs-10">locked</span>
+                                    <span class="badge bg-dark fs-10">{{ __('roles.locked') }}</span>
                                 @endif
                             </span>
                             <span class="d-block text-muted fs-12 mt-1">{{ $permission->meta_description }}</span>
@@ -69,9 +69,9 @@
     </div>
 
     <div class="d-flex justify-content-end gap-2 mt-3 mb-3">
-        <a href="{{ route('admin.roles.index') }}" class="btn btn-outline-secondary">Cancel</a>
+        <a href="{{ route('admin.roles.index') }}" class="btn btn-outline-secondary">{{ __('roles.back_to_roles') }}</a>
         <button type="submit" class="btn btn-primary">
-            <i class="ti ti-check me-1"></i>Save Permissions
+            <i class="ti ti-check me-1"></i>{{ __('roles.save_permissions') }}
         </button>
     </div>
 </form>

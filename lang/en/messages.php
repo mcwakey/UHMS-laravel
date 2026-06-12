@@ -695,6 +695,18 @@ return [
     ],
 
     /* ------------------------------------------------------------------ */
+    /* Service Renderings (BC alias — canonical key is service_rendering)  */
+    /* ------------------------------------------------------------------ */
+    'service_renderings' => [
+        'billed'        => 'Billed ":name" to :visit. A rendering task was created for the department.',
+        'started'       => 'Service rendering started.',
+        'rendered'      => 'Service marked as rendered.',
+        'not_rendered'  => 'Service marked as not rendered.',
+        'cancelled'     => 'Service rendering cancelled.',
+        'notes_updated' => 'Rendering notes updated.',
+    ],
+
+    /* ------------------------------------------------------------------ */
     /* Service Rendering (billed via ServiceRenderingController)            */
     /* ------------------------------------------------------------------ */
     'service_rendering' => [

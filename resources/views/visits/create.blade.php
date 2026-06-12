@@ -1,11 +1,11 @@
 @extends('layouts.app')
-@section('title', 'Create Visit')
+@section('title', __('visits.create_new_visit'))
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
     <h6 class="fw-bold mb-0 d-flex align-items-center">
-        <a href="{{ route('admin.visits.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>Create New Visit</a>
+        <a href="{{ route('admin.visits.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>{{ __('visits.create_new_visit') }}</a>
     </h6>
     {{-- <div class="flex-grow-1">
         <h4 class="fw-bold mb-0"></h4>
@@ -35,14 +35,14 @@
             <!-- Patient Search -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-search me-1"></i>Select Patient</h5>
+                    <h5 class="fw-bold mb-0"><i class="ti ti-search me-1"></i>{{ __('visits.select_patient_heading') }}</h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <label class="form-label">Search Patient <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('visits.search_patient_label') }} <span class="text-danger">*</span></label>
                         <select id="patientSearch"
                                 class="form-select form-select-lg @error('patient_id') is-invalid @enderror"
-                                data-placeholder="Type patient name, ID, phone, or Ghana Card number..."
+                                data-placeholder="{{ __('visits.search_patient_placeholder') }}"
                                 style="width:100%">
                             <option value=""></option>
                             @if($selectedPatient)
@@ -58,19 +58,19 @@
                         @if($selectedPatient?->is_deceased)
                         <div class="alert alert-danger d-flex align-items-center gap-2 mb-2">
                             <i class="ti ti-skull fs-18 flex-shrink-0"></i>
-                            <span><strong>This patient is marked as deceased and cannot start a new visit.</strong></span>
+                            <span><strong>{{ __('visits.patient_deceased_warning') }}</strong></span>
                         </div>
                         @endif
                         <div id="deceasedWarning" class="alert alert-danger d-flex align-items-center gap-2 mb-2 d-none">
                             <i class="ti ti-skull fs-18 flex-shrink-0"></i>
-                            <span><strong>This patient is marked as deceased and cannot start a new visit.</strong></span>
+                            <span><strong>{{ __('visits.patient_deceased_warning') }}</strong></span>
                         </div>
                         @php($selectedActiveAdmission = $selectedPatient?->activeAdmission)
                         <div id="activeAdmissionWarning" class="alert alert-warning mb-2 {{ $selectedActiveAdmission ? '' : 'd-none' }}">
                             <div class="d-flex align-items-start gap-2">
                                 <i class="ti ti-bed fs-18 flex-shrink-0"></i>
                                 <div>
-                                    <div class="fw-semibold">This patient is currently admitted.</div>
+                                    <div class="fw-semibold">{{ __('visits.currently_admitted') }}</div>
                                     <div class="small" id="activeAdmissionText">
                                         @if($selectedActiveAdmission)
                                             Admission {{ $selectedActiveAdmission->admission_number }}{{ $selectedActiveAdmission->bed ? ' - '.$selectedActiveAdmission->bed->ward?->name.' / Bed '.$selectedActiveAdmission->bed->bed_number : '' }}.
@@ -80,11 +80,11 @@
                             </div>
                             @if($canOverrideActiveAdmission)
                                 <div class="mt-2">
-                                    <label class="form-label small mb-1" for="admissionOverrideReason">Override reason</label>
-                                    <textarea class="form-control" id="admissionOverrideReason" name="admission_override_reason" rows="2" placeholder="Required when creating an OPD visit while admission is active">{{ old('admission_override_reason') }}</textarea>
+                                    <label class="form-label small mb-1" for="admissionOverrideReason">{{ __('visits.override_reason') }}</label>
+                                    <textarea class="form-control" id="admissionOverrideReason" name="admission_override_reason" rows="2" placeholder="{{ __('visits.override_reason') }}">{{ old('admission_override_reason') }}</textarea>
                                 </div>
                             @else
-                                <div class="small mt-2">Complete the admission before creating a new OPD visit.</div>
+                                <div class="small mt-2">{{ __('visits.complete_admission_first') }}</div>
                             @endif
                         </div>
                         <div class="alert alert-light border d-flex align-items-center gap-3 mb-0">
@@ -97,7 +97,7 @@
                                     <span id="patientNumber">{{ $selectedPatient?->patient_number }}</span>
                                     &bull; <span id="patientPhone">{{ $selectedPatient?->phone }}</span>
                                     <span id="patientLastVisit" class="{{ $selectedPatient && $selectedPatient->visits()->exists() ? '' : 'd-none' }}">
-                                        &bull; Last visit: <strong>{{ $selectedPatient ? ($selectedPatient->visits()->latest('visit_date')->value('visit_date') ? \Carbon\Carbon::parse($selectedPatient->visits()->latest('visit_date')->value('visit_date'))->format('d M Y') : '') : '' }}</strong>
+                                        &bull; {{ __('visits.last_visit') }} <strong>{{ $selectedPatient ? ($selectedPatient->visits()->latest('visit_date')->value('visit_date') ? \Carbon\Carbon::parse($selectedPatient->visits()->latest('visit_date')->value('visit_date'))->format('d M Y') : '') : '' }}</strong>
                                     </span>
                                 </small>
                             </div>
@@ -112,12 +112,12 @@
             <!-- Insurance Selection -->
             <div class="card d-none" id="insuranceCard">
                 <div class="card-header d-flex align-items-center justify-content-between">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Insurance</h5>
+                    <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>{{ __('visits.insurance_heading') }}</h5>
                     <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">Default expired - using Cash &amp; Carry</span>
+                        <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">{{ __('visits.insurance_fallback_badge') }}</span>
                         @can('patients.edit')
                             <button type="button" class="btn btn-sm btn-outline-primary" id="addInsuranceBtn">
-                                <i class="ti ti-plus me-1"></i>Add Insurance
+                                <i class="ti ti-plus me-1"></i>{{ __('visits.add_insurance_btn') }}
                             </button>
                         @endcan
                     </div>
@@ -126,7 +126,7 @@
                     <!-- Insurance List (radio selection) -->
                     <div id="insuranceList" class="mb-3">
                         <div class="text-muted text-center py-3">
-                            <i class="ti ti-loader me-1"></i>Loading patient insurances...
+                            <i class="ti ti-loader me-1"></i>{{ __('visits.loading_insurances') }}
                         </div>
                     </div>
 
@@ -138,21 +138,21 @@
                          /admin/insurance/verify; no provider names appear here. --}}
                     <div id="verificationPanel" class="border rounded p-3 mt-3 d-none">
                         <div class="d-flex align-items-center justify-content-between mb-2">
-                            <h6 class="mb-0"><i class="ti ti-shield-lock me-1"></i>Verification</h6>
-                            <span class="badge bg-secondary" id="verificationStatusBadge">Not started</span>
+                            <h6 class="mb-0"><i class="ti ti-shield-lock me-1"></i>{{ __('visits.verification') }}</h6>
+                            <span class="badge bg-secondary" id="verificationStatusBadge">{{ __('visits.not_started') }}</span>
                         </div>
                         <div class="text-muted small mb-2" id="verificationProviderMeta">&mdash;</div>
 
                         <div class="row g-2 align-items-end" id="verificationCodeRow" style="display:none;">
                             <div class="col-sm-8">
-                                <label class="form-label mb-1">Authorization / Reference / CC Code</label>
+                                <label class="form-label mb-1">{{ __('visits.ccc_code_label') }}</label>
                                 <input type="text" id="verificationReferenceInput" name="verification_reference_code"
-                                       class="form-control" placeholder="Enter code issued by the provider"
+                                       class="form-control" placeholder="{{ __('visits.ccc_code_label') }}"
                                        autocomplete="off">
                             </div>
                             <div class="col-sm-4 d-grid">
                                 <button type="button" class="btn btn-primary" id="runVerificationBtn">
-                                    <i class="ti ti-shield-check me-1"></i>Verify
+                                    <i class="ti ti-shield-check me-1"></i>{{ __('common.confirm') }}
                                 </button>
                             </div>
                         </div>
@@ -160,7 +160,7 @@
                         <div class="row g-2 align-items-end mt-1" id="verificationManualRow" style="display:none;">
                             <div class="col-12 d-grid">
                                 <button type="button" class="btn btn-outline-primary btn-sm" id="runVerificationBtn2">
-                                    <i class="ti ti-shield-check me-1"></i>Verify
+                                    <i class="ti ti-shield-check me-1"></i>{{ __('common.confirm') }}
                                 </button>
                             </div>
                         </div>
@@ -173,14 +173,14 @@
             <!-- Visit Details -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>Visit Details</h5>
+                    <h5 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>{{ __('visits.visit_details_heading') }}</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Visit Type <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('visits.visit_type_label') }} <span class="text-danger">*</span></label>
                             <select name="visit_type" class="form-select @error('visit_type') is-invalid @enderror" required>
-                                <option value="">Select Type</option>
+                                <option value="">{{ __('visits.select_type_opt') }}</option>
                                 @foreach(\App\Enums\VisitType::cases() as $type)
                                     <option value="{{ $type->value }}" {{ old('visit_type') == $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
                                 @endforeach
@@ -188,7 +188,7 @@
                             @error('visit_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Priority <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('visits.priority_label') }} <span class="text-danger">*</span></label>
                             <select name="priority" class="form-select @error('priority') is-invalid @enderror" required>
                                 @foreach(\App\Enums\Priority::cases() as $priority)
                                     <option value="{{ $priority->value }}" {{ old('priority', 'normal') == $priority->value ? 'selected' : '' }}>{{ $priority->label() }}</option>
@@ -197,27 +197,27 @@
                             @error('priority')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Visit Date</label>
+                            <label class="form-label">{{ __('visits.visit_date_label') }}</label>
                             <input type="date" name="visit_date" class="form-control @error('visit_date') is-invalid @enderror" value="{{ old('visit_date', date('Y-m-d')) }}" id="visitDate">
                             @error('visit_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                            <small class="text-muted" id="schedulingHint">Today = walk-in. Future date = scheduled visit.</small>
+                            <small class="text-muted" id="schedulingHint">{{ __('visits.today_scheduling_hint') }}</small>
                         </div>
                     </div>
 
                     {{-- Scheduling Fields (shown when future date selected) --}}
                     <div class="row" id="schedulingFields" style="display: none;">
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Start Time</label>
+                            <label class="form-label">{{ __('visits.start_time_label') }}</label>
                             <input type="time" name="start_time" class="form-control @error('start_time') is-invalid @enderror" value="{{ old('start_time') }}">
                             @error('start_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">End Time</label>
+                            <label class="form-label">{{ __('visits.end_time_label') }}</label>
                             <input type="time" name="end_time" class="form-control @error('end_time') is-invalid @enderror" value="{{ old('end_time') }}">
                             @error('end_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Consultation Mode</label>
+                            <label class="form-label">{{ __('visits.consultation_mode_label') }}</label>
                             <select name="consultation_mode" class="form-select @error('consultation_mode') is-invalid @enderror">
                                 @foreach(\App\Enums\ConsultationMode::cases() as $mode)
                                     <option value="{{ $mode->value }}" {{ old('consultation_mode', 'in_person') == $mode->value ? 'selected' : '' }}>{{ $mode->label() }}</option>
@@ -228,14 +228,14 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Chief Complaint</label>
-                            <textarea name="chief_complaint" class="form-control @error('chief_complaint') is-invalid @enderror" rows="3" placeholder="Primary reason for visit...">{{ old('chief_complaint') }}</textarea>
+                            <label class="form-label">{{ __('visits.chief_complaint_field') }}</label>
+                            <textarea name="chief_complaint" class="form-control @error('chief_complaint') is-invalid @enderror" rows="3" placeholder="{{ __('visits.complaint_placeholder') }}">{{ old('chief_complaint') }}</textarea>
                             @error('chief_complaint')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Notes</label>
-                            <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" rows="3" placeholder="Additional notes...">{{ old('notes') }}</textarea>
+                            <label class="form-label">{{ __('visits.notes_field') }}</label>
+                            <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" rows="3" placeholder="{{ __('visits.notes_placeholder') }}">{{ old('notes') }}</textarea>
                             @error('notes')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                     </div>
@@ -248,23 +248,23 @@
             <!-- Department, Services & Doctor Selection -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-building-hospital me-1"></i>Department, Services & Doctor</h5>
+                    <h5 class="fw-bold mb-0"><i class="ti ti-building-hospital me-1"></i>{{ __('visits.dept_services_heading') }}</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Department <small class="text-muted">(filters services)</small></label>
-                            <select id="departmentSelect" class="form-select @error('department_id') is-invalid @enderror" data-placeholder="Search department..." style="width:100%">
-                                <option value="">Select Department</option>
+                            <label class="form-label">{{ __('visits.department_filter_label') }} <small class="text-muted">{{ __('visits.dept_filters_services') }}</small></label>
+                            <select id="departmentSelect" class="form-select @error('department_id') is-invalid @enderror" data-placeholder="{{ __('visits.search_dept_placeholder') }}" style="width:100%">
+                                <option value="">{{ __('visits.select_department') }}</option>
                                 @foreach($departments as $dept)
                                     <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Assign Doctor/Staff <small class="text-muted">(optional)</small></label>
-                            <select id="doctorSelect" class="form-select" data-placeholder="Search doctor/staff..." style="width:100%" disabled>
-                                <option value="">Select department first</option>
+                            <label class="form-label">{{ __('visits.assign_doctor_label') }} <small class="text-muted">{{ __('visits.optional_label') }}</small></label>
+                            <select id="doctorSelect" class="form-select" data-placeholder="{{ __('visits.search_doctor_placeholder') }}" style="width:100%" disabled>
+                                <option value="">{{ __('visits.select_dept_first') }}</option>
                             </select>
                             {{-- <div id="doctorSelectHelp" class="form-text">Doctors load from specialties linked to the selected department.</div> --}}
                         </div>
@@ -273,20 +273,20 @@
                     <!-- Service Selection -->
                     <div class="mb-3">
                         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-1">
-                            <label class="form-label mb-0">Available Services</label>
+                            <label class="form-label mb-0">{{ __('visits.available_services_label') }}</label>
                             <div class="form-check form-switch mb-0">
                                 <input class="form-check-input" type="checkbox" role="switch" id="showExtraServices">
-                                <label class="form-check-label small text-muted" for="showExtraServices">Show other services</label>
+                                <label class="form-check-label small text-muted" for="showExtraServices">{{ __('visits.show_other_services') }}</label>
                             </div>
                         </div>
                         <div id="servicesList" class="border rounded p-3 bg-light">
                             <div class="text-muted text-center py-3" id="servicesPlaceholder">
-                                <i class="ti ti-list-search me-1"></i>Select a department to load services and route doctors
+                                <i class="ti ti-list-search me-1"></i>{{ __('visits.select_dept_load_services') }}
                             </div>
                             <div id="servicesContent" class="d-none">
                                 <div class="input-group mb-2">
                                     <span class="input-group-text"><i class="ti ti-search"></i></span>
-                                    <input type="text" id="serviceFilter" class="form-control" placeholder="Filter services...">
+                                    <input type="text" id="serviceFilter" class="form-control" placeholder="{{ __('visits.filter_services') }}">
                                 </div>
                                 <div id="servicesItems" style="max-height: 280px; overflow-y: auto;"></div>
                             </div>
@@ -295,21 +295,21 @@
 
                     <!-- Selected Services (Department Sessions + Billing Lines) -->
                     <div id="selectedServicesCard" class="d-none">
-                        <label class="form-label fw-bold"><i class="ti ti-receipt me-1"></i>Selected Services</label>
+                        <label class="form-label fw-bold"><i class="ti ti-receipt me-1"></i>{{ __('visits.selected_services_label') }}</label>
                         <div id="routeDoctorSummary" class="small text-muted mb-2"></div>
                         <div class="table-responsive">
                             <table class="table table-sm table-hover table-bordered mb-0" id="billingTable">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Service</th>
-                                        <th class="text-end" style="width: 120px;">Price</th>
-                                        <th class="text-center" style="width: 50px;">Action</th>
+                                        <th>{{ __('visits.service_name') }}</th>
+                                        <th class="text-end" style="width: 120px;">{{ __('visits.price_col') }}</th>
+                                        <th class="text-center" style="width: 50px;">{{ __('visits.action_col') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody id="billingBody"></tbody>
                                 <tfoot>
                                     <tr class="table-light fw-bold">
-                                        <td class="text-end text-primary">Overall Total:</td>
+                                        <td class="text-end text-primary">{{ __('visits.overall_total_label') }}</td>
                                         <td class="text-end text-primary" id="totalAmount">&#8373;0.00</td>
                                         <td></td>
                                     </tr>
@@ -323,30 +323,30 @@
             <!-- Quick Info -->
             <div class="card bg-light" id="walkInInfo">
                 <div class="card-body">
-                    <h6 class="fw-bold mb-3"><i class="ti ti-info-circle me-1"></i>What Happens Next</h6>
+                    <h6 class="fw-bold mb-3"><i class="ti ti-info-circle me-1"></i>{{ __('visits.what_happens_next') }}</h6>
                     <ul class="list-unstyled mb-0 small">
-                        <li class="mb-2"><i class="ti ti-check text-success me-1"></i>Visit is registered</li>
-                        <li class="mb-2"><i class="ti ti-check text-success me-1"></i>Patient moves to <strong>Waiting</strong></li>
-                        <li class="mb-2"><i class="ti ti-check text-warning me-1"></i>Staff pushes to <strong>Triage</strong> → queue # assigned</li>
-                        <li><i class="ti ti-check text-primary me-1"></i>Billing lines created for selected services</li>
+                        <li class="mb-2"><i class="ti ti-check text-success me-1"></i>{{ __('visits.visit_registered') }}</li>
+                        <li class="mb-2"><i class="ti ti-check text-success me-1"></i>{{ __('visits.patient_moves_waiting') }}</li>
+                        <li class="mb-2"><i class="ti ti-check text-warning me-1"></i>{{ __('visits.staff_pushes_triage') }}</li>
+                        <li><i class="ti ti-check text-primary me-1"></i>{{ __('visits.billing_lines_created') }}</li>
                     </ul>
                 </div>
             </div>
             <div class="card bg-light d-none" id="scheduledInfo">
                 <div class="card-body">
-                    <h6 class="fw-bold mb-3"><i class="ti ti-calendar-event me-1 text-primary"></i>Scheduling a Future Visit</h6>
+                    <h6 class="fw-bold mb-3"><i class="ti ti-calendar-event me-1 text-primary"></i>{{ __('visits.scheduling_future') }}</h6>
                     <ul class="list-unstyled mb-0 small">
-                        <li class="mb-2"><i class="ti ti-check text-primary me-1"></i>Visit is <strong>Scheduled</strong></li>
-                        <li class="mb-2"><i class="ti ti-check text-primary me-1"></i>Patient will be notified</li>
-                        <li class="mb-2"><i class="ti ti-check text-primary me-1"></i>Check-in on visit day</li>
-                        <li><i class="ti ti-check text-primary me-1"></i>Auto-transitions to Waiting on check-in</li>
+                        <li class="mb-2"><i class="ti ti-check text-primary me-1"></i>{{ __('visits.visit_scheduled') }}</li>
+                        <li class="mb-2"><i class="ti ti-check text-primary me-1"></i>{{ __('visits.patient_notified') }}</li>
+                        <li class="mb-2"><i class="ti ti-check text-primary me-1"></i>{{ __('visits.checkin_visit_day') }}</li>
+                        <li><i class="ti ti-check text-primary me-1"></i>{{ __('visits.auto_transitions') }}</li>
                     </ul>
                 </div>
             </div>
 
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
-                    <i class="ti ti-plus me-1"></i><span id="submitBtnText">Create Visit</span>
+                    <i class="ti ti-plus me-1"></i><span id="submitBtnText">{{ __('visits.create_visit_btn') }}</span>
                 </button>
             </div>
         </div>
@@ -377,7 +377,7 @@
 
                 <div class="modal-header">
                     <h5 class="modal-title fw-bold">
-                        <i class="ti ti-shield-plus me-1"></i><span id="insuranceModalTitle">Add Insurance</span>
+                        <i class="ti ti-shield-plus me-1"></i><span id="insuranceModalTitle">{{ __('visits.add_insurance_title') }}</span>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -386,9 +386,9 @@
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Insurance Provider <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('visits.insurance_provider_label') }} <span class="text-danger">*</span></label>
                             <select name="insurance_provider_id" id="insuranceProviderSelect" class="form-select" required>
-                                <option value="">Select Provider</option>
+                                <option value="">{{ __('visits.select_provider_opt') }}</option>
                                 @foreach($insuranceProviders as $prov)
                                     <option value="{{ $prov->id }}"
                                             data-type="{{ $prov->type?->value }}"
@@ -400,52 +400,52 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Tier</label>
+                            <label class="form-label">{{ __('visits.tier_label') }}</label>
                             <select name="insurance_tier_id" id="insuranceTierSelect" class="form-select">
-                                <option value="">— Default —</option>
+                                <option value="">{{ __('visits.tier_default') }}</option>
                             </select>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Membership Number</label>
+                            <label class="form-label">{{ __('visits.membership_number_label') }}</label>
                             <input type="text" name="membership_number" class="form-control" maxlength="50">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Policy Number</label>
+                            <label class="form-label">{{ __('visits.policy_number_label') }}</label>
                             <input type="text" name="policy_number" class="form-control" maxlength="50">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">CCC Code <small class="text-muted">(optional)</small></label>
+                            <label class="form-label">{{ __('visits.ccc_code_label') }} <small class="text-muted">{{ __('visits.optional_label') }}</small></label>
                             <input type="text" name="ccc_code" class="form-control" maxlength="64">
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Member Type</label>
+                            <label class="form-label">{{ __('visits.member_type_label') }}</label>
                             <select name="member_type" class="form-select">
-                                <option value="holder" selected>Card Holder</option>
-                                <option value="beneficiary">Beneficiary</option>
+                                <option value="holder" selected>{{ __('visits.card_holder_opt') }}</option>
+                                <option value="beneficiary">{{ __('visits.beneficiary_opt') }}</option>
                             </select>
                         </div>
 
                         <div class="col-md-6">
-                            <label class="form-label">Expiry Date</label>
+                            <label class="form-label">{{ __('visits.expiry_date_label') }}</label>
                             <input type="date" name="expiry_date" class="form-control">
                         </div>
 
                         <div class="col-12">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="is_primary" value="1" id="insIsPrimary">
-                                <label class="form-check-label" for="insIsPrimary">Set as primary insurance</label>
+                                <label class="form-check-label" for="insIsPrimary">{{ __('visits.set_primary_label') }}</label>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('visits.cancel_btn') }}</button>
                     <button type="submit" class="btn btn-primary" id="insuranceFormSaveBtn">
-                        <i class="ti ti-device-floppy me-1"></i>Save Insurance
+                        <i class="ti ti-device-floppy me-1"></i>{{ __('visits.save_insurance_btn') }}
                     </button>
                 </div>
             </form>
@@ -455,6 +455,71 @@
 @endcan
 @endsection
 
+@php
+$visitI18nData = [
+    'search_patient_placeholder' => __('visits.search_patient_placeholder'),
+    'search_dept_placeholder'    => __('visits.search_dept_placeholder'),
+    'search_doctor_placeholder'  => __('visits.search_doctor_placeholder'),
+    'select_dept_load_services'  => __('visits.select_dept_load_services'),
+    'loading_services_doctors'   => __('visits.loading_services_doctors'),
+    'no_services_dept'           => __('visits.no_services_dept'),
+    'no_consult_services'        => __('visits.no_consult_services'),
+    'failed_load_dept'           => __('visits.failed_load_dept'),
+    'loading_insurances'         => __('visits.loading_insurances'),
+    'failed_load_insurances'     => __('visits.failed_load_insurances'),
+    'no_insurances_cash'         => __('visits.no_insurances_cash'),
+    'no_phone'                   => __('visits.no_phone'),
+    'last_visit_label'           => __('visits.last_visit_label'),
+    'member_label'               => __('visits.member_label'),
+    'expires_label'              => __('visits.expires_label'),
+    'expires_today'              => __('visits.expires_today'),
+    'no_expiry'                  => __('visits.no_expiry'),
+    'valid_status'               => __('visits.valid_status'),
+    'expired_status'             => __('visits.expired_status'),
+    'inactive_status'            => __('visits.inactive_status'),
+    'renew_btn'                  => __('visits.renew_btn'),
+    'edit_btn'                   => __('visits.edit_btn'),
+    'beneficiary_label'          => __('visits.beneficiary_opt'),
+    'card_holder_label'          => __('visits.card_holder_opt'),
+    'admission_prefix'           => __('visits.admission_prefix'),
+    'bed_prefix'                 => __('visits.bed_prefix'),
+    'filter_services'            => __('visits.filter_services'),
+    'dept_session_label'         => __('visits.dept_session_label'),
+    'dept_total_label'           => __('visits.dept_total_label'),
+    'doctor_prefix'              => __('visits.doctor_prefix'),
+    'doctor_unassigned'          => __('visits.doctor_unassigned'),
+    'assign_doctor_opt'          => __('visits.assign_doctor_opt'),
+    'select_dept_first'          => __('visits.select_dept_first'),
+    'consult_sessions_note'      => __('visits.consult_sessions_note'),
+    'unassigned_doctor'          => __('visits.unassigned_doctor'),
+    'created_successfully'       => __('visits.created_successfully'),
+    'open_visit'                 => __('visits.open_visit'),
+    'create_another'             => __('visits.create_another'),
+    'current_status'             => __('visits.current_status'),
+    'correct_fields'             => __('visits.correct_fields'),
+    'select_patient_first'       => __('visits.select_patient_first'),
+    'saving'                     => __('visits.saving'),
+    'verifying'                  => __('visits.verifying'),
+    'schedule_visit_btn'         => __('visits.schedule_visit_btn'),
+    'create_visit_btn'           => __('visits.create_visit_btn'),
+    'tier_default'               => __('visits.tier_default'),
+    'add_insurance_title'        => __('visits.add_insurance_title'),
+    'failed_create_visit'        => __('visits.failed_create_visit'),
+    'network_error_visit'        => __('visits.network_error_visit'),
+    'verification_failed'        => __('visits.verification_failed'),
+    'select_patient_ins_update'  => __('visits.select_patient_ins_update'),
+    'insurance_saved'            => __('visits.insurance_saved'),
+    'insurance_updated'          => __('visits.insurance_updated'),
+    'correct_fields_short'       => __('visits.correct_fields_short'),
+    'failed_save_insurance'      => __('visits.failed_save_insurance'),
+    'failed_update_insurance'    => __('visits.failed_update_insurance'),
+    'network_error_insurance'    => __('visits.network_error_insurance'),
+    'network_error_ins_update'   => __('visits.network_error_ins_update'),
+    'select_type_first'          => __('visits.select_type_first'),
+    'select_provider_first'      => __('visits.select_provider_first'),
+];
+@endphp
+<script>const visitI18n = @json($visitI18nData);</script>
 @push('scripts')
 @include('patients.partials.insurance-add-modal-scripts')
 @include('patients.partials.insurance-edit-modal-scripts')
@@ -540,7 +605,7 @@ document.addEventListener('DOMContentLoaded', function() {
         schedulingFields.style.display = isFuture ? '' : 'none';
         walkInInfo.classList.toggle('d-none', isFuture);
         scheduledInfo.classList.toggle('d-none', !isFuture);
-        submitBtnText.textContent = isFuture ? 'Schedule Visit' : 'Create Visit';
+        submitBtnText.textContent = isFuture ? visitI18n.schedule_visit_btn : visitI18n.create_visit_btn;
     }
     visitDateInput.addEventListener('change', checkScheduling);
     checkScheduling();
@@ -639,12 +704,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        showFormFeedback('danger', 'Please correct the highlighted fields and try again.');
+        showFormFeedback('danger', visitI18n.correct_fields);
     }
 
     function setSubmitting(isSubmitting) {
         submitBtn.disabled = isSubmitting;
-        submitBtnText.textContent = isSubmitting ? 'Saving...' : '';
+        submitBtnText.textContent = isSubmitting ? visitI18n.saving : '';
 
         if (!isSubmitting) {
             checkScheduling();
@@ -660,7 +725,7 @@ document.addEventListener('DOMContentLoaded', function() {
         patientInsurances = [];
         selectedInsurance = null;
 
-        document.getElementById('insuranceList').innerHTML = '<div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>Loading patient insurances...</div>';
+        document.getElementById('insuranceList').innerHTML = '<div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>' + visitI18n.loading_insurances + '</div>';
         document.getElementById('insuranceFallbackBadge').style.display = 'none';
         document.getElementById('visitInsuranceId').value = '';
 
@@ -708,11 +773,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 showFormFeedback(
                     'success',
                     '<div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">'
-                        + '<div><div class="fw-bold">' + escapeHtml(payload.message || 'Visit created successfully.') + '</div>'
-                        + '<div class="small text-muted">Current status: ' + escapeHtml(payload.status_label || '') + '</div></div>'
+                        + '<div><div class="fw-bold">' + escapeHtml(payload.message || visitI18n.created_successfully) + '</div>'
+                        + '<div class="small text-muted">' + visitI18n.current_status + ' ' + escapeHtml(payload.status_label || '') + '</div></div>'
                         + '<div class="d-flex gap-2">'
-                        + '<a href="' + escapeHtml(payload.redirect_url || '#') + '" class="btn btn-sm btn-success">Open Visit</a>'
-                        + '<button type="button" class="btn btn-sm btn-outline-success" id="createAnotherVisitBtn">Create Another</button>'
+                        + '<a href="' + escapeHtml(payload.redirect_url || '#') + '" class="btn btn-sm btn-success">' + visitI18n.open_visit + '</a>'
+                        + '<button type="button" class="btn btn-sm btn-outline-success" id="createAnotherVisitBtn">' + visitI18n.create_another + '</button>'
                         + '</div></div>'
                 );
 
@@ -736,10 +801,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            const message = payload.message || 'Failed to create visit. Please try again.';
+            const message = payload.message || visitI18n.failed_create_visit;
             showFormFeedback('danger', escapeHtml(message));
         } catch (error) {
-            showFormFeedback('danger', 'Network error while creating visit. Please try again.');
+            showFormFeedback('danger', visitI18n.network_error_visit);
         } finally {
             setSubmitting(false);
         }
@@ -809,10 +874,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const meta = [
                     patient.patient_number || '',
-                    patient.phone || 'No phone',
+                    patient.phone || visitI18n.no_phone,
                 ].filter(Boolean);
                 if (patient.last_visit_date) {
-                    meta.push('Last visit: ' + patient.last_visit_date);
+                    meta.push(visitI18n.last_visit_label + ' ' + patient.last_visit_date);
                 }
 
                 return jQuery('<span>').html(
@@ -838,11 +903,11 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('patientInitial').textContent = patient.full_name.charAt(0).toUpperCase();
         document.getElementById('patientName').textContent = patient.full_name;
         document.getElementById('patientNumber').textContent = patient.patient_number;
-        document.getElementById('patientPhone').textContent = patient.phone || 'No phone';
+        document.getElementById('patientPhone').textContent = patient.phone || visitI18n.no_phone;
 
         const lastVisitEl = document.getElementById('patientLastVisit');
         if (patient.last_visit_date) {
-            lastVisitEl.innerHTML = '&bull; Last visit: <strong>' + escapeHtml(patient.last_visit_date) + '</strong>';
+            lastVisitEl.innerHTML = '&bull; ' + visitI18n.last_visit_label + ' <strong>' + escapeHtml(patient.last_visit_date) + '</strong>';
             lastVisitEl.classList.remove('d-none');
         } else {
             lastVisitEl.classList.add('d-none');
@@ -860,9 +925,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const activeAdmissionText = document.getElementById('activeAdmissionText');
         if (patient.active_admission) {
             const admission = patient.active_admission;
-            let text = 'Admission ' + admission.admission_number;
+            let text = visitI18n.admission_prefix + ' ' + admission.admission_number;
             if (admission.ward || admission.bed) {
-                text += ' - ' + [admission.ward, admission.bed ? 'Bed ' + admission.bed : null].filter(Boolean).join(' / ');
+                text += ' - ' + [admission.ward, admission.bed ? visitI18n.bed_prefix + ' ' + admission.bed : null].filter(Boolean).join(' / ');
             }
             activeAdmissionText.textContent = text + '.';
             activeAdmissionWarning.classList.remove('d-none');
@@ -907,7 +972,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ==========================================
     function loadPatientInsurances(patientId) {
         insuranceCard.classList.remove('d-none');
-        document.getElementById('insuranceList').innerHTML = '<div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>Loading...</div>';
+        document.getElementById('insuranceList').innerHTML = '<div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>' + visitI18n.loading_insurances + '</div>';
 
         fetch('{{ route("admin.visits.patient-insurances") }}?patient_id=' + patientId, {
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
@@ -922,14 +987,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
             let html = '';
             if (patientInsurances.length === 0) {
-                html = '<div class="text-muted text-center py-2">No insurances found. Defaulting to Cash & Carry.</div>';
+                html = '<div class="text-muted text-center py-2">' + visitI18n.no_insurances_cash + '</div>';
             } else {
                 html = '<div class="list-group">';
                 patientInsurances.forEach(function(ins) {
                     const isDefault = ins.id == defaultId;
                     const isDisabled = !ins.is_valid && !ins.is_default;
                     const badgeClass = ins.is_valid ? 'bg-success' : (ins.is_expired ? 'bg-danger' : 'bg-secondary');
-                    const statusText = ins.is_valid ? 'Valid' : (ins.is_expired ? 'Expired' : 'Inactive');
+                    const statusText = ins.is_valid ? visitI18n.valid_status : (ins.is_expired ? visitI18n.expired_status : visitI18n.inactive_status);
 
                     html += '<label class="list-group-item list-group-item-action d-flex align-items-center gap-3 ' + (isDisabled ? 'opacity-50' : '') + '">';
                     html += '<input type="radio" name="_insurance_radio" class="form-check-input insurance-radio" value="' + ins.id + '" data-ins-id="' + ins.id + '"';
@@ -940,11 +1005,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += '<div class="fw-medium">' + escapeHtml(ins.provider_name) + ' <span class="badge bg-' + ins.type_color + ' ms-1">' + escapeHtml(ins.type_label) + '</span>';
                     if (ins.tier_name) html += ' <span class="badge bg-primary bg-opacity-75 ms-1">' + escapeHtml(ins.tier_name) + '</span>';
                     const memberBadge = ins.member_type === 'beneficiary' ? 'bg-warning text-dark' : 'bg-info';
-                    const memberLabel = ins.member_type === 'beneficiary' ? 'Beneficiary' : 'Card Holder';
+                    const memberLabel = ins.member_type === 'beneficiary' ? visitI18n.beneficiary_label : visitI18n.card_holder_label;
                     html += ' <span class="badge ' + memberBadge + ' ms-1">' + memberLabel + '</span>';
                     html += '</div>';
                     html += '<small class="text-muted">';
-                    if (ins.membership_number) html += 'Member: ' + escapeHtml(ins.membership_number) + ' &bull; ';
+                    if (ins.membership_number) html += visitI18n.member_label + ' ' + escapeHtml(ins.membership_number) + ' &bull; ';
                     if (ins.expiry_date) {
                         const expiry = new Date(ins.expiry_date);
                         const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -954,23 +1019,23 @@ document.addEventListener('DOMContentLoaded', function() {
                             daysText = daysLeft + ' day' + (daysLeft === 1 ? '' : 's') + ' left';
                             badgeClass = daysLeft <= 30 ? 'bg-warning text-dark' : 'bg-light text-muted border';
                         } else if (daysLeft === 0) {
-                            daysText = 'Expires today';
+                            daysText = visitI18n.expires_today;
                             badgeClass = 'bg-warning text-dark';
                         } else {
                             daysText = Math.abs(daysLeft) + ' day' + (Math.abs(daysLeft) === 1 ? '' : 's') + ' ago';
                             badgeClass = 'bg-danger text-white';
                         }
-                        html += 'Expires: ' + ins.expiry_date + ' <span class="badge ' + badgeClass + '">' + daysText + '</span>';
-                    } else html += 'No expiry';
+                        html += visitI18n.expires_label + ' ' + ins.expiry_date + ' <span class="badge ' + badgeClass + '">' + daysText + '</span>';
+                    } else html += visitI18n.no_expiry;
                     html += '</small>';
                     html += '</div>';
                     html += '<div class="text-end">';
                     html += '<span class="badge ' + badgeClass + '">' + statusText + '</span>';
                     if (ins.coverage_percentage != null) {
-                        html += '<div class="small text-muted mt-1">' + ins.coverage_percentage + '% coverage</div>';
+                        html += '<div class="small text-muted mt-1">' + ins.coverage_percentage + '%</div>';
                     }
                     if (!ins.is_default && canManagePatientInsurance) {
-                        const editLabel = ins.is_expired ? 'Renew' : 'Edit';
+                        const editLabel = ins.is_expired ? visitI18n.renew_btn : visitI18n.edit_btn;
                         const editIcon  = ins.is_expired ? 'ti-refresh' : 'ti-pencil';
                         html += '<button type="button" class="btn btn-link btn-sm p-0 mt-1 edit-insurance-btn"'
                               + ' data-id="' + ins.id + '"'
@@ -1023,7 +1088,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(function() {
-            document.getElementById('insuranceList').innerHTML = '<div class="text-danger text-center py-2">Failed to load insurances.</div>';
+            document.getElementById('insuranceList').innerHTML = '<div class="text-danger text-center py-2">' + visitI18n.failed_load_insurances + '</div>';
         });
     }
 
@@ -1123,7 +1188,7 @@ document.addEventListener('DOMContentLoaded', function() {
             renderServicesList();
         })
         .catch(() => {
-            document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-alert-circle me-1 text-danger"></i>Failed to load department options';
+            document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-alert-circle me-1 text-danger"></i>' + visitI18n.failed_load_dept;
             document.getElementById('servicesPlaceholder').classList.remove('d-none');
             repopulateDoctorSelect([]);
         });
@@ -1146,7 +1211,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderServicesList() {
         if (availableServices.length === 0) {
-            document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-info-circle me-1 text-muted"></i>No services are available for this department';
+            document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-info-circle me-1 text-muted"></i>' + visitI18n.no_services_dept;
             document.getElementById('servicesPlaceholder').classList.remove('d-none');
             document.getElementById('servicesContent').classList.add('d-none');
             document.getElementById('servicesItems').innerHTML = '';
@@ -1159,8 +1224,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }).length;
 
         if (visibleServices.length === 0) {
-            document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-info-circle me-1 text-muted"></i>No consultation services are available for this department'
-                + (extraServicesCount ? '. Enable "Show other services" to load extra services.' : '.');
+            document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-info-circle me-1 text-muted"></i>' + visitI18n.no_consult_services + (extraServicesCount ? '.' : '.');
             document.getElementById('servicesPlaceholder').classList.remove('d-none');
             document.getElementById('servicesContent').classList.add('d-none');
             document.getElementById('servicesItems').innerHTML = '';
@@ -1220,13 +1284,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showServicesPlaceholder() {
-        document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-list-search me-1"></i>Select a department to load services and route doctors';
+        document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-list-search me-1"></i>' + visitI18n.select_dept_load_services;
         document.getElementById('servicesPlaceholder').classList.remove('d-none');
         document.getElementById('servicesContent').classList.add('d-none');
     }
 
     function showVisitOptionsLoading() {
-        document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-loader me-1"></i>Loading services and route doctors...';
+        document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-loader me-1"></i>' + visitI18n.loading_services_doctors;
         document.getElementById('servicesPlaceholder').classList.remove('d-none');
         document.getElementById('servicesContent').classList.add('d-none');
     }
@@ -1309,10 +1373,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 html += '<tr class="table-light">';
                 html += '<td colspan="3">';
                 html += '<div class="d-flex flex-wrap justify-content-between gap-2">';
-                html += '<span class="fw-semibold text-dark">' + escapeHtml(group.departmentName || 'Department') + ' Department Session</span>';
+                html += '<span class="fw-semibold text-dark">' + escapeHtml(group.departmentName || '') + ' ' + visitI18n.dept_session_label + '</span>';
                 html += '<span class="text-muted small">';
-                html += group.doctorName ? 'Doctor: ' + escapeHtml(group.doctorName) : 'Doctor: Unassigned';
-                html += ' &middot; Department total: ₵' + formatNumber(groupTotal);
+                html += group.doctorName ? visitI18n.doctor_prefix + ' ' + escapeHtml(group.doctorName) : visitI18n.doctor_unassigned;
+                html += ' &middot; ' + visitI18n.dept_total_label + ' ₵' + formatNumber(groupTotal);
                 html += '</span></div></td></tr>';
                 renderedDepartments[groupKey] = true;
             }
@@ -1371,12 +1435,12 @@ document.addEventListener('DOMContentLoaded', function() {
             .filter(group => group.departmentType === 'consultation');
 
         if (consultationGroups.length === 0) {
-            summary.textContent = 'Consultation department sessions will be created only for consultation-type departments.';
+            summary.textContent = visitI18n.consult_sessions_note;
             return;
         }
 
         summary.textContent = consultationGroups.map(function(group) {
-            return (group.departmentName || 'Department') + ': ' + (group.doctorName || 'Unassigned doctor');
+            return (group.departmentName || '') + ': ' + (group.doctorName || visitI18n.unassigned_doctor);
         }).join(' | ');
     }
 
@@ -1407,14 +1471,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!departmentSelect.value) {
             doctorSelect.disabled = true;
-            doctorSelect.innerHTML = '<option value="">Select department first</option>';
+            doctorSelect.innerHTML = '<option value="">' + visitI18n.select_dept_first + '</option>';
             // doctorSelectHelp.textContent = 'Doctors load from specialties linked to the selected department.';
             refreshVisitSelect2(doctorSelect);
             return;
         }
 
         doctorSelect.disabled = false;
-        doctorSelect.innerHTML = '<option value="">Assign Doctor/Staff optional</option>';
+        doctorSelect.innerHTML = '<option value="">' + visitI18n.assign_doctor_opt + '</option>';
         doctors.forEach(function(doc) {
             const opt = document.createElement('option');
             opt.value = doc.id;
@@ -1518,7 +1582,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const piId = document.getElementById('visitInsuranceId').value;
         if (!piId) return;
         const fb = document.getElementById('verificationFeedback');
-        fb.innerHTML = '<i class="ti ti-loader me-1"></i>Contacting provider...';
+        fb.innerHTML = '<i class="ti ti-loader me-1"></i>' + visitI18n.verifying;
         try {
             const resp = await fetch(verifyUrl, {
                 method: 'POST',
@@ -1536,12 +1600,12 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             const data = await resp.json();
             if (!resp.ok) {
-                fb.innerHTML = '<div class="text-danger">' + escapeHtml(data.message || 'Verification request failed.') + '</div>';
+                fb.innerHTML = '<div class="text-danger">' + escapeHtml(data.message || visitI18n.verification_failed) + '</div>';
                 return;
             }
             renderVerificationStatus(data);
         } catch (e) {
-            fb.innerHTML = '<div class="text-danger">Verification request failed: ' + escapeHtml(e.message) + '</div>';
+            fb.innerHTML = '<div class="text-danger">' + visitI18n.verification_failed + ': ' + escapeHtml(e.message) + '</div>';
         }
     }
 
@@ -1591,12 +1655,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const tierInfo = document.getElementById('addInsTierInfo');
 
         if (provider) {
-            provider.innerHTML = '<option value="">Select type first</option>';
+            provider.innerHTML = '<option value="">' + visitI18n.select_type_first + '</option>';
             provider.disabled = true;
         }
 
         if (tier) {
-            tier.innerHTML = '<option value="">Select provider first</option>';
+            tier.innerHTML = '<option value="">' + visitI18n.select_provider_first + '</option>';
             tier.disabled = true;
         }
 
@@ -1631,7 +1695,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const patientId = patientIdInput.value;
         if (!patientId) {
-            alert('Please select a patient first.');
+            alert(visitI18n.select_patient_first);
             return;
         }
 
@@ -1646,7 +1710,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             const patientId = patientIdInput.value;
             if (!patientId) {
-                showSharedAddInsuranceFeedback('danger', 'Please select a patient first.');
+                showSharedAddInsuranceFeedback('danger', visitI18n.select_patient_first);
                 return;
             }
 
@@ -1661,7 +1725,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const originalLabel = sharedAddInsuranceSubmit ? sharedAddInsuranceSubmit.innerHTML : '';
             if (sharedAddInsuranceSubmit) {
                 sharedAddInsuranceSubmit.disabled = true;
-                sharedAddInsuranceSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+                sharedAddInsuranceSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>' + visitI18n.saving + '';
             }
 
             try {
@@ -1679,7 +1743,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = ct.includes('application/json') ? await resp.json() : {};
 
                 if (resp.ok) {
-                    showSharedAddInsuranceFeedback('success', data.message || 'Insurance saved.');
+                    showSharedAddInsuranceFeedback('success', data.message || visitI18n.insurance_saved);
                     await reloadInsuranceListAndSelect(data.insurance_id || null);
                     setTimeout(() => sharedAddInsuranceModal.hide(), 600);
                     return;
@@ -1687,13 +1751,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (resp.status === 422 && data.errors) {
                     applySharedAddInsuranceErrors(data.errors);
-                    showSharedAddInsuranceFeedback('danger', data.message || 'Please correct the highlighted fields.');
+                    showSharedAddInsuranceFeedback('danger', data.message || visitI18n.correct_fields_short);
                     return;
                 }
 
-                showSharedAddInsuranceFeedback('danger', data.message || 'Failed to save insurance. Please try again.');
+                showSharedAddInsuranceFeedback('danger', data.message || visitI18n.failed_save_insurance);
             } catch (err) {
-                showSharedAddInsuranceFeedback('danger', 'Network error while saving insurance.');
+                showSharedAddInsuranceFeedback('danger', visitI18n.network_error_insurance);
             } finally {
                 if (sharedAddInsuranceSubmit) {
                     sharedAddInsuranceSubmit.disabled = false;
@@ -1731,7 +1795,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const patientId = patientIdInput.value || sharedEditInsuranceForm.dataset.patientId;
             const insuranceId = sharedEditInsuranceForm.dataset.insuranceId;
             if (!patientId || !insuranceId) {
-                showSharedEditInsuranceFeedback('danger', 'Please select a patient insurance to update.');
+                showSharedEditInsuranceFeedback('danger', visitI18n.select_patient_ins_update);
                 return;
             }
 
@@ -1749,7 +1813,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const originalLabel = sharedEditInsuranceSubmit ? sharedEditInsuranceSubmit.innerHTML : '';
             if (sharedEditInsuranceSubmit) {
                 sharedEditInsuranceSubmit.disabled = true;
-                sharedEditInsuranceSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+                sharedEditInsuranceSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>' + visitI18n.saving + '';
             }
 
             try {
@@ -1767,7 +1831,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = ct.includes('application/json') ? await resp.json() : {};
 
                 if (resp.ok) {
-                    showSharedEditInsuranceFeedback('success', data.message || 'Insurance updated.');
+                    showSharedEditInsuranceFeedback('success', data.message || visitI18n.insurance_updated);
                     await reloadInsuranceListAndSelect(data.insurance_id || parseInt(insuranceId));
                     if (sharedEditInsuranceModalEl) {
                         setTimeout(() => bootstrap.Modal.getOrCreateInstance(sharedEditInsuranceModalEl).hide(), 600);
@@ -1777,13 +1841,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (resp.status === 422 && data.errors) {
                     applySharedEditInsuranceErrors(data.errors);
-                    showSharedEditInsuranceFeedback('danger', data.message || 'Please correct the highlighted fields.');
+                    showSharedEditInsuranceFeedback('danger', data.message || visitI18n.correct_fields_short);
                     return;
                 }
 
-                showSharedEditInsuranceFeedback('danger', data.message || 'Failed to update insurance. Please try again.');
+                showSharedEditInsuranceFeedback('danger', data.message || visitI18n.failed_update_insurance);
             } catch (err) {
-                showSharedEditInsuranceFeedback('danger', 'Network error while updating insurance.');
+                showSharedEditInsuranceFeedback('danger', visitI18n.network_error_ins_update);
             } finally {
                 if (sharedEditInsuranceSubmit) {
                     sharedEditInsuranceSubmit.disabled = false;
@@ -1808,7 +1872,7 @@ document.addEventListener('DOMContentLoaded', function() {
         insuranceForm.reset();
         insIdInput.value = '';
         insPatientIdInput.value = '';
-        tierSelect.innerHTML = '<option value="">— Default —</option>';
+        tierSelect.innerHTML = '<option value="">' + visitI18n.tier_default + '</option>';
         insuranceForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
         insuranceForm.querySelectorAll('.dynamic-invalid-feedback').forEach(el => el.remove());
         insuranceFormFb.classList.add('d-none');
@@ -1816,7 +1880,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function repopulateTiers(providerOption) {
-        tierSelect.innerHTML = '<option value="">— Default —</option>';
+        tierSelect.innerHTML = '<option value="">' + visitI18n.tier_default + '</option>';
         if (!providerOption) return;
         let tiers = [];
         try { tiers = JSON.parse(providerOption.dataset.tiers || '[]'); } catch (e) {}
@@ -1839,12 +1903,12 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!insuranceModal) return;
         const patientId = patientIdInput.value;
         if (!patientId) {
-            alert('Please select a patient first.');
+            alert(visitI18n.select_patient_first);
             return;
         }
         clearInsuranceForm();
         insPatientIdInput.value = patientId;
-        insModalTitle.textContent = (mode === 'edit') ? 'Edit / Renew Insurance' : 'Add Insurance';
+        insModalTitle.textContent = (mode === 'edit') ? visitI18n.edit_btn + ' / ' + visitI18n.renew_btn + ' Insurance' : visitI18n.add_insurance_title;
 
         if (mode === 'edit' && insuranceId) {
             const ins = patientInsurances.find(i => i.id === insuranceId);
@@ -1907,7 +1971,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             insSaveBtn.disabled = true;
             const originalLabel = insSaveBtn.innerHTML;
-            insSaveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Saving...';
+            insSaveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>' + visitI18n.saving + '';
 
             try {
                 const resp = await fetch(baseUrl, {
@@ -1924,7 +1988,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = ct.includes('application/json') ? await resp.json() : {};
 
                 if (resp.ok) {
-                    showInsuranceFb('success', data.message || 'Insurance saved.');
+                    showInsuranceFb('success', data.message || visitI18n.insurance_saved);
                     // Reload insurance list and auto-select the new/edited one
                     await reloadInsuranceListAndSelect(data.insurance_id || (isEdit ? parseInt(insId) : null));
                     setTimeout(() => insuranceModal.hide(), 600);
@@ -1933,13 +1997,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (resp.status === 422 && data.errors) {
                     applyInsuranceErrors(data.errors);
-                    showInsuranceFb('danger', data.message || 'Please correct the highlighted fields.');
+                    showInsuranceFb('danger', data.message || visitI18n.correct_fields_short);
                     return;
                 }
 
-                showInsuranceFb('danger', data.message || 'Failed to save insurance. Please try again.');
+                showInsuranceFb('danger', data.message || visitI18n.failed_save_insurance);
             } catch (err) {
-                showInsuranceFb('danger', 'Network error while saving insurance.');
+                showInsuranceFb('danger', visitI18n.network_error_insurance);
             } finally {
                 insSaveBtn.disabled = false;
                 insSaveBtn.innerHTML = originalLabel;

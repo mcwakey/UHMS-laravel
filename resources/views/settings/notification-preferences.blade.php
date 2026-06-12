@@ -3,8 +3,8 @@
 
 @section('content')
 <div class="d-flex align-items-center justify-content-between mb-3">
-    <h4 class="fw-bold mb-0">Notification Preferences</h4>
-    <a href="{{ route('admin.profile') }}" class="btn btn-sm btn-outline-secondary">Back to profile</a>
+    <h4 class="fw-bold mb-0">{{ __('settings.notification_title') }}</h4>
+    <a href="{{ route('admin.profile') }}" class="btn btn-sm btn-outline-secondary">{{ __('settings.back_to_profile') }}</a>
 </div>
 
 <form method="POST" action="{{ route('admin.notification-preferences.update') }}">
@@ -14,13 +14,13 @@
             <table class="table mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Module</th>
+                        <th>{{ __('settings.notif_module') }}</th>
                         @foreach($channels as $ch)
                             <th class="text-center">{{ ucfirst($ch) }}</th>
                         @endforeach
-                        <th class="text-center">Digest</th>
-                        <th>Quiet from</th>
-                        <th>Quiet to</th>
+                        <th class="text-center">{{ __('settings.notif_digest') }}</th>
+                        <th>{{ __('settings.notif_quiet_from') }}</th>
+                        <th>{{ __('settings.notif_quiet_to') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -62,7 +62,7 @@
             </table>
         </div>
         <div class="card-footer">
-            <button class="btn btn-primary btn-sm">Save preferences</button>
+            <button class="btn btn-primary btn-sm">{{ __('settings.save_preferences') }}</button>
         </div>
     </div>
 </form>

@@ -117,7 +117,7 @@
 @endif
 @if($errors->any())
     <div class="alert alert-danger">
-        <div class="fw-semibold mb-1">Please correct the highlighted details.</div>
+        <div class="fw-semibold mb-1">{{ __('emergency.correct_highlighted_details') }}</div>
         <ul class="mb-0">
             @foreach($errors->all() as $error)
                 <li>{{ $error }}</li>
@@ -130,36 +130,36 @@
     <div class="col-md-6 col-xl-3">
         <div class="card h-100 border-0 bg-light emergency-kpi">
             <div class="card-body">
-                <div class="text-muted small">Triage</div>
+                <div class="text-muted small">{{ __('emergency.triage_label') }}</div>
                 <div class="h5 mb-1"><span class="badge {{ $triageClass }}">{{ $currentTriage }}</span></div>
-                <small class="text-muted">Auto: {{ $case->auto_triage_category ?: 'Pending' }} @if($case->triage_score) - Score {{ $case->triage_score }} @endif</small>
+                <small class="text-muted">{{ __('emergency.auto_prefix') }}: {{ $case->auto_triage_category ?: __('emergency.pending_calc') }} @if($case->triage_score) - {{ __('emergency.score') }} {{ $case->triage_score }} @endif</small>
             </div>
         </div>
     </div>
     <div class="col-md-6 col-xl-3">
         <div class="card h-100 border-0 bg-light">
             <div class="card-body">
-                <div class="text-muted small">Bay / Bed</div>
-                <div class="h5 mb-1">{{ $case->activeBayAssignment?->bed?->bed_number ?: ($case->bay->name ?? 'Unassigned') }}</div>
-                <small class="text-muted">{{ $case->activeBayAssignment?->ward?->name ?: ($case->bay?->ward?->name ?: 'No emergency bed linked') }}</small>
+                <div class="text-muted small">{{ __('emergency.bay_bed') }}</div>
+                <div class="h5 mb-1">{{ $case->activeBayAssignment?->bed?->bed_number ?: ($case->bay->name ?? __('emergency.unassigned')) }}</div>
+                <small class="text-muted">{{ $case->activeBayAssignment?->ward?->name ?: ($case->bay?->ward?->name ?: __('emergency.no_emergency_bed_linked')) }}</small>
             </div>
         </div>
     </div>
     <div class="col-md-6 col-xl-3">
         <div class="card h-100 border-0 bg-light">
             <div class="card-body">
-                <div class="text-muted small">Emergency Team</div>
-                <div class="small">Doctor: <span class="fw-semibold">{{ $session?->mainDoctor?->name ?? $case->assignedDoctor->name ?? 'Unassigned' }}</span></div>
-                <div class="small">Nurse: <span class="fw-semibold">{{ $session?->primaryNurse?->name ?? $case->assignedNurse->name ?? 'Unassigned' }}</span></div>
+                <div class="text-muted small">{{ __('emergency.emergency_team') }}</div>
+                <div class="small">{{ __('emergency.doctor_prefix') }}: <span class="fw-semibold">{{ $session?->mainDoctor?->name ?? $case->assignedDoctor->name ?? __('emergency.unassigned') }}</span></div>
+                <div class="small">{{ __('emergency.nurse_prefix_team') }}: <span class="fw-semibold">{{ $session?->primaryNurse?->name ?? $case->assignedNurse->name ?? __('emergency.unassigned') }}</span></div>
             </div>
         </div>
     </div>
     <div class="col-md-6 col-xl-3">
         <div class="card h-100 border-0 bg-light">
             <div class="card-body">
-                <div class="text-muted small">Contributors</div>
-                <div class="small fw-semibold">{{ $contributors->isNotEmpty() ? $contributors->take(3)->implode(', ') : 'None yet' }}</div>
-                <small class="text-muted">Session: {{ $session?->status ?? 'Pending' }}</small>
+                <div class="text-muted small">{{ __('emergency.contributors_label') }}</div>
+                <div class="small fw-semibold">{{ $contributors->isNotEmpty() ? $contributors->take(3)->implode(', ') : __('emergency.none_yet') }}</div>
+                <small class="text-muted">{{ __('emergency.session_label') }}: {{ $session?->status ?? __('emergency.pending_calc') }}</small>
             </div>
         </div>
     </div>
@@ -167,7 +167,7 @@
 
 @if($criticalAlerts->isNotEmpty())
     <div class="alert alert-danger py-2">
-        <div class="fw-semibold mb-1"><i class="ti ti-alert-triangle me-1"></i>Critical Alerts</div>
+        <div class="fw-semibold mb-1"><i class="ti ti-alert-triangle me-1"></i>{{ __('emergency.critical_alerts') }}</div>
         <div class="d-flex flex-wrap gap-2">
             @foreach($criticalAlerts as $alert)
                 <span class="badge bg-danger-subtle text-danger border border-danger-subtle">{{ $alert }}</span>
@@ -180,38 +180,38 @@
     <div class="col-xl-8">
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <h5 class="card-title mb-0">Emergency Control Sheet</h5>
+                <h5 class="card-title mb-0">{{ __('emergency.control_sheet') }}</h5>
                 <div class="d-flex align-items-center gap-2">
                     <span class="badge bg-light text-dark">{{ $case->arrival_mode }}</span>
                     <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#controlSheetModal">
-                        <i class="ti ti-edit me-1"></i>Edit
+                        <i class="ti ti-edit me-1"></i>{{ __('emergency.edit') }}
                     </button>
                 </div>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <div class="text-muted small">Patient</div>
-                        <div class="fw-semibold">{{ $case->patient->full_name ?? 'Unknown patient' }}</div>
+                        <div class="text-muted small">{{ __('emergency.patient_label') }}</div>
+                        <div class="fw-semibold">{{ $case->patient->full_name ?? __('emergency.unknown_patient_cs') }}</div>
                         <div class="small text-muted">{{ $case->patient->patient_number ?? '' }}</div>
                         @if($case->patient?->is_temporary)
-                            <span class="badge bg-warning-subtle text-warning">Temporary emergency patient</span>
+                            <span class="badge bg-warning-subtle text-warning">{{ __('emergency.temp_emergency_patient') }}</span>
                         @endif
                     </div>
                     <div class="col-md-6">
-                        <div class="text-muted small">Chief Complaint</div>
-                        <div>{{ $case->chief_complaint ?: 'Not recorded' }}</div>
+                        <div class="text-muted small">{{ __('emergency.chief_complaint_label') }}</div>
+                        <div>{{ $case->chief_complaint ?: __('emergency.not_recorded') }}</div>
                     </div>
                     <div class="col-md-6">
-                        <div class="text-muted small">Initial Condition</div>
-                        <div>{{ $case->initial_condition ?: 'Not recorded' }}</div>
+                        <div class="text-muted small">{{ __('emergency.initial_condition_label') }}</div>
+                        <div>{{ $case->initial_condition ?: __('emergency.not_recorded') }}</div>
                     </div>
                     <div class="col-md-6">
-                        <div class="text-muted small">Referral / Source</div>
-                        <div>{{ $case->referral_facility ?: ($case->source ?: 'Not recorded') }}</div>
+                        <div class="text-muted small">{{ __('emergency.referral_source') }}</div>
+                        <div>{{ $case->referral_facility ?: ($case->source ?: __('emergency.not_recorded')) }}</div>
                     </div>
                     <div class="col-md-6">
-                        <div class="text-muted small">Latest Vitals</div>
+                        <div class="text-muted small">{{ __('emergency.latest_vitals_label') }}</div>
                         @if($case->latestVitals)
                             <div class="small">
                                 BP {{ $case->latestVitals->blood_pressure ?? '-' }},
@@ -219,15 +219,15 @@
                                 Temp {{ $case->latestVitals->temperature ?? '-' }},
                                 SpO2 {{ $case->latestVitals->spo2 ?? '-' }}
                             </div>
-                            <small class="text-muted">By {{ $case->latestVitals->recordedBy->name ?? 'Unknown' }} at {{ $case->latestVitals->recorded_at?->format('d M H:i') }}</small>
+                            <small class="text-muted">{{ __('emergency.vitals_recorded_by') }} {{ $case->latestVitals->recordedBy->name ?? __('emergency.unknown_patient') }} at {{ $case->latestVitals->recorded_at?->format('d M H:i') }}</small>
                         @else
-                            <div class="text-muted">No vitals recorded</div>
+                            <div class="text-muted">{{ __('emergency.no_vitals') }}</div>
                         @endif
                     </div>
                     <div class="col-md-6">
-                        <div class="text-muted small">Billing</div>
-                        <div class="fw-semibold">{{ $activeInvoice?->invoice_number ?? 'No invoice yet' }}</div>
-                        <small class="text-muted">Emergency care is not blocked by payment.</small>
+                        <div class="text-muted small">{{ __('emergency.billing_label') }}</div>
+                        <div class="fw-semibold">{{ $activeInvoice?->invoice_number ?? __('emergency.no_invoice_yet') }}</div>
+                        <small class="text-muted">{{ __('emergency.emergency_care_note') }}</small>
                     </div>
                 </div>
             </div>
@@ -235,8 +235,8 @@
 
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <h5 class="card-title mb-0">Vitals Trend</h5>
-                <span class="badge bg-light text-dark">{{ $case->vitals->count() }} readings</span>
+                <h5 class="card-title mb-0">{{ __('emergency.vitals_trend') }}</h5>
+                <span class="badge bg-light text-dark">{{ $case->vitals->count() }} {{ __('emergency.readings') }}</span>
             </div>
             <div class="card-body">
                 @if($case->vitals->isNotEmpty())
@@ -251,7 +251,7 @@
                     </div>
                     <div class="table-responsive mt-3 er-scroll">
                         <table class="table table-sm align-middle mb-0">
-                            <thead><tr><th>Time</th><th>BP</th><th>HR</th><th>RR</th><th>Temp</th><th>SpO2</th><th>By</th></tr></thead>
+                            <thead><tr><th>{{ __('emergency.vitals_time') }}</th><th>BP</th><th>HR</th><th>RR</th><th>{{ __('emergency.vitals_temp') }}</th><th>SpO2</th><th>{{ __('emergency.vitals_recorded_by') }}</th></tr></thead>
                             <tbody>
                                 @foreach($case->vitals->sortByDesc('recorded_at') as $vital)
                                     <tr>
@@ -261,20 +261,20 @@
                                         <td>{{ $vital->respiratory_rate ?? '-' }}</td>
                                         <td>{{ $vital->temperature ?? '-' }}</td>
                                         <td>{{ $vital->spo2 ?? '-' }}</td>
-                                        <td>{{ $vital->recordedBy->name ?? 'Unknown' }}</td>
+                                        <td>{{ $vital->recordedBy->name ?? __('emergency.unknown_patient') }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
                 @else
-                    <div class="text-muted py-3">No emergency vitals recorded yet.</div>
+                    <div class="text-muted py-3">{{ __('emergency.no_vitals_recorded') }}</div>
                 @endif
             </div>
         </div>
 
         <div class="card mb-3">
-            <div class="card-header"><h5 class="card-title mb-0">Clinical Notes</h5></div>
+            <div class="card-header"><h5 class="card-title mb-0">{{ __('emergency.clinical_notes') }}</h5></div>
             <div class="card-body">
                 <form method="POST" action="{{ route('admin.emergency.notes.store', $case) }}" class="row g-2 mb-3">
                     @csrf
@@ -285,8 +285,8 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-6"><textarea class="form-control" name="content" rows="2" placeholder="Add rapid emergency note" required></textarea></div>
-                    <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">Add Note</button></div>
+                    <div class="col-md-6"><textarea class="form-control" name="content" rows="2" placeholder="{{ __('emergency.add_rapid_note') }}" required></textarea></div>
+                    <div class="col-md-2"><button class="btn btn-primary w-100" type="submit">{{ __('emergency.add_note_btn') }}</button></div>
                 </form>
                 <div class="list-group list-group-flush">
                     @forelse($case->notes->sortByDesc('created_at') as $note)
@@ -296,10 +296,10 @@
                                 <small class="text-muted">{{ $note->created_at?->format('d M Y H:i') }}</small>
                             </div>
                             <div class="mt-1">{{ $note->content }}</div>
-                            <small class="text-muted">Entered by {{ $note->creator->name ?? 'Unknown user' }}</small>
+                            <small class="text-muted">{{ __('emergency.entered_by') }} {{ $note->creator->name ?? __('emergency.unknown_user') }}</small>
                         </div>
                     @empty
-                        <div class="text-muted py-3">No emergency notes yet.</div>
+                        <div class="text-muted py-3">{{ __('emergency.no_notes') }}</div>
                     @endforelse
                 </div>
             </div>
@@ -311,37 +311,37 @@
                 <ul class="nav nav-tabs card-header-tabs flex-nowrap overflow-auto" id="erActionTabs" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link active text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabMedication" type="button" role="tab">
-                            <i class="ti ti-pill me-1"></i>Medication
+                            <i class="ti ti-pill me-1"></i>{{ __('emergency.tab_medication') }}
                             @if($case->medicationOrders->count())<span class="badge rounded-pill bg-danger-subtle text-danger ms-1">{{ $case->medicationOrders->count() }}</span>@endif
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabInvestigations" type="button" role="tab">
-                            <i class="ti ti-test-pipe me-1"></i>Investigations
+                            <i class="ti ti-test-pipe me-1"></i>{{ __('emergency.tab_investigations') }}
                             @if($case->labRequests->count())<span class="badge rounded-pill bg-secondary ms-1">{{ $case->labRequests->count() }}</span>@endif
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabProcedures" type="button" role="tab">
-                            <i class="ti ti-stethoscope me-1"></i>Procedures
+                            <i class="ti ti-stethoscope me-1"></i>{{ __('emergency.tab_procedures') }}
                             @if($case->procedureRequests->count())<span class="badge rounded-pill bg-secondary ms-1">{{ $case->procedureRequests->count() }}</span>@endif
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabConsumables" type="button" role="tab">
-                            <i class="ti ti-box me-1"></i>Consumables
+                            <i class="ti ti-box me-1"></i>{{ __('emergency.tab_consumables') }}
                             @if($case->consumableUsages->count())<span class="badge rounded-pill bg-secondary ms-1">{{ $case->consumableUsages->count() }}</span>@endif
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabTasks" type="button" role="tab">
-                            <i class="ti ti-checklist me-1"></i>Tasks
+                            <i class="ti ti-checklist me-1"></i>{{ __('emergency.tab_tasks') }}
                             @if($pendingTasks->count())<span class="badge rounded-pill bg-warning text-dark ms-1">{{ $pendingTasks->count() }}</span>@endif
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link text-nowrap" data-bs-toggle="tab" data-bs-target="#erTabBilling" type="button" role="tab">
-                            <i class="ti ti-receipt me-1"></i>Billing
+                            <i class="ti ti-receipt me-1"></i>{{ __('emergency.tab_billing') }}
                         </button>
                     </li>
                 </ul>
@@ -351,30 +351,30 @@
                     {{-- Medication / MAR --}}
                     <div class="tab-pane fade show active" id="erTabMedication" role="tabpanel">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="fw-bold mb-0">Medication / MAR</h6>
-                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.emergency.mar-chart', $case->visit) }}"><i class="ti ti-external-link me-1"></i>Open MAR</a>
+                            <h6 class="fw-bold mb-0">{{ __('emergency.medication_mar') }}</h6>
+                            <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.emergency.mar-chart', $case->visit) }}"><i class="ti ti-external-link me-1"></i>{{ __('emergency.open_mar') }}</a>
                         </div>
                         <div class="row g-2 text-center mb-3">
-                            <div class="col-3"><div class="fw-bold text-danger">{{ $medCounts['due_now'] }}</div><small class="text-muted">Due</small></div>
-                            <div class="col-3"><div class="fw-bold text-warning">{{ $medCounts['overdue'] }}</div><small class="text-muted">Late</small></div>
-                            <div class="col-3"><div class="fw-bold text-primary">{{ $medCounts['upcoming'] }}</div><small class="text-muted">Next</small></div>
-                            <div class="col-3"><div class="fw-bold text-success">{{ $medCounts['administered_today'] }}</div><small class="text-muted">Given</small></div>
+                            <div class="col-3"><div class="fw-bold text-danger">{{ $medCounts['due_now'] }}</div><small class="text-muted">{{ __('emergency.due_label') }}</small></div>
+                            <div class="col-3"><div class="fw-bold text-warning">{{ $medCounts['overdue'] }}</div><small class="text-muted">{{ __('emergency.late_label') }}</small></div>
+                            <div class="col-3"><div class="fw-bold text-primary">{{ $medCounts['upcoming'] }}</div><small class="text-muted">{{ __('emergency.next_label') }}</small></div>
+                            <div class="col-3"><div class="fw-bold text-success">{{ $medCounts['administered_today'] }}</div><small class="text-muted">{{ __('emergency.given_label') }}</small></div>
                         </div>
                         <form method="POST" action="{{ route('admin.emergency.medications.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-12">
-                                <select class="form-select" name="product_id" id="medicationProductSelect" data-er-select2 data-placeholder="Search medication/product…" required>
-                                    <option value="">Select medication/product</option>
+                                <select class="form-select" name="product_id" id="medicationProductSelect" data-er-select2 data-placeholder="{{ __('emergency.select_medication') }}" required>
+                                    <option value="">{{ __('emergency.select_medication') }}</option>
                                     @foreach($products as $product)
                                         <option value="{{ $product->id }}" data-emergency-stock="{{ $product->emergency_available_quantity ?? 0 }}" data-pharmacy-stock="{{ $product->pharmacy_available_quantity ?? 0 }}">
                                             {{ $product->name }} - ER {{ number_format($product->emergency_available_quantity ?? 0, 0) }} / Pharmacy {{ number_format($product->pharmacy_available_quantity ?? 0, 0) }}
                                         </option>
                                     @endforeach
                                 </select>
-                                <small class="text-muted">Emergency stock is shown first; pharmacy remains the wider stock source for formal dispensing.</small>
+                                <small class="text-muted">{{ __('emergency.er_pharmacy_stock_note') }}</small>
                             </div>
-                            <div class="col-4"><input class="form-control" name="dose" placeholder="Dose" required></div>
-                            <div class="col-4"><input class="form-control" name="route" placeholder="Route" required></div>
+                            <div class="col-4"><input class="form-control" name="dose" placeholder="{{ __('emergency.dose_placeholder') }}" required></div>
+                            <div class="col-4"><input class="form-control" name="route" placeholder="{{ __('emergency.route_placeholder') }}" required></div>
                             <div class="col-4">
                                 <select class="form-select" name="frequency_code" required>
                                     @foreach($frequencies as $frequency)
@@ -382,19 +382,19 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-4"><input class="form-control" type="number" min="1" name="duration_value" value="1" placeholder="Duration"></div>
+                            <div class="col-4"><input class="form-control" type="number" min="1" name="duration_value" value="1" placeholder="{{ __('emergency.duration_placeholder') }}"></div>
                             <div class="col-4">
                                 <select class="form-select" name="duration_unit">
-                                    <option value="days">Days</option>
-                                    <option value="weeks">Weeks</option>
-                                    <option value="months">Months</option>
+                                    <option value="days">{{ __('emergency.duration_days') }}</option>
+                                    <option value="weeks">{{ __('emergency.duration_weeks') }}</option>
+                                    <option value="months">{{ __('emergency.duration_months') }}</option>
                                 </select>
                             </div>
-                            <div class="col-4"><input class="form-control" type="number" min="0" name="quantity_ordered" placeholder="Qty override"></div>
+                            <div class="col-4"><input class="form-control" type="number" min="0" name="quantity_ordered" placeholder="{{ __('emergency.qty_override_placeholder') }}"></div>
                             <div class="col-12"><input class="form-control" type="datetime-local" name="start_at"></div>
-                            <div class="col-12"><div class="small text-muted" id="medicationQuantityHint">Quantity is calculated from frequency and duration unless overridden.</div></div>
-                            <div class="col-12"><textarea class="form-control" name="instructions" rows="2" placeholder="Instructions"></textarea></div>
-                            <div class="col-12"><button class="btn btn-outline-danger w-100" type="submit">Order Emergency Medication</button></div>
+                            <div class="col-12"><div class="small text-muted" id="medicationQuantityHint">{{ __('emergency.er_pharmacy_stock_note') }}</div></div>
+                            <div class="col-12"><textarea class="form-control" name="instructions" rows="2" placeholder="{{ __('emergency.instructions_placeholder') }}"></textarea></div>
+                            <div class="col-12"><button class="btn btn-outline-danger w-100" type="submit">{{ __('emergency.order_medication_btn') }}</button></div>
                         </form>
                         <div class="er-scroll">
                         @forelse($case->medicationOrders as $order)
@@ -405,30 +405,30 @@
                                 </div>
                                 <small class="text-muted">{{ $order->dose }} {{ $order->route }} {{ $order->frequency?->code }} - Qty {{ $order->quantity_ordered ?? '-' }}</small>
                                 @if($order->schedules->isNotEmpty())
-                                    <div class="small mt-1">Next: {{ optional($order->schedules->whereIn('status', ['SCHEDULED', 'DUE'])->sortBy('scheduled_at')->first())->scheduled_at?->format('d M H:i') ?: 'No pending doses' }}</div>
+                                    <div class="small mt-1">{{ __('emergency.next_dose') }}: {{ optional($order->schedules->whereIn('status', ['SCHEDULED', 'DUE'])->sortBy('scheduled_at')->first())->scheduled_at?->format('d M H:i') ?: __('emergency.no_pending_doses') }}</div>
                                 @endif
                             </div>
                         @empty
-                            <div class="text-muted">No emergency medication orders yet.</div>
+                            <div class="text-muted">{{ __('emergency.no_medication_orders') }}</div>
                         @endforelse
                         </div>
                     </div>
 
                     {{-- Investigations --}}
                     <div class="tab-pane fade" id="erTabInvestigations" role="tabpanel">
-                        <h6 class="fw-bold mb-3">Investigations</h6>
+                        <h6 class="fw-bold mb-3">{{ __('emergency.tab_investigations') }}</h6>
                         <form method="POST" action="{{ route('admin.emergency.investigations.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-12">
                                 <select class="form-select" name="target_department_id" id="emergencyInvestigationDepartment" required>
-                                    <option value="">Investigation department</option>
+                                    <option value="">{{ __('emergency.investigation_dept_ph') }}</option>
                                     @foreach($investigationDepartments as $department)
                                         <option value="{{ $department->id }}" @selected(old('target_department_id') == $department->id)>{{ $department->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="col-12">
-                                <select class="form-select" name="service_id[]" id="emergencyInvestigationService" multiple data-placeholder="Select one or more investigations" required disabled>
+                                <select class="form-select" name="service_id[]" id="emergencyInvestigationService" multiple data-placeholder="{{ __('emergency.tab_investigations') }}" required disabled>
                                 </select>
                             </div>
                             <div class="col-12">
@@ -439,7 +439,7 @@
                                 </select>
                             </div>
                             <div class="col-12"><textarea class="form-control" name="clinical_info" rows="2" placeholder="Clinical information">{{ old('clinical_info') }}</textarea></div>
-                            <div class="col-12"><button class="btn btn-outline-primary w-100" type="submit">Request Investigation</button></div>
+                            <div class="col-12"><button class="btn btn-outline-primary w-100" type="submit">{{ __('emergency.request_investigation_btn') }}</button></div>
                         </form>
                         <div class="er-scroll">
                         @forelse($case->labRequests as $request)
@@ -449,29 +449,29 @@
                                     <div class="fw-semibold">{{ $requestItems ?: $request->request_number }}</div>
                                     <x-status-badge :status="$request->status" domain="lab" />
                                 </div>
-                                <small class="text-muted">{{ $request->targetDepartment->name ?? 'Department pending' }} - {{ $request->urgency ?? 'routine' }} - Requested by {{ $request->requestedBy->name ?? 'Unknown' }}</small>
+                                <small class="text-muted">{{ $request->targetDepartment->name ?? __('emergency.dept_pending') }} - {{ $request->urgency ?? 'routine' }} - {{ __('emergency.requested_by_label') }} {{ $request->requestedBy->name ?? __('emergency.unknown_patient') }}</small>
                             </div>
                         @empty
-                            <div class="text-muted">No emergency investigations yet.</div>
+                            <div class="text-muted">{{ __('emergency.no_investigations') }}</div>
                         @endforelse
                         </div>
                     </div>
 
                     {{-- Procedures --}}
                     <div class="tab-pane fade" id="erTabProcedures" role="tabpanel">
-                        <h6 class="fw-bold mb-3">Procedures</h6>
+                        <h6 class="fw-bold mb-3">{{ __('emergency.tab_procedures') }}</h6>
                         <form method="POST" action="{{ route('admin.emergency.procedures.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-12">
                                 <select class="form-select" name="department_id" id="emergencyProcedureDepartment" required>
-                                    <option value="">Procedure department</option>
+                                    <option value="">{{ __('emergency.procedure_dept_ph') }}</option>
                                     @foreach($procedureDepartments as $department)
                                         <option value="{{ $department->id }}" @selected(old('department_id') == $department->id)>{{ $department->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="col-12">
-                                <select class="form-select" name="service_catalog_id[]" id="emergencyProcedureService" multiple data-placeholder="Select one or more procedures" required disabled>
+                                <select class="form-select" name="service_catalog_id[]" id="emergencyProcedureService" multiple data-placeholder="{{ __('emergency.tab_procedures') }}" required disabled>
                                 </select>
                             </div>
                             <div class="col-12">
@@ -482,7 +482,7 @@
                                 </select>
                             </div>
                             <div class="col-12"><textarea class="form-control" name="indication" rows="2" placeholder="Indication" required>{{ old('indication') }}</textarea></div>
-                            <div class="col-12"><button class="btn btn-outline-primary w-100" type="submit">Request Procedure</button></div>
+                            <div class="col-12"><button class="btn btn-outline-primary w-100" type="submit">{{ __('emergency.request_procedure_btn') }}</button></div>
                         </form>
                         <div class="er-scroll">
                         @forelse($case->procedureRequests as $request)
@@ -491,10 +491,10 @@
                                     <div class="fw-semibold">{{ $request->service?->name ?? $request->procedure_name ?? $request->request_number }}</div>
                                     <x-status-badge :status="$request->status" domain="theatre" />
                                 </div>
-                                <small class="text-muted">{{ $request->department->name ?? 'Department pending' }} - {{ $request->priority ?? 'routine' }} - Requested by {{ $request->requestingDoctor->name ?? 'Unknown' }}</small>
+                                <small class="text-muted">{{ $request->department->name ?? __('emergency.dept_pending') }} - {{ $request->priority ?? 'routine' }} - {{ __('emergency.requested_by_label') }} {{ $request->requestingDoctor->name ?? __('emergency.unknown_patient') }}</small>
                             </div>
                         @empty
-                            <div class="text-muted">No emergency procedures yet.</div>
+                            <div class="text-muted">{{ __('emergency.no_procedures') }}</div>
                         @endforelse
                         </div>
                     </div>
@@ -502,22 +502,22 @@
                     {{-- Consumables --}}
                     <div class="tab-pane fade" id="erTabConsumables" role="tabpanel">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="fw-bold mb-0">Consumables</h6>
-                            <span class="badge bg-light text-dark">Emergency stock</span>
+                            <h6 class="fw-bold mb-0">{{ __('emergency.consumables_label') }}</h6>
+                            <span class="badge bg-light text-dark">{{ __('emergency.emergency_stock_badge') }}</span>
                         </div>
                         <form method="POST" action="{{ route('admin.emergency.consumables.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-12">
-                                <select class="form-select" name="product_id" id="emergencyConsumableSelect" data-er-select2 data-placeholder="Search consumable…" required>
-                                    <option value="">Select consumable</option>
+                                <select class="form-select" name="product_id" id="emergencyConsumableSelect" data-er-select2 data-placeholder="{{ __('emergency.select_consumable') }}" required>
+                                    <option value="">{{ __('emergency.select_consumable') }}</option>
                                     @foreach($consumableProducts as $product)
                                         <option value="{{ $product->id }}">{{ $product->name }} - ER {{ number_format($product->emergency_available_quantity ?? 0, 0) }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="col-4"><input class="form-control" type="number" min="0.0001" step="0.01" name="quantity" value="1" required></div>
-                            <div class="col-8"><input class="form-control" name="notes" placeholder="Usage notes"></div>
-                            <div class="col-12"><button class="btn btn-outline-danger w-100" type="submit">Use Consumable</button></div>
+                            <div class="col-8"><input class="form-control" name="notes" placeholder="{{ __('emergency.usage_notes_ph') }}"></div>
+                            <div class="col-12"><button class="btn btn-outline-danger w-100" type="submit">{{ __('emergency.use_consumable_btn') }}</button></div>
                         </form>
                         <div class="er-scroll">
                             @forelse($case->consumableUsages->sortByDesc('used_at') as $usage)
@@ -526,10 +526,10 @@
                                         <span class="fw-semibold">{{ $usage->product->name ?? 'Consumable' }}</span>
                                         <span>{{ number_format((float) $usage->quantity_used, 2) }}</span>
                                     </div>
-                                    <span class="text-muted">{{ $usage->used_at?->format('d M H:i') }} - {{ $usage->user->name ?? 'Unknown' }}</span>
+                                    <span class="text-muted">{{ $usage->used_at?->format('d M H:i') }} - {{ $usage->user->name ?? __('emergency.unknown_patient') }}</span>
                                 </div>
                             @empty
-                                <div class="text-muted">No emergency consumables recorded yet.</div>
+                                <div class="text-muted">{{ __('emergency.no_consumables') }}</div>
                             @endforelse
                         </div>
                     </div>
@@ -537,30 +537,30 @@
                     {{-- Tasks & Monitoring --}}
                     <div class="tab-pane fade" id="erTabTasks" role="tabpanel">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="fw-bold mb-0">Tasks &amp; Monitoring</h6>
-                            <span class="badge bg-light text-dark">{{ $pendingTasks->count() }} pending</span>
+                            <h6 class="fw-bold mb-0">{{ __('emergency.tasks_monitoring') }}</h6>
+                            <span class="badge bg-light text-dark">{{ $pendingTasks->count() }} {{ __('emergency.pending_count_badge') }}</span>
                         </div>
                         <form method="POST" action="{{ route('admin.emergency.tasks.store', $case) }}" class="row g-2 mb-3">
                             @csrf
-                            <div class="col-12"><input class="form-control form-control-sm" name="title" placeholder="Task (e.g. Recheck vitals, Reposition patient)" maxlength="255" required></div>
+                            <div class="col-12"><input class="form-control form-control-sm" name="title" placeholder="{{ __('emergency.task_placeholder') }}" maxlength="255" required></div>
                             <div class="col-6">
                                 <select class="form-select form-select-sm" name="priority">
-                                    <option value="normal">Normal</option>
-                                    <option value="high">High</option>
-                                    <option value="critical">Critical</option>
-                                    <option value="low">Low</option>
+                                    <option value="normal">{{ __('emergency.priority_normal') }}</option>
+                                    <option value="high">{{ __('emergency.priority_high') }}</option>
+                                    <option value="critical">{{ __('emergency.priority_critical') }}</option>
+                                    <option value="low">{{ __('emergency.priority_low') }}</option>
                                 </select>
                             </div>
                             <div class="col-6"><input class="form-control form-control-sm" type="datetime-local" name="scheduled_at"></div>
                             <div class="col-12">
-                                <select class="form-select form-select-sm" name="assigned_to" data-er-select2 data-placeholder="Assign to (optional)">
-                                    <option value="">Assign to (optional) — defaults to Emergency Nurse</option>
+                                <select class="form-select form-select-sm" name="assigned_to" data-er-select2 data-placeholder="{{ __('emergency.assign_to_ph') }}">
+                                    <option value="">{{ __('emergency.assign_to_ph') }}</option>
                                     @foreach($users as $user)
                                         <option value="{{ $user->id }}">{{ $user->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-12"><button class="btn btn-sm btn-outline-primary w-100" type="submit">Add Monitoring Task</button></div>
+                            <div class="col-12"><button class="btn btn-sm btn-outline-primary w-100" type="submit">{{ __('emergency.add_task_btn') }}</button></div>
                         </form>
                         <div class="er-scroll">
                         @forelse($case->clinicalTasks->sortByDesc('scheduled_at') as $task)
@@ -570,19 +570,19 @@
                                     <div class="fw-semibold {{ $taskDone ? 'text-decoration-line-through text-muted' : '' }}">{{ $task->title }}</div>
                                     <x-status-badge :status="$task->status" domain="default" />
                                 </div>
-                                <small class="text-muted">{{ $task->priority }} - {{ $task->scheduled_at?->format('d M H:i') ?: 'No schedule' }} - {{ $task->assignedUser->name ?? $task->assigned_role ?? 'Unassigned' }}</small>
+                                <small class="text-muted">{{ $task->priority }} - {{ $task->scheduled_at?->format('d M H:i') ?: __('emergency.no_schedule') }} - {{ $task->assignedUser->name ?? $task->assigned_role ?? __('emergency.unassigned') }}</small>
                                 @unless($isMedTask)
                                     <form method="POST" action="{{ route('admin.emergency.tasks.complete', [$case, $task]) }}" class="mt-1">
                                         @csrf
                                         @method('PATCH')
                                         <button class="btn btn-sm {{ $taskDone ? 'btn-outline-secondary' : 'btn-outline-success' }} w-100" type="submit">
-                                            <i class="ti {{ $taskDone ? 'ti-rotate' : 'ti-check' }} me-1"></i>{{ $taskDone ? 'Reopen' : 'Mark Complete' }}
+                                            <i class="ti {{ $taskDone ? 'ti-rotate' : 'ti-check' }} me-1"></i>{{ $taskDone ? __('emergency.reopen') : __('emergency.mark_complete') }}
                                         </button>
                                     </form>
                                 @endunless
                             </div>
                         @empty
-                            <div class="text-muted">No emergency monitoring tasks yet.</div>
+                            <div class="text-muted">{{ __('emergency.no_tasks') }}</div>
                         @endforelse
                         </div>
                     </div>
@@ -590,23 +590,23 @@
                     {{-- Billing --}}
                     <div class="tab-pane fade" id="erTabBilling" role="tabpanel">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6 class="fw-bold mb-0">Billing</h6>
+                            <h6 class="fw-bold mb-0">{{ __('emergency.tab_billing') }}</h6>
                             @if($activeInvoice)
-                                <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.billing.invoices.show', $activeInvoice) }}"><i class="ti ti-file-invoice me-1"></i>Open Invoice</a>
+                                <a class="btn btn-sm btn-outline-secondary" href="{{ route('admin.billing.invoices.show', $activeInvoice) }}"><i class="ti ti-file-invoice me-1"></i>{{ __('emergency.open_invoice_btn') }}</a>
                             @endif
                         </div>
                         <form method="POST" action="{{ route('admin.emergency.services.store', $case) }}" class="row g-2 mb-3">
                             @csrf
                             <div class="col-8">
-                                <select class="form-select" name="service_catalog_id" data-er-select2 data-placeholder="Add billable emergency service" required>
-                                    <option value="">Add billable emergency service</option>
+                                <select class="form-select" name="service_catalog_id" data-er-select2 data-placeholder="{{ __('emergency.add_billable_service') }}" required>
+                                    <option value="">{{ __('emergency.add_billable_service') }}</option>
                                     @foreach($services as $service)
                                         <option value="{{ $service->id }}">{{ $service->name }} - {{ $service->formatted_price }}</option>
                                     @endforeach
                                 </select>
                             </div>
                             <div class="col-4"><input class="form-control" type="number" name="quantity" min="1" value="1"></div>
-                            <div class="col-12"><button class="btn btn-outline-success w-100" type="submit">Add to Invoice</button></div>
+                            <div class="col-12"><button class="btn btn-outline-success w-100" type="submit">{{ __('emergency.add_to_invoice_btn') }}</button></div>
                         </form>
                         <div class="er-scroll">
                         @if($billingGroups)
@@ -622,7 +622,7 @@
                                 </div>
                             @endforeach
                         @else
-                            <div class="text-muted">No emergency invoice items yet.</div>
+                            <div class="text-muted">{{ __('emergency.no_invoice_items') }}</div>
                         @endif
                         </div>
                     </div>
@@ -635,24 +635,24 @@
     <div class="col-xl-4">
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <h5 class="card-title mb-0">Triage</h5>
+                <h5 class="card-title mb-0">{{ __('emergency.triage_title') }}</h5>
                 <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#triageModal">
-                    <i class="ti ti-activity-heartbeat me-1"></i>Record
+                    <i class="ti ti-activity-heartbeat me-1"></i>{{ __('emergency.record_triage') }}
                 </button>
             </div>
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-2">
                     <span class="badge {{ $triageClass }}">{{ $currentTriage }}</span>
-                    <span class="small text-muted">Score {{ $case->triage_score ?? '-' }}</span>
+                    <span class="small text-muted">{{ __('emergency.score') }} {{ $case->triage_score ?? '-' }}</span>
                 </div>
                 <div class="small mb-2 d-flex flex-wrap align-items-center justify-content-between gap-3">
-                    <span>Auto: <span class="fw-semibold">{{ $case->auto_triage_category ?: 'Pending' }}</span></span>
-                    <span>AVPU: <span class="fw-semibold">{{ $case->avpu ?: 'Not recorded' }}</span></span>
-                    <span>Pain: <span class="fw-semibold">{{ $case->pain_score ?? 'Not recorded' }}</span></span>
+                    <span>{{ __('emergency.auto_triage_label') }}: <span class="fw-semibold">{{ $case->auto_triage_category ?: __('emergency.pending_calc') }}</span></span>
+                    <span>{{ __('emergency.avpu_label') }}: <span class="fw-semibold">{{ $case->avpu ?: __('emergency.not_recorded_label') }}</span></span>
+                    <span>{{ __('emergency.pain_label') }}: <span class="fw-semibold">{{ $case->pain_score ?? __('emergency.not_recorded_label') }}</span></span>
                 </div>
                 @if($case->triage_reasons)
                     <div class="border rounded p-2 small">
-                        <div class="fw-semibold text-danger mb-1">Automated reasons</div>
+                        <div class="fw-semibold text-danger mb-1">{{ __('emergency.automated_reasons') }}</div>
                         <ul class="mb-0 ps-3">
                             @foreach(array_slice($case->triage_reasons, 0, 3) as $reason)
                                 <li>{{ $reason }}</li>
@@ -660,40 +660,40 @@
                         </ul>
                     </div>
                 @else
-                    <div class="text-muted small">No triage score has been calculated yet.</div>
+                    <div class="text-muted small">{{ __('emergency.no_triage_score') }}</div>
                 @endif
             </div>
         </div>
 
         <div class="card mb-3">
-            <div class="card-header"><h5 class="card-title mb-0">Bay and Team</h5></div>
+            <div class="card-header"><h5 class="card-title mb-0">{{ __('emergency.bay_team_title') }}</h5></div>
             <div class="card-body">
                 <form method="POST" action="{{ route('admin.emergency.bay.assign', $case) }}" class="mb-3">
                     @csrf
-                    <div class="er-section-title mb-1">Emergency Bay</div>
-                    <select class="form-select mb-2" name="emergency_bay_id" data-er-select2 data-placeholder="Select bay…" required>
+                    <div class="er-section-title mb-1">{{ __('emergency.emergency_bay_section') }}</div>
+                    <select class="form-select mb-2" name="emergency_bay_id" data-er-select2 data-placeholder="{{ __('emergency.bay') }}…" required>
                         @foreach($bays as $bay)
                             <option value="{{ $bay->id }}" @selected($case->emergency_bay_id === $bay->id)>{{ $bay->name }} - {{ $bay->status }}{{ $bay->bed?->bed_number ? ' - '.$bay->bed->bed_number : '' }}</option>
                         @endforeach
                     </select>
                     <div class="form-check small mb-2">
                         <input class="form-check-input" type="checkbox" name="override" value="1" id="overrideBay">
-                        <label class="form-check-label" for="overrideBay">Override occupied bay when clinically required</label>
+                        <label class="form-check-label" for="overrideBay">{{ __('emergency.override_bay_label') }}</label>
                     </div>
-                    <button class="btn btn-sm btn-outline-primary w-100" type="submit"><i class="ti ti-bed me-1"></i>Assign Bay</button>
+                    <button class="btn btn-sm btn-outline-primary w-100" type="submit"><i class="ti ti-bed me-1"></i>{{ __('emergency.assign_bay_btn') }}</button>
                 </form>
 
                 <form method="POST" action="{{ route('admin.emergency.bay.assign-ward-bed', $case) }}" class="mb-3 border-top pt-3">
                     @csrf
-                    <div class="er-section-title mb-1">Ward / Bed</div>
-                    <select class="form-select mb-2" name="ward_id" data-er-select2 data-placeholder="No ward link">
-                        <option value="">No ward link</option>
+                    <div class="er-section-title mb-1">{{ __('emergency.ward_bed_section') }}</div>
+                    <select class="form-select mb-2" name="ward_id" data-er-select2 data-placeholder="{{ __('emergency.no_ward_link') }}">
+                        <option value="">{{ __('emergency.no_ward_link') }}</option>
                         @foreach($wards as $ward)
                             <option value="{{ $ward->id }}" @selected($case->activeBayAssignment?->ward_id === $ward->id)>{{ $ward->name }}</option>
                         @endforeach
                     </select>
-                    <select class="form-select mb-2" name="bed_id" data-er-select2 data-placeholder="No bed link">
-                        <option value="">No bed link</option>
+                    <select class="form-select mb-2" name="bed_id" data-er-select2 data-placeholder="{{ __('emergency.no_bed_link') }}">
+                        <option value="">{{ __('emergency.no_bed_link') }}</option>
                         @foreach($wards as $ward)
                             @foreach($ward->beds as $bed)
                                 <option value="{{ $bed->id }}" @selected($case->activeBayAssignment?->bed_id === $bed->id)>{{ $ward->name }} - {{ $bed->bed_number }} ({{ $bed->status }})</option>
@@ -702,15 +702,15 @@
                     </select>
                     <div class="form-check small mb-2">
                         <input class="form-check-input" type="checkbox" name="override" value="1" id="overrideBed">
-                        <label class="form-check-label" for="overrideBed">Override occupied bed when clinically required</label>
+                        <label class="form-check-label" for="overrideBed">{{ __('emergency.override_bed_label') }}</label>
                     </div>
-                    <button class="btn btn-sm btn-outline-secondary w-100" type="submit" @disabled(! $case->emergency_bay_id)><i class="ti ti-link me-1"></i>Link Ward / Bed</button>
+                    <button class="btn btn-sm btn-outline-secondary w-100" type="submit" @disabled(! $case->emergency_bay_id)><i class="ti ti-link me-1"></i>{{ __('emergency.link_ward_bed_btn') }}</button>
                     @unless($case->emergency_bay_id)
-                        <div class="small text-muted mt-1"><i class="ti ti-info-circle me-1"></i>Assign an emergency bay first, then link a ward/bed.</div>
+                        <div class="small text-muted mt-1"><i class="ti ti-info-circle me-1"></i>{{ __('emergency.assign_bay_first_hint') }}</div>
                     @endunless
                 </form>
                 <div class="border-top pt-3 mb-3">
-                    <div class="er-section-title mb-2">Assignment History</div>
+                    <div class="er-section-title mb-2">{{ __('emergency.assignment_history') }}</div>
                     @forelse($case->bayAssignments->sortByDesc('assigned_at') as $assignment)
                         <div class="d-flex align-items-start justify-content-between gap-2 small mb-2">
                             <div>
@@ -720,47 +720,47 @@
                             <x-status-badge :status="$assignment->status" size="sm" />
                         </div>
                     @empty
-                        <div class="small text-muted">No assignment history yet.</div>
+                        <div class="small text-muted">{{ __('emergency.no_assignment_history') }}</div>
                     @endforelse
                 </div>
 
                 <form method="POST" action="{{ route('admin.emergency.cases.update', $case) }}" class="border-top pt-3">
                     @csrf
                     @method('PATCH')
-                    <div class="er-section-title mb-2">Care Team &amp; Status</div>
+                    <div class="er-section-title mb-2">{{ __('emergency.care_team_status') }}</div>
                     <div class="mb-2">
-                        <label class="form-label small mb-1">Doctor</label>
-                        <select class="form-select" name="assigned_doctor_id" data-er-select2 data-placeholder="Unassigned">
-                            <option value="">Unassigned</option>
+                        <label class="form-label small mb-1">{{ __('emergency.doctor_label') }}</label>
+                        <select class="form-select" name="assigned_doctor_id" data-er-select2 data-placeholder="{{ __('emergency.unassigned') }}">
+                            <option value="">{{ __('emergency.unassigned') }}</option>
                             @foreach($users as $user)
                                 <option value="{{ $user->id }}" @selected($case->assigned_doctor_id === $user->id)>{{ $user->name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small mb-1">Nurse</label>
-                        <select class="form-select" name="assigned_nurse_id" data-er-select2 data-placeholder="Unassigned">
-                            <option value="">Unassigned</option>
+                        <label class="form-label small mb-1">{{ __('emergency.nurse_label') }}</label>
+                        <select class="form-select" name="assigned_nurse_id" data-er-select2 data-placeholder="{{ __('emergency.unassigned') }}">
+                            <option value="">{{ __('emergency.unassigned') }}</option>
                             @foreach($users as $user)
                                 <option value="{{ $user->id }}" @selected($case->assigned_nurse_id === $user->id)>{{ $user->name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small mb-1">Emergency Status</label>
+                        <label class="form-label small mb-1">{{ __('emergency.emergency_status_label') }}</label>
                         <select class="form-select" name="emergency_status">
                             @foreach(['WAITING_TRIAGE','TRIAGED','UNDER_EMERGENCY_CARE','OBSERVATION','READY_FOR_DISPOSITION','CANCELLED'] as $status)
                                 <option value="{{ $status }}" @selected($case->emergency_status === $status)>{{ str_replace('_', ' ', $status) }}</option>
                             @endforeach
                         </select>
                     </div>
-                    <button class="btn btn-sm btn-primary w-100" type="submit"><i class="ti ti-device-floppy me-1"></i>Update Case</button>
+                    <button class="btn btn-sm btn-primary w-100" type="submit"><i class="ti ti-device-floppy me-1"></i>{{ __('emergency.update_case_btn') }}</button>
                 </form>
             </div>
         </div>
 
         <div class="card mb-3">
-            <div class="card-header"><h5 class="card-title mb-0">Emergency Timeline</h5></div>
+            <div class="card-header"><h5 class="card-title mb-0">{{ __('emergency.timeline_title') }}</h5></div>
             <div class="card-body">
                 @forelse($case->logs->sortByDesc('created_at') as $log)
                     <div class="d-flex gap-3 pb-3 mb-3 border-bottom">
@@ -768,11 +768,11 @@
                         <div>
                             <div class="fw-semibold">{{ $log->title }}</div>
                             @if($log->description)<div class="small">{{ Str::limit($log->description, 15) }}</div>@endif
-                            <small class="text-muted">{{ $log->action }} by {{ $log->performedBy->name ?? 'System' }}</small>
+                            <small class="text-muted">{{ $log->action }} {{ __('emergency.timeline_action') }} {{ $log->performedBy->name ?? 'System' }}</small>
                         </div>
                     </div>
                 @empty
-                    <div class="text-muted">No timeline entries yet.</div>
+                    <div class="text-muted">{{ __('emergency.no_timeline') }}</div>
                 @endforelse
             </div>
         </div>
@@ -780,12 +780,12 @@
 </div>
 
 <div class="card mt-3">
-    <div class="card-header"><h5 class="card-title mb-0">Disposition</h5></div>
+    <div class="card-header"><h5 class="card-title mb-0">{{ __('emergency.disposition_title') }}</h5></div>
     <div class="card-body">
         <form method="POST" action="{{ route('admin.emergency.disposition.store', $case) }}" class="row g-3">
             @csrf
             <div class="col-md-3">
-                <label class="form-label">Disposition</label>
+                <label class="form-label">{{ __('emergency.disposition_label') }}</label>
                 <select class="form-select" name="disposition" required>
                     @foreach(['ADMITTED','DISCHARGED','TRANSFERRED_TO_OPD','TRANSFERRED_TO_THEATRE','REFERRED_OUT','LEFT_AGAINST_MEDICAL_ADVICE','ABSCONDED','DIED','DEAD_ON_ARRIVAL'] as $disposition)
                         <option value="{{ $disposition }}" @selected($case->disposition === $disposition)>{{ str_replace('_', ' ', $disposition) }}</option>
@@ -793,18 +793,18 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Disposition Time</label>
+                <label class="form-label">{{ __('emergency.disposition_time') }}</label>
                 <input class="form-control" type="datetime-local" name="disposition_time" value="{{ now()->format('Y-m-d\TH:i') }}">
             </div>
             <div class="col-md-3">
-                <label class="form-label">Cause of Death</label>
-                <input class="form-control" name="cause_of_death" placeholder="If applicable">
+                <label class="form-label">{{ __('emergency.cause_of_death') }}</label>
+                <input class="form-control" name="cause_of_death" placeholder="{{ __('emergency.cause_of_death_ph') }}">
             </div>
             <div class="col-md-3 d-flex align-items-end">
-                <button class="btn btn-danger w-100" type="submit">Record Disposition</button>
+                <button class="btn btn-danger w-100" type="submit">{{ __('emergency.record_disposition_btn') }}</button>
             </div>
             <div class="col-12">
-                <label class="form-label">Disposition Notes</label>
+                <label class="form-label">{{ __('emergency.disposition_notes_label') }}</label>
                 <textarea class="form-control" name="disposition_notes" rows="2">{{ $case->disposition_notes }}</textarea>
             </div>
         </form>
@@ -820,7 +820,7 @@
                 <input type="hidden" name="_form" value="control_sheet">
                 <div class="modal-header">
                     <div>
-                        <h5 class="modal-title" id="controlSheetModalLabel">Emergency Control Sheet</h5>
+                        <h5 class="modal-title" id="controlSheetModalLabel">{{ __('emergency.control_sheet_modal_title') }}</h5>
                         <div class="small text-muted">{{ $case->emergency_number }}</div>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -828,7 +828,7 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Arrival Mode</label>
+                            <label class="form-label">{{ __('emergency.arrival_mode_label') }}</label>
                             <select class="form-select" name="arrival_mode">
                                 @foreach(['WALK_IN','AMBULANCE','POLICE','FAMILY_BROUGHT','REFERRAL','TRANSFER_FROM_OPD','TRANSFER_FROM_WARD','UNKNOWN'] as $mode)
                                     <option value="{{ $mode }}" @selected(old('arrival_mode', $case->arrival_mode) === $mode)>{{ str_replace('_', ' ', $mode) }}</option>
@@ -836,23 +836,23 @@
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Arrival Time</label>
+                            <label class="form-label">{{ __('emergency.arrival_time_label') }}</label>
                             <input class="form-control" type="datetime-local" name="arrival_time" value="{{ old('arrival_time', $case->arrival_time?->format('Y-m-d\TH:i')) }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Brought By</label>
+                            <label class="form-label">{{ __('emergency.brought_by_label') }}</label>
                             <input class="form-control" name="brought_by" value="{{ old('brought_by', $case->brought_by) }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Source</label>
+                            <label class="form-label">{{ __('emergency.source_field_label') }}</label>
                             <input class="form-control" name="source" value="{{ old('source', $case->source) }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Referral Facility</label>
+                            <label class="form-label">{{ __('emergency.referral_facility_label') }}</label>
                             <input class="form-control" name="referral_facility" value="{{ old('referral_facility', $case->referral_facility) }}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Emergency Status</label>
+                            <label class="form-label">{{ __('emergency.emergency_status_field') }}</label>
                             <select class="form-select" name="emergency_status">
                                 @foreach(['WAITING_TRIAGE','TRIAGED','UNDER_EMERGENCY_CARE','OBSERVATION','READY_FOR_DISPOSITION','CANCELLED'] as $status)
                                     <option value="{{ $status }}" @selected(old('emergency_status', $case->emergency_status) === $status)>{{ str_replace('_', ' ', $status) }}</option>
@@ -860,18 +860,18 @@
                             </select>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Chief Complaint</label>
+                            <label class="form-label">{{ __('emergency.chief_complaint_field') }}</label>
                             <textarea class="form-control" name="chief_complaint" rows="3">{{ old('chief_complaint', $case->chief_complaint) }}</textarea>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Initial Condition</label>
+                            <label class="form-label">{{ __('emergency.initial_condition_field') }}</label>
                             <textarea class="form-control" name="initial_condition" rows="3">{{ old('initial_condition', $case->initial_condition) }}</textarea>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Control Sheet</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('emergency.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('emergency.save_control_sheet') }}</button>
                 </div>
             </form>
         </div>
@@ -886,41 +886,41 @@
                 <input type="hidden" name="_form" value="triage">
                 <div class="modal-header">
                     <div>
-                        <h5 class="modal-title" id="triageModalLabel">Record Emergency Triage</h5>
-                        <div class="small text-muted">{{ $case->emergency_number }} - {{ $case->patient->full_name ?? 'Unknown patient' }}</div>
+                        <h5 class="modal-title" id="triageModalLabel">{{ __('emergency.triage_modal_title') }}</h5>
+                        <div class="small text-muted">{{ $case->emergency_number }} - {{ $case->patient->full_name ?? __('emergency.unknown_patient') }}</div>
                     </div>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label class="form-label">Auto Category</label>
-                            <input class="form-control" value="{{ $case->auto_triage_category ?: 'Calculated on save' }}" readonly>
+                            <label class="form-label">{{ __('emergency.auto_category_field') }}</label>
+                            <input class="form-control" value="{{ $case->auto_triage_category ?: __('emergency.calculated_on_save') }}" readonly>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Final Category</label>
+                            <label class="form-label">{{ __('emergency.final_category_field') }}</label>
                             <select class="form-select" name="final_triage_category">
-                                <option value="">Use automated category</option>
+                                <option value="">{{ __('emergency.use_auto_category') }}</option>
                                 @foreach(['RED','ORANGE','YELLOW','GREEN','BLACK'] as $category)
                                     <option value="{{ $category }}" @selected(old('final_triage_category', $currentTriage) === $category)>{{ $category }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">AVPU</label>
+                            <label class="form-label">{{ __('emergency.avpu_field') }}</label>
                             <select class="form-select" name="avpu">
-                                <option value="">Not recorded</option>
-                                @foreach(['A' => 'Alert', 'V' => 'Voice', 'P' => 'Pain', 'U' => 'Unresponsive'] as $value => $label)
+                                <option value="">{{ __('emergency.avpu_not_recorded') }}</option>
+                                @foreach(['A' => __('emergency.avpu_alert'), 'V' => __('emergency.avpu_voice'), 'P' => __('emergency.avpu_pain'), 'U' => __('emergency.avpu_unresponsive')] as $value => $label)
                                     <option value="{{ $value }}" @selected(old('avpu', $case->avpu) === $value)>{{ $label }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Pain Score</label>
+                            <label class="form-label">{{ __('emergency.pain_score_field') }}</label>
                             <input class="form-control" type="number" min="0" max="10" name="pain_score" value="{{ old('pain_score', $case->pain_score) }}" placeholder="0-10">
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Danger Signs</label>
+                            <label class="form-label">{{ __('emergency.danger_signs_field') }}</label>
                             <div class="row g-2">
                                 @foreach($dangerSignOptions as $value => $label)
                                     <div class="col-sm-6 col-lg-3">
@@ -933,8 +933,8 @@
                             </div>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Override Reason</label>
-                            <input class="form-control" name="triage_override_reason" value="{{ old('triage_override_reason', $case->triage_override_reason) }}" placeholder="Required only if final category differs from auto category">
+                            <label class="form-label">{{ __('emergency.override_reason_field') }}</label>
+                            <input class="form-control" name="triage_override_reason" value="{{ old('triage_override_reason', $case->triage_override_reason) }}" placeholder="{{ __('emergency.override_reason_ph') }}">
                         </div>
                         <div class="col-md-3"><input class="form-control" name="blood_pressure_systolic" value="{{ old('blood_pressure_systolic') }}" placeholder="BP Sys"></div>
                         <div class="col-md-3"><input class="form-control" name="blood_pressure_diastolic" value="{{ old('blood_pressure_diastolic') }}" placeholder="BP Dia"></div>
@@ -950,7 +950,7 @@
                             <div class="col-12">
                                 <div class="border rounded p-3 small">
                                     @if($case->triage_reasons)
-                                        <div class="fw-semibold text-danger mb-1">Automated reasons</div>
+                                        <div class="fw-semibold text-danger mb-1">{{ __('emergency.automated_reasons') }}</div>
                                         <ul class="mb-2 ps-3">
                                             @foreach($case->triage_reasons as $reason)
                                                 <li>{{ $reason }}</li>
@@ -958,7 +958,7 @@
                                         </ul>
                                     @endif
                                     @if($case->triage_warnings)
-                                        <div class="fw-semibold text-warning mb-1">Warnings</div>
+                                        <div class="fw-semibold text-warning mb-1">{{ __('emergency.warnings_label') }}</div>
                                         <ul class="mb-0 ps-3">
                                             @foreach($case->triage_warnings as $warning)
                                                 <li>{{ $warning }}</li>
@@ -971,8 +971,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Triage</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('emergency.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ __('emergency.save_triage_btn') }}</button>
                 </div>
             </form>
         </div>
@@ -1150,7 +1150,7 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="modal-content">
             <div class="modal-header bg-warning-subtle">
                 <div>
-                    <h5 class="modal-title" id="confirmEmergencyIdentityModalLabel"><i class="ti ti-id-badge-2 me-1"></i>Confirm Temporary Emergency Identity</h5>
+                    <h5 class="modal-title" id="confirmEmergencyIdentityModalLabel"><i class="ti ti-id-badge-2 me-1"></i>{{ __('emergency.confirm_identity_title') }}</h5>
                     <div class="small text-muted">{{ $temporaryPatient->patient_number }} - {{ $temporaryPatient->full_name }}</div>
                 </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -1159,12 +1159,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 <ul class="nav nav-tabs mb-3" role="tablist">
                     <li class="nav-item" role="presentation">
                         <button class="nav-link {{ old('_identity_action') === 'register' ? '' : 'active' }}" id="existing-identity-tab" data-bs-toggle="tab" data-bs-target="#existing-identity-pane" type="button" role="tab" aria-controls="existing-identity-pane" aria-selected="{{ old('_identity_action') === 'register' ? 'false' : 'true' }}">
-                            <i class="ti ti-users me-1"></i>Existing Patient
+                            <i class="ti ti-users me-1"></i>{{ __('emergency.existing_patient_tab') }}
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link {{ old('_identity_action') === 'register' ? 'active' : '' }}" id="register-identity-tab" data-bs-toggle="tab" data-bs-target="#register-identity-pane" type="button" role="tab" aria-controls="register-identity-pane" aria-selected="{{ old('_identity_action') === 'register' ? 'true' : 'false' }}">
-                            <i class="ti ti-user-plus me-1"></i>Register Patient
+                            <i class="ti ti-user-plus me-1"></i>{{ __('emergency.register_patient_tab') }}
                         </button>
                     </li>
                 </ul>
@@ -1175,9 +1175,9 @@ document.addEventListener('DOMContentLoaded', function () {
                             @csrf
                             <input type="hidden" name="_identity_action" value="existing">
                             <div class="col-md-7">
-                                <label class="form-label">Confirmed Patient Folder <span class="text-danger">*</span></label>
+                                <label class="form-label">{{ __('emergency.confirmed_patient_folder') }} <span class="text-danger">*</span></label>
                                 <select name="confirmed_patient_id" class="form-select @error('confirmed_patient_id') is-invalid @enderror" required>
-                                    <option value="">Select confirmed patient</option>
+                                    <option value="">{{ __('emergency.select_confirmed_patient') }}</option>
                                     @foreach($identityCandidates as $candidate)
                                         <option value="{{ $candidate->id }}" @selected(old('confirmed_patient_id') == $candidate->id)>{{ $candidate->patient_number }} - {{ $candidate->full_name }} - {{ $candidate->phone }}</option>
                                     @endforeach
@@ -1185,19 +1185,19 @@ document.addEventListener('DOMContentLoaded', function () {
                                 @error('confirmed_patient_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-5">
-                                <label class="form-label">Confirmation Note</label>
-                                <input type="text" name="reason" class="form-control @error('reason') is-invalid @enderror" value="{{ old('reason') }}" placeholder="ID confirmed by family, Ghana Card, or staff verification">
+                                <label class="form-label">{{ __('emergency.confirmation_note_label') }}</label>
+                                <input type="text" name="reason" class="form-control @error('reason') is-invalid @enderror" value="{{ old('reason') }}" placeholder="{{ __('emergency.confirm_id_note_ph') }}">
                                 @error('reason')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-8">
                                 <div class="form-check">
                                     <input class="form-check-input @error('confirmed') is-invalid @enderror" type="checkbox" name="confirmed" value="1" id="existingIdentityConfirmed" required @checked(old('confirmed'))>
-                                    <label class="form-check-label" for="existingIdentityConfirmed">I have verified this temporary patient belongs to the selected folder.</label>
+                                    <label class="form-check-label" for="existingIdentityConfirmed">{{ __('emergency.verify_merge_checkbox') }}</label>
                                     @error('confirmed')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                                 </div>
                             </div>
                             <div class="col-md-4 text-md-end">
-                                <button class="btn btn-warning" type="submit"><i class="ti ti-git-merge me-1"></i>Merge Into Existing Folder</button>
+                                <button class="btn btn-warning" type="submit"><i class="ti ti-git-merge me-1"></i>{{ __('emergency.merge_btn') }}</button>
                             </div>
                         </form>
                     </div>
@@ -1207,29 +1207,29 @@ document.addEventListener('DOMContentLoaded', function () {
                             @csrf
                             <input type="hidden" name="_identity_action" value="register">
                             <div class="col-md-4">
-                                <label class="form-label">First Name <span class="text-danger">*</span></label>
+                                <label class="form-label">{{ __('emergency.first_name_label') }} <span class="text-danger">*</span></label>
                                 <input type="text" name="first_name" class="form-control @error('first_name') is-invalid @enderror" value="{{ old('first_name', $temporaryPatient->first_name) }}" required>
                                 @error('first_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Other Names</label>
+                                <label class="form-label">{{ __('emergency.other_names_label') }}</label>
                                 <input type="text" name="other_names" class="form-control @error('other_names') is-invalid @enderror" value="{{ old('other_names', $temporaryPatient->other_names) }}">
                                 @error('other_names')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <label class="form-label">{{ __('emergency.last_name_label') }} <span class="text-danger">*</span></label>
                                 <input type="text" name="last_name" class="form-control @error('last_name') is-invalid @enderror" value="{{ old('last_name', $temporaryPatient->last_name) }}" required>
                                 @error('last_name')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                                <label class="form-label">{{ __('emergency.date_of_birth_label') }} <span class="text-danger">*</span></label>
                                 <input type="date" name="date_of_birth" class="form-control @error('date_of_birth') is-invalid @enderror" value="{{ old('date_of_birth', $temporaryPatient->date_of_birth?->format('Y-m-d')) }}" required>
                                 @error('date_of_birth')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Gender <span class="text-danger">*</span></label>
+                                <label class="form-label">{{ __('emergency.gender_field_label') }} <span class="text-danger">*</span></label>
                                 <select name="gender" class="form-select @error('gender') is-invalid @enderror" required>
-                                    <option value="">Select Gender</option>
+                                    <option value="">{{ __('emergency.select_gender') }}</option>
                                     @foreach(\App\Enums\Gender::cases() as $gender)
                                         <option value="{{ $gender->value }}" @selected(old('gender', $temporaryPatient->getRawOriginal('gender')) === $gender->value)>{{ $gender->label() }}</option>
                                     @endforeach
@@ -1237,27 +1237,27 @@ document.addEventListener('DOMContentLoaded', function () {
                                 @error('gender')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                <label class="form-label">{{ __('emergency.phone_number_label') }} <span class="text-danger">*</span></label>
                                 <input type="tel" name="phone" class="form-control @error('phone') is-invalid @enderror" value="{{ old('phone', $temporaryPatient->phone === '0000000000' ? '' : $temporaryPatient->phone) }}" required>
                                 @error('phone')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Secondary Phone</label>
+                                <label class="form-label">{{ __('emergency.secondary_phone_label') }}</label>
                                 <input type="tel" name="phone_secondary" class="form-control @error('phone_secondary') is-invalid @enderror" value="{{ old('phone_secondary', $temporaryPatient->phone_secondary) }}">
                                 @error('phone_secondary')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Email Address</label>
+                                <label class="form-label">{{ __('emergency.email_address_label') }}</label>
                                 <input type="email" name="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email', $temporaryPatient->email) }}">
                                 @error('email')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Ghana Card Number</label>
+                                <label class="form-label">{{ __('emergency.ghana_card_label') }}</label>
                                 <input type="text" name="ghana_card_number" class="form-control @error('ghana_card_number') is-invalid @enderror" value="{{ old('ghana_card_number', $temporaryPatient->ghana_card_number) }}">
                                 @error('ghana_card_number')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Blood Group</label>
+                                <label class="form-label">{{ __('emergency.blood_group_label') }}</label>
                                 <select name="blood_group" class="form-select @error('blood_group') is-invalid @enderror">
                                     <option value="">Select</option>
                                     @foreach(\App\Enums\BloodGroup::cases() as $bloodGroup)
@@ -1267,7 +1267,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 @error('blood_group')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Marital Status</label>
+                                <label class="form-label">{{ __('emergency.marital_status_label') }}</label>
                                 <select name="marital_status" class="form-select @error('marital_status') is-invalid @enderror">
                                     <option value="">Select</option>
                                     @foreach(\App\Enums\MaritalStatus::cases() as $maritalStatus)
@@ -1277,44 +1277,44 @@ document.addEventListener('DOMContentLoaded', function () {
                                 @error('marital_status')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Region</label>
+                                <label class="form-label">{{ __('emergency.region_label') }}</label>
                                 <input type="text" name="region" class="form-control @error('region') is-invalid @enderror" value="{{ old('region', $temporaryPatient->region) }}">
                                 @error('region')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">City</label>
+                                <label class="form-label">{{ __('emergency.city_label') }}</label>
                                 <input type="text" name="city" class="form-control @error('city') is-invalid @enderror" value="{{ old('city', $temporaryPatient->city) }}">
                                 @error('city')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Town</label>
+                                <label class="form-label">{{ __('emergency.town_label') }}</label>
                                 <input type="text" name="town" class="form-control @error('town') is-invalid @enderror" value="{{ old('town', $temporaryPatient->town) }}">
                                 @error('town')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Digital Address</label>
+                                <label class="form-label">{{ __('emergency.digital_address_label') }}</label>
                                 <input type="text" name="digital_address" class="form-control @error('digital_address') is-invalid @enderror" value="{{ old('digital_address', $temporaryPatient->digital_address) }}">
                                 @error('digital_address')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-12">
-                                <label class="form-label">Address</label>
+                                <label class="form-label">{{ __('emergency.address_label') }}</label>
                                 <textarea name="address" class="form-control @error('address') is-invalid @enderror" rows="2">{{ old('address', $temporaryPatient->address) }}</textarea>
                                 @error('address')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-12">
-                                <label class="form-label">Confirmation Note</label>
-                                <input type="text" name="reason" class="form-control @error('reason') is-invalid @enderror" value="{{ old('reason') }}" placeholder="Patient identified during emergency registration">
+                                <label class="form-label">{{ __('emergency.confirmation_note_label') }}</label>
+                                <input type="text" name="reason" class="form-control @error('reason') is-invalid @enderror" value="{{ old('reason') }}" placeholder="{{ __('emergency.register_confirm_note_ph') }}">
                                 @error('reason')<div class="invalid-feedback">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-md-8">
                                 <div class="form-check">
                                     <input class="form-check-input @error('confirmed') is-invalid @enderror" type="checkbox" name="confirmed" value="1" id="registerIdentityConfirmed" required @checked(old('confirmed'))>
-                                    <label class="form-check-label" for="registerIdentityConfirmed">I have verified these details and want to register this emergency patient.</label>
+                                    <label class="form-check-label" for="registerIdentityConfirmed">{{ __('emergency.verify_register_checkbox') }}</label>
                                     @error('confirmed')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                                 </div>
                             </div>
                             <div class="col-md-4 text-md-end">
-                                <button class="btn btn-warning" type="submit"><i class="ti ti-user-plus me-1"></i>Register and Confirm</button>
+                                <button class="btn btn-warning" type="submit"><i class="ti ti-user-plus me-1"></i>{{ __('emergency.register_and_confirm_btn') }}</button>
                             </div>
                         </form>
                     </div>

@@ -17,40 +17,40 @@
         <h4 class="fw-bold mb-0">{{ $batch->typeLabel() }} {{ $batch->batch_number }}</h4>
         <div class="text-muted small">{{ $batch->created_at?->format('d M Y H:i') }}</div>
     </div>
-    <a href="{{ route($backRoute) }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>Back</a>
+    <a href="{{ route($backRoute) }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>{{ __('stock.back') }}</a>
 </div>
 
 @if(session('success'))<div class="alert alert-success alert-dismissible fade show">{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>@endif
 
 <div class="row g-3 mb-3">
-    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">Type</small><strong>{{ $batch->typeLabel() }}</strong></div></div></div>
-    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">From</small><strong>{{ $batch->sourceLocation?->name ?? '—' }}</strong></div></div></div>
-    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">To</small><strong>{{ $batch->destLocation?->name ?? '—' }}</strong></div></div></div>
-    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">Recorded By</small><strong>{{ trim(($batch->createdBy?->first_name ?? '') . ' ' . ($batch->createdBy?->last_name ?? '')) ?: '—' }}</strong></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.type') }}</small><strong>{{ $batch->typeLabel() }}</strong></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.from') }}</small><strong>{{ $batch->sourceLocation?->name ?? '—' }}</strong></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.to') }}</small><strong>{{ $batch->destLocation?->name ?? '—' }}</strong></div></div></div>
+    <div class="col-md-3"><div class="card"><div class="card-body"><small class="text-muted d-block">{{ __('stock.recorded_by') }}</small><strong>{{ trim(($batch->createdBy?->first_name ?? '') . ' ' . ($batch->createdBy?->last_name ?? '')) ?: '—' }}</strong></div></div></div>
 </div>
 
 @if($batch->reason || $batch->notes)
 <div class="card mb-3"><div class="card-body">
     <div class="row g-3">
-        <div class="col-md-6"><small class="text-muted d-block">Reason</small>{{ $batch->reason ?: '—' }}</div>
-        <div class="col-md-6"><small class="text-muted d-block">Notes</small>{{ $batch->notes ?: '—' }}</div>
+        <div class="col-md-6"><small class="text-muted d-block">{{ __('stock.reason') }}</small>{{ $batch->reason ?: '—' }}</div>
+        <div class="col-md-6"><small class="text-muted d-block">{{ __('stock.notes') }}</small>{{ $batch->notes ?: '—' }}</div>
     </div>
 </div></div>
 @endif
 
 <div class="card">
-    <div class="card-header"><h6 class="mb-0">Line Items</h6></div>
+    <div class="card-header"><h6 class="mb-0">{{ __('stock.line_items') }}</h6></div>
     <div class="table-responsive">
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>Product</th>
-                    <th>Location</th>
-                    <th>Movement</th>
-                    <th class="text-end">Quantity</th>
-                    <th>Batch</th>
-                    <th>Expiry</th>
-                    <th class="text-end">Unit Cost</th>
+                    <th>{{ __('stock.product') }}</th>
+                    <th>{{ __('stock.location') }}</th>
+                    <th>{{ __('stock.movement') }}</th>
+                    <th class="text-end">{{ __('stock.quantity') }}</th>
+                    <th>{{ __('stock.batch_number') }}</th>
+                    <th>{{ __('stock.expiry_date') }}</th>
+                    <th class="text-end">{{ __('stock.unit_cost') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -69,7 +69,7 @@
                     <td class="text-end">GH₵ {{ number_format((float) $movement->unit_cost, 2) }}</td>
                 </tr>
             @empty
-                <tr><td colspan="7" class="text-center text-muted py-4">This batch has no movements.</td></tr>
+                <tr><td colspan="7" class="text-center text-muted py-4">{{ __('stock.no_batch_movements') }}</td></tr>
             @endforelse
             </tbody>
         </table>

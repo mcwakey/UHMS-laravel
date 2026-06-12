@@ -1,12 +1,12 @@
 @extends('layouts.app')
-@section('title', 'Create Invoice')
+@section('title', __('invoices.create_invoice'))
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
     <div class="flex-grow-1">
         <h6 class="fw-bold mb-0 d-flex align-items-center">
-            <a href="{{ route('admin.billing.invoices.index') }}"><i class="ti ti-chevron-left me-1 fs-14"></i>Invoices</a>
+            <a href="{{ route('admin.billing.invoices.index') }}"><i class="ti ti-chevron-left me-1 fs-14"></i>{{ __('invoices.title') }}</a>
         </h6>
     </div>
 </div>
@@ -20,7 +20,7 @@
 
 <div class="card">
     <div class="card-header">
-        <h5 class="fw-bold m-0"><i class="ti ti-file-invoice me-2"></i>New Invoice</h5>
+        <h5 class="fw-bold m-0"><i class="ti ti-file-invoice me-2"></i>{{ __('invoices.new_invoice_title') }}</h5>
     </div>
     <div class="card-body">
         <form method="POST" action="{{ route('admin.billing.invoices.store') }}" id="invoiceForm">
@@ -28,15 +28,15 @@
 
             <div class="row mb-3">
                 <div class="col-md-6">
-                    <label class="form-label fw-medium">Patient <span class="text-danger">*</span></label>
+                    <label class="form-label fw-medium">{{ __('invoices.patient_label') }} <span class="text-danger">*</span></label>
                     @if($visit)
                         <input type="hidden" name="visit_id" value="{{ $visit->id }}">
                         <input type="hidden" name="patient_id" value="{{ $visit->patient_id }}">
                         <input type="text" class="form-control" value="{{ $visit->patient->full_name }} ({{ $visit->patient->patient_number }})" readonly>
-                        <small class="text-muted">Visit: {{ $visit->visit_number }} — {{ $visit->visit_date->format('d M Y') }}</small>
+                        <small class="text-muted">{{ __('invoices.visit') }}: {{ $visit->visit_number }} — {{ $visit->visit_date->format('d M Y') }}</small>
                     @else
                         <select name="visit_id" id="visitSelect" class="form-select @error('visit_id') is-invalid @enderror" required>
-                            <option value="">Select a visit...</option>
+                            <option value="">{{ __('invoices.select_visit') }}</option>
                             @foreach($billableVisits as $billableVisit)
                             <option value="{{ $billableVisit->id }}" data-patient-id="{{ $billableVisit->patient_id }}">
                                 {{ $billableVisit->visit_number }} — {{ $billableVisit->patient?->full_name }} — {{ $billableVisit->visit_date?->format('d M Y') }} ({{ $billableVisit->visitServices->count() }} service{{ $billableVisit->visitServices->count() === 1 ? '' : 's' }})
@@ -50,7 +50,7 @@
                     @endif
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-medium">Billing Type <span class="text-danger">*</span></label>
+                    <label class="form-label fw-medium">{{ __('invoices.billing_type_label') }} <span class="text-danger">*</span></label>
                     <select name="billing_type" class="form-select @error('billing_type') is-invalid @enderror" required>
                         @foreach($billingTypes as $type)
                         <option value="{{ $type->value }}" {{ old('billing_type', 'cash') === $type->value ? 'selected' : '' }}>
@@ -63,24 +63,24 @@
                     @enderror
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label fw-medium">Due Date</label>
+                    <label class="form-label fw-medium">{{ __('invoices.due_date_label') }}</label>
                     <input type="date" name="due_date" class="form-control" value="{{ old('due_date', now()->addDays(30)->format('Y-m-d')) }}">
                 </div>
             </div>
 
             <!-- Invoice Items -->
-            <h6 class="fw-bold mb-3"><i class="ti ti-list-details me-1"></i>Invoice Items</h6>
+            <h6 class="fw-bold mb-3"><i class="ti ti-list-details me-1"></i>{{ __('invoices.invoice_items_title') }}</h6>
             <div class="mb-3">
                 <div class="table-responsive"><table class="table table-bordered" id="itemsTable">
                     <thead class="table-light">
                         <tr>
-                            <th style="width:30%">Description <span class="text-danger">*</span></th>
-                            <th style="width:15%">Service</th>
-                            <th style="width:8%">Qty</th>
-                            <th style="width:12%">Unit Price (&#8373;)</th>
-                            <th style="width:12%">Total (&#8373;)</th>
-                            <th style="width:8%">Covered?</th>
-                            <th style="width:12%">Covered Amt (&#8373;)</th>
+                            <th style="width:30%">{{ __('invoices.description_col') }} <span class="text-danger">*</span></th>
+                            <th style="width:15%">{{ __('invoices.service_col') }}</th>
+                            <th style="width:8%">{{ __('invoices.qty_col') }}</th>
+                            <th style="width:12%">{{ __('invoices.unit_price_col') }}</th>
+                            <th style="width:12%">{{ __('invoices.total_col') }}</th>
+                            <th style="width:8%">{{ __('invoices.covered_col') }}</th>
+                            <th style="width:12%">{{ __('invoices.covered_amt_col') }}</th>
                             <th style="width:3%"></th>
                         </tr>
                     </thead>
@@ -118,7 +118,7 @@
                                     <input type="number" name="items[{{ $i }}][nhis_approved_amount]" class="form-control form-control-sm nhis-amount" value="{{ $item['nhis_approved_amount'] ?? 0 }}" step="0.01" min="0">
                                 </td>
                                 <td>
-                                    <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
+                                    <button aria-label="{{ __('common.delete') }}" title="{{ __('common.delete') }}" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
                                 </td>
                             </tr>
                             @endforeach
@@ -153,7 +153,7 @@
                                     <input type="number" name="items[0][nhis_approved_amount]" class="form-control form-control-sm nhis-amount" value="0" step="0.01" min="0">
                                 </td>
                                 <td>
-                                    <button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
+                                    <button aria-label="{{ __('common.delete') }}" title="{{ __('common.delete') }}" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button>
                                 </td>
                             </tr>
                         @endif
@@ -162,7 +162,7 @@
             </div>
 
             <button type="button" class="btn btn-sm btn-outline-primary mb-3" id="addItemBtn">
-                <i class="ti ti-plus me-1"></i>Add Item
+                <i class="ti ti-plus me-1"></i>{{ __('invoices.add_item_btn') }}
             </button>
 
             <!-- Totals -->
@@ -170,31 +170,31 @@
                 <div class="col-md-5">
                     <div class="table-responsive"><table class="table table-sm table-borderless">
                         <tr>
-                            <td class="fw-medium">Subtotal:</td>
+                            <td class="fw-medium">{{ __('invoices.subtotal') }}:</td>
                             <td class="text-end" id="subtotalDisplay">&#8373;0.00</td>
                         </tr>
                         <tr>
-                            <td class="fw-medium">Tax (&#8373;):</td>
+                            <td class="fw-medium">{{ __('invoices.tax_label') }}:</td>
                             <td class="text-end">
                                 <input type="number" name="tax_amount" class="form-control form-control-sm text-end" id="taxInput" value="0" step="0.01" min="0" style="max-width:150px;margin-left:auto;">
                             </td>
                         </tr>
                         <tr class="d-none">
-                            <td class="fw-medium">Discount (&#8373;):</td>
+                            <td class="fw-medium">{{ __('invoices.discount') }} (&#8373;):</td>
                             <td class="text-end">
                                 <input type="number" name="discount_amount" class="form-control form-control-sm text-end" id="discountInput" value="0" step="0.01" min="0" style="max-width:150px;margin-left:auto;">
                             </td>
                         </tr>
                         <tr>
-                            <td class="fw-medium text-primary">Insurance Covered:</td>
+                            <td class="fw-medium text-primary">{{ __('invoices.insurance_covered') }}:</td>
                             <td class="text-end text-primary fw-bold" id="nhisDisplay">&#8373;0.00</td>
                         </tr>
                         <tr class="border-top">
-                            <td class="fw-bold fs-5">Total:</td>
+                            <td class="fw-bold fs-5">{{ __('invoices.total') }}:</td>
                             <td class="text-end fw-bold fs-5" id="totalDisplay">&#8373;0.00</td>
                         </tr>
                         <tr>
-                            <td class="fw-bold text-danger">Patient Pays:</td>
+                            <td class="fw-bold text-danger">{{ __('invoices.patient_pays') }}:</td>
                             <td class="text-end fw-bold text-danger" id="patientPaysDisplay">&#8373;0.00</td>
                         </tr>
                     </table></div>
@@ -203,15 +203,15 @@
 
             <!-- Notes -->
             <div class="mb-3">
-                <label class="form-label fw-medium">Notes</label>
-                <textarea name="notes" class="form-control" rows="2" placeholder="Optional notes...">{{ old('notes') }}</textarea>
+                <label class="form-label fw-medium">{{ __('invoices.notes') }}</label>
+                <textarea name="notes" class="form-control" rows="2" placeholder="{{ __('invoices.optional_notes') }}">{{ old('notes') }}</textarea>
             </div>
 
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary">
-                    <i class="ti ti-file-invoice me-1"></i>Create Invoice
+                    <i class="ti ti-file-invoice me-1"></i>{{ __('invoices.create_invoice_btn') }}
                 </button>
-                <a href="{{ route('admin.billing.invoices.index') }}" class="btn btn-outline-secondary">Cancel</a>
+                <a href="{{ route('admin.billing.invoices.index') }}" class="btn btn-outline-secondary">{{ __('common.cancel') }}</a>
             </div>
         </form>
     </div>
@@ -311,7 +311,7 @@ $(function() {
             <td><input type="text" class="form-control form-control-sm line-total" readonly value="0.00"></td>
             <td class="text-center"><input type="checkbox" name="items[${rowIndex}][is_nhis_covered]" class="form-check-input nhis-check" value="1"></td>
             <td><input type="number" name="items[${rowIndex}][nhis_approved_amount]" class="form-control form-control-sm nhis-amount" value="0" step="0.01" min="0"></td>
-            <td><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
+            <td><button aria-label="{{ __('common.delete') }}" title="{{ __('common.delete') }}" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
         </tr>`;
         $('#itemsBody').append(row);
         rowIndex++;

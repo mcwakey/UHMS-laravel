@@ -1,25 +1,25 @@
 @extends('layouts.app')
-@section('title', 'Inventory Valuation')
+@section('title', __('stock.inventory_valuation'))
 
 @php $canCost = auth()->user()?->can('inventory.cost.view') ?? false; @endphp
 
 @section('content')
-<x-page-header title="Inventory Valuation" icon="ti-report-money" description="On-hand stock valued at weighted-average cost.">
+<x-page-header title="{{ __('stock.inventory_valuation') }}" icon="ti-report-money" description="{{ __('stock.valuation_description') }}">
     <x-slot:actions>
-        <a href="{{ route('admin.store.stock.balances') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-list-numbers me-1"></i>Stock Balances</a>
+        <a href="{{ route('admin.store.stock.balances') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-list-numbers me-1"></i>{{ __('stock.product_stock_balances') }}</a>
     </x-slot:actions>
 </x-page-header>
 
 <div class="card mb-3"><div class="card-body py-2">
     <form method="GET" class="row g-2 align-items-end">
-        <div class="col-md-3"><input type="text" name="search" class="form-control" placeholder="Product name/code" value="{{ request('search') }}"></div>
+        <div class="col-md-3"><input type="text" name="search" class="form-control" placeholder="{{ __('stock.product_name_code') }}" value="{{ request('search') }}"></div>
         <div class="col-md-3">
-            <select name="location_id" class="form-select"><option value="">All Locations</option>
+            <select name="location_id" class="form-select"><option value="">{{ __('stock.all_locations') }}</option>
                 @foreach($locations as $l)<option value="{{ $l->id }}" @selected((string)request('location_id')===(string)$l->id)>{{ $l->name }}</option>@endforeach
             </select>
         </div>
         <div class="col-md-3">
-            <select name="product_type" class="form-select"><option value="">All Types</option>
+            <select name="product_type" class="form-select"><option value="">{{ __('stock.all_types') }}</option>
                 @foreach($productTypes as $t)<option value="{{ $t->value }}" @selected(request('product_type')===$t->value)>{{ ucwords(str_replace('_',' ',$t->value)) }}</option>@endforeach
             </select>
         </div>
@@ -30,7 +30,7 @@
 
 @if($canCost)
 <div class="row g-2 mb-3">
-    <div class="col-md-3"><div class="card border-primary"><div class="card-body py-2 text-center"><small class="text-muted d-block">Total Inventory Value</small><strong class="fs-5 text-primary">GHS {{ number_format($report['total_value'], 2) }}</strong><small class="text-muted d-block">{{ $report['count'] }} line(s)</small></div></div></div>
+    <div class="col-md-3"><div class="card border-primary"><div class="card-body py-2 text-center"><small class="text-muted d-block">{{ __('stock.total_inventory_value') }}</small><strong class="fs-5 text-primary">GHS {{ number_format($report['total_value'], 2) }}</strong><small class="text-muted d-block">{{ $report['count'] }} line(s)</small></div></div></div>
     @foreach(array_slice($report['by_location'], 0, 3, true) as $loc => $val)
         <div class="col-md-3"><div class="card h-100"><div class="card-body py-2 text-center"><small class="text-muted d-block text-truncate">{{ $loc }}</small><strong>GHS {{ number_format($val, 2) }}</strong></div></div></div>
     @endforeach
@@ -40,9 +40,9 @@
 <div class="card"><div class="table-responsive">
     <table class="table table-hover mb-0">
         <thead class="table-light"><tr>
-            <th>Code</th><th>Product</th><th>Type</th><th>Location</th><th class="text-end">Qty on Hand</th>
-            @if($canCost)<th class="text-end">Avg Cost</th><th class="text-end">Total Value</th><th>Inventory Account</th>@endif
-            <th>Last Movement</th>
+            <th>{{ __('stock.code') }}</th><th>{{ __('stock.product') }}</th><th>{{ __('stock.type') }}</th><th>{{ __('stock.location') }}</th><th class="text-end">{{ __('stock.qty_on_hand') }}</th>
+            @if($canCost)<th class="text-end">{{ __('stock.avg_cost') }}</th><th class="text-end">{{ __('stock.total_value') }}</th><th>{{ __('stock.inventory_account') }}</th>@endif
+            <th>{{ __('stock.last_movement') }}</th>
         </tr></thead>
         <tbody>
         @forelse($report['rows'] as $r)
@@ -60,11 +60,11 @@
                 <td><small>{{ $r['last_movement_at'] ?? '—' }}</small></td>
             </tr>
         @empty
-            <tr><td colspan="{{ $canCost ? 9 : 6 }}"><x-empty-state icon="ti-report-money" title="No stock on hand" message="No valued inventory matches your filters." /></td></tr>
+            <tr><td colspan="{{ $canCost ? 9 : 6 }}"><x-empty-state icon="ti-report-money" title="{{ __('stock.no_stock_on_hand') }}" message="{{ __('stock.no_valued_inventory') }}" /></td></tr>
         @endforelse
         </tbody>
         @if($canCost && !empty($report['rows']))
-        <tfoot><tr class="table-light"><td colspan="6" class="text-end fw-bold">Total Inventory Value</td><td class="text-end fw-bold">{{ number_format($report['total_value'], 2) }}</td><td colspan="2"></td></tr></tfoot>
+        <tfoot><tr class="table-light"><td colspan="6" class="text-end fw-bold">{{ __('stock.total_inventory_footer') }}</td><td class="text-end fw-bold">{{ number_format($report['total_value'], 2) }}</td><td colspan="2"></td></tr></tfoot>
         @endif
     </table>
 </div></div>

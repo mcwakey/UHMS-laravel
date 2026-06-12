@@ -1,13 +1,13 @@
 @extends('layouts.app')
-@section('title', 'Patient Merge Audit Logs')
+@section('title', __('patients.merge_audit_logs'))
 
 @section('content')
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
-        <h4 class="fw-bold mb-1">Patient Merge Audit Logs</h4>
-        <p class="text-muted mb-0">Every merge action is retained for traceability.</p>
+        <h4 class="fw-bold mb-1">{{ __('patients.merge_audit_logs') }}</h4>
+        <p class="text-muted mb-0">{{ __('patients.merge_audit_subtitle') }}</p>
     </div>
-    <a href="{{ route('admin.patients.merge.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-chevron-left me-1"></i>Back</a>
+    <a href="{{ route('admin.patients.merge.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-chevron-left me-1"></i>{{ __('common.back') }}</a>
 </div>
 
 <div class="card">
@@ -15,13 +15,13 @@
         <table class="table table-hover mb-0">
             <thead class="bg-light">
                 <tr>
-                    <th>Time</th>
-                    <th>Request</th>
-                    <th>Action</th>
-                    <th>Main</th>
-                    <th>Duplicate</th>
-                    <th>Table</th>
-                    <th>By</th>
+                    <th>{{ __('patients.col_time') }}</th>
+                    <th>{{ __('patients.col_request') }}</th>
+                    <th>{{ __('patients.col_action_log') }}</th>
+                    <th>{{ __('patients.col_main') }}</th>
+                    <th>{{ __('patients.col_duplicate') }}</th>
+                    <th>{{ __('patients.col_table') }}</th>
+                    <th>{{ __('patients.col_by') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -42,7 +42,7 @@
                         <td>{{ $log->performedBy?->name ?: '-' }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="7"><x-empty-state message="No merge logs found." /></td></tr>
+                    <tr><td colspan="7"><x-empty-state message="{{ __('patients.no_merge_logs') }}" /></td></tr>
                 @endforelse
             </tbody>
         </table>

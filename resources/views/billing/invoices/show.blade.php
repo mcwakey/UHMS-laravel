@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Invoice ' . $invoice->invoice_number)
+@section('title', __('invoices.invoice') . ' ' . $invoice->invoice_number)
 
 @section('content')
 @php
@@ -45,14 +45,14 @@
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3">
     <div class="flex-grow-1">
         <h6 class="fw-bold mb-0 d-flex align-items-center">
-            <a href="{{ route('admin.billing.invoices.index') }}"><i class="ti ti-chevron-left me-1 fs-14"></i>Invoices</a>
+            <a href="{{ route('admin.billing.invoices.index') }}"><i class="ti ti-chevron-left me-1 fs-14"></i>{{ __('invoices.title') }}</a>
         </h6>
     </div>
     <div class="d-flex gap-2">
         @can('claims.view')
         @if($invoiceClaim)
         <a href="{{ route('admin.claims.show', $invoiceClaim) }}" class="btn btn-outline-primary btn-md">
-            <i class="ti ti-file-dollar me-1"></i>View Insurance Claim
+            <i class="ti ti-file-dollar me-1"></i>{{ __('billing.view_insurance_claim') }}
         </a>
         @endif
         @endcan
@@ -64,33 +64,33 @@
                     <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
                     <input type="hidden" name="insurance_provider_id" value="{{ $invoiceInsuranceProviderId }}">
                     <button type="submit" class="btn btn-primary btn-md">
-                        <i class="ti ti-file-plus me-1"></i>Generate Insurance Claim
+                        <i class="ti ti-file-plus me-1"></i>{{ __('billing.generate_insurance_claim') }}
                     </button>
                 </form>
                 @else
                 <a href="{{ route('admin.claims.create', ['invoice_id' => $invoice->id]) }}" class="btn btn-primary btn-md">
-                    <i class="ti ti-file-plus me-1"></i>Generate Insurance Claim
+                    <i class="ti ti-file-plus me-1"></i>{{ __('billing.generate_insurance_claim') }}
                 </a>
                 @endif
             @endcan
         @endif
         <a data-no-inertia href="{{ route('admin.billing.invoices.print', $invoice) }}" target="_blank" class="btn btn-dark btn-md">
-            <i class="ti ti-printer me-1"></i>Print
+            <i class="ti ti-printer me-1"></i>{{ __('common.print') }}
         </a>
         <a data-no-inertia href="{{ route('admin.billing.invoices.pdf', $invoice) }}" class="btn btn-outline-danger btn-md">
-            <i class="ti ti-file-type-pdf me-1"></i>Download PDF
+            <i class="ti ti-file-type-pdf me-1"></i>{{ __('invoices.download_pdf') }}
         </a>
         @can('invoices.edit')
         @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::CANCELLED, \App\Enums\InvoiceStatus::REFUNDED, \App\Enums\InvoiceStatus::PAID], true))
         <a href="{{ route('admin.billing.invoices.edit', $invoice) }}" class="btn btn-outline-secondary btn-md">
-            <i class="ti ti-edit me-1"></i>Edit
+            <i class="ti ti-edit me-1"></i>{{ __('common.edit') }}
         </a>
         @endif
         @endcan
         @can('credit_notes.create')
         @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::CANCELLED, \App\Enums\InvoiceStatus::REFUNDED], true) && $invoice->balance > 0)
         <a href="{{ route('admin.billing.credit-notes.create', ['invoice_id' => $invoice->id]) }}" class="btn btn-outline-info btn-md">
-            <i class="ti ti-receipt-refund me-1"></i>Issue Credit Note
+            <i class="ti ti-receipt-refund me-1"></i>{{ __('invoices.credit_note') }}
         </a>
         @endif
         @endcan
@@ -131,14 +131,14 @@
                 <!-- Invoice Info Row -->
                 <div class="row mb-4 pb-3 border-bottom">
                     <div class="col-md-4">
-                        <h6 class="fw-bold mb-2">Invoice Details</h6>
-                        <p class="mb-1 text-muted">Invoice #: <span class="text-dark fw-medium">{{ $invoice->invoice_number }}</span></p>
-                        <p class="mb-1 text-muted">Date: <span class="text-dark">{{ $invoice->created_at->format('d M Y') }}</span></p>
-                        <p class="mb-1 text-muted">Due Date: <span class="text-dark">{{ $invoice->due_date?->format('d M Y') ?? '—' }}</span></p>
-                        <p class="mb-0 text-muted">Type: <span class="badge bg-soft-{{ $invoice->billing_type->color() }}">{{ $invoice->billing_type->label() }}</span></p>
+                        <h6 class="fw-bold mb-2">{{ __('invoices.invoice_details') }}</h6>
+                        <p class="mb-1 text-muted">{{ __('invoices.invoice_number') }}: <span class="text-dark fw-medium">{{ $invoice->invoice_number }}</span></p>
+                        <p class="mb-1 text-muted">{{ __('invoices.invoice_date') }}: <span class="text-dark">{{ $invoice->created_at->format('d M Y') }}</span></p>
+                        <p class="mb-1 text-muted">{{ __('invoices.due_date') }}: <span class="text-dark">{{ $invoice->due_date?->format('d M Y') ?? '—' }}</span></p>
+                        <p class="mb-0 text-muted">{{ __('common.type') }}: <span class="badge bg-soft-{{ $invoice->billing_type->color() }}">{{ $invoice->billing_type->label() }}</span></p>
                         @if($canViewAccountingPosting)
                             <div class="mt-2 small">
-                                <span class="text-muted">Accounting:</span>
+                                <span class="text-muted">{{ __('invoices.accounting') }}:</span>
                                 <span class="badge bg-{{ $accountingStatusColor($invoice->accounting_status) }}">
                                     {{ $accountingStatusLabel($invoice->accounting_status) }}
                                 </span>
@@ -150,7 +150,7 @@
                                         @csrf
                                         <input type="hidden" name="source_type" value="invoice">
                                         <input type="hidden" name="source_id" value="{{ $invoice->id }}">
-                                        <button type="submit" class="btn btn-link btn-sm p-0 align-baseline">Retry</button>
+                                        <button type="submit" class="btn btn-link btn-sm p-0 align-baseline">{{ __('invoices.retry') }}</button>
                                     </form>
                                 @endif
                                 @if($invoice->accounting_status === 'failed' && $canViewAccountingFailures && $invoice->accounting_error)
@@ -160,19 +160,19 @@
                         @endif
                     </div>
                     <div class="col-md-4">
-                        <h6 class="fw-bold mb-2">{{ $invoice->patient ? 'Patient' : 'Recipient' }}</h6>
+                        <h6 class="fw-bold mb-2">{{ $invoice->patient ? __('common.patient') : __('invoices.recipient') }}</h6>
                         @if($invoice->patient)
                             <p class="fw-medium mb-1">{{ $invoice->patient->full_name }}</p>
                             <p class="text-muted mb-1">{{ $invoice->patient->patient_number }}</p>
                             <p class="text-muted mb-1">{{ $invoice->patient->phone }}</p>
                         @else
-                            <p class="fw-medium mb-1">{{ $invoice->external_party_name ?? 'External recipient' }}</p>
-                            <p class="text-muted mb-1"><span class="badge bg-purple-lt">External / referral</span></p>
-                            @if($invoice->bloodRequest)<p class="text-muted mb-1">Blood request {{ $invoice->bloodRequest->request_number }}</p>@endif
+                            <p class="fw-medium mb-1">{{ $invoice->external_party_name ?? __('invoices.external_recipient') }}</p>
+                            <p class="text-muted mb-1"><span class="badge bg-purple-lt">{{ __('billing.external_referral') }}</span></p>
+                            @if($invoice->bloodRequest)<p class="text-muted mb-1">{{ __('invoices.blood_requests') }} {{ $invoice->bloodRequest->request_number }}</p>@endif
                         @endif
                     </div>
                     <div class="col-md-4 text-md-end">
-                        <h6 class="fw-bold mb-2">Visit</h6>
+                        <h6 class="fw-bold mb-2">{{ __('invoices.visit') }}</h6>
                         @if($invoice->visit)
                             <p class="text-muted mb-1">{{ $invoice->visit->visit_number }}</p>
                             <p id="invoiceVisitStatusLabel" class="text-muted mb-1">{{ $invoice->visit->status->label() }}</p>
@@ -184,7 +184,7 @@
                 </div>
 
                 <!-- Items Table -->
-                <h6 class="fw-bold mb-3">Service Items</h6>
+                <h6 class="fw-bold mb-3">{{ __('invoices.service_items') }}</h6>
                 @php
                     $sourceLabels = [
                         'cash_and_carry'         => ['Cash & Carry',    'secondary'],
@@ -250,17 +250,17 @@
                         <thead class="table-light">
                             <tr>
                                 <th>#</th>
-                                <th>Description</th>
-                                <th>Pricing</th>
-                                <th class="text-end">Price</th>
-                                <th class="text-end">Covered</th>
-                                <th class="text-end">Discount</th>
-                                <th class="text-end">Patient Payable</th>
-                                <th class="text-end">Paid</th>
-                                <th class="text-end">Balance</th>
-                                <th class="text-center">Status</th>
+                                <th>{{ __('invoices.description') }}</th>
+                                <th>{{ __('invoices.pricing') }}</th>
+                                <th class="text-end">{{ __('invoices.price') }}</th>
+                                <th class="text-end">{{ __('invoices.covered') }}</th>
+                                <th class="text-end">{{ __('invoices.discount') }}</th>
+                                <th class="text-end">{{ __('invoices.patient_payable') }}</th>
+                                <th class="text-end">{{ __('invoices.paid') }}</th>
+                                <th class="text-end">{{ __('invoices.balance') }}</th>
+                                <th class="text-center">{{ __('common.status') }}</th>
                                 @if($canDiscountActions)
-                                <th class="text-center" style="width:60px;">Actions</th>
+                                <th class="text-center" style="width:60px;">{{ __('common.actions') }}</th>
                                 @endif
                             </tr>
                         </thead>
@@ -341,7 +341,7 @@
                                     @if($canApplyDiscount)
                                     <button type="button"
                                             class="btn btn-sm btn-outline-warning"
-                                            title="Apply Discount"
+                                            title="{{ __('invoices.apply_discount') }}"
                                             data-bs-toggle="modal"
                                             data-bs-target="#discountModal"
                                             data-item-id="{{ $item->id }}"
@@ -355,11 +355,11 @@
                                     @if($canRemoveDiscount && (float) $item->discount_amount > 0)
                                      <x-confirm-form :action="route('admin.billing.invoices.items.discount.remove', [$invoice, $item])" method="DELETE"
                                          button-label="" button-class="btn btn-sm btn-outline-danger ms-1" icon="ti-x"
-                                         confirm-title="Remove this discount?"
-                                         confirm-text="This will reverse the manual discount on this invoice item."
-                                         confirm-button="Yes, remove discount"
+                                         :confirm-title="__('invoices.remove_discount_title')"
+                                         :confirm-text="__('invoices.remove_discount_text')"
+                                         :confirm-button="__('invoices.remove_discount_btn')"
                                          :require-reason="true"
-                                         reason-placeholder="Reason for removing this discount" />
+                                         :reason-placeholder="__('invoices.remove_discount_reason')" />
                                      @endif
                                     @endif
                                  </td>
@@ -375,44 +375,44 @@
                     <div class="col-md-6">
                         @if($invoice->notes)
                         <div>
-                            <h6 class="fw-bold mb-1">Notes</h6>
+                            <h6 class="fw-bold mb-1">{{ __('invoices.notes') }}</h6>
                             <p class="text-muted">{{ $invoice->notes }}</p>
                         </div>
                         @endif
-                        <p class="text-muted mb-1">Created by: <span class="text-dark">{{ $invoice->createdBy->name ?? '—' }}</span></p>
+                        <p class="text-muted mb-1">{{ __('common.created_by') }}: <span class="text-dark">{{ $invoice->createdBy->name ?? '—' }}</span></p>
                     </div>
                     <div class="col-md-6">
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Gross Total</span>
+                            <span class="text-muted">{{ __('invoices.gross_total') }}</span>
                             <span class="fw-medium">&#8373;{{ number_format($invoiceBalanceSummary['gross_total'], 2) }}</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Discounts</span>
+                            <span class="text-muted">{{ __('invoices.discounts') }}</span>
                             <span class="text-danger">-&#8373;{{ number_format($invoiceBalanceSummary['discounts'], 2) }}</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Credit Notes</span>
+                            <span class="text-muted">{{ __('invoices.credit_notes') }}</span>
                             <span class="text-info">-&#8373;{{ number_format($invoiceBalanceSummary['credit_notes'], 2) }}</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Write-offs</span>
+                            <span class="text-muted">{{ __('invoices.write_offs') }}</span>
                             <span class="text-dark">-&#8373;{{ number_format($invoiceBalanceSummary['write_offs'], 2) }}</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-success fw-medium">Payments</span>
+                            <span class="text-success fw-medium">{{ __('invoices.payments') }}</span>
                             <span id="invoicePaidValue" class="text-success fw-medium" data-amount="{{ $invoice->amount_paid }}">-&#8373;{{ number_format($invoiceBalanceSummary['payments'], 2) }}</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-danger fw-medium">Refunds / Reversals</span>
+                            <span class="text-danger fw-medium">{{ __('invoices.refunds_reversals') }}</span>
                             <span class="text-danger">+&#8373;{{ number_format($invoiceBalanceSummary['refunds'], 2) }}</span>
                         </div>
                         <div class="d-flex justify-content-between border-top pt-2">
-                            <span class="fw-bold text-danger">Balance</span>
+                            <span class="fw-bold text-danger">{{ __('invoices.balance_label') }}</span>
                             <span id="invoiceBalanceValue" class="fw-bold text-danger fs-5" data-amount="{{ $invoice->balance }}">&#8373;{{ number_format($invoiceBalanceSummary['outstanding_balance'], 2) }}</span>
                         </div>
                         @if($canViewAccountingPosting)
                         <div class="d-flex justify-content-between mt-2">
-                            <span class="text-muted">Accounting Status</span>
+                            <span class="text-muted">{{ __('invoices.accounting_status') }}</span>
                             <span class="badge bg-{{ $accountingStatusColor($invoiceBalanceSummary['accounting_status']) }}">{{ $accountingStatusLabel($invoiceBalanceSummary['accounting_status']) }}</span>
                         </div>
                         @endif
@@ -427,10 +427,10 @@
                 @if($canViewReceivables)
                 <hr>
                 <div class="d-flex align-items-center justify-content-between mb-3">
-                    <h6 class="fw-bold mb-0"><i class="ti ti-users-group me-1"></i>Payer Responsibility / Receivables</h6>
+                    <h6 class="fw-bold mb-0"><i class="ti ti-users-group me-1"></i>{{ __('invoices.payer_responsibility') }}</h6>
                     @if($canReallocateReceivables && $openReceivables->isNotEmpty())
                     <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#receivableReallocationModal">
-                        <i class="ti ti-arrows-exchange me-1"></i>Reallocate
+                        <i class="ti ti-arrows-exchange me-1"></i>{{ __('invoices.reallocate') }}
                     </button>
                     @endif
                 </div>
@@ -438,16 +438,16 @@
                     <table class="table table-sm table-bordered align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th>Payer</th>
-                                <th>Type</th>
-                                <th class="text-end">Allocated</th>
-                                <th class="text-end">Paid</th>
-                                <th class="text-end">Adjustments</th>
-                                <th class="text-end">Balance</th>
-                                <th>Due / Aging</th>
-                                <th>Status</th>
+                                <th>{{ __('invoices.payer') }}</th>
+                                <th>{{ __('common.type') }}</th>
+                                <th class="text-end">{{ __('invoices.allocated') }}</th>
+                                <th class="text-end">{{ __('invoices.paid') }}</th>
+                                <th class="text-end">{{ __('invoices.adjustments') }}</th>
+                                <th class="text-end">{{ __('invoices.balance') }}</th>
+                                <th>{{ __('invoices.due_aging') }}</th>
+                                <th>{{ __('common.status') }}</th>
                                 @if($canViewAccountingPosting)
-                                <th>Journal</th>
+                                <th>{{ __('invoices.journal_entry') }}</th>
                                 @endif
                             </tr>
                         </thead>
@@ -466,8 +466,8 @@
                                 <td class="text-end">&#8373;{{ number_format($adjustments, 2) }}</td>
                                 <td class="text-end fw-semibold {{ (float) $receivable->balance > 0 ? 'text-danger' : 'text-muted' }}">&#8373;{{ number_format($receivable->balance, 2) }}</td>
                                 <td>
-                                    <div>{{ $receivable->due_date?->format('d M Y') ?? 'No due date' }}</div>
-                                    <small class="text-muted">{{ $agingDays }} day{{ $agingDays === 1 ? '' : 's' }}</small>
+                                    <div>{{ $receivable->due_date?->format('d M Y') ?? '—' }}</div>
+                                    <small class="text-muted">{{ $agingDays }} {{ $agingDays === 1 ? 'day' : 'days' }}</small>
                                 </td>
                                 <td><span class="badge bg-{{ $receivableStatusColor($receivable->status) }}">{{ ucfirst(str_replace('_', ' ', $receivable->status)) }}</span></td>
                                 @if($canViewAccountingPosting)
@@ -485,7 +485,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="{{ $canViewAccountingPosting ? 9 : 8 }}" class="text-center text-muted py-3">No payer responsibility rows are available yet.</td>
+                                <td colspan="{{ $canViewAccountingPosting ? 9 : 8 }}" class="text-center text-muted py-3">{{ __('invoices.no_payer_rows') }}</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -494,21 +494,21 @@
                 @endif
 
                 <hr>
-                <h6 class="fw-bold mb-3"><i class="ti ti-adjustments-dollar me-1"></i>Adjustments &amp; Settlements</h6>
+                <h6 class="fw-bold mb-3"><i class="ti ti-adjustments-dollar me-1"></i>{{ __('invoices.adjustments_settlements') }}</h6>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th>Date</th>
-                                <th>Type</th>
-                                <th>Reference</th>
-                                <th class="text-end">Amount</th>
-                                <th>Reason</th>
-                                <th>Status</th>
-                                <th>Approved By</th>
+                                <th>{{ __('common.date') }}</th>
+                                <th>{{ __('common.type') }}</th>
+                                <th>{{ __('invoices.reference') }}</th>
+                                <th class="text-end">{{ __('common.amount') }}</th>
+                                <th>{{ __('common.reason') }}</th>
+                                <th>{{ __('common.status') }}</th>
+                                <th>{{ __('invoices.approved_by') }}</th>
                                 @if($canViewAccountingPosting)
-                                <th>Journal Entry</th>
-                                <th>Action</th>
+                                <th>{{ __('invoices.journal_entry') }}</th>
+                                <th>{{ __('common.action') }}</th>
                                 @endif
                             </tr>
                         </thead>
@@ -531,7 +531,7 @@
                                     @endif
                                     @if($history['reversal_journal'])
                                         <div class="small">
-                                            Reversal:
+                                            {{ __('invoices.reversal') }}:
                                             <a href="{{ route('admin.accounting.journals.show', $history['reversal_journal']) }}">{{ $history['reversal_journal']->journal_number }}</a>
                                         </div>
                                     @endif
@@ -546,7 +546,7 @@
                                             <input type="hidden" name="source_type" value="{{ $history['retry_source_type'] }}">
                                             <input type="hidden" name="source_id" value="{{ $history['retry_source_id'] }}">
                                             <button type="submit" class="btn btn-sm btn-outline-warning">
-                                                <i class="ti ti-refresh me-1"></i>Retry
+                                                <i class="ti ti-refresh me-1"></i>{{ __('invoices.retry') }}
                                             </button>
                                         </form>
                                     @else
@@ -557,7 +557,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="{{ $canViewAccountingPosting ? 9 : 7 }}" class="text-center text-muted py-3">No payments or adjustments recorded.</td>
+                                <td colspan="{{ $canViewAccountingPosting ? 9 : 7 }}" class="text-center text-muted py-3">{{ __('invoices.no_adjustments') }}</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -566,20 +566,20 @@
 
                 @if($canViewDiscountHistory)
                 <hr>
-                <h6 class="fw-bold mb-3"><i class="ti ti-discount-2 me-1"></i>Discount History</h6>
+                <h6 class="fw-bold mb-3"><i class="ti ti-discount-2 me-1"></i>{{ __('invoices.discount_history') }}</h6>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered">
                         <thead class="table-light">
                             <tr>
-                                <th>Date</th>
-                                <th>Item</th>
-                                <th class="text-end">Old Discount</th>
-                                <th class="text-end">New Discount</th>
-                                <th>Risk</th>
-                                <th>Reason</th>
-                                <th>User</th>
+                                <th>{{ __('common.date') }}</th>
+                                <th>{{ __('invoices.item') }}</th>
+                                <th class="text-end">{{ __('invoices.old_discount') }}</th>
+                                <th class="text-end">{{ __('invoices.new_discount') }}</th>
+                                <th>{{ __('invoices.risk') }}</th>
+                                <th>{{ __('common.reason') }}</th>
+                                <th>{{ __('invoices.user') }}</th>
                                 @if($canViewAccountingPosting)
-                                <th>Accounting</th>
+                                <th>{{ __('invoices.accounting') }}</th>
                                 @endif
                             </tr>
                         </thead>
@@ -609,7 +609,7 @@
                                             @csrf
                                             <input type="hidden" name="source_type" value="discount">
                                             <input type="hidden" name="source_id" value="{{ $event->id }}">
-                                            <button type="submit" class="btn btn-link btn-sm p-0">Retry</button>
+                                            <button type="submit" class="btn btn-link btn-sm p-0">{{ __('invoices.retry') }}</button>
                                         </form>
                                     @endif
                                     @if($event->accounting_status === 'failed' && $canViewAccountingFailures && $event->accounting_error)
@@ -620,7 +620,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="{{ $canViewAccountingPosting ? 8 : 7 }}" class="text-center text-muted py-3">No discount history.</td>
+                                <td colspan="{{ $canViewAccountingPosting ? 8 : 7 }}" class="text-center text-muted py-3">{{ __('invoices.no_discount_history') }}</td>
                             </tr>
                             @endforelse
                         </tbody>
@@ -631,20 +631,20 @@
                 <!-- Payment History -->
                 @if($invoice->payments->count() > 0)
                 <hr>
-                <h6 class="fw-bold mb-3"><i class="ti ti-cash me-1"></i>Payment History</h6>
+                <h6 class="fw-bold mb-3"><i class="ti ti-cash me-1"></i>{{ __('invoices.payment_history') }}</h6>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered">
                         <thead class="table-light">
                             <tr>
-                                <th>Payment #</th>
-                                <th>Date</th>
-                                <th>Payer</th>
-                                <th>Method</th>
-                                <th>Reference</th>
-                                <th class="text-end">Amount</th>
-                                <th>Received By</th>
+                                <th>{{ __('invoices.payment_no') }}</th>
+                                <th>{{ __('common.date') }}</th>
+                                <th>{{ __('invoices.payer_col') }}</th>
+                                <th>{{ __('invoices.method') }}</th>
+                                <th>{{ __('invoices.reference') }}</th>
+                                <th class="text-end">{{ __('common.amount') }}</th>
+                                <th>{{ __('invoices.received_by') }}</th>
                                 @if($canViewAccountingPosting)
-                                <th>Accounting</th>
+                                <th>{{ __('invoices.accounting') }}</th>
                                 @endif
                             </tr>
                         </thead>
@@ -677,7 +677,7 @@
                                             @csrf
                                             <input type="hidden" name="source_type" value="payment">
                                             <input type="hidden" name="source_id" value="{{ $payment->id }}">
-                                            <button type="submit" class="btn btn-link btn-sm p-0">Retry</button>
+                                            <button type="submit" class="btn btn-link btn-sm p-0">{{ __('invoices.retry') }}</button>
                                         </form>
                                     @endif
                                     @if($payment->accounting_status === 'failed' && $canViewAccountingFailures && $payment->accounting_error)
@@ -700,18 +700,18 @@
         @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::PAID, \App\Enums\InvoiceStatus::CANCELLED, \App\Enums\InvoiceStatus::REFUNDED]))
         <div class="card border-primary" id="recordPaymentCard">
             <div class="card-header bg-primary text-white">
-                <h6 class="fw-bold mb-0"><i class="ti ti-cash me-1"></i>Record Payment</h6>
+                <h6 class="fw-bold mb-0"><i class="ti ti-cash me-1"></i>{{ __('invoices.record_payment') }}</h6>
             </div>
             <div class="card-body">
                 <div class="alert alert-warning py-2 mb-3" id="invoiceOutstandingAlert">
-                    <small><strong>Outstanding:</strong> <span id="invoiceOutstandingValue">&#8373;{{ number_format($invoice->balance, 2) }}</span></small>
+                    <small><strong>{{ __('invoices.outstanding_label') }}:</strong> <span id="invoiceOutstandingValue">&#8373;{{ number_format($invoice->balance, 2) }}</span></small>
                 </div>
 
                 <form method="POST" action="{{ route('admin.billing.payments.store', $invoice) }}" id="paymentForm">
                     @csrf
                     @if($openReceivables->isNotEmpty())
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Paying Party <span class="text-danger">*</span></label>
+                        <label class="form-label fw-medium">{{ __('invoices.paying_party') }} <span class="text-danger">*</span></label>
                         <select name="invoice_receivable_id" id="invoiceReceivableSelect" class="form-select @error('invoice_receivable_id') is-invalid @enderror" required>
                             @foreach($openReceivables as $receivable)
                             <option value="{{ $receivable->id }}"
@@ -728,7 +728,7 @@
                     </div>
                     @endif
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Amount (&#8373;) <span class="text-danger">*</span></label>
+                        <label class="form-label fw-medium">{{ __('invoices.amount_label') }} <span class="text-danger">*</span></label>
                         <input type="number" name="amount" id="paymentAmountInput" class="form-control @error('amount') is-invalid @enderror"
                             value="{{ old('amount', number_format($defaultPaymentAmount, 2, '.', '')) }}" step="0.01" min="0.01" max="{{ number_format($defaultPaymentAmount, 2, '.', '') }}" required>
                         @error('amount')
@@ -737,7 +737,7 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Payment Method <span class="text-danger">*</span></label>
+                        <label class="form-label fw-medium">{{ __('payments.payment_method') }} <span class="text-danger">*</span></label>
                         <select name="payment_method" class="form-select @error('payment_method') is-invalid @enderror" required id="paymentMethodSelect">
                             @foreach(\App\Enums\PaymentMethod::cases() as $method)
                             <option value="{{ $method->value }}">{{ $method->label() }}</option>
@@ -749,7 +749,7 @@
                     </div>
 
                     <div class="mb-3" id="referenceGroup" style="display:none;">
-                        <label class="form-label fw-medium">Reference / Transaction ID</label>
+                        <label class="form-label fw-medium">{{ __('payments.payment_reference') }}</label>
                         <input type="text" name="reference_number" class="form-control" placeholder="e.g. MoMo Transaction ID">
                     </div>
 
@@ -764,8 +764,8 @@
                     <div class="mb-3">
                         <details>
                             <summary class="fw-medium text-primary" style="cursor:pointer;">
-                                <i class="ti ti-list-check me-1"></i>Pay specific items
-                                <small class="text-muted">(optional — leave unchecked to auto-distribute)</small>
+                                <i class="ti ti-list-check me-1"></i>{{ __('invoices.pay_specific_items') }}
+                                <small class="text-muted">({{ __('invoices.auto_distribute') }})</small>
                             </summary>
                             <div class="mt-2 border rounded p-2" style="max-height:260px;overflow:auto;">
                                 @foreach($unpaidItems as $uIdx => $uItem)
@@ -775,7 +775,7 @@
                                     </div>
                                     <div class="col">
                                         <div class="small fw-medium">{{ $uItem->description }}</div>
-                                        <div class="small text-muted">Balance: &#8373;{{ number_format($uItem->balance, 2) }}</div>
+                                        <div class="small text-muted">{{ __('invoices.balance_label_item') }}: &#8373;{{ number_format($uItem->balance, 2) }}</div>
                                         <input type="hidden" name="allocations[{{ $uIdx }}][invoice_item_id]" value="{{ $uItem->id }}" disabled class="alloc-id">
                                     </div>
                                     <div class="col-4">
@@ -792,13 +792,13 @@
                     @endif
 
                     <div class="mb-3">
-                        <label class="form-label fw-medium">Notes</label>
-                        <textarea name="notes" class="form-control" rows="2" placeholder="Optional"></textarea>
+                        <label class="form-label fw-medium">{{ __('payments.notes') }}</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="{{ __('common.optional') }}"></textarea>
                     </div>
 
                     @can('payments.create')
                     <button type="submit" class="btn btn-primary w-100" id="recordPaymentBtn">
-                        <i class="ti ti-check me-1"></i>Record Payment
+                        <i class="ti ti-check me-1"></i>{{ __('invoices.record_payment') }}
                     </button>
                     @endcan
                 </form>
@@ -809,10 +809,10 @@
             <div class="card-body text-center py-4">
                 @if($invoice->status === \App\Enums\InvoiceStatus::PAID)
                 <i class="ti ti-circle-check text-success fs-1 d-block mb-2"></i>
-                <h5 class="text-success">Fully Paid</h5>
+                <h5 class="text-success">{{ __('invoices.fully_paid') }}</h5>
                 @elseif($invoice->status === \App\Enums\InvoiceStatus::CANCELLED)
                 <i class="ti ti-circle-x text-danger fs-1 d-block mb-2"></i>
-                <h5 class="text-danger">Cancelled</h5>
+                <h5 class="text-danger">{{ __('invoices.cancelled_label') }}</h5>
                 @endif
             </div>
         </div>
@@ -821,13 +821,13 @@
         <!-- Quick Actions -->
         <div class="card">
             <div class="card-header">
-                <h6 class="fw-bold mb-0">Quick Actions</h6>
+                <h6 class="fw-bold mb-0">{{ __('invoices.quick_actions') }}</h6>
             </div>
             <div class="card-body d-grid gap-2">
                 @can('claims.view')
                 @if($invoiceClaim)
                 <a href="{{ route('admin.claims.show', $invoiceClaim) }}" class="btn btn-outline-primary">
-                    <i class="ti ti-file-dollar me-1"></i>View Insurance Claim
+                    <i class="ti ti-file-dollar me-1"></i>{{ __('billing.view_insurance_claim') }}
                 </a>
                 @endif
                 @endcan
@@ -839,38 +839,38 @@
                             <input type="hidden" name="invoice_id" value="{{ $invoice->id }}">
                             <input type="hidden" name="insurance_provider_id" value="{{ $invoiceInsuranceProviderId }}">
                             <button type="submit" class="btn btn-outline-primary w-100">
-                                <i class="ti ti-file-plus me-1"></i>Generate Insurance Claim
+                                <i class="ti ti-file-plus me-1"></i>{{ __('billing.generate_insurance_claim') }}
                             </button>
                         </form>
                         @else
                         <a href="{{ route('admin.claims.create', ['invoice_id' => $invoice->id]) }}" class="btn btn-outline-primary">
-                            <i class="ti ti-file-plus me-1"></i>Generate Insurance Claim
+                            <i class="ti ti-file-plus me-1"></i>{{ __('billing.generate_insurance_claim') }}
                         </a>
                         @endif
                     @endcan
                 @endif
                 <a data-no-inertia href="{{ route('admin.billing.invoices.print', $invoice) }}" target="_blank" class="btn btn-outline-dark">
-                    <i class="ti ti-printer me-1"></i>Print Invoice
+                    <i class="ti ti-printer me-1"></i>{{ __('invoices.print_invoice') }}
                 </a>
                 @if(!in_array($invoice->status, [\App\Enums\InvoiceStatus::PAID, \App\Enums\InvoiceStatus::CANCELLED]))
                 @can('invoices.void')
                 <x-confirm-form :action="route('admin.billing.invoices.cancel', $invoice)" method="PATCH"
-                    button-label="Cancel Invoice" button-class="btn btn-outline-danger w-100" icon="ti-x"
-                    confirm-title="Cancel this invoice?" confirm-text="The invoice will be marked cancelled." confirm-button="Yes, cancel invoice" />
+                    :button-label="__('billing.cancel_invoice')" button-class="btn btn-outline-danger w-100" icon="ti-x"
+                    :confirm-title="__('billing.cancel_invoice_title')" :confirm-text="__('billing.cancel_invoice_text')" :confirm-button="__('billing.cancel_invoice_confirm')" />
                 @endcan
                 @endif
                 @if($invoice->visit)
                 <a href="{{ route('admin.visits.show', $invoice->visit) }}" class="btn btn-outline-primary">
-                    <i class="ti ti-calendar-check me-1"></i>View Visit
+                    <i class="ti ti-calendar-check me-1"></i>{{ __('invoices.view_visit') }}
                 </a>
                 @endif
                 @if($invoice->patient)
                 <a href="{{ route('admin.patients.show', $invoice->patient) }}" class="btn btn-outline-info">
-                    <i class="ti ti-user me-1"></i>View Patient
+                    <i class="ti ti-user me-1"></i>{{ __('invoices.view_patient') }}
                 </a>
                 @elseif($invoice->bloodRequest)
                 <a href="{{ route('admin.blood-bank.requests.index') }}" class="btn btn-outline-info">
-                    <i class="ti ti-droplet me-1"></i>Blood Requests
+                    <i class="ti ti-droplet me-1"></i>{{ __('invoices.blood_requests') }}
                 </a>
                 @endif
             </div>
@@ -885,31 +885,31 @@
             @csrf
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="ti ti-arrows-exchange me-1"></i>Reallocate Payer Responsibility</h5>
+                    <h5 class="modal-title"><i class="ti ti-arrows-exchange me-1"></i>{{ __('invoices.reallocate_payer') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Move From <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('invoices.move_from') }} <span class="text-danger">*</span></label>
                         <select name="from_receivable_id" class="form-select" required>
                             @foreach($openReceivables as $receivable)
                             <option value="{{ $receivable->id }}" data-balance="{{ number_format((float) $receivable->balance, 2, '.', '') }}">
-                                {{ ucfirst($receivable->payer_type) }} - {{ $receivable->payerName() }} (Balance &#8373;{{ number_format($receivable->balance, 2) }})
+                                {{ ucfirst($receivable->payer_type) }} - {{ $receivable->payerName() }} ({{ __('invoices.balance_label') }} &#8373;{{ number_format($receivable->balance, 2) }})
                             </option>
                             @endforeach
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Move To <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('invoices.move_to') }} <span class="text-danger">*</span></label>
                         <select name="target_payer_type" id="targetPayerTypeSelect" class="form-select" required>
-                            <option value="patient">Patient</option>
-                            <option value="insurance">Insurance Provider</option>
-                            <option value="sponsor">Sponsor</option>
-                            <option value="corporate">Corporate Client</option>
+                            <option value="patient">{{ __('common.patient') }}</option>
+                            <option value="insurance">{{ __('invoices.insurance') }}</option>
+                            <option value="sponsor">{{ __('invoices.sponsor_label') ?? 'Sponsor' }}</option>
+                            <option value="corporate">{{ __('invoices.corporate') }}</option>
                         </select>
                     </div>
                     <div class="mb-3 payer-target-select d-none" data-payer-target="insurance">
-                        <label class="form-label">Insurance Provider</label>
+                        <label class="form-label">{{ __('invoices.insurance') }}</label>
                         <select class="form-select target-payer-id" disabled>
                             <option value="">Select provider</option>
                             @foreach(($receivablePayerOptions['insurance'] ?? []) as $provider)
@@ -918,7 +918,7 @@
                         </select>
                     </div>
                     <div class="mb-3 payer-target-select d-none" data-payer-target="sponsor">
-                        <label class="form-label">Sponsor</label>
+                        <label class="form-label">{{ __('invoices.sponsor_label') ?? 'Sponsor' }}</label>
                         <select class="form-select target-payer-id" disabled>
                             <option value="">Select sponsor</option>
                             @foreach(($receivablePayerOptions['sponsors'] ?? []) as $sponsor)
@@ -927,7 +927,7 @@
                         </select>
                     </div>
                     <div class="mb-3 payer-target-select d-none" data-payer-target="corporate">
-                        <label class="form-label">Corporate Client</label>
+                        <label class="form-label">{{ __('invoices.corporate') }}</label>
                         <select class="form-select target-payer-id" disabled>
                             <option value="">Select corporate client</option>
                             @foreach(($receivablePayerOptions['corporate'] ?? []) as $client)
@@ -937,20 +937,20 @@
                     </div>
                     <input type="hidden" name="target_payer_id" id="targetPayerIdInput">
                     <div class="mb-3">
-                        <label class="form-label">Amount (GH&#8373;) <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('invoices.amount_label') }} <span class="text-danger">*</span></label>
                         <input type="number" name="amount" id="receivableReallocationAmount" class="form-control" step="0.01" min="0.01" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Reason <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('common.reason') }} <span class="text-danger">*</span></label>
                         <textarea name="reason" class="form-control" rows="3" maxlength="500" required></textarea>
                     </div>
                     <div class="alert alert-warning py-2 mb-0 small">
-                        Reallocation changes the payer responsible for collection. It does not discount, waive, or cancel the invoice.
+                        {{ __('invoices.reallocation_warning') }}
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>Reallocate</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-primary"><i class="ti ti-check me-1"></i>{{ __('invoices.reallocate') }}</button>
                 </div>
             </div>
         </form>
@@ -966,26 +966,26 @@
             @csrf
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="ti ti-discount-2 me-1"></i>Apply Discount</h5>
+                    <h5 class="modal-title"><i class="ti ti-discount-2 me-1"></i>{{ __('invoices.apply_discount') }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-2"><strong>Item:</strong> <span id="discountItemDesc">—</span></p>
-                    <p class="mb-3 text-muted small">Line Total: &#8373;<span id="discountLineTotal">0.00</span></p>
+                    <p class="mb-2"><strong>{{ __('invoices.item') }}:</strong> <span id="discountItemDesc">—</span></p>
+                    <p class="mb-3 text-muted small">{{ __('invoices.subtotal') }}: &#8373;<span id="discountLineTotal">0.00</span></p>
                     <div class="mb-3">
-                        <label class="form-label">Discount Amount (GH&#8373;) <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('invoices.discount_amount_label') }} <span class="text-danger">*</span></label>
                         <input type="number" name="discount_amount" id="discountAmountInput"
                                class="form-control" step="0.01" min="0.01" required>
-                        <div class="form-text">Must not exceed the line total. Larger discounts require override permission.</div>
+                        <div class="form-text">{{ __('invoices.discount_exceed_note') }}</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Reason <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('common.reason') }} <span class="text-danger">*</span></label>
                         <textarea name="reason" id="discountReasonInput" class="form-control" rows="3" maxlength="500" required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-warning"><i class="ti ti-check me-1"></i>Apply Discount</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
+                    <button type="submit" class="btn btn-warning"><i class="ti ti-check me-1"></i>{{ __('invoices.apply_discount') }}</button>
                 </div>
             </div>
         </form>

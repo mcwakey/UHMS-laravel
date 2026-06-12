@@ -1,0 +1,36 @@
+<?php
+
+return [
+    'title'                 => 'Rôles et autorisations',
+    'roles'                 => 'Rôles',
+    'permissions'           => 'Autorisations',
+    'create_role'           => 'Créer un rôle',
+    'edit_role'             => 'Modifier le rôle',
+    'role_name'             => 'Nom du rôle',
+    'role_description'      => 'Description',
+    'assign_permissions'    => 'Attribuer des autorisations',
+    'save_role'             => 'Enregistrer le rôle',
+    'no_roles_found'        => 'Aucun rôle trouvé.',
+    'users_count'           => 'Utilisateurs',
+    'manage_permissions'    => 'Gérer les autorisations',
+    'permission_group'      => 'Groupe d\'autorisations',
+    'select_all'            => 'Tout sélectionner',
+    'deselect_all'          => 'Tout désélectionner',
+    'no_permissions'        => 'Aucune autorisation définie.',
+    'delete_role'           => 'Supprimer le rôle',
+    'cannot_delete'         => 'Ce rôle ne peut pas être supprimé.',
+    'system_role'           => 'Rôle système',
+    'custom_role'           => 'Rôle personnalisé',
+    'back_to_roles'         => 'Retour aux rôles',
+
+    // Extra UI strings
+    'add_role'              => 'Ajouter un rôle',
+    'add_new_role'          => 'Ajouter un nouveau rôle',
+    'edit_name'             => 'Modifier le nom',
+    'permissions_count'     => ':count autorisations',
+    'users_count_badge'     => ':count utilisateurs',
+    'locked'                => 'verrouillé',
+    'update_role'           => 'Mettre à jour le rôle',
+    'manage_permissions_for' => 'Gérer les autorisations : ',
+    'save_permissions'      => 'Enregistrer les autorisations',
+];

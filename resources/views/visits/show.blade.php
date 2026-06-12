@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Visit ' . $visit->visit_number)
+@section('title', __('visits.visit_number') . $visit->visit_number)
 
 @push('styles')
 <style>
@@ -15,8 +15,8 @@
     </h6>
     <div class="flex-grow-1">
         {{-- <a href="{{ route('admin.visits.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>Create New Visit</a> --}}
-        <h4 class="fw-bold mb-0">Visit {{ $visit->visit_number }}</h4>
-        <small class="text-muted">Created {{ $visit->created_at->format('d M Y, h:i A') }} by {{ $visit->createdBy?->full_name }}</small>
+        <h4 class="fw-bold mb-0">{{ __('visits.visit_number') }}{{ $visit->visit_number }}</h4>
+        <small class="text-muted">{{ $visit->created_at->format('d M Y, h:i A') }} {{ $visit->createdBy?->full_name }}</small>
     </div>
     <div class="d-flex gap-2">
         {{-- <a href="{{ route('admin.visits.index') }}" class="btn btn-outline-secondary btn-md">
@@ -25,13 +25,13 @@
         @can('emergency.case.create')
         @if(!in_array($visit->status, [\App\Enums\VisitStatus::COMPLETED, \App\Enums\VisitStatus::CANCELLED, \App\Enums\VisitStatus::NO_SHOW], true))
         <a href="{{ route('admin.emergency.cases.create', ['visit_id' => $visit->id]) }}" class="btn btn-outline-danger btn-md">
-            <i class="ti ti-ambulance me-1"></i>Create Emergency Case
+            <i class="ti ti-ambulance me-1"></i>{{ __('visits.create_emergency_case') }}
         </a>
         @endif
         @endcan
         @can('visits.create')
         <a href="{{ route('admin.visits.create', ['patient_id' => $visit->patient_id]) }}" class="btn btn-outline-primary btn-md">
-            <i class="ti ti-plus me-1"></i>New Visit
+            <i class="ti ti-plus me-1"></i>{{ __('visits.new_visit_btn') }}
         </a>
         @endcan
         {{-- @can('visits.edit')
@@ -54,7 +54,7 @@
         <div class="card mb-3">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between mb-3">
-                    <h6 class="fw-bold mb-0">Visit Status Flow</h6>
+                    <h6 class="fw-bold mb-0">{{ __('visits.visit_status_flow') }}</h6>
                     <div class="d-flex align-items-center gap-2">
                         <x-status-badge :status="$visit->status" class="fs-14 px-3 py-2" />
                         @if($visit->triage_score)
@@ -152,18 +152,18 @@
         <!-- Visit Details Card -->
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <h6 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>Visit Details</h6>
+                <h6 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>{{ __('visits.visit_details') }}</h6>
                 
                 @can('visits.preview')
                 <a href="{{ route('admin.visits.preview', $visit) }}" class="btn btn-outline-info btn-md">
-                    <i class="ti ti-eye-search me-1"></i>Preview Visit
+                    <i class="ti ti-eye-search me-1"></i>{{ __('visits.preview_visit_btn') }}
                 </a>
                 @endcan
             </div>
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-3 mb-2">
-                        <label class="text-muted small mb-1">Visit Type</label>
+                        <label class="text-muted small mb-1">{{ __('visits.visit_type_label') }}</label>
                         <div>
                             <span class="badge bg-{{ $visit->visit_type === \App\Enums\VisitType::EMERGENCY ? 'danger' : ($visit->visit_type === \App\Enums\VisitType::INPATIENT ? 'info' : 'light text-dark') }}">
                                 {{ $visit->visit_type->label() }}
@@ -171,11 +171,11 @@
                         </div>
                     </div>
                     <div class="col-md-3 mb-2">
-                        <label class="text-muted small mb-1">Priority</label>
+                        <label class="text-muted small mb-1">{{ __('visits.priority_label') }}</label>
                         <div><x-status-badge :status="$visit->priority" /></div>
                     </div>
                     <div class="col-md-3 mb-2">
-                        <label class="text-muted small mb-1">Visit Date</label>
+                        <label class="text-muted small mb-1">{{ __('visits.visit_date_label') }}</label>
                         <div class="fw-medium">{{ $visit->visit_date->format('d M Y') }}</div>
                     </div>
                     {{-- <div class="col-md-4 mb-3">
@@ -183,19 +183,19 @@
                         <div class="fw-medium">{{ $visit->currentConsultationDoctor() ? 'Dr. ' . $visit->currentConsultationDoctor()->full_name : '—' }}</div>
                     </div> --}}
                     <div class="col-md-3 mb-2">
-                        <label class="text-muted small mb-1">Duration</label>
+                        <label class="text-muted small mb-1">{{ __('visits.duration_label') }}</label>
                         <div class="fw-medium">{{ $visit->duration ?? '—' }}</div>
                     </div>
                 </div>
                 @if($visit->chief_complaint)
                 <div class="mb-2">
-                    <label class="text-muted small mb-1">Chief Complaint</label>
+                    <label class="text-muted small mb-1">{{ __('visits.chief_complaint_label') }}</label>
                     <div class="bg-light rounded p-2">{{ $visit->chief_complaint }}</div>
                 </div>
                 @endif
                 @if($visit->notes)
                 <div class="mb-2">
-                    <label class="text-muted small mb-1">Notes</label>
+                    <label class="text-muted small mb-1">{{ __('visits.notes_label') }}</label>
                     <div class="bg-light rounded p-2">{{ $visit->notes }}</div>
                 </div>
                 @endif
@@ -209,18 +209,18 @@
         @endphp
         <div class="card mb-3">
             <div class="card-header d-flex align-items-center justify-content-between">
-                <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-info"></i>Triage Assessment</h6>
+                <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-info"></i>{{ __('visits.triage_assessment') }}</h6>
                 {{-- @if($triage->triage_score)
                     <x-status-badge :status="$triage->triage_score" />
                 @endif --}}
                 
                 <div>
                     <a href="{{ route('admin.triage.show', $visit) }}" class="btn btn-outline-info btn-sm">
-                        <i class="ti ti-eye me-1"></i>Full Triage Report
+                        <i class="ti ti-eye me-1"></i>{{ __('visits.full_triage_report') }}
                     </a>
                     @if($visit->status === \App\Enums\VisitStatus::TRIAGE)
                         <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-info btn-sm">
-                            <i class="ti ti-pencil me-1"></i>Re-assess
+                            <i class="ti ti-pencil me-1"></i>{{ __('visits.re_assess') }}
                         </a>
                     @endif
                 </div>
@@ -235,13 +235,13 @@
                     @endif
                     @if($triage->heart_rate)
                         <div class="col-6 col-md-2 text-center">
-                            <div class="text-muted" style="font-size:0.72rem">Heart Rate</div>
+                            <div class="text-muted" style="font-size:0.72rem">{{ __('visits.heart_rate') }}</div>
                             <div class="fw-semibold small">{{ $triage->heart_rate }} bpm</div>
                         </div>
                     @endif
                     @if($triage->temperature)
                         <div class="col-6 col-md-2 text-center">
-                            <div class="text-muted" style="font-size:0.72rem">Temp</div>
+                            <div class="text-muted" style="font-size:0.72rem">{{ __('visits.temp_abbr') }}</div>
                             <div class="fw-semibold small">{{ $triage->temperature }} °C</div>
                         </div>
                     @endif
@@ -253,14 +253,14 @@
                     @endif
                     @if($triage->respiratory_rate)
                         <div class="col-6 col-md-2 text-center">
-                            <div class="text-muted" style="font-size:0.72rem">Resp. Rate</div>
+                            <div class="text-muted" style="font-size:0.72rem">{{ __('visits.resp_rate_abbr') }}</div>
                             <div class="fw-semibold small">{{ $triage->respiratory_rate }}/min</div>
                         </div>
                     @endif
                     @if($triage->bmi)
                         <div class="col-6 col-md-2 text-center">
                             @php
-                                $bmiCat = $triage->bmi < 18.5 ? ['Underweight', 'warning'] : ($triage->bmi < 25 ? ['Normal', 'success'] : ($triage->bmi < 30 ? ['Overweight', 'warning'] : ['Obese', 'danger']));
+                                $bmiCat = $triage->bmi < 18.5 ? [__('visits.bmi_underweight'), 'warning'] : ($triage->bmi < 25 ? [__('visits.bmi_normal'), 'success'] : ($triage->bmi < 30 ? [__('visits.bmi_overweight'), 'warning'] : [__('visits.bmi_obese'), 'danger']));
                             @endphp
                             <div class="text-muted" style="font-size:0.72rem">BMI</div>
                             <div class="fw-semibold small">{{ $triage->bmi }} kg/m²</div>
@@ -270,7 +270,7 @@
                 </div>
                 @if($triage->department)
                     <div class="mt-2 small text-muted">
-                        <i class="ti ti-building-hospital me-1"></i>Assigned to: <strong>{{ $triage->department->name }}</strong>
+                        <i class="ti ti-building-hospital me-1"></i>{{ __('visits.assigned_to') }}: <strong>{{ $triage->department->name }}</strong>
                     </div>
                 @endif
             </div>
@@ -280,61 +280,61 @@
         @if($isWaiting || $isTriage || $visit->status->allowedTransitions())
         <div class="card mb-3">
             <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-switch-horizontal me-1"></i>Transition Visit</h6>
+                <h6 class="fw-bold mb-0"><i class="ti ti-switch-horizontal me-1"></i>{{ __('visits.transition_visit') }}</h6>
             </div>
             <div class="card-body">
                 <div class="border rounded p-3 mb-3">
                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                        <h6 class="fw-bold mb-0"><i class="ti ti-route me-1 text-primary"></i>Current Consultation Routing</h6>
+                        <h6 class="fw-bold mb-0"><i class="ti ti-route me-1 text-primary"></i>{{ __('visits.current_routing') }}</h6>
                         @if($activeConsultationRoute)
                             <a href="{{ route('admin.consultations.routes.show', [$visit, $activeConsultationRoute]) }}" class="btn btn-sm btn-outline-primary">
-                                <i class="ti ti-external-link me-1"></i>Open Active Session
+                                <i class="ti ti-external-link me-1"></i>{{ __('visits.open_active_session') }}
                             </a>
                         @endif
                     </div>
                     @if($activeConsultationRoute)
                     <div class="row g-2 small">
                         <div class="col-md-3">
-                            <span class="text-muted d-block">Active Department Session</span>
+                            <span class="text-muted d-block">{{ __('visits.active_dept_session') }}</span>
                             <span class="fw-semibold">{{ $activeConsultationRoute->department?->name ?? '-' }}</span>
                         </div>
                         <div class="col-md-3">
-                            <span class="text-muted d-block">Linked Services</span>
+                            <span class="text-muted d-block">{{ __('visits.linked_services') }}</span>
                             <span class="fw-semibold">{{ $activeConsultationServiceNames->implode(', ') ?: '-' }}</span>
                         </div>
                         <div class="col-md-2">
-                            <span class="text-muted d-block">Doctor</span>
-                            <span class="fw-semibold">{{ $activeConsultationRoute->doctor ? 'Dr. ' . $activeConsultationRoute->doctor->full_name : 'Unassigned' }}</span>
+                            <span class="text-muted d-block">{{ __('visits.doctor') }}</span>
+                            <span class="fw-semibold">{{ $activeConsultationRoute->doctor ? 'Dr. ' . $activeConsultationRoute->doctor->full_name : __('visits.unassigned') }}</span>
                         </div>
                         <div class="col-md-2">
-                            <span class="text-muted d-block">Route Status</span>
+                            <span class="text-muted d-block">{{ __('visits.route_status') }}</span>
                             <x-status-badge :status="$activeConsultationRoute->status" domain="consultation_route" />
                         </div>
                         <div class="col-md-2">
-                            <span class="text-muted d-block">Started At</span>
+                            <span class="text-muted d-block">{{ __('visits.started_at') }}</span>
                             <span class="fw-semibold">{{ $activeConsultationRoute->started_at?->format('d M, h:i A') ?? '-' }}</span>
                         </div>
                     </div>
                     @else
-                        <p class="text-muted small mb-0">No active consultation session. Use an existing route below or queue another consultation department.</p>
+                        <p class="text-muted small mb-0">{{ __('visits.no_active_session') }}</p>
                     @endif
                 </div>
 
                 <div class="border rounded p-3 mb-3">
                     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                        <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-primary"></i>Available Consultation Department Sessions</h6>
-                        <span class="badge bg-light text-dark">{{ $consultationRoutes->count() }} existing route{{ $consultationRoutes->count() === 1 ? '' : 's' }}</span>
+                        <h6 class="fw-bold mb-0"><i class="ti ti-stethoscope me-1 text-primary"></i>{{ __('visits.available_sessions') }}</h6>
+                        <span class="badge bg-light text-dark">{{ trans_choice('visits.existing_routes', $consultationRoutes->count(), ['count' => $consultationRoutes->count()]) }}</span>
                     </div>
                     @if($consultationRoutes->isNotEmpty())
                     <div class="table-responsive mb-3">
                         <table class="table table-sm align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Department</th>
-                                    <th>Linked Services</th>
-                                    <th>Doctor</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <th>{{ __('visits.department') }}</th>
+                                    <th>{{ __('visits.linked_services') }}</th>
+                                    <th>{{ __('visits.doctor') }}</th>
+                                    <th>{{ __('visits.status') }}</th>
+                                    <th>{{ __('common.actions') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -345,29 +345,29 @@
                                 <tr>
                                     <td>{{ $route->department?->name ?? '-' }}</td>
                                     <td>{{ $serviceNames->implode(', ') ?: '-' }}</td>
-                                    <td>{{ $route->doctor ? 'Dr. ' . $route->doctor->full_name : 'Unassigned' }}</td>
+                                    <td>{{ $route->doctor ? 'Dr. ' . $route->doctor->full_name : __('visits.unassigned') }}</td>
                                     <td><x-status-badge :status="$route->status" domain="consultation_route" /></td>
                                     <td>
                                         <div class="d-flex flex-wrap gap-1">
-                                            <a href="{{ route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-xs btn-outline-primary">Open</a>
+                                            <a href="{{ route('admin.consultations.routes.show', [$visit, $route]) }}" class="btn btn-xs btn-outline-primary">{{ __('visits.open_btn') }}</a>
                                             @can('consultations.create')
                                             @if(in_array($route->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
                                             <form method="POST" action="{{ route('admin.consultations.routes.activate', [$visit, $route]) }}">
                                                 @csrf
                                                 <input type="hidden" name="route_only" value="1">
-                                                <button type="submit" class="btn btn-xs btn-primary">Activate</button>
+                                                <button type="submit" class="btn btn-xs btn-primary">{{ __('visits.activate_btn') }}</button>
                                             </form>
                                             @endif
                                             @if($route->status === \App\Models\VisitConsultationRoute::STATUS_ACTIVE)
                                             <form method="POST" action="{{ route('admin.consultations.routes.complete', [$visit, $route]) }}">
                                                 @csrf
-                                                <button type="submit" class="btn btn-xs btn-success" onclick="return confirm('Complete this consultation session?')">Complete</button>
+                                                <button type="submit" class="btn btn-xs btn-success" onclick="return confirm('{{ __('visits.complete_session_confirm') }}')">{{ __('visits.complete_btn') }}</button>
                                             </form>
                                             @endif
                                             @if(in_array($route->status, [\App\Models\VisitConsultationRoute::STATUS_PENDING, \App\Models\VisitConsultationRoute::STATUS_PAUSED], true))
                                             <form method="POST" action="{{ route('admin.consultations.routes.cancel', [$visit, $route]) }}">
                                                 @csrf
-                                                <button type="submit" class="btn btn-xs btn-outline-danger" onclick="return confirm('Cancel this consultation route?')">Cancel</button>
+                                                <button type="submit" class="btn btn-xs btn-outline-danger" onclick="return confirm('{{ __('visits.cancel_route_confirm') }}')">{{ __('visits.cancel_btn') }}</button>
                                             </form>
                                             @endif
                                             @endcan
@@ -383,45 +383,45 @@
                     @can('consultations.create')
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <i class="ti ti-plus text-primary"></i>
-                        <h6 class="fw-bold mb-0">Queue Another Consultation Department</h6>
+                        <h6 class="fw-bold mb-0">{{ __('visits.queue_another_dept') }}</h6>
                     </div>
                     <form method="POST" action="{{ route('admin.consultations.routes.store', $visit) }}" class="row g-2 align-items-end">
                         @csrf
                         <div class="col-md-3">
-                            <label class="form-label small">Consultation Department</label>
+                            <label class="form-label small">{{ __('visits.consultation_dept') }}</label>
                             <select name="department_id" id="visitRouteDeptSelect" class="form-select form-select-sm" required>
-                                <option value="">Select department</option>
+                                <option value="">{{ __('visits.select_department') }}</option>
                                 @foreach($consultationDepartments as $department)
                                     <option value="{{ $department->id }}">{{ $department->name }}</option>
                                 @endforeach
                             </select>
                             <div class="form-check mt-1">
                                 <input class="form-check-input" type="checkbox" id="visitRouteShowOtherServices" disabled>
-                                <label class="form-check-label small text-muted" for="visitRouteShowOtherServices">Show other services</label>
+                                <label class="form-check-label small text-muted" for="visitRouteShowOtherServices">{{ __('visits.show_other_services') }}</label>
                             </div>
                         </div>
                         <div class="col-md-3">
                             {{-- <label class="form-label small">Services to add/bill</label> --}}
                             <select name="service_ids[]" id="visitRouteServiceSelect" class="form-select form-select-sm" disabled multiple size="3" required>
-                                <option value="">Select department first</option>
+                                <option value="">{{ __('visits.select_dept_first') }}</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label small">Doctor (optional)</label>
+                            <label class="form-label small">{{ __('visits.doctor_optional') }}</label>
                             <select name="doctor_id" id="visitRouteDoctorSelect" class="form-select form-select-sm" disabled>
-                                <option value="">Select department first</option>
+                                <option value="">{{ __('visits.select_dept_first') }}</option>
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <label class="form-label small">Notes</label>
-                            <input type="text" name="notes" class="form-control form-control-sm" placeholder="Reason">
+                            <label class="form-label small">{{ __('visits.notes') }}</label>
+                            <input type="text" name="notes" class="form-control form-control-sm" placeholder="{{ __('visits.notes') }}">
                         </div>
                         <div class="col-md-1">
                             <div class="form-check mb-2">
                                 <input class="form-check-input" type="checkbox" name="activate_now" value="1" id="visitRouteActivateNow">
-                                <label class="form-check-label small" for="visitRouteActivateNow">Activate</label>
+                                <label class="form-check-label small" for="visitRouteActivateNow">{{ __('visits.activate_label') }}</label>
                             </div>
-                            <button type="submit" class="btn btn-sm btn-primary w-100">Queue</button>
+                            <button type="submit" class="btn btn-sm btn-primary w-100">{{ __('visits.queue_btn') }}</button>
                         </div>
                     </form>
                     @endcan
@@ -429,7 +429,7 @@
 
                 {{-- WAITING: Triage / Cancelled / Reschedule only --}}
                 @if($isWaiting)
-                <p class="text-muted small mb-2">Select the next step for this patient:</p>
+                <p class="text-muted small mb-2">{{ __('visits.next_step') }}</p>
                 <div class="d-flex flex-wrap gap-2">
                     @foreach([\App\Enums\VisitStatus::TRIAGE, \App\Enums\VisitStatus::CANCELLED, \App\Enums\VisitStatus::RESCHEDULED] as $nextStatus)
                         <form method="POST" action="{{ route('admin.visits.transition', $visit) }}" class="d-inline">
@@ -437,7 +437,7 @@
                             @method('PATCH')
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
                             <button type="submit" class="btn btn-{{ $nextStatus->color() }} btn-sm"
-                                    onclick="return confirm('Move visit to {{ $nextStatus->label() }}?')">
+                                    onclick="return confirm('{{ __('visits.move_to_confirm', ['status' => $nextStatus->label()]) }}')">
                                 <i class="ti ti-arrow-right me-1"></i>{{ $nextStatus->label() }}
                             </button>
                         </form>
@@ -448,11 +448,11 @@
                 @elseif($isTriage)
                 <div class="mb-3">
                     <a href="{{ route('admin.triage.create', $visit) }}" class="btn btn-info">
-                        <i class="ti ti-stethoscope me-1"></i>Start Triage Assessment
+                        <i class="ti ti-stethoscope me-1"></i>{{ __('visits.start_triage') }}
                     </a>
                     @if($visit->triage)
                         <a href="{{ route('admin.triage.show', $visit) }}" class="btn btn-outline-info btn-sm ms-2">
-                            <i class="ti ti-eye me-1"></i>View Triage Record
+                            <i class="ti ti-eye me-1"></i>{{ __('visits.view_triage_record') }}
                         </a>
                     @endif
                 </div>
@@ -462,8 +462,8 @@
                         @method('PATCH')
                         <input type="hidden" name="status" value="{{ \App\Enums\VisitStatus::CANCELLED->value }}">
                         <button type="submit" class="btn btn-danger btn-sm"
-                                onclick="return confirm('Cancel this visit?')">
-                            <i class="ti ti-x me-1"></i>Cancel Visit
+                                onclick="return confirm('{{ __('visits.cancel_visit_confirm') }}')">
+                            <i class="ti ti-x me-1"></i>{{ __('visits.cancel_visit_btn') }}
                         </button>
                     </form>
                 </div>
@@ -494,7 +494,7 @@
                             @method('PATCH')
                             <input type="hidden" name="status" value="{{ $nextStatus->value }}">
                             <button type="submit" class="btn btn-{{ $nextStatus->color() }} btn-sm"
-                                    onclick="return confirm('Move visit to {{ $nextStatus->label() }}?')">
+                                    onclick="return confirm('{{ __('visits.move_to_confirm', ['status' => $nextStatus->label()]) }}')">
                                 <i class="ti ti-arrow-right me-1"></i>{{ $nextStatus->label() }}
                             </button>
                         </form>
@@ -603,12 +603,12 @@
         <div class="card mb-3">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h6 class="fw-bold mb-0">
-                    <i class="ti ti-receipt me-1"></i>Visit Invoice
+                    <i class="ti ti-receipt me-1"></i>{{ __('visits.visit_invoice') }}
                     <span class="badge bg-secondary ms-2">{{ $visitInvoice->invoice_number }}</span>
                 </h6>
                 @can('billing.view')
                 <a href="{{ route('admin.billing.invoices.show', $visitInvoice) }}" class="btn btn-sm btn-outline-primary">
-                    <i class="ti ti-external-link me-1"></i>Open Invoice
+                    <i class="ti ti-external-link me-1"></i>{{ __('visits.open_invoice') }}
                 </a>
                 @endcan
             </div>
@@ -617,13 +617,13 @@
                     <table class="table table-sm mb-0 align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th>Service / Description</th>
-                                <th>Pricing</th>
-                                <th class="text-end">Price</th>
-                                <th class="text-end">Covered</th>
+                                <th>{{ __('visits.service_description') }}</th>
+                                <th>{{ __('visits.pricing_col') }}</th>
+                                <th class="text-end">{{ __('visits.price_col') }}</th>
+                                <th class="text-end">{{ __('visits.covered_col') }}</th>
                                 {{-- <th class="text-end">Total</th> --}}
-                                <th class="text-end">Patient Pays</th>
-                                <th class="text-end">Balance</th>
+                                <th class="text-end">{{ __('visits.patient_pays_col') }}</th>
+                                <th class="text-end">{{ __('visits.balance_col') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -694,7 +694,7 @@
                         </tbody>
                         <tfoot>
                             <tr class="table-light fw-bold">
-                                <td colspan="3" class="text-end text-muted">Subtotal:</td>
+                                <td colspan="3" class="text-end text-muted">{{ __('visits.subtotal_row') }}</td>
                                 <td class="text-end text-success">&#8373;{{ number_format($totalIns, 2) }}</td>
                                 <td class="text-end text-muted">&#8373;{{ number_format($totalPatient, 2) }}</td>
                                 <td class="text-end {{ $totalBalance > 0 ? 'text-danger' : 'text-success' }}">&#8373;{{ number_format($totalBalance, 2) }}</td>
@@ -886,7 +886,7 @@
         @if($visit->queueEntries->isNotEmpty())
         <div class="card mb-3">
             <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-list-numbers me-1"></i>Queue History</h6>
+                <h6 class="fw-bold mb-0"><i class="ti ti-list-numbers me-1"></i>{{ __('visits.queue_history') }}</h6>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -894,9 +894,9 @@
                         <thead class="table-light">
                             <tr>
                                 <th>#</th>
-                                <th>Department</th>
-                                <th>Status</th>
-                                <th>Time</th>
+                                <th>{{ __('visits.department') }}</th>
+                                <th>{{ __('visits.status') }}</th>
+                                <th>{{ __('common.time') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -907,7 +907,7 @@
                                     @if($qe->department)
                                         <span class="badge bg-light text-dark">{{ $qe->department->name }}</span>
                                     @else
-                                        <span class="badge bg-info text-white">Triage</span>
+                                        <span class="badge bg-info text-white">{{ __('visits.triage') }}</span>
                                     @endif
                                 </td>
                                 <td><span class="badge bg-{{ $qe->status_badge }}">{{ $qe->status_label }}</span></td>
@@ -960,19 +960,19 @@
         <!-- Timestamps -->
         <div class="card">
             <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-clock me-1"></i>Timestamps</h6>
+                <h6 class="fw-bold mb-0"><i class="ti ti-clock me-1"></i>{{ __('visits.timestamps') }}</h6>
             </div>
             <div class="card-body">
                 <div class="d-flex justify-content-between py-2 border-bottom">
-                    <span class="text-muted">Registered</span>
+                    <span class="text-muted">{{ __('visits.registered') }}</span>
                     <span class="small">{{ $visit->created_at->format('d M Y, h:i A') }}</span>
                 </div>
                 <div class="d-flex justify-content-between py-2 border-bottom">
-                    <span class="text-muted">Checked In</span>
+                    <span class="text-muted">{{ __('visits.checked_in') }}</span>
                     <span class="small">{{ $visit->checked_in_at?->format('h:i A') ?? '—' }}</span>
                 </div>
                 <div class="d-flex justify-content-between py-2">
-                    <span class="text-muted">Checked Out</span>
+                    <span class="text-muted">{{ __('visits.checked_out') }}</span>
                     <span class="small">{{ $visit->checked_out_at?->format('h:i A') ?? '—' }}</span>
                 </div>
             </div>
@@ -981,7 +981,7 @@
         <!-- Status Timeline -->
         <div class="card">
             <div class="card-header">
-                <h6 class="fw-bold mb-0"><i class="ti ti-timeline me-1"></i>Status History</h6>
+                <h6 class="fw-bold mb-0"><i class="ti ti-timeline me-1"></i>{{ __('visits.status_history') }}</h6>
             </div>
             <div class="card-body">
                 <div class="timeline">
@@ -1025,16 +1025,16 @@
             @method('PATCH')
             <div class="modal-header">
                 <h5 class="modal-title" id="changeVisitInsuranceModalLabel">
-                    <i class="ti ti-shield-check me-1"></i>Change Visit Insurance
+                    <i class="ti ti-shield-check me-1"></i>{{ __('visits.change_visit_insurance') }}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning small">
-                    This changes the payer used for future billed items only. Existing invoice items keep their original insurance snapshot.
+                    {{ __('visits.insurance_change_warning') }}
                 </div>
 
-                <label for="visitInsuranceChangeSelect" class="form-label">Active insurance for new billed items</label>
+                <label for="visitInsuranceChangeSelect" class="form-label">{{ __('visits.active_ins_new_items') }}</label>
                 <select name="visit_insurance_id" id="visitInsuranceChangeSelect" class="form-select @error('visit_insurance_id') is-invalid @enderror" required>
                     @foreach(($patientInsuranceOptions ?? []) as $option)
                         @php
@@ -1059,9 +1059,9 @@
                 @enderror
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
                 <button type="submit" class="btn btn-primary">
-                    <i class="ti ti-device-floppy me-1"></i>Save Insurance
+                    <i class="ti ti-device-floppy me-1"></i>{{ __('visits.save_insurance') }}
                 </button>
             </div>
         </form>
@@ -1117,13 +1117,13 @@ document.addEventListener('DOMContentLoaded', () => {
             showOtherServices.checked = false;
             showOtherServices.disabled = true;
         }
-        serviceSelect.innerHTML = '<option value="">Loading services...</option>';
-        doctorSelect.innerHTML = '<option value="">Loading doctors...</option>';
+        serviceSelect.innerHTML = '<option value="">{{ __('visits.loading_services_doctors') }}</option>';
+        doctorSelect.innerHTML = '<option value="">{{ __('visits.loading_services_doctors') }}</option>';
 
         if (!deptSelect.value) {
             routeServices = [];
-            serviceSelect.innerHTML = '<option value="">Select department first</option>';
-            doctorSelect.innerHTML = '<option value="">Select department first</option>';
+            serviceSelect.innerHTML = '<option value="">{{ __('visits.select_dept_first') }}</option>';
+            doctorSelect.innerHTML = '<option value="">{{ __('visits.select_dept_first') }}</option>';
             return;
         }
 
@@ -1140,7 +1140,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showOtherServices.disabled = !routeServices.some(service => !isConsultationService(service));
         }
         renderRouteServices();
-        optionList(doctorSelect, doctors.length ? 'Select doctor' : 'No doctor linked through specialty', doctors, row => row.name);
+        optionList(doctorSelect, doctors.length ? '{{ __('visits.select_doctor') }}' : '{{ __('visits.select_dept_first') }}', doctors, row => row.name);
     });
 
     if (showOtherServices) {

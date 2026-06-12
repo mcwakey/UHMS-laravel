@@ -5,23 +5,23 @@
 @endphp
 
 @if(($noResult ?? false) || !$result)
-    <div class="alert alert-warning mb-0"><i class="ti ti-alert-circle me-1"></i>No result has been entered yet.</div>
+    <div class="alert alert-warning mb-0"><i class="ti ti-alert-circle me-1"></i>{{ __('lab.no_result_entered') }}</div>
 @else
 <div class="row g-2 mb-3">
     <div class="col-md-6">
-        <small class="text-muted d-block">Patient</small>
+        <small class="text-muted d-block">{{ __('lab.patient_label') }}</small>
         <strong>{{ $item->labRequest->patient->full_name ?? '—' }}</strong>
     </div>
     <div class="col-md-3">
-        <small class="text-muted d-block">Investigation</small>
+        <small class="text-muted d-block">{{ __('lab.investigation_col') }}</small>
         <strong>{{ $item->display_name }}</strong>
     </div>
     <div class="col-md-3">
-        <small class="text-muted d-block">Status</small>
+        <small class="text-muted d-block">{{ __('lab.status_col') }}</small>
         @if($result->is_verified)
-            <span class="badge bg-success"><i class="ti ti-check me-1"></i>Verified</span>
+            <span class="badge bg-success"><i class="ti ti-check me-1"></i>{{ __('lab.verified_badge') }}</span>
         @else
-            <span class="badge bg-warning">Pending Verification</span>
+            <span class="badge bg-warning">{{ __('lab.pending_verification') }}</span>
         @endif
     </div>
 </div>
@@ -38,7 +38,7 @@
         <div class="mb-2">
             <h6 class="small fw-bold border-bottom pb-1 mb-2">{{ $h->name }}</h6>
             <div class="table-responsive"><table class="table table-sm mb-0">
-                <thead><tr><th>Parameter</th><th>Value</th><th>Unit</th><th>Reference</th><th>Flag</th></tr></thead>
+                <thead><tr><th>{{ __('lab.parameter_col') }}</th><th>{{ __('lab.value_col') }}</th><th>{{ __('lab.unit_col') }}</th><th>{{ __('lab.reference_col') }}</th><th>{{ __('lab.flag_col') }}</th></tr></thead>
                 <tbody>
                 @foreach($hCriteria as $c)
                     @php $v = $valuesByCriteria->get($c->id); @endphp
@@ -58,7 +58,7 @@
     @php $unsorted = $serviceCriteria->whereNull('header_id'); @endphp
     @if($unsorted->isNotEmpty() || ($serviceHeaders->isEmpty() && $serviceCriteria->isEmpty()))
     <div class="table-responsive"><table class="table table-sm">
-        <thead><tr><th>Parameter</th><th>Value</th><th>Unit</th><th>Reference</th><th>Flag</th></tr></thead>
+        <thead><tr><th>{{ __('lab.parameter_col') }}</th><th>{{ __('lab.value_col') }}</th><th>{{ __('lab.unit_col') }}</th><th>{{ __('lab.reference_col') }}</th><th>{{ __('lab.flag_col') }}</th></tr></thead>
         <tbody>
         @foreach($result->values as $v)
             @php $c = $serviceCriteria->firstWhere('id', $v->criteria_id); @endphp
@@ -78,7 +78,7 @@
 @else
     <div class="card mb-2">
         <div class="card-body py-2">
-            <small class="text-muted d-block">Result</small>
+            <small class="text-muted d-block">{{ __('lab.result_label') }}</small>
             @if($result->result_text)
                 <div>{!! nl2br(e($result->result_text)) !!}</div>
             @elseif($result->result_value)
@@ -86,7 +86,7 @@
             @endif
             @if($result->result_file)
                 <a href="{{ asset('storage/' . $result->result_file) }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
-                    <i class="ti ti-paperclip me-1"></i>{{ $result->result_file_name ?? 'Attachment' }}
+                    <i class="ti ti-paperclip me-1"></i>{{ $result->result_file_name ?? __('lab.attachment_label') }}
                 </a>
             @endif
         </div>
@@ -94,20 +94,20 @@
 @endif
 
 @if($result->remarks)
-<div class="alert alert-light border small mb-2"><strong>Remarks:</strong> {{ $result->remarks }}</div>
+<div class="alert alert-light border small mb-2"><strong>{{ __('lab.remarks_label') }}:</strong> {{ $result->remarks }}</div>
 @endif
 
 <div class="row g-2 small text-muted">
     <div class="col-md-6">
-        <i class="ti ti-user me-1"></i>Performed by <strong>{{ $result->performedBy?->name ?? '—' }}</strong>
-        on {{ $result->performed_at?->format('d M Y H:i') ?? '—' }}
+        <i class="ti ti-user me-1"></i>{{ __('lab.performed_by_label') }} <strong>{{ $result->performedBy?->name ?? '—' }}</strong>
+        {{ __('lab.on_label') }} {{ $result->performed_at?->format('d M Y H:i') ?? '—' }}
     </div>
     <div class="col-md-6">
         @if($result->is_verified)
-        <i class="ti ti-shield-check text-success me-1"></i>Verified by <strong>{{ $result->verifiedBy?->name ?? '—' }}</strong>
-        on {{ $result->verified_at?->format('d M Y H:i') ?? '—' }}
+        <i class="ti ti-shield-check text-success me-1"></i>{{ __('lab.verified_by_label') }} <strong>{{ $result->verifiedBy?->name ?? '—' }}</strong>
+        {{ __('lab.on_label') }} {{ $result->verified_at?->format('d M Y H:i') ?? '—' }}
         @else
-        <i class="ti ti-alert-circle text-warning me-1"></i>Awaiting verification
+        <i class="ti ti-alert-circle text-warning me-1"></i>{{ __('lab.awaiting_verification') }}
         @endif
     </div>
 </div>
@@ -115,7 +115,7 @@
 @if($result->is_verified)
 <div class="mt-3 text-end">
     <a data-no-inertia href="{{ route('admin.lab.results.print', $item) }}" target="_blank" class="btn btn-sm btn-primary">
-        <i class="ti ti-printer me-1"></i>Print Report
+        <i class="ti ti-printer me-1"></i>{{ __('lab.print_report_btn') }}
     </a>
 </div>
 @endif

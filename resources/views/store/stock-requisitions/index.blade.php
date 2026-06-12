@@ -1,12 +1,12 @@
 @extends('layouts.app')
-@section('title', 'Stock Requisitions')
+@section('title', __('stock.dept_stock_requisitions'))
 
 @section('content')
-<x-page-header title="Department Stock Requisitions" icon="ti-clipboard-list">
-    <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">Total: {{ $stockRequisitions->total() }}</span>
+<x-page-header title="{{ __('stock.dept_stock_requisitions') }}" icon="ti-clipboard-list">
+    <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">{{ __('stock.total') }}: {{ $stockRequisitions->total() }}</span>
     <x-slot:actions>
         <a href="{{ route('admin.store.stock-requisitions.create') }}" class="btn btn-primary btn-md fs-13">
-            <i class="ti ti-plus me-1"></i>New Requisition
+            <i class="ti ti-plus me-1"></i>{{ __('stock.new_requisition') }}
         </a>
     </x-slot:actions>
 </x-page-header>
@@ -17,10 +17,10 @@
 <div class="card mb-3">
     <div class="card-body py-2">
         <form method="GET" action="{{ route('admin.store.stock-requisitions.index') }}" class="row g-2 align-items-end">
-            <div class="col-md-3"><input type="text" name="search" class="form-control" placeholder="Search requisition #" value="{{ request('search') }}"></div>
+            <div class="col-md-3"><input type="text" name="search" class="form-control" placeholder="{{ __('stock.search_requisition') }}" value="{{ request('search') }}"></div>
             <div class="col-md-3">
                 <select name="department_id" class="form-select">
-                    <option value="">All Departments</option>
+                    <option value="">{{ __('stock.all_departments') }}</option>
                     @foreach($departments as $department)
                         <option value="{{ $department->id }}" @selected((string) request('department_id') === (string) $department->id)>{{ $department->name }}</option>
                     @endforeach
@@ -28,7 +28,7 @@
             </div>
             <div class="col-md-2">
                 <select name="status" class="form-select">
-                    <option value="">All Status</option>
+                    <option value="">{{ __('stock.all_status') }}</option>
                     @foreach($statuses as $status)
                         <option value="{{ $status->value }}" @selected(request('status') === $status->value)>{{ $status->label() }}</option>
                     @endforeach
@@ -36,7 +36,7 @@
             </div>
             <div class="col-md-3">
                 <select name="product_id" class="form-select">
-                    <option value="">All Products</option>
+                    <option value="">{{ __('stock.all_products') }}</option>
                     @foreach($products as $product)
                         <option value="{{ $product->id }}" @selected((string) request('product_id') === (string) $product->id)>{{ $product->name }}@if($product->code) ({{ $product->code }})@endif</option>
                     @endforeach
@@ -58,13 +58,13 @@
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>Requisition #</th>
-                    <th>Department</th>
-                    <th>Requested</th>
-                    <th>Requested By</th>
-                    <th class="text-center">Items</th>
-                    <th>Status</th>
-                    <th class="text-end">Actions</th>
+                    <th>{{ __('stock.requisition_no') }}</th>
+                    <th>{{ __('stock.department') }}</th>
+                    <th>{{ __('stock.requested') }}</th>
+                    <th>{{ __('stock.requested_by') }}</th>
+                    <th class="text-center">{{ __('stock.items') }}</th>
+                    <th>{{ __('stock.status') }}</th>
+                    <th class="text-end">{{ __('stock.actions') ?? 'Actions' }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -79,7 +79,7 @@
                     <td class="text-end"><a aria-label="View" title="View" href="{{ route('admin.store.stock-requisitions.show', $stockRequisition) }}" class="btn btn-sm btn-outline-primary"><i class="ti ti-eye"></i></a></td>
                 </tr>
             @empty
-                <tr><td colspan="7"><x-empty-state icon="ti-clipboard-off" title="No requisitions" message="No stock requisitions match your filters." /></td></tr>
+                <tr><td colspan="7"><x-empty-state icon="ti-clipboard-off" title="{{ __('stock.no_requisitions') }}" message="{{ __('stock.no_requisitions_message') }}" /></td></tr>
             @endforelse
             </tbody>
         </table>

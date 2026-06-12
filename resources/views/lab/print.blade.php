@@ -38,32 +38,32 @@
 </head>
 <body>
 <div class="no-print">
-    <button onclick="window.print()" style="padding:6px 12px;">Print</button>
-    <button onclick="window.close()" style="padding:6px 12px;">Close</button>
+    <button onclick="window.print()" style="padding:6px 12px;">{{ __('lab.print_button') }}</button>
+    <button onclick="window.close()" style="padding:6px 12px;">{{ __('lab.close_button') }}</button>
 </div>
 
 <div class="header">
     <div class="hospital">{{ $hospital }}</div>
-    <div style="font-size:11px;color:#555;">Investigation Result Report &nbsp;<span class="badge-verified">VERIFIED</span></div>
+    <div style="font-size:11px;color:#555;">{{ __('lab.result_report_title') }} &nbsp;<span class="badge-verified">{{ __('lab.verified_badge') }}</span></div>
 </div>
 
 <div class="meta">
-    <div>Request #: <strong>{{ $request->request_number }}</strong></div>
-    <div>Date Printed: {{ now()->format('d M Y H:i') }}</div>
+    <div>{{ __('lab.request_hash') }}: <strong>{{ $request->request_number }}</strong></div>
+    <div>{{ __('lab.date_printed') }}: {{ now()->format('d M Y H:i') }}</div>
 </div>
 
 <div class="grid">
     <div>
-        <span class="label">{{ $patient ? 'Patient' : 'Recipient' }}</span><br>
+        <span class="label">{{ $patient ? __('lab.patient_label') : __('lab.recipient_label') }}</span><br>
         <span class="value">{{ $patient?->full_name ?? $request->external_party_name ?? '—' }}</span><br>
         <span style="font-size:11px;color:#555;">
-            {{ $patient?->patient_number ?? ($request->external_party_name ? 'Walk-in' : '') }}
+            {{ $patient?->patient_number ?? ($request->external_party_name ? __('lab.walk_in') : '') }}
             @if($patient?->age) &middot; {{ $patient->age }}y @elseif($request->external_party_age) &middot; {{ $request->external_party_age }}y @endif
             @if($patient?->gender) &middot; {{ ucfirst($patient->gender->value ?? $patient->gender) }} @elseif($request->external_party_sex) &middot; {{ $request->external_party_sex }} @endif
         </span>
     </div>
     <div>
-        <span class="label">Visit</span><br>
+        <span class="label">{{ __('lab.visit_label') }}</span><br>
         <span class="value">{{ $visit?->visit_number ?? '—' }}</span><br>
         <span style="font-size:11px;color:#555;">
             {{ $visit?->visit_date?->format('d M Y') ?? '' }}
@@ -71,23 +71,23 @@
         </span>
     </div>
     <div>
-        <span class="label">Investigation</span><br>
+        <span class="label">{{ __('lab.investigation_col') }}</span><br>
         <span class="value">{{ $item->display_name }}</span>
     </div>
     <div>
-        <span class="label">Department</span><br>
+        <span class="label">{{ __('lab.department_label') }}</span><br>
         <span class="value">{{ $request->targetDepartment->name ?? '—' }}</span>
     </div>
 </div>
 
 @if($request->clinical_info)
 <div style="margin-bottom:8px;">
-    <span class="label">Clinical Information</span><br>
+    <span class="label">{{ __('lab.clinical_information') }}</span><br>
     <span>{{ $request->clinical_info }}</span>
 </div>
 @endif
 
-<div class="section-title">Result</div>
+<div class="section-title">{{ __('lab.result_col') }}</div>
 
 @if($values->isNotEmpty())
     @foreach($serviceHeaders as $h)
@@ -95,7 +95,7 @@
         @if($hCriteria->isNotEmpty())
         <div style="font-weight:bold;margin-top:8px;">{{ $h->name }}</div>
         <table>
-            <thead><tr><th>Parameter</th><th>Value</th><th>Unit</th><th>Reference Range</th><th>Flag</th></tr></thead>
+            <thead><tr><th>{{ __('lab.parameter_th') }}</th><th>{{ __('lab.value_th') }}</th><th>{{ __('lab.unit_th') }}</th><th>{{ __('lab.reference_range_th') }}</th><th>{{ __('lab.flag_th') }}</th></tr></thead>
             <tbody>
             @foreach($hCriteria as $c)
                 @php $v = $valuesByCriteria->get($c->id); @endphp
@@ -115,7 +115,7 @@
     @php $unsorted = $values->filter(fn ($v) => $serviceCriteria->firstWhere('id', $v->criteria_id)?->header_id === null || $serviceCriteria->firstWhere('id', $v->criteria_id) === null); @endphp
     @if($unsorted->isNotEmpty())
     <table>
-        <thead><tr><th>Parameter</th><th>Value</th><th>Unit</th><th>Reference Range</th><th>Flag</th></tr></thead>
+        <thead><tr><th>{{ __('lab.parameter_th') }}</th><th>{{ __('lab.value_th') }}</th><th>{{ __('lab.unit_th') }}</th><th>{{ __('lab.reference_range_th') }}</th><th>{{ __('lab.flag_th') }}</th></tr></thead>
         <tbody>
         @foreach($unsorted as $v)
             <tr>
@@ -136,26 +136,26 @@
 @endif
 
 @if($result->remarks)
-<div style="margin-top:8px;"><strong>Remarks:</strong> {{ $result->remarks }}</div>
+<div style="margin-top:8px;"><strong>{{ __('lab.remarks_label') }}:</strong> {{ $result->remarks }}</div>
 @endif
 
 <div class="signatures">
     <div>
         <div class="sig-box">
             {{ $result->performedBy?->name ?? '—' }}<br>
-            <small>Performed by &middot; {{ $result->performed_at?->format('d M Y H:i') }}</small>
+            <small>{{ __('lab.performed_by_sig') }} &middot; {{ $result->performed_at?->format('d M Y H:i') }}</small>
         </div>
     </div>
     <div>
         <div class="sig-box">
             {{ $result->verifiedBy?->name ?? '—' }}<br>
-            <small>Verified by &middot; {{ $result->verified_at?->format('d M Y H:i') }}</small>
+            <small>{{ __('lab.verified_by_sig') }} &middot; {{ $result->verified_at?->format('d M Y H:i') }}</small>
         </div>
     </div>
 </div>
 
 <div class="footer">
-    This is a system-generated report from {{ $hospital }}. Printed on {{ now()->format('d M Y H:i') }}.
+    {{ __('lab.footer_generated', ['hospital' => $hospital, 'date' => now()->format('d M Y H:i')]) }}
 </div>
 
 <script>window.addEventListener('load', () => { setTimeout(() => window.print(), 250); });</script>

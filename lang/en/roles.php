@@ -1,0 +1,36 @@
+<?php
+
+return [
+    'title'                 => 'Roles & Permissions',
+    'roles'                 => 'Roles',
+    'permissions'           => 'Permissions',
+    'create_role'           => 'Create Role',
+    'edit_role'             => 'Edit Role',
+    'role_name'             => 'Role Name',
+    'role_description'      => 'Description',
+    'assign_permissions'    => 'Assign Permissions',
+    'save_role'             => 'Save Role',
+    'no_roles_found'        => 'No roles found.',
+    'users_count'           => 'Users',
+    'manage_permissions'    => 'Manage Permissions',
+    'permission_group'      => 'Permission Group',
+    'select_all'            => 'Select All',
+    'deselect_all'          => 'Deselect All',
+    'no_permissions'        => 'No permissions defined.',
+    'delete_role'           => 'Delete Role',
+    'cannot_delete'         => 'This role cannot be deleted.',
+    'system_role'           => 'System Role',
+    'custom_role'           => 'Custom Role',
+    'back_to_roles'         => 'Back to Roles',
+
+    // Extra UI strings
+    'add_role'              => 'Add Role',
+    'add_new_role'          => 'Add New Role',
+    'edit_name'             => 'Edit Name',
+    'permissions_count'     => ':count permissions',
+    'users_count_badge'     => ':count users',
+    'locked'                => 'locked',
+    'update_role'           => 'Update Role',
+    'manage_permissions_for' => 'Manage Permissions: ',
+    'save_permissions'      => 'Save Permissions',
+];

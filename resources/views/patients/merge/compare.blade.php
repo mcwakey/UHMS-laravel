@@ -1,13 +1,13 @@
 @extends('layouts.app')
-@section('title', 'Compare Patient Folders')
+@section('title', __('patients.compare_folders'))
 
 @section('content')
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
-        <h4 class="fw-bold mb-1">Compare Patient Folders</h4>
-        <p class="text-muted mb-0">Review demographics and records before creating the merge request.</p>
+        <h4 class="fw-bold mb-1">{{ __('patients.compare_folders') }}</h4>
+        <p class="text-muted mb-0">{{ __('patients.compare_subtitle') }}</p>
     </div>
-    <a href="{{ route('admin.patients.merge.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-chevron-left me-1"></i>Back</a>
+    <a href="{{ route('admin.patients.merge.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-chevron-left me-1"></i>{{ __('common.back') }}</a>
 </div>
 
 @if($errors->any())
@@ -21,23 +21,23 @@
 <div class="row g-3 mb-3">
     <div class="col-md-6">
         <div class="card h-100 border-success">
-            <div class="card-header bg-success-subtle text-success fw-semibold">Main Folder</div>
+            <div class="card-header bg-success-subtle text-success fw-semibold">{{ __('patients.main_folder') }}</div>
             <div class="card-body">
                 <div class="h5 mb-1">{{ $mainPatient->full_name }}</div>
                 <div class="text-muted">{{ $mainPatient->patient_number }}</div>
-                <div class="small mt-2">{{ $mainPatient->phone ?: 'No phone' }} · {{ $mainPatient->ghana_card_number ?: 'No Ghana Card' }}</div>
+                <div class="small mt-2">{{ $mainPatient->phone ?: __('patients.no_phone') }} · {{ $mainPatient->ghana_card_number ?: __('patients.no_ghana_card') }}</div>
             </div>
         </div>
     </div>
     <div class="col-md-6">
         <div class="card h-100 border-warning">
-            <div class="card-header bg-warning-subtle text-warning fw-semibold">Duplicate Folder</div>
+            <div class="card-header bg-warning-subtle text-warning fw-semibold">{{ __('patients.duplicate_folder') }}</div>
             <div class="card-body">
                 <div class="h5 mb-1">{{ $duplicatePatient->full_name }}</div>
                 <div class="text-muted">{{ $duplicatePatient->patient_number }}</div>
-                <div class="small mt-2">{{ $duplicatePatient->phone ?: 'No phone' }} · {{ $duplicatePatient->ghana_card_number ?: 'No Ghana Card' }}</div>
+                <div class="small mt-2">{{ $duplicatePatient->phone ?: __('patients.no_phone') }} · {{ $duplicatePatient->ghana_card_number ?: __('patients.no_ghana_card') }}</div>
                 @if($duplicatePatient->is_temporary)
-                    <span class="badge bg-warning-subtle text-warning mt-2">Temporary emergency folder</span>
+                    <span class="badge bg-warning-subtle text-warning mt-2">{{ __('patients.temporary_emergency') }}</span>
                 @endif
             </div>
         </div>
@@ -46,12 +46,12 @@
 
 <div class="card mb-3">
     <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title mb-0">Records To Reassign</h5>
-        <span class="badge bg-primary">{{ $preview['total_records'] }} records</span>
+        <h5 class="card-title mb-0">{{ __('patients.records_to_reassign') }}</h5>
+        <span class="badge bg-primary">{{ $preview['total_records'] }} {{ __('patients.col_records') }}</span>
     </div>
     <div class="table-responsive">
         <table class="table table-sm mb-0">
-            <thead class="bg-light"><tr><th>Area</th><th>Handler</th><th class="text-end">Records</th></tr></thead>
+            <thead class="bg-light"><tr><th>{{ __('patients.col_area') }}</th><th>{{ __('patients.col_handler') }}</th><th class="text-end">{{ __('patients.col_records') }}</th></tr></thead>
             <tbody>
                 @foreach($preview['record_counts'] as $row)
                     <tr>
@@ -72,16 +72,16 @@
 
     <div class="card mb-3">
         <div class="card-header">
-            <h5 class="card-title mb-0">Demographic Resolution</h5>
+            <h5 class="card-title mb-0">{{ __('patients.demographic_resolution') }}</h5>
         </div>
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="bg-light">
                     <tr>
-                        <th>Field</th>
-                        <th>Main Value</th>
-                        <th>Duplicate Value</th>
-                        <th>Keep</th>
+                        <th>{{ __('patients.col_field') }}</th>
+                        <th>{{ __('patients.col_main_value') }}</th>
+                        <th>{{ __('patients.col_duplicate_value') }}</th>
+                        <th>{{ __('patients.col_keep') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -92,8 +92,8 @@
                             <td>{{ $field['duplicate'] ?: '-' }}</td>
                             <td style="min-width: 180px;">
                                 <select name="field_resolution[{{ $field['field'] }}]" class="form-select form-select-sm">
-                                    <option value="main" {{ $field['suggested_source'] === 'main' ? 'selected' : '' }}>Main folder value</option>
-                                    <option value="duplicate" {{ $field['suggested_source'] === 'duplicate' ? 'selected' : '' }}>Duplicate folder value</option>
+                                    <option value="main" {{ $field['suggested_source'] === 'main' ? 'selected' : '' }}>{{ __('patients.main_folder_value') }}</option>
+                                    <option value="duplicate" {{ $field['suggested_source'] === 'duplicate' ? 'selected' : '' }}>{{ __('patients.duplicate_folder_value') }}</option>
                                 </select>
                             </td>
                         </tr>
@@ -106,19 +106,19 @@
     <div class="card">
         <div class="card-body">
             <div class="mb-3">
-                <label class="form-label">Merge Reason <span class="text-danger">*</span></label>
+                <label class="form-label">{{ __('patients.merge_reason') }} <span class="text-danger">*</span></label>
                 <textarea name="reason" class="form-control @error('reason') is-invalid @enderror" rows="3" required
-                          placeholder="Document why these folders are the same patient">{{ old('reason') }}</textarea>
+                          placeholder="{{ __('patients.merge_reason_ph') }}">{{ old('reason') }}</textarea>
                 @error('reason')<div class="invalid-feedback">{{ $message }}</div>@enderror
             </div>
             <div class="form-check mb-3">
                 <input class="form-check-input" type="checkbox" name="confirmed" value="1" id="confirmed" required>
-                <label class="form-check-label" for="confirmed">I have reviewed both folders and confirm the duplicate should be locked after merge.</label>
+                <label class="form-check-label" for="confirmed">{{ __('patients.confirm_merge_label') }}</label>
             </div>
             <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-outline-primary"><i class="ti ti-file-plus me-1"></i>Create Request</button>
+                <button type="submit" class="btn btn-outline-primary"><i class="ti ti-file-plus me-1"></i>{{ __('patients.create_request') }}</button>
                 @can('patients.merge.execute')
-                    <button type="submit" name="execute_now" value="1" class="btn btn-primary"><i class="ti ti-git-merge me-1"></i>Create And Execute</button>
+                    <button type="submit" name="execute_now" value="1" class="btn btn-primary"><i class="ti ti-git-merge me-1"></i>{{ __('patients.create_and_execute') }}</button>
                 @endcan
             </div>
         </div>

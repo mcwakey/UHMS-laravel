@@ -4,11 +4,11 @@
 @section('content')
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
     <div>
-        <h4 class="fw-bold mb-0">Settings</h4>
+        <h4 class="fw-bold mb-0">{{ __('settings.title') }}</h4>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                <li class="breadcrumb-item active">Ward & Admissions Settings</li>
+                <li class="breadcrumb-item active">{{ __('settings.ward_breadcrumb') }}</li>
             </ol>
         </nav>
     </div>
@@ -25,7 +25,7 @@
     <div class="col-lg-9">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0"><i class="ti ti-bed me-2 text-primary"></i>Ward & Admissions Configuration</h5>
+                <h5 class="card-title mb-0"><i class="ti ti-bed me-2 text-primary"></i>{{ __('settings.ward_configuration') }}</h5>
             </div>
             <div class="card-body">
                 @if(session('success'))
@@ -45,16 +45,16 @@
                     @csrf
                     @method('PUT')
 
-                    <h6 class="fw-bold text-muted text-uppercase small mb-3">Default Fee Services</h6>
+                    <h6 class="fw-bold text-muted text-uppercase small mb-3">{{ __('settings.default_fee_services') }}</h6>
                     <p class="text-muted small mb-3">
-                        These services are pre-selected on the New Admission form. Staff can still change them per admission.
+                        {{ __('settings.default_fee_services_desc') }}
                     </p>
 
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">Admission Fee Service</label>
+                            <label class="form-label fw-semibold">{{ __('settings.admission_fee_service') }}</label>
                             <select name="admission_fee_service_id" class="form-select">
-                                <option value="">— None / Manual —</option>
+                                <option value="">{{ __('settings.none_manual') }}</option>
                                 @foreach($services as $service)
                                     <option value="{{ $service->id }}"
                                         {{ (int)($settings['admission_fee_service_id'] ?? 0) === $service->id ? 'selected' : '' }}>
@@ -62,13 +62,13 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <small class="text-muted">One-time fee at admission (type: Admission).</small>
+                            <small class="text-muted">{{ __('settings.admission_fee_help') }}</small>
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">Detention Fee Service</label>
+                            <label class="form-label fw-semibold">{{ __('settings.detention_fee_service') }}</label>
                             <select name="detention_fee_service_id" class="form-select">
-                                <option value="">— None / Manual —</option>
+                                <option value="">{{ __('settings.none_manual') }}</option>
                                 @foreach($services as $service)
                                     <option value="{{ $service->id }}"
                                         {{ (int)($settings['detention_fee_service_id'] ?? 0) === $service->id ? 'selected' : '' }}>
@@ -76,13 +76,13 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <small class="text-muted">One-time fee at admission (type: Detention).</small>
+                            <small class="text-muted">{{ __('settings.detention_fee_help') }}</small>
                         </div>
 
                         <div class="col-md-4">
-                            <label class="form-label fw-semibold">Consumable Fee Service <span class="badge bg-secondary fw-normal ms-1">Daily</span></label>
+                            <label class="form-label fw-semibold">{{ __('settings.consumable_fee_service') }} <span class="badge bg-secondary fw-normal ms-1">{{ __('settings.consumable_daily') }}</span></label>
                             <select name="consumable_fee_service_id" class="form-select">
-                                <option value="">— None / Manual —</option>
+                                <option value="">{{ __('settings.none_manual') }}</option>
                                 @foreach($services as $service)
                                     <option value="{{ $service->id }}"
                                         {{ (int)($settings['consumable_fee_service_id'] ?? 0) === $service->id ? 'selected' : '' }}>
@@ -90,7 +90,7 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <small class="text-muted">Per-day consumables / detention charge applied during stay.</small>
+                            <small class="text-muted">{{ __('settings.consumable_fee_help') }}</small>
                         </div>
                     </div>
 
@@ -98,7 +98,7 @@
 
                     <div class="text-end">
                         <button type="submit" class="btn btn-primary">
-                            <i class="ti ti-device-floppy me-1"></i>Save Settings
+                            <i class="ti ti-device-floppy me-1"></i>{{ __('settings.save_settings') }}
                         </button>
                     </div>
                 </form>

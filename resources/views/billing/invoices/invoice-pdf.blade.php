@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Invoice {{ $invoice->invoice_number }}</title>
+    <title>{{ __('invoices.invoice') }} {{ $invoice->invoice_number }}</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #333; }
@@ -46,9 +46,9 @@
 
     <table class="header">
         <tr>
-            <td><div class="logo">UHMS<small>Ultimate Hospital Management System</small></div></td>
+            <td><div class="logo">UHMS<small>{{ __('common.app_tagline') }}</small></div></td>
             <td>
-                <div class="doc-title">INVOICE</div>
+                <div class="doc-title">{{ __('invoices.invoice_label') }}</div>
                 <div class="doc-num">{{ $invoice->invoice_number }}</div>
                 <div style="text-align:right; margin-top:4px;"><span class="badge {{ $badgeClass }}">{{ $invoice->status->label() }}</span></div>
             </td>
@@ -58,28 +58,28 @@
     <table class="info-table">
         <tr>
             <td>
-                <h5>Invoice Details</h5>
-                <p><span class="label">Date:</span> {{ $invoice->created_at->format('d M Y') }}</p>
-                <p><span class="label">Due Date:</span> {{ $invoice->due_date?->format('d M Y') ?? '—' }}</p>
-                <p><span class="label">Billing Type:</span> {{ $invoice->billing_type?->label() }}</p>
+                <h5>{{ __('invoices.invoice_details') }}</h5>
+                <p><span class="label">{{ __('invoices.date_label') }}:</span> {{ $invoice->created_at->format('d M Y') }}</p>
+                <p><span class="label">{{ __('invoices.due_date_col') }}:</span> {{ $invoice->due_date?->format('d M Y') ?? '—' }}</p>
+                <p><span class="label">{{ __('invoices.billing_type_col') }}:</span> {{ $invoice->billing_type?->label() }}</p>
                 @if($invoice->sponsor)
-                <p><span class="label">Sponsor:</span> {{ $invoice->sponsor->name }}</p>
+                <p><span class="label">{{ __('invoices.sponsor_label') }}:</span> {{ $invoice->sponsor->name }}</p>
                 @endif
             </td>
             <td>
-                <h5>{{ $invoice->patient ? 'Patient' : 'Recipient' }}</h5>
+                <h5>{{ $invoice->patient ? __('invoices.patient_label') : __('invoices.recipient') }}</h5>
                 @if($invoice->patient)
                     <p style="font-weight:bold;">{{ $invoice->patient->full_name }}</p>
                     <p>{{ $invoice->patient->patient_number }}</p>
                     <p>{{ $invoice->patient->phone }}</p>
                 @else
-                    <p style="font-weight:bold;">{{ $invoice->external_party_name ?? 'External recipient' }}</p>
-                    <p>External / referral</p>
+                    <p style="font-weight:bold;">{{ $invoice->external_party_name ?? __('invoices.external_recipient') }}</p>
+                    <p>{{ __('invoices.external_referral') }}</p>
                     @if($invoice->bloodRequest)<p>{{ $invoice->bloodRequest->request_number }}</p>@endif
                 @endif
             </td>
             <td>
-                <h5>Visit</h5>
+                <h5>{{ __('invoices.visit') }}</h5>
                 @if($invoice->visit)
                 <p>{{ $invoice->visit->visit_number }}</p>
                 <p>{{ $invoice->visit->department?->name }}</p>
@@ -95,10 +95,10 @@
         <thead>
             <tr>
                 <th style="width:5%;">#</th>
-                <th>Description</th>
-                <th class="text-end" style="width:12%;">Qty</th>
-                <th class="text-end" style="width:18%;">Price</th>
-                <th class="text-end" style="width:20%;">Patient Payable</th>
+                <th>{{ __('invoices.description') }}</th>
+                <th class="text-end" style="width:12%;">{{ __('invoices.quantity') }}</th>
+                <th class="text-end" style="width:18%;">{{ __('invoices.price') }}</th>
+                <th class="text-end" style="width:20%;">{{ __('invoices.patient_payable_col') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -120,35 +120,35 @@
 
     <table class="totals">
         <tr>
-            <td class="label">Subtotal</td>
+            <td class="label">{{ __('invoices.subtotal') }}</td>
             <td class="text-end">&#8373;{{ number_format($invoice->subtotal, 2) }}</td>
         </tr>
         @if($invoice->tax_amount > 0)
-        <tr><td class="label">Tax</td><td class="text-end">&#8373;{{ number_format($invoice->tax_amount, 2) }}</td></tr>
+        <tr><td class="label">{{ __('invoices.tax') }}</td><td class="text-end">&#8373;{{ number_format($invoice->tax_amount, 2) }}</td></tr>
         @endif
         @if($invoice->discount_amount > 0)
-        <tr><td class="label">Discount</td><td class="text-end" style="color:red;">-&#8373;{{ number_format($invoice->discount_amount, 2) }}</td></tr>
+        <tr><td class="label">{{ __('invoices.discount') }}</td><td class="text-end" style="color:red;">-&#8373;{{ number_format($invoice->discount_amount, 2) }}</td></tr>
         @endif
         @if(($invoice->adjustment_amount ?? 0) > 0)
-        <tr><td class="label">Credit / Write-off</td><td class="text-end" style="color:#0d6efd;">-&#8373;{{ number_format($invoice->adjustment_amount, 2) }}</td></tr>
+        <tr><td class="label">{{ __('invoices.credit_write_off') }}</td><td class="text-end" style="color:#0d6efd;">-&#8373;{{ number_format($invoice->adjustment_amount, 2) }}</td></tr>
         @endif
         @if($invoice->nhis_amount > 0)
-        <tr><td class="label">Insurance Covered</td><td class="text-end" style="color:#0d6efd;">&#8373;{{ number_format($invoice->nhis_amount, 2) }}</td></tr>
+        <tr><td class="label">{{ __('invoices.insurance_covered') }}</td><td class="text-end" style="color:#0d6efd;">&#8373;{{ number_format($invoice->nhis_amount, 2) }}</td></tr>
         @endif
-        <tr class="total-row"><td>Total (GHS)</td><td class="text-end">&#8373;{{ number_format($invoice->total_amount, 2) }}</td></tr>
-        <tr><td class="label">Amount Paid</td><td class="text-end" style="color:green;">&#8373;{{ number_format($invoice->amount_paid, 2) }}</td></tr>
-        <tr><td><strong>Balance Due</strong></td><td class="text-end" style="color:red; font-weight:bold;">&#8373;{{ number_format($invoice->balance, 2) }}</td></tr>
+        <tr class="total-row"><td>{{ __('invoices.total_ghs') }}</td><td class="text-end">&#8373;{{ number_format($invoice->total_amount, 2) }}</td></tr>
+        <tr><td class="label">{{ __('invoices.amount_paid_col') }}</td><td class="text-end" style="color:green;">&#8373;{{ number_format($invoice->amount_paid, 2) }}</td></tr>
+        <tr><td><strong>{{ __('invoices.balance_due') }}</strong></td><td class="text-end" style="color:red; font-weight:bold;">&#8373;{{ number_format($invoice->balance, 2) }}</td></tr>
     </table>
 
     @if($invoice->notes)
-    <div class="notes" style="clear:both;"><strong>Notes:</strong> {{ $invoice->notes }}</div>
+    <div class="notes" style="clear:both;"><strong>{{ __('invoices.notes') }}:</strong> {{ $invoice->notes }}</div>
     @endif
 
     @if($invoice->creditNotes->where('status', 'issued')->count() > 0)
     <div style="clear:both; margin-top:16px;">
-        <h5 style="font-size:12px; color:#0d6efd; margin-bottom:6px;">Credit Notes / Write-offs</h5>
+        <h5 style="font-size:12px; color:#0d6efd; margin-bottom:6px;">{{ __('invoices.credit_notes_section') }}</h5>
         <table class="items">
-            <thead><tr><th>Credit Note #</th><th>Type</th><th>Reason</th><th class="text-end">Amount</th></tr></thead>
+            <thead><tr><th>{{ __('invoices.credit_note_num') }}</th><th>{{ __('common.type') }}</th><th>{{ __('common.reason') }}</th><th class="text-end">{{ __('invoices.amount_paid') }}</th></tr></thead>
             <tbody>
                 @foreach($invoice->creditNotes->where('status', 'issued') as $cn)
                 <tr>
@@ -164,7 +164,7 @@
     @endif
 
     <div class="footer">
-        Generated on {{ now()->format('d M Y H:i') }} · UHMS · This is a computer-generated invoice.
+        {{ __('invoices.generated_footer', ['date' => now()->format('d M Y H:i')]) }} · {{ __('invoices.computer_generated') }}
     </div>
 </body>
 </html>

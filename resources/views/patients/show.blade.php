@@ -1,17 +1,17 @@
 @extends('layouts.app')
-@section('title', $patient->full_name . ' - Patient Profile')
+@section('title', $patient->full_name . ' - ' . __('patients.profile_title'))
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex mb-3">
     <h6 class="fw-bold mb-0 d-flex align-items-center">
-        <a href="{{ route('admin.patients.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>Patients</a>
+        <a href="{{ route('admin.patients.index') }}" class="text-dark"><i class="ti ti-chevron-left me-1"></i>{{ __('patients.title') }}</a>
     </h6>
     
     @can('patients.mark_deceased')
     @if(!$patient->is_deceased)
     <button type="button" class="btn btn-outline-danger btn-md ms-auto" data-bs-toggle="modal" data-bs-target="#markDeceasedModal">
-        <i class="ti ti-skull me-1"></i>Mark as Deceased
+        <i class="ti ti-skull me-1"></i>{{ __('patients.mark_deceased') }}
     </button>
     @endif
     @endcan
@@ -49,28 +49,28 @@
                 <div class="mb-3">
                     @php $lastVisitDate = $patient->visits->first()?->visit_date; @endphp
                     @if($lastVisitDate)
-                        <span class="text-muted small me-2"><i class="ti ti-calendar-event me-1"></i>Last visit: {{ $lastVisitDate->format('d M Y') }}</span>
+                        <span class="text-muted small me-2"><i class="ti ti-calendar-event me-1"></i>{{ __('patients.last_visit') }}: {{ $lastVisitDate->format('d M Y') }}</span>
                     @endif
                     @if($patient->status === 'active')
-                        <span class="badge badge-soft-success fs-13 px-3 py-2">Active</span>
+                        <span class="badge badge-soft-success fs-13 px-3 py-2">{{ __('common.active') }}</span>
                     @elseif($patient->status === 'inactive')
-                        <span class="badge badge-soft-warning fs-13 px-3 py-2">Inactive</span>
+                        <span class="badge badge-soft-warning fs-13 px-3 py-2">{{ __('common.inactive') }}</span>
                     @else
-                        <span class="badge badge-soft-dark fs-13 px-3 py-2">Deceased</span>
+                        <span class="badge badge-soft-dark fs-13 px-3 py-2">{{ __('patients.deceased') }}</span>
                     @endif
                 </div>
                 <div class="d-flex gap-2 justify-content-lg-end flex-wrap">
                     @can('visits.create')
                     @if($patient->is_deceased)
-                    <button type="button" class="btn btn-success btn-md" disabled title="Cannot start a new visit for a deceased patient">
-                        <i class="ti ti-plus me-1"></i>New Visit
+                    <button type="button" class="btn btn-success btn-md" disabled title="{{ __('patients.cannot_visit_deceased') }}">
+                        <i class="ti ti-plus me-1"></i>{{ __('patients.new_visit') }}
                     </button>
                     @else
-                    <a href="{{ route('admin.visits.create') }}?patient_id={{ $patient->id }}" class="btn btn-success btn-md"><i class="ti ti-plus me-1"></i>New Visit</a>
+                    <a href="{{ route('admin.visits.create') }}?patient_id={{ $patient->id }}" class="btn btn-success btn-md"><i class="ti ti-plus me-1"></i>{{ __('patients.new_visit') }}</a>
                     @endif
                     @endcan
                     @can('patients.edit')
-                    <a href="{{ route('admin.patients.edit', $patient) }}" class="btn btn-primary btn-md"><i class="ti ti-edit me-1"></i>Edit Patient</a>
+                    <a href="{{ route('admin.patients.edit', $patient) }}" class="btn btn-primary btn-md"><i class="ti ti-edit me-1"></i>{{ __('patients.edit_patient') }}</a>
                     @endcan
                 </div>
             </div>
@@ -82,17 +82,17 @@
 <div class="alert alert-danger d-flex align-items-start mb-3" role="alert">
     <i class="ti ti-skull fs-20 me-3 flex-shrink-0 mt-1"></i>
     <div>
-        <h6 class="fw-bold mb-1">This patient is deceased</h6>
+        <h6 class="fw-bold mb-1">{{ __('patients.patient_deceased') }}</h6>
         <p class="mb-0">
-            Date of death: <strong>{{ $patient->deceased_at ? $patient->deceased_at->format('d M Y') : '—' }}</strong>
+            {{ __('patients.date_of_death') }}: <strong>{{ $patient->deceased_at ? $patient->deceased_at->format('d M Y') : '—' }}</strong>
             @if($patient->cause_of_death)
-                &nbsp;|&nbsp; Cause: <strong>{{ $patient->cause_of_death }}</strong>
+                &nbsp;|&nbsp; {{ __('patients.cause') }}: <strong>{{ $patient->cause_of_death }}</strong>
             @endif
             @if($patient->deceased_notes)
                 <br><span class="text-muted">{{ $patient->deceased_notes }}</span>
             @endif
             @if($patient->markedDeceasedBy)
-                <br><small class="text-muted">Recorded by {{ $patient->markedDeceasedBy->name }}</small>
+                <br><small class="text-muted">{{ __('patients.recorded_by') }} {{ $patient->markedDeceasedBy->name }}</small>
             @endif
         </p>
     </div>
@@ -105,7 +105,7 @@
     <div class="col-xl-5 d-flex">
         <div class="card shadow-sm flex-fill w-100">
             <div class="card-header">
-                <h5 class="fw-bold mb-0"><i class="ti ti-user-star me-1"></i>About</h5>
+                <h5 class="fw-bold mb-0"><i class="ti ti-user-star me-1"></i>{{ __('patients.about') }}</h5>
             </div>
             <div class="card-body pb-0">
                 <div class="row">
@@ -113,7 +113,7 @@
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-circle bg-light text-dark flex-shrink-0 me-2"><i class="ti ti-calendar-event fs-16"></i></span>
                             <div>
-                                <h6 class="fs-13 fw-bold mb-1">Date of Birth</h6>
+                                <h6 class="fs-13 fw-bold mb-1">{{ __('patients.date_of_birth') }}</h6>
                                 <p class="mb-0">{{ $patient->date_of_birth->format('d M Y') }} ({{ $patient->age }} yrs)</p>
                             </div>
                         </div>
@@ -122,7 +122,7 @@
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-circle bg-light text-dark flex-shrink-0 me-2"><i class="ti ti-droplet fs-16"></i></span>
                             <div>
-                                <h6 class="fs-13 fw-bold mb-1">Blood Group</h6>
+                                <h6 class="fs-13 fw-bold mb-1">{{ __('patients.blood_group') }}</h6>
                                 <p class="mb-0">{{ $patient->blood_group?->label() ?? '—' }}</p>
                             </div>
                         </div>
@@ -131,7 +131,7 @@
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-circle bg-light text-dark flex-shrink-0 me-2"><i class="ti ti-gender-male fs-16"></i></span>
                             <div>
-                                <h6 class="fs-13 fw-bold mb-1">Gender</h6>
+                                <h6 class="fs-13 fw-bold mb-1">{{ __('patients.gender') }}</h6>
                                 <p class="mb-0">{{ $patient->gender?->label() ?? '—' }}</p>
                             </div>
                         </div>
@@ -140,7 +140,7 @@
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-circle bg-light text-dark flex-shrink-0 me-2"><i class="ti ti-heart fs-16"></i></span>
                             <div>
-                                <h6 class="fs-13 fw-bold mb-1">Marital Status</h6>
+                                <h6 class="fs-13 fw-bold mb-1">{{ __('patients.marital_status') }}</h6>
                                 <p class="mb-0">{{ $patient->marital_status?->label() ?? '—' }}</p>
                             </div>
                         </div>
@@ -149,7 +149,7 @@
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-circle bg-light text-dark flex-shrink-0 me-2"><i class="ti ti-pray fs-16"></i></span>
                             <div>
-                                <h6 class="fs-13 fw-bold mb-1">Religion</h6>
+                                <h6 class="fs-13 fw-bold mb-1">{{ __('patients.religion') }}</h6>
                                 <p class="mb-0">{{ $patient->religion ?? '—' }}</p>
                             </div>
                         </div>
@@ -158,7 +158,7 @@
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-circle bg-light text-dark flex-shrink-0 me-2"><i class="ti ti-briefcase fs-16"></i></span>
                             <div>
-                                <h6 class="fs-13 fw-bold mb-1">Occupation</h6>
+                                <h6 class="fs-13 fw-bold mb-1">{{ __('patients.occupation') }}</h6>
                                 <p class="mb-0">{{ $patient->occupation ?? '—' }}</p>
                             </div>
                         </div>
@@ -181,7 +181,7 @@
     <div class="col-xl-7 d-flex">
         <div class="card shadow-sm flex-fill w-100">
             <div class="card-header">
-                <h5 class="fw-bold mb-0"><i class="ti ti-id me-1"></i>Identification & Emergency</h5>
+                <h5 class="fw-bold mb-0"><i class="ti ti-id me-1"></i>{{ __('patients.identification') }}</h5>
             </div>
             <div class="card-body pb-0">
                 <div class="row">
@@ -189,7 +189,7 @@
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-id-badge-2 fs-16"></i></span>
                             <div>
-                                <h6 class="fs-13 fw-bold mb-1">Ghana Card</h6>
+                                <h6 class="fs-13 fw-bold mb-1">{{ __('patients.ghana_card') }}</h6>
                                 <p class="mb-0">{{ $patient->ghana_card_number ?? '—' }}</p>
                             </div>
                         </div>
@@ -199,7 +199,7 @@
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-shield-check fs-16"></i></span>
                             <div>
-                                <h6 class="fs-13 fw-bold mb-1">Primary Insurance</h6>
+                                <h6 class="fs-13 fw-bold mb-1">{{ __('patients.primary_insurance') }}</h6>
                                 <p class="mb-0">{{ $patient->insurances->where('is_primary', true)->first()?->insuranceProvider?->name ?? 'Cash & Carry' }}</p>
                                 
                                 {{-- <h6 class="fs-13 fw-bold mb-1">{{ $patient->insurances->where('is_primary', true)->first()?->insuranceProvider?->name ?? 'Cash & Carry' }}</h6>
@@ -212,7 +212,7 @@
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-building-community fs-16"></i></span>
                             <div>
-                                <h6 class="fs-13 fw-bold mb-1">City / Town</h6>
+                                <h6 class="fs-13 fw-bold mb-1">{{ __('patients.city_town') }}</h6>
                                 <p class="mb-0">{{ collect([$patient->city, $patient->town])->filter()->implode(' / ') ?: '\u2014' }}</p>
                             </div>
                         </div>
@@ -221,7 +221,7 @@
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-map-pin-code fs-16"></i></span>
                             <div>
-                                <h6 class="fs-13 fw-bold mb-1">Digital Address</h6>
+                                <h6 class="fs-13 fw-bold mb-1">{{ __('patients.digital_address') }}</h6>
                                 <p class="mb-0">{{ $patient->digital_address ?? '—' }}</p>
                             </div>
                         </div>
@@ -231,7 +231,7 @@
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-urgent fs-16"></i></span>
                             <div>
-                                <h6 class="fs-13 fw-bold mb-1">Emergency Contact</h6>
+                                <h6 class="fs-13 fw-bold mb-1">{{ __('patients.emergency_contact') }}</h6>
                                 <p class="mb-0">{{ $primaryContact?->name ?? '—' }}</p>
                             </div>
                         </div>
@@ -240,7 +240,7 @@
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-phone-call fs-16"></i></span>
                             <div>
-                                <h6 class="fs-13 fw-bold mb-1">Emergency Phone</h6>
+                                <h6 class="fs-13 fw-bold mb-1">{{ __('patients.emergency_phone') }}</h6>
                                 <p class="mb-0">{{ $primaryContact?->phone ?? '—' }}</p>
                             </div>
                         </div>
@@ -249,7 +249,7 @@
                         <div class="d-flex align-items-center mb-3">
                             <span class="avatar rounded-2 bg-light text-dark flex-shrink-0 me-2 border"><i class="ti ti-home fs-16"></i></span>
                             <div>
-                                <h6 class="fs-13 fw-bold mb-1">Address</h6>
+                                <h6 class="fs-13 fw-bold mb-1">{{ __('patients.address') }}</h6>
                                 <p class="mb-0">{{ $patient->address ?? '—' }}</p>
                             </div>
                         </div>
@@ -267,7 +267,7 @@
     <div class="col-md-6 d-flex">
         <div class="card shadow-sm flex-fill">
             <div class="card-header">
-                <h5 class="fw-bold mb-0 text-danger"><i class="ti ti-alert-triangle me-1"></i>Allergies</h5>
+                <h5 class="fw-bold mb-0 text-danger"><i class="ti ti-alert-triangle me-1"></i>{{ __('patients.allergies') }}</h5>
             </div>
             <div class="card-body">
                 <p class="mb-0">{{ $patient->allergies }}</p>
@@ -279,7 +279,7 @@
     <div class="col-md-6 d-flex">
         <div class="card shadow-sm flex-fill">
             <div class="card-header">
-                <h5 class="fw-bold mb-0 text-warning"><i class="ti ti-heartbeat me-1"></i>Chronic Conditions</h5>
+                <h5 class="fw-bold mb-0 text-warning"><i class="ti ti-heartbeat me-1"></i>{{ __('patients.chronic_conditions') }}</h5>
             </div>
             <div class="card-body">
                 <p class="mb-0">{{ $patient->chronic_conditions }}</p>
@@ -293,22 +293,22 @@
 <!-- Tabs -->
 <ul class="nav nav-tabs nav-bordered mb-3">
     <li class="nav-item">
-        <a href="#visits" data-bs-toggle="tab" class="nav-link active bg-transparent"><i class="ti ti-calendar-event me-1"></i>Visit History <span class="badge bg-success ms-1">{{ $patient->visits->count() }}</span></a>
+        <a href="#visits" data-bs-toggle="tab" class="nav-link active bg-transparent"><i class="ti ti-calendar-event me-1"></i>{{ __('patients.tab_visit_history') }} <span class="badge bg-success ms-1">{{ $patient->visits->count() }}</span></a>
     </li>
     <li class="nav-item">
-        <a href="#insurance" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-shield-check me-1"></i>Insurance <span class="badge bg-primary ms-1">{{ $patient->insurances->count() }}</span></a>
+        <a href="#insurance" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-shield-check me-1"></i>{{ __('patients.tab_insurance') }} <span class="badge bg-primary ms-1">{{ $patient->insurances->count() }}</span></a>
     </li>
     <li class="nav-item">
-        <a href="#emergency-contacts" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-urgent me-1"></i>Emergency Contacts <span class="badge bg-secondary ms-1">{{ $patient->emergencyContacts->count() }}</span></a>
+        <a href="#emergency-contacts" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-urgent me-1"></i>{{ __('patients.tab_emergency_contacts') }} <span class="badge bg-secondary ms-1">{{ $patient->emergencyContacts->count() }}</span></a>
     </li>
     <li class="nav-item">
-        <a href="#billing" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-receipt me-1"></i>Billing <span class="badge bg-warning text-dark ms-1">{{ $patient->visits->flatMap(fn($v) => $v->invoices)->count() }}</span></a>
+        <a href="#billing" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-receipt me-1"></i>{{ __('patients.tab_billing') }} <span class="badge bg-warning text-dark ms-1">{{ $patient->visits->flatMap(fn($v) => $v->invoices)->count() }}</span></a>
     </li>
     <li class="nav-item">
-        <a href="#registration-info" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-info-circle me-1"></i>Registration Info</a>
+        <a href="#registration-info" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-info-circle me-1"></i>{{ __('patients.tab_registration_info') }}</a>
     </li>
     <li class="nav-item">
-        <a href="#activity-log" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-history me-1"></i>Activity Log <span class="badge bg-secondary ms-1">{{ $activityLogs->count() }}</span></a>
+        <a href="#activity-log" data-bs-toggle="tab" class="nav-link bg-transparent"><i class="ti ti-history me-1"></i>{{ __('patients.tab_activity_log') }} <span class="badge bg-secondary ms-1">{{ $activityLogs->count() }}</span></a>
     </li>
 </ul>
 
@@ -318,18 +318,18 @@
         @if(($upcomingAppointments ?? collect())->isNotEmpty())
         <div class="card border-info mb-3">
             <div class="card-header bg-info bg-opacity-10">
-                <h6 class="fw-bold mb-0 text-info"><i class="ti ti-calendar-plus me-1"></i>Upcoming Follow-up Appointments</h6>
+                <h6 class="fw-bold mb-0 text-info"><i class="ti ti-calendar-plus me-1"></i>{{ __('patients.upcoming_appointments') }}</h6>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Date</th>
-                                <th>Department</th>
-                                <th>Doctor</th>
-                                <th>Reason</th>
-                                <th>Status</th>
+                                <th>{{ __('patients.col_date') }}</th>
+                                <th>{{ __('patients.col_department') }}</th>
+                                <th>{{ __('patients.col_doctor') }}</th>
+                                <th>{{ __('patients.col_reason') }}</th>
+                                <th>{{ __('patients.col_status') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -363,18 +363,18 @@
         @if($upcomingVisits->isNotEmpty())
         <div class="card border-primary mb-3">
             <div class="card-header bg-primary bg-opacity-10">
-                <h6 class="fw-bold mb-0 text-primary"><i class="ti ti-calendar-plus me-1"></i>Upcoming Scheduled Visits</h6>
+                <h6 class="fw-bold mb-0 text-primary"><i class="ti ti-calendar-plus me-1"></i>{{ __('patients.upcoming_visits') }}</h6>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Date</th>
-                                <th>Time</th>
-                                <th>Department</th>
-                                <th>Doctor</th>
-                                <th>Status</th>
+                                <th>{{ __('patients.col_date') }}</th>
+                                <th>{{ __('patients.col_time') }}</th>
+                                <th>{{ __('patients.col_department') }}</th>
+                                <th>{{ __('patients.col_doctor') }}</th>
+                                <th>{{ __('patients.col_status') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -397,9 +397,9 @@
         {{-- Past Visit History --}}
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="fw-bold mb-0">Visit History</h6>
+                <h6 class="fw-bold mb-0">{{ __('patients.visit_history') }}</h6>
                 @can('visits.create')
-                <a href="{{ route('admin.visits.create') }}?patient_id={{ $patient->id }}" class="btn btn-sm btn-primary"><i class="ti ti-plus me-1"></i>New Visit</a>
+                <a href="{{ route('admin.visits.create') }}?patient_id={{ $patient->id }}" class="btn btn-sm btn-primary"><i class="ti ti-plus me-1"></i>{{ __('patients.new_visit') }}</a>
                 @endcan
             </div>
             @if($patient->visits->isNotEmpty())
@@ -408,13 +408,13 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Visit #</th>
-                                <th>Date</th>
-                                <th>Type</th>
-                                <th>Department</th>
-                                <th>Doctor</th>
-                                <th>Status</th>
-                                <th>Action</th>
+                                <th>{{ __('patients.col_visit_no') }}</th>
+                                <th>{{ __('patients.col_date') }}</th>
+                                <th>{{ __('patients.col_type') }}</th>
+                                <th>{{ __('patients.col_department') }}</th>
+                                <th>{{ __('patients.col_doctor') }}</th>
+                                <th>{{ __('patients.col_status') }}</th>
+                                <th>{{ __('patients.col_action') }}</th>
                             </tr>
                         </thead>
                         <tbody>

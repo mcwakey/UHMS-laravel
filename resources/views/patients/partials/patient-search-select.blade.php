@@ -7,7 +7,7 @@
     Params (all optional):
       $id          DOM id (default 'patientSearch'); also the hidden field id + JS hook prefix
       $name        hidden input name (default 'patient_id')
-      $label       field label (default 'Search Patient')
+      $label       field label (default translated 'Search Patient')
       $placeholder placeholder text
       $required    show the red asterisk (default false)
       $emptyOption text for the blank option (e.g. 'Create temporary emergency patient')
@@ -17,8 +17,8 @@
 @php
     $id = $id ?? 'patientSearch';
     $name = $name ?? 'patient_id';
-    $label = $label ?? 'Search Patient';
-    $placeholder = $placeholder ?? 'Type patient name, folder no., phone, Ghana Card, or insurance number…';
+    $label = $label ?? __('patients.search_patient');
+    $placeholder = $placeholder ?? __('patients.search_patient_ph');
     $required = $required ?? false;
     $emptyOption = $emptyOption ?? null;
     $selected = $selected ?? null;
