@@ -96,7 +96,7 @@
         if (requireReason) {
             opts.input = 'text';
             opts.inputPlaceholder = btn.dataset.reasonPlaceholder;
-            opts.inputValidator = function (v) { if (!v || !v.trim()) return 'A reason is required.'; };
+            opts.inputValidator = function (v) { if (!v || !v.trim()) return @json(__('common.reason_required')); };
         }
         Swal.fire(opts).then(function (res) {
             if (res.isConfirmed) submit(requireReason ? res.value : null);

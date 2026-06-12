@@ -1,10 +1,10 @@
 @extends('layouts.app')
-@section('title', 'Create Account')
+@section('title', __('accounting.create_account'))
 
 @section('content')
-<x-page-header title="Create Account" icon="ti-plus">
+<x-page-header :title="__('accounting.create_account')" icon="ti-plus">
     <x-slot:actions>
-        <a href="{{ route('admin.accounting.accounts.index') }}" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>Back</a>
+        <a href="{{ route('admin.accounting.accounts.index') }}" class="btn btn-outline-secondary"><i class="ti ti-arrow-left me-1"></i>{{ __('common.back') }}</a>
     </x-slot:actions>
 </x-page-header>
 
@@ -18,7 +18,7 @@
             @csrf
             @include('accounting.accounts._form')
             <div class="mt-3">
-                <button class="btn btn-primary" type="submit"><i class="ti ti-device-floppy me-1"></i>Save Account</button>
+                <button class="btn btn-primary" type="submit"><i class="ti ti-device-floppy me-1"></i>{{ __('accounting.save_account') }}</button>
             </div>
         </form>
     </div>

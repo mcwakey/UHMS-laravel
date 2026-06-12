@@ -1,69 +1,69 @@
 @php($editing = isset($account))
 <div class="row g-3">
     <div class="col-md-3">
-        <label class="form-label">Code <span class="text-danger">*</span></label>
+        <label class="form-label">{{ __('accounting.code') }} <span class="text-danger">*</span></label>
         <input type="text" name="code" class="form-control" value="{{ old('code', $account->code ?? '') }}" required>
     </div>
     <div class="col-md-5">
-        <label class="form-label">Name <span class="text-danger">*</span></label>
+        <label class="form-label">{{ __('common.name') }} <span class="text-danger">*</span></label>
         <input type="text" name="name" class="form-control" value="{{ old('name', $account->name ?? '') }}" required>
     </div>
     <div class="col-md-4">
-        <label class="form-label">Type <span class="text-danger">*</span></label>
+        <label class="form-label">{{ __('common.type') }} <span class="text-danger">*</span></label>
         <select name="type" class="form-select" required>
-            <option value="">Select type</option>
+            <option value="">{{ __('accounting.select_type') }}</option>
             @foreach($types as $type)
                 <option value="{{ $type->value }}" @selected(old('type', isset($account) ? $account->type->value : '') === $type->value)>{{ $type->label() }}</option>
             @endforeach
         </select>
     </div>
     <div class="col-md-4">
-        <label class="form-label">Subtype</label>
+        <label class="form-label">{{ __('accounting.subtype') }}</label>
         <input type="text" name="subtype" class="form-control" value="{{ old('subtype', $account->subtype ?? '') }}" placeholder="CURRENT_ASSET">
     </div>
     <div class="col-md-4">
-        <label class="form-label">Parent Account</label>
+        <label class="form-label">{{ __('accounting.parent_account') }}</label>
         <select name="parent_id" class="form-select select2">
-            <option value="">No parent</option>
+            <option value="">{{ __('accounting.no_parent') }}</option>
             @foreach($parentAccounts as $parent)
                 <option value="{{ $parent->id }}" @selected((string) old('parent_id', $account->parent_id ?? '') === (string) $parent->id)>{{ $parent->display_name }}</option>
             @endforeach
         </select>
     </div>
     <div class="col-md-4">
-        <label class="form-label">Normal Balance</label>
+        <label class="form-label">{{ __('accounting.normal_balance') }}</label>
         <select name="normal_balance" class="form-select">
-            <option value="">Use type default</option>
+            <option value="">{{ __('accounting.use_type_default') }}</option>
             @foreach($normalBalances as $balance)
                 <option value="{{ $balance->value }}" @selected(old('normal_balance', isset($account) ? $account->normal_balance->value : '') === $balance->value)>{{ $balance->label() }}</option>
             @endforeach
         </select>
     </div>
     <div class="col-md-4">
-        <label class="form-label">Opening Balance</label>
+        <label class="form-label">{{ __('accounting.opening_balance') }}</label>
         <input type="number" step="0.01" name="opening_balance" class="form-control" value="{{ old('opening_balance', $account->opening_balance ?? '0.00') }}">
     </div>
     <div class="col-md-8">
-        <label class="form-label">Description</label>
+        <label class="form-label">{{ __('common.description') }}</label>
         <input type="text" name="description" class="form-control" value="{{ old('description', $account->description ?? '') }}">
     </div>
     <div class="col-12">
         <div class="d-flex flex-wrap gap-3">
             <label class="form-check">
                 <input class="form-check-input" type="checkbox" name="is_cash_account" value="1" @checked(old('is_cash_account', $account->is_cash_account ?? false))>
-                <span class="form-check-label">Cash account</span>
+                <span class="form-check-label">{{ __('accounting.cash_account') }}</span>
             </label>
             <label class="form-check">
                 <input class="form-check-input" type="checkbox" name="is_bank_account" value="1" @checked(old('is_bank_account', $account->is_bank_account ?? false))>
-                <span class="form-check-label">Bank account</span>
+                <span class="form-check-label">{{ __('accounting.bank_account') }}</span>
             </label>
             <label class="form-check">
                 <input class="form-check-input" type="checkbox" name="is_control_account" value="1" @checked(old('is_control_account', $account->is_control_account ?? false))>
-                <span class="form-check-label">Control account</span>
+                <span class="form-check-label">{{ __('accounting.control_account') }}</span>
             </label>
             <label class="form-check">
                 <input class="form-check-input" type="checkbox" name="is_active" value="1" @checked(old('is_active', $account->is_active ?? true))>
-                <span class="form-check-label">Active</span>
+                <span class="form-check-label">{{ __('common.active') }}</span>
             </label>
         </div>
     </div>

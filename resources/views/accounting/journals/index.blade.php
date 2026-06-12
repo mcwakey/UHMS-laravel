@@ -1,11 +1,11 @@
 @extends('layouts.app')
-@section('title', 'Journal Entries')
+@section('title', __('accounting.journal_entries'))
 
 @section('content')
-<x-page-header title="Journal Entries" icon="ti-journal">
+<x-page-header :title="__('accounting.journal_entries')" icon="ti-journal">
     <x-slot:actions>
         @can('accounting.journals.create')
-            <a href="{{ route('admin.accounting.journals.create') }}" class="btn btn-primary"><i class="ti ti-plus me-1"></i>New Journal</a>
+            <a href="{{ route('admin.accounting.journals.create') }}" class="btn btn-primary"><i class="ti ti-plus me-1"></i>{{ __('accounting.new_journal') }}</a>
         @endcan
     </x-slot:actions>
 </x-page-header>
@@ -14,24 +14,24 @@
     <div class="card-body py-2">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-md-4">
-                <label class="form-label small">Search</label>
-                <input type="text" name="search" class="form-control" value="{{ request('search') }}" placeholder="Journal, reference, description">
+                <label class="form-label small">{{ __('common.search') }}</label>
+                <input type="text" name="search" class="form-control" value="{{ request('search') }}" placeholder="{{ __('accounting.journal_reference_description') }}">
             </div>
             <div class="col-md-2">
-                <label class="form-label small">Status</label>
+                <label class="form-label small">{{ __('common.status') }}</label>
                 <select name="status" class="form-select">
-                    <option value="">All</option>
+                    <option value="">{{ __('common.all') }}</option>
                     @foreach($statuses as $status)
                         <option value="{{ $status->value }}" @selected(request('status') === $status->value)>{{ $status->label() }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label small">From</label>
+                <label class="form-label small">{{ __('common.from') }}</label>
                 <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
             </div>
             <div class="col-md-2">
-                <label class="form-label small">To</label>
+                <label class="form-label small">{{ __('common.to') }}</label>
                 <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
             </div>
             <div class="col-md-2 d-flex gap-2">
@@ -47,14 +47,14 @@
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>Journal</th>
-                    <th>Date</th>
-                    <th>Description</th>
-                    <th>Reference</th>
-                    <th>Status</th>
-                    <th class="text-end">Debit</th>
-                    <th>Created By</th>
-                    <th class="text-end">Actions</th>
+                    <th>{{ __('accounting.journal') }}</th>
+                    <th>{{ __('common.date') }}</th>
+                    <th>{{ __('common.description') }}</th>
+                    <th>{{ __('common.reference') }}</th>
+                    <th>{{ __('common.status') }}</th>
+                    <th class="text-end">{{ __('accounting.debit') }}</th>
+                    <th>{{ __('common.created_by') }}</th>
+                    <th class="text-end">{{ __('common.actions') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -72,7 +72,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="8" class="text-center text-muted py-4">No journal entries found.</td></tr>
+                <tr><td colspan="8" class="text-center text-muted py-4">{{ __('accounting.no_journal_entries_found') }}</td></tr>
             @endforelse
             </tbody>
         </table>
