@@ -1,20 +1,20 @@
 @extends('layouts.app')
-@section('title', 'Service Rendering')
+@section('title', __('services.rendering_title'))
 
 @section('content')
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 pb-3 mb-3 border-bottom">
     <div>
-        <h4 class="fw-bold mb-1"><i class="ti ti-clipboard-check me-2 text-primary"></i>{{ $rendering->service?->name ?? 'Service Rendering' }}</h4>
-        <p class="text-muted mb-0">{{ $rendering->patient?->full_name ?? 'Unknown patient' }} / {{ $rendering->visit?->visit_number ?? 'No visit' }}</p>
+        <h4 class="fw-bold mb-1"><i class="ti ti-clipboard-check me-2 text-primary"></i>{{ $rendering->service?->name ?? __('services.rendering_title') }}</h4>
+        <p class="text-muted mb-0">{{ $rendering->patient?->full_name ?? __('services.unknown_patient') }} / {{ $rendering->visit?->visit_number ?? __('services.no_visit') }}</p>
     </div>
     <div class="d-flex gap-2">
         @if($rendering->visit)
             <a href="{{ route('admin.visits.preview', $rendering->visit) }}" class="btn btn-outline-info btn-sm">
-                <i class="ti ti-eye-search me-1"></i>Visit Preview
+                <i class="ti ti-eye-search me-1"></i>{{ __('services.visit_preview') }}
             </a>
         @endif
         <a href="{{ route('admin.service-renderings.index') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="ti ti-arrow-left me-1"></i>Back
+            <i class="ti ti-arrow-left me-1"></i>{{ __('common.back') }}
         </a>
     </div>
 </div>
@@ -42,7 +42,7 @@
 
 @if($isUnrenderedButPayable)
     <div class="alert alert-warning">
-        This service is documented as not rendered, but the invoice item is still financially active. Billing or cashier staff should review the invoice item separately.
+        {{ __('services.financially_active_warning') }}
     </div>
 @endif
 
@@ -52,66 +52,66 @@
             <div class="card-body">
                 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
                     <div>
-                        <span class="text-muted small">Rendering Status</span>
-                        <div><span class="badge bg-{{ $rendering->status_color }} fs-6">{{ str_replace('_', ' ', $rendering->status) }}</span></div>
+                        <span class="text-muted small">{{ __('services.rendering_status') }}</span>
+                        <div><span class="badge bg-{{ $rendering->status_color }} fs-6">{{ __("statuses.default.$rendering->status") }}</span></div>
                     </div>
                     <div class="text-end">
-                        <span class="text-muted small">Payment Status</span>
-                        <div><span class="badge bg-{{ $paymentStatus === 'paid' ? 'success' : ($paymentStatus === 'partially_paid' ? 'warning text-dark' : 'danger') }}">{{ ucwords(str_replace('_', ' ', $paymentStatus)) }}</span></div>
+                        <span class="text-muted small">{{ __('services.payment_status') }}</span>
+                        <div><span class="badge bg-{{ $paymentStatus === 'paid' ? 'success' : ($paymentStatus === 'partially_paid' ? 'warning text-dark' : 'danger') }}">{{ __("statuses.default.$paymentStatus") }}</span></div>
                     </div>
                 </div>
 
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <div class="text-muted small">Patient</div>
-                        <div class="fw-semibold">{{ $rendering->patient?->full_name ?? 'Unknown patient' }}</div>
+                        <div class="text-muted small">{{ __('common.patient') }}</div>
+                        <div class="fw-semibold">{{ $rendering->patient?->full_name ?? __('services.unknown_patient') }}</div>
                         <small class="text-muted">{{ $rendering->patient?->patient_number }}</small>
                     </div>
                     <div class="col-md-6">
-                        <div class="text-muted small">Visit</div>
-                        <div class="fw-semibold">{{ $rendering->visit?->visit_number ?? 'No visit number' }}</div>
-                        <small class="text-muted">{{ $rendering->visit?->visit_type?->label() ?? '' }}</small>
+                        <div class="text-muted small">{{ __('services.visit') }}</div>
+                        <div class="fw-semibold">{{ $rendering->visit?->visit_number ?? __('services.no_visit_number') }}</div>
+                        <small class="text-muted">{{ $rendering->visit?->visit_type?->translatedLabel() ?? '' }}</small>
                     </div>
                     <div class="col-md-6">
-                        <div class="text-muted small">Service</div>
-                        <div class="fw-semibold">{{ $rendering->service?->name ?? 'Service' }}</div>
+                        <div class="text-muted small">{{ __('services.service_name') }}</div>
+                        <div class="fw-semibold">{{ $rendering->service?->name ?? __('services.service_name') }}</div>
                         <small class="text-muted">{{ $rendering->invoiceItem?->description }}</small>
                     </div>
                     <div class="col-md-6">
-                        <div class="text-muted small">Department</div>
-                        <div class="fw-semibold">{{ $rendering->department?->name ?? 'Unassigned' }}</div>
+                        <div class="text-muted small">{{ __('common.department') }}</div>
+                        <div class="fw-semibold">{{ $rendering->department?->name ?? __('services.unassigned') }}</div>
                     </div>
                     <div class="col-md-6">
-                        <div class="text-muted small">Invoice</div>
-                        <div class="fw-semibold">{{ $rendering->invoiceItem?->invoice?->invoice_number ?? 'No invoice' }}</div>
-                        <small class="text-muted">Item #{{ $rendering->invoice_item_id }}</small>
+                        <div class="text-muted small">{{ __('services.invoice') }}</div>
+                        <div class="fw-semibold">{{ $rendering->invoiceItem?->invoice?->invoice_number ?? __('services.no_invoice') }}</div>
+                        <small class="text-muted">{{ __('services.invoice_item', ['id' => $rendering->invoice_item_id]) }}</small>
                     </div>
                     <div class="col-md-6">
-                        <div class="text-muted small">Amount</div>
+                        <div class="text-muted small">{{ __('services.amount') }}</div>
                         <div class="fw-semibold">GHS {{ number_format((float) ($rendering->invoiceItem?->patient_payable ?? 0), 2) }}</div>
-                        <small class="text-muted">Rendering never changes invoice payment state.</small>
+                        <small class="text-muted">{{ __('services.invoice_state_note') }}</small>
                     </div>
                     <div class="col-md-4">
-                        <div class="text-muted small">Started By</div>
-                        <div>{{ $rendering->startedBy?->full_name ?? $rendering->startedBy?->name ?? 'Not started' }}</div>
+                        <div class="text-muted small">{{ __('services.started_by') }}</div>
+                        <div>{{ $rendering->startedBy?->full_name ?? $rendering->startedBy?->name ?? __('services.not_started') }}</div>
                         <small class="text-muted">{{ $rendering->started_at?->format('d M Y H:i') }}</small>
                     </div>
                     <div class="col-md-4">
-                        <div class="text-muted small">Rendered By</div>
-                        <div>{{ $rendering->renderedBy?->full_name ?? $rendering->renderedBy?->name ?? 'Not rendered' }}</div>
+                        <div class="text-muted small">{{ __('services.rendered_by') }}</div>
+                        <div>{{ $rendering->renderedBy?->full_name ?? $rendering->renderedBy?->name ?? __('services.not_rendered_by_anyone') }}</div>
                         <small class="text-muted">{{ $rendering->rendered_at?->format('d M Y H:i') }}</small>
                     </div>
                     <div class="col-md-4">
-                        <div class="text-muted small">Context</div>
+                        <div class="text-muted small">{{ __('services.context') }}</div>
                         <div>
                             @if($rendering->emergencyCase)
                                 <span class="badge bg-danger-subtle text-danger">{{ $rendering->emergencyCase->emergency_number }}</span>
                             @elseif($rendering->admission)
                                 <span class="badge bg-primary-subtle text-primary">{{ $rendering->admission->admission_number }}</span>
                             @elseif($rendering->consultationRoute)
-                                <span class="badge bg-info-subtle text-info">Consultation Route #{{ $rendering->consultationRoute->id }}</span>
+                                <span class="badge bg-info-subtle text-info">{{ __('services.consultation_route', ['id' => $rendering->consultationRoute->id]) }}</span>
                             @else
-                                <span class="badge bg-light text-dark">Visit Service</span>
+                                <span class="badge bg-light text-dark">{{ __('services.visit_service') }}</span>
                             @endif
                         </div>
                     </div>
@@ -120,15 +120,15 @@
                 @if($rendering->result_summary || $rendering->notes || $rendering->reason_not_rendered)
                     <hr>
                     @if($rendering->result_summary)
-                        <h6 class="fw-semibold">Result Summary</h6>
+                        <h6 class="fw-semibold">{{ __('services.result_summary') }}</h6>
                         <p class="mb-3">{{ $rendering->result_summary }}</p>
                     @endif
                     @if($rendering->reason_not_rendered)
-                        <h6 class="fw-semibold">Reason Not Rendered</h6>
+                        <h6 class="fw-semibold">{{ __('services.reason_not_rendered') }}</h6>
                         <p class="mb-3">{{ $rendering->reason_not_rendered }}</p>
                     @endif
                     @if($rendering->notes)
-                        <h6 class="fw-semibold">Notes</h6>
+                        <h6 class="fw-semibold">{{ __('common.notes') }}</h6>
                         <p class="mb-0">{{ $rendering->notes }}</p>
                     @endif
                 @endif
@@ -137,31 +137,31 @@
 
         <div class="card">
             <div class="card-header bg-white">
-                <h6 class="mb-0">Audit Trail</h6>
+                <h6 class="mb-0">{{ __('services.audit_trail') }}</h6>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0">
                         <thead class="bg-light">
                             <tr>
-                                <th>Time</th>
-                                <th>Action</th>
-                                <th>Status</th>
-                                <th>User</th>
-                                <th>Notes</th>
+                                <th>{{ __('services.time') }}</th>
+                                <th>{{ __('services.action') }}</th>
+                                <th>{{ __('common.status') }}</th>
+                                <th>{{ __('services.user') }}</th>
+                                <th>{{ __('common.notes') }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($rendering->logs->sortByDesc('created_at') as $log)
                                 <tr>
                                     <td>{{ $log->created_at?->format('d M Y H:i') }}</td>
-                                    <td>{{ str_replace('_', ' ', $log->action) }}</td>
-                                    <td>{{ $log->from_status ? str_replace('_', ' ', $log->from_status).' -> ' : '' }}{{ str_replace('_', ' ', $log->to_status ?? '') }}</td>
-                                    <td>{{ $log->performedBy?->full_name ?? $log->performedBy?->name ?? 'System' }}</td>
+                                    <td>{{ __("statuses.default.$log->action") }}</td>
+                                    <td>{{ $log->from_status ? __("statuses.default.$log->from_status").' -> ' : '' }}{{ $log->to_status ? __("statuses.default.$log->to_status") : '' }}</td>
+                                    <td>{{ $log->performedBy?->full_name ?? $log->performedBy?->name ?? __('services.system') }}</td>
                                     <td>{{ $log->reason ?: $log->notes ?: '-' }}</td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5"><x-empty-state message="No rendering log entries yet." /></td></tr>
+                                <tr><td colspan="5"><x-empty-state :message="__('services.no_rendering_logs')" /></td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -175,11 +175,11 @@
             @if($rendering->can_be_started)
                 <div class="card mb-3">
                     <div class="card-body">
-                        <h6 class="fw-semibold">Start Rendering</h6>
+                        <h6 class="fw-semibold">{{ __('services.start_rendering') }}</h6>
                         <form method="POST" action="{{ route('admin.service-renderings.start', $rendering) }}">
                             @csrf
-                            <textarea class="form-control mb-2" name="notes" rows="2" placeholder="Optional start note"></textarea>
-                            <button class="btn btn-info w-100" type="submit">Start Service</button>
+                            <textarea class="form-control mb-2" name="notes" rows="2" placeholder="{{ __('services.optional_start_note') }}"></textarea>
+                            <button class="btn btn-info w-100" type="submit">{{ __('services.start_service') }}</button>
                         </form>
                     </div>
                 </div>
@@ -190,16 +190,16 @@
             @if($rendering->can_be_closed)
                 <div class="card mb-3">
                     <div class="card-body">
-                        <h6 class="fw-semibold">Mark Rendered</h6>
+                        <h6 class="fw-semibold">{{ __('services.mark_rendered') }}</h6>
                         <form method="POST" action="{{ route('admin.service-renderings.mark-rendered', $rendering) }}">
                             @csrf
-                            <label class="form-label small">Rendered At</label>
+                            <label class="form-label small">{{ __('services.rendered_at') }}</label>
                             <input type="datetime-local" class="form-control mb-2" name="rendered_at" value="{{ now()->format('Y-m-d\TH:i') }}">
-                            <label class="form-label small">Result Summary</label>
-                            <textarea class="form-control mb-2" name="result_summary" rows="3" placeholder="What was done, result, or outcome"></textarea>
-                            <label class="form-label small">Notes</label>
+                            <label class="form-label small">{{ __('services.result_summary') }}</label>
+                            <textarea class="form-control mb-2" name="result_summary" rows="3" placeholder="{{ __('services.result_placeholder') }}"></textarea>
+                            <label class="form-label small">{{ __('common.notes') }}</label>
                             <textarea class="form-control mb-2" name="notes" rows="2"></textarea>
-                            <button class="btn btn-success w-100" type="submit">Mark Rendered</button>
+                            <button class="btn btn-success w-100" type="submit">{{ __('services.mark_rendered') }}</button>
                         </form>
                     </div>
                 </div>
@@ -210,14 +210,14 @@
             @if($rendering->can_be_closed)
                 <div class="card mb-3">
                     <div class="card-body">
-                        <h6 class="fw-semibold">Mark Not Rendered</h6>
+                        <h6 class="fw-semibold">{{ __('services.mark_not_rendered') }}</h6>
                         <form method="POST" action="{{ route('admin.service-renderings.mark-not-rendered', $rendering) }}">
                             @csrf
-                            <label class="form-label small">Reason</label>
+                            <label class="form-label small">{{ __('services.reason') }}</label>
                             <textarea class="form-control mb-2" name="reason_not_rendered" rows="3" required></textarea>
-                            <label class="form-label small">Notes</label>
+                            <label class="form-label small">{{ __('common.notes') }}</label>
                             <textarea class="form-control mb-2" name="notes" rows="2"></textarea>
-                            <button class="btn btn-outline-danger w-100" type="submit">Mark Not Rendered</button>
+                            <button class="btn btn-outline-danger w-100" type="submit">{{ __('services.mark_not_rendered') }}</button>
                         </form>
                     </div>
                 </div>
@@ -227,15 +227,15 @@
         @can('service_rendering.edit_notes')
             <div class="card mb-3">
                 <div class="card-body">
-                    <h6 class="fw-semibold">Update Notes</h6>
+                    <h6 class="fw-semibold">{{ __('services.update_notes') }}</h6>
                     <form method="POST" action="{{ route('admin.service-renderings.notes', $rendering) }}">
                         @csrf
                         @method('PATCH')
-                        <label class="form-label small">Result Summary</label>
+                        <label class="form-label small">{{ __('services.result_summary') }}</label>
                         <textarea class="form-control mb-2" name="result_summary" rows="3">{{ old('result_summary', $rendering->result_summary) }}</textarea>
-                        <label class="form-label small">Notes</label>
+                        <label class="form-label small">{{ __('common.notes') }}</label>
                         <textarea class="form-control mb-2" name="notes" rows="3">{{ old('notes', $rendering->notes) }}</textarea>
-                        <button class="btn btn-outline-primary w-100" type="submit">Save Notes</button>
+                        <button class="btn btn-outline-primary w-100" type="submit">{{ __('services.save_notes') }}</button>
                     </form>
                 </div>
             </div>
@@ -245,14 +245,14 @@
             @if($rendering->status !== \App\Models\ServiceRendering::STATUS_CANCELLED)
                 <div class="card border-danger">
                     <div class="card-body">
-                        <h6 class="fw-semibold text-danger">Cancel Rendering</h6>
+                        <h6 class="fw-semibold text-danger">{{ __('services.cancel_rendering') }}</h6>
                         <form method="POST" action="{{ route('admin.service-renderings.cancel', $rendering) }}">
                             @csrf
-                            <label class="form-label small">Reason</label>
+                            <label class="form-label small">{{ __('services.reason') }}</label>
                             <textarea class="form-control mb-2" name="reason" rows="3" required></textarea>
-                            <label class="form-label small">Notes</label>
+                            <label class="form-label small">{{ __('common.notes') }}</label>
                             <textarea class="form-control mb-2" name="notes" rows="2"></textarea>
-                            <button class="btn btn-outline-danger w-100" type="submit">Cancel Rendering</button>
+                            <button class="btn btn-outline-danger w-100" type="submit">{{ __('services.cancel_rendering') }}</button>
                         </form>
                     </div>
                 </div>

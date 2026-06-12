@@ -1,24 +1,24 @@
 @extends('layouts.app')
 
-@section('title', 'Appointment Calendar')
+@section('title', __('appointments.calendar_title'))
 
 @section('content')
     <div class="page-header">
         <div class="row align-items-center">
             <div class="col-sm-6">
-                <h3 class="page-title">Appointment Calendar</h3>
+                <h3 class="page-title">{{ __('appointments.calendar_title') }}</h3>
             </div>
             <div class="col-sm-6 text-sm-end">
                 <div class="bg-white border shadow-sm rounded px-1 pb-0 text-center d-flex align-items-center justify-content-center">
-                    <a aria-label="List" title="List" href="{{ route('admin.appointments.index') }}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-body"></i></a>
-                    <a aria-label="Calendar event" title="Calendar event" href="{{ route('admin.appointments.calendar') }}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-calendar-event fs-14 text-body"></i> </a>
+                    <a aria-label="{{ __('appointments.list_view') }}" title="{{ __('appointments.list_view') }}" href="{{ route('admin.appointments.index') }}" class="bg-light rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-list fs-14 text-body"></i></a>
+                    <a aria-label="{{ __('appointments.calendar_view') }}" title="{{ __('appointments.calendar_view') }}" href="{{ route('admin.appointments.calendar') }}" class="bg-white rounded p-1 d-flex align-items-center justify-content-center"> <i class="ti ti-calendar-event fs-14 text-body"></i> </a>
                 </div>
                 {{-- <a href="{{ route('admin.appointments.index') }}" class="btn btn-outline-secondary me-2">
                     <i class="ti ti-list me-1"></i> List View
                 </a> --}}
                 @can('appointments.create')
                 <a href="{{ route('admin.appointments.create') }}" class="btn btn-primary">
-                    <i class="ti ti-plus me-1"></i> New Appointment
+                    <i class="ti ti-plus me-1"></i> {{ __('appointments.new_appointment') }}
                 </a>
                 @endcan
             </div>
@@ -37,9 +37,9 @@
                     ])
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Doctor</label>
+                    <label class="form-label">{{ __('common.doctor') }}</label>
                     <select name="doctor_id" class="form-select">
-                        <option value="">All Doctors</option>
+                        <option value="">{{ __('appointments.all_doctors') }}</option>
                         @foreach($doctors as $doctor)
                             <option value="{{ $doctor->id }}" {{ ($filters['doctor_id'] ?? '') == $doctor->id ? 'selected' : '' }}>
                                 Dr. {{ $doctor->name }}
@@ -48,9 +48,9 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Department</label>
+                    <label class="form-label">{{ __('common.department') }}</label>
                     <select name="department_id" class="form-select">
-                        <option value="">All Departments</option>
+                        <option value="">{{ __('common.all_departments') }}</option>
                         @foreach($departments as $dept)
                             <option value="{{ $dept->id }}" {{ ($filters['department_id'] ?? '') == $dept->id ? 'selected' : '' }}>
                                 {{ $dept->name }}
@@ -60,7 +60,7 @@
                 </div>
                 <div class="col-md-3">
                     <button type="submit" class="btn btn-primary me-2">
-                        <i class="ti ti-filter me-1"></i> Filter
+                        <i class="ti ti-filter me-1"></i> {{ __('common.filter') }}
                     </button>
                     <a href="{{ route('admin.appointments.calendar') }}" class="btn btn-outline-secondary">
                         <i class="ti ti-x me-1"></i>
@@ -83,7 +83,7 @@
             $rangeQuery = request()->except(['date_range', 'date_from', 'date_to', 'from', 'to']);
         @endphp
         <a href="{{ route('admin.appointments.calendar', array_merge($rangeQuery, ['date_range' => $prevStart->toDateString().' to '.$prevEnd->toDateString()])) }}" class="btn btn-outline-secondary btn-sm">
-            <i class="ti ti-chevron-left me-1"></i> Previous Range
+            <i class="ti ti-chevron-left me-1"></i> {{ __('appointments.previous_range') }}
         </a>
         <div>
             <h5 class="mb-0">
@@ -92,10 +92,10 @@
         </div>
         <div class="d-flex gap-2">
             <a href="{{ route('admin.appointments.calendar', $rangeQuery) }}" class="btn btn-outline-primary btn-sm">
-                Today
+                {{ __('appointments.today') }}
             </a>
             <a href="{{ route('admin.appointments.calendar', array_merge($rangeQuery, ['date_range' => $nextStart->toDateString().' to '.$nextEnd->toDateString()])) }}" class="btn btn-outline-secondary btn-sm">
-                Next Range <i class="ti ti-chevron-right ms-1"></i>
+                {{ __('appointments.next_range') }} <i class="ti ti-chevron-right ms-1"></i>
             </a>
         </div>
     </div>
@@ -115,7 +115,7 @@
     @endphp
     <div class="card uhms-calendar-week {{ $weekIndex > 0 ? 'mt-3' : '' }}">
         <div class="card-header d-flex align-items-center justify-content-between">
-            <h5 class="card-title mb-0">{{ $calendarWeeks->count() > 1 ? 'Range '.($weekIndex + 1) : 'Selected Range' }}</h5>
+            <h5 class="card-title mb-0">{{ $calendarWeeks->count() > 1 ? __('appointments.range_label', ['number' => $weekIndex + 1]) : __('appointments.selected_range') }}</h5>
             <span class="text-muted fw-medium">{{ $weekStart->format('d M') }} - {{ $weekEnd->format('d M Y') }}</span>
         </div>
         <div class="card-body p-0">
@@ -155,7 +155,7 @@
                                                     {{ $apt->patient->first_name }} {{ $apt->patient->last_name }}
                                                 </small>
                                                 <span class="badge bg-{{ $apt->status->color() }}" style="font-size: 0.65rem;">
-                                                    {{ $apt->status->label() }}
+                                                    {{ $apt->status->translatedLabel() }}
                                                 </span>
                                             </div>
                                             <small class="text-muted d-block">
@@ -172,7 +172,7 @@
                                     </a>
                                     @empty
                                     <div class="text-center text-muted py-4">
-                                        <small>No appointments</small>
+                                        <small>{{ __('appointments.no_appointments') }}</small>
                                     </div>
                                     @endforelse
 
@@ -197,7 +197,7 @@
     <div class="card mt-3">
         <div class="card-body py-2">
             <div class="d-flex flex-wrap gap-3 align-items-center">
-                <small class="text-muted fw-medium">Status Legend:</small>
+                <small class="text-muted fw-medium">{{ __('appointments.status_legend') }}</small>
                 @foreach(\App\Enums\AppointmentStatus::cases() as $status)
                 <x-status-badge :status="$status" />
                 @endforeach

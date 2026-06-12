@@ -10,6 +10,8 @@ return [
         'on_hold' => 'En suspens',
         'held' => 'Suspendu',
         'completed' => 'Terminé',
+        'rendered' => 'Rendu',
+        'not_rendered' => 'Non rendu',
         'done' => 'Fait',
         'approved' => 'Approuvé',
         'verified' => 'Vérifié',

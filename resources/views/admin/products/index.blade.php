@@ -89,7 +89,7 @@
                     <tr>
                         <td>{{ $product->name }}</td>
                         <td>@if($product->code)<code>{{ $product->code }}</code>@else <span class="text-muted">—</span> @endif</td>
-                        <td><span class="badge bg-light text-dark">{{ $product->product_type?->label() ?? '—' }}</span></td>
+                        <td><span class="badge bg-light text-dark">{{ $product->product_type?->translatedLabel() ?? '—' }}</span></td>
                         <td>{{ $product->unit ?? '—' }}</td>
                         <td>
                             @foreach($product->departments as $d)

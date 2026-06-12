@@ -16,6 +16,8 @@ return [
         'on_hold' => 'On Hold',
         'held' => 'Held',
         'completed' => 'Completed',
+        'rendered' => 'Rendered',
+        'not_rendered' => 'Not Rendered',
         'done' => 'Done',
         'approved' => 'Approved',
         'verified' => 'Verified',

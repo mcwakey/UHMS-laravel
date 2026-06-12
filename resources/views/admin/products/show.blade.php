@@ -4,16 +4,16 @@
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <a href="{{ route('admin.products.index') }}" class="text-muted text-decoration-none small"><i class="ti ti-arrow-left me-1"></i>Products</a>
+        <a href="{{ route('admin.products.index') }}" class="text-muted text-decoration-none small"><i class="ti ti-arrow-left me-1"></i>{{ __('products.title') }}</a>
         <h4 class="fw-bold mb-0 mt-1">
             <i class="ti ti-package me-2"></i>{{ $product->name }}
             @if($product->is_active)
-                <span class="badge bg-success-subtle text-success fs-xs fw-normal ms-1">Active</span>
+                <span class="badge bg-success-subtle text-success fs-xs fw-normal ms-1">{{ __('common.active') }}</span>
             @else
-                <span class="badge bg-secondary-subtle text-secondary fs-xs fw-normal ms-1">Inactive</span>
+                <span class="badge bg-secondary-subtle text-secondary fs-xs fw-normal ms-1">{{ __('common.inactive') }}</span>
             @endif
         </h4>
-        <small class="text-muted">{{ $product->product_type?->label() }}{{ $product->code ? ' · ' . $product->code : '' }}</small>
+        <small class="text-muted">{{ $product->product_type?->translatedLabel() }}{{ $product->code ? ' · ' . $product->code : '' }}</small>
     </div>
 </div>
 
@@ -25,10 +25,10 @@
 
 {{-- Tabs --}}
 <ul class="nav nav-tabs mb-3" id="productTabs">
-    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-details"><i class="ti ti-info-circle me-1"></i>Details</a></li>
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-stock"><i class="ti ti-list-check me-1"></i>Stock Balances</a></li>
+    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-details"><i class="ti ti-info-circle me-1"></i>{{ __('products.details') }}</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-stock"><i class="ti ti-list-check me-1"></i>{{ __('products.stock_balances') }}</a></li>
     @can('product.pricing.manage')
-    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-pricing"><i class="ti ti-tag me-1"></i>Pricing</a></li>
+    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-pricing"><i class="ti ti-tag me-1"></i>{{ __('products.pricing') }}</a></li>
     @endcan
 </ul>
 
@@ -39,26 +39,26 @@
         <div class="row g-3">
             <div class="col-md-6">
                 <div class="card h-100">
-                    <div class="card-header fw-semibold py-2 small">Product Information</div>
+                    <div class="card-header fw-semibold py-2 small">{{ __('products.product_information') }}</div>
                     <div class="card-body">
                         <dl class="row mb-0 small">
-                            <dt class="col-sm-4 text-muted">Name</dt><dd class="col-sm-8">{{ $product->name }}</dd>
-                            <dt class="col-sm-4 text-muted">Code</dt><dd class="col-sm-8">{{ $product->code ?? '—' }}</dd>
-                            <dt class="col-sm-4 text-muted">Type</dt><dd class="col-sm-8">{{ $product->product_type?->label() ?? '—' }}</dd>
-                            <dt class="col-sm-4 text-muted">Unit</dt><dd class="col-sm-8">{{ $product->unit ?? '—' }}</dd>
-                            <dt class="col-sm-4 text-muted">Reorder Level</dt><dd class="col-sm-8">{{ $product->reorder_level ?? '—' }}</dd>
-                            <dt class="col-sm-4 text-muted">Cost Price</dt><dd class="col-sm-8">@if($product->default_cost) GH₵ {{ number_format($product->default_cost, 2) }} @else <span class="text-muted">—</span> @endif</dd>
-                            <dt class="col-sm-4 text-muted">Description</dt><dd class="col-sm-8">{{ $product->description ?? '—' }}</dd>
+                            <dt class="col-sm-4 text-muted">{{ __('common.name') }}</dt><dd class="col-sm-8">{{ $product->name }}</dd>
+                            <dt class="col-sm-4 text-muted">{{ __('common.code') }}</dt><dd class="col-sm-8">{{ $product->code ?? '—' }}</dd>
+                            <dt class="col-sm-4 text-muted">{{ __('common.type') }}</dt><dd class="col-sm-8">{{ $product->product_type?->translatedLabel() ?? '—' }}</dd>
+                            <dt class="col-sm-4 text-muted">{{ __('products.unit') }}</dt><dd class="col-sm-8">{{ $product->unit ?? '—' }}</dd>
+                            <dt class="col-sm-4 text-muted">{{ __('products.reorder_level') }}</dt><dd class="col-sm-8">{{ $product->reorder_level ?? '—' }}</dd>
+                            <dt class="col-sm-4 text-muted">{{ __('products.cost_price') }}</dt><dd class="col-sm-8">@if($product->default_cost) GH₵ {{ number_format($product->default_cost, 2) }} @else <span class="text-muted">—</span> @endif</dd>
+                            <dt class="col-sm-4 text-muted">{{ __('common.description') }}</dt><dd class="col-sm-8">{{ $product->description ?? '—' }}</dd>
                         </dl>
                     </div>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="card h-100">
-                    <div class="card-header fw-semibold py-2 small">Billing Settings</div>
+                    <div class="card-header fw-semibold py-2 small">{{ __('products.billing_settings') }}</div>
                     <div class="card-body">
                         <dl class="row mb-0 small">
-                            <dt class="col-sm-5 text-muted">Billable</dt>
+                            <dt class="col-sm-5 text-muted">{{ __('products.billable') }}</dt>
                             <dd class="col-sm-7">
                                 @if($product->is_billable)
                                     <span class="badge bg-success-subtle text-success">Yes — can appear on invoices</span>
@@ -66,12 +66,12 @@
                                     <span class="badge bg-secondary-subtle text-secondary">No — stock use only</span>
                                 @endif
                             </dd>
-                            <dt class="col-sm-5 text-muted">Base Price (Cash)</dt>
+                            <dt class="col-sm-5 text-muted">{{ __('products.base_price_cash') }}</dt>
                             <dd class="col-sm-7">
                                 @if($product->base_price !== null)
                                     <strong>GH₵ {{ number_format($product->base_price, 2) }}</strong>
                                 @else
-                                    <span class="text-muted">Not set</span>
+                                    <span class="text-muted">{{ __('products.not_set') }}</span>
                                 @endif
                             </dd>
                         </dl>
@@ -81,7 +81,7 @@
                             @csrf @method('PATCH')
                             <div class="row g-2 align-items-end">
                                 <div class="col-7">
-                                    <label class="form-label small mb-1">Base Price (GH₵)</label>
+                                    <label class="form-label small mb-1">{{ __('products.base_price_ghs') }}</label>
                                     <input type="number" step="0.01" min="0" name="base_price" class="form-control form-control-sm"
                                            value="{{ old('base_price', $product->base_price) }}" placeholder="0.00">
                                 </div>
@@ -89,11 +89,11 @@
                                     <div class="form-check mt-3">
                                         <input type="checkbox" class="form-check-input" name="is_billable" value="1" id="is_billable"
                                                @checked(old('is_billable', $product->is_billable))>
-                                        <label class="form-check-label small" for="is_billable">Is Billable</label>
+                                        <label class="form-check-label small" for="is_billable">{{ __('products.is_billable') }}</label>
                                     </div>
                                 </div>
                                 <div class="col-12">
-                                    <button type="submit" class="btn btn-primary btn-sm">Update Billing Settings</button>
+                                    <button type="submit" class="btn btn-primary btn-sm">{{ __('products.update_billing_settings') }}</button>
                                 </div>
                             </div>
                         </form>
@@ -103,12 +103,12 @@
             </div>
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header fw-semibold py-2 small">Linked Departments</div>
+                    <div class="card-header fw-semibold py-2 small">{{ __('products.linked_departments') }}</div>
                     <div class="card-body py-2">
                         @forelse($product->departments as $dept)
                             <span class="badge bg-info-subtle text-info me-1 mb-1">{{ $dept->name }}</span>
                         @empty
-                            <span class="text-muted small">No departments linked.</span>
+                            <span class="text-muted small">{{ __('products.no_departments_linked') }}</span>
                         @endforelse
                     </div>
                 </div>
@@ -123,7 +123,7 @@
                 <div class="table-responsive">
                     <table class="table table-hover mb-0 align-middle small">
                         <thead class="table-light">
-                            <tr><th>Location</th><th class="text-end">Balance</th><th>Unit</th></tr>
+                            <tr><th>{{ __('products.location') }}</th><th class="text-end">{{ __('products.balance') }}</th><th>{{ __('products.unit') }}</th></tr>
                         </thead>
                         <tbody>
                         @forelse($product->stockBalances as $bal)
@@ -135,7 +135,7 @@
                                 <td>{{ $product->unit ?? '' }}</td>
                             </tr>
                         @empty
-                            <tr><td colspan="3"><x-empty-state message="No stock records found." /></td></tr>
+                            <tr><td colspan="3"><x-empty-state :message="__('products.no_stock_records')" /></td></tr>
                         @endforelse
                         </tbody>
                     </table>
@@ -159,12 +159,11 @@
             {{-- Default prices per type --}}
             <div class="card mb-3">
                 <div class="card-header py-2">
-                    <span class="fw-semibold"><i class="ti ti-shield-check me-1"></i>Default Prices by Insurance Type</span>
+                    <span class="fw-semibold"><i class="ti ti-shield-check me-1"></i>{{ __('products.default_prices_by_insurance_type') }}</span>
                 </div>
                 <div class="card-body">
                     <p class="text-muted small mb-3">
-                        Applied to all patients with that insurance type (overrides base price).
-                        Leave blank to fall back to base price (&#8373;{{ number_format($basePrice, 2) }}).
+                        {{ __('products.default_prices_help', ['price' => '₵'.number_format($basePrice, 2)]) }}
                     </p>
                     <div class="row g-3">
                         @foreach($insuranceTypes as $type)
@@ -190,31 +189,31 @@
             {{-- Provider-specific overrides --}}
             <div class="card mb-3">
                 <div class="card-header py-2 d-flex justify-content-between align-items-center">
-                    <span class="fw-semibold"><i class="ti ti-building-hospital me-1"></i>Provider-Specific Overrides</span>
+                    <span class="fw-semibold"><i class="ti ti-building-hospital me-1"></i>{{ __('products.provider_overrides') }}</span>
                     <button type="button" class="btn btn-sm btn-outline-secondary add-provider-row"
                             data-target="providerPrices-{{ $product->id }}"
-                            data-types='@json(collect($insuranceTypes)->map(fn($t)=>["value"=>$t->value,"label"=>$t->label()]))'
+                            data-types='@json(collect($insuranceTypes)->map(fn($t)=>["value"=>$t->value,"label"=>$t->translatedLabel()]))'
                             data-providers='@json($insuranceProviders->map(fn($p)=>["id"=>$p->id,"name"=>$p->name,"type"=>$p->type]))'>
-                        <i class="ti ti-plus me-1"></i>Add Provider Override
+                        <i class="ti ti-plus me-1"></i>{{ __('products.add_provider_override') }}
                     </button>
                 </div>
                 <div class="card-body">
                     <p class="text-muted small mb-3">
-                        Negotiated rates for specific insurance companies. These override the type default above.
+                        {{ __('products.provider_overrides_help') }}
                     </p>
                     <div id="providerPrices-{{ $product->id }}">
                         @foreach($providerPrices as $idx => $pp)
                             <div class="row g-2 align-items-end mb-2 provider-price-row">
                                 <div class="col-md-4">
-                                    <label class="form-label small">Type</label>
+                                    <label class="form-label small">{{ __('common.type') }}</label>
                                     <select name="provider_prices[{{ $idx }}][insurance_type]" class="form-select form-select-sm type-select" required>
                                         @foreach($insuranceTypes as $type)
-                                            <option value="{{ $type->value }}" {{ $pp->insurance_type === $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
+                                            <option value="{{ $type->value }}" {{ $pp->insurance_type === $type->value ? 'selected' : '' }}>{{ $type->translatedLabel() }}</option>
                                         @endforeach
                                     </select>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label small">Provider</label>
+                                    <label class="form-label small">{{ __('products.provider') }}</label>
                                     <select name="provider_prices[{{ $idx }}][insurance_provider_id]" class="form-select form-select-sm provider-select" required>
                                         @foreach($insuranceProviders as $prov)
                                             <option value="{{ $prov->id }}" data-type="{{ $prov->type }}" {{ $pp->insurance_provider_id == $prov->id ? 'selected' : '' }}>{{ $prov->name }}</option>
@@ -222,7 +221,7 @@
                                     </select>
                                 </div>
                                 <div class="col-md-3">
-                                    <label class="form-label small">Price (&#8373;)</label>
+                                    <label class="form-label small">{{ __('products.price_ghs') }}</label>
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text">&#8373;</span>
                                         <input type="number" name="provider_prices[{{ $idx }}][price]" class="form-control" value="{{ number_format($pp->price, 2, '.', '') }}" step="0.01" min="0" required>
@@ -243,7 +242,7 @@
 
             <div class="d-flex justify-content-end mb-3">
                 <button type="submit" class="btn btn-primary">
-                    <i class="ti ti-device-floppy me-1"></i>Save Insurance Prices
+                    <i class="ti ti-device-floppy me-1"></i>{{ __('products.save_insurance_prices') }}
                 </button>
             </div>
         </form>

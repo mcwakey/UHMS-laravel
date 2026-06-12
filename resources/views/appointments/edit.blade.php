@@ -1,15 +1,15 @@
 @extends('layouts.app')
-@section('title', 'Edit Appointment — ' . $appointment->appointment_number)
+@section('title', __('appointments.edit_title') . ' - ' . $appointment->appointment_number)
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Edit Appointment <span class="text-muted fw-normal fs-5">{{ $appointment->appointment_number }}</span></h4>
+        <h4 class="fw-bold mb-0">{{ __('appointments.edit_title') }} <span class="text-muted fw-normal fs-5">{{ $appointment->appointment_number }}</span></h4>
     </div>
     <div class="d-flex gap-2">
         <a href="{{ route('admin.appointments.show', $appointment) }}" class="btn btn-outline-secondary btn-md">
-            <i class="ti ti-arrow-left me-1"></i>Back to Appointment
+            <i class="ti ti-arrow-left me-1"></i>{{ __('appointments.back_to_appointment') }}
         </a>
     </div>
 </div>
@@ -39,7 +39,7 @@
             <!-- Patient (read-only) -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-user me-1"></i>Patient</h5>
+                    <h5 class="fw-bold mb-0"><i class="ti ti-user me-1"></i>{{ __('common.patient') }}</h5>
                 </div>
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3">
@@ -56,7 +56,7 @@
                                 @endif
                             </small>
                         </div>
-                        <span class="ms-auto badge bg-{{ $appointment->status->color() }} fs-7">{{ $appointment->status->label() }}</span>
+                        <span class="ms-auto badge bg-{{ $appointment->status->color() }} fs-7">{{ $appointment->status->translatedLabel() }}</span>
                     </div>
                     <input type="hidden" name="patient_id" value="{{ $appointment->patient_id }}">
                 </div>
@@ -65,30 +65,30 @@
             <!-- Insurance Selection -->
             <div class="card" id="insuranceCard">
                 <div class="card-header d-flex align-items-center justify-content-between">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Insurance</h5>
+                    <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>{{ __('appointments.insurance') }}</h5>
                     <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">Default expired — using Cash &amp; Carry</span>
                 </div>
                 <div class="card-body">
                     <div id="insuranceList" class="mb-3">
-                        <div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>Loading patient insurances...</div>
+                        <div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>{{ __('appointments.loading_patient_insurances') }}</div>
                     </div>
                     <div id="selectedInsuranceInfo" class="d-none">
                         <div class="alert alert-light border mb-0">
                             <div class="row">
                                 <div class="col-6">
-                                    <small class="text-muted d-block">Insurance Type</small>
+                                    <small class="text-muted d-block">{{ __('appointments.insurance_type') }}</small>
                                     <span class="fw-medium" id="insInfoType">—</span>
                                 </div>
                                 <div class="col-6">
-                                    <small class="text-muted d-block">Coverage</small>
+                                    <small class="text-muted d-block">{{ __('appointments.coverage') }}</small>
                                     <span class="fw-medium" id="insInfoCoverage">—</span>
                                 </div>
                                 <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Total Billed (YTD)</small>
+                                    <small class="text-muted d-block">{{ __('appointments.total_billed_ytd') }}</small>
                                     <span class="fw-medium" id="insInfoBilled">—</span>
                                 </div>
                                 <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Remaining Balance</small>
+                                    <small class="text-muted d-block">{{ __('appointments.remaining_balance') }}</small>
                                     <span class="fw-bold" id="insInfoRemaining">—</span>
                                 </div>
                             </div>
@@ -101,30 +101,30 @@
             <!-- Appointment Details -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>Appointment Details</h5>
+                    <h5 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>{{ __('appointments.appointment_details') }}</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Visit Type <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('appointments.visit_type') }} <span class="text-danger">*</span></label>
                             <select name="visit_type" class="form-select @error('visit_type') is-invalid @enderror" required>
                                 @foreach(\App\Enums\VisitType::cases() as $type)
-                                    <option value="{{ $type->value }}" {{ old('visit_type', $appointment->visit_type->value ?? '') == $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
+                                    <option value="{{ $type->value }}" {{ old('visit_type', $appointment->visit_type->value ?? '') == $type->value ? 'selected' : '' }}>{{ $type->translatedLabel() }}</option>
                                 @endforeach
                             </select>
                             @error('visit_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Priority <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('appointments.priority') }} <span class="text-danger">*</span></label>
                             <select name="priority" class="form-select @error('priority') is-invalid @enderror" required>
                                 @foreach(\App\Enums\Priority::cases() as $priority)
-                                    <option value="{{ $priority->value }}" {{ old('priority', $appointment->priority ?? 'normal') == $priority->value ? 'selected' : '' }}>{{ $priority->label() }}</option>
+                                    <option value="{{ $priority->value }}" {{ old('priority', $appointment->priority ?? 'normal') == $priority->value ? 'selected' : '' }}>{{ $priority->translatedLabel() }}</option>
                                 @endforeach
                             </select>
                             @error('priority')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Appointment Date <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('appointments.appointment_date') }} <span class="text-danger">*</span></label>
                             <input type="date" name="appointment_date" class="form-control @error('appointment_date') is-invalid @enderror"
                                    value="{{ old('appointment_date', $appointment->appointment_date->format('Y-m-d')) }}" required>
                             @error('appointment_date')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -133,22 +133,22 @@
 
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Start Time <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('appointments.start_time') }} <span class="text-danger">*</span></label>
                             <input type="time" name="start_time" class="form-control @error('start_time') is-invalid @enderror"
                                    value="{{ old('start_time', \Carbon\Carbon::parse($appointment->start_time)->format('H:i')) }}" required>
                             @error('start_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">End Time</label>
+                            <label class="form-label">{{ __('appointments.end_time') }}</label>
                             <input type="time" name="end_time" class="form-control @error('end_time') is-invalid @enderror"
                                    value="{{ old('end_time', $appointment->end_time ? \Carbon\Carbon::parse($appointment->end_time)->format('H:i') : '') }}">
                             @error('end_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Consultation Mode</label>
+                            <label class="form-label">{{ __('appointments.consultation_mode') }}</label>
                             <select name="consultation_mode" class="form-select @error('consultation_mode') is-invalid @enderror">
                                 @foreach(\App\Enums\ConsultationMode::cases() as $mode)
-                                    <option value="{{ $mode->value }}" {{ old('consultation_mode', $appointment->consultation_mode ?? 'in_person') == $mode->value ? 'selected' : '' }}>{{ $mode->label() }}</option>
+                                    <option value="{{ $mode->value }}" {{ old('consultation_mode', $appointment->consultation_mode ?? 'in_person') == $mode->value ? 'selected' : '' }}>{{ $mode->translatedLabel() }}</option>
                                 @endforeach
                             </select>
                             @error('consultation_mode')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -156,13 +156,13 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Chief Complaint</label>
+                        <label class="form-label">{{ __('appointments.chief_complaint') }}</label>
                         <textarea name="chief_complaint" class="form-control @error('chief_complaint') is-invalid @enderror" rows="3">{{ old('chief_complaint', $appointment->chief_complaint ?? $appointment->reason) }}</textarea>
                         @error('chief_complaint')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Notes</label>
+                        <label class="form-label">{{ __('appointments.notes') }}</label>
                         <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" rows="2">{{ old('notes', $appointment->notes) }}</textarea>
                         @error('notes')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
@@ -176,14 +176,14 @@
             <!-- Department, Services & Doctor -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-building-hospital me-1"></i>Department, Services &amp; Doctor</h5>
+                    <h5 class="fw-bold mb-0"><i class="ti ti-building-hospital me-1"></i>{{ __('appointments.department_services_doctor') }}</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Department <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('common.department') }} <span class="text-danger">*</span></label>
                             <select id="departmentSelect" name="department_id" class="form-select @error('department_id') is-invalid @enderror" required>
-                                <option value="">Select Department</option>
+                                <option value="">{{ __('appointments.select_department') }}</option>
                                 @foreach($departments as $dept)
                                     <option value="{{ $dept->id }}" {{ old('department_id', $appointment->department_id) == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
                                 @endforeach
@@ -191,9 +191,9 @@
                             @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Assign Doctor</label>
+                            <label class="form-label">{{ __('appointments.assign_doctor') }}</label>
                             <select name="doctor_id" id="doctorSelect" class="form-select @error('doctor_id') is-invalid @enderror">
-                                <option value="">Select Doctor (optional)</option>
+                                <option value="">{{ __('appointments.select_doctor_optional') }}</option>
                                 @foreach($doctors as $doctor)
                                     <option value="{{ $doctor->id }}" {{ old('doctor_id', $appointment->doctor_id) == $doctor->id ? 'selected' : '' }}>Dr. {{ $doctor->full_name }}</option>
                                 @endforeach
@@ -203,15 +203,15 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Available Services</label>
+                        <label class="form-label">{{ __('appointments.available_services') }}</label>
                         <div id="servicesList" class="border rounded p-3 bg-light">
                             <div class="text-muted text-center py-3" id="servicesPlaceholder">
-                                <i class="ti ti-list-search me-1"></i>Select a department or doctor to load services
+                                <i class="ti ti-list-search me-1"></i>{{ __('appointments.select_dept_or_doctor_load_services') }}
                             </div>
                             <div id="servicesContent" class="d-none">
                                 <div class="input-group mb-2">
                                     <span class="input-group-text"><i class="ti ti-search"></i></span>
-                                    <input type="text" id="serviceFilter" class="form-control" placeholder="Filter services...">
+                                    <input type="text" id="serviceFilter" class="form-control" placeholder="{{ __('appointments.filter_services') }}">
                                 </div>
                                 <div id="servicesItems" style="max-height: 280px; overflow-y: auto;"></div>
                             </div>
@@ -219,22 +219,22 @@
                     </div>
 
                     <div id="selectedServicesCard" class="{{ $appointment->services->isNotEmpty() ? '' : 'd-none' }}">
-                        <label class="form-label fw-bold"><i class="ti ti-receipt me-1"></i>Selected Services</label>
+                        <label class="form-label fw-bold"><i class="ti ti-receipt me-1"></i>{{ __('appointments.selected_services') }}</label>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered mb-0" id="billingTable">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Service</th>
-                                        <th class="text-center" style="width:70px;">Qty</th>
-                                        <th class="text-end" style="width:100px;">Unit Price</th>
-                                        <th class="text-end" style="width:100px;">Total</th>
+                                        <th>{{ __('appointments.service') }}</th>
+                                        <th class="text-center" style="width:70px;">{{ __('appointments.qty') }}</th>
+                                        <th class="text-end" style="width:100px;">{{ __('appointments.unit_price') }}</th>
+                                        <th class="text-end" style="width:100px;">{{ __('common.total') }}</th>
                                         <th style="width:36px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="billingBody"></tbody>
                                 <tfoot>
                                     <tr class="table-light fw-bold">
-                                        <td colspan="3" class="text-end">Est. Total:</td>
+                                        <td colspan="3" class="text-end">{{ __('appointments.estimated_total') }}</td>
                                         <td class="text-end" id="totalAmount">&#8373;0.00</td>
                                         <td></td>
                                     </tr>
@@ -247,9 +247,9 @@
 
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="ti ti-device-floppy me-1"></i>Update Appointment
+                    <i class="ti ti-device-floppy me-1"></i>{{ __('appointments.update_appointment') }}
                 </button>
-                <a href="{{ route('admin.appointments.show', $appointment) }}" class="btn btn-outline-secondary">Cancel</a>
+                <a href="{{ route('admin.appointments.show', $appointment) }}" class="btn btn-outline-secondary">{{ __('common.cancel') }}</a>
             </div>
         </div>
     </div>

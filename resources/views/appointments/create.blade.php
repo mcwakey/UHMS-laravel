@@ -1,15 +1,15 @@
 @extends('layouts.app')
-@section('title', 'Schedule Appointment')
+@section('title', __('appointments.schedule_title'))
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Schedule Appointment</h4>
+        <h4 class="fw-bold mb-0">{{ __('appointments.schedule_title') }}</h4>
     </div>
     <div>
         <a href="{{ route('admin.appointments.index') }}" class="btn btn-outline-secondary btn-md">
-            <i class="ti ti-arrow-left me-1"></i>Back to Appointments
+            <i class="ti ti-arrow-left me-1"></i>{{ __('appointments.back_to_appointments') }}
         </a>
     </div>
 </div>
@@ -38,13 +38,13 @@
             <!-- Patient Search -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-search me-1"></i>Select Patient</h5>
+                    <h5 class="fw-bold mb-0"><i class="ti ti-search me-1"></i>{{ __('appointments.select_patient') }}</h5>
                 </div>
                 <div class="card-body">
                     <div class="mb-3 position-relative">
-                        <label class="form-label">Search Patient <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('appointments.search_patient') }} <span class="text-danger">*</span></label>
                         <input type="text" id="patientSearch" class="form-control form-control-lg @error('patient_id') is-invalid @enderror"
-                               placeholder="Type patient name, ID, phone, or Ghana Card number..."
+                               placeholder="{{ __('appointments.search_patient_placeholder') }}"
                                value="{{ $selectedPatient ? $selectedPatient->patient_number . ' — ' . $selectedPatient->full_name : '' }}"
                                autocomplete="off">
                         <input type="hidden" name="patient_id" id="patientId" value="{{ $selectedPatient?->id ?? old('patient_id') }}">
@@ -64,7 +64,7 @@
                                     &bull; <span id="patientPhone">{{ $selectedPatient?->phone }}</span>
                                 </small>
                             </div>
-                            <button aria-label="Close" title="Close" type="button" class="btn btn-sm btn-outline-danger" onclick="clearPatient()">
+                            <button aria-label="{{ __('common.close') }}" title="{{ __('common.close') }}" type="button" class="btn btn-sm btn-outline-danger" onclick="clearPatient()">
                                 <i class="ti ti-x"></i>
                             </button>
                         </div>
@@ -75,30 +75,30 @@
             <!-- Insurance Selection -->
             <div class="card d-none" id="insuranceCard">
                 <div class="card-header d-flex align-items-center justify-content-between">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>Insurance</h5>
+                    <h5 class="fw-bold mb-0"><i class="ti ti-shield-check me-1"></i>{{ __('appointments.insurance') }}</h5>
                     <span class="badge bg-warning text-dark" id="insuranceFallbackBadge" style="display:none;">Default expired — using Cash &amp; Carry</span>
                 </div>
                 <div class="card-body">
                     <div id="insuranceList" class="mb-3">
-                        <div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>Loading patient insurances...</div>
+                        <div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>{{ __('appointments.loading_patient_insurances') }}</div>
                     </div>
                     <div id="selectedInsuranceInfo" class="d-none">
                         <div class="alert alert-light border mb-0">
                             <div class="row">
                                 <div class="col-6">
-                                    <small class="text-muted d-block">Insurance Type</small>
+                                    <small class="text-muted d-block">{{ __('appointments.insurance_type') }}</small>
                                     <span class="fw-medium" id="insInfoType">—</span>
                                 </div>
                                 <div class="col-6">
-                                    <small class="text-muted d-block">Coverage</small>
+                                    <small class="text-muted d-block">{{ __('appointments.coverage') }}</small>
                                     <span class="fw-medium" id="insInfoCoverage">—</span>
                                 </div>
                                 <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Total Billed (YTD)</small>
+                                    <small class="text-muted d-block">{{ __('appointments.total_billed_ytd') }}</small>
                                     <span class="fw-medium" id="insInfoBilled">—</span>
                                 </div>
                                 <div class="col-6 mt-2">
-                                    <small class="text-muted d-block">Remaining Balance</small>
+                                    <small class="text-muted d-block">{{ __('appointments.remaining_balance') }}</small>
                                     <span class="fw-bold" id="insInfoRemaining">—</span>
                                 </div>
                             </div>
@@ -111,31 +111,31 @@
             <!-- Appointment Details -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>Appointment Details</h5>
+                    <h5 class="fw-bold mb-0"><i class="ti ti-clipboard-text me-1"></i>{{ __('appointments.appointment_details') }}</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Visit Type <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('appointments.visit_type') }} <span class="text-danger">*</span></label>
                             <select name="visit_type" class="form-select @error('visit_type') is-invalid @enderror" required>
-                                <option value="">Select Type</option>
+                                <option value="">{{ __('appointments.select_type') }}</option>
                                 @foreach(\App\Enums\VisitType::cases() as $type)
-                                    <option value="{{ $type->value }}" {{ old('visit_type', 'outpatient') == $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
+                                    <option value="{{ $type->value }}" {{ old('visit_type', 'outpatient') == $type->value ? 'selected' : '' }}>{{ $type->translatedLabel() }}</option>
                                 @endforeach
                             </select>
                             @error('visit_type')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Priority <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('appointments.priority') }} <span class="text-danger">*</span></label>
                             <select name="priority" class="form-select @error('priority') is-invalid @enderror" required>
                                 @foreach(\App\Enums\Priority::cases() as $priority)
-                                    <option value="{{ $priority->value }}" {{ old('priority', 'normal') == $priority->value ? 'selected' : '' }}>{{ $priority->label() }}</option>
+                                    <option value="{{ $priority->value }}" {{ old('priority', 'normal') == $priority->value ? 'selected' : '' }}>{{ $priority->translatedLabel() }}</option>
                                 @endforeach
                             </select>
                             @error('priority')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Appointment Date <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('appointments.appointment_date') }} <span class="text-danger">*</span></label>
                             <input type="date" name="appointment_date" id="appointmentDate" class="form-control @error('appointment_date') is-invalid @enderror"
                                    value="{{ old('appointment_date', date('Y-m-d', strtotime('+1 day'))) }}"
                                    min="{{ date('Y-m-d') }}" required>
@@ -145,21 +145,21 @@
 
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Start Time <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('appointments.start_time') }} <span class="text-danger">*</span></label>
                             <input type="time" name="start_time" class="form-control @error('start_time') is-invalid @enderror" value="{{ old('start_time', '09:00') }}" required>
                             @error('start_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">End Time</label>
+                            <label class="form-label">{{ __('appointments.end_time') }}</label>
                             <input type="time" name="end_time" class="form-control @error('end_time') is-invalid @enderror" value="{{ old('end_time') }}">
-                            <small class="text-muted">Defaults to 30 minutes if empty</small>
+                            <small class="text-muted">{{ __('appointments.default_duration_hint') }}</small>
                             @error('end_time')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Consultation Mode</label>
+                            <label class="form-label">{{ __('appointments.consultation_mode') }}</label>
                             <select name="consultation_mode" class="form-select @error('consultation_mode') is-invalid @enderror">
                                 @foreach(\App\Enums\ConsultationMode::cases() as $mode)
-                                    <option value="{{ $mode->value }}" {{ old('consultation_mode', 'in_person') == $mode->value ? 'selected' : '' }}>{{ $mode->label() }}</option>
+                                    <option value="{{ $mode->value }}" {{ old('consultation_mode', 'in_person') == $mode->value ? 'selected' : '' }}>{{ $mode->translatedLabel() }}</option>
                                 @endforeach
                             </select>
                             @error('consultation_mode')<div class="invalid-feedback">{{ $message }}</div>@enderror
@@ -167,14 +167,14 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Chief Complaint</label>
-                        <textarea name="chief_complaint" class="form-control @error('chief_complaint') is-invalid @enderror" rows="3" placeholder="Primary reason for appointment...">{{ old('chief_complaint') }}</textarea>
+                        <label class="form-label">{{ __('appointments.chief_complaint') }}</label>
+                        <textarea name="chief_complaint" class="form-control @error('chief_complaint') is-invalid @enderror" rows="3" placeholder="{{ __('appointments.complaint_placeholder') }}">{{ old('chief_complaint') }}</textarea>
                         @error('chief_complaint')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Notes</label>
-                        <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" rows="2" placeholder="Additional notes...">{{ old('notes') }}</textarea>
+                        <label class="form-label">{{ __('appointments.notes') }}</label>
+                        <textarea name="notes" class="form-control @error('notes') is-invalid @enderror" rows="2" placeholder="{{ __('appointments.notes_placeholder') }}">{{ old('notes') }}</textarea>
                         @error('notes')<div class="invalid-feedback">{{ $message }}</div>@enderror
                     </div>
                 </div>
@@ -187,14 +187,14 @@
             <!-- Department, Services & Doctor -->
             <div class="card">
                 <div class="card-header">
-                    <h5 class="fw-bold mb-0"><i class="ti ti-building-hospital me-1"></i>Department, Services &amp; Doctor</h5>
+                    <h5 class="fw-bold mb-0"><i class="ti ti-building-hospital me-1"></i>{{ __('appointments.department_services_doctor') }}</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Department <span class="text-danger">*</span></label>
+                            <label class="form-label">{{ __('common.department') }} <span class="text-danger">*</span></label>
                             <select id="departmentSelect" name="department_id" class="form-select @error('department_id') is-invalid @enderror" required>
-                                <option value="">Select Department</option>
+                                <option value="">{{ __('appointments.select_department') }}</option>
                                 @foreach($departments as $dept)
                                     <option value="{{ $dept->id }}" {{ old('department_id') == $dept->id ? 'selected' : '' }}>{{ $dept->name }}</option>
                                 @endforeach
@@ -202,9 +202,9 @@
                             @error('department_id')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label class="form-label">Assign Doctor</label>
+                            <label class="form-label">{{ __('appointments.assign_doctor') }}</label>
                             <select name="doctor_id" id="doctorSelect" class="form-select @error('doctor_id') is-invalid @enderror">
-                                <option value="">Select Doctor (optional)</option>
+                                <option value="">{{ __('appointments.select_doctor_optional') }}</option>
                                 @foreach($doctors as $doctor)
                                     <option value="{{ $doctor->id }}" {{ old('doctor_id') == $doctor->id ? 'selected' : '' }}>Dr. {{ $doctor->full_name }}</option>
                                 @endforeach
@@ -214,15 +214,15 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Available Services</label>
+                        <label class="form-label">{{ __('appointments.available_services') }}</label>
                         <div id="servicesList" class="border rounded p-3 bg-light">
                             <div class="text-muted text-center py-3" id="servicesPlaceholder">
-                                <i class="ti ti-list-search me-1"></i>Select a department or doctor to load available services
+                                <i class="ti ti-list-search me-1"></i>{{ __('appointments.select_dept_or_doctor_services') }}
                             </div>
                             <div id="servicesContent" class="d-none">
                                 <div class="input-group mb-2">
                                     <span class="input-group-text"><i class="ti ti-search"></i></span>
-                                    <input type="text" id="serviceFilter" class="form-control" placeholder="Filter services...">
+                                    <input type="text" id="serviceFilter" class="form-control" placeholder="{{ __('appointments.filter_services') }}">
                                 </div>
                                 <div id="servicesItems" style="max-height: 280px; overflow-y: auto;"></div>
                             </div>
@@ -230,22 +230,22 @@
                     </div>
 
                     <div id="selectedServicesCard" class="d-none">
-                        <label class="form-label fw-bold"><i class="ti ti-receipt me-1"></i>Selected Services</label>
+                        <label class="form-label fw-bold"><i class="ti ti-receipt me-1"></i>{{ __('appointments.selected_services') }}</label>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered mb-0" id="billingTable">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Service</th>
-                                        <th class="text-center" style="width: 70px;">Qty</th>
-                                        <th class="text-end" style="width: 100px;">Unit Price</th>
-                                        <th class="text-end" style="width: 100px;">Total</th>
+                                        <th>{{ __('appointments.service') }}</th>
+                                        <th class="text-center" style="width: 70px;">{{ __('appointments.qty') }}</th>
+                                        <th class="text-end" style="width: 100px;">{{ __('appointments.unit_price') }}</th>
+                                        <th class="text-end" style="width: 100px;">{{ __('common.total') }}</th>
                                         <th style="width: 36px;"></th>
                                     </tr>
                                 </thead>
                                 <tbody id="billingBody"></tbody>
                                 <tfoot>
                                     <tr class="table-light fw-bold">
-                                        <td colspan="3" class="text-end">Est. Total:</td>
+                                        <td colspan="3" class="text-end">{{ __('appointments.estimated_total') }}</td>
                                         <td class="text-end" id="totalAmount">&#8373;0.00</td>
                                         <td></td>
                                     </tr>
@@ -258,19 +258,19 @@
 
             <div class="card bg-light">
                 <div class="card-body">
-                    <h6 class="fw-bold mb-3"><i class="ti ti-calendar-event me-1 text-primary"></i>What Happens Next</h6>
+                    <h6 class="fw-bold mb-3"><i class="ti ti-calendar-event me-1 text-primary"></i>{{ __('appointments.what_happens_next') }}</h6>
                     <ul class="list-unstyled mb-0 small">
-                        <li class="mb-2"><i class="ti ti-check text-primary me-1"></i>Appointment is <strong>Scheduled</strong></li>
-                        <li class="mb-2"><i class="ti ti-check text-primary me-1"></i>Patient can be notified</li>
-                        <li class="mb-2"><i class="ti ti-check text-primary me-1"></i>On appointment day, staff checks patient in</li>
-                        <li><i class="ti ti-check text-success me-1"></i>Check-in creates a new visit with pre-selected services</li>
+                        <li class="mb-2"><i class="ti ti-check text-primary me-1"></i>{{ __('appointments.appointment_is_scheduled') }}</li>
+                        <li class="mb-2"><i class="ti ti-check text-primary me-1"></i>{{ __('appointments.patient_can_be_notified') }}</li>
+                        <li class="mb-2"><i class="ti ti-check text-primary me-1"></i>{{ __('appointments.staff_checks_in') }}</li>
+                        <li><i class="ti ti-check text-success me-1"></i>{{ __('appointments.checkin_creates_visit') }}</li>
                     </ul>
                 </div>
             </div>
 
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary btn-lg">
-                    <i class="ti ti-calendar-plus me-1"></i>Schedule Appointment
+                    <i class="ti ti-calendar-plus me-1"></i>{{ __('appointments.schedule_appointment') }}
                 </button>
             </div>
         </div>
@@ -295,6 +295,27 @@ document.addEventListener('DOMContentLoaded', function() {
     let availableServices = [];
     let selectedServices = [];
     let allDoctors = @json($doctors->map(fn($d) => ['id' => $d->id, 'name' => 'Dr. ' . $d->full_name]));
+    const i18n = @json([
+        'noPatientsFound' => __('appointments.no_patients_found'),
+        'noPhone' => __('appointments.no_phone'),
+        'loading' => __('appointments.loading'),
+        'noInsurancesCash' => __('appointments.no_insurances_cash'),
+        'member' => __('appointments.member_label'),
+        'expires' => __('appointments.expires_label'),
+        'noExpiry' => __('appointments.no_expiry'),
+        'valid' => __('appointments.valid_status'),
+        'expired' => __('appointments.expired_status'),
+        'inactive' => __('appointments.inactive_status'),
+        'coverage' => __('appointments.coverage'),
+        'unlimited' => __('appointments.unlimited'),
+        'failedLoadInsurances' => __('appointments.failed_load_insurances'),
+        'noServicesFound' => __('appointments.no_services_found'),
+        'selectServices' => __('appointments.select_dept_or_doctor_services'),
+        'loadingServices' => __('appointments.loading_services'),
+        'add' => __('common.add'),
+        'delete' => __('common.delete'),
+        'selectDoctorOptional' => __('appointments.select_doctor_optional'),
+    ]);
 
     searchInput.addEventListener('input', function() {
         clearTimeout(debounceTimer);
@@ -306,13 +327,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     resultsDiv.innerHTML = '';
                     if (data.length === 0) {
-                        resultsDiv.innerHTML = '<div class="list-group-item text-muted">No patients found</div>';
+                        resultsDiv.innerHTML = '<div class="list-group-item text-muted">' + escapeHtml(i18n.noPatientsFound) + '</div>';
                     } else {
                         data.forEach(function(patient) {
                             const item = document.createElement('a');
                             item.href = '#';
                             item.className = 'list-group-item list-group-item-action';
-                            item.innerHTML = '<div class="fw-medium">' + escapeHtml(patient.full_name) + '</div><small class="text-muted">' + escapeHtml(patient.patient_number) + ' &bull; ' + escapeHtml(patient.phone || 'No phone') + '</small>';
+                            item.innerHTML = '<div class="fw-medium">' + escapeHtml(patient.full_name) + '</div><small class="text-muted">' + escapeHtml(patient.patient_number) + ' &bull; ' + escapeHtml(patient.phone || i18n.noPhone) + '</small>';
                             item.addEventListener('click', function(e) { e.preventDefault(); selectPatient(patient); });
                             resultsDiv.appendChild(item);
                         });
@@ -330,7 +351,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('patientInitial').textContent = patient.full_name.charAt(0).toUpperCase();
         document.getElementById('patientName').textContent = patient.full_name;
         document.getElementById('patientNumber').textContent = patient.patient_number;
-        document.getElementById('patientPhone').textContent = patient.phone || 'No phone';
+        document.getElementById('patientPhone').textContent = patient.phone || i18n.noPhone;
         patientInfo.classList.remove('d-none');
         resultsDiv.classList.add('d-none');
         loadPatientInsurances(patient.id);
@@ -349,7 +370,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function loadPatientInsurances(patientId) {
         insuranceCard.classList.remove('d-none');
-        document.getElementById('insuranceList').innerHTML = '<div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>Loading...</div>';
+        document.getElementById('insuranceList').innerHTML = '<div class="text-muted text-center py-3"><i class="ti ti-loader me-1"></i>' + escapeHtml(i18n.loading) + '</div>';
         fetch('{{ route("admin.visits.patient-insurances") }}?patient_id=' + patientId, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
         .then(r => r.json())
         .then(data => {
@@ -358,7 +379,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('insuranceFallbackBadge').style.display = data.is_fallback ? '' : 'none';
             let html = '';
             if (patientInsurances.length === 0) {
-                html = '<div class="text-muted text-center py-2">No insurances found. Defaulting to Cash &amp; Carry.</div>';
+                html = '<div class="text-muted text-center py-2">' + escapeHtml(i18n.noInsurancesCash) + '</div>';
             } else {
                 html = '<div class="list-group">';
                 patientInsurances.forEach(function(ins) {
@@ -367,8 +388,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += '<label class="list-group-item list-group-item-action d-flex align-items-center gap-3 ' + (isDisabled ? 'opacity-50' : '') + '">';
                     html += '<input type="radio" name="_insurance_radio" class="form-check-input insurance-radio" value="' + ins.id + '" data-ins-id="' + ins.id + '"' + (isDefault ? ' checked' : '') + (isDisabled ? ' disabled' : '') + '>';
                     html += '<div class="flex-grow-1"><div class="fw-medium">' + escapeHtml(ins.provider_name) + ' <span class="badge bg-' + ins.type_color + ' ms-1">' + escapeHtml(ins.type_label) + '</span></div>';
-                    html += '<small class="text-muted">' + (ins.membership_number ? 'Member: ' + escapeHtml(ins.membership_number) + ' &bull; ' : '') + (ins.expiry_date ? 'Expires: ' + ins.expiry_date : 'No expiry') + '</small></div>';
-                    html += '<div class="text-end"><span class="badge ' + badgeClass + '">' + (ins.is_valid ? 'Valid' : (ins.is_expired ? 'Expired' : 'Inactive')) + '</span>' + (ins.coverage_percentage != null ? '<div class="small text-muted mt-1">' + ins.coverage_percentage + '% coverage</div>' : '') + '</div></label>';
+                    html += '<small class="text-muted">' + (ins.membership_number ? escapeHtml(i18n.member) + ' ' + escapeHtml(ins.membership_number) + ' &bull; ' : '') + (ins.expiry_date ? escapeHtml(i18n.expires) + ' ' + ins.expiry_date : escapeHtml(i18n.noExpiry)) + '</small></div>';
+                    html += '<div class="text-end"><span class="badge ' + badgeClass + '">' + (ins.is_valid ? escapeHtml(i18n.valid) : (ins.is_expired ? escapeHtml(i18n.expired) : escapeHtml(i18n.inactive))) + '</span>' + (ins.coverage_percentage != null ? '<div class="small text-muted mt-1">' + ins.coverage_percentage + '% ' + escapeHtml(i18n.coverage) + '</div>' : '') + '</div></label>';
                 });
                 html += '</div>';
             }
@@ -376,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.insurance-radio').forEach(function(radio) { radio.addEventListener('change', function() { selectInsurance(parseInt(this.dataset.insId)); }); });
             if (defaultId) selectInsurance(defaultId);
         })
-        .catch(function() { document.getElementById('insuranceList').innerHTML = '<div class="text-danger text-center py-2">Failed to load insurances.</div>'; });
+        .catch(function() { document.getElementById('insuranceList').innerHTML = '<div class="text-danger text-center py-2">' + escapeHtml(i18n.failedLoadInsurances) + '</div>'; });
     }
 
     function selectInsurance(insId) {
@@ -389,7 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('insInfoCoverage').textContent = (selectedInsurance.coverage_percentage || 0) + '%';
             const remaining = selectedInsurance.remaining_annual_limit;
             document.getElementById('insInfoBilled').textContent = remaining != null ? '\u20B5' + formatNumber((selectedInsurance.annual_limit || 0) - remaining) : '\u2014';
-            document.getElementById('insInfoRemaining').textContent = remaining != null ? '\u20B5' + formatNumber(remaining) : 'Unlimited';
+            document.getElementById('insInfoRemaining').textContent = remaining != null ? '\u20B5' + formatNumber(remaining) : i18n.unlimited;
         } else { infoPanel.classList.add('d-none'); }
         selectedServices.forEach(svc => { svc.price = resolveServicePrice(svc.originalService); });
         recalculateBilling(); renderBillingTable();
@@ -421,7 +442,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function renderServicesList() {
         if (availableServices.length === 0) {
-            document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-info-circle me-1 text-muted"></i>No services found';
+            document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-info-circle me-1 text-muted"></i>' + escapeHtml(i18n.noServicesFound);
             document.getElementById('servicesPlaceholder').classList.remove('d-none');
             document.getElementById('servicesContent').classList.add('d-none'); return;
         }
@@ -432,7 +453,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<div class="service-item d-flex align-items-center justify-content-between py-2 px-2 border-bottom bg-white rounded mb-1" data-name="' + escapeHtml(svc.name.toLowerCase()) + '">';
             html += '<div><span class="fw-medium">' + escapeHtml(svc.name) + '</span> <span class="badge bg-light text-dark ms-1">' + escapeHtml(svc.code) + '</span><div class="small text-muted">' + escapeHtml(svc.category) + '</div></div>';
             html += '<div class="d-flex align-items-center gap-2"><span class="fw-bold text-success svc-price-display" data-svc-id="' + svc.id + '">\u20B5' + formatNumber(resolveServicePrice(svc)) + '</span>';
-            html += '<button aria-label="Add" title="Add" type="button" class="btn btn-sm btn-outline-primary add-service-btn" data-id="' + svc.id + '" data-name="' + escapeHtml(svc.name) + '"><i class="ti ti-plus"></i></button></div></div>';
+            html += '<button aria-label="' + escapeHtml(i18n.add) + '" title="' + escapeHtml(i18n.add) + '" type="button" class="btn btn-sm btn-outline-primary add-service-btn" data-id="' + svc.id + '" data-name="' + escapeHtml(svc.name) + '"><i class="ti ti-plus"></i></button></div></div>';
         });
         document.getElementById('servicesItems').innerHTML = html;
         document.querySelectorAll('.add-service-btn').forEach(btn => btn.addEventListener('click', function() {
@@ -446,12 +467,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function showServicesPlaceholder() {
-        document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-list-search me-1"></i>Select a department or doctor to load available services';
+        document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-list-search me-1"></i>' + escapeHtml(i18n.selectServices);
         document.getElementById('servicesPlaceholder').classList.remove('d-none');
         document.getElementById('servicesContent').classList.add('d-none');
     }
     function showServicesLoading() {
-        document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-loader me-1"></i>Loading services...';
+        document.getElementById('servicesPlaceholder').innerHTML = '<i class="ti ti-loader me-1"></i>' + escapeHtml(i18n.loadingServices);
         document.getElementById('servicesPlaceholder').classList.remove('d-none');
         document.getElementById('servicesContent').classList.add('d-none');
     }
@@ -476,7 +497,7 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<tr><td>' + escapeHtml(svc.name) + '<input type="hidden" name="services[' + idx + '][service_catalog_id]" value="' + svc.service_catalog_id + '"><input type="hidden" name="services[' + idx + '][quantity]" value="' + svc.quantity + '"></td>';
             html += '<td class="text-center"><div class="input-group input-group-sm" style="width:70px;"><button type="button" class="btn btn-outline-secondary btn-xs qty-dec" data-index="' + idx + '">-</button><span class="form-control form-control-sm text-center px-1">' + svc.quantity + '</span><button type="button" class="btn btn-outline-secondary btn-xs qty-inc" data-index="' + idx + '">+</button></div></td>';
             html += '<td class="text-end text-muted">\u20B5' + formatNumber(svc.price) + '</td><td class="text-end fw-medium">\u20B5' + formatNumber(svc.price * svc.quantity) + '</td>';
-            html += '<td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="' + idx + '"><i class="ti ti-trash"></i></button></td></tr>';
+            html += '<td class="text-center"><button aria-label="' + escapeHtml(i18n.delete) + '" title="' + escapeHtml(i18n.delete) + '" type="button" class="btn btn-sm btn-outline-danger remove-service-btn" data-index="' + idx + '"><i class="ti ti-trash"></i></button></td></tr>';
         });
         tbody.innerHTML = html;
         tbody.querySelectorAll('.remove-service-btn').forEach(b => b.addEventListener('click', function() { removeServiceFromBilling(parseInt(this.dataset.index)); }));
@@ -498,7 +519,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function repopulateDoctorSelect(doctors) {
         const cur = doctorSelect.value;
-        doctorSelect.innerHTML = '<option value="">Select Doctor (optional)</option>';
+        doctorSelect.innerHTML = '<option value="">' + escapeHtml(i18n.selectDoctorOptional) + '</option>';
         doctors.forEach(doc => {
             const opt = document.createElement('option');
             opt.value = doc.id; opt.textContent = doc.name;

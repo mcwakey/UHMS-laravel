@@ -117,15 +117,15 @@ function initDateRangePicker() {
         autoUpdateInput: false,
         opens: 'left',
         ranges: {
-            Today: [moment(), moment()],
-            Yesterday: [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-            'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-            'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-            'This Month': [moment().startOf('month'), moment().endOf('month')],
-            'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
+            [t('visits.today')]: [moment(), moment()],
+            [t('visits.yesterday')]: [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+            [t('visits.last_7_days')]: [moment().subtract(6, 'days'), moment()],
+            [t('visits.last_30_days')]: [moment().subtract(29, 'days'), moment()],
+            [t('visits.this_month')]: [moment().startOf('month'), moment().endOf('month')],
+            [t('visits.last_month')]: [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
         },
         locale: {
-            cancelLabel: 'Clear',
+            cancelLabel: t('visits.clear'),
         },
     });
 

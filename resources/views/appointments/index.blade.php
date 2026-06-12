@@ -197,7 +197,7 @@
                             </td>
                             <td>
                                 <span class="badge bg-{{ $appointment->status->color() }} js-appointment-status-badge">
-                                    {{ $appointment->status->label() }}
+                                    {{ $appointment->status->translatedLabel() }}
                                 </span>
                             </td>
                             <td class="text-end">
