@@ -107,7 +107,7 @@
                     <option value="">{{ __('billing.all_statuses') }}</option>
                     @foreach(\App\Enums\InvoiceStatus::cases() as $status)
                     <option value="{{ $status->value }}" {{ request('status') === $status->value ? 'selected' : '' }}>
-                        {{ $status->label() }}
+                        {{ $status->translatedLabel() }}
                     </option>
                     @endforeach
                 </select>
@@ -118,7 +118,7 @@
                     <option value="">{{ __('billing.all_billing_types') }}</option>
                     @foreach(\App\Enums\BillingType::cases() as $type)
                     <option value="{{ $type->value }}" {{ request('billing_type') === $type->value ? 'selected' : '' }}>
-                        {{ $type->label() }}
+                        {{ $type->translatedLabel() }}
                     </option>
                     @endforeach
                 </select>
@@ -167,7 +167,7 @@
                             <small class="text-muted">{{ $invoice->patient?->patient_number ?? __('billing.external_referral') }}</small>
                         </td>
                         <td>
-                            <span class="badge bg-soft-{{ $invoice->billing_type->color() }}">{{ $invoice->billing_type->label() }}</span>
+                            <span class="badge bg-soft-{{ $invoice->billing_type->color() }}">{{ $invoice->billing_type->translatedLabel() }}</span>
                         </td>
                         <td class="text-end fw-medium">&#8373;{{ number_format($invoice->total_amount, 2) }}</td>
                         <td class="text-end text-success">&#8373;{{ number_format($invoice->amount_paid, 2) }}</td>

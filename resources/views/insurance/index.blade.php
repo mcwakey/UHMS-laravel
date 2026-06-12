@@ -31,7 +31,7 @@
                 <select name="type" class="form-select">
                     <option value="">All Types</option>
                     @foreach(\App\Enums\InsuranceType::cases() as $type)
-                        <option value="{{ $type->value }}" {{ request('type') == $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
+                        <option value="{{ $type->value }}" {{ request('type') == $type->value ? 'selected' : '' }}>{{ $type->translatedLabel() }}</option>
                     @endforeach
                 </select>
             </div>
@@ -87,7 +87,7 @@
                         <td>
                             @if($provider->verification_driver)
                                 <span class="badge bg-info" title="{{ $provider->verification_method ?? '' }}{{ $provider->verification_channel ? ' • '.$provider->verification_channel : '' }}">
-                                    <i class="ti ti-shield-check me-1"></i>{{ ucfirst($provider->verification_driver) }}
+                                    <i class="ti ti-shield-check me-1"></i>{{ __('statuses.default.' . $provider->verification_driver) }}
                                 </span>
                             @else
                                 <span class="badge bg-light text-dark">Not required</span>
@@ -171,7 +171,7 @@
                         <label class="form-label">Pricing Type <span class="text-danger">*</span></label>
                         <select name="type" class="form-select" required>
                             @foreach(\App\Enums\InsuranceType::cases() as $type)
-                                <option value="{{ $type->value }}" {{ $provider->type === $type ? 'selected' : '' }}>{{ $type->label() }}</option>
+                                <option value="{{ $type->value }}" {{ $provider->type === $type ? 'selected' : '' }}>{{ $type->translatedLabel() }}</option>
                             @endforeach
                         </select>
                         </div>
@@ -257,7 +257,7 @@
                         <label class="form-label">Pricing Type <span class="text-danger">*</span></label>
                         <select name="type" class="form-select" required>
                             @foreach(\App\Enums\InsuranceType::cases() as $type)
-                                <option value="{{ $type->value }}">{{ $type->label() }}</option>
+                                <option value="{{ $type->value }}">{{ $type->translatedLabel() }}</option>
                             @endforeach
                         </select>
                         </div>

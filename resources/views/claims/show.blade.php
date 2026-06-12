@@ -210,7 +210,7 @@
                     <span class="badge bg-primary bg-opacity-75">{{ $claimTier->name }}</span>
                     @if($claimMemberType)
                         <span class="badge {{ $claimMemberType->value === 'beneficiary' ? 'bg-warning text-dark' : 'bg-info' }} ms-1">
-                            {{ $claimMemberType->label() }}
+                            {{ $claimMemberType->translatedLabel() }}
                         </span>
                     @endif
                     @php
@@ -308,7 +308,7 @@
                             <tr>
                                 <td class="fw-medium">{{ $item->description ?: $item->service_name }}</td>
                                 <td>{{ $item->department?->name ?? '-' }}</td>
-                                <td><span class="badge bg-light text-dark">{{ $item->service_type->label() }}</span></td>
+                                <td><span class="badge bg-light text-dark">{{ $item->service_type->translatedLabel() }}</span></td>
                                 <td class="text-center">{{ $item->quantity }}</td>
                                 <td class="text-end">GH₵ {{ number_format($item->unit_price, 2) }}</td>
                                 <td class="text-end">GH₵ {{ number_format($item->total_price, 2) }}</td>
@@ -442,7 +442,7 @@
                         <label class="form-label">Service Type <span class="text-danger">*</span></label>
                         <select name="service_type" class="form-select">
                             @foreach(\App\Enums\ServiceType::cases() as $st)
-                                <option value="{{ $st->value }}">{{ $st->label() }}</option>
+                                <option value="{{ $st->value }}">{{ $st->translatedLabel() }}</option>
                             @endforeach
                         </select>
                     </div>

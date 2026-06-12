@@ -119,7 +119,7 @@
                                 </td>
                                 <td>
                                     <a href="{{ route('admin.visits.show', $entry->visit) }}" class="text-primary">{{ $entry->visit->visit_number }}</a>
-                                    <br><small class="text-muted">{{ $entry->visit->visit_type->label() }}</small>
+                                    <br><small class="text-muted">{{ $entry->visit->visit_type->translatedLabel() }}</small>
                                 </td>
                                 <td>
                                     <x-status-badge :status="$entry->priority" />

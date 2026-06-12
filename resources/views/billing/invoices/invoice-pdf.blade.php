@@ -50,7 +50,7 @@
             <td>
                 <div class="doc-title">{{ __('invoices.invoice_label') }}</div>
                 <div class="doc-num">{{ $invoice->invoice_number }}</div>
-                <div style="text-align:right; margin-top:4px;"><span class="badge {{ $badgeClass }}">{{ $invoice->status->label() }}</span></div>
+                <div style="text-align:right; margin-top:4px;"><span class="badge {{ $badgeClass }}">{{ $invoice->status->translatedLabel() }}</span></div>
             </td>
         </tr>
     </table>
@@ -61,7 +61,7 @@
                 <h5>{{ __('invoices.invoice_details') }}</h5>
                 <p><span class="label">{{ __('invoices.date_label') }}:</span> {{ $invoice->created_at->format('d M Y') }}</p>
                 <p><span class="label">{{ __('invoices.due_date_col') }}:</span> {{ $invoice->due_date?->format('d M Y') ?? '—' }}</p>
-                <p><span class="label">{{ __('invoices.billing_type_col') }}:</span> {{ $invoice->billing_type?->label() }}</p>
+                <p><span class="label">{{ __('invoices.billing_type_col') }}:</span> {{ $invoice->billing_type?->translatedLabel() }}</p>
                 @if($invoice->sponsor)
                 <p><span class="label">{{ __('invoices.sponsor_label') }}:</span> {{ $invoice->sponsor->name }}</p>
                 @endif
@@ -153,7 +153,7 @@
                 @foreach($invoice->creditNotes->where('status', 'issued') as $cn)
                 <tr>
                     <td>{{ $cn->credit_note_number }}</td>
-                    <td>{{ $cn->type?->label() }}</td>
+                    <td>{{ $cn->type?->translatedLabel() }}</td>
                     <td>{{ $cn->reason }}</td>
                     <td class="text-end">&#8373;{{ number_format($cn->amount, 2) }}</td>
                 </tr>

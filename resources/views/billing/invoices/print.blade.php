@@ -67,7 +67,7 @@
                         default => 'badge-pending',
                     };
                 @endphp
-                <span class="badge {{ $badgeClass }}">{{ $invoice->status->label() }}</span>
+                <span class="badge {{ $badgeClass }}">{{ $invoice->status->translatedLabel() }}</span>
             </div>
         </div>
 
@@ -77,7 +77,7 @@
                 <h5>{{ __('invoices.invoice_details') }}</h5>
                 <p><span class="label">{{ __('invoices.date_label') }}:</span> {{ $invoice->created_at->format('d M Y') }}</p>
                 <p><span class="label">{{ __('invoices.due_date_col') }}:</span> {{ $invoice->due_date?->format('d M Y') ?? '—' }}</p>
-                <p><span class="label">{{ __('invoices.billing_type_col') }}:</span> {{ $invoice->billing_type->label() }}</p>
+                <p><span class="label">{{ __('invoices.billing_type_col') }}:</span> {{ $invoice->billing_type->translatedLabel() }}</p>
             </div>
             <div class="info-col">
                 <h5>{{ $invoice->patient ? __('invoices.patient_label') : __('invoices.recipient') }}</h5>
@@ -95,7 +95,7 @@
                 <h5>{{ __('invoices.visit') }}</h5>
                 @if($invoice->visit)
                     <p>{{ $invoice->visit->visit_number }}</p>
-                    <p>{{ $invoice->visit->status->label() }}</p>
+                    <p>{{ $invoice->visit->status->translatedLabel() }}</p>
                     <p>{{ $invoice->visit->visit_date->format('d M Y') }}</p>
                 @else
                     <p>—</p>
@@ -135,7 +135,7 @@
                     $selectedPrice = $item->selected_price !== null ? (float) $item->selected_price : (float) ($item->unit_price ?? 0);
                     $lineTotal     = round($selectedPrice * (int) $item->quantity, 2);
                     $src           = $item->pricing_source ?? 'cash_and_carry';
-                    $label         = $sourceLabels[$src] ?? ucwords(str_replace('_',' ', (string) $src));
+                    $label         = $sourceLabels[$src] ?? __('statuses.default.' . (string) $src);
                     $payer         = $item->payer_type ?? 'cash';
                 @endphp
                 <tr>
@@ -148,7 +148,7 @@
                     </td>
                     {{-- <td style="font-size:11px;">
                         {{ $label }}<br>
-                        <span style="color:#666;">{{ ucfirst($payer) }}</span>
+                        <span style="color:#666;">{{ __('statuses.default.' . $payer) }}</span>
                     </td> --}}
                     {{-- <td class="text-center">{{ $item->quantity }}</td> --}}
                     <td class="text-end">&#8373;{{ number_format($selectedPrice, 2) }}</td>
@@ -231,7 +231,7 @@
                     <tr>
                         <td>{{ $payment->payment_number }}</td>
                         <td>{{ $payment->paid_at->format('d M Y H:i') }}</td>
-                        <td>{{ $payment->payment_method->label() }}</td>
+                        <td>{{ $payment->payment_method->translatedLabel() }}</td>
                         <td>{{ $payment->reference_number ?? '—' }}</td>
                         <td class="text-end" style="color:green; font-weight:bold;">&#8373;{{ number_format($payment->amount, 2) }}</td>
                     </tr>

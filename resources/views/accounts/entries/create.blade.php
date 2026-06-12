@@ -1,14 +1,14 @@
 @extends('layouts.app')
-@section('title', 'Record ' . ucfirst($type))
+@section('title', __('accounting.record_type', ['type' => __('statuses.default.' . $type)]))
 
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Record {{ ucfirst($type) }}</h4>
+        <h4 class="fw-bold mb-0">{{ __('accounting.record_type', ['type' => __('statuses.default.' . $type)]) }}</h4>
     </div>
     <div>
         <a href="{{ route($type === 'income' ? 'admin.accounts.income.index' : 'admin.accounts.expenses.index') }}" class="btn btn-outline-secondary">
-            <i class="ti ti-arrow-left me-1"></i>Back
+            <i class="ti ti-arrow-left me-1"></i>{{ __('common.back') }}
         </a>
     </div>
 </div>
@@ -28,7 +28,7 @@
     <div class="col-lg-8">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title mb-0">{{ ucfirst($type) }} Details</h5>
+                <h5 class="card-title mb-0">{{ __('accounting.type_details', ['type' => __('statuses.default.' . $type)]) }}</h5>
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ route('admin.accounts.entries.store') }}">
@@ -63,7 +63,7 @@
                             <select name="payment_method" class="form-select">
                                 <option value="">Select Method...</option>
                                 @foreach($paymentMethods as $pm)
-                                    <option value="{{ $pm->value }}" {{ old('payment_method') == $pm->value ? 'selected' : '' }}>{{ $pm->label() }}</option>
+                                    <option value="{{ $pm->value }}" {{ old('payment_method') == $pm->value ? 'selected' : '' }}>{{ $pm->translatedLabel() }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -84,7 +84,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary">
-                        <i class="ti ti-{{ $type === 'income' ? 'trending-up' : 'trending-down' }} me-1"></i>Record {{ ucfirst($type) }}
+                        <i class="ti ti-{{ $type === 'income' ? 'trending-up' : 'trending-down' }} me-1"></i>{{ __('accounting.record_type', ['type' => __('statuses.default.' . $type)]) }}
                     </button>
                 </form>
             </div>

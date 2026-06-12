@@ -180,7 +180,7 @@
                     @php $revTotal = collect($data['revenue_by_method'])->sum('total'); @endphp
                     @forelse($data['revenue_by_method'] as $row)
                     <tr>
-                        <td class="fw-medium">{{ $row->payment_method instanceof \App\Enums\PaymentMethod ? $row->payment_method->label() : (\App\Enums\PaymentMethod::tryFrom((string) $row->payment_method)?->label() ?? $row->payment_method) }}</td>
+                        <td class="fw-medium">{{ $row->payment_method instanceof \App\Enums\PaymentMethod ? $row->payment_method->translatedLabel() : (\App\Enums\PaymentMethod::tryFrom((string) $row->payment_method)?->translatedLabel() ?? $row->payment_method) }}</td>
                         <td class="text-center">{{ $row->count }}</td>
                         <td class="text-end">GH₵ {{ number_format($row->total, 2) }}</td>
                         <td class="text-end">{{ $revTotal > 0 ? number_format(($row->total / $revTotal) * 100, 1) : 0 }}%</td>

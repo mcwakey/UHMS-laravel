@@ -69,9 +69,9 @@
             <tr>
                 <td>{{ $row['invoice_number'] }}</td>
                 <td>{{ $row['patient_name'] }}<br><span class="muted">{{ $row['patient_number'] }}</span></td>
-                <td>{{ ucfirst($row['payer_type']) }}<br><span class="muted">{{ $row['payer_name'] }}</span></td>
+                <td>{{ __('statuses.default.' . $row['payer_type']) }}<br><span class="muted">{{ $row['payer_name'] }}</span></td>
                 <td>{{ $row['due_date'] ?? 'No due date' }}<br><span class="muted">From {{ $row['aging_start_date'] }}</span></td>
-                <td>{{ ucwords(str_replace('_', ' ', $row['status'])) }}</td>
+                <td>{{ __('statuses.default.' . $row['status']) }}</td>
                 <td class="text-center">{{ $row['days_overdue'] }}</td>
                 <td>{{ $aging['buckets'][$row['bucket']]['label'] ?? $row['bucket'] }}</td>
                 <td class="text-end">&#8373;{{ number_format($row['allocated_amount'], 2) }}</td>

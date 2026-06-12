@@ -26,7 +26,7 @@
         <select name="verification_driver" id="ver_driver_{{ $idSuffix }}" class="form-select verification-driver-select" data-suffix="{{ $idSuffix }}">
             <option value="">— Not required —</option>
             @foreach ($drivers as $d)
-                <option value="{{ $d }}" {{ old('verification_driver', $current) === $d ? 'selected' : '' }}>{{ ucfirst($d) }}</option>
+                <option value="{{ $d }}" {{ old('verification_driver', $current) === $d ? 'selected' : '' }}>{{ __('statuses.default.' . $d) }}</option>
             @endforeach
         </select>
         <div class="form-text">Manual asks the visit desk to enter a reference code; Code validates a captured code; API calls an endpoint.</div>

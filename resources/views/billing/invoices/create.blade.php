@@ -54,7 +54,7 @@
                     <select name="billing_type" class="form-select @error('billing_type') is-invalid @enderror" required>
                         @foreach($billingTypes as $type)
                         <option value="{{ $type->value }}" {{ old('billing_type', 'cash') === $type->value ? 'selected' : '' }}>
-                            {{ $type->label() }}
+                            {{ $type->translatedLabel() }}
                         </option>
                         @endforeach
                     </select>

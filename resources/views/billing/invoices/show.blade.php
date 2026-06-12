@@ -23,7 +23,7 @@
         'failed' => 'danger',
         'reversed' => 'warning',
     ];
-    $accountingStatusLabel = fn ($status) => ucfirst(str_replace('_', ' ', $status ?: 'pending'));
+    $accountingStatusLabel = fn ($status) => __('statuses.default.' . ($status ?: 'pending'));
     $accountingStatusColor = fn ($status) => $accountingStatusColors[$status ?: 'pending'] ?? 'secondary';
     $receivableStatusColors = [
         'pending' => 'warning',
@@ -124,7 +124,7 @@
                         <img src="{{ URL::asset('build/img/logo.svg') }}" alt="UHMS" style="height:40px;">
                     </div>
                     <div class="text-end">
-                        <span id="invoiceStatusBadge" class="badge bg-{{ $invoice->status->color() }} fs-13 px-3 py-2">{{ $invoice->status->label() }}</span>
+                        <span id="invoiceStatusBadge" class="badge bg-{{ $invoice->status->color() }} fs-13 px-3 py-2">{{ $invoice->status->translatedLabel() }}</span>
                     </div>
                 </div>
 
@@ -135,7 +135,7 @@
                         <p class="mb-1 text-muted">{{ __('invoices.invoice_number') }}: <span class="text-dark fw-medium">{{ $invoice->invoice_number }}</span></p>
                         <p class="mb-1 text-muted">{{ __('invoices.invoice_date') }}: <span class="text-dark">{{ $invoice->created_at->format('d M Y') }}</span></p>
                         <p class="mb-1 text-muted">{{ __('invoices.due_date') }}: <span class="text-dark">{{ $invoice->due_date?->format('d M Y') ?? '—' }}</span></p>
-                        <p class="mb-0 text-muted">{{ __('common.type') }}: <span class="badge bg-soft-{{ $invoice->billing_type->color() }}">{{ $invoice->billing_type->label() }}</span></p>
+                        <p class="mb-0 text-muted">{{ __('common.type') }}: <span class="badge bg-soft-{{ $invoice->billing_type->color() }}">{{ $invoice->billing_type->translatedLabel() }}</span></p>
                         @if($canViewAccountingPosting)
                             <div class="mt-2 small">
                                 <span class="text-muted">{{ __('invoices.accounting') }}:</span>
@@ -175,7 +175,7 @@
                         <h6 class="fw-bold mb-2">{{ __('invoices.visit') }}</h6>
                         @if($invoice->visit)
                             <p class="text-muted mb-1">{{ $invoice->visit->visit_number }}</p>
-                            <p id="invoiceVisitStatusLabel" class="text-muted mb-1">{{ $invoice->visit->status->label() }}</p>
+                        <p id="invoiceVisitStatusLabel" class="text-muted mb-1">{{ $invoice->visit->status->translatedLabel() }}</p>
                             <p class="text-muted mb-0">{{ $invoice->visit->visit_date->format('d M Y') }}</p>
                         @else
                             <p class="text-muted mb-0">—</p>
@@ -271,13 +271,13 @@
                                     ? (float) $item->selected_price
                                     : (float) ($item->unit_price ?? 0);
                                 $src       = $item->pricing_source ?? 'cash_and_carry';
-                                $meta      = $sourceLabels[$src] ?? [ucfirst(str_replace('_',' ',$src)), 'light text-dark'];
+                                $meta      = $sourceLabels[$src] ?? [__('statuses.default.' . $src), 'light text-dark'];
                                 $payer     = $item->payer_type ?? 'cash';
                                 $rawSourceKey  = $item->source_type ?: ($item->service_catalog_id ? 'service_catalog' : 'other');
                                 $sourceKey  = $sourceTypeGroups[$rawSourceKey] ?? $rawSourceKey;
                                 $departmentKey = $item->department_id ? 'department_'.$item->department_id : 'department_none';
                                 $groupKey  = $sourceKey.'|'.$departmentKey;
-                                $groupLabel = $sourceTypeLabels[$sourceKey] ?? ucfirst(str_replace('_',' ',$sourceKey));
+                                $groupLabel = $sourceTypeLabels[$sourceKey] ?? __('statuses.default.' . $sourceKey);
                                 $departmentLabel = $item->department?->name ?? 'Unassigned Department';
                                 $payStatus  = $item->payment_status ?: 'unpaid';
                                 $payColor   = $statusBadge[$payStatus] ?? 'secondary';
@@ -302,7 +302,7 @@
                                 <td>
                                     <span class="badge bg-{{ $meta[1] }}">{{ $meta[0] }}</span>
                                     <div class="small text-muted mt-1">
-                                        <i class="ti ti-{{ $payer === 'insurance' ? 'shield-check' : 'cash' }} me-1"></i>{{ ucfirst($payer) }}
+                                        <i class="ti ti-{{ $payer === 'insurance' ? 'shield-check' : 'cash' }} me-1"></i>{{ __('statuses.default.' . $payer) }}
                                     </div>
                                 </td>
                                 {{-- <td class="text-end fw-semibold">&#8373;{{ number_format($selectedPrice, 2) }}</td> --}}
@@ -460,7 +460,7 @@
                             @endphp
                             <tr>
                                 <td class="fw-medium">{{ $receivable->payerName() }}</td>
-                                <td><span class="badge bg-{{ $receivable->payerBadgeColor() }}">{{ ucfirst($receivable->payer_type) }}</span></td>
+                                <td><span class="badge bg-{{ $receivable->payerBadgeColor() }}">{{ __('statuses.default.' . $receivable->payer_type) }}</span></td>
                                 <td class="text-end">&#8373;{{ number_format($receivable->allocated_amount, 2) }}</td>
                                 <td class="text-end text-success">&#8373;{{ number_format($receivable->paid_amount, 2) }}</td>
                                 <td class="text-end">&#8373;{{ number_format($adjustments, 2) }}</td>
@@ -469,7 +469,7 @@
                                     <div>{{ $receivable->due_date?->format('d M Y') ?? '—' }}</div>
                                     <small class="text-muted">{{ $agingDays }} {{ $agingDays === 1 ? 'day' : 'days' }}</small>
                                 </td>
-                                <td><span class="badge bg-{{ $receivableStatusColor($receivable->status) }}">{{ ucfirst(str_replace('_', ' ', $receivable->status)) }}</span></td>
+                                <td><span class="badge bg-{{ $receivableStatusColor($receivable->status) }}">{{ __('statuses.default.' . $receivable->status) }}</span></td>
                                 @if($canViewAccountingPosting)
                                 <td>
                                     @if($receivable->journalEntry)
@@ -655,13 +655,13 @@
                                 <td>{{ $payment->paid_at->format('d M Y H:i') }}</td>
                                 <td>
                                     @if($payment->receivable)
-                                        <span class="badge bg-{{ $payment->receivable->payerBadgeColor() }}">{{ ucfirst($payment->receivable->payer_type) }}</span>
+                                        <span class="badge bg-{{ $payment->receivable->payerBadgeColor() }}">{{ __('statuses.default.' . $payment->receivable->payer_type) }}</span>
                                         <div class="small text-muted">{{ $payment->receivable->payerName() }}</div>
                                     @else
-                                        <span class="badge bg-light text-dark">{{ ucfirst($payment->payer_type ?: 'patient') }}</span>
+                                        <span class="badge bg-light text-dark">{{ __('statuses.default.' . ($payment->payer_type ?: 'patient')) }}</span>
                                     @endif
                                 </td>
-                                <td>{{ $payment->payment_method->label() }}</td>
+                                <td>{{ $payment->payment_method->translatedLabel() }}</td>
                                 <td>{{ $payment->reference_number ?? '—' }}</td>
                                 <td class="text-end fw-medium text-success">&#8373;{{ number_format($payment->amount, 2) }}</td>
                                 <td>{{ $payment->receivedBy->name ?? '—' }}</td>
@@ -718,7 +718,7 @@
                                     data-balance="{{ number_format((float) $receivable->balance, 2, '.', '') }}"
                                     data-payer-type="{{ $receivable->payer_type }}"
                                     {{ (int) $defaultPaymentReceivable?->id === (int) $receivable->id ? 'selected' : '' }}>
-                                {{ ucfirst($receivable->payer_type) }} - {{ $receivable->payerName() }} (&#8373;{{ number_format($receivable->balance, 2) }})
+                                {{ __('statuses.default.' . $receivable->payer_type) }} - {{ $receivable->payerName() }} (&#8373;{{ number_format($receivable->balance, 2) }})
                             </option>
                             @endforeach
                         </select>
@@ -740,7 +740,7 @@
                         <label class="form-label fw-medium">{{ __('payments.payment_method') }} <span class="text-danger">*</span></label>
                         <select name="payment_method" class="form-select @error('payment_method') is-invalid @enderror" required id="paymentMethodSelect">
                             @foreach(\App\Enums\PaymentMethod::cases() as $method)
-                            <option value="{{ $method->value }}">{{ $method->label() }}</option>
+                            <option value="{{ $method->value }}">{{ $method->translatedLabel() }}</option>
                             @endforeach
                         </select>
                         @error('payment_method')
@@ -894,7 +894,7 @@
                         <select name="from_receivable_id" class="form-select" required>
                             @foreach($openReceivables as $receivable)
                             <option value="{{ $receivable->id }}" data-balance="{{ number_format((float) $receivable->balance, 2, '.', '') }}">
-                                {{ ucfirst($receivable->payer_type) }} - {{ $receivable->payerName() }} ({{ __('invoices.balance_label') }} &#8373;{{ number_format($receivable->balance, 2) }})
+                                {{ __('statuses.default.' . $receivable->payer_type) }} - {{ $receivable->payerName() }} ({{ __('invoices.balance_label') }} &#8373;{{ number_format($receivable->balance, 2) }})
                             </option>
                             @endforeach
                         </select>

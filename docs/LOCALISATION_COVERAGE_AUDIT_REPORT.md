@@ -1,12 +1,12 @@
 # UHMS Localisation Coverage Audit Report
 
-Date: 2026-06-13 00:21:47 +02:00
+Date: 2026-06-13 00:50:07 +02:00
 
 ## Summary
 
-- Total files scanned: 1266
-- Total files with possible hardcoded strings: 516
-- Total hardcoded candidates found: 18825
+- Total files scanned: 1268
+- Total files with possible hardcoded strings: 518
+- Total hardcoded candidates found: 18751
 - Modules affected: 310
 
 ### Modules Affected
@@ -33,6 +33,7 @@ Date: 2026-06-13 00:21:47 +02:00
 - patients.blade.php: 145
 - theatre: 143
 - staffs.blade.php: 137
+- lang: 133
 - add-doctor.blade.php: 133
 - edit-doctor.blade.php: 133
 - index.blade.php: 133
@@ -40,7 +41,6 @@ Date: 2026-06-13 00:21:47 +02:00
 - layout-full-width.blade.php: 133
 - layout-hidden.blade.php: 133
 - layout-hover-view.blade.php: 133
-- layout-mini.blade.php: 133
 
 ### High Priority Files
 
@@ -1791,6 +1791,13 @@ Date: 2026-06-13 00:21:47 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/app.php :: visit_status_changed`
 
+### `lang/en/accounting.php`
+
+- Line 95 [medium]: `Description`
+  - Context: `'description' => 'Description',`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Suggested key: `lang/{en,fr}/lang.php :: description`
+
 ### `lang/en/admissions.php`
 
 - Line 4 [medium]: `Admissions`
@@ -2112,6 +2119,13 @@ Date: 2026-06-13 00:21:47 +02:00
   - Context: `'title' => 'Visits / OPD',`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/lang.php :: visits_opd`
+
+### `lang/fr/accounting.php`
+
+- Line 95 [medium]: `Description`
+  - Context: `'description' => 'Description',`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Suggested key: `lang/{en,fr}/lang.php :: description`
 
 ### `lang/fr/admissions.php`
 
@@ -3427,98 +3441,6 @@ Date: 2026-06-13 00:21:47 +02:00
 
 ### `resources/views/accounts/entries/index.blade.php`
 
-- Line 41 [high]: `Filtered Total`
-  - Context: `<small class="text-muted">Filtered Total</small>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: filtered_total`
-- Line 56 [high]: `This Month`
-  - Context: `<small class="text-muted">This Month</small>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: this_month`
-- Line 69 [high]: `Search`
-  - Context: `<label class="form-label small">Search</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: search`
-- Line 70 [high]: `Search entry #, description...`
-  - Context: `<input type="text" name="search" class="form-control" placeholder="Search entry #, description..." value="{{ request('search') }}">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: search_entry_description`
-- Line 73 [high]: `Category`
-  - Context: `<label class="form-label small">Category</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: category`
-- Line 75 [high]: `All Categories`
-  - Context: `<option value="">All Categories</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: all_categories`
-- Line 82 [high]: `Method`
-  - Context: `<label class="form-label small">Method</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: method`
-- Line 84 [high]: `All Methods`
-  - Context: `<option value="">All Methods</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: all_methods`
-- Line 91 [high]: `From`
-  - Context: `<label class="form-label small">From</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: from`
-- Line 95 [high]: `Search`
-  - Context: `<button aria-label="Search" title="Search" type="submit" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: search`
-- Line 95 [high]: `Search`
-  - Context: `<button aria-label="Search" title="Search" type="submit" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: search`
-- Line 99 [high]: `Close`
-  - Context: `<a aria-label="Close" title="Close" href="{{ route($type === 'income' ? 'admin.accounts.income.index' : 'admin.accounts.expenses.index') }}" class="btn btn-outline-secondary w-100"><i class="ti ti-x"></i></a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: close`
-- Line 99 [high]: `Close`
-  - Context: `<a aria-label="Close" title="Close" href="{{ route($type === 'income' ? 'admin.accounts.income.index' : 'admin.accounts.expenses.index') }}" class="btn btn-outline-secondary w-100"><i class="ti ti-x"></i></a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: close`
-- Line 113 [high]: `Entry #`
-  - Context: `<th>Entry #</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: entry`
-- Line 114 [high]: `Date`
-  - Context: `<th>Date</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: date`
-- Line 115 [high]: `Category`
-  - Context: `<th>Category</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: category`
-- Line 116 [high]: `Description`
-  - Context: `<th>Description</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: description`
-- Line 117 [high]: `Method`
-  - Context: `<th>Method</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: method`
-- Line 118 [high]: `Amount`
-  - Context: `<th class="text-end">Amount</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: amount`
-- Line 119 [high]: `Recorded By`
-  - Context: `<th>Recorded By</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: recorded_by`
-- Line 121 [high]: `Actions`
-  - Context: `<th class="text-end">Actions</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: actions`
-- Line 143 [high]: `Actions`
-  - Context: `<button aria-label="Actions" title="Actions" type="button" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: actions`
-- Line 143 [high]: `Actions`
-  - Context: `<button aria-label="Actions" title="Actions" type="button" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/accounts.php :: actions`
 - Line 162 [high]: `Delete this entry?`
   - Context: `confirm-title="Delete this entry?" confirm-text="This accounting entry will be permanently deleted." confirm-button="Yes, delete" />`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -11728,130 +11650,10 @@ Date: 2026-06-13 00:21:47 +02:00
 
 ### `resources/views/claims/create.blade.php`
 
-- Line 2 [high]: `Create Claim`
-  - Context: `@section('title', 'Create Claim')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: create_claim`
-- Line 7 [high]: `Create Insurance Claim`
-  - Context: `<h4 class="fw-bold mb-0">Create Insurance Claim</h4>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: create_insurance_claim`
-- Line 50 [high]: `Insurance Claim from Invoice`
-  - Context: `<h5 class="card-title mb-0">Insurance Claim from Invoice</h5>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: insurance_claim_from_invoice`
-- Line 61 [high]: `Select Provider...`
-  - Context: `<option value="">Select Provider...</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: select_provider`
-- Line 70 [high]: `Assigned Doctor`
-  - Context: `<label class="form-label">Assigned Doctor</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: assigned_doctor`
-- Line 72 [high]: `Select Doctor (Optional)...`
-  - Context: `<option value="">Select Doctor (Optional)...</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: select_doctor_optional`
-- Line 81 [high]: `Insurance-Covered Invoice Items`
-  - Context: `<h6 class="mb-2">Insurance-Covered Invoice Items</h6>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: insurance_covered_invoice_items`
-- Line 86 [high]: `Service`
-  - Context: `<th>Service</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: service`
-- Line 87 [high]: `Qty`
-  - Context: `<th>Qty</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: qty`
-- Line 88 [high]: `Total`
-  - Context: `<th class="text-end">Total</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: total`
-- Line 89 [high]: `Claim Amount`
-  - Context: `<th class="text-end">Claim Amount</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: claim_amount`
-- Line 108 [high]: `Claim Total:`
-  - Context: `<td colspan="3" class="text-end">Claim Total:</td>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: claim_total`
-- Line 126 [high]: `Claim Details`
-  - Context: `<h5 class="card-title mb-0">Claim Details</h5>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: claim_details`
-- Line 136 [high]: `Select Provider...`
-  - Context: `<option value="">Select Provider...</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: select_provider`
-- Line 147 [high]: `Select Patient...`
-  - Context: `<option value="">Select Patient...</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: select_patient`
-- Line 158 [high]: `Select Visit...`
-  - Context: `<option value="">Select Visit...</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: select_visit`
-- Line 167 [high]: `Assigned Doctor`
-  - Context: `<label class="form-label">Assigned Doctor</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: assigned_doctor`
-- Line 169 [high]: `Select Doctor (Optional)...`
-  - Context: `<option value="">Select Doctor (Optional)...</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: select_doctor_optional`
-- Line 183 [high]: `Period From`
-  - Context: `<label class="form-label">Period From</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: period_from`
-- Line 187 [high]: `Period To`
-  - Context: `<label class="form-label">Period To</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: period_to`
-- Line 198 [high]: `Service Name`
-  - Context: `<th>Service Name</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: service_name`
-- Line 199 [high]: `Service Type`
-  - Context: `<th style="width: 150px;">Service Type</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: service_type`
-- Line 200 [high]: `Qty`
-  - Context: `<th style="width: 80px;">Qty</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: qty`
-- Line 201 [high]: `Unit Price`
-  - Context: `<th style="width: 120px;">Unit Price</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: unit_price`
-- Line 202 [high]: `Total`
-  - Context: `<th style="width: 120px;">Total</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: total`
-- Line 219 [high]: `Delete`
-  - Context: `<td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: delete`
-- Line 219 [high]: `Delete`
-  - Context: `<td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: delete`
-- Line 224 [high]: `Grand Total:`
-  - Context: `<td colspan="4" class="text-end fw-bold">Grand Total:</td>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: grand_total`
 - Line 225 [high]: `GH₵ 0.00`
   - Context: `<td class="text-end fw-bold" id="grandTotal">GH₵ 0.00</td>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/claims.php :: gh_0_00`
-- Line 261 [high]: `Delete`
-  - Context: `<td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: delete`
-- Line 261 [high]: `Delete`
-  - Context: `<td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: delete`
 
 ### `resources/views/claims/eligible-visits.blade.php`
 
@@ -11906,102 +11708,10 @@ Date: 2026-06-13 00:21:47 +02:00
 
 ### `resources/views/claims/index.blade.php`
 
-- Line 2 [high]: `Insurance Claims`
-  - Context: `@section('title', 'Insurance Claims')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: insurance_claims`
-- Line 5 [high]: `Insurance Claims`
-  - Context: `<x-page-header title="Insurance Claims" icon="ti-file-dollar">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: insurance_claims`
-- Line 45 [high]: `Draft`
-  - Context: `<small class="text-muted">Draft</small>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: draft`
-- Line 60 [high]: `Pending Review`
-  - Context: `<small class="text-muted">Pending Review</small>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: pending_review`
-- Line 90 [high]: `Total Approved`
-  - Context: `<small class="text-muted">Total Approved</small>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: total_approved`
-- Line 103 [high]: `Search claim #, patient...`
-  - Context: `<input type="text" name="search" class="form-control" placeholder="Search claim #, patient..." value="{{ request('search') }}">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: search_claim_patient`
-- Line 107 [high]: `All Status`
-  - Context: `<option value="">All Status</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: all_status`
-- Line 115 [high]: `All Providers`
-  - Context: `<option value="">All Providers</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: all_providers`
-- Line 123 [high]: `All Claim Types`
-  - Context: `<option value="">All Claim Types</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: all_claim_types`
 - Line 130 [high]: `From`
   - Context: `<input type="date" name="date_from" class="form-control" placeholder="From" value="{{ request('date_from') }}">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/claims.php :: from`
-- Line 133 [high]: `Search`
-  - Context: `<button aria-label="Search" title="Search" type="submit" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: search`
-- Line 133 [high]: `Search`
-  - Context: `<button aria-label="Search" title="Search" type="submit" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: search`
-- Line 137 [high]: `Close`
-  - Context: `<a aria-label="Close" title="Close" href="{{ route('admin.claims.index') }}" class="btn btn-outline-secondary w-100"><i class="ti ti-x"></i></a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: close`
-- Line 137 [high]: `Close`
-  - Context: `<a aria-label="Close" title="Close" href="{{ route('admin.claims.index') }}" class="btn btn-outline-secondary w-100"><i class="ti ti-x"></i></a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: close`
-- Line 151 [high]: `Claim #`
-  - Context: `<th>Claim #</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: claim`
-- Line 152 [high]: `Patient`
-  - Context: `<th>Patient</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: patient`
-- Line 153 [high]: `Provider`
-  - Context: `<th>Provider</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: provider`
-- Line 154 [high]: `Claim Type`
-  - Context: `<th>Claim Type</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: claim_type`
-- Line 155 [high]: `Claim Date`
-  - Context: `<th>Claim Date</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: claim_date`
-- Line 156 [high]: `Total`
-  - Context: `<th class="text-end">Total</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: total`
-- Line 158 [high]: `Items`
-  - Context: `<th>Items</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: items`
-- Line 160 [high]: `Actions`
-  - Context: `<th class="text-end">Actions</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: actions`
-- Line 190 [high]: `Actions`
-  - Context: `<button aria-label="Actions" title="Actions" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: actions`
-- Line 190 [high]: `Actions`
-  - Context: `<button aria-label="Actions" title="Actions" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/claims.php :: actions`
 
 ### `resources/views/claims/partials/clinical-mirror.blade.php`
 

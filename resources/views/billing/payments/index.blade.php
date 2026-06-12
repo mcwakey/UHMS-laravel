@@ -79,7 +79,7 @@
                     <option value="">{{ __('payments.all_methods') }}</option>
                     @foreach($paymentMethods as $method)
                     <option value="{{ $method->value }}" {{ request('payment_method') === $method->value ? 'selected' : '' }}>
-                        {{ $method->label() }}
+                        {{ $method->translatedLabel() }}
                     </option>
                     @endforeach
                 </select>
@@ -139,7 +139,7 @@
                             </a>
                         </td>
                         <td>
-                            <span class="badge bg-soft-primary">{{ $payment->payment_method->label() }}</span>
+                            <span class="badge bg-soft-primary">{{ $payment->payment_method->translatedLabel() }}</span>
                         </td>
                         <td>{{ $payment->reference_number ?? '—' }}</td>
                         <td class="text-end fw-bold {{ $payment->is_reversal ? 'text-danger' : 'text-success' }}">&#8373;{{ number_format($payment->amount, 2) }}</td>

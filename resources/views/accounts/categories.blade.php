@@ -14,7 +14,7 @@
             <select name="type" class="form-select" style="width:130px;" onchange="this.form.submit()">
                 <option value="">All Types</option>
                 @foreach($types as $type)
-                    <option value="{{ $type->value }}" {{ request('type') == $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
+                    <option value="{{ $type->value }}" {{ request('type') == $type->value ? 'selected' : '' }}>{{ $type->translatedLabel() }}</option>
                 @endforeach
             </select>
             <input type="text" name="search" class="form-control" placeholder="Search..." value="{{ request('search') }}" style="width:160px;">
@@ -101,7 +101,7 @@
                                             <label class="form-label">Type <span class="text-danger">*</span></label>
                                             <select name="type" class="form-select" required>
                                                 @foreach($types as $type)
-                                                    <option value="{{ $type->value }}" {{ $cat->type === $type ? 'selected' : '' }}>{{ $type->label() }}</option>
+                                                    <option value="{{ $type->value }}" {{ $cat->type === $type ? 'selected' : '' }}>{{ $type->translatedLabel() }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -158,7 +158,7 @@
                         <select name="type" class="form-select" required>
                             <option value="">Select Type...</option>
                             @foreach($types as $type)
-                                <option value="{{ $type->value }}">{{ $type->label() }}</option>
+                                <option value="{{ $type->value }}">{{ $type->translatedLabel() }}</option>
                             @endforeach
                         </select>
                     </div>

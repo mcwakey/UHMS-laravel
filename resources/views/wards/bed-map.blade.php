@@ -69,7 +69,7 @@
                    title="Admit patient to {{ $bed->bed_number }}">
                     <i class="ti ti-bed fs-4 d-block mb-1 text-{{ $bed->status->color() }}"></i>
                     <div class="fw-medium fs-13">{{ $bed->bed_number }}</div>
-                    <small class="text-muted">{{ $bed->bed_type->label() }}</small>
+                    <small class="text-muted">{{ $bed->bed_type->translatedLabel() }}</small>
                     <div class="mt-1">
                         <small class="text-success fw-semibold"><i class="ti ti-plus-circle fs-11"></i> Admit</small>
                     </div>
@@ -78,7 +78,7 @@
                 <div class="border rounded p-2 text-center {{ $colorClass }}">
                     <i class="ti ti-bed fs-4 d-block mb-1 text-{{ $bed->status->color() }}"></i>
                     <div class="fw-medium fs-13">{{ $bed->bed_number }}</div>
-                    <small class="text-muted">{{ $bed->bed_type->label() }}</small>
+                    <small class="text-muted">{{ $bed->bed_type->translatedLabel() }}</small>
                     @if($bed->currentAdmission)
                         <div class="mt-1">
                             <a href="{{ route('admin.admissions.show', $bed->currentAdmission) }}" class="text-decoration-none fs-12">
@@ -92,7 +92,7 @@
                 <div class="border rounded p-2 text-center {{ $colorClass }}">
                     <i class="ti ti-bed fs-4 d-block mb-1 text-{{ $bed->status->color() }}"></i>
                     <div class="fw-medium fs-13">{{ $bed->bed_number }}</div>
-                    <small class="text-muted">{{ $bed->bed_type->label() }}</small>
+                    <small class="text-muted">{{ $bed->bed_type->translatedLabel() }}</small>
                     @if($bed->currentAdmission)
                         <div class="mt-1">
                             <a href="{{ route('admin.admissions.show', $bed->currentAdmission) }}" class="text-decoration-none fs-12">

@@ -1,20 +1,20 @@
 @extends('layouts.app')
-@section('title', ucfirst($type) . ' Entries')
+@section('title', __('accounting.entries_title', ['type' => __('statuses.default.' . $type)]))
 
 @section('content')
 <!-- Page Header -->
 <div class="uhms-page-header d-flex align-items-sm-center flex-sm-row flex-column gap-2">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">{{ ucfirst($type) }} Entries
+        <h4 class="fw-bold mb-0">{{ __('accounting.entries_title', ['type' => __('statuses.default.' . $type)]) }}
             <span class="badge badge-soft-{{ $type === 'income' ? 'success' : 'danger' }} border border-{{ $type === 'income' ? 'success' : 'danger' }} fs-13 fw-medium ms-2">
-                Total: {{ $entries->total() }}
+                {{ __('claims.total') }}: {{ $entries->total() }}
             </span>
         </h4>
     </div>
     <div>
         @can('accounts.entries.create')
         <a href="{{ route($type === 'income' ? 'admin.accounts.income.create' : 'admin.accounts.expenses.create') }}" class="btn btn-primary btn-md fs-13">
-            <i class="ti ti-plus me-1"></i>Record {{ ucfirst($type) }}
+            <i class="ti ti-plus me-1"></i>{{ __('accounting.record_type', ['type' => __('statuses.default.' . $type)]) }}
         </a>
         @endcan
     </div>
@@ -38,7 +38,7 @@
                     </div>
                     <div>
                         <h4 class="mb-0">GH₵ {{ number_format($totalAmount, 2) }}</h4>
-                        <small class="text-muted">Filtered Total</small>
+                        <small class="text-muted">{{ __('accounting.filtered_total') }}</small>
                     </div>
                 </div>
             </div>
@@ -53,7 +53,7 @@
                     </div>
                     <div>
                         <h4 class="mb-0">GH₵ {{ number_format($monthTotal, 2) }}</h4>
-                        <small class="text-muted">This Month</small>
+                        <small class="text-muted">{{ __('accounting.this_month') }}</small>
                     </div>
                 </div>
             </div>
@@ -66,37 +66,37 @@
     <div class="card-body py-2">
         <form method="GET" action="{{ route($type === 'income' ? 'admin.accounts.income.index' : 'admin.accounts.expenses.index') }}" class="row g-2 align-items-end">
             <div class="col-md-3">
-                <label class="form-label small">Search</label>
-                <input type="text" name="search" class="form-control" placeholder="Search entry #, description..." value="{{ request('search') }}">
+                <label class="form-label small">{{ __('accounting.search') }}</label>
+                <input type="text" name="search" class="form-control" placeholder="{{ __('accounting.search_entry_placeholder') }}" value="{{ request('search') }}">
             </div>
             <div class="col-md-2">
-                <label class="form-label small">Category</label>
+                <label class="form-label small">{{ __('accounting.category') }}</label>
                 <select name="category_id" class="form-select">
-                    <option value="">All Categories</option>
+                    <option value="">{{ __('accounting.all_categories') }}</option>
                     @foreach($categories as $cat)
                         <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label small">Method</label>
+                <label class="form-label small">{{ __('accounting.method') }}</label>
                 <select name="payment_method" class="form-select">
-                    <option value="">All Methods</option>
+                    <option value="">{{ __('accounting.all_methods') }}</option>
                     @foreach($paymentMethods as $pm)
-                        <option value="{{ $pm->value }}" {{ request('payment_method') == $pm->value ? 'selected' : '' }}>{{ $pm->label() }}</option>
+                        <option value="{{ $pm->value }}" {{ request('payment_method') == $pm->value ? 'selected' : '' }}>{{ $pm->translatedLabel() }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label small">From</label>
+                <label class="form-label small">{{ __('accounting.from') }}</label>
                 <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
             </div>
             <div class="col-md-1">
-                <button aria-label="Search" title="Search" type="submit" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button>
+                <button aria-label="{{ __('accounting.search') }}" title="{{ __('accounting.search') }}" type="submit" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button>
             </div>
             @if(request()->hasAny(['search', 'category_id', 'payment_method', 'date_from']))
             <div class="col-md-1">
-                <a aria-label="Close" title="Close" href="{{ route($type === 'income' ? 'admin.accounts.income.index' : 'admin.accounts.expenses.index') }}" class="btn btn-outline-secondary w-100"><i class="ti ti-x"></i></a>
+                <a aria-label="{{ __('accounting.clear') }}" title="{{ __('accounting.clear') }}" href="{{ route($type === 'income' ? 'admin.accounts.income.index' : 'admin.accounts.expenses.index') }}" class="btn btn-outline-secondary w-100"><i class="ti ti-x"></i></a>
             </div>
             @endif
         </form>
@@ -110,15 +110,15 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Entry #</th>
-                        <th>Date</th>
-                        <th>Category</th>
-                        <th>Description</th>
-                        <th>Method</th>
-                        <th class="text-end">Amount</th>
-                        <th>Recorded By</th>
-                        <th>Status</th>
-                        <th class="text-end">Actions</th>
+                        <th>{{ __('accounting.entry_number') }}</th>
+                        <th>{{ __('accounting.date') }}</th>
+                        <th>{{ __('accounting.category') }}</th>
+                        <th>{{ __('accounting.description') }}</th>
+                        <th>{{ __('accounting.method') }}</th>
+                        <th class="text-end">{{ __('accounting.amount') }}</th>
+                        <th>{{ __('accounting.recorded_by') }}</th>
+                        <th>{{ __('accounting.status') }}</th>
+                        <th class="text-end">{{ __('accounting.actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -128,19 +128,19 @@
                         <td>{{ $entry->entry_date->format('d M Y') }}</td>
                         <td><span class="badge bg-light text-dark">{{ $entry->category->name }}</span></td>
                         <td>{{ Str::limit($entry->description, 40) }}</td>
-                        <td>{{ $entry->payment_method?->label() ?? '-' }}</td>
+                        <td>{{ $entry->payment_method?->translatedLabel() ?? '-' }}</td>
                         <td class="text-end fw-medium">GH₵ {{ number_format($entry->amount, 2) }}</td>
                         <td>{{ $entry->recordedByUser->name ?? '-' }}</td>
                         <td>
                             @if($entry->is_approved)
-                                <span class="badge bg-success">Approved</span>
+                                <span class="badge bg-success">{{ __('accounting.approved') }}</span>
                             @else
-                                <span class="badge bg-warning">Pending</span>
+                                <span class="badge bg-warning">{{ __('accounting.pending') }}</span>
                             @endif
                         </td>
                         <td class="text-end">
                             <div class="dropdown">
-                                <button aria-label="Actions" title="Actions" type="button" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
+                                <button aria-label="{{ __('accounting.actions') }}" title="{{ __('accounting.actions') }}" type="button" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">
                                     <i class="ti ti-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
@@ -150,7 +150,7 @@
                                         <form method="POST" action="{{ route('admin.accounts.entries.approve', $entry) }}">
                                             @csrf
                                             <button type="submit" class="dropdown-item">
-                                                <i class="ti ti-check me-1"></i>Approve
+                                                <i class="ti ti-check me-1"></i>{{ __('accounting.approve') }}
                                             </button>
                                         </form>
                                     </li>

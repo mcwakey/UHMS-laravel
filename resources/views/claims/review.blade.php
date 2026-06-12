@@ -128,7 +128,7 @@
                 <div class="col-md-4">
                     <h6 class="mb-1">{{ $item->service_name }}</h6>
                     <small class="text-muted">
-                        {{ $item->service_type->label() }} |
+                        {{ $item->service_type->translatedLabel() }} |
                         Qty: {{ $item->quantity }} × GH₵ {{ number_format($item->unit_price, 2) }} =
                         <strong>GH₵ {{ number_format($item->total_price, 2) }}</strong>
                     </small>

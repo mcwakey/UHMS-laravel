@@ -32,8 +32,8 @@
 <body>
     @php
         $method = $payment->payment_method instanceof \App\Enums\PaymentMethod
-            ? $payment->payment_method->label()
-            : (\App\Enums\PaymentMethod::tryFrom((string) $payment->payment_method)?->label() ?? $payment->payment_method);
+            ? $payment->payment_method->translatedLabel()
+            : (\App\Enums\PaymentMethod::tryFrom((string) $payment->payment_method)?->translatedLabel() ?? $payment->payment_method);
     @endphp
     <table class="header">
         <tr>

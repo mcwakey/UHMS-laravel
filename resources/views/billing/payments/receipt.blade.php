@@ -85,7 +85,7 @@
             <div class="col">
                 <h5>{{ __('payments.payment_details') }}</h5>
                 <p><span class="label">{{ __('payments.date_label') }}:</span> {{ $payment->paid_at->format('d M Y, h:i A') }}</p>
-                <p><span class="label">{{ __('payments.method_label') }}:</span> {{ $payment->payment_method instanceof \App\Enums\PaymentMethod ? $payment->payment_method->label() : (\App\Enums\PaymentMethod::tryFrom((string) $payment->payment_method)?->label() ?? $payment->payment_method) }}</p>
+                <p><span class="label">{{ __('payments.method_label') }}:</span> {{ $payment->payment_method instanceof \App\Enums\PaymentMethod ? $payment->payment_method->translatedLabel() : (\App\Enums\PaymentMethod::tryFrom((string) $payment->payment_method)?->translatedLabel() ?? $payment->payment_method) }}</p>
                 @if($payment->reference_number)
                 <p><span class="label">{{ __('payments.reference_label') }}:</span> {{ $payment->reference_number }}</p>
                 @endif
@@ -154,7 +154,7 @@
                 @foreach($inv->items as $item)
                 @php
                     $src           = $item->pricing_source ?? 'cash_and_carry';
-                    $label         = $sourceLabels[$src] ?? ucwords(str_replace('_',' ', (string) $src));
+                    $label         = $sourceLabels[$src] ?? __('statuses.default.' . (string) $src);
                     $payer         = $item->payer_type ?? 'cash';
                     $selectedPrice = $item->selected_price !== null ? (float) $item->selected_price : (float) ($item->unit_price ?? 0);
                     $lineTotal     = round($selectedPrice * (int) $item->quantity, 2);
@@ -163,7 +163,7 @@
                     <td>{{ $item->description }}</td>
                     <td style="font-size:11px;">
                         {{ $label }}<br>
-                        <span style="color:#666;">{{ ucfirst($payer) }}</span>
+                        <span style="color:#666;">{{ __('statuses.default.' . $payer) }}</span>
                     </td>
                     <td class="text-center">{{ $item->quantity }}</td>
                     <td class="text-end">&#8373;{{ number_format($selectedPrice, 2) }}</td>

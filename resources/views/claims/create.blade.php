@@ -1,14 +1,14 @@
 @extends('layouts.app')
-@section('title', 'Create Claim')
+@section('title', __('claims.create_claim'))
 
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Create Insurance Claim</h4>
+        <h4 class="fw-bold mb-0">{{ __('claims.create_insurance_claim') }}</h4>
     </div>
     <div>
         <a href="{{ route('admin.claims.index') }}" class="btn btn-outline-secondary">
-            <i class="ti ti-arrow-left me-1"></i>Back
+            <i class="ti ti-arrow-left me-1"></i>{{ __('claims.back') }}
         </a>
     </div>
 </div>
@@ -41,13 +41,13 @@
 @if($claimableItems->isEmpty())
 <div class="alert alert-warning">
     <i class="ti ti-alert-circle me-1"></i>
-    This invoice does not have any insurance-covered lines with an approved amount. Update the invoice items before creating a claim.
+    {{ __('claims.invoice_no_claimable_items') }}
 </div>
 @endif
 
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title mb-0">Insurance Claim from Invoice</h5>
+        <h5 class="card-title mb-0">{{ __('claims.claim_from_invoice') }}</h5>
     </div>
     <div class="card-body">
         <form method="POST" action="{{ route('admin.claims.store-from-invoice') }}">
@@ -56,20 +56,20 @@
 
             <div class="row mb-3">
                 <div class="col-md-6">
-                    <label class="form-label">Insurance Provider <span class="text-danger">*</span></label>
+                    <label class="form-label">{{ __('claims.insurance_provider') }} <span class="text-danger">*</span></label>
                     <select name="insurance_provider_id" class="form-select select2" required>
-                        <option value="">Select Provider...</option>
+                        <option value="">{{ __('claims.select_provider') }}</option>
                         @foreach($providers as $provider)
                             <option value="{{ $provider->id }}" {{ (string) $defaultProviderId === (string) $provider->id ? 'selected' : '' }}>
-                                {{ $provider->name }} ({{ $provider->type->label() }})
+                                {{ $provider->name }} ({{ $provider->type->translatedLabel() }})
                             </option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Assigned Doctor</label>
+                    <label class="form-label">{{ __('claims.assigned_doctor') }}</label>
                     <select name="assigned_doctor_id" class="form-select select2">
-                        <option value="">Select Doctor (Optional)...</option>
+                        <option value="">{{ __('claims.select_doctor_optional') }}</option>
                         @foreach($doctors as $doctor)
                             <option value="{{ $doctor->id }}">{{ $doctor->name }}</option>
                         @endforeach
@@ -78,15 +78,15 @@
             </div>
 
             <!-- Invoice Items Preview -->
-            <h6 class="mb-2">Insurance-Covered Invoice Items</h6>
+            <h6 class="mb-2">{{ __('claims.insurance_covered_items') }}</h6>
             <div class="table-responsive mb-3">
                 <table class="table table-sm table-bordered">
                     <thead class="table-light">
                         <tr>
-                            <th>Service</th>
-                            <th>Qty</th>
-                            <th class="text-end">Total</th>
-                            <th class="text-end">Claim Amount</th>
+                            <th>{{ __('claims.service') }}</th>
+                            <th>{{ __('claims.qty') }}</th>
+                            <th class="text-end">{{ __('claims.total') }}</th>
+                            <th class="text-end">{{ __('claims.claim_amount') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -99,13 +99,13 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="4"><x-empty-state message="No insurance-covered items found." /></td>
+                            <td colspan="4"><x-empty-state :message="__('claims.no_insurance_items')" /></td>
                         </tr>
                         @endforelse
                     </tbody>
                     <tfoot>
                         <tr class="fw-bold">
-                            <td colspan="3" class="text-end">Claim Total:</td>
+                            <td colspan="3" class="text-end">{{ __('claims.claim_total') }}:</td>
                             <td class="text-end text-primary">GH₵ {{ number_format($claimTotal, 2) }}</td>
                         </tr>
                     </tfoot>
@@ -113,7 +113,7 @@
             </div>
 
             <button type="submit" class="btn btn-primary" {{ $claimableItems->isEmpty() ? 'disabled' : '' }}>
-                <i class="ti ti-file-plus me-1"></i>Create Claim from Invoice
+                <i class="ti ti-file-plus me-1"></i>{{ __('claims.create_from_invoice') }}
             </button>
         </form>
     </div>
@@ -123,7 +123,7 @@
 {{-- Manual Claim Creation --}}
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title mb-0">Claim Details</h5>
+        <h5 class="card-title mb-0">{{ __('claims.claim_details') }}</h5>
     </div>
     <div class="card-body">
         <form method="POST" action="{{ route('admin.claims.store') }}" id="claimForm">
@@ -131,20 +131,20 @@
 
             <div class="row mb-3">
                 <div class="col-md-3">
-                    <label class="form-label">Insurance Provider <span class="text-danger">*</span></label>
+                    <label class="form-label">{{ __('claims.insurance_provider') }} <span class="text-danger">*</span></label>
                     <select name="insurance_provider_id" class="form-select select2" required>
-                        <option value="">Select Provider...</option>
+                        <option value="">{{ __('claims.select_provider') }}</option>
                         @foreach($providers as $provider)
                             <option value="{{ $provider->id }}" {{ old('insurance_provider_id') == $provider->id ? 'selected' : '' }}>
-                                {{ $provider->name }} ({{ $provider->type->label() }})
+                                {{ $provider->name }} ({{ $provider->type->translatedLabel() }})
                             </option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Patient <span class="text-danger">*</span></label>
+                    <label class="form-label">{{ __('claims.patient') }} <span class="text-danger">*</span></label>
                     <select name="patient_id" class="form-select select2" required>
-                        <option value="">Select Patient...</option>
+                        <option value="">{{ __('claims.select_patient') }}</option>
                         @foreach($patients as $p)
                             <option value="{{ $p->id }}" {{ old('patient_id') == $p->id ? 'selected' : '' }}>
                                 {{ $p->first_name }} {{ $p->last_name }} ({{ $p->patient_number }})
@@ -153,9 +153,9 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Visit <span class="text-danger">*</span></label>
+                    <label class="form-label">{{ __('claims.visit') }} <span class="text-danger">*</span></label>
                     <select name="visit_id" class="form-select select2" required>
-                        <option value="">Select Visit...</option>
+                        <option value="">{{ __('claims.select_visit') }}</option>
                         @foreach($visits as $visit)
                             <option value="{{ $visit->id }}" {{ old('visit_id') == $visit->id ? 'selected' : '' }}>
                                 {{ $visit->visit_number }} — {{ $visit->patient?->full_name ?? 'Unknown Patient' }}
@@ -164,9 +164,9 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Assigned Doctor</label>
+                    <label class="form-label">{{ __('claims.assigned_doctor') }}</label>
                     <select name="assigned_doctor_id" class="form-select select2">
-                        <option value="">Select Doctor (Optional)...</option>
+                        <option value="">{{ __('claims.select_doctor_optional') }}</option>
                         @foreach($doctors as $doctor)
                             <option value="{{ $doctor->id }}" {{ old('assigned_doctor_id') == $doctor->id ? 'selected' : '' }}>{{ $doctor->name }}</option>
                         @endforeach
@@ -176,30 +176,30 @@
 
             <div class="row mb-3">
                 <div class="col-md-4">
-                    <label class="form-label">Claim Date <span class="text-danger">*</span></label>
+                    <label class="form-label">{{ __('claims.claim_date') }} <span class="text-danger">*</span></label>
                     <input type="date" name="claim_date" class="form-control" value="{{ old('claim_date', date('Y-m-d')) }}" required>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Period From</label>
+                    <label class="form-label">{{ __('claims.period_from') }}</label>
                     <input type="date" name="period_from" class="form-control" value="{{ old('period_from', date('Y-m-d')) }}" required>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Period To</label>
+                    <label class="form-label">{{ __('claims.period_to') }}</label>
                     <input type="date" name="period_to" class="form-control" value="{{ old('period_to', date('Y-m-d')) }}" required>
                 </div>
             </div>
 
             <!-- Claim Items -->
-            <h6 class="mb-2">Claim Items <span class="text-danger">*</span></h6>
+            <h6 class="mb-2">{{ __('claims.claim_items') }} <span class="text-danger">*</span></h6>
             <div class="table-responsive mb-3">
                 <table class="table table-bordered" id="itemsTable">
                     <thead class="table-light">
                         <tr>
-                            <th>Service Name</th>
-                            <th style="width: 150px;">Service Type</th>
-                            <th style="width: 80px;">Qty</th>
-                            <th style="width: 120px;">Unit Price</th>
-                            <th style="width: 120px;">Total</th>
+                            <th>{{ __('claims.service_name') }}</th>
+                            <th style="width: 150px;">{{ __('claims.service_type') }}</th>
+                            <th style="width: 80px;">{{ __('claims.qty') }}</th>
+                            <th style="width: 120px;">{{ __('claims.unit_price') }}</th>
+                            <th style="width: 120px;">{{ __('claims.total') }}</th>
                             <th style="width: 50px;"></th>
                         </tr>
                     </thead>
@@ -209,19 +209,19 @@
                             <td>
                                 <select name="items[0][service_type]" class="form-select form-select-sm">
                                     @foreach($serviceTypes as $st)
-                                        <option value="{{ $st->value }}">{{ $st->label() }}</option>
+                                        <option value="{{ $st->value }}">{{ $st->translatedLabel() }}</option>
                                     @endforeach
                                 </select>
                             </td>
                             <td><input type="number" name="items[0][quantity]" class="form-control form-control-sm qty-input" value="1" min="1" required></td>
                             <td><input type="number" name="items[0][unit_price]" class="form-control form-control-sm price-input" step="0.01" min="0" required></td>
                             <td class="row-total text-end align-middle fw-medium">0.00</td>
-                            <td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
+                            <td class="text-center"><button aria-label="{{ __('claims.delete') }}" title="{{ __('claims.delete') }}" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
                         </tr>
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="4" class="text-end fw-bold">Grand Total:</td>
+                            <td colspan="4" class="text-end fw-bold">{{ __('claims.grand_total') }}:</td>
                             <td class="text-end fw-bold" id="grandTotal">GH₵ 0.00</td>
                             <td></td>
                         </tr>
@@ -230,12 +230,12 @@
             </div>
 
             <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="addItemBtn">
-                <i class="ti ti-plus me-1"></i>Add Item
+                <i class="ti ti-plus me-1"></i>{{ __('claims.add_item') }}
             </button>
 
             <div>
                 <button type="submit" class="btn btn-primary">
-                    <i class="ti ti-file-plus me-1"></i>Create Claim
+                    <i class="ti ti-file-plus me-1"></i>{{ __('claims.create_claim') }}
                 </button>
             </div>
         </form>
@@ -251,14 +251,14 @@ $(document).ready(function() {
 
     // Add item row
     $('#addItemBtn').on('click', function() {
-        const serviceOptions = `@foreach($serviceTypes as $st)<option value="{{ $st->value }}">{{ $st->label() }}</option>@endforeach`;
+        const serviceOptions = `@foreach($serviceTypes as $st)<option value="{{ $st->value }}">{{ $st->translatedLabel() }}</option>@endforeach`;
         const row = `<tr class="item-row">
             <td><input type="text" name="items[${itemIndex}][service_name]" class="form-control form-control-sm" required></td>
             <td><select name="items[${itemIndex}][service_type]" class="form-select form-select-sm">${serviceOptions}</select></td>
             <td><input type="number" name="items[${itemIndex}][quantity]" class="form-control form-control-sm qty-input" value="1" min="1" required></td>
             <td><input type="number" name="items[${itemIndex}][unit_price]" class="form-control form-control-sm price-input" step="0.01" min="0" required></td>
             <td class="row-total text-end align-middle fw-medium">0.00</td>
-            <td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
+            <td class="text-center"><button aria-label="{{ __('claims.delete') }}" title="{{ __('claims.delete') }}" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
         </tr>`;
         $('#itemsBody').append(row);
         itemIndex++;

@@ -75,7 +75,7 @@
             @forelse($ledger as $entry)
             <tr>
                 <td>{{ optional($entry['date'])->format('d M Y') }}</td>
-                <td>{{ ucfirst($entry['type']) }}</td>
+                <td>{{ __('statuses.default.' . $entry['type']) }}</td>
                 <td>{{ $entry['reference'] }}</td>
                 <td>{{ $entry['description'] }}</td>
                 <td class="text-end">@if($entry['charges'] > 0)&#8373;{{ number_format($entry['charges'], 2) }}@else—@endif</td>

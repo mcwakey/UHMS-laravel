@@ -32,7 +32,7 @@
                 <select name="status" class="form-select">
                     <option value="">All Status</option>
                     @foreach(\App\Enums\BedStatus::cases() as $status)
-                        <option value="{{ $status->value }}" {{ request('status') == $status->value ? 'selected' : '' }}>{{ $status->label() }}</option>
+                        <option value="{{ $status->value }}" {{ request('status') == $status->value ? 'selected' : '' }}>{{ $status->translatedLabel() }}</option>
                     @endforeach
                 </select>
             </div>
@@ -40,7 +40,7 @@
                 <select name="bed_type" class="form-select">
                     <option value="">All Types</option>
                     @foreach(\App\Enums\BedType::cases() as $type)
-                        <option value="{{ $type->value }}" {{ request('bed_type') == $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
+                        <option value="{{ $type->value }}" {{ request('bed_type') == $type->value ? 'selected' : '' }}>{{ $type->translatedLabel() }}</option>
                     @endforeach
                 </select>
             </div>
@@ -74,9 +74,9 @@
                     <tr>
                         <td><span class="fw-medium">{{ $bed->bed_number }}</span></td>
                         <td>{{ $bed->ward->name }}</td>
-                        <td>{{ $bed->bed_type->label() }}</td>
+                        <td>{{ $bed->bed_type->translatedLabel() }}</td>
                         <td>GH₵ {{ number_format($bed->daily_rate, 2) }}</td>
-                        <td><span class="badge badge-soft-{{ $bed->status->color() }}">{{ $bed->status->label() }}</span></td>
+                        <td><span class="badge badge-soft-{{ $bed->status->color() }}">{{ $bed->status->translatedLabel() }}</span></td>
                         <td>
                             @if($bed->currentAdmission)
                                 <a href="{{ route('admin.admissions.show', $bed->currentAdmission) }}" class="text-decoration-none">
@@ -145,7 +145,7 @@
                             <label class="form-label">Bed Type <span class="text-danger">*</span></label>
                             <select name="bed_type" class="form-select" required>
                                 @foreach(\App\Enums\BedType::cases() as $type)
-                                    <option value="{{ $type->value }}">{{ $type->label() }}</option>
+                                    <option value="{{ $type->value }}">{{ $type->translatedLabel() }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -191,7 +191,7 @@
                             <label class="form-label">Bed Type</label>
                             <select name="bed_type" class="form-select">
                                 @foreach(\App\Enums\BedType::cases() as $type)
-                                    <option value="{{ $type->value }}" {{ $bed->bed_type == $type ? 'selected' : '' }}>{{ $type->label() }}</option>
+                                    <option value="{{ $type->value }}" {{ $bed->bed_type == $type ? 'selected' : '' }}>{{ $type->translatedLabel() }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -199,7 +199,7 @@
                             <label class="form-label">Status</label>
                             <select name="status" class="form-select">
                                 @foreach(\App\Enums\BedStatus::cases() as $status)
-                                    <option value="{{ $status->value }}" {{ $bed->status == $status ? 'selected' : '' }}>{{ $status->label() }}</option>
+                                    <option value="{{ $status->value }}" {{ $bed->status == $status ? 'selected' : '' }}>{{ $status->translatedLabel() }}</option>
                                 @endforeach
                             </select>
                         </div>

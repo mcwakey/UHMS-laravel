@@ -101,7 +101,7 @@
                 <select name="status" class="form-select">
                     <option value="">{{ __('payments.all_unpaid') }}</option>
                     @foreach($invoiceStatuses as $status)
-                    <option value="{{ $status->value }}" {{ request('status') === $status->value ? 'selected' : '' }}>{{ $status->label() }}</option>
+                    <option value="{{ $status->value }}" {{ request('status') === $status->value ? 'selected' : '' }}>{{ $status->translatedLabel() }}</option>
                     @endforeach
                 </select>
             </div>
@@ -110,7 +110,7 @@
                 <select name="billing_type" class="form-select">
                     <option value="">{{ __('payments.all_types') }}</option>
                     @foreach(\App\Enums\BillingType::cases() as $type)
-                    <option value="{{ $type->value }}" {{ request('billing_type') === $type->value ? 'selected' : '' }}>{{ $type->label() }}</option>
+                    <option value="{{ $type->value }}" {{ request('billing_type') === $type->value ? 'selected' : '' }}>{{ $type->translatedLabel() }}</option>
                     @endforeach
                 </select>
             </div>
@@ -148,7 +148,7 @@
                             <a href="{{ route('admin.billing.invoices.show', $invoice) }}" class="fw-bold text-primary">{{ $invoice->invoice_number }}</a>
                             <div class="small text-muted">{{ $invoice->created_at->format('d M Y') }}</div>
                             <x-status-badge :status="$invoice->status" />
-                            <span class="badge bg-soft-{{ $invoice->billing_type->color() }} text-{{ $invoice->billing_type->color() }}">{{ $invoice->billing_type->label() }}</span>
+                            <span class="badge bg-soft-{{ $invoice->billing_type->color() }} text-{{ $invoice->billing_type->color() }}">{{ $invoice->billing_type->translatedLabel() }}</span>
                         </td>
                         <td>
                             <div class="fw-medium">{{ $invoice->patient?->full_name ?? $invoice->external_party_name ?? '—' }}</div>
@@ -187,7 +187,7 @@
                                             @endif
                                             @foreach($paymentMethods as $method)
                                             <option value="{{ $method->value }}" {{ $method === \App\Enums\PaymentMethod::CASH && ! $openShift ? 'disabled' : '' }}>
-                                                {{ $method->label() }}{{ $method === \App\Enums\PaymentMethod::CASH && ! $openShift ? ' ' . __('payments.shift_closed_suffix') : '' }}
+                                                {{ $method->translatedLabel() }}{{ $method === \App\Enums\PaymentMethod::CASH && ! $openShift ? ' ' . __('payments.shift_closed_suffix') : '' }}
                                             </option>
                                             @endforeach
                                         </select>
