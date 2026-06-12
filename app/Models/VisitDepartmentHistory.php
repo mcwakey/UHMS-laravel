@@ -102,6 +102,11 @@ class VisitDepartmentHistory extends Model
         };
     }
 
+    public function translatedTypeLabel(): string
+    {
+        return __("consultations.history_type.{$this->type}");
+    }
+
     public function statusLabel(): string
     {
         return match ($this->status) {
@@ -111,6 +116,11 @@ class VisitDepartmentHistory extends Model
             self::STATUS_CANCELLED   => 'Cancelled',
             default                  => ucfirst($this->status),
         };
+    }
+
+    public function translatedStatusLabel(): string
+    {
+        return __("consultations.history_status.{$this->status}");
     }
 
     public function statusColor(): string

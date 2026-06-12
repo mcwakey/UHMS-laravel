@@ -13,9 +13,9 @@
 <x-page-header :title="$donor->full_name" description="Donor profile and WHO screening workspace." icon="ti-clipboard-heart"
     :breadcrumbs="[['label' => 'Blood Donors', 'url' => route('admin.blood-bank.donors.index')], ['label' => $donor->donor_number]]">
     <x-slot:actions>
-        <a href="{{ route('admin.blood-bank.donors.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>All Donors</a>
+        <a href="{{ route('admin.blood-bank.donors.index') }}" class="btn btn-outline-secondary btn-sm"><i class="ti ti-arrow-left me-1"></i>{{ __('blood_bank.all_donors') }}</a>
         @if($donor->canDonate())
-            <a href="{{ route('admin.blood-bank.donations.index') }}" class="btn btn-success btn-sm"><i class="ti ti-droplet-plus me-1"></i>Record Donation</a>
+            <a href="{{ route('admin.blood-bank.donations.index') }}" class="btn btn-success btn-sm"><i class="ti ti-droplet-plus me-1"></i>{{ __('blood_bank.record_donation') }}</a>
         @endif
     </x-slot:actions>
 </x-page-header>
@@ -34,27 +34,27 @@
                     </div>
                 </div>
                 <dl class="row mb-0 small">
-                    <dt class="col-5 text-muted">Blood Group</dt><dd class="col-7">@if($donor->blood_group)<span class="badge bg-red-lt">{{ $donor->blood_group }}</span>@else Unknown @endif</dd>
-                    <dt class="col-5 text-muted">Age / DOB</dt><dd class="col-7">{{ $donor->age !== null ? $donor->age.' yrs' : '—' }} <span class="text-muted">{{ $donor->date_of_birth?->format('d M Y') }}</span></dd>
-                    <dt class="col-5 text-muted">Gender</dt><dd class="col-7">{{ $donor->gender ?: '—' }}</dd>
-                    <dt class="col-5 text-muted">Phone</dt><dd class="col-7">{{ $donor->phone ?: '—' }}</dd>
-                    <dt class="col-5 text-muted">Email</dt><dd class="col-7 text-truncate">{{ $donor->email ?: '—' }}</dd>
-                    <dt class="col-5 text-muted">Address</dt><dd class="col-7">{{ $donor->address ?: '—' }}</dd>
-                    <dt class="col-5 text-muted">Last Donation</dt><dd class="col-7">{{ $donor->last_donation_at?->format('d M Y') ?? 'Never' }}</dd>
-                    <dt class="col-5 text-muted">Registered By</dt><dd class="col-7">{{ $donor->registeredBy->full_name ?? '—' }}</dd>
+                    <dt class="col-5 text-muted">{{ __('blood_bank.blood_group') }}</dt><dd class="col-7">@if($donor->blood_group)<span class="badge bg-red-lt">{{ $donor->blood_group }}</span>@else Unknown @endif</dd>
+                    <dt class="col-5 text-muted">{{ __('blood_bank.age_dob') }}</dt><dd class="col-7">{{ $donor->age !== null ? $donor->age.' yrs' : '—' }} <span class="text-muted">{{ $donor->date_of_birth?->format('d M Y') }}</span></dd>
+                    <dt class="col-5 text-muted">{{ __('blood_bank.gender') }}</dt><dd class="col-7">{{ $donor->gender ?: '—' }}</dd>
+                    <dt class="col-5 text-muted">{{ __('blood_bank.phone') }}</dt><dd class="col-7">{{ $donor->phone ?: '—' }}</dd>
+                    <dt class="col-5 text-muted">{{ __('blood_bank.email') }}</dt><dd class="col-7 text-truncate">{{ $donor->email ?: '—' }}</dd>
+                    <dt class="col-5 text-muted">{{ __('blood_bank.address') }}</dt><dd class="col-7">{{ $donor->address ?: '—' }}</dd>
+                    <dt class="col-5 text-muted">{{ __('blood_bank.last_donation') }}</dt><dd class="col-7">{{ $donor->last_donation_at?->format('d M Y') ?? __('blood_bank.never') }}</dd>
+                    <dt class="col-5 text-muted">{{ __('blood_bank.registered_by') }}</dt><dd class="col-7">{{ $donor->registeredBy->full_name ?? '—' }}</dd>
                 </dl>
                 @if($donor->isDeferred() && $donor->deferral_reason)
-                    <div class="alert alert-warning mt-3 mb-0 py-2 small"><i class="ti ti-alert-triangle me-1"></i><strong>Deferred:</strong> {{ $donor->deferral_reason }}@if($donor->deferred_until) (until {{ $donor->deferred_until->format('d M Y') }})@endif</div>
+                    <div class="alert alert-warning mt-3 mb-0 py-2 small"><i class="ti ti-alert-triangle me-1"></i><strong>{{ __('blood_bank.deferred') }}:</strong> {{ $donor->deferral_reason }}@if($donor->deferred_until) (until {{ $donor->deferred_until->format('d M Y') }})@endif</div>
                 @endif
             </div>
         </div>
 
         {{-- Suggested eligibility (the "why") --}}
         <div class="card mt-3">
-            <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-bulb me-1 text-warning"></i>System Eligibility Assessment</h6></div>
+            <div class="card-header bg-white"><h6 class="card-title mb-0"><i class="ti ti-bulb me-1 text-warning"></i>{{ __('blood_bank.system_eligibility_assessment') }}</h6></div>
             <div class="card-body">
                 @if(!$hasScreening)
-                    <p class="text-muted small mb-0">Start the screening to generate an eligibility assessment.</p>
+                    <p class="text-muted small mb-0">{{ __('blood_bank.start_screening_assessment') }}</p>
                 @else
                     <div class="mb-2">Suggested decision:
                         <x-status-badge :status="$suggestion['decision'] ?? 'NEEDS_REVIEW'" domain="donor_screening" />
@@ -65,7 +65,7 @@
                             @foreach($suggestion['flags'] as $flag)<li>{{ $flag }}</li>@endforeach
                         </ul>
                     @else
-                        <p class="small text-success mb-0"><i class="ti ti-circle-check me-1"></i>No deferral flags — meets the configured thresholds.</p>
+                        <p class="small text-success mb-0"><i class="ti ti-circle-check me-1"></i>{{ __('blood_bank.no_deferral_flags') }}</p>
                     @endif
                 @endif
             </div>
@@ -76,8 +76,8 @@
     <div class="col-xl-8">
         <div class="card">
             <div class="card-header bg-white d-flex align-items-center justify-content-between">
-                <h6 class="card-title mb-0"><i class="ti ti-list-check me-1"></i>WHO Donor Screening</h6>
-                <span class="small text-muted">Stage: <strong>{{ str_replace('_',' ', $screening->stage ?? 'NOT STARTED') }}</strong></span>
+                <h6 class="card-title mb-0"><i class="ti ti-list-check me-1"></i>{{ __('blood_bank.who_donor_screening') }}</h6>
+                <span class="small text-muted">{{ __('blood_bank.stage_label') }}: <strong>{{ str_replace('_',' ', $screening->stage ?? __('blood_bank.not_started')) }}</strong></span>
             </div>
             <div class="card-body">
                 @can('blood_bank.screening.perform')
@@ -91,8 +91,8 @@
                     <div class="tab-pane fade show active" id="tabQ">
                         <form method="POST" action="{{ route('admin.blood-bank.donors.screening.questionnaire', $donor) }}">
                             @csrf
-                            <p class="small text-muted">Tick any that apply. Saved answers are retained below — they reflect what was recorded.</p>
-                            <div class="fw-semibold small mb-1">Temporary-risk questions</div>
+                            <p class="small text-muted">Tick any that apply. Saved answers are retained below - they reflect what was recorded.</p>
+                            <div class="fw-semibold small mb-1">{{ __('blood_bank.temporary_risk_questions') }}</div>
                             <div class="row row-cols-1 row-cols-md-2 g-1 small mb-3">
                                 @foreach($temporary as $key)
                                     <div class="col"><div class="form-check">
@@ -101,7 +101,7 @@
                                     </div></div>
                                 @endforeach
                             </div>
-                            <div class="fw-semibold small mb-1 text-danger">Permanent-risk questions</div>
+                            <div class="fw-semibold small mb-1 text-danger">{{ __('blood_bank.permanent_risk_questions') }}</div>
                             <div class="row row-cols-1 row-cols-md-2 g-1 small mb-3">
                                 @foreach($permanent as $key)
                                     <div class="col"><div class="form-check">
@@ -111,11 +111,11 @@
                                 @endforeach
                             </div>
                             <div class="d-flex flex-wrap gap-3 small border-top pt-2">
-                                <div class="form-check"><input class="form-check-input" type="checkbox" name="consent_donate" value="1" id="cd" @checked($hasScreening ? $screening->consent_donate : true)><label class="form-check-label" for="cd">Consent to donate</label></div>
-                                <div class="form-check"><input class="form-check-input" type="checkbox" name="consent_testing" value="1" id="ct" @checked($hasScreening ? $screening->consent_testing : true)><label class="form-check-label" for="ct">Consent to test</label></div>
-                                <div class="form-check"><input class="form-check-input" type="checkbox" name="consent_contact" value="1" id="cc" @checked($hasScreening ? $screening->consent_contact : false)><label class="form-check-label" for="cc">Consent to contact</label></div>
+                                <div class="form-check"><input class="form-check-input" type="checkbox" name="consent_donate" value="1" id="cd" @checked($hasScreening ? $screening->consent_donate : true)><label class="form-check-label" for="cd">{{ __('blood_bank.consent_to_donate') }}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="checkbox" name="consent_testing" value="1" id="ct" @checked($hasScreening ? $screening->consent_testing : true)><label class="form-check-label" for="ct">{{ __('blood_bank.consent_to_test') }}</label></div>
+                                <div class="form-check"><input class="form-check-input" type="checkbox" name="consent_contact" value="1" id="cc" @checked($hasScreening ? $screening->consent_contact : false)><label class="form-check-label" for="cc">{{ __('blood_bank.consent_to_contact') }}</label></div>
                             </div>
-                            <div class="mt-3"><button class="btn btn-primary btn-sm"><i class="ti ti-device-floppy me-1"></i>Save Questionnaire</button>
+                            <div class="mt-3"><button class="btn btn-primary btn-sm"><i class="ti ti-device-floppy me-1"></i>{{ __('blood_bank.save_questionnaire') }}</button>
                                 @if($screening?->questionnaire_at)<span class="small text-muted ms-2">Last saved {{ $screening->questionnaire_at->format('d M Y H:i') }} by {{ $screening->questionnaireBy->full_name ?? '—' }}</span>@endif
                             </div>
                         </form>
@@ -125,7 +125,7 @@
                     <div class="tab-pane fade" id="tabP">
                         <form method="POST" action="{{ route('admin.blood-bank.donors.screening.assessment', $donor) }}" class="row g-2">
                             @csrf
-                            <div class="col-md-3"><label class="form-label small">Weight (kg)</label><input name="weight_kg" type="number" step="0.1" class="form-control" value="{{ $screening?->weight_kg }}"></div>
+                            <div class="col-md-3"><label class="form-label small">{{ __('blood_bank.weight_kg') }}</label><input name="weight_kg" type="number" step="0.1" class="form-control" value="{{ $screening?->weight_kg }}"></div>
                             <div class="col-md-3"><label class="form-label small">Temp (°C)</label><input name="temperature_c" type="number" step="0.1" class="form-control" value="{{ $screening?->temperature_c }}"></div>
                             <div class="col-md-3"><label class="form-label small">Hb (g/dL)</label><input name="hemoglobin" type="number" step="0.1" class="form-control" value="{{ $screening?->hemoglobin }}"></div>
                             <div class="col-md-3"><label class="form-label small">Pulse</label><input name="pulse" type="number" class="form-control" value="{{ $screening?->pulse }}"></div>
@@ -179,7 +179,7 @@
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0">
-                        <thead class="bg-light"><tr><th>Donation</th><th>Date</th><th>Group</th><th>Unit</th><th>Screening</th></tr></thead>
+                        <thead class="bg-light"><tr><th>{{ __('blood_bank.donation') }}</th><th>{{ __('medication_administration.date') }}</th><th>{{ __('blood_bank.group') }}</th><th>{{ __('blood_bank.unit') }}</th><th>{{ __('blood_bank.screening') }}</th></tr></thead>
                         <tbody>
                             @forelse($donor->donations as $d)
                                 <tr>
@@ -190,7 +190,7 @@
                                     <td><x-status-badge :status="$d->screening_status" domain="screening" size="sm" /></td>
                                 </tr>
                             @empty
-                                <tr><td colspan="5" class="text-center text-muted py-3">No donations yet.</td></tr>
+                                <tr><td colspan="5" class="text-center text-muted py-3">{{ __('blood_bank.no_donations_message') }}</td></tr>
                             @endforelse
                         </tbody>
                     </table>

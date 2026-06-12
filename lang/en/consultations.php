@@ -19,4 +19,17 @@ return [
     'continue' => 'Continue',
     'open' => 'Open',
     'no_active_consultations' => 'No active consultations at the moment.',
+    'department_history' => 'Department History',
+    'history_type' => [
+        'triage' => 'Triage',
+        'consultation' => 'Consultation',
+        'referral' => 'Referral',
+        'investigation' => 'Investigation',
+    ],
+    'history_status' => [
+        'waiting' => 'Waiting',
+        'in_progress' => 'In Progress',
+        'completed' => 'Completed',
+        'cancelled' => 'Cancelled',
+    ],
 ];

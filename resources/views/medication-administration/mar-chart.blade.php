@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'MAR Chart - ' . ($chart['header']['patient_name'] ?? 'Patient'))
+@section('title', __('medication_administration.mar_chart') . ' - ' . ($chart['header']['patient_name'] ?? __('medication_administration.patient')))
 
 @push('styles')
 <style>
@@ -31,27 +31,27 @@
 
 @section('content')
 <div class="mar-print-title">
-    <h3 class="mb-1">MEDICATION ADMINISTRATION RECORD</h3>
-    <div>{{ $chart['header']['patient_name'] ?? 'Patient' }} - {{ $chart['selected_date']->format('d M Y') }}</div>
+    <h3 class="mb-1">{{ strtoupper(__('medication_administration.medication_administration_record')) }}</h3>
+    <div>{{ $chart['header']['patient_name'] ?? __('medication_administration.patient') }} - {{ $chart['selected_date']->format('d M Y') }}</div>
 </div>
 
 <div class="d-flex align-items-sm-center flex-sm-row flex-column justify-content-between gap-2 pb-3 mb-3 border-bottom no-print">
     <div>
-        <h4 class="fw-bold mb-1"><i class="ti ti-layout-grid me-1"></i>MAR Chart</h4>
-        <p class="text-muted mb-0">Patient-specific medication administration grid for scheduled, due, overdue, and completed doses.</p>
+        <h4 class="fw-bold mb-1"><i class="ti ti-layout-grid me-1"></i>{{ __('medication_administration.mar_chart') }}</h4>
+        <p class="text-muted mb-0">{{ __('medication_administration.mar_chart_description') }}</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         @can('mar_chart.print')
         <button type="button" onclick="window.print()" class="btn btn-outline-secondary btn-sm">
-            <i class="ti ti-printer me-1"></i>Print MAR
+            <i class="ti ti-printer me-1"></i>{{ __('medication_administration.print_mar') }}
         </button>
         @endcan
         @if($chart['admission'])
-            <a href="{{ route('admin.admissions.medications.show', $chart['admission']) }}" class="btn btn-outline-primary btn-sm">Medication Board</a>
-            <a href="{{ route('admin.admissions.show', $chart['admission']) }}" class="btn btn-outline-secondary btn-sm">Admission</a>
+            <a href="{{ route('admin.admissions.medications.show', $chart['admission']) }}" class="btn btn-outline-primary btn-sm">{{ __('medication_administration.medication_board') }}</a>
+            <a href="{{ route('admin.admissions.show', $chart['admission']) }}" class="btn btn-outline-secondary btn-sm">{{ __('medication_administration.admission') }}</a>
         @else
-            <a href="{{ route('admin.emergency.medication-board') }}" class="btn btn-outline-primary btn-sm">Emergency Board</a>
-            <a href="{{ route('admin.visits.preview', $chart['visit']) }}" class="btn btn-outline-secondary btn-sm">Visit Preview</a>
+            <a href="{{ route('admin.emergency.medication-board') }}" class="btn btn-outline-primary btn-sm">{{ __('medication_administration.emergency_board') }}</a>
+            <a href="{{ route('admin.visits.preview', $chart['visit']) }}" class="btn btn-outline-secondary btn-sm">{{ __('medication_administration.visit_preview') }}</a>
         @endif
     </div>
 </div>
@@ -123,7 +123,7 @@
         } else if (data && data.message) {
             messages.push(data.message);
         } else {
-            messages.push('Unable to save medication administration.');
+            messages.push(@json(__('medication_administration.unable_to_save_administration')));
         }
 
         errorBox.innerHTML = messages.map(function (message) { return '<div>' + message + '</div>'; }).join('');

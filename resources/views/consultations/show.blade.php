@@ -2544,11 +2544,11 @@
                     </div>
                     @if($visit->departmentHistory->isNotEmpty())
                         <div class="alert alert-info py-2 small">
-                            <strong>Department History:</strong><br>
+                            <strong>{{ __('consultations.department_history') }}:</strong><br>
                             @foreach($visit->departmentHistory as $hist)
-                                <span class="badge bg-{{ $hist->typeColor() }}">{{ $hist->typeLabel() }}</span>
+                                <span class="badge bg-{{ $hist->typeColor() }}">{{ $hist->translatedTypeLabel() }}</span>
                                 {{ $hist->department?->name }}
-                                <span class="badge bg-{{ $hist->statusColor() }}">{{ $hist->statusLabel() }}</span><br>
+                                <span class="badge bg-{{ $hist->statusColor() }}">{{ $hist->translatedStatusLabel() }}</span><br>
                             @endforeach
                         </div>
                     @endif

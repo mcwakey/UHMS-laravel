@@ -1,15 +1,11 @@
 @extends('layouts.app')
-@section('title', 'Procedure Consumables')
+@section('title', __('theatre.procedure_consumables'))
 
 @section('content')
 <div class="d-flex align-items-sm-center justify-content-between flex-wrap gap-2 mb-4">
     <div>
-        <h4 class="fw-bold mb-0">Procedure Consumables</h4>
-        <p class="text-muted small mb-0">
-            Filtered view of <strong>products</strong> linked to the Theatre / Procedure department.
-            Quantities show on-hand balance at the <strong>Theatre stock location</strong> and the <strong>Main Store</strong>.
-            New products are added from <em>Store &rsaquo; Products</em>.
-        </p>
+        <h4 class="fw-bold mb-0">{{ __('theatre.procedure_consumables') }}</h4>
+        <p class="text-muted small mb-0">{{ __('theatre.procedure_consumables_description') }}</p>
     </div>
 </div>
 
@@ -17,7 +13,7 @@
     <div class="col-md-3 col-6">
         <div class="card border-start border-primary border-3 shadow-sm">
             <div class="card-body py-3">
-                <p class="text-muted small mb-1">Total Items</p>
+                <p class="text-muted small mb-1">{{ __('theatre.total_items') }}</p>
                 <h4 class="fw-bold mb-0">{{ $products->total() }}</h4>
             </div>
         </div>
@@ -25,7 +21,7 @@
     <div class="col-md-3 col-6">
         <div class="card border-start border-warning border-3 shadow-sm">
             <div class="card-body py-3">
-                <p class="text-muted small mb-1">Low / Out of Stock (page)</p>
+                <p class="text-muted small mb-1">{{ __('theatre.low_out_stock_page') }}</p>
                 <h4 class="fw-bold mb-0">{{ $lowStockCount }}</h4>
             </div>
         </div>
@@ -37,11 +33,11 @@
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-md-5">
                 <input type="text" name="search" class="form-control form-control-sm"
-                    placeholder="Search product name or code..." value="{{ request('search') }}">
+                    placeholder="{{ __('theatre.product_search_placeholder') }}" value="{{ request('search') }}">
             </div>
             <div class="col-md-4">
                 <select name="product_type" class="form-select form-select-sm">
-                    <option value="">All Product Types</option>
+                    <option value="">{{ __('theatre.all_product_types') }}</option>
                     @foreach($allowedTypes as $type)
                     <option value="{{ $type }}" {{ request('product_type') === $type ? 'selected' : '' }}>
                         {{ ucwords(str_replace('_', ' ', strtolower($type))) }}
@@ -50,8 +46,8 @@
                 </select>
             </div>
             <div class="col-md-auto">
-                <button type="submit" class="btn btn-primary btn-sm">Filter</button>
-                <a href="{{ route('admin.theatre.consumables.index') }}" class="btn btn-secondary btn-sm">Reset</a>
+                <button type="submit" class="btn btn-primary btn-sm">{{ __('common.filter') }}</button>
+                <a href="{{ route('admin.theatre.consumables.index') }}" class="btn btn-secondary btn-sm">{{ __('common.reset') }}</a>
             </div>
         </form>
     </div>
@@ -63,14 +59,14 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Product</th>
-                        <th>Code</th>
-                        <th>Type</th>
-                        <th>Unit</th>
-                        <th class="text-center">Department Available Qty</th>
-                        <th class="text-center">Main Stock Qty</th>
-                        <th class="text-center">Reorder Level</th>
-                        <th class="text-center">Status</th>
+                        <th>{{ __('theatre.product') }}</th>
+                        <th>{{ __('theatre.code') }}</th>
+                        <th>{{ __('theatre.type') }}</th>
+                        <th>{{ __('theatre.unit') }}</th>
+                        <th class="text-center">{{ __('theatre.department_available_qty') }}</th>
+                        <th class="text-center">{{ __('theatre.main_stock_qty') }}</th>
+                        <th class="text-center">{{ __('theatre.reorder_level') }}</th>
+                        <th class="text-center">{{ __('common.status') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -98,7 +94,7 @@
                                     {{ ucwords(str_replace('_', ' ', strtolower($type))) }}
                                 </span>
                             </td>
-                            <td>{{ $product->unit ?? 'unit' }}</td>
+                            <td>{{ $product->unit ?? __('theatre.unit') }}</td>
                             <td class="text-center">
                                 <span class="fw-bold">{{ $qtyDisplay ?: '0' }}</span>
                                 <span class="badge bg-{{ $theatreStatus['class'] }} ms-1">{{ $theatreStatus['label'] }}</span>
@@ -114,10 +110,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">
-                                No products are linked to the Theatre / Procedure department yet.
-                                Link a product from <em>Store &rsaquo; Products</em> first.
-                            </td>
+                            <td colspan="8" class="text-center text-muted py-4">{{ __('theatre.no_theatre_products') }}</td>
                         </tr>
                     @endforelse
                 </tbody>

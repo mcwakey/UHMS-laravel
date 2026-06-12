@@ -35,7 +35,7 @@
             <div class="step-body">
                 <strong>{{ $step['label'] }}</strong>
                 @if ($step['status'] === 'pending')
-                    <span class="badge bg-warning text-dark ms-1">Pending</span>
+                    <span class="badge bg-warning text-dark ms-1">{{ __('statuses.default.pending') }}</span>
                 @endif
                 <div class="meta">
                     @if (!empty($step['timestamp']))

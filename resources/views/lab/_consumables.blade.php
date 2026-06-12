@@ -44,7 +44,7 @@
             @if($defaults->isEmpty())
                 <tr class="consumable-row">
                     <td>
-                        <input list="products-datalist-{{ $item->id }}" name="consumables[0][product_id]" class="form-control form-control-sm" placeholder="Search product…">
+                        <input list="products-datalist-{{ $item->id }}" name="consumables[0][product_id]" class="form-control form-control-sm" placeholder="{{ __('lab.search_product_placeholder') }}">
                     </td>
                     <td><input type="number" step="0.0001" min="0" name="consumables[0][quantity]" class="form-control form-control-sm"></td>
                     <td><input name="consumables[0][notes]" class="form-control form-control-sm" maxlength="255"></td>

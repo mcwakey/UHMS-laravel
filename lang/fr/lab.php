@@ -179,6 +179,7 @@ return [
     'qty_col'                   => 'Qté',
     'notes_col'                 => 'Notes',
     'consumables_blank_hint'    => 'Laisser vide si aucun consommable n\'a été utilisé pour ce test.',
+    'search_product_placeholder'=> 'Rechercher un produit...',
 
     // print.blade.php
     'print_button'              => 'Imprimer',

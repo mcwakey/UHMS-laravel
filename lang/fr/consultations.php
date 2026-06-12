@@ -19,4 +19,17 @@ return [
     'continue' => 'Continuer',
     'open' => 'Ouvrir',
     'no_active_consultations' => 'Aucune consultation active pour le moment.',
+    'department_history' => 'Historique des départements',
+    'history_type' => [
+        'triage' => 'Triage',
+        'consultation' => 'Consultation',
+        'referral' => 'Référence',
+        'investigation' => 'Investigation',
+    ],
+    'history_status' => [
+        'waiting' => 'En attente',
+        'in_progress' => 'En cours',
+        'completed' => 'Terminé',
+        'cancelled' => 'Annulé',
+    ],
 ];

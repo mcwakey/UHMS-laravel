@@ -4,8 +4,8 @@
 @section('content')
 <x-page-header title="Blood Bank Reports" description="Inventory, requests, issues, transfusion safety, screening, and compatibility." icon="ti-report-analytics">
     <x-slot:actions>
-        <button type="button" class="btn btn-outline-primary btn-sm d-print-none" onclick="window.print()"><i class="ti ti-printer me-1"></i>Print</button>
-        <a href="{{ route('admin.blood-bank.dashboard') }}" class="btn btn-outline-secondary btn-sm d-print-none"><i class="ti ti-layout-dashboard me-1"></i>Dashboard</a>
+        <button type="button" class="btn btn-outline-primary btn-sm d-print-none" onclick="window.print()"><i class="ti ti-printer me-1"></i>{{ __('lab.print_button') }}</button>
+        <a href="{{ route('admin.blood-bank.dashboard') }}" class="btn btn-outline-secondary btn-sm d-print-none"><i class="ti ti-layout-dashboard me-1"></i>{{ __('blood_bank.dashboard_link') }}</a>
     </x-slot:actions>
 </x-page-header>
 
@@ -33,21 +33,21 @@
 <div class="card mb-3 d-print-none">
     <div class="card-body">
         <form class="row g-2 align-items-end">
-            <div class="col-md-2"><label class="form-label">From</label><input type="date" name="date_from" value="{{ $filters['date_from'] ?? '' }}" class="form-control"></div>
+            <div class="col-md-2"><label class="form-label">{{ __('medication_administration.from') }}</label><input type="date" name="date_from" value="{{ $filters['date_from'] ?? '' }}" class="form-control"></div>
             <div class="col-md-2"><label class="form-label">To</label><input type="date" name="date_to" value="{{ $filters['date_to'] ?? '' }}" class="form-control"></div>
-            <div class="col-md-2"><label class="form-label">Group</label><select name="blood_group" class="form-select"><option value="">All</option>@foreach(['O-','O+','A-','A+','B-','B+','AB-','AB+'] as $g)<option value="{{ $g }}" @selected(($filters['blood_group'] ?? '') === $g)>{{ $g }}</option>@endforeach</select></div>
-            <div class="col-md-2"><label class="form-label">Component</label><input name="component_type" value="{{ $filters['component_type'] ?? '' }}" class="form-control"></div>
-            <div class="col-md-2"><label class="form-label">Status</label><input name="status" value="{{ $filters['status'] ?? '' }}" class="form-control"></div>
-            <div class="col-md-2"><button class="btn btn-primary w-100">Run Report</button></div>
+            <div class="col-md-2"><label class="form-label">{{ __('blood_bank.group') }}</label><select name="blood_group" class="form-select"><option value="">{{ __('blood_bank.all') }}</option>@foreach(['O-','O+','A-','A+','B-','B+','AB-','AB+'] as $g)<option value="{{ $g }}" @selected(($filters['blood_group'] ?? '') === $g)>{{ $g }}</option>@endforeach</select></div>
+            <div class="col-md-2"><label class="form-label">{{ __('blood_bank.component') }}</label><input name="component_type" value="{{ $filters['component_type'] ?? '' }}" class="form-control"></div>
+            <div class="col-md-2"><label class="form-label">{{ __('medication_administration.status') }}</label><input name="status" value="{{ $filters['status'] ?? '' }}" class="form-control"></div>
+            <div class="col-md-2"><button class="btn btn-primary w-100">{{ __('blood_bank.run_report') }}</button></div>
         </form>
     </div>
 </div>
 
 <div class="card mb-3">
-    <div class="card-header bg-white"><h5 class="card-title mb-0">Inventory Report</h5></div>
+    <div class="card-header bg-white"><h5 class="card-title mb-0">{{ __('blood_bank.inventory_report') }}</h5></div>
     <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
-        <thead class="bg-light"><tr><th>Unit</th><th>Group</th><th>Component</th><th>Status</th><th>Screening</th><th>Expiry</th><th>Storage</th></tr></thead>
-        <tbody>@forelse($inventory as $unit)<tr><td>{{ $unit->unit_number }}</td><td>{{ $unit->blood_group }}</td><td>{{ $unit->component_type }}</td><td><x-status-badge :status="$unit->status" domain="blood_unit" size="sm" /></td><td><x-status-badge :status="$unit->screening_status" domain="screening" size="sm" /></td><td>{{ $unit->expiry_date?->format('d M Y') }}</td><td>{{ $unit->storageLocation->name ?? '—' }}</td></tr>@empty<tr><td colspan="7"><x-empty-state icon="ti-droplet-off" message="No inventory records." /></td></tr>@endforelse</tbody>
+        <thead class="bg-light"><tr><th>{{ __('blood_bank.unit') }}</th><th>{{ __('blood_bank.group') }}</th><th>{{ __('blood_bank.component') }}</th><th>{{ __('medication_administration.status') }}</th><th>{{ __('blood_bank.screening') }}</th><th>{{ __('blood_bank.expiry') }}</th><th>{{ __('blood_bank.storage') }}</th></tr></thead>
+        <tbody>@forelse($inventory as $unit)<tr><td>{{ $unit->unit_number }}</td><td>{{ $unit->blood_group }}</td><td>{{ $unit->component_type }}</td><td><x-status-badge :status="$unit->status" domain="blood_unit" size="sm" /></td><td><x-status-badge :status="$unit->screening_status" domain="screening" size="sm" /></td><td>{{ $unit->expiry_date?->format('d M Y') }}</td><td>{{ $unit->storageLocation->name ?? '—' }}</td></tr>@empty<tr><td colspan="7"><x-empty-state icon="ti-droplet-off" :message="__('blood_bank.no_inventory_records')" /></td></tr>@endforelse</tbody>
     </table></div></div>
     @if($inventory->hasPages())<div class="card-footer">{{ $inventory->links() }}</div>@endif
 </div>
@@ -55,19 +55,19 @@
 <div class="row g-3">
     <div class="col-xl-6">
         <div class="card">
-            <div class="card-header bg-white"><h5 class="card-title mb-0">Request Report</h5></div>
+            <div class="card-header bg-white"><h5 class="card-title mb-0">{{ __('blood_bank.request_report') }}</h5></div>
             <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
-                <thead class="bg-light"><tr><th>Request</th><th>Patient</th><th>Blood</th><th>Status</th><th>Date</th></tr></thead>
-                <tbody>@forelse($requests as $request)<tr><td>{{ $request->request_number }}</td><td>{{ $request->patient->full_name ?? '—' }}</td><td>{{ $request->blood_group }} x{{ $request->units_requested }}</td><td><x-status-badge :status="$request->status" domain="blood_request" size="sm" /></td><td>{{ $request->requested_at?->format('d M Y') }}</td></tr>@empty<tr><td colspan="5"><x-empty-state icon="ti-droplet-off" message="No blood requests found." /></td></tr>@endforelse</tbody>
+                <thead class="bg-light"><tr><th>{{ __('blood_bank.request') }}</th><th>{{ __('blood_bank.patient') }}</th><th>{{ __('blood_bank.blood') }}</th><th>{{ __('medication_administration.status') }}</th><th>{{ __('medication_administration.date') }}</th></tr></thead>
+                <tbody>@forelse($requests as $request)<tr><td>{{ $request->request_number }}</td><td>{{ $request->patient->full_name ?? '—' }}</td><td>{{ $request->blood_group }} x{{ $request->units_requested }}</td><td><x-status-badge :status="$request->status" domain="blood_request" size="sm" /></td><td>{{ $request->requested_at?->format('d M Y') }}</td></tr>@empty<tr><td colspan="5"><x-empty-state icon="ti-droplet-off" :message="__('blood_bank.no_blood_requests_found')" /></td></tr>@endforelse</tbody>
             </table></div></div>
         </div>
     </div>
     <div class="col-xl-6">
         <div class="card">
-            <div class="card-header bg-white"><h5 class="card-title mb-0">Issue / Transfusion Report</h5></div>
+            <div class="card-header bg-white"><h5 class="card-title mb-0">{{ __('blood_bank.issue_transfusion_report') }}</h5></div>
             <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
-                <thead class="bg-light"><tr><th>Issue</th><th>Unit</th><th>Patient</th><th>Status</th><th>Issued</th></tr></thead>
-                <tbody>@forelse($issues as $issue)<tr><td>{{ $issue->issue_number }}</td><td>{{ $issue->unit->unit_number ?? '—' }}</td><td>{{ $issue->patient->full_name ?? '—' }}</td><td><x-status-badge :status="$issue->transfusion_status" domain="blood_issue" size="sm" />{!! $issue->is_emergency_release ? ' <span class="badge bg-dark">ER</span>' : '' !!}</td><td>{{ $issue->issued_at?->format('d M Y H:i') }}</td></tr>@empty<tr><td colspan="5"><x-empty-state icon="ti-droplet-off" message="No blood issues found." /></td></tr>@endforelse</tbody>
+                <thead class="bg-light"><tr><th>{{ __('blood_bank.issue') }}</th><th>{{ __('blood_bank.unit') }}</th><th>{{ __('blood_bank.patient') }}</th><th>{{ __('medication_administration.status') }}</th><th>{{ __('blood_bank.issued') }}</th></tr></thead>
+                <tbody>@forelse($issues as $issue)<tr><td>{{ $issue->issue_number }}</td><td>{{ $issue->unit->unit_number ?? '—' }}</td><td>{{ $issue->patient->full_name ?? '—' }}</td><td><x-status-badge :status="$issue->transfusion_status" domain="blood_issue" size="sm" />{!! $issue->is_emergency_release ? ' <span class="badge bg-dark">ER</span>' : '' !!}</td><td>{{ $issue->issued_at?->format('d M Y H:i') }}</td></tr>@empty<tr><td colspan="5"><x-empty-state icon="ti-droplet-off" :message="__('blood_bank.no_blood_issues_found')" /></td></tr>@endforelse</tbody>
             </table></div></div>
         </div>
     </div>
@@ -75,9 +75,9 @@
 
 {{-- Donor Screening Report --}}
 <div class="card mt-3">
-    <div class="card-header bg-white"><h5 class="card-title mb-0">Donor Screening Report</h5></div>
+    <div class="card-header bg-white"><h5 class="card-title mb-0">{{ __('blood_bank.donor_screening_report') }}</h5></div>
     <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
-        <thead class="bg-light"><tr><th>Donor</th><th>Donor No.</th><th>Screening Date</th><th>Decision</th><th>Deferral Reason</th><th>Assessed By</th><th>Reviewed By</th></tr></thead>
+        <thead class="bg-light"><tr><th>{{ __('blood_bank.donor') }}</th><th>{{ __('blood_bank.donor_number') }}</th><th>{{ __('blood_bank.screening') }}</th><th>{{ __('blood_bank.decision') }}</th><th>{{ __('blood_bank.deferral_reason') }}</th><th>{{ __('blood_bank.assessed_by') }}</th><th>{{ __('blood_bank.reviewed_by') }}</th></tr></thead>
         <tbody>@forelse($donorScreenings as $s)<tr>
             <td>{{ $s->donor->full_name ?? '—' }}</td>
             <td>{{ $s->donor->donor_number ?? '—' }}</td>
@@ -86,16 +86,16 @@
             <td class="small">{{ $s->deferral_reason ?: '—' }}</td>
             <td>{{ $s->assessedBy->full_name ?? '—' }}</td>
             <td>{{ $s->reviewedBy->full_name ?? '—' }}</td>
-        </tr>@empty<tr><td colspan="7"><x-empty-state icon="ti-clipboard-off" message="No donor screening decisions." /></td></tr>@endforelse</tbody>
+        </tr>@empty<tr><td colspan="7"><x-empty-state icon="ti-clipboard-off" :message="__('blood_bank.no_donor_screening_decisions')" /></td></tr>@endforelse</tbody>
     </table></div></div>
     @if($donorScreenings->hasPages())<div class="card-footer">{{ $donorScreenings->links() }}</div>@endif
 </div>
 
 {{-- Infectious Disease Screening Report --}}
 <div class="card mt-3">
-    <div class="card-header bg-white"><h5 class="card-title mb-0">Infectious Disease Screening Report</h5></div>
+    <div class="card-header bg-white"><h5 class="card-title mb-0">{{ __('blood_bank.infectious_disease_screening_report') }}</h5></div>
     <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
-        <thead class="bg-light"><tr><th>Donation</th><th>Unit</th><th>Test</th><th>Result</th><th>Performed By</th><th>Verified By</th><th>Date</th></tr></thead>
+        <thead class="bg-light"><tr><th>{{ __('blood_bank.donation') }}</th><th>{{ __('blood_bank.unit') }}</th><th>{{ __('blood_bank.test') }}</th><th>{{ __('blood_bank.result') }}</th><th>{{ __('blood_bank.performed_by') }}</th><th>{{ __('blood_bank.verified') }}</th><th>{{ __('medication_administration.date') }}</th></tr></thead>
         <tbody>@forelse($diseaseScreenings as $t)<tr>
             <td>{{ $t->donation->donation_number ?? '—' }}</td>
             <td>{{ $t->donation->unit->unit_number ?? '—' }}</td>
@@ -104,16 +104,16 @@
             <td>{{ $t->performedBy->full_name ?? '—' }}</td>
             <td>{{ $t->verifiedBy->full_name ?? '—' }}</td>
             <td>{{ $t->performed_at?->format('d M Y') ?? '—' }}</td>
-        </tr>@empty<tr><td colspan="7"><x-empty-state icon="ti-flask-off" message="No screening tests recorded." /></td></tr>@endforelse</tbody>
+        </tr>@empty<tr><td colspan="7"><x-empty-state icon="ti-flask-off" :message="__('blood_bank.no_screening_tests_recorded')" /></td></tr>@endforelse</tbody>
     </table></div></div>
     @if($diseaseScreenings->hasPages())<div class="card-footer">{{ $diseaseScreenings->links() }}</div>@endif
 </div>
 
 {{-- Compatibility / Crossmatch Report --}}
 <div class="card mt-3">
-    <div class="card-header bg-white"><h5 class="card-title mb-0">Compatibility / Crossmatch Report</h5></div>
+    <div class="card-header bg-white"><h5 class="card-title mb-0">{{ __('blood_bank.compatibility_crossmatch_report') }}</h5></div>
     <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
-        <thead class="bg-light"><tr><th>Request</th><th>Patient</th><th>Recipient</th><th>Unit</th><th>Donor</th><th>Component</th><th>Compatibility</th><th>Reasoning</th><th>Result</th><th>By</th></tr></thead>
+        <thead class="bg-light"><tr><th>{{ __('blood_bank.request') }}</th><th>{{ __('blood_bank.patient') }}</th><th>{{ __('blood_bank.recipient') }}</th><th>{{ __('blood_bank.unit') }}</th><th>{{ __('blood_bank.donor') }}</th><th>{{ __('blood_bank.component') }}</th><th>{{ __('blood_bank.compatibility') }}</th><th>{{ __('blood_bank.reasoning') }}</th><th>{{ __('blood_bank.result') }}</th><th>{{ __('theatre.by') }}</th></tr></thead>
         <tbody>@forelse($crossmatches as $xm)<tr>
             <td>{{ $xm->request->request_number ?? '—' }}</td>
             <td>{{ $xm->patient->full_name ?? ($xm->request?->recipientName() ?? '—') }}</td>
@@ -125,16 +125,16 @@
             <td class="small text-muted" style="max-width:280px">{{ $xm->compatibility_reason ?? '—' }}</td>
             <td>{{ $xm->result }}</td>
             <td class="small">{{ $xm->performedBy->full_name ?? '—' }}@if($xm->verifiedBy)<div class="text-success">✓ {{ $xm->verifiedBy->full_name }}</div>@endif</td>
-        </tr>@empty<tr><td colspan="10"><x-empty-state icon="ti-droplet-off" message="No crossmatch records." /></td></tr>@endforelse</tbody>
+        </tr>@empty<tr><td colspan="10"><x-empty-state icon="ti-droplet-off" :message="__('blood_bank.no_crossmatch_records')" /></td></tr>@endforelse</tbody>
     </table></div></div>
     @if($crossmatches->hasPages())<div class="card-footer">{{ $crossmatches->links() }}</div>@endif
 </div>
 
 {{-- Transfusion Reaction Report --}}
 <div class="card mt-3">
-    <div class="card-header bg-white"><h5 class="card-title mb-0">Transfusion Reaction Report</h5></div>
+    <div class="card-header bg-white"><h5 class="card-title mb-0">{{ __('blood_bank.transfusion_reaction_report') }}</h5></div>
     <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm align-middle mb-0">
-        <thead class="bg-light"><tr><th>Patient</th><th>Unit</th><th>Component</th><th>Reaction Type</th><th>Outcome</th><th>Notes</th><th>Transfused By</th><th>Date</th></tr></thead>
+        <thead class="bg-light"><tr><th>{{ __('blood_bank.patient') }}</th><th>{{ __('blood_bank.unit') }}</th><th>{{ __('blood_bank.component') }}</th><th>{{ __('blood_bank.reaction') }}</th><th>{{ __('theatre.outcome') }}</th><th>{{ __('blood_bank.notes') }}</th><th>{{ __('theatre.by') }}</th><th>{{ __('medication_administration.date') }}</th></tr></thead>
         <tbody>@forelse($reactions as $r)<tr>
             <td>{{ $r->patient->full_name ?? '—' }}</td>
             <td>{{ $r->unit->unit_number ?? '—' }}</td>
@@ -144,7 +144,7 @@
             <td class="small">{{ $r->reaction_notes ?: '—' }}</td>
             <td>{{ $r->transfusedBy->full_name ?? '—' }}</td>
             <td>{{ $r->transfused_at?->format('d M Y H:i') ?? '—' }}</td>
-        </tr>@empty<tr><td colspan="8"><x-empty-state icon="ti-mood-check" message="No transfusion reactions recorded." /></td></tr>@endforelse</tbody>
+        </tr>@empty<tr><td colspan="8"><x-empty-state icon="ti-mood-check" :message="__('blood_bank.no_transfusion_reactions')" /></td></tr>@endforelse</tbody>
     </table></div></div>
     @if($reactions->hasPages())<div class="card-footer">{{ $reactions->links() }}</div>@endif
 </div>

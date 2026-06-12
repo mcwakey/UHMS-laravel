@@ -180,6 +180,7 @@ return [
     'qty_col'                   => 'Qty',
     'notes_col'                 => 'Notes',
     'consumables_blank_hint'    => 'Leave blank if no consumables were used for this test.',
+    'search_product_placeholder'=> 'Search product...',
 
     // print.blade.php
     'print_button'              => 'Print',
