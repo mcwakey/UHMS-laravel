@@ -85,7 +85,7 @@ class PatientMergePreviewService
 
             $counts[] = [
                 'table' => $definition['table'],
-                'label' => $definition['label'],
+                'label' => $this->recordLabel($definition['table'], $definition['label']),
                 'count' => $count,
                 'handler' => $definition['handler'] ?? 'generic',
             ];
@@ -105,12 +105,18 @@ class PatientMergePreviewService
 
     public function recordTables(): array
     {
-        return self::RECORD_TABLES;
+        return array_map(function (array $definition) {
+            $definition['label'] = $this->recordLabel($definition['table'], $definition['label']);
+
+            return $definition;
+        }, self::RECORD_TABLES);
     }
 
     public function demographicFields(): array
     {
-        return self::DEMOGRAPHIC_FIELDS;
+        return collect(self::DEMOGRAPHIC_FIELDS)
+            ->mapWithKeys(fn (string $label, string $field) => [$field => $this->demographicLabel($field, $label)])
+            ->all();
     }
 
     public function tableExists(string $table): bool
@@ -149,7 +155,7 @@ class PatientMergePreviewService
 
             $comparison[] = [
                 'field' => $field,
-                'label' => $label,
+                'label' => $this->demographicLabel($field, $label),
                 'main' => $mainValue,
                 'duplicate' => $duplicateValue,
                 'differs' => (string) $mainValue !== (string) $duplicateValue,
@@ -165,17 +171,31 @@ class PatientMergePreviewService
         $warnings = [];
 
         if ($mainPatient->isMerged()) {
-            $warnings[] = 'The selected main folder is already merged. Use its final patient folder instead.';
+            $warnings[] = __('patients.merge_preview.warnings.main_already_merged');
         }
 
         if ($duplicatePatient->isMerged()) {
-            $warnings[] = 'The selected duplicate folder has already been merged.';
+            $warnings[] = __('patients.merge_preview.warnings.duplicate_already_merged');
         }
 
         if ($duplicatePatient->is_temporary) {
-            $warnings[] = 'The duplicate folder is a temporary emergency identity. Its temporary number will be retained as an alias.';
+            $warnings[] = __('patients.merge_preview.warnings.temporary_emergency_identity');
         }
 
         return $warnings;
+    }
+
+    private function recordLabel(string $table, string $fallback): string
+    {
+        return __("patients.merge_preview.records.{$table}", [], app()->getLocale()) !== "patients.merge_preview.records.{$table}"
+            ? __("patients.merge_preview.records.{$table}")
+            : $fallback;
+    }
+
+    private function demographicLabel(string $field, string $fallback): string
+    {
+        return __("patients.merge_preview.demographics.{$field}", [], app()->getLocale()) !== "patients.merge_preview.demographics.{$field}"
+            ? __("patients.merge_preview.demographics.{$field}")
+            : $fallback;
     }
 }

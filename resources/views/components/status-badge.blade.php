@@ -32,7 +32,7 @@
     $sizeClass = $size === 'sm' ? ' fs-12' : '';
 
     // Translated label: statuses.{domain}.{status} → statuses.default.{status}
-    // → enum label() → title-cased raw. Explicit `label` prop always wins.
+    // → enum translatedLabel()/label() → title-cased raw. Explicit `label` prop always wins.
     $langKey = strtolower(trim($raw));
     if ($label !== null) {
         $text = $label;
@@ -40,6 +40,8 @@
         $text = __("statuses.{$domain}.{$langKey}");
     } elseif ($langKey !== '' && \Illuminate\Support\Facades\Lang::has("statuses.default.{$langKey}")) {
         $text = __("statuses.default.{$langKey}");
+    } elseif ($enum && method_exists($enum, 'translatedLabel')) {
+        $text = $enum->translatedLabel();
     } elseif ($enum && method_exists($enum, 'label')) {
         $text = $enum->label();
     } else {

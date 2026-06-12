@@ -5,84 +5,70 @@ There is currently no docs/UHMS_IMPLEMENTATION_SKILL.md file in this project.
 Do not try to read it.
 Follow the instructions in this prompt directly.
 
-We ran a full Localisation Coverage Audit.
+We completed:
 
-Audit results:
+* Localisation Phases 1–5
+* Localisation Coverage Audit
+* Localisation Coverage Cleanup — Real Runtime Messages
 
-* 1,248 files scanned
-* 551 files with possible hardcoded strings
-* 19,758 hardcoded candidates found
-* Many candidates are false positives from demo/template/sample pages, comments, CSS/JS selectors, or internal strings
-* But real remaining user-facing strings still exist in controllers, services, consultations, theatre, blood bank, medication administration, reports/accounting labels, and some live Blade pages
+The latest cleanup report shows:
+
+* files scanned stayed at 1,248
+* files with candidates reduced from 551 to 536
+* candidates reduced from 19,758 to 19,723
+* controller/API messages and several report/service labels were fixed
+* many remaining candidates are demo/template/sample pages
+* `SidebarMenuBuilder.php` still appears because raw source labels are translated downstream
+* enum/model labels need a dedicated safe pass
+* real Blade screens still need a separate cleanup excluding demo/template files
 
 Now proceed with:
 
-# UHMS Localisation Coverage Cleanup — Real Pages Only
+# UHMS Localisation Phase 6 — Real Blade Screens & Enum/Status Label Cleanup
 
 ## Goal
 
-Clean up the real remaining untranslated UHMS user-facing strings found by the localisation coverage audit.
+Clean remaining real UHMS Blade screens and safely localise enum/model/status labels that are visible to users.
 
-This phase must separate real application pages from template/demo/sample pages.
+This phase must avoid wasting time on demo/template/sample pages.
 
-Do not blindly translate every candidate.
-Do not translate vendor/template demo pages unless they are actually used by UHMS routes.
-Do not waste time on commented-out code.
-Do not translate CSS classes, JS selectors, route names, permission names, config keys, or internal codes.
-Do not claim 100% until real application files are clean.
-
----
-
-# 1. Start From The Audit Report
-
-Open and use:
-
-```text
-docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
-```
-
-Use it as the source list for cleanup.
-
-First classify findings into:
-
-1. Real UHMS application files — fix now
-2. Template/demo/sample files — ignore or move to TODO
-3. False positives — document and ignore
-4. Internal/non-visible strings — ignore
-5. Risky strings needing manual review — document
+Do not blindly translate all audit candidates.
+Do not translate demo/template files unless they are actively used by UHMS routes or menus.
+Do not change stored enum/database values.
+Do not change business logic.
+Do not change workflow logic.
+Do not create a parallel localisation system.
 
 ---
 
-# 2. High Priority Real Application Areas
+# 1. Audit Real Routes First
 
-Prioritise these real UHMS areas first:
+Before editing Blade files, map real runtime routes to views.
 
-```text
-resources/views/consultations/
-resources/views/theatre/
-resources/views/blood-bank/
-resources/views/medication-administration/
-resources/views/hr/
-resources/views/store/
-resources/views/admin/
-resources/views/layout/partials/sidebar.blade.php
-app/Http/Controllers/
-app/Services/
-app/Models/
-app/Enums/
-app/Helpers/
+Use:
+
+```bash
+php artisan route:list
 ```
 
-Also review:
+Then identify which Blade files are actually used by active UHMS routes/controllers.
 
-```text
-resources/views/emails/
-resources/views/mail/
-resources/js/
-public/js/
-```
+Create a classification list:
 
-Do not prioritise obvious template/demo files such as:
+1. Real active UHMS views — clean now
+2. Shared components used by real views — clean now
+3. Demo/template/sample views — ignore/document
+4. Legacy unused views — document as cleanup candidates
+5. Unsure views — document for manual review
+
+Do not rely only on filename.
+Check route/controller usage.
+
+---
+
+# 2. Exclude Demo/Template Views
+
+Unless proven active, exclude these from translation cleanup:
 
 ```text
 resources/views/widgets.blade.php
@@ -97,154 +83,25 @@ resources/views/layout-hidden.blade.php
 resources/views/layout-hover-view.blade.php
 resources/views/layout-mini.blade.php
 resources/views/layout-rtl.blade.php
+resources/views/components/modal-popup.blade.php
 ```
 
-Unless any of those are actively linked by UHMS routes/menu and used in production.
+For each excluded file, document:
+
+* whether it has a route
+* whether it is linked in menu/sidebar
+* whether it appears to be template/demo
+* whether it should be deleted, archived, or left as reference later
+
+Do not delete these files in this phase.
 
 ---
 
-# 3. Controllers Cleanup
+# 3. Real Blade Screen Cleanup
 
-Fix real user-facing hardcoded messages in controllers.
+Clean real active Blade views only.
 
-Search for:
-
-```php
-->with('success',
-->with('error',
-->with('warning',
-->with('info',
-session()->flash(
-return response()->json(['message' =>
-'description' => '...
-'title' => '...
-'label' => '...
-```
-
-Examples from the audit include:
-
-* Appointment check-in success message
-* Medication administration recorded messages
-* Patient insurance added/updated messages
-* Service catalog validation and price entry removed messages
-* Visit failure message
-* Billing report payer/status labels
-* Consultation prescription/procedure JSON messages
-* Activity log export description
-
-Use existing `lang/en/messages.php` and `lang/fr/messages.php` where appropriate.
-
-If a message belongs to a module, place it cleanly:
-
-```php
-__('messages.appointments.checked_in_visit_created')
-__('messages.medication_administration.recorded')
-__('messages.patient_insurance.added')
-__('messages.service_catalog.price_entry_removed')
-__('messages.visits.create_failed')
-```
-
-Use named placeholders for dynamic values.
-
-Do not change controller business logic.
-
----
-
-# 4. Services Cleanup
-
-Fix real user-facing labels/messages in services where those strings are displayed in UI, logs, notifications, timeline entries, reports, task titles, or API responses.
-
-Examples from the audit include:
-
-* ARAgingService / APAgingService labels
-* FinancialReportService labels
-* PatientMergePreviewService labels
-* ProcedureReportService stage labels
-* ProcedureWorkflowService titles
-* ProcedureRequestService titles
-* ProcedureScheduleService titles
-* LabService titles
-* InvestigationRequestService titles
-* EmergencyCaseService titles
-* EmergencyBedBillingService titles
-* AdmissionService titles
-* AdmissionBedBillingService titles
-* BloodDonationService titles
-* BloodIssueService titles
-* BloodCrossmatchService titles
-* QueueService titles
-* PharmacyService titles
-* ServiceRenderingService titles
-* JournalEntryService reversal labels
-
-Use clean language keys.
-
-Preferred files:
-
-```text
-lang/en/messages.php
-lang/fr/messages.php
-lang/en/statuses.php
-lang/fr/statuses.php
-lang/en/reports.php
-lang/fr/reports.php
-lang/en/common.php
-lang/fr/common.php
-```
-
-Create a new module file only if necessary, for example:
-
-```text
-lang/en/clinical.php
-lang/fr/clinical.php
-lang/en/theatre.php
-lang/fr/theatre.php
-lang/en/blood_bank.php
-lang/fr/blood_bank.php
-```
-
-Maintain EN/FR parity.
-
-Do not translate internal database values.
-Do not change stored enum values.
-Do not change accounting logic.
-Do not change workflow logic.
-Do not bypass ActivityLogService.
-
----
-
-# 5. Sidebar/Menu Cleanup
-
-The audit flagged `app/Services/SidebarMenuBuilder.php`.
-
-This service may already have a `translateLabel()` hook.
-
-Do not blindly wrap every menu label with `__()` if the builder already translates labels later.
-
-Instead:
-
-1. Inspect the menu builder.
-2. If labels are intentionally raw and translated by `translateLabel()`, document as false positive.
-3. If some labels are not passing through translation, fix those.
-4. Ignore commented-out menu blocks unless they are active.
-
-Ensure active menu labels are translated through:
-
-```php
-__('menu.key')
-```
-
-or the existing `translateLabel()` mechanism.
-
-Do not break permissions or module visibility.
-
----
-
-# 6. Real Blade Views Cleanup
-
-Translate remaining real Blade files.
-
-Focus on:
+Prioritise:
 
 ```text
 resources/views/consultations/
@@ -252,140 +109,235 @@ resources/views/theatre/
 resources/views/blood-bank/
 resources/views/medication-administration/
 resources/views/hr/
-resources/views/store/
 resources/views/admin/
+resources/views/store/
+resources/views/layout/partials/
+resources/views/components/
+resources/views/partials/
 resources/views/emails/
 resources/views/mail/
 ```
 
-Translate:
+Translate visible:
 
-* headings
+* page headings
+* section headings
+* breadcrumbs
 * buttons
-* tabs
-* modal labels
-* form labels
+* labels
 * placeholders
 * table headers
+* filter labels
+* modal titles
+* modal button text
 * empty states
-* action labels
-* alert text
+* alerts
+* dropdown actions
 * print labels
 * email labels
+* JavaScript UI strings inside Blade
 
 Do not translate:
 
-* clinical notes
-* diagnosis text
-* product names
-* service names entered by users
-* patient/staff names
+* patient names
+* doctor names
 * supplier names
+* product names entered by users
+* service names entered by users unless system-defined
+* clinical free text
+* diagnosis notes
+* audit event codes
 * route names
 * permission names
 * internal codes
+* CSS classes
+* JavaScript selectors
+* units like mmHg, bpm, °C, kg, ml
+* currency symbols
+* UHMS brand name
 
 ---
 
-# 7. Template/Demo Files
+# 4. Enum / Model / Status Label Cleanup
 
-For obvious template/demo files, do not translate unless used in production.
-
-Create a section in the cleanup report listing ignored template/demo files, for example:
+Audit:
 
 ```text
-resources/views/widgets.blade.php
-resources/views/ui-dropdowns.blade.php
-resources/views/tables-basic.blade.php
-resources/views/ui-modals.blade.php
-resources/views/social-feed.blade.php
-resources/views/form-select2.blade.php
-resources/views/layout-dark.blade.php
-resources/views/layout-full-width.blade.php
-resources/views/layout-hidden.blade.php
-resources/views/layout-hover-view.blade.php
-resources/views/layout-mini.blade.php
-resources/views/layout-rtl.blade.php
+app/Enums/
+app/Models/
+app/Services/
+app/Helpers/
 ```
 
-For each ignored file, state:
+Look for:
 
-* why it was ignored
-* whether it is linked by any route/menu
-* whether it should be deleted later, archived, or left as template reference
+```php
+label()
+getLabelAttribute()
+statusLabel()
+typeLabel()
+displayName()
+humanName()
+```
 
-Do not delete files in this phase unless clearly safe.
+Also check enum-like classes such as:
+
+```text
+InvoiceStatus
+ClaimStatus
+BillingType
+PaymentStatus
+VisitStatus
+AdmissionStatus
+EmergencyStatus
+ProcedureStatus
+StockMovementType
+```
+
+If labels are visible to users, localise them safely.
+
+Preferred approach:
+
+* do not change stored values
+* do not change canonical enum constants
+* add `translatedLabel()` if changing `label()` is risky
+* use existing `statuses.php` groups where possible
+* use module-specific lang files when needed
+
+Example:
+
+```php
+public function translatedLabel(): string
+{
+    return __('statuses.invoices.' . $this->value);
+}
+```
+
+If an existing status badge resolver already handles translation, reuse it.
+
+Do not duplicate status logic.
 
 ---
 
-# 8. Translation Key Rules
+# 5. Service Event Title Review
 
-Add EN and FR keys together.
+Review remaining service `title` and `message` findings.
 
-Use existing files when practical:
+Focus on services where strings may appear in:
+
+* patient timeline
+* visit timeline
+* notifications
+* audit logs
+* report payloads
+* task queues
+* dashboard cards
+* API responses
+
+Known areas from previous report:
+
+* admission workflow services
+* blood bank services
+* procedure workflow services
+* lab workflow services
+* merge-preview services
+* queue services
+* emergency services
+* pharmacy services
+
+Classify each string:
+
+1. User-facing timeline/notification/report/API label — translate
+2. Internal audit/event code — do not translate
+3. Stored canonical event title — risky, document for later
+4. False positive — ignore
+
+Do not change audit/event semantics accidentally.
+
+---
+
+# 6. Sidebar/Menu Handling
+
+Inspect `app/Services/SidebarMenuBuilder.php`.
+
+If active labels are translated downstream through `translateLabel()` or existing menu translation logic, document this as a false positive.
+
+Only fix labels that are active and not translated at render time.
+
+Ignore commented-out menu blocks.
+
+Do not break:
+
+* permissions
+* module visibility
+* menu hierarchy
+* route names
+* icon names
+
+---
+
+# 7. Translation Keys
+
+Use existing files where possible:
 
 ```text
 lang/en/common.php
 lang/fr/common.php
-lang/en/messages.php
-lang/fr/messages.php
 lang/en/menu.php
 lang/fr/menu.php
 lang/en/statuses.php
 lang/fr/statuses.php
+lang/en/messages.php
+lang/fr/messages.php
 lang/en/reports.php
 lang/fr/reports.php
-lang/en/lab.php
-lang/fr/lab.php
-lang/en/emergency.php
-lang/fr/emergency.php
-lang/en/admissions.php
-lang/fr/admissions.php
-lang/en/billing.php
-lang/fr/billing.php
-lang/en/payments.php
-lang/fr/payments.php
-lang/en/invoices.php
-lang/fr/invoices.php
-lang/en/stock.php
-lang/fr/stock.php
-```
-
-Create new lang files only if the module is active and has enough unique text:
-
-```text
+lang/en/consultations.php
+lang/fr/consultations.php
 lang/en/theatre.php
 lang/fr/theatre.php
 lang/en/blood_bank.php
 lang/fr/blood_bank.php
 lang/en/hr.php
 lang/fr/hr.php
-lang/en/consultations.php
-lang/fr/consultations.php
+lang/en/lab.php
+lang/fr/lab.php
+lang/en/stock.php
+lang/fr/stock.php
 ```
 
-Avoid messy generic keys.
-Avoid duplicate keys with the same meaning.
+If a needed module file does not exist, create both EN and FR files.
+
+Maintain EN/FR parity.
+
+Avoid duplicate keys.
+Avoid vague keys like `label1`, `text2`, `button_new`.
 
 ---
 
-# 9. Repeat Audit After Cleanup
+# 8. Re-run Localisation Audit
 
-After fixes, run the localisation audit again.
+After cleanup, rerun:
 
-The new report should show:
+```bash
+php scripts/localisation-audit.php
+```
 
-* fewer real application candidates
-* template/demo candidates separated
-* remaining false positives documented
+The total candidate count may still be high because of excluded demo/template files.
+
+That is acceptable.
+
+But the report must clearly show:
+
+* real active UHMS views cleaned
+* demo/template files documented separately
+* enum/status labels handled or documented
+* remaining real candidates listed clearly
 * no hardcoded controller flash literals
-* no obvious untranslated real Blade text in active modules
-
-The total candidate count may still be high because of template/demo files. That is acceptable if real UHMS files are clean and documented.
+* no obvious untranslated text in active high-priority modules
 
 ---
 
-# 10. Verification
+# 9. Verification
 
 Run:
 
@@ -396,63 +348,69 @@ php artisan cache:clear
 php artisan route:list
 ```
 
-Run PHP syntax checks:
+Run lint:
 
 ```bash
 find app database routes config -name "*.php" -print0 | xargs -0 -n1 php -l
 for f in lang/en/*.php lang/fr/*.php; do php -l "$f"; done
 ```
 
-Run nested EN/FR parity verification.
+Run nested EN/FR parity check.
 
 Required:
 
 * 0 missing EN keys
 * 0 missing FR keys
-* PHP lint passes
+* touched files pass PHP lint
 * caches clear
+* route list works
+
+If full recursive lint times out, run touched-file lint and document the timeout honestly.
 
 ---
 
-# 11. Documentation
+# 10. Documentation
 
 Create:
 
 ```text
-docs/LOCALISATION_COVERAGE_CLEANUP_REPORT.md
+docs/LOCALISATION_PHASE_6_REAL_BLADE_ENUM_STATUS_CLEANUP_REPORT.md
 ```
 
 Include:
 
-* audit summary before cleanup
-* files classified as real application files
-* files classified as template/demo files
-* false positives ignored
-* files fixed
+* route-to-view audit summary
+* real active views cleaned
+* shared components cleaned
+* demo/template views excluded
+* legacy unused views documented
+* enum/model/status labels updated
+* service event titles translated or classified
+* sidebar/menu false-positive decision
 * language files changed
-* remaining candidates after re-audit
+* audit result after cleanup
 * EN/FR parity result
-* PHP lint result
-* route/list/cache verification result
+* lint/cache/route verification result
 * remaining TODOs
 
 ---
 
-# 12. Acceptance Criteria
+# 11. Acceptance Criteria
 
 This phase is complete when:
 
-* real active UHMS pages from the audit are cleaned
-* real controller flash/API messages are translated
-* real service-generated display labels are translated
-* menu/sidebar active labels are translated or confirmed handled by `translateLabel()`
-* template/demo files are documented separately
-* false positives are documented
+* real active UHMS Blade views from the audit are cleaned
+* demo/template files are separated from real app files
+* enum/status labels visible to users are translated or safely documented
+* service event titles are translated or classified
+* sidebar/menu false positives are documented
 * EN/FR parity remains clean
-* PHP lint passes
+* touched files pass lint
 * caches clear
+* route list works
 * no business logic was changed
+* no workflow logic was changed
 * no duplicate localisation system was created
 * no Tailwind or new packages introduced
 
-Proceed with UHMS Localisation Coverage Cleanup — Real Pages Only now.
+Proceed with UHMS Localisation Phase 6 now.

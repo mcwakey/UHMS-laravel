@@ -1,12 +1,12 @@
 # UHMS Localisation Coverage Audit Report
 
-Date: 2026-06-12 13:05:15 +02:00
+Date: 2026-06-12 13:36:27 +02:00
 
 ## Summary
 
-- Total files scanned: 1248
-- Total files with possible hardcoded strings: 536
-- Total hardcoded candidates found: 19723
+- Total files scanned: 1252
+- Total files with possible hardcoded strings: 534
+- Total hardcoded candidates found: 19694
 - Modules affected: 310
 
 ### Modules Affected
@@ -20,15 +20,15 @@ Date: 2026-06-12 13:05:15 +02:00
 - ui-dropdowns.blade.php: 336
 - store: 248
 - theatre: 248
-- blood-bank: 246
 - tables-basic.blade.php: 240
+- blood-bank: 229
 - patterns: 208
 - ui-modals.blade.php: 202
 - social-feed.blade.php: 201
 - form-select2.blade.php: 196
 - doctors.blade.php: 178
-- medication-administration: 178
 - hr: 171
+- medication-administration: 166
 - payments.blade.php: 161
 - email.blade.php: 155
 - doctors-patient-details.blade.php: 153
@@ -11072,77 +11072,6 @@ Date: 2026-06-12 13:05:15 +02:00
   - Context: `<p class="truncate-2-lines mb-0">Start your day with 2 minutes of silence. Taking a walk without your phone. Getting enough sleep</p>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/blogs.blade.php.php :: start_your_day_with_2_minutes_of_silence_taking_a_`
-
-### `resources/views/blood-bank/dashboard.blade.php`
-
-- Line 2 [high]: `Blood Bank Dashboard`
-  - Context: `@section('title', 'Blood Bank Dashboard')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: blood_bank_dashboard`
-- Line 5 [high]: `Blood Bank Dashboard`
-  - Context: `<x-page-header title="Blood Bank Dashboard" description="Inventory, requests, expiring units, and issue safety at a glance." icon="ti-droplet-filled">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: blood_bank_dashboard`
-- Line 40 [high]: `Inventory By Group`
-  - Context: `<h5 class="card-title mb-0">Inventory By Group</h5>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: inventory_by_group`
-- Line 41 [high]: `All Units`
-  - Context: `<a class="btn btn-sm btn-outline-primary" href="{{ route('admin.blood-bank.units.index') }}">All Units</a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: all_units`
-- Line 46 [high]: `Group`
-  - Context: `<thead class="bg-light"><tr><th>Group</th><th>Component</th><th>Status</th><th class="text-end">Units</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: group`
-- Line 46 [high]: `Component`
-  - Context: `<thead class="bg-light"><tr><th>Group</th><th>Component</th><th>Status</th><th class="text-end">Units</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: component`
-- Line 46 [high]: `Units`
-  - Context: `<thead class="bg-light"><tr><th>Group</th><th>Component</th><th>Status</th><th class="text-end">Units</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: units`
-- Line 67 [high]: `Pending / Active Requests`
-  - Context: `<h5 class="card-title mb-0">Pending / Active Requests</h5>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: pending_active_requests`
-- Line 68 [high]: `Open Worklist`
-  - Context: `<a class="btn btn-sm btn-outline-primary" href="{{ route('admin.blood-bank.requests.index') }}">Open Worklist</a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: open_worklist`
-- Line 73 [high]: `Request`
-  - Context: `<thead class="bg-light"><tr><th>Request</th><th>Patient</th><th>Blood</th><th>Status</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: request`
-- Line 73 [high]: `Patient`
-  - Context: `<thead class="bg-light"><tr><th>Request</th><th>Patient</th><th>Blood</th><th>Status</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: patient`
-- Line 73 [high]: `Blood`
-  - Context: `<thead class="bg-light"><tr><th>Request</th><th>Patient</th><th>Blood</th><th>Status</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: blood`
-- Line 91 [high]: `Expiring Soon`
-  - Context: `<div class="card-header bg-white"><h5 class="card-title mb-0 text-danger">Expiring Soon</h5></div>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: expiring_soon`
-- Line 95 [high]: `Unit`
-  - Context: `<thead class="bg-light"><tr><th>Unit</th><th>Group</th><th>Location</th><th>Expiry</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: unit`
-- Line 95 [high]: `Group`
-  - Context: `<thead class="bg-light"><tr><th>Unit</th><th>Group</th><th>Location</th><th>Expiry</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: group`
-- Line 95 [high]: `Location`
-  - Context: `<thead class="bg-light"><tr><th>Unit</th><th>Group</th><th>Location</th><th>Expiry</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: location`
-- Line 95 [high]: `Expiry`
-  - Context: `<thead class="bg-light"><tr><th>Unit</th><th>Group</th><th>Location</th><th>Expiry</th></tr></thead>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/blood_bank.php :: expiry`
 
 ### `resources/views/blood-bank/donation-view.blade.php`
 
@@ -49962,57 +49891,6 @@ Date: 2026-06-12 13:05:15 +02:00
   - Context: `<a href="javascript:void(0);" class="btn btn-primary">Save Changes</a>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Suggested key: `lang/{en,fr}/maintenance_mode_settings.blade.php.php :: save_changes`
-
-### `resources/views/medication-administration/admission-board.blade.php`
-
-- Line 2 [high]: `Admission Medication Board`
-  - Context: `@section('title', 'Admission Medication Board')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: admission_medication_board`
-- Line 5 [high]: `Admission Medication Board`
-  - Context: `<x-page-header title="Admission Medication Board" description="Due, overdue, upcoming, and completed medication tasks for admitted patients." icon="ti-pill">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: admission_medication_board`
-- Line 9 [high]: `All wards`
-  - Context: `<option value="">All wards</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: all_wards`
-- Line 25 [high]: `Patient`
-  - Context: `<th>Patient</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: patient`
-- Line 26 [high]: `Ward / Bed`
-  - Context: `<th>Ward / Bed</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: ward_bed`
-- Line 27 [high]: `Active Meds`
-  - Context: `<th class="text-center">Active Meds</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: active_meds`
-- Line 28 [high]: `Due Now`
-  - Context: `<th class="text-center">Due Now</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: due_now`
-- Line 29 [high]: `Overdue`
-  - Context: `<th class="text-center">Overdue</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: overdue`
-- Line 30 [high]: `Upcoming`
-  - Context: `<th class="text-center">Upcoming</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: upcoming`
-- Line 31 [high]: `Completed Today`
-  - Context: `<th class="text-center">Completed Today</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: completed_today`
-- Line 32 [high]: `Action`
-  - Context: `<th class="text-end">Action</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: action`
-- Line 67 [high]: `No medication tasks`
-  - Context: `<td colspan="8"><x-empty-state icon="ti-pill-off" title="No medication tasks" message="No admitted patients with medication tasks found." /></td>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Suggested key: `lang/{en,fr}/medication_administration.php :: no_medication_tasks`
 
 ### `resources/views/medication-administration/admission-show.blade.php`
 
