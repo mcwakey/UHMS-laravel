@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Suppliers')
+@section('title', __('store.suppliers'))
 
 @section('content')
 <!-- Page Header -->
@@ -39,12 +39,12 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Name</th>
-                        <th>Contact Person</th>
-                        <th>Phone</th>
-                        <th>Email</th>
-                        <th>POs</th>
-                        <th>Status</th>
+                        <th>{{ __('common.name') }}</th>
+                        <th>{{ __('store.contact_person') }}</th>
+                        <th>{{ __('common.phone') }}</th>
+                        <th>{{ __('common.email') }}</th>
+                        <th>{{ __('store.pos') }}</th>
+                        <th>{{ __('common.status') }}</th>
                         <th class="text-end">Actions</th>
                     </tr>
                 </thead>

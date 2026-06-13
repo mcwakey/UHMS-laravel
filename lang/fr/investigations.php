@@ -105,4 +105,19 @@ return [
     'update_stock_title'        => 'Mettre à jour le stock',
     'update_btn'                => 'Mettre à jour',
     'na_label'                  => 'N/A',
+
+    // Page des consommables d'investigation
+    'investigation_consumables' => 'Consommables d\'investigation',
+    'consumables_description'   => 'Vue filtrée des <strong>produits</strong> liés aux départements Investigation / Laboratoire / Radiologie. Les quantités ci-dessous reflètent le solde disponible à l\'<strong>emplacement de stock du laboratoire</strong>. Les nouveaux produits sont ajoutés depuis <em>Stock &rsaquo; Produits</em>.',
+    'department_available_qty'  => 'Qté disponible du département',
+    'main_stock_qty'            => 'Qté du stock principal',
+
+    // Catalogue d'investigation
+    'investigation_catalogue'   => 'Catalogue d\'investigation',
+    'all_investigation_departments' => 'Tous les départements d\'investigation',
+    'configure_subtitle'        => 'Configurez les en-têtes et les critères de résultat pour les services proposés par les départements de type investigation.',
+    'service_name_or_code'      => 'Nom ou code du service...',
+    'service'                   => 'Service',
+    'headers'                   => 'En-têtes',
+    'criteria'                  => 'Critères',
 ];

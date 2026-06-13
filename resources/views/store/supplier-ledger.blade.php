@@ -51,36 +51,36 @@
                     <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control form-control-sm">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small mb-1">Type</label>
+                    <label class="form-label small mb-1">{{ __('common.type') }}</label>
                     <select name="entry_type" class="form-select form-select-sm">
-                        <option value="">All types</option>
+                        <option value="">{{ __('store.all_types') }}</option>
                         @foreach($types as $t)
                             <option value="{{ $t }}" @selected(request('entry_type') === $t)>{{ str_replace('_', ' ', $t) }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small mb-1">Debit/Credit</label>
+                    <label class="form-label small mb-1">{{ __('store.debit_credit') }}</label>
                     <select name="debit_credit" class="form-select form-select-sm">
-                        <option value="">Both</option>
-                        <option value="debit" @selected(request('debit_credit') === 'debit')>Debit</option>
-                        <option value="credit" @selected(request('debit_credit') === 'credit')>Credit</option>
+                        <option value="">{{ __('store.both') }}</option>
+                        <option value="debit" @selected(request('debit_credit') === 'debit')>{{ __('store.debit') }}</option>
+                        <option value="credit" @selected(request('debit_credit') === 'credit')>{{ __('store.credit') }}</option>
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small mb-1">Source</label>
+                    <label class="form-label small mb-1">{{ __('stock.source') }}</label>
                     <select name="source_type" class="form-select form-select-sm">
-                        <option value="">Any</option>
+                        <option value="">{{ __('store.any') }}</option>
                         @foreach($sourceTypes as $sourceType)
                             <option value="{{ $sourceType }}" @selected(request('source_type') === $sourceType)>{{ class_basename($sourceType) }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-2 d-grid">
-                    <button class="btn btn-primary btn-sm" type="submit"><i class="ti ti-filter me-1"></i>Filter</button>
+                    <button class="btn btn-primary btn-sm" type="submit"><i class="ti ti-filter me-1"></i>{{ __('common.filter') }}</button>
                 </div>
                 <div class="col-md-2 d-grid">
-                    <a href="{{ route('admin.store.suppliers.ledger', $supplier) }}" class="btn btn-outline-secondary btn-sm">Reset</a>
+                    <a href="{{ route('admin.store.suppliers.ledger', $supplier) }}" class="btn btn-outline-secondary btn-sm">{{ __('common.reset') }}</a>
                 </div>
             </div>
         </form>
@@ -93,14 +93,14 @@
             <table class="table table-hover mb-0 align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Date</th>
-                        <th>Type</th>
-                        <th>Description</th>
-                        <th class="text-end">Debit</th>
-                        <th class="text-end">Credit</th>
-                        <th class="text-end">Balance</th>
-                        <th>Source</th>
-                        <th>By</th>
+                        <th>{{ __('common.date') }}</th>
+                        <th>{{ __('common.type') }}</th>
+                        <th>{{ __('common.description') }}</th>
+                        <th class="text-end">{{ __('store.debit') }}</th>
+                        <th class="text-end">{{ __('store.credit') }}</th>
+                        <th class="text-end">{{ __('common.balance') }}</th>
+                        <th>{{ __('stock.source') }}</th>
+                        <th>{{ __('stock.by') }}</th>
                     </tr>
                 </thead>
                 <tbody>

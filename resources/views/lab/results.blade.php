@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Investigation Results')
+@section('title', __('lab.results_title'))
 
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">

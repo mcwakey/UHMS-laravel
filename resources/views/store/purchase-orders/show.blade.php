@@ -159,12 +159,12 @@
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>Item</th>
-                                <th class="text-center">Type</th>
-                                <th class="text-center">Ordered</th>
-                                <th class="text-center">Received</th>
-                                <th class="text-end">Unit Cost</th>
-                                <th class="text-end">Total</th>
+                                <th>{{ __('store.item') }}</th>
+                                <th class="text-center">{{ __('stock.type') }}</th>
+                                <th class="text-center">{{ __('store.ordered') }}</th>
+                                <th class="text-center">{{ __('stock.received_qty') }}</th>
+                                <th class="text-end">{{ __('stock.unit_cost') }}</th>
+                                <th class="text-end">{{ __('stock.total') }}</th>
                                 @if($purchaseOrder->is_editable)
                                 <th class="text-end">Actions</th>
                                 @endif
@@ -230,13 +230,13 @@
                         <div class="table-responsive"><table class="table table-bordered table-sm">
                             <thead class="table-light">
                                 <tr>
-                                    <th>Product</th>
-                                    <th style="width:80px;">Ordered</th>
-                                    <th style="width:80px;">Already</th>
-                                    <th style="width:80px;">Remaining</th>
-                                    <th style="width:100px;">Receiving</th>
-                                    <th style="width:130px;">Batch #</th>
-                                    <th style="width:140px;">Expiry</th>
+                                    <th>{{ __('stock.product') }}</th>
+                                    <th style="width:80px;">{{ __('store.ordered') }}</th>
+                                    <th style="width:80px;">{{ __('store.already') }}</th>
+                                    <th style="width:80px;">{{ __('store.remaining') }}</th>
+                                    <th style="width:100px;">{{ __('store.receiving') }}</th>
+                                    <th style="width:130px;">{{ __('store.batch_hash') }}</th>
+                                    <th style="width:140px;">{{ __('stock.expiry') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -287,9 +287,9 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Product <span class="text-danger">*</span></label>
+                        <label class="form-label">{{ __('stock.product') }} <span class="text-danger">*</span></label>
                         <select name="product_id" class="form-select select2-modal" required>
-                            <option value="">Select Product...</option>
+                            <option value="">{{ __('store.select_product') }}</option>
                             @foreach(\App\Models\Product::query()->active()->orderBy('name')->get() as $product)
                                 <option value="{{ $product->id }}">{{ $product->name }}@if($product->code) — {{ $product->code }}@endif</option>
                             @endforeach

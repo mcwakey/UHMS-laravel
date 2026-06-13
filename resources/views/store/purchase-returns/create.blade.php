@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'New Purchase Return')
+@section('title', __('store.new_purchase_return'))
 
 @section('content')
 <div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom">
@@ -20,9 +20,9 @@
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-4">
-                <label class="form-label">Purchase Order <span class="text-danger">*</span></label>
+                <label class="form-label">{{ __('store.purchase_order') }} <span class="text-danger">*</span></label>
                 <select name="purchase_order_id" id="poSelect" class="form-select select2" required>
-                    <option value="">Select purchase order</option>
+                    <option value="">{{ __('store.select_purchase_order') }}</option>
                     @foreach($purchaseOrders as $po)
                         <option value="{{ $po->id }}"
                             data-supplier-id="{{ $po->supplier_id }}"
@@ -32,43 +32,43 @@
                         </option>
                     @endforeach
                 </select>
-                <small class="text-muted">A return must reference a received purchase order.</small>
+                <small class="text-muted">{{ __('store.return_must_reference') }}</small>
             </div>
             <div class="col-md-4">
-                <label class="form-label">Supplier</label>
-                <input type="text" id="supplierName" class="form-control" value="" readonly placeholder="Auto-filled from the PO">
+                <label class="form-label">{{ __('stock.supplier') }}</label>
+                <input type="text" id="supplierName" class="form-control" value="" readonly placeholder="{{ __('store.auto_filled_from_po') }}">
             </div>
             <div class="col-md-4">
-                <label class="form-label">Return From <span class="text-danger">*</span></label>
+                <label class="form-label">{{ __('store.return_from') }} <span class="text-danger">*</span></label>
                 <select name="stock_location_id" class="form-select" required>
                     @foreach($locations as $location)
-                        <option value="{{ $location->id }}" @selected(old('stock_location_id') == $location->id || $location->is_main)>{{ $location->name }} @if($location->is_main) (Main) @endif</option>
+                        <option value="{{ $location->id }}" @selected(old('stock_location_id') == $location->id || $location->is_main)>{{ $location->name }} @if($location->is_main) {{ __('stock.main_suffix') }} @endif</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-4">
-                <label class="form-label">Return Date <span class="text-danger">*</span></label>
+                <label class="form-label">{{ __('store.return_date') }} <span class="text-danger">*</span></label>
                 <input type="date" name="return_date" class="form-control" value="{{ old('return_date', now()->toDateString()) }}" required>
             </div>
             <div class="col-md-8">
-                <label class="form-label">Reason</label>
-                <input type="text" name="reason" class="form-control" maxlength="255" value="{{ old('reason') }}" placeholder="e.g. Damaged / expired / wrong item">
+                <label class="form-label">{{ __('stock.reason') }}</label>
+                <input type="text" name="reason" class="form-control" maxlength="255" value="{{ old('reason') }}" placeholder="{{ __('store.return_reason_placeholder') }}">
             </div>
         </div>
 
         <hr>
-        <h6 class="mb-2">Items to Return</h6>
+        <h6 class="mb-2">{{ __('store.items_to_return') }}</h6>
         <div class="table-responsive">
             <table class="table table-bordered align-middle" id="itemsTable">
                 <thead class="table-light">
                     <tr>
-                        <th style="min-width: 260px;">Product</th>
-                        <th style="width: 120px;" class="text-end">Received</th>
-                        <th style="width: 130px;">Return Qty</th>
-                        <th style="width: 140px;">Unit Cost (GH₵)</th>
-                        <th style="width: 130px;">Batch</th>
-                        <th style="width: 150px;">Expiry</th>
-                        <th style="width: 130px;" class="text-end">Line Total</th>
+                        <th style="min-width: 260px;">{{ __('stock.product') }}</th>
+                        <th style="width: 120px;" class="text-end">{{ __('stock.received_qty') }}</th>
+                        <th style="width: 130px;">{{ __('store.return_qty') }}</th>
+                        <th style="width: 140px;">{{ __('store.unit_cost_cedis') }}</th>
+                        <th style="width: 130px;">{{ __('stock.batch') }}</th>
+                        <th style="width: 150px;">{{ __('stock.expiry') }}</th>
+                        <th style="width: 130px;" class="text-end">{{ __('store.line_total') }}</th>
                     </tr>
                 </thead>
                 <tbody id="itemsBody">

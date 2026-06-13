@@ -1,14 +1,14 @@
 @extends('layouts.app')
-@section('title', 'Create Purchase Order')
+@section('title', __('store.create_purchase_order'))
 
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Create Purchase Order</h4>
+        <h4 class="fw-bold mb-0">{{ __('store.create_purchase_order') }}</h4>
     </div>
     <div>
         <a href="{{ route('admin.store.purchase-orders.index') }}" class="btn btn-outline-secondary">
-            <i class="ti ti-arrow-left me-1"></i>Back
+            <i class="ti ti-arrow-left me-1"></i>{{ __('stock.back') }}
         </a>
     </div>
 </div>
@@ -26,7 +26,7 @@
 
 <div class="card">
     <div class="card-header">
-        <h5 class="card-title mb-0">Purchase Order Details</h5>
+        <h5 class="card-title mb-0">{{ __('store.purchase_order_details') }}</h5>
     </div>
     <div class="card-body">
         <form method="POST" action="{{ route('admin.store.purchase-orders.store') }}" id="poForm">
@@ -34,9 +34,9 @@
 
             <div class="row mb-3">
                 <div class="col-md-4">
-                    <label class="form-label">Supplier <span class="text-danger">*</span></label>
+                    <label class="form-label">{{ __('stock.supplier') }} <span class="text-danger">*</span></label>
                     <select name="supplier_id" class="form-select select2" required>
-                        <option value="">Select Supplier...</option>
+                        <option value="">{{ __('store.select_supplier') }}</option>
                         @foreach($suppliers as $supplier)
                             <option value="{{ $supplier->id }}" {{ old('supplier_id') == $supplier->id ? 'selected' : '' }}>
                                 {{ $supplier->name }}
@@ -45,30 +45,30 @@
                     </select>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Order Date <span class="text-danger">*</span></label>
+                    <label class="form-label">{{ __('stock.order_date') }} <span class="text-danger">*</span></label>
                     <input type="date" name="order_date" class="form-control" value="{{ old('order_date', date('Y-m-d')) }}" required>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Expected Delivery Date</label>
+                    <label class="form-label">{{ __('store.expected_delivery_date') }}</label>
                     <input type="date" name="expected_date" class="form-control" value="{{ old('expected_date') }}">
                 </div>
             </div>
 
             <div class="mb-3">
-                <label class="form-label">Notes</label>
-                <textarea name="notes" class="form-control" rows="2" placeholder="Optional notes...">{{ old('notes') }}</textarea>
+                <label class="form-label">{{ __('stock.notes') }}</label>
+                <textarea name="notes" class="form-control" rows="2" placeholder="{{ __('store.optional_notes') }}">{{ old('notes') }}</textarea>
             </div>
 
             <!-- Order Items -->
-            <h6 class="mb-2">Order Items <span class="text-danger">*</span></h6>
+            <h6 class="mb-2">{{ __('store.order_items') }} <span class="text-danger">*</span></h6>
             <div class="table-responsive mb-3">
                 <table class="table table-bordered" id="itemsTable">
                     <thead class="table-light">
                         <tr>
-                            <th>Product</th>
-                            <th style="width: 120px;">Quantity</th>
-                            <th style="width: 140px;">Unit Cost (GH₵)</th>
-                            <th style="width: 140px;">Total</th>
+                            <th>{{ __('stock.product') }}</th>
+                            <th style="width: 120px;">{{ __('stock.quantity') }}</th>
+                            <th style="width: 140px;">{{ __('store.unit_cost_cedis') }}</th>
+                            <th style="width: 140px;">{{ __('stock.total') }}</th>
                             <th style="width: 50px;"></th>
                         </tr>
                     </thead>
@@ -76,7 +76,7 @@
                         <tr class="item-row">
                             <td>
                                 <select name="items[0][product_id]" class="form-select form-select-sm product-select" required>
-                                    <option value="">Select Product...</option>
+                                    <option value="">{{ __('store.select_product') }}</option>
                                     @foreach($products as $product)
                                         @php $typeLabel = $product->product_type instanceof \App\Enums\ProductType ? $product->product_type->value : (string) $product->product_type; @endphp
                                         <option value="{{ $product->id }}"
@@ -90,12 +90,12 @@
                             <td><input type="number" name="items[0][quantity_ordered]" class="form-control form-control-sm qty-input" value="1" min="1" required></td>
                             <td><input type="number" name="items[0][unit_cost]" class="form-control form-control-sm price-input" step="0.01" min="0" required></td>
                             <td class="row-total text-end align-middle fw-medium">0.00</td>
-                            <td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
+                            <td class="text-center"><button aria-label="{{ __('common.delete') }}" title="{{ __('common.delete') }}" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>
                         </tr>
                     </tbody>
                     <tfoot>
                         <tr>
-                            <td colspan="3" class="text-end fw-bold">Grand Total:</td>
+                            <td colspan="3" class="text-end fw-bold">{{ __('store.grand_total') }}</td>
                             <td class="text-end fw-bold" id="grandTotal">GH₵ 0.00</td>
                             <td></td>
                         </tr>
@@ -104,12 +104,12 @@
             </div>
 
             <button type="button" class="btn btn-outline-primary btn-sm mb-3" id="addItemBtn">
-                <i class="ti ti-plus me-1"></i>Add Item
+                <i class="ti ti-plus me-1"></i>{{ __('stock.add_item') }}
             </button>
 
             <div>
                 <button type="submit" class="btn btn-primary">
-                    <i class="ti ti-file-plus me-1"></i>Create Purchase Order
+                    <i class="ti ti-file-plus me-1"></i>{{ __('store.create_purchase_order') }}
                 </button>
             </div>
         </form>
@@ -128,7 +128,7 @@ $(document).ready(function() {
 
     function initProductSelect($select) {
         if ($.fn.select2 && !$select.data('select2')) {
-            $select.select2({ width: '100%', placeholder: 'Select Product...', allowClear: false });
+            $select.select2({ width: '100%', placeholder: @json(__('store.select_product')), allowClear: false });
         }
     }
 
@@ -221,7 +221,7 @@ $(document).ready(function() {
             e.preventDefault();
             // Re-enable so the user can still interact with the form.
             $('.item-row').find('input, select').prop('disabled', false);
-            alert('Please select at least one product before saving the purchase order.');
+            alert(@json(__('store.select_one_product')));
             return false;
         }
     });

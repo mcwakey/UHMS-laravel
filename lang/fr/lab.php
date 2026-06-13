@@ -215,4 +215,5 @@ return [
     'filter_btn'                => 'Filtrer',
     'clear_btn'                 => 'Effacer',
     'date_col'                  => 'Date',
+    'tests_title'               => 'Catalogue des tests de laboratoire',
 ];

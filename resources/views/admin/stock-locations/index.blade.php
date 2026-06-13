@@ -52,7 +52,7 @@
                                 <span class="text-muted small">{{ __('stock.protected') }}</span>
                             @else
                                 <button class="btn btn-sm btn-outline-primary"
-                                        data-bs-toggle="modal" data-bs-target="#editLocationModal{{ $loc->id }}" aria-label="Edit" title="Edit">
+                                        data-bs-toggle="modal" data-bs-target="#editLocationModal{{ $loc->id }}" aria-label="{{ __('stock.edit_location') }}" title="{{ __('stock.edit_location') }}">
                                     <i class="ti ti-edit"></i>
                                 </button>
                                 <form action="{{ route('admin.stock-locations.toggle', $loc) }}" method="POST" class="d-inline">

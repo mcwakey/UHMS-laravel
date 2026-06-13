@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Return Stock')
+@section('title', __('stock.return_stock'))
 
 @section('content')
 <div class="container-fluid py-3" style="max-width: 700px;">

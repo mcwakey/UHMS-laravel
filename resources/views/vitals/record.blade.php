@@ -1,5 +1,5 @@
 ﻿@extends('layouts.app')
-@section('title', 'Record Vitals')
+@section('title', __('vitals.record_vitals'))
 
 @section('content')
 <!-- Page Header -->
@@ -37,7 +37,7 @@
                     </a>
                     @empty
                     <div class="text-center text-muted py-4">
-                        <small>No active visits in triage/waiting.</small>
+                        <small>{{ __('vitals.no_active_visits') }}</small>
                     </div>
                     @endforelse
                 </div>
@@ -276,7 +276,7 @@
                         <div class="col-12">
                             <label class="form-label">Notes</label>
                             <textarea name="notes" class="form-control @error('notes') is-invalid @enderror"
-                                      rows="2" placeholder="Additional observations...">{{ old('notes') }}</textarea>
+                                      rows="2" placeholder="{{ __('vitals.additional_observations') }}">{{ old('notes') }}</textarea>
                             @error('notes') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
 
@@ -306,7 +306,7 @@
         <div class="card">
             <div class="card-body text-center text-muted py-5">
                 <i class="ti ti-heartbeat fs-1 d-block mb-2"></i>
-                <p>Select a visit from the list to record vitals.</p>
+                <p>{{ __('vitals.select_visit_to_record') }}</p>
             </div>
         </div>
         @endif

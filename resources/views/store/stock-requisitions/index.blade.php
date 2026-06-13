@@ -43,7 +43,7 @@
                 </select>
             </div>
             <div class="col-md-3">
-                @include('partials.date-range-filter', ['name' => 'date_range', 'value' => request('date_range'), 'label' => 'Date Range', 'labelClass' => 'small text-muted mb-1'])
+                @include('partials.date-range-filter', ['name' => 'date_range', 'value' => request('date_range'), 'label' => __('store.date_range'), 'labelClass' => 'small text-muted mb-1'])
             </div>
             <div class="col-md-1"><button aria-label="Search" title="Search" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button></div>
             @if(request()->hasAny(['search', 'department_id', 'status', 'product_id', 'date_range']))

@@ -37,11 +37,11 @@
         <form method="GET" action="{{ route($routeName) }}" class="row g-2 align-items-end">
             <div class="col-md-5">
                 <input type="text" name="search" class="form-control form-control-sm"
-                    placeholder="Search product name or code..." value="{{ request('search') }}">
+                    placeholder="{{ __('stock.search_product_name_code') }}" value="{{ request('search') }}">
             </div>
             <div class="col-md-4">
                 <select name="product_type" class="form-select form-select-sm">
-                    <option value="">All Product Types</option>
+                    <option value="">{{ __('stock.all_product_types') }}</option>
                     @foreach($allowedTypes as $type)
                         <option value="{{ $type }}" {{ request('product_type') === $type ? 'selected' : '' }}>
                             {{ ucwords(str_replace('_', ' ', strtolower($type))) }}
@@ -50,8 +50,8 @@
                 </select>
             </div>
             <div class="col-md-auto">
-                <button type="submit" class="btn btn-primary btn-sm">Filter</button>
-                <a href="{{ route($routeName) }}" class="btn btn-secondary btn-sm">Reset</a>
+                <button type="submit" class="btn btn-primary btn-sm">{{ __('stock.filter') }}</button>
+                <a href="{{ route($routeName) }}" class="btn btn-secondary btn-sm">{{ __('stock.reset') }}</a>
             </div>
         </form>
     </div>
@@ -63,14 +63,14 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Product</th>
-                        <th>Code</th>
-                        <th>Type</th>
-                        <th>Unit</th>
-                        <th class="text-center">Department Available Qty</th>
-                        <th class="text-center">Main Stock Qty</th>
-                        <th class="text-center">Reorder Level</th>
-                        <th class="text-center">Status</th>
+                        <th>{{ __('stock.product') }}</th>
+                        <th>{{ __('stock.code') }}</th>
+                        <th>{{ __('stock.type') }}</th>
+                        <th>{{ __('stock.unit') }}</th>
+                        <th class="text-center">{{ __('theatre.department_available_qty') }}</th>
+                        <th class="text-center">{{ __('theatre.main_stock_qty') }}</th>
+                        <th class="text-center">{{ __('stock.reorder_level') }}</th>
+                        <th class="text-center">{{ __('stock.status') }}</th>
                     </tr>
                 </thead>
                 <tbody>

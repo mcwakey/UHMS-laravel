@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Transfer Stock')
+@section('title', __('stock.transfer_stock'))
 
 @section('content')
 <div class="container-fluid py-3" style="max-width: 700px;">
-    <h4 class="mb-3"><i class="ti ti-transfer"></i> Transfer Stock</h4>
+    <h4 class="mb-3"><i class="ti ti-transfer"></i> {{ __('stock.transfer_stock') }}</h4>
 
     @if(isset($errors) && $errors->any())
         <div class="alert alert-danger"><ul class="mb-0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>
@@ -12,8 +12,7 @@
 
     <div class="alert alert-info small">
         <i class="ti ti-info-circle"></i>
-        Transfers must involve <strong>Main Store</strong> on at least one side unless inter-department transfers
-        are explicitly enabled in <code>config/inventory.php</code>.
+        {!! __('stock.transfer_main_store_hint') !!}
     </div>
 
     <form action="{{ route('admin.product-stock.transfer') }}" method="POST" class="card">

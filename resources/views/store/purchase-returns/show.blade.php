@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Purchase Return')
+@section('title', __('store.purchase_return'))
 
 @section('content')
 <div class="d-flex align-items-center justify-content-between pb-3 mb-3 border-bottom">

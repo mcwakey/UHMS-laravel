@@ -213,4 +213,5 @@ return [
     'filter_btn'                => 'Filter',
     'clear_btn'                 => 'Clear',
     'date_col'                  => 'Date',
+    'tests_title'               => 'Lab Test Catalog',
 ];

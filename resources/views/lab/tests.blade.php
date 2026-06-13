@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Lab Test Catalog')
+@section('title', __('lab.tests_title'))
 
 @section('content')
 <!-- Page Header -->

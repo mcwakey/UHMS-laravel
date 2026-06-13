@@ -1,23 +1,23 @@
 # UHMS Localisation Coverage Audit Report
 
-Date: 2026-06-13 19:26:20 +02:00
+Date: 2026-06-13 20:27:51 +02:00
 
 ## Summary
 
-- Total files scanned: 1274
-- Total files with possible hardcoded strings: 477
-- Total hardcoded candidates found: 17735
+- Total files scanned: 1280
+- Total files with possible hardcoded strings: 471
+- Total hardcoded candidates found: 17510
 - Modules affected: 306
 - Direct active route/controller Blade views: 232
 - Active Blade views including resolved dependencies: 285
 
 ### Candidate Classification
 
-- Active runtime candidates: 317
+- Active runtime candidates: 192
 - Demo/template candidates: 15788
 - Backup-only candidates: 0
-- Language-file candidates: 133
-- Known false positives: 1103
+- Language-file candidates: 136
+- Known false positives: 1000
 - Service-title manual-review candidates: 394
 
 ### Service Candidate Review Classes
@@ -35,23 +35,23 @@ Date: 2026-06-13 19:26:20 +02:00
 - app: 394
 - widgets.blade.php: 390
 - ui-dropdowns.blade.php: 336
-- admin: 292
-- store: 243
 - tables-basic.blade.php: 240
 - patterns: 208
 - ui-modals.blade.php: 202
 - social-feed.blade.php: 201
+- admin: 196
 - form-select2.blade.php: 196
 - consultations: 189
 - doctors.blade.php: 178
 - payments.blade.php: 161
+- store: 157
 - email.blade.php: 155
 - doctors-patient-details.blade.php: 153
 - patient-details.blade.php: 150
 - doctors-list.blade.php: 148
 - patients.blade.php: 145
 - staffs.blade.php: 137
-- lang: 133
+- lang: 136
 - add-doctor.blade.php: 133
 - edit-doctor.blade.php: 133
 - index.blade.php: 133
@@ -138,29 +138,16 @@ Date: 2026-06-13 19:26:20 +02:00
 | Module | File | Candidate count | Active route-linked? | Shared component? | Priority | User-facing confidence | Risk | Recommended action |
 |---|---|---:|:---:|:---:|---|---|---|---|
 | javascript | `resources/js/script.js` | 23 | no | no | high | high | medium | manual-review |
-| admin | `resources/views/admin/product-stock/ledger.blade.php` | 12 | yes | no | high | high | medium | fix |
 | prescriptions | `resources/views/prescriptions/show.blade.php` | 12 | yes | no | high | high | medium | fix |
 | admin | `resources/views/admin/investigation-catalogue/show.blade.php` | 11 | yes | no | high | high | medium | fix |
-| admin | `resources/views/admin/product-stock/balances.blade.php` | 10 | yes | no | high | high | medium | fix |
-| store | `resources/views/store/purchase-orders/index.blade.php` | 10 | yes | no | high | high | medium | fix |
 | admin | `resources/views/admin/icd-codes/index.blade.php` | 9 | yes | no | high | high | medium | fix |
-| store | `resources/views/store/purchase-orders/show.blade.php` | 9 | yes | no | high | high | medium | fix |
-| store | `resources/views/store/supplier-ledger.blade.php` | 9 | yes | no | high | high | medium | fix |
 | departments | `resources/views/departments/index.blade.php` | 8 | yes | no | high | high | medium | fix |
 | emergency | `resources/views/emergency/show.blade.php` | 8 | yes | no | high | high | high | fix |
-| investigations | `resources/views/investigations/items/index.blade.php` | 8 | yes | no | high | high | medium | fix |
 | notifications | `resources/views/notifications/index.blade.php` | 8 | yes | no | high | high | medium | fix |
-| prescriptions | `resources/views/prescriptions/index.blade.php` | 8 | yes | no | high | high | medium | fix |
-| store | `resources/views/store/purchase-orders/create.blade.php` | 8 | yes | no | high | high | medium | fix |
-| store | `resources/views/store/purchase-returns/index.blade.php` | 8 | yes | no | high | high | medium | fix |
 | admin | `resources/views/admin/services/index.blade.php` | 7 | yes | no | high | high | medium | fix |
 | designations | `resources/views/designations/index.blade.php` | 7 | yes | no | high | high | medium | fix |
-| store | `resources/views/store/purchase-returns/create.blade.php` | 7 | yes | no | high | high | medium | fix |
 | accounts | `resources/views/accounts/categories.blade.php` | 6 | yes | no | high | high | medium | fix |
-| admin | `resources/views/admin/investigation-catalogue/index.blade.php` | 6 | yes | no | high | high | medium | fix |
 | admin | `resources/views/admin/permissions/index.blade.php` | 6 | yes | no | high | high | medium | fix |
-| admin | `resources/views/admin/product-stock/receive.blade.php` | 6 | yes | no | high | high | medium | fix |
-| department-consumables | `resources/views/department-consumables/index.blade.php` | 6 | yes | no | high | high | medium | fix |
 | queue | `resources/views/queue/manage.blade.php` | 6 | yes | no | high | high | medium | fix |
 | admin | `resources/views/admin/modules/index.blade.php` | 5 | yes | no | high | high | medium | fix |
 | complaints | `resources/views/complaints/catalogue/index.blade.php` | 5 | yes | no | high | high | medium | fix |
@@ -168,8 +155,6 @@ Date: 2026-06-13 19:26:20 +02:00
 | billing | `resources/views/billing/invoices/show.blade.php` | 4 | yes | no | high | high | high | fix |
 | hr | `resources/views/hr/employees/create.blade.php` | 4 | yes | no | high | high | medium | fix |
 | patients | `resources/views/patients/partials/insurance-add-modal-scripts.blade.php` | 4 | no | no | high | high | high | manual-review |
-| store | `resources/views/store/suppliers.blade.php` | 4 | yes | no | high | high | medium | fix |
-| vitals | `resources/views/vitals/record.blade.php` | 4 | yes | no | high | high | medium | fix |
 | javascript | `resources/js/doctors.js` | 3 | no | no | high | high | medium | manual-review |
 | accounting | `resources/views/accounting/payable/payables.blade.php` | 3 | yes | no | high | high | high | fix |
 | accounting | `resources/views/accounting/settings/index.blade.php` | 3 | yes | no | high | high | high | fix |
@@ -178,8 +163,6 @@ Date: 2026-06-13 19:26:20 +02:00
 | hr | `resources/views/hr/employees/edit.blade.php` | 3 | yes | no | high | high | medium | fix |
 | service-renderings | `resources/views/service-renderings/index.blade.php` | 3 | yes | no | high | high | medium | fix |
 | accounts | `resources/views/accounts/entries/create.blade.php` | 2 | yes | no | high | high | medium | fix |
-| admin | `resources/views/admin/product-stock/transfer.blade.php` | 2 | yes | no | high | high | medium | fix |
-| admin | `resources/views/admin/stock-locations/index.blade.php` | 2 | yes | no | high | high | medium | fix |
 | blood-bank | `resources/views/blood-bank/donations.blade.php` | 2 | yes | no | high | high | medium | fix |
 | blood-bank | `resources/views/blood-bank/reports.blade.php` | 2 | yes | no | high | high | medium | fix |
 | blood-bank | `resources/views/blood-bank/requests.blade.php` | 2 | yes | no | high | high | medium | fix |
@@ -189,16 +172,12 @@ Date: 2026-06-13 19:26:20 +02:00
 | visits | `resources/views/visits/create.blade.php` | 2 | yes | no | high | high | high | fix |
 | accounts | `resources/views/accounts/entries/index.blade.php` | 1 | yes | no | high | high | medium | fix |
 | admin | `resources/views/admin/dashboards/index.blade.php` | 1 | yes | no | high | high | medium | fix |
-| admin | `resources/views/admin/product-stock/adjust.blade.php` | 1 | yes | no | high | high | medium | fix |
-| admin | `resources/views/admin/product-stock/return.blade.php` | 1 | yes | no | high | high | medium | fix |
 | admin | `resources/views/admin/users/permissions.blade.php` | 1 | yes | no | high | high | medium | fix |
 | blood-bank | `resources/views/blood-bank/donation-view.blade.php` | 1 | yes | no | medium | medium | medium | fix |
 | blood-bank | `resources/views/blood-bank/donor-profile.blade.php` | 1 | yes | no | medium | medium | medium | fix |
 | claims | `resources/views/claims/partials/clinical-mirror.blade.php` | 1 | no | no | high | high | high | manual-review |
 | hr | `resources/views/hr/attendance/summary.blade.php` | 1 | yes | no | high | high | medium | fix |
 | hr | `resources/views/hr/leave/create.blade.php` | 1 | yes | no | high | high | medium | fix |
-| lab | `resources/views/lab/results.blade.php` | 1 | yes | no | high | high | medium | fix |
-| lab | `resources/views/lab/tests.blade.php` | 1 | yes | no | high | high | medium | fix |
 | partials | `resources/views/partials/patient-card.blade.php` | 1 | no | yes | high | high | medium | fix |
 | queue | `resources/views/queue/board.blade.php` | 1 | yes | no | high | high | medium | fix |
 | settings | `resources/views/settings/activity-log-show.blade.php` | 1 | yes | no | high | high | medium | fix |
@@ -209,8 +188,6 @@ Date: 2026-06-13 19:26:20 +02:00
 | settings | `resources/views/settings/organization.blade.php` | 1 | yes | no | high | high | medium | fix |
 | settings | `resources/views/settings/payment-methods.blade.php` | 1 | yes | no | high | high | medium | fix |
 | settings | `resources/views/settings/profile.blade.php` | 1 | yes | no | high | high | medium | fix |
-| store | `resources/views/store/purchase-returns/show.blade.php` | 1 | yes | no | high | high | medium | fix |
-| store | `resources/views/store/stock-requisitions/index.blade.php` | 1 | yes | no | medium | medium | medium | fix |
 
 ## Detailed Findings
 
@@ -2750,6 +2727,11 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: investigations_laboratory`
+- Line 111 [high, language_file_candidates]: `Laboratory stock location`
+  - Context: `'consumables_description'   => 'Filtered view of <strong>products</strong> linked to the Investigation / Laboratory / Radiology departments. Quantities below reflect the on-hand balance at the <strong>Laboratory stock location</strong>. New products are added from <em>Store &rsaquo; Products</em>.',`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/lang.php :: laboratory_stock_location`
 
 ### `lang/en/invoices.php`
 
@@ -3049,6 +3031,11 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: stock_inventory`
+- Line 309 [high, language_file_candidates]: `Main Store`
+  - Context: `'transfer_main_store_hint' => 'Transfers must involve <strong>Main Store</strong> on at least one side unless inter-department transfers are explicitly enabled in <code>config/inventory.php</code>.',`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/lang.php :: main_store`
 
 ### `lang/en/triage.php`
 
@@ -3428,6 +3415,11 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lang.php :: stock_inventaire`
+- Line 309 [high, language_file_candidates]: `Magasin principal`
+  - Context: `'transfer_main_store_hint' => 'Les transferts doivent impliquer le <strong>Magasin principal</strong> d\'au moins un côté, sauf si les transferts inter-services sont explicitement activés dans <code>config/inventory.php</code>.',`
+  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
+  - Status after Phase 14: false positive
+  - Suggested key: `lang/{en,fr}/lang.php :: magasin_principal`
 
 ### `lang/fr/triage.php`
 
@@ -5250,71 +5242,6 @@ Date: 2026-06-13 19:26:20 +02:00
 
 ### `resources/views/admin/investigation-catalogue/index.blade.php`
 
-- Line 3 [high, active_runtime_candidates]: `Investigation Catalogue`
-  - Context: `@section('title', 'Investigation Catalogue')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: investigation_catalogue`
-- Line 10 [high, known_false_positive_candidates]: `Configure headers and result criteria for services offered by investigation-type departments.`
-  - Context: `<small class="text-muted">Configure headers and result criteria for services offered by investigation-type departments.</small>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: configure_headers_and_result_criteria_for_services`
-- Line 22 [high, known_false_positive_candidates]: `Search`
-  - Context: `<label class="form-label small mb-1">Search</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: search`
-- Line 23 [high, known_false_positive_candidates]: `Service name or code...`
-  - Context: `<input type="text" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Service name or code...">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: service_name_or_code`
-- Line 26 [high, known_false_positive_candidates]: `Department`
-  - Context: `<label class="form-label small mb-1">Department</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: department`
-- Line 28 [high, active_runtime_candidates]: `All Investigation Departments`
-  - Context: `<option value="">All Investigation Departments</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: all_investigation_departments`
-- Line 37 [high, active_runtime_candidates]: `Any`
-  - Context: `<option value="">Any</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: any`
-- Line 44 [high, known_false_positive_candidates]: `Reset`
-  - Context: `<a href="{{ route('admin.investigation-catalogue.index') }}" class="btn btn-light btn-sm">Reset</a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: reset`
-- Line 56 [high, active_runtime_candidates]: `Service`
-  - Context: `<th>Service</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: service`
-- Line 57 [high, active_runtime_candidates]: `Code`
-  - Context: `<th>Code</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: code`
-- Line 58 [high, active_runtime_candidates]: `Department`
-  - Context: `<th>Department</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: department`
-- Line 59 [high, known_false_positive_candidates]: `Headers`
-  - Context: `<th class="text-center">Headers</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: headers`
-- Line 60 [high, known_false_positive_candidates]: `Criteria`
-  - Context: `<th class="text-center">Criteria</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: criteria`
 - Line 61 [high, known_false_positive_candidates]: `Price`
   - Context: `<th class="text-end">Price</th>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -5730,11 +5657,6 @@ Date: 2026-06-13 19:26:20 +02:00
 
 ### `resources/views/admin/product-stock/adjust.blade.php`
 
-- Line 3 [high, active_runtime_candidates]: `Adjust Stock`
-  - Context: `@section('title', 'Adjust Stock')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: adjust_stock`
 - Line 17 [high, known_false_positive_candidates]: `Location *`
   - Context: `<label class="form-label">Location *</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -5771,407 +5693,8 @@ Date: 2026-06-13 19:26:20 +02:00
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: cancel`
 
-### `resources/views/admin/product-stock/balances.blade.php`
-
-- Line 3 [high, active_runtime_candidates]: `Stock Balances`
-  - Context: `@section('title', 'Stock Balances')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: stock_balances`
-- Line 24 [high, known_false_positive_candidates]: `Location`
-  - Context: `<label class="form-label small mb-1">Location</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: location`
-- Line 26 [high, active_runtime_candidates]: `All Locations`
-  - Context: `<option value="">All Locations</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: all_locations`
-- Line 35 [high, known_false_positive_candidates]: `Search`
-  - Context: `<label class="form-label small mb-1">Search</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: search`
-- Line 36 [high, known_false_positive_candidates]: `Name or code`
-  - Context: `<input name="search" value="{{ $search }}" class="form-control form-control-sm" placeholder="Name or code">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: name_or_code`
-- Line 39 [high, known_false_positive_candidates]: `Product Type`
-  - Context: `<label class="form-label small mb-1">Product Type</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: product_type`
-- Line 41 [high, active_runtime_candidates]: `All`
-  - Context: `<option value="">All</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: all`
-- Line 48 [high, known_false_positive_candidates]: `Filter`
-  - Context: `<button class="btn btn-sm btn-primary w-100">Filter</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: filter`
-- Line 58 [high, active_runtime_candidates]: `Product`
-  - Context: `<th>Product</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: product`
-- Line 59 [high, active_runtime_candidates]: `Type`
-  - Context: `<th>Type</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: type`
-- Line 60 [high, active_runtime_candidates]: `Unit`
-  - Context: `<th>Unit</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: unit`
-- Line 64 [high, known_false_positive_candidates]: `Total`
-  - Context: `<th class="text-end">Total</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: total`
-- Line 113 [high, known_false_positive_candidates]: `Location`
-  - Context: `<label class="form-label">Location</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: location`
-- Line 118 [high, known_false_positive_candidates]: `Product *`
-  - Context: `<label class="form-label">Product *</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: product`
-- Line 120 [high, active_runtime_candidates]: `Select product`
-  - Context: `<option value="">Select product</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: select_product`
-- Line 127 [high, known_false_positive_candidates]: `Qty *`
-  - Context: `<label class="form-label">Qty *</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: qty`
-- Line 131 [high, known_false_positive_candidates]: `Unit Cost`
-  - Context: `<label class="form-label">Unit Cost</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: unit_cost`
-- Line 135 [high, known_false_positive_candidates]: `Batch No.`
-  - Context: `<label class="form-label">Batch No.</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: batch_no`
-- Line 139 [high, known_false_positive_candidates]: `Expiry Date`
-  - Context: `<label class="form-label">Expiry Date</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: expiry_date`
-- Line 143 [high, known_false_positive_candidates]: `Notes`
-  - Context: `<label class="form-label">Notes</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: notes`
-- Line 149 [high, known_false_positive_candidates]: `Cancel`
-  - Context: `<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: cancel`
-- Line 150 [high, known_false_positive_candidates]: `Receive`
-  - Context: `<button class="btn btn-success">Receive</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: receive`
-- Line 167 [high, known_false_positive_candidates]: `From *`
-  - Context: `<label class="form-label">From *</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: from`
-- Line 175 [high, known_false_positive_candidates]: `To *`
-  - Context: `<label class="form-label">To *</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: to`
-- Line 184 [high, known_false_positive_candidates]: `Product *`
-  - Context: `<label class="form-label">Product *</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: product`
-- Line 186 [high, active_runtime_candidates]: `Select product`
-  - Context: `<option value="">Select product</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: select_product`
-- Line 193 [high, known_false_positive_candidates]: `Quantity *`
-  - Context: `<label class="form-label">Quantity *</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: quantity`
-- Line 197 [high, known_false_positive_candidates]: `Notes`
-  - Context: `<label class="form-label">Notes</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: notes`
-- Line 202 [high, known_false_positive_candidates]: `Cancel`
-  - Context: `<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: cancel`
-- Line 203 [high, known_false_positive_candidates]: `Transfer`
-  - Context: `<button class="btn btn-primary">Transfer</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: transfer`
-- Line 219 [high, known_false_positive_candidates]: `Location *`
-  - Context: `<label class="form-label">Location *</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: location`
-- Line 227 [high, known_false_positive_candidates]: `Product *`
-  - Context: `<label class="form-label">Product *</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: product`
-- Line 229 [high, active_runtime_candidates]: `Select product`
-  - Context: `<option value="">Select product</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: select_product`
-- Line 237 [high, known_false_positive_candidates]: `Type *`
-  - Context: `<label class="form-label">Type *</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: type`
-- Line 245 [high, known_false_positive_candidates]: `Quantity *`
-  - Context: `<label class="form-label">Quantity *</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: quantity`
-- Line 250 [high, known_false_positive_candidates]: `Reason *`
-  - Context: `<label class="form-label">Reason *</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: reason`
-- Line 255 [high, known_false_positive_candidates]: `Allow negative balance`
-  - Context: `<span class="form-check-label">Allow negative balance</span>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: allow_negative_balance`
-- Line 259 [high, known_false_positive_candidates]: `Cancel`
-  - Context: `<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: cancel`
-- Line 260 [high, known_false_positive_candidates]: `Adjust`
-  - Context: `<button class="btn btn-warning">Adjust</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: adjust`
-- Line 277 [high, known_false_positive_candidates]: `From *`
-  - Context: `<label class="form-label">From *</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: from`
-- Line 285 [high, known_false_positive_candidates]: `To *`
-  - Context: `<label class="form-label">To *</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: to`
-- Line 294 [high, known_false_positive_candidates]: `Product *`
-  - Context: `<label class="form-label">Product *</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: product`
-- Line 296 [high, active_runtime_candidates]: `Select product`
-  - Context: `<option value="">Select product</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: select_product`
-- Line 303 [high, known_false_positive_candidates]: `Quantity *`
-  - Context: `<label class="form-label">Quantity *</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: quantity`
-- Line 307 [high, known_false_positive_candidates]: `Notes`
-  - Context: `<label class="form-label">Notes</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: notes`
-- Line 312 [high, known_false_positive_candidates]: `Cancel`
-  - Context: `<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: cancel`
-- Line 313 [high, known_false_positive_candidates]: `Return`
-  - Context: `<button class="btn btn-secondary">Return</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: return`
-
-### `resources/views/admin/product-stock/ledger.blade.php`
-
-- Line 3 [high, active_runtime_candidates]: `Stock Ledger`
-  - Context: `@section('title', 'Stock Ledger')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: stock_ledger`
-- Line 15 [high, known_false_positive_candidates]: `Location`
-  - Context: `<label class="form-label small mb-1">Location</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: location`
-- Line 17 [high, active_runtime_candidates]: `All`
-  - Context: `<option value="">All</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: all`
-- Line 24 [high, known_false_positive_candidates]: `Product`
-  - Context: `<label class="form-label small mb-1">Product</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: product`
-- Line 26 [high, active_runtime_candidates]: `All`
-  - Context: `<option value="">All</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: all`
-- Line 33 [high, known_false_positive_candidates]: `Type`
-  - Context: `<label class="form-label small mb-1">Type</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: type`
-- Line 35 [high, active_runtime_candidates]: `All`
-  - Context: `<option value="">All</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: all`
-- Line 42 [high, known_false_positive_candidates]: `From`
-  - Context: `<label class="form-label small mb-1">From</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: from`
-- Line 50 [high, known_false_positive_candidates]: `Filter`
-  - Context: `<button class="btn btn-sm btn-primary">Filter</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: filter`
-- Line 51 [high, known_false_positive_candidates]: `Reset`
-  - Context: `<a href="{{ route('admin.product-stock.ledger') }}" class="btn btn-sm btn-outline-secondary">Reset</a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: reset`
-- Line 61 [high, active_runtime_candidates]: `When`
-  - Context: `<th>When</th><th>Product</th><th>Location</th><th>Type</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: when`
-- Line 61 [high, active_runtime_candidates]: `Product`
-  - Context: `<th>When</th><th>Product</th><th>Location</th><th>Type</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: product`
-- Line 61 [high, active_runtime_candidates]: `Location`
-  - Context: `<th>When</th><th>Product</th><th>Location</th><th>Type</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: location`
-- Line 61 [high, active_runtime_candidates]: `Type`
-  - Context: `<th>When</th><th>Product</th><th>Location</th><th>Type</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: type`
-- Line 62 [high, known_false_positive_candidates]: `Qty`
-  - Context: `<th class="text-end">Qty</th><th>Direction</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: qty`
-- Line 62 [high, known_false_positive_candidates]: `Direction`
-  - Context: `<th class="text-end">Qty</th><th>Direction</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: direction`
-- Line 63 [high, active_runtime_candidates]: `Batch`
-  - Context: `<th>Batch</th><th>Expiry</th><th>Performed By</th><th>Notes</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: batch`
-- Line 63 [high, active_runtime_candidates]: `Expiry`
-  - Context: `<th>Batch</th><th>Expiry</th><th>Performed By</th><th>Notes</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: expiry`
-- Line 63 [high, active_runtime_candidates]: `Performed By`
-  - Context: `<th>Batch</th><th>Expiry</th><th>Performed By</th><th>Notes</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: performed_by`
-- Line 63 [high, active_runtime_candidates]: `Notes`
-  - Context: `<th>Batch</th><th>Expiry</th><th>Performed By</th><th>Notes</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: notes`
-
-### `resources/views/admin/product-stock/receive.blade.php`
-
-- Line 3 [high, active_runtime_candidates]: `Receive Stock`
-  - Context: `@section('title', 'Receive Stock')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: receive_stock`
-- Line 18 [high, known_false_positive_candidates]: `Stock Location *`
-  - Context: `<label class="form-label">Stock Location *</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: stock_location`
-- Line 23 [high, known_false_positive_candidates]: `Notes`
-  - Context: `<label class="form-label">Notes</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: notes`
-- Line 24 [high, known_false_positive_candidates]: `GRN / Supplier reference…`
-  - Context: `<input name="notes" class="form-control" value="{{ old('notes') }}" maxlength="500" placeholder="GRN / Supplier reference…">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: grn_supplier_reference`
-- Line 31 [high, active_runtime_candidates]: `Product *`
-  - Context: `<th style="width:34%;">Product *</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: product`
-- Line 32 [high, active_runtime_candidates]: `Quantity *`
-  - Context: `<th style="width:14%;">Quantity *</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: quantity`
-- Line 33 [high, active_runtime_candidates]: `Unit Cost`
-  - Context: `<th style="width:14%;">Unit Cost</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: unit_cost`
-- Line 34 [high, active_runtime_candidates]: `Batch No`
-  - Context: `<th style="width:14%;">Batch No</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: batch_no`
-- Line 35 [high, active_runtime_candidates]: `Expiry Date`
-  - Context: `<th style="width:14%;">Expiry Date</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: expiry_date`
-- Line 61 [high, known_false_positive_candidates]: `Cancel`
-  - Context: `<a href="{{ route('admin.product-stock.balances') }}" class="btn btn-link">Cancel</a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/admin.php :: cancel`
-
 ### `resources/views/admin/product-stock/return.blade.php`
 
-- Line 3 [high, active_runtime_candidates]: `Return Stock`
-  - Context: `@section('title', 'Return Stock')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: return_stock`
 - Line 18 [high, known_false_positive_candidates]: `From Location *`
   - Context: `<label class="form-label">From Location *</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -6205,42 +5728,32 @@ Date: 2026-06-13 19:26:20 +02:00
 
 ### `resources/views/admin/product-stock/transfer.blade.php`
 
-- Line 3 [high, active_runtime_candidates]: `Transfer Stock`
-  - Context: `@section('title', 'Transfer Stock')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: transfer_stock`
-- Line 15 [high, active_runtime_candidates]: `Main Store`
-  - Context: `Transfers must involve <strong>Main Store</strong> on at least one side unless inter-department transfers`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: main_store`
-- Line 24 [high, known_false_positive_candidates]: `From Location *`
+- Line 23 [high, known_false_positive_candidates]: `From Location *`
   - Context: `<label class="form-label">From Location *</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: from_location`
-- Line 35 [high, known_false_positive_candidates]: `To Location *`
+- Line 34 [high, known_false_positive_candidates]: `To Location *`
   - Context: `<label class="form-label">To Location *</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: to_location`
-- Line 47 [high, known_false_positive_candidates]: `Product *`
+- Line 46 [high, known_false_positive_candidates]: `Product *`
   - Context: `<label class="form-label">Product *</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: product`
-- Line 56 [high, known_false_positive_candidates]: `Quantity *`
+- Line 55 [high, known_false_positive_candidates]: `Quantity *`
   - Context: `<label class="form-label">Quantity *</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: quantity`
-- Line 60 [high, known_false_positive_candidates]: `Notes`
+- Line 59 [high, known_false_positive_candidates]: `Notes`
   - Context: `<label class="form-label">Notes</label>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: notes`
-- Line 65 [high, known_false_positive_candidates]: `Cancel`
+- Line 64 [high, known_false_positive_candidates]: `Cancel`
   - Context: `<a href="{{ route('admin.product-stock.balances') }}" class="btn btn-link">Cancel</a>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
@@ -6546,19 +6059,6 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/admin.php :: create_specialty`
-
-### `resources/views/admin/stock-locations/index.blade.php`
-
-- Line 55 [high, active_runtime_candidates]: `Edit`
-  - Context: `data-bs-toggle="modal" data-bs-target="#editLocationModal{{ $loc->id }}" aria-label="Edit" title="Edit">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: edit`
-- Line 55 [high, active_runtime_candidates]: `Edit`
-  - Context: `data-bs-toggle="modal" data-bs-target="#editLocationModal{{ $loc->id }}" aria-label="Edit" title="Edit">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/admin.php :: edit`
 
 ### `resources/views/admin/users/permissions.blade.php`
 
@@ -25804,61 +25304,6 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/department_consumables.php :: low_out_of_stock_page`
-- Line 40 [high, active_runtime_candidates]: `Search product name or code...`
-  - Context: `placeholder="Search product name or code..." value="{{ request('search') }}">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/department_consumables.php :: search_product_name_or_code`
-- Line 44 [high, active_runtime_candidates]: `All Product Types`
-  - Context: `<option value="">All Product Types</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/department_consumables.php :: all_product_types`
-- Line 53 [high, known_false_positive_candidates]: `Filter`
-  - Context: `<button type="submit" class="btn btn-primary btn-sm">Filter</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/department_consumables.php :: filter`
-- Line 54 [high, known_false_positive_candidates]: `Reset`
-  - Context: `<a href="{{ route($routeName) }}" class="btn btn-secondary btn-sm">Reset</a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/department_consumables.php :: reset`
-- Line 66 [high, active_runtime_candidates]: `Product`
-  - Context: `<th>Product</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/department_consumables.php :: product`
-- Line 67 [high, active_runtime_candidates]: `Code`
-  - Context: `<th>Code</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/department_consumables.php :: code`
-- Line 68 [high, active_runtime_candidates]: `Type`
-  - Context: `<th>Type</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/department_consumables.php :: type`
-- Line 69 [high, active_runtime_candidates]: `Unit`
-  - Context: `<th>Unit</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/department_consumables.php :: unit`
-- Line 70 [high, known_false_positive_candidates]: `Department Available Qty`
-  - Context: `<th class="text-center">Department Available Qty</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/department_consumables.php :: department_available_qty`
-- Line 71 [high, known_false_positive_candidates]: `Main Stock Qty`
-  - Context: `<th class="text-center">Main Stock Qty</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/department_consumables.php :: main_stock_qty`
-- Line 72 [high, known_false_positive_candidates]: `Reorder Level`
-  - Context: `<th class="text-center">Reorder Level</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/department_consumables.php :: reorder_level`
 
 ### `resources/views/departments/index.blade.php`
 
@@ -45532,86 +44977,16 @@ Date: 2026-06-13 19:26:20 +02:00
 
 ### `resources/views/investigations/items/index.blade.php`
 
-- Line 2 [high, active_runtime_candidates]: `Investigation Consumables`
-  - Context: `@section('title', 'Investigation Consumables')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/investigations.php :: investigation_consumables`
-- Line 7 [high, known_false_positive_candidates]: `Investigation Consumables`
-  - Context: `<h4 class="fw-bold mb-0">Investigation Consumables</h4>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/investigations.php :: investigation_consumables`
-- Line 10 [high, active_runtime_candidates]: `Laboratory stock location`
-  - Context: `Quantities below reflect the on-hand balance at the <strong>Laboratory stock location</strong>.`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/investigations.php :: laboratory_stock_location`
-- Line 21 [high, known_false_positive_candidates]: `Total Items`
+- Line 19 [high, known_false_positive_candidates]: `Total Items`
   - Context: `<p class="text-muted small mb-1">Total Items</p>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/investigations.php :: total_items`
-- Line 29 [high, known_false_positive_candidates]: `Low / Out of Stock (page)`
+- Line 27 [high, known_false_positive_candidates]: `Low / Out of Stock (page)`
   - Context: `<p class="text-muted small mb-1">Low / Out of Stock (page)</p>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/investigations.php :: low_out_of_stock_page`
-- Line 42 [high, active_runtime_candidates]: `Search product name or code...`
-  - Context: `placeholder="Search product name or code..." value="{{ request('search') }}">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/investigations.php :: search_product_name_or_code`
-- Line 46 [high, active_runtime_candidates]: `All Product Types`
-  - Context: `<option value="">All Product Types</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/investigations.php :: all_product_types`
-- Line 56 [high, known_false_positive_candidates]: `Filter`
-  - Context: `<button type="submit" class="btn btn-primary btn-sm">Filter</button>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/investigations.php :: filter`
-- Line 57 [high, known_false_positive_candidates]: `Reset`
-  - Context: `<a href="{{ route('admin.investigations.items.index') }}" class="btn btn-secondary btn-sm">Reset</a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/investigations.php :: reset`
-- Line 70 [high, active_runtime_candidates]: `Product`
-  - Context: `<th>Product</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/investigations.php :: product`
-- Line 71 [high, active_runtime_candidates]: `Code`
-  - Context: `<th>Code</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/investigations.php :: code`
-- Line 72 [high, active_runtime_candidates]: `Type`
-  - Context: `<th>Type</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/investigations.php :: type`
-- Line 73 [high, active_runtime_candidates]: `Unit`
-  - Context: `<th>Unit</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/investigations.php :: unit`
-- Line 74 [high, known_false_positive_candidates]: `Department Available Qty`
-  - Context: `<th class="text-center">Department Available Qty</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/investigations.php :: department_available_qty`
-- Line 75 [high, known_false_positive_candidates]: `Main Stock Qty`
-  - Context: `<th class="text-center">Main Stock Qty</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/investigations.php :: main_stock_qty`
-- Line 76 [high, known_false_positive_candidates]: `Reorder Level`
-  - Context: `<th class="text-center">Reorder Level</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/investigations.php :: reorder_level`
 
 ### `resources/views/investigations/items/stock.blade.php`
 
@@ -47928,21 +47303,8 @@ Date: 2026-06-13 19:26:20 +02:00
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/lab.php :: view_result`
 
-### `resources/views/lab/results.blade.php`
-
-- Line 2 [high, active_runtime_candidates]: `Investigation Results`
-  - Context: `@section('title', 'Investigation Results')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/lab.php :: investigation_results`
-
 ### `resources/views/lab/tests.blade.php`
 
-- Line 2 [high, active_runtime_candidates]: `Lab Test Catalog`
-  - Context: `@section('title', 'Lab Test Catalog')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/lab.php :: lab_test_catalog`
 - Line 42 [high, known_false_positive_candidates]: `Actions`
   - Context: `<button aria-label="Actions" title="Actions" class="btn btn-sm btn-white border dropdown-toggle drop-arrow-none" data-bs-toggle="dropdown">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -67640,84 +67002,6 @@ Date: 2026-06-13 19:26:20 +02:00
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/prefixes_settings.blade.php.php :: save_changes`
 
-### `resources/views/prescriptions/index.blade.php`
-
-- Line 2 [high, active_runtime_candidates]: `Prescriptions`
-  - Context: `@section('title', 'Prescriptions')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/prescriptions.php :: prescriptions`
-- Line 8 [high, known_false_positive_candidates]: `Prescriptions`
-  - Context: `<h4 class="fw-bold mb-0">Prescriptions</h4>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/prescriptions.php :: prescriptions`
-- Line 9 [high, known_false_positive_candidates]: `Manage patient prescriptions`
-  - Context: `<small class="text-muted">Manage patient prescriptions</small>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/prescriptions.php :: manage_patient_prescriptions`
-- Line 18 [high, known_false_positive_candidates]: `Search`
-  - Context: `<label class="form-label small">Search</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/prescriptions.php :: search`
-- Line 19 [high, known_false_positive_candidates]: `Rx number, patient name...`
-  - Context: `<input type="text" name="search" class="form-control" placeholder="Rx number, patient name..." value="{{ request('search') }}">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/prescriptions.php :: rx_number_patient_name`
-- Line 24 [high, active_runtime_candidates]: `All Statuses`
-  - Context: `<option value="">All Statuses</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/prescriptions.php :: all_statuses`
-- Line 34 [high, known_false_positive_candidates]: `Clear`
-  - Context: `<a href="{{ route('admin.prescriptions.index') }}" class="btn btn-outline-secondary w-100">Clear</a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/prescriptions.php :: clear`
-- Line 47 [high, active_runtime_candidates]: `Rx #`
-  - Context: `<th>Rx #</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/prescriptions.php :: rx`
-- Line 48 [high, active_runtime_candidates]: `Patient`
-  - Context: `<th>Patient</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/prescriptions.php :: patient`
-- Line 49 [high, active_runtime_candidates]: `Doctor`
-  - Context: `<th>Doctor</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/prescriptions.php :: doctor`
-- Line 50 [high, active_runtime_candidates]: `Items`
-  - Context: `<th>Items</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/prescriptions.php :: items`
-- Line 52 [high, active_runtime_candidates]: `Date`
-  - Context: `<th>Date</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/prescriptions.php :: date`
-- Line 53 [high, active_runtime_candidates]: `Action`
-  - Context: `<th>Action</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/prescriptions.php :: action`
-- Line 69 [high, known_false_positive_candidates]: `View`
-  - Context: `<a aria-label="View" title="View" href="{{ route('admin.prescriptions.show', $prescription) }}" class="btn btn-sm btn-outline-primary">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/prescriptions.php :: view`
-- Line 69 [high, known_false_positive_candidates]: `View`
-  - Context: `<a aria-label="View" title="View" href="{{ route('admin.prescriptions.show', $prescription) }}" class="btn btn-sm btn-outline-primary">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/prescriptions.php :: view`
-
 ### `resources/views/prescriptions/show.blade.php`
 
 - Line 20 [medium, known_false_positive_candidates]: `Cancel this prescription?`
@@ -72911,81 +72195,6 @@ Date: 2026-06-13 19:26:20 +02:00
 
 ### `resources/views/store/purchase-orders/create.blade.php`
 
-- Line 2 [high, active_runtime_candidates]: `Create Purchase Order`
-  - Context: `@section('title', 'Create Purchase Order')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: create_purchase_order`
-- Line 7 [high, known_false_positive_candidates]: `Create Purchase Order`
-  - Context: `<h4 class="fw-bold mb-0">Create Purchase Order</h4>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: create_purchase_order`
-- Line 29 [high, known_false_positive_candidates]: `Purchase Order Details`
-  - Context: `<h5 class="card-title mb-0">Purchase Order Details</h5>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: purchase_order_details`
-- Line 39 [high, active_runtime_candidates]: `Select Supplier...`
-  - Context: `<option value="">Select Supplier...</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: select_supplier`
-- Line 52 [high, known_false_positive_candidates]: `Expected Delivery Date`
-  - Context: `<label class="form-label">Expected Delivery Date</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: expected_delivery_date`
-- Line 58 [high, known_false_positive_candidates]: `Notes`
-  - Context: `<label class="form-label">Notes</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: notes`
-- Line 59 [high, known_false_positive_candidates]: `Optional notes...`
-  - Context: `<textarea name="notes" class="form-control" rows="2" placeholder="Optional notes...">{{ old('notes') }}</textarea>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: optional_notes`
-- Line 68 [high, active_runtime_candidates]: `Product`
-  - Context: `<th>Product</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: product`
-- Line 69 [high, active_runtime_candidates]: `Quantity`
-  - Context: `<th style="width: 120px;">Quantity</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: quantity`
-- Line 70 [high, active_runtime_candidates]: `Unit Cost (GH₵)`
-  - Context: `<th style="width: 140px;">Unit Cost (GH₵)</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: unit_cost_gh`
-- Line 71 [high, active_runtime_candidates]: `Total`
-  - Context: `<th style="width: 140px;">Total</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: total`
-- Line 79 [high, active_runtime_candidates]: `Select Product...`
-  - Context: `<option value="">Select Product...</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: select_product`
-- Line 93 [high, known_false_positive_candidates]: `Delete`
-  - Context: `<td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: delete`
-- Line 93 [high, known_false_positive_candidates]: `Delete`
-  - Context: `<td class="text-center"><button aria-label="Delete" title="Delete" type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="ti ti-trash"></i></button></td>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: delete`
-- Line 98 [high, known_false_positive_candidates]: `Grand Total:`
-  - Context: `<td colspan="3" class="text-end fw-bold">Grand Total:</td>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: grand_total`
 - Line 99 [high, known_false_positive_candidates]: `GH₵ 0.00`
   - Context: `<td class="text-end fw-bold" id="grandTotal">GH₵ 0.00</td>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -73001,19 +72210,9 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/store.php :: delete`
-- Line 224 [medium, active_runtime_candidates]: `Please select at least one product before saving the purchase order.`
-  - Context: `alert('Please select at least one product before saving the purchase order.');`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: please_select_at_least_one_product_before_saving_t`
 
 ### `resources/views/store/purchase-orders/index.blade.php`
 
-- Line 2 [high, active_runtime_candidates]: `Purchase Orders`
-  - Context: `@section('title', 'Purchase Orders')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: purchase_orders`
 - Line 39 [high, known_false_positive_candidates]: `Draft`
   - Context: `<small class="text-muted">Draft</small>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -73049,26 +72248,6 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/store.php :: search_po_supplier`
-- Line 108 [high, active_runtime_candidates]: `All Status`
-  - Context: `<option value="">All Status</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: all_status`
-- Line 116 [high, active_runtime_candidates]: `All Suppliers`
-  - Context: `<option value="">All Suppliers</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: all_suppliers`
-- Line 123 [medium, active_runtime_candidates]: `Date Range`
-  - Context: `@include('partials.date-range-filter', ['name' => 'date_range', 'value' => request('date_range'), 'label' => 'Date Range', 'labelClass' => 'small text-muted mb-1'])`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: date_range`
-- Line 127 [high, active_runtime_candidates]: `All Products`
-  - Context: `<option value="">All Products</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: all_products`
 - Line 134 [high, known_false_positive_candidates]: `Search`
   - Context: `<button aria-label="Search" title="Search" type="submit" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -73089,31 +72268,6 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/store.php :: close`
-- Line 152 [high, active_runtime_candidates]: `PO #`
-  - Context: `<th>PO #</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: po`
-- Line 153 [high, active_runtime_candidates]: `Supplier`
-  - Context: `<th>Supplier</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: supplier`
-- Line 154 [high, active_runtime_candidates]: `Order Date`
-  - Context: `<th>Order Date</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: order_date`
-- Line 155 [high, active_runtime_candidates]: `Expected`
-  - Context: `<th>Expected</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: expected`
-- Line 156 [high, known_false_positive_candidates]: `Items`
-  - Context: `<th class="text-center">Items</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: items`
 - Line 157 [high, known_false_positive_candidates]: `Total`
   - Context: `<th class="text-end">Total</th>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -73134,11 +72288,6 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/store.php :: actions`
-- Line 211 [medium, active_runtime_candidates]: `Cancel this PO?`
-  - Context: `<form method="POST" action="{{ route('admin.store.purchase-orders.cancel', $po) }}" onsubmit="return confirm('Cancel this PO?')">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: cancel_this_po`
 
 ### `resources/views/store/purchase-orders/show.blade.php`
 
@@ -73212,36 +72361,6 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/store.php :: notes`
-- Line 162 [high, active_runtime_candidates]: `Item`
-  - Context: `<th>Item</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: item`
-- Line 163 [high, known_false_positive_candidates]: `Type`
-  - Context: `<th class="text-center">Type</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: type`
-- Line 164 [high, known_false_positive_candidates]: `Ordered`
-  - Context: `<th class="text-center">Ordered</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: ordered`
-- Line 165 [high, known_false_positive_candidates]: `Received`
-  - Context: `<th class="text-center">Received</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: received`
-- Line 166 [high, known_false_positive_candidates]: `Unit Cost`
-  - Context: `<th class="text-end">Unit Cost</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: unit_cost`
-- Line 167 [high, known_false_positive_candidates]: `Total`
-  - Context: `<th class="text-end">Total</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: total`
 - Line 169 [high, known_false_positive_candidates]: `Actions`
   - Context: `<th class="text-end">Actions</th>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -73267,41 +72386,6 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/store.php :: total`
-- Line 233 [high, active_runtime_candidates]: `Product`
-  - Context: `<th>Product</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: product`
-- Line 234 [high, active_runtime_candidates]: `Ordered`
-  - Context: `<th style="width:80px;">Ordered</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: ordered`
-- Line 235 [high, active_runtime_candidates]: `Already`
-  - Context: `<th style="width:80px;">Already</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: already`
-- Line 236 [high, active_runtime_candidates]: `Remaining`
-  - Context: `<th style="width:80px;">Remaining</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: remaining`
-- Line 237 [high, active_runtime_candidates]: `Receiving`
-  - Context: `<th style="width:100px;">Receiving</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: receiving`
-- Line 238 [high, active_runtime_candidates]: `Batch #`
-  - Context: `<th style="width:130px;">Batch #</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: batch`
-- Line 239 [high, active_runtime_candidates]: `Expiry`
-  - Context: `<th style="width:140px;">Expiry</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: expiry`
 - Line 255 [high, known_false_positive_candidates]: `Batch`
   - Context: `<input type="text" name="items[{{ $idx }}][batch_number]" class="form-control form-control-sm" value="{{ $item->batch_number }}" placeholder="Batch">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -73317,11 +72401,6 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/store.php :: add_item_to_po`
-- Line 292 [high, active_runtime_candidates]: `Select Product...`
-  - Context: `<option value="">Select Product...</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: select_product`
 - Line 310 [high, known_false_positive_candidates]: `Cancel`
   - Context: `<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -73335,81 +72414,11 @@ Date: 2026-06-13 19:26:20 +02:00
 
 ### `resources/views/store/purchase-returns/create.blade.php`
 
-- Line 2 [high, active_runtime_candidates]: `New Purchase Return`
-  - Context: `@section('title', 'New Purchase Return')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: new_purchase_return`
 - Line 6 [high, known_false_positive_candidates]: `New Purchase Return`
   - Context: `<h4 class="fw-bold mb-0">New Purchase Return</h4>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/store.php :: new_purchase_return`
-- Line 25 [high, active_runtime_candidates]: `Select purchase order`
-  - Context: `<option value="">Select purchase order</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: select_purchase_order`
-- Line 35 [high, known_false_positive_candidates]: `A return must reference a received purchase order.`
-  - Context: `<small class="text-muted">A return must reference a received purchase order.</small>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: a_return_must_reference_a_received_purchase_order`
-- Line 38 [high, known_false_positive_candidates]: `Supplier`
-  - Context: `<label class="form-label">Supplier</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: supplier`
-- Line 39 [high, known_false_positive_candidates]: `Auto-filled from the PO`
-  - Context: `<input type="text" id="supplierName" class="form-control" value="" readonly placeholder="Auto-filled from the PO">`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: auto_filled_from_the_po`
-- Line 54 [high, known_false_positive_candidates]: `Reason`
-  - Context: `<label class="form-label">Reason</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: reason`
-- Line 60 [high, known_false_positive_candidates]: `Items to Return`
-  - Context: `<h6 class="mb-2">Items to Return</h6>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: items_to_return`
-- Line 65 [high, active_runtime_candidates]: `Product`
-  - Context: `<th style="min-width: 260px;">Product</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: product`
-- Line 66 [high, known_false_positive_candidates]: `Received`
-  - Context: `<th style="width: 120px;" class="text-end">Received</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: received`
-- Line 67 [high, active_runtime_candidates]: `Return Qty`
-  - Context: `<th style="width: 130px;">Return Qty</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: return_qty`
-- Line 68 [high, active_runtime_candidates]: `Unit Cost (GH₵)`
-  - Context: `<th style="width: 140px;">Unit Cost (GH₵)</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: unit_cost_gh`
-- Line 69 [high, active_runtime_candidates]: `Batch`
-  - Context: `<th style="width: 130px;">Batch</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: batch`
-- Line 70 [high, active_runtime_candidates]: `Expiry`
-  - Context: `<th style="width: 150px;">Expiry</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: expiry`
-- Line 71 [high, known_false_positive_candidates]: `Line Total`
-  - Context: `<th style="width: 130px;" class="text-end">Line Total</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: line_total`
 - Line 84 [high, known_false_positive_candidates]: `Grand Total:`
   - Context: `<td colspan="6" class="text-end fw-bold">Grand Total:</td>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -73453,31 +72462,11 @@ Date: 2026-06-13 19:26:20 +02:00
 
 ### `resources/views/store/purchase-returns/index.blade.php`
 
-- Line 2 [high, active_runtime_candidates]: `Purchase Returns`
-  - Context: `@section('title', 'Purchase Returns')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: purchase_returns`
 - Line 22 [high, known_false_positive_candidates]: `Search return # or supplier`
   - Context: `<div class="col-md-3"><input type="text" name="search" class="form-control" placeholder="Search return # or supplier" value="{{ request('search') }}"></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/store.php :: search_return_or_supplier`
-- Line 25 [high, active_runtime_candidates]: `All Suppliers`
-  - Context: `<option value="">All Suppliers</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: all_suppliers`
-- Line 33 [high, active_runtime_candidates]: `All Status`
-  - Context: `<option value="">All Status</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: all_status`
-- Line 41 [high, active_runtime_candidates]: `All Products`
-  - Context: `<option value="">All Products</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: all_products`
 - Line 49 [high, known_false_positive_candidates]: `Search`
   - Context: `<div class="col-md-1"><button aria-label="Search" title="Search" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -73498,31 +72487,6 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/store.php :: close`
-- Line 62 [high, active_runtime_candidates]: `Return #`
-  - Context: `<th>Return #</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: return`
-- Line 63 [high, active_runtime_candidates]: `Supplier`
-  - Context: `<th>Supplier</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: supplier`
-- Line 64 [high, active_runtime_candidates]: `Date`
-  - Context: `<th>Date</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: date`
-- Line 65 [high, active_runtime_candidates]: `Location`
-  - Context: `<th>Location</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: location`
-- Line 66 [high, known_false_positive_candidates]: `Items`
-  - Context: `<th class="text-center">Items</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: items`
 - Line 67 [high, known_false_positive_candidates]: `Value`
   - Context: `<th class="text-end">Value</th>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -73546,11 +72510,6 @@ Date: 2026-06-13 19:26:20 +02:00
 
 ### `resources/views/store/purchase-returns/show.blade.php`
 
-- Line 2 [high, active_runtime_candidates]: `Purchase Return`
-  - Context: `@section('title', 'Purchase Return')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: purchase_return`
 - Line 14 [high, known_false_positive_candidates]: `Cancel this return?`
   - Context: `<x-confirm-form :action="route('admin.store.purchase-returns.cancel', $purchaseReturn)" method="POST" button-label="Cancel" button-class="btn btn-outline-danger btn-sm" icon="ti-x" confirm-title="Cancel this return?" confirm-text="The purchase return will be cancelled." confirm-button="Yes, cancel" />`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -73657,11 +72616,6 @@ Date: 2026-06-13 19:26:20 +02:00
 
 ### `resources/views/store/stock-requisitions/index.blade.php`
 
-- Line 46 [medium, active_runtime_candidates]: `Date Range`
-  - Context: `@include('partials.date-range-filter', ['name' => 'date_range', 'value' => request('date_range'), 'label' => 'Date Range', 'labelClass' => 'small text-muted mb-1'])`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: date_range`
 - Line 48 [high, known_false_positive_candidates]: `Search`
   - Context: `<div class="col-md-1"><button aria-label="Search" title="Search" class="btn btn-outline-primary w-100"><i class="ti ti-search"></i></button></div>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -73914,86 +72868,6 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/store.php :: from`
-- Line 54 [high, known_false_positive_candidates]: `Type`
-  - Context: `<label class="form-label small mb-1">Type</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: type`
-- Line 56 [high, active_runtime_candidates]: `All types`
-  - Context: `<option value="">All types</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: all_types`
-- Line 63 [high, known_false_positive_candidates]: `Debit/Credit`
-  - Context: `<label class="form-label small mb-1">Debit/Credit</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: debit_credit`
-- Line 65 [high, active_runtime_candidates]: `Both`
-  - Context: `<option value="">Both</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: both`
-- Line 66 [high, active_runtime_candidates]: `Debit`
-  - Context: `<option value="debit" @selected(request('debit_credit') === 'debit')>Debit</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: debit`
-- Line 67 [high, active_runtime_candidates]: `Credit`
-  - Context: `<option value="credit" @selected(request('debit_credit') === 'credit')>Credit</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: credit`
-- Line 71 [high, known_false_positive_candidates]: `Source`
-  - Context: `<label class="form-label small mb-1">Source</label>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: source`
-- Line 73 [high, active_runtime_candidates]: `Any`
-  - Context: `<option value="">Any</option>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: any`
-- Line 83 [high, known_false_positive_candidates]: `Reset`
-  - Context: `<a href="{{ route('admin.store.suppliers.ledger', $supplier) }}" class="btn btn-outline-secondary btn-sm">Reset</a>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: reset`
-- Line 96 [high, active_runtime_candidates]: `Date`
-  - Context: `<th>Date</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: date`
-- Line 97 [high, active_runtime_candidates]: `Type`
-  - Context: `<th>Type</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: type`
-- Line 98 [high, active_runtime_candidates]: `Description`
-  - Context: `<th>Description</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: description`
-- Line 99 [high, known_false_positive_candidates]: `Debit`
-  - Context: `<th class="text-end">Debit</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: debit`
-- Line 100 [high, known_false_positive_candidates]: `Credit`
-  - Context: `<th class="text-end">Credit</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: credit`
-- Line 101 [high, known_false_positive_candidates]: `Balance`
-  - Context: `<th class="text-end">Balance</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: false positive
-  - Suggested key: `lang/{en,fr}/store.php :: balance`
-- Line 102 [high, active_runtime_candidates]: `Source`
-  - Context: `<th>Source</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: source`
 - Line 143 [high, known_false_positive_candidates]: `Record Manual Supplier Ledger Entry`
   - Context: `<h5 class="modal-title">Record Manual Supplier Ledger Entry</h5>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -74042,11 +72916,6 @@ Date: 2026-06-13 19:26:20 +02:00
 
 ### `resources/views/store/suppliers.blade.php`
 
-- Line 2 [high, active_runtime_candidates]: `Suppliers`
-  - Context: `@section('title', 'Suppliers')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: suppliers`
 - Line 14 [high, known_false_positive_candidates]: `Search suppliers...`
   - Context: `<input type="text" name="search" class="form-control" placeholder="Search suppliers..." value="{{ request('search') }}" style="width:200px;">`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -74072,21 +72941,6 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/store.php :: close`
-- Line 43 [high, active_runtime_candidates]: `Contact Person`
-  - Context: `<th>Contact Person</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: contact_person`
-- Line 44 [high, active_runtime_candidates]: `Phone`
-  - Context: `<th>Phone</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: phone`
-- Line 46 [high, active_runtime_candidates]: `POs`
-  - Context: `<th>POs</th>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/store.php :: pos`
 - Line 48 [high, known_false_positive_candidates]: `Actions`
   - Context: `<th class="text-end">Actions</th>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -88474,11 +87328,6 @@ Date: 2026-06-13 19:26:20 +02:00
 
 ### `resources/views/vitals/record.blade.php`
 
-- Line 2 [high, active_runtime_candidates]: `Record Vitals`
-  - Context: `@section('title', 'Record Vitals')`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/vitals.php :: record_vitals`
 - Line 8 [high, known_false_positive_candidates]: `Record Vitals`
   - Context: `<h4 class="fw-bold mb-0">Record Vitals</h4>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -88489,11 +87338,6 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/vitals.php :: record_patient_vital_signs_during_triage`
-- Line 40 [high, active_runtime_candidates]: `No active visits in triage/waiting.`
-  - Context: `<small>No active visits in triage/waiting.</small>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/vitals.php :: no_active_visits_in_triage_waiting`
 - Line 106 [high, known_false_positive_candidates]: `Update`
   - Context: `<button type="submit" class="btn btn-sm btn-outline-secondary">Update</button>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -88534,11 +87378,6 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/vitals.php :: notes`
-- Line 279 [high, active_runtime_candidates]: `Additional observations...`
-  - Context: `rows="2" placeholder="Additional observations...">{{ old('notes') }}</textarea>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/vitals.php :: additional_observations`
 - Line 287 [high, known_false_positive_candidates]: `Estimated Score:`
   - Context: `<strong class="small">Estimated Score:</strong>`
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
@@ -88549,11 +87388,6 @@ Date: 2026-06-13 19:26:20 +02:00
   - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
   - Status after Phase 14: false positive
   - Suggested key: `lang/{en,fr}/vitals.php :: cancel`
-- Line 309 [high, active_runtime_candidates]: `Select a visit from the list to record vitals.`
-  - Context: `<p>Select a visit from the list to record vitals.</p>`
-  - Recommendation: Wrap in __() and add matching EN/FR keys if this is visible UI text.
-  - Status after Phase 14: deferred
-  - Suggested key: `lang/{en,fr}/vitals.php :: select_a_visit_from_the_list_to_record_vitals`
 
 ### `resources/views/voice-call.blade.php`
 

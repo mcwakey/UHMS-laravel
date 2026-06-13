@@ -7,33 +7,33 @@ Follow this prompt directly.
 
 Localisation is still not complete.
 
-Phase 15C reduced active runtime candidates from 437 to 370, but the report clearly says it was a partial pass. Do not move to dashboards. Do not move to the Full Test Suite. Do not claim localisation is complete.
+Phase 15D reduced active runtime candidates from 370 to 317. The report clearly says the pass is partial and not complete. Do not move to dashboards. Do not move to the Full Test Suite. Do not claim localisation is complete.
 
-# UHMS Localisation Phase 15D — Runtime Burn-Down Continuation
+# UHMS Localisation Phase 15E — Stock, Store, Procurement, Clinical Runtime Burn-Down
 
 ## Goal
 
-Continue the localisation burn-down from the Phase 15C exit state.
+Continue the localisation burn-down from the Phase 15D exit state.
 
 Starting point:
 
 ```text
-Active runtime candidates: 370
+Active runtime candidates: 317
 ```
 
-Target:
+Primary target:
 
 ```text
-Active runtime candidates: below 150 if possible
+Active runtime candidates: below 200
 ```
 
 Preferred target:
 
 ```text
-Active runtime candidates: below 100
+Active runtime candidates: below 150
 ```
 
-Do not touch dormant demo/template pages unless they are route-linked or included by active layouts/components.
+Do not work on dormant demo/template files unless they are route-linked or included by active layouts/components.
 
 ---
 
@@ -43,146 +43,60 @@ Read:
 
 ```text
 docs/LOCALISATION_COVERAGE_AUDIT_REPORT.md
-docs/LOCALISATION_PHASE_15C_REMAINING_RUNTIME_BURNDOWN_REPORT.md
+docs/LOCALISATION_PHASE_15D_RUNTIME_BURNDOWN_CONTINUATION_REPORT.md
 ```
 
 Use the active runtime worklist in `LOCALISATION_COVERAGE_AUDIT_REPORT.md` as the source of truth.
 
-Do not repeat files already completed in Phase 15C unless the scanner still reports them.
+Do not repeat files already completed in Phase 15D unless the scanner still reports them.
 
 ---
 
 # 2. Current Known Status
 
-Phase 15C completed:
-
-```text
-resources/views/pharmacy/drug-history.blade.php
-resources/views/pharmacy/history.blade.php
-resources/views/theatre/rooms/index.blade.php
-resources/views/admin/procedures/index.blade.php
-resources/views/admin/procedure-catalogue/show.blade.php
-```
-
-Phase 15C created:
-
-```text
-lang/en/procedures.php
-lang/fr/procedures.php
-```
-
-Phase 15C extended:
-
-```text
-lang/en/pharmacy.php
-lang/fr/pharmacy.php
-lang/en/theatre.php
-lang/fr/theatre.php
-```
-
-Remaining active runtime candidates after Phase 15C:
-
-```text
-370
-```
-
----
-
-# 3. Batch 2 Remainder — Finish Theatre / Procedures
-
-First complete the remaining Batch 2 files:
+Phase 15D completed:
 
 ```text
 resources/views/admin/procedures/schedule.blade.php
-resources/views/theatre/show.blade.php
 resources/views/admin/procedure-catalogue/index.blade.php
+resources/views/theatre/show.blade.php
 resources/views/theatre/partials/schedule-form.blade.php
 resources/views/theatre/rooms/partials/form.blade.php
-```
-
-Translate:
-
-* procedure schedule labels
-* theatre case labels
-* theatre status badges
-* room form labels
-* schedule form labels
-* filters
-* table headers
-* action buttons
-* modal titles
-* empty states
-* confirmation messages
-* placeholders
-* helper text
-* JavaScript strings if present
-
-Use or extend:
-
-```text
-lang/en/theatre.php
-lang/fr/theatre.php
-lang/en/procedures.php
-lang/fr/procedures.php
-```
-
-Do not change theatre workflow.
-Do not change scheduling logic.
-Do not expose restricted clinical data.
-
-Manual-review partials must be checked carefully because they may be shared.
-
-If safe, translate them.
-If not safe, document exactly why.
-
----
-
-# 4. Batch 3 — Wards and Beds
-
-Fix:
-
-```text
 resources/views/wards/index.blade.php
 resources/views/wards/beds.blade.php
 resources/views/wards/bed-map.blade.php
 resources/views/settings/ward.blade.php
 ```
 
-Create or extend:
+Phase 15D created:
 
 ```text
 lang/en/wards.php
 lang/fr/wards.php
 ```
 
-Translate:
+Phase 15D extended:
 
-* ward labels
-* bed labels
-* occupancy labels
-* bed status labels
-* admission labels
-* patient labels
-* room labels
-* availability labels
-* filters
-* cards
-* table headers
-* action buttons
-* modal titles
-* empty states
-* helper text
-* JavaScript messages if present
+```text
+lang/en/theatre.php
+lang/fr/theatre.php
+lang/en/procedures.php
+lang/fr/procedures.php
+```
 
-Do not translate patient names or ward names entered by users.
-Do not change bed allocation logic.
-Do not expose restricted admission data.
+Remaining active runtime candidates after Phase 15D:
+
+```text
+317
+```
 
 ---
 
-# 5. Batch 4 — Product Stock / Store / Suppliers / Procurement
+# 3. Batch 4 — Stock, Product Stock, Store, Suppliers, Procurement
 
-Fix:
+This is the main priority for Phase 15E.
+
+Fix these files:
 
 ```text
 resources/views/admin/product-stock/ledger.blade.php
@@ -219,20 +133,35 @@ Translate:
 
 * stock ledger labels
 * stock balance labels
-* receive/transfer/adjust/return labels
+* receive stock labels
+* transfer stock labels
+* adjust stock labels
+* return stock labels
+* stock location labels
 * purchase order labels
 * purchase return labels
 * supplier labels
 * supplier ledger labels
 * requisition labels
 * department consumable labels
+* product labels
+* batch labels
+* quantity labels
+* unit cost labels
+* selling price labels
+* expiry date labels
 * filters
 * table headers
+* form labels
+* placeholders
+* helper text
 * buttons
 * modal titles
 * empty states
 * confirmation messages
+* validation labels
 * print labels if present
+* JavaScript messages if present
 
 Important UHMS rule:
 
@@ -243,9 +172,15 @@ Services = billable activities.
 
 Do not mix products and services.
 
-Protect stock cost visibility.
+---
 
-Do not remove or weaken:
+# 4. Stock Cost / Financial Security
+
+This batch touches sensitive stock and procurement pages.
+
+Do not expose stock cost to unauthorized users.
+
+Preserve all permission checks:
 
 ```text
 @can
@@ -256,9 +191,29 @@ stock-cost visibility checks
 financial visibility checks
 ```
 
+Do not modify business rules for:
+
+```text
+stock receiving
+stock transfer
+stock adjustment
+stock returns
+purchase orders
+purchase returns
+supplier ledger
+department consumables
+stock requisitions
+```
+
+Only translate visible UI strings.
+
+Do not move business logic into Blade.
+
 ---
 
-# 6. Batch 5 — Prescriptions / Investigations / Vitals / Lab
+# 5. Batch 5 — Prescriptions, Investigations, Vitals, Lab
+
+After Batch 4, if time/change-set size remains safe, continue with Batch 5.
 
 Fix:
 
@@ -289,18 +244,21 @@ Translate:
 * prescription labels
 * medication order labels
 * dosage labels
+* route/frequency labels
 * investigation item labels
-* catalogue labels
+* investigation catalogue labels
 * lab result labels
 * vital sign labels
 * status badges
-* patient/visit labels
+* patient labels
+* visit labels
 * filters
 * table headers
+* form labels
 * action buttons
 * modal titles
 * empty states
-* JavaScript messages if present
+* JavaScript strings if present
 
 Do not translate:
 
@@ -309,15 +267,15 @@ Do not translate:
 * clinician-entered notes
 * diagnosis text
 * patient names
-* clinical units like mmHg, bpm, kg, cm, °C, %, SpO2
+* clinical units such as mmHg, bpm, kg, cm, °C, %, SpO2
 
 Do not change clinical workflow.
 
 ---
 
-# 7. Batch 6 — Emergency Remaining Candidates
+# 6. Batch 6 — Emergency Remaining Candidates
 
-Fix:
+If Batch 4 and Batch 5 are completed safely, process:
 
 ```text
 resources/views/emergency/show.blade.php
@@ -338,31 +296,9 @@ Do not expose restricted clinical or financial data.
 
 ---
 
-# 8. Run Scanner After Every Batch
+# 7. JavaScript Manual Review
 
-After each batch, run:
-
-```bash
-php scripts/localisation-audit.php
-```
-
-Record before/after counts for:
-
-```text
-Batch 2 remainder
-Batch 3
-Batch 4
-Batch 5
-Batch 6
-```
-
-If a batch creates parse errors, stop and fix before continuing.
-
----
-
-# 9. JavaScript Manual Review
-
-Review but do not necessarily complete unless safe:
+Review but do not rush unless safe:
 
 ```text
 resources/js/script.js
@@ -385,7 +321,7 @@ If strings are dormant template/demo examples, document them as false positives 
 
 ---
 
-# 10. Class-A Service Candidates
+# 8. Class-A Service Candidates
 
 Do not rush these in this phase unless they are simple and clearly user-facing.
 
@@ -401,7 +337,7 @@ ProcedureReportService.php
 StatisticsService.php
 ```
 
-Safe examples:
+Safe example:
 
 ```php
 'label' => __('accounting.revenue')
@@ -421,7 +357,7 @@ Leave unsafe items unchanged and document them.
 
 ---
 
-# 11. Translation Rules
+# 9. Translation Rules
 
 Use Laravel localisation only.
 
@@ -459,7 +395,7 @@ __('stock.remaining_quantity', ['qty' => $qty])
 
 ---
 
-# 12. Language File Rules
+# 10. Language File Rules
 
 Use appropriate namespaces.
 
@@ -469,7 +405,7 @@ Generic UI words go in:
 common.php
 ```
 
-Only for:
+Only for truly generic words:
 
 ```text
 save
@@ -495,9 +431,6 @@ success
 Domain words go in domain files:
 
 ```text
-theatre.php
-procedures.php
-wards.php
 stock.php
 store.php
 prescriptions.php
@@ -511,7 +444,7 @@ Every French key must exist in English.
 
 ---
 
-# 13. Do Not Translate These
+# 11. Do Not Translate These
 
 Do not translate:
 
@@ -541,7 +474,7 @@ Do not translate:
 
 ---
 
-# 14. Security Rules
+# 12. Security Rules
 
 Do not weaken permissions.
 
@@ -577,7 +510,7 @@ No business logic should be moved into Blade.
 
 ---
 
-# 15. Responsiveness
+# 13. Responsiveness
 
 While touching these pages, fix obvious responsiveness problems only where directly encountered:
 
@@ -592,30 +525,50 @@ Do not introduce Tailwind.
 
 ---
 
-# 16. Required Documentation
+# 14. Scanner Burn-Down
+
+Run the scanner after every batch:
+
+```bash
+php scripts/localisation-audit.php
+```
+
+Record before/after counts for:
+
+```text
+Batch 4
+Batch 5
+Batch 6
+JavaScript review if touched
+Class-A services if touched
+```
+
+If a batch introduces parse errors, stop and fix before continuing.
+
+---
+
+# 15. Required Documentation
 
 Create:
 
 ```text
-docs/LOCALISATION_PHASE_15D_RUNTIME_BURNDOWN_CONTINUATION_REPORT.md
+docs/LOCALISATION_PHASE_15E_STOCK_STORE_CLINICAL_BURNDOWN_REPORT.md
 ```
 
 Include:
 
 * summary
-* starting active runtime candidate count: 370
+* starting active runtime candidate count: 317
 * ending active runtime candidate count
 * per-batch before/after counts
-* Batch 2 remainder files fixed/deferred
-* Batch 3 files fixed/deferred
 * Batch 4 files fixed/deferred
 * Batch 5 files fixed/deferred
 * Batch 6 files fixed/deferred
+* JavaScript files reviewed/touched/deferred
+* class-A service candidates reviewed/touched/deferred
 * language files changed
 * namespaces created
 * keys added
-* JavaScript files reviewed
-* class-A service candidates reviewed
 * dynamic labels converted
 * permissions/security confirmation
 * EN/FR parity result
@@ -625,11 +578,11 @@ Include:
 * manual French verification checklist
 * next recommendation if candidates remain
 
-Do not claim “all pages translated” unless the scanner and manual French checks support it.
+Do not claim “all pages translated” unless scanner and manual French checks support it.
 
 ---
 
-# 17. Verification Commands
+# 16. Verification Commands
 
 Run:
 
@@ -669,20 +622,11 @@ find storage/framework/views -type f -name "*.php" -print0 | xargs -0 -n1 php -l
 
 ---
 
-# 18. Manual French Verification
+# 17. Manual French Verification
 
 Switch the app to French and manually verify every fixed batch:
 
 ```text
-procedure schedule
-theatre show
-procedure catalogue index
-theatre schedule form
-theatre room form
-wards index
-wards beds
-wards bed map
-ward settings
 product stock ledger
 product stock balances
 product stock receive
@@ -723,26 +667,31 @@ Check:
 * print/PDF labels if present
 * JavaScript messages
 * validation errors
+* stock-cost visibility still permission-controlled
+* clinical data still permission-controlled
 
 ---
 
-# 19. Acceptance Criteria
+# 18. Acceptance Criteria
 
-Phase 15D is complete only when:
+Phase 15E is complete only when:
 
-* Batch 2 remainder is finished or clearly documented
-* Batches 3–6 are finished or clearly documented
-* active runtime candidates are reduced from 370
-* target below 150 is attempted
+* Batch 4 is finished or clearly documented
+* Batch 5 is finished or clearly documented
+* Batch 6 is finished or clearly documented
+* active runtime candidates are reduced from 317
+* target below 200 is attempted
 * all added keys have EN/FR parity
-* PHP lint passes
+* PHP lint passes 
 * view cache compiles
 * localisation scanner runs
 * permissions are unchanged
+* stock-cost visibility remains protected
+* clinical confidentiality remains protected
 * no business logic is moved into Blade
 * no new localisation framework is introduced
 * no new frontend package is introduced
 * documentation report is created
 * manual French verification checklist is updated
 
-Proceed with UHMS Localisation Phase 15D now.
+Proceed with UHMS Localisation Phase 15E now.

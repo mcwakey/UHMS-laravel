@@ -1,12 +1,12 @@
 @extends('layouts.app')
-@section('title', 'Purchase Orders')
+@section('title', __('store.purchase_orders'))
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Purchase Orders
-            <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">Total: {{ $purchaseOrders->total() }}</span>
+        <h4 class="fw-bold mb-0">{{ __('store.purchase_orders') }}
+            <span class="badge badge-soft-primary border border-primary fs-13 fw-medium ms-2">{{ __('common.total') }}: {{ $purchaseOrders->total() }}</span>
         </h4>
     </div>
     <div>
@@ -105,7 +105,7 @@
             </div>
             <div class="col-md-2">
                 <select name="status" class="form-select">
-                    <option value="">All Status</option>
+                    <option value="">{{ __('common.all_statuses') }}</option>
                     @foreach($statuses as $status)
                         <option value="{{ $status->value }}" {{ request('status') == $status->value ? 'selected' : '' }}>{{ $status->translatedLabel() }}</option>
                     @endforeach
@@ -113,18 +113,18 @@
             </div>
             <div class="col-md-2">
                 <select name="supplier_id" class="form-select">
-                    <option value="">All Suppliers</option>
+                    <option value="">{{ __('stock.all_suppliers') }}</option>
                     @foreach($suppliers as $supplier)
                         <option value="{{ $supplier->id }}" {{ request('supplier_id') == $supplier->id ? 'selected' : '' }}>{{ $supplier->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-3">
-                @include('partials.date-range-filter', ['name' => 'date_range', 'value' => request('date_range'), 'label' => 'Date Range', 'labelClass' => 'small text-muted mb-1'])
+                @include('partials.date-range-filter', ['name' => 'date_range', 'value' => request('date_range'), 'label' => __('store.date_range'), 'labelClass' => 'small text-muted mb-1'])
             </div>
             <div class="col-md-2">
                 <select name="product_id" class="form-select">
-                    <option value="">All Products</option>
+                    <option value="">{{ __('stock.all_products') }}</option>
                     @foreach($products as $product)
                         <option value="{{ $product->id }}" @selected((string) request('product_id') === (string) $product->id)>{{ $product->name }}@if($product->code) ({{ $product->code }})@endif</option>
                     @endforeach
@@ -149,11 +149,11 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>PO #</th>
-                        <th>Supplier</th>
-                        <th>Order Date</th>
-                        <th>Expected</th>
-                        <th class="text-center">Items</th>
+                        <th>{{ __('store.po_number_short') }}</th>
+                        <th>{{ __('stock.supplier') }}</th>
+                        <th>{{ __('stock.order_date') }}</th>
+                        <th>{{ __('store.expected') }}</th>
+                        <th class="text-center">{{ __('stock.items') }}</th>
                         <th class="text-end">Total</th>
                         <th>Status</th>
                         <th class="text-end">Actions</th>
@@ -208,7 +208,7 @@
                                     @endif
                                     @if($po->is_editable || $po->status === \App\Enums\PurchaseOrderStatus::SUBMITTED)
                                     <li>
-                                        <form method="POST" action="{{ route('admin.store.purchase-orders.cancel', $po) }}" onsubmit="return confirm('Cancel this PO?')">
+                                        <form method="POST" action="{{ route('admin.store.purchase-orders.cancel', $po) }}" onsubmit="return confirm('{{ __('store.cancel_po_confirm') }}')">
                                             @csrf
                                             <button type="submit" class="dropdown-item text-danger">
                                                 <i class="ti ti-x me-1"></i>Cancel

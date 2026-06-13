@@ -1,17 +1,17 @@
 @extends('layouts.app')
 
-@section('title', 'Stock Balances')
+@section('title', __('stock.stock_balances'))
 
 @section('content')
 <div class="container-fluid py-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0"><i class="ti ti-database"></i> Stock Balances</h4>
+        <h4 class="mb-0"><i class="ti ti-database"></i> {{ __('stock.stock_balances') }}</h4>
         <div class="btn-group">
-            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#receiveStockModal"><i class="ti ti-arrow-down"></i> Receive</button>
-            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#transferStockModal"><i class="ti ti-transfer"></i> Transfer</button>
-            <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#adjustStockModal"><i class="ti ti-adjustments"></i> Adjust</button>
-            <button type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#returnStockModal"><i class="ti ti-arrow-back-up"></i> Return</button>
-            <a href="{{ route('admin.product-stock.ledger') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-list"></i> Ledger</a>
+            <button type="button" class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#receiveStockModal"><i class="ti ti-arrow-down"></i> {{ __('stock.receive') }}</button>
+            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#transferStockModal"><i class="ti ti-transfer"></i> {{ __('stock.transfer') }}</button>
+            <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#adjustStockModal"><i class="ti ti-adjustments"></i> {{ __('stock.adjust') }}</button>
+            <button type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#returnStockModal"><i class="ti ti-arrow-back-up"></i> {{ __('stock.return_action') }}</button>
+            <a href="{{ route('admin.product-stock.ledger') }}" class="btn btn-sm btn-outline-secondary"><i class="ti ti-list"></i> {{ __('stock.ledger') }}</a>
         </div>
     </div>
 
@@ -21,31 +21,31 @@
     <form method="GET" class="card card-body mb-3">
         <div class="row g-2">
             <div class="col-md-3">
-                <label class="form-label small mb-1">Location</label>
+                <label class="form-label small mb-1">{{ __('stock.location') }}</label>
                 <select name="location_id" class="form-select form-select-sm" onchange="this.form.submit()">
-                    <option value="">All Locations</option>
+                    <option value="">{{ __('stock.all_locations') }}</option>
                     @foreach($locations as $l)
                         <option value="{{ $l->id }}" @selected($locationId == $l->id)>
-                            {{ $l->name }} @if($l->is_main) (Main) @endif
+                            {{ $l->name }} @if($l->is_main) {{ __('stock.main_suffix') }} @endif
                         </option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label small mb-1">Search</label>
-                <input name="search" value="{{ $search }}" class="form-control form-control-sm" placeholder="Name or code">
+                <label class="form-label small mb-1">{{ __('stock.search') }}</label>
+                <input name="search" value="{{ $search }}" class="form-control form-control-sm" placeholder="{{ __('stock.search_name_code') }}">
             </div>
             <div class="col-md-3">
-                <label class="form-label small mb-1">Product Type</label>
+                <label class="form-label small mb-1">{{ __('stock.product_type') }}</label>
                 <select name="type" class="form-select form-select-sm">
-                    <option value="">All</option>
+                    <option value="">{{ __('stock.all') }}</option>
                     @foreach($typeOptions as $val => $label)
                         <option value="{{ $val }}" @selected($type === $val)>{{ $label }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-3 d-flex align-items-end">
-                <button class="btn btn-sm btn-primary w-100">Filter</button>
+                <button class="btn btn-sm btn-primary w-100">{{ __('stock.filter') }}</button>
             </div>
         </div>
     </form>
@@ -55,14 +55,14 @@
             <table class="table table-vcenter table-hover mb-0">
                 <thead>
                     <tr>
-                        <th>Product</th>
-                        <th>Type</th>
-                        <th>Unit</th>
+                        <th>{{ __('stock.product') }}</th>
+                        <th>{{ __('stock.type') }}</th>
+                        <th>{{ __('stock.unit') }}</th>
                         @foreach($locations as $location)
                             <th class="text-end text-nowrap">{{ $location->name }}</th>
                         @endforeach
-                        <th class="text-end">Total</th>
-                        <th>Status</th>
+                        <th class="text-end">{{ __('stock.total') }}</th>
+                        <th>{{ __('stock.status') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -104,50 +104,50 @@
         <form action="{{ route('admin.product-stock.receive') }}" method="POST" class="modal-content">
             @csrf
             <div class="modal-header">
-                <h5 class="modal-title"><i class="ti ti-arrow-down me-1"></i>Receive Stock</h5>
+                <h5 class="modal-title"><i class="ti ti-arrow-down me-1"></i>{{ __('stock.receive_stock') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <input type="hidden" name="stock_location_id" value="{{ $mainStore->id }}">
                 <div class="mb-3">
-                    <label class="form-label">Location</label>
-                    <input type="text" class="form-control" value="{{ $mainStore->name }} (Main Store)" disabled>
+                    <label class="form-label">{{ __('stock.location') }}</label>
+                    <input type="text" class="form-control" value="{{ $mainStore->name }} {{ __('stock.main_store_suffix') }}" disabled>
                 </div>
                 <div class="row g-2">
                     <div class="col-md-5">
-                        <label class="form-label">Product *</label>
+                        <label class="form-label">{{ __('stock.product') }} *</label>
                         <select name="items[0][product_id]" class="form-select" required>
-                            <option value="">Select product</option>
+                            <option value="">{{ __('stock.select_product') }}</option>
                             @foreach($stockProducts as $product)
                                 <option value="{{ $product->id }}">{{ $product->name }} @if($product->code) ({{ $product->code }}) @endif</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Qty *</label>
+                        <label class="form-label">{{ __('stock.qty') }} *</label>
                         <input type="number" step="0.0001" min="0.0001" name="items[0][quantity]" class="form-control" required>
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label">Unit Cost</label>
+                        <label class="form-label">{{ __('stock.unit_cost') }}</label>
                         <input type="number" step="0.01" min="0" name="items[0][unit_cost]" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Batch No.</label>
+                        <label class="form-label">{{ __('stock.batch_no') }}</label>
                         <input type="text" name="items[0][batch_no]" class="form-control" maxlength="100">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Expiry Date</label>
+                        <label class="form-label">{{ __('stock.expiry_date') }}</label>
                         <input type="date" name="items[0][expiry_date]" class="form-control">
                     </div>
                     <div class="col-md-9">
-                        <label class="form-label">Notes</label>
+                        <label class="form-label">{{ __('stock.notes') }}</label>
                         <input type="text" name="notes" class="form-control" maxlength="500">
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-success">Receive</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('stock.cancel') }}</button>
+                <button class="btn btn-success">{{ __('stock.receive') }}</button>
             </div>
         </form>
     </div>
@@ -158,49 +158,49 @@
         <form action="{{ route('admin.product-stock.transfer') }}" method="POST" class="modal-content">
             @csrf
             <div class="modal-header">
-                <h5 class="modal-title"><i class="ti ti-transfer me-1"></i>Transfer Stock</h5>
+                <h5 class="modal-title"><i class="ti ti-transfer me-1"></i>{{ __('stock.transfer_stock') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="row g-2">
                     <div class="col-md-6">
-                        <label class="form-label">From *</label>
+                        <label class="form-label">{{ __('stock.from') }} *</label>
                         <select name="from_location_id" class="form-select" required>
                             @foreach($locations as $location)
-                                <option value="{{ $location->id }}" @selected($location->is_main)>{{ $location->name }} @if($location->is_main) (Main) @endif</option>
+                                <option value="{{ $location->id }}" @selected($location->is_main)>{{ $location->name }} @if($location->is_main) {{ __('stock.main_suffix') }} @endif</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">To *</label>
+                        <label class="form-label">{{ __('stock.to') }} *</label>
                         <select name="to_location_id" class="form-select" required>
                             @foreach($locations as $location)
-                                <option value="{{ $location->id }}">{{ $location->name }} @if($location->is_main) (Main) @endif</option>
+                                <option value="{{ $location->id }}">{{ $location->name }} @if($location->is_main) {{ __('stock.main_suffix') }} @endif</option>
                             @endforeach
                         </select>
                     </div>
                 </div>
                 <div class="mb-2 mt-2">
-                    <label class="form-label">Product *</label>
+                    <label class="form-label">{{ __('stock.product') }} *</label>
                     <select name="product_id" class="form-select" required>
-                        <option value="">Select product</option>
+                        <option value="">{{ __('stock.select_product') }}</option>
                         @foreach($stockProducts as $product)
                             <option value="{{ $product->id }}">{{ $product->name }} @if($product->code) ({{ $product->code }}) @endif</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="mb-2">
-                    <label class="form-label">Quantity *</label>
+                    <label class="form-label">{{ __('stock.quantity') }} *</label>
                     <input type="number" step="0.0001" min="0.0001" name="quantity" class="form-control" required>
                 </div>
                 <div class="mb-2">
-                    <label class="form-label">Notes</label>
+                    <label class="form-label">{{ __('stock.notes') }}</label>
                     <textarea name="notes" rows="2" class="form-control" maxlength="500"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-primary">Transfer</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('stock.cancel') }}</button>
+                <button class="btn btn-primary">{{ __('stock.transfer') }}</button>
             </div>
         </form>
     </div>
@@ -211,22 +211,22 @@
         <form action="{{ route('admin.product-stock.adjust') }}" method="POST" class="modal-content">
             @csrf
             <div class="modal-header">
-                <h5 class="modal-title"><i class="ti ti-adjustments me-1"></i>Adjust Stock</h5>
+                <h5 class="modal-title"><i class="ti ti-adjustments me-1"></i>{{ __('stock.adjust_stock') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-2">
-                    <label class="form-label">Location *</label>
+                    <label class="form-label">{{ __('stock.location') }} *</label>
                     <select name="stock_location_id" class="form-select" required>
                         @foreach($locations as $location)
-                            <option value="{{ $location->id }}">{{ $location->name }} @if($location->is_main) (Main) @endif</option>
+                            <option value="{{ $location->id }}">{{ $location->name }} @if($location->is_main) {{ __('stock.main_suffix') }} @endif</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="mb-2">
-                    <label class="form-label">Product *</label>
+                    <label class="form-label">{{ __('stock.product') }} *</label>
                     <select name="product_id" class="form-select" required>
-                        <option value="">Select product</option>
+                        <option value="">{{ __('stock.select_product') }}</option>
                         @foreach($stockProducts as $product)
                             <option value="{{ $product->id }}">{{ $product->name }} @if($product->code) ({{ $product->code }}) @endif</option>
                         @endforeach
@@ -234,7 +234,7 @@
                 </div>
                 <div class="row g-2">
                     <div class="col-md-6">
-                        <label class="form-label">Type *</label>
+                        <label class="form-label">{{ __('stock.type') }} *</label>
                         <select name="type" class="form-select" required>
                             @foreach($adjustmentTypes as $value => $label)
                                 <option value="{{ $value }}">{{ $label }}</option>
@@ -242,22 +242,22 @@
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Quantity *</label>
+                        <label class="form-label">{{ __('stock.quantity') }} *</label>
                         <input type="number" step="0.0001" min="0.0001" name="quantity" class="form-control" required>
                     </div>
                 </div>
                 <div class="mb-2 mt-2">
-                    <label class="form-label">Reason *</label>
+                    <label class="form-label">{{ __('stock.reason') }} *</label>
                     <textarea name="reason" rows="2" class="form-control" maxlength="500" required></textarea>
                 </div>
                 <label class="form-check">
                     <input type="checkbox" name="allow_negative" value="1" class="form-check-input">
-                    <span class="form-check-label">Allow negative balance</span>
+                    <span class="form-check-label">{{ __('stock.allow_negative_balance') }}</span>
                 </label>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-warning">Adjust</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('stock.cancel') }}</button>
+                <button class="btn btn-warning">{{ __('stock.adjust') }}</button>
             </div>
         </form>
     </div>
@@ -268,49 +268,49 @@
         <form action="{{ route('admin.product-stock.return') }}" method="POST" class="modal-content">
             @csrf
             <div class="modal-header">
-                <h5 class="modal-title"><i class="ti ti-arrow-back-up me-1"></i>Return Stock To Main Store</h5>
+                <h5 class="modal-title"><i class="ti ti-arrow-back-up me-1"></i>{{ __('stock.return_to_main_store') }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="row g-2">
                     <div class="col-md-6">
-                        <label class="form-label">From *</label>
+                        <label class="form-label">{{ __('stock.from') }} *</label>
                         <select name="from_location_id" class="form-select" required>
                             @foreach($locations as $location)
-                                <option value="{{ $location->id }}">{{ $location->name }} @if($location->is_main) (Main) @endif</option>
+                                <option value="{{ $location->id }}">{{ $location->name }} @if($location->is_main) {{ __('stock.main_suffix') }} @endif</option>
                             @endforeach
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">To *</label>
+                        <label class="form-label">{{ __('stock.to') }} *</label>
                         <select name="to_location_id" class="form-select" required>
                             @foreach($locations as $location)
-                                <option value="{{ $location->id }}" @selected($mainStore->id === $location->id)>{{ $location->name }} @if($location->is_main) (Main) @endif</option>
+                                <option value="{{ $location->id }}" @selected($mainStore->id === $location->id)>{{ $location->name }} @if($location->is_main) {{ __('stock.main_suffix') }} @endif</option>
                             @endforeach
                         </select>
                     </div>
                 </div>
                 <div class="mb-2 mt-2">
-                    <label class="form-label">Product *</label>
+                    <label class="form-label">{{ __('stock.product') }} *</label>
                     <select name="product_id" class="form-select" required>
-                        <option value="">Select product</option>
+                        <option value="">{{ __('stock.select_product') }}</option>
                         @foreach($stockProducts as $product)
                             <option value="{{ $product->id }}">{{ $product->name }} @if($product->code) ({{ $product->code }}) @endif</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="mb-2">
-                    <label class="form-label">Quantity *</label>
+                    <label class="form-label">{{ __('stock.quantity') }} *</label>
                     <input type="number" step="0.0001" min="0.0001" name="quantity" class="form-control" required>
                 </div>
                 <div class="mb-2">
-                    <label class="form-label">Notes</label>
+                    <label class="form-label">{{ __('stock.notes') }}</label>
                     <textarea name="notes" rows="2" class="form-control" maxlength="500"></textarea>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-secondary">Return</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('stock.cancel') }}</button>
+                <button class="btn btn-secondary">{{ __('stock.return_action') }}</button>
             </div>
         </form>
     </div>

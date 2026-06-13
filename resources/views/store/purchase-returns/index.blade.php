@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Purchase Returns')
+@section('title', __('store.purchase_returns'))
 
 @section('content')
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 pb-3 mb-3 border-bottom">
@@ -22,7 +22,7 @@
             <div class="col-md-3"><input type="text" name="search" class="form-control" placeholder="Search return # or supplier" value="{{ request('search') }}"></div>
             <div class="col-md-2">
                 <select name="supplier_id" class="form-select">
-                    <option value="">All Suppliers</option>
+                    <option value="">{{ __('stock.all_suppliers') }}</option>
                     @foreach($suppliers as $supplier)
                         <option value="{{ $supplier->id }}" @selected((string) request('supplier_id') === (string) $supplier->id)>{{ $supplier->name }}</option>
                     @endforeach
@@ -30,7 +30,7 @@
             </div>
             <div class="col-md-2">
                 <select name="status" class="form-select">
-                    <option value="">All Status</option>
+                    <option value="">{{ __('common.all_statuses') }}</option>
                     @foreach($statuses as $status)
                         <option value="{{ $status->value }}" @selected(request('status') === $status->value)>{{ $status->translatedLabel() }}</option>
                     @endforeach
@@ -38,7 +38,7 @@
             </div>
             <div class="col-md-2">
                 <select name="product_id" class="form-select">
-                    <option value="">All Products</option>
+                    <option value="">{{ __('stock.all_products') }}</option>
                     @foreach($products as $product)
                         <option value="{{ $product->id }}" @selected((string) request('product_id') === (string) $product->id)>{{ $product->name }}@if($product->code) ({{ $product->code }})@endif</option>
                     @endforeach
@@ -59,11 +59,11 @@
         <table class="table table-hover mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>Return #</th>
-                    <th>Supplier</th>
-                    <th>Date</th>
-                    <th>Location</th>
-                    <th class="text-center">Items</th>
+                    <th>{{ __('store.return_number_short') }}</th>
+                    <th>{{ __('stock.supplier') }}</th>
+                    <th>{{ __('stock.date') }}</th>
+                    <th>{{ __('stock.location') }}</th>
+                    <th class="text-center">{{ __('stock.items') }}</th>
                     <th class="text-end">Value</th>
                     <th>Status</th>
                     <th class="text-end">Actions</th>

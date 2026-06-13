@@ -1,12 +1,12 @@
 @extends('layouts.app')
-@section('title', 'Prescriptions')
+@section('title', __('prescriptions.prescriptions'))
 
 @section('content')
 <!-- Page Header -->
 <div class="d-flex align-items-sm-center flex-sm-row flex-column gap-2 mb-3 pb-3 border-bottom">
     <div class="flex-grow-1">
-        <h4 class="fw-bold mb-0">Prescriptions</h4>
-        <small class="text-muted">Manage patient prescriptions</small>
+        <h4 class="fw-bold mb-0">{{ __('prescriptions.prescriptions') }}</h4>
+        <small class="text-muted">{{ __('prescriptions.manage_subtitle') }}</small>
     </div>
 </div>
 
@@ -15,23 +15,23 @@
     <div class="card-body">
         <form method="GET" class="row g-2 align-items-end">
             <div class="col-md-4">
-                <label class="form-label small">Search</label>
-                <input type="text" name="search" class="form-control" placeholder="Rx number, patient name..." value="{{ request('search') }}">
+                <label class="form-label small">{{ __('common.search') }}</label>
+                <input type="text" name="search" class="form-control" placeholder="{{ __('prescriptions.search_placeholder') }}" value="{{ request('search') }}">
             </div>
             <div class="col-md-3">
-                <label class="form-label small">Status</label>
+                <label class="form-label small">{{ __('common.status') }}</label>
                 <select name="status" class="form-select">
-                    <option value="">All Statuses</option>
+                    <option value="">{{ __('common.all_statuses') }}</option>
                     @foreach(\App\Enums\PrescriptionStatus::cases() as $status)
                     <option value="{{ $status->value }}" {{ request('status') === $status->value ? 'selected' : '' }}>{{ $status->label() }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100"><i class="ti ti-search me-1"></i>Filter</button>
+                <button type="submit" class="btn btn-primary w-100"><i class="ti ti-search me-1"></i>{{ __('common.filter') }}</button>
             </div>
             <div class="col-md-2">
-                <a href="{{ route('admin.prescriptions.index') }}" class="btn btn-outline-secondary w-100">Clear</a>
+                <a href="{{ route('admin.prescriptions.index') }}" class="btn btn-outline-secondary w-100">{{ __('common.clear') }}</a>
             </div>
         </form>
     </div>
@@ -44,13 +44,13 @@
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Rx #</th>
-                        <th>Patient</th>
-                        <th>Doctor</th>
-                        <th>Items</th>
-                        <th>Status</th>
-                        <th>Date</th>
-                        <th>Action</th>
+                        <th>{{ __('pharmacy.rx_number_short') }}</th>
+                        <th>{{ __('common.patient') }}</th>
+                        <th>{{ __('common.doctor') }}</th>
+                        <th>{{ __('pharmacy.items') }}</th>
+                        <th>{{ __('common.status') }}</th>
+                        <th>{{ __('common.date') }}</th>
+                        <th>{{ __('common.action') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -62,11 +62,11 @@
                             <small class="text-muted">{{ $prescription->patient->patient_number }}</small>
                         </td>
                         <td>Dr. {{ $prescription->doctor->full_name }}</td>
-                        <td><span class="badge bg-secondary">{{ $prescription->items->count() }} items</span></td>
+                        <td><span class="badge bg-secondary">{{ __('prescriptions.items_count', ['count' => $prescription->items->count()]) }}</span></td>
                         <td><x-status-badge :status="$prescription->status" /></td>
                         <td><small>{{ $prescription->created_at->format('d M Y, h:i A') }}</small></td>
                         <td>
-                            <a aria-label="View" title="View" href="{{ route('admin.prescriptions.show', $prescription) }}" class="btn btn-sm btn-outline-primary">
+                            <a aria-label="{{ __('common.view') }}" title="{{ __('common.view') }}" href="{{ route('admin.prescriptions.show', $prescription) }}" class="btn btn-sm btn-outline-primary">
                                 <i class="ti ti-eye"></i>
                             </a>
                         </td>
@@ -75,7 +75,7 @@
                     <tr>
                         <td colspan="7" class="text-center py-4 text-muted">
                             <i class="ti ti-prescription fs-1 d-block mb-2"></i>
-                            No prescriptions found.
+                            {{ __('prescriptions.no_prescriptions_found') }}
                         </td>
                     </tr>
                     @endforelse

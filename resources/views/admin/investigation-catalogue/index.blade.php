@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Investigation Catalogue')
+@section('title', __('investigations.investigation_catalogue'))
 
 @section('content')
 <div class="container-fluid py-3">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h4 class="mb-0"><i class="ti ti-flask me-2"></i>Investigation Catalogue</h4>
-            <small class="text-muted">Configure headers and result criteria for services offered by investigation-type departments.</small>
+            <h4 class="mb-0"><i class="ti ti-flask me-2"></i>{{ __('investigations.investigation_catalogue') }}</h4>
+            <small class="text-muted">{{ __('investigations.configure_subtitle') }}</small>
         </div>
     </div>
 
@@ -19,29 +19,29 @@
         <div class="card-body py-2">
             <form method="GET" class="row g-2 align-items-end">
                 <div class="col-md-4">
-                    <label class="form-label small mb-1">Search</label>
-                    <input type="text" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Service name or code...">
+                    <label class="form-label small mb-1">{{ __('common.search') }}</label>
+                    <input type="text" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="{{ __('investigations.service_name_or_code') }}">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small mb-1">Department</label>
+                    <label class="form-label small mb-1">{{ __('common.department') }}</label>
                     <select name="department_id" class="form-select form-select-sm">
-                        <option value="">All Investigation Departments</option>
+                        <option value="">{{ __('investigations.all_investigation_departments') }}</option>
                         @foreach($departments as $d)
                             <option value="{{ $d->id }}" @selected(request('department_id') == $d->id)>{{ $d->name }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small mb-1">Status</label>
+                    <label class="form-label small mb-1">{{ __('common.status') }}</label>
                     <select name="active" class="form-select form-select-sm">
-                        <option value="">Any</option>
-                        <option value="1" @selected(request('active') === '1')>Active</option>
-                        <option value="0" @selected(request('active') === '0')>Inactive</option>
+                        <option value="">{{ __('store.any') }}</option>
+                        <option value="1" @selected(request('active') === '1')>{{ __('common.active') }}</option>
+                        <option value="0" @selected(request('active') === '0')>{{ __('common.inactive') }}</option>
                     </select>
                 </div>
                 <div class="col-md-3 d-flex gap-2">
-                    <button class="btn btn-primary btn-sm flex-grow-1"><i class="ti ti-search me-1"></i>Filter</button>
-                    <a href="{{ route('admin.investigation-catalogue.index') }}" class="btn btn-light btn-sm">Reset</a>
+                    <button class="btn btn-primary btn-sm flex-grow-1"><i class="ti ti-search me-1"></i>{{ __('common.filter') }}</button>
+                    <a href="{{ route('admin.investigation-catalogue.index') }}" class="btn btn-light btn-sm">{{ __('common.reset') }}</a>
                 </div>
             </form>
         </div>
@@ -53,11 +53,11 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Service</th>
-                            <th>Code</th>
-                            <th>Department</th>
-                            <th class="text-center">Headers</th>
-                            <th class="text-center">Criteria</th>
+                            <th>{{ __('investigations.service') }}</th>
+                            <th>{{ __('common.code') }}</th>
+                            <th>{{ __('common.department') }}</th>
+                            <th class="text-center">{{ __('investigations.headers') }}</th>
+                            <th class="text-center">{{ __('investigations.criteria') }}</th>
                             <th class="text-end">Price</th>
                             <th class="text-center">Status</th>
                             <th></th>

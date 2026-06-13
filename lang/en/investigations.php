@@ -105,4 +105,19 @@ return [
     'update_stock_title'        => 'Update Stock',
     'update_btn'                => 'Update',
     'na_label'                  => 'N/A',
+
+    // Investigation consumables page
+    'investigation_consumables' => 'Investigation Consumables',
+    'consumables_description'   => 'Filtered view of <strong>products</strong> linked to the Investigation / Laboratory / Radiology departments. Quantities below reflect the on-hand balance at the <strong>Laboratory stock location</strong>. New products are added from <em>Store &rsaquo; Products</em>.',
+    'department_available_qty'  => 'Department Available Qty',
+    'main_stock_qty'            => 'Main Stock Qty',
+
+    // Investigation catalogue
+    'investigation_catalogue'   => 'Investigation Catalogue',
+    'all_investigation_departments' => 'All Investigation Departments',
+    'configure_subtitle'        => 'Configure headers and result criteria for services offered by investigation-type departments.',
+    'service_name_or_code'      => 'Service name or code...',
+    'service'                   => 'Service',
+    'headers'                   => 'Headers',
+    'criteria'                  => 'Criteria',
 ];
